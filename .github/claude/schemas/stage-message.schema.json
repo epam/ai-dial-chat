@@ -51,7 +51,7 @@
       "properties": {
         "findings": {
           "type": "array",
-          "description": "Reviewer convention. Each entry is one issue. Rendered as a table in the sticky comment when present.",
+          "description": "Reviewer convention. Each entry is one issue. Review agents should include repo-relative file and head-side line for line-specific findings; the platform can publish those as inline PR review comments and render the rest in the sticky summary.",
           "items": {
             "type": "object",
             "required": ["severity", "message"],
@@ -63,9 +63,14 @@
               },
               "file": { "type": "string" },
               "line": { "type": "integer", "minimum": 1 },
-              "message": { "type": "string" },
+              "message": { "type": "string", "minLength": 1 },
               "suggested_fix": { "type": "string" },
-              "requirement_ref": { "type": "string" }
+              "requirement_ref": { "type": "string" },
+              "inline_comment": {
+                "type": "object",
+                "description": "Platform annotation added after the agent writes stage-output.json; agents should not set this.",
+                "additionalProperties": true
+              }
             }
           }
         },

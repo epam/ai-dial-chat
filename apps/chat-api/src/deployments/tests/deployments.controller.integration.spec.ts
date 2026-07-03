@@ -175,6 +175,32 @@ describe('DeploymentsController (integration)', () => {
         .expect(400);
     });
 
+    it('returns 400 for old embeddings value', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments?interface_type=embeddings')
+        .expect(400);
+    });
+
+    it('returns 200 for corrected embedding value', async () => {
+      const embeddingResponse: DeploymentsResponseDto = {
+        deployments: [
+          { id: 'embed-model', displayName: 'Embed', type: 'model' },
+        ],
+      };
+      service.listDeployments.mockResolvedValue(embeddingResponse);
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments?interface_type=embedding')
+        .expect(200);
+
+      expect(service.listDeployments).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        TEST_USER.bucket,
+        ['embedding'],
+      );
+    });
+
     it('returns 401 when service throws UnauthorizedException', async () => {
       service.listDeployments.mockRejectedValue(new UnauthorizedException());
       await request(app.getHttpServer()).get('/api/v1/deployments').expect(401);

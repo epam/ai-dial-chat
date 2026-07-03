@@ -30,6 +30,8 @@ export interface CatalogItem {
   isUserFavorite?: boolean;
   /** Whether the item belongs to the current user (e.g. created by them or in their personal space). */
   isMyApp?: boolean;
+  /** Provider name shown below the entity name in the details header, e.g. `'OpenAI'` or `'Anthropic'`. */
+  provider?: string;
   /** Folder breadcrumb path segments, outermost first. */
   folder: string[];
   /** Topics associated with the item. */

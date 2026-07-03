@@ -25,6 +25,7 @@ interface Props {
   onNewChat?: () => void;
 }
 
+// TODO: remove? need change after full redesign
 const Header: FC<Props> = ({
   onMenuToggle,
   isConversationPanelOpen,
@@ -39,7 +40,7 @@ const Header: FC<Props> = ({
     useSourcesSidebar();
 
   return (
-    <header className="relative z-30 grid min-h-[64px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-tertiary bg-layer-0">
+    <header className="relative z-30 grid min-h-[64px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-tertiary bg-layer-0 desktop:hidden">
       <div className="flex items-center gap-1 ps-3">
         {onConversationPanelToggle != null && isConversationPanel && (
           <DialGhostIconButton

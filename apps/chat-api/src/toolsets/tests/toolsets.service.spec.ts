@@ -31,6 +31,14 @@ const mockToolset: DialToolsetDto = {
   },
 };
 const mockList: DialToolsetListResponseDto = { data: [mockToolset] };
+const mockEnrichedToolset: DialToolsetDto = {
+  ...mockToolset,
+  is_installed: false,
+  is_my: false,
+};
+const mockEnrichedList: DialToolsetListResponseDto = {
+  data: [mockEnrichedToolset],
+};
 
 const okResponse = (data: unknown) =>
   ({ data, response: {} as Response }) as never;
@@ -51,13 +59,23 @@ function makeDeps() {
     set: vi.fn().mockResolvedValue(undefined),
   };
 
-  return { configService, cacheManager };
+  const userConfigService = {
+    getInstalledIds: vi
+      .fn()
+      .mockResolvedValue({ toolsets: [], deployments: [] }),
+  };
+
+  return { configService, cacheManager, userConfigService };
 }
 
 function makeService() {
-  const { configService, cacheManager } = makeDeps();
-  const service = new ToolsetsService(configService, cacheManager as never);
-  return { service, cacheManager };
+  const { configService, cacheManager, userConfigService } = makeDeps();
+  const service = new ToolsetsService(
+    configService,
+    cacheManager as never,
+    userConfigService as never,
+  );
+  return { service, cacheManager, userConfigService };
 }
 
 describe('ToolsetsService', () => {
@@ -73,28 +91,91 @@ describe('ToolsetsService', () => {
         okResponse(upstreamList),
       );
 
-      const result = await service.listToolsets('user1', 'token-abc');
-      expect(result).toEqual(mockList);
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result).toEqual(mockEnrichedList);
+    });
+
+    it('filters hidden .dial_folder toolsets from upstream list', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+        okResponse({
+          data: [
+            mockToolset,
+            {
+              id: 'toolsets/bucket/.dial_folder',
+              toolset: 'toolsets/bucket/.dial_folder',
+              object: 'toolset',
+            },
+          ],
+        }),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data).toEqual([mockEnrichedToolset]);
     });
 
     it('returns cached list without calling upstream on cache hit', async () => {
-      const { configService } = makeDeps();
+      const { configService, userConfigService } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockList),
         set: vi.fn(),
       };
-      const service = new ToolsetsService(configService, cacheManager as never);
+      const service = new ToolsetsService(
+        configService,
+        cacheManager as never,
+        userConfigService as never,
+      );
       const spy = vi
         .spyOn(service['client'], 'getToolSets')
         .mockResolvedValue(okResponse(mockList));
 
-      const result = await service.listToolsets('user1', 'token-abc');
-      expect(result).toEqual(mockList);
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result).toEqual(mockEnrichedList);
       expect(spy).not.toHaveBeenCalled();
     });
 
+    it('sets isInstalled=true for installed toolsets from user config', async () => {
+      const { service, userConfigService } = makeService();
+      userConfigService.getInstalledIds.mockResolvedValue({
+        toolsets: ['my-toolset'],
+        deployments: [],
+      });
+      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+        okResponse(mockList),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data[0]).toMatchObject({
+        id: 'my-toolset',
+        is_installed: true,
+        is_my: false,
+      });
+    });
+
+    it('sets isMy=true when bucket appears as a toolset path segment', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+        okResponse({
+          data: [
+            {
+              ...mockToolset,
+              id: 'toolsets/bucket/my-toolset',
+              toolset: 'toolsets/bucket/my-toolset',
+            },
+          ],
+        }),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data[0]).toMatchObject({
+        id: 'toolsets/bucket/my-toolset',
+        is_installed: false,
+        is_my: true,
+      });
+    });
+
     it('uses per-user cache keys — different users get different cache entries', async () => {
-      const { configService } = makeDeps();
+      const { configService, userConfigService } = makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -103,13 +184,17 @@ describe('ToolsetsService', () => {
           return Promise.resolve();
         }),
       };
-      const service = new ToolsetsService(configService, cacheManager as never);
+      const service = new ToolsetsService(
+        configService,
+        cacheManager as never,
+        userConfigService as never,
+      );
       vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
         okResponse(mockList),
       );
 
-      await service.listToolsets('user1', 'token1');
-      await service.listToolsets('user2', 'token2');
+      await service.listToolsets('user1', 'token1', 'bucket');
+      await service.listToolsets('user2', 'token2', 'bucket');
 
       expect(cacheManager.get).toHaveBeenCalledWith('toolsets:list:user1');
       expect(cacheManager.get).toHaveBeenCalledWith('toolsets:list:user2');
@@ -121,7 +206,7 @@ describe('ToolsetsService', () => {
         .spyOn(service['client'], 'getToolSets')
         .mockResolvedValue(okResponse(mockList));
 
-      await service.listToolsets('user1', 'my-token');
+      await service.listToolsets('user1', 'my-token', 'bucket');
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
           headers: expect.objectContaining({
@@ -136,7 +221,7 @@ describe('ToolsetsService', () => {
       vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
         errResponse(401),
       );
-      await expect(service.listToolsets('u', 't')).rejects.toThrow(
+      await expect(service.listToolsets('u', 't', 'bucket')).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -146,7 +231,7 @@ describe('ToolsetsService', () => {
       vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
         errResponse(403),
       );
-      await expect(service.listToolsets('u', 't')).rejects.toThrow(
+      await expect(service.listToolsets('u', 't', 'bucket')).rejects.toThrow(
         ForbiddenException,
       );
     });
@@ -156,7 +241,7 @@ describe('ToolsetsService', () => {
       vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
         errResponse(429),
       );
-      await expect(service.listToolsets('u', 't')).rejects.toThrow(
+      await expect(service.listToolsets('u', 't', 'bucket')).rejects.toThrow(
         HttpException,
       );
     });
@@ -166,7 +251,7 @@ describe('ToolsetsService', () => {
       vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
         errResponse(500),
       );
-      await expect(service.listToolsets('u', 't')).rejects.toThrow(
+      await expect(service.listToolsets('u', 't', 'bucket')).rejects.toThrow(
         BadGatewayException,
       );
     });
@@ -176,7 +261,7 @@ describe('ToolsetsService', () => {
       vi.spyOn(service['client'], 'getToolSets').mockRejectedValue(
         new TypeError('fetch failed'),
       );
-      await expect(service.listToolsets('u', 't')).rejects.toThrow(
+      await expect(service.listToolsets('u', 't', 'bucket')).rejects.toThrow(
         ServiceUnavailableException,
       );
     });
@@ -195,7 +280,7 @@ describe('ToolsetsService', () => {
         okResponse({ data: [toolsetWithSecret] }),
       );
 
-      const result = await service.listToolsets('user1', 'token');
+      const result = await service.listToolsets('user1', 'token', 'bucket');
       expect(result.data[0].auth_settings).toEqual({
         authentication_type: 'OAUTH',
         client_id: 'id',
@@ -217,18 +302,23 @@ describe('ToolsetsService', () => {
       const result = await service.getToolset(
         'user1',
         'token-abc',
+        'bucket',
         'my-toolset',
       );
-      expect(result).toEqual(mockToolset);
+      expect(result).toEqual(mockEnrichedToolset);
     });
 
     it('returns cached toolset without calling upstream on cache hit', async () => {
-      const { configService } = makeDeps();
+      const { configService, userConfigService } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockToolset),
         set: vi.fn(),
       };
-      const service = new ToolsetsService(configService, cacheManager as never);
+      const service = new ToolsetsService(
+        configService,
+        cacheManager as never,
+        userConfigService as never,
+      );
       const spy = vi
         .spyOn(service['client'], 'getToolset')
         .mockResolvedValue(okResponse(mockToolset));
@@ -236,10 +326,38 @@ describe('ToolsetsService', () => {
       const result = await service.getToolset(
         'user1',
         'token-abc',
+        'bucket',
         'my-toolset',
       );
-      expect(result).toEqual(mockToolset);
+      expect(result).toEqual(mockEnrichedToolset);
       expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('sets ownership fields for a single toolset', async () => {
+      const { service, userConfigService } = makeService();
+      userConfigService.getInstalledIds.mockResolvedValue({
+        toolsets: ['toolsets/bucket/my-toolset'],
+        deployments: [],
+      });
+      vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
+        okResponse({
+          ...mockToolset,
+          id: 'toolsets/bucket/my-toolset',
+          toolset: 'toolsets/bucket/my-toolset',
+        }),
+      );
+
+      const result = await service.getToolset(
+        'user1',
+        'token-abc',
+        'bucket',
+        'toolsets/bucket/my-toolset',
+      );
+      expect(result).toMatchObject({
+        id: 'toolsets/bucket/my-toolset',
+        is_installed: true,
+        is_my: true,
+      });
     });
 
     it('uses per-user per-toolset cache key', async () => {
@@ -248,7 +366,7 @@ describe('ToolsetsService', () => {
         okResponse(mockToolset),
       );
 
-      await service.getToolset('user1', 'token', 'my-toolset');
+      await service.getToolset('user1', 'token', 'bucket', 'my-toolset');
       expect(cacheManager.get).toHaveBeenCalledWith(
         'toolsets:single:user1:my-toolset',
       );
@@ -260,7 +378,7 @@ describe('ToolsetsService', () => {
         .spyOn(service['client'], 'getToolset')
         .mockResolvedValue(okResponse(mockToolset));
 
-      await service.getToolset('user1', 'my-token', 'my-toolset');
+      await service.getToolset('user1', 'my-token', 'bucket', 'my-toolset');
       expect(spy).toHaveBeenCalledWith(
         'my-toolset',
         expect.objectContaining({
@@ -285,7 +403,12 @@ describe('ToolsetsService', () => {
         okResponse(toolsetWithSecret),
       );
 
-      const result = await service.getToolset('user1', 'token', 'my-toolset');
+      const result = await service.getToolset(
+        'user1',
+        'token',
+        'bucket',
+        'my-toolset',
+      );
       expect(
         (result.auth_settings as { client_secret?: string }).client_secret,
       ).toBeUndefined();
@@ -305,9 +428,9 @@ describe('ToolsetsService', () => {
       vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
         errResponse(404),
       );
-      await expect(service.getToolset('u', 't', 'unknown')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getToolset('u', 't', 'bucket', 'unknown'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('throws UnauthorizedException on upstream 401', async () => {
@@ -315,9 +438,9 @@ describe('ToolsetsService', () => {
       vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
         errResponse(401),
       );
-      await expect(service.getToolset('u', 't', 'my-toolset')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.getToolset('u', 't', 'bucket', 'my-toolset'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('throws ForbiddenException on upstream 403', async () => {
@@ -325,9 +448,9 @@ describe('ToolsetsService', () => {
       vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
         errResponse(403),
       );
-      await expect(service.getToolset('u', 't', 'my-toolset')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.getToolset('u', 't', 'bucket', 'my-toolset'),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('throws BadGatewayException on upstream 5xx', async () => {
@@ -335,9 +458,9 @@ describe('ToolsetsService', () => {
       vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
         errResponse(502),
       );
-      await expect(service.getToolset('u', 't', 'my-toolset')).rejects.toThrow(
-        BadGatewayException,
-      );
+      await expect(
+        service.getToolset('u', 't', 'bucket', 'my-toolset'),
+      ).rejects.toThrow(BadGatewayException);
     });
 
     it('throws ServiceUnavailableException on network error', async () => {
@@ -345,21 +468,25 @@ describe('ToolsetsService', () => {
       vi.spyOn(service['client'], 'getToolset').mockRejectedValue(
         new TypeError('fetch failed'),
       );
-      await expect(service.getToolset('u', 't', 'my-toolset')).rejects.toThrow(
-        ServiceUnavailableException,
-      );
+      await expect(
+        service.getToolset('u', 't', 'bucket', 'my-toolset'),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
   });
 });
 
 function makeWriteService() {
-  const { configService } = makeDeps();
+  const { configService, userConfigService } = makeDeps();
   const cacheManager = {
     get: vi.fn().mockResolvedValue(undefined),
     set: vi.fn().mockResolvedValue(undefined),
     del: vi.fn().mockResolvedValue(undefined),
   };
-  const service = new ToolsetsService(configService, cacheManager as never);
+  const service = new ToolsetsService(
+    configService,
+    cacheManager as never,
+    userConfigService as never,
+  );
   return { service, cacheManager };
 }
 

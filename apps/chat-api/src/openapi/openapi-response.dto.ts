@@ -77,6 +77,24 @@ export class DialModelFeaturesDto {
 
   @ApiPropertyOptional({ example: false })
   mcp?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  chat_completion?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  responses_api?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  max_tokens_supported?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  max_completion_tokens_supported?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  custom_temperature_supported?: boolean;
+
+  @ApiPropertyOptional({ type: [String], example: [] })
+  reasoning_efforts?: string[];
 }
 
 export class DialModelCapabilitiesDto {
@@ -227,6 +245,9 @@ export class DialToolsetAuthSettingsDto {
   @ApiPropertyOptional({ example: '' })
   token_endpoint?: string;
 
+  @ApiPropertyOptional({ example: 'base64-url-code-challenge' })
+  code_challenge?: string;
+
   @ApiPropertyOptional({ example: 'S256' })
   code_challenge_method?: string;
 
@@ -298,6 +319,9 @@ export class DialToolsetDto {
   @ApiPropertyOptional({ example: 1672534900 })
   updated_at?: number;
 
+  @ApiPropertyOptional({ type: () => DialModelFeaturesDto })
+  features?: DialModelFeaturesDto;
+
   @ApiPropertyOptional({ example: 'https://my-toolset.example.com/mcp' })
   endpoint?: string;
 
@@ -309,6 +333,17 @@ export class DialToolsetDto {
 
   @ApiPropertyOptional({ type: () => DialToolsetAuthSettingsDto })
   auth_settings?: DialToolsetAuthSettingsDto;
+
+  @ApiPropertyOptional({
+    description: 'Whether this toolset is installed by the current user',
+  })
+  is_installed?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'True when the toolset id/path belongs to the current session user bucket',
+  })
+  is_my?: boolean;
 }
 
 export class DialToolsetListResponseDto {

@@ -87,6 +87,7 @@ const ConversationSourcesPanelContainer: FC = () => {
       ariaLabel: t(SidebarI18nKeys.AriaLabel),
       closeLabel: t(ButtonsI18nKeys.Close),
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+      searchClearLabel: t(BasicI18nKeys.ClearSearch),
       emptyLabel: t(BasicI18nKeys.Empty),
       noResultsLabel: t(BasicI18nKeys.NoResults),
       downloadAllLabel: t(SidebarI18nKeys.DownloadAll),

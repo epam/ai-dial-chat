@@ -39,6 +39,10 @@ inputs:
     description: 'When "true", convert payload.findings[] to SARIF and upload to GitHub code scanning (Security tab). Scoped to ANALYSIS_REF_FULL/ANALYSIS_SHA from env when set (the scanned branch), else the current ref/sha.'
     required: false
     default: 'false'
+  publish_inline_comments:
+    description: 'When "true", publish payload.findings[] entries with file+line as GitHub PR inline review comments and omit successfully posted entries from the sticky summary.'
+    required: false
+    default: 'false'
 
 outputs:
   message:
@@ -308,6 +312,22 @@ runs:
         # readable, so dumping the findings here would leak internal security
         # data. The renderer validates shape in the next step; the artifact
         # carries the full content for the (private, in-run) chain handoff.
+
+    - name: Publish inline PR comments
+      # Review agents can emit payload.findings[] with repo-relative file+line
+      # locations. Publish findings whose lines are present in the PR diff as
+      # GitHub review comments, annotate stage-output.json with post status, and
+      # let the sticky renderer summarize only what was not posted inline.
+      if: github.event_name == 'pull_request' && inputs.private_output != 'true' && inputs.publish_inline_comments == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        STAGE_NAME: ${{ inputs.stage_name }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        REPO: ${{ github.repository }}
+        GITHUB_SERVER_URL: ${{ github.server_url }}
+      run: python3 ./.github/claude/scripts/publish-inline-comments.py
 
     - name: Validate and render sticky comment
       id: extract
