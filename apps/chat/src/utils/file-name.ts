@@ -1,16 +1,17 @@
-import { truncateToUtf8Bytes } from '@epam/ai-dial-chat-shared';
+import {
+  getUtf8ByteLength,
+  truncateToUtf8Bytes,
+} from '@epam/ai-dial-chat-shared';
 import { NOT_ALLOWED_SYMBOLS_REGEXP } from '@epam/ai-dial-ui-kit';
 
-const encoder = new TextEncoder();
-
 export const trimFileNameToByteLimit = (name: string, limit = 255): string => {
-  if (encoder.encode(name).length <= limit) return name;
+  if (getUtf8ByteLength(name) <= limit) return name;
 
   const lastDot = name.lastIndexOf('.');
   const hasExtension = lastDot > 0;
   const base = hasExtension ? name.slice(0, lastDot) : name;
   const ext = hasExtension ? name.slice(lastDot) : '';
-  const extBytes = encoder.encode(ext).length;
+  const extBytes = getUtf8ByteLength(ext);
   const baseLimit = limit - extBytes;
 
   if (baseLimit <= 0) {

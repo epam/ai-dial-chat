@@ -294,6 +294,7 @@ const DialFileManagerModal: FC<Props> = ({
       const file = filesByPath.get(virtualPath);
       if (file == null) return [];
       const source = file.url ?? file.id ?? '';
+      if (!source) return [];
       const dialPath = source.startsWith('files/')
         ? source
         : `files/${file.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;

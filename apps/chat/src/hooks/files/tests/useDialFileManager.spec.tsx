@@ -542,6 +542,29 @@ describe('useDialFileManager', () => {
     );
   });
 
+  it('does not fetch the same expanded folder twice while the first load is pending', async () => {
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const initialCallCount = mockListFiles.mock.calls.length;
+    mockListFiles.mockImplementation(() => new Promise(() => undefined));
+
+    act(() => {
+      result.current.onExpandedPathsChange(new Set(['/My files/docs/']));
+    });
+    act(() => {
+      result.current.onExpandedPathsChange(
+        new Set(['/My files/docs/', '/My files/images/']),
+      );
+    });
+
+    expect(mockListFiles).toHaveBeenCalledTimes(initialCallCount + 2);
+    expect(
+      mockListFiles.mock.calls
+        .slice(initialCallCount)
+        .map(([params]) => params.path),
+    ).toEqual(['docs/', 'images/']);
+  });
+
   it('shows notifications for successful and failed deletes', async () => {
     const onNotification = vi.fn();
     mockDeleteFiles.mockResolvedValue({

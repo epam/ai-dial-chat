@@ -490,6 +490,39 @@ describe('DialFileManagerModal', () => {
     });
   });
 
+  it('skips selected folder when DIAL Core source path is missing', () => {
+    const onAttach = vi.fn();
+    const root = defaultHookResult.items[0];
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      items: [
+        {
+          ...root,
+          items: root.items?.map((item) =>
+            item.nodeType === DialFileNodeType.FOLDER
+              ? { ...item, id: '', url: undefined }
+              : item,
+          ),
+        },
+      ],
+    });
+    render(
+      <DialFileManagerModal
+        {...defaultProps}
+        onAttach={onAttach}
+        canAttachFolders
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select docs folder' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
+
+    expect(onAttach).toHaveBeenCalledWith({
+      files: [],
+      folderPaths: [],
+    });
+  });
+
   it('marks folder rows as selectable when canAttachFolders is true', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} canAttachFolders />);

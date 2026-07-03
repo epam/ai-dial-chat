@@ -83,7 +83,11 @@ export interface UseDialFileManagerResult {
   /** Re-runs the fetch for the current `folderPath`. */
   retry: () => void;
 
-  /** Search: called by DialFileManager when the user types in the search box. */
+  /**
+   * Search: called by DialFileManager when the user types in the search box.
+   * The `folder` argument is accepted for DialFileManager API parity; this hook
+   * searches from the active-tab root stored in `folderPath`.
+   */
   onSearchFiles: (folder: string, query: string) => void;
   /** Search: true while a search request is in flight. */
   isSearching: boolean;
@@ -583,6 +587,7 @@ export const useDialFileManager = ({
   const [searchResults, setSearchResults] = useState<DialFile[] | null>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchCancelRef = useRef<(() => void) | null>(null);
+  const expandingApiPathsRef = useRef<Set<string>>(new Set());
 
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
     () => new Set(),
@@ -737,12 +742,14 @@ export const useDialFileManager = ({
     (paths: Set<string>) => {
       setExpandedPaths(paths);
       const newlyExpanded = [...paths].filter((p) => {
-        if (expandedPaths.has(p)) return false;
         const apiPath = virtualPathToApiPath(p, rootLabel);
-        return !cache.has(apiPath);
+        return (
+          !cache.has(apiPath) && !expandingApiPathsRef.current.has(apiPath)
+        );
       });
       newlyExpanded.forEach((virtualPath) => {
         const apiPath = virtualPathToApiPath(virtualPath, rootLabel);
+        expandingApiPathsRef.current.add(apiPath);
         fetchByTab(activeTab, bucket, apiPath, sharedRootMetaRef.current)
           .then(({ items: flat, permissions }) => {
             setCache((prev) => new Map(prev).set(apiPath, flat));
@@ -757,10 +764,13 @@ export const useDialFileManager = ({
               variant: NotificationVariant.Error,
               message: t(DialFileManagerI18nKeys.FolderLoadError),
             });
+          })
+          .finally(() => {
+            expandingApiPathsRef.current.delete(apiPath);
           });
       });
     },
-    [activeTab, bucket, cache, expandedPaths, onNotification, rootLabel, t],
+    [activeTab, bucket, cache, onNotification, rootLabel, t],
   );
 
   const clearSearchResults = useCallback(() => {
@@ -792,6 +802,7 @@ export const useDialFileManager = ({
 
         // Shared root: filter already-loaded root items from the cache (no BFF call).
         if (activeTab === DialFileManagerTabs.Shared && folderPath === '') {
+          setIsSearching(true);
           const rootItems = cache.get('') ?? [];
           const matched = rootItems.filter((item) =>
             safeDecodeURI(item.name).toLowerCase().includes(lowerQuery),
@@ -801,6 +812,7 @@ export const useDialFileManager = ({
               mapSearchItem(item, item.bucket ?? bucket, rootLabel),
             ),
           );
+          setIsSearching(false);
           return;
         }
 
@@ -810,8 +822,14 @@ export const useDialFileManager = ({
           cancelled = true;
         };
         setIsSearching(true);
-        fetchForSearch(activeTab, bucket, folderPath, sharedRootMetaRef.current)
-          .then(({ items }) => {
+        const runSearch = async (): Promise<void> => {
+          try {
+            const { items } = await fetchForSearch(
+              activeTab,
+              bucket,
+              folderPath,
+              sharedRootMetaRef.current,
+            );
             if (cancelled) return;
             const matched = items.filter((item) =>
               safeDecodeURI(item.name).toLowerCase().includes(lowerQuery),
@@ -821,13 +839,13 @@ export const useDialFileManager = ({
                 mapSearchItem(item, item.bucket ?? bucket, rootLabel),
               ),
             );
-          })
-          .catch(() => {
+          } catch {
             if (!cancelled) setSearchResults([]);
-          })
-          .finally(() => {
+          } finally {
             if (!cancelled) setIsSearching(false);
-          });
+          }
+        };
+        void runSearch();
       }, 300);
     },
     [activeTab, bucket, cache, folderPath, rootLabel],
