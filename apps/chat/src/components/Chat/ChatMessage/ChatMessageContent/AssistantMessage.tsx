@@ -26,6 +26,7 @@ import {
   getDialLinksFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
+import { dispatchRetryFileUpload } from '@/src/utils/app/file-upload-dispatch';
 import {
   getConfigurationSchema,
   getConfigurationValue,
@@ -373,7 +374,7 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
 
   const handleRetry = useCallback(
     (fileId: string) => {
-      return () => dispatch(FilesActions.reuploadFile({ fileId }));
+      dispatchRetryFileUpload(dispatch, fileId);
     },
     [dispatch],
   );
