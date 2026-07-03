@@ -3,13 +3,20 @@ import type { AttachmentDto } from '@epam/chat-api-client';
 import { describe, expect, it, vi } from 'vitest';
 import { attachmentDtoToDisplayAttachment } from '../attachment-dto-to-display';
 
-// resolveCatalogIconUrl is imported by the module under test; mock it here so
-// the spec doesn't depend on API endpoint constants.
+// resolveCatalogIconUrl / resolveDialFileDownloadUrl are imported by the module
+// under test; mock them here so the spec doesn't depend on API endpoint constants.
 vi.mock('../icon-path', () => ({
   resolveCatalogIconUrl: (url: string) =>
     url.startsWith('files/')
       ? `/api/v1/files/download?path=${url.slice('files/'.length)}`
       : url,
+}));
+
+vi.mock('../dial-file', () => ({
+  resolveDialFileDownloadUrl: (url: string) =>
+    url.startsWith('files/')
+      ? `/api/v1/files/download?path=${url.slice('files/'.length)}`
+      : undefined,
 }));
 
 describe('attachmentDtoToDisplayAttachment', () => {
@@ -74,5 +81,44 @@ describe('attachmentDtoToDisplayAttachment', () => {
     expect(attachment.previewUrl).toBe(
       '/api/v1/files/download?path=user-bucket/uploads/2026-06/photo.jpg',
     );
+  });
+
+  it('resolves a DIAL file ID url to a download URL for audio playUrl', () => {
+    const dto: AttachmentDto = {
+      type: 'audio/mpeg',
+      title: 'recording.mp3',
+      url: 'files/user-bucket/uploads/2026-06/recording.mp3',
+    };
+
+    const attachment = attachmentDtoToDisplayAttachment(dto);
+
+    expect(attachment.type).toBe(AttachmentType.Audio);
+    expect(attachment.playUrl).toBe(
+      '/api/v1/files/download?path=user-bucket/uploads/2026-06/recording.mp3',
+    );
+  });
+
+  it('falls back to the raw url for audio playback when it is not a DIAL file ID', () => {
+    const dto: AttachmentDto = {
+      type: 'audio/wav',
+      title: 'voice.wav',
+      url: 'https://example.com/voice.wav',
+    };
+
+    const attachment = attachmentDtoToDisplayAttachment(dto);
+
+    expect(attachment.playUrl).toBe('https://example.com/voice.wav');
+  });
+
+  it('synthesizes a data: URL for inline-data audio without a url', () => {
+    const dto: AttachmentDto = {
+      type: 'audio/mpeg',
+      title: 'clip.mp3',
+      data: 'SGVsbG8=',
+    };
+
+    const attachment = attachmentDtoToDisplayAttachment(dto);
+
+    expect(attachment.playUrl).toBe('data:audio/mpeg;base64,SGVsbG8=');
   });
 });

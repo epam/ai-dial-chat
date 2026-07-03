@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { handleDialError } from '../../common/utils/dial-error';
+import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import {
   ConversationGenerationService,
@@ -13,8 +13,8 @@ import {
 } from '../dto/conversation-message.dto';
 import { CompletionMode } from '../dto/send-completion.dto';
 
-vi.mock('../../common/utils/dial-error', () => ({
-  handleDialError: vi.fn(),
+vi.mock('../../common/dial/dial-error.mapper', () => ({
+  handleDialSdkError: vi.fn(),
 }));
 
 const UUID_REGEX =
@@ -113,7 +113,7 @@ describe('ConversationService', () => {
       mockGenerationService,
       mockConversationNamingService as never,
     );
-    vi.mocked(handleDialError).mockReset();
+    vi.mocked(handleDialSdkError).mockReset();
     vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
       data: {},
     } as never);
@@ -726,7 +726,7 @@ describe('ConversationService', () => {
         data: null,
         error: { status: 500 },
       } as never);
-      vi.mocked(handleDialError).mockImplementation(() => {
+      vi.mocked(handleDialSdkError).mockImplementation(() => {
         throw new Error('save failed');
       });
 
@@ -2021,7 +2021,7 @@ describe('ConversationService', () => {
       expect(result.items[0].sharedWithMe).toBe(true);
     });
 
-    it('calls handleDialError when the user bucket returns a response-level error', async () => {
+    it('calls handleDialSdkError when the user bucket returns a response-level error', async () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockImplementation(
         (bucket: string) => {
           if (bucket === 'test-bucket') {
@@ -2031,7 +2031,7 @@ describe('ConversationService', () => {
         },
       );
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
-      vi.mocked(handleDialError).mockImplementation(() => {
+      vi.mocked(handleDialSdkError).mockImplementation(() => {
         throw new Error('mapped DIAL error');
       });
 
@@ -2039,7 +2039,11 @@ describe('ConversationService', () => {
         service.listConversations('test-token', 'test-bucket'),
       ).rejects.toThrow('mapped DIAL error');
 
-      expect(handleDialError).toHaveBeenCalledWith({ status: 502 });
+      expect(handleDialSdkError).toHaveBeenCalledWith(
+        { status: 502 },
+        'conversations.listConversations',
+        expect.anything(),
+      );
     });
 
     it('returns only user items when public bucket returns a response-level error', async () => {

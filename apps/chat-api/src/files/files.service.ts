@@ -16,8 +16,9 @@ import { ConfigService } from '@nestjs/config';
 import archiver from 'archiver';
 import type { Response as ExpressResponse } from 'express';
 import { AppService } from '../app/app.service';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { handleDialError } from '../common/utils/dial-error';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import type { EnvironmentVariables } from '../config/environment.config';
 import type { CreateFolderResponseDto } from './dto/create-folder.dto';
@@ -92,14 +93,8 @@ const getFileNameFromPath = (path: string): string =>
 const safeDecodePathForCompare = (path: string): string =>
   path.split('/').map(safeDecodeURIComponent).join('/');
 
-const encodeDialFileResourcePath = (path: string): string =>
-  path
-    .split('/')
-    .map((segment) => encodeURIComponent(safeDecodePathForCompare(segment)))
-    .join('/');
-
 const buildDialFileResourceUrl = (bucket: string, path: string): string =>
-  buildDialFileUrl(bucket, encodeDialFileResourcePath(path));
+  buildDialFileUrl(bucket, encodeDialResourcePath(path));
 
 const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
   const formData = new FormData();
@@ -114,7 +109,7 @@ const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
 
 const getRenameErrorMessage = (error: unknown): string => {
   try {
-    handleDialError(error);
+    handleDialSdkError(error, 'files.renameItem');
   } catch (err) {
     if (err instanceof HttpException) {
       if (err.getStatus() === HttpStatus.CONFLICT) return 'Conflict';
@@ -174,7 +169,11 @@ export class FilesService extends AppService {
       this.logger.warn(
         `DIAL Core listFiles returned error: status=${response.status}, bucket=${bucket}`,
       );
-      return handleDialError({ status: response.status });
+      return handleDialSdkError(
+        { status: response.status },
+        'files.listFiles',
+        this.logger,
+      );
     }
 
     const dialData = (data ?? {}) as typeof data & {
@@ -231,7 +230,11 @@ export class FilesService extends AppService {
         this.logger.warn(
           `DIAL Core upload returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
         );
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          { status: response.status },
+          'files.uploadFile',
+          this.logger,
+        );
       }
 
       const url = buildDialFileUrl(bucket, path);
@@ -244,7 +247,7 @@ export class FilesService extends AppService {
         throw err;
       }
       this.logger.error(`Upload failed for ${bucket}/${path}`, err);
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.uploadFile', this.logger);
     }
   }
 
@@ -317,7 +320,7 @@ export class FilesService extends AppService {
       };
     } catch (err) {
       this.logger.warn(`listFiles failed for bucket=${bucket}`, err);
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.listFiles', this.logger);
     }
   }
 
@@ -353,7 +356,11 @@ export class FilesService extends AppService {
         this.logger.warn(
           `DIAL Core getSharedResources returned error: status=${response.status}`,
         );
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          { status: response.status },
+          'files.listSharedFiles',
+          this.logger,
+        );
       }
 
       const sharedData = (data ?? {}) as typeof data & {
@@ -376,7 +383,7 @@ export class FilesService extends AppService {
       return { bucket: '', path: query.path ?? '', items };
     } catch (err) {
       this.logger.warn('listSharedFiles failed', err);
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.listSharedFiles', this.logger);
     }
   }
 
@@ -403,14 +410,22 @@ export class FilesService extends AppService {
         this.logger.warn(
           `DIAL Core getFileMetadata returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
         );
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          { status: response.status },
+          'files.getFileMetadata',
+          this.logger,
+        );
       }
 
       if (data == null) {
         this.logger.warn(
           `DIAL Core getFileMetadata returned no data: bucket=${bucket}, path=${path}`,
         );
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          { status: response.status },
+          'files.getFileMetadata',
+          this.logger,
+        );
       }
 
       this.logger.debug(
@@ -438,7 +453,7 @@ export class FilesService extends AppService {
         `getFileMetadata failed for bucket=${bucket}, path=${path}`,
         err,
       );
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.getFileMetadata', this.logger);
     }
   }
 
@@ -494,7 +509,11 @@ export class FilesService extends AppService {
           `createFolder marker probe mismatch: requested=${markerPath}, probeName=${probe.name ?? '(none)'}, probeUrl=${probe.url ?? '(none)'}`,
         );
       } else if (metaError != null && metaStatus !== 404) {
-        handleDialError({ status: metaStatus });
+        handleDialSdkError(
+          { status: metaStatus },
+          'files.createFolder',
+          this.logger,
+        );
       }
 
       await this.uploadFile(
@@ -520,7 +539,7 @@ export class FilesService extends AppService {
         `createFolder failed for ${bucket}/${normalizedParent}${name}`,
         err,
       );
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.createFolder', this.logger);
     }
   }
 
@@ -568,7 +587,11 @@ export class FilesService extends AppService {
       };
 
       if (error != null) {
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          { status: response.status },
+          'files.downloadFile',
+          this.logger,
+        );
       }
 
       const headers = Object.fromEntries(
@@ -580,7 +603,7 @@ export class FilesService extends AppService {
       return { stream: response.body as ReadableStream, headers };
     } catch (err) {
       this.logger.error(`Download failed for ${bucket}/${path}`, err);
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.downloadFile', this.logger);
     }
   }
 
@@ -620,9 +643,11 @@ export class FilesService extends AppService {
         this.logger.warn(
           `Archive folder metadata failed: bucket=${bucket}, path=${relFolderPath}, page=${page}, status=${response.status}`,
         );
-        return handleDialError({
-          status: (response as { status: number }).status,
-        });
+        return handleDialSdkError(
+          { status: (response as { status: number }).status },
+          'files.expandFolderContents',
+          this.logger,
+        );
       }
 
       const dialData = (data ?? {}) as typeof data & {
