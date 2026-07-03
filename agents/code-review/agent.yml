@@ -4,7 +4,7 @@ skill: code-review-and-quality
 agent_version: "0.1.0"
 description: "AI code review wrapping the local /code-review-and-quality skill."
 triggers: [pull_request]
-allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git branch:*),Bash(git remote:*),Bash(git rev-parse:*),Skill"
+allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Skill"
 model: claude-sonnet-4-6
 phase: pilot
 cost_class: light
