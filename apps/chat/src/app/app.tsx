@@ -45,6 +45,9 @@ import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
+const DialFileManagerPage = lazy(
+  () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
+);
 const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
@@ -219,6 +222,16 @@ const App: FC = () => {
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
                   <CatalogView />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.FileManager}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <DialFileManagerPage />
                 </Suspense>
               </RouteErrorBoundary>
             }
