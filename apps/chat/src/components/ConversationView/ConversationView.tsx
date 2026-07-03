@@ -59,7 +59,10 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
-import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
+import {
+  dialFilesToAttachments,
+  dialFolderPathToAttachment,
+} from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { normalizeResponseFormat } from '../../utils/message-utils';
@@ -493,7 +496,11 @@ const ConversationView: FC<Props> = ({
 
   const handleAttachDialFiles = useCallback(
     (result: AttachResult) => {
-      setPendingDialAttachments(dialFilesToAttachments(result.files, bucket));
+      const fileAttachments = dialFilesToAttachments(result.files, bucket);
+      const folderAttachments = result.folderPaths.map(
+        dialFolderPathToAttachment,
+      );
+      setPendingDialAttachments([...fileAttachments, ...folderAttachments]);
       setIsDialFileManagerOpen(false);
     },
     [bucket],
@@ -725,6 +732,9 @@ const ConversationView: FC<Props> = ({
                   maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
                   maximumAttachmentsAmount={
                     selectedDeployment?.maxInputAttachments
+                  }
+                  canAttachFolders={
+                    selectedDeployment?.features?.folderAttachments
                   }
                   title={t(DialFileManagerI18nKeys.Title)}
                   attachLabel={t(DialFileManagerI18nKeys.Attach)}
