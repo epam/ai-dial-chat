@@ -22,6 +22,7 @@ from pathlib import Path
 
 CONTRACT_VERSION = "0.1"
 ICON = {"passed": "✅", "passed_with_findings": "⚠️", "failed": "❌"}
+MESSAGE_FIELDS = ("message", "title", "description", "details", "reason", "evidence")
 
 
 def fail(msg):
@@ -39,11 +40,34 @@ def deep_merge(base, override):
     return out
 
 
+def finding_message(finding):
+    parts = []
+    for field in MESSAGE_FIELDS:
+        value = finding.get(field)
+        if isinstance(value, str) and value.strip():
+            parts.append(value.strip())
+    suggested_fix = finding.get("suggested_fix")
+    if isinstance(suggested_fix, str) and suggested_fix.strip():
+        parts.append(f"Suggested fix: {suggested_fix.strip()}")
+    if parts:
+        return " ".join(parts)
+    return "No finding message provided by agent."
+
+
 def build_findings_block(findings, run_url):
-    if not findings:
+    sticky_findings = [
+        f for f in findings
+        if not ((f.get("inline_comment") or {}).get("posted") is True)
+    ]
+    inline_count = len(findings) - len(sticky_findings)
+
+    if not sticky_findings:
+        if inline_count:
+            return ["", f"_{inline_count} finding(s) posted as inline review comments._"]
         return []
+
     lines = ["", "| Severity | Location | Message |", "|---|---|---|"]
-    for f in findings[:10]:
+    for f in sticky_findings[:10]:
         sev = f.get("severity", "info")
         file_path = f.get("file", "—")
         line_num = f.get("line")
@@ -51,12 +75,15 @@ def build_findings_block(findings, run_url):
         req = f.get("requirement_ref")
         if req:
             loc += f" ({req})"
-        msg = (f.get("message") or "").replace("|", "\\|").replace("\n", " ")
+        msg = finding_message(f).replace("|", "\\|").replace("\n", " ")
         lines.append(f"| `{sev}` | {loc} | {msg} |")
-    overflow = len(findings) - 10
+    overflow = len(sticky_findings) - 10
     if overflow > 0:
         lines.append("")
         lines.append(f"_… and {overflow} more — full output in the [run artifact]({run_url})._")
+    if inline_count:
+        lines.append("")
+        lines.append(f"_{inline_count} finding(s) posted as inline review comments._")
     return lines
 
 
