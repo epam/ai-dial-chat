@@ -12,7 +12,6 @@ import { useIsPublicationReview } from '@/src/hooks/useIsPublicationReview';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
-import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 
 import { FeatureType } from '@/src/types/common';
 import { DialLink, FileSourceType } from '@/src/types/files';
@@ -29,7 +28,6 @@ import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
 import { AttachLinkDialog } from './AttachLinkDialog';
 import { FileManagerModal } from './FileManagerModal';
-import { PreUploadDialog } from './PreUploadModal';
 
 const reviewFilesFilter = new Set([
   FileSourceType.MY_FILES,
@@ -46,10 +44,6 @@ interface Props {
   TriggerCustomRenderer?: JSX.Element;
   contextMenuPlacement?: Placement;
   onSelectAlreadyUploaded: (result: string[]) => void;
-  onUploadFromDevice: (
-    selectedFiles: ResolvedUploadFile[],
-    folderPath: string | undefined,
-  ) => void;
   onAddLinkToMessage: (link: DialLink) => void;
 }
 
@@ -58,7 +52,6 @@ export const AttachButton = ({
   TriggerCustomRenderer,
   contextMenuPlacement,
   onSelectAlreadyUploaded,
-  onUploadFromDevice,
   onAddLinkToMessage,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
@@ -68,7 +61,9 @@ export const AttachButton = ({
   const isModelLoaded = useAppSelector(ModelsSelectors.selectAreModelsLoaded);
   const availableAttachmentsTypes = useAppSelector(
     ConversationsSelectors.selectAvailableAttachmentsTypes,
+    (a, b) => a?.join() === b?.join(),
   );
+
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
@@ -95,6 +90,7 @@ export const AttachButton = ({
   }, []);
 
   const handleAttachFromComputer = useCallback(() => {
+    setIsSelectFilesDialogOpened(true);
     setIsPreUploadDialogOpened(true);
   }, []);
 
@@ -109,6 +105,7 @@ export const AttachButton = ({
       }
 
       setIsSelectFilesDialogOpened(false);
+      setIsPreUploadDialogOpened(false);
     },
     [onSelectAlreadyUploaded],
   );
@@ -190,19 +187,12 @@ export const AttachButton = ({
           customButtonLabel={t(ChatI18nKeys.Attach)}
           selectedFilesIds={selectedFilesIds}
           onClose={handleCloseFileManagerModal}
-        />
-      )}
-      {isPreUploadDialogOpened && (
-        <PreUploadDialog
-          isOpen
-          allowedTypes={availableAttachmentsTypes}
-          initialFilesSelect
-          maximumAttachmentsAmount={maximumAttachmentsAmount}
-          onUploadFiles={onUploadFromDevice}
-          onClose={() => {
-            setIsPreUploadDialogOpened(false);
-          }}
-          uploadFolderId={getQuickAttachmentsSavingPath()}
+          isPreUploadOpen={isPreUploadDialogOpened}
+          initialPath={
+            isPreUploadDialogOpened
+              ? getQuickAttachmentsSavingPath()
+              : undefined
+          }
         />
       )}
       {isAttachLinkDialogOpened && (
