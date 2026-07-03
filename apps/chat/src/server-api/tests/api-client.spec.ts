@@ -367,7 +367,7 @@ describe('unauthorizedMiddleware', () => {
     cleanup();
   });
 
-  it('throws a descriptive error when CSRF refresh does not return a token', async () => {
+  it('throws UnauthorizedError when CSRF refresh does not return a token', async () => {
     setCsrfToken('stale-token');
     const fetchSpy = vi
       .fn<typeof fetch>()
@@ -392,9 +392,9 @@ describe('unauthorizedMiddleware', () => {
           deploymentId: 'test-deployment',
         },
       }),
-    ).rejects.toThrow('CSRF refresh failed');
+    ).rejects.toBeInstanceOf(UnauthorizedError);
 
-    expect(listener).not.toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledWith('/api/v1/conversations');
     expect(getCsrfToken()).toBeNull();
     expect(fetchSpy).toHaveBeenCalledTimes(2);
 

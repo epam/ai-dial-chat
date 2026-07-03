@@ -88,7 +88,8 @@ const retryWithFreshCsrf = async (
     throw new UnauthorizedError(ApiEndpoints.AUTH_ME);
   }
   if (refreshed.status !== CsrfRefreshStatus.Ok) {
-    return undefined;
+    notifyUnauthorized(context.url);
+    throw new UnauthorizedError(context.url);
   }
 
   const headers = new Headers(context.init.headers);
@@ -142,7 +143,10 @@ const unauthorizedMiddleware: Middleware = {
       if (retryResponse) {
         return handleRetryResponse(context, retryResponse);
       }
-      throw new Error(`CSRF refresh failed for ${context.url}`);
+      const errorBody = await readResponseBody(context.response);
+      throw new Error(
+        `Request failed with status ${context.response.status} for ${context.init.method ?? 'GET'} ${context.url}: ${errorBody}`,
+      );
     }
     return context.response;
   },

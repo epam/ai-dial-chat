@@ -108,7 +108,6 @@ const runCsrfRefresh = async (): Promise<CsrfRefreshResult> => {
       credentials: 'include',
     });
   } catch {
-    clearCsrfToken();
     return { status: CsrfRefreshStatus.Failed };
   }
 
@@ -123,7 +122,6 @@ const runCsrfRefresh = async (): Promise<CsrfRefreshResult> => {
     return { status: CsrfRefreshStatus.Ok, token: csrfToken };
   }
 
-  clearCsrfToken();
   return { status: CsrfRefreshStatus.Failed };
 };
 
@@ -227,6 +225,8 @@ const request = async <TResponse>(
           notifyUnauthorized(ApiEndpoints.AUTH_ME);
           throw new UnauthorizedError(ApiEndpoints.AUTH_ME);
         }
+        notifyUnauthorized(url);
+        throw new UnauthorizedError(url);
       }
     }
     throw new Error(

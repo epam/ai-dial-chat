@@ -172,6 +172,38 @@ describe('onUnauthorized', () => {
     unregister();
   });
 
+  it('notifies unauthorized when CSRF refresh fails during invalid CSRF recovery', async () => {
+    setCsrfToken('stale-csrf-token');
+    const listener = vi.fn();
+    const unregister = onUnauthorized(listener);
+    const fetchSpy = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: vi.fn().mockResolvedValue(
+          JSON.stringify({
+            code: 'CSRF_INVALID',
+            message: 'Invalid CSRF token',
+            error: 'Forbidden',
+            statusCode: 403,
+          }),
+        ),
+      } as unknown as Response)
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    global.fetch = fetchSpy;
+
+    await expect(post('/api/test', {})).rejects.toBeInstanceOf(
+      UnauthorizedError,
+    );
+    expect(listener).toHaveBeenCalledWith('/api/test');
+    expect(getCsrfToken()).toBeNull();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    unregister();
+  });
+
   it('shares one in-flight CSRF refresh request', async () => {
     const fetchSpy = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(null, {
@@ -196,6 +228,18 @@ describe('onUnauthorized', () => {
     });
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(getCsrfToken()).toBe('fresh-csrf-token');
+  });
+
+  it('keeps the current CSRF token when refresh network request fails', async () => {
+    setCsrfToken('stale-csrf-token');
+    global.fetch = vi
+      .fn<typeof fetch>()
+      .mockRejectedValue(new TypeError('Network error'));
+
+    await expect(refreshCsrfToken()).resolves.toEqual({
+      status: CsrfRefreshStatus.Failed,
+    });
+    expect(getCsrfToken()).toBe('stale-csrf-token');
   });
 
   it('keeps the current CSRF token while refresh is in flight', async () => {

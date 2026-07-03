@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as authApi from '../../server-api/auth.api';
 import {
   getCsrfToken,
-  onUnauthorized,
+  notifyUnauthorized,
   setCsrfToken,
   UnauthorizedError,
 } from '../../server-api/base';
@@ -117,8 +117,9 @@ describe('UserContext', () => {
     );
   });
 
-  it('onUnauthorized listener from any subsequent call resets context', async () => {
+  it('notifyUnauthorized from any subsequent call resets context', async () => {
     vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
+    setCsrfToken('csrf-token');
 
     const { result } = renderHook(() => useUser(), { wrapper });
     await waitFor(() =>
@@ -127,11 +128,11 @@ describe('UserContext', () => {
 
     // Simulate a 401 from any API call via the listener mechanism
     act(() => {
-      onUnauthorized(() => undefined);
-      result.current.reset();
+      notifyUnauthorized('/api/test');
     });
 
     expect(result.current.status).toBe(AuthStatus.Unauthenticated);
     expect(result.current.user).toBeNull();
+    expect(getCsrfToken()).toBeNull();
   });
 });
