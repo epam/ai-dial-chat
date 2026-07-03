@@ -9,6 +9,11 @@ import type {
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserConfigService } from '../../user-config/user-config.service';
+import {
+  ConversationGenerationService,
+  GenerationStatus,
+} from '../conversation-generation.service';
+import { ConversationNamingService } from '../conversation-naming.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 
@@ -41,9 +46,23 @@ describe('ConversationController (integration)', () => {
       deleteAllConversations: vi.fn(),
     };
 
+    const mockGenerationService = {
+      register: vi.fn().mockReturnValue(new AbortController()),
+      abort: vi.fn().mockReturnValue(true),
+      complete: vi.fn(),
+      error: vi.fn(),
+      getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
-      providers: [{ provide: ConversationService, useValue: service }],
+      providers: [
+        { provide: ConversationService, useValue: service },
+        {
+          provide: ConversationGenerationService,
+          useValue: mockGenerationService,
+        },
+      ],
     }).compile();
 
     app = module.createNestApplication();
@@ -191,6 +210,11 @@ describe('ConversationController (integration)', () => {
           { provide: ConfigService, useValue: configService },
           ConversationService,
           UserConfigService,
+          ConversationGenerationService,
+          {
+            provide: ConversationNamingService,
+            useValue: { maybeRenameAfterFirstReply: vi.fn() },
+          },
         ],
       }).compile();
 
@@ -210,6 +234,10 @@ describe('ConversationController (integration)', () => {
         realApp.get(ConversationService)['client'],
         'saveConversation',
       ).mockResolvedValue({ data: {} } as never);
+      vi.spyOn(
+        realApp.get(ConversationService)['client'],
+        'getConversationMetadata',
+      ).mockResolvedValue({ data: null, error: { status: 404 } } as never);
 
       const result = await request(realApp.getHttpServer())
         .post('/conversations')

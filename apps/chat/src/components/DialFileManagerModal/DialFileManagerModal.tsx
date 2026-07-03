@@ -2,21 +2,21 @@ import {
   isMimeTypeAllowed,
   mimeTypesToExtensionLabels,
 } from '@epam/ai-dial-attachment-input';
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
   DialFileNodeType,
-  DialLoader,
+  DialSpinner,
   DialPopup,
-  DialPrimaryButton,
   GridSelectionMode,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
   PopupSize,
+  useDialFileManagerTabs,
   type DialFile,
   type FileManagerGridRow,
-  useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
@@ -113,21 +113,27 @@ const DialFileManagerModal: FC<Props> = ({
   const { t } = useTranslation();
   const { showNotification } = useNotification();
 
-  const {
-    activeTab,
-    handleTabChange,
-    tabs: allTabs,
-  } = useDialFileManagerTabs(
-    {
+  const tabLabels = useMemo(
+    () => ({
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(
         DialFileManagerI18nKeys.TabOrganization,
       ),
       [DialFileManagerTabs.Review]: '',
-    },
-    DialFileManagerTabs.MyFiles,
+    }),
+    [t],
   );
+
+  const {
+    activeTab,
+    handleTabChange,
+    tabs: allTabs,
+  } = useDialFileManagerTabs(tabLabels, DialFileManagerTabs.MyFiles);
+
+  const rootLabel =
+    tabLabels[activeTab] || tabLabels[DialFileManagerTabs.MyFiles];
+
   const tabs = useMemo(
     () => allTabs?.filter((tab) => tab.id !== DialFileManagerTabs.Review),
     [allTabs],
@@ -152,6 +158,9 @@ const DialFileManagerModal: FC<Props> = ({
     isDownloading,
     onDeleteFiles,
     isDeleting,
+    onMoveToFiles,
+    onRenameValidate,
+    isRenaming,
     uploadEnabled,
     isNewButtonDisabled,
     disabledNewButtonTooltip,
@@ -163,6 +172,7 @@ const DialFileManagerModal: FC<Props> = ({
   } = useDialFileManager({
     bucket,
     activeTab,
+    rootLabel,
     onNotification: showNotification,
   });
 
@@ -376,7 +386,7 @@ const DialFileManagerModal: FC<Props> = ({
       (file) => file.status !== FileUploadStatus.Uploading,
     ).length;
 
-    return t('dialFileManager.uploadProgressSummary', {
+    return t(DialFileManagerI18nKeys.UploadProgressSummary, {
       done,
       total: uploadBatchState.files.length,
     });
@@ -398,7 +408,19 @@ const DialFileManagerModal: FC<Props> = ({
   );
 
   const isOperationInProgress =
-    isDownloading || isDeleting || isCreatingFolder || uploadBatchState != null;
+    isDownloading ||
+    isDeleting ||
+    isRenaming ||
+    isCreatingFolder ||
+    uploadBatchState != null;
+
+  const renameValidationMessages = useMemo(
+    () => ({
+      emptyName: t(DialFileManagerI18nKeys.RenameNameEmpty),
+      duplicateName: t(DialFileManagerI18nKeys.RenameDuplicateName),
+    }),
+    [t],
+  );
 
   const conflictResolutionPopupOptions = useMemo(
     () => ({
@@ -443,8 +465,13 @@ const DialFileManagerModal: FC<Props> = ({
     if (DialFileManagerActions.Delete in tabActionLabels) {
       labels[DialFileManagerActions.Delete] = deleteLabel;
     }
+    if (DialFileManagerActions.Rename in tabActionLabels) {
+      labels[DialFileManagerActions.Rename] = t(
+        DialFileManagerI18nKeys.RenameAction,
+      );
+    }
     return labels;
-  }, [tabActionLabels, downloadLabel, deleteLabel]);
+  }, [tabActionLabels, downloadLabel, deleteLabel, t]);
 
   const gridOptions = useMemo(
     () => ({
@@ -566,9 +593,10 @@ const DialFileManagerModal: FC<Props> = ({
         size={PopupSize.Lg}
         className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-2 [&>[aria-label='popup-description']]:flex [&>[aria-label='popup-description']]:min-h-0 [&>[aria-label='popup-description']]:flex-col"
         onClose={onClose}
+        hideClose={true}
         footer={
           <div className="flex justify-end px-6 py-4">
-            <DialPrimaryButton
+            <PrimaryButton
               label={attachLabel}
               disabled={
                 selectedFiles.length === 0 || isLoading || isOperationInProgress
@@ -581,7 +609,7 @@ const DialFileManagerModal: FC<Props> = ({
         {error != null ? (
           <div role="alert" className="flex flex-col items-center gap-4 p-6">
             <p>{errorMessage}</p>
-            <DialPrimaryButton label={retryLabel} onClick={retry} />
+            <PrimaryButton label={retryLabel} onClick={retry} />
           </div>
         ) : (
           <div className="relative flex min-h-0 w-full grow overflow-auto bg-layer-2">
@@ -613,6 +641,10 @@ const DialFileManagerModal: FC<Props> = ({
               onCreateFolderValidate={onCreateFolderValidate}
               onDownloadFiles={onDownloadFiles}
               onDeleteFiles={onDeleteFiles}
+              onMoveToFiles={onMoveToFiles}
+              onRenameValidate={onRenameValidate}
+              renameValidationMessages={renameValidationMessages}
+              isRenameFileAvailable={uploadEnabled}
               deleteConfirmationOptions={deleteConfirmationOptions}
               conflictResolutionPopupOptions={conflictResolutionPopupOptions}
               forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
@@ -627,7 +659,7 @@ const DialFileManagerModal: FC<Props> = ({
                 aria-live="polite"
                 className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
               >
-                <DialLoader
+                <DialSpinner
                   size={32}
                   fullWidth={false}
                   ariaLabel={downloadingLabel}
@@ -639,10 +671,22 @@ const DialFileManagerModal: FC<Props> = ({
                 aria-live="polite"
                 className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
               >
-                <DialLoader
+                <DialSpinner
                   size={32}
                   fullWidth={false}
                   ariaLabel={deletingLabel}
+                />
+              </div>
+            )}
+            {isRenaming && (
+              <div
+                aria-live="polite"
+                className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
+              >
+                <DialSpinner
+                  size={32}
+                  fullWidth={false}
+                  ariaLabel={t(DialFileManagerI18nKeys.RenamingLabel)}
                 />
               </div>
             )}

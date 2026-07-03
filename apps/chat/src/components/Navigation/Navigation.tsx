@@ -4,9 +4,14 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { NAVIGATION_CONFIG } from '../../constants/navigation';
-import { NavigationI18nKeys } from '../../constants/translation-keys';
+import {
+  ChatI18nKeys,
+  NavigationI18nKeys,
+} from '../../constants/translation-keys';
+import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';
+import { getIconPath } from '../../utils/icon-path';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import NavPageContent from '../MobileNavBottomSheet/NavPageContent';
 import NavigableBottomSheet from '../NavigableBottomSheet/NavigableBottomSheet';
@@ -22,23 +27,27 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
+  const { currentThemeFavicon } = useTheme();
 
-  const navItems = NAVIGATION_CONFIG.map(({ path, icon: Icon, labelKey }) => {
-    const isActive =
-      path === '/' ? pathname === '/' : pathname.startsWith(path);
-    return (
-      <Link key={path} to={path} className="contents">
-        <DialGhostIconButton
-          icon={<Icon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-          aria-label={t(labelKey)}
-          aria-current={isActive ? 'page' : undefined}
-          tooltipProps={{ tooltip: t(labelKey) }}
-          tabIndex={-1}
-          className={isActive ? '!text-accent-primary' : undefined}
-        />
-      </Link>
-    );
-  });
+  const navItems = NAVIGATION_CONFIG.map(
+    ({ path, matchPaths, icon: Icon, labelKey }) => {
+      const isActive =
+        (path === '/' ? pathname === '/' : pathname.startsWith(path)) ||
+        (matchPaths?.some((p) => pathname.startsWith(p)) ?? false);
+      return (
+        <Link key={path} to={path} className="contents">
+          <DialGhostIconButton
+            icon={<Icon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+            aria-label={t(labelKey)}
+            aria-current={isActive ? 'page' : undefined}
+            tooltipProps={{ tooltip: t(labelKey) }}
+            tabIndex={-1}
+            className={isActive ? '!text-accent-primary' : undefined}
+          />
+        </Link>
+      );
+    },
+  );
 
   return (
     <>
@@ -46,9 +55,27 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
       {!isMobile && (
         <nav
           aria-label={t(NavigationI18nKeys.AriaLabel)}
-          className="flex h-full w-[60px] flex-col justify-between bg-layer-3"
+          className="relative z-10 flex h-full w-[60px] flex-col justify-between bg-layer-3 [box-shadow:2px_0_8px_rgba(0,0,0,0.04)] rtl:[box-shadow:-2px_0_8px_rgba(0,0,0,0.04)]"
         >
-          <div className="flex flex-col items-center gap-2 p-2">{navItems}</div>
+          <div className="flex flex-col items-center">
+            {currentThemeFavicon && (
+              <a
+                href="/"
+                aria-label={t(ChatI18nKeys.Logo)}
+                className="flex h-16 w-full shrink-0 items-center justify-center"
+              >
+                <span
+                  style={{
+                    backgroundImage: `url(${getIconPath(currentThemeFavicon)})`,
+                  }}
+                  className="h-6 w-6 bg-contain bg-center bg-no-repeat"
+                />
+              </a>
+            )}
+            <div className="flex flex-col items-center gap-2 p-2">
+              {navItems}
+            </div>
+          </div>
           <UserMenu />
         </nav>
       )}

@@ -1,9 +1,5 @@
-import {
-  ButtonAppearance,
-  DIAL_ICON_SIZE,
-  DialNeutralButton,
-  DialPrimaryButton,
-} from '@epam/ai-dial-ui-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import {
   IconChevronDown,
   IconPlayerPlayFilled,
@@ -33,8 +29,11 @@ export const Header: FC<HeaderProps> = ({
   texts,
   detailsStyles,
 }) => {
-  const { nameClassName = 'dial-display-2-text' } =
-    detailsStyles?.typography ?? {};
+  const {
+    nameClassName = 'dial-body-semi-text text-primary',
+    folderLabelClassName = 'dial-tiny-text',
+    folderLeafClassName = 'dial-tiny-semi-text',
+  } = detailsStyles?.typography ?? {};
   const handleUseInChat = useCallback(() => {
     onUseInChat?.(item);
   }, [item, onUseInChat]);
@@ -50,27 +49,30 @@ export const Header: FC<HeaderProps> = ({
         iconSize={52}
         nameClassName={nameClassName}
         featuredLabel={texts?.featuredLabel ?? 'Featured'}
+        footer={
+          item.folder.length > 0 ? (
+            <FolderPath
+              segments={item.folder}
+              labelClassName={folderLabelClassName}
+              leafClassName={folderLeafClassName}
+            />
+          ) : undefined
+        }
       />
-      <div className="flex flex-col gap-1 pl-[56px]">
-        <FolderPath segments={item.folder} />
-        <div className="mt-3 flex flex-wrap gap-2">
-          <DialPrimaryButton
-            label={
-              texts?.primaryActionLabel ??
-              texts?.useInChatLabel ??
-              'Use in chat'
-            }
-            iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
-            onClick={handleUseInChat}
-          />
-          <DialNeutralButton
-            appearance={ButtonAppearance.Outlined}
-            label={texts?.shareLabel ?? 'Share'}
-            iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}
-            iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.MD} />}
-            onClick={handleShare}
-          />
-        </div>
+      <div className="flex flex-wrap gap-2 ps-[60px]">
+        <PrimaryButton
+          label={
+            texts?.primaryActionLabel ?? texts?.useInChatLabel ?? 'Use in chat'
+          }
+          iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
+          onClick={handleUseInChat}
+        />
+        <NeutralButton
+          label={texts?.shareLabel ?? 'Share'}
+          iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}
+          iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.MD} />}
+          onClick={handleShare}
+        />
       </div>
     </div>
   );

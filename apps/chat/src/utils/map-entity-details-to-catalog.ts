@@ -3,18 +3,27 @@ import type {
   CatalogItemPricing,
   CatalogItemTabData,
   CodeSnippet,
+  EndpointOption,
   OverviewSection,
 } from '@epam/ai-dial-catalog';
 import { CodeLanguage } from '@epam/ai-dial-catalog';
+import { ModelEndpointType } from '../types/entity-details';
 import type {
   AgentEntityDetails,
   EntitySpecificDetails,
   GuardrailEntityDetails,
+  ModelEndpoint,
   ModelEntityDetails,
   ModelPricing,
   SkillEntityDetails,
   ToolsetEntityDetails,
 } from '../types/entity-details';
+
+const ENDPOINT_LABELS: Record<ModelEndpointType, string> = {
+  [ModelEndpointType.AzureOpenAI]: 'Azure OpenAI Endpoint',
+  [ModelEndpointType.Anthropic]: 'Anthropic Endpoint',
+  [ModelEndpointType.Responses]: 'Responses Endpoint',
+};
 
 const formatTokens = (n: number): string =>
   n >= 1_000_000
@@ -22,6 +31,19 @@ const formatTokens = (n: number): string =>
     : n >= 1_000
       ? `${n / 1_000}K tokens`
       : `${n} tokens`;
+
+const mapEndpointSnippets = (endpoint: ModelEndpoint): CodeSnippet[] => {
+  const snippets: CodeSnippet[] = [];
+  const { snippets: s } = endpoint;
+  if (s == null) return snippets;
+  if (s.pythonSnippet != null)
+    snippets.push({ language: CodeLanguage.Python, code: s.pythonSnippet });
+  if (s.curlSnippet != null)
+    snippets.push({ language: CodeLanguage.Curl, code: s.curlSnippet });
+  if (s.jsSnippet != null)
+    snippets.push({ language: CodeLanguage.JavaScript, code: s.jsSnippet });
+  return snippets;
+};
 
 const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
@@ -31,13 +53,8 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
     sections.push({
       title: 'Capabilities',
       specs: [
-        { label: 'Chat', value: c.hasChat },
         { label: 'Reasoning', value: c.hasReasoning },
-        { label: 'Generation', value: c.hasGeneration },
-        { label: 'Knowledge', value: c.hasKnowledge },
         { label: 'Instructions', value: c.hasInstructions },
-        { label: 'Context', value: c.hasContext },
-        { label: 'Multimodal', value: c.hasMultimodal },
         { label: 'Tools', value: c.hasTools },
         { label: 'Structured output', value: c.hasStructuredOutput },
       ],
@@ -48,6 +65,8 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
     const { specification: s } = data;
     const specs: OverviewSection['specs'] = [];
 
+    if (s.hostedBy != null)
+      specs.push({ label: 'Hosted by', value: s.hostedBy });
     if (s.contextWindowTokens != null)
       specs.push({
         label: 'Context window',
@@ -64,26 +83,6 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
       specs.push({ label: 'Output type', value: s.outputTypes.join(' · ') });
     if (s.languages?.length)
       specs.push({ label: 'Languages', value: s.languages.join(' · ') });
-    if (s.availability != null)
-      specs.push({ label: 'Availability', value: s.availability });
-    if (s.hasSystemPrompt != null)
-      specs.push({ label: 'System prompt', value: s.hasSystemPrompt });
-    if (s.hasTools != null) specs.push({ label: 'Tools', value: s.hasTools });
-    if (s.hasTemperature != null)
-      specs.push({ label: 'Temperature supported', value: s.hasTemperature });
-    if (s.hasSeed != null) specs.push({ label: 'Seed', value: s.hasSeed });
-    if (s.hasUrlAttachments != null)
-      specs.push({ label: 'URL attachments', value: s.hasUrlAttachments });
-    if (s.hasFolderAttachments != null)
-      specs.push({
-        label: 'Folder attachments',
-        value: s.hasFolderAttachments,
-      });
-    if (s.hasAssistantAttachments != null)
-      specs.push({
-        label: 'Assistant attachments in request',
-        value: s.hasAssistantAttachments,
-      });
 
     if (specs.length > 0) sections.push({ title: 'Specification', specs });
   }
@@ -147,21 +146,19 @@ const mapModelApi = (
   const { api } = data;
   if (api == null) return undefined;
 
-  const snippets: CodeSnippet[] = [];
-  if (api.pythonSnippet != null)
-    snippets.push({ language: CodeLanguage.Python, code: api.pythonSnippet });
-  if (api.curlSnippet != null)
-    snippets.push({ language: CodeLanguage.Curl, code: api.curlSnippet });
-  if (api.jsSnippet != null)
-    snippets.push({ language: CodeLanguage.JavaScript, code: api.jsSnippet });
+  const resource = api.modelId != null ? { modelId: api.modelId } : undefined;
 
-  const resource =
-    api.modelId != null || api.endpointUrl != null
-      ? { modelId: api.modelId, endpointUrl: api.endpointUrl }
+  const endpoints: EndpointOption[] | undefined =
+    api.endpoints != null && api.endpoints.length > 0
+      ? api.endpoints.map((e) => ({
+          label: ENDPOINT_LABELS[e.type] ?? e.type,
+          url: e.url,
+          snippets: mapEndpointSnippets(e),
+        }))
       : undefined;
 
-  if (resource == null && snippets.length === 0) return undefined;
-  return { resource, snippets: snippets.length > 0 ? snippets : undefined };
+  if (resource == null && endpoints == null) return undefined;
+  return { resource, endpoints };
 };
 
 const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {

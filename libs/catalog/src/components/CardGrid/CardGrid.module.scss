@@ -1,25 +1,73 @@
 .card {
-  background: var(--cat-card-bg, var(--bg-layer-2, #161b2d));
-  border-color: var(--cat-card-border, var(--stroke-secondary, #242c42));
+  background: var(--bg-layer-0, #fcfcfc);
+  box-shadow:
+    0 1px 3px rgba(16, 24, 40, 0.04),
+    0 6px 20px rgba(16, 24, 40, 0.05);
+  transition:
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out;
 
-  &:hover {
-    background: var(--cat-card-hover-bg, var(--bg-layer-3, #1d2439));
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 4px 10px rgba(16, 24, 40, 0.06),
+        0 18px 44px rgba(16, 24, 40, 0.1);
+    }
+
+    &:hover .emptyStarHidden {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+
+    .starBtn {
+      transition: none !important;
+    }
+
+    .emptyStarHidden {
+      transition: none !important;
+    }
   }
 }
 
-.featuredCard {
-  box-shadow: 0 0 15px 0 var(--cat-card-featured-glow, rgba(125, 164, 255, 0.5));
+.starBtn {
+  transition: transform 150ms ease !important;
+
+  @media (hover: hover) {
+    &:hover {
+      transform: scale(1.15) !important;
+    }
+  }
+}
+
+.emptyStarHidden {
+  opacity: 0;
+  transition: opacity 150ms ease !important;
 }
 
 .description {
-  color: var(--cat-card-text-primary, var(--text-primary, #eef1f7));
+  color: var(--text-secondary, #575f73);
 }
 
-.cardFooter {
-  border-color: var(--cat-card-footer-border, var(--stroke-secondary, #242c42));
+.featuredChip {
+  background: color-mix(
+    in srgb,
+    var(--entity-color, #2764d9) 12%,
+    var(--bg-layer-0, #fcfcfc)
+  ) !important;
+  border: none !important;
+  color: var(--entity-color, #2764d9) !important;
+  font-size: 10px !important;
+  border-radius: 16px !important;
 }
 
 .skeletonCard {
-  border-color: var(--cat-card-border, var(--stroke-secondary, #242c42));
-  --cat-skeleton-bg: var(--bg-layer-4);
+  background: var(--bg-layer-0, #fcfcfc);
 }

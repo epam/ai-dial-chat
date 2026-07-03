@@ -1,5 +1,7 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { ConversationSourcesPanel } from '@epam/ai-dial-source-panel';
+import type { QuotationSource } from '@epam/ai-dial-source-panel';
 import { memo, useCallback, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -16,6 +18,7 @@ import { useConversationSources } from '../../hooks/conversation-sources/useConv
 import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { StorageKey } from '../../types/storage-key';
+import { isDialFileId } from '../../utils/dial-file';
 
 const MIN_PANEL_WIDTH = 312;
 const DEFAULT_PANEL_WIDTH = 360;
@@ -40,6 +43,33 @@ const ConversationSourcesPanelContainer: FC = () => {
     [openAttachmentCanvas, downloadAttachment, handleClose],
   );
 
+  const handleSourceClick = useCallback(
+    async (source: QuotationSource) => {
+      const { url, title, contentType } = source;
+      const attachment: DisplayAttachment = {
+        id: url,
+        name: title,
+        contentType,
+        type: contentType.startsWith('image/')
+          ? AttachmentType.Image
+          : AttachmentType.File,
+        status: RequestStatus.Idle,
+        url,
+      };
+      const opened = await openAttachmentCanvas(attachment);
+      if (opened) {
+        handleClose();
+        return;
+      }
+      if (!isDialFileId(url)) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        downloadAttachment(attachment);
+      }
+    },
+    [openAttachmentCanvas, downloadAttachment, handleClose],
+  );
+
   const isMobile = useIsMobile();
   const viewportWidth = useViewportWidth();
   const maxPanelWidth = Math.floor(viewportWidth * 0.5);
@@ -57,6 +87,7 @@ const ConversationSourcesPanelContainer: FC = () => {
       ariaLabel: t(SidebarI18nKeys.AriaLabel),
       closeLabel: t(ButtonsI18nKeys.Close),
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+      searchClearLabel: t(BasicI18nKeys.ClearSearch),
       emptyLabel: t(BasicI18nKeys.Empty),
       noResultsLabel: t(BasicI18nKeys.NoResults),
       downloadAllLabel: t(SidebarI18nKeys.DownloadAll),
@@ -77,6 +108,7 @@ const ConversationSourcesPanelContainer: FC = () => {
       generated={generated}
       sources={sources}
       onAttachmentClick={handleAttachmentClick}
+      onSourceClick={handleSourceClick}
       isMobile={isMobile}
       defaultWidth={defaultPanelWidth}
       minWidth={MIN_PANEL_WIDTH}

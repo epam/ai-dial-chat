@@ -1,0 +1,11 @@
+contract_version: "0.1"
+name: triage-deps
+skill: dep-triage
+agent_version: "0.1.0"
+description: "Triages upstream dependency-scan findings against repo code. Marks each as confirmed (real risk) or false_positive (not exploitable in this codebase context)."
+triggers: [pull_request]
+needs: [scan-deps]
+allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Skill"
+model: claude-sonnet-4-6
+phase: pilot
+cost_class: medium

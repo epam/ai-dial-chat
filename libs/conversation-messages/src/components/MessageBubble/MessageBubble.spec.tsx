@@ -47,16 +47,16 @@ describe('MessageBubble', () => {
     expect(getByText('Hello world')).toBeTruthy();
   });
 
-  it('applies rounded-se-[24px] with BubblePosition.Bottom (default)', () => {
+  it('applies rounded-se-[6px] with BubblePosition.Bottom (default)', () => {
     const { container } = render(
       <MessageBubble text="msg" role={MessageRole.User} />,
     );
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
-      'rounded-se-[24px]',
+      'rounded-se-[6px]',
     );
   });
 
-  it('applies rounded-ee-[24px] with BubblePosition.Top', () => {
+  it('applies rounded-ee-[6px] with BubblePosition.Top', () => {
     const { container } = render(
       <MessageBubble
         text="msg"
@@ -65,7 +65,7 @@ describe('MessageBubble', () => {
       />,
     );
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
-      'rounded-ee-[24px]',
+      'rounded-ee-[6px]',
     );
   });
 
@@ -348,6 +348,9 @@ describe('AssistantMessageBubble — attachments', () => {
     const paragraph = screen.getByText(longToken);
     expect(paragraph.className).toContain('[overflow-wrap:anywhere]');
     expect(paragraph.className).toContain('break-words');
+    expect(paragraph.className).toContain('dial-body-paragraph-text');
+    expect(paragraph.className).toContain('mb-3');
+    expect(paragraph.className).toContain('[text-wrap:pretty]');
     expect(container.querySelector('.min-w-0.max-w-full')).not.toBeNull();
   });
 

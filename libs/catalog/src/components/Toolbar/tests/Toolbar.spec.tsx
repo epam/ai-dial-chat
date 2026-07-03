@@ -87,8 +87,9 @@ vi.mock('@tabler/icons-react', () => ({
   IconFilter: () => null,
   IconX: () => null,
   IconChevronDown: () => null,
-  IconLayoutCards: () => null,
+  IconLayoutGrid: () => null,
   IconLayoutList: () => null,
+  IconSearch: () => null,
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', () => ({
@@ -105,8 +106,6 @@ const renderToolbar = (props?: Partial<React.ComponentProps<typeof Toolbar>>) =>
       onClearFilters={vi.fn()}
       viewMode={CatalogViewMode.Grid}
       onViewModeChange={vi.fn()}
-      sortKey="recently-updated"
-      onSortChange={vi.fn()}
       {...props}
     />,
   );

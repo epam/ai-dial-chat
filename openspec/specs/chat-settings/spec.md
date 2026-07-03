@@ -91,6 +91,7 @@ interface ChatSettingsConfig {
   temperatureLabels?: [string, string, string];
   temperatureHint?: string;
   saveLabel?: string;
+  saveDisabledTooltip?: string;       // tooltip on disabled save button; no tooltip when omitted
   backLabel?: string;                // mobile back-arrow label; defaults to 'Back'
 }
 ```
@@ -129,7 +130,7 @@ The app layer (`apps/chat`) SHALL pass `chatSettings` whenever a conversation is
 
 Sections not enabled SHALL be hidden entirely (not disabled).
 
-The modal SHALL have a primary "Apply changes" action that calls `onSave` with `ChatSettingsValues` and closes. It SHALL close without saving when the user dismisses it (no `onSave` call).
+The modal SHALL have a primary "Apply changes" action that calls `onSave` with `ChatSettingsValues` and closes. It SHALL close without saving when the user dismisses it (no `onSave` call). The button SHALL be disabled (and optionally show a tooltip) when `canSubmit` is `false` — see the *Response format required* requirement below.
 
 All user-visible strings SHALL be provided as optional props (with English defaults); the component MUST NOT call `useTranslation`.
 
@@ -176,3 +177,41 @@ All user-visible strings SHALL be provided as optional props (with English defau
 
 - **WHEN** the modal opens with existing conversation `prompt`, `temperature`, and `responseFormat`
 - **THEN** each field pre-populates with the corresponding current value
+
+---
+
+### Requirement: Response format required when feature is enabled
+
+When `features.responseFormat === true`, the "Apply changes" button SHALL be disabled until the user has selected a response format value.
+
+The button SHALL show a tooltip (provided via `saveDisabledTooltip` prop, default `'Please select a response format'`) while it is disabled. When `saveDisabledTooltip` is not provided the tooltip SHALL be suppressed.
+
+Calling `handleSubmit` programmatically while `canSubmit` is `false` SHALL be a no-op (i.e. `onSave` and `onClose` are not called).
+
+`ChatSettingsConfig` SHALL include an optional `saveDisabledTooltip?: string` field that is forwarded to both `ChatSettingsModal` and `ChatSettingsBottomSheet` by `AddAttachmentButton`.
+
+The app layer (`apps/chat`) SHALL supply this string from the `chatSettings.saveDisabledTooltip` i18n key (`"Please select a response format"`).
+
+#### Scenario: Apply changes disabled when no response format selected
+
+- **GIVEN** `features.responseFormat === true`
+- **WHEN** the user deselects the active response format option so that no option is selected
+- **THEN** the "Apply changes" button is disabled
+
+#### Scenario: Tooltip shown on disabled Apply changes button
+
+- **GIVEN** the "Apply changes" button is disabled because no response format is selected
+- **AND** `saveDisabledTooltip` is provided
+- **WHEN** the user hovers over the button
+- **THEN** a tooltip appears with the `saveDisabledTooltip` text
+
+#### Scenario: Apply changes enabled when a response format is selected
+
+- **GIVEN** `features.responseFormat === true`
+- **WHEN** the user has a response format selected (either the pre-filled value or a newly chosen one)
+- **THEN** the "Apply changes" button is enabled
+
+#### Scenario: Submit is a no-op when canSubmit is false
+
+- **WHEN** `handleSubmit` is invoked while no response format is selected
+- **THEN** `onSave` is NOT called and the modal/sheet does NOT close

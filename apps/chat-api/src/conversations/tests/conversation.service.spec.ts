@@ -2,11 +2,16 @@ import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialError } from '../../common/utils/dial-error';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import {
+  ConversationGenerationService,
+  GenerationStatus,
+} from '../conversation-generation.service';
 import { ConversationService } from '../conversation.service';
 import {
   ConversationMessageRole,
   StatusEvent,
 } from '../dto/conversation-message.dto';
+import { CompletionMode } from '../dto/send-completion.dto';
 
 vi.mock('../../common/utils/dial-error', () => ({
   handleDialError: vi.fn(),
@@ -29,6 +34,30 @@ const TEST_CONVERSATION = {
   assistantModelId: 'gpt-4o',
 };
 
+const makeMockRes = () => {
+  const written: Uint8Array[] = [];
+  return {
+    setHeader: vi.fn(),
+    flushHeaders: vi.fn(),
+    write: vi.fn((chunk: Uint8Array | string) => {
+      if (typeof chunk === 'string') {
+        written.push(new TextEncoder().encode(chunk));
+      } else {
+        written.push(chunk);
+      }
+    }),
+    end: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+    writableEnded: false,
+    status: vi.fn().mockReturnThis(),
+    getWritten: () =>
+      new TextDecoder().decode(
+        Buffer.concat(written.map((b) => Buffer.from(b))),
+      ),
+  };
+};
+
 const textToStream = (chunks: string[]): ReadableStream<Uint8Array> => {
   const encoder = new TextEncoder();
 
@@ -42,28 +71,6 @@ const textToStream = (chunks: string[]): ReadableStream<Uint8Array> => {
   });
 };
 
-const readStreamText = async (
-  stream: ReadableStream<Uint8Array>,
-): Promise<string> => {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let text = '';
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        text += decoder.decode();
-        return text;
-      }
-
-      text += decoder.decode(value, { stream: true });
-    }
-  } finally {
-    reader.releaseLock();
-  }
-};
-
 describe('ConversationService', () => {
   let service: ConversationService;
   let mockConfigService: Partial<ConfigService>;
@@ -71,6 +78,10 @@ describe('ConversationService', () => {
     getPinnedIds: ReturnType<typeof vi.fn>;
     updatePin: ReturnType<typeof vi.fn>;
     migratePin: ReturnType<typeof vi.fn>;
+  };
+  let mockGenerationService: ConversationGenerationService;
+  let mockConversationNamingService: {
+    maybeRenameAfterFirstReply: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -86,18 +97,34 @@ describe('ConversationService', () => {
       updatePin: vi.fn().mockResolvedValue(undefined),
       migratePin: vi.fn().mockResolvedValue(undefined),
     };
+    mockConversationNamingService = {
+      maybeRenameAfterFirstReply: vi.fn(),
+    };
+    mockGenerationService = {
+      register: vi.fn().mockReturnValue(new AbortController()),
+      abort: vi.fn().mockReturnValue(true),
+      complete: vi.fn(),
+      error: vi.fn(),
+      getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
+    } as unknown as ConversationGenerationService;
     service = new ConversationService(
       mockConfigService as unknown as ConfigService<EnvironmentVariables>,
       mockUserConfigService as never,
+      mockGenerationService,
+      mockConversationNamingService as never,
     );
     vi.mocked(handleDialError).mockReset();
     vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
       data: {},
     } as never);
-    // Default: empty bucket so fetchAllUserTitles returns an empty set.
+    vi.spyOn(service['client'], 'getConversation').mockRejectedValue({
+      error: { status: 404 },
+    } as never);
+    // Default: no path collision on create (metadata lookup returns empty).
     // Individual createConversation tests override this when needed.
     vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
-      data: { items: [] },
+      data: null,
+      error: { status: 404 },
     } as never);
   });
 
@@ -229,7 +256,8 @@ describe('ConversationService', () => {
 
     it('uses the base name when no conversation with that title exists', async () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
-        data: { items: [] },
+        data: null,
+        error: { status: 404 },
       } as never);
 
       const result = await service.createConversation(
@@ -242,13 +270,9 @@ describe('ConversationService', () => {
       expect(result.name).toBe('What is AI?');
     });
 
-    it('appends _1 when a conversation with the same title already exists', async () => {
+    it('keeps the unsuffixed name when a conversation with the same title already exists', async () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
-        data: {
-          items: [
-            { name: 'gpt-4o__What is AI?__existing-uuid', nodeType: 'FILE' },
-          ],
-        },
+        data: { name: 'gpt-4o__What is AI?' },
       } as never);
 
       const result = await service.createConversation(
@@ -258,33 +282,44 @@ describe('ConversationService', () => {
         'gpt-4o',
       );
 
-      expect(result.name).toBe('What is AI? 1');
+      expect(result.name).toBe('What is AI?');
+      expect(result.id).toMatch(
+        /^test-bucket\/gpt-4o__What is AI\?__[0-9a-f-]{36}$/,
+      );
     });
 
-    it('appends _2 when both the base name and _1 variant already exist', async () => {
-      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
-        data: {
-          items: [
-            { name: 'gpt-4o__What is AI?__uuid1', nodeType: 'FILE' },
-            { name: 'gpt-4o__What is AI? 1__uuid2', nodeType: 'FILE' },
-          ],
-        },
-      } as never);
+    it('uses a 3-part path when the 2-part path already exists', async () => {
+      const getMetadataSpy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockResolvedValue({
+          data: { name: 'gpt-4o__What is AI?' },
+        } as never);
+      const saveSpy = vi.spyOn(service['client'], 'saveConversation');
 
-      const result = await service.createConversation(
+      await service.createConversation(
         'What is AI?',
         'test-token',
         'test-bucket',
         'gpt-4o',
       );
 
-      expect(result.name).toBe('What is AI? 2');
+      expect(getMetadataSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__What%20is%20AI%3F',
+        expect.any(Object),
+      );
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        expect.stringMatching(/^gpt-4o__What%20is%20AI%3F__[\w-]+$/),
+        expect.any(Object),
+      );
     });
 
-    it('uses base name when fetching existing titles fails', async () => {
+    it('uses base name when path collision check fails', async () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockRejectedValue(
         new Error('DIAL Core unreachable'),
       );
+      const saveSpy = vi.spyOn(service['client'], 'saveConversation');
 
       const result = await service.createConversation(
         'What is AI?',
@@ -294,57 +329,11 @@ describe('ConversationService', () => {
       );
 
       expect(result.name).toBe('What is AI?');
-    });
-
-    it('passes each nextToken to the following metadata request', async () => {
-      const getMetadataSpy = vi
-        .spyOn(service['client'], 'getConversationMetadata')
-        .mockImplementation((_bucket, _path, init) => {
-          const token = init?.params?.query?.token;
-          if (token === 'page-2') {
-            return Promise.resolve({
-              data: {
-                items: [
-                  {
-                    name: 'gpt-4o__What is AI? 1',
-                    nodeType: 'FILE',
-                  },
-                ],
-              },
-            } as never);
-          }
-
-          return Promise.resolve({
-            data: {
-              items: [
-                {
-                  name: 'gpt-4o__What is AI?',
-                  nodeType: 'FILE',
-                },
-              ],
-              nextToken: 'page-2',
-            },
-          } as never);
-        });
-
-      const result = await service.createConversation(
-        'What is AI?',
-        'test-token',
+      expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'gpt-4o',
+        expect.stringMatching(/^gpt-4o__What%20is%20AI%3F__[\w-]+$/),
+        expect.any(Object),
       );
-
-      expect(getMetadataSpy).toHaveBeenNthCalledWith(
-        2,
-        'test-bucket',
-        '',
-        expect.objectContaining({
-          params: {
-            query: expect.objectContaining({ token: 'page-2' }),
-          },
-        }),
-      );
-      expect(result.name).toBe('What is AI? 2');
     });
   });
 
@@ -403,6 +392,24 @@ describe('ConversationService', () => {
       );
     });
 
+    it('fetches shared conversation from the originating bucket, not the session bucket', async () => {
+      const spy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
+
+      await service.getConversation(
+        'other-user-bucket/gpt-4o__shared-chat__uuid',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(spy).toHaveBeenCalledWith(
+        'other-user-bucket',
+        'gpt-4o__shared-chat__uuid',
+        expect.any(Object),
+      );
+    });
+
     it('uses session bucket for a path with no slash', async () => {
       const spy = vi
         .spyOn(service['client'], 'getConversation')
@@ -438,6 +445,54 @@ describe('ConversationService', () => {
         expect.any(Object),
       );
     });
+
+    it('returns the stored LLM title when the path still uses the message-derived name', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: {
+          ...TEST_CONVERSATION,
+          name: 'Docker networking basics',
+          llmNamingDone: true,
+          messages: [
+            {
+              role: ConversationMessageRole.User,
+              content: 'How does Docker networking work?',
+            },
+          ],
+        },
+      } as never);
+
+      const result = await service.getConversation(
+        'test-bucket/gpt-4o__How does Docker networking work?',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.name).toBe('Docker networking basics');
+    });
+
+    it('prefers the path title when the conversation was path-renamed after LLM naming', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: {
+          ...TEST_CONVERSATION,
+          name: 'Docker networking basics',
+          llmNamingDone: true,
+          messages: [
+            {
+              role: ConversationMessageRole.User,
+              content: 'How does Docker networking work?',
+            },
+          ],
+        },
+      } as never);
+
+      const result = await service.getConversation(
+        'test-bucket/gpt-4o__My custom title',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.name).toBe('My custom title');
+    });
   });
 
   describe('encoded conversation resource paths', () => {
@@ -466,6 +521,18 @@ describe('ConversationService', () => {
       const moveSpy = vi
         .spyOn(service['client'], 'moveResource')
         .mockResolvedValue({ data: {} } as never);
+      const getSpy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({
+          data: {
+            ...TEST_CONVERSATION,
+            name: 'LLM generated title',
+            llmNamingDone: true,
+          },
+        } as never);
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
 
       const result = await service.renameConversation(
         conversationPath,
@@ -484,21 +551,35 @@ describe('ConversationService', () => {
           },
         }),
       );
+      expect(getSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+        expect.any(Object),
+      );
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+        expect.objectContaining({
+          body: expect.objectContaining({
+            name: 'renamed',
+            llmNamingDone: true,
+          }),
+        }),
+      );
       expect(result.newPath).toBe(
         'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__renamed',
       );
     });
 
     it('preserves nested deployment paths when duplicating', async () => {
-      const copySpy = vi
-        .spyOn(service['client'], 'copyResource')
+      const getSpy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({
+          data: { ...TEST_CONVERSATION, name: 'hello' },
+        } as never);
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
-      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: { ...TEST_CONVERSATION },
-      } as never);
-      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
-        data: {},
-      } as never);
 
       const result = await service.duplicateConversation(
         `source-bucket/${conversationPath}`,
@@ -506,18 +587,24 @@ describe('ConversationService', () => {
         'test-bucket',
       );
 
-      expect(copySpy).toHaveBeenCalledWith(
+      expect(getSpy).toHaveBeenCalledWith(
+        'source-bucket',
+        conversationPath,
+        expect.any(Object),
+      );
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Team%2FApp%20One__0.0.1__hello',
         expect.objectContaining({
-          body: {
-            sourceUrl: `conversations/source-bucket/${conversationPath}`,
-            destinationUrl:
-              'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello%201',
-            overwrite: false,
-          },
+          body: expect.objectContaining({
+            id: 'test-bucket/applications/catalog/Team/App One__0.0.1__hello',
+            folderId: 'test-bucket/applications/catalog',
+            name: 'hello',
+          }),
         }),
       );
       expect(result.newPath).toBe(
-        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello%201',
+        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
       );
     });
 
@@ -555,6 +642,107 @@ describe('ConversationService', () => {
         expect.any(Object),
       );
     });
+
+    it('preserves an LLM display name when the client saves a stale title', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: {
+          ...TEST_CONVERSATION,
+          name: 'Greeting',
+          llmNamingDone: true,
+        },
+      } as never);
+      const saveSpy = vi.spyOn(service['client'], 'saveConversation');
+
+      await service.saveConversation(
+        conversationPath,
+        'test-token',
+        'test-bucket',
+        { ...TEST_CONVERSATION, name: 'helllo' },
+      );
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        conversationPath,
+        expect.objectContaining({
+          body: expect.objectContaining({
+            name: 'Greeting',
+            llmNamingDone: true,
+          }),
+        }),
+      );
+    });
+
+    it('invokes LLM naming hook after a successful save without awaiting it', async () => {
+      const conversation = {
+        ...TEST_CONVERSATION,
+        messages: [
+          {
+            id: 'user-1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: new Date().toISOString(),
+          },
+          {
+            id: 'assistant-1',
+            role: ConversationMessageRole.Assistant,
+            content: 'Hi there',
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      };
+
+      await service.saveConversation(
+        conversationPath,
+        'test-token',
+        'test-bucket',
+        conversation,
+      );
+
+      expect(
+        mockConversationNamingService.maybeRenameAfterFirstReply,
+      ).toHaveBeenCalledWith(
+        conversationPath,
+        'test-token',
+        'test-bucket',
+        expect.objectContaining({ messages: conversation.messages }),
+      );
+    });
+
+    it('does not invoke LLM naming hook when llmNamingDone is already true', async () => {
+      await service.saveConversation(
+        conversationPath,
+        'test-token',
+        'test-bucket',
+        { ...TEST_CONVERSATION, llmNamingDone: true },
+      );
+
+      expect(
+        mockConversationNamingService.maybeRenameAfterFirstReply,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('does not invoke LLM naming hook when save fails', async () => {
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        data: null,
+        error: { status: 500 },
+      } as never);
+      vi.mocked(handleDialError).mockImplementation(() => {
+        throw new Error('save failed');
+      });
+
+      await expect(
+        service.saveConversation(
+          conversationPath,
+          'test-token',
+          'test-bucket',
+          TEST_CONVERSATION,
+        ),
+      ).rejects.toThrow('save failed');
+
+      expect(
+        mockConversationNamingService.maybeRenameAfterFirstReply,
+      ).not.toHaveBeenCalled();
+    });
   });
 
   describe('duplicateConversation', () => {
@@ -565,18 +753,12 @@ describe('ConversationService', () => {
       name: 'New chat',
     };
 
-    // The copy is performed by copyResource; the metadata fix then reads the
-    // copy back (getConversation) and re-saves it (saveConversation).
     const mockGetConversation = (
       conversation: typeof TEST_CONVERSATION = SHARED_CONVERSATION,
-    ) => {
-      vi.spyOn(service['client'], 'copyResource').mockResolvedValue({
-        data: {},
-      } as never);
-      return vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+    ) =>
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
         data: { ...conversation },
       } as never);
-    };
 
     it('decodes the encoded filename so the title is not mangled (no "New20 chat")', async () => {
       mockGetConversation();
@@ -593,16 +775,14 @@ describe('ConversationService', () => {
       // The space stays a real space (encoded %20), never collapsed to "New20".
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'gpt-4o__New%20chat%201',
+        'gpt-4o__New%20chat',
         expect.objectContaining({
-          body: expect.objectContaining({ name: 'New chat 1' }),
+          body: expect.objectContaining({ name: 'New chat' }),
         }),
       );
     });
 
-    it('gives the copy a distinct name so it does not collide with the source path', async () => {
-      // Source is in another (shared/org) bucket and has no namesake in the user
-      // bucket, yet the copy must still be renamed so its relative path differs.
+    it('preserves the source display name without adding a numeric suffix', async () => {
       mockGetConversation();
       const saveSpy = vi
         .spyOn(service['client'], 'saveConversation')
@@ -616,10 +796,67 @@ describe('ConversationService', () => {
 
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        expect.not.stringMatching(/__New%20chat$/),
+        'gpt-4o__New%20chat',
         expect.objectContaining({
-          body: expect.objectContaining({ name: 'New chat 1' }),
+          body: expect.objectContaining({ name: 'New chat' }),
         }),
+      );
+    });
+
+    it('regression: does not produce a double suffix when source title ends with a number', async () => {
+      mockGetConversation({
+        ...SHARED_CONVERSATION,
+        id: 'shared-bucket/gpt-4o__New chat 1',
+        name: 'New chat 1',
+      });
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat%201',
+        'test-token',
+        'test-bucket',
+      );
+
+      const savedBody = saveSpy.mock.calls[0][2].body as Record<
+        string,
+        unknown
+      >;
+      expect(savedBody.name).toBe('New chat 1');
+      expect(savedBody.name).not.toBe('New chat 1 1');
+    });
+
+    it('uses the stored name field when the conversation was LLM-renamed', async () => {
+      // Storage path still uses the original first-message name, but JSON name
+      // was updated by the LLM to a meaningful title.
+      mockGetConversation({
+        ...SHARED_CONVERSATION,
+        id: 'shared-bucket/gpt-4o__Hello there',
+        name: 'AI Discussion',
+        llmNamingDone: true,
+      });
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__Hello%20there',
+        'test-token',
+        'test-bucket',
+      );
+
+      const savedBody = saveSpy.mock.calls[0][2].body as Record<
+        string,
+        unknown
+      >;
+      expect(savedBody.name).toBe('AI Discussion');
+      expect(savedBody.name).not.toBe('Hello there');
+      // Path built from the LLM-assigned name
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__AI%20Discussion',
+        expect.anything(),
       );
     });
 
@@ -637,24 +874,19 @@ describe('ConversationService', () => {
 
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'gpt-4o__New%20chat%201',
+        'gpt-4o__New%20chat',
         expect.objectContaining({
           body: expect.objectContaining({
-            id: 'test-bucket/gpt-4o__New chat 1',
+            id: 'test-bucket/gpt-4o__New chat',
             folderId: 'test-bucket',
           }),
         }),
       );
     });
 
-    it('increments the suffix past existing copies in the bucket', async () => {
+    it('appends a UUID segment when the destination path already exists', async () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
-        data: {
-          items: [
-            { name: 'gpt-4o__New chat', nodeType: 'CONVERSATION' },
-            { name: 'gpt-4o__New chat 1', nodeType: 'CONVERSATION' },
-          ],
-        },
+        data: { name: 'gpt-4o__New chat' },
       } as never);
       mockGetConversation();
       const saveSpy = vi
@@ -669,14 +901,88 @@ describe('ConversationService', () => {
 
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'gpt-4o__New%20chat%202',
+        expect.stringMatching(/^gpt-4o__New%20chat__[\w-]{36}$/),
         expect.objectContaining({
-          body: expect.objectContaining({
-            name: 'New chat 2',
-            id: 'test-bucket/gpt-4o__New chat 2',
-          }),
+          body: expect.objectContaining({ name: 'New chat' }),
         }),
       );
+    });
+
+    it('builds a clean 2-part path when source already has a UUID suffix', async () => {
+      mockGetConversation({
+        ...SHARED_CONVERSATION,
+        id: 'shared-bucket/gpt-4o__hello__a557f695-6bf5-4796-b609-2532881ae91a',
+        name: 'hello',
+      });
+      const metadataSpy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockResolvedValue({ error: { status: 404 } } as never);
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__hello__a557f695-6bf5-4796-b609-2532881ae91a',
+        'test-token',
+        'test-bucket',
+      );
+
+      // Collision check must be for the clean 2-part path, not a 3-part path
+      expect(metadataSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__hello',
+        expect.anything(),
+      );
+      // Saved path must be clean (no old UUID carried over)
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__hello',
+        expect.objectContaining({
+          body: expect.objectContaining({ name: 'hello' }),
+        }),
+      );
+    });
+
+    it('does not call fetchAllUserTitles during duplicate', async () => {
+      mockGetConversation();
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        data: {},
+      } as never);
+      const metadataSpy = vi.spyOn(
+        service['client'],
+        'getConversationMetadata',
+      );
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      // getConversationMetadata is called once for the path collision check,
+      // never for a full bucket title scan (which would pass an empty path '').
+      expect(metadataSpy).not.toHaveBeenCalledWith(
+        expect.anything(),
+        '',
+        expect.anything(),
+      );
+    });
+
+    it('does not invoke ConversationNamingService during duplicate', async () => {
+      mockGetConversation();
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        data: {},
+      } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(
+        mockConversationNamingService.maybeRenameAfterFirstReply,
+      ).not.toHaveBeenCalled();
     });
 
     it('returns the encoded path of the new conversation', async () => {
@@ -692,8 +998,34 @@ describe('ConversationService', () => {
       );
 
       expect(result.newPath).toBe(
-        'conversations/test-bucket/gpt-4o__New%20chat%201',
+        'conversations/test-bucket/gpt-4o__New%20chat',
       );
+    });
+
+    it('preserves temperature and responseFormat from the source conversation', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: {
+          ...SHARED_CONVERSATION,
+          temperature: 0.7,
+          responseFormat: 'plain_text',
+        },
+      } as never);
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      const savedBody = saveSpy.mock.calls[0][2].body as Record<
+        string,
+        unknown
+      >;
+      expect(savedBody.temperature).toBe(0.7);
+      expect(savedBody.responseFormat).toBe('plain_text');
     });
   });
 
@@ -708,6 +1040,49 @@ describe('ConversationService', () => {
       selectedAddons: [],
       lastActivityDate: 0,
       updatedAt: 0,
+    };
+
+    const callStream = async (
+      conversationData: object,
+      message: string,
+      model: string,
+      customContent?: Record<string, unknown>,
+      mode = CompletionMode.Append,
+      streamChunks = [': keepalive\n\n'],
+    ) => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: conversationData,
+      } as never);
+      const res = makeMockRes();
+      const encoder = new TextEncoder();
+      const mockStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          for (const c of streamChunks) controller.enqueue(encoder.encode(c));
+          controller.close();
+        },
+      });
+      const sendSpy = vi
+        .spyOn(service['client'], 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: new Response(mockStream, {
+            status: 200,
+            headers: { 'Content-Type': 'text/event-stream' },
+          }),
+        } as never);
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        mode,
+        message,
+        undefined,
+        model,
+        customContent as never,
+        'test-session-id',
+        res as never,
+      );
+      return { sendSpy, res };
     };
 
     it('excludes ConversationMessageRole.Status messages from the DIAL Core payload', async () => {
@@ -740,25 +1115,11 @@ describe('ConversationService', () => {
         ],
       };
 
-      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: conversation,
-      } as never);
-
-      const mockStream = new ReadableStream();
-      const sendSpy = vi
-        .spyOn(service['client'], 'sendChatCompletionRequest')
-        .mockResolvedValue({
-          response: { ok: true, body: mockStream } as Response,
-        } as never);
-
-      await service.streamCompletion(
-        'test-path',
-        'test-token',
-        'test-bucket',
+      const { sendSpy } = await callStream(
+        conversation,
         'Next message',
         'gpt-4o',
       );
-
       const sentMessages: { role: string }[] =
         sendSpy.mock.calls[0][1].body.messages;
       expect(
@@ -802,25 +1163,7 @@ describe('ConversationService', () => {
         ],
       };
 
-      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: conversation,
-      } as never);
-
-      const mockStream = new ReadableStream();
-      const sendSpy = vi
-        .spyOn(service['client'], 'sendChatCompletionRequest')
-        .mockResolvedValue({
-          response: { ok: true, body: mockStream } as Response,
-        } as never);
-
-      await service.streamCompletion(
-        'test-path',
-        'test-token',
-        'test-bucket',
-        'Follow-up',
-        'gpt-4o',
-      );
-
+      const { sendSpy } = await callStream(conversation, 'Follow-up', 'gpt-4o');
       const sentMessages = sendSpy.mock.calls[0][1].body.messages as {
         role: string;
         content: string;
@@ -849,44 +1192,24 @@ describe('ConversationService', () => {
             role: ConversationMessageRole.User,
             content: 'Pick a number',
             timestamp: '2024-01-01T00:00:00.000Z',
-            custom_content: {
-              configuration_value: { button: 1 },
-            },
+            custom_content: { configuration_value: { button: 1 } },
           },
         ],
       };
 
-      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: conversation,
-      } as never);
-
-      const mockStream = new ReadableStream();
-      const sendSpy = vi
-        .spyOn(service['client'], 'sendChatCompletionRequest')
-        .mockResolvedValue({
-          response: { ok: true, body: mockStream } as Response,
-        } as never);
-
-      await service.streamCompletion(
-        'test-path',
-        'test-token',
-        'test-bucket',
+      // Conversation ends with user — use ContinueLastUser so history builder doesn't add another user msg
+      const { sendSpy } = await callStream(
+        conversation,
         '',
         'form-example',
         { configuration_value: { button: 1 } },
+        CompletionMode.ContinueLastUser,
       );
 
       expect(sendSpy.mock.calls[0][1].body).toMatchObject({
-        messages: [
-          {
-            role: ConversationMessageRole.User,
-            content: '',
-          },
-        ],
+        messages: [{ role: ConversationMessageRole.User, content: '' }],
         stream: true,
-        custom_fields: {
-          configuration: { button: 1 },
-        },
+        custom_fields: { configuration: { button: 1 } },
       });
       expect(
         (sendSpy.mock.calls[0][1].body.messages[0] as Record<string, unknown>)
@@ -903,9 +1226,7 @@ describe('ConversationService', () => {
             role: ConversationMessageRole.User,
             content: 'Pick a number',
             timestamp: '2024-01-01T00:00:00.000Z',
-            custom_content: {
-              configuration_value: { button: 1 },
-            },
+            custom_content: { configuration_value: { button: 1 } },
           },
           {
             id: 'a1',
@@ -941,31 +1262,12 @@ describe('ConversationService', () => {
         ],
       };
 
-      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: conversation,
-      } as never);
-
-      const mockStream = new ReadableStream();
-      const sendSpy = vi
-        .spyOn(service['client'], 'sendChatCompletionRequest')
-        .mockResolvedValue({
-          response: { ok: true, body: mockStream } as Response,
-        } as never);
-
-      await service.streamCompletion(
-        'test-path',
-        'test-token',
-        'test-bucket',
-        '',
-        'form-example',
-        { form_value: { button: 2 } },
-      );
+      const { sendSpy } = await callStream(conversation, '', 'form-example', {
+        form_value: { button: 2 },
+      });
 
       expect(sendSpy.mock.calls[0][1].body.messages).toEqual([
-        {
-          role: ConversationMessageRole.User,
-          content: '',
-        },
+        { role: ConversationMessageRole.User, content: '' },
         {
           role: ConversationMessageRole.Assistant,
           content: 'Pick a number',
@@ -979,9 +1281,7 @@ describe('ConversationService', () => {
         {
           role: ConversationMessageRole.User,
           content: '',
-          custom_content: {
-            form_value: { button: 2 },
-          },
+          custom_content: { form_value: { button: 2 } },
         },
       ]);
       expect(sendSpy.mock.calls[0][1].body.custom_fields).toEqual({
@@ -989,16 +1289,13 @@ describe('ConversationService', () => {
       });
     });
 
-    it('logs and delegates to handleDialError when completion stream is rejected', async () => {
+    it('saves partial message with hasStreamError when DIAL Core returns non-ok response', async () => {
       vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
-      vi.mocked(handleDialError).mockImplementation(() => {
-        throw new Error('mapped DIAL error');
-      });
-      const logError = vi
-        .spyOn(service['logger'], 'error')
-        .mockImplementation(() => undefined);
+      const saveConversationSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
       vi.spyOn(
         service['client'],
         'sendChatCompletionRequest',
@@ -1009,56 +1306,133 @@ describe('ConversationService', () => {
         }),
       } as never);
 
-      await expect(
-        service.streamCompletion(
-          'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-          'test-token',
-          'test-bucket',
-          'Hello',
-          'gpt-4o',
-        ),
-      ).rejects.toThrow('mapped DIAL error');
+      const res = makeMockRes();
+      await service.streamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
 
-      expect(logError).toHaveBeenCalled();
-      expect(handleDialError).toHaveBeenCalledWith({ status: 400 });
+      // Should have saved at start (placeholder) + at error (partial with hasStreamError)
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const errorSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { hasStreamError?: boolean }[];
+      };
+      const assistantMsg = errorSave.messages.at(-1);
+      expect((assistantMsg as Record<string, unknown>).hasStreamError).toBe(
+        true,
+      );
     });
 
-    it('passes the stream through when completion succeeds', async () => {
+    it('writes SSE chunks to res and saves conversation on completion', async () => {
       vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
+      const saveConversationSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
       const firstChunk =
-        'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n';
-      const secondChunk = 'data: [DONE]\n\n';
-      const sendCompletionSpy = vi.spyOn(
+        'data: {"id":"resp-1","choices":[{"delta":{"content":"Hello"}}]}\n\n';
+      const doneChunk = 'data: [DONE]\n\n';
+      vi.spyOn(
         service['client'],
         'sendChatCompletionRequest',
-      );
-      sendCompletionSpy.mockResolvedValue({
-        response: new Response(textToStream([firstChunk, secondChunk]), {
+      ).mockResolvedValue({
+        response: new Response(textToStream([firstChunk, doneChunk]), {
           status: 200,
           headers: { 'Content-Type': 'text/event-stream' },
         }),
       } as never);
 
-      const stream = await service.streamCompletion(
+      const res = makeMockRes();
+      await service.streamCompletion(
         'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
         'test-token',
         'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
         'Hello',
+        undefined,
         'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
       );
 
-      await expect(readStreamText(stream)).resolves.toBe(
-        `${firstChunk}${secondChunk}`,
-      );
-      expect(sendCompletionSpy).toHaveBeenCalledWith(
-        'gpt-4o',
-        expect.objectContaining({
-          params: { query: { 'api-version': '2024-10-21' } },
+      // Written SSE data should contain our chunks
+      const written = res.getWritten();
+      expect(written).toContain('Hello');
+      // Final save should include assembled content
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const finalSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { content?: string }[];
+      };
+      expect(finalSave.messages.at(-1)?.content).toBe('Hello');
+    });
+
+    it('finalizes the generation on [DONE] even when the upstream keeps the connection open', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        data: {},
+      } as never);
+
+      const encoder = new TextEncoder();
+      // Stream that emits content + [DONE] but is intentionally never closed,
+      // mimicking a provider that holds the SSE socket open after [DONE].
+      const neverClosingStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"id":"resp-1","choices":[{"delta":{"content":"Hi"}}]}\n\n',
+            ),
+          );
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          // no controller.close() — would hang the old "wait for socket close" logic
+        },
+      });
+      vi.spyOn(
+        service['client'],
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(neverClosingStream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
         }),
+      } as never);
+
+      const res = makeMockRes();
+      await service.streamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
       );
-      expect(handleDialError).not.toHaveBeenCalled();
+
+      // The generation is released (complete), not left active — so a
+      // subsequent request (e.g. regenerate) would not get a 409.
+      expect(mockGenerationService.complete).toHaveBeenCalledWith(
+        'test-session-id',
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-gen-id',
+      );
+      expect(mockGenerationService.error).not.toHaveBeenCalled();
     });
   });
 
@@ -1112,6 +1486,25 @@ describe('ConversationService', () => {
           },
         }),
       );
+    });
+
+    it('enriches display names for at most the most recently updated owned items', async () => {
+      const items = Array.from({ length: 25 }, (_, index) => ({
+        url: `conversations/bucket/conv-${index}`,
+        nodeType: 'FILE' as const,
+        updatedAt: index,
+        permissions: ['READ', 'WRITE'],
+      }));
+      mockMetadata(items);
+      const getConversationSpy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({
+          data: { name: 'Stored display title' },
+        } as never);
+
+      await service.listConversations('test-token', 'test-bucket');
+
+      expect(getConversationSpy).toHaveBeenCalledTimes(20);
     });
 
     it('sets isPinned: true on items whose id is in the pins list', async () => {

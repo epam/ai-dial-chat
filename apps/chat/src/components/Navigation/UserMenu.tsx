@@ -71,7 +71,7 @@ export const UserMenu = memo(() => {
       src={image}
       width={28}
       height={28}
-      alt="User avatar"
+      alt={t(AuthI18nKeys.UserAvatar)}
       onError={() => setIsFallbackIconShown(true)}
     />
   );
@@ -206,9 +206,7 @@ export const UserMenu = memo(() => {
           placement="top-end"
           matchReferenceWidth={false}
           items={menuItems}
-          listClassName="shadow-md"
-          separatorClassName="m-0"
-          overlayContentClassName="p-0"
+          listClassName="cp-dropdown-overlay"
         >
           <button
             className="flex size-[44px] items-center justify-center rounded-full border border-transparent focus-within:border-focus hover:bg-accent-primary-alpha focus:border-transparent"

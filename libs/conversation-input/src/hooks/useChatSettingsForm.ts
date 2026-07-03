@@ -29,9 +29,9 @@ export const useChatSettingsForm = ({
   onClose,
   isOpen,
 }: UseChatSettingsFormParams) => {
-  const [responseFormat, setResponseFormat] = useState<ResponseFormat>(
-    initialResponseFormat,
-  );
+  const [responseFormat, setResponseFormat] = useState<
+    ResponseFormat | undefined
+  >(initialResponseFormat);
   const [systemPrompt, setSystemPrompt] = useState(initialSystemPrompt);
   const [temperature, setTemperature] = useState<number>(initialTemperature);
 
@@ -45,19 +45,32 @@ export const useChatSettingsForm = ({
     prevIsOpenRef.current = isOpen;
   }, [isOpen, initialResponseFormat, initialSystemPrompt, initialTemperature]);
 
+  const canSubmit = !features.responseFormat || responseFormat != null;
+
   const handleSubmit = useCallback(() => {
+    if (!canSubmit) return;
     const values: ChatSettingsValues = {};
-    if (features.responseFormat) values.responseFormat = responseFormat;
+    if (features.responseFormat && responseFormat != null)
+      values.responseFormat = responseFormat;
     if (features.systemPrompt) values.systemPrompt = systemPrompt;
     if (features.temperature) values.temperature = temperature;
     onSave(values);
     onClose();
-  }, [features, responseFormat, systemPrompt, temperature, onSave, onClose]);
+  }, [
+    canSubmit,
+    features,
+    responseFormat,
+    systemPrompt,
+    temperature,
+    onSave,
+    onClose,
+  ]);
 
   return {
     responseFormat,
     systemPrompt,
     temperature,
+    canSubmit,
     setResponseFormat,
     setSystemPrompt,
     setTemperature,

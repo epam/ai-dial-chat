@@ -56,10 +56,10 @@ export const useScrollVirtualizer = (
 
   const [state, setState] = useState<VirtualizerState>(() => {
     const w = typeof window !== 'undefined' ? window.innerWidth : 1440;
-    // Approximate container width from viewport: on desktop subtract sidebar (60 px),
-    // on mobile (≤ 768 px) the sidebar is hidden. Grid padding is 15 % each side (×0.7).
+    // Approximate the grid container width: content column capped at 1180 px,
+    // minus sidebar (60 px on desktop) and 64 px horizontal padding (px-8 × 2).
     const sidebarWidth = w > 768 ? 60 : 0;
-    const approxContainer = Math.max(0, (w - sidebarWidth) * 0.7);
+    const approxContainer = Math.min(1180, Math.max(0, w - sidebarWidth)) - 64;
     const cols = getColumnCount(approxContainer);
     const rows = Math.ceil(itemCount / cols);
     return { startRow: 0, endRow: Math.min(rows, 12), columnCount: cols };

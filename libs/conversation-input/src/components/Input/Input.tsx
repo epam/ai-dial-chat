@@ -20,13 +20,14 @@ import {
   useCallback,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import { useAttachments } from '../../hooks/useAttachments';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useMessageState } from '../../hooks/useMessageState';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
-import type { InputProps } from '../../models/Input';
 import { SendOnEnter } from '../../models/Input';
+import type { InputProps } from '../../models/Input';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
@@ -45,13 +46,12 @@ export const Input: FC<InputProps> = ({
   placeholder = 'Type a message...',
   ariaLabel,
   attachLabel = 'Attach file',
-  addMenuLabel = 'Add',
+  addMenuTitle = 'Add',
   menuTitle = 'Menu',
   menuCloseLabel = 'Close',
   removeLabel,
   retryLabel,
   sendLabel,
-  sendTitle,
   stopLabel,
   micLabel = 'Record voice message',
   colors,
@@ -86,8 +86,10 @@ export const Input: FC<InputProps> = ({
   dialFileSystemLabel,
   validateAttachment,
   onAttachmentClick,
+  modelPickerOverlay,
 }) => {
   const isMobile = useIsMobile();
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const historyNav = useInputHistoryNavigation(messageHistory);
 
   const cssVars = useMemo(
@@ -96,17 +98,16 @@ export const Input: FC<InputProps> = ({
         '--ci-bg': colors?.background,
         '--ci-text': colors?.text,
         '--ci-border': colors?.border,
+        '--ci-border-hover': colors?.borderHover,
         '--ci-border-focus': colors?.borderFocus,
         '--ci-placeholder': colors?.placeholder,
+        '--ci-shadow': colors?.shadow,
+        '--ci-shadow-focus': colors?.shadowFocus,
         '--ci-send-bg': colors?.sendBackground,
         '--ci-send-text': colors?.sendText,
         '--ci-stop-color': colors?.stopColor,
-        '--ci-font-family': typography?.fontFamily,
-        '--ci-font-size': typography?.fontSize,
-        '--ci-font-weight': typography?.fontWeight?.toString(),
-        '--ci-line-height': typography?.lineHeight,
       }),
-    [colors, typography],
+    [colors],
   );
 
   const dialFileSystemMenuItem = useMemo(
@@ -179,6 +180,7 @@ export const Input: FC<InputProps> = ({
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
   const hasSendableContent =
@@ -274,6 +276,7 @@ export const Input: FC<InputProps> = ({
     <textarea
       className={mergeClasses(
         styles.textarea,
+        typography?.fontClassName,
         'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
       )}
       ref={textareaRef}
@@ -293,13 +296,15 @@ export const Input: FC<InputProps> = ({
     />
   );
 
-  return (
+  const inputBox = (
     <div
+      ref={containerRef}
       style={cssVars}
       className={mergeClasses(
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
-        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded border p-3',
+        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border',
+        attachments.length > 6 ? 'py-3 pl-3' : 'p-3',
         className,
       )}
     >
@@ -332,7 +337,7 @@ export const Input: FC<InputProps> = ({
       ) : (
         <div
           className={mergeClasses(
-            'flex items-center gap-2 mobile:gap-y-3',
+            'flex items-center gap-2',
             isStackedLayout ? 'flex-wrap' : 'flex-wrap desktop:flex-nowrap',
           )}
         >
@@ -359,7 +364,7 @@ export const Input: FC<InputProps> = ({
                     : () => fileInputRef.current?.click()
                 }
                 attachLabel={attachLabel}
-                addMenuLabel={addMenuLabel}
+                addMenuTitle={addMenuTitle}
                 menuTitle={menuTitle}
                 menuCloseLabel={menuCloseLabel}
                 style={cssVars}
@@ -380,7 +385,7 @@ export const Input: FC<InputProps> = ({
           </div>
           <div
             className={mergeClasses(
-              'flex flex-shrink-0 items-center gap-1',
+              'flex flex-shrink-0 items-center gap-2',
               'order-3 ms-auto',
               !isStackedLayout && 'desktop:ms-0',
             )}
@@ -398,10 +403,15 @@ export const Input: FC<InputProps> = ({
                   isMobile={isMobile}
                   isInputDisabled={isInputDisabled}
                   style={cssVars}
+                  modelPickerOverlay={modelPickerOverlay}
+                  isPickerOpen={isPickerOpen}
+                  onPickerToggle={() => setIsPickerOpen((prev) => !prev)}
+                  onPickerOpenChange={setIsPickerOpen}
                 />
-                {isStreaming ? (
+                {isStreaming && onStop ? (
                   <StopButton onStop={onStop} ariaLabel={stopLabel} />
                 ) : (
+                  !isStreaming &&
                   hasSendableContent && (
                     <SendButton
                       onSend={handleSend}
@@ -411,26 +421,25 @@ export const Input: FC<InputProps> = ({
                         hasBlockedAttachments
                       }
                       ariaLabel={sendLabel}
-                      title={sendTitle}
                     />
                   )
                 )}
               </>
             )}
-            {isTranscriptionSupported &&
-              !message.trim() &&
-              attachments.length === 0 && (
-                <DialGhostIconButton
-                  icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
-                  aria-label={micLabel}
-                  className="size-10 flex-shrink-0"
-                  onClick={startRecording}
-                  disabled={isInputDisabled || isStreaming}
-                />
-              )}
+            {isTranscriptionSupported && !message.trim() && (
+              <DialGhostIconButton
+                icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
+                aria-label={micLabel}
+                className="size-10 flex-shrink-0"
+                onClick={startRecording}
+                disabled={isInputDisabled || isStreaming}
+              />
+            )}
           </div>
         </div>
       )}
     </div>
   );
+
+  return inputBox;
 };

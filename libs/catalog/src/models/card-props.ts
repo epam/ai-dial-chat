@@ -8,6 +8,12 @@ export interface CardTypography {
   versionClassName?: string;
   /** Typography class applied to the description text. Default: `'dial-small-text'`. */
   descriptionClassName?: string;
+  /** Typography class applied to the featured chip label. Default: `'dial-tiny-semi-text uppercase tracking-[0.06em]'`. */
+  featuredChipClassName?: string;
+  /** Typography class applied to folder path separator labels. Default: `'dial-tiny-text'`. */
+  folderLabelClassName?: string;
+  /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
+  folderLeafClassName?: string;
 }
 
 /** Color overrides applied as CSS custom properties for `Card`. */
@@ -56,4 +62,8 @@ export interface CardProps {
   styles?: CardStyles;
   /** Label for the "Featured" tag. Default: `'Featured'`. */
   featuredLabel?: string;
+  /** Accessible label for the star button when the item is not yet starred. Default: `'Add to favorites'`. */
+  addToFavoritesAriaLabel?: string;
+  /** Accessible label for the star button when the item is already starred. Default: `'Remove from favorites'`. */
+  removeFromFavoritesAriaLabel?: string;
 }

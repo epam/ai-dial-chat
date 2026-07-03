@@ -129,6 +129,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
               items={overflowItems}
               placement="bottom-end"
               matchReferenceWidth={false}
+              listClassName="cp-dropdown-overlay"
             >
               <DialRoundedButton
                 iconAfter={

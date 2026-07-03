@@ -21,6 +21,8 @@ export interface ConversationSourcesPanelLabels {
   closeLabel: string;
   /** Placeholder text shown inside the search input. */
   searchPlaceholder: string;
+  /** Accessible label for the search input clear button. */
+  searchClearLabel: string;
   /** Text shown when the panel has no files or sources. */
   emptyLabel: string;
   /** Text shown when a search query matches nothing. */
@@ -63,6 +65,8 @@ export interface ConversationSourcesPanelProps {
   sources: QuotationSource[];
   /** Called when the user activates an attachment card. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Called when the user clicks a source link. When omitted, the link navigates normally. */
+  onSourceClick?: (source: QuotationSource) => void;
   /** Whether the viewport is in mobile breakpoint (disables resizing). */
   isMobile: boolean;
   /** Initial panel width in pixels. */
@@ -89,6 +93,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   generated,
   sources,
   onAttachmentClick,
+  onSourceClick,
   isMobile,
   defaultWidth,
   minWidth,
@@ -173,6 +178,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
           placeholder={labels.searchPlaceholder}
           value={searchQuery}
           onChange={setSearchQuery}
+          clearLabel={labels.searchClearLabel}
         />
       )}
       <div className="flex-1 overflow-y-auto p-4">
@@ -203,6 +209,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
               linkClassName={styles?.sourceLinkClassName}
               quoteClassName={styles?.sourceQuoteClassName}
               copyLabel={labels.copySourceLabel}
+              onSourceClick={onSourceClick}
             />
           </>
         )}

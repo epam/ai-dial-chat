@@ -6,18 +6,12 @@
 }
 
 .panel {
-  background: var(--bg-layer-0, #000000);
+  background: var(--bg-layer-0, #fcfcfc);
   border-inline-start-color: var(--stroke-secondary, #242c42);
 }
 
 .divider {
-  border-block-end: 1px solid var(--stroke-secondary, #242c42);
-}
-
-.version {
-  color: var(--text-secondary, #9fa6bd);
-  // Align version baseline with the bottom of the name text
-  padding-bottom: 6px;
+  border-block-end: 1px solid var(--stroke-tertiary, #e0e6f0);
 }
 
 .content {
@@ -26,5 +20,19 @@
 }
 
 .introCaption {
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #575f73);
+}
+
+.tabsRow {
+  border-bottom-color: var(--stroke-tertiary, #e0e6f0);
+}
+
+.activeTab {
+  border-image: linear-gradient(
+      135deg,
+      var(--bg-accent-secondary, #37babc) 0%,
+      var(--bg-accent-primary, #5c8dea) 30%,
+      var(--bg-accent-tertiary, #a972ff) 100%
+    )
+    1;
 }

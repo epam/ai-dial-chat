@@ -37,9 +37,8 @@ Generated-client impact:
 - Frontend callers use the normal (non-Raw) generated method via `apps/chat/src/server-api/conversations.api.ts`
 
 Error codes:
-- `400 Bad Request` — `path` or `newTitle` fails DTO validation
+- `400 Bad Request` — `path` or `newTitle` fails DTO validation; or source conversation does not exist (DIAL Core returns 400 for missing source instead of 404)
 - `401 Unauthorized` — missing or invalid bearer token
-- `404 Not Found` — source conversation does not exist in DIAL Core
 - `409 Conflict` — destination path already exists (DIAL Core 4xx when `overwrite=false`)
 - `502 Bad Gateway` — DIAL Core returned an unexpected error
 - `503 Service Unavailable` — DIAL Core unreachable
@@ -59,10 +58,10 @@ Error codes:
 - **WHEN** `PATCH /api/v1/conversations?path=...` is called with `newTitle` of 201 characters
 - **THEN** the response status is 400
 
-#### Scenario: Non-existent source path returns 404
+#### Scenario: Non-existent source path returns 400
 
-- **WHEN** DIAL Core returns a 4xx for `moveResource` indicating the source does not exist
-- **THEN** the response status is 404
+- **WHEN** DIAL Core returns 400 for `moveResource` with message containing "does not exist"
+- **THEN** the response status is 400
 
 #### Scenario: Integration test covers PATCH 200 and 400 paths
 

@@ -1,6 +1,7 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback } from 'react';
+import { useCitationCardContext } from '../../../context/CitationCardContext';
 import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
 import CitationCard from '../CitationCard/CitationCard';
 import CitationMarker from '../CitationMarker/CitationMarker';
@@ -8,37 +9,30 @@ import CitationMarker from '../CitationMarker/CitationMarker';
 interface Props {
   /** The annotation group represented by this marker+popup pair. */
   group: AnnotationGroup;
-  /** Whether this group's popup is currently open. */
-  isOpen: boolean;
-  /** Zero-based index of the currently visible annotation inside the popup. */
-  activeIndex: number;
-  /** Called when the popup should open. */
-  onOpen: () => void;
-  /** Called when the popup should close. */
-  onClose: () => void;
-  /** Called when the user navigates within the group switcher. */
-  onIndexChange: (index: number) => void;
   /** Called when the user clicks "Preview" for an annotation. */
   onPreview: (annotation: Annotation) => void;
   /** Called when the user clicks "Open in browser" for an annotation. */
   onOpenInBrowser: (annotation: Annotation) => void;
 }
 
-const CitationDropdown: FC<Props> = ({
-  group,
-  isOpen,
-  activeIndex,
-  onOpen,
-  onClose,
-  onIndexChange,
-  onPreview,
-  onOpenInBrowser,
-}) => {
+const CitationDropdown: FC<Props> = ({ group, onPreview, onOpenInBrowser }) => {
+  const citationCard = useCitationCardContext();
+  const isOpen = citationCard.isOpen(group.sourceUrl);
+  const activeIndex = citationCard.getActiveIndex(group.sourceUrl);
+
   const handleOpenChange = useCallback(
-    (isOpen: boolean) => {
-      if (!isOpen) onClose();
+    (nextOpen: boolean) => {
+      if (!nextOpen) citationCard.closePopup();
     },
-    [onClose],
+    [citationCard],
+  );
+
+  const handlePreview = useCallback(
+    (annotation: Annotation) => {
+      onPreview(annotation);
+      citationCard.closePopup();
+    },
+    [onPreview, citationCard],
   );
 
   return (
@@ -52,8 +46,8 @@ const CitationDropdown: FC<Props> = ({
         <CitationCard
           group={group}
           activeIndex={activeIndex}
-          onIndexChange={onIndexChange}
-          onPreview={onPreview}
+          onIndexChange={(i) => citationCard.setActiveIndex(group.sourceUrl, i)}
+          onPreview={handlePreview}
           onOpenInBrowser={onOpenInBrowser}
         />
       }
@@ -61,7 +55,7 @@ const CitationDropdown: FC<Props> = ({
       <CitationMarker
         sourceName={group.sourceName}
         annotationCount={group.annotations.length}
-        onOpen={onOpen}
+        onOpen={() => citationCard.openPopup(group.sourceUrl)}
       />
     </DialTooltip>
   );

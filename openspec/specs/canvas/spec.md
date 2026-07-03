@@ -17,7 +17,8 @@ The `AttachmentCanvas` side panel opens to the right of the main conversation ar
 | `CollapsedGroup` stage attachments | `ConversationMessageItem.tsx` via `onAttachmentClick` | Open canvas |
 | `ConversationInput` tray (new message) | `ConversationRoute.tsx` → `handleAttachmentClick` | Open canvas |
 | `EditMessageInput` tray | `ConversationView.tsx` → `handleInputAttachmentClick` | Open canvas |
-| `ConversationSourcesPanel` | `ConversationSourcesPanel.tsx` → `handleAttachmentClick` | Open canvas if previewable (closes source panel), fall back to download if `openAttachmentCanvas` returns `false` |
+| `ConversationSourcesPanel` (attachment card) | `ConversationSourcesPanel.tsx` → `handleAttachmentClick` | Open canvas if previewable (closes source panel), fall back to anchor-download if `openAttachmentCanvas` returns `false` |
+| `ConversationSourcesPanel` (source link) | `ConversationSourcesPanel.tsx` → `handleSourceClick` | Builds a `DisplayAttachment` from `QuotationSource` (`url`, `title`, `contentType`); opens canvas if previewable (closes source panel); falls back to `window.open` for web URLs or anchor-download for DIAL file IDs when `openAttachmentCanvas` returns `false` |
 
 #### Open behavior
 
@@ -213,6 +214,13 @@ The `PdfContent` component (`libs/attachment-canvas/src/components/AttachmentCan
 - **Thumbnail sidebar** (`w-30 shrink-0 overflow-auto`) — rendered once `totalPages > 0`. Displays one `PageThumbnail` per page. Clicking a thumbnail calls `viewerApiRef.current?.navigateToPage(pageNum)` and updates `selectedPage` state.
 - **Viewer pane** (`min-w-0 flex-1 overflow-hidden`) — contains `DocumentPreview`.
 
+**`selectedPage` state** — tracks which thumbnail is highlighted (selected):
+- Initialised via a lazy `useState` initializer: finds the `InputHighlightData` entry whose `id` matches `selectedHighlightId` and returns its first `BBox.page`; falls back to `1` when no match is found.
+- A `useEffect` keyed on `[selectedHighlightId, highlights]` updates `selectedPage` when the user opens a different citation in the same PDF (new `selectedHighlightId` prop on the already-mounted component).
+- `PdfContent` is keyed by `content.url` in `AttachmentCanvas` — the component stays mounted across same-PDF citation changes, so there is no blink or document reload.
+- A second `useEffect` keyed on `[selectedPage, totalPages]` calls `scrollIntoView({ block: 'center', behavior: 'smooth' })` on the selected thumbnail's wrapper `div` (tracked in `thumbnailNodeRefs`). Including `totalPages` in the deps ensures the scroll fires once the thumbnail sidebar has been rendered for the first time.
+- Clicking a thumbnail calls `handleSelectPage`, which sets `selectedPage` directly and calls `viewerApiRef.current?.navigateToPage(pageNum)`.
+
 `DocumentPreview` props:
 
 | Prop | Value |
@@ -250,8 +258,9 @@ When `annotation.body.source.attachment.type === 'application/pdf'`:
 1. Find the `AnnotationGroup` that owns the clicked annotation (by `sourceUrl`).
 2. `annotationsToPdfHighlights(group.annotations)` — maps every annotation whose `body.selector` contains one or more `PdfBBoxSelector` entries (`type: 'pdf_bbox'`) to an `InputHighlightData`. Each annotation becomes one highlight whose `bboxes` list collects all its `pdf_bbox` selectors. The highlight `id` is `annotation.index` when present, otherwise the annotation's position in the group.
 3. `selectedHighlightId` is computed for the clicked annotation using the same ID formula, so the viewer scrolls to it on load.
-4. `openCanvas` is called directly with `PdfCanvasContent { type: Pdf, url, highlights, selectedHighlightId }`.
-5. Annotations whose `body.selector` carries no `pdf_bbox` entries produce no highlight and are silently skipped.
+4. `fileName` is derived from the annotation's `attachment`: `attachment.title` is used when present; otherwise the last path segment of `attachment.url` is URL-decoded with `decodeURIComponent` (so `%20` → space, etc.).
+5. `openCanvas` is called directly with `PdfCanvasContent { type: Pdf, url, highlights, selectedHighlightId }` and the resolved `fileName`.
+6. Annotations whose `body.selector` carries no `pdf_bbox` entries produce no highlight and are silently skipped.
 
 #### Non-PDF sources
 

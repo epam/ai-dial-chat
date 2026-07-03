@@ -183,7 +183,7 @@ Inside the `<div className="relative ...">` that wraps `DialFileManager`:
     aria-live="polite"
     className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
   >
-    <DialLoader size={32} fullWidth={false} ariaLabel={deletingLabel} />
+    <DialSpinner size={32} fullWidth={false} ariaLabel={deletingLabel} />
   </div>
 )}
 ```

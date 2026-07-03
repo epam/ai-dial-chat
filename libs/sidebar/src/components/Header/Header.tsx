@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { type FC, memo, type ReactNode } from 'react';
 import styles from '../SidebarPanel/SidebarPanel.module.scss';
 
@@ -30,7 +31,7 @@ export const Header: FC<HeaderProps> = memo(
   }) => (
     <div
       className={mergeClasses(
-        'flex h-12 shrink-0 items-center gap-2 border-b px-4',
+        'flex h-12 shrink-0 items-center gap-2 px-4',
         styles.header,
       )}
     >
@@ -38,15 +39,10 @@ export const Header: FC<HeaderProps> = memo(
         <div className="flex items-center gap-1">{leftActions}</div>
       )}
 
-      <span
-        className={mergeClasses(
-          'min-w-0 flex-1 truncate',
-          !titleClassName && styles.headerTitle,
-          titleClassName,
-        )}
-      >
-        {title}
-      </span>
+      <DialEllipsisTooltip
+        text={title}
+        className={mergeClasses('min-w-0 flex-1 truncate', titleClassName)}
+      />
 
       {rightActions && (
         <div className="flex items-center gap-1">{rightActions}</div>

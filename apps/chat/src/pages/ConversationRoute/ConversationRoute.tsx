@@ -30,11 +30,13 @@ import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
+import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   ChatI18nKeys,
   ChatSettingsI18nKeys,
   ConversationI18nKeys,
@@ -52,6 +54,7 @@ import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmen
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { getApiErrorMessage } from '../../server-api/api-error';
@@ -69,6 +72,7 @@ import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import {
   getStarterPopulateText,
   getStartersFromSchema,
@@ -82,6 +86,16 @@ const ConversationInput = lazy(async () => {
 const DialFileManagerModal = lazy(async () => {
   const module =
     await import('../../components/DialFileManagerModal/DialFileManagerModal');
+  return { default: module.default };
+});
+
+const ModelPickerPanel = lazy(
+  () => import('../../components/ModelPicker/ModelPickerPanel'),
+);
+
+const CatalogPickerModal = lazy(async () => {
+  const module =
+    await import('../../components/ModelPicker/CatalogPickerModal');
   return { default: module.default };
 });
 
@@ -124,6 +138,17 @@ const ConversationRoute: FC = () => {
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),
     [items, selectedItemId],
+  );
+
+  const [isCatalogPickerOpen, setIsCatalogPickerOpen] = useState(false);
+
+  const { favoriteIds, toggleFavorite } = useFavoriteApplications();
+  const favoriteCatalogItems = useMemo(
+    () =>
+      items
+        .filter((d) => favoriteIds.has(d.id))
+        .map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
+    [items, favoriteIds],
   );
 
   const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
@@ -202,15 +227,9 @@ const ConversationRoute: FC = () => {
       ] as [string, string, string],
       temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
       saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
+      saveDisabledTooltip: t(ChatSettingsI18nKeys.SaveDisabledTooltip),
     }),
-    [
-      selectedDeployment?.features,
-      chatSettingsValues.responseFormat,
-      chatSettingsValues.systemPrompt,
-      chatSettingsValues.temperature,
-      t,
-      showNotification,
-    ],
+    [selectedDeployment?.features, chatSettingsValues, t, showNotification],
   );
 
   const modelSelectorLabels = useMemo(
@@ -460,7 +479,7 @@ const ConversationRoute: FC = () => {
       />
       <Suspense fallback={<RouteFallback />}>
         <div
-          className="flex flex-1 flex-col items-center justify-center p-4 desktop:p-8"
+          className="relative flex flex-1 flex-col items-center justify-center overflow-hidden p-4 [container-type:inline-size] desktop:p-8"
           role="region"
           aria-label={t(ChatI18nKeys.WelcomeScreen)}
         >
@@ -491,12 +510,13 @@ const ConversationRoute: FC = () => {
               firstName || undefined,
             )}
             placeholder={t(ChatI18nKeys.Placeholder)}
-            styles={{ typography: { welcomeClassName: 'dial-display2-text' } }}
+            styles={CONVERSATION_ROUTE_INPUT_STYLES}
             deployments={deploymentItems}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
             isInputDisabled={isInputDisabled}
             modelSelectorLabels={modelSelectorLabels}
+            addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
             sendLabel={t(ChatI18nKeys.SendMessage)}
             sendTitle={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
@@ -521,6 +541,29 @@ const ConversationRoute: FC = () => {
             }
             hideAttachFile={!isAttachmentsAllowed}
             onAttachmentClick={handleAttachmentClick}
+            modelPickerOverlay={(onClose) => (
+              <Suspense fallback={null}>
+                <ModelPickerPanel
+                  favorites={favoriteCatalogItems}
+                  selectedId={selectedItemId}
+                  onSelect={setSelectedItemId}
+                  onToggleFavorite={toggleFavorite}
+                  onBrowseCatalog={() => setIsCatalogPickerOpen(true)}
+                  onClose={onClose}
+                  labels={{
+                    searchPlaceholder: t(
+                      CatalogI18nKeys.PickerSearchPlaceholder,
+                    ),
+                    searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
+                    emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
+                    browseCatalogLabel: t(CatalogI18nKeys.PickerBrowseCatalog),
+                    removeFromFavoritesLabel: t(
+                      CatalogI18nKeys.PickerRemoveFromFavorites,
+                    ),
+                  }}
+                />
+              </Suspense>
+            )}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
@@ -584,6 +627,12 @@ const ConversationRoute: FC = () => {
             cancelLabel={t(ButtonsI18nKeys.Cancel)}
           />
         )}
+        <Suspense fallback={null}>
+          <CatalogPickerModal
+            isOpen={isCatalogPickerOpen}
+            onClose={() => setIsCatalogPickerOpen(false)}
+          />
+        </Suspense>
       </Suspense>
     </div>
   );

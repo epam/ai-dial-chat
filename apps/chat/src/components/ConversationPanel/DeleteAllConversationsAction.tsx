@@ -31,7 +31,12 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <DialDropdown items={items} placement="bottom-end" onOpenChange={setIsOpen}>
+    <DialDropdown
+      items={items}
+      placement="bottom-end"
+      listClassName="cp-dropdown-overlay"
+      onOpenChange={setIsOpen}
+    >
       <DialIconButton
         aria-label={label}
         appearance={ButtonAppearance.Ghost}
