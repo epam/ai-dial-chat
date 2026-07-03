@@ -41,25 +41,61 @@ jobs:
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
+            BASE_SHA: ${{ github.event.pull_request.base.sha }}
+            PREV_HEAD_SHA: ${{ github.event.before }}
+            HEAD_SHA: ${{ github.sha }}
 
-            Perform a pull request security code review.
+            Perform an INCREMENTAL, MEMORY-AWARE pull request security code review.
+            Goal: the review must CONVERGE. Re-runs after fixes must only re-examine what changed
+            and must not invent fresh, unrelated findings about untouched code.
+
+            STEP A — Determine the diff range to review:
+              - PREV_HEAD_SHA may be empty (first review on `opened`/`reopened`).
+              - Run `git merge-base --is-ancestor <PREV_HEAD_SHA> <HEAD_SHA>` to test the range.
+              - If PREV_HEAD_SHA is empty OR the ancestor check exits non-zero (first review,
+                force-push, or rebase), review the FULL PR diff: `git diff BASE_SHA...HEAD_SHA`.
+              - Otherwise review ONLY the incremental delta: `git diff PREV_HEAD_SHA..HEAD_SHA`.
+              - NEVER comment on code outside the chosen diff range.
+
+            STEP B — Load your own prior findings before reviewing:
+              - Fetch your previously posted inline review comments AND their thread resolution
+                status via GraphQL, e.g.:
+                `gh api graphql -f query='{ repository(owner:"OWNER", name:"NAME") {
+                  pullRequest(number: PR) { reviewThreads(first:100) { nodes {
+                    isResolved isOutdated comments(first:1){ nodes { body path line } } } } } } }'`
+                (substitute OWNER/NAME/PR from REPO and PR NUMBER).
+              - Also read the current body of your sticky tracking comment.
+
+            STEP C — Reconcile memory with the new delta:
+              - OMIT any finding whose thread is already resolved.
+              - If the new delta FIXES a previously flagged issue, do not re-post it; note it as
+                resolved in the tracking comment.
+              - RE-CHECK still-open prior findings against the new code and only re-surface one if
+                it is still valid.
+              - Never repeat a finding that is already posted.
 
             RULES:
               1. The repository is already checked out at the PR head SHA.
-              2. At first, use `security-review` skill to do the main work. Once finished, address the findings.
+              2. Use the `security-review` skill to do the main work, scoped to the diff range from
+                 STEP A. Once finished, address the findings.
               3. You MUST use `mcp__github_inline_comment__create_inline_comment` to highlight issues that point at specific lines.
               4. Any other feedback that is not specific to a line goes to the tracking comment (`mcp__github_comment__update_claude_comment`).
               5. Keep feedback concise. Do not praise good practices or provide other non-critical feedback.
               6. NEVER repeat feedback from inline comments in the tracking comment. Tracking comment MUST be ULTRA CONCISE and high-level. Table summary `Severity | File(s) | Description` is preferred.
               7. Do not include `https://claude.ai` links in your comments, as they are not reachable by the users.
               8. Skip findings that are already posted as comments.
+              9. Precision over recall. Report ONLY genuine security or correctness issues of
+                 Medium severity or higher. Do NOT post stylistic, naming, formatting, or
+                 subjective "nitpick" comments.
+              10. This review is ADVISORY and does not block merge. State this once at the top of
+                 the tracking comment so authors are not pressured to resolve every item.
           track_progress: true
           use_sticky_comment: true
           claude_args: |
             --verbose
             --model dial,anthropic.claude-sonnet-4-6
             --max-turns 50
-            --allowedTools "Glob,Grep,LS,Read,Task,Skill,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh pr checks:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:--comment*),Bash(gh pr comment:*),mcp__github_comment__update_claude_comment,mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Glob,Grep,LS,Read,Task,Skill,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git merge-base:*),Bash(gh api graphql:*),Bash(gh pr checks:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:--comment*),Bash(gh pr comment:*),mcp__github_comment__update_claude_comment,mcp__github_inline_comment__create_inline_comment"
         env:
           ANTHROPIC_BASE_URL: "${{ vars.DIAL_CORE_URL }}/anthropic"
           ANTHROPIC_AUTH_TOKEN: ${{ secrets.DIAL_API_KEY }}
