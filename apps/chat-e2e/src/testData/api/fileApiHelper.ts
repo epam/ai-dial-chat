@@ -5,7 +5,7 @@ import { Publication } from '@/chat/types/publication';
 import { API, Attachment, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil } from '@/src/utils';
-import { PublishActions } from '@epam/ai-dial-shared';
+import { PublishActions, Toolset } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import path from 'path';
@@ -123,6 +123,16 @@ export class FileApiHelper extends BaseApiHelper {
     await this.putStringAsFile(
       API.installedDeploymentsFile,
       installedDeploymentsJson,
+      { parentPath: API.installedEntityFolder },
+    );
+  }
+
+  // Bookmarks toolsets for the user — installed_toolsets.json holds their references.
+  public async updateInstalledToolsets(toolsets: Toolset[]) {
+    const installedToolsets = toolsets.map((t) => t.reference ?? t.id);
+    await this.putStringAsFile(
+      API.installedToolsetsFile,
+      JSON.stringify(installedToolsets),
       { parentPath: API.installedEntityFolder },
     );
   }
