@@ -1,4 +1,4 @@
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { GhostButton, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import {
   IconArrowLeft,
@@ -65,18 +65,18 @@ const NotFoundPage: FC = () => {
             />
           </div>
 
-          <button
-            type="button"
-            className="dial-small-text mt-6 inline-flex min-h-11 items-center gap-2 text-secondary hover:text-primary"
+          <GhostButton
+            label={t(NavigationI18nKeys.Back)}
+            className="mt-6"
+            iconBefore={
+              <IconArrowLeft
+                size={DIAL_ICON_SIZE.SM}
+                className="rtl:scale-x-[-1]"
+                aria-hidden="true"
+              />
+            }
             onClick={() => navigate(-1)}
-          >
-            <IconArrowLeft
-              size={DIAL_ICON_SIZE.SM}
-              className="rtl:scale-x-[-1]"
-              aria-hidden="true"
-            />
-            {t(NavigationI18nKeys.Back)}
-          </button>
+          />
         </div>
       </div>
     </section>
