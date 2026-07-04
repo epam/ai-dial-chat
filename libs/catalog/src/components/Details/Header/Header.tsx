@@ -11,6 +11,7 @@ import type {
   ItemDetailsStyles,
   ItemDetailsTexts,
 } from '../../../models/item-details-props';
+import { CatalogEntityType } from '../../../types/entity-type';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import { FolderPath } from '../../FolderPath/FolderPath';
 
@@ -60,13 +61,17 @@ export const Header: FC<HeaderProps> = ({
         }
       />
       <div className="flex flex-wrap gap-2 ps-[60px]">
-        <PrimaryButton
-          label={
-            texts?.primaryActionLabel ?? texts?.useInChatLabel ?? 'Use in chat'
-          }
-          iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
-          onClick={handleUseInChat}
-        />
+        {item.type !== CatalogEntityType.Toolset && (
+          <PrimaryButton
+            label={
+              texts?.primaryActionLabel ??
+              texts?.useInChatLabel ??
+              'Use in chat'
+            }
+            iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
+            onClick={handleUseInChat}
+          />
+        )}
         <NeutralButton
           label={texts?.shareLabel ?? 'Share'}
           iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}
