@@ -12,6 +12,7 @@ const backgroundsColors = {
   'layer-7': 'var(--bg-layer-7, #00000006)',
   'layer-8': 'var(--bg-layer-8, #f0f2f5)',
   blackout: 'var(--bg-blackout, #0C101D4D)',
+  overlay: 'var(--bg-overlay, #FCFCFC80)',
   error: 'var(--bg-error, #F3D6D8)',
   warning: 'var(--bg-warning, #FAF0CF)',
   info: 'var(--bg-info, #D6E2F9)',

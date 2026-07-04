@@ -239,8 +239,8 @@
     "signOut": "Sign out",
     "signedInAs": "Signed in as {{email}}",
     "loading": "Checking your session…",
-    "loginTitle": "Sign in to continue",
-    "loginDescription": "Choose your identity provider",
+    "loginTitle": "Welcome to DIAL Chat",
+    "loginDescription": "Sign in with:",
     "providerButtonLabel": "Sign in with {{provider}}",
     "providersError": "Could not load identity providers. Please retry.",
     "userMenuLabel": "User menu",
@@ -346,6 +346,7 @@
     "downloadFileError": "Failed to download file. Please try again later.",
     "downloadFilesError": "Failed to download files. Please try again later.",
     "folderCreateError": "Failed to create folder",
+    "folderLoadError": "Failed to load folder contents. Please try again.",
     "folderConflict": "A folder with this name already exists",
     "folderNameEmpty": "Folder name cannot be empty",
     "folderNameInvalidChars": "Folder name cannot contain / or \\",
@@ -401,6 +402,24 @@
       "modifiedDate": "Modified date",
       "size": "Size",
       "author": "Author"
+    },
+    "search": {
+      "emptyStateTitle": "No results found"
+    },
+    "myFiles": {
+      "treeHeader": "My files",
+      "emptyStateTitle": "No files yet",
+      "emptyStateDescription": "Upload files to your personal storage"
+    },
+    "shared": {
+      "treeHeader": "Shared with me",
+      "emptyStateTitle": "No shared files",
+      "emptyStateDescription": "Files shared with you will appear here"
+    },
+    "organization": {
+      "treeHeader": "Organization",
+      "emptyStateTitle": "No organization files",
+      "emptyStateDescription": "No files are available in the organization storage"
     }
   },
   "userConfig": {
