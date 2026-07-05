@@ -10,7 +10,6 @@ import React, {
 
 import classNames from 'classnames';
 
-import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTextareaInsertInPosition } from '@/src/hooks/useTextareaInsertInPosition';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
@@ -19,13 +18,13 @@ import { useVoiceRecorder } from '@/src/hooks/useVoiceRecorder';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { getUserCustomContent } from '@/src/utils/app/file';
+import { dispatchRetryFileUpload } from '@/src/utils/app/file-upload-dispatch';
 import {
   getConversationSchema,
   isFormValueValid,
 } from '@/src/utils/app/form-schema';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 import { doesAgentHaveChatCompletion } from '@/src/utils/app/models';
-import type { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
 import { DialLink } from '@/src/types/files';
@@ -531,7 +530,7 @@ export const ChatInputMessage = Inversify.register(
 
     const handleRetry = useCallback(
       (fileId: string) => {
-        dispatch(FilesActions.reuploadFile({ fileId }));
+        dispatchRetryFileUpload(dispatch, fileId);
       },
       [dispatch],
     );
@@ -546,18 +545,6 @@ export const ChatInputMessage = Inversify.register(
         );
       },
       [dispatch],
-    );
-
-    const { dispatchPreparedFiles } = useChatUploadFiles();
-
-    const handleUploadFromDevice = useCallback(
-      (selectedFiles: ResolvedUploadFile[], folderPath: string | undefined) => {
-        dispatchPreparedFiles(selectedFiles, folderPath, {
-          showSuccessMessage: true,
-          isFromDeviceAttachment: true,
-        });
-      },
-      [dispatchPreparedFiles],
     );
 
     const handleAddLinkToMessage = useCallback((link: DialLink) => {
@@ -750,7 +737,6 @@ export const ChatInputMessage = Inversify.register(
                 <AttachButton
                   selectedFilesIds={selectedAttachmentsIds}
                   onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-                  onUploadFromDevice={handleUploadFromDevice}
                   onAddLinkToMessage={handleAddLinkToMessage}
                 />
               </div>

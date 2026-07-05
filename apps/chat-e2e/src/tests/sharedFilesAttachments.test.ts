@@ -332,7 +332,7 @@ dialSharedWithMeTest(
       async () => {
         const newRequest = GeneratorUtil.randomString(10);
         await additionalShareUserFileManagerModalFoldersTreeAssertion.assertFolderState(
-          'hidden',
+          'visible',
           specialCharsFolder,
         );
         const attachmentCheckbox =
