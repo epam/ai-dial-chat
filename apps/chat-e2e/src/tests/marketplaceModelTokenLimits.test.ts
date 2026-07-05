@@ -1,15 +1,15 @@
 import { MarketplaceI18nKeys } from '@/chat/constants/i18n';
-import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants } from '@/src/testData';
-import { ModelLimitsMockHelper } from '@/src/testData/marketplace/modelLimitsMockHelper';
+import {
+  FORMATTED_LIMITED_TOKENS,
+  FORMATTED_USED_TOKENS,
+  ModelLimitsMockHelper,
+  dailyAndWeeklyTokensStats,
+  minuteDailyMonthlyTokensStats,
+  monthlyTokensStats,
+} from '@/src/testData/marketplace/modelLimitsMockHelper';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-
-let model: DialAIEntityModel;
-
-dialTest.beforeAll(async () => {
-  model = GeneratorUtil.randomArrayElement(ModelsUtil.getModels());
-});
 
 dialTest(
   'Token limits section is collapsed by default.\n' +
@@ -24,6 +24,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-9077', 'EPMRTC-9078');
+
+    const model = GeneratorUtil.randomArrayElement(ModelsUtil.getModels());
 
     await dialTest.step(
       'Set up limits API mock to return unlimited stats',
@@ -89,6 +91,125 @@ dialTest(
           'collapsed',
           MarketplaceI18nKeys.TokenLimits,
         );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Token limits] Bar with the limit appear only when the limit is set',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
+    entityDetailsModalAssertion,
+    page,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-9079');
+
+    const [model1, model2, model3] = GeneratorUtil.randomArrayElements(
+      ModelsUtil.getModels(),
+      3,
+    );
+
+    await dialTest.step(
+      'Set up limits API mocks for three model configurations',
+      async () => {
+        await new ModelLimitsMockHelper(page, model1).mockLimitsResponse(
+          monthlyTokensStats,
+        );
+        await new ModelLimitsMockHelper(page, model2).mockLimitsResponse(
+          dailyAndWeeklyTokensStats,
+        );
+        await new ModelLimitsMockHelper(page, model3).mockLimitsResponse(
+          minuteDailyMonthlyTokensStats,
+        );
+      },
+    );
+
+    await dialTest.step('Open Marketplace page', async () => {
+      await marketplacePage.openMarketplacePage();
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Open model1 (monthly limit) and verify only Monthly bar is shown',
+      async () => {
+        await marketplaceHeader.getSearch().inputField.fillInInput(model1.name);
+        const model1Element =
+          await marketplaceEntitiesSection.findEntityElement(model1);
+        await model1Element.click();
+        await entityDetailsModal
+          .sectionByKeyCaret(MarketplaceI18nKeys.TokenLimits)
+          .click();
+        await entityDetailsModalAssertion.assertLimitItems([
+          MarketplaceI18nKeys.Monthly,
+        ]);
+        await entityDetailsModalAssertion.assertLimitItemValues(
+          MarketplaceI18nKeys.Monthly,
+          FORMATTED_USED_TOKENS,
+          FORMATTED_LIMITED_TOKENS,
+        );
+        await entityDetailsModal.closeButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Open model2 (daily + weekly limits) and verify only Daily and Weekly bars are shown',
+      async () => {
+        await marketplaceHeader.getSearch().inputField.fillInInput(model2.name);
+        const model2Element =
+          await marketplaceEntitiesSection.findEntityElement(model2);
+        await model2Element.click();
+        await entityDetailsModal
+          .sectionByKeyCaret(MarketplaceI18nKeys.TokenLimits)
+          .click();
+        await entityDetailsModalAssertion.assertLimitItems([
+          MarketplaceI18nKeys.Daily,
+          MarketplaceI18nKeys.Weekly,
+        ]);
+        for (const key of [
+          MarketplaceI18nKeys.Daily,
+          MarketplaceI18nKeys.Weekly,
+        ]) {
+          await entityDetailsModalAssertion.assertLimitItemValues(
+            key,
+            FORMATTED_USED_TOKENS,
+            FORMATTED_LIMITED_TOKENS,
+          );
+        }
+        await entityDetailsModal.closeButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Open model3 (minute + daily + monthly limits) and verify only Minute, Daily, Monthly bars are shown',
+      async () => {
+        await marketplaceHeader.getSearch().inputField.fillInInput(model3.name);
+        const model3Element =
+          await marketplaceEntitiesSection.findEntityElement(model3);
+        await model3Element.click();
+        await entityDetailsModal
+          .sectionByKeyCaret(MarketplaceI18nKeys.TokenLimits)
+          .click();
+        await entityDetailsModalAssertion.assertLimitItems([
+          MarketplaceI18nKeys.Minute,
+          MarketplaceI18nKeys.Daily,
+          MarketplaceI18nKeys.Monthly,
+        ]);
+        for (const key of [
+          MarketplaceI18nKeys.Minute,
+          MarketplaceI18nKeys.Daily,
+          MarketplaceI18nKeys.Monthly,
+        ]) {
+          await entityDetailsModalAssertion.assertLimitItemValues(
+            key,
+            FORMATTED_USED_TOKENS,
+            FORMATTED_LIMITED_TOKENS,
+          );
+        }
       },
     );
   },

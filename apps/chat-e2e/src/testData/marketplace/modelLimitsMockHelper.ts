@@ -3,6 +3,10 @@ import { API } from '@/src/testData';
 import { Page } from '@playwright/test';
 
 const UNLIMITED_LIMIT = 9e18;
+export const LIMITED_TOKENS = 100_000;
+export const FORMATTED_LIMITED_TOKENS =
+  Intl.NumberFormat('ru-RU').format(LIMITED_TOKENS);
+export const FORMATTED_USED_TOKENS = Intl.NumberFormat('ru-RU').format(0);
 
 export const defaultUnlimitedUsageStats: AgentUsageStats = {
   hourRequestStats: { total: UNLIMITED_LIMIT, used: 0 },
@@ -15,6 +19,24 @@ export const defaultUnlimitedUsageStats: AgentUsageStats = {
   dayCostStats: { total: UNLIMITED_LIMIT, used: 0 },
   weekCostStats: { total: UNLIMITED_LIMIT, used: 0 },
   monthCostStats: { total: UNLIMITED_LIMIT, used: 0 },
+};
+
+export const monthlyTokensStats: AgentUsageStats = {
+  ...defaultUnlimitedUsageStats,
+  monthTokenStats: { total: LIMITED_TOKENS, used: 0 },
+};
+
+export const dailyAndWeeklyTokensStats: AgentUsageStats = {
+  ...defaultUnlimitedUsageStats,
+  dayTokenStats: { total: LIMITED_TOKENS, used: 0 },
+  weekTokenStats: { total: LIMITED_TOKENS, used: 0 },
+};
+
+export const minuteDailyMonthlyTokensStats: AgentUsageStats = {
+  ...defaultUnlimitedUsageStats,
+  minuteTokenStats: { total: LIMITED_TOKENS, used: 0 },
+  dayTokenStats: { total: LIMITED_TOKENS, used: 0 },
+  monthTokenStats: { total: LIMITED_TOKENS, used: 0 },
 };
 
 export class ModelLimitsMockHelper {

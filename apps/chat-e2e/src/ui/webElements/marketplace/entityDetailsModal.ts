@@ -159,6 +159,14 @@ export class EntityDetailsModal extends BaseElement {
     this.limitsGrid
       .getChildElementBySelector(MarketplaceDetailsModal.limitItem)
       .getElementLocatorByText(limitKey);
+  public usedLimitByKey = (limitKey: MarketplaceI18nKeys) =>
+    this.limitItemByKey(limitKey).locator(MarketplaceDetailsModal.usedLimit);
+  public totalLimitByKey = (limitKey: MarketplaceI18nKeys) =>
+    this.limitItemByKey(limitKey).locator(MarketplaceDetailsModal.totalLimit);
+  public usageContainerByKey = (limitKey: MarketplaceI18nKeys) =>
+    this.limitItemByKey(limitKey).locator(
+      MarketplaceDetailsModal.usageContainer,
+    );
   public noLimitsApplied = this.getChildElementBySelector(
     MarketplaceDetailsModal.noLimits,
   );

@@ -183,6 +183,40 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
         );
   }
 
+  public async assertLimitItemValues(
+    limitKey: MarketplaceI18nKeys,
+    expectedUsed: string,
+    expectedTotal: string,
+  ) {
+    await this.assertElementText(
+      this.entityDetailsModal.usedLimitByKey(limitKey),
+      expectedUsed,
+    );
+    await this.assertElementText(
+      this.entityDetailsModal.totalLimitByKey(limitKey),
+      expectedTotal,
+    );
+    await this.assertElementState(
+      this.entityDetailsModal.usageContainerByKey(limitKey),
+      'visible',
+    );
+  }
+
+  public async assertLimitItems(expectedVisibleKeys: MarketplaceI18nKeys[]) {
+    const allTokenLimitKeys = [
+      MarketplaceI18nKeys.Minute,
+      MarketplaceI18nKeys.Weekly,
+      MarketplaceI18nKeys.Daily,
+      MarketplaceI18nKeys.Monthly,
+    ];
+    for (const key of allTokenLimitKeys) {
+      await this.assertElementState(
+        this.entityDetailsModal.limitItemByKey(key),
+        expectedVisibleKeys.includes(key) ? 'visible' : 'hidden',
+      );
+    }
+  }
+
   public async assertSectionExpandedState(
     expectedCaretState: ElementCaretState,
     sectionKey: MarketplaceI18nKeys,
