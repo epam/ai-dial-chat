@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { prepareFileName } from '@/src/utils/app/file';
+
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions } from '@/src/store/actions';
@@ -154,6 +156,7 @@ export const FileManager: React.FC = () => {
           deleteConfirmationOptions={deleteConfirmationOptions}
           conflictResolutionPopupOptions={conflictResolutionPopupOptions}
           onUploadFiles={handleUploadFiles}
+          prepareUploadFileName={prepareFileName}
           onCreateFolder={handleCreateFolder}
           onUploadArchive={handleUploadArchive}
           onUnshareFiles={handleOpenUnshareFilesDialog}
