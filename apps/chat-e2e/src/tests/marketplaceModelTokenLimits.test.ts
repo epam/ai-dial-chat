@@ -25,7 +25,9 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-9077', 'EPMRTC-9078');
 
-    const model = GeneratorUtil.randomArrayElement(ModelsUtil.getModels());
+    const model = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModels(),
+    );
 
     await dialTest.step(
       'Set up limits API mock to return unlimited stats',
@@ -110,7 +112,7 @@ dialTest(
     setTestIds('EPMRTC-9079');
 
     const [model1, model2, model3] = GeneratorUtil.randomArrayElements(
-      ModelsUtil.getModels(),
+      ModelsUtil.getLatestModels(),
       3,
     );
 
