@@ -9,10 +9,7 @@ import {
   type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import {
-  FileDndOverlay,
-  type ChatSettingsValues,
-} from '@epam/ai-dial-conversation-input';
+import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
@@ -39,23 +36,21 @@ import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import { CONVERSATION_VIEW_INPUT_STYLES } from '../../constants/input-styles';
 import {
-  BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
   ChatI18nKeys,
-  ChatSettingsI18nKeys,
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
-  DeploymentsI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
+import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
@@ -65,7 +60,6 @@ import {
 } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
-import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import ModelPickerPanel from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
@@ -156,7 +150,6 @@ const ConversationView: FC<Props> = ({
   onBrowseCatalog,
 }) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -300,20 +293,11 @@ const ConversationView: FC<Props> = ({
     [t],
   );
 
-  const modelSelectorLabels = useMemo(
-    () => ({
-      ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
-      loading: isLoading ? t(DeploymentsI18nKeys.SelectorLoading) : undefined,
-      error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
-      empty:
-        !isLoading && !error && items.length === 0
-          ? t(DeploymentsI18nKeys.SelectorEmpty)
-          : undefined,
-      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
-      closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
-    }),
-    [t, isLoading, error, items.length],
-  );
+  const modelSelectorLabels = useModelSelectorLabels({
+    isLoading,
+    error,
+    itemCount: items.length,
+  });
 
   const formatStatusModelChangedBody = useCallback(
     (from: string, to: string) =>
@@ -432,67 +416,12 @@ const ConversationView: FC<Props> = ({
     scrollToBottom(false);
   }, [scrollToBottom]);
 
-  const chatSettings = useMemo(
-    () => ({
-      features: {
-        ...(selectedDeployment?.features ?? {
-          systemPrompt: false,
-          temperature: false,
-        }),
-        responseFormat: true,
-      },
-      responseFormat: normalizeResponseFormat(
-        conversation.responseFormat as string | undefined,
-      ),
-      systemPrompt: conversation.prompt ?? '',
-      temperature: conversation.temperature ?? 0.5,
-      onSave: (values: ChatSettingsValues) => {
-        onConversationChange({
-          ...conversation,
-          ...(values.responseFormat != null && {
-            responseFormat: values.responseFormat,
-          }),
-          ...(values.systemPrompt != null && {
-            prompt: values.systemPrompt,
-          }),
-          ...(values.temperature != null && {
-            temperature: values.temperature,
-          }),
-        });
-        showNotification({
-          variant: NotificationVariant.Success,
-          message: t(ChatSettingsI18nKeys.SavedNotification),
-        });
-      },
-      menuItemLabel: t(ChatI18nKeys.ChatSettings),
-      title: t(ChatSettingsI18nKeys.Title),
-      responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
-      responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
-      responseFormatMarkdownLabel: t(
-        ChatSettingsI18nKeys.ResponseFormatMarkdown,
-      ),
-      responseFormatPlainTextLabel: t(
-        ChatSettingsI18nKeys.ResponseFormatPlainText,
-      ),
-      systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
-      systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
-      temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),
-      temperatureLabels: [
-        t(ChatSettingsI18nKeys.TemperaturePrecise),
-        t(ChatSettingsI18nKeys.TemperatureNeutral),
-        t(ChatSettingsI18nKeys.TemperatureCreative),
-      ] as [string, string, string],
-      temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
-      saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
-    }),
-    [
-      selectedDeployment?.features,
-      conversation,
-      t,
-      onConversationChange,
-      showNotification,
-    ],
-  );
+  const chatSettings = useChatSettingsFormConfig({
+    mode: 'conversation',
+    conversation,
+    onConversationChange,
+    deploymentFeatures: selectedDeployment?.features,
+  });
 
   const handleAttachDialFiles = useCallback(
     (result: AttachResult) => {
