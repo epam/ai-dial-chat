@@ -432,9 +432,15 @@ export const filesSlice = createSlice({
             f.folderId !== folderPath &&
             !f.folderId.startsWith(`${folderPath}/`),
         );
-        const inScopeFiles = payload.files.filter(
-          (f) => !f.folderId.endsWith(`/${CLIENTDATA_PATH}`),
+        const prevById: Record<string, DialFile> = Object.fromEntries(
+          state.files.map((f) => [f.id, f]),
         );
+        const inScopeFiles = payload.files
+          .filter((f) => !f.folderId.endsWith(`/${CLIENTDATA_PATH}`))
+          .map((newFile) => {
+            const oldFile = prevById[newFile.id];
+            return oldFile ? { ...oldFile, ...newFile } : newFile;
+          });
         const uploadingInScope = state.files.filter(
           (f) =>
             !f.serverSynced &&
