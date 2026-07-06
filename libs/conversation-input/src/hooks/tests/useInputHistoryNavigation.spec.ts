@@ -65,8 +65,10 @@ describe('useInputHistoryNavigation', () => {
     it('restores saved draft when pressing Down past the most-recent entry', () => {
       const { result } = renderHook(() => useInputHistoryNavigation(HISTORY));
       result.current.navigate('up', 'my draft', 7); // enters history, saves draft
-      // After one up we're at the most-recent entry.
-      // Pressing down once should restore the saved draft.
+      /*
+       * After one up we're at the most-recent entry.
+       * Pressing down once should restore the saved draft.
+       */
       const value = result.current.navigate(
         'down',
         'third message',
@@ -113,8 +115,10 @@ describe('useInputHistoryNavigation', () => {
       result.current.navigate('up', '', 0); // enter history mode
       // cursor is mid-content with text after it on the same line
       const value = result.current.navigate('down', 'third message', 3);
-      // 'third message'.slice(3) has no \n, so cursor is on the last line.
-      // Because we're at the most-recent history item, Down restores saved draft.
+      /*
+       * 'third message'.slice(3) has no \n, so cursor is on the last line.
+       * Because we're at the most-recent history item, Down restores saved draft.
+       */
       expect(value).toBe('');
     });
 

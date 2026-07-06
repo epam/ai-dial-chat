@@ -3,8 +3,11 @@ import type { AttachmentDto } from '@epam/chat-api-client';
 import { describe, expect, it, vi } from 'vitest';
 import { attachmentDtoToDisplayAttachment } from '../attachment-dto-to-display';
 
-// resolveCatalogIconUrl / resolveDialFileDownloadUrl are imported by the module
-// under test; mock them here so the spec doesn't depend on API endpoint constants.
+/*
+ * resolveCatalogIconUrl and resolveDialFileDownloadUrl are imported by the
+ * module under test; mock them here so the spec doesn't depend on API endpoint
+ * constants.
+ */
 vi.mock('../icon-path', () => ({
   resolveCatalogIconUrl: (url: string) =>
     url.startsWith('files/')

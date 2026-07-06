@@ -120,8 +120,10 @@ describe('ConversationService', () => {
     vi.spyOn(service['client'], 'getConversation').mockRejectedValue({
       error: { status: 404 },
     } as never);
-    // Default: no path collision on create (metadata lookup returns empty).
-    // Individual createConversation tests override this when needed.
+    /*
+     * Default: no path collision on create (metadata lookup returns empty).
+     * Individual createConversation tests override this when needed.
+     */
     vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
       data: null,
       error: { status: 404 },
@@ -828,8 +830,10 @@ describe('ConversationService', () => {
     });
 
     it('uses the stored name field when the conversation was LLM-renamed', async () => {
-      // Storage path still uses the original first-message name, but JSON name
-      // was updated by the LLM to a meaningful title.
+      /*
+       * Storage path still uses the original first-message name, but JSON name
+       * was updated by the LLM to a meaningful title.
+       */
       mockGetConversation({
         ...SHARED_CONVERSATION,
         id: 'shared-bucket/gpt-4o__Hello there',
@@ -959,8 +963,10 @@ describe('ConversationService', () => {
         'test-bucket',
       );
 
-      // getConversationMetadata is called once for the path collision check,
-      // never for a full bucket title scan (which would pass an empty path '').
+      /*
+       * getConversationMetadata is called once for the path collision check,
+       * never for a full bucket title scan (which would pass an empty path '').
+       */
       expect(metadataSpy).not.toHaveBeenCalledWith(
         expect.anything(),
         '',
@@ -1387,8 +1393,10 @@ describe('ConversationService', () => {
       } as never);
 
       const encoder = new TextEncoder();
-      // Stream that emits content + [DONE] but is intentionally never closed,
-      // mimicking a provider that holds the SSE socket open after [DONE].
+      /*
+       * Stream that emits content + [DONE] but is intentionally never closed,
+       * mimicking a provider that holds the SSE socket open after [DONE].
+       */
       const neverClosingStream = new ReadableStream<Uint8Array>({
         start(controller) {
           controller.enqueue(
@@ -1425,8 +1433,10 @@ describe('ConversationService', () => {
         res as never,
       );
 
-      // The generation is released (complete), not left active — so a
-      // subsequent request (e.g. regenerate) would not get a 409.
+      /*
+       * The generation is released (complete), not left active — so a
+       * subsequent request (e.g. regenerate) would not get a 409.
+       */
       expect(mockGenerationService.complete).toHaveBeenCalledWith(
         'test-session-id',
         'gpt-4o__Test__11111111-1111-1111-1111-111111111111',

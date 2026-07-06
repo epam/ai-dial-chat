@@ -378,8 +378,10 @@ describe('useConversationStream', () => {
       );
     });
 
-    // Completing a stream for a non-displayed conversation must not reload or
-    // overwrite the currently-shown conversation.
+    /*
+     * Completing a stream for a non-displayed conversation must not reload or
+     * overwrite the currently-shown conversation.
+     */
     expect(mockGetConversation).not.toHaveBeenCalled();
     expect(setConversation).not.toHaveBeenCalled();
   });
@@ -450,8 +452,10 @@ describe('useConversationStream', () => {
   });
 
   it('does not eagerly reload on stop — the stream end reloads the saved partial', async () => {
-    // Capture onComplete so we can simulate the backend closing the stream
-    // after it has aborted and saved the partial answer.
+    /*
+     * Capture onComplete so we can simulate the backend closing the stream
+     * after it has aborted and saved the partial answer.
+     */
     let capturedOnComplete: StreamCompletionOptions['onComplete'] | null = null;
     mockStreamCompletion.mockImplementation((_p, _m, _model, opts) => {
       capturedOnComplete = opts.onComplete;
@@ -916,8 +920,10 @@ describe('useConversationStream', () => {
       // The background resolution must not overwrite the displayed conversation.
       expect(setConversation).not.toHaveBeenCalled();
 
-      // Switching to the now-resolved background conversation shows it is no
-      // longer tracked as streaming.
+      /*
+       * Switching to the now-resolved background conversation shows it is no
+       * longer tracked as streaming.
+       */
       rerender({ conversationId: 'bucket/gpt-4o__Background__id' });
       expect(result.current.isStreaming).toBe(false);
     });

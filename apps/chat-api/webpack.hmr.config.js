@@ -8,8 +8,10 @@ const {
   NESTJS_RESOLVE_ALIASES,
 } = require('./webpack.shared');
 
-// Watch + auto-restart dev config. NestJS DI/services cannot be hot-swapped via
-// webpack HMR — a full process restart on each rebuild is the reliable path.
+/*
+ * Watch + auto-restart dev config. NestJS DI/services cannot be hot-swapped via
+ * webpack HMR — a full process restart on each rebuild is the reliable path.
+ */
 module.exports = {
   entry: {
     main: './src/main.ts',

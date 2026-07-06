@@ -2,8 +2,10 @@ import { StringUtils } from '../../common/utils/string-utils';
 import { COMPOUND_TOKEN_PREFIX } from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 
-// Strips characters unsafe in DIAL Core resource names: path separators (/ %),
-// null bytes, and Unicode bidi codepoints that can spoof filenames (CWE-116).
+/*
+ * Strips characters unsafe in DIAL Core resource names: path separators (/ %),
+ * null bytes, and Unicode bidi codepoints that can spoof filenames (CWE-116).
+ */
 const notAllowedSymbolsRegex =
   /[:;,=/{}%&"\0\u200E\u200F\u202A-\u202E\u2066-\u2069]/gu;
 const trailingDotsRegex = /\.+$/g;

@@ -613,8 +613,10 @@ export class FilesService extends AppService {
     archiveRoot: string,
     at: string,
   ): Promise<ExpandedFile[]> {
-    // DialFile.path is the full DIAL resource path: "files/{bucket}/reports/"
-    // Both the metadata API and download SDK expect the relative path: "reports/"
+    /*
+     * DialFile.path is the full DIAL resource path: "files/{bucket}/reports/"
+     * Both the metadata API and download SDK expect the relative path: "reports/"
+     */
     const relFolderPath = this.toRelativePath(folderPath, bucket);
 
     const results: ExpandedFile[] = [];

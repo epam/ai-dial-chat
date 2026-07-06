@@ -403,8 +403,10 @@ export class ConversationService extends AppService {
       );
     }
 
-    // Migrate pin state: if the old conversation was pinned, point the pin at
-    // the new path. Fire-and-forget, non-fatal (mirrors deleteConversation cleanup).
+    /*
+     * Migrate pin state: if the old conversation was pinned, point the pin at
+     * the new path. Fire-and-forget, non-fatal (mirrors deleteConversation cleanup).
+     */
     const oldPinId = buildConversationUrl(bucket, conversationPath);
     const newPinId = buildConversationUrl(bucket, renamedPath);
     void this.userConfigService
@@ -482,9 +484,11 @@ export class ConversationService extends AppService {
     const subPath =
       slashIndex === -1 ? sourcePath : sourcePath.slice(slashIndex + 1);
 
-    // `subPath` arrives percent-encoded (it comes from a resource URL). Each
-    // `/`-separated segment is one path component; a literal slash inside a
-    // component (e.g. a deployment name "Team/App One") is encoded as %2F.
+    /*
+     * `subPath` arrives percent-encoded (it comes from a resource URL). Each
+     * `/`-separated segment is one path component; a literal slash inside a
+     * component (e.g. a deployment name "Team/App One") is encoded as %2F.
+     */
     const segments = subPath.split('/');
     const encodedFilename = segments.at(-1) ?? subPath;
     const decodedFilename = safeDecodeURIComponent(encodedFilename);
@@ -492,8 +496,10 @@ export class ConversationService extends AppService {
       .slice(0, -1)
       .map(safeDecodeURIComponent);
 
-    // Read source first so we can use its `name` field (which may have been
-    // updated by LLM naming without renaming the storage path).
+    /*
+     * Read source first so we can use its `name` field (which may have been
+     * updated by LLM naming without renaming the storage path).
+     */
     const { data: sourceData, error: readError } =
       (await this.client.getConversation(
         sourceBucket,
@@ -512,8 +518,10 @@ export class ConversationService extends AppService {
       );
     }
 
-    // Prefer the stored `name` field (set by LLM naming) over the path-derived
-    // title so that conversations renamed by the model keep that name in the copy.
+    /*
+     * Prefer the stored `name` field (set by LLM naming) over the path-derived
+     * title so that conversations renamed by the model keep that name in the copy.
+     */
     const pathTitle = getConversationTitleFromName(decodedFilename);
     const sourceTitle = sourceData.name?.trim() || pathTitle;
     const uniqueTitle = prepareEntityName(sourceTitle);
@@ -695,11 +703,13 @@ export class ConversationService extends AppService {
             };
           });
 
-      // Extract the path within a bucket from a DIAL Core resource URL.
-      // URL format: "conversations/<bucket>/<relative-path>"
-      // Stripping the first two segments lets us match the same conversation
-      // across different buckets (e.g. user bucket vs. public bucket).
-      // Falls back to item.name when url is absent.
+      /*
+       * Extract the path within a bucket from a DIAL Core resource URL.
+       * URL format: "conversations/<bucket>/<relative-path>"
+       * Stripping the first two segments lets us match the same conversation
+       * across different buckets (e.g. user bucket vs. public bucket).
+       * Falls back to item.name when url is absent.
+       */
       const getBucketRelativePath = (item: MetadataItem): string => {
         if (item.url) {
           const parts = item.url.split('/');
@@ -708,9 +718,11 @@ export class ConversationService extends AppService {
         return item.name ?? '';
       };
 
-      // Paths of public-bucket items on this page — used to:
-      //   1. Skip public items that duplicate a user-bucket item (dedup)
-      //   2. Promote user-bucket items that are org-published to publishedWithMe: true
+      /*
+       * Paths of public-bucket items on this page — used to:
+       *   1. Skip public items that duplicate a user-bucket item (dedup)
+       *   2. Promote user-bucket items that are org-published to publishedWithMe: true
+       */
       const publicItemPaths = new Set(
         publicError == null && publicData
           ? (publicData.items ?? [])
@@ -719,10 +731,12 @@ export class ConversationService extends AppService {
           : [],
       );
 
-      // IDs of user-bucket items that also exist in the public bucket.
-      // These should be shown as org-published (Organization section) rather
-      // than My Chats, because DIAL Core may not set publishedWithMe on
-      // user-bucket copies.
+      /*
+       * IDs of user-bucket items that also exist in the public bucket.
+       * These should be shown as org-published (Organization section) rather
+       * than My Chats, because DIAL Core may not set publishedWithMe on
+       * user-bucket copies.
+       */
       const orgPublishedUserIds = new Set(
         (userData.items ?? [])
           .filter(
@@ -741,8 +755,10 @@ export class ConversationService extends AppService {
           : item,
       );
 
-      // Paths of user-bucket items on this page — used to skip public items
-      // that are already represented as user items above.
+      /*
+       * Paths of user-bucket items on this page — used to skip public items
+       * that are already represented as user items above.
+       */
       const userItemPaths = new Set(
         (userData.items ?? [])
           .filter((item) => item.nodeType !== 'FOLDER')
@@ -1043,9 +1059,11 @@ export class ConversationService extends AppService {
       `deleteConversations: bucket=${bucket} total=${uniqueIds.length} owned=${ownedIds.length}`,
     );
 
-    // IDs from the metadata listing are already URL-encoded (e.g. %20 for spaces).
-    // Decode each segment before passing to encodeDialResourcePath to avoid
-    // double-encoding (%20 → %2520).
+    /*
+     * IDs from the metadata listing are already URL-encoded (e.g. %20 for spaces).
+     * Decode each segment before passing to encodeDialResourcePath to avoid
+     * double-encoding (%20 → %2520).
+     */
     const pathsForDelete = ownedIds.map((id) => {
       const rawPath = id.slice(prefix.length);
       return rawPath.split('/').map(safeDecodeURIComponent).join('/');
@@ -1261,9 +1279,11 @@ export class ConversationService extends AppService {
         customContent,
       );
     } catch (err) {
-      // Release the just-registered entry so a failure before streaming starts
-      // doesn't leave the conversation "locked" — otherwise the next request
-      // (e.g. regenerate) would be rejected with a 409 until stale eviction.
+      /*
+       * Release the just-registered entry so a failure before streaming starts
+       * doesn't leave the conversation "locked" — otherwise the next request
+       * (e.g. regenerate) would be rejected with a 409 until stale eviction.
+       */
       this.generationService.error(sessionId, conversationPath, generationId);
       throw err;
     }
@@ -1458,11 +1478,13 @@ export class ConversationService extends AppService {
           }
         }
 
-        // `[DONE]` is the SSE completion signal. Stop here rather than waiting
-        // for the upstream socket to close — some providers keep the connection
-        // open after `[DONE]`, which would otherwise leave this generation
-        // registered as active and reject the next request (e.g. regenerate)
-        // with a 409 conflict.
+        /*
+         * `[DONE]` is the SSE completion signal. Stop here rather than waiting
+         * for the upstream socket to close — some providers keep the connection
+         * open after `[DONE]`, which would otherwise leave this generation
+         * registered as active and reject the next request (e.g. regenerate)
+         * with a 409 conflict.
+         */
         if (receivedDone) break;
       }
 
@@ -1497,8 +1519,10 @@ export class ConversationService extends AppService {
     } finally {
       if (upstreamReader) {
         try {
-          // cancel() (not releaseLock) so the upstream connection is closed
-          // when we stop early on `[DONE]`, instead of being left dangling.
+          /*
+           * cancel() (not releaseLock) so the upstream connection is closed
+           * when we stop early on `[DONE]`, instead of being left dangling.
+           */
           await upstreamReader.cancel();
         } catch {
           /* already closed */

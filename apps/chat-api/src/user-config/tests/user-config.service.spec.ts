@@ -588,8 +588,10 @@ describe('UserConfigService', () => {
           new Error('delete failed'),
         );
 
-        // ts-a is already in base, legacy file also has ts-a → no new IDs merged,
-        // but writeConfig is still called once to persist legacyMigrationDone flag
+        /*
+         * ts-a is already in base, legacy file also has ts-a → no new IDs merged,
+         * but writeConfig is still called once to persist legacyMigrationDone flag
+         */
         const result = await service.readConfig('token', 'bucket');
         expect(
           result.toolsets.installed.filter((id) => id === 'ts-a'),

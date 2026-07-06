@@ -12,9 +12,11 @@ export enum ToolsetEditorQuery {
 export const DEFAULT_TOOLSET_NAME = 'New toolset';
 export const DEFAULT_TOOLSET_VERSION = '0.0.1';
 
-// sessionStorage key for the OAuth redirect handshake. Persists the toolset
-// being authorized across the external provider redirect so the callback route
-// can complete the code exchange.
+/*
+ * sessionStorage key for the OAuth redirect handshake. Persists the toolset
+ * being authorized across the external provider redirect so the callback route
+ * can complete the code exchange.
+ */
 export const TOOLSET_REDIRECT_STATE_KEY = 'toolset-redirect-state';
 
 export interface AuthTypeOption {
