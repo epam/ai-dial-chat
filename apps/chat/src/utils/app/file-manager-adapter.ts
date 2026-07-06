@@ -1,4 +1,4 @@
-import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
+import { getEntityBucket, getFileRootId, isRootId } from '@/src/utils/app/id';
 
 import { ApiKeys } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -136,6 +136,30 @@ const sortItemsByName = (items: UIKitDialFile[]): UIKitDialFile[] =>
     item.items ? { ...item, items: sortItemsByName(item.items) } : item,
   );
 
+const ensureFolderChain = (
+  folderMap: Map<string, UIKitDialFile>,
+  folderId?: string,
+) => {
+  let currentId = folderId;
+  while (currentId && !isRootId(currentId) && !folderMap.has(currentId)) {
+    const slashIndex = currentId.lastIndexOf('/');
+    if (slashIndex === -1) break;
+    const parentId = currentId.slice(0, slashIndex);
+    const name = currentId.slice(slashIndex + 1);
+    folderMap.set(currentId, {
+      id: currentId,
+      name,
+      path: currentId,
+      folderId: parentId,
+      nodeType: DialFileNodeType.FOLDER,
+      items: [],
+      parentPath: parentId || null,
+      permissions: [],
+    });
+    currentId = parentId;
+  }
+};
+
 export const buildFileTree = (
   files: DialFile[],
   folders: FileFolderInterface[],
@@ -184,6 +208,9 @@ export const buildFileTree = (
       sharedByMePaths.add(folder.id);
     }
   });
+
+  files.forEach((file) => ensureFolderChain(folderMap, file.folderId));
+  folders.forEach((folder) => ensureFolderChain(folderMap, folder.folderId));
 
   const placedFolderIds = new Set<string>();
   const placedFileIds = new Set<string>();

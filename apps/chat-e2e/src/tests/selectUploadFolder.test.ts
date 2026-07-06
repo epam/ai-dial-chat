@@ -11,7 +11,8 @@ import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, RegexUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   '[Select folder] Create new folder on the root level.\n' +
     '[Select folder] Rename new folder just after its creation on Enter.\n' +
     '[Select folder] Allowed special characters.\n' +
@@ -128,7 +129,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   '[Select folder] Restricted special characters are not entered.\n' +
     '[Select folder] Restricted special characters are removed if to copy-paste',
   async ({
@@ -195,7 +197,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   '[Select folder] Long folder name is cut with three dots at the end.\n' +
     '[Select folder] Create new nested folder.\n' +
     '[Select folder] Folder names can be equal on different levels.\n' +
@@ -286,7 +289,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   `[Select folder] Window changes it's height and Scroll doesn't appear`,
   async ({
     dialHomePage,
@@ -345,7 +349,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   '[Select folder] Error message appears if to add a dot to the end of folder name.\n' +
     '[Select folder] Error message appears if to create a folder with already existing name.\n' +
     '[Select folder] Error message appears if to add a dot to the beginning of folder name.\n' +
@@ -448,7 +453,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   '[Select folder] Folder name can not be blank or with spaces only',
   async ({
     dialHomePage,

@@ -15,7 +15,6 @@ import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Attachment as AttachmentInterface } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
-import { CDPSession } from 'playwright-chromium';
 
 let modelsWithAttachments: DialAIEntityModel[];
 let randomModelWithImageAttachment: DialAIEntityModel;
@@ -31,8 +30,7 @@ dialTest.beforeAll(async () => {
 });
 
 dialTest(
-  'Save & Submit button is available if there is only attachment without text.\n' +
-    'Save & Submit button is unavailable while attachment is being uploaded',
+  'Save & Submit button is available if there is only attachment without text',
   async ({
     dialHomePage,
     conversationData,
@@ -42,15 +40,13 @@ dialTest(
     chatMessages,
     chat,
     attachmentDropdownMenu,
-    uploadFromDeviceModal,
-    editMessageInputAttachments,
+    fileManagerModal,
     page,
     localStorageManager,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-1613', 'EPMRTC-1776');
+    setTestIds('EPMRTC-1613');
     let conversation: Conversation;
-    let client: CDPSession;
 
     await dialTest.step(
       'Create conversation with model that accept attachments only with text in request',
@@ -84,40 +80,25 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Upload file from device to the request and verify no Save&Submit is disabled while file is uploading',
-      async () => {
-        await chatMessages.getChatMessageClipIcon(1).click();
-        await dialHomePage.uploadData(
-          { path: Attachment.sunImageName, dataType: 'upload' },
-          () =>
-            attachmentDropdownMenu.selectMenuOption(
-              UploadMenuOptions.uploadFromDevice,
-              {
-                isHttpMethodTriggered: true,
-                triggeredHttpMethod: 'GET',
-              },
-            ),
-        );
-        client = await dialHomePage.emulateSlowNetworkConditions();
-        await uploadFromDeviceModal.uploadButton.click();
-        await baseAssertion.assertElementActionabilityState(
-          chatMessages.saveAndSubmit,
-          'disabled',
-        );
-      },
-    );
+    await dialTest.step('Upload file from device to the request', async () => {
+      await chatMessages.getChatMessageClipIcon(1).click();
+      await dialHomePage.uploadData(
+        { path: Attachment.sunImageName, dataType: 'upload' },
+        () =>
+          attachmentDropdownMenu.selectMenuOption(
+            UploadMenuOptions.uploadFromDevice,
+            {
+              isHttpMethodTriggered: true,
+              triggeredHttpMethod: 'GET',
+            },
+          ),
+      );
+      await fileManagerModal.getAttachButton().click();
+    });
 
     await dialTest.step(
       'Verify Save&Submit is enabled when file is uploaded',
       async () => {
-        await dialHomePage.stopNetworkConditionsEmulating(client);
-        await baseAssertion.assertElementState(
-          editMessageInputAttachments.inputAttachmentLoadingIndicator(
-            Attachment.sunImageName,
-          ),
-          'hidden',
-        );
         await baseAssertion.assertElementActionabilityState(
           chatMessages.saveAndSubmit,
           'enabled',
