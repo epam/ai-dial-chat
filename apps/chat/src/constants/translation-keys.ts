@@ -445,6 +445,13 @@ export enum SettingsI18nKeys {
   KeyboardShortcuts = 'settings.keyboardShortcuts',
   ShortcutEnter = 'settings.shortcutEnter',
   ShortcutMetaEnter = 'settings.shortcutMetaEnter',
+  NavSectionLabel = 'settings.navSectionLabel',
+  NavAriaLabel = 'settings.navAriaLabel',
+  General = 'settings.general',
+  Preferences = 'settings.preferences',
+  Usage = 'settings.usage',
+  UsagePageSubtitle = 'settings.usagePageSubtitle',
+  UsageByModel = 'settings.usageByModel',
 }
 
 export enum ConversationPanelI18nKeys {

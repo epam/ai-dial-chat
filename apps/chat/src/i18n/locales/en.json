@@ -386,7 +386,14 @@
     "themeSystem": "System",
     "keyboardShortcuts": "Keyboard shortcuts",
     "shortcutEnter": "Enter — send message, Shift+Enter — new line",
-    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter — new line"
+    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter — new line",
+    "navSectionLabel": "Settings",
+    "navAriaLabel": "Settings navigation",
+    "general": "General",
+    "preferences": "Preferences",
+    "usage": "Usage",
+    "usagePageSubtitle": "Per-model figures below sum to the totals · settle after each response · times in your timezone · set by your organization.",
+    "usageByModel": "By model"
   },
   "attachments": {
     "downloadFile": "Download file",

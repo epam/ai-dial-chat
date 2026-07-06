@@ -84,6 +84,9 @@ const ConversationSharedInvitationPage = lazy(
     import('../pages/ConversationSharedInvitation/ConversationSharedInvitation'),
 );
 const NotFoundPage = lazy(() => import('../pages/NotFound/NotFound'));
+const ProfileUsagePage = lazy(
+  () => import('../pages/ProfileUsage/ProfileUsage'),
+);
 
 // Start loading the module immediately so the Suspense fallback is skipped on first navigation.
 const conversationPageModule = import('../pages/Conversation/Conversation');
@@ -411,6 +414,16 @@ const App: FC = () => {
                 <RouteErrorBoundary>
                   <Suspense fallback={<RouteFallback />}>
                     <ToolsetEditorPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.ProfileUsage}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ProfileUsagePage />
                   </Suspense>
                 </RouteErrorBoundary>
               }

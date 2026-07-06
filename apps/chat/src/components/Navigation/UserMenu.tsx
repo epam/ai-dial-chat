@@ -15,10 +15,12 @@ import {
   IconLanguage,
   IconLogout,
   IconMoon,
+  IconSettings,
   IconSun,
 } from '@tabler/icons-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   AuthI18nKeys,
   ButtonsI18nKeys,
@@ -39,6 +41,7 @@ import { useThemeOptions } from '../../hooks/theme/useThemeOptions';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { AuthStatus } from '../../types/auth-status';
+import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import AvatarInitials from './AvatarInitials';
@@ -47,6 +50,7 @@ import MenuItemLabel from './MenuItemLabel';
 export const UserMenu = memo(() => {
   const { status, user } = useUser();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { hasDark, hasLight, selectedTheme, setTheme } = useThemeOptions();
   const { preference, setPreference } = useKeyboardShortcutPreference();
   const { language, changeLanguage } = useLanguage();
@@ -201,6 +205,16 @@ export const UserMenu = memo(() => {
           },
         ]
       : []),
+    {
+      key: 'settings',
+      label: (
+        <span className="dial-small-text">
+          {t(SettingsI18nKeys.NavSectionLabel)}
+        </span>
+      ),
+      icon: <IconSettings size={DIAL_ICON_SIZE.SM} aria-hidden />,
+      onClick: () => navigate(ROUTES.ProfileUsage),
+    },
     { key: 'divider-1', type: DropdownItemType.Divider },
     {
       key: 'logout',
