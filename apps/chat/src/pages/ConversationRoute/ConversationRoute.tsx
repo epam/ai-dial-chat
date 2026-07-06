@@ -576,6 +576,7 @@ const ConversationRoute: FC = () => {
             allowedTypes={inputAttachmentTypes}
             maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
             maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
+            canAttachFolders={selectedDeployment?.features?.folderAttachments}
             title={t(DialFileManagerI18nKeys.Title)}
             attachLabel={t(DialFileManagerI18nKeys.Attach)}
             emptyTitle={t(DialFileManagerI18nKeys.Empty)}

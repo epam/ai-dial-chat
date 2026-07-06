@@ -1,21 +1,84 @@
 import type { ProviderInfoDto } from '@epam/chat-api-client';
-import { memo, useCallback, useEffect, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { AuthI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { getProviders } from '../../server-api/auth.api';
+import { getIconPath } from '../../utils/icon-path';
+import { ButtonAppearance, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
-// TODO: change styles, add app logo, etc.
-const LoginPage = () => {
+const getProviderIconUrl = (id: string) =>
+  `https://authjs.dev/img/providers/${id.replace(/[1-9]\d*$/, '')}.svg`;
+
+const handleIconError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+  e.currentTarget.style.display = 'none';
+};
+
+const renderProviders = (
+  providers: ProviderInfoDto[],
+  callbackUrl: string,
+  signInLabel: string,
+) => (
+  <>
+    <p className="text-center text-base text-primary">{signInLabel}</p>
+    <div className="flex w-full flex-col gap-3">
+      {providers.map((provider) => {
+        const href = `/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+        return (
+          <DialNeutralButton
+            key={provider.id}
+            className="w-full"
+            appearance={ButtonAppearance.Outlined}
+            iconBefore={
+              <img
+                src={getProviderIconUrl(provider.id)}
+                alt=""
+                aria-hidden="true"
+                className="size-5 shrink-0"
+                onError={handleIconError}
+              />
+            }
+            label={provider.label}
+            onClick={() => {
+              window.location.href = href;
+            }}
+          />
+        );
+      })}
+    </div>
+  </>
+);
+
+const LoginPage: FC = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const callbackUrl =
-    searchParams.get('callbackUrl') ?? `${window.location.origin}/`;
+  const callbackUrl = useMemo(() => {
+    const raw = searchParams.get('callbackUrl');
+    if (raw) {
+      if (raw.startsWith('//')) return `${window.location.origin}/`;
+      try {
+        const parsed = new URL(raw);
+        if (parsed.origin === window.location.origin) return raw;
+      } catch {
+        // fall through to default
+      }
+    }
+    return `${window.location.origin}/`;
+  }, [searchParams]);
   useUser(); // subscribes to auth state so useAuthRedirect can redirect authenticated users away from /login
   useAuthRedirect();
 
+  const { currentThemeFavicon } = useTheme();
   const [providers, setProviders] = useState<ProviderInfoDto[] | null>(null);
   const [hasError, setHasError] = useState(false);
 
@@ -23,10 +86,11 @@ const LoginPage = () => {
     async (signal: { isCancelled: boolean }) => {
       try {
         const data = await getProviders();
-        if (!signal.isCancelled) setProviders(data);
-      } catch (err) {
         if (!signal.isCancelled) {
-          console.error(err);
+          setProviders(data);
+        }
+      } catch {
+        if (!signal.isCancelled) {
           setHasError(true);
         }
       }
@@ -42,36 +106,54 @@ const LoginPage = () => {
     };
   }, [loadProviders]);
 
-  if (hasError) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>{t(AuthI18nKeys.ProvidersError)}</p>
-      </div>
-    );
-  }
-
-  if (!providers) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>{t(AuthI18nKeys.Loading)}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-semibold">{t(AuthI18nKeys.LoginTitle)}</h1>
-      <p className="text-secondary">{t(AuthI18nKeys.LoginDescription)}</p>
-      <div className="flex flex-col gap-2">
-        {providers.map((provider) => (
-          <a
-            key={provider.id}
-            href={`/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`}
-            className="border-accent hover:bg-accent-secondary rounded border px-6 py-2 text-center"
-          >
-            {t(AuthI18nKeys.ProviderButtonLabel, { provider: provider.label })}
-          </a>
-        ))}
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-2 mobile:bg-layer-0 mobile:px-6">
+      <div
+        className="pointer-events-none absolute inset-0 size-full mobile:hidden"
+        aria-hidden="true"
+      >
+        <picture className="block size-full">
+          <source media="(min-width: 1920px)" srcSet="/1920_login.png" />
+          <img src="/768_login.png" alt="" className="size-full object-cover" />
+        </picture>
+      </div>
+
+      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-overlay p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
+        {currentThemeFavicon && (
+          <span
+            style={{
+              backgroundImage: `url("${getIconPath(currentThemeFavicon)}")`,
+            }}
+            className="size-8 shrink-0 bg-contain bg-center bg-no-repeat"
+            aria-hidden="true"
+          />
+        )}
+
+        <div className="flex w-full flex-col items-center gap-8 mobile:gap-6">
+          <h1 className="text-center text-[28px] font-semibold leading-10 text-primary mobile:text-[22px] mobile:leading-8">
+            {t(AuthI18nKeys.LoginTitle)}
+          </h1>
+
+          <div className="flex w-full flex-col items-center gap-5 desktop:w-[400px]">
+            {hasError && (
+              <p className="text-center text-primary">
+                {t(AuthI18nKeys.ProvidersError)}
+              </p>
+            )}
+            {!hasError && !providers && (
+              <p className="text-center text-primary">
+                {t(AuthI18nKeys.Loading)}
+              </p>
+            )}
+            {!hasError &&
+              providers &&
+              renderProviders(
+                providers,
+                callbackUrl,
+                t(AuthI18nKeys.LoginDescription),
+              )}
+          </div>
+        </div>
       </div>
     </div>
   );
