@@ -15,8 +15,8 @@ export class RenameConversationBodyDto {
 
 export class RenameConversationResponseDto {
   @ApiProperty({
-    description: 'New relative path of the renamed conversation',
-    example: 'conversations/bucket/gpt-4o__My renamed chat__uuid',
+    description: 'Sanitised stored display name of the renamed conversation',
+    example: 'My renamed chat',
   })
-  newPath!: string;
+  name!: string;
 }

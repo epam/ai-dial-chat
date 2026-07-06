@@ -374,9 +374,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
       setIsRenaming(true);
       setRenameError(null);
-      let newPath: string;
       try {
-        newPath = await renameConversation(id, newTitle);
+        await renameConversation(id, newTitle);
       } catch {
         setRenameError(t(ConversationPanelI18nKeys.RenameError));
         setIsRenaming(false);
@@ -384,20 +383,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       }
       setIsRenaming(false);
       setPendingRenameItem(null);
-
-      const activeContextId = panelActiveConversationId
-        ? panelToContextId.get(panelActiveConversationId)
-        : undefined;
-      if (activeContextId === id) navigate(getConversationRoute(newPath));
     },
-    [
-      pendingRenameItem,
-      renameConversation,
-      panelActiveConversationId,
-      panelToContextId,
-      navigate,
-      t,
-    ],
+    [pendingRenameItem, renameConversation, t],
   );
 
   const handleCloseRenameDialog = useCallback(() => {

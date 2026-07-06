@@ -472,28 +472,40 @@ describe('ConversationService', () => {
       expect(result.name).toBe('Docker networking basics');
     });
 
-    it('prefers the path title when the conversation was path-renamed after LLM naming', async () => {
+    it('returns the manually-renamed stored name even when the filename still encodes the old title', async () => {
       vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
         data: {
           ...TEST_CONVERSATION,
-          name: 'Docker networking basics',
+          name: 'New Title',
           llmNamingDone: true,
-          messages: [
-            {
-              role: ConversationMessageRole.User,
-              content: 'How does Docker networking work?',
-            },
-          ],
         },
       } as never);
 
       const result = await service.getConversation(
-        'test-bucket/gpt-4o__My custom title',
+        'test-bucket/gpt-4o__Old Title__uuid',
         'test-token',
         'test-bucket',
       );
 
-      expect(result.name).toBe('My custom title');
+      expect(result.name).toBe('New Title');
+    });
+
+    it('falls back to the filename-derived title when naming is not yet final', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: {
+          ...TEST_CONVERSATION,
+          name: 'How does Docker networking work?',
+          llmNamingDone: false,
+        },
+      } as never);
+
+      const result = await service.getConversation(
+        'test-bucket/gpt-4o__How does Docker networking work?',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.name).toBe('How does Docker networking work?');
     });
   });
 
@@ -519,16 +531,14 @@ describe('ConversationService', () => {
       );
     });
 
-    it('preserves nested deployment paths when renaming', async () => {
-      const moveSpy = vi
-        .spyOn(service['client'], 'moveResource')
-        .mockResolvedValue({ data: {} } as never);
+    it('renames at the same path without moving the resource', async () => {
+      const moveSpy = vi.spyOn(service['client'], 'moveResource');
       const getSpy = vi
         .spyOn(service['client'], 'getConversation')
         .mockResolvedValue({
           data: {
             ...TEST_CONVERSATION,
-            name: 'LLM generated title',
+            name: 'Old Title',
             llmNamingDone: true,
           },
         } as never);
@@ -543,24 +553,15 @@ describe('ConversationService', () => {
         'test-bucket',
       );
 
-      expect(moveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: {
-            sourceUrl: `conversations/test-bucket/${conversationPath}`,
-            destinationUrl:
-              'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__renamed',
-            overwrite: false,
-          },
-        }),
-      );
+      expect(moveSpy).not.toHaveBeenCalled();
       expect(getSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+        conversationPath,
         expect.any(Object),
       );
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+        conversationPath,
         expect.objectContaining({
           body: expect.objectContaining({
             name: 'renamed',
@@ -568,9 +569,23 @@ describe('ConversationService', () => {
           }),
         }),
       );
-      expect(result.newPath).toBe(
-        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__renamed',
-      );
+      expect(result).toEqual({ name: 'renamed' });
+    });
+
+    it('throws NotFoundException when the conversation to rename does not exist', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: null,
+        error: { status: 404 },
+      } as never);
+
+      await expect(
+        service.renameConversation(
+          conversationPath,
+          'renamed',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow('Conversation not found');
     });
 
     it('preserves nested deployment paths when duplicating', async () => {
