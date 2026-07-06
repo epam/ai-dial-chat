@@ -163,7 +163,7 @@
       "type": "string",
       "enum": ["full", "incremental"],
       "default": "full",
-      "description": "Diff scope the agent reviews on pull_request runs. `full` (default) reviews the whole PR (origin/<base>...HEAD) on every push — unchanged legacy behavior. `incremental` narrows re-reviews to the commits pushed since the previous run (github.event.before); the first review, and any force-push or rebase, fall back to the full diff. The range is computed on the runner and substituted into the composed prompt, so opting one agent in does not change the prompt or behavior of any other agent."
+      "description": "Diff scope the agent reviews on pull_request runs. `full` (default) reviews the whole PR (origin/<base>...HEAD) on every push — unchanged legacy behavior. `incremental` narrows re-reviews to the commits since the one this stage last reviewed — read on the runner from the original_commit_id of this stage's own prior inline comments, so a cancelled or timed-out run (which posts nothing) falls back to the last successfully reviewed commit rather than skipping its commits; the first review, and any force-push or rebase, fall back to the full diff. The range is computed on the runner and substituted into the composed prompt, so opting one agent in does not change the prompt or behavior of any other agent."
     },
     "analysis_ref": {
       "type": "string",

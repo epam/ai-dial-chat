@@ -44,7 +44,7 @@ inputs:
     required: false
     default: 'false'
   diff_mode:
-    description: 'Diff scope for pull_request runs: "full" (default, whole PR = origin/<base>...HEAD) or "incremental" (commits pushed since the previous run = github.event.before, with a full-diff fallback on the first review / force-push / rebase). The concrete range is computed on the runner and substituted into the composed prompt; leaving it "full" keeps the prompt byte-identical to prior behavior.'
+    description: 'Diff scope for pull_request runs: "full" (default, whole PR = origin/<base>...HEAD) or "incremental" (commits since the one this stage last reviewed, read on the runner from the original_commit_id of this stage''s own prior inline comments; a cancelled/timed-out run posts none, so it falls back to the last successfully reviewed commit — and to the full diff on the first review / force-push / rebase). The concrete range is computed on the runner and substituted into the composed prompt; leaving it "full" keeps the prompt byte-identical to prior behavior.'
     required: false
     default: 'full'
 
@@ -80,7 +80,9 @@ runs:
         UPSTREAM_ARTIFACTS: ${{ inputs.upstream_artifacts }}
         RUNNER_TEMP: ${{ runner.temp }}
         DIFF_MODE: ${{ inputs.diff_mode }}
-        PREV_SHA: ${{ github.event.before }}
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
       run: |
         set -euo pipefail
         if [ -z "${SKILL}" ]; then
@@ -89,9 +91,13 @@ runs:
         fi
 
         DIFF_RANGE="origin/${GITHUB_BASE_REF:-main}...HEAD"
-        if [ "${DIFF_MODE:-full}" = "incremental" ] && [ -n "${PREV_SHA:-}" ] \
-           && git merge-base --is-ancestor "${PREV_SHA}" HEAD 2>/dev/null; then
-          DIFF_RANGE="${PREV_SHA}..HEAD"
+        if [ "${DIFF_MODE:-full}" = "incremental" ] && [ -n "${PR_NUMBER:-}" ]; then
+          PREV_SHA="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"<!-- dial-sdlc-inline:${STAGE_NAME}:\")) | [.created_at, .original_commit_id] | @tsv" 2>/dev/null \
+            | sort | tail -n1 | cut -f2 || true)"
+          if [ -n "${PREV_SHA:-}" ] && git merge-base --is-ancestor "${PREV_SHA}" HEAD 2>/dev/null; then
+            DIFF_RANGE="${PREV_SHA}..HEAD"
+          fi
         fi
         export DIFF_RANGE
         echo "Diff range for agent: ${DIFF_RANGE}"
