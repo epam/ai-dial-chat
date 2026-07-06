@@ -14,8 +14,10 @@ export enum ToolsetCredentialsLevel {
   App = 'APP',
 }
 
-// Allowlist for the toolset reference/url that is forwarded to DIAL Core and
-// written to log lines. Mirrors the deployment-id character set.
+/*
+ * Allowlist for the toolset reference/url that is forwarded to DIAL Core and
+ * written to log lines. Mirrors the deployment-id character set.
+ */
 const TOOLSET_URL_PATTERN = /^(?:[\w.\-:@/]|%[\dA-Fa-f]{2})+$/;
 const TOOLSET_URL_MESSAGE =
   'Must contain only supported characters or valid percent-encoded bytes';

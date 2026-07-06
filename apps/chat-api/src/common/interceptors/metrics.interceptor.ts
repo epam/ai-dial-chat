@@ -33,8 +33,10 @@ export class MetricsInterceptor implements NestInterceptor {
 
           this.logger.log(`${method} ${url} ${statusCode} - ${duration}ms`);
 
-          // TODO: Send metrics to monitoring service (Prometheus, DataDog, etc.)
-          // Example: metricsService.recordHttpRequest({ method, url, statusCode, duration });
+          /*
+           * TODO: Send metrics to monitoring service (Prometheus, DataDog, etc.)
+           * Example: metricsService.recordHttpRequest({ method, url, statusCode, duration });
+           */
         },
         error: (error: unknown) => {
           const duration = Date.now() - startTime;
@@ -44,8 +46,10 @@ export class MetricsInterceptor implements NestInterceptor {
             `${method} ${url} ${statusCode} - ${duration}ms - Error: ${message}`,
           );
 
-          // TODO: Send error metrics to monitoring service
-          // Example: metricsService.recordHttpError({ method, url, statusCode, duration, error });
+          /*
+           * TODO: Send error metrics to monitoring service
+           * Example: metricsService.recordHttpError({ method, url, statusCode, duration, error });
+           */
         },
       }),
     );

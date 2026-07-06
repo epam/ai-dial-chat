@@ -109,8 +109,10 @@ export const Filter: FC<FilterProps> = ({
     setPendingMyApps(isMyAppsActive ?? false);
   }, [isOpen, checked, isMyAppsActive]);
 
-  // Keyboard navigation — roving tabindex across checkbox rows only.
-  // Footer buttons live outside the roving group (natural tab order).
+  /*
+   * Keyboard navigation — roving tabindex across checkbox rows only.
+   * Footer buttons live outside the roving group (natural tab order).
+   */
   const totalItems = topics.length + 1;
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -147,8 +149,10 @@ export const Filter: FC<FilterProps> = ({
     }
   };
 
-  // Arrow keys navigate checkbox rows; Escape closes. Footer buttons stop
-  // propagation of Arrow keys so they don't accidentally move row focus.
+  /*
+   * Arrow keys navigate checkbox rows; Escape closes. Footer buttons stop
+   * propagation of Arrow keys so they don't accidentally move row focus.
+   */
   const handleMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();

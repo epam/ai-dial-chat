@@ -56,8 +56,10 @@ const readResponseBody = async (response: Response): Promise<string> => {
   }
 };
 
-// The runtime threads the exact `init` object built in `csrfMiddleware.pre`
-// through to `post`, so the token actually sent can be read back from it.
+/*
+ * The runtime threads the exact `init` object built in `csrfMiddleware.pre`
+ * through to `post`, so the token actually sent can be read back from it.
+ */
 const getDispatchCsrfToken = (init: RequestInit): string | null =>
   new Headers(init.headers).get('X-CSRF-Token');
 

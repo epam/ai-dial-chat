@@ -42,8 +42,10 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     [colors],
   );
 
-  // Track actual panel width so the closing animation matches the real size,
-  // not the defaultWidth prop (relevant when the panel has been resized).
+  /*
+   * Track actual panel width so the closing animation matches the real size,
+   * not the defaultWidth prop (relevant when the panel has been resized).
+   */
   const currentWidthRef = useRef(defaultWidth);
   const [animationMaxWidth, setAnimationMaxWidth] = useState(
     isOpen ? defaultWidth : 0,

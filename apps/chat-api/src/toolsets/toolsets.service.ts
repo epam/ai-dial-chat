@@ -112,8 +112,10 @@ const toDialAuthSettings = (
   return { authentication_type: auth.authenticationType };
 };
 
-// Maps the camelCase request DTO to the snake_case body DIAL Core expects,
-// only including auth fields relevant to the selected authentication type.
+/*
+ * Maps the camelCase request DTO to the snake_case body DIAL Core expects,
+ * only including auth fields relevant to the selected authentication type.
+ */
 const toDialToolsetBody = (
   body: ToolsetBodyDto,
   version: string,
