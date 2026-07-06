@@ -10,11 +10,12 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { AppService } from '../app/app.service';
-import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
-} from '../common/utils/dial-fetch-error';
+} from '../common/dial/dial-error.mapper';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
@@ -48,12 +49,6 @@ interface DialToolsetResource {
   path: string;
 }
 
-const encodeDialToolsetPath = (path: string): string =>
-  path
-    .split('/')
-    .map((segment) => encodeURIComponent(safeDecodeURIComponent(segment)))
-    .join('/');
-
 const parseDialToolsetResource = (
   toolsetName: string,
 ): DialToolsetResource | undefined => {
@@ -68,7 +63,7 @@ const parseDialToolsetResource = (
     throw new BadRequestException('Toolset id must include bucket and path');
   }
 
-  return { bucket, path: encodeDialToolsetPath(path) };
+  return { bucket, path: encodeDialResourcePath(path) };
 };
 
 const toDialAuthSettings = (
@@ -373,7 +368,7 @@ export class ToolsetsService extends AppService {
 
     return {
       bucket: await this.getUserBucket(authHeaders, 'get user bucket'),
-      path: encodeDialToolsetPath(toolsetName),
+      path: encodeDialResourcePath(toolsetName),
     };
   }
 

@@ -3,11 +3,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { AppService } from '../app/app.service';
-import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
-} from '../common/utils/dial-fetch-error';
+} from '../common/dial/dial-error.mapper';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import type { EnvironmentVariables } from '../config/environment.config';
 import type { ApplicationsResponseDto } from './dto/application.dto';
 import type {

@@ -1,5 +1,4 @@
 import { StringUtils } from '../../common/utils/string-utils';
-import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { COMPOUND_TOKEN_PREFIX } from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 
@@ -137,13 +136,6 @@ export const buildRenamedConversationPath = (
     ? [...segments.slice(0, -1), renamedFilename].join('/')
     : renamedFilename;
 };
-
-// TODO: Remove this once the DIAL SDK encodes resource path segments internally.
-export const encodeDialResourcePath = (path: string): string =>
-  path
-    .split('/')
-    .map((segment) => encodeURIComponent(safeDecodeURIComponent(segment)))
-    .join('/');
 
 /** Builds the full DIAL Core resource URL for a conversation: `conversations/<bucket>/<path>` */
 export const buildConversationUrl = (
