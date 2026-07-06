@@ -393,9 +393,19 @@ export const useFileManager = ({
     },
     resolvedInitialTab,
   );
+
+  const [showHiddenFiles, setShowHiddenFiles] = useState(
+    resolvedInitialTab === DialFileManagerTabs.Review,
+  );
+
+  const handleToggleHiddenFiles = useCallback((value: boolean) => {
+    setShowHiddenFiles(value);
+  }, []);
+
   const handleTabChangeWithRefresh = useCallback(
     (tab: DialFileManagerTabs) => {
       handleTabChange(tab);
+      setShowHiddenFiles(tab === DialFileManagerTabs.Review);
       if (tab === DialFileManagerTabs.MyFiles) {
         dispatch(
           FilesActions.getFilesWithFolders({ skipShareListingsRefresh: true }),
@@ -1565,6 +1575,9 @@ export const useFileManager = ({
     sharedWithMeIds,
 
     uploadEnabled,
+
+    showHiddenFiles,
+    handleToggleHiddenFiles,
 
     emptyStateDescription,
     emptyStateTitle,
