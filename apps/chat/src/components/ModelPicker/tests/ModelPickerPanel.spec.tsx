@@ -28,19 +28,19 @@ describe('ModelPickerPanel', () => {
   it('shows a favorited Application in the list', () => {
     renderPanel([makeItem('app-1', CatalogEntityType.Application)]);
 
-    expect(screen.getByText('app-1')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /app-1/ })).toBeTruthy();
   });
 
   it('shows a favorited Model in the list', () => {
     renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
 
-    expect(screen.getByText('model-1')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /model-1/ })).toBeTruthy();
   });
 
   it('shows a favorited Agent in the list', () => {
     renderPanel([makeItem('agent-1', CatalogEntityType.Agent)]);
 
-    expect(screen.getByText('agent-1')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /agent-1/ })).toBeTruthy();
   });
 
   it.each([
@@ -51,7 +51,7 @@ describe('ModelPickerPanel', () => {
   ])('excludes a favorited %s from the list', (type) => {
     renderPanel([makeItem('non-talkable-1', type)]);
 
-    expect(screen.queryByText('non-talkable-1')).toBeNull();
+    expect(screen.queryByRole('button', { name: /non-talkable-1/ })).toBeNull();
   });
 
   it('shows Models and Applications together', () => {
@@ -61,8 +61,8 @@ describe('ModelPickerPanel', () => {
       makeItem('toolset-1', CatalogEntityType.Toolset),
     ]);
 
-    expect(screen.getByText('model-1')).toBeTruthy();
-    expect(screen.getByText('app-1')).toBeTruthy();
-    expect(screen.queryByText('toolset-1')).toBeNull();
+    expect(screen.getByRole('button', { name: /model-1/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /app-1/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /toolset-1/ })).toBeNull();
   });
 });
