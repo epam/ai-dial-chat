@@ -3,7 +3,7 @@ You are running the **{{stage}}** agent.
 ## Inputs
 
 - Working tree: the current checkout (repo root).
-- PR diff: `git diff origin/{{base_ref}}...HEAD`.
+- PR diff: `git diff {{diff_range}}`.
 - Upstream agent outputs:
   {{upstream_inputs}}
 

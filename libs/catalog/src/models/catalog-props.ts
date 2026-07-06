@@ -84,6 +84,8 @@ export interface CatalogProps {
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /** Called when the "Use in chat" button is clicked in the details panel. */
   onUseInChat?: (item: CatalogItem) => void;
+  /** Controls whether the primary action button is shown for an item. */
+  isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked in the details panel. */
   onShare?: (item: CatalogItem) => void;
   /**

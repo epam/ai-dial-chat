@@ -33,6 +33,7 @@ export const Catalog: FC<CatalogProps> = ({
   titles,
   onToggleFavorite,
   onUseInChat,
+  isPrimaryActionVisible,
   onShare,
   onFetchAboutContent,
   onCreateClick,
@@ -351,6 +352,7 @@ export const Catalog: FC<CatalogProps> = ({
           onClose={handleCloseDetails}
           onToggleFavorite={onToggleFavorite}
           onUseInChat={onUseInChat}
+          isPrimaryActionVisible={isPrimaryActionVisible}
           onShare={onShare}
           texts={detailsTexts}
         />
