@@ -71,16 +71,20 @@ export function ApplicationDetails({
     WidgetsSelectors.selectWidgetsSchemaIds,
   );
 
+  const isSuggestedEntity =
+    isSuggested || (isMyAppsTab && !installedModelIds.has(entity.reference));
   const filteredEntities = useMemo(() => {
     const filtered = allEntities.filter(
       (e) =>
         getGroupMarketplaceEntityKey(entity) ===
           getGroupMarketplaceEntityKey(e) &&
-        (!isMyAppsTab || installedModelIds.has(e.reference) || isSuggested),
+        (!isMyAppsTab ||
+          installedModelIds.has(e.reference) ||
+          isSuggestedEntity),
     );
 
     return isMyApplication(entity) ? sortItemsVersions(filtered) : filtered;
-  }, [allEntities, entity, installedModelIds, isMyAppsTab, isSuggested]);
+  }, [allEntities, entity, installedModelIds, isMyAppsTab, isSuggestedEntity]);
 
   const handleUseEntity = useCallback(() => {
     if (widgetsSchemaIds.has(entity.applicationTypeSchemaId as string)) {

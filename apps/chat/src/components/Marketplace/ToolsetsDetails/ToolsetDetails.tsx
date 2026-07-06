@@ -52,13 +52,17 @@ export function ToolsetDetails({
   const installedToolsetsIds = useAppSelector(
     ToolsetSelectors.selectInstalledToolsetsSet,
   );
+  const isSuggestedEntity =
+    isSuggested ||
+    (isMyWorkspaceTab && !installedToolsetsIds.has(entity.reference));
+
   const filteredEntities = useMemo(() => {
     const filtered = allEntities.filter(
       (e) =>
         getGroupMarketplaceEntityKey(entity) ===
           getGroupMarketplaceEntityKey(e) &&
         (!isMyWorkspaceTab ||
-          isSuggested ||
+          isSuggestedEntity ||
           installedToolsetsIds.has(e.reference)),
     );
 
@@ -68,7 +72,7 @@ export function ToolsetDetails({
     entity,
     installedToolsetsIds,
     isMyWorkspaceTab,
-    isSuggested,
+    isSuggestedEntity,
   ]);
 
   return (
