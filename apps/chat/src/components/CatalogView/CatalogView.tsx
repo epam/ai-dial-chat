@@ -36,6 +36,7 @@ const CatalogView: FC = () => {
     isLoading: isDeploymentsLoading,
     schemas,
     toolsets,
+    setSelectedItemId,
   } = useDeployments();
   const {
     favoriteIds,
@@ -103,6 +104,21 @@ const CatalogView: FC = () => {
     [isLoading, toggleFavorite, catalogItems, showNotification, t],
   );
 
+  const handleUseInChat = useCallback(
+    (item: CatalogItem) => {
+      setSelectedItemId(item.id);
+      navigate(ROUTES.Root);
+    },
+    [setSelectedItemId, navigate],
+  );
+
+  const isPrimaryActionVisible = useCallback(
+    (item: CatalogItem) =>
+      item.type === CatalogEntityType.Model ||
+      item.type === CatalogEntityType.Application,
+    [],
+  );
+
   const buildEditorUrl = useCallback((schemaId: string): string => {
     const params = new URLSearchParams({
       [AppsEditorQuery.Step]: AppsEditorStep.General,
@@ -148,6 +164,8 @@ const CatalogView: FC = () => {
       createOptions={createOptions}
       onFetchAboutContent={fetchAboutContent}
       onToggleFavorite={onToggleFavorite}
+      onUseInChat={handleUseInChat}
+      isPrimaryActionVisible={isPrimaryActionVisible}
       styles={{
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },
       }}

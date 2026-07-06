@@ -144,6 +144,15 @@ export enum CatalogI18nKeys {
   PickerRemoveFromFavorites = 'catalog.picker.removeFromFavoritesLabel',
 }
 
+export enum NotFoundI18nKeys {
+  AriaLabel = 'notFound.ariaLabel',
+  Eyebrow = 'notFound.eyebrow',
+  Title = 'notFound.title',
+  Description = 'notFound.description',
+  OpenCatalog = 'notFound.openCatalog',
+  NewChat = 'notFound.newChat',
+}
+
 export enum DeploymentsI18nKeys {
   Empty = 'deployments.empty',
   TypeModel = 'deployments.type.model',

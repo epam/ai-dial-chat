@@ -103,9 +103,20 @@ vi.mock('../../Toolbar/Toolbar', () => ({
   ),
 }));
 vi.mock('../../CardGrid/CardGrid', () => ({
-  CardGrid: ({ items }: { items: { id: string }[] }) => (
+  CardGrid: ({
+    items,
+    onItemClick,
+  }: {
+    items: CatalogItem[];
+    onItemClick: (item: CatalogItem) => void;
+  }) => (
     <div role="grid" aria-label="catalog grid">
       {items.length} items
+      {items.map((item) => (
+        <button key={item.id} onClick={() => onItemClick(item)}>
+          {item.name}
+        </button>
+      ))}
     </div>
   ),
 }));
@@ -116,6 +127,20 @@ vi.mock('../../Favorites/Favorites', () => ({
 }));
 vi.mock('../../ListView/ListView', () => ({
   ListView: () => <div role="grid" aria-label="catalog list" />,
+}));
+vi.mock('../../Details/DetailsPanel', () => ({
+  DetailsPanel: ({
+    item,
+    isPrimaryActionVisible,
+  }: {
+    item: CatalogItem;
+    isPrimaryActionVisible?: (item: CatalogItem) => boolean;
+  }) => (
+    <div>
+      <span>{item.name}</span>
+      <span>{String(isPrimaryActionVisible?.(item))}</span>
+    </div>
+  ),
 }));
 
 const makeItem = (
@@ -224,5 +249,19 @@ describe('Catalog', () => {
     expect(
       screen.getByRole('grid', { name: 'catalog grid' }).textContent,
     ).toContain('1 items');
+  });
+
+  it('passes primary action visibility predicate to the details panel', async () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        isPrimaryActionVisible={(item) => item.id === '1'}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(screen.getByText('true')).toBeTruthy();
   });
 });

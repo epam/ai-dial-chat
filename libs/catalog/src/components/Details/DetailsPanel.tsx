@@ -24,6 +24,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onClose,
   onToggleFavorite,
   onUseInChat,
+  isPrimaryActionVisible,
   onShare,
   texts,
   styles: detailsStyles,
@@ -143,6 +144,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           <Header
             item={item}
             onUseInChat={onUseInChat}
+            isPrimaryActionVisible={isPrimaryActionVisible}
             onShare={onShare}
             texts={texts}
             detailsStyles={detailsStyles}
