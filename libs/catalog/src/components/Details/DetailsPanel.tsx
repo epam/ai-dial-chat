@@ -148,11 +148,11 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             detailsStyles={detailsStyles}
           />
 
-          <div className={mergeClasses('shrink-0', styles.divider)} />
+          <div className={styles.divider} />
 
           <Summary item={item} texts={texts} detailsStyles={detailsStyles} />
 
-          <div className="shrink-0 px-[22px]">
+          <div className="px-[22px]">
             <TabRow
               tabs={tabs}
               activeTabId={activeTab}
@@ -163,11 +163,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           </div>
 
           <div
-            className={
-              activeTab !== CatalogDetailsTab.Overview
-                ? 'px-[22px] py-4'
-                : undefined
-            }
+            className={mergeClasses(
+              activeTab !== CatalogDetailsTab.Overview && 'px-[22px] py-4',
+            )}
           >
             {activeTab === CatalogDetailsTab.About && (
               <AboutTab
