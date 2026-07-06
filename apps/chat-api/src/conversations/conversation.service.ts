@@ -10,8 +10,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import { AppService } from '../app/app.service';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { handleDialError } from '../common/utils/dial-error';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
@@ -57,7 +58,6 @@ import {
   getDeploymentKey,
   decodeNextToken,
   encodeCompoundToken,
-  encodeDialResourcePath,
   getConversationName,
   getConversationTitleFromName,
   prepareEntityName,
@@ -163,10 +163,7 @@ export class ConversationService extends AppService {
     };
 
     try {
-      const encodedConversationPath = conversationPath
-        .split('/')
-        .map((segment) => encodeURIComponent(safeDecodeURIComponent(segment)))
-        .join('/');
+      const encodedConversationPath = encodeDialResourcePath(conversationPath);
       const { data, error } = (await this.client.saveConversation(
         bucket,
         encodedConversationPath,
@@ -177,13 +174,21 @@ export class ConversationService extends AppService {
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
-        return handleDialError(error);
+        return handleDialSdkError(
+          error,
+          'conversations.createConversation',
+          this.logger,
+        );
       }
 
       return { ...data, ...conversation } as ConversationResponseDto;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.createConversation',
+        this.logger,
+      );
     }
   }
 
@@ -211,7 +216,11 @@ export class ConversationService extends AppService {
         : { ...conversation, name: resolvedName };
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversation', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.getConversation',
+        this.logger,
+      );
     }
   }
 
@@ -317,11 +326,19 @@ export class ConversationService extends AppService {
       )) as { data?: unknown; error?: unknown };
       if (error != null) {
         this.logger.error('DIAL Core rejected deleteConversation', error);
-        handleDialError(error);
+        handleDialSdkError(
+          error,
+          'conversations.deleteConversation',
+          this.logger,
+        );
       }
     } catch (error) {
       this.logger.error('DIAL Core rejected deleteConversation', error);
-      handleDialError(error);
+      handleDialSdkError(
+        error,
+        'conversations.deleteConversation',
+        this.logger,
+      );
     }
 
     // Remove from pins if present — fire-and-forget, non-fatal
@@ -381,7 +398,11 @@ export class ConversationService extends AppService {
       this.logger.error('DIAL Core rejected saveConversation (rename)', {
         error: saveError,
       });
-      return handleDialError(saveError);
+      return handleDialSdkError(
+        saveError,
+        'conversations.renameConversation',
+        this.logger,
+      );
     }
 
     return { name: sanitisedTitle };
@@ -425,7 +446,11 @@ export class ConversationService extends AppService {
         'Could not read source conversation for duplicate',
         readError,
       );
-      return handleDialError(readError);
+      return handleDialSdkError(
+        readError,
+        'conversations.duplicateConversation',
+        this.logger,
+      );
     }
 
     /*
@@ -480,7 +505,11 @@ export class ConversationService extends AppService {
     )) as { error?: unknown };
     if (saveError != null) {
       this.logger.error('Could not save duplicated conversation', saveError);
-      return handleDialError(saveError);
+      return handleDialSdkError(
+        saveError,
+        'conversations.duplicateConversation',
+        this.logger,
+      );
     }
 
     return { newPath: destinationUrl };
@@ -554,7 +583,11 @@ export class ConversationService extends AppService {
           'DIAL Core rejected listConversations (user bucket)',
           userError,
         );
-        return handleDialError(userError);
+        return handleDialSdkError(
+          userError,
+          'conversations.listConversations',
+          this.logger,
+        );
       }
 
       const { data: publicData, error: publicError } = publicResult;
@@ -714,7 +747,11 @@ export class ConversationService extends AppService {
       };
     } catch (error) {
       this.logger.error('DIAL Core listConversations failed', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.listConversations',
+        this.logger,
+      );
     }
   }
 
@@ -736,12 +773,20 @@ export class ConversationService extends AppService {
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected getConversationMetadata', error);
-        return handleDialError(error);
+        return handleDialSdkError(
+          error,
+          'conversations.getConversationMetadata',
+          this.logger,
+        );
       }
       return data as ConversationMetadataDto;
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversationMetadata', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.getConversationMetadata',
+        this.logger,
+      );
     }
   }
 
@@ -769,7 +814,11 @@ export class ConversationService extends AppService {
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
-        return handleDialError(error);
+        return handleDialSdkError(
+          error,
+          'conversations.saveConversation',
+          this.logger,
+        );
       }
       const saved = { ...data, ...bodyToSave } as ConversationResponseDto;
       if (saved.llmNamingDone !== true) {
@@ -783,7 +832,11 @@ export class ConversationService extends AppService {
       return saved;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.saveConversation',
+        this.logger,
+      );
     }
   }
 
@@ -1098,12 +1151,20 @@ export class ConversationService extends AppService {
         this.logger.error(
           `DIAL Core rejected subscribeToResources — status: ${result.response.status}`,
         );
-        return handleDialError({ status: result.response.status });
+        return handleDialSdkError(
+          { status: result.response.status },
+          'conversations.watchConversation',
+          this.logger,
+        );
       }
       return result.response.body;
     } catch (error) {
       this.logger.error('DIAL Core subscribeToResources failed', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.watchConversation',
+        this.logger,
+      );
     }
   }
 

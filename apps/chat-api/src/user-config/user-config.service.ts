@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import {
   CURRENT_CONFIG_VERSION,
@@ -229,7 +229,11 @@ export class UserConfigService extends AppService {
           `Failed to write user config — DIAL Core ${response.status}: ${body}`,
           error,
         );
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          { status: response.status },
+          'user-config.writeConfig',
+          this.logger,
+        );
       }
     } catch (err) {
       this.logger.error('Failed to write user config', err);
