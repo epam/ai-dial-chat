@@ -97,6 +97,7 @@ import {
   MarketplaceEntitiesTabs,
 } from '@/src/constants/marketplace';
 import { NA_VERSION } from '@/src/constants/publication';
+import { Routes } from '@/src/constants/routes';
 import { shareApiErrorsRegex } from '@/src/constants/share';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
@@ -633,11 +634,19 @@ const acceptInvitationSuccessEpic: AppEpic = (action$, state$, { router }) =>
     }),
   );
 
-const acceptInvitationFailEpic: AppEpic = (action$) =>
+const acceptInvitationFailEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ShareActions.acceptShareInvitationFail.type),
     switchMap(({ payload }) => {
-      history.replaceState({}, '', window.location.origin);
+      const isMarketplace = router.pathname === Routes.Marketplace;
+
+      history.replaceState(
+        {},
+        '',
+        isMarketplace
+          ? `${window.location.origin}${Routes.Marketplace}`
+          : window.location.origin,
+      );
 
       const { message: errorMessage, details, traceId } = payload;
       let resourceUrl = sortBy(
@@ -647,8 +656,13 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
 
       const resultActions$: Observable<AppAction>[] = [
         of(ShareActions.resetAcceptedEntityInfo()),
-        of(ConversationsActions.initSelectedConversations()),
       ];
+
+      if (!isMarketplace) {
+        resultActions$.push(
+          of(ConversationsActions.initSelectedConversations()),
+        );
+      }
       if (
         errorMessage?.startsWith('no invitation found') ||
         errorMessage?.includes('not found')

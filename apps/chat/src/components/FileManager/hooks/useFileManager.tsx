@@ -9,11 +9,7 @@ import {
 } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  constructPath,
-  formatFileSize,
-  prepareFileName,
-} from '@/src/utils/app/file';
+import { constructPath, formatFileSize } from '@/src/utils/app/file';
 import {
   buildFileTree,
   convertToUIKitFile,
@@ -174,6 +170,7 @@ interface UseFileManagerOptions {
   availableTabs?: Set<string>;
   reviewBucket?: string;
   initialTab?: DialFileManagerTabs;
+  initialPath?: string;
   additionalFilesAndFolders?: {
     files: LocalDialFileType[];
     folders?: FolderInterface[];
@@ -187,6 +184,7 @@ export const useFileManager = ({
   availableTabs = defaultAvailableTabs,
   reviewBucket,
   initialTab,
+  initialPath,
   additionalFilesAndFolders,
   gridEditingOptions: gridEditingOptionsConfig,
 }: UseFileManagerOptions = {}) => {
@@ -359,7 +357,9 @@ export const useFileManager = ({
     FilesSelectors.selectIsLoadingSearchListing,
   );
 
-  const [currentPath, setCurrentPath] = useState<string | undefined>();
+  const [currentPath, setCurrentPath] = useState<string | undefined>(
+    initialPath,
+  );
   const [isSearching, setIsSearching] = useState(false);
   const [destinationPath, setDestinationPath] = useState<string | undefined>();
 
@@ -631,7 +631,9 @@ export const useFileManager = ({
       uploadEnabled = isRootId(currentPath) && currentPath ? false : true;
     }
 
-    if (
+    if (!!initialPath && !previousActiveTabRef.current) {
+      previousActiveTabRef.current = activeTab;
+    } else if (
       activeTab !== previousActiveTabRef.current &&
       rootFolder.id &&
       isRootId(rootFolder.id)
@@ -650,7 +652,15 @@ export const useFileManager = ({
       currentPathRootAlias: pathRootAlias,
       uploadEnabled,
     };
-  }, [files, folders, activeTab, reviewBucket, currentPath, translateChat]);
+  }, [
+    files,
+    folders,
+    activeTab,
+    reviewBucket,
+    currentPath,
+    translateChat,
+    initialPath,
+  ]);
 
   const stableFileTreeItems = freezeItems(fileTreeItems);
 
@@ -1392,61 +1402,18 @@ export const useFileManager = ({
     (filesToUpload: DialUploadFileItem[], destinationUrl: string) => {
       if (filesToUpload.length === 0) return;
 
-      const existingInFolder = new Set(
-        files.filter((f) => f.folderId === destinationUrl).map((f) => f.name),
-      );
-
-      const namesInCurrentBatch = new Set<string>();
-
-      const processedFiles = filesToUpload.map((file) => {
-        const sanitizedName = prepareFileName(file.name);
-        let finalName = sanitizedName;
-
-        const isNameModified = sanitizedName !== file.name;
-        const conflictsWithBatch = namesInCurrentBatch.has(finalName);
-        const conflictsWithFolder = existingInFolder.has(finalName);
-
-        if (conflictsWithBatch || (isNameModified && conflictsWithFolder)) {
-          let counter = 1;
-          const extensionIndex = sanitizedName.lastIndexOf('.');
-          const baseName =
-            extensionIndex === -1
-              ? sanitizedName
-              : sanitizedName.substring(0, extensionIndex);
-          const extension =
-            extensionIndex === -1
-              ? ''
-              : sanitizedName.substring(extensionIndex);
-
-          while (
-            existingInFolder.has(finalName) ||
-            namesInCurrentBatch.has(finalName)
-          ) {
-            finalName = `${baseName} (${counter})${extension}`;
-            counter++;
-          }
-        }
-
-        namesInCurrentBatch.add(finalName);
-
-        return {
-          ...file,
-          name: finalName,
-        };
-      });
-
       dispatch(
         FilesActions.uploadFiles({
-          files: processedFiles,
+          files: filesToUpload,
           destinationUrl,
         }),
       );
 
       setUploadingFilesIds(
-        new Set(processedFiles.map((f) => getFileId(f.name, destinationUrl))),
+        new Set(filesToUpload.map((f) => getFileId(f.name, destinationUrl))),
       );
     },
-    [dispatch, getFileId, files],
+    [dispatch, getFileId],
   );
 
   const deduplicatedFileIdsRef = useRef<Set<string>>(new Set());
@@ -1472,7 +1439,7 @@ export const useFileManager = ({
       dispatch(
         FilesActions.uploadArchive({
           archive: archiveFile,
-          name: prepareFileName(name),
+          name,
           destinationUrl,
         }),
       );

@@ -1,5 +1,4 @@
 import {
-  Icon,
   IconCheck,
   IconCsv,
   IconDownload,
@@ -30,35 +29,9 @@ import { Translation } from '@/src/types/translation';
 import { MarkdownI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { DownloadTableCsvModal } from '@/src/components/Markdown/DownloadTableCsvModal';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
-
-interface CopyIconProps {
-  Icon: Icon;
-  onClick: () => void;
-  copied: boolean;
-  type: CopyTableType;
-}
-
-const CopyIcon = ({ Icon, onClick, copied, type }: CopyIconProps) => {
-  const IconComponent = copied ? IconCheck : Icon;
-
-  return (
-    <IconComponent
-      stroke={1.5}
-      className="cursor-pointer text-secondary hover:text-accent-primary"
-      size={DEFAULT_ICON_SIZES.STANDARD}
-      data-qa={type.concat('-icon')}
-      onClick={() => {
-        if (!copied) {
-          onClick();
-        }
-      }}
-    />
-  );
-};
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 const buildCsvString = (
   headerRef: RefObject<HTMLTableElement | null>,
@@ -83,7 +56,7 @@ const buildCsvString = (
 
 const getDefaultFilename = (): string => {
   const date = new Date().toISOString().slice(0, 10);
-  return `table_${date}.csv`;
+  return `${date}_table.csv`;
 };
 
 interface Props {
@@ -294,47 +267,71 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
           data-qa="table-controls"
         >
           <div data-no-context-menu className="flex gap-2">
-            <Tooltip
-              placement="top"
-              tooltip={t(MarkdownI18nKeys.CopyAsCSV, {
-                ns: Translation.Markdown,
-              })}
-            >
-              <CopyIcon
-                Icon={IconCsv}
-                onClick={copyTableToCSV}
-                copied={CopyTableType.CSV === copiedType}
-                type={CopyTableType.CSV}
-              />
-            </Tooltip>
-            <Tooltip
-              placement="top"
-              tooltip={t(MarkdownI18nKeys.CopyAsTXT, {
-                ns: Translation.Markdown,
-              })}
-            >
-              <CopyIcon
-                Icon={IconTxt}
-                onClick={copyTableToTXT}
-                copied={CopyTableType.TXT === copiedType}
-                type={CopyTableType.TXT}
-              />
-            </Tooltip>
-            <Tooltip
-              placement="top"
-              tooltip={t(MarkdownI18nKeys.CopyAsMD, {
-                ns: Translation.Markdown,
-              })}
-            >
-              <CopyIcon
-                Icon={IconMarkdown}
-                onClick={copyTableToMD}
-                copied={CopyTableType.MD === copiedType}
-                type={CopyTableType.MD}
-              />
-            </Tooltip>
-            <DialButton
-              className="flex max-h-[24px] items-center !px-0 text-secondary hover:text-accent-primary"
+            <DialGhostIconButton
+              size={ElementSize.Small}
+              data-qa="copy-csv-icon"
+              tooltipProps={{
+                placement: 'top',
+                isTriggerClickable: true,
+                tooltip: t(MarkdownI18nKeys.CopyAsCSV, {
+                  ns: Translation.Markdown,
+                }),
+              }}
+              onClick={() => {
+                if (CopyTableType.CSV !== copiedType) copyTableToCSV();
+              }}
+              icon={
+                CopyTableType.CSV === copiedType ? (
+                  <IconCheck size={DEFAULT_ICON_SIZES.SMALL} />
+                ) : (
+                  <IconCsv stroke={1.5} size={DEFAULT_ICON_SIZES.SMALL} />
+                )
+              }
+            />
+            <DialGhostIconButton
+              size={ElementSize.Small}
+              data-qa="copy-txt-icon"
+              tooltipProps={{
+                placement: 'top',
+                isTriggerClickable: true,
+                tooltip: t(MarkdownI18nKeys.CopyAsTXT, {
+                  ns: Translation.Markdown,
+                }),
+              }}
+              onClick={() => {
+                if (CopyTableType.TXT !== copiedType) copyTableToTXT();
+              }}
+              icon={
+                CopyTableType.TXT === copiedType ? (
+                  <IconCheck size={DEFAULT_ICON_SIZES.SMALL} />
+                ) : (
+                  <IconTxt stroke={1.5} size={DEFAULT_ICON_SIZES.SMALL} />
+                )
+              }
+            />
+            <DialGhostIconButton
+              size={ElementSize.Small}
+              data-qa="copy-md-icon"
+              tooltipProps={{
+                placement: 'top',
+                isTriggerClickable: true,
+                tooltip: t(MarkdownI18nKeys.CopyAsMD, {
+                  ns: Translation.Markdown,
+                }),
+              }}
+              onClick={() => {
+                if (CopyTableType.MD !== copiedType) copyTableToMD();
+              }}
+              icon={
+                CopyTableType.MD === copiedType ? (
+                  <IconCheck size={DEFAULT_ICON_SIZES.SMALL} />
+                ) : (
+                  <IconMarkdown stroke={1.5} size={DEFAULT_ICON_SIZES.SMALL} />
+                )
+              }
+            />
+            <DialGhostIconButton
+              size={ElementSize.Small}
               data-qa="download-csv"
               aria-label={t(MarkdownI18nKeys.DownloadAsCSV, {
                 ns: Translation.Markdown,
@@ -345,10 +342,9 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
                 tooltip: t(MarkdownI18nKeys.DownloadAsCSV, {
                   ns: Translation.Markdown,
                 }),
-                contentClassName: 'text-base',
               }}
               onClick={() => setIsDownloadModalOpen(true)}
-              iconBefore={
+              icon={
                 <IconDownload size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
               }
             />

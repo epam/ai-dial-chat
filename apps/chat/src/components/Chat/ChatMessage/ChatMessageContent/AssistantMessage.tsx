@@ -26,6 +26,7 @@ import {
   getDialLinksFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
+import { dispatchRetryFileUpload } from '@/src/utils/app/file-upload-dispatch';
 import {
   getConfigurationSchema,
   getConfigurationValue,
@@ -34,7 +35,6 @@ import {
 } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
-import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -374,7 +374,7 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
 
   const handleRetry = useCallback(
     (fileId: string) => {
-      return () => dispatch(FilesActions.reuploadFile({ fileId }));
+      dispatchRetryFileUpload(dispatch, fileId);
     },
     [dispatch],
   );
@@ -386,22 +386,10 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
     );
   }, []);
 
-  const { uploadFiles: uploadPastedFiles, dispatchPreparedFiles } =
-    useChatUploadFiles({
-      selectedAttachmentsAmount: newEditableAttachments.length,
-      skipSelect: true,
-    });
-
-  const handleUploadFromDevice = useCallback(
-    (selectedFiles: ResolvedUploadFile[], folderPath: string | undefined) => {
-      const ids = dispatchPreparedFiles(selectedFiles, folderPath, {
-        isFromDeviceAttachment: true,
-      });
-
-      setNewEditableAttachmentsIds((prevIds) => uniq(prevIds.concat(ids)));
-    },
-    [dispatchPreparedFiles],
-  );
+  const { uploadFiles: uploadPastedFiles } = useChatUploadFiles({
+    selectedAttachmentsAmount: newEditableAttachments.length,
+    skipSelect: true,
+  });
 
   const handleUploadPastedFiles = useCallback(
     (
@@ -409,13 +397,6 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
       textContent?: string,
       selection?: { start: number; end: number },
     ) => {
-      if (canAttachFiles) {
-        uploadPastedFiles(pasteFiles)?.then((newFiles) => {
-          setNewEditableAttachmentsIds((ids) =>
-            uniq(ids.concat(newFiles.map(({ id }) => id))),
-          );
-        });
-      }
       if (textContent) {
         setMessageContent((prev) =>
           selection
@@ -427,6 +408,12 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
               )
             : textContent,
         );
+      } else if (canAttachFiles) {
+        uploadPastedFiles(pasteFiles)?.then((newFiles) => {
+          setNewEditableAttachmentsIds((ids) =>
+            uniq(ids.concat(newFiles.map(({ id }) => id))),
+          );
+        });
       }
     },
     [uploadPastedFiles, canAttachFiles],
@@ -539,7 +526,6 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
             }
             selectedFilesIds={selectedFileIds}
             onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-            onUploadFromDevice={handleUploadFromDevice}
             onAddLinkToMessage={handleAddLinkToMessage}
           />
         </div>

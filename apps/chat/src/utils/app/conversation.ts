@@ -458,10 +458,10 @@ export const isReplayConversation = (conversation: ConversationInfo) =>
 export const isReplayAsIsConversation = (conversation: ConversationInfo) =>
   (conversation as Conversation).replay?.replayAsIs ?? false;
 
-export const getQuickAttachmentsSavingPath = () => {
+export const getQuickAttachmentsSavingPath = (bucket?: string) => {
   const date = new Date();
 
-  return `${getFileRootId()}/uploads/${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  return `${getFileRootId(bucket)}/uploads/${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 };
 
 export const updateMessagesAttachmentsTitles = (

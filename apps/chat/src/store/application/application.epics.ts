@@ -504,13 +504,29 @@ const editApplicationEpic: AppEpic = (action$, state$) =>
             features: mergeFeatures(featuresRecord),
           };
 
-          return of(
-            ApplicationActions.editSuccess(),
-            ModelsActions.updateModel({
-              model: modelData,
-              oldApplicationId: payload.updatedApplication.id,
-            }),
-          );
+          const actions: Observable<AppAction>[] = [
+            of(
+              ApplicationActions.editSuccess(),
+              ModelsActions.updateModel({
+                model: modelData,
+                oldApplicationId: payload.updatedApplication.id,
+              }),
+            ),
+          ];
+
+          const schemaId = payload.updatedApplication.applicationTypeSchemaId;
+          if (schemaId && schemaId === DEFAULT_QUICK_APPS_SCHEMA_2_ID) {
+            actions.push(
+              of(
+                ChatActions.getConfigurationSchema({
+                  modelId: payload.updatedApplication.id,
+                  replaceExisting: true,
+                }),
+              ),
+            );
+          }
+
+          return concat(...actions);
         }),
         tap(() => {
           if (payload.redirectUrl) {

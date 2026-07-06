@@ -33,7 +33,7 @@ import {
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
-import { DialAIEntityFeatures } from '@/src/types/models';
+import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import {
   AnyToolset,
   CodeInterpreterToolset,
@@ -987,9 +987,9 @@ export const getApplicationPayload = ({
       };
 
     case AppsEditorSchemaTypes.QuickApp2: {
-      const model = allEntitiesMap[data.model];
+      const model = allEntitiesMap[data.model] as DialAIEntityModel | undefined;
       const temperatureToUse =
-        model && isDialAiEntityModel(model) && doesModelAllowTemperature(model)
+        model && doesModelAllowTemperature(model)
           ? data.temperature
           : undefined;
       const starters = data.starters
@@ -1018,7 +1018,7 @@ export const getApplicationPayload = ({
               variables: {},
               content: data.instructions,
             },
-            ...(!!data.inputAttachmentTypes.length && {
+            ...(!!model?.inputAttachmentTypes?.length && {
               attachment_strategy: data.processLargeFiles
                 ? { type: 'lazy_on_demand' }
                 : null,

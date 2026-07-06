@@ -426,7 +426,16 @@ const importPromptsEpic: AppEpic = (action$) =>
       });
 
       if (!preparedPrompts.length) {
-        return of(ImportExportActions.importPromptsFail());
+        return concat(
+          of(ImportExportActions.importPromptsFail()),
+          of(
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.ImportPromptsFailed, {
+                ns: Translation.Common,
+              }),
+            }),
+          ),
+        );
       }
 
       return PromptService.getPrompts(undefined, true).pipe(

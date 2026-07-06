@@ -166,9 +166,9 @@ export const DragFileSelectors = {
 export const TableSelectors = {
   tableContainer: '[data-qa="table"]',
   tableControls: '[data-qa="table-controls"]',
-  copyAsCsvIcon: '[data-qa="csv-icon"]',
-  copyAsTxtIcon: '[data-qa="txt-icon"]',
-  copyAsMdIcon: '[data-qa="md-icon"]',
+  copyAsCsvIcon: '[data-qa="copy-csv-icon"]',
+  copyAsTxtIcon: '[data-qa="copy-txt-icon"]',
+  copyAsMdIcon: '[data-qa="copy-md-icon"]',
 };
 
 export const PublicationReviewControls = {
