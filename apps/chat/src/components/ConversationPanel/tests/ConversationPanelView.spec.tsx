@@ -191,7 +191,30 @@ vi.mock('../../../utils/icon-path', () => ({
   resolveCatalogIconUrl: (url: string) => url,
 }));
 vi.mock('../../RenameConversationPopup/RenameConversationPopup', () => ({
-  default: () => null,
+  default: ({
+    isOpen,
+    currentTitle,
+    error,
+    onSave,
+    onCancel,
+  }: {
+    isOpen: boolean;
+    currentTitle: string;
+    isSaving: boolean;
+    error: string | null;
+    onSave: (newTitle: string) => void;
+    onCancel: () => void;
+  }) => {
+    if (!isOpen) return null;
+    return (
+      <div role="dialog" aria-label="rename conversation">
+        <span>{currentTitle}</span>
+        {error && <span role="alert">{error}</span>}
+        <button onClick={() => onSave('New Title')}>Save</button>
+        <button onClick={onCancel}>Cancel</button>
+      </div>
+    );
+  },
 }));
 vi.mock('../get-conversation-source', () => ({
   getConversationSource: () => undefined,
@@ -633,6 +656,45 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+  });
+});
+
+describe('ConversationPanelView — rename', () => {
+  const RENAME_LABEL = 'buttons.rename';
+
+  it('clicking rename opens the popup with the current title', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'rename conversation',
+    });
+    expect(within(dialog).getByText('Chat 1')).toBeTruthy();
+  });
+
+  it('confirming rename does not navigate', async () => {
+    const mockRenameConversation = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      renameConversation: mockRenameConversation,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'rename conversation',
+    });
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    });
+
+    expect(mockRenameConversation).toHaveBeenCalledWith('conv1', 'New Title');
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
 });
