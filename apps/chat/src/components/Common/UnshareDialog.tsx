@@ -115,17 +115,22 @@ const view = withRenderWhen((state) => {
     const resourceId = unshareEntity?.id ?? unshareResourceId ?? '';
     const { bucket } = splitEntityId(resourceId);
     const isAuthor = isMyBucket(bucket);
-    const { name } = parseEntityApiKey(splitEntityId(resourceId).name, {
-      parseVersion: true,
-      parseModel: isConversationId(resourceId),
-    });
+
+    const { name: parsedName } = parseEntityApiKey(
+      splitEntityId(resourceId).name,
+      {
+        parseVersion: true,
+        parseModel: isConversationId(resourceId),
+      },
+    );
+    const name = unshareEntity?.name ?? shareResourceName ?? parsedName;
 
     return t(
       isAuthor
         ? CommonI18nKeys.ConfirmRemoveAllUsersAccess
         : CommonI18nKeys.ConfirmRemoveYourAccess,
       {
-        name: name ?? shareResourceName,
+        name,
       },
     );
   }, [
