@@ -134,75 +134,82 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
         <div className={mergeClasses('shrink-0', styles.divider)} />
 
-        <Header
-          item={item}
-          onUseInChat={onUseInChat}
-          onShare={onShare}
-          texts={texts}
-        />
-
-        <div className={mergeClasses('shrink-0', styles.divider)} />
-
-        <Summary item={item} texts={texts} detailsStyles={detailsStyles} />
-
-        <div className="shrink-0 px-[22px]">
-          <TabRow
-            tabs={tabs}
-            activeTabId={activeTab}
-            onTabChange={setActiveTab}
-            activeTabClassName="text-catalog-tab-active"
-            inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
-          />
-        </div>
-
         <div
           className={mergeClasses(
             'min-h-0 flex-1 overflow-y-auto',
             styles.content,
-            activeTab !== CatalogDetailsTab.Overview && 'px-[22px] py-4',
           )}
         >
-          {activeTab === CatalogDetailsTab.About && (
-            <AboutTab
-              item={item}
-              aboutContent={aboutContent}
-              isAboutLoading={isAboutLoading}
-              detailsStyles={detailsStyles}
+          <Header
+            item={item}
+            onUseInChat={onUseInChat}
+            onShare={onShare}
+            texts={texts}
+            detailsStyles={detailsStyles}
+          />
+
+          <div className={styles.divider} />
+
+          <Summary item={item} texts={texts} detailsStyles={detailsStyles} />
+
+          <div className="px-[22px]">
+            <TabRow
+              tabs={tabs}
+              activeTabId={activeTab}
+              onTabChange={setActiveTab}
+              activeTabClassName="text-catalog-tab-active"
+              inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
             />
-          )}
-          {activeTab === CatalogDetailsTab.Overview && (
-            <Overview
-              sections={item.details?.overview?.sections}
-              sectionClassName={overviewSectionClassName}
-              labelClassName={overviewLabelClassName}
-              valueClassName={overviewValueClassName}
-              valueTrueClassName={overviewValueTrueClassName}
-              yesLabel={overviewYesLabel}
-              noLabel={overviewNoLabel}
-            />
-          )}
-          {activeTab === CatalogDetailsTab.Pricing && (
-            <Pricing
-              pricing={item.details?.pricing}
-              pricesSectionLabel={texts?.pricingPricesSectionLabel}
-              limitsSectionLabel={texts?.pricingLimitsSectionLabel}
-            />
-          )}
-          {activeTab === CatalogDetailsTab.Api && item.details?.api != null && (
-            <ApiDetails
-              api={item.details.api}
-              resourceSectionLabel={texts?.apiResourceSectionLabel}
-              snippetSectionLabel={texts?.apiSnippetSectionLabel}
-              modelIdLabel={texts?.apiModelIdLabel}
-              endpointLabel={texts?.apiEndpointLabel}
-              requestExampleLabel={texts?.apiRequestExampleLabel}
-              responseSchemaLabel={texts?.apiResponseSchemaLabel}
-              copyAriaLabel={texts?.copyCodeAriaLabel}
-            />
-          )}
-          {activeTab === CatalogDetailsTab.Tools && (
-            <Tools tools={item.details?.tools} />
-          )}
+          </div>
+
+          <div
+            className={mergeClasses(
+              activeTab !== CatalogDetailsTab.Overview && 'px-[22px] py-4',
+            )}
+          >
+            {activeTab === CatalogDetailsTab.About && (
+              <AboutTab
+                item={item}
+                aboutContent={aboutContent}
+                isAboutLoading={isAboutLoading}
+                detailsStyles={detailsStyles}
+              />
+            )}
+            {activeTab === CatalogDetailsTab.Overview && (
+              <Overview
+                sections={item.details?.overview?.sections}
+                sectionClassName={overviewSectionClassName}
+                labelClassName={overviewLabelClassName}
+                valueClassName={overviewValueClassName}
+                valueTrueClassName={overviewValueTrueClassName}
+                yesLabel={overviewYesLabel}
+                noLabel={overviewNoLabel}
+              />
+            )}
+            {activeTab === CatalogDetailsTab.Pricing && (
+              <Pricing
+                pricing={item.details?.pricing}
+                pricesSectionLabel={texts?.pricingPricesSectionLabel}
+                limitsSectionLabel={texts?.pricingLimitsSectionLabel}
+              />
+            )}
+            {activeTab === CatalogDetailsTab.Api &&
+              item.details?.api != null && (
+                <ApiDetails
+                  api={item.details.api}
+                  resourceSectionLabel={texts?.apiResourceSectionLabel}
+                  snippetSectionLabel={texts?.apiSnippetSectionLabel}
+                  modelIdLabel={texts?.apiModelIdLabel}
+                  endpointLabel={texts?.apiEndpointLabel}
+                  requestExampleLabel={texts?.apiRequestExampleLabel}
+                  responseSchemaLabel={texts?.apiResponseSchemaLabel}
+                  copyAriaLabel={texts?.copyCodeAriaLabel}
+                />
+              )}
+            {activeTab === CatalogDetailsTab.Tools && (
+              <Tools tools={item.details?.tools} />
+            )}
+          </div>
         </div>
       </div>
     </>
