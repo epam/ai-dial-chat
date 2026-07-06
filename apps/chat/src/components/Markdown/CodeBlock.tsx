@@ -1,5 +1,5 @@
-import { IconCheck, IconCopy } from '@tabler/icons-react';
-import { CSSProperties, FC, memo, useCallback } from 'react';
+import { IconCheck, IconCopy, IconDownload } from '@tabler/icons-react';
+import { CSSProperties, FC, memo, useCallback, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
@@ -16,7 +16,8 @@ import {
   languageFilenameMapping,
   languageNameMapping,
 } from '@/src/utils/app/codeblock';
-import { getDownLoadCurrentDate } from '@/src/utils/app/import-export';
+import { triggerDownload } from '@/src/utils/app/file';
+import { getDefaultExportFileName } from '@/src/utils/app/import-export';
 
 import { Translation } from '@/src/types/translation';
 
@@ -26,7 +27,8 @@ import { UISelectors } from '@/src/store/selectors';
 import { MarkdownI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
-import Download from '@/public/images/icons/download.svg';
+import { ChangeDownloadFileNameModal } from '@/src/components/Markdown/ChangeDownloadFileNameModal';
+
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -49,38 +51,26 @@ export const CodeBlock: FC<Props> = memo(
 
     const { copied: isCopied, onCopy: copyToClipboard } = useCopy(value);
 
+    const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+
     const lowercaseLanguage = language.toLowerCase();
     const displayLanguage =
       languageNameMapping[lowercaseLanguage] || lowercaseLanguage;
 
-    const downloadAsFile = useCallback(() => {
-      // languageExtensionMapping allows set empty extension
-      const fileExtension = languageExtensionMapping[displayLanguage] ?? '.txt';
-      // use the specific filename if it exists in languageFilenameMapping
-      const suggestedFileName =
-        languageFilenameMapping[displayLanguage] ??
-        `ai-chat-code-${getDownLoadCurrentDate()}${fileExtension}`;
-      const fileName = window.prompt(
-        t(MarkdownI18nKeys.EnterFileName),
-        suggestedFileName,
-      );
+    // languageExtensionMapping allows set empty extension
+    const fileExtension = languageExtensionMapping[displayLanguage] ?? '.txt';
+    const suggestedFileName =
+      languageFilenameMapping[displayLanguage] ??
+      getDefaultExportFileName(`ai-chat-code${fileExtension}`);
 
-      if (!fileName) {
-        // User pressed cancel on prompt
-        return;
-      }
-
-      const blob = new Blob([value], { type: 'attachment/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = url;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, [displayLanguage, t, value]);
+    const handleDownloadConfirm = useCallback(
+      (filename: string) => {
+        const blob = new Blob([value], { type: 'attachment/plain' });
+        const url = URL.createObjectURL(blob);
+        triggerDownload(url, filename);
+      },
+      [value],
+    );
 
     return (
       <div
@@ -131,12 +121,9 @@ export const CodeBlock: FC<Props> = memo(
                   tooltip: t(MarkdownI18nKeys.Download),
                 }}
                 className="flex items-center rounded bg-none hover:text-accent-primary"
-                onClick={downloadAsFile}
+                onClick={() => setIsDownloadModalOpen(true)}
                 icon={
-                  <Download
-                    width={DEFAULT_ICON_SIZES.SMALL}
-                    height={DEFAULT_ICON_SIZES.SMALL}
-                  />
+                  <IconDownload size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
                 }
                 aria-label="Download"
               />
@@ -163,6 +150,15 @@ export const CodeBlock: FC<Props> = memo(
             {value}
           </SyntaxHighlighter>
         </div>
+
+        <ChangeDownloadFileNameModal
+          isOpen={isDownloadModalOpen}
+          defaultFilename={suggestedFileName}
+          heading={t(MarkdownI18nKeys.DownloadCodeBlock)}
+          onConfirm={handleDownloadConfirm}
+          onClose={() => setIsDownloadModalOpen(false)}
+          dataQa="download-codeblock-modal"
+        />
       </div>
     );
   },
