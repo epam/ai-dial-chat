@@ -52,7 +52,7 @@ export class ModelLimitsMockHelper {
     stats: AgentUsageStats = defaultUnlimitedUsageStats,
   ): Promise<void> {
     await this.page.route(
-      API.limitsHost(this.model.reference),
+      API.limitsHost(encodeURIComponent(this.model.reference)),
       async (route) => {
         await route.fulfill({
           status: 200,
@@ -61,9 +61,5 @@ export class ModelLimitsMockHelper {
         });
       },
     );
-  }
-
-  async removeLimitsMock(): Promise<void> {
-    await this.page.unroute(API.limitsHost(this.model.reference));
   }
 }
