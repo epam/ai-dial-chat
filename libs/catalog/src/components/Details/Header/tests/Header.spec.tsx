@@ -63,6 +63,43 @@ describe('Header', () => {
     expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
   });
 
+  it('does not render Use in chat for non-selectable entity types by default', () => {
+    render(<Header item={makeItem(CatalogEntityType.Agent)} />);
+    expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
+  });
+
+  it('hides Use in chat when hasPrimaryAction is false', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        texts={{ hasPrimaryAction: false }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
+  });
+
+  it('uses the primary action visibility predicate', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        isPrimaryActionVisible={() => true}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
+  });
+
+  it('uses primaryActionLabel for the primary action label', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        texts={{
+          primaryActionLabel: 'Open chat',
+        }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Open chat' })).toBeTruthy();
+  });
+
   it('calls onUseInChat with the item when Use in chat is clicked', async () => {
     const onUseInChat = vi.fn();
     const item = makeItem(CatalogEntityType.Model);

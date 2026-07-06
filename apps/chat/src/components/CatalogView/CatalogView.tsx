@@ -112,6 +112,13 @@ const CatalogView: FC = () => {
     [setSelectedItemId, navigate],
   );
 
+  const isPrimaryActionVisible = useCallback(
+    (item: CatalogItem) =>
+      item.type === CatalogEntityType.Model ||
+      item.type === CatalogEntityType.Application,
+    [],
+  );
+
   const buildEditorUrl = useCallback((schemaId: string): string => {
     const params = new URLSearchParams({
       [AppsEditorQuery.Step]: AppsEditorStep.General,
@@ -158,6 +165,7 @@ const CatalogView: FC = () => {
       onFetchAboutContent={fetchAboutContent}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
+      isPrimaryActionVisible={isPrimaryActionVisible}
       styles={{
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },
       }}

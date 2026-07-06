@@ -1674,9 +1674,7 @@
           }
         },
         "summary": "Stop an active generation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/watch": {
@@ -1709,9 +1707,7 @@
           }
         },
         "summary": "Subscribe to conversation resource updates via SSE",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/duplicate": {
@@ -4400,12 +4396,7 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "append",
-              "continue_last_user",
-              "regenerate",
-              "edit"
-            ],
+            "enum": ["append", "continue_last_user", "regenerate", "edit"],
             "description": "How the message should be inserted into history. append = new user+assistant turn; continue_last_user = conversation already ends with a user message; regenerate = replace assistant at messageIndex; edit = replace user message at messageIndex."
           },
           "message": {
@@ -4428,12 +4419,7 @@
             ]
           }
         },
-        "required": [
-          "generationId",
-          "path",
-          "model",
-          "mode"
-        ]
+        "required": ["generationId", "path", "model", "mode"]
       },
       "StopCompletionDto": {
         "type": "object",
@@ -4450,10 +4436,7 @@
             "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
           }
         },
-        "required": [
-          "generationId",
-          "path"
-        ]
+        "required": ["generationId", "path"]
       },
       "WatchConversationBodyDto": {
         "type": "object",
@@ -4464,9 +4447,7 @@
             "example": "gpt-4o__My Chat"
           }
         },
-        "required": [
-          "path"
-        ]
+        "required": ["path"]
       },
       "RenameConversationBodyDto": {
         "type": "object",

@@ -18,6 +18,7 @@ import { FolderPath } from '../../FolderPath/FolderPath';
 interface HeaderProps {
   item: CatalogItem;
   onUseInChat?: (item: CatalogItem) => void;
+  isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   onShare?: (item: CatalogItem) => void;
   texts?: ItemDetailsTexts;
   detailsStyles?: ItemDetailsStyles;
@@ -26,6 +27,7 @@ interface HeaderProps {
 export const Header: FC<HeaderProps> = ({
   item,
   onUseInChat,
+  isPrimaryActionVisible,
   onShare,
   texts,
   detailsStyles,
@@ -42,6 +44,12 @@ export const Header: FC<HeaderProps> = ({
   const handleShare = useCallback(() => {
     onShare?.(item);
   }, [item, onShare]);
+
+  const shouldShowPrimaryAction =
+    texts?.hasPrimaryAction !== false &&
+    (isPrimaryActionVisible?.(item) ??
+      (item.type === CatalogEntityType.Model ||
+        item.type === CatalogEntityType.Application));
 
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
@@ -61,13 +69,9 @@ export const Header: FC<HeaderProps> = ({
         }
       />
       <div className="flex flex-wrap gap-2 ps-[60px]">
-        {item.type !== CatalogEntityType.Toolset && (
+        {shouldShowPrimaryAction && (
           <PrimaryButton
-            label={
-              texts?.primaryActionLabel ??
-              texts?.useInChatLabel ??
-              'Use in chat'
-            }
+            label={texts?.primaryActionLabel ?? 'Use in chat'}
             iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
             onClick={handleUseInChat}
           />
