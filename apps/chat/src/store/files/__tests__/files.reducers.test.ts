@@ -500,3 +500,36 @@ describe('files.reducers quick attachments', () => {
     expect(nextState.files).toHaveLength(1);
   });
 });
+
+describe('files.reducers getFullListingSuccess', () => {
+  it('preserves client-only metadata like publishedWithMe when merging fresh listing results', () => {
+    const folderPath = 'files/org-bucket';
+    const fileId = `${folderPath}/happy_beach_person.png`;
+    const state = {
+      ...filesSlice.getInitialState(),
+      files: [
+        makeFile({
+          id: fileId,
+          folderId: folderPath,
+          publishedWithMe: true,
+        }),
+      ],
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.getFullListingSuccess({
+        folderPath,
+        files: [
+          makeFile({
+            id: fileId,
+            folderId: folderPath,
+          }),
+        ],
+      }),
+    );
+
+    const file = nextState.files.find((f) => f.id === fileId);
+    expect(file?.publishedWithMe).toBe(true);
+  });
+});
