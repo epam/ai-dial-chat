@@ -21,4 +21,4 @@
 - [x] 4.1 Run `npm exec nx run @epam/chat:lint`.
 - [x] 4.2 Run `npm exec nx run @epam/ai-dial-catalog:test`.
 - [x] 4.3 Run `npm exec nx run @epam/chat:test` (or `nx affected --target=test` scoped to touched projects) to cover `CatalogView` changes.
-- [ ] 4.4 Manually verify in the running app: Models tab → Use in chat → lands on `/` with model selected and sendable; Applications tab → same; Toolsets tab → no Use in chat button; reload after selection keeps the deployment selected.
+- [x] 4.4 Manually verify in the running app: Models tab → Use in chat → lands on `/` with model selected and sendable; Applications tab → same; Toolsets tab → no Use in chat button; reload after selection keeps the deployment selected.
