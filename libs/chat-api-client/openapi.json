@@ -1710,6 +1710,56 @@
         "tags": ["conversations"]
       }
     },
+    "/api/v1/conversations/generate-title": {
+      "post": {
+        "description": "Generates a title for an existing conversation using the operator-configured utility model, based on the most recent messages. The suggestion is returned but NOT persisted — the caller confirms the rename separately. Does not read or set the llmNamingDone flag.",
+        "operationId": "generateConversationTitle",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated title suggestion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateTitleResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid path, or conversation has no content"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "LLM title generation failed"
+          },
+          "503": {
+            "description": "LLM title generation unavailable or timed out"
+          }
+        },
+        "summary": "Generate an LLM-based title suggestion for a conversation",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/conversations/duplicate": {
       "post": {
         "operationId": "duplicateConversation",
@@ -4467,6 +4517,17 @@
             "type": "string",
             "description": "Sanitised stored display name of the renamed conversation",
             "example": "My renamed chat"
+          }
+        },
+        "required": ["name"]
+      },
+      "GenerateTitleResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Sanitised LLM-generated title suggestion for the conversation. Not persisted — the caller confirms the rename separately.",
+            "example": "Refactoring the auth module"
           }
         },
         "required": ["name"]

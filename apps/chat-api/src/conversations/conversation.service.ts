@@ -408,6 +408,22 @@ export class ConversationService extends AppService {
     return { name: sanitisedTitle };
   }
 
+  async generateTitle(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+  ): Promise<string> {
+    const qualifiedPath = this.qualifySessionConversationPath(
+      conversationPath,
+      bucket,
+    );
+    return this.conversationNamingService.generateTitle(
+      qualifiedPath,
+      token,
+      bucket,
+    );
+  }
+
   async duplicateConversation(
     sourcePath: string,
     token: string,

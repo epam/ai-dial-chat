@@ -306,6 +306,8 @@ export enum ConversationPanelI18nKeys {
   RenameInputPlaceholder = 'conversationPanel.renameInputPlaceholder',
   RenameError = 'conversationPanel.renameError',
   RenameTitleTooLong = 'conversationPanel.renameTitleTooLong',
+  RenameWithAiLabel = 'conversationPanel.renameWithAiLabel',
+  RenameWithAiError = 'conversationPanel.renameWithAiError',
   DuplicateReadOnlyDescription = 'conversationPanel.duplicateReadOnlyDescription',
   DuplicateError = 'conversationPanel.duplicateError',
   PanelActionsLabel = 'conversationPanel.panelActionsLabel',

@@ -70,6 +70,9 @@ export const renameConversation = (path: string, newTitle: string) =>
     renameConversationBodyDto: { newTitle },
   });
 
+export const generateConversationTitle = (conversationPath: string) =>
+  conversationsApi.generateConversationTitle({ path: conversationPath });
+
 export const duplicateConversation = (conversationPath: string) =>
   conversationsApi.duplicateConversation({ path: conversationPath });
 

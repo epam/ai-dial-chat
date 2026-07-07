@@ -109,6 +109,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pinConversation,
     deleteConversation,
     renameConversation,
+    generateConversationTitle,
     duplicateConversation,
     refreshConversations,
   } = useConversations();
@@ -387,6 +388,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [pendingRenameItem, renameConversation, t],
   );
 
+  const handleGenerateRenameWithAi = useCallback(async () => {
+    if (!pendingRenameItem) return '';
+    return generateConversationTitle(pendingRenameItem.id);
+  }, [pendingRenameItem, generateConversationTitle]);
+
   const handleCloseRenameDialog = useCallback(() => {
     if (isRenaming) return;
     setPendingRenameItem(null);
@@ -481,6 +487,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         error={renameError}
         onSave={handleConfirmRename}
         onCancel={handleCloseRenameDialog}
+        onGenerateWithAi={handleGenerateRenameWithAi}
       />
     </>
   );
