@@ -91,9 +91,10 @@ export const BasePublicationResources = ({
       uniqBy(
         entities.filter(
           (entity) =>
-            // in case of publication creation, we need to show all files as root entities
             isRootEntity(entity.id) ||
-            (publicationModel && isFileId(entity.id)),
+            (publicationModel &&
+              !publicationModel.isFolder &&
+              isFileId(entity.id)),
         ),
         (entity) => getIdWithoutVersionFromApiKey(entity.id),
       ),
@@ -122,8 +123,12 @@ export const BasePublicationResources = ({
     () =>
       folders.filter(
         (folder) =>
-          // for files, we don't need to show folders in case of publication creation
-          isRootEntity(folder.id) && !(publicationModel && isFileId(folder.id)),
+          isRootEntity(folder.id) &&
+          !(
+            publicationModel &&
+            !publicationModel.isFolder &&
+            isFileId(folder.id)
+          ),
       ),
     [folders, publicationModel],
   );
