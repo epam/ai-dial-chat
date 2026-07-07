@@ -41,20 +41,13 @@ interface Result {
 }
 
 /**
- * Owns all scroll behaviour for the conversation message list:
- * - Anchors a freshly sent/regenerated/edited message near the top of the
- *   viewport, leaving room below it for the streamed response. A spacer
- *   reserves scroll room so the anchor is reachable even when little content
- *   currently follows it, then shrinks as the response streams in.
- * - Never force-scrolls while a response is streaming — the view stays
- *   wherever the user (or the last anchor) left it.
- * - Drives the scroll-to-bottom button's visibility from both manual
- *   scrolling and content growth.
+ * Owns chat-list scrolling: anchors a new turn near the viewport top, keeps
+ * the position stable while the response streams, and reports whether the
+ * scroll-to-bottom button should be shown.
  *
- * See openspec/changes/chat-scroll-ux for the full design rationale,
- * including why the spacer must be recomputed in a `useLayoutEffect` (not a
- * `ResizeObserver` or CSS `min-height`/`flex-grow`) and why it needs
- * `shrink-0`.
+ * The temporary spacer stays fixed during a turn. Shrinking it while rendered
+ * markdown is still growing can reduce total scroll height and make the
+ * browser clamp `scrollTop`, which is visible as a jump.
  */
 export const useConversationScroll = ({
   messages,
@@ -65,8 +58,10 @@ export const useConversationScroll = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const spacerRef = useRef<HTMLDivElement>(null);
 
-  // DOM nodes of rendered messages, keyed by index — used to anchor a
-  // specific message near the top of the viewport on send/regenerate/edit.
+  /*
+   * Message DOM nodes keyed by index, used to anchor the acted-on message
+   * without coupling this hook to send/regenerate/edit handlers.
+   */
   const messageRefsMap = useRef<Map<number, HTMLDivElement>>(new Map());
   const setMessageRef = useCallback(
     (index: number, el: HTMLDivElement | null) => {
@@ -79,16 +74,14 @@ export const useConversationScroll = ({
     [],
   );
 
-  // Index of the message to anchor near the top on the next messages-effect
-  // run. Set via `armAnchor`, consumed once by that effect.
+  /*
+   * Message index to anchor after the next render. It is set by `armAnchor`
+   * and consumed once by the layout effect below.
+   */
   const pendingAnchorIndexRef = useRef<number | null>(null);
   const armAnchor = useCallback((index: number) => {
     pendingAnchorIndexRef.current = index;
   }, []);
-
-  // Total height (real content + reserved room) frozen at anchor time.
-  // 0 means "no active reservation" — the spacer stays at 0 in that state.
-  const requiredTotalRef = useRef(0);
 
   const performScroll = useCallback((targetTop: number, instant: boolean) => {
     const container = containerRef.current;
@@ -99,9 +92,10 @@ export const useConversationScroll = ({
     });
   }, []);
 
-  // Absolute scroll offset (relative to scrollTop 0) at which `contentRef`'s
-  // bottom edge — the end of the real message content, excluding the
-  // spacer — sits flush with the bottom of the visible viewport.
+  /*
+   * ScrollTop where the real content bottom, excluding spacer space, aligns
+   * with the viewport bottom.
+   */
   const getContentBottomScrollTop = useCallback(() => {
     const container = containerRef.current;
     const content = contentRef.current;
@@ -124,11 +118,10 @@ export const useConversationScroll = ({
     [performScroll, getContentBottomScrollTop],
   );
 
-  // Scrolls so the message at `index` lands near the top of the viewport,
-  // leaving room below it for a streamed response to render into. Uses
-  // getBoundingClientRect (not offsetTop) since offsetTop resolves against
-  // the nearest positioned ancestor, which is unreliable here — message
-  // bubbles commonly use position: relative for their action buttons.
+  /*
+   * Uses rects instead of `offsetTop` because message internals can introduce
+   * positioned ancestors for action controls.
+   */
   const scrollMessageToTop = useCallback(
     (index: number, instant = false) => {
       const container = containerRef.current;
@@ -143,10 +136,10 @@ export const useConversationScroll = ({
     [performScroll],
   );
 
-  // Distance from the current viewport's bottom edge to the actual end of
-  // message content (excluding the spacer) — used for the scroll-to-bottom
-  // button so it doesn't stay visible just because reserved space hasn't
-  // been scrolled into.
+  /*
+   * Measures distance to real content bottom so spacer space alone does not
+   * keep the scroll-to-bottom button visible.
+   */
   const updateScrollButtonVisibility = useCallback(() => {
     const container = containerRef.current;
     const content = contentRef.current;
@@ -160,42 +153,27 @@ export const useConversationScroll = ({
     );
   }, []);
 
-  // On send/regenerate/edit: freeze the total room needed (content height
-  // right now + viewport height), size the spacer to match, then scroll the
-  // armed message to the top, once. While a reservation is active, each
-  // later run recomputes the spacer from the frozen total minus the
-  // content's current real height. Otherwise, only scroll on non-streaming
-  // message-count changes (conversation load, message deletion) — never
-  // while a response is streaming.
+  /*
+   * Anchor an armed turn once. Other non-streaming length changes, such as
+   * loading a conversation or deleting a message, keep the old bottom-scroll
+   * behavior.
+   */
   const prevLengthRef = useRef(messages.length);
   useLayoutEffect(() => {
     const lengthChanged = messages.length !== prevLengthRef.current;
     prevLengthRef.current = messages.length;
 
     const container = containerRef.current;
-    const content = contentRef.current;
     const spacer = spacerRef.current;
 
     const anchorIndex = pendingAnchorIndexRef.current;
     if (anchorIndex != null && messageRefsMap.current.has(anchorIndex)) {
       pendingAnchorIndexRef.current = null;
-      if (container && content && spacer) {
-        const currentContentHeight = content.getBoundingClientRect().height;
-        requiredTotalRef.current =
-          currentContentHeight + container.clientHeight;
+      if (container && spacer) {
         spacer.style.height = `${container.clientHeight}px`;
       }
       scrollMessageToTop(anchorIndex, false);
       return;
-    }
-
-    if (requiredTotalRef.current > 0 && content && spacer) {
-      const currentContentHeight = content.getBoundingClientRect().height;
-      const needed = Math.max(
-        requiredTotalRef.current - currentContentHeight,
-        0,
-      );
-      spacer.style.height = `${needed}px`;
     }
 
     if (!isAssistantTyping && lengthChanged) {
@@ -203,15 +181,13 @@ export const useConversationScroll = ({
     }
   }, [messages, isAssistantTyping, scrollToBottom, scrollMessageToTop]);
 
-  // Once the turn completes, drop any leftover reserved space immediately —
-  // don't wait for content growth to fully consume it (e.g. a short
-  // response never grows past the frozen total on its own).
+  /*
+   * MarkdownRenderer flushes buffered typewriter content synchronously when
+   * streaming stops, so clearing the spacer cannot race a growing reply.
+   */
   useLayoutEffect(() => {
-    if (!isAssistantTyping) {
-      requiredTotalRef.current = 0;
-      if (spacerRef.current) {
-        spacerRef.current.style.height = '0px';
-      }
+    if (!isAssistantTyping && spacerRef.current) {
+      spacerRef.current.style.height = '0px';
     }
   }, [isAssistantTyping]);
 
@@ -225,10 +201,10 @@ export const useConversationScroll = ({
       container.removeEventListener('scroll', updateScrollButtonVisibility);
   }, [updateScrollButtonVisibility]);
 
-  // Streamed content grows the content box without moving scrollTop (we
-  // never auto-follow), so no native 'scroll' event fires on its own —
-  // observe the content box directly so the button still reflects unseen
-  // content as a response streams past the fold.
+  /*
+   * Streaming grows content without firing a native scroll event. Observe
+   * content size so the button reflects newly hidden content below the fold.
+   */
   useEffect(() => {
     const content = contentRef.current;
     if (!content) return;
