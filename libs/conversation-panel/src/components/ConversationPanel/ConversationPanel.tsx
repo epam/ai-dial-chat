@@ -330,6 +330,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         ariaLabel={title}
         onClose={onToggle}
         closeLabel={closeAriaLabel}
+        headerClassName="h-[64px]"
         styles={{
           colors: {
             background: colors?.background,

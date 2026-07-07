@@ -57,9 +57,7 @@ import { getConversationSource } from './get-conversation-source';
 
 const PANEL_STYLES: ConversationPanelStyles = {
   typography: {
-    fontClassName: 'dial-body-text',
     itemIconBadgeClassName: 'rounded-lg',
-    newChatLabelClassName: 'dial-small-text',
     groupHeaderClassName: 'dial-tiny-semi-text uppercase tracking-wider',
     tabClassName: 'dial-tiny-semi-text cp-filter-tab',
   },
