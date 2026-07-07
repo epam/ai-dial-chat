@@ -2,8 +2,6 @@ import type { CatalogItem } from './catalog-item';
 
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
 export interface ItemDetailsTexts {
-  /** "Use in chat" action button label. Default: `'Use in chat'`. */
-  useInChatLabel?: string;
   /** "Share" action button label. Default: `'Share'`. */
   shareLabel?: string;
   /** Caption above the short intro text. Default: `'Intro'`. */
@@ -44,7 +42,9 @@ export interface ItemDetailsTexts {
   apiSnippetSectionLabel?: string;
   /** "Model ID" row label in the API tab. Default: `'Model ID'`. */
   apiModelIdLabel?: string;
-  /** "Endpoint" row label in the API tab. Default: `'Endpoint'`. */
+  /** "Endpoint" section heading in the API tab (multi-endpoint selector). Default: `'Endpoint'`. */
+  apiEndpointSectionLabel?: string;
+  /** URL row label inside each endpoint option. Default: `'Endpoint'`. */
   apiEndpointLabel?: string;
   /** "Request example" row label in the API tab. Default: `'Request example'`. */
   apiRequestExampleLabel?: string;
@@ -62,6 +62,8 @@ export interface ItemDetailsTexts {
 export interface ItemDetailsTypography {
   /** Typography class for the entity name. Default: `'dial-body-semi-text text-primary'`. */
   nameClassName?: string;
+  /** Typography class for the provider label below the entity name. Default: `'dial-tiny-text text-secondary'`. */
+  providerClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
   /** Typography class for the intro section caption. Default: `'dial-caption-text'`. */
@@ -80,6 +82,10 @@ export interface ItemDetailsTypography {
   overviewValueClassName?: string;
   /** Typography class for "Yes" spec values. Default: `'dial-small-text'`. */
   overviewValueTrueClassName?: string;
+  /** Typography class applied to folder path separator labels. Default: `'dial-tiny-text'`. */
+  folderLabelClassName?: string;
+  /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
+  folderLeafClassName?: string;
 }
 
 /** Grouped style overrides for `DetailsPanel`. */
@@ -109,6 +115,8 @@ export interface DetailsPanelProps {
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /** Called when the "Use in chat" button is clicked. */
   onUseInChat?: (item: CatalogItem) => void;
+  /** Controls whether the primary action button is shown for the item. */
+  isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked. */
   onShare?: (item: CatalogItem) => void;
   /** Text overrides for all user-visible strings. */

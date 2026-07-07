@@ -27,8 +27,6 @@ export interface CatalogTitles {
   pageTitle?: string;
   /** Create button label. Default: 'Create'. */
   createLabel?: string;
-  /** Caption shown at the top of the Create dropdown menu. Default: 'Create new'. */
-  createMenuCaption?: string;
   /** Favorites section heading. Default: 'Your Favorites'. */
   favoritesTitle?: string;
   /** Browse section heading. Default: 'Browse'. */
@@ -48,6 +46,10 @@ export interface CatalogTitles {
   sortNameAZLabel?: string;
   /** Label for the "Featured" tag on cards. Default: 'Featured'. */
   featuredLabel?: string;
+  /** Accessible label for switching to grid view. Default: 'Grid view'. */
+  gridViewLabel?: string;
+  /** Accessible label for switching to list view. Default: 'List view'. */
+  listViewLabel?: string;
   /** ARIA label for the page/grid. Default: 'Catalog'. */
   ariaLabel?: string;
   /**
@@ -82,6 +84,8 @@ export interface CatalogProps {
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /** Called when the "Use in chat" button is clicked in the details panel. */
   onUseInChat?: (item: CatalogItem) => void;
+  /** Controls whether the primary action button is shown for an item. */
+  isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked in the details panel. */
   onShare?: (item: CatalogItem) => void;
   /**

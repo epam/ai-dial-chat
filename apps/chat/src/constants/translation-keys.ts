@@ -47,6 +47,7 @@ export enum RateI18nKeys {
 
 export enum BasicI18nKeys {
   SearchPlaceholder = 'basic.searchPlaceholder',
+  ClearSearch = 'basic.clearSearch',
   NoResults = 'basic.noResults',
   Empty = 'basic.noData',
 }
@@ -110,6 +111,8 @@ export enum CatalogI18nKeys {
   SortNewest = 'catalog.sortNewest',
   SortNameAZ = 'catalog.sortNameAZ',
   FeaturedLabel = 'catalog.featuredLabel',
+  GridViewLabel = 'catalog.gridViewLabel',
+  ListViewLabel = 'catalog.listViewLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsDailyLimit = 'catalog.details.dailyLimit',
@@ -122,7 +125,6 @@ export enum CatalogI18nKeys {
   DetailsApiCopy = 'catalog.details.api.copy',
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
-  CreateMenuCaption = 'catalog.create.menuCaption',
   CreateQuickApp = 'catalog.create.quickApp',
   CreateToolset = 'catalog.create.toolset',
   FavoriteAddedTitle = 'catalog.favoriteAddedTitle',
@@ -131,15 +133,24 @@ export enum CatalogI18nKeys {
   FavoriteRemoved = 'catalog.favoriteRemoved',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
+  TabToolsets = 'catalog.tab.toolsets',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
   PickerTitle = 'catalog.picker.title',
   PickerSearchPlaceholder = 'catalog.picker.searchPlaceholder',
   PickerSearchAriaLabel = 'catalog.picker.searchAriaLabel',
-  PickerFavoritesLabel = 'catalog.picker.favoritesLabel',
   PickerEmptyHint = 'catalog.picker.emptyHint',
   PickerBrowseCatalog = 'catalog.picker.browseCatalogLabel',
   PickerRemoveFromFavorites = 'catalog.picker.removeFromFavoritesLabel',
+}
+
+export enum NotFoundI18nKeys {
+  AriaLabel = 'notFound.ariaLabel',
+  Eyebrow = 'notFound.eyebrow',
+  Title = 'notFound.title',
+  Description = 'notFound.description',
+  OpenCatalog = 'notFound.openCatalog',
+  NewChat = 'notFound.newChat',
 }
 
 export enum DeploymentsI18nKeys {
@@ -209,6 +220,7 @@ export enum DialFileManagerI18nKeys {
   DownloadFileError = 'dialFileManager.downloadFileError',
   DownloadFilesError = 'dialFileManager.downloadFilesError',
   FolderCreateError = 'dialFileManager.folderCreateError',
+  FolderLoadError = 'dialFileManager.folderLoadError',
   DeleteFilesError = 'dialFileManager.deleteFilesError',
   ItemDeletedSuccessfully = 'dialFileManager.itemDeletedSuccessfully',
   ItemsDeletedSuccessfully = 'dialFileManager.itemsDeletedSuccessfully',
@@ -232,6 +244,16 @@ export enum DialFileManagerI18nKeys {
   RenameReservedName = 'dialFileManager.renameReservedName',
   RenameInvalidChars = 'dialFileManager.renameInvalidChars',
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
+  SearchEmptyStateTitle = 'dialFileManager.search.emptyStateTitle',
+  MyFilesTreeHeader = 'dialFileManager.myFiles.treeHeader',
+  SharedTreeHeader = 'dialFileManager.shared.treeHeader',
+  OrganizationTreeHeader = 'dialFileManager.organization.treeHeader',
+  MyFilesEmptyStateTitle = 'dialFileManager.myFiles.emptyStateTitle',
+  MyFilesEmptyStateDescription = 'dialFileManager.myFiles.emptyStateDescription',
+  SharedEmptyStateTitle = 'dialFileManager.shared.emptyStateTitle',
+  SharedEmptyStateDescription = 'dialFileManager.shared.emptyStateDescription',
+  OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
+  OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
   UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
 }
 

@@ -4,8 +4,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { AppService } from '../app/app.service';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { handleDialError } from '../common/utils/dial-error';
 import { TranscribeAudioDto } from './dto/transcribe-audio.dto';
 
 interface CompletionResponse {
@@ -55,8 +55,10 @@ export class TranscriptionService extends AppService {
           'DIAL Core rejected transcription request',
           result.error,
         );
-        return handleDialError(
+        return handleDialSdkError(
           result.error ?? { status: result.response.status },
+          'transcription.transcribeAudio',
+          this.logger,
         );
       }
 
@@ -70,7 +72,11 @@ export class TranscriptionService extends AppService {
         throw error;
       }
       this.logger.error('DIAL Core transcription failed', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'transcription.transcribeAudio',
+        this.logger,
+      );
     }
   }
 }

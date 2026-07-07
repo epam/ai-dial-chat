@@ -4,8 +4,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { ButtonsI18nKeys } from '../../../constants/translation-keys';
 import NegativeFeedbackModal from '../Rate/NegativeFeedbackModal';
 
-// DialSelect uses floating-ui which can't position in jsdom — mock it as a
-// native <select> so option interaction works in tests.
+/*
+ * DialSelect uses floating-ui which can't position in jsdom — mock it as a
+ * native <select> so option interaction works in tests.
+ */
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const real = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {

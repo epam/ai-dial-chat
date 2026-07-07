@@ -7,8 +7,7 @@ description: Design, review, or change HTTP API contracts for AI DIAL Chat. Use 
 
 Use this skill before implementing or reviewing any HTTP API contract. It defines the
 contract-first procedure for this repo. For backend implementation mechanics (DTO/Swagger/SDK
-patterns, tests, Nx verification) follow `.agents/skills/nestjs-chat-api/SKILL.md` and
-`apps/chat-api/AGENTS.md` — do not restate them here. For library isolation follow the
+patterns, tests, Nx verification) follow `apps/chat-api/AGENTS.md` — do not restate them here. For library isolation follow the
 "Library isolation" section in the root `AGENTS.md`: host/API/transport details stay in apps;
 hand-authored `libs/*` receive resolved data, values, or callbacks. Exception: `libs/chat-api-client`
 is the generated OpenAPI client.

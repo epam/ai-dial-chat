@@ -3,11 +3,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { AppService } from '../app/app.service';
-import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
-} from '../common/utils/dial-fetch-error';
+} from '../common/dial/dial-error.mapper';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import type { DeploymentLimitsResponseDto } from '../openapi/openapi-response.dto';
@@ -17,7 +17,7 @@ import type {
   DeploymentItemDto,
   DeploymentsResponseDto,
 } from './dto/deployment-item.dto';
-import type { DeploymentInterfaceType } from './dto/deployments-query.dto';
+import { DeploymentInterfaceType } from './dto/deployments-query.dto';
 import { RawDeploymentDto } from './dto/raw-deployment.dto';
 
 const isRecord = (val: unknown): val is Record<string, unknown> =>
@@ -31,12 +31,8 @@ const toAdditionalProperties = (
   return undefined;
 };
 
-type RawDeploymentWithFeatures = RawDeploymentDto & {
-  features?: { system_prompt?: boolean; temperature?: boolean };
-};
-
 const mapToDeploymentItem = (
-  raw: RawDeploymentWithFeatures,
+  raw: RawDeploymentDto,
   featuredIds: Set<string>,
   hiddenTags: Set<string>,
 ): DeploymentItemDto | null => {
@@ -84,6 +80,9 @@ const mapToDeploymentItem = (
       ? {
           systemPrompt: raw.features.system_prompt ?? false,
           temperature: raw.features.temperature ?? false,
+          ...(raw.features.folder_attachments != null && {
+            folderAttachments: raw.features.folder_attachments,
+          }),
         }
       : undefined,
     maxInputAttachments:
@@ -127,8 +126,13 @@ export class DeploymentsService extends AppService {
     interfaceType?: DeploymentInterfaceType[],
   ): Promise<DeploymentsResponseDto> {
     const baseCacheKey = `deployments:list:${userSub}`;
+    const normalizedTypes = interfaceType?.filter(
+      (t) => t !== DeploymentInterfaceType.All,
+    );
     const interfaceFilter =
-      interfaceType && interfaceType.length > 0 ? interfaceType : undefined;
+      normalizedTypes && normalizedTypes.length > 0
+        ? normalizedTypes
+        : undefined;
     const cacheKey = interfaceFilter
       ? `${baseCacheKey}:interface:${interfaceFilter.join(',')}`
       : baseCacheKey;
@@ -146,9 +150,10 @@ export class DeploymentsService extends AppService {
       try {
         const result = await this.client.getDeploymentsByInterfaceType({
           headers: getBearerAuthHeaders(accessToken),
-          params: interfaceFilter
+          // Cast needed: SDK type still references old 'embeddings' literal; our enum uses 'embedding'
+          params: (interfaceFilter
             ? { query: { interface_type: interfaceFilter } }
-            : undefined,
+            : undefined) as never,
         });
         if (result.error) {
           return mapDialHttpStatus(
@@ -194,12 +199,10 @@ export class DeploymentsService extends AppService {
       return { deployments: withInstalled };
     }
 
-    const filtered = withInstalled.filter(
-      (item) =>
-        item.interfaces &&
-        item.interfaces.some((iface) =>
-          interfaceFilter.includes(iface as DeploymentInterfaceType),
-        ),
+    const filtered = withInstalled.filter((item) =>
+      item.interfaces?.some((iface) =>
+        interfaceFilter.includes(iface as DeploymentInterfaceType),
+      ),
     );
     return { deployments: filtered };
   }

@@ -23,6 +23,7 @@ import {
   useMatch,
   useNavigate,
 } from 'react-router-dom';
+import ChatLayout from '../components/ChatLayout/ChatLayout';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
@@ -51,6 +52,7 @@ const ToolsetEditorPage = lazy(
 const ToolsetEditorCallbackPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditorCallback'),
 );
+const NotFoundPage = lazy(() => import('../pages/NotFound/NotFound'));
 
 // Start loading the module immediately so the Suspense fallback is skipped on first navigation.
 const conversationPageModule = import('../pages/Conversation/Conversation');
@@ -180,7 +182,7 @@ const App: FC = () => {
       <main
         id="main-content"
         role="main"
-        className="flex min-h-0 min-w-0 flex-1 flex-col"
+        className="flex min-h-0 min-w-0 flex-1 flex-col shadow-main-inset"
       >
         <Header
           onMenuToggle={toggleNav}
@@ -189,25 +191,35 @@ const App: FC = () => {
           onNewChat={() => navigate(ROUTES.Root)}
         />
         <Routes>
-          <Route path={ROUTES.Root} element={<ConversationRoute />} />
+          <Route
+            element={
+              <ChatLayout
+                isHistoryPanelOpen={isHistoryPanelOpen}
+                onToggleHistoryPanel={toggleHistoryPanel}
+                onNewChat={() => navigate(ROUTES.Root)}
+              />
+            }
+          >
+            <Route path={ROUTES.Root} element={<ConversationRoute />} />
+            <Route
+              path="/conversations/*"
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ConversationPage
+                      onDuplicateReadonly={handleDuplicateReadonly}
+                    />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+          </Route>
           <Route
             path={ROUTES.Catalog}
             element={
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
                   <CatalogView />
-                </Suspense>
-              </RouteErrorBoundary>
-            }
-          />
-          <Route
-            path="/conversations/*"
-            element={
-              <RouteErrorBoundary>
-                <Suspense fallback={<RouteFallback />}>
-                  <ConversationPage
-                    onDuplicateReadonly={handleDuplicateReadonly}
-                  />
                 </Suspense>
               </RouteErrorBoundary>
             }
@@ -238,6 +250,16 @@ const App: FC = () => {
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
                   <ToolsetEditorPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <NotFoundPage />
                 </Suspense>
               </RouteErrorBoundary>
             }

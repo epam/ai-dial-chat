@@ -3,7 +3,7 @@ You are running the **{{stage}}** agent.
 ## Inputs
 
 - Working tree: the current checkout (repo root).
-- PR diff: `git diff origin/{{base_ref}}...HEAD`.
+- PR diff: `git diff {{diff_range}}`.
 - Upstream agent outputs:
   {{upstream_inputs}}
 
@@ -48,7 +48,7 @@ The JSON object you write must have:
 
 **Optional `payload`** (object) — put the skill's results here in **whatever shape fits the skill**. `payload` is open; the shapes below are _helpers the renderer/processors recognize_, not requirements — pick the one that matches your skill's output, or use your own keys:
 
-- `payload.findings[]` — for skills that emit **issues/findings** (scan, review, triage). Shape: `{severity, file?, line?, message, suggested_fix?, requirement_ref?}`. Severity: `info`/`low`/`medium`/`high`/`critical`. Preserve the skill's severity verbatim; don't downgrade. The renderer turns these into a table automatically.
+- `payload.findings[]` — for skills that emit **issues/findings** (scan, review, triage). Shape: `{severity, file?, line?, message, suggested_fix?, requirement_ref?}`. Severity: `info`/`low`/`medium`/`high`/`critical`. Preserve the skill's severity verbatim; don't downgrade. `message` must be a non-empty, human-readable review comment; do not put the finding text only in custom fields. For PR review findings, include repo-relative `file` and head-side `line` whenever the issue points to a specific line; the platform will publish those as inline review comments when the line is present in the PR diff, and will keep non-inline findings in the sticky summary.
 - `payload.comment_markdown` — a verbatim markdown body (test-suite summaries, benchmark numbers, prose). **Long markdown inside JSON is escape-error-prone** — embedded code fences, nested backticks, and `"` in block quotes can produce malformed JSON; keep it brief (~5 lines) and avoid nested code blocks.
 - Any other keys — agent-specific. `payload` accepts arbitrary structured data for downstream consumers.
 

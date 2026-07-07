@@ -19,7 +19,7 @@ export interface SessionPayload {
   rt_exp: number;
   /** Cookie issue time — Unix timestamp (seconds) */
   iat: number;
-  /** CSRF token — random UUID rotated on every refresh */
+  /** CSRF token — random UUID created on login and kept stable across refresh */
   csrf: string;
   /** Filtered OIDC claims stored for the UI (allowlist only) */
   claims: Record<string, unknown>;

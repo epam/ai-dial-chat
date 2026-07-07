@@ -11,7 +11,9 @@ import {
 } from './openapi/openapi.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['log', 'error', 'warn'],
+  });
 
   app.use(cookieParser());
 
@@ -55,6 +57,7 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:4207',
     credentials: true,
+    exposedHeaders: ['X-CSRF-Token'],
   });
 
   const port = process.env.PORT || 3005;

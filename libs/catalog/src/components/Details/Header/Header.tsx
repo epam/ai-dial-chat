@@ -11,12 +11,14 @@ import type {
   ItemDetailsStyles,
   ItemDetailsTexts,
 } from '../../../models/item-details-props';
+import { CatalogEntityType } from '../../../types/entity-type';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import { FolderPath } from '../../FolderPath/FolderPath';
 
 interface HeaderProps {
   item: CatalogItem;
   onUseInChat?: (item: CatalogItem) => void;
+  isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   onShare?: (item: CatalogItem) => void;
   texts?: ItemDetailsTexts;
   detailsStyles?: ItemDetailsStyles;
@@ -25,12 +27,16 @@ interface HeaderProps {
 export const Header: FC<HeaderProps> = ({
   item,
   onUseInChat,
+  isPrimaryActionVisible,
   onShare,
   texts,
   detailsStyles,
 }) => {
-  const { nameClassName = 'dial-body-semi-text text-primary' } =
-    detailsStyles?.typography ?? {};
+  const {
+    nameClassName = 'dial-body-semi-text text-primary',
+    folderLabelClassName = 'dial-tiny-text',
+    folderLeafClassName = 'dial-tiny-semi-text',
+  } = detailsStyles?.typography ?? {};
   const handleUseInChat = useCallback(() => {
     onUseInChat?.(item);
   }, [item, onUseInChat]);
@@ -38,6 +44,12 @@ export const Header: FC<HeaderProps> = ({
   const handleShare = useCallback(() => {
     onShare?.(item);
   }, [item, onShare]);
+
+  const shouldShowPrimaryAction =
+    texts?.hasPrimaryAction !== false &&
+    (isPrimaryActionVisible?.(item) ??
+      (item.type === CatalogEntityType.Model ||
+        item.type === CatalogEntityType.Application));
 
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
@@ -50,20 +62,20 @@ export const Header: FC<HeaderProps> = ({
           item.folder.length > 0 ? (
             <FolderPath
               segments={item.folder}
-              labelClassName="dial-tiny-text"
-              leafClassName="dial-tiny-semi-text"
+              labelClassName={folderLabelClassName}
+              leafClassName={folderLeafClassName}
             />
           ) : undefined
         }
       />
       <div className="flex flex-wrap gap-2 ps-[60px]">
-        <PrimaryButton
-          label={
-            texts?.primaryActionLabel ?? texts?.useInChatLabel ?? 'Use in chat'
-          }
-          iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
-          onClick={handleUseInChat}
-        />
+        {shouldShowPrimaryAction && (
+          <PrimaryButton
+            label={texts?.primaryActionLabel ?? 'Use in chat'}
+            iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
+            onClick={handleUseInChat}
+          />
+        )}
         <NeutralButton
           label={texts?.shareLabel ?? 'Share'}
           iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}

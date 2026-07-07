@@ -37,6 +37,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
+import { CONVERSATION_VIEW_INPUT_STYLES } from '../../constants/input-styles';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -58,12 +59,15 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
-import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
+import {
+  dialFilesToAttachments,
+  dialFolderPathToAttachment,
+} from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
-import { ModelPickerPanel } from '../ModelPicker/ModelPickerPanel';
+import ModelPickerPanel from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -102,6 +106,7 @@ interface Props {
   editingMessageIndexes?: Set<number>;
   placeholder: string;
   isAssistantTyping?: boolean;
+  canStopAssistant?: boolean;
   initialModelId: string;
   streamErrorText: string;
   stoppedGeneratingText: string;
@@ -136,6 +141,7 @@ const ConversationView: FC<Props> = ({
   editingMessageIndexes,
   placeholder,
   isAssistantTyping = false,
+  canStopAssistant = false,
   initialModelId,
   streamErrorText,
   stoppedGeneratingText,
@@ -236,8 +242,10 @@ const ConversationView: FC<Props> = ({
     [items],
   );
 
-  // For each message, resolve the deployment active at that point in the conversation.
-  // Scans status messages in order so messages before a model change get the initial model icon.
+  /*
+   * For each message, resolve the deployment active at that point in the conversation.
+   * Scans status messages in order so messages before a model change get the initial model icon.
+   */
   const effectiveDeploymentIds = useMemo<(string | undefined)[]>(
     () =>
       messages.reduce<{
@@ -322,8 +330,10 @@ const ConversationView: FC<Props> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  // True when the user has manually scrolled up during a stream.
-  // Pauses auto-scroll until they click the scroll button or send a new message.
+  /*
+   * True when the user has manually scrolled up during a stream.
+   * Pauses auto-scroll until they click the scroll button or send a new message.
+   */
   const userScrolledRef = useRef(false);
 
   // Prevents the scroll handler from misreading programmatic scrolls as user input.
@@ -354,9 +364,11 @@ const ConversationView: FC<Props> = ({
         isProgrammaticRef.current = false;
       });
     } else {
-      // Smooth scroll fires scroll events for its entire ~300 ms animation.
-      // Keep the flag set until the browser signals the scroll is complete;
-      // fall back to a timeout for Safari < 17.4 which lacks scrollend.
+      /*
+       * Smooth scroll fires scroll events for its entire ~300 ms animation.
+       * Keep the flag set until the browser signals the scroll is complete;
+       * fall back to a timeout for Safari < 17.4 which lacks scrollend.
+       */
       const reset = () => {
         if (smoothScrollTimerRef.current != null) {
           clearTimeout(smoothScrollTimerRef.current);
@@ -376,9 +388,11 @@ const ConversationView: FC<Props> = ({
     }
   }, [isAssistantTyping]);
 
-  // Scroll on message updates.
-  // During streaming: instant + skip if user scrolled up.
-  // On new turns (non-streaming message count change): always smooth-scroll.
+  /*
+   * Scroll on message updates.
+   * During streaming: instant + skip if user scrolled up.
+   * On new turns (non-streaming message count change): always smooth-scroll.
+   */
   const prevLengthRef = useRef(messages.length);
   useEffect(() => {
     const lengthChanged = messages.length !== prevLengthRef.current;
@@ -490,7 +504,11 @@ const ConversationView: FC<Props> = ({
 
   const handleAttachDialFiles = useCallback(
     (result: AttachResult) => {
-      setPendingDialAttachments(dialFilesToAttachments(result.files, bucket));
+      const fileAttachments = dialFilesToAttachments(result.files, bucket);
+      const folderAttachments = result.folderPaths.map(
+        dialFolderPathToAttachment,
+      );
+      setPendingDialAttachments([...fileAttachments, ...folderAttachments]);
       setIsDialFileManagerOpen(false);
     },
     [bucket],
@@ -535,7 +553,7 @@ const ConversationView: FC<Props> = ({
           aria-relevant="additions"
           className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden"
         >
-          <div className="mx-auto flex w-full min-w-0 max-w-[760px] flex-1 flex-col gap-[26px] overflow-x-hidden px-6 pb-[18px] pt-7">
+          <div className="mx-auto flex w-full min-w-0 max-w-[760px] flex-1 flex-col gap-[26px] overflow-x-hidden px-6 pt-7">
             {messages.map((msg, index) => {
               const isThisMessageEditing = editingMessageIndexes?.has(index);
               return (
@@ -618,7 +636,7 @@ const ConversationView: FC<Props> = ({
       <div
         role="region"
         aria-label={t(ChatI18nKeys.MessageInput)}
-        className="w-full bg-layer-0 px-6 pb-[22px] pt-3.5"
+        className="relative z-10 w-full px-6 pb-4"
       >
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
@@ -638,14 +656,10 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
+                styles={CONVERSATION_VIEW_INPUT_STYLES}
                 onSend={onSend}
                 onUploadAttachment={onUploadAttachment}
-                onStop={onStop}
-                styles={{
-                  typography: {
-                    input: { fontClassName: 'dial-body-paragraph-text' },
-                  },
-                }}
+                onStop={canStopAssistant ? onStop : undefined}
                 isStreaming={isAssistantTyping}
                 onAttachmentsChange={onAttachmentsChange}
                 placeholder={placeholder}
@@ -703,7 +717,6 @@ const ConversationView: FC<Props> = ({
                         CatalogI18nKeys.PickerSearchPlaceholder,
                       ),
                       searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
-                      favoritesLabel: t(CatalogI18nKeys.PickerFavoritesLabel),
                       emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
                       browseCatalogLabel: t(
                         CatalogI18nKeys.PickerBrowseCatalog,
@@ -727,6 +740,9 @@ const ConversationView: FC<Props> = ({
                   maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
                   maximumAttachmentsAmount={
                     selectedDeployment?.maxInputAttachments
+                  }
+                  canAttachFolders={
+                    selectedDeployment?.features?.folderAttachments
                   }
                   title={t(DialFileManagerI18nKeys.Title)}
                   attachLabel={t(DialFileManagerI18nKeys.Attach)}

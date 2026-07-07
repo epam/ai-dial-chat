@@ -1172,6 +1172,12 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   temperature: boolean;
+  /**
+   * Whether the deployment supports attaching folders from the file manager
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  folderAttachments?: boolean;
 }
 /**
  *
@@ -1719,6 +1725,42 @@ export interface DialModelFeaturesDto {
    * @memberof DialModelFeaturesDto
    */
   mcp?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  chatCompletion?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  responsesApi?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  maxTokensSupported?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  maxCompletionTokensSupported?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  customTemperatureSupported?: boolean;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialModelFeaturesDto
+   */
+  reasoningEfforts?: Array<string>;
 }
 /**
  *
@@ -1819,6 +1861,12 @@ export interface DialToolsetAuthSettingsDto {
    * @memberof DialToolsetAuthSettingsDto
    */
   tokenEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  codeChallenge?: string;
   /**
    *
    * @type {string}
@@ -1968,6 +2016,12 @@ export interface DialToolsetDto {
   updatedAt?: number;
   /**
    *
+   * @type {DialModelFeaturesDto}
+   * @memberof DialToolsetDto
+   */
+  features?: DialModelFeaturesDto;
+  /**
+   *
    * @type {string}
    * @memberof DialToolsetDto
    */
@@ -1990,6 +2044,18 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   authSettings?: DialToolsetAuthSettingsDto;
+  /**
+   * Whether this toolset is installed by the current user
+   * @type {boolean}
+   * @memberof DialToolsetDto
+   */
+  isInstalled?: boolean;
+  /**
+   * True when the toolset id/path belongs to the current session user bucket
+   * @type {boolean}
+   * @memberof DialToolsetDto
+   */
+  isMy?: boolean;
 }
 /**
  *
@@ -2454,11 +2520,11 @@ export interface RenameConversationBodyDto {
  */
 export interface RenameConversationResponseDto {
   /**
-   * New relative path of the renamed conversation
+   * Sanitised stored display name of the renamed conversation
    * @type {string}
    * @memberof RenameConversationResponseDto
    */
-  newPath: string;
+  name: string;
 }
 /**
  *

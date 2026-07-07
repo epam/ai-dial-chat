@@ -1,7 +1,7 @@
 ---
 name: create-ticket
 model: haiku
-description: Interactively create GitHub issues (Bug, Feature, Task) for the current repository. Infrastructure changes are Tasks auto-labeled `infra-task`. Parses optional args for type and description, asks targeted questions, assigns labels, and creates the issue via gh CLI.
+description: Interactively create OR update GitHub issues (Bug, Feature, Task) for the current repository. Create from a discussion, from an openspec change (current branch or a specific change path), or update an existing issue with new details. Use for "create ticket/issue", "generate issue from spec", "document this feature as a ticket", or "update ticket/issue". Infrastructure changes are Tasks auto-labeled `infra-task`. Asks targeted questions, assigns labels, and runs the gh CLI.
 alwaysApply: false
 metadata:
   author: project
@@ -22,7 +22,7 @@ gh auth status
 - If not authenticated → stop and tell the user: "Run `gh auth login` to authenticate first."
 - If authenticated → proceed to Step 0
 
-**Usage**: `/create-ticket [type: description]`
+**Usage**: `/create-ticket [type: description | from spec | <change-path> | update <#issue|url>]`
 
 Examples:
 
@@ -31,10 +31,21 @@ Examples:
 - `/create-ticket feature: add bulk delete for models`
 - `/create-ticket task: refactor Sidebar for reuse in entity lists`
 - `/create-ticket infra: add LOG_LEVEL to prod`
+- `/create-ticket from spec` — from the openspec changes on the current branch
+- `/create-ticket openspec/changes/archive/2026-06-15-file-dnd-overlay` — from a specific change
+- `/create-ticket update #123` — add details to an existing issue
 
 ---
 
-## Step 0 — Parse Args
+## Step 0 — Intent, Source & Args
+
+First decide which of three modes applies, then parse the remaining args.
+
+- **Mode C — Update existing** — the user references an existing issue: `update`, `#<number>`, or a GitHub issue URL. → go to **Update Existing Ticket** below.
+- **Mode B — From spec** — the user says "from spec", "from the branch", "issue from current change", or passes an `openspec/changes/...` folder path. → go to **From Spec** below, which drafts the Step 2 proposal, then continues at Step 1/3.
+- **Mode A — From discussion** (default) — anything else. Continue with arg parsing here.
+
+### Mode A arg parsing
 
 If the user provided arguments after `/create-ticket`, parse them:
 
@@ -47,7 +58,7 @@ If the user provided arguments after `/create-ticket`, parse them:
   - If not found → treat the entire arg string as a description seed and ask for type
 - If no args at all → start fully interactive from Step 1
 
-When args provide a description seed, use it to:
+When args provide a description seed (or the description comes from the current discussion), use it to:
 
 - **Generate a proposed title** — concise, under 80 characters
 - **Generate a proposed summary** — a short paragraph followed by key points as a bullet list. For bugs, also draft the actual/expected result from context.
@@ -57,9 +68,119 @@ When args provide a description seed, use it to:
 
 ---
 
+## From Spec (Mode B)
+
+Build the ticket from the openspec change(s) rather than free description. This produces a **User Story + Acceptance Criteria + Definition of Done** body, then flows through the normal pipeline (type, labels, priority, assignee, preview, create) so the ticket still gets `--project` and an assignee.
+
+### B1 — Locate the change
+
+- If the user passed a specific `openspec/changes/...` folder path → use it, skip discovery.
+- Otherwise discover changes introduced on the current branch against the repo's base branch (`origin/development-1.0` — NOT `main`):
+
+  ```bash
+  git diff --name-only $(git merge-base HEAD origin/development-1.0) -- openspec/
+  ```
+
+- If no openspec files are found on the branch → tell the user and offer to fall back to Mode A (from discussion). Do not stop silently.
+
+### B2 — Read the spec content
+
+For each changed change folder, read (in priority order, all that exist, in parallel):
+
+1. `proposal.md` — primary: Why, What Changes, Capabilities, Impact
+2. `design.md` — supplementary detail
+3. `tasks.md` — acceptance-criteria hints (checked `- [x]` = delivered scope)
+4. `.openspec.yaml` — metadata (title, status)
+
+Also read any `specs/*` files in the diff (`openspec/changes/<name>/specs/` or `openspec/specs/`).
+
+### B3 — Synthesise the draft (feeds Step 2)
+
+- **Title** — from `.openspec.yaml` title or the proposal heading, under 80 chars.
+- **Type** — derive from the change (default Feature; use Bug/Task if the spec is clearly a fix or engineering task). Confirm in Step 1.
+- **Summary body** — structured as:
+
+  ```markdown
+  #### User Story
+
+  **As a** <persona — end user; "developer" only for tooling/infra>
+  **I want to** <one action derived from "What Changes" / capability>
+  **So that** <business value from "Why">
+
+  #### Acceptance Criteria
+
+  - <concise, testable, present-tense: "User can …", "When …, then …"> (aim for 4–8)
+
+  #### Definition of Done
+
+  - <delivered scope from checked tasks.md items + repo defaults: tests, i18n, RTL, docs where relevant>
+  ```
+
+Use this as the Step 2 draft, then continue at **Step 1** (confirm type) → **Step 3** onward. Skip Step 2a code research (the spec already is the research) unless the user asks.
+
+---
+
+## Update Existing Ticket (Mode C)
+
+Add details to an issue that already exists. Default action is to **edit the body in place**; appending a comment is offered as an option.
+
+### C1 — Resolve the target issue
+
+- If args include `#<number>` or an issue URL → use it.
+- Otherwise list candidates and let the user pick:
+
+  ```bash
+  gh issue list --search "<keywords from the request>" --limit 10 --json number,title,url
+  ```
+
+### C2 — Fetch current state
+
+```bash
+gh issue view <number> --json number,title,body,labels,assignees,url,state
+```
+
+Show the user the current title, labels, assignee, and body.
+
+### C3 — Gather the new details
+
+Collect what to add from the discussion, or reuse **From Spec (Mode B)** if the update should come from an openspec change. Determine which of these change: body content, labels, title, assignee, priority.
+
+### C4 — Preview the before → after
+
+Show the current vs. proposed body/labels/title so the user sees exactly what changes. Use **AskUserQuestion**:
+
+> "Apply this update?"
+
+Options:
+
+- **Edit body** (default) — merge the new details into the issue body and update labels/title as needed
+- **Add comment** — keep the body, append the new details as a comment
+- **Cancel** — make no change
+
+### C5 — Apply
+
+- Edit body / fields:
+
+  ```bash
+  gh issue edit <number> \
+    --body "<merged body>" \
+    --add-label "<label>" \
+    --title "<new title if changed>"
+  ```
+
+- Or add a comment:
+
+  ```bash
+  gh issue comment <number> --body "<new details>"
+  ```
+
+Use `--add-label` / `--remove-label` for label changes; only pass `--title`/`--body` when they change. After applying, display the issue URL. Then stop — the rest of the create pipeline (Steps 1–8) does not apply to updates.
+
+---
+
 ## Step 1 — Issue Type
 
-Skip if parsed from args.
+Skip if the type was parsed from args. If it was **derived from a spec (Mode B)**, don't skip — confirm the derived type with the user (pre-select it as the default) before continuing.
 
 Use **AskUserQuestion** to ask:
 

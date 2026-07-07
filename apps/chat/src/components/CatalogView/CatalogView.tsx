@@ -17,10 +17,15 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import useFavoriteApplications, {
+  FavoriteEntityType,
+} from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
-import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
+import {
+  mapDeploymentToCatalogItem,
+  mapToolsetToCatalogItem,
+} from '../../utils/map-deployment-to-catalog-item';
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
@@ -30,6 +35,8 @@ const CatalogView: FC = () => {
     items: deployments,
     isLoading: isDeploymentsLoading,
     schemas,
+    toolsets,
+    setSelectedItemId,
   } = useDeployments();
   const {
     favoriteIds,
@@ -40,11 +47,15 @@ const CatalogView: FC = () => {
   const isLoading = isDeploymentsLoading || isFavoritesLoading;
 
   const catalogItems = useMemo(
-    () =>
-      deployments.map((d) =>
+    () => [
+      ...deployments.map((d) =>
         mapDeploymentToCatalogItem(d, favoriteIds, undefined, t),
       ),
-    [deployments, favoriteIds, t],
+      ...toolsets.map((toolset) =>
+        mapToolsetToCatalogItem(toolset, favoriteIds),
+      ),
+    ],
+    [deployments, favoriteIds, t, toolsets],
   );
 
   const favorites = useMemo(
@@ -63,8 +74,15 @@ const CatalogView: FC = () => {
   const onToggleFavorite = useCallback(
     (id: string, isFavorite: boolean) => {
       if (isLoading) return;
-      toggleFavorite(id, isFavorite);
-      const name = catalogItems.find((item) => item.id === id)?.name ?? id;
+      const item = catalogItems.find((catalogItem) => catalogItem.id === id);
+      toggleFavorite(
+        id,
+        isFavorite,
+        item?.type === CatalogEntityType.Toolset
+          ? FavoriteEntityType.Toolset
+          : FavoriteEntityType.Deployment,
+      );
+      const name = item?.name ?? id;
 
       showNotification({
         variant: isFavorite
@@ -84,6 +102,21 @@ const CatalogView: FC = () => {
       });
     },
     [isLoading, toggleFavorite, catalogItems, showNotification, t],
+  );
+
+  const handleUseInChat = useCallback(
+    (item: CatalogItem) => {
+      setSelectedItemId(item.id);
+      navigate(ROUTES.Root);
+    },
+    [setSelectedItemId, navigate],
+  );
+
+  const isPrimaryActionVisible = useCallback(
+    (item: CatalogItem) =>
+      item.type === CatalogEntityType.Model ||
+      item.type === CatalogEntityType.Application,
+    [],
   );
 
   const buildEditorUrl = useCallback((schemaId: string): string => {
@@ -131,10 +164,14 @@ const CatalogView: FC = () => {
       createOptions={createOptions}
       onFetchAboutContent={fetchAboutContent}
       onToggleFavorite={onToggleFavorite}
+      onUseInChat={handleUseInChat}
+      isPrimaryActionVisible={isPrimaryActionVisible}
+      styles={{
+        typography: { pageHeadingFontClassName: 'catalog-heading-text' },
+      }}
       titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),
         createLabel: t(ButtonsI18nKeys.Create),
-        createMenuCaption: t(CatalogI18nKeys.CreateMenuCaption),
         favoritesTitle: t(CatalogI18nKeys.FavoritesTitle),
         browseTitle: t(ButtonsI18nKeys.Browse),
         searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
@@ -143,10 +180,13 @@ const CatalogView: FC = () => {
         sortNewestLabel: t(CatalogI18nKeys.SortNewest),
         sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
         featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
+        gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
+        listViewLabel: t(CatalogI18nKeys.ListViewLabel),
         ariaLabel: t(CatalogI18nKeys.AriaLabel),
         tabLabels: {
           [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
           [CatalogEntityType.Application]: t(CatalogI18nKeys.TabApplications),
+          [CatalogEntityType.Toolset]: t(CatalogI18nKeys.TabToolsets),
         },
       }}
       detailsTexts={{

@@ -1,11 +1,13 @@
-import type { CreateOption } from '@epam/ai-dial-catalog';
+import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
-import useFavoriteApplications from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
+import useFavoriteApplications, {
+  FavoriteEntityType,
+} from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { ROUTES } from '../../../types/routes';
 import CatalogView from '../CatalogView';
 
@@ -21,8 +23,39 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     Application: 'APPLICATION',
     Toolset: 'TOOLSET',
   },
-  Catalog: ({ createOptions }: { createOptions?: CreateOption[] }) => (
+  Catalog: ({
+    createOptions,
+    items,
+    onToggleFavorite,
+    onUseInChat,
+  }: {
+    createOptions?: CreateOption[];
+    items?: CatalogItem[];
+    onToggleFavorite?: (id: string, isFavorite: boolean) => void;
+    onUseInChat?: (item: CatalogItem) => void;
+  }) => (
     <div>
+      <output aria-label="Catalog item ids">
+        {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
+      </output>
+      {(items ?? []).map((item) => (
+        <button
+          key={`favorite-${item.id}`}
+          type="button"
+          onClick={() => onToggleFavorite?.(item.id, true)}
+        >
+          favorite {item.id}
+        </button>
+      ))}
+      {(items ?? []).map((item) => (
+        <button
+          key={`use-in-chat-${item.id}`}
+          type="button"
+          onClick={() => onUseInChat?.(item)}
+        >
+          use in chat {item.id}
+        </button>
+      ))}
       {(createOptions ?? []).map((option) => (
         <button key={option.label} type="button" onClick={option.onClick}>
           {option.label}
@@ -43,6 +76,10 @@ vi.mock('../../../context/NotificationContext', () => ({
 vi.mock(
   '../../../hooks/useFavoriteApplications/useFavoriteApplications',
   () => ({
+    FavoriteEntityType: {
+      Deployment: 'deployment',
+      Toolset: 'toolset',
+    },
     default: vi.fn(),
   }),
 );
@@ -61,6 +98,7 @@ describe('CatalogView', () => {
       isLoading: false,
       error: null,
       schemas: [],
+      toolsets: [],
     });
     vi.mocked(useNotification).mockReturnValue({
       notifications: [],
@@ -86,5 +124,163 @@ describe('CatalogView', () => {
     expect(mockNavigate).toHaveBeenCalledWith(
       `${ROUTES.ToolsetEditor}?returnUrl=%2Fcatalog`,
     );
+  });
+
+  it('adds toolsets from deployments context to catalog items', () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        {
+          id: 'gpt-4o',
+          displayName: 'GPT-4o',
+          type: 'model',
+        },
+      ],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/b/search__0.0.1',
+          toolset: 'toolsets/b/search__0.0.1',
+          displayName: 'Search',
+        },
+      ],
+    });
+
+    render(<CatalogView />);
+
+    expect(screen.getByLabelText('Catalog item ids').textContent).toBe(
+      'gpt-4o:MODEL,toolsets/b/search__0.0.1:TOOLSET',
+    );
+  });
+
+  it('toggles toolset favorites through the toolset user-config section', async () => {
+    const toggleFavorite = vi.fn();
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/b/search__0.0.1',
+          toolset: 'toolsets/b/search__0.0.1',
+          displayName: 'Search',
+        },
+      ],
+    });
+    vi.mocked(useFavoriteApplications).mockReturnValue({
+      favoriteIds: new Set(),
+      isLoading: false,
+      toggleFavorite,
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'favorite toolsets/b/search__0.0.1',
+      }),
+    );
+
+    expect(toggleFavorite).toHaveBeenCalledWith(
+      'toolsets/b/search__0.0.1',
+      true,
+      FavoriteEntityType.Toolset,
+    );
+  });
+
+  it('selects the model as the deployment and navigates to the root route when Use in chat is clicked', async () => {
+    const setSelectedItemId = vi.fn();
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        {
+          id: 'gpt-4o',
+          displayName: 'GPT-4o',
+          type: 'model',
+        },
+      ],
+      selectedItemId: null,
+      setSelectedItemId,
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'use in chat gpt-4o' }),
+    );
+
+    expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
+  });
+
+  it('selects the application as the deployment and navigates to the root route when Use in chat is clicked', async () => {
+    const setSelectedItemId = vi.fn();
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        {
+          id: 'my-app',
+          displayName: 'My App',
+          type: 'application',
+        },
+      ],
+      selectedItemId: null,
+      setSelectedItemId,
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'use in chat my-app' }),
+    );
+
+    expect(setSelectedItemId).toHaveBeenCalledWith('my-app');
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
+  });
+
+  it('updates the selection when Use in chat is clicked on a different deployment', async () => {
+    const setSelectedItemId = vi.fn();
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
+        { id: 'gpt-4o-mini', displayName: 'GPT-4o mini', type: 'model' },
+      ],
+      selectedItemId: 'gpt-4o',
+      setSelectedItemId,
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'use in chat gpt-4o-mini' }),
+    );
+
+    expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
   });
 });

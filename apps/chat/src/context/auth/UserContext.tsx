@@ -9,7 +9,11 @@ import {
   useState,
 } from 'react';
 import { getMe } from '../../server-api/auth.api';
-import { onUnauthorized, UnauthorizedError } from '../../server-api/base';
+import {
+  clearCsrfToken,
+  onUnauthorized,
+  UnauthorizedError,
+} from '../../server-api/base';
 import { AuthStatus } from '../../types/auth-status';
 
 interface UserContextType {
@@ -36,7 +40,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     } catch (err) {
       if (!signal.isCancelled) {
         if (!(err instanceof UnauthorizedError)) {
+          /*
+           * Keep CSRF across transient bootstrap failures; mutating requests
+           * re-prime it through the invalid-CSRF retry path if it became stale.
+           */
           console.error('UserContext bootstrap failed', err);
+        } else {
+          clearCsrfToken();
         }
         setUser(null);
         setStatus(AuthStatus.Unauthenticated);
@@ -54,12 +64,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     return onUnauthorized(() => {
+      clearCsrfToken();
       setUser(null);
       setStatus(AuthStatus.Unauthenticated);
     });
   }, []);
 
   const reset = useCallback(() => {
+    clearCsrfToken();
     setUser(null);
     setStatus(AuthStatus.Unauthenticated);
   }, []);

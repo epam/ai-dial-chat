@@ -18,9 +18,21 @@ import {
   stopCompletion,
   streamCompletion,
 } from '../../server-api/chat-stream.api';
-import { getConversation } from '../../server-api/conversations.api';
+import {
+  getConversation,
+  watchConversation,
+} from '../../server-api/conversations.api';
 import { applyChunkToMessages } from '../../utils/apply-chunk';
 import { getConversationPath } from '../../utils/conversation-path';
+import { isAwaitingGenerationResume } from '../../utils/generation-resume';
+
+/*
+ * Safety-net only: the primary completion signal is the `/watch` SSE event
+ * fired when the backend's finalize() save happens, independent of how long
+ * the generation itself takes. This bounds the wait if that event is ever
+ * missed (e.g. a backend crash mid-generation that never reaches finalize()).
+ */
+const GENERATION_RESUME_WATCH_TIMEOUT_MS = 5 * 60 * 1000;
 
 interface Params {
   conversationId: string | undefined;
@@ -40,7 +52,12 @@ interface Result {
     mode?: SendCompletionDtoModeEnum,
   ) => void;
   handleStop: () => void;
+  resumeIfAwaitingGeneration: (
+    currentConversationId: string,
+    conversation: Conversation,
+  ) => void;
   isStreaming: boolean;
+  canStopStreaming: boolean;
   hasStreamError: boolean;
   setHasStreamError: Dispatch<SetStateAction<boolean>>;
 }
@@ -51,19 +68,26 @@ export const useConversationStream = ({
   conversationRef,
   onStopError,
 }: Params): Result => {
-  // Paths with an in-flight generation. A Set (not a boolean) so concurrent
-  // generations across conversations each track their own streaming state.
+  /*
+   * Paths with an in-flight generation. A Set (not a boolean) so concurrent
+   * generations across conversations each track their own streaming state.
+   */
   const [streamingPaths, setStreamingPaths] = useState<Set<string>>(
     () => new Set(),
   );
+  const [stoppablePath, setStoppablePath] = useState<string | null>(null);
   const [hasStreamError, setHasStreamError] = useState(false);
   const activeGenerationIdRef = useRef<string | null>(null);
+  const activeGenerationPathRef = useRef<string | null>(null);
+  const resumingPathsRef = useRef<Set<string>>(new Set());
   const { startGeneration, completeGeneration } = useGeneration();
 
-  // ConversationPage is NOT remounted when navigating between conversations
-  // (it has no per-id key), so this single hook instance is reused. Stream
-  // callbacks must therefore know which conversation is *currently displayed*
-  // to avoid writing chunks/reloads into the wrong conversation's state.
+  /*
+   * ConversationPage is NOT remounted when navigating between conversations
+   * (it has no per-id key), so this single hook instance is reused. Stream
+   * callbacks must therefore know which conversation is *currently displayed*
+   * to avoid writing chunks/reloads into the wrong conversation's state.
+   */
   const displayedConversationIdRef = useRef<string | undefined>(conversationId);
   useEffect(() => {
     displayedConversationIdRef.current = conversationId;
@@ -93,9 +117,11 @@ export const useConversationStream = ({
     });
   }, []);
 
-  // An in-flight generation is intentionally NOT aborted on unmount: it is owned
-  // by GenerationContext and must survive navigation; only Stop or tab close ends
-  // it. (Aborting here would also let StrictMode's remount cancel a fresh stream.)
+  /*
+   * An in-flight generation is intentionally NOT aborted on unmount: it is owned
+   * by GenerationContext and must survive navigation; only Stop or tab close ends
+   * it. (Aborting here would also let StrictMode's remount cancel a fresh stream.)
+   */
 
   const startStream = useCallback(
     (
@@ -110,10 +136,14 @@ export const useConversationStream = ({
       const genId = generationId ?? crypto.randomUUID();
       const conversationPath = getConversationPath(currentConversationId);
       activeGenerationIdRef.current = genId;
+      activeGenerationPathRef.current = conversationPath;
+      setStoppablePath(conversationPath);
 
-      // `messageIndex` is the local placeholder index (for onChunk); translate it
-      // to the backend's truncation index. Regenerate truncates at the assistant
-      // (same index); Edit truncates at the user message (one before it).
+      /*
+       * `messageIndex` is the local placeholder index (for onChunk); translate it
+       * to the backend's truncation index. Regenerate truncates at the assistant
+       * (same index); Edit truncates at the user message (one before it).
+       */
       let serverMessageIndex: number | undefined;
       if (mode === CompletionMode.Regenerate) {
         serverMessageIndex = messageIndex;
@@ -131,9 +161,11 @@ export const useConversationStream = ({
         {
           signal: controller.signal,
           onChunk: (chunk) => {
-            // Drop stale chunks (a newer generation replaced this one) and
-            // chunks for a conversation the user is no longer viewing — the
-            // backend persists them, so the correct chat reloads them later.
+            /*
+             * Drop stale chunks (a newer generation replaced this one) and
+             * chunks for a conversation the user is no longer viewing — the
+             * backend persists them, so the correct chat reloads them later.
+             */
             if (activeGenerationIdRef.current !== genId) return;
             if (!isPathDisplayed(conversationPath)) return;
             setConversation((prev) => {
@@ -153,14 +185,20 @@ export const useConversationStream = ({
             removeStreamingPath(conversationPath);
             if (activeGenerationIdRef.current === genId) {
               activeGenerationIdRef.current = null;
+              activeGenerationPathRef.current = null;
+              setStoppablePath(null);
             }
             completeGeneration(conversationPath, genId);
-            // Only refresh displayed state if the user is still viewing this
-            // conversation; otherwise leave the currently-shown chat untouched.
+            /*
+             * Only refresh displayed state if the user is still viewing this
+             * conversation; otherwise leave the currently-shown chat untouched.
+             */
             if (!isPathDisplayed(conversationPath)) return;
             try {
-              // Backend has already saved the conversation; reload to get server-persisted state
-              // (including server-computed fields like stage attachment `data`).
+              /*
+               * Backend has already saved the conversation; reload to get server-persisted state
+               * (including server-computed fields like stage attachment `data`).
+               */
               const refreshed = (await getConversation(
                 conversationPath,
               )) as Conversation;
@@ -175,6 +213,8 @@ export const useConversationStream = ({
             removeStreamingPath(conversationPath);
             if (activeGenerationIdRef.current === genId) {
               activeGenerationIdRef.current = null;
+              activeGenerationPathRef.current = null;
+              setStoppablePath(null);
             }
             // Surface the error only on the conversation the user is viewing.
             if (!isPathDisplayed(conversationPath)) return;
@@ -214,10 +254,13 @@ export const useConversationStream = ({
     if (!genId || !conversationId) return;
 
     const conversationPath = getConversationPath(conversationId);
+    if (activeGenerationPathRef.current !== conversationPath) return;
 
-    // Only signal the backend; it aborts upstream, saves the partial, and closes
-    // the stream. Keeping our fetch open lets onComplete reload the saved partial
-    // race-free (do not reload here — it would race the backend save).
+    /*
+     * Only signal the backend; it aborts upstream, saves the partial, and closes
+     * the stream. Keeping our fetch open lets onComplete reload the saved partial
+     * race-free (do not reload here — it would race the backend save).
+     */
     void stopCompletion({ generationId: genId, path: conversationPath }).catch(
       (err: unknown) => {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -227,16 +270,144 @@ export const useConversationStream = ({
     );
   }, [conversationId, onStopError]);
 
-  // Reflects only the currently-displayed conversation: a stream running in a
-  // different chat must not show this chat as generating.
+  /*
+   * A hard refresh mid-generation loads a conversation whose last message is
+   * the backend's empty start-state placeholder (no incremental save exists
+   * to show partial content). Rather than leaving that static and forever
+   * empty, mark the path as streaming — for free, this reuses the same
+   * typing indicator and the isStreaming guards already in
+   * useConversationHandlers (regenerate/edit/starter no-op while streaming)
+   * — and watch the conversation's existing resource-update SSE channel
+   * until the backend's finalize() save resolves the placeholder.
+   */
+  const resumeIfAwaitingGeneration = useCallback(
+    (currentConversationId: string, conversation: Conversation): void => {
+      if (!isAwaitingGenerationResume(conversation)) return;
+
+      const conversationPath = getConversationPath(currentConversationId);
+      if (resumingPathsRef.current.has(conversationPath)) return;
+      resumingPathsRef.current.add(conversationPath);
+      addStreamingPath(conversationPath);
+
+      const controller = new AbortController();
+
+      const finish = (result?: Conversation) => {
+        resumingPathsRef.current.delete(conversationPath);
+        removeStreamingPath(conversationPath);
+        if (result && isPathDisplayed(conversationPath)) {
+          setConversation(result);
+          conversationRef.current = result;
+        }
+      };
+
+      const finalCheck = async () => {
+        try {
+          const result = (await getConversation(
+            conversationPath,
+          )) as Conversation;
+          finish(result);
+        } catch {
+          finish();
+        }
+      };
+
+      const run = async () => {
+        let stream: ReadableStream<Uint8Array>;
+        try {
+          stream = await watchConversation(conversationPath, controller.signal);
+        } catch {
+          await finalCheck();
+          return;
+        }
+
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        const timeoutId = window.setTimeout(() => {
+          controller.abort();
+        }, GENERATION_RESUME_WATCH_TIMEOUT_MS);
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() ?? '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith('data:')) continue;
+
+              const data = trimmed.slice(5).trim();
+              let event: { action?: string } | null = null;
+              try {
+                event = JSON.parse(data) as { action?: string };
+              } catch {
+                continue;
+              }
+
+              if (event?.action !== 'UPDATE') continue;
+
+              try {
+                const result = (await getConversation(
+                  conversationPath,
+                )) as Conversation;
+                if (!isAwaitingGenerationResume(result)) {
+                  finish(result);
+                  return;
+                }
+              } catch {
+                // Keep watching until stream ends or timeout.
+              }
+            }
+          }
+        } catch {
+          /*
+           * AbortError on timeout, or unexpected stream error — fall through
+           * to the final check below.
+           */
+        } finally {
+          clearTimeout(timeoutId);
+          reader.releaseLock();
+        }
+
+        /*
+         * Timed out or the stream ended without a qualifying event: do one
+         * last check before giving up, so Regenerate/edit become available
+         * again either way.
+         */
+        await finalCheck();
+      };
+
+      void run();
+    },
+    // setConversation and conversationRef are stable refs — intentionally omitted
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [addStreamingPath, removeStreamingPath, isPathDisplayed],
+  );
+
+  /*
+   * Reflects only the currently-displayed conversation: a stream running in a
+   * different chat must not show this chat as generating.
+   */
   const isStreaming =
     conversationId != null &&
     streamingPaths.has(getConversationPath(conversationId));
+  const displayedConversationPath =
+    conversationId != null ? getConversationPath(conversationId) : null;
+  const canStopStreaming =
+    displayedConversationPath != null &&
+    stoppablePath === displayedConversationPath;
 
   return {
     startStream,
     handleStop,
+    resumeIfAwaitingGeneration,
     isStreaming,
+    canStopStreaming,
     hasStreamError,
     setHasStreamError,
   };

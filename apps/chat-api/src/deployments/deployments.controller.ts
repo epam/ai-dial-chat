@@ -25,7 +25,7 @@ export class DeploymentsController {
     name: 'interface_type',
     required: false,
     isArray: true,
-    enum: ['chat', 'embeddings', 'mcp', 'custom_ui', 'all'],
+    enum: ['chat', 'embedding', 'mcp', 'custom_ui', 'all'],
     description: 'Filter by interface type (repeatable)',
     example: ['chat', 'mcp'],
   })

@@ -4,6 +4,7 @@ export enum ApiEndpoints {
   CHAT_COMPLETIONS = '/api/v1/chat/completions',
   CONVERSATIONS = '/api/v1/conversations',
   MODELS = '/api/v1/models',
+  AUTH_ME = '/api/v1/auth/me',
   AUTH_LOGOUT = '/api/v1/auth/logout',
   TRANSCRIPTION = '/api/v1/transcription',
 }
@@ -16,8 +17,32 @@ export class UnauthorizedError extends Error {
   }
 }
 
+export enum CsrfRefreshStatus {
+  Ok = 'ok',
+  Unauthorized = 'unauthorized',
+  Failed = 'failed',
+}
+
+export type CsrfRefreshResult =
+  | { status: CsrfRefreshStatus.Ok; token: string }
+  | { status: CsrfRefreshStatus.Unauthorized | CsrfRefreshStatus.Failed };
+
+enum CsrfErrorCode {
+  Invalid = 'CSRF_INVALID',
+}
+
 type UnauthorizedListener = (url: string) => void;
 const listeners = new Set<UnauthorizedListener>();
+
+let _csrfToken: string | null = null;
+export const setCsrfToken = (token: string | null): void => {
+  _csrfToken = token;
+};
+export const getCsrfToken = (): string | null => _csrfToken;
+export const clearCsrfToken = (): void => {
+  _csrfToken = null;
+};
+
 export const onUnauthorized = (
   listener: UnauthorizedListener,
 ): (() => void) => {
@@ -26,6 +51,7 @@ export const onUnauthorized = (
 };
 
 export const notifyUnauthorized = (url: string): void => {
+  clearCsrfToken();
   listeners.forEach((l) => l(url));
 };
 
@@ -36,11 +62,75 @@ type RequestOptions = Omit<RequestInit, 'method' | 'body'> & {
   responseHandler?: (response: Response) => void;
 };
 
-let _csrfToken: string | null = null;
-export const setCsrfToken = (token: string | null): void => {
-  _csrfToken = token;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const hasInvalidCsrfMessage = (value: unknown): boolean => {
+  if (typeof value === 'string') {
+    return value.includes('Invalid CSRF token');
+  }
+
+  if (Array.isArray(value)) {
+    return value.some(hasInvalidCsrfMessage);
+  }
+
+  return false;
 };
-export const getCsrfToken = (): string | null => _csrfToken;
+
+export const isInvalidCsrfErrorBody = (body: string): boolean => {
+  try {
+    const parsed: unknown = JSON.parse(body);
+    if (!isRecord(parsed)) {
+      return hasInvalidCsrfMessage(parsed);
+    }
+
+    if (parsed.code === CsrfErrorCode.Invalid) {
+      return true;
+    }
+
+    return (
+      parsed.statusCode === 403 &&
+      parsed.error === 'Forbidden' &&
+      hasInvalidCsrfMessage(parsed.message)
+    );
+  } catch {
+    return body.includes('Invalid CSRF token');
+  }
+};
+
+let csrfRefreshPromise: Promise<CsrfRefreshResult> | null = null;
+
+const runCsrfRefresh = async (): Promise<CsrfRefreshResult> => {
+  let response: Response;
+  try {
+    response = await fetch(ApiEndpoints.AUTH_ME, {
+      method: 'GET',
+      credentials: 'include',
+    });
+  } catch {
+    return { status: CsrfRefreshStatus.Failed };
+  }
+
+  if (response.status === 401) {
+    clearCsrfToken();
+    return { status: CsrfRefreshStatus.Unauthorized };
+  }
+
+  const csrfToken = response.headers.get('x-csrf-token');
+  if (response.ok && csrfToken != null) {
+    setCsrfToken(csrfToken);
+    return { status: CsrfRefreshStatus.Ok, token: csrfToken };
+  }
+
+  return { status: CsrfRefreshStatus.Failed };
+};
+
+export const refreshCsrfToken = (): Promise<CsrfRefreshResult> => {
+  csrfRefreshPromise ??= runCsrfRefresh().finally(() => {
+    csrfRefreshPromise = null;
+  });
+  return csrfRefreshPromise;
+};
 
 // Type guard for validating response structure
 export const isValidResponse = <T>(
@@ -93,9 +183,11 @@ const request = async <TResponse>(
   url: string,
   method: RequestMethod,
   options: RequestOptions = {},
+  allowCsrfRetry = true,
 ): Promise<TResponse> => {
   const { body, headers, responseHandler, ...restOptions } = options;
   const isFormData = body instanceof FormData;
+  const csrfTokenForRequest = _csrfToken;
 
   const response = await fetch(url, {
     ...restOptions,
@@ -114,7 +206,7 @@ const request = async <TResponse>(
 
   if (!response.ok) {
     if (response.status === 401) {
-      listeners.forEach((l) => l(url));
+      notifyUnauthorized(url);
       throw new UnauthorizedError(url);
     }
     let errorBody = '';
@@ -122,6 +214,25 @@ const request = async <TResponse>(
       errorBody = await response.text();
     } catch {
       errorBody = '';
+    }
+    if (
+      response.status === 403 &&
+      isInvalidCsrfErrorBody(errorBody) &&
+      allowCsrfRetry
+    ) {
+      if (_csrfToken !== null && _csrfToken !== csrfTokenForRequest) {
+        // A concurrent request already refreshed the token; reuse it.
+        return request(url, method, options, false);
+      }
+      const refreshed = await refreshCsrfToken();
+      if (refreshed.status === CsrfRefreshStatus.Ok) {
+        return request(url, method, options, false);
+      }
+      if (refreshed.status === CsrfRefreshStatus.Unauthorized) {
+        notifyUnauthorized(ApiEndpoints.AUTH_ME);
+        throw new UnauthorizedError(ApiEndpoints.AUTH_ME);
+      }
+      throw new Error(`CSRF refresh failed for ${method} ${url}`);
     }
     throw new Error(
       `Request failed with status ${response.status} for ${method} ${url}: ${errorBody}`,

@@ -53,6 +53,7 @@ import { ROUTES } from '../../types/routes';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
+import { isAwaitingGenerationResume } from '../../utils/generation-resume';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 interface Props {
@@ -61,7 +62,7 @@ interface Props {
 
 export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const { '*': conversationId } = useParams<{ '*': string }>();
-  const { state } = useLocation();
+  const { state, pathname, search } = useLocation();
   const prefetchedConversation =
     (state as { conversation?: Conversation } | null)?.conversation ?? null;
   const [conversation, setConversation] = useState<Conversation | null>(
@@ -264,12 +265,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   );
 
   const { getGeneration } = useGeneration();
-  // Conversation paths whose auto-stream has already been kicked off. Guards
-  // against React 18 StrictMode double-mounting (and any other re-run of
-  // loadConversation) firing two concurrent generations, which the backend
-  // rejects with 409 and surfaces as a spurious "Something went wrong" error.
+  /*
+   * Conversation paths whose auto-stream has already been kicked off. Guards
+   * against React 18 StrictMode double-mounting (and any other re-run of
+   * loadConversation) firing two concurrent generations, which the backend
+   * rejects with 409 and surfaces as a spurious "Something went wrong" error.
+   */
   const autoStartedPathsRef = useRef<Set<string>>(new Set());
-
   const handleStopError = useCallback(() => {
     showNotification({
       variant: NotificationVariant.Error,
@@ -277,7 +279,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     });
   }, [showNotification, t]);
 
-  const { startStream, handleStop, isStreaming } = useConversationStream({
+  const {
+    startStream,
+    handleStop,
+    resumeIfAwaitingGeneration,
+    isStreaming,
+    canStopStreaming,
+  } = useConversationStream({
     conversationId,
     setConversation,
     conversationRef,
@@ -349,8 +357,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           updateConversationTitle(id, result.name);
         }
 
-        // Restore the last selected agent from the conversation's change history
-        // so the deployment selector reflects what was active, not the default.
+        /*
+         * Restore the last selected agent from the conversation's change history
+         * so the deployment selector reflects what was active, not the default.
+         */
         const lastDeploymentId = getLastDeploymentId(result.messages);
         const modelToSelect =
           lastDeploymentId ?? (result.assistantModelId || result.model.id);
@@ -361,8 +371,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         const lastMsg = result.messages[result.messages.length - 1];
 
         if (lastMsg?.role === MessageRole.User) {
-          // The conversation still awaits an assistant reply: show the typing
-          // placeholder so streamed chunks have a slot to land in.
+          /*
+           * The conversation still awaits an assistant reply: show the typing
+           * placeholder so streamed chunks have a slot to land in.
+           */
           const assistantPlaceholder: Message = {
             role: MessageRole.Assistant,
             content: '',
@@ -375,9 +387,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           setConversation(withPlaceholder);
           conversationRef.current = withPlaceholder;
 
-          // Start the generation only once per conversation. Guards against
-          // React StrictMode double-mounting (and any re-run of loadConversation)
-          // launching a second stream — which the backend rejects with 409.
+          /*
+           * Start the generation only once per conversation. Guards against
+           * React StrictMode double-mounting (and any re-run of loadConversation)
+           * launching a second stream — which the backend rejects with 409.
+           */
           const conversationPath = getConversationPath(id);
           const alreadyStarted =
             autoStartedPathsRef.current.has(conversationPath) ||
@@ -397,6 +411,16 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           }
         } else {
           setConversation(result);
+
+          /*
+           * A hard refresh mid-generation loads the backend's empty
+           * start-state placeholder (no incremental save exists to show
+           * partial content). Watch for its resolution instead of leaving a
+           * static empty bubble — see resumeIfAwaitingGeneration.
+           */
+          if (isAwaitingGenerationResume(result)) {
+            resumeIfAwaitingGeneration(id, result);
+          }
         }
       } catch {
         navigate(ROUTES.Root);
@@ -408,6 +432,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       navigate,
       restoreSelectedItemId,
       startStream,
+      resumeIfAwaitingGeneration,
       updateConversationTitle,
       getGeneration,
     ],
@@ -419,10 +444,25 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       return;
     }
     void loadConversation(conversationId, prefetchedConversation);
-    // prefetchedConversation intentionally omitted: it is router state captured at mount,
-    // re-running when it changes would re-initialize an already-loaded conversation.
+    /*
+     * prefetchedConversation intentionally omitted: it is router state captured at mount,
+     * re-running when it changes would re-initialize an already-loaded conversation.
+     */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, loadConversation]);
+
+  const clearedPrefetchIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!conversationId || !prefetchedConversation) return;
+    if (clearedPrefetchIdRef.current === conversationId) return;
+    clearedPrefetchIdRef.current = conversationId;
+    /*
+     * history.state survives a hard refresh, so leaving the just-created
+     * user-only snapshot in it would make every reload re-run the auto-start
+     * stream instead of fetching the up-to-date conversation from the server.
+     */
+    navigate(`${pathname}${search}`, { replace: true, state: null });
+  }, [conversationId, prefetchedConversation, navigate, pathname, search]);
 
   const {
     handleSend,
@@ -528,6 +568,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onEditMessage={handleEditMessage}
           editingMessageIndexes={editingMessageIndexes}
           isAssistantTyping={isStreaming}
+          canStopAssistant={canStopStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
           streamErrorText={t(ChatI18nKeys.StreamError)}

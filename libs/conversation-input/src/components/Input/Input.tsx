@@ -52,7 +52,6 @@ export const Input: FC<InputProps> = ({
   removeLabel,
   retryLabel,
   sendLabel,
-  sendTitle,
   stopLabel,
   micLabel = 'Record voice message',
   colors,
@@ -187,9 +186,11 @@ export const Input: FC<InputProps> = ({
   const hasSendableContent =
     message.trim().length > 0 || attachments.length > 0;
   const canSend = hasSendableContent && !hasBlockedAttachments;
-  // Stacked layout: textarea on its own row above the action bar. Used when the
-  // caller opts in (edit mode), whenever attachments are present, or when the
-  // message spans multiple visual lines (either explicit newlines or word-wrap).
+  /*
+   * Stacked layout: textarea on its own row above the action bar. Used when the
+   * caller opts in (edit mode), whenever attachments are present, or when the
+   * message spans multiple visual lines (either explicit newlines or word-wrap).
+   */
   const isStackedLayout =
     isStacked ||
     attachments.length > 0 ||
@@ -297,7 +298,7 @@ export const Input: FC<InputProps> = ({
     />
   );
 
-  return (
+  const inputBox = (
     <div
       ref={containerRef}
       style={cssVars}
@@ -338,7 +339,7 @@ export const Input: FC<InputProps> = ({
       ) : (
         <div
           className={mergeClasses(
-            'flex items-center gap-2 mobile:gap-y-3',
+            'flex items-center gap-2',
             isStackedLayout ? 'flex-wrap' : 'flex-wrap desktop:flex-nowrap',
           )}
         >
@@ -409,9 +410,10 @@ export const Input: FC<InputProps> = ({
                   onPickerToggle={() => setIsPickerOpen((prev) => !prev)}
                   onPickerOpenChange={setIsPickerOpen}
                 />
-                {isStreaming ? (
+                {isStreaming && onStop ? (
                   <StopButton onStop={onStop} ariaLabel={stopLabel} />
                 ) : (
+                  !isStreaming &&
                   hasSendableContent && (
                     <SendButton
                       onSend={handleSend}
@@ -421,7 +423,6 @@ export const Input: FC<InputProps> = ({
                         hasBlockedAttachments
                       }
                       ariaLabel={sendLabel}
-                      title={sendTitle}
                     />
                   )
                 )}
@@ -441,4 +442,6 @@ export const Input: FC<InputProps> = ({
       )}
     </div>
   );
+
+  return inputBox;
 };

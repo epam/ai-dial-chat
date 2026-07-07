@@ -12,6 +12,7 @@ const backgroundsColors = {
   'layer-7': 'var(--bg-layer-7, #00000006)',
   'layer-8': 'var(--bg-layer-8, #f0f2f5)',
   blackout: 'var(--bg-blackout, #0C101D4D)',
+  overlay: 'var(--bg-overlay, #FCFCFC80)',
   error: 'var(--bg-error, #F3D6D8)',
   warning: 'var(--bg-warning, #FAF0CF)',
   info: 'var(--bg-info, #D6E2F9)',
@@ -140,6 +141,8 @@ module.exports = {
       },
       boxShadow: {
         DEFAULT: '0 0 4px 0 var(--shadow-default, rgba(0, 0, 0, 0.30))',
+        'main-inset': 'inset 1px 0 8px rgba(0, 0, 0, 0.04)',
+        'main-inset-rtl': 'inset -1px 0 8px rgba(0, 0, 0, 0.04)',
       },
       borderRadius: {
         DEFAULT: '3px',

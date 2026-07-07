@@ -23,7 +23,11 @@ const mockToolset: DialToolsetDto = {
 };
 const mockList: DialToolsetListResponseDto = { data: [mockToolset] };
 
-const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
+const TEST_USER = {
+  sub: 'user-123',
+  at: 'test-access-token',
+  bucket: 'user-bucket',
+};
 
 async function buildApp(
   service: unknown,
@@ -90,6 +94,7 @@ describe('ToolsetsController (integration)', () => {
       expect(service.listToolsets).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        TEST_USER.bucket,
       );
     });
 
@@ -114,6 +119,7 @@ describe('ToolsetsController (integration)', () => {
       expect(service.getToolset).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        TEST_USER.bucket,
         'my-toolset',
       );
     });
@@ -375,8 +381,10 @@ describe('ToolsetsController — write operations (integration)', () => {
   describe('unauthenticated', () => {
     it('returns 500 when no session user is present on a write', async () => {
       const noUserApp = await buildApp(service, false);
-      // No req.user → controller reads undefined; the global pipe accepts the
-      // body but the handler throws when destructuring the session user.
+      /*
+       * No req.user → controller reads undefined; the global pipe accepts the
+       * body but the handler throws when destructuring the session user.
+       */
       await request(noUserApp.getHttpServer())
         .post('/api/v1/toolsets')
         .send(validBody)
