@@ -60,7 +60,7 @@ export function CreatePublicationHandler({
         if (isFileId(id)) {
           return {
             action: publicationModel.action,
-            sourceUrl: id,
+            sourceUrl,
             targetUrl: constructPath(
               ApiKeys.Files,
               formData?.publishToUrl ?? '',
