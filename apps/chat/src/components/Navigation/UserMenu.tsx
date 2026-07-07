@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import {
   DIAL_ICON_SIZE,
@@ -8,7 +9,6 @@ import {
   DropdownItemType,
 } from '@epam/ai-dial-ui-kit';
 import {
-  IconColorSwatch,
   IconDeviceDesktop,
   IconKeyboard,
   IconLanguage,
@@ -76,6 +76,7 @@ export const UserMenu = memo(() => {
     />
   );
 
+  // @ts-expect-error
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const themeChildren = [
     hasDark && {
