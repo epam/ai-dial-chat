@@ -30,7 +30,7 @@ export const InitialsAvatar: FC<InitialsAvatarProps> = ({
     <div
       aria-hidden="true"
       className={mergeClasses(
-        'flex select-none items-center justify-center rounded-[6px]',
+        'flex select-none items-center justify-center rounded-md',
         className,
       )}
       style={{ width: size, height: size, backgroundColor: background }}
