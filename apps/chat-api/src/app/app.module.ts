@@ -17,8 +17,7 @@ import { FilesModule } from '../files/files.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
 import { RateModule } from '../rate/rate.module';
-import { ThemeController } from '../themes/theme.controller';
-import { ThemeService } from '../themes/theme.service';
+import { ThemesModule } from '../themes/themes.module';
 import { ToolsetsModule } from '../toolsets/toolsets.module';
 import { TranscriptionModule } from '../transcription/transcription.module';
 import { UserConfigModule } from '../user-config/user-config.module';
@@ -58,11 +57,11 @@ import { createServeStaticOptions } from './static-assets';
     FilesModule,
     RateModule,
     TranscriptionModule,
+    ThemesModule,
   ],
-  controllers: [AppController, ThemeController, HealthController],
+  controllers: [AppController, HealthController],
   providers: [
     AppService,
-    ThemeService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
