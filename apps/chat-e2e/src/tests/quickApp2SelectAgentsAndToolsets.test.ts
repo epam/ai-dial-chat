@@ -632,8 +632,6 @@ dialTest(
   '[UI][Select agents and toolsets] the modal when there is no any agent and toolset bookmarked or created', // EPMRTC-7291
   async ({
     marketplacePage,
-    marketplaceHeader,
-    addAppDropdownMenu,
     entityEditorPage,
     entityEditorGeneralForm,
     quickApp2EditorViewForm,
@@ -666,31 +664,17 @@ dialTest(
       },
     );
 
-    await dialTest.step('Open My workspace', async () => {
-      await marketplacePage.openMyWorkspacePage({
-        updateInstalledDeployments: false,
-        getStyles: true,
-        updateInstalledToolsets: false,
+    await dialTest.step('Open Quick app 2.0 creation page directly', async () => {
+      await marketplacePage.openCreateQuickApp2Page({
+        updateInstalledEntities: false,
       });
-      await marketplacePage.waitForPageLoaded();
-    });
-
-    await dialTest.step('Start Quick app 2.0 creation', async () => {
-      await marketplaceHeader.addAppButton.click();
-      await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.quickApp2);
       await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.QuickApp2);
+      await entityEditorGeneralForm.fillInEntityFields({ name: quickAppName });
+      await entityEditorGeneralForm.goNext();
+      await entityEditorPage.waitForPageLoadedForEdit(
+        EntityEditorAppTypes.QuickApp2,
+      );
     });
-
-    await dialTest.step(
-      'Fill in the name and proceed to the App settings step',
-      async () => {
-        await entityEditorGeneralForm.fillInEntityFields({ name: quickAppName });
-        await entityEditorGeneralForm.goNext();
-        await entityEditorPage.waitForPageLoadedForEdit(
-          EntityEditorAppTypes.QuickApp2,
-        );
-      },
-    );
 
     await dialTest.step(
       'Open the select modal — it shows the empty state with a Go to Marketplace link',
@@ -723,12 +707,10 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   "[Select agents and toolsets] Sorting order of agents and toolsets on 'My workspace' and 'Marketplace'", // EPMRTC-7348
   async ({
     marketplacePage,
-    marketplaceHeader,
-    addAppDropdownMenu,
     entityEditorPage,
     entityEditorGeneralForm,
     quickApp2EditorViewForm,
@@ -783,31 +765,17 @@ dialTest.only(
       },
     );
 
-    await dialTest.step('Open My workspace', async () => {
-      await marketplacePage.openMyWorkspacePage({
-        updateInstalledDeployments: false,
-        getStyles: true,
-        updateInstalledToolsets: false,
+    await dialTest.step('Open Quick app 2.0 creation page directly', async () => {
+      await marketplacePage.openCreateQuickApp2Page({
+        updateInstalledEntities: false,
       });
-      await marketplacePage.waitForPageLoaded();
-    });
-
-    await dialTest.step('Start Quick app 2.0 creation', async () => {
-      await marketplaceHeader.addAppButton.click();
-      await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.quickApp2);
       await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.QuickApp2);
+      await entityEditorGeneralForm.fillInEntityFields({ name: quickAppName });
+      await entityEditorGeneralForm.goNext();
+      await entityEditorPage.waitForPageLoadedForEdit(
+        EntityEditorAppTypes.QuickApp2,
+      );
     });
-
-    await dialTest.step(
-      'Fill in the name and proceed to the App settings step',
-      async () => {
-        await entityEditorGeneralForm.fillInEntityFields({ name: quickAppName });
-        await entityEditorGeneralForm.goNext();
-        await entityEditorPage.waitForPageLoadedForEdit(
-          EntityEditorAppTypes.QuickApp2,
-        );
-      },
-    );
 
     await dialTest.step(
       'Open the select modal — agents and toolsets are mixed and sorted alphabetically (case-insensitive)',
