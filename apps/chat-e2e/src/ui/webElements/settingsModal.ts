@@ -117,6 +117,22 @@ export class SettingsModal extends BaseElement {
     agent: DialAIEntityModel | { name: string; version?: string } | string,
   ) => this.getElementIcon(this.startChatWithListboxAgent(agent));
 
+  public keyboardShortcutRadioButton = this.getChildElementBySelector(
+    AccountSettingsModalSelector.keyboardShortcutRadioButton,
+  );
+
+  public keyboardShortcutRadioButtonByValue = (value: string) =>
+    this.getChildElementBySelector(
+      AccountSettingsModalSelector.keyboardShortcutRadioButtonByValue(value),
+    );
+
+  public keyboardShortcutRadioButtonByValueLabel = (value: string) =>
+    this.getChildElementBySelector(
+      AccountSettingsModalSelector.keyboardShortcutRadioButtonByValueLabel(
+        value,
+      ),
+    );
+
   public async getAllOptions() {
     const attributesSelector =
       AccountSettingsModalSelector.startChatWithListboxOptionAttributes;
