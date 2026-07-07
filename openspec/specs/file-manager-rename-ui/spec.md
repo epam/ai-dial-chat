@@ -4,7 +4,7 @@
 
 `useDialFileManager` SHALL expose `onRenameValidate(value: string, item: DialFile): string | null`, which validates a proposed new name before the rename is submitted.
 
-**State ownership**: the hook in `apps/chat/src/components/DialFileManagerModal/useDialFileManager.ts` (or equivalent path) owns validation logic. `DialFileManagerModal` receives `onRenameValidate` from the hook and passes it to `DialFileManager`.
+**State ownership**: the hook in `apps/chat/src/hooks/files/useDialFileManager.ts` owns validation logic. `DialFileManagerShell` receives `onRenameValidate` via the `hookResult` prop and passes it to `DialFileManager`.
 
 **Validation rules** (checked in order):
 
@@ -123,9 +123,9 @@ Forbidden-symbol validation (beyond `/` and `\`) SHALL use the same `forbiddenSy
 
 ---
 
-### Requirement: DialFileManagerModal rename wiring
+### Requirement: DialFileManagerShell rename wiring
 
-`DialFileManagerModal` SHALL pass rename props to `DialFileManager` and include `DialFileManagerActions.Rename` in `actionLabels` only on the `my_files` tab (or when tabs are absent and the folder has WRITE permission).
+`DialFileManagerShell` SHALL pass rename props to `DialFileManager` and include `DialFileManagerActions.Rename` in `actionLabels` only on the `my_files` tab (or when tabs are absent and the folder has WRITE permission).
 
 **Props wired**:
 - `onRenameValidate` — from `useDialFileManager`

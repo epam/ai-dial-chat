@@ -45,6 +45,11 @@ import {
   uploadFile,
 } from '../../server-api/files.api';
 import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+  deriveActionProfile,
+} from '../../types/file-manager-variant';
+import {
   DownloadDestinationType,
   prepareDownloadDestination,
   triggerBrowserDownload,
@@ -67,6 +72,10 @@ export interface UseDialFileManagerOptions {
   onNotification?: (notification: FileManagerNotification) => void;
   /** Regexp of characters forbidden in file/folder names (e.g. NOT_ALLOWED_SYMBOLS_REGEXP). */
   forbiddenSymbolsRegExp?: RegExp;
+  /** Which host is driving this hook instance. Defaults to `Attach`. */
+  variant?: DialFileManagerVariant;
+  /** Gates which actions are exposed. Defaults to the value derived from `variant`. */
+  actionProfile?: DialFileManagerActionProfile;
 }
 
 export interface UseDialFileManagerResult {
@@ -558,8 +567,25 @@ export const useDialFileManager = ({
   activeTab = DialFileManagerTabs.MyFiles,
   onNotification,
   forbiddenSymbolsRegExp,
+  variant = DialFileManagerVariant.Attach,
+  actionProfile = deriveActionProfile(variant),
 }: UseDialFileManagerOptions): UseDialFileManagerResult => {
   const { t, i18n } = useTranslation();
+
+  // `actionProfile` is not yet branched on below (see design.md Decision 3 —
+  // Attach and Browse must compute identical actionLabels in this change);
+  // this switch only guards that every profile is deliberately accounted for.
+  switch (actionProfile) {
+    case DialFileManagerActionProfile.Attach:
+    case DialFileManagerActionProfile.Browse:
+    case DialFileManagerActionProfile.Full:
+      break;
+    default: {
+      const exhaustiveCheck: never = actionProfile;
+      throw new Error(`Unhandled actionProfile: ${String(exhaustiveCheck)}`);
+    }
+  }
+
   const [folderPath, setFolderPath] = useState('');
   const [cache, setCache] = useState<Map<string, ListFilesItemDto[]>>(
     () => new Map(),
@@ -637,6 +663,10 @@ export const useDialFileManager = ({
     };
   }, []);
 
+  // Fires on mount for every variant (including Standalone) because
+  // `folderPath` initializes to `''` above — no separate mount-effect is
+  // needed to satisfy the standalone page's "load root listing on open"
+  // requirement; it falls out of this effect's existing dependency array.
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
