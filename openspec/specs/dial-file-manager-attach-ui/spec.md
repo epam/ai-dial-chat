@@ -19,9 +19,9 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 ---
 
-### Requirement: Per-tab gridOptions in DialFileManagerModal
+### Requirement: Per-tab gridOptions in DialFileManagerShell
 
-`DialFileManagerModal` SHALL derive `gridOptions` from `activeTab`:
+`DialFileManagerShell` SHALL derive `gridOptions` from `activeTab`:
 
 - `visibleColumns` changes per tab (see `file-manager-tabs` spec).
 - `actionLabels` includes `Delete` only when `activeTab === DialFileManagerTabs.MyFiles`.
@@ -45,7 +45,7 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 ### Requirement: Per-tab treeOptions and bulkActionsToolbarOptions
 
-`DialFileManagerModal` SHALL derive `treeOptions.actionLabels` and `bulkActionsToolbarOptions.actionLabels` from `activeTab` with the same Delete visibility rule as `gridOptions.actionLabels`: Delete present only on `my_files` tab.
+`DialFileManagerShell` SHALL derive `treeOptions.actionLabels` and `bulkActionsToolbarOptions.actionLabels` from `activeTab` with the same Delete visibility rule as `gridOptions.actionLabels`: Delete present only on `my_files` tab.
 
 #### Scenario: Bulk actions hide Delete on Shared tab
 
@@ -67,7 +67,7 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 ### Requirement: sharedWithMeIds passed to DialFileManager
 
-`DialFileManagerModal` SHALL pass `sharedWithMeIds` to `DialFileManager` when `activeTab === DialFileManagerTabs.Shared`, populated from the root-level item paths in the shared listing. On all other tabs `sharedWithMeIds` SHALL be `undefined`.
+`DialFileManagerShell` SHALL pass `sharedWithMeIds` to `DialFileManager` when `activeTab === DialFileManagerTabs.Shared`, populated from the root-level item paths in the shared listing. On all other tabs `sharedWithMeIds` SHALL be `undefined`.
 
 #### Scenario: sharedWithMeIds present on Shared tab
 

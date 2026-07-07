@@ -6,4 +6,5 @@ export enum ROUTES {
   AppsEditor = '/apps-editor',
   ToolsetEditor = '/toolset-editor',
   ToolsetEditorCallback = '/toolset-editor/callback',
+  FileManager = '/files',
 }

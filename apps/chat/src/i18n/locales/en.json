@@ -430,6 +430,9 @@
       "treeHeader": "Organization",
       "emptyStateTitle": "No organization files",
       "emptyStateDescription": "No files are available in the organization storage"
+    },
+    "page": {
+      "navLabel": "File Manager"
     }
   },
   "userConfig": {

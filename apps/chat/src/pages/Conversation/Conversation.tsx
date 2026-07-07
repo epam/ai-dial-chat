@@ -1,6 +1,4 @@
 import {
-  Attachment,
-  isAudioTranscriptionSupported,
   MessageRating,
   MessageRole,
   type Conversation,
@@ -36,21 +34,16 @@ import {
 } from '../../context/GenerationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
+import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
-  transcribeAudio,
-  transcribeAudioWithAsrModel,
-} from '../../server-api/chat.api';
-import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
-import { uploadFile } from '../../server-api/files.api';
 import { ROUTES } from '../../types/routes';
-import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
 import { isAwaitingGenerationResume } from '../../utils/generation-resume';
@@ -80,7 +73,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     config: { asrModelId, transcribeSizeLimitBytes },
   } = useAppConfig();
   const {
-    items: deploymentItems,
     restoreSelectedItemId,
     selectedItemId: currentSelectedItemId,
     isLoading: isDeploymentsLoading,
@@ -97,54 +89,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
-  const isTranscriptionSupported = useMemo(() => {
-    if (asrModelId != null) return true;
-    const selected = deploymentItems.find(
-      (item) => item.id === currentSelectedItemId,
-    );
-    return isAudioTranscriptionSupported(selected?.inputAttachmentTypes);
-  }, [asrModelId, deploymentItems, currentSelectedItemId]);
-
-  const lastAudioMimeTypeRef = useRef<string>('audio/webm');
-
-  const handleUploadAudio = useCallback(
-    async (file: File, contentType: string): Promise<string> => {
-      if (!bucket) {
-        throw new Error('User bucket is not available');
-      }
-      if (file.size > transcribeSizeLimitBytes) {
-        throw new Error(
-          `Audio file exceeds the ${transcribeSizeLimitBytes} byte limit`,
-        );
-      }
-      lastAudioMimeTypeRef.current = contentType;
-      const response = await uploadFile(
-        bucket,
-        buildUploadPath({ name: file.name } as Attachment),
-        file,
-      );
-      return response.url;
-    },
-    [bucket, transcribeSizeLimitBytes],
-  );
-
-  const handleTranscribeAudio = useCallback(
-    async (audioUrl: string): Promise<string> => {
-      const mimeType = lastAudioMimeTypeRef.current;
-      if (asrModelId != null) {
-        return transcribeAudioWithAsrModel({ audioUrl, mimeType });
-      }
-      if (!currentSelectedItemId) {
-        throw new Error('No model selected');
-      }
-      return transcribeAudio({
-        audioUrl,
-        mimeType,
-        deployment: currentSelectedItemId,
-      });
-    },
-    [asrModelId, currentSelectedItemId],
-  );
+  const { handleUploadAudio, handleTranscribeAudio, isTranscriptionSupported } =
+    useAudioTranscription({
+      bucket,
+      transcribeSizeLimitBytes,
+      asrModelId,
+      selectedDeploymentId: currentSelectedItemId,
+    });
 
   const { showNotification } = useNotification();
 
