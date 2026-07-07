@@ -1,5 +1,6 @@
 import { AgentUsageStats, DialAIEntityModel } from '@/chat/types/models';
 import { API } from '@/src/testData';
+import { ItemUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 
 const UNLIMITED_LIMIT = 9e18;
@@ -52,7 +53,7 @@ export class ModelLimitsMockHelper {
     stats: AgentUsageStats = defaultUnlimitedUsageStats,
   ): Promise<void> {
     await this.page.route(
-      API.limitsHost(encodeURIComponent(this.model.reference)),
+      API.limitsHost(ItemUtil.getEncodedItemId(this.model.id)),
       async (route) => {
         await route.fulfill({
           status: 200,

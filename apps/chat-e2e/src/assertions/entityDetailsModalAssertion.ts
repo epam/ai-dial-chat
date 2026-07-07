@@ -5,6 +5,7 @@ import {
   ElementState,
   ExpectedConstants,
   ExpectedMessages,
+  MarketplaceExpectedMessages,
   PublishingExpectedMessages,
 } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
@@ -191,10 +192,12 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
     await this.assertElementText(
       this.entityDetailsModal.usedLimitByKey(limitKey),
       expectedUsed,
+      MarketplaceExpectedMessages.usedLimitIsValid,
     );
     await this.assertElementText(
       this.entityDetailsModal.totalLimitByKey(limitKey),
       expectedTotal,
+      MarketplaceExpectedMessages.totalLimitIsValid,
     );
     await this.assertElementState(
       this.entityDetailsModal.usageContainerByKey(limitKey),
@@ -210,9 +213,15 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
       MarketplaceI18nKeys.Monthly,
     ];
     for (const key of allTokenLimitKeys) {
+      const expectedState = expectedVisibleKeys.includes(key)
+        ? 'visible'
+        : 'hidden';
       await this.assertElementState(
         this.entityDetailsModal.limitItemByKey(key),
-        expectedVisibleKeys.includes(key) ? 'visible' : 'hidden',
+        expectedState,
+        expectedState === 'visible'
+          ? MarketplaceExpectedMessages.limitItemIsVisible(key)
+          : MarketplaceExpectedMessages.limitItemIsHidden(key),
       );
     }
   }
