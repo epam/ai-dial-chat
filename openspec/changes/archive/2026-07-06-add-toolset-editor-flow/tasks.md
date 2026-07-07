@@ -56,4 +56,4 @@
 - [x] 8.2 RTL/i18n check: logical Tailwind utilities, no hardcoded `aria-label`, all keys via enums
 - [x] 8.3 Confirm zero new entries in `package.json`
 - [x] 8.4 Confirm shared-file edits remain minimal/append-only (routes, translation keys, router, controller/module) to limit merge conflicts
-- [ ] 8.5 Manual smoke test against a real DIAL Core: create, edit, API-key login, OAuth login round-trip, logout
+- [x] 8.5 Manual smoke test against a real DIAL Core: create, edit, API-key login, OAuth login round-trip, logout

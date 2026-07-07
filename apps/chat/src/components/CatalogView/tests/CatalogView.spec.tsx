@@ -1,4 +1,4 @@
-import type { CreateOption } from '@epam/ai-dial-catalog';
+import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -27,10 +27,12 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     createOptions,
     items,
     onToggleFavorite,
+    onUseInChat,
   }: {
     createOptions?: CreateOption[];
-    items?: { id: string; type: string }[];
+    items?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
+    onUseInChat?: (item: CatalogItem) => void;
   }) => (
     <div>
       <output aria-label="Catalog item ids">
@@ -43,6 +45,15 @@ vi.mock('@epam/ai-dial-catalog', () => ({
           onClick={() => onToggleFavorite?.(item.id, true)}
         >
           favorite {item.id}
+        </button>
+      ))}
+      {(items ?? []).map((item) => (
+        <button
+          key={`use-in-chat-${item.id}`}
+          type="button"
+          onClick={() => onUseInChat?.(item)}
+        >
+          use in chat {item.id}
         </button>
       ))}
       {(createOptions ?? []).map((option) => (
@@ -185,5 +196,91 @@ describe('CatalogView', () => {
       true,
       FavoriteEntityType.Toolset,
     );
+  });
+
+  it('selects the model as the deployment and navigates to the root route when Use in chat is clicked', async () => {
+    const setSelectedItemId = vi.fn();
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        {
+          id: 'gpt-4o',
+          displayName: 'GPT-4o',
+          type: 'model',
+        },
+      ],
+      selectedItemId: null,
+      setSelectedItemId,
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'use in chat gpt-4o' }),
+    );
+
+    expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
+  });
+
+  it('selects the application as the deployment and navigates to the root route when Use in chat is clicked', async () => {
+    const setSelectedItemId = vi.fn();
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        {
+          id: 'my-app',
+          displayName: 'My App',
+          type: 'application',
+        },
+      ],
+      selectedItemId: null,
+      setSelectedItemId,
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'use in chat my-app' }),
+    );
+
+    expect(setSelectedItemId).toHaveBeenCalledWith('my-app');
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
+  });
+
+  it('updates the selection when Use in chat is clicked on a different deployment', async () => {
+    const setSelectedItemId = vi.fn();
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
+        { id: 'gpt-4o-mini', displayName: 'GPT-4o mini', type: 'model' },
+      ],
+      selectedItemId: 'gpt-4o',
+      setSelectedItemId,
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'use in chat gpt-4o-mini' }),
+    );
+
+    expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
   });
 });

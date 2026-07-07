@@ -162,8 +162,10 @@ describe('useDialFileManager', () => {
     const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // DialFileManager breadcrumb calls onPathChange with "My files/reports"
-    // (no leading /, no trailing /)
+    /*
+     * DialFileManager breadcrumb calls onPathChange with "My files/reports"
+     * (no leading /, no trailing /)
+     */
     act(() => result.current.onPathChange('My files/reports'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 

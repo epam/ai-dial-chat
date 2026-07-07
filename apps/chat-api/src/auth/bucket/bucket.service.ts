@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppService } from '../../app/app.service';
+import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
-import { handleDialError } from '../../common/utils/dial-error';
 
 @Injectable()
 export class BucketService extends AppService {
@@ -27,14 +27,14 @@ export class BucketService extends AppService {
         this.logger.debug(
           'getUserBucket returned error response from DIAL Core',
         );
-        return handleDialError(error);
+        return handleDialSdkError(error, 'bucket.getUserBucket', this.logger);
       }
 
       this.logger.debug(`getUserBucket succeeded, bucket=${data.bucket}`);
       return data;
     } catch (error) {
       this.logger.error('DIAL Core rejected getUserBucket', error);
-      return handleDialError(error);
+      return handleDialSdkError(error, 'bucket.getUserBucket', this.logger);
     }
   }
 }

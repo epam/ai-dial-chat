@@ -250,8 +250,10 @@ export class AuthController {
       params.providerId,
     );
 
-    // RFC 9207: if the IdP advertises iss in the callback, it MUST match the
-    // configured issuer for this provider. Defends against IdP mix-up attacks.
+    /*
+     * RFC 9207: if the IdP advertises iss in the callback, it MUST match the
+     * configured issuer for this provider. Defends against IdP mix-up attacks.
+     */
     if (query.iss && query.iss !== providerConfig.issuer) {
       this.logger.warn(
         `Issuer mismatch on callback: expected ${providerConfig.issuer}, got ${query.iss}`,
@@ -291,8 +293,10 @@ export class AuthController {
     const claims = tokenSet.claims();
     const now = Math.floor(Date.now() / 1000);
 
-    // Only store a defined allowlist of OIDC claims — never spread all claims,
-    // which could include sensitive IdP-specific data (phone, address, etc.).
+    /*
+     * Only store a defined allowlist of OIDC claims — never spread all claims,
+     * which could include sensitive IdP-specific data (phone, address, etc.).
+     */
     const ALLOWED_CLAIM_KEYS = new Set([
       'sub',
       'email',
@@ -381,8 +385,10 @@ export class AuthController {
   @ApiResponse({ status: 302, description: 'Redirect after logout' })
   async logout(@Req() req: Request, @Res() res: Response): Promise<void> {
     this.logger.debug('logout() start');
-    // Protect against CSRF logout even though this route is @Public().
-    // Native HTML form POSTs always carry an Origin header the browser sets.
+    /*
+     * Protect against CSRF logout even though this route is @Public().
+     * Native HTML form POSTs always carry an Origin header the browser sets.
+     */
     const origin = req.headers['origin'];
     const referer = req.headers['referer'];
     const candidate =

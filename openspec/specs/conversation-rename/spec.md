@@ -90,6 +90,8 @@ i18n keys:
 
 `ConversationPanelView` SHALL include a "Rename" action in the `DropdownItem[]` returned by `getActions`, inserted between Pin and Delete. The item uses icon `IconPencil` from `@tabler/icons-react`, label from i18n key `conversationHistory.renameLabel` ("Rename"), and `onClick` sets local state `pendingRenameItem` to `{ id: contextId, title: panelItem.title }`.
 
+On confirming a rename, `ConversationPanelView` SHALL call the context `renameConversation` and SHALL NOT navigate to a new route afterwards, because the conversation id (and therefore its route) is unchanged by the rename.
+
 i18n keys:
 - `conversationHistory.renameLabel` — "Rename"
 
@@ -103,22 +105,24 @@ i18n keys:
 - **WHEN** the user clicks the Rename action for a conversation
 - **THEN** `RenameConversationPopup` opens with `currentTitle` matching that conversation's title
 
+#### Scenario: Confirming rename does not navigate
+
+- **WHEN** the active conversation is renamed successfully
+- **THEN** no navigation to a new conversation route occurs
+- **AND** the current route continues to resolve to the same conversation
+
 ---
 
 ### Requirement: ConversationsContext exposes renameConversation with optimistic update
 
-`ConversationsContext` SHALL expose a `renameConversation(id: string, newTitle: string): Promise<string>` operation. Implementation:
+`ConversationsContext` SHALL expose a `renameConversation(id: string, newTitle: string): Promise<void>` operation. Implementation:
 
-1. Capture whether the conversation is currently pinned (`wasPinned`).
-2. Optimistically update the matching item's `title` in local state.
-3. Call `PATCH /api/v1/conversations/:path/rename` via the server-api wrapper.
-4. On success:
-   a. Update the item's `id` in local state to the `newPath` returned by the API.
-   b. If `wasPinned` is true, call `PATCH /api/v1/user-config/pins` twice: first to unpin the old ID, then to pin the new `newPath`. Failures in this step are caught and logged without failing the rename.
-5. On failure, revert the optimistic title update and re-throw the error.
-6. Return `newPath`.
+1. Optimistically update the matching item's `title` in local state.
+2. Call `PATCH /api/v1/conversations?path=<path>` via the server-api wrapper, where `<path>` is derived from `id` (unchanged by the rename).
+3. On success, reconcile the matching item's `title` with the `name` returned by the API (the server-sanitised display name). The item's `id` MUST NOT change.
+4. On failure, revert the optimistic title update and re-throw the error.
 
-Background: DIAL Core renames a conversation by **moving** it to a new path derived from the new title. The old ID ceases to exist after a rename, so the pinned-conversation list must be updated atomically or the pin state will be lost on page refresh.
+Background: rename updates only the stored `name` at the existing storage path; the conversation `id` (the storage path) is immutable across renames. Because the id does not change, the pinned-conversation list requires no migration on rename.
 
 State ownership: `ConversationsContext` — no new context state needed beyond the function exposed on the interface.
 
@@ -132,21 +136,17 @@ State ownership: `ConversationsContext` — no new context state needed beyond t
 - **WHEN** the API call rejects
 - **THEN** the conversations list reverts to the original title
 
-#### Scenario: id is updated on API success
+#### Scenario: id is unchanged on API success
 
-- **WHEN** the API returns `{ newPath: "conversations/bucket/model__New Name__uuid" }`
-- **THEN** the item's `id` in the list is updated to match the returned path
+- **WHEN** the API returns `{ name: "New Name" }`
+- **THEN** the item's `id` in the list is unchanged
+- **AND** the item's `title` reflects the returned `name`
 
-#### Scenario: Pinned state is preserved after rename
+#### Scenario: Pinned state is preserved after rename without pin migration
 
 - **WHEN** a pinned conversation is renamed successfully
-- **THEN** `updatePin` is called to unpin the old ID and then pin the new ID
-- **AND** the conversation remains pinned after page refresh
-
-#### Scenario: Rename succeeds even when pin update fails
-
-- **WHEN** a pinned conversation is renamed and the `updatePin` API calls throw
-- **THEN** the rename itself still resolves (no error is re-thrown for the pin failure)
+- **THEN** no pin update (unpin-old / pin-new) API call is made
+- **AND** the conversation remains pinned after page refresh because its id is unchanged
 
 ---
 

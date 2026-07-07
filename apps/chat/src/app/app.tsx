@@ -55,6 +55,7 @@ const ToolsetEditorPage = lazy(
 const ToolsetEditorCallbackPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditorCallback'),
 );
+const NotFoundPage = lazy(() => import('../pages/NotFound/NotFound'));
 
 // Start loading the module immediately so the Suspense fallback is skipped on first navigation.
 const conversationPageModule = import('../pages/Conversation/Conversation');
@@ -262,6 +263,16 @@ const App: FC = () => {
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
                   <ToolsetEditorPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <NotFoundPage />
                 </Suspense>
               </RouteErrorBoundary>
             }

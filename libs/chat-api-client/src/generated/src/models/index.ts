@@ -2520,11 +2520,11 @@ export interface RenameConversationBodyDto {
  */
 export interface RenameConversationResponseDto {
   /**
-   * New relative path of the renamed conversation
+   * Sanitised stored display name of the renamed conversation
    * @type {string}
    * @memberof RenameConversationResponseDto
    */
-  newPath: string;
+  name: string;
 }
 /**
  *

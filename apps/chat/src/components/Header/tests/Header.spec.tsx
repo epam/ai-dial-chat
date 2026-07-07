@@ -99,8 +99,10 @@ describe('Header', () => {
       name: SidebarI18nKeys.ToggleOpen,
     });
     await user.click(btn);
-    // When sidebar is open the file-icon toggle disappears from the header —
-    // the X button lives inside the sidebar panel itself.
+    /*
+     * When sidebar is open the file-icon toggle disappears from the header —
+     * the X button lives inside the sidebar panel itself.
+     */
     expect(
       screen.queryByRole('button', { name: SidebarI18nKeys.ToggleOpen }),
     ).toBeNull();

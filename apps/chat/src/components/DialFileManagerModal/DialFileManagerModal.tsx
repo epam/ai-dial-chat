@@ -252,8 +252,10 @@ const DialFileManagerModal: FC<Props> = ({
       const dialPath = source.startsWith('files/')
         ? source
         : `files/${file.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
-      // Strip any `../`/`./` segments before the path is forwarded to DIAL Core —
-      // the BFF is the trust boundary, but this guards against a compromised response.
+      /*
+       * Strip any `../`/`./` segments before the path is forwarded to DIAL Core —
+       * the BFF is the trust boundary, but this guards against a compromised response.
+       */
       const normalizedDialPath = dialPath
         .split('/')
         .filter((segment) => segment !== '..' && segment !== '.')

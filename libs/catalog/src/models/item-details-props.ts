@@ -2,8 +2,6 @@ import type { CatalogItem } from './catalog-item';
 
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
 export interface ItemDetailsTexts {
-  /** "Use in chat" action button label. Default: `'Use in chat'`. */
-  useInChatLabel?: string;
   /** "Share" action button label. Default: `'Share'`. */
   shareLabel?: string;
   /** Caption above the short intro text. Default: `'Intro'`. */
@@ -117,6 +115,8 @@ export interface DetailsPanelProps {
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /** Called when the "Use in chat" button is clicked. */
   onUseInChat?: (item: CatalogItem) => void;
+  /** Controls whether the primary action button is shown for the item. */
+  isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked. */
   onShare?: (item: CatalogItem) => void;
   /** Text overrides for all user-visible strings. */

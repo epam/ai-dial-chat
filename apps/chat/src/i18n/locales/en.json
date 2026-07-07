@@ -121,6 +121,14 @@
       "removeFromFavoritesLabel": "Remove from favorites"
     }
   },
+  "notFound": {
+    "ariaLabel": "Page not found",
+    "eyebrow": "404",
+    "title": "Page not found",
+    "description": "This route is not available. Open the catalog to continue browsing models, agents, and toolsets, or start a new chat.",
+    "openCatalog": "Open catalog",
+    "newChat": "New chat"
+  },
   "deployments": {
     "empty": "No models or applications available.",
     "type": {

@@ -43,6 +43,10 @@ inputs:
     description: 'When "true", publish payload.findings[] entries with file+line as GitHub PR inline review comments and omit successfully posted entries from the sticky summary.'
     required: false
     default: 'false'
+  diff_mode:
+    description: 'Diff scope for pull_request runs: "full" (default, whole PR = origin/<base>...HEAD) or "incremental" (commits since the one this stage last reviewed, read on the runner from the original_commit_id of this stage''s own prior inline comments; a cancelled/timed-out run posts none, so it falls back to the last successfully reviewed commit — and to the full diff on the first review / force-push / rebase). The concrete range is computed on the runner and substituted into the composed prompt; leaving it "full" keeps the prompt byte-identical to prior behavior.'
+    required: false
+    default: 'full'
 
 outputs:
   message:
@@ -75,12 +79,28 @@ runs:
         SHOW_FULL_OUTPUT: ${{ inputs.show_full_output }}
         UPSTREAM_ARTIFACTS: ${{ inputs.upstream_artifacts }}
         RUNNER_TEMP: ${{ runner.temp }}
+        DIFF_MODE: ${{ inputs.diff_mode }}
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
       run: |
         set -euo pipefail
         if [ -z "${SKILL}" ]; then
           echo "::error::skill input is required (agents wrap a local skill)"
           exit 1
         fi
+
+        DIFF_RANGE="origin/${GITHUB_BASE_REF:-main}...HEAD"
+        if [ "${DIFF_MODE:-full}" = "incremental" ] && [ -n "${PR_NUMBER:-}" ]; then
+          PREV_SHA="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"<!-- dial-sdlc-inline:${STAGE_NAME}:\")) | [.created_at, .original_commit_id] | @tsv" 2>/dev/null \
+            | sort | tail -n1 | cut -f2 || true)"
+          if [ -n "${PREV_SHA:-}" ] && git merge-base --is-ancestor "${PREV_SHA}" HEAD 2>/dev/null; then
+            DIFF_RANGE="${PREV_SHA}..HEAD"
+          fi
+        fi
+        export DIFF_RANGE
+        echo "Diff range for agent: ${DIFF_RANGE}"
 
         # Build agent-facing schema AND compose the prompt. Schema: strip
         # envelope fields the renderer injects, pin `stage` to a literal const
@@ -138,6 +158,7 @@ runs:
                     .replace('{{stage}}', stage)
                     .replace('{{skill}}', os.environ['SKILL'])
                     .replace('{{base_ref}}', base_ref)
+                    .replace('{{diff_range}}', os.environ.get('DIFF_RANGE', f'origin/{base_ref}...HEAD'))
                     .replace('{{upstream_inputs}}', upstream_inputs))
         with open(os.environ['COMPOSED_PROMPT_PATH'], 'w') as f:
             f.write(composed)
