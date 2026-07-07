@@ -1,4 +1,4 @@
-import { IconBook2, IconMessage } from '@tabler/icons-react';
+import { IconBook2, IconFolder, IconMessage } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { ROUTES } from '../types/routes';
 import { NavigationI18nKeys } from './translation-keys';
@@ -21,5 +21,10 @@ export const NAVIGATION_CONFIG: NavigationItem[] = [
     path: ROUTES.Catalog,
     icon: IconBook2,
     labelKey: NavigationI18nKeys.Catalog,
+  },
+  {
+    path: ROUTES.FileManager,
+    icon: IconFolder,
+    labelKey: NavigationI18nKeys.FileManager,
   },
 ];

@@ -92,6 +92,7 @@ export enum NavigationI18nKeys {
   AriaLabel = 'navigation.ariaLabel',
   Home = 'navigation.home',
   Catalog = 'navigation.catalog',
+  FileManager = 'dialFileManager.page.navLabel',
   OpenMenu = 'navigation.openMenu',
   CloseMenu = 'navigation.closeMenu',
   MobileMenu = 'navigation.mobileMenu',
@@ -255,6 +256,7 @@ export enum DialFileManagerI18nKeys {
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
   UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
+  PageNavLabel = 'dialFileManager.page.navLabel',
 }
 
 export enum AuthI18nKeys {

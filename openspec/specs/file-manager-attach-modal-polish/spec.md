@@ -37,7 +37,7 @@ Memoisation: the `useEffect` dependency array MUST include `uploadBatchState.sta
 
 ### Requirement: Tab-specific empty state copy
 
-`DialFileManagerModal` SHALL pass tab-specific `emptyStateTitle` and `emptyStateDescription` to `DialFileManager` based on the active tab. Each tab SHALL use distinct i18n keys.
+`DialFileManagerShell` SHALL pass tab-specific `emptyStateTitle` and `emptyStateDescription` to `DialFileManager` based on the active tab. Each tab SHALL use distinct i18n keys.
 
 i18n keys:
 - My Files: `dialFileManager.myFiles.emptyStateTitle`, `dialFileManager.myFiles.emptyStateDescription`
