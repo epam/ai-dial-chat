@@ -28,6 +28,7 @@ export enum MarkdownI18nKeys {
   CopyAsMD = 'Copy as MD',
   DownloadAsCSV = 'Download as CSV',
   DownloadTableAsCSV = 'Download table as CSV',
+  DownloadCodeBlock = 'Download code block',
   FileName = 'File name',
 }
 
