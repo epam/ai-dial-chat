@@ -9,6 +9,9 @@ import { Toolset } from '@epam/ai-dial-shared';
 import path from 'path';
 
 export const ExpectedConstants = {
+  // Agents & toolsets select modal — empty state (no created/bookmarked items)
+  noAgentsAndToolsets: 'No Agents and Toolsets',
+  goToMarketplaceLink: 'Go to Marketplace',
   settingsTooltip: (entityType: EntityType, temperature?: number | string) =>
     entityType === EntityType.Application
       ? 'Change conversation settings:\nThere are no conversation settings for this agent'

@@ -1,7 +1,16 @@
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { AddAppMenuOptions, EntityEditorAppTypes } from '@/src/testData';
-import { ApplicationsUtil, GeneratorUtil } from '@/src/utils';
+import {
+  AddAppMenuOptions,
+  EntityEditorAppTypes,
+  ExpectedMessages,
+} from '@/src/testData';
+import {
+  ApplicationsUtil,
+  GeneratorUtil,
+  applicationNamePrefix,
+  toolsetNamePrefix,
+} from '@/src/utils';
 import { PublishActions, Toolset } from '@epam/ai-dial-shared';
 
 dialTest(
@@ -614,6 +623,212 @@ dialSharedWithMeTest(
           marketplaceHidden,
           'hidden',
         );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[UI][Select agents and toolsets] the modal when there is no any agent and toolset bookmarked or created', // EPMRTC-7291
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    addAppDropdownMenu,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    quickApp2EditorViewForm,
+    agentAndToolsetSelectModal,
+    agentAndToolsetSelectModalAssertion,
+    itemApiHelper,
+    toolsetApiHelper,
+    fileApiHelper,
+    mainUserShareApiHelper,
+    localStorageManager,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-7291');
+    const quickAppName = GeneratorUtil.randomApplicationName();
+
+    await dialTest.step(
+      'Precondition: the user has no created, shared or bookmarked agents and toolsets',
+      async () => {
+        await itemApiHelper.deleteAllData();
+        await toolsetApiHelper.deleteAllToolsets();
+        const sharedApps = await mainUserShareApiHelper.listSharedWithMeApps();
+        await mainUserShareApiHelper.deleteSharedWithMeEntities(
+          sharedApps.resources,
+        );
+        await fileApiHelper.updateInstalledDeployments([]);
+        await fileApiHelper.updateInstalledToolsets([]);
+        // Start with no recent models so the page doesn't re-populate the list.
+        await localStorageManager.setRecentModelsIds();
+      },
+    );
+
+    await dialTest.step('Open My workspace', async () => {
+      await marketplacePage.openMyWorkspacePage({
+        updateInstalledDeployments: false,
+        getStyles: true,
+        updateInstalledToolsets: false,
+      });
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step('Start Quick app 2.0 creation', async () => {
+      await marketplaceHeader.addAppButton.click();
+      await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.quickApp2);
+      await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.QuickApp2);
+    });
+
+    await dialTest.step(
+      'Fill in the name and proceed to the App settings step',
+      async () => {
+        await entityEditorGeneralForm.fillInEntityFields({ name: quickAppName });
+        await entityEditorGeneralForm.goNext();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open the select modal — it shows the empty state with a Go to Marketplace link',
+      async () => {
+        await quickApp2EditorViewForm.addAgentsButton.click();
+        await baseAssertion.assertElementState(
+          agentAndToolsetSelectModal,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          agentAndToolsetSelectModal.noItemsPlaceholder,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          agentAndToolsetSelectModal.goToMarketplaceLink,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click Go to Marketplace — the Marketplace tab becomes active',
+      async () => {
+        await agentAndToolsetSelectModal.goToMarketplaceLink.click();
+        await agentAndToolsetSelectModalAssertion.assertTabIsActive(
+          agentAndToolsetSelectModal.marketplaceTab,
+        );
+      },
+    );
+  },
+);
+
+dialTest.only(
+  "[Select agents and toolsets] Sorting order of agents and toolsets on 'My workspace' and 'Marketplace'", // EPMRTC-7348
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    addAppDropdownMenu,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    quickApp2EditorViewForm,
+    agentAndToolsetSelectModal,
+    agentAndToolsetSelectModalAssertion,
+    customApplicationBuilder,
+    toolsetBuilder,
+    applicationApiHelper,
+    toolsetApiHelper,
+    itemApiHelper,
+    fileApiHelper,
+    mainUserShareApiHelper,
+    localStorageManager,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-7348');
+    // Names always start with our E2E prefix (so cleanup catches them); the
+    // ASCII-boundary char comes right after and drives the sort within each type.
+    const seed = GeneratorUtil.randomString(5);
+    const appNames = ['!', 'A', 'w'].map(
+      (char) => `${applicationNamePrefix}${char}${seed}`,
+    );
+    const toolsetNames = ['!', 'Z', 'a'].map(
+      (char) => `${toolsetNamePrefix}${char}${seed}`,
+    );
+    const quickAppName = GeneratorUtil.randomApplicationName();
+
+    await dialTest.step(
+      'Precondition: start from a clean workspace, then create a mix of ASCII-boundary named agents and toolsets',
+      async () => {
+        await itemApiHelper.deleteAllData();
+        await toolsetApiHelper.deleteAllToolsets();
+        const sharedApps = await mainUserShareApiHelper.listSharedWithMeApps();
+        await mainUserShareApiHelper.deleteSharedWithMeEntities(
+          sharedApps.resources,
+        );
+        await fileApiHelper.updateInstalledDeployments([]);
+        await fileApiHelper.updateInstalledToolsets([]);
+        await localStorageManager.setRecentModelsIds();
+
+        for (const name of appNames) {
+          await applicationApiHelper.createApplication(
+            customApplicationBuilder.withDisplayName(name).build(),
+          );
+        }
+        for (const name of toolsetNames) {
+          await toolsetApiHelper.createToolset(
+            toolsetBuilder.withDisplayName(name).build(),
+          );
+        }
+      },
+    );
+
+    await dialTest.step('Open My workspace', async () => {
+      await marketplacePage.openMyWorkspacePage({
+        updateInstalledDeployments: false,
+        getStyles: true,
+        updateInstalledToolsets: false,
+      });
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step('Start Quick app 2.0 creation', async () => {
+      await marketplaceHeader.addAppButton.click();
+      await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.quickApp2);
+      await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.QuickApp2);
+    });
+
+    await dialTest.step(
+      'Fill in the name and proceed to the App settings step',
+      async () => {
+        await entityEditorGeneralForm.fillInEntityFields({ name: quickAppName });
+        await entityEditorGeneralForm.goNext();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open the select modal — agents and toolsets are mixed and sorted alphabetically (case-insensitive)',
+      async () => {
+        await quickApp2EditorViewForm.addAgentsButton.click();
+        await baseAssertion.assertElementState(
+          agentAndToolsetSelectModal,
+          'visible',
+        );
+        await agentAndToolsetSelectModalAssertion.assertTabIsActive(
+          agentAndToolsetSelectModal.myWorkspaceTab,
+        );
+        const displayedNames = await agentAndToolsetSelectModal
+          .getEntities()
+          .getEntityNames();
+        baseAssertion.assertValue(
+          displayedNames.length,
+          appNames.length + toolsetNames.length,
+          ExpectedMessages.elementsCountIsValid,
+        );
+        baseAssertion.assertStringsSorting(displayedNames, 'asc');
       },
     );
   },
