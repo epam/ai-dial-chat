@@ -1172,6 +1172,12 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   temperature: boolean;
+  /**
+   * Whether the deployment supports attaching folders from the file manager
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  folderAttachments?: boolean;
 }
 /**
  *
@@ -2514,11 +2520,11 @@ export interface RenameConversationBodyDto {
  */
 export interface RenameConversationResponseDto {
   /**
-   * New relative path of the renamed conversation
+   * Sanitised stored display name of the renamed conversation
    * @type {string}
    * @memberof RenameConversationResponseDto
    */
-  newPath: string;
+  name: string;
 }
 /**
  *

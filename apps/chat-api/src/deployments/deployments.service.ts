@@ -3,11 +3,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { AppService } from '../app/app.service';
-import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
-} from '../common/utils/dial-fetch-error';
+} from '../common/dial/dial-error.mapper';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import type { DeploymentLimitsResponseDto } from '../openapi/openapi-response.dto';
@@ -31,12 +31,8 @@ const toAdditionalProperties = (
   return undefined;
 };
 
-type RawDeploymentWithFeatures = RawDeploymentDto & {
-  features?: { system_prompt?: boolean; temperature?: boolean };
-};
-
 const mapToDeploymentItem = (
-  raw: RawDeploymentWithFeatures,
+  raw: RawDeploymentDto,
   featuredIds: Set<string>,
   hiddenTags: Set<string>,
 ): DeploymentItemDto | null => {
@@ -84,6 +80,9 @@ const mapToDeploymentItem = (
       ? {
           systemPrompt: raw.features.system_prompt ?? false,
           temperature: raw.features.temperature ?? false,
+          ...(raw.features.folder_attachments != null && {
+            folderAttachments: raw.features.folder_attachments,
+          }),
         }
       : undefined,
     maxInputAttachments:

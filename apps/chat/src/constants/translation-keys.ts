@@ -144,6 +144,15 @@ export enum CatalogI18nKeys {
   PickerRemoveFromFavorites = 'catalog.picker.removeFromFavoritesLabel',
 }
 
+export enum NotFoundI18nKeys {
+  AriaLabel = 'notFound.ariaLabel',
+  Eyebrow = 'notFound.eyebrow',
+  Title = 'notFound.title',
+  Description = 'notFound.description',
+  OpenCatalog = 'notFound.openCatalog',
+  NewChat = 'notFound.newChat',
+}
+
 export enum DeploymentsI18nKeys {
   Empty = 'deployments.empty',
   TypeModel = 'deployments.type.model',
@@ -211,6 +220,7 @@ export enum DialFileManagerI18nKeys {
   DownloadFileError = 'dialFileManager.downloadFileError',
   DownloadFilesError = 'dialFileManager.downloadFilesError',
   FolderCreateError = 'dialFileManager.folderCreateError',
+  FolderLoadError = 'dialFileManager.folderLoadError',
   DeleteFilesError = 'dialFileManager.deleteFilesError',
   ItemDeletedSuccessfully = 'dialFileManager.itemDeletedSuccessfully',
   ItemsDeletedSuccessfully = 'dialFileManager.itemsDeletedSuccessfully',
@@ -234,6 +244,16 @@ export enum DialFileManagerI18nKeys {
   RenameReservedName = 'dialFileManager.renameReservedName',
   RenameInvalidChars = 'dialFileManager.renameInvalidChars',
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
+  SearchEmptyStateTitle = 'dialFileManager.search.emptyStateTitle',
+  MyFilesTreeHeader = 'dialFileManager.myFiles.treeHeader',
+  SharedTreeHeader = 'dialFileManager.shared.treeHeader',
+  OrganizationTreeHeader = 'dialFileManager.organization.treeHeader',
+  MyFilesEmptyStateTitle = 'dialFileManager.myFiles.emptyStateTitle',
+  MyFilesEmptyStateDescription = 'dialFileManager.myFiles.emptyStateDescription',
+  SharedEmptyStateTitle = 'dialFileManager.shared.emptyStateTitle',
+  SharedEmptyStateDescription = 'dialFileManager.shared.emptyStateDescription',
+  OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
+  OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
   UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
 }
 

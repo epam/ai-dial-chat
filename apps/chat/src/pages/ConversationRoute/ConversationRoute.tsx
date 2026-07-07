@@ -99,8 +99,10 @@ const CatalogPickerModal = lazy(async () => {
   return { default: module.default };
 });
 
-// TODO: rename page and component
-// TODO: review component after ConversationPage implementation, maybe move ConversationInput here and remove ConversationInput component
+/*
+ * TODO: rename page and component
+ * TODO: review component after ConversationPage implementation, maybe move ConversationInput here and remove ConversationInput component
+ */
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -576,6 +578,7 @@ const ConversationRoute: FC = () => {
             allowedTypes={inputAttachmentTypes}
             maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
             maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
+            canAttachFolders={selectedDeployment?.features?.folderAttachments}
             title={t(DialFileManagerI18nKeys.Title)}
             attachLabel={t(DialFileManagerI18nKeys.Attach)}
             emptyTitle={t(DialFileManagerI18nKeys.Empty)}

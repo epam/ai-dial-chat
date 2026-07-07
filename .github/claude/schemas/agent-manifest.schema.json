@@ -159,6 +159,12 @@
       "description": "When true on pull_request runs, the platform publishes payload.findings[] entries with file+line as GitHub inline PR review comments when the line is present in the PR diff. Successfully posted inline findings are omitted from the sticky summary to avoid duplication.",
       "default": false
     },
+    "diff_mode": {
+      "type": "string",
+      "enum": ["full", "incremental"],
+      "default": "full",
+      "description": "Diff scope the agent reviews on pull_request runs. `full` (default) reviews the whole PR (origin/<base>...HEAD) on every push — unchanged legacy behavior. `incremental` narrows re-reviews to the commits since the one this stage last reviewed — read on the runner from the original_commit_id of this stage's own prior inline comments, so a cancelled or timed-out run (which posts nothing) falls back to the last successfully reviewed commit rather than skipping its commits; the first review, and any force-push or rebase, fall back to the full diff. The range is computed on the runner and substituted into the composed prompt, so opting one agent in does not change the prompt or behavior of any other agent."
+    },
     "analysis_ref": {
       "type": "string",
       "description": "Optional git ref whose code the agent should inspect instead of the PR working tree (e.g. the branch a scanner ran against). run-agent.yml fetches it and overlays its source onto the working tree before invoking the agent, preserving the framework paths (.github, .claude) so the composite action and skills keep working. The agent reads the findings' repo-relative paths directly — no skill/prompt awareness of branches needed. Also scopes emit_sarif uploads to this ref/commit."

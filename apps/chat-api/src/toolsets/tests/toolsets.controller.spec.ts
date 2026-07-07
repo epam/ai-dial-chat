@@ -381,8 +381,10 @@ describe('ToolsetsController — write operations (integration)', () => {
   describe('unauthenticated', () => {
     it('returns 500 when no session user is present on a write', async () => {
       const noUserApp = await buildApp(service, false);
-      // No req.user → controller reads undefined; the global pipe accepts the
-      // body but the handler throws when destructuring the session user.
+      /*
+       * No req.user → controller reads undefined; the global pipe accepts the
+       * body but the handler throws when destructuring the session user.
+       */
       await request(noUserApp.getHttpServer())
         .post('/api/v1/toolsets')
         .send(validBody)

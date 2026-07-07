@@ -26,6 +26,7 @@ const mockListConversations = vi.mocked(conversationsApi.listConversations);
 const mockDeleteAllConversations = vi.mocked(
   conversationsApi.deleteAllConversations,
 );
+const mockRenameConversation = vi.mocked(conversationsApi.renameConversation);
 
 const seedConversations = [
   {
@@ -218,5 +219,86 @@ describe('ConversationsContext — deleteAllConversations', () => {
     ).rejects.toThrow('Network error');
 
     expect(result.current.conversations).toHaveLength(3);
+  });
+});
+
+describe('ConversationsContext — renameConversation', () => {
+  it('optimistically applies the new title before the API resolves', async () => {
+    let resolveRename!: (value: { name: string }) => void;
+    mockRenameConversation.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveRename = resolve;
+      }),
+    );
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    let renamePromise!: Promise<void>;
+    act(() => {
+      renamePromise = result.current.renameConversation('conv1', 'New Name');
+    });
+
+    expect(
+      result.current.conversations.find((c) => c.id === 'conv1')?.title,
+    ).toBe('New Name');
+
+    resolveRename({ name: 'New Name' });
+    await act(async () => {
+      await renamePromise;
+    });
+  });
+
+  it('reconciles the title from the server response and leaves id unchanged', async () => {
+    mockRenameConversation.mockResolvedValueOnce({ name: 'Sanitised Name' });
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await act(async () => {
+      await result.current.renameConversation('conv1', 'Sanitised Name!!');
+    });
+
+    const renamed = result.current.conversations.find((c) => c.id === 'conv1');
+    expect(renamed?.id).toBe('conv1');
+    expect(renamed?.title).toBe('Sanitised Name');
+  });
+
+  it('reverts the title on API failure', async () => {
+    mockRenameConversation.mockRejectedValueOnce(new Error('rename failed'));
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await expect(
+      act(async () => {
+        await result.current.renameConversation('conv1', 'New Name');
+      }),
+    ).rejects.toThrow('rename failed');
+
+    expect(
+      result.current.conversations.find((c) => c.id === 'conv1')?.title,
+    ).toBe('Chat 1');
+  });
+
+  it('does not call any pin API during rename', async () => {
+    mockRenameConversation.mockResolvedValueOnce({ name: 'New Name' });
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    await act(async () => {
+      await result.current.renameConversation('conv1', 'New Name');
+    });
+
+    expect(userConfigApi.pinConversation).not.toHaveBeenCalled();
   });
 });

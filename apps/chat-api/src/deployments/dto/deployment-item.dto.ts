@@ -10,6 +10,12 @@ export class DeploymentFeaturesDto {
     description: 'Whether the deployment supports temperature control',
   })
   temperature!: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether the deployment supports attaching folders from the file manager',
+  })
+  folderAttachments?: boolean;
 }
 
 export class DeploymentItemDto {

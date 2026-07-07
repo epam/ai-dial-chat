@@ -191,8 +191,10 @@ describe('RouteErrorBoundary', () => {
   });
 
   it('resets error state when the route key changes', () => {
-    // Test the underlying key-change mechanism directly:
-    // RouteErrorBoundary uses resetKeys=[pathname], which the library treats the same as a key change.
+    /*
+     * Test the underlying key-change mechanism directly:
+     * RouteErrorBoundary uses resetKeys=[pathname], which the library treats the same as a key change.
+     */
     const { rerender } = render(
       <ErrorBoundaryWithKey routeKey="/catalog" shouldThrow={true} />,
     );

@@ -58,7 +58,10 @@ import { useConversationScroll } from '../../hooks/conversation/useConversationS
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
-import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
+import {
+  dialFilesToAttachments,
+  dialFolderPathToAttachment,
+} from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import {
@@ -239,8 +242,10 @@ const ConversationView: FC<Props> = ({
     [items],
   );
 
-  // For each message, resolve the deployment active at that point in the conversation.
-  // Scans status messages in order so messages before a model change get the initial model icon.
+  /*
+   * For each message, resolve the deployment active at that point in the conversation.
+   * Scans status messages in order so messages before a model change get the initial model icon.
+   */
   const effectiveDeploymentIds = useMemo<(string | undefined)[]>(
     () =>
       messages.reduce<{
@@ -343,9 +348,11 @@ const ConversationView: FC<Props> = ({
 
   const handleRegenerateMessageWithAnchor = useCallback(
     (messageIndex: number) => {
-      // Regenerating while another generation is in flight is a no-op in
-      // handleRegenerateMessage — skip arming the anchor so a later,
-      // unrelated message update doesn't consume a stale index.
+      /*
+       * Regenerating while another generation is in flight is a no-op in
+       * handleRegenerateMessage — skip arming the anchor so a later,
+       * unrelated message update doesn't consume a stale index.
+       */
       if (!isAssistantTyping) {
         armAnchor(messageIndex - 1);
       }
@@ -361,9 +368,11 @@ const ConversationView: FC<Props> = ({
       keptAttachments: DisplayAttachment[],
       newAttachments: Attachment[],
     ) => {
-      // handleEditMessage no-ops if a generation is in flight or the text is
-      // unchanged (isMessageChanged mirrors that same check) — skip arming
-      // in either case so a later, unrelated update can't consume a stale index.
+      /*
+       * handleEditMessage no-ops if a generation is in flight or the text is
+       * unchanged (isMessageChanged mirrors that same check) — skip arming
+       * in either case so a later, unrelated update can't consume a stale index.
+       */
       const originalMessage = messages[messageIndex];
       if (
         !isAssistantTyping &&
@@ -441,7 +450,11 @@ const ConversationView: FC<Props> = ({
 
   const handleAttachDialFiles = useCallback(
     (result: AttachResult) => {
-      setPendingDialAttachments(dialFilesToAttachments(result.files, bucket));
+      const fileAttachments = dialFilesToAttachments(result.files, bucket);
+      const folderAttachments = result.folderPaths.map(
+        dialFolderPathToAttachment,
+      );
+      setPendingDialAttachments([...fileAttachments, ...folderAttachments]);
       setIsDialFileManagerOpen(false);
     },
     [bucket],
@@ -700,6 +713,9 @@ const ConversationView: FC<Props> = ({
                   maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
                   maximumAttachmentsAmount={
                     selectedDeployment?.maxInputAttachments
+                  }
+                  canAttachFolders={
+                    selectedDeployment?.features?.folderAttachments
                   }
                   title={t(DialFileManagerI18nKeys.Title)}
                   attachLabel={t(DialFileManagerI18nKeys.Attach)}

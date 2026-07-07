@@ -1411,7 +1411,7 @@
         },
         "responses": {
           "200": {
-            "description": "Conversation renamed — new path returned",
+            "description": "Conversation renamed — display name updated, path unchanged",
             "content": {
               "application/json": {
                 "schema": {
@@ -1426,8 +1426,8 @@
           "401": {
             "description": "Not authenticated"
           },
-          "409": {
-            "description": "Destination path already exists"
+          "404": {
+            "description": "Conversation not found"
           },
           "502": {
             "description": "DIAL Core error"
@@ -2957,6 +2957,10 @@
           "temperature": {
             "type": "boolean",
             "description": "Whether the deployment supports temperature control"
+          },
+          "folderAttachments": {
+            "type": "boolean",
+            "description": "Whether the deployment supports attaching folders from the file manager"
           }
         },
         "required": ["systemPrompt", "temperature"]
@@ -4459,13 +4463,13 @@
       "RenameConversationResponseDto": {
         "type": "object",
         "properties": {
-          "newPath": {
+          "name": {
             "type": "string",
-            "description": "New relative path of the renamed conversation",
-            "example": "conversations/bucket/gpt-4o__My renamed chat__uuid"
+            "description": "Sanitised stored display name of the renamed conversation",
+            "example": "My renamed chat"
           }
         },
-        "required": ["newPath"]
+        "required": ["name"]
       },
       "DuplicateConversationResponseDto": {
         "type": "object",
