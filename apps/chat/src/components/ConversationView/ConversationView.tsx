@@ -497,18 +497,10 @@ const ConversationView: FC<Props> = ({
           aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
-          // max-w-[760px]/mx-auto live here (not on contentRef) so the
-          // scrollbar hugs the message column instead of the full-width panel.
           className="mx-auto flex w-full max-w-[760px] flex-1 flex-col overflow-y-auto overflow-x-hidden"
         >
           <div
             ref={contentRef}
-            // No overflow-x here: setting only one overflow axis makes the
-            // browser compute the other as `auto` too, turning this div into
-            // its own scroll container instead of `containerRef` (its
-            // `overflow-x-hidden` already clips horizontally). No flex-grow
-            // either — this div must size to its own real message content
-            // only, since that height drives the scroll-to-bottom button.
             className="flex min-w-0 shrink-0 flex-col gap-[26px] px-6 pt-7"
           >
             {messages.map((msg, index) => {
@@ -589,9 +581,6 @@ const ConversationView: FC<Props> = ({
           <div
             ref={spacerRef}
             aria-hidden="true"
-            // shrink-0: without it, flexbox would collapse this spacer to
-            // fit contentRef's real content, which routinely exceeds
-            // containerRef's own height — silently defeating the reservation.
             className="shrink-0"
             style={{ height: 0 }}
           />
