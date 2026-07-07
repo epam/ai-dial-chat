@@ -385,10 +385,10 @@ describe('AssistantMessageBubble — attachments', () => {
     expect(screen.getByText('Hi there')).toBeTruthy();
   });
 
-  it('continues revealing remaining text after streaming stops', () => {
+  it('renders remaining text immediately after streaming stops', () => {
     vi.useFakeTimers();
 
-    const { queryByText, rerender } = render(
+    const { rerender } = render(
       <AssistantMessageBubble text="Hi" isStreaming />,
     );
 
@@ -399,12 +399,6 @@ describe('AssistantMessageBubble — attachments', () => {
     });
 
     rerender(<AssistantMessageBubble text="Hi there friend" />);
-
-    expect(queryByText('Hi there friend')).toBeNull();
-
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
 
     expect(screen.getByText('Hi there friend')).toBeTruthy();
   });
