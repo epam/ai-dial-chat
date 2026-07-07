@@ -242,9 +242,11 @@ const ConversationMessageItem: FC<Props> = ({
       )
     : {};
 
-  // A generation stopped before any token produces an empty assistant message;
-  // show a "Stopped generating" label instead of an empty bubble. (The label is
-  // rendered, never written into msg.content, so a late token can't corrupt it.)
+  /*
+   * A generation stopped before any token produces an empty assistant message;
+   * show a "Stopped generating" label instead of an empty bubble. (The label is
+   * rendered, never written into msg.content, so a late token can't corrupt it.)
+   */
   const isEmptyStopped =
     msg.role === MessageRole.Assistant &&
     !isStreaming &&

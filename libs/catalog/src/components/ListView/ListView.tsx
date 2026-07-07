@@ -72,9 +72,11 @@ export const ListView: FC<ListViewProps> = ({
     }
   }, [items]);
 
-  // Load the next batch when the sentinel scrolls into the visible area.
-  // IntersectionObserver with a non-document root is unreliable here, so
-  // a plain scroll listener on the nearest scroll ancestor is used instead.
+  /*
+   * Load the next batch when the sentinel scrolls into the visible area.
+   * IntersectionObserver with a non-document root is unreliable here, so
+   * a plain scroll listener on the nearest scroll ancestor is used instead.
+   */
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
@@ -103,8 +105,10 @@ export const ListView: FC<ListViewProps> = ({
     [items, visibleCount],
   );
 
-  // Refresh cell renderers when the search query changes so highlighting updates.
-  // rowData is kept in sync via the prop; no need to call setGridOption here.
+  /*
+   * Refresh cell renderers when the search query changes so highlighting updates.
+   * rowData is kept in sync via the prop; no need to call setGridOption here.
+   */
   useEffect(() => {
     gridApiRef.current?.refreshCells({ force: true });
   }, [query]);

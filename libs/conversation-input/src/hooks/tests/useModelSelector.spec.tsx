@@ -243,11 +243,13 @@ describe('useModelSelector — search filtering', () => {
       }),
     );
     act(() => {
-      // Simulate search by closing and re-opening would not work in isolation;
-      // instead we access the internal setter via onOpenChange side-effect.
-      // We need to trigger the search — the hook exposes no direct setter,
-      // so we test filtering indirectly via DialSearch onChange in integration.
-      // Here we verify the baseline (no query) returns all items.
+      /*
+       * Simulate search by closing and re-opening would not work in isolation;
+       * instead we access the internal setter via onOpenChange side-effect.
+       * We need to trigger the search — the hook exposes no direct setter,
+       * so we test filtering indirectly via DialSearch onChange in integration.
+       * Here we verify the baseline (no query) returns all items.
+       */
     });
     expect(result.current.menuItems).toHaveLength(3);
   });

@@ -10,8 +10,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import { AppService } from '../app/app.service';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { handleDialError } from '../common/utils/dial-error';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
@@ -54,11 +55,9 @@ import { applyChunkToMessage } from './utils/apply-chunk.server';
 import { buildConversationHistory } from './utils/conversation-history-builder';
 import {
   buildConversationUrl,
-  buildRenamedConversationPath,
   getDeploymentKey,
   decodeNextToken,
   encodeCompoundToken,
-  encodeDialResourcePath,
   getConversationName,
   getConversationTitleFromName,
   prepareEntityName,
@@ -164,10 +163,7 @@ export class ConversationService extends AppService {
     };
 
     try {
-      const encodedConversationPath = conversationPath
-        .split('/')
-        .map((segment) => encodeURIComponent(safeDecodeURIComponent(segment)))
-        .join('/');
+      const encodedConversationPath = encodeDialResourcePath(conversationPath);
       const { data, error } = (await this.client.saveConversation(
         bucket,
         encodedConversationPath,
@@ -178,13 +174,21 @@ export class ConversationService extends AppService {
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
-        return handleDialError(error);
+        return handleDialSdkError(
+          error,
+          'conversations.createConversation',
+          this.logger,
+        );
       }
 
       return { ...data, ...conversation } as ConversationResponseDto;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.createConversation',
+        this.logger,
+      );
     }
   }
 
@@ -212,7 +216,11 @@ export class ConversationService extends AppService {
         : { ...conversation, name: resolvedName };
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversation', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.getConversation',
+        this.logger,
+      );
     }
   }
 
@@ -318,11 +326,19 @@ export class ConversationService extends AppService {
       )) as { data?: unknown; error?: unknown };
       if (error != null) {
         this.logger.error('DIAL Core rejected deleteConversation', error);
-        handleDialError(error);
+        handleDialSdkError(
+          error,
+          'conversations.deleteConversation',
+          this.logger,
+        );
       }
     } catch (error) {
       this.logger.error('DIAL Core rejected deleteConversation', error);
-      handleDialError(error);
+      handleDialSdkError(
+        error,
+        'conversations.deleteConversation',
+        this.logger,
+      );
     }
 
     // Remove from pins if present — fire-and-forget, non-fatal
@@ -343,111 +359,53 @@ export class ConversationService extends AppService {
     bucket: string,
   ): Promise<RenameConversationResponseDto> {
     const sanitisedTitle = prepareEntityName(newTitle);
-    const renamedPath = buildRenamedConversationPath(
-      conversationPath,
-      sanitisedTitle,
-    );
-
-    const sourceUrl = `${buildConversationUrl(bucket, encodeDialResourcePath(conversationPath))}`;
-    const destinationUrl = `${buildConversationUrl(bucket, encodeDialResourcePath(renamedPath))}`;
-
-    let moveError: unknown = undefined;
-    let moveStatus: number | undefined = undefined;
-    try {
-      const result = (await this.client.moveResource({
-        headers: getBearerAuthHeaders(token),
-        body: { sourceUrl, destinationUrl, overwrite: false },
-      })) as { error?: unknown; response?: globalThis.Response };
-      if (result.error != null) {
-        moveError = result.error;
-        moveStatus = result.response?.status;
-      }
-    } catch (error) {
-      moveError = error;
-    }
-
-    if (moveError != null) {
-      this.logger.error('DIAL Core moveResource (rename) failed', {
-        status: moveStatus,
-        error: moveError,
-      });
-      // DIAL Core bug: returns 400 with "Source resource ... does not exist" instead of 404.
-      if (
-        moveStatus === 400 &&
-        typeof moveError === 'string' &&
-        moveError.includes('does not exist')
-      ) {
-        throw new NotFoundException('Conversation not found');
-      }
-      return handleDialError(moveError);
-    }
-
-    // Migrate pin state: if the old conversation was pinned, point the pin at
-    // the new path. Fire-and-forget, non-fatal (mirrors deleteConversation cleanup).
-    const oldPinId = buildConversationUrl(bucket, conversationPath);
-    const newPinId = buildConversationUrl(bucket, renamedPath);
-    void this.userConfigService
-      .migratePin(oldPinId, newPinId, token, bucket)
-      .catch((err) =>
-        this.logger.error('Failed to migrate pin on rename', err),
-      );
-
-    await this.syncStoredDisplayNameAfterPathRename(
-      renamedPath,
-      sanitisedTitle,
-      token,
-      bucket,
-    );
-
-    return { newPath: buildConversationUrl(bucket, renamedPath) };
-  }
-
-  /**
-   * Path rename (moveResource) updates the filename only. Sync `conversation.name`
-   * in the stored body so list enrichment and GET do not keep an LLM title.
-   */
-  private async syncStoredDisplayNameAfterPathRename(
-    conversationPath: string,
-    displayName: string,
-    token: string,
-    bucket: string,
-  ): Promise<void> {
     const qualifiedPath = this.qualifySessionConversationPath(
       conversationPath,
       bucket,
     );
+
+    let stored: ConversationResponseDto;
     try {
-      const { conversation: data } = await this.getStoredConversation(
+      ({ conversation: stored } = await this.getStoredConversation(
         qualifiedPath,
         token,
         bucket,
-      );
-      if (data.name?.trim() === displayName) {
-        return;
-      }
-
-      const { bucket: saveBucket, subPath } = this.resolveConversationLocation(
-        qualifiedPath,
-        bucket,
-      );
-
-      const { error: saveError } = (await this.client.saveConversation(
-        saveBucket,
-        encodeDialResourcePath(subPath),
-        {
-          headers: getBearerAuthHeaders(token),
-          body: { ...data, name: displayName } as never,
-        },
-      )) as { error?: unknown };
-      if (saveError != null) {
-        this.logger.warn(
-          'Failed to sync display name after path rename',
-          saveError,
-        );
-      }
+      ));
     } catch (error) {
-      this.logger.warn('Failed to sync display name after path rename', error);
+      this.logger.error('DIAL Core rejected getConversation (rename)', error);
+      throw new NotFoundException('Conversation not found');
     }
+
+    const { bucket: saveBucket, subPath } = this.resolveConversationLocation(
+      qualifiedPath,
+      bucket,
+    );
+
+    const { error: saveError } = (await this.client.saveConversation(
+      saveBucket,
+      encodeDialResourcePath(subPath),
+      {
+        headers: getBearerAuthHeaders(token),
+        body: {
+          ...stored,
+          name: sanitisedTitle,
+          llmNamingDone: true,
+        } as never,
+      },
+    )) as { error?: unknown };
+
+    if (saveError != null) {
+      this.logger.error('DIAL Core rejected saveConversation (rename)', {
+        error: saveError,
+      });
+      return handleDialSdkError(
+        saveError,
+        'conversations.renameConversation',
+        this.logger,
+      );
+    }
+
+    return { name: sanitisedTitle };
   }
 
   async duplicateConversation(
@@ -461,9 +419,11 @@ export class ConversationService extends AppService {
     const subPath =
       slashIndex === -1 ? sourcePath : sourcePath.slice(slashIndex + 1);
 
-    // `subPath` arrives percent-encoded (it comes from a resource URL). Each
-    // `/`-separated segment is one path component; a literal slash inside a
-    // component (e.g. a deployment name "Team/App One") is encoded as %2F.
+    /*
+     * `subPath` arrives percent-encoded (it comes from a resource URL). Each
+     * `/`-separated segment is one path component; a literal slash inside a
+     * component (e.g. a deployment name "Team/App One") is encoded as %2F.
+     */
     const segments = subPath.split('/');
     const encodedFilename = segments.at(-1) ?? subPath;
     const decodedFilename = safeDecodeURIComponent(encodedFilename);
@@ -471,8 +431,10 @@ export class ConversationService extends AppService {
       .slice(0, -1)
       .map(safeDecodeURIComponent);
 
-    // Read source first so we can use its `name` field (which may have been
-    // updated by LLM naming without renaming the storage path).
+    /*
+     * Read source first so we can use its `name` field (which may have been
+     * updated by LLM naming without renaming the storage path).
+     */
     const { data: sourceData, error: readError } =
       (await this.client.getConversation(
         sourceBucket,
@@ -484,11 +446,17 @@ export class ConversationService extends AppService {
         'Could not read source conversation for duplicate',
         readError,
       );
-      return handleDialError(readError);
+      return handleDialSdkError(
+        readError,
+        'conversations.duplicateConversation',
+        this.logger,
+      );
     }
 
-    // Prefer the stored `name` field (set by LLM naming) over the path-derived
-    // title so that conversations renamed by the model keep that name in the copy.
+    /*
+     * Prefer the stored `name` field (set by LLM naming) over the path-derived
+     * title so that conversations renamed by the model keep that name in the copy.
+     */
     const pathTitle = getConversationTitleFromName(decodedFilename);
     const sourceTitle = sourceData.name?.trim() || pathTitle;
     const uniqueTitle = prepareEntityName(sourceTitle);
@@ -537,7 +505,11 @@ export class ConversationService extends AppService {
     )) as { error?: unknown };
     if (saveError != null) {
       this.logger.error('Could not save duplicated conversation', saveError);
-      return handleDialError(saveError);
+      return handleDialSdkError(
+        saveError,
+        'conversations.duplicateConversation',
+        this.logger,
+      );
     }
 
     return { newPath: destinationUrl };
@@ -611,7 +583,11 @@ export class ConversationService extends AppService {
           'DIAL Core rejected listConversations (user bucket)',
           userError,
         );
-        return handleDialError(userError);
+        return handleDialSdkError(
+          userError,
+          'conversations.listConversations',
+          this.logger,
+        );
       }
 
       const { data: publicData, error: publicError } = publicResult;
@@ -662,11 +638,13 @@ export class ConversationService extends AppService {
             };
           });
 
-      // Extract the path within a bucket from a DIAL Core resource URL.
-      // URL format: "conversations/<bucket>/<relative-path>"
-      // Stripping the first two segments lets us match the same conversation
-      // across different buckets (e.g. user bucket vs. public bucket).
-      // Falls back to item.name when url is absent.
+      /*
+       * Extract the path within a bucket from a DIAL Core resource URL.
+       * URL format: "conversations/<bucket>/<relative-path>"
+       * Stripping the first two segments lets us match the same conversation
+       * across different buckets (e.g. user bucket vs. public bucket).
+       * Falls back to item.name when url is absent.
+       */
       const getBucketRelativePath = (item: MetadataItem): string => {
         if (item.url) {
           const parts = item.url.split('/');
@@ -675,9 +653,11 @@ export class ConversationService extends AppService {
         return item.name ?? '';
       };
 
-      // Paths of public-bucket items on this page — used to:
-      //   1. Skip public items that duplicate a user-bucket item (dedup)
-      //   2. Promote user-bucket items that are org-published to publishedWithMe: true
+      /*
+       * Paths of public-bucket items on this page — used to:
+       *   1. Skip public items that duplicate a user-bucket item (dedup)
+       *   2. Promote user-bucket items that are org-published to publishedWithMe: true
+       */
       const publicItemPaths = new Set(
         publicError == null && publicData
           ? (publicData.items ?? [])
@@ -686,10 +666,12 @@ export class ConversationService extends AppService {
           : [],
       );
 
-      // IDs of user-bucket items that also exist in the public bucket.
-      // These should be shown as org-published (Organization section) rather
-      // than My Chats, because DIAL Core may not set publishedWithMe on
-      // user-bucket copies.
+      /*
+       * IDs of user-bucket items that also exist in the public bucket.
+       * These should be shown as org-published (Organization section) rather
+       * than My Chats, because DIAL Core may not set publishedWithMe on
+       * user-bucket copies.
+       */
       const orgPublishedUserIds = new Set(
         (userData.items ?? [])
           .filter(
@@ -708,8 +690,10 @@ export class ConversationService extends AppService {
           : item,
       );
 
-      // Paths of user-bucket items on this page — used to skip public items
-      // that are already represented as user items above.
+      /*
+       * Paths of user-bucket items on this page — used to skip public items
+       * that are already represented as user items above.
+       */
       const userItemPaths = new Set(
         (userData.items ?? [])
           .filter((item) => item.nodeType !== 'FOLDER')
@@ -763,7 +747,11 @@ export class ConversationService extends AppService {
       };
     } catch (error) {
       this.logger.error('DIAL Core listConversations failed', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.listConversations',
+        this.logger,
+      );
     }
   }
 
@@ -785,12 +773,20 @@ export class ConversationService extends AppService {
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected getConversationMetadata', error);
-        return handleDialError(error);
+        return handleDialSdkError(
+          error,
+          'conversations.getConversationMetadata',
+          this.logger,
+        );
       }
       return data as ConversationMetadataDto;
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversationMetadata', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.getConversationMetadata',
+        this.logger,
+      );
     }
   }
 
@@ -818,7 +814,11 @@ export class ConversationService extends AppService {
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
-        return handleDialError(error);
+        return handleDialSdkError(
+          error,
+          'conversations.saveConversation',
+          this.logger,
+        );
       }
       const saved = { ...data, ...bodyToSave } as ConversationResponseDto;
       if (saved.llmNamingDone !== true) {
@@ -832,7 +832,11 @@ export class ConversationService extends AppService {
       return saved;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.saveConversation',
+        this.logger,
+      );
     }
   }
 
@@ -946,19 +950,11 @@ export class ConversationService extends AppService {
       return storedName;
     }
 
-    if (conversation.llmNamingDone !== true) {
-      return pathTitle;
-    }
-
-    const firstUserMessage = conversation.messages?.find(
-      (message) => message.role === ConversationMessageRole.User,
-    )?.content;
-    const messageDerivedTitle = getConversationName(
-      'New chat',
-      firstUserMessage ?? '',
-    );
-
-    return pathTitle === messageDerivedTitle ? storedName : pathTitle;
+    /* `llmNamingDone` marks `name` as authoritative — set by LLM naming and by
+     * manual rename, both of which update `name` at the same storage path, so
+     * the filename-derived title may legitimately diverge from it.
+     */
+    return conversation.llmNamingDone === true ? storedName : pathTitle;
   }
 
   private isOwnedBySessionBucket(id: string, sessionBucket: string): boolean {
@@ -990,9 +986,11 @@ export class ConversationService extends AppService {
       `deleteConversations: bucket=${bucket} total=${uniqueIds.length} owned=${ownedIds.length}`,
     );
 
-    // IDs from the metadata listing are already URL-encoded (e.g. %20 for spaces).
-    // Decode each segment before passing to encodeDialResourcePath to avoid
-    // double-encoding (%20 → %2520).
+    /*
+     * IDs from the metadata listing are already URL-encoded (e.g. %20 for spaces).
+     * Decode each segment before passing to encodeDialResourcePath to avoid
+     * double-encoding (%20 → %2520).
+     */
     const pathsForDelete = ownedIds.map((id) => {
       const rawPath = id.slice(prefix.length);
       return rawPath.split('/').map(safeDecodeURIComponent).join('/');
@@ -1153,12 +1151,20 @@ export class ConversationService extends AppService {
         this.logger.error(
           `DIAL Core rejected subscribeToResources — status: ${result.response.status}`,
         );
-        return handleDialError({ status: result.response.status });
+        return handleDialSdkError(
+          { status: result.response.status },
+          'conversations.watchConversation',
+          this.logger,
+        );
       }
       return result.response.body;
     } catch (error) {
       this.logger.error('DIAL Core subscribeToResources failed', error);
-      return handleDialError(error);
+      return handleDialSdkError(
+        error,
+        'conversations.watchConversation',
+        this.logger,
+      );
     }
   }
 
@@ -1200,9 +1206,11 @@ export class ConversationService extends AppService {
         customContent,
       );
     } catch (err) {
-      // Release the just-registered entry so a failure before streaming starts
-      // doesn't leave the conversation "locked" — otherwise the next request
-      // (e.g. regenerate) would be rejected with a 409 until stale eviction.
+      /*
+       * Release the just-registered entry so a failure before streaming starts
+       * doesn't leave the conversation "locked" — otherwise the next request
+       * (e.g. regenerate) would be rejected with a 409 until stale eviction.
+       */
       this.generationService.error(sessionId, conversationPath, generationId);
       throw err;
     }
@@ -1397,11 +1405,13 @@ export class ConversationService extends AppService {
           }
         }
 
-        // `[DONE]` is the SSE completion signal. Stop here rather than waiting
-        // for the upstream socket to close — some providers keep the connection
-        // open after `[DONE]`, which would otherwise leave this generation
-        // registered as active and reject the next request (e.g. regenerate)
-        // with a 409 conflict.
+        /*
+         * `[DONE]` is the SSE completion signal. Stop here rather than waiting
+         * for the upstream socket to close — some providers keep the connection
+         * open after `[DONE]`, which would otherwise leave this generation
+         * registered as active and reject the next request (e.g. regenerate)
+         * with a 409 conflict.
+         */
         if (receivedDone) break;
       }
 
@@ -1436,8 +1446,10 @@ export class ConversationService extends AppService {
     } finally {
       if (upstreamReader) {
         try {
-          // cancel() (not releaseLock) so the upstream connection is closed
-          // when we stop early on `[DONE]`, instead of being left dangling.
+          /*
+           * cancel() (not releaseLock) so the upstream connection is closed
+           * when we stop early on `[DONE]`, instead of being left dangling.
+           */
           await upstreamReader.cancel();
         } catch {
           /* already closed */

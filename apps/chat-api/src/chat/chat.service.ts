@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppService } from '../app/app.service';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { handleDialError } from '../common/utils/dial-error';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 
 @Injectable()
@@ -24,14 +24,16 @@ export class ChatService extends AppService {
 
       if (!result.response.ok || result.error != null) {
         this.logger.error('DIAL Core rejected sendCompletion', result.error);
-        return handleDialError(
+        return handleDialSdkError(
           result.error ?? { status: result.response.status },
+          'chat.sendCompletion',
+          this.logger,
         );
       }
       return result.data;
     } catch (error) {
       this.logger.error('DIAL Core sendCompletion failed', error);
-      return handleDialError(error);
+      return handleDialSdkError(error, 'chat.sendCompletion', this.logger);
     }
   }
 }

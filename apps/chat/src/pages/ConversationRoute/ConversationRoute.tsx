@@ -86,8 +86,10 @@ const CatalogPickerModal = lazy(async () => {
   return { default: module.default };
 });
 
-// TODO: rename page and component
-// TODO: review component after ConversationPage implementation, maybe move ConversationInput here and remove ConversationInput component
+/*
+ * TODO: rename page and component
+ * TODO: review component after ConversationPage implementation, maybe move ConversationInput here and remove ConversationInput component
+ */
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();

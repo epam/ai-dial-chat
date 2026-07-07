@@ -186,9 +186,11 @@ export const Input: FC<InputProps> = ({
   const hasSendableContent =
     message.trim().length > 0 || attachments.length > 0;
   const canSend = hasSendableContent && !hasBlockedAttachments;
-  // Stacked layout: textarea on its own row above the action bar. Used when the
-  // caller opts in (edit mode), whenever attachments are present, or when the
-  // message spans multiple visual lines (either explicit newlines or word-wrap).
+  /*
+   * Stacked layout: textarea on its own row above the action bar. Used when the
+   * caller opts in (edit mode), whenever attachments are present, or when the
+   * message spans multiple visual lines (either explicit newlines or word-wrap).
+   */
   const isStackedLayout =
     isStacked ||
     attachments.length > 0 ||

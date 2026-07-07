@@ -53,8 +53,10 @@ export const useMessageState = ({
     if (!textareaRef.current || singleRowHeightRef.current === 0) return;
     const isNowMultiLine =
       textareaRef.current.offsetHeight > singleRowHeightRef.current;
-    // Only reset to false when message is empty: switching from stacked to non-stacked
-    // changes textarea width, which can re-trigger wrapping and cause an infinite toggle.
+    /*
+     * Only reset to false when message is empty: switching from stacked to non-stacked
+     * changes textarea width, which can re-trigger wrapping and cause an infinite toggle.
+     */
     setIsMultiLine((prev) =>
       isNowMultiLine ? true : message === '' ? false : prev,
     );
