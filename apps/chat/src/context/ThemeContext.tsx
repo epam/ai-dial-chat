@@ -32,9 +32,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [config, setConfig] = useState<ThemeConfiguration | null>(null);
-  const [currentThemeId, setCurrentThemeId] = useState<string>(ThemeId.Dark);
+  const [currentThemeId, setCurrentThemeId] = useState<string>(ThemeId.Light);
   const [selectedThemeId, setSelectedThemeId] = useState<string>(
-    () => getFromLocalStorage(StorageKey.Theme) ?? ThemeId.Dark,
+    () => getFromLocalStorage(StorageKey.Theme) ?? ThemeId.Light,
   );
   const [currentLogo, setCurrentLogo] = useState<string | undefined>(void 0);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,7 +100,11 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       typeof window !== 'undefined'
         ? getFromLocalStorage(StorageKey.Theme)
         : null;
-    const configuredTheme = storedTheme || config?.themes?.[0].id;
+    const defaultTheme = config?.themes?.[0].id;
+    const configuredTheme =
+      storedTheme || defaultTheme !== ThemeId.Dark
+        ? defaultTheme
+        : ThemeId.Light;
     if (configuredTheme) {
       setSelectedThemeId(configuredTheme);
       updateTheme(configuredTheme);
