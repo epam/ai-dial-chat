@@ -1,8 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
-import { FilterTab, type FilterLabels } from '../../models/ConversationPanel';
-import panelStyles from '../ConversationPanel/ConversationPanel.module.scss';
+import { type FilterLabels } from '../../models/panel-props';
+import { FilterTab } from '../../types/filter-tab';
+import styles from './FilterTabs.module.scss';
 
 /** Props for `FilterTabs`. */
 export interface FilterTabsProps {
@@ -14,8 +15,6 @@ export interface FilterTabsProps {
   onChange: (tab: FilterTab) => void;
   /** Typography class applied to each tab label. Defaults to `'dial-tiny-semi-text'`. */
   tabClassName?: string;
-  /** Text color class applied to each tab label. Defaults to `'text-primary'`. */
-  tabColorClassName?: string;
 }
 
 const TABS: { value: FilterTab; labelKey: keyof FilterLabels }[] = [
@@ -27,17 +26,11 @@ const TABS: { value: FilterTab; labelKey: keyof FilterLabels }[] = [
 
 /** Segmented pill-tab control for filtering conversations by source. */
 export const FilterTabs: FC<FilterTabsProps> = memo(
-  ({
-    activeTab,
-    labels,
-    onChange,
-    tabClassName = 'dial-tiny-semi-text',
-    tabColorClassName = 'text-primary',
-  }) => (
+  ({ activeTab, labels, onChange, tabClassName = 'dial-tiny-semi-text' }) => (
     <div
       className={mergeClasses(
-        'flex flex-wrap gap-2 border-b px-5 py-3',
-        panelStyles.divider,
+        'mx-3 my-2 flex flex-nowrap gap-2 rounded-full p-1',
+        styles.filterTabs,
       )}
     >
       {TABS.map(({ value, labelKey }) => (
@@ -47,11 +40,10 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
           selected={activeTab === value}
           onClick={() => onChange(value)}
           className={mergeClasses(
-            'box-border border border-primary px-[7px] py-1',
+            'box-border h-auto flex-1 justify-center rounded-full p-[7px] text-center',
             tabClassName,
-            tabColorClassName,
-            activeTab === value &&
-              'border-accent-secondary bg-accent-secondary-alpha',
+            styles.tab,
+            activeTab === value && styles.tabActive,
           )}
         />
       ))}

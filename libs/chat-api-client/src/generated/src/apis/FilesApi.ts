@@ -13,23 +13,228 @@
  */
 
 import * as runtime from '../runtime';
-import type { FileUploadResponseDto } from '../models/index';
+import type {
+  CreateFolderDto,
+  CreateFolderResponseDto,
+  DeleteFilesDto,
+  DeleteFilesResponseDto,
+  DownloadArchiveDto,
+  FileMetadataResponseDto,
+  FileUploadResponseDto,
+  ListFilesResponseDto,
+  RenameFilesDto,
+  RenameFilesResponseDto,
+} from '../models/index';
+
+export interface CreateFolderRequest {
+  createFolderDto: CreateFolderDto;
+}
+
+export interface DeleteFilesRequest {
+  deleteFilesDto: DeleteFilesDto;
+}
+
+export interface DownloadArchiveRequest {
+  downloadArchiveDto: DownloadArchiveDto;
+}
 
 export interface DownloadFileRequest {
   bucket: string;
   path: string;
 }
 
+export interface GetFileMetadataRequest {
+  bucket: string;
+  path: string;
+}
+
+export interface ListFilesRequest {
+  bucket: string;
+  path?: string;
+  token?: string;
+  limit?: number;
+  recursive?: boolean;
+  permissions?: boolean;
+}
+
+export interface ListPublicFilesRequest {
+  path?: string;
+  token?: string;
+  limit?: number;
+  recursive?: boolean;
+}
+
+export interface ListSharedFilesRequest {
+  path?: string;
+  token?: string;
+  limit?: number;
+}
+
+export interface RenameFilesRequest {
+  renameFilesDto: RenameFilesDto;
+}
+
 export interface UploadFileRequest {
   file: Blob;
   bucket: string;
   path: string;
+  uploadMode?: UploadFileUploadModeEnum;
 }
 
 /**
  *
  */
 export class FilesApi extends runtime.BaseAPI {
+  /**
+   * Create a folder
+   */
+  async createFolderRaw(
+    requestParameters: CreateFolderRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<CreateFolderResponseDto>> {
+    if (requestParameters['createFolderDto'] == null) {
+      throw new runtime.RequiredError(
+        'createFolderDto',
+        'Required parameter "createFolderDto" was null or undefined when calling createFolder().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/folders`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['createFolderDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<CreateFolderResponseDto>(response);
+  }
+
+  /**
+   * Create a folder
+   */
+  async createFolder(
+    requestParameters: CreateFolderRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<CreateFolderResponseDto> {
+    const response = await this.createFolderRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Delete files and folders
+   */
+  async deleteFilesRaw(
+    requestParameters: DeleteFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<DeleteFilesResponseDto>> {
+    if (requestParameters['deleteFilesDto'] == null) {
+      throw new runtime.RequiredError(
+        'deleteFilesDto',
+        'Required parameter "deleteFilesDto" was null or undefined when calling deleteFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/delete`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['deleteFilesDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<DeleteFilesResponseDto>(response);
+  }
+
+  /**
+   * Delete files and folders
+   */
+  async deleteFiles(
+    requestParameters: DeleteFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<DeleteFilesResponseDto> {
+    const response = await this.deleteFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Download files and folders as a ZIP archive
+   */
+  async downloadArchiveRaw(
+    requestParameters: DownloadArchiveRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Blob>> {
+    if (requestParameters['downloadArchiveDto'] == null) {
+      throw new runtime.RequiredError(
+        'downloadArchiveDto',
+        'Required parameter "downloadArchiveDto" was null or undefined when calling downloadArchive().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/download-archive`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['downloadArchiveDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.BlobApiResponse(response);
+  }
+
+  /**
+   * Download files and folders as a ZIP archive
+   */
+  async downloadArchive(
+    requestParameters: DownloadArchiveRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Blob> {
+    const response = await this.downloadArchiveRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    */
   async downloadFileRaw(
@@ -84,6 +289,302 @@ export class FilesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Blob> {
     const response = await this.downloadFileRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns metadata for a single named file from DIAL Core. Path must not end with /.
+   * Get file metadata
+   */
+  async getFileMetadataRaw(
+    requestParameters: GetFileMetadataRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<FileMetadataResponseDto>> {
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling getFileMetadata().',
+      );
+    }
+
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling getFileMetadata().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
+    }
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/metadata`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<FileMetadataResponseDto>(response);
+  }
+
+  /**
+   * Returns metadata for a single named file from DIAL Core. Path must not end with /.
+   * Get file metadata
+   */
+  async getFileMetadata(
+    requestParameters: GetFileMetadataRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<FileMetadataResponseDto> {
+    const response = await this.getFileMetadataRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility.
+   * List files and folders
+   */
+  async listFilesRaw(
+    requestParameters: ListFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListFilesResponseDto>> {
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling listFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
+    }
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['token'] != null) {
+      queryParameters['token'] = requestParameters['token'];
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['recursive'] != null) {
+      queryParameters['recursive'] = requestParameters['recursive'];
+    }
+
+    if (requestParameters['permissions'] != null) {
+      queryParameters['permissions'] = requestParameters['permissions'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/list`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListFilesResponseDto>(response);
+  }
+
+  /**
+   * Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility.
+   * List files and folders
+   */
+  async listFiles(
+    requestParameters: ListFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListFilesResponseDto> {
+    const response = await this.listFilesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket.
+   * List files from the organization (public) bucket
+   */
+  async listPublicFilesRaw(
+    requestParameters: ListPublicFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListFilesResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['token'] != null) {
+      queryParameters['token'] = requestParameters['token'];
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['recursive'] != null) {
+      queryParameters['recursive'] = requestParameters['recursive'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/public`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListFilesResponseDto>(response);
+  }
+
+  /**
+   * Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket.
+   * List files from the organization (public) bucket
+   */
+  async listPublicFiles(
+    requestParameters: ListPublicFilesRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListFilesResponseDto> {
+    const response = await this.listPublicFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Proxies the DIAL Core sharing API to return files shared with the authenticated user.
+   * List files shared with the current user
+   */
+  async listSharedFilesRaw(
+    requestParameters: ListSharedFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListFilesResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['token'] != null) {
+      queryParameters['token'] = requestParameters['token'];
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/shared`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListFilesResponseDto>(response);
+  }
+
+  /**
+   * Proxies the DIAL Core sharing API to return files shared with the authenticated user.
+   * List files shared with the current user
+   */
+  async listSharedFiles(
+    requestParameters: ListSharedFilesRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListFilesResponseDto> {
+    const response = await this.listSharedFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Rename files and folders
+   */
+  async renameFilesRaw(
+    requestParameters: RenameFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<RenameFilesResponseDto>> {
+    if (requestParameters['renameFilesDto'] == null) {
+      throw new runtime.RequiredError(
+        'renameFilesDto',
+        'Required parameter "renameFilesDto" was null or undefined when calling renameFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/rename`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['renameFilesDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<RenameFilesResponseDto>(response);
+  }
+
+  /**
+   * Rename files and folders
+   */
+  async renameFiles(
+    requestParameters: RenameFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<RenameFilesResponseDto> {
+    const response = await this.renameFilesRaw(
       requestParameters,
       initOverrides,
     );
@@ -149,6 +650,10 @@ export class FilesApi extends runtime.BaseAPI {
       formParams.append('path', requestParameters['path']);
     }
 
+    if (requestParameters['uploadMode'] != null) {
+      formParams.append('uploadMode', requestParameters['uploadMode']);
+    }
+
     let urlPath = `/api/v1/files`;
 
     const response = await this.request(
@@ -175,3 +680,13 @@ export class FilesApi extends runtime.BaseAPI {
     return await response.value();
   }
 }
+
+/**
+ * @export
+ */
+export const UploadFileUploadModeEnum = {
+  Overwrite: 'overwrite',
+  CreateOnly: 'create-only',
+} as const;
+export type UploadFileUploadModeEnum =
+  (typeof UploadFileUploadModeEnum)[keyof typeof UploadFileUploadModeEnum];

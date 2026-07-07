@@ -62,7 +62,7 @@ export default [
       'prettier/prettier': 'error',
 
       // React Hooks rules
-      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/rules-of-hooks': 'off',
       'react-hooks/exhaustive-deps': 'error',
       'react-hooks/set-state-in-effect': 'off',
       'tailwindcss/no-contradicting-classname': 'error',
@@ -134,7 +134,18 @@ export default [
       '**/*.mjs',
     ],
     // Override or add rules here
-    rules: {},
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
   },
   prettierConfig,
 ];

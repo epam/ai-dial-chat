@@ -26,6 +26,10 @@
 
 Full tech stack, path aliases, commands, and architecture layout live in `openspec/config.yaml` — read it before designing or implementing features. The `opsx:*` skills use it as their primary context.
 
+Spec work follows the OpenSpec lifecycle: **explore → propose → apply → archive** (`opsx:explore` to think through an idea, `opsx:propose` to create a change with design/specs/tasks, `opsx:apply` to implement the tasks, `opsx:archive` to finalize once done).
+
+Internal `@epam/*` libs resolve via `tsconfig.base.json` paths + the Nx project graph — fix `@epam/*` resolution errors (`cannot find module`, `TS2307`) there and in the lib's own `package.json`, not by hand-editing `node_modules` symlinks or running `npm install --workspace`. Use the `nx-workspace` skill to diagnose.
+
 ## Library isolation
 
 Libraries under `libs/*` must stay maximally isolated from host applications and external interfaces. A lib must not know host-owned integration details such as REST paths, `/api` routes, generated API clients, `apps/chat/src/server-api`, app contexts, auth/session/cookies, environment variables, feature flags, routing/navigation, analytics/telemetry, logging transports, persistence/storage keys and schemas, deployment/tenant/provider details, third-party SDK setup, platform bridges, or app-specific URL schemes.
@@ -34,25 +38,12 @@ Put application, backend, platform, and external-system knowledge at the applica
 
 Exception: `libs/chat-api-client` is a generated OpenAPI client package. It may contain generated endpoint paths, DTOs, runtime transport code, and OpenAPI artifacts because that is its only purpose. Do not hand-edit generated client files or add app-specific behavior there; update the backend Swagger/OpenAPI source and regenerate with the repository OpenAPI scripts. Other hand-authored libs still must not import or wrap `@epam/chat-api-client`; apps consume it through app-level adapters such as `apps/chat/src/server-api`.
 
-## Cross-agent feature research
-
-For broad "global feature" research (best practices, architecture alternatives, trade-offs), use `./.claude/skills/feature-research/SKILL.md` as the default workflow before implementation.
-
-Expected output:
-
-- Context and constraints
-- 2-4 options with trade-offs
-- Recommended approach
-- Risks and rollback notes
-- Thin-slice implementation draft with Nx verification steps
-
 ## Skill routing
 
 Use these local skills directly:
 
-- `./.claude/skills/incremental-implementation/SKILL.md` for multi-file implementation and refactors
+- `./.agents/skills/address-current-branch-review/SKILL.md` for processing unresolved GitHub review threads on the current branch. Fix requests do not authorize inline replies; reply only after the user explicitly asks and the pushed fix is visible in the PR.
 - `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
-- `./.claude/skills/feature-research/SKILL.md` for broad feature research and trade-off analysis
 - `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components
 - `./.claude/skills/responsive-design/SKILL.md` for any UI work that must support both mobile and desktop, or any review of mobile parity
 
@@ -61,7 +52,14 @@ Default behavior:
 - Implementation work should follow incremental slices with per-slice verification.
 - Before merge (or on explicit review requests), run the five-axis quality review.
 - Before changing anything under `libs/*`, explicitly check the library isolation rule: host/external contracts are adapted by apps, not embedded in libs.
-- UI work is mobile-first by default. The project's named Tailwind breakpoints (`mobile`, `small_tablet`, `large_tablet`, `desktop`, `large_desktop`) live in `tailwind.config.js`; do not introduce `sm:`/`md:`/`lg:`/`xl:` defaults. When a component must branch in JS, use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts` rather than reading `window.innerWidth`.
+- UI work is mobile-first by default. The project's named Tailwind breakpoints (`mobile`, `desktop`) live in `tailwind.config.js`; do not introduce `small_tablet:`/`large_tablet:`/`large_desktop:` or `sm:`/`md:`/`lg:`/`xl:` prefixes. When a component must branch in JS, use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts` rather than reading `window.innerWidth`.
+
+## Docs
+
+Ground-truth design docs live in `docs/` — app architecture, technical/product requirements, and the auth subsystem (OIDC login/logout, session cookies, token refresh, BFF flow, SessionGuard).
+
+- **Reading:** Before changing or explaining documented behavior, use the `dial-docs` skill to find the one authoritative doc. Don't guess from memory and don't read all docs — the skill is an index that routes you to the right one.
+- **Writing:** When a change alters behavior a doc describes, update that doc and any affected diagram in the **same commit**.
 
 ## TypeScript module imports
 
@@ -69,6 +67,14 @@ Default behavior:
 - Keep extensions that identify non-code resources such as `.css`, `.scss`, `.json`, and image files, and preserve package subpaths whose published API explicitly includes an extension.
 - Vite-built apps and libraries must use `moduleResolution: "bundler"` with an ES module mode such as `module: "esnext"`. Do not switch frontend code to `node16`/`nodenext` resolution to make `.js` source specifiers compile.
 - Native Node ESM packages that are executed without a bundler are a separate case: use a Node-compatible build strategy instead of introducing `.js` specifiers into shared frontend source.
+
+## TypeScript enums
+
+- Use string enums for named finite sets of statuses, modes, variants, or lifecycle states instead of string-literal union types. Prefer `enum UploadStatus { Idle = 'idle' }` over `type UploadStatus = 'idle' | ...` when the values are reused across a module, exported, or compared in component logic/tests.
+
+## Code comments
+
+- Use block comments (`/* ... */`) for explanatory comments that span multiple lines. Keep `//` comments for short, single-line notes only.
 
 ## RTL and Arabic language support
 
@@ -123,7 +129,7 @@ Use these two tools for all UI kit discovery and documentation needs: `searchEnt
 
 When you encounter errors after a ui kit package upgrade, or when a prop no longer exists on a component:
 
-1. Determine the **target release version**: check the installed version in `package.json` (`@epam/ai-dial-ui-kit`). Dev versions (`x.y.z-dev.N`) map to the next release — e.g. `0.11.0-dev.18` → look up `0.11.0`.
+1. Determine the **target release version**: check the installed version in `package.json` (`@epam/ai-dial-ui-kit`). Dev versions (`x.y.z-dev.N`) map to the next release — e.g. `0.11.0.18` → look up `0.11.0`.
 2. Read `node_modules/@epam/ai-dial-ui-kit/dist/CHANGELOG.md` for `### Breaking Changes` entries at or between the previous release and the target release.
 3. Follow the linked migration guides found at `node_modules/@epam/ai-dial-ui-kit/dist/migration-guides/<version>/`.
 4. Use `getEntityDetails("component", "DialXxx")` to confirm the current prop signature before applying the fix.

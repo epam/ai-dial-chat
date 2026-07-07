@@ -7,7 +7,7 @@ Specifies inline editing of user messages within a conversation: entering edit m
 ---
 
 ### Requirement: Edit button availability
-The edit button on user message bubbles SHALL be visible at all times and disabled while the AI is streaming a response.
+The edit button on user message bubbles SHALL be visible at all times and disabled while the AI is streaming a response or when the conversation is read-only.
 
 #### Scenario: Edit button visible on user message
 - **WHEN** a user message is rendered in the conversation
@@ -16,6 +16,11 @@ The edit button on user message bubbles SHALL be visible at all times and disabl
 #### Scenario: Edit button disabled during streaming
 - **WHEN** the AI is actively streaming a response
 - **THEN** all edit buttons in the conversation are disabled and not interactive
+
+#### Scenario: Edit button hidden in read-only conversation
+- **WHEN** the conversation is read-only (isReadonly flag set or user lacks WRITE permission)
+- **THEN** the edit button is not rendered on any user message
+- **AND** clicking a user message does not trigger edit mode
 
 ---
 
@@ -26,7 +31,7 @@ Clicking the edit button on a user message SHALL replace the static message bubb
 - **WHEN** the user clicks the edit button on a user message
 - **THEN** the message bubble is replaced by an inline editable input area
 - **THEN** the textarea contains the original message text
-- **THEN** existing attachments are displayed in an attachment tray above the bordered textarea box
+- **THEN** existing attachments are displayed inside the bordered textarea box, in the same attachment tray as any newly added attachments
 
 #### Scenario: Edit mode on mobile
 - **WHEN** the user taps the edit button on a mobile device
@@ -40,12 +45,12 @@ Clicking the edit button on a user message SHALL replace the static message bubb
 
 ### Requirement: Edit area layout
 The inline edit area consists of two parts stacked vertically:
-1. A bordered box containing only the textarea (new attachments added during editing appear in a tray inside this box, above the textarea; pre-existing attachments from the original message appear in a tray above the bordered box).
+1. A bordered box containing the attachment tray (pre-existing and newly added attachments shown together) and the textarea below it.
 2. An action row below the bordered box: the attach (+) button on the left, Cancel and Save & Submit buttons on the right.
 
 #### Scenario: Action bar layout
 - **WHEN** a message is in edit mode
-- **THEN** a bordered box is shown containing only the textarea
+- **THEN** a bordered box is shown containing the attachment tray (when attachments are present) and the textarea
 - **THEN** below the bordered box: an attach (+) button is shown on the left
 - **THEN** a Cancel button (neutral style) and a Save & Submit button (primary style) are shown on the right of the action row
 
@@ -66,7 +71,7 @@ While in edit mode, the user SHALL be able to remove existing attachments and ad
 - **WHEN** the user clicks the attach (+) button in the action row
 - **THEN** a file picker opens (desktop: dropdown menu; mobile: bottom sheet)
 - **WHEN** the user selects a file
-- **THEN** the new file is added to the attachment tray inside the bordered box
+- **THEN** the new file appears in the shared attachment tray inside the bordered box, alongside any pre-existing attachments
 
 ---
 

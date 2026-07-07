@@ -2,7 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialEllipsisTooltip, type DropdownItem } from '@epam/ai-dial-ui-kit';
 import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import { type FC, memo, useState } from 'react';
-import type { ConversationHistoryItem } from '../../models/ConversationPanel';
+import type { ConversationHistoryItem } from '../../models/panel-props';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 import { ConversationRow } from './ConversationRow';
 

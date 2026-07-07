@@ -109,10 +109,15 @@ await Promise.all(
 );
 
 const runtimeSource = await readFile(generatedRuntimePath, 'utf8');
-const runtimeUpdated = runtimeSource.replace(
-  'return value !== null && value !== undefined;',
-  'return value != null;',
-);
+const runtimeUpdated = runtimeSource
+  .replace(
+    'return value !== null && value !== undefined;',
+    'return value != null;',
+  )
+  .replace(
+    /constructor\(\s*public cause: Error,/,
+    'constructor(\n    public override cause: Error,',
+  );
 
 if (runtimeUpdated !== runtimeSource) {
   await writeFile(generatedRuntimePath, runtimeUpdated);

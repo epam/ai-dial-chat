@@ -1,3 +1,8 @@
+import {
+  AttachmentType,
+  RequestStatus,
+  type Attachment,
+} from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -144,6 +149,33 @@ describe('Input', () => {
     expect(handleSend).toHaveBeenCalledWith('Click send', []);
   });
 
+  it('should show stop button while streaming when onStop is provided', () => {
+    const handleStop = vi.fn();
+    render(
+      <Input isStreaming onStop={handleStop} stopLabel="Stop streaming" />,
+    );
+
+    fireEvent.click(screen.getByLabelText('Stop streaming'));
+
+    expect(handleStop).toHaveBeenCalledOnce();
+    expect(screen.queryByLabelText('Send message')).toBeNull();
+  });
+
+  it('should not show stop or send while streaming when onStop is omitted', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input isStreaming message="Draft" onSend={handleSend} />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+
+    expect(screen.queryByLabelText('Stop streaming')).toBeNull();
+    expect(screen.queryByLabelText('Send message')).toBeNull();
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
   it('should set --ci-bg and --ci-text CSS variables when colors prop is provided', () => {
     const { container } = render(
       <Input colors={{ background: '#fff', text: '#000' }} />,
@@ -159,10 +191,13 @@ describe('Input', () => {
     expect(wrapper.style.getPropertyValue('--ci-text')).toBe('');
   });
 
-  it('should set --ci-font-size CSS variable when typography prop is provided', () => {
-    const { container } = render(<Input typography={{ fontSize: '16px' }} />);
-    const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper.style.getPropertyValue('--ci-font-size')).toBe('16px');
+  it('should apply the typography fontClassName to the textarea', () => {
+    const { container } = render(
+      <Input typography={{ fontClassName: 'dial-body-paragraph-text' }} />,
+    );
+    expect(container.querySelector('textarea')?.className).toContain(
+      'dial-body-paragraph-text',
+    );
   });
 
   it('should use custom placeholder when provided', () => {
@@ -260,6 +295,32 @@ describe('Input', () => {
     );
     expect(screen.getByText('dropped')).toBeTruthy();
     expect(onDropFilesConsumed).toHaveBeenCalled();
+  });
+
+  it('adds already-uploaded pending attachments without uploading them again', () => {
+    const onPendingAttachmentsConsumed = vi.fn();
+    const onUploadAttachment = vi.fn();
+    const attachment: Attachment = {
+      id: 'files/my-bucket/report.pdf',
+      name: 'report.pdf',
+      contentType: 'application/pdf',
+      type: AttachmentType.File,
+      status: RequestStatus.Idle,
+      url: 'files/my-bucket/report.pdf',
+      file: new File([], 'report.pdf', { type: 'application/pdf' }),
+    };
+
+    render(
+      <Input
+        pendingAttachments={[attachment]}
+        onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
+        onUploadAttachment={onUploadAttachment}
+      />,
+    );
+
+    expect(screen.getByText('report')).toBeTruthy();
+    expect(onUploadAttachment).not.toHaveBeenCalled();
+    expect(onPendingAttachmentsConsumed).toHaveBeenCalledOnce();
   });
 
   it('should call onAttachmentsChange when a file is added', () => {

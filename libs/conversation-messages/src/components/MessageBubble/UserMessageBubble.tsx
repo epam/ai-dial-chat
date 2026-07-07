@@ -34,9 +34,10 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   showLessLabel = 'Show less',
   showMoreAriaLabel,
   showLessAriaLabel,
+  onAttachmentClick,
+  attachmentClickLabel,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
-  const noCustomClass = !typography?.fontClassName;
 
   const {
     textRef,
@@ -51,16 +52,6 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   const cssVars = buildCssVars({
     '--cm-bubble-user-bg': colors?.userBackground,
     '--cm-bubble-text': colors?.text,
-    '--cm-bubble-font-family': noCustomClass
-      ? typography?.fontFamily
-      : undefined,
-    '--cm-bubble-font-size': noCustomClass ? typography?.fontSize : undefined,
-    '--cm-bubble-font-weight': noCustomClass
-      ? typography?.fontWeight
-      : undefined,
-    '--cm-bubble-line-height': noCustomClass
-      ? typography?.lineHeight
-      : undefined,
     '--cm-bubble-collapsed-height': isOverflowing
       ? `${collapsedMaxHeight}px`
       : undefined,
@@ -70,7 +61,9 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   });
 
   const positionRadius =
-    position === BubblePosition.Top ? 'rounded-ee-[24px]' : 'rounded-se-[24px]';
+    position === BubblePosition.Top
+      ? 'rounded-ee-[6px] rounded-se-[16px]'
+      : 'rounded-se-[6px] rounded-ee-[16px]';
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
   const expandAriaLabel = showMoreAriaLabel ?? showMoreLabel;
@@ -81,12 +74,17 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
       <div className="ms-auto flex w-fit flex-col items-end gap-4">
-        <AttachmentTray attachments={attachments ?? []} />
+        <AttachmentTray
+          attachments={attachments ?? []}
+          onAttachmentClick={onAttachmentClick}
+          clickLabel={attachmentClickLabel}
+          className="max-w-[640px] flex-wrap justify-end overflow-x-visible"
+        />
         {text && (
           <div
             className={mergeClasses(
               styles.userBubble,
-              'flex w-fit items-center justify-end rounded-es-[16px] rounded-ss-[16px] px-6 py-4',
+              'flex w-fit items-center justify-end rounded-es-[16px] rounded-ss-[16px] border px-6 py-4',
               positionRadius,
               bubbleClassName,
             )}

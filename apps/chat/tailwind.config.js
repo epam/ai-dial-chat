@@ -14,6 +14,12 @@ module.exports = {
   ],
   theme: {
     extend: {
+      backgroundColor: {
+        'avatar-bg': '#60D239',
+      },
+      textColor: {
+        'avatar-initials': '#000000',
+      },
       keyframes: {
         spin: {
           to: { transform: 'rotate(1turn)' },

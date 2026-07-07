@@ -1,122 +1,122 @@
-import {
-  PanelEmptyState,
-  SearchInput,
-  SidebarPanel,
-  SidebarSide,
-} from '@epam/ai-dial-sidebar';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import {
-  IconDownload,
-  IconFileDescription,
-  IconSearchOff,
-} from '@tabler/icons-react';
-import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
+import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
+import { ConversationSourcesPanel } from '@epam/ai-dial-source-panel';
+import type { QuotationSource } from '@epam/ai-dial-source-panel';
+import { memo, useCallback, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SidebarI18nKeys } from '../../constants/translation-keys';
+import {
+  AttachmentsI18nKeys,
+  BasicI18nKeys,
+  ButtonsI18nKeys,
+  SidebarI18nKeys,
+} from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
+import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
-import FilesSection from './sections/FilesSection/FilesSection';
+import useViewportWidth from '../../hooks/use-viewport-width';
+import useLocalStorage from '../../hooks/useLocalStorage';
+import { StorageKey } from '../../types/storage-key';
+import { isDialFileId } from '../../utils/dial-file';
 
-// TODO: need add libs for this panel
-const ConversationSourcesPanel: FC = () => {
+const MIN_PANEL_WIDTH = 312;
+const DEFAULT_PANEL_WIDTH = 360;
+
+const ConversationSourcesPanelContainer: FC = () => {
   const { t } = useTranslation();
   const { handleClose, isOpen, messages } = useSourcesSidebar();
-  const { uploaded, generated } = useConversationSources(messages);
-  const { handleAttachmentClick } = useAttachmentAction();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { uploaded, generated, sources } = useConversationSources(messages);
+  const { handleAttachmentClick: downloadAttachment } = useAttachmentAction();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
 
-  useLayoutEffect(() => {
-    if (!isOpen) {
-      setSearchQuery('');
-    }
-  }, [isOpen]);
-
-  const filteredUploaded = useMemo(
-    () =>
-      searchQuery
-        ? uploaded.filter((att) =>
-            att.name.toLowerCase().includes(searchQuery.toLowerCase()),
-          )
-        : uploaded,
-    [uploaded, searchQuery],
+  const handleAttachmentClick = useCallback(
+    (attachment: DisplayAttachment) => {
+      void openAttachmentCanvas(attachment).then((opened) => {
+        if (opened) {
+          handleClose();
+        } else {
+          downloadAttachment(attachment);
+        }
+      });
+    },
+    [openAttachmentCanvas, downloadAttachment, handleClose],
   );
 
-  const filteredGenerated = useMemo(
-    () =>
-      searchQuery
-        ? generated.filter((att) =>
-            att.name.toLowerCase().includes(searchQuery.toLowerCase()),
-          )
-        : generated,
-    [generated, searchQuery],
+  const handleSourceClick = useCallback(
+    async (source: QuotationSource) => {
+      const { url, title, contentType } = source;
+      const attachment: DisplayAttachment = {
+        id: url,
+        name: title,
+        contentType,
+        type: contentType.startsWith('image/')
+          ? AttachmentType.Image
+          : AttachmentType.File,
+        status: RequestStatus.Idle,
+        url,
+      };
+      const opened = await openAttachmentCanvas(attachment);
+      if (opened) {
+        handleClose();
+        return;
+      }
+      if (!isDialFileId(url)) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } else {
+        downloadAttachment(attachment);
+      }
+    },
+    [openAttachmentCanvas, downloadAttachment, handleClose],
   );
 
-  const isEmpty = uploaded.length === 0 && generated.length === 0;
-  const isNoResults =
-    searchQuery !== '' &&
-    filteredUploaded.length === 0 &&
-    filteredGenerated.length === 0;
+  const isMobile = useIsMobile();
+  const viewportWidth = useViewportWidth();
+  const maxPanelWidth = Math.floor(viewportWidth * 0.5);
+  const [storedWidth, setStoredWidth] = useLocalStorage(
+    StorageKey.ConversationSourcesWidth,
+    DEFAULT_PANEL_WIDTH,
+  );
+  const defaultPanelWidth = Math.min(
+    Math.max(storedWidth, MIN_PANEL_WIDTH),
+    maxPanelWidth,
+  );
+
+  const labels = useMemo(
+    () => ({
+      ariaLabel: t(SidebarI18nKeys.AriaLabel),
+      closeLabel: t(ButtonsI18nKeys.Close),
+      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+      searchClearLabel: t(BasicI18nKeys.ClearSearch),
+      emptyLabel: t(BasicI18nKeys.Empty),
+      noResultsLabel: t(BasicI18nKeys.NoResults),
+      downloadAllLabel: t(SidebarI18nKeys.DownloadAll),
+      uploadedSectionTitle: t(SidebarI18nKeys.SectionUploadedFiles),
+      generatedSectionTitle: t(SidebarI18nKeys.SectionGeneratedFiles),
+      sourcesSectionTitle: t(SidebarI18nKeys.SectionSources),
+      copySourceLabel: t(SidebarI18nKeys.CopySource),
+      attachmentClickLabel: t(AttachmentsI18nKeys.Download),
+    }),
+    [t],
+  );
 
   return (
-    <SidebarPanel
+    <ConversationSourcesPanel
       isOpen={isOpen}
-      side={SidebarSide.Right}
-      className={isOpen ? 'w-[360px] mobile:w-full' : 'w-0'}
-      ariaLabel={t(SidebarI18nKeys.AriaLabel)}
-      closeLabel={t(SidebarI18nKeys.Close)}
       onClose={handleClose}
-      bodyClassName="flex flex-col overflow-hidden p-0"
-      rightActions={
-        !isEmpty && (
-          <DialGhostIconButton
-            icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-            aria-label={t(SidebarI18nKeys.DownloadAll)}
-            disabled
-          />
-        )
-      }
-    >
-      {!isEmpty && (
-        <SearchInput
-          placeholder={t(SidebarI18nKeys.Search)}
-          value={searchQuery}
-          onChange={setSearchQuery}
-        />
-      )}
-      <div className="flex-1 overflow-y-auto p-4">
-        {isEmpty ? (
-          <PanelEmptyState
-            icon={<IconFileDescription aria-hidden size={60} stroke={1} />}
-            label={t(SidebarI18nKeys.Empty)}
-          />
-        ) : isNoResults ? (
-          <PanelEmptyState
-            icon={<IconSearchOff aria-hidden size={45} stroke={1} />}
-            label={t(SidebarI18nKeys.NoResults)}
-          />
-        ) : (
-          <>
-            <FilesSection
-              attachments={filteredUploaded}
-              title={t(SidebarI18nKeys.SectionUploadedFiles)}
-              onAttachmentClick={handleAttachmentClick}
-              attachmentClickLabel={t(SidebarI18nKeys.AttachmentDownloadLabel)}
-            />
-            <FilesSection
-              attachments={filteredGenerated}
-              title={t(SidebarI18nKeys.SectionGeneratedFiles)}
-              onAttachmentClick={handleAttachmentClick}
-              attachmentClickLabel={t(SidebarI18nKeys.AttachmentDownloadLabel)}
-            />
-            {/* TODO: restore after implementing sources extraction from assistant
-            messages */}
-            {/* <SourcesSection title={t(SidebarI18nKeys.SectionSources)} /> */}
-          </>
-        )}
-      </div>
-    </SidebarPanel>
+      uploaded={uploaded}
+      generated={generated}
+      sources={sources}
+      onAttachmentClick={handleAttachmentClick}
+      onSourceClick={handleSourceClick}
+      isMobile={isMobile}
+      defaultWidth={defaultPanelWidth}
+      minWidth={MIN_PANEL_WIDTH}
+      maxWidth={maxPanelWidth}
+      onResizeStop={setStoredWidth}
+      labels={labels}
+    />
   );
 };
 
-export default memo(ConversationSourcesPanel);
+export default memo(ConversationSourcesPanelContainer);

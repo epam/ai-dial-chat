@@ -2,10 +2,31 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
 import * as deploymentsApi from '../../server-api/deployments.api';
+import * as toolsetsApi from '../../server-api/toolsets';
 import { DeploymentsProvider, useDeployments } from '../DeploymentsContext';
+
+const contextMocks = vi.hoisted(() => ({
+  defaultDeploymentId: null as string | null,
+  selectedDeploymentId: null as string | null,
+  setSelectedDeployment: vi.fn(),
+}));
 
 vi.mock('../../server-api/deployments.api');
 vi.mock('../../server-api/application-schemas');
+vi.mock('../../server-api/toolsets');
+vi.mock('../AppConfigContext', () => ({
+  useAppConfig: () => ({
+    config: {
+      defaultDeploymentId: contextMocks.defaultDeploymentId,
+    },
+  }),
+}));
+vi.mock('../UserConfigContext', () => ({
+  useUserConfig: () => ({
+    selectedDeploymentId: contextMocks.selectedDeploymentId,
+    setSelectedDeployment: contextMocks.setSelectedDeployment,
+  }),
+}));
 
 const mockItem1 = {
   id: 'gpt-4o',
@@ -25,11 +46,16 @@ describe('DeploymentsContext', () => {
   const mockGetApplicationSchemas = vi.mocked(
     applicationSchemasApi.getApplicationSchemas,
   );
+  const mockListToolsets = vi.mocked(toolsetsApi.listToolsets);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    contextMocks.defaultDeploymentId = null;
+    contextMocks.selectedDeploymentId = null;
+    contextMocks.setSelectedDeployment.mockResolvedValue(undefined);
     mockGetDeployments.mockResolvedValue(mockResponse);
     mockGetApplicationSchemas.mockResolvedValue(emptySchemas);
+    mockListToolsets.mockResolvedValue({ data: [] });
   });
 
   it('loads items on mount and sets isLoading false on completion', async () => {
@@ -95,6 +121,61 @@ describe('DeploymentsContext', () => {
     });
 
     expect(result.current.selectedItemId).toBe(mockItem2.id);
+    expect(contextMocks.setSelectedDeployment).toHaveBeenCalledWith(
+      mockItem2.id,
+    );
+  });
+
+  it('restoreSelectedItemId updates selectedItemId without persisting user config', async () => {
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => expect(result.current.items.length).toBe(2));
+
+    act(() => {
+      result.current.restoreSelectedItemId(mockItem2.id);
+    });
+
+    expect(result.current.selectedItemId).toBe(mockItem2.id);
+    expect(contextMocks.setSelectedDeployment).not.toHaveBeenCalled();
+  });
+
+  it('uses selected deployment from user config when it exists in the list', async () => {
+    contextMocks.selectedDeploymentId = mockItem2.id;
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+  });
+
+  it('uses operator default when user config selected deployment is absent', async () => {
+    contextMocks.defaultDeploymentId = mockItem2.id;
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+  });
+
+  it('falls back to first sorted deployment when configured ids are stale', async () => {
+    contextMocks.selectedDeploymentId = 'missing-user-selection';
+    contextMocks.defaultDeploymentId = 'missing-default';
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedItemId).toBe(mockItem1.id);
+    });
   });
 
   it('throws when useDeployments is called outside DeploymentsProvider', () => {
@@ -310,6 +391,89 @@ describe('DeploymentsContext', () => {
         expect(result.current.isLoading).toBe(false);
         expect(result.current.error).toBeNull();
         expect(result.current.items).toEqual(mockResponse.deployments);
+      });
+    });
+  });
+
+  describe('schemas in context', () => {
+    it('exposes schemas from successful fetch in context value', async () => {
+      const schemaList = [
+        { id: 'schema-abc', displayName: 'Quick App 2.0' },
+        { id: 'schema-xyz', displayName: 'Toolset' },
+      ];
+      mockGetApplicationSchemas.mockResolvedValueOnce({ schemas: schemaList });
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.schemas).toEqual(schemaList);
+      });
+    });
+
+    it('exposes empty schemas array when fetch fails', async () => {
+      mockGetApplicationSchemas.mockRejectedValueOnce(
+        new Error('Schema fetch failed'),
+      );
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+        expect(result.current.schemas).toEqual([]);
+      });
+    });
+
+    it('initial schemas value is an empty array', () => {
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      expect(result.current.schemas).toEqual([]);
+    });
+  });
+
+  describe('toolsets in context', () => {
+    it('exposes sorted toolsets from the dedicated toolsets API', async () => {
+      const zebra = {
+        id: 'toolsets/b/zebra__0.0.1',
+        toolset: 'toolsets/b/zebra__0.0.1',
+        displayName: 'Zebra Toolset',
+      };
+      const alpha = {
+        id: 'toolsets/b/alpha__0.0.1',
+        toolset: 'toolsets/b/alpha__0.0.1',
+        displayName: 'Alpha Toolset',
+      };
+      mockListToolsets.mockResolvedValueOnce({ data: [zebra, alpha] });
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.toolsets.map((item) => item.id)).toEqual([
+          alpha.id,
+          zebra.id,
+        ]);
+      });
+    });
+
+    it('keeps deployments available when toolsets fetch fails', async () => {
+      mockListToolsets.mockRejectedValueOnce(new Error('Toolsets failed'));
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+        expect(result.current.error).toBeNull();
+        expect(result.current.items).toEqual(mockResponse.deployments);
+        expect(result.current.toolsets).toEqual([]);
       });
     });
   });

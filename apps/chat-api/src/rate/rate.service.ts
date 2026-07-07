@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { handleDialError } from '../common/utils/dial-error';
 import type { EnvironmentVariables } from '../config/environment.config';
 import type { RateMessageDto } from './dto/rate-message.dto';
 
 @Injectable()
 export class RateService extends AppService {
-  protected logger = new Logger(RateService.name);
+  protected override logger = new Logger(RateService.name);
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     super(configService);
@@ -47,7 +47,7 @@ export class RateService extends AppService {
         });
       }
     } catch (error) {
-      handleDialError(error);
+      handleDialSdkError(error, 'rate.rateMessage', this.logger);
     }
   }
 }

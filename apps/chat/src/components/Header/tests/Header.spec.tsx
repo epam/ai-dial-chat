@@ -3,9 +3,13 @@ import userEvent from '@testing-library/user-event';
 import type { AriaAttributes } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ROUTES } from '../../../constants/routes';
+import {
+  ChatI18nKeys,
+  SidebarI18nKeys,
+} from '../../../constants/translation-keys';
 import { SourcesSidebarProvider } from '../../../context/SourcesSidebarContext';
 import * as ThemeContext from '../../../context/ThemeContext';
+import { ROUTES } from '../../../types/routes';
 import Header from '../Header';
 
 vi.mock('../../../context/ThemeContext');
@@ -32,7 +36,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 
 const renderHeader = () =>
   render(
-    <MemoryRouter initialEntries={[`${ROUTES.CONVERSATIONS}/test`]}>
+    <MemoryRouter initialEntries={[`${ROUTES.Conversations}/test`]}>
       <SourcesSidebarProvider>
         <Header onMenuToggle={vi.fn()} />
       </SourcesSidebarProvider>
@@ -46,6 +50,7 @@ describe('Header', () => {
     vi.clearAllMocks();
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
+      selectedTheme: 'dark',
       currentThemeLogo: 'logo.svg',
       themes: [],
       setTheme: vi.fn(),
@@ -60,7 +65,7 @@ describe('Header', () => {
 
   it('renders Logo component inside Header', () => {
     renderHeader();
-    expect(screen.getByLabelText('chat.logo')).toBeTruthy();
+    expect(screen.getByLabelText(ChatI18nKeys.Logo)).toBeTruthy();
   });
 
   it('applies expected container classes', () => {
@@ -68,21 +73,21 @@ describe('Header', () => {
     const header = container.querySelector('header');
     expect(header?.classList.contains('relative')).toBe(true);
     expect(header?.classList.contains('z-30')).toBe(true);
-    expect(header?.classList.contains('min-h-[49px]')).toBe(true);
+    expect(header?.classList.contains('min-h-[64px]')).toBe(true);
     expect(header?.classList.contains('w-full')).toBe(true);
   });
 
   it('renders the sidebar toggle button with open label when closed', () => {
     renderHeader();
     expect(
-      screen.getByRole('button', { name: 'sidebar.base.toggleOpen' }),
+      screen.getByRole('button', { name: SidebarI18nKeys.ToggleOpen }),
     ).toBeTruthy();
   });
 
   it('toggle button starts with aria-pressed=false', () => {
     renderHeader();
     const btn = screen.getByRole('button', {
-      name: 'sidebar.base.toggleOpen',
+      name: SidebarI18nKeys.ToggleOpen,
     });
     expect(btn.getAttribute('aria-pressed')).toBe('false');
   });
@@ -91,13 +96,15 @@ describe('Header', () => {
     const user = userEvent.setup();
     renderHeader();
     const btn = screen.getByRole('button', {
-      name: 'sidebar.base.toggleOpen',
+      name: SidebarI18nKeys.ToggleOpen,
     });
     await user.click(btn);
-    // When sidebar is open the file-icon toggle disappears from the header —
-    // the X button lives inside the sidebar panel itself.
+    /*
+     * When sidebar is open the file-icon toggle disappears from the header —
+     * the X button lives inside the sidebar panel itself.
+     */
     expect(
-      screen.queryByRole('button', { name: 'sidebar.base.toggleOpen' }),
+      screen.queryByRole('button', { name: SidebarI18nKeys.ToggleOpen }),
     ).toBeNull();
   });
 });

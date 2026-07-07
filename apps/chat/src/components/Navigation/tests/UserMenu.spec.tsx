@@ -1,9 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthI18nKeys } from '../../../constants/translation-keys';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
 import * as BreakpointModule from '../../../hooks/breakpoint/useBreakpoint';
+import { AuthStatus } from '../../../types/auth-status';
 import { UserMenu } from '../UserMenu';
 
 vi.mock('../../../context/auth/UserContext');
@@ -16,6 +18,7 @@ const mockUseIsMobile = vi.mocked(BreakpointModule.useIsMobile);
 
 const defaultTheme = {
   currentTheme: 'dark',
+  selectedTheme: 'dark',
   themes: [
     {
       id: 'dark',
@@ -56,7 +59,7 @@ describe('UserMenu', () => {
 
   it('returns null when status is loading', () => {
     mockUseUser.mockReturnValue({
-      status: 'loading',
+      status: AuthStatus.Loading,
       user: null,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -72,7 +75,7 @@ describe('UserMenu', () => {
 
   it('renders avatar image when authenticated and image claim exists', () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: {
         ...mockUser,
         claims: {
@@ -90,14 +93,14 @@ describe('UserMenu', () => {
       </MemoryRouter>,
     );
 
-    const avatar = screen.getByRole('img', { name: 'User avatar' });
+    const avatar = screen.getByRole('img', { name: AuthI18nKeys.UserAvatar });
     expect(avatar).not.toBeNull();
     expect(avatar.getAttribute('src')).toBe('https://example.com/avatar.png');
   });
 
   it('renders short name fallback when image is missing', () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: mockUser,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -110,12 +113,14 @@ describe('UserMenu', () => {
     );
 
     expect(screen.getByText('JD')).not.toBeNull();
-    expect(screen.queryByRole('img', { name: 'User avatar' })).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: AuthI18nKeys.UserAvatar }),
+    ).toBeNull();
   });
 
   it('switches to fallback when image fails to load', () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: {
         ...mockUser,
         claims: {
@@ -133,7 +138,7 @@ describe('UserMenu', () => {
       </MemoryRouter>,
     );
 
-    const avatar = screen.getByRole('img', { name: 'User avatar' });
+    const avatar = screen.getByRole('img', { name: AuthI18nKeys.UserAvatar });
     fireEvent.error(avatar);
 
     expect(screen.getByText('JD')).not.toBeNull();
@@ -141,7 +146,7 @@ describe('UserMenu', () => {
 
   it('avatar button has an aria-label', () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: mockUser,
       refresh: vi.fn(),
       reset: vi.fn(),

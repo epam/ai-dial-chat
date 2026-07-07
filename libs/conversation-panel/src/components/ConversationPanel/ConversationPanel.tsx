@@ -1,26 +1,53 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  PanelEmptyState,
+  PanelEmpty,
+  PanelNoResults,
   SearchInput,
+  SidebarOrientation,
   SidebarPanel,
-  SidebarSide,
 } from '@epam/ai-dial-sidebar';
-import { IconMessageCircle, IconSearchOff } from '@tabler/icons-react';
-import { type FC, memo, useMemo, useState } from 'react';
+import { DialSkeleton } from '@epam/ai-dial-ui-kit';
 import {
-  ConversationSource,
-  type ConversationPanelProps,
-  FilterTab,
-} from '../../models/ConversationPanel';
-import { ConversationGroup } from '../ConversationGroup/ConversationGroup';
+  type FC,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { List } from 'react-window';
+import { ITEM_ROW_HEIGHT } from '../../constants/virtual-list';
+import { ConversationPanelProps } from '../../models/panel-props';
+import {
+  type RowRendererData,
+  type VirtualRow,
+  VirtualRowKind,
+} from '../../models/virtual-row';
+import { ConversationGroupKey } from '../../types/conversation-group-key';
+import { ConversationSource } from '../../types/conversation-source';
+import { FilterTab } from '../../types/filter-tab';
+import {
+  getRowHeight,
+  getSkeletonWidth,
+  SKELETON_ROW_COUNT,
+} from '../../utils/conversation-row';
+import {
+  computeAllowedDropGroups,
+  findGroupKeyForItem,
+} from '../../utils/drag';
 import { FilterTabs } from '../FilterTabs/FilterTabs';
 import { NewChatButton } from '../NewChatButton/NewChatButton';
+import { RowRenderer } from '../RowRenderer/RowRenderer';
 import { matchesSearch, matchesTab } from './utils';
+
+const ALL_GROUP_KEYS = new Set<string>(Object.values(ConversationGroupKey));
 
 /** Collapsible left-side panel showing the user's conversation history. */
 export const ConversationPanel: FC<ConversationPanelProps> = memo(
   ({
     conversations,
+    isLoading,
     isOpen,
     onSelectConversation,
     activeConversationId,
@@ -30,6 +57,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onNewChat,
     newChatLabel,
     searchPlaceholder,
+    searchClearLabel,
     filterLabels,
     groupLabels,
     styles: panelStyles,
@@ -38,16 +66,117 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     actionsLabel,
     onToggle,
     closeAriaLabel,
+    resizable,
+    defaultPanelWidth = 325,
+    minPanelWidth = 312,
+    maxPanelWidth = 600,
+    onPanelResizeStop,
+    headerActions,
+    onMoveConversation,
+    activeFilter,
+    onActiveFilterChange,
   }) => {
     const { colors, typography } = panelStyles ?? {};
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<FilterTab>(FilterTab.All);
+    const [activeTab, setActiveTab] = useState(FilterTab.All);
 
-    const hasTypographyClass = Boolean(typography?.fontClassName);
+    useEffect(() => {
+      if (activeFilter == null) return;
+      setActiveTab(activeFilter);
+      onActiveFilterChange?.(activeFilter);
+    }, [activeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+      () => ALL_GROUP_KEYS,
+    );
+    const [overscanCount, setOverscanCount] = useState(5);
+
+    const [draggingId, setDraggingId] = useState<string | null>(null);
+    const [dragOverId, setDragOverId] = useState<string | null>(null);
+    const [allowedDropGroups, setAllowedDropGroups] =
+      useState<Set<ConversationGroupKey> | null>(null);
+
+    /*
+     * Refs let the drop handler read current values without being in the useCallback dep array,
+     * avoiding recreating the handler (and remounting rows) on every drag-state change.
+     */
+    const draggingIdRef = useRef<string | null>(null);
+    const allowedDropGroupsRef = useRef<Set<ConversationGroupKey> | null>(null);
+
+    const handleListResize = useCallback(({ height }: { height: number }) => {
+      setOverscanCount(Math.ceil((height / ITEM_ROW_HEIGHT) * 2));
+    }, []);
+
+    const handleToggleGroup = useCallback((key: string) => {
+      setExpandedGroups((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) {
+          next.delete(key);
+        } else {
+          next.add(key);
+        }
+        return next;
+      });
+    }, []);
+
+    const clearDragState = useCallback(() => {
+      draggingIdRef.current = null;
+      allowedDropGroupsRef.current = null;
+      setDraggingId(null);
+      setDragOverId(null);
+      setAllowedDropGroups(null);
+    }, []);
+
+    const handleDragStart = useCallback(
+      (id: string, rows: VirtualRow[]) => {
+        const groupKey = findGroupKeyForItem(rows, id);
+        const allowed = computeAllowedDropGroups(id, groupKey, conversations);
+        draggingIdRef.current = id;
+        allowedDropGroupsRef.current = allowed;
+        setDraggingId(id);
+        setAllowedDropGroups(allowed);
+      },
+      [conversations],
+    );
+
+    const handleDragEnd = useCallback(() => {
+      clearDragState();
+    }, [clearDragState]);
+
+    const handleDragOver = useCallback((id: string) => {
+      setDragOverId(id);
+    }, []);
+
+    const handleDragLeave = useCallback(() => {
+      setDragOverId(null);
+    }, []);
+
+    const handleDrop = useCallback(
+      (
+        targetId: string,
+        targetGroupKey: ConversationGroupKey,
+        afterId: string | null,
+      ) => {
+        const currentDraggingId = draggingIdRef.current;
+        const currentAllowed = allowedDropGroupsRef.current;
+        clearDragState();
+        if (
+          currentDraggingId != null &&
+          currentDraggingId !== targetId &&
+          currentAllowed?.has(targetGroupKey)
+        ) {
+          onMoveConversation?.({
+            draggedId: currentDraggingId,
+            targetGroupKey,
+            afterId,
+          });
+        }
+      },
+      [clearDragState, onMoveConversation],
+    );
+
     const cssVars = buildCssVars({
       '--cp-bg': colors?.background,
-      '--cp-border': colors?.border,
-      '--cp-header-border': colors?.headerBorder,
+      '--sb-border': colors?.border,
       '--cp-item-hover': colors?.itemHover,
       '--cp-item-active': colors?.itemActive,
       '--cp-text': colors?.text,
@@ -58,20 +187,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-new-chat-icon-bg-hover': colors?.newChatIconBackgroundHover,
       '--cp-new-chat-icon-bg-active': colors?.newChatIconBackgroundActive,
       '--cp-new-chat-icon': colors?.newChatIconColor,
-      '--cp-new-chat-radius': colors?.newChatBorderRadius,
       '--cp-new-chat-divider': colors?.newChatDivider,
-      '--cp-title-font-family': hasTypographyClass
-        ? undefined
-        : typography?.fontFamily,
-      '--cp-title-font-size': hasTypographyClass
-        ? undefined
-        : typography?.fontSize,
-      '--cp-title-font-weight': hasTypographyClass
-        ? undefined
-        : typography?.fontWeight?.toString(),
-      '--cp-title-line-height': hasTypographyClass
-        ? undefined
-        : typography?.lineHeight,
     });
 
     const filteredItems = useMemo(
@@ -116,15 +232,101 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       [filteredItems],
     );
 
+    const groups = useMemo(
+      () => [
+        {
+          key: ConversationGroupKey.Pinned,
+          label: groupLabels?.pinned ?? 'Pinned',
+          items: pinnedItems,
+        },
+        {
+          key: ConversationGroupKey.MyChats,
+          label: groupLabels?.myChats ?? 'My chats',
+          items: myChatsItems,
+        },
+        {
+          key: ConversationGroupKey.Shared,
+          label: groupLabels?.shared ?? 'Shared',
+          items: sharedItems,
+        },
+        {
+          key: ConversationGroupKey.Organization,
+          label: groupLabels?.organization ?? 'Organization',
+          items: organizationItems,
+        },
+      ],
+      [groupLabels, pinnedItems, myChatsItems, sharedItems, organizationItems],
+    );
+
+    const virtualRows = useMemo(() => {
+      const rows: VirtualRow[] = [];
+      for (const group of groups) {
+        if (group.items.length === 0) continue;
+        rows.push({
+          kind: VirtualRowKind.Header,
+          groupKey: group.key,
+          label: group.label,
+        });
+        if (expandedGroups.has(group.key)) {
+          for (const item of group.items) {
+            rows.push({ kind: VirtualRowKind.Item, item, groupKey: group.key });
+          }
+        }
+      }
+      return rows;
+    }, [groups, expandedGroups]);
+
+    const rowProps = useMemo<RowRendererData>(
+      () => ({
+        rows: virtualRows,
+        expandedGroups,
+        onToggleGroup: handleToggleGroup,
+        activeConversationId,
+        onSelectConversation,
+        getActions,
+        actionsLabel,
+        groupHeaderClassName: typography?.groupHeaderClassName,
+        itemTitleClassName: typography?.itemTitleClassName,
+        itemIconBadgeClassName: typography?.itemIconBadgeClassName,
+        draggingId,
+        dragOverId,
+        allowedDropGroups,
+        onDragStart: (id: string) => handleDragStart(id, virtualRows),
+        onDragEnd: handleDragEnd,
+        onDragOver: handleDragOver,
+        onDragLeave: handleDragLeave,
+        onDrop: handleDrop,
+      }),
+      [
+        virtualRows,
+        expandedGroups,
+        handleToggleGroup,
+        activeConversationId,
+        onSelectConversation,
+        getActions,
+        actionsLabel,
+        typography?.groupHeaderClassName,
+        typography?.itemTitleClassName,
+        typography?.itemIconBadgeClassName,
+        draggingId,
+        dragOverId,
+        allowedDropGroups,
+        handleDragStart,
+        handleDragEnd,
+        handleDragOver,
+        handleDragLeave,
+        handleDrop,
+      ],
+    );
+
     const isNoConversations = conversations.length === 0;
     const isNoResults = conversations.length > 0 && filteredItems.length === 0;
 
     return (
       <SidebarPanel
         isOpen={isOpen}
-        side={SidebarSide.Left}
+        orientation={SidebarOrientation.Left}
         title={title}
-        titleClassName={typography?.fontClassName}
         ariaLabel={title}
         onClose={onToggle}
         closeLabel={closeAriaLabel}
@@ -132,20 +334,28 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           colors: {
             background: colors?.background,
             border: colors?.border,
-            headerBorder: colors?.headerBorder,
           },
           typography: {
             fontClassName: typography?.fontClassName,
-            fontFamily: hasTypographyClass ? undefined : typography?.fontFamily,
-            fontSize: hasTypographyClass ? undefined : typography?.fontSize,
           },
+          bodyClassName: 'flex flex-col overflow-hidden p-0 gap-3',
+          cssVars,
+          titleClassName: typography?.fontClassName,
         }}
         className={mergeClasses(
-          isOpen ? 'w-[325px] border-l border-r mobile:w-full' : 'w-0',
+          isOpen
+            ? resizable
+              ? 'border-l border-r mobile:w-full'
+              : 'w-[325px] border-l border-r mobile:w-full'
+            : 'w-0',
           className,
         )}
-        bodyClassName="flex flex-col overflow-hidden p-0"
-        cssVars={cssVars}
+        resizable={resizable}
+        defaultWidth={defaultPanelWidth}
+        minWidth={minPanelWidth}
+        maxWidth={maxPanelWidth}
+        onResizeStop={onPanelResizeStop}
+        rightActions={headerActions}
       >
         <NewChatButton
           label={newChatLabel}
@@ -157,72 +367,48 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={setSearchQuery}
+          clearLabel={searchClearLabel}
         />
 
         <FilterTabs
           activeTab={activeTab}
           labels={filterLabels}
-          onChange={setActiveTab}
+          onChange={(tab) => {
+            setActiveTab(tab);
+            onActiveFilterChange?.(tab);
+          }}
           tabClassName={typography?.tabClassName}
-          tabColorClassName={typography?.tabColorClassName}
         />
 
-        <div className="flex w-full flex-1 flex-col gap-2 overflow-y-auto px-2 py-1">
-          {isNoConversations ? (
-            <PanelEmptyState
-              icon={<IconMessageCircle aria-hidden size={48} stroke={1} />}
-              label={emptyLabel}
-              labelClassName={typography?.emptyLabelClassName}
-            />
+        <div className="flex-1 overflow-hidden px-2 py-1">
+          {isLoading ? (
+            <div className="flex flex-col gap-3 px-2 py-3">
+              {Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
+                <DialSkeleton
+                  key={i}
+                  avatar={{ size: 24 }}
+                  showTitle={{ width: getSkeletonWidth(i) }}
+                  paragraph={false}
+                  active
+                  color="var(--bg-layer-4)"
+                />
+              ))}
+            </div>
+          ) : isNoConversations ? (
+            <PanelEmpty label={emptyLabel} />
           ) : isNoResults ? (
-            <PanelEmptyState
-              icon={<IconSearchOff aria-hidden size={45} stroke={1} />}
-              label={noResultsLabel}
-              labelClassName={typography?.emptyLabelClassName}
-            />
+            <PanelNoResults label={noResultsLabel} />
           ) : (
-            <>
-              <ConversationGroup
-                label={groupLabels?.pinned ?? 'Pinned'}
-                items={pinnedItems}
-                activeConversationId={activeConversationId}
-                onSelectConversation={onSelectConversation}
-                getActions={getActions}
-                actionsLabel={actionsLabel}
-                groupHeaderClassName={typography?.groupHeaderClassName}
-                itemTitleClassName={typography?.itemTitleClassName}
-              />
-              <ConversationGroup
-                label={groupLabels?.myChats ?? 'My chats'}
-                items={myChatsItems}
-                activeConversationId={activeConversationId}
-                onSelectConversation={onSelectConversation}
-                getActions={getActions}
-                actionsLabel={actionsLabel}
-                groupHeaderClassName={typography?.groupHeaderClassName}
-                itemTitleClassName={typography?.itemTitleClassName}
-              />
-              <ConversationGroup
-                label={groupLabels?.shared ?? 'Shared'}
-                items={sharedItems}
-                activeConversationId={activeConversationId}
-                onSelectConversation={onSelectConversation}
-                getActions={getActions}
-                actionsLabel={actionsLabel}
-                groupHeaderClassName={typography?.groupHeaderClassName}
-                itemTitleClassName={typography?.itemTitleClassName}
-              />
-              <ConversationGroup
-                label={groupLabels?.organization ?? 'Organization'}
-                items={organizationItems}
-                activeConversationId={activeConversationId}
-                onSelectConversation={onSelectConversation}
-                getActions={getActions}
-                actionsLabel={actionsLabel}
-                groupHeaderClassName={typography?.groupHeaderClassName}
-                itemTitleClassName={typography?.itemTitleClassName}
-              />
-            </>
+            <List<RowRendererData>
+              role="list"
+              style={{ height: '100%' }}
+              rowComponent={RowRenderer}
+              rowCount={virtualRows.length}
+              rowHeight={getRowHeight}
+              overscanCount={overscanCount}
+              onResize={handleListResize}
+              rowProps={rowProps}
+            />
           )}
         </div>
       </SidebarPanel>

@@ -1,0 +1,11 @@
+.divider {
+  border-top: 1px solid var(--stroke-tertiary, #e0e6f0);
+}
+
+.description {
+  color: var(--text-secondary, #575f73);
+}
+
+.code {
+  font-family: 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+}

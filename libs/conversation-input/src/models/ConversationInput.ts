@@ -1,12 +1,16 @@
 import type {
   Attachment,
+  AttachmentErrorReason,
   DeploymentItem,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
+import type { ReactNode } from 'react';
 import type {
+  ChatSettingsConfig,
   InputColors,
   InputTypography,
   ModelSelectorLabels,
+  SendOnEnter,
 } from './Input';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
@@ -21,18 +25,8 @@ export interface ConversationInputColors {
 
 /** Typography overrides for the `ConversationInput` component. */
 export interface ConversationInputTypography {
-  /** Tailwind (or custom) class applied to the welcome heading — takes precedence over the individual font properties below. */
+  /** Tailwind (or custom) class applied to the welcome heading. */
   welcomeClassName?: string;
-  /** Font family of the welcome heading (CSS value, e.g. `"'Inter', sans-serif"`). Ignored when `welcomeClassName` is set. */
-  welcomeFontFamily?: string;
-  /** Font size of the welcome heading (CSS value, e.g. `'24px'`). Ignored when `welcomeClassName` is set. */
-  welcomeFontSize?: string;
-  /** Font weight of the welcome heading. Ignored when `welcomeClassName` is set. */
-  welcomeFontWeight?: string | number;
-  /** Line height of the welcome heading. Ignored when `welcomeClassName` is set. */
-  welcomeLineHeight?: string | number;
-  /** Tailwind (or custom) class applied to the drop-overlay label. Defaults to `'dial-tiny-text'`. */
-  dropLabelClassName?: string;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;
 }
@@ -77,7 +71,7 @@ export interface EditMessageInputProps {
   /** Accessible label for each attachment card's retry button (error state only). */
   retryLabel?: string;
   /** Accessible label for the add-menu trigger button. */
-  addMenuLabel?: string;
+  addMenuTitle?: string;
   /** Label for the attach-file menu item. */
   attachLabel?: string;
   /** Heading text shown in the mobile bottom-sheet add-menu. Defaults to `'Menu'`. */
@@ -86,6 +80,22 @@ export interface EditMessageInputProps {
   menuCloseLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
+  /** Files supplied by a page-level drag-and-drop handler to be added as attachments. */
+  pendingDropFiles?: File[];
+  /** Called after the files have been consumed, signalling the parent to clear its state. */
+  onDropFilesConsumed?: () => void;
+  /**
+   * Called synchronously for each attachment after it is added, before upload begins.
+   * Return an `AttachmentErrorReason` to reject the attachment (it enters error state
+   * and `onUploadAttachment` is NOT called). Return `undefined` to allow normal upload.
+   */
+  validateAttachment?: (
+    attachment: Attachment,
+  ) => AttachmentErrorReason | undefined;
+  /**
+   * When `true`, the "Attach file" button is hidden.
+   */
+  hideAttachFile?: boolean;
 }
 
 /** Props accepted by the `ConversationInput` component. */
@@ -113,10 +123,14 @@ export interface ConversationInputProps {
   styles?: ConversationInputStyles;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
-  /** Text displayed inside the drag-over overlay. Defaults to `"Drop files here"`. */
-  dropLabel?: string;
-  /** Tailwind (or custom) class applied to the drag-over overlay container. Defaults to `'rounded'`. */
-  dropOverlayClassName?: string;
+  /** Files supplied by a page-level drag-and-drop handler to be added as attachments. */
+  pendingDropFiles?: File[];
+  /** Called after the inner `Input` has consumed `pendingDropFiles`, signalling the parent to clear its state. */
+  onDropFilesConsumed?: () => void;
+  /** Already-uploaded attachments supplied by the host and awaiting insertion into the local tray. */
+  pendingAttachments?: Attachment[];
+  /** Called after `pendingAttachments` have been inserted into the local tray. */
+  onPendingAttachmentsConsumed?: () => void;
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
   /**
@@ -132,6 +146,8 @@ export interface ConversationInputProps {
   modelSelectorLabels?: ModelSelectorLabels;
   /** Accessible label for the send button. */
   sendLabel?: string;
+  /** Tooltip shown on hover over the send button. */
+  sendTitle?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
@@ -155,4 +171,58 @@ export interface ConversationInputProps {
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
   /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
   micLabel?: string;
+  /**
+   * Controls which key combination submits the message.
+   * - `SendOnEnter.Enter` (default): Enter submits; Shift+Enter inserts a newline.
+   * - `SendOnEnter.MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
+   */
+  sendOnEnter?: SendOnEnter;
+  /**
+   * When provided, a "Chat settings" item is added to the `+` menu.
+   * Clicking it opens a modal with fields gated by `features`.
+   */
+  chatSettings?: ChatSettingsConfig;
+  /** When `true`, focuses the textarea on mount. Defaults to `false`. */
+  autoFocus?: boolean;
+  /**
+   * Ordered list of previously sent message strings for the current
+   * conversation (oldest first, most-recent last). When provided, pressing
+   * Up in the textarea recalls the previous entry; pressing Down returns
+   * toward the current draft. Omit or pass an empty array to disable
+   * keyboard history navigation.
+   */
+  messageHistory?: readonly string[];
+  /** Called when user selects "DIAL file system" from the attach menu. When absent, the menu item is not rendered. */
+  onDialFileSystemClick?: () => void;
+  /** Label for the "DIAL file system" menu item. Defaults to `'DIAL file system'`. */
+  dialFileSystemLabel?: string;
+  /** Accessible label for the `+` trigger button. Defaults to `'Add'`. */
+  addMenuTitle?: string;
+  /**
+   * Called synchronously for each attachment after it is added, before upload begins.
+   * Return an `AttachmentErrorReason` to reject the attachment (it enters error state
+   * and `onUploadAttachment` is NOT called). Return `undefined` to allow normal upload.
+   */
+  validateAttachment?: (
+    attachment: Attachment,
+  ) => AttachmentErrorReason | undefined;
+  /**
+   * When `true`, the "Attach file" item is removed from the attach menu.
+   * Other menu items (e.g. DIAL file system) remain visible. When no items
+   * remain in the menu the entire attach (+) button is hidden automatically.
+   */
+  hideAttachFile?: boolean;
+  /**
+   * Called when the user clicks or keyboard-activates an attachment card.
+   * Receives the full `Attachment` object (including the local `File`).
+   * When absent the card is not rendered as interactive.
+   */
+  onAttachmentClick?: (attachment: Attachment) => void;
+  /**
+   * When provided, the desktop model-selector chip opens this panel instead of
+   * the flat deployment list. Receives `onClose` so the panel can close the
+   * popover after a selection or an explicit dismiss.
+   */
+  // TODO: review usage
+  modelPickerOverlay?: (onClose: () => void) => ReactNode;
 }

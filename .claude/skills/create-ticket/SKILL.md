@@ -1,7 +1,7 @@
 ---
 name: create-ticket
 model: haiku
-description: Interactively create GitHub issues (Bug, Feature, Task) for the current repository. Infrastructure changes are Tasks auto-labeled `infra-task`. Parses optional args for type and description, asks targeted questions, assigns labels, and creates the issue via gh CLI.
+description: Interactively create OR update GitHub issues (Bug, Feature, Task) for the current repository. Create from a discussion, from an openspec change (current branch or a specific change path), or update an existing issue with new details. Use for "create ticket/issue", "generate issue from spec", "document this feature as a ticket", or "update ticket/issue". Infrastructure changes are Tasks auto-labeled `infra-task`. Asks targeted questions, assigns labels, and runs the gh CLI.
 alwaysApply: false
 metadata:
   author: project
@@ -22,7 +22,7 @@ gh auth status
 - If not authenticated → stop and tell the user: "Run `gh auth login` to authenticate first."
 - If authenticated → proceed to Step 0
 
-**Usage**: `/create-ticket [type: description]`
+**Usage**: `/create-ticket [type: description | from spec | <change-path> | update <#issue|url>]`
 
 Examples:
 
@@ -31,10 +31,21 @@ Examples:
 - `/create-ticket feature: add bulk delete for models`
 - `/create-ticket task: refactor Sidebar for reuse in entity lists`
 - `/create-ticket infra: add LOG_LEVEL to prod`
+- `/create-ticket from spec` — from the openspec changes on the current branch
+- `/create-ticket openspec/changes/archive/2026-06-15-file-dnd-overlay` — from a specific change
+- `/create-ticket update #123` — add details to an existing issue
 
 ---
 
-## Step 0 — Parse Args
+## Step 0 — Intent, Source & Args
+
+First decide which of three modes applies, then parse the remaining args.
+
+- **Mode C — Update existing** — the user references an existing issue: `update`, `#<number>`, or a GitHub issue URL. → go to **Update Existing Ticket** below.
+- **Mode B — From spec** — the user says "from spec", "from the branch", "issue from current change", or passes an `openspec/changes/...` folder path. → go to **From Spec** below, which drafts the Step 2 proposal, then continues at Step 1/3.
+- **Mode A — From discussion** (default) — anything else. Continue with arg parsing here.
+
+### Mode A arg parsing
 
 If the user provided arguments after `/create-ticket`, parse them:
 
@@ -47,7 +58,7 @@ If the user provided arguments after `/create-ticket`, parse them:
   - If not found → treat the entire arg string as a description seed and ask for type
 - If no args at all → start fully interactive from Step 1
 
-When args provide a description seed, use it to:
+When args provide a description seed (or the description comes from the current discussion), use it to:
 
 - **Generate a proposed title** — concise, under 80 characters
 - **Generate a proposed summary** — a short paragraph followed by key points as a bullet list. For bugs, also draft the actual/expected result from context.
@@ -57,9 +68,119 @@ When args provide a description seed, use it to:
 
 ---
 
+## From Spec (Mode B)
+
+Build the ticket from the openspec change(s) rather than free description. This produces a **User Story + Acceptance Criteria + Definition of Done** body, then flows through the normal pipeline (type, labels, priority, assignee, preview, create) so the ticket still gets `--project` and an assignee.
+
+### B1 — Locate the change
+
+- If the user passed a specific `openspec/changes/...` folder path → use it, skip discovery.
+- Otherwise discover changes introduced on the current branch against the repo's base branch (`origin/development-1.0` — NOT `main`):
+
+  ```bash
+  git diff --name-only $(git merge-base HEAD origin/development-1.0) -- openspec/
+  ```
+
+- If no openspec files are found on the branch → tell the user and offer to fall back to Mode A (from discussion). Do not stop silently.
+
+### B2 — Read the spec content
+
+For each changed change folder, read (in priority order, all that exist, in parallel):
+
+1. `proposal.md` — primary: Why, What Changes, Capabilities, Impact
+2. `design.md` — supplementary detail
+3. `tasks.md` — acceptance-criteria hints (checked `- [x]` = delivered scope)
+4. `.openspec.yaml` — metadata (title, status)
+
+Also read any `specs/*` files in the diff (`openspec/changes/<name>/specs/` or `openspec/specs/`).
+
+### B3 — Synthesise the draft (feeds Step 2)
+
+- **Title** — from `.openspec.yaml` title or the proposal heading, under 80 chars.
+- **Type** — derive from the change (default Feature; use Bug/Task if the spec is clearly a fix or engineering task). Confirm in Step 1.
+- **Summary body** — structured as:
+
+  ```markdown
+  #### User Story
+
+  **As a** <persona — end user; "developer" only for tooling/infra>
+  **I want to** <one action derived from "What Changes" / capability>
+  **So that** <business value from "Why">
+
+  #### Acceptance Criteria
+
+  - <concise, testable, present-tense: "User can …", "When …, then …"> (aim for 4–8)
+
+  #### Definition of Done
+
+  - <delivered scope from checked tasks.md items + repo defaults: tests, i18n, RTL, docs where relevant>
+  ```
+
+Use this as the Step 2 draft, then continue at **Step 1** (confirm type) → **Step 3** onward. Skip Step 2a code research (the spec already is the research) unless the user asks.
+
+---
+
+## Update Existing Ticket (Mode C)
+
+Add details to an issue that already exists. Default action is to **edit the body in place**; appending a comment is offered as an option.
+
+### C1 — Resolve the target issue
+
+- If args include `#<number>` or an issue URL → use it.
+- Otherwise list candidates and let the user pick:
+
+  ```bash
+  gh issue list --search "<keywords from the request>" --limit 10 --json number,title,url
+  ```
+
+### C2 — Fetch current state
+
+```bash
+gh issue view <number> --json number,title,body,labels,assignees,url,state
+```
+
+Show the user the current title, labels, assignee, and body.
+
+### C3 — Gather the new details
+
+Collect what to add from the discussion, or reuse **From Spec (Mode B)** if the update should come from an openspec change. Determine which of these change: body content, labels, title, assignee, priority.
+
+### C4 — Preview the before → after
+
+Show the current vs. proposed body/labels/title so the user sees exactly what changes. Use **AskUserQuestion**:
+
+> "Apply this update?"
+
+Options:
+
+- **Edit body** (default) — merge the new details into the issue body and update labels/title as needed
+- **Add comment** — keep the body, append the new details as a comment
+- **Cancel** — make no change
+
+### C5 — Apply
+
+- Edit body / fields:
+
+  ```bash
+  gh issue edit <number> \
+    --body "<merged body>" \
+    --add-label "<label>" \
+    --title "<new title if changed>"
+  ```
+
+- Or add a comment:
+
+  ```bash
+  gh issue comment <number> --body "<new details>"
+  ```
+
+Use `--add-label` / `--remove-label` for label changes; only pass `--title`/`--body` when they change. After applying, display the issue URL. Then stop — the rest of the create pipeline (Steps 1–8) does not apply to updates.
+
+---
+
 ## Step 1 — Issue Type
 
-Skip if parsed from args.
+Skip if the type was parsed from args. If it was **derived from a spec (Mode B)**, don't skip — confirm the derived type with the user (pre-select it as the default) before continuing.
 
 Use **AskUserQuestion** to ask:
 
@@ -178,82 +299,11 @@ Options:
 - **Provide details now** — Go through each field interactively
 - **Use draft as-is** — Skip all type-specific questions, use drafted content for all fields and fill missing fields with reasonable defaults or "_No response_"
 
-Gather information interactively based on the issue type. Ask each field as a separate question using **AskUserQuestion** (open-ended, no preset options) unless a dropdown/choice is specified.
+Gather information interactively based on the issue type. **Read the file for the chosen type now** and follow its "Fields to gather" section — ask each field as a separate question using **AskUserQuestion** (open-ended, no preset options) unless a dropdown/choice is specified. Keep this file open: its "Body format" section is what you emit in Step 8.
 
-### Bug
-
-1. **Version**: Auto-detect by reading the `version` field from the root `package.json`. Confirm with user:
-   > "The current version is `<version>`. Is this the version where you see the bug?"
-2. **Steps to reproduce**: Ask:
-   > "How do you reproduce this bug? Provide step-by-step instructions."
-3. **Actual result**: Ask:
-   > "What happens currently? (the broken behavior)"
-4. **Expected result**: Ask:
-   > "What should happen instead?"
-5. **Additional information** (optional): Ask:
-   > "Any additional context? (screenshots, logs, browser info — or skip)"
-6. **Severity**: Use **AskUserQuestion** with options:
-   - **Critical** — Severe issue impacting core functionality, requires urgent resolution
-   - **Major** — Affects many users or key components
-   - **Minor** — Minor issue with limited impact
-   - **Low** — Low issue with little to no critical impact
-
-### Feature
-
-1. **Description**: Ask:
-   > "Describe the feature. What should it do and why is it needed?"
-2. **Related issues** (optional): Ask:
-   > "Are there any related issues? (paste issue numbers/URLs or skip)"
-
-### Task
-
-Covers engineering work (refactor, reuse, tech debt, cleanup, test/build improvements) AND infrastructure changes (env var, secret, config, deployment setting).
-
-**Step 3.0 — Infra sub-classification**
-
-Before gathering fields, detect whether this Task is an infrastructure change.
-
-**Infra signals** (auto-apply `infra-task` label when ANY are present):
-
-- Keywords: environment variable, env var, secret, credential, config change, deployment, `LOG_LEVEL`, `NODE_ENV`, prod / uat / development, Kubernetes, Helm, CI/CD, pipeline
-- The user invoked `/create-ticket infra: …` (args prefix forces infra-task label)
-- The description only describes a runtime/config change with no code change
-
-If infra signals are clearly present → auto-apply `infra-task` label (tell the user), go to the infra field set below.
-If genuinely ambiguous → use **AskUserQuestion**:
-
-> "This looks like a Task. Is it an infrastructure change (env var, secret, config, deployment)?"
-> Options: **Yes, infra** (adds `infra-task` label) / **No, general task**
-
-**General Task fields** (no `infra-task` label):
-
-1. **Description**: Ask:
-   > "Describe the task. What needs to change and why? (problem/motivation)"
-2. **Acceptance criteria** (optional): Ask:
-   > "List acceptance criteria or sub-tasks as checklist items (one per line), or skip."
-   > Format each as `- [ ] <item>` in the body.
-   > If the task touches hand-authored `libs/*`, include a checklist item to verify no host/external integration details were added to the lib. If it touches `libs/chat-api-client`, include a checklist item to verify generated files were regenerated from OpenAPI sources.
-3. **Related issues** (optional): Ask:
-   > "Are there any related issues or PRs? (paste numbers/URLs or skip)"
-
-**Infra Task fields** (`infra-task` label auto-applied):
-
-1. **Change type**: Use **AskUserQuestion** with options:
-   - environment variable
-   - secret
-   - config change
-   - extra configuration
-   - other
-2. **Target environment**: Use **AskUserQuestion** with options:
-   - development
-   - uat
-   - production
-   - all
-3. **Task list**: Ask:
-   > "List the changes needed as checklist items (one per line)."
-   > Format each as `- [ ] <item>` in the body.
-4. **Context / reason** (optional): Ask:
-   > "Why is this change needed? Link to a ticket, incident, or PR if applicable. (or skip)"
+- Bug → `types/bug.md`
+- Feature → `types/feature.md`
+- Task (and infra variant) → `types/task.md`
 
 ---
 
@@ -379,108 +429,8 @@ Notes:
 - `--type` is not supported by `gh issue create`. Issue type (Bug/Feature/Task) is conveyed via labels (`bug`, `enhancement`, or task-specific labels) — there is no separate type flag.
 - There is no separate "Infra Task" type — infrastructure work is a Task with the `infra-task` label auto-applied and the infra-specific body structure (change type, target environment, task list).
 - `--assignee` is ALWAYS set (default `@me`). Never omit it — the skill guarantees every ticket has an owner.
-- The `<details-section>` placeholder in the templates below is the code-research findings from Step 2a. If research was NOT performed, omit the entire `### Details` heading and its content — do not leave an empty section.
-- The body must be formatted to match the GitHub issue template output format:
-
-**Bug body format:**
-
-```markdown
-### EPAM AI DIAL Admin version
-
-<version>
-
-### How to reproduce
-
-<steps>
-
-### Actual result
-
-<actual>
-
-### Expected result
-
-<expected>
-
-### Additional information
-
-<info or "_No response_">
-
-### Details
-
-<details-section>
-
-### Confidential information
-
-- [x] I confirm that do not share any confidential information
-```
-
-**Feature body format:**
-
-```markdown
-### Description
-
-<description>
-
-### Related issues
-
-<issues or "_No response_">
-
-### Details
-
-<details-section>
-
-### Confidential information
-
-- [x] I confirm that do not share any confidential information
-```
-
-**Task body format (general):**
-
-```markdown
-### Description
-
-<description>
-
-### Acceptance criteria
-
-<checklist items or "_No response_">
-
-### Related issues
-
-<issues or "_No response_">
-
-### Details
-
-<details-section>
-
-### Confidential information
-
-- [x] I confirm that do not share any confidential information
-```
-
-**Task body format (infra variant — used when `infra-task` label is applied):**
-
-```markdown
-### Type of change
-
-<change type>
-
-### Target environment
-
-<environment>
-
-### Task list
-
-<checklist items>
-
-### Context / reason
-
-<context or "_No response_">
-
-### Details
-
-<details-section>
-```
+- The `<details-section>` placeholder in the body format is the code-research findings from Step 2a. If research was NOT performed, omit the entire `### Details` heading and its content — do not leave an empty section.
+- The body must match the GitHub issue template output format. Use the **"Body format"** section from the type file you read in Step 3 (`types/bug.md`, `types/feature.md`, or `types/task.md` — the general or infra variant as applicable).
 
 After successful creation, display the issue URL returned by `gh`.
 
@@ -488,29 +438,14 @@ After successful creation, display the issue URL returned by `gh`.
 
 ## Label Reference
 
-| Label               | Applied When                                                                                                                                                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `bug`               | Type = Bug                                                                                                                                                                                                   |
-| `enhancement`       | Type = Feature                                                                                                                                                                                               |
-| `to-be-documented`  | Type = Feature (always)                                                                                                                                                                                      |
-| `infra-task`        | Type = Task AND infra signals detected (keywords: env var, secret, config change, deployment, prod/uat, `LOG_LEVEL`, etc.) OR user invoked `/create-ticket infra: …` OR user confirms "Yes, infra" in Step 3 |
-| `Priority-Low`      | User selects Low priority                                                                                                                                                                                    |
-| `Priority-Medium`   | User selects Medium priority                                                                                                                                                                                 |
-| `Priority-High`     | User selects High priority                                                                                                                                                                                   |
-| `Severity-Low`      | Bug — user selects Low                                                                                                                                                                                       |
-| `Severity-Minor`    | Bug — user selects Minor                                                                                                                                                                                     |
-| `Severity-Major`    | Bug — user selects Major                                                                                                                                                                                     |
-| `Severity-Critical` | Bug — user selects Critical                                                                                                                                                                                  |
-| `Design Required`   | Auto or asked — see Step 5                                                                                                                                                                                   |
-| `SIA-required`      | Auto or asked — see Step 5                                                                                                                                                                                   |
-| `SIA-not required`  | User confirms no security impact                                                                                                                                                                             |
+The full label table lives in `labels.md`. Read it when assigning labels in Steps 2b, 5, and 8.
 
 ## Guardrails
 
 - NEVER create an issue without showing a preview and getting explicit confirmation
 - NEVER auto-assign a label unless you are 100% certain from the user's input
 - When uncertain about ANY label, ask directly — don't guess
-- Always use the exact label names as listed in the Label Reference table
+- Always use the exact label names as listed in `labels.md`
 - Always add `--project "epam/68"`
 - The confidential information checkbox is always pre-checked in the body
 - If `gh` CLI fails, show the error and suggest the user check their auth (`gh auth status`)

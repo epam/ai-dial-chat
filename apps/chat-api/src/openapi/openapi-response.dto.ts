@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ConversationMessageDto } from '../conversations/dto/conversation-message.dto';
 
 export class ProviderInfoDto {
   @ApiProperty({ example: 'local' })
@@ -76,6 +77,24 @@ export class DialModelFeaturesDto {
 
   @ApiPropertyOptional({ example: false })
   mcp?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  chat_completion?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  responses_api?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  max_tokens_supported?: boolean;
+
+  @ApiPropertyOptional({ example: false })
+  max_completion_tokens_supported?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  custom_temperature_supported?: boolean;
+
+  @ApiPropertyOptional({ type: [String], example: [] })
+  reasoning_efforts?: string[];
 }
 
 export class DialModelCapabilitiesDto {
@@ -207,20 +226,215 @@ export class DialModelListResponseDto {
   data!: DialModelDto[];
 }
 
+export class DialToolsetAuthSettingsDto {
+  @ApiProperty({ example: 'OAUTH', enum: ['OAUTH', 'API_KEY', 'NONE'] })
+  authentication_type!: string;
+
+  @ApiPropertyOptional({ example: 'X-Api-Key' })
+  api_key_header?: string;
+
+  @ApiPropertyOptional({ example: 'my-client-id' })
+  client_id?: string;
+
+  @ApiPropertyOptional({ example: '' })
+  redirect_uri?: string;
+
+  @ApiPropertyOptional({ example: '' })
+  authorization_endpoint?: string;
+
+  @ApiPropertyOptional({ example: '' })
+  token_endpoint?: string;
+
+  @ApiPropertyOptional({ example: 'base64-url-code-challenge' })
+  code_challenge?: string;
+
+  @ApiPropertyOptional({ example: 'S256' })
+  code_challenge_method?: string;
+
+  @ApiPropertyOptional({ type: [String], example: ['scope1', 'scope2'] })
+  scopes_supported?: string[];
+
+  @ApiPropertyOptional({
+    example: 'SIGNED_OUT',
+    enum: ['SIGNED_IN', 'SIGNED_OUT'],
+  })
+  global_auth_status?: string;
+
+  @ApiPropertyOptional({
+    example: 'SIGNED_OUT',
+    enum: ['SIGNED_IN', 'SIGNED_OUT'],
+  })
+  user_level_auth_status?: string;
+}
+
+export class DialToolsetDto {
+  @ApiProperty({
+    example: 'toolsets/encrypted-bucket/folder/toolset-name',
+  })
+  id!: string;
+
+  @ApiProperty({
+    example: 'toolsets/encrypted-bucket/folder/toolset-name',
+  })
+  toolset!: string;
+
+  @ApiPropertyOptional({ example: 'Toolset display name' })
+  display_name?: string;
+
+  @ApiPropertyOptional({ example: '0.0.1' })
+  display_version?: string;
+
+  @ApiPropertyOptional({ example: 'My toolset description' })
+  description?: string;
+
+  @ApiPropertyOptional({ example: '' })
+  icon_url?: string;
+
+  @ApiPropertyOptional({ example: "Owner's name" })
+  owner?: string;
+
+  @ApiPropertyOptional({ example: 'toolset' })
+  object?: string;
+
+  @ApiPropertyOptional({ example: 'succeeded' })
+  status?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['keyword1', 'keyword2'],
+  })
+  description_keywords?: string[];
+
+  @ApiPropertyOptional({
+    example: 'ff5584b7-a82b-4f4f-bf42-5bf74a3893d6',
+  })
+  reference?: string;
+
+  @ApiPropertyOptional({ example: 2 })
+  max_retry_attempts?: number;
+
+  @ApiPropertyOptional({ example: 1672534800 })
+  created_at?: number;
+
+  @ApiPropertyOptional({ example: 1672534900 })
+  updated_at?: number;
+
+  @ApiPropertyOptional({ type: () => DialModelFeaturesDto })
+  features?: DialModelFeaturesDto;
+
+  @ApiPropertyOptional({ example: 'https://my-toolset.example.com/mcp' })
+  endpoint?: string;
+
+  @ApiPropertyOptional({ example: 'HTTP' })
+  transport?: string;
+
+  @ApiPropertyOptional({ type: [String], example: ['tool1', 'tool2'] })
+  allowed_tools?: string[];
+
+  @ApiPropertyOptional({ type: () => DialToolsetAuthSettingsDto })
+  auth_settings?: DialToolsetAuthSettingsDto;
+
+  @ApiPropertyOptional({
+    description: 'Whether this toolset is installed by the current user',
+  })
+  is_installed?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'True when the toolset id/path belongs to the current session user bucket',
+  })
+  is_my?: boolean;
+}
+
+export class DialToolsetListResponseDto {
+  @ApiProperty({ type: () => [DialToolsetDto] })
+  data!: DialToolsetDto[];
+}
+
+export class LimitStatsDto {
+  @ApiProperty({ example: 100 })
+  total!: number;
+
+  @ApiProperty({ example: 10 })
+  used!: number;
+}
+
+export class DeploymentLimitsResponseDto {
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  hourRequestStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  dayRequestStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  minuteTokenStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  dayTokenStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  weekTokenStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  monthTokenStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  minuteCostStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  dayCostStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  weekCostStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  monthCostStats?: LimitStatsDto;
+}
+
 export class ThemeDto {
   @ApiProperty({ example: 'light' })
   id!: string;
 
   @ApiProperty({ example: 'Light Theme' })
-  name!: string;
+  displayName!: string;
 
-  @ApiPropertyOptional({ example: 'icon-light.svg' })
-  icon?: string;
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { 'primary-color': '#ffffff' },
+  })
+  colors!: Record<string, string>;
+
+  @ApiProperty({ example: 'https://example.com/logo-light.svg' })
+  'app-logo'!: string;
+}
+
+export class ThemeImagesDto {
+  @ApiProperty({ example: 'https://example.com/addon.png' })
+  'default-addon'!: string;
+
+  @ApiProperty({ example: 'https://example.com/model.png' })
+  'default-model'!: string;
+
+  @ApiProperty({ example: 'https://example.com/favicon.ico' })
+  favicon!: string;
+
+  @ApiPropertyOptional({ example: 'chat-logo-light.svg' })
+  'chat-logo-light'?: string;
+
+  @ApiPropertyOptional({ example: 'chat-logo-dark.svg' })
+  'chat-logo-dark'?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/chat-favicon.png' })
+  'chat-favicon'?: string;
 }
 
 export class ThemeConfigResponseDto {
   @ApiProperty({ type: () => [ThemeDto] })
   themes!: ThemeDto[];
+
+  @ApiProperty({ type: () => ThemeImagesDto })
+  images!: ThemeImagesDto;
 }
 
 export class ChatCompletionChoiceDto {
@@ -246,17 +460,6 @@ export class ChatCompletionResponseDto {
 
   @ApiProperty({ type: () => [ChatCompletionChoiceDto] })
   choices!: ChatCompletionChoiceDto[];
-}
-
-export class ConversationMessageDto {
-  @ApiProperty({ enum: ['user', 'assistant'], example: 'user' })
-  role!: 'user' | 'assistant';
-
-  @ApiProperty({ example: 'Hello!' })
-  content!: string;
-
-  @ApiProperty({ example: '2026-05-19T16:00:00.000Z' })
-  timestamp!: string;
 }
 
 export class ConversationModelDto {
@@ -332,4 +535,17 @@ export class ConversationResponseDto {
 
   @ApiProperty({ example: 'anthropic.claude-v3-sonnet' })
   assistantModelId!: string;
+
+  @ApiPropertyOptional({
+    example: 'markdown',
+    enum: ['markdown', 'plain_text'],
+  })
+  responseFormat?: string;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'When true, automatic LLM conversation naming has already run for this conversation.',
+  })
+  llmNamingDone?: boolean;
 }

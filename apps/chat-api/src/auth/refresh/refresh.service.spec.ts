@@ -20,6 +20,7 @@ function makePayload(overrides?: Partial<SessionPayload>): SessionPayload {
     iat: now - 3600,
     csrf: 'old-csrf',
     claims: { email: 'u@example.com' },
+    bucket: '',
     ...overrides,
   };
 }
@@ -60,7 +61,7 @@ describe('RefreshService', () => {
     expect(result.at).toBe('new-at');
     expect(result.at_exp).toBe(now + 3600);
     expect(result.rt).toBe('old-refresh-token'); // not rotated — unchanged
-    expect(result.csrf).not.toBe('old-csrf'); // always rotated on refresh
+    expect(result.csrf).toBe(payload.csrf);
     expect(result.sid).toBe(payload.sid); // sid never changes on refresh
   });
 

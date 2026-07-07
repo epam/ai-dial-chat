@@ -8,6 +8,7 @@ import {
   IsString,
   IsUrl,
   Matches,
+  Max,
   Min,
 } from 'class-validator';
 
@@ -36,6 +37,10 @@ export class EnvironmentVariables {
       'DIAL_API_VERSION must follow the YYYY-MM-DD or YYYY-MM-DD-preview format',
   })
   DIAL_API_VERSION?: string = '2024-10-21';
+
+  @IsOptional()
+  @IsString()
+  DIAL_API_KEY?: string;
 
   @IsOptional()
   @IsUrl({ require_tld: false })
@@ -100,12 +105,99 @@ export class EnvironmentVariables {
   FILE_TRANSFER_TIMEOUT_MS?: number = 30_000;
 
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_MAX_ITEMS?: number = 100;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_MAX_FILES?: number = 1000;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_MAX_UNCOMPRESSED_BYTES?: number = 5_368_709_120;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_TIMEOUT_MS?: number = 300_000;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  @Max(32)
+  ARCHIVE_DOWNLOAD_CONCURRENCY?: number = 32;
+
+  @IsOptional()
+  @IsString()
+  DEFAULT_DEPLOYMENT?: string;
+
+  @IsOptional()
   @IsString()
   ASR_MODEL?: string;
+
+  @IsOptional()
+  @IsString()
+  UTILITY_MODEL?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  LLM_CONVERSATION_NAMING_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  UTILITY_NAMING_TIMEOUT_MS?: number = 10_000;
 
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @Min(1)
   TRANSCRIBE_SIZE_LIMIT_BYTES?: number = 5 * 1024 * 1024;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  ASR_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  FEATURED_MODEL_IDS?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  HIDDEN_ENTITY_TAGS?: string[] = [];
 }

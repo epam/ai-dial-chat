@@ -1,0 +1,507 @@
+name: 'Run Claude Stage'
+description: 'Run a Claude-powered DIAL SDLC stage. An agent is a manifest + skill ref; the action composes a uniform prompt that delegates work to the skill, runs Claude with --json-schema, validates the output, and posts a sticky PR comment.'
+
+inputs:
+  stage_name:
+    description: 'Stage identifier (kebab-case). Pinned into the output schema and sticky-comment marker.'
+    required: true
+  skill:
+    description: 'Local skill the agent wraps. Must be addressable as `/<skill>` (e.g. code-review-and-quality, opsx:verify).'
+    required: true
+  allowed_tools:
+    description: 'Comma-separated allowed tools (e.g. "Read,Grep,Glob,Skill"). Should include the tools the wrapped skill needs plus `Skill` itself.'
+    required: true
+  agent_version:
+    description: 'Stage/agent version (semver) recorded into the output envelope.'
+    required: false
+    default: 'unknown'
+  model:
+    description: 'Claude model to invoke (e.g. claude-sonnet-4-6). Empty means use claude-code-action default.'
+    required: false
+    default: ''
+  max_turns:
+    description: 'Max Claude turns. 18 covers a typical multi-step agent (e.g. spec-validation: CLI floor + diff scoping + drift check via Grep/Read + Write); reviewer agents typically use 5-8. Raise per-stage via the manifest if a heavier agent needs more.'
+    required: false
+    default: '18'
+  show_full_output:
+    description: 'When "true", claude-code-action streams full Claude prompts/responses to the GHA log. Useful for debugging on a sandbox base; set to "false" before agents see real secrets in their prompts.'
+    required: false
+    default: 'false'
+  upstream_artifacts:
+    description: 'Comma-separated names of upstream agents whose stage-output.json artifacts have been downloaded into upstream/<name>/ (same value the calling workflow passes to the gh run download step). Used to render the per-agent upstream-inputs section of the composed prompt.'
+    required: false
+    default: ''
+  private_output:
+    description: 'When "true", encrypt stage-output.json (openssl, key from SDLC_ARTIFACT_KEY in env) before uploading it as an artifact, so the artifact is not readable on a public repo. Local plaintext is consumed on the runner first (verify/render/SARIF) then removed.'
+    required: false
+    default: 'false'
+  emit_sarif:
+    description: 'When "true", convert payload.findings[] to SARIF and upload to GitHub code scanning (Security tab). Scoped to ANALYSIS_REF_FULL/ANALYSIS_SHA from env when set (the scanned branch), else the current ref/sha.'
+    required: false
+    default: 'false'
+  publish_inline_comments:
+    description: 'When "true", publish payload.findings[] entries with file+line as GitHub PR inline review comments and omit successfully posted entries from the sticky summary.'
+    required: false
+    default: 'false'
+  diff_mode:
+    description: 'Diff scope for pull_request runs: "full" (default, whole PR = origin/<base>...HEAD) or "incremental" (commits since the one this stage last reviewed, read on the runner from the original_commit_id of this stage''s own prior inline comments; a cancelled/timed-out run posts none, so it falls back to the last successfully reviewed commit — and to the full diff on the first review / force-push / rebase). The concrete range is computed on the runner and substituted into the composed prompt; leaving it "full" keeps the prompt byte-identical to prior behavior.'
+    required: false
+    default: 'full'
+
+outputs:
+  message:
+    description: 'Validated sticky JSON payload from the stage.'
+    value: ${{ steps.extract.outputs.json }}
+  status:
+    description: 'Stage status (passed | passed_with_findings | failed).'
+    value: ${{ steps.extract.outputs.status }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate ANTHROPIC_API_KEY env
+      shell: bash
+      run: |
+        if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+          echo "::error::ANTHROPIC_API_KEY env is not set. Set it on the calling job from secrets.ANTHROPIC_API_KEY."
+          exit 1
+        fi
+
+    - name: Prepare prompt, schema, and Claude args
+      id: prep
+      shell: bash
+      env:
+        STAGE_NAME: ${{ inputs.stage_name }}
+        SKILL: ${{ inputs.skill }}
+        ALLOWED_TOOLS: ${{ inputs.allowed_tools }}
+        MAX_TURNS: ${{ inputs.max_turns }}
+        MODEL: ${{ inputs.model }}
+        SHOW_FULL_OUTPUT: ${{ inputs.show_full_output }}
+        UPSTREAM_ARTIFACTS: ${{ inputs.upstream_artifacts }}
+        RUNNER_TEMP: ${{ runner.temp }}
+        DIFF_MODE: ${{ inputs.diff_mode }}
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+        if [ -z "${SKILL}" ]; then
+          echo "::error::skill input is required (agents wrap a local skill)"
+          exit 1
+        fi
+
+        DIFF_RANGE="origin/${GITHUB_BASE_REF:-main}...HEAD"
+        if [ "${DIFF_MODE:-full}" = "incremental" ] && [ -n "${PR_NUMBER:-}" ]; then
+          PREV_SHA="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"<!-- dial-sdlc-inline:${STAGE_NAME}:\")) | [.created_at, .original_commit_id] | @tsv" 2>/dev/null \
+            | sort | tail -n1 | cut -f2 || true)"
+          if [ -n "${PREV_SHA:-}" ] && git merge-base --is-ancestor "${PREV_SHA}" HEAD 2>/dev/null; then
+            DIFF_RANGE="${PREV_SHA}..HEAD"
+          fi
+        fi
+        export DIFF_RANGE
+        echo "Diff range for agent: ${DIFF_RANGE}"
+
+        # Build agent-facing schema AND compose the prompt. Schema: strip
+        # envelope fields the renderer injects, pin `stage` to a literal const
+        # so Claude can't mismatch. Prompt: load the universal wrapper
+        # template (.github/claude/prompts/agent-wrapper.md) and substitute
+        # `{{stage}}` and `{{skill}}` — no per-agent prompt file is involved.
+        SCHEMA_PATH="${RUNNER_TEMP}/agent-schema.json"
+        COMPOSED_PROMPT_PATH="${RUNNER_TEMP}/composed-prompt.md"
+        WRAPPER_PATH=".github/claude/prompts/agent-wrapper.md"
+        export STAGE_NAME SKILL SCHEMA_PATH COMPOSED_PROMPT_PATH WRAPPER_PATH
+        python3 - <<'PY'
+        import json, os
+
+        # --- Agent-facing schema --------------------------------------------
+        with open('.github/claude/schemas/stage-message.schema.json') as f:
+            s = json.load(f)
+        # Envelope fields are injected by render-stage-comment.py; agents must not write them.
+        for k in ('contract_version', 'agent_version', 'run_id', 'trigger'):
+            s.get('properties', {}).pop(k, None)
+        s['required'] = [r for r in s.get('required', []) if r != 'contract_version']
+        stage = os.environ['STAGE_NAME']
+        s.setdefault('properties', {}).setdefault('stage', {'type': 'string'})['const'] = stage
+        with open(os.environ['SCHEMA_PATH'], 'w') as f:
+            json.dump(s, f)
+
+        # --- Composed prompt ------------------------------------------------
+        # IMPORTANT: substitute {{base_ref}} with the real branch name HERE,
+        # not at runtime via ${GITHUB_BASE_REF} in Claude's Bash command. The
+        # Claude Code Bash tool rejects commands containing shell variable
+        # expansion (`Contains expansion` / `Contains simple_expansion`) for
+        # safety — anything Claude types into a Bash tool call must be
+        # literal. So we expand the base ref at compose time and Claude sees
+        # `git diff origin/<actual-branch>...HEAD`.
+        base_ref = os.environ.get('GITHUB_BASE_REF', 'main')
+
+        # Render the upstream-inputs section from the comma-separated `needs`
+        # list the calling workflow plumbs through (same value used by the
+        # gh-run-download step). Explicit per-agent lines beat a generic
+        # placeholder: the agent is told the exact file(s) to read rather than
+        # having to discover them. Skills stay agnostic of CI plumbing.
+        upstream_raw = os.environ.get('UPSTREAM_ARTIFACTS', '')
+        upstream_names = [n.strip() for n in upstream_raw.split(',') if n.strip()]
+        if upstream_names:
+            upstream_inputs = '\n'.join(
+                f'  - `upstream/{n}/stage-output.json` — the `{n}` agent\'s output '
+                f'envelope; its agent-specific data (findings, reports, etc.) is under `payload`.'
+                for n in upstream_names
+            )
+        else:
+            upstream_inputs = '  - none declared; this agent runs independently on the PR diff and working tree.'
+
+        with open(os.environ['WRAPPER_PATH']) as f:
+            template = f.read()
+        composed = (template
+                    .replace('{{stage}}', stage)
+                    .replace('{{skill}}', os.environ['SKILL'])
+                    .replace('{{base_ref}}', base_ref)
+                    .replace('{{diff_range}}', os.environ.get('DIFF_RANGE', f'origin/{base_ref}...HEAD'))
+                    .replace('{{upstream_inputs}}', upstream_inputs))
+        with open(os.environ['COMPOSED_PROMPT_PATH'], 'w') as f:
+            f.write(composed)
+        PY
+        echo "Agent-facing schema written to $SCHEMA_PATH"
+        echo "Composed prompt written to $COMPOSED_PROMPT_PATH ($(wc -c < "$COMPOSED_PROMPT_PATH") bytes)"
+        PROMPT_CONTENT="$(cat "$COMPOSED_PROMPT_PATH")"
+
+        # 3) Build claude_args. Allowed tools, model, and (when toggled)
+        # the verbose flag all go through the CLI via claude_args; the
+        # action exposes none as direct inputs.
+        #
+        # NOTE: --json-schema is intentionally NOT used. The
+        # claude-code-action structured_output path buffers Claude's
+        # output entirely (no live streaming for ~5-15min) regardless of
+        # version. We instead instruct the agent in the prompt to write
+        # its JSON response to `stage-output.json` via the Write tool,
+        # and the verify step below just confirms the file exists. The
+        # renderer (render-stage-comment.py) performs the same shape
+        # validation that --json-schema would have given us.
+        ARGS="--max-turns ${MAX_TURNS}"
+        if [ "${SHOW_FULL_OUTPUT}" = "true" ]; then
+          # `--verbose` streams tool-use events with full detail. Costs
+          # log volume; useful when an agent is misbehaving. Gated by
+          # show_full_output so production runs stay quieter.
+          ARGS="${ARGS} --verbose"
+        fi
+        if [ -n "${MODEL}" ]; then
+          # In DIAL mode (SDLC_DIAL_MODE=1, set by run-agent's inference-route
+          # step) route the model through DIAL's Anthropic-compatible deployment
+          # as `dial,anthropic.<model>`. Manifests stay provider-agnostic
+          # (model: claude-sonnet-4-6); the platform adds the routing.
+          if [ "${SDLC_DIAL_MODE:-}" = "1" ]; then
+            # Route to the DIAL deployment: prefer the explicit DIAL_MODEL id
+            # (set by run-agent from vars.DIAL_MODEL — DIAL deployment names
+            # rarely match Anthropic model strings), else assume an
+            # `anthropic.<model>` deployment exists.
+            ARGS="${ARGS} --model dial,${SDLC_DIAL_MODEL:-anthropic.${MODEL}}"
+          else
+            ARGS="${ARGS} --model ${MODEL}"
+          fi
+        fi
+        # Append `Write` to allowed_tools so the agent can produce
+        # stage-output.json. Every agent needs this — structural, not
+        # agent-specific, so we don't burden manifests with it.
+        ARGS="${ARGS} --allowed-tools '${ALLOWED_TOOLS},Write'"
+
+        echo "claude_args=${ARGS}" >> "$GITHUB_OUTPUT"
+        {
+          echo "prompt<<PROMPT_EOF"
+          echo "$PROMPT_CONTENT"
+          echo "PROMPT_EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Pre-flight state dump
+      # Diagnostic only — dumps cwd, env, skill discovery paths, composed
+      # prompt, and the agent-facing schema before invoking Claude. Off by
+      # default in production; toggle via `show_full_output: 'true'` to
+      # debug a misbehaving agent.
+      if: inputs.show_full_output == 'true'
+      shell: bash
+      env:
+        SCHEMA_PATH: ${{ runner.temp }}/agent-schema.json
+        COMPOSED_PROMPT_PATH: ${{ runner.temp }}/composed-prompt.md
+        STAGE_NAME: ${{ inputs.stage_name }}
+        SKILL: ${{ inputs.skill }}
+        ALLOWED_TOOLS: ${{ inputs.allowed_tools }}
+      run: |
+        set -euo pipefail
+        echo "::group::stage + cwd + tree state"
+        echo "stage_name=$STAGE_NAME"
+        echo "skill=$SKILL"
+        echo "allowed_tools=$ALLOWED_TOOLS"
+        echo "cwd=$(pwd)"
+        echo "ANTHROPIC_API_KEY set? $([ -n "${ANTHROPIC_API_KEY:-}" ] && echo yes || echo NO)"
+        echo "--- .claude/ in cwd ---"
+        ls -la .claude/ 2>/dev/null || echo "(missing)"
+        echo "--- .claude/skills/ ---"
+        ls -la .claude/skills/ 2>/dev/null || echo "(missing)"
+        echo "--- .claude/commands/opsx/ ---"
+        ls -la .claude/commands/opsx/ 2>/dev/null || echo "(missing)"
+        echo "--- target skill SKILL.md ---"
+        ls -la ".claude/skills/${SKILL}/SKILL.md" 2>/dev/null || echo "(missing — Claude will not find /$SKILL)"
+        echo "::endgroup::"
+        echo "::group::composed prompt (full)"
+        cat "$COMPOSED_PROMPT_PATH"
+        echo "::endgroup::"
+        echo "::group::agent-facing schema"
+        cat "$SCHEMA_PATH"
+        echo "::endgroup::"
+
+    - name: Run Claude
+      id: claude
+      uses: anthropics/claude-code-action@11ba60486e4aec9ddfeafcf4bb3f00b028ac2c16 # v1.0.142
+      with:
+        anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
+        # Pass the runner's GITHUB_TOKEN directly so the action skips its
+        # OIDC → Claude-App-token exchange. We do not install the Claude
+        # Code GitHub App on this repo; we render our own sticky comments
+        # in a later step (see "Post sticky PR comment" below) using the
+        # same token via `gh api`.
+        github_token: ${{ github.token }}
+        # When the caller sets `show_full_output: "true"` we surface Claude's
+        # prompts and tool calls in the GHA log. The action's default hides
+        # them for security; visibility is essential on the sandbox base
+        # while wiring is shaken out.
+        show_full_output: ${{ inputs.show_full_output }}
+        prompt: ${{ steps.prep.outputs.prompt }}
+        claude_args: ${{ steps.prep.outputs.claude_args }}
+
+    - name: Persist input prompt (audit)
+      # Baseline audit (ADR-0005): persist INPUT alongside output, so a run can
+      # be reconstructed from "what was sent" + "what came back". Captures the
+      # composed prompt + agent-facing schema. `always()` so a failed/garbled
+      # agent run is still auditable. Encrypted for private_output agents to
+      # match the output artifact (public repo → world-downloadable artifacts);
+      # the prompt is wrapper boilerplate + skill/upstream names today, but
+      # encrypting keeps the "private agent ⇒ ciphertext" invariant if the
+      # composition ever starts inlining sensitive context.
+      # Guard inside bash, not via hashFiles(): hashFiles only globs under
+      # GITHUB_WORKSPACE, and the prompt lives in runner.temp.
+      if: always()
+      shell: bash
+      env:
+        PRIVATE_OUTPUT: ${{ inputs.private_output }}
+        RUNNER_TEMP: ${{ runner.temp }}
+      run: |
+        set -euo pipefail
+        if [ ! -f "${RUNNER_TEMP}/composed-prompt.md" ]; then
+          echo "::notice::no composed prompt to persist (prep did not complete)"
+          exit 0
+        fi
+        AUDIT_DIR="${RUNNER_TEMP}/stage-input"
+        mkdir -p "$AUDIT_DIR"
+        cp "${RUNNER_TEMP}/composed-prompt.md" "$AUDIT_DIR/composed-prompt.md"
+        [ -f "${RUNNER_TEMP}/agent-schema.json" ] && cp "${RUNNER_TEMP}/agent-schema.json" "$AUDIT_DIR/agent-schema.json" || true
+        if [ "${PRIVATE_OUTPUT}" = "true" ]; then
+          if [ -z "${SDLC_ARTIFACT_KEY:-}" ]; then
+            echo "::error::private_output is true but SDLC_ARTIFACT_KEY is not in env — cannot encrypt the audit input. Add it to the agent manifest \`secrets:\` and repo/org Actions secrets."
+            exit 1
+          fi
+          for f in "$AUDIT_DIR"/*; do
+            openssl enc -aes-256-cbc -pbkdf2 -salt -in "$f" -out "$f.enc" -pass env:SDLC_ARTIFACT_KEY
+            rm -f "$f"
+          done
+          echo "Persisted encrypted audit input (private agent)."
+        else
+          echo "Persisted audit input (plaintext)."
+        fi
+
+    - name: Upload input prompt artifact
+      # if-no-files-found: ignore — the dir is absent when prep didn't complete
+      # (the persist step above exits early); no audit input to upload then.
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: stage-input-${{ inputs.stage_name }}
+        path: ${{ runner.temp }}/stage-input/
+        retention-days: 90
+        if-no-files-found: ignore
+
+    - name: Verify stage-output.json
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [ ! -f stage-output.json ]; then
+          echo "::error::Claude did not write stage-output.json. The agent must use the Write tool to create the file at the repo root with its final JSON response. Check the Run Claude step's log for what happened."
+          exit 1
+        fi
+        echo "stage-output.json present ($(wc -c < stage-output.json) bytes)"
+        # Do NOT cat the file: this repo is PUBLIC and run logs are world-
+        # readable, so dumping the findings here would leak internal security
+        # data. The renderer validates shape in the next step; the artifact
+        # carries the full content for the (private, in-run) chain handoff.
+
+    - name: Publish inline PR comments
+      # Review agents can emit payload.findings[] with repo-relative file+line
+      # locations. Publish findings whose lines are present in the PR diff as
+      # GitHub review comments, annotate stage-output.json with post status, and
+      # let the sticky renderer summarize only what was not posted inline.
+      if: github.event_name == 'pull_request' && inputs.private_output != 'true' && inputs.publish_inline_comments == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        STAGE_NAME: ${{ inputs.stage_name }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        REPO: ${{ github.repository }}
+        GITHUB_SERVER_URL: ${{ github.server_url }}
+      run: python3 ./.github/claude/scripts/publish-inline-comments.py
+
+    - name: Validate and render sticky comment
+      id: extract
+      shell: bash
+      env:
+        STAGE_NAME: ${{ inputs.stage_name }}
+        AGENT_VERSION: ${{ inputs.agent_version }}
+      run: python3 ./.github/claude/scripts/render-stage-comment.py
+
+    - name: Scrub output (M4 — secret scan + URL/HTML neutralize)
+      # ADR-0005 M4: deterministic, LLM-free, fail-closed gate on the rendered
+      # PUBLIC body before any posting step. Fails the stage on a secret hit
+      # (stops "Comment and Control") and neutralizes outbound-exfil vectors
+      # (zero-click images, non-allowlisted links, dangerous HTML). The posting
+      # steps below consume `steps.scrub.outputs.comment` — the scrubbed body —
+      # never the raw render. Only runs for public (non-private_output) agents;
+      # private agents publish counts-only aggregates, not this body.
+      id: scrub
+      if: inputs.private_output != 'true' && steps.extract.outputs.comment != ''
+      shell: bash
+      env:
+        BODY: ${{ steps.extract.outputs.comment }}
+        GITHUB_SERVER_URL: ${{ github.server_url }}
+      run: python3 ./.github/claude/scripts/scrub-output.py
+
+    - name: Emit SARIF to code scanning
+      # Convert payload.findings[] -> SARIF and upload to the Security tab (a
+      # write-access-gated surface, unlike public PR comments/summaries). Runs
+      # on the local plaintext, BEFORE the encrypt step removes it. Scoped to
+      # the scanned branch/commit (ANALYSIS_*) when analysis_ref is set, so
+      # alerts render against real code; falls back to the current ref/sha.
+      if: inputs.emit_sarif == 'true' && hashFiles('stage-output.json') != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+        python3 ./.github/claude/scripts/findings-to-sarif.py stage-output.json triage.sarif
+        SARIF_REF="${ANALYSIS_REF_FULL:-$GITHUB_REF}"
+        SARIF_SHA="${ANALYSIS_SHA:-$GITHUB_SHA}"
+        B64="$(gzip -c triage.sarif | base64 -w0)"
+        echo "Uploading SARIF for ${SARIF_REF}@${SARIF_SHA:0:7}"
+        gh api -X POST "repos/${REPO}/code-scanning/sarifs" \
+          -f commit_sha="${SARIF_SHA}" \
+          -f ref="${SARIF_REF}" \
+          -f sarif="${B64}" \
+          && echo "SARIF accepted by code scanning." \
+          || { echo "::warning::SARIF upload failed (code scanning may be disabled, or ref/sha not accepted). Triage still succeeded."; }
+
+    - name: Publish aggregate report (sensitive agents)
+      # private_output (sensitive) agents publish ONLY aggregate counts — no file
+      # paths, per-finding verdicts, or any detail — to the Actions run's job
+      # summary (the pipeline view), NOT a PR comment: these are batch/scheduled
+      # agents over a standing backlog, not PR reviewers. Counts are safe on a
+      # public repo. Runs on the local plaintext, BEFORE the encrypt step removes it.
+      if: inputs.private_output == 'true' && hashFiles('stage-output.json') != ''
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 ./.github/claude/scripts/findings-aggregate.py stage-output.json >> "$GITHUB_STEP_SUMMARY"
+        echo "Published aggregate counts to the job summary."
+
+    - name: Encrypt stage output (private agents)
+      # Runs AFTER the renderer (and any SARIF emitter) have consumed the local
+      # plaintext. Encrypts stage-output.json -> stage-output.json.enc and
+      # removes the plaintext, so only ciphertext is uploaded as an artifact —
+      # required on a PUBLIC repo, where artifacts are world-downloadable. The
+      # key (SDLC_ARTIFACT_KEY) is injected by run-agent from the manifest's
+      # declared secrets; the downstream agent's run-agent decrypts it.
+      if: inputs.private_output == 'true' && hashFiles('stage-output.json') != ''
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [ -z "${SDLC_ARTIFACT_KEY:-}" ]; then
+          echo "::error::private_output is true but SDLC_ARTIFACT_KEY is not in env. Add it to the agent's manifest \`secrets:\` list and the repo/org Actions secrets."
+          exit 1
+        fi
+        openssl enc -aes-256-cbc -pbkdf2 -salt \
+          -in stage-output.json -out stage-output.json.enc -pass env:SDLC_ARTIFACT_KEY
+        rm -f stage-output.json
+        echo "Encrypted stage-output.json -> stage-output.json.enc (plaintext removed)"
+
+    - name: Upload stage output artifact
+      # Uploads whichever exists: stage-output.json (public agents) or
+      # stage-output.json.enc (private_output agents). The artifact name is the
+      # same either way; the downstream decrypt step handles the .enc variant.
+      if: always() && (hashFiles('stage-output.json') != '' || hashFiles('stage-output.json.enc') != '')
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: stage-output-${{ inputs.stage_name }}
+        path: |
+          stage-output.json
+          stage-output.json.enc
+        retention-days: 90
+        if-no-files-found: warn
+
+    - name: Publish to job summary
+      # FULL detail — only for NON-sensitive agents (private_output != true).
+      # Sensitive agents use the aggregate (counts-only) step above instead,
+      # because this repo is public and the job summary is world-readable.
+      if: inputs.private_output != 'true' && steps.scrub.outputs.comment != ''
+      shell: bash
+      env:
+        STAGE_NAME: ${{ inputs.stage_name }}
+        BODY: ${{ steps.scrub.outputs.comment }}
+      run: |
+        {
+          echo "## ${STAGE_NAME}"
+          echo ""
+          echo "${BODY}"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Post sticky PR comment
+      # FULL detail — only for NON-sensitive agents (private_output != true).
+      # Sensitive agents post the aggregate (counts-only) sticky comment above.
+      if: github.event_name == 'pull_request' && inputs.private_output != 'true' && steps.scrub.outputs.comment != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        STAGE_NAME: ${{ inputs.stage_name }}
+        BODY: ${{ steps.scrub.outputs.comment }}
+      run: |
+        set -euo pipefail
+        MARKER="<!-- dial-sdlc:${STAGE_NAME} -->"
+        EXISTING_ID="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+          | jq -r --arg m "$MARKER" '.[] | select(.body | startswith($m)) | .id' \
+          | head -n1)"
+        if [ -n "$EXISTING_ID" ]; then
+          gh api -X PATCH "repos/${REPO}/issues/comments/${EXISTING_ID}" -f body="$BODY" > /dev/null
+          echo "Updated sticky comment $EXISTING_ID"
+        else
+          gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -f body="$BODY" > /dev/null
+          echo "Created sticky comment for stage ${STAGE_NAME}"
+        fi
+
+    - name: Enforce stage gate (fail job on status=failed)
+      # The job-failing gate is DELIBERATELY the LAST step. The renderer used to
+      # exit 1 on a well-formed status=failed, but that ran in the same step that
+      # produced the comment body — so every step after it (scrub, job summary,
+      # PR comment, aggregate, artifact upload) was skipped and the blocking
+      # findings never reached the PR. Now the renderer stays exit-0 on a valid
+      # failed result, all surfacing steps run, and THEN we fail the job here.
+      # `always()` so a failed status still gates even if an earlier surfacing
+      # step was skipped (e.g. private agents post no PR comment). Genuine render
+      # errors (bad JSON / invalid fields) already failed the extract step and
+      # the job; this only adds the gate for the valid-but-failed case.
+      if: always() && steps.extract.outputs.status == 'failed'
+      shell: bash
+      env:
+        STAGE_NAME: ${{ inputs.stage_name }}
+      run: |
+        echo "::error::Stage ${STAGE_NAME} reported status=failed — blocking findings surfaced in the PR comment / job summary above."
+        exit 1

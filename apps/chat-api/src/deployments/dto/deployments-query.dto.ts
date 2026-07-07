@@ -1,13 +1,15 @@
 import { Transform } from 'class-transformer';
 import { IsArray, IsIn, IsOptional } from 'class-validator';
 
-const VALID_INTERFACE_TYPES = [
-  'chat',
-  'embeddings',
-  'mcp',
-  'custom_ui',
-  'all',
-] as const;
+export enum DeploymentInterfaceType {
+  Chat = 'chat',
+  Embedding = 'embedding',
+  Mcp = 'mcp',
+  CustomUi = 'custom_ui',
+  All = 'all',
+}
+
+const VALID_INTERFACE_TYPES = Object.values(DeploymentInterfaceType);
 
 export class DeploymentsQueryDto {
   @IsOptional()
@@ -17,5 +19,5 @@ export class DeploymentsQueryDto {
     if (typeof value === 'string') return value.split(',');
     return value;
   })
-  interface_type?: string[];
+  interface_type?: DeploymentInterfaceType[];
 }

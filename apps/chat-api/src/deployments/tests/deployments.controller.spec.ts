@@ -3,15 +3,23 @@ import type { Request } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import { DeploymentsController } from '../deployments.controller';
 import type { DeploymentsService } from '../deployments.service';
-import type { DeploymentsQueryDto } from '../dto/deployments-query.dto';
+import {
+  DeploymentInterfaceType,
+  type DeploymentsQueryDto,
+} from '../dto/deployments-query.dto';
 
-const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
+const TEST_USER = {
+  sub: 'user-123',
+  at: 'test-access-token',
+  bucket: 'test-bucket',
+};
 const mockReq = { user: TEST_USER } as unknown as Request;
 
 function makeController() {
   const service = {
     listDeployments: vi.fn().mockResolvedValue({ deployments: [] }),
     getDeploymentConfiguration: vi.fn(),
+    getDeploymentLimits: vi.fn(),
   } as unknown as DeploymentsService;
 
   const controller = new DeploymentsController(service);
@@ -21,14 +29,17 @@ function makeController() {
 describe('DeploymentsController', () => {
   it('delegates to service with parsed query and extracts sub and at from request', async () => {
     const { controller, service } = makeController();
-    const query: DeploymentsQueryDto = { interface_type: ['chat'] };
+    const query: DeploymentsQueryDto = {
+      interface_type: [DeploymentInterfaceType.Chat],
+    };
 
     await controller.listDeployments(query, mockReq);
 
     expect(service.listDeployments).toHaveBeenCalledWith(
       TEST_USER.sub,
       TEST_USER.at,
-      ['chat'],
+      TEST_USER.bucket,
+      [DeploymentInterfaceType.Chat],
     );
   });
 
@@ -41,6 +52,7 @@ describe('DeploymentsController', () => {
     expect(service.listDeployments).toHaveBeenCalledWith(
       TEST_USER.sub,
       TEST_USER.at,
+      TEST_USER.bucket,
       undefined,
     );
   });
@@ -71,6 +83,31 @@ describe('DeploymentsController', () => {
     ).mockRejectedValue(new NotFoundException());
     await expect(
       controller.getDeploymentConfiguration(mockReq, 'unknown'),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('getDeploymentLimits returns service result', async () => {
+    const { controller, service } = makeController();
+    const limits = { dayTokenStats: { total: 100, used: 10 } };
+    (service.getDeploymentLimits as ReturnType<typeof vi.fn>).mockResolvedValue(
+      limits,
+    );
+
+    const result = await controller.getDeploymentLimits(mockReq, 'gpt-4o');
+    expect(result).toEqual(limits);
+    expect(service.getDeploymentLimits).toHaveBeenCalledWith(
+      'gpt-4o',
+      TEST_USER.at,
+    );
+  });
+
+  it('getDeploymentLimits propagates NotFoundException', async () => {
+    const { controller, service } = makeController();
+    (service.getDeploymentLimits as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new NotFoundException(),
+    );
+    await expect(
+      controller.getDeploymentLimits(mockReq, 'unknown'),
     ).rejects.toThrow(NotFoundException);
   });
 });

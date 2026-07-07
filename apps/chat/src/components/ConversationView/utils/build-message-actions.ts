@@ -1,6 +1,7 @@
 import {
   MessageRating,
   MessageRole,
+  copyToClipboard,
   type Message,
 } from '@epam/ai-dial-chat-shared';
 import type {
@@ -15,6 +16,7 @@ export interface MessageActionHandlers {
   onDelete?: (messageIndex: number) => void;
   onRegenerate?: (messageIndex: number) => void;
   onRate?: (messageIndex: number, rating: MessageRating | null) => void;
+  onDislike?: (messageIndex: number) => void;
 }
 
 export const buildMessageActions = (
@@ -46,15 +48,12 @@ export const buildMessageActions = (
     return { onRegenerate, tooltips, ariaLabels };
   }
 
-  const copyToClipboard = () =>
-    navigator.clipboard.writeText(msg.content).catch(() => {
-      console.error('Failed to copy message content to clipboard');
-    });
+  const handleCopy = () => void copyToClipboard(msg.content);
 
   return {
     onRegenerate,
-    onCopy: copyToClipboard,
-    onCopyMarkdown: copyToClipboard, // TODO: add implementation for markdown formatting
+    onCopy: handleCopy,
+    onCopyMarkdown: handleCopy,
     onLike: handlers.onRate
       ? () =>
           handlers.onRate?.(
@@ -62,13 +61,16 @@ export const buildMessageActions = (
             msg.rating === MessageRating.Like ? null : MessageRating.Like,
           )
       : void 0,
-    onDislike: handlers.onRate
-      ? () =>
-          handlers.onRate?.(
-            index,
-            msg.rating === MessageRating.Dislike ? null : MessageRating.Dislike,
-          )
-      : void 0,
+    onDislike:
+      handlers.onRate || handlers.onDislike
+        ? () => {
+            if (msg.rating === MessageRating.Dislike) {
+              handlers.onRate?.(index, null);
+            } else {
+              handlers.onDislike?.(index);
+            }
+          }
+        : void 0,
     activeRating: msg.rating,
     tooltips,
     ariaLabels,

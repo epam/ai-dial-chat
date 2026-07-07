@@ -1,4 +1,8 @@
-import type { ConversationListItemDto } from '@epam/chat-api-client';
+import type {
+  ConversationDeletionResultDto,
+  ConversationListItemDto,
+  ConversationResponseDto,
+} from '@epam/chat-api-client';
 import {
   createContext,
   type ReactNode,
@@ -10,13 +14,19 @@ import {
 } from 'react';
 import { normalizeConversationId } from '../constants/routes';
 import {
+  deleteAllConversations as apiDeleteAllConversations,
   deleteConversation as apiDeleteConversation,
   duplicateConversation as apiDuplicateConversation,
+  getConversation,
   listConversations,
   renameConversation as apiRenameConversation,
+  watchConversation,
 } from '../server-api/conversations.api';
-import { pinConversation as apiPinConversation } from '../server-api/user-config.api';
+import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { getConversationPath } from '../utils/conversation-path';
+import { useUserConfig } from './UserConfigContext';
+
+const DISPLAY_NAME_WATCH_TIMEOUT_MS = 120_000;
 
 interface ConversationsContextType {
   /** Flat list of all loaded conversations. */
@@ -29,12 +39,31 @@ interface ConversationsContextType {
   pinConversation: (id: string, isPinned: boolean) => Promise<void>;
   /** Delete a conversation by id, removing it from the local list on success. */
   deleteConversation: (id: string) => Promise<void>;
-  /** Rename a conversation; optimistically updates title, reverts on failure. Returns the new conversation id. */
-  renameConversation: (id: string, newTitle: string) => Promise<string>;
+  /** Rename a conversation; optimistically updates title, reverts on failure. The conversation id never changes. */
+  renameConversation: (id: string, newTitle: string) => Promise<void>;
   /** Duplicate a conversation into the user's own bucket; returns the new conversation id. */
   duplicateConversation: (id: string) => Promise<string>;
   /** Re-fetch the full conversation list from the server. */
   refreshConversations: () => Promise<void>;
+  /** Updates the sidebar title for a conversation without changing its id. */
+  updateConversationTitle: (id: string, title: string) => void;
+  /**
+   * Polls GET conversation until the display name changes or LLM naming completes.
+   * Returns a cleanup function that cancels polling.
+   */
+  watchForDisplayNameUpdate: (
+    conversationId: string,
+    previousName: string,
+    onUpdated: (title: string) => void,
+  ) => () => void;
+  /**
+   * Delete every conversation in the authenticated user's bucket.
+   * Returns the structured result. The list is re-fetched whenever at least one
+   * item was deleted or absent (preserving shared/public conversations).
+   * On total failure local state is unchanged.
+   * Throws if the API call itself fails before returning per-item results.
+   */
+  deleteAllConversations: () => Promise<ConversationDeletionResultDto>;
 }
 
 const ConversationsContext = createContext<
@@ -46,6 +75,7 @@ export const ConversationsProvider = ({
 }: {
   children: ReactNode;
 }) => {
+  const { setPinnedConversation } = useUserConfig();
   const [conversations, setConversations] = useState<ConversationListItemDto[]>(
     [],
   );
@@ -64,6 +94,113 @@ export const ConversationsProvider = ({
       setIsLoading(false);
     }
   }, []);
+
+  const silentRefreshConversations = useCallback(async () => {
+    try {
+      const response = await listConversations();
+      setConversations(response.items);
+    } catch {
+      // Background refresh must not disturb the panel loading state.
+    }
+  }, []);
+
+  const updateConversationTitle = useCallback((id: string, title: string) => {
+    setConversations((prev) =>
+      prev.map((item) =>
+        conversationIdsMatch(item.id, id) ? { ...item, title } : item,
+      ),
+    );
+  }, []);
+
+  const watchForDisplayNameUpdate = useCallback(
+    (
+      conversationId: string,
+      previousName: string,
+      onUpdated: (title: string) => void,
+    ) => {
+      const conversationPath = getConversationPath(
+        normalizeConversationId(conversationId),
+      );
+
+      const controller = new AbortController();
+
+      const run = async () => {
+        let stream: ReadableStream<Uint8Array>;
+        try {
+          stream = await watchConversation(conversationPath, controller.signal);
+        } catch {
+          return;
+        }
+
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        const timeoutId = window.setTimeout(() => {
+          controller.abort();
+        }, DISPLAY_NAME_WATCH_TIMEOUT_MS);
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            const lines = buffer.split('\n');
+            buffer = lines.pop() ?? '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith('data:')) continue;
+
+              const data = trimmed.slice(5).trim();
+              let event: { url?: string; action?: string } | null = null;
+              try {
+                event = JSON.parse(data) as { url?: string; action?: string };
+              } catch {
+                continue;
+              }
+
+              if (event?.action !== 'UPDATE') continue;
+
+              try {
+                const conversation = (await getConversation(
+                  conversationPath,
+                )) as ConversationResponseDto;
+                const nextName = conversation.name?.trim();
+                if (
+                  conversation.llmNamingDone === true ||
+                  (nextName && nextName !== previousName.trim())
+                ) {
+                  if (nextName) {
+                    updateConversationTitle(conversationId, nextName);
+                    onUpdated(nextName);
+                    void silentRefreshConversations();
+                  }
+                  return;
+                }
+              } catch {
+                // Keep watching until stream ends or timeout.
+              }
+            }
+          }
+        } catch {
+          // AbortError on timeout/unmount or unexpected stream error — exit silently.
+        } finally {
+          clearTimeout(timeoutId);
+          reader.releaseLock();
+        }
+      };
+
+      void run();
+
+      return () => {
+        controller.abort();
+      };
+    },
+    [silentRefreshConversations, updateConversationTitle],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -89,19 +226,22 @@ export const ConversationsProvider = ({
     };
   }, []);
 
-  const pinConversation = useCallback(async (id: string, isPinned: boolean) => {
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, isPinned } : c)),
-    );
-    try {
-      await apiPinConversation(id, isPinned);
-    } catch (err) {
+  const pinConversation = useCallback(
+    async (id: string, isPinned: boolean) => {
       setConversations((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, isPinned: !isPinned } : c)),
+        prev.map((c) => (c.id === id ? { ...c, isPinned } : c)),
       );
-      console.error('Failed to persist pin state', err);
-    }
-  }, []);
+      try {
+        await setPinnedConversation(id, isPinned);
+      } catch (err) {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, isPinned: !isPinned } : c)),
+        );
+        console.error('Failed to persist pin state', err);
+      }
+    },
+    [setPinnedConversation],
+  );
 
   const deleteConversation = useCallback(async (id: string) => {
     let snapshot: ConversationListItemDto[] | undefined;
@@ -131,14 +271,13 @@ export const ConversationsProvider = ({
 
       const conversationPath = getConversationPath(normalizeConversationId(id));
       try {
-        const { newPath } = await apiRenameConversation(
+        const { name } = await apiRenameConversation(
           conversationPath,
           newTitle,
         );
         setConversations((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, id: newPath } : c)),
+          prev.map((c) => (c.id === id ? { ...c, title: name } : c)),
         );
-        return newPath;
       } catch (err) {
         if (originalTitle != null) {
           setConversations((prev) =>
@@ -163,6 +302,21 @@ export const ConversationsProvider = ({
     [refreshConversations],
   );
 
+  const deleteAllConversations =
+    useCallback(async (): Promise<ConversationDeletionResultDto> => {
+      const result = await apiDeleteAllConversations();
+
+      if (
+        result.deleted > 0 ||
+        result.alreadyAbsent > 0 ||
+        result.failed.length === 0
+      ) {
+        await refreshConversations();
+      }
+
+      return result;
+    }, [refreshConversations]);
+
   const value = useMemo(
     () => ({
       conversations,
@@ -173,6 +327,9 @@ export const ConversationsProvider = ({
       renameConversation,
       duplicateConversation,
       refreshConversations,
+      updateConversationTitle,
+      watchForDisplayNameUpdate,
+      deleteAllConversations,
     }),
     [
       conversations,
@@ -183,6 +340,9 @@ export const ConversationsProvider = ({
       renameConversation,
       duplicateConversation,
       refreshConversations,
+      updateConversationTitle,
+      watchForDisplayNameUpdate,
+      deleteAllConversations,
     ],
   );
 

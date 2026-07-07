@@ -1,0 +1,25 @@
+.secondaryText {
+  color: var(--cat-list-secondary-text, var(--text-secondary, #575f73));
+}
+
+.listContainer {
+  // ag-grid's internal wrappers carry overflow:auto, which makes them the sticky
+  // scroll-context instead of the outer section. Clear them so the section becomes
+  // the containing scroll context for position:sticky on .ag-header.
+  // Horizontal overflow falls through to the section (overflow:auto on both axes).
+  :global(.ag-theme-balham-dark),
+  :global(.ag-root-wrapper),
+  :global(.ag-root) {
+    overflow: visible !important;
+  }
+
+  :global(.ag-header) {
+    position: sticky;
+    top: var(--list-header-sticky-top, 0px);
+    z-index: 5;
+  }
+}
+
+.starFilledIcon {
+  color: var(--cat-card-star-filled, var(--text-warning-icon, #eec840));
+}

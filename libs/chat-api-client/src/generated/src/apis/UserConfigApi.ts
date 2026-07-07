@@ -13,10 +13,27 @@
  */
 
 import * as runtime from '../runtime';
-import type { UpdatePinsDto } from '../models/index';
+import type {
+  UpdateInstalledDto,
+  UpdatePinsDto,
+  UpdateSelectedDeploymentDto,
+  UserConfigDto,
+} from '../models/index';
+
+export interface UpdateInstalledDeploymentRequest {
+  updateInstalledDto: UpdateInstalledDto;
+}
+
+export interface UpdateInstalledToolsetRequest {
+  updateInstalledDto: UpdateInstalledDto;
+}
 
 export interface UpdatePinRequest {
   updatePinsDto: UpdatePinsDto;
+}
+
+export interface UpdateSelectedDeploymentRequest {
+  updateSelectedDeploymentDto: UpdateSelectedDeploymentDto;
 }
 
 /**
@@ -26,9 +43,9 @@ export class UserConfigApi extends runtime.BaseAPI {
   /**
    * Get current user configuration
    */
-  async getConfigRaw(
+  async getUserConfigRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
+  ): Promise<runtime.ApiResponse<UserConfigDto>> {
     const queryParameters: runtime.HTTPQuery = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -45,16 +62,109 @@ export class UserConfigApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.VoidApiResponse(response);
+    return new runtime.JSONApiResponse<UserConfigDto>(response);
   }
 
   /**
    * Get current user configuration
    */
-  async getConfig(
+  async getUserConfig(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<UserConfigDto> {
+    const response = await this.getUserConfigRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Install or uninstall a deployment
+   */
+  async updateInstalledDeploymentRaw(
+    requestParameters: UpdateInstalledDeploymentRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['updateInstalledDto'] == null) {
+      throw new runtime.RequiredError(
+        'updateInstalledDto',
+        'Required parameter "updateInstalledDto" was null or undefined when calling updateInstalledDeployment().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/user-config/deployments`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['updateInstalledDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Install or uninstall a deployment
+   */
+  async updateInstalledDeployment(
+    requestParameters: UpdateInstalledDeploymentRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
-    await this.getConfigRaw(initOverrides);
+    await this.updateInstalledDeploymentRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Install or uninstall a toolset
+   */
+  async updateInstalledToolsetRaw(
+    requestParameters: UpdateInstalledToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['updateInstalledDto'] == null) {
+      throw new runtime.RequiredError(
+        'updateInstalledDto',
+        'Required parameter "updateInstalledDto" was null or undefined when calling updateInstalledToolset().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/user-config/toolsets`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['updateInstalledDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Install or uninstall a toolset
+   */
+  async updateInstalledToolset(
+    requestParameters: UpdateInstalledToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.updateInstalledToolsetRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -101,5 +211,51 @@ export class UserConfigApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.updatePinRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Set the selected deployment
+   */
+  async updateSelectedDeploymentRaw(
+    requestParameters: UpdateSelectedDeploymentRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['updateSelectedDeploymentDto'] == null) {
+      throw new runtime.RequiredError(
+        'updateSelectedDeploymentDto',
+        'Required parameter "updateSelectedDeploymentDto" was null or undefined when calling updateSelectedDeployment().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/user-config/deployments/selected`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['updateSelectedDeploymentDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Set the selected deployment
+   */
+  async updateSelectedDeployment(
+    requestParameters: UpdateSelectedDeploymentRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.updateSelectedDeploymentRaw(requestParameters, initOverrides);
   }
 }

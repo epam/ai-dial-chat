@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DIAL SDLC Stage Message",
+  "description": "Sticky JSON payload every SDLC stage writes (via Claude --json-schema). Envelope fields (contract_version, agent_version, run_id, trigger) are injected by the renderer — agents do not write them. Top-level is intentionally open (additionalProperties: true). Agent-specific structured data goes under `payload`. The renderer recognizes two payload conventions: `findings[]` (reviewer-shaped issues, rendered as a table) and `comment_markdown` (verbatim body that replaces the default rendering).",
+  "type": "object",
+  "required": ["contract_version", "stage", "status", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "enum": ["0.1"],
+      "description": "Schema contract version. Injected by the renderer."
+    },
+    "agent_version": {
+      "type": "string",
+      "description": "Agent version (semver). Injected by the renderer from the workflow's agent_version input."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Correlation ID — the GitHub Actions run ID. Injected by the renderer."
+    },
+    "trigger": {
+      "type": "object",
+      "description": "Event context that fired this run. Injected by the renderer.",
+      "additionalProperties": false,
+      "properties": {
+        "event": { "type": "string" },
+        "ref": { "type": "string" },
+        "sha": { "type": "string" }
+      }
+    },
+    "stage": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Stage identifier; pinned by the composite action to the workflow's stage_name."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["passed", "passed_with_findings", "failed"]
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 280,
+      "description": "One short human-readable line for the sticky PR comment."
+    },
+    "cost_usd": { "type": "number", "minimum": 0 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Agent-specific structured data. Open shape: any keys allowed. The renderer recognizes two well-known sub-conventions.",
+      "properties": {
+        "findings": {
+          "type": "array",
+          "description": "Reviewer convention. Each entry is one issue. Review agents should include repo-relative file and head-side line for line-specific findings; the platform can publish those as inline PR review comments and render the rest in the sticky summary.",
+          "items": {
+            "type": "object",
+            "required": ["severity", "message"],
+            "additionalProperties": true,
+            "properties": {
+              "severity": {
+                "type": "string",
+                "enum": ["info", "low", "medium", "high", "critical"]
+              },
+              "file": { "type": "string" },
+              "line": { "type": "integer", "minimum": 1 },
+              "message": { "type": "string", "minLength": 1 },
+              "suggested_fix": { "type": "string" },
+              "requirement_ref": { "type": "string" },
+              "inline_comment": {
+                "type": "object",
+                "description": "Platform annotation added after the agent writes stage-output.json; agents should not set this.",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "comment_markdown": {
+          "type": "string",
+          "description": "Override convention. If set, replaces the renderer's default body (findings table) with this markdown verbatim. Use for non-reviewer agents (test-gen, benchmark, migration, doc-gen)."
+        }
+      }
+    }
+  }
+}

@@ -11,15 +11,17 @@ export type Breakpoint = 'mobile' | 'desktop';
 const BREAKPOINT_QUERIES: ReadonlyArray<{
   query: string;
   breakpoint: Breakpoint;
-}> = [{ query: '(min-width: 1024px)', breakpoint: 'desktop' }];
+}> = [{ query: '(min-width: 769px)', breakpoint: 'desktop' }];
 
 const resolveBreakpoint = (): Breakpoint => {
   if (
     typeof window === 'undefined' ||
     typeof window.matchMedia !== 'function'
   ) {
-    // SSR / non-DOM test env: default to desktop so server-rendered markup
-    // matches the historical desktop-only baseline.
+    /*
+     * SSR / non-DOM test env: default to desktop so server-rendered markup
+     * matches the historical desktop-only baseline.
+     */
     return 'desktop';
   }
   for (const { query, breakpoint } of BREAKPOINT_QUERIES) {

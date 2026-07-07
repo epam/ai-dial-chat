@@ -23,6 +23,7 @@ describe('Logo', () => {
 
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
+      selectedTheme: 'dark',
       currentThemeLogo: mockLogoName,
       themes: [],
       setTheme: vi.fn(),
@@ -31,11 +32,13 @@ describe('Logo', () => {
 
     mockGetIconPath.mockReturnValue(mockIconPath);
 
-    render(<Logo />);
+    const { container } = render(<Logo />);
 
     const logo = screen.getByLabelText(ChatI18nKeys.Logo);
+    const logoImage = container.querySelector('span.desktop\\:block');
     expect(logo).toBeTruthy();
-    expect((logo as HTMLElement).style.backgroundImage).toBe(
+    expect(logoImage).toBeTruthy();
+    expect((logoImage as HTMLElement).style.backgroundImage).toBe(
       `url(${mockIconPath})`,
     );
     expect(mockGetIconPath).toHaveBeenCalledWith(mockLogoName);
@@ -44,6 +47,7 @@ describe('Logo', () => {
   it('should return null when logo is not available', () => {
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
+      selectedTheme: 'dark',
       currentThemeLogo: undefined,
       themes: [],
       setTheme: vi.fn(),
@@ -60,6 +64,7 @@ describe('Logo', () => {
 
     mockUseTheme.mockReturnValue({
       currentTheme: 'light',
+      selectedTheme: 'light',
       currentThemeLogo: mockLightLogo,
       themes: [],
       setTheme: vi.fn(),
@@ -68,10 +73,11 @@ describe('Logo', () => {
 
     mockGetIconPath.mockReturnValue(mockLightPath);
 
-    render(<Logo />);
+    const { container } = render(<Logo />);
 
-    const logo = screen.getByLabelText(ChatI18nKeys.Logo);
-    expect((logo as HTMLElement).style.backgroundImage).toBe(
+    const logoImage = container.querySelector('span.desktop\\:block');
+    expect(logoImage).toBeTruthy();
+    expect((logoImage as HTMLElement).style.backgroundImage).toBe(
       `url(${mockLightPath})`,
     );
     expect(mockGetIconPath).toHaveBeenCalledWith(mockLightLogo);
@@ -80,6 +86,7 @@ describe('Logo', () => {
   it('should render as a link with correct href', () => {
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
+      selectedTheme: 'dark',
       currentThemeLogo: 'logo.svg',
       themes: [],
       setTheme: vi.fn(),
@@ -97,6 +104,7 @@ describe('Logo', () => {
   it('should apply correct CSS classes', () => {
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
+      selectedTheme: 'dark',
       currentThemeLogo: 'logo.svg',
       themes: [],
       setTheme: vi.fn(),
@@ -105,30 +113,21 @@ describe('Logo', () => {
 
     mockGetIconPath.mockReturnValue('/api/themes/icon?iconName=logo.svg');
 
-    render(<Logo />);
+    const { container } = render(<Logo />);
 
-    const logo = screen.getByLabelText(ChatI18nKeys.Logo);
-    expect((logo as HTMLElement).classList.contains('min-w-[125px]')).toBe(
+    const logoImage = container.querySelector('span.desktop\\:block');
+    expect(logoImage).toBeTruthy();
+    expect((logoImage as HTMLElement).classList.contains('min-w-[125px]')).toBe(
       true,
     );
-    expect((logo as HTMLElement).classList.contains('bg-contain')).toBe(true);
-    expect((logo as HTMLElement).classList.contains('bg-right')).toBe(true);
-    expect((logo as HTMLElement).classList.contains('bg-no-repeat')).toBe(true);
-  });
-
-  it('should render loader while theme is loading', () => {
-    mockUseTheme.mockReturnValue({
-      currentTheme: 'dark',
-      currentThemeLogo: 'logo.svg',
-      themes: [],
-      setTheme: vi.fn(),
-      isLoading: true,
-    });
-
-    render(<Logo />);
-
-    expect(screen.getByLabelText('logo loading')).toBeTruthy();
-    expect(screen.queryByLabelText(ChatI18nKeys.Logo)).toBeNull();
-    expect(mockGetIconPath).not.toHaveBeenCalled();
+    expect((logoImage as HTMLElement).classList.contains('bg-contain')).toBe(
+      true,
+    );
+    expect((logoImage as HTMLElement).classList.contains('bg-right')).toBe(
+      true,
+    );
+    expect((logoImage as HTMLElement).classList.contains('bg-no-repeat')).toBe(
+      true,
+    );
   });
 });

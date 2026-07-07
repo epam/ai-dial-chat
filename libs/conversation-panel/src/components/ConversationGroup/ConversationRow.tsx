@@ -1,18 +1,23 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DeploymentIcon } from '@epam/ai-dial-conversation-input';
+import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GhostButton } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialDropdown,
-  DialGhostButton,
+  DialEllipsisTooltip,
   DialIconButton,
+  DialSkeleton,
+  DialSkeletonVariant,
   ElementSize,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
-import { useState, type FC } from 'react';
-import type { ConversationHistoryItem } from '../../models/ConversationPanel';
-import { getButtonPaddingEnd } from '../../utils/conversation-row.utils';
+import { useCallback, useState, type DragEvent, type FC } from 'react';
+import { ConversationHistoryItem } from '../../models/panel-props';
+import type { VirtualRow } from '../../models/virtual-row';
+import { ConversationGroupKey } from '../../types/conversation-group-key';
+import { getButtonPaddingEnd } from '../../utils/conversation-row';
+import { getDropAfterId } from '../../utils/drag';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
 export interface ConversationRowProps {
@@ -32,6 +37,35 @@ export interface ConversationRowProps {
   actionsLabel?: string;
   /** Typography class for the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
+  /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
+  itemIconBadgeClassName?: string;
+  /**
+   * The group this row belongs to — required to enable drag-and-drop.
+   * When absent the row is not draggable (used by `ConversationGroup`).
+   */
+  rowGroupKey?: ConversationGroupKey;
+  /** The full virtual rows array — used to compute drop position. */
+  rows?: VirtualRow[];
+  /** Id of the conversation currently being dragged. `null` when no drag is active. */
+  draggingId?: string | null;
+  /** Id of the row currently under the drag cursor. */
+  dragOverId?: string | null;
+  /** Groups that are valid drop targets for the current drag. `null` when no drag is active. */
+  allowedDropGroups?: Set<ConversationGroupKey> | null;
+  /** Called when the user starts dragging this row. */
+  onDragStart?: (id: string) => void;
+  /** Called when the drag ends (drop or cancel). */
+  onDragEnd?: () => void;
+  /** Called when the drag cursor enters this row. */
+  onDragOver?: (id: string) => void;
+  /** Called when the drag cursor leaves this row. */
+  onDragLeave?: () => void;
+  /** Called when the user drops onto this row. */
+  onDrop?: (
+    targetId: string,
+    targetGroupKey: ConversationGroupKey,
+    afterId: string | null,
+  ) => void;
 }
 
 export const ConversationRow: FC<ConversationRowProps> = ({
@@ -41,45 +75,137 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   getActions,
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
+  itemIconBadgeClassName,
+  rowGroupKey,
+  rows,
+  draggingId,
+  dragOverId,
+  allowedDropGroups,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
 
-  const avatar = <DeploymentIcon src={item.iconUrl} size={DIAL_ICON_SIZE.LG} />;
+  const avatar = item.isIconLoading ? (
+    <DialSkeleton
+      variant={DialSkeletonVariant.Circular}
+      width={DIAL_ICON_SIZE.LG}
+      height={DIAL_ICON_SIZE.LG}
+      color="var(--bg-layer-4)"
+      aria-hidden
+    />
+  ) : (
+    <DeploymentIcon
+      src={item.iconUrl}
+      size={DIAL_ICON_SIZE.LG}
+      initialsName={item.iconTooltip ?? ''}
+      tooltip={item.iconTooltip}
+      badgeClassName={itemIconBadgeClassName}
+    />
+  );
 
   const buttonPaddingRight = getButtonPaddingEnd(hasActions, isMenuOpen);
 
+  const isDragEnabled = rowGroupKey != null;
+
+  const handleDragLeave = useCallback(
+    (e: DragEvent<HTMLLIElement>) => {
+      // Only clear dragOver when truly leaving the row (not moving between child elements)
+      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+        onDragLeave?.();
+      }
+    },
+    [onDragLeave],
+  );
+
+  const handleDrop = useCallback(
+    (e: DragEvent<HTMLLIElement>) => {
+      if (!rowGroupKey || !rows || !onDrop) return;
+      e.preventDefault();
+      const afterId = getDropAfterId(e, item.id, rows, rowGroupKey);
+      onDrop(item.id, rowGroupKey, afterId);
+    },
+    [item.id, rows, rowGroupKey, onDrop],
+  );
+
+  const isDragging = item.id === draggingId;
+  const isDropTarget = item.id === dragOverId;
+  const isDropAllowed =
+    rowGroupKey != null && (allowedDropGroups?.has(rowGroupKey) ?? false);
+  const isDragActive = draggingId != null;
+
   return (
-    <li className="group relative">
-      <DialGhostButton
-        iconBefore={avatar}
-        label={item.title}
-        textClassName={mergeClasses('truncate min-w-0', itemTitleClassName)}
-        aria-current={isActive ? 'page' : undefined}
-        onClick={() => onSelectConversation(item.id)}
-        className={mergeClasses(
-          'h-8 w-full justify-start gap-2 rounded-b rounded-t border-l-2 border-transparent ps-3',
-          buttonPaddingRight,
-          styles.item,
-          isActive && styles.itemActive,
-          isMenuOpen && styles.itemActive,
-        )}
-      />
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    <li
+      className={mergeClasses(
+        'group/conversation relative',
+        isDragging && 'cursor-grabbing opacity-50',
+        isDropTarget &&
+          isDropAllowed &&
+          'ring-accent-secondary rounded ring-1 ring-inset',
+        isDragActive && !isDragging && !isDropAllowed && 'cursor-not-allowed',
+      )}
+      draggable={isDragEnabled || undefined}
+      onDragStart={isDragEnabled ? () => onDragStart?.(item.id) : undefined}
+      onDragEnd={isDragEnabled ? onDragEnd : undefined}
+      onDragOver={
+        isDragEnabled
+          ? (e) => {
+              e.preventDefault();
+              onDragOver?.(item.id);
+            }
+          : undefined
+      }
+      onDragLeave={isDragEnabled ? handleDragLeave : undefined}
+      onDrop={isDragEnabled ? handleDrop : undefined}
+    >
+      <a
+        href={item.href}
+        className="contents"
+        onClick={(e) => e.preventDefault()}
+      >
+        <GhostButton
+          iconBefore={avatar}
+          label={
+            <DialEllipsisTooltip
+              text={item.title}
+              className={itemTitleClassName}
+            />
+          }
+          textClassName="min-w-0"
+          aria-current={isActive ? 'page' : undefined}
+          onClick={() => onSelectConversation(item.id)}
+          tabIndex={item.href ? -1 : undefined}
+          className={mergeClasses(
+            'h-8 w-full justify-start gap-2 rounded-b rounded-t border-l-2 border-transparent ps-3',
+            buttonPaddingRight,
+            styles.item,
+            isActive && styles.itemActive,
+            isMenuOpen && styles.itemActive,
+          )}
+        />
+      </a>
 
       {hasActions && (
         <div
           className={mergeClasses(
             'absolute inset-y-0 end-1 flex items-center',
-            isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+            isMenuOpen
+              ? 'opacity-100'
+              : 'opacity-0 group-hover/conversation:opacity-100',
           )}
         >
           <DialDropdown
             items={menuItems}
             onOpenChange={setIsMenuOpen}
             matchReferenceWidth={false}
-            listClassName="w-[140px] shadow-md"
+            listClassName="w-[140px] cp-dropdown-overlay"
           >
             <DialIconButton
               icon={

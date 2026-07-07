@@ -1,36 +1,29 @@
 import type { StarterOption } from '@epam/ai-dial-chat-shared';
-import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
+import { StarterButtons as StarterButtonsLib } from '@epam/ai-dial-starter-buttons';
 import { FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatI18nKeys } from '../../constants/translation-keys';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 
 interface Props {
-  /** Starter options to display as buttons. */
   starters: StarterOption[];
-  /** Called with the full starter option when a button is clicked. */
   onSelect: (starter: StarterOption) => void;
 }
 
 const StarterButtons: FC<Props> = ({ starters, onSelect }) => {
   const { t } = useTranslation();
-
-  if (starters.length === 0) return null;
+  const isMobile = useIsMobile();
 
   return (
-    <div
-      role="list"
-      aria-label={t(ChatI18nKeys.ConversationStarters)}
-      className="mt-4 flex flex-wrap justify-center gap-2"
-    >
-      {starters.map((starter, index) => (
-        <div key={index} role="listitem">
-          <DialRoundedButton
-            label={starter.title}
-            onClick={() => onSelect(starter)}
-          />
-        </div>
-      ))}
-    </div>
+    <StarterButtonsLib
+      starters={starters}
+      onSelect={onSelect}
+      isMobile={isMobile}
+      ariaLabels={{
+        list: t(ChatI18nKeys.ConversationStarters),
+        overflow: t(ChatI18nKeys.StarterButtonsOverflow),
+      }}
+    />
   );
 };
 

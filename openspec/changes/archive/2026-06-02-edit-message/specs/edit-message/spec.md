@@ -65,7 +65,7 @@ Clicking Cancel SHALL exit edit mode and restore the original message bubble wit
 - **THEN** the original message text and attachments are displayed unchanged
 
 ### Requirement: Submitting an edit
-Clicking Save & Submit (or pressing Enter in the textarea) SHALL update the message content, discard all subsequent messages, silently cancel any other active edits, and re-run the AI from that message.
+Clicking Save & Submit (or pressing Enter in the textarea) SHALL update the message content, discard all subsequent messages, silently cancel any other active edits, and re-run the AI from that message. If the text and attachments are identical to the original, the edit is silently discarded and no regeneration occurs.
 
 #### Scenario: Successful edit submission
 - **WHEN** the user modifies the text in the edit area and clicks Save & Submit
@@ -73,6 +73,12 @@ Clicking Save & Submit (or pressing Enter in the textarea) SHALL update the mess
 - **THEN** all messages after the edited message are removed from the conversation
 - **THEN** the AI is re-triggered with the updated message and attachments
 - **THEN** a new streaming assistant response begins
+
+#### Scenario: Save & Submit with no changes discards the edit silently
+- **WHEN** the user opens edit mode on a message and clicks Save & Submit without changing the text or attachments
+- **THEN** the edit area is closed
+- **THEN** the original message bubble is restored unchanged
+- **THEN** no new AI response is generated
 
 #### Scenario: Other edits silently cancelled on submit
 - **WHEN** the user submits an edit while other messages are also in edit mode

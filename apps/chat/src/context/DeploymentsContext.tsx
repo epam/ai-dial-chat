@@ -3,6 +3,7 @@ import {
   ListDeploymentsInterfaceTypeEnum,
   type ApplicationSchemaSummaryDto,
   type DeploymentItemDto,
+  type DialToolsetDto,
 } from '@epam/chat-api-client';
 import {
   createContext,
@@ -16,20 +17,33 @@ import {
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
+import { listToolsets } from '../server-api/toolsets';
+import { useAppConfig } from './AppConfigContext';
+import { useUserConfig } from './UserConfigContext';
 
 export interface DeploymentsContextType {
   /** Full list of deployment items from the API, enriched with schema icon fallback. */
   items: DeploymentItemDto[];
   /** ID of the currently selected deployment, or null if none. */
   selectedItemId: string | null;
-  /** Updates the selected deployment. */
-  setSelectedItemId: (id: string) => void;
+  /** Updates the selected deployment and persists the choice to user config. Use for user-initiated selections. */
+  setSelectedItemId: (id: string | null) => void;
+  /**
+   * Restores the selected deployment without persisting to user config.
+   * Use when loading a conversation to reflect its last-used model without
+   * overwriting the user's own model preference for new chats.
+   */
+  restoreSelectedItemId: (id: string) => void;
   /** JSON Schema configuration for the currently selected deployment, or null if none selected or unsupported. */
   selectedDeploymentConfiguration: DeploymentConfigurationSchema | null;
   /** True while deployments are being fetched. */
   isLoading: boolean;
   /** Non-null if the deployments fetch failed. */
   error: Error | null;
+  /** List of application type schemas fetched in parallel with deployments. Empty when the fetch failed. */
+  schemas: ApplicationSchemaSummaryDto[];
+  /** Toolsets fetched from the dedicated toolsets API for catalog surfaces. */
+  toolsets: DialToolsetDto[];
 }
 
 export const DeploymentsContext = createContext<
@@ -52,29 +66,52 @@ const sortDeployments = (
   });
 };
 
-// TODO: move to user config
-const SELECTED_DEPLOYMENT_KEY = 'dial:selectedDeploymentId';
-
-const readStoredDeploymentId = (): string | null => {
-  try {
-    return localStorage.getItem(SELECTED_DEPLOYMENT_KEY);
-  } catch {
-    return null;
-  }
+const sortToolsets = (toolsets: DialToolsetDto[]): DialToolsetDto[] => {
+  return [...toolsets].sort((a, b) => {
+    const nameCompare = (a.displayName ?? a.id).localeCompare(
+      b.displayName ?? b.id,
+      undefined,
+      { sensitivity: 'accent' },
+    );
+    if (nameCompare !== 0) {
+      return nameCompare;
+    }
+    return a.id.localeCompare(b.id, undefined, { sensitivity: 'accent' });
+  });
 };
 
-const writeStoredDeploymentId = (id: string): void => {
-  try {
-    localStorage.setItem(SELECTED_DEPLOYMENT_KEY, id);
-  } catch {
-    // storage quota exceeded or private browsing — ignore
+const resolveInitialSelection = (
+  deployments: DeploymentItemDto[],
+  inMemoryId: string | null,
+  userConfigId: string | null,
+  operatorDefaultId: string | null,
+): string | null => {
+  if (inMemoryId != null && deployments.some((d) => d.id === inMemoryId)) {
+    return inMemoryId;
   }
+  if (userConfigId != null && deployments.some((d) => d.id === userConfigId)) {
+    return userConfigId;
+  }
+  if (
+    operatorDefaultId != null &&
+    deployments.some((d) => d.id === operatorDefaultId)
+  ) {
+    return operatorDefaultId;
+  }
+  return deployments[0]?.id ?? null;
 };
 
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
+  const { selectedDeploymentId: userConfigSelectedId, setSelectedDeployment } =
+    useUserConfig();
+  const { config: appConfig } = useAppConfig();
+
   const [rawDeployments, setRawDeployments] = useState<DeploymentItemDto[]>([]);
   const [schemas, setSchemas] = useState<ApplicationSchemaSummaryDto[]>([]);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [toolsets, setToolsets] = useState<DialToolsetDto[]>([]);
+  const [selectedItemId, setSelectedItemIdState] = useState<string | null>(
+    null,
+  );
   const [selectedDeploymentConfiguration, setSelectedDeploymentConfiguration] =
     useState<DeploymentConfigurationSchema | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,20 +122,16 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       setError(null);
       setSchemas([]);
+      setToolsets([]);
 
-      const [deploymentsResult, schemasResult] = await Promise.allSettled([
-        getDeployments([ListDeploymentsInterfaceTypeEnum.Chat]),
-        getApplicationSchemas(),
-      ]);
+      const [deploymentsResult, schemasResult, toolsetsResult] =
+        await Promise.allSettled([
+          getDeployments([ListDeploymentsInterfaceTypeEnum.Chat]),
+          getApplicationSchemas(),
+          listToolsets(),
+        ]);
 
       if (signal.isCancelled) return;
-
-      if (deploymentsResult.status === 'rejected') {
-        const err = deploymentsResult.reason;
-        setError(err instanceof Error ? err : new Error(String(err)));
-        setIsLoading(false);
-        return;
-      }
 
       if (schemasResult.status === 'rejected') {
         console.warn(
@@ -109,23 +142,32 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         setSchemas(schemasResult.value.schemas ?? []);
       }
 
+      if (toolsetsResult.status !== 'rejected') {
+        setToolsets(sortToolsets(toolsetsResult.value.data ?? []));
+      }
+
+      if (deploymentsResult.status === 'rejected') {
+        const err = deploymentsResult.reason;
+        setError(err instanceof Error ? err : new Error(String(err)));
+        setIsLoading(false);
+        return;
+      }
+
       const deployments = sortDeployments(
         deploymentsResult.value.deployments ?? [],
       );
       setRawDeployments(deployments);
-      setSelectedItemId((prev) => {
-        if (prev !== null && deployments.some((d) => d.id === prev)) {
-          return prev;
-        }
-        const stored = readStoredDeploymentId();
-        if (stored != null && deployments.some((d) => d.id === stored)) {
-          return stored;
-        }
-        return deployments[0]?.id ?? null;
-      });
+      setSelectedItemIdState((prev) =>
+        resolveInitialSelection(
+          deployments,
+          prev,
+          userConfigSelectedId,
+          appConfig.defaultDeploymentId,
+        ),
+      );
       setIsLoading(false);
     },
-    [],
+    [userConfigSelectedId, appConfig.defaultDeploymentId],
   );
 
   useEffect(() => {
@@ -182,32 +224,50 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [selectedItemId]);
 
-  const selectDeployment = useCallback((id: string) => {
-    writeStoredDeploymentId(id);
-    setSelectedItemId(id);
+  const setSelectedItemId = useCallback(
+    (id: string | null) => {
+      setSelectedItemIdState(id);
+      void setSelectedDeployment(id).catch((err) => {
+        console.warn(
+          '[DeploymentsContext] Failed to persist selected deployment',
+          err,
+        );
+      });
+    },
+    [setSelectedDeployment],
+  );
+
+  const restoreSelectedItemId = useCallback((id: string) => {
+    setSelectedItemIdState(id);
   }, []);
 
+  const contextValue = useMemo(
+    () => ({
+      items,
+      selectedItemId,
+      setSelectedItemId,
+      restoreSelectedItemId,
+      selectedDeploymentConfiguration,
+      isLoading,
+      error,
+      schemas,
+      toolsets,
+    }),
+    [
+      items,
+      selectedItemId,
+      setSelectedItemId,
+      restoreSelectedItemId,
+      selectedDeploymentConfiguration,
+      isLoading,
+      error,
+      schemas,
+      toolsets,
+    ],
+  );
+
   return (
-    <DeploymentsContext.Provider
-      value={useMemo(
-        () => ({
-          items,
-          selectedItemId,
-          setSelectedItemId: selectDeployment,
-          selectedDeploymentConfiguration,
-          isLoading,
-          error,
-        }),
-        [
-          items,
-          selectedItemId,
-          selectDeployment,
-          selectedDeploymentConfiguration,
-          isLoading,
-          error,
-        ],
-      )}
-    >
+    <DeploymentsContext.Provider value={contextValue}>
       {children}
     </DeploymentsContext.Provider>
   );

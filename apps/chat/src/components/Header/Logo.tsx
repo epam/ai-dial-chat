@@ -1,4 +1,3 @@
-import { DialLoader } from '@epam/ai-dial-ui-kit';
 import { FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatI18nKeys } from '../../constants/translation-keys';
@@ -7,25 +6,31 @@ import { getIconPath } from '../../utils/icon-path';
 
 /**
  * Logo component that displays the theme-specific logo image or fallback text.
- * Shows loading skeleton while theme is being loaded.
  */
 const Logo: FC = () => {
   const { t } = useTranslation();
-  const { currentThemeLogo, isLoading } = useTheme();
+  const { currentThemeLogo, currentThemeFavicon } = useTheme();
 
-  // Show loading skeleton while theme is loading
-  if (isLoading) {
-    return <DialLoader size={14} ariaLabel="logo loading" />;
-  }
+  if (!currentThemeLogo && !currentThemeFavicon) return null;
 
-  return currentThemeLogo ? (
-    <a
-      href="/"
-      aria-label={t(ChatI18nKeys.Logo)}
-      style={{ backgroundImage: `url(${getIconPath(currentThemeLogo)})` }}
-      className="h-[48px] min-w-[125px] bg-contain bg-right bg-no-repeat"
-    />
-  ) : null;
+  return (
+    <a href="/" aria-label={t(ChatI18nKeys.Logo)} className="flex items-center">
+      {currentThemeFavicon && (
+        <span
+          style={{
+            backgroundImage: `url(${getIconPath(currentThemeFavicon)})`,
+          }}
+          className="h-[32px] w-[32px] bg-contain bg-center bg-no-repeat desktop:hidden"
+        />
+      )}
+      {currentThemeLogo && (
+        <span
+          style={{ backgroundImage: `url(${getIconPath(currentThemeLogo)})` }}
+          className="hidden h-[48px] min-w-[125px] bg-contain bg-right bg-no-repeat desktop:block"
+        />
+      )}
+    </a>
+  );
 };
 
 export default memo(Logo);

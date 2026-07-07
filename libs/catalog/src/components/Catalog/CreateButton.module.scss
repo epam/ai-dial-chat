@@ -1,0 +1,117 @@
+.splitDivider {
+  display: block;
+  flex-shrink: 0;
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 1px;
+}
+
+// Gradient and shadow are now handled globally by .dial-primary-solid-button.dial-primary-solid-button
+// in styles.scss. This class only needs to exist so the className prop can be set;
+// no extra declarations required.
+.gradientBtn {
+}
+
+// ── Chevron ──────────────────────────────────────────────────────────────────
+
+.chevron {
+  transition: transform 150ms ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+// ── Menu surface ─────────────────────────────────────────────────────────────
+
+// Applied via DialDropdown's listClassName — overrides the kit's wrapper
+// shadow/radius/overflow so the shadow is visible outside the clipping boundary.
+.dropdownWrapper {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 16px 40px rgba(16, 24, 40, 0.12) !important;
+}
+
+.menu {
+  width: 288px;
+  padding: 6px;
+  background: var(--bg-layer-0);
+  border-radius: 12px;
+  animation: menuEnter 120ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+// ── Menu item ─────────────────────────────────────────────────────────────────
+
+.item {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+  outline: none;
+  transition: background 100ms ease;
+
+  &:hover {
+    background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--text-accent-primary);
+    outline-offset: -2px;
+    background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
+  }
+}
+
+.itemIcon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.itemText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemLabel {
+  color: var(--text-primary);
+}
+
+.itemDescription {
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ── Animations ───────────────────────────────────────────────────────────────
+
+@keyframes menuEnter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,13 +1,23 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import type {
+  NextFunction,
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+} from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserConfigController } from '../user-config.controller';
 import { UserConfigService } from '../user-config.service';
 
 const TEST_USER = {
+  sid: 'test-sid',
+  sub: 'test-sub',
+  providerId: 'keycloak',
   at: 'test-access-token',
   bucket: 'test-bucket',
+  claims: {},
+  csrf: 'test-csrf',
 };
 
 describe('UserConfigController (integration)', () => {
@@ -15,12 +25,18 @@ describe('UserConfigController (integration)', () => {
   let service: {
     readConfig: ReturnType<typeof vi.fn>;
     updatePin: ReturnType<typeof vi.fn>;
+    updateInstalledToolset: ReturnType<typeof vi.fn>;
+    updateInstalledDeployment: ReturnType<typeof vi.fn>;
+    updateSelectedDeployment: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     service = {
       readConfig: vi.fn(),
       updatePin: vi.fn(),
+      updateInstalledToolset: vi.fn(),
+      updateInstalledDeployment: vi.fn(),
+      updateSelectedDeployment: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -29,10 +45,12 @@ describe('UserConfigController (integration)', () => {
     }).compile();
 
     app = module.createNestApplication();
-    app.use((req, _res, next) => {
-      req.user = TEST_USER;
-      next();
-    });
+    app.use(
+      (req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
+        req.user = TEST_USER;
+        next();
+      },
+    );
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -49,8 +67,13 @@ describe('UserConfigController (integration)', () => {
   });
 
   describe('GET /user-config', () => {
-    it('returns 200 with the user config', async () => {
-      const config = { version: 1, pinnedConversationIds: ['conv-1'] };
+    it('returns 200 with the v2 user config', async () => {
+      const config = {
+        version: 2,
+        conversations: { pinnedIds: ['conv-1'] },
+        toolsets: { installed: ['toolset-abc'] },
+        deployments: { installed: [] },
+      };
       service.readConfig.mockResolvedValue(config);
 
       const result = await request(app.getHttpServer())
@@ -130,6 +153,163 @@ describe('UserConfigController (integration)', () => {
         .patch('/user-config/pins')
         .send({})
         .expect(400);
+    });
+  });
+
+  describe('PATCH /user-config/toolsets', () => {
+    it('returns 204 for a valid install request', async () => {
+      service.updateInstalledToolset.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/user-config/toolsets')
+        .send({ id: 'toolset-abc', isInstalled: true })
+        .expect(204);
+
+      expect(service.updateInstalledToolset).toHaveBeenCalledWith(
+        'toolset-abc',
+        true,
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 204 for a valid uninstall request', async () => {
+      service.updateInstalledToolset.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/user-config/toolsets')
+        .send({ id: 'toolset-abc', isInstalled: false })
+        .expect(204);
+
+      expect(service.updateInstalledToolset).toHaveBeenCalledWith(
+        'toolset-abc',
+        false,
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 400 when id is missing', async () => {
+      await request(app.getHttpServer())
+        .patch('/user-config/toolsets')
+        .send({ isInstalled: true })
+        .expect(400);
+    });
+
+    it('returns 400 when isInstalled is not a boolean', async () => {
+      await request(app.getHttpServer())
+        .patch('/user-config/toolsets')
+        .send({ id: 'toolset-abc', isInstalled: 'yes' })
+        .expect(400);
+    });
+
+    it('returns 400 when body is empty', async () => {
+      await request(app.getHttpServer())
+        .patch('/user-config/toolsets')
+        .send({})
+        .expect(400);
+    });
+  });
+
+  describe('PATCH /user-config/deployments', () => {
+    it('returns 204 for a valid install request', async () => {
+      service.updateInstalledDeployment.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments')
+        .send({ id: 'deployment-xyz', isInstalled: true })
+        .expect(204);
+
+      expect(service.updateInstalledDeployment).toHaveBeenCalledWith(
+        'deployment-xyz',
+        true,
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 204 for a valid uninstall request', async () => {
+      service.updateInstalledDeployment.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments')
+        .send({ id: 'deployment-xyz', isInstalled: false })
+        .expect(204);
+
+      expect(service.updateInstalledDeployment).toHaveBeenCalledWith(
+        'deployment-xyz',
+        false,
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 400 when id is missing', async () => {
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments')
+        .send({ isInstalled: true })
+        .expect(400);
+    });
+
+    it('returns 400 when isInstalled is not a boolean', async () => {
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments')
+        .send({ id: 'deployment-xyz', isInstalled: 'yes' })
+        .expect(400);
+    });
+
+    it('returns 400 when body is empty', async () => {
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments')
+        .send({})
+        .expect(400);
+    });
+  });
+
+  describe('PATCH /user-config/deployments/selected', () => {
+    it('returns 204 for a valid id', async () => {
+      service.updateSelectedDeployment.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments/selected')
+        .send({ id: 'gpt-4o' })
+        .expect(204);
+
+      expect(service.updateSelectedDeployment).toHaveBeenCalledWith(
+        'gpt-4o',
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 204 for null id (clear selection)', async () => {
+      service.updateSelectedDeployment.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments/selected')
+        .send({ id: null })
+        .expect(204);
+
+      expect(service.updateSelectedDeployment).toHaveBeenCalledWith(
+        null,
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 204 for empty body (id defaults to null)', async () => {
+      service.updateSelectedDeployment.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments/selected')
+        .send({})
+        .expect(204);
+
+      expect(service.updateSelectedDeployment).toHaveBeenCalledWith(
+        null,
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
     });
   });
 });

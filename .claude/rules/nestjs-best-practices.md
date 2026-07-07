@@ -1,0 +1,56 @@
+---
+description: NestJS conventions for apps/chat-api — controllers thin + Swagger, services use Logger/ConfigService, DIAL Core calls prefer @epam/ai-dial-typescript-sdk, DTOs validated, errors as HTTP exceptions. Source of truth lives in apps/chat-api/AGENTS.md.
+globs: apps/chat-api/**/*.ts
+alwaysApply: false
+---
+
+# NestJS best practices (apps/chat-api)
+
+## TL;DR
+
+- **All business HTTP APIs must be versioned** with URI versioning. `main.ts` must call
+  `app.setGlobalPrefix('api')` **and** `app.enableVersioning({ type: VersioningType.URI })`.
+  Business controllers use `@Controller({ path: '<resource>', version: '1' })` →
+  routes resolve to `/api/v1/<resource>`. Infrastructure endpoints (health, metrics) are
+  exempt — use plain `@Controller('health')`.
+- **Controllers are thin**: `@ApiTags` + `@Controller({ path, version })`, `@ApiOperation` +
+  `@ApiResponse` for **every** status code, `@Throttle` per public endpoint, delegate to a
+  service. Reference: `apps/chat-api/src/themes/theme.controller.ts`.
+- **OpenAPI is part of endpoint implementation**: handler names become generated SDK method
+  names through `operationIdFactory`, so use names like `listModels`/`getCurrentUser`.
+  Success `@ApiResponse` entries need `type`, `schema`, or `content`; path/query params need
+  DTO Swagger metadata or `@ApiParam`/`@ApiQuery`. After endpoint changes run
+  `npm run openapi`, `npm run openapi:check`, and build/lint `chat-api-client`.
+- **Services use Logger + ConfigService**: `private readonly logger = new Logger(X.name)`,
+  `configService.get('VAR', { infer: true })`. DIAL Core integrations prefer
+  `@epam/ai-dial-typescript-sdk` through `apps/chat-api/src/app/app.service.ts`; use raw
+  `fetch` only for non-DIAL upstreams or SDK gaps. No `console.log`, no `process.env`
+  reads, no `as string`.
+  References: `apps/chat-api/src/app/app.service.ts`, `apps/chat-api/src/themes/theme.service.ts`.
+- **DTOs are mandatory**: `class-validator` + `@ApiProperty` on every field; `@Matches`
+  with an allowlist regex for any string that hits a path / URL / log line.
+  Response DTOs are required for JSON success responses; use classes, not interfaces, so
+  Swagger can emit runtime metadata.
+  Reference: `apps/chat-api/src/themes/dto/get-theme-icon.dto.ts`.
+- **Errors are typed HTTP exceptions**: `NotFoundException`, `BadGatewayException`,
+  `ServiceUnavailableException`, `UnauthorizedException`, `ForbiddenException`. Never
+  return `null` to signal failure; never swallow without logging.
+- **Env is validated at boot**: add new vars to
+  `apps/chat-api/src/config/environment.config.ts` (`EnvironmentVariables`). Fail fast
+  on missing/invalid values; never cast.
+- **Security defaults**: `helmet` + global `ValidationPipe` ({ whitelist:true,
+  forbidNonWhitelisted:true, transform:true }) are mandatory. Auth/session cookies are
+  `HttpOnly` + `Secure` + `SameSite=Lax` (use `__Host-` prefix when host-scoped). Never
+  log tokens, refresh tokens, cookie payloads, or full bodies for auth/payment endpoints.
+- **Tests co-locate**: `*.spec.ts` next to the source. Use `@nestjs/testing` for units
+  and `supertest` for e2e. Cover happy path + every thrown exception + validation
+  rejection (incl. path traversal) + rate-limit boundary.
+
+## Verification after each slice
+
+```sh
+npm exec nx test  chat-api
+npm exec nx lint  chat-api
+npm exec nx build chat-api   # when bundling/Nest startup is affected
+npm run openapi && npm run openapi:check   # when endpoint contracts changed
+```

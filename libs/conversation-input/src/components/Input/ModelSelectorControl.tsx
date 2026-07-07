@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DialDropdown,
   DialDropdownIcon,
   DialGhostIconButton,
   ElementSize,
@@ -21,6 +22,13 @@ interface Props {
   isMobile: boolean;
   isInputDisabled?: boolean;
   style: CSSProperties;
+  modelPickerOverlay: InputProps['modelPickerOverlay'];
+  /** Whether the model picker popover is open (controlled from Input). */
+  isPickerOpen?: boolean;
+  /** Toggles the model picker popover open/closed. */
+  onPickerToggle?: () => void;
+  /** Called by DialDropdown when open state changes (e.g. outside click). */
+  onPickerOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -35,6 +43,10 @@ export const ModelSelectorControl: FC<Props> = ({
   isMobile,
   isInputDisabled = false,
   style,
+  modelPickerOverlay,
+  isPickerOpen,
+  onPickerToggle,
+  onPickerOpenChange,
 }) => {
   const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
 
@@ -59,14 +71,33 @@ export const ModelSelectorControl: FC<Props> = ({
     ? 'pointer-events-none opacity-50 cursor-not-allowed'
     : undefined;
 
+  const caretIcon = (
+    <div
+      className={mergeClasses(
+        styles.modelSelectorCaret,
+        'flex size-5 items-center justify-center rounded-full bg-layer-2',
+      )}
+    >
+      <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
+    </div>
+  );
+
   if (isMobile) {
     return (
       <>
         <DialGhostIconButton
-          icon={selectorIcon}
+          icon={
+            <div className="relative flex items-center">
+              {selectorIcon}
+              <div className="absolute end-[-12px]"> {caretIcon}</div>
+            </div>
+          }
           aria-label={selectorAriaLabel}
           onClick={() => setIsModelSheetOpen(true)}
-          className={disabledIconClassName}
+          className={mergeClasses(
+            styles.modelSelectorButton,
+            disabledIconClassName,
+          )}
         />
         <ModelSelectorBottomSheet
           isOpen={isModelSheetOpen}
@@ -86,6 +117,44 @@ export const ModelSelectorControl: FC<Props> = ({
     );
   }
 
+  if (modelPickerOverlay) {
+    return (
+      <DialDropdown
+        placement="top-end"
+        matchReferenceWidth={false}
+        open={isPickerOpen}
+        onOpenChange={onPickerOpenChange}
+        trigger={[]}
+        outsideClosable
+        renderOverlay={() =>
+          modelPickerOverlay(() => onPickerOpenChange?.(false))
+        }
+        listClassName="cp-dropdown-overlay !w-[480px]"
+      >
+        <button
+          type="button"
+          aria-label={selectorAriaLabel}
+          className={mergeClasses(
+            'relative flex items-center justify-center rounded-md p-2',
+            styles.modelSelectorButton,
+            isInputDisabled || isStreaming ? disabledIconClassName : undefined,
+            isInputDisabled && styles.modelSelectorButtonDisabled,
+          )}
+          onClick={() => {
+            if (!isInputDisabled && !isStreaming) {
+              onPickerToggle?.();
+            }
+          }}
+        >
+          <div className="relative flex items-center">
+            {selectorIcon}
+            <div className="absolute end-[-12px]">{caretIcon}</div>
+          </div>
+        </button>
+      </DialDropdown>
+    );
+  }
+
   return (
     <DialDropdownIcon
       icon={selectorIcon}
@@ -94,19 +163,10 @@ export const ModelSelectorControl: FC<Props> = ({
       menuHeader={menuHeader}
       placement="bottom-end"
       matchReferenceWidth={false}
-      listClassName="!w-[240px] !max-h-80 shadow-md"
+      listClassName="cp-dropdown-overlay !w-[240px] !max-h-80"
       onOpenChange={handleModelSelectorOpenChange}
       size={ElementSize.Standard}
-      caretIcon={
-        <div
-          className={mergeClasses(
-            styles.modelSelectorCaret,
-            'flex size-5 items-center justify-center rounded-full',
-          )}
-        >
-          <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
-        </div>
-      }
+      caretIcon={caretIcon}
       iconClassName={isInputDisabled ? disabledIconClassName : undefined}
       buttonClassName={mergeClasses(
         'bg-transparent',

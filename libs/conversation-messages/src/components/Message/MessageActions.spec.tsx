@@ -7,7 +7,7 @@ import { MessageActions } from './MessageActions';
 describe('MessageActions', () => {
   describe('role=User (default)', () => {
     it('renders Edit and Delete buttons', () => {
-      render(<MessageActions />);
+      render(<MessageActions onEdit={vi.fn()} onDelete={vi.fn()} />);
       expect(screen.getByRole('button', { name: 'Edit message' })).toBeTruthy();
       expect(
         screen.getByRole('button', { name: 'Delete message' }),

@@ -64,21 +64,25 @@ export const MessageActions: FC<MessageActionsProps> = ({
     >
       {role === MessageRole.User ? (
         <>
-          <DialGhostIconButton
-            icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} />}
-            size={ElementSize.Small}
-            aria-label={ariaLabels?.editMessage ?? 'Edit message'}
-            tooltipProps={{ tooltip: tooltips?.edit ?? 'Edit' }}
-            onClick={onEdit}
-            onMouseEnter={onEditHover}
-          />
-          <DialGhostIconButton
-            icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}
-            size={ElementSize.Small}
-            aria-label={ariaLabels?.deleteMessage ?? 'Delete message'}
-            tooltipProps={{ tooltip: tooltips?.delete ?? 'Delete' }}
-            onClick={onDelete}
-          />
+          {onEdit && (
+            <DialGhostIconButton
+              icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} />}
+              size={ElementSize.Small}
+              aria-label={ariaLabels?.editMessage ?? 'Edit message'}
+              tooltipProps={{ tooltip: tooltips?.edit ?? 'Edit' }}
+              onClick={onEdit}
+              onMouseEnter={onEditHover}
+            />
+          )}
+          {onDelete && (
+            <DialGhostIconButton
+              icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}
+              size={ElementSize.Small}
+              aria-label={ariaLabels?.deleteMessage ?? 'Delete message'}
+              tooltipProps={{ tooltip: tooltips?.delete ?? 'Delete' }}
+              onClick={onDelete}
+            />
+          )}
         </>
       ) : (
         <>
@@ -140,7 +144,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.likeResponse ?? 'Like response'}
               className={
                 activeRating === MessageRating.Like
-                  ? 'text-accent-primary'
+                  ? '!text-accent-primary'
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
@@ -154,7 +158,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.dislikeResponse ?? 'Dislike response'}
               className={
                 activeRating === MessageRating.Dislike
-                  ? 'text-accent-primary'
+                  ? '!text-accent-primary'
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}

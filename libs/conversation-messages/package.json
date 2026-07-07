@@ -20,10 +20,9 @@
   "peerDependencies": {
     "react": "^19.0.0",
     "@tabler/icons-react": "^3.0.0",
-    "@epam/ai-dial-ui-kit": "0.11.0-dev.30",
-    "@epam/ai-dial-chat-shared": "0.0.1",
-    "@epam/ai-dial-conversation-input": "0.0.1",
-    "react-markdown": "^10.0.0",
-    "remark-gfm": "^4.0.0"
+    "@epam/ai-dial-ui-kit": "0.12.0-dev.10",
+    "@epam/ai-dial-chat-shared": "*",
+    "@epam/ai-dial-conversation-input": "*",
+    "react-markdown": "^10.0.0"
   }
 }

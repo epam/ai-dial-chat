@@ -25,7 +25,11 @@ const mockResponse: DeploymentsResponseDto = {
   ],
 };
 
-const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
+const TEST_USER = {
+  sub: 'user-123',
+  at: 'test-access-token',
+  bucket: 'test-bucket',
+};
 
 async function buildApp(service: unknown): Promise<INestApplication> {
   const injectUser = true;
@@ -62,12 +66,17 @@ async function buildApp(service: unknown): Promise<INestApplication> {
 
 describe('DeploymentsController (integration)', () => {
   let app: INestApplication;
-  let service: { listDeployments: ReturnType<typeof vi.fn> };
+  let service: {
+    listDeployments: ReturnType<typeof vi.fn>;
+    getDeploymentConfiguration: ReturnType<typeof vi.fn>;
+    getDeploymentLimits: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     service = {
       listDeployments: vi.fn().mockResolvedValue(mockResponse),
       getDeploymentConfiguration: vi.fn(),
+      getDeploymentLimits: vi.fn(),
     };
     app = await buildApp(service);
   });
@@ -87,8 +96,51 @@ describe('DeploymentsController (integration)', () => {
       expect(service.listDeployments).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        TEST_USER.bucket,
         undefined,
       );
+    });
+
+    it('includes new owner and isMy fields when service returns them', async () => {
+      const enrichedResponse: DeploymentsResponseDto = {
+        deployments: [
+          {
+            id: 'my-app',
+            displayName: 'My App',
+            type: 'application',
+            owner: 'users/alice@example.com',
+            isMy: true,
+          },
+        ],
+      };
+      service.listDeployments.mockResolvedValue(enrichedResponse);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/deployments')
+        .expect(200);
+
+      expect(res.body.deployments[0].owner).toBe('users/alice@example.com');
+      expect(res.body.deployments[0].isMy).toBe(true);
+    });
+
+    it('includes applicationFolder when service returns it for a nested application', async () => {
+      const enrichedResponse: DeploymentsResponseDto = {
+        deployments: [
+          {
+            id: 'folder1/my-app',
+            displayName: 'My App',
+            type: 'application',
+            applicationFolder: 'folder1',
+          },
+        ],
+      };
+      service.listDeployments.mockResolvedValue(enrichedResponse);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/deployments')
+        .expect(200);
+
+      expect(res.body.deployments[0].applicationFolder).toBe('folder1');
     });
 
     it('returns 200 with ?interface_type=chat', async () => {
@@ -112,6 +164,7 @@ describe('DeploymentsController (integration)', () => {
       expect(service.listDeployments).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        TEST_USER.bucket,
         ['chat'],
       );
     });
@@ -120,6 +173,32 @@ describe('DeploymentsController (integration)', () => {
       await request(app.getHttpServer())
         .get('/api/v1/deployments?interface_type=unknown')
         .expect(400);
+    });
+
+    it('returns 400 for old embeddings value', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments?interface_type=embeddings')
+        .expect(400);
+    });
+
+    it('returns 200 for corrected embedding value', async () => {
+      const embeddingResponse: DeploymentsResponseDto = {
+        deployments: [
+          { id: 'embed-model', displayName: 'Embed', type: 'model' },
+        ],
+      };
+      service.listDeployments.mockResolvedValue(embeddingResponse);
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments?interface_type=embedding')
+        .expect(200);
+
+      expect(service.listDeployments).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        TEST_USER.bucket,
+        ['embedding'],
+      );
     });
 
     it('returns 401 when service throws UnauthorizedException', async () => {
@@ -179,6 +258,59 @@ describe('DeploymentsController (integration)', () => {
 
       await request(app.getHttpServer())
         .get('/api/v1/deployments/statgpt/configuration')
+        .expect(503);
+    });
+  });
+
+  describe('GET /api/v1/deployments/:deployment/limits', () => {
+    const mockLimits = {
+      dayTokenStats: { total: 10000, used: 4000 },
+    };
+
+    it('returns 200 with deployment limits', async () => {
+      service.getDeploymentLimits.mockResolvedValue(mockLimits);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/deployments/gpt-4o/limits')
+        .expect(200);
+
+      expect(res.body).toEqual(mockLimits);
+      expect(service.getDeploymentLimits).toHaveBeenCalledWith(
+        'gpt-4o',
+        TEST_USER.at,
+      );
+    });
+
+    it('accepts percent-encoded deployment names in a single path segment', async () => {
+      service.getDeploymentLimits.mockResolvedValue(mockLimits);
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/applications%2Ffoo%2Fbar/limits')
+        .expect(200);
+
+      expect(service.getDeploymentLimits).toHaveBeenCalledWith(
+        'applications/foo/bar',
+        TEST_USER.at,
+      );
+    });
+
+    it('returns 404 when limits not found', async () => {
+      const { NotFoundException } = await import('@nestjs/common');
+      service.getDeploymentLimits.mockRejectedValue(new NotFoundException());
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/unknown/limits')
+        .expect(404);
+    });
+
+    it('returns 503 when DIAL Core is unreachable', async () => {
+      const { ServiceUnavailableException } = await import('@nestjs/common');
+      service.getDeploymentLimits.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/gpt-4o/limits')
         .expect(503);
     });
   });

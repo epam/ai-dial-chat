@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import type { AriaAttributes } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
+import { NAVIGATION_CONFIG } from '../../../constants/navigation';
+import { NavigationI18nKeys } from '../../../constants/translation-keys';
 import Navigation from '../Navigation';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -11,23 +13,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialGhostIconButton: ({
     'aria-label': ariaLabel,
     'aria-current': ariaCurrent,
-    onClick,
   }: {
     'aria-label': string;
     'aria-current'?: AriaAttributes['aria-current'];
-    onClick: () => void;
   }) => (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      aria-current={ariaCurrent}
-      onClick={onClick}
-    />
+    <button type="button" aria-label={ariaLabel} aria-current={ariaCurrent} />
   ),
+}));
+
+vi.mock('../../../context/ThemeContext', () => ({
+  useTheme: () => ({ currentThemeFavicon: undefined }),
 }));
 
 vi.mock('../UserMenu', () => ({
   default: () => <div>User menu</div>,
+}));
+
+vi.mock('../../LogoutConfirmation/LogoutConfirmationModal', () => ({
+  default: () => null,
 }));
 
 const renderNavigation = (initialPath = '/') =>
@@ -39,16 +42,16 @@ const renderNavigation = (initialPath = '/') =>
 
 describe('Navigation', () => {
   it('renders the nav landmark with aria-label', () => {
-    const { container } = renderNavigation();
-    const nav = container.querySelector('nav');
-    expect(nav).toBeTruthy();
-    expect(nav?.getAttribute('aria-label')).toBe('navigation.ariaLabel');
+    renderNavigation();
+    expect(
+      screen.getByRole('navigation', { name: NavigationI18nKeys.AriaLabel }),
+    ).toBeTruthy();
   });
 
   it('renders a Home button', () => {
     renderNavigation();
     expect(
-      screen.getByRole('button', { name: 'navigation.home' }),
+      screen.getByRole('button', { name: NavigationI18nKeys.Home }),
     ).toBeTruthy();
   });
 
@@ -56,8 +59,44 @@ describe('Navigation', () => {
     renderNavigation('/');
     expect(
       screen
-        .getByRole('button', { name: 'navigation.home' })
+        .getByRole('button', { name: NavigationI18nKeys.Home })
         .getAttribute('aria-current'),
     ).toBe('page');
+  });
+
+  it('marks Catalog as active on the /catalog route', () => {
+    renderNavigation('/catalog');
+    expect(
+      screen
+        .getByRole('button', { name: NavigationI18nKeys.Catalog })
+        .getAttribute('aria-current'),
+    ).toBe('page');
+  });
+
+  it('does not mark Home as active on /catalog', () => {
+    renderNavigation('/catalog');
+    expect(
+      screen
+        .getByRole('button', { name: NavigationI18nKeys.Home })
+        .getAttribute('aria-current'),
+    ).toBeNull();
+  });
+
+  it('renders each nav item as a link with the correct href', () => {
+    const { container } = renderNavigation();
+    for (const { path } of NAVIGATION_CONFIG) {
+      const link = container.querySelector(`a[href="${path}"]`);
+      expect(link, `expected a link with href="${path}"`).toBeTruthy();
+    }
+  });
+
+  it('Home nav item has href="/"', () => {
+    const { container } = renderNavigation();
+    expect(container.querySelector('a[href="/"]')).toBeTruthy();
+  });
+
+  it('Catalog nav item has href="/catalog"', () => {
+    const { container } = renderNavigation();
+    expect(container.querySelector('a[href="/catalog"]')).toBeTruthy();
   });
 });

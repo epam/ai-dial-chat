@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { SidebarSide } from '../../../models/SidebarPanel';
+import { SidebarOrientation } from '../../../types/orientation';
 import { SidebarPanel } from '../SidebarPanel';
 
 // Minimal mock so DialGhostIconButton passes through aria-label and calls onClick.
@@ -14,11 +14,23 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-label': string;
     onClick: () => void;
   }) => <button type="button" aria-label={ariaLabel} onClick={onClick} />,
+  DialEllipsisTooltip: ({ text }: { text: React.ReactNode }) => (
+    <span>{text}</span>
+  ),
+  ResizableContainerSide: {
+    Left: 'left',
+    Right: 'right',
+  },
+  DialConditionalResizableContainer: ({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) => <div>{children}</div>,
 }));
 
 const defaultProps = {
   isOpen: true,
-  side: SidebarSide.Right,
+  orientation: SidebarOrientation.Right,
   onClose: vi.fn(),
   ariaLabel: 'Test panel',
   closeLabel: 'Close',
@@ -74,7 +86,7 @@ describe('SidebarPanel', () => {
     render(
       <SidebarPanel
         {...defaultProps}
-        side={SidebarSide.Right}
+        orientation={SidebarOrientation.Right}
         rightActions={<button aria-label="download" />}
       >
         <span />
@@ -86,17 +98,17 @@ describe('SidebarPanel', () => {
     );
   });
 
-  it('side=right: applies border-l divider', () => {
+  it('side=right: applies border-s divider', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} side={SidebarSide.Right}>
+      <SidebarPanel {...defaultProps} orientation={SidebarOrientation.Right}>
         <span />
       </SidebarPanel>,
     );
     expect(
-      container.querySelector('aside')?.classList.contains('border-l'),
+      container.querySelector('aside')?.classList.contains('border-s'),
     ).toBe(true);
     expect(
-      container.querySelector('aside')?.classList.contains('border-r'),
+      container.querySelector('aside')?.classList.contains('border-e'),
     ).toBe(false);
   });
 
@@ -105,7 +117,7 @@ describe('SidebarPanel', () => {
     render(
       <SidebarPanel
         {...defaultProps}
-        side={SidebarSide.Left}
+        orientation={SidebarOrientation.Left}
         rightActions={<button aria-label="download" />}
       >
         <span />
@@ -117,17 +129,17 @@ describe('SidebarPanel', () => {
     );
   });
 
-  it('side=left: applies border-r divider', () => {
+  it('side=left: applies border-e divider', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} side={SidebarSide.Left}>
+      <SidebarPanel {...defaultProps} orientation={SidebarOrientation.Left}>
         <span />
       </SidebarPanel>,
     );
     expect(
-      container.querySelector('aside')?.classList.contains('border-r'),
+      container.querySelector('aside')?.classList.contains('border-e'),
     ).toBe(true);
     expect(
-      container.querySelector('aside')?.classList.contains('border-l'),
+      container.querySelector('aside')?.classList.contains('border-s'),
     ).toBe(false);
   });
 

@@ -3,6 +3,7 @@ import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { DeploymentLimitsResponseDto } from '../openapi/openapi-response.dto';
 import { DeploymentsService } from './deployments.service';
 import { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import { DeploymentsResponseDto } from './dto/deployment-item.dto';
@@ -24,7 +25,7 @@ export class DeploymentsController {
     name: 'interface_type',
     required: false,
     isArray: true,
-    enum: ['chat', 'embeddings', 'mcp', 'custom_ui', 'all'],
+    enum: ['chat', 'embedding', 'mcp', 'custom_ui', 'all'],
     description: 'Filter by interface type (repeatable)',
     example: ['chat', 'mcp'],
   })
@@ -45,10 +46,11 @@ export class DeploymentsController {
     description: 'DIAL Core is unavailable or timed out',
   })
   listDeployments(@Query() query: DeploymentsQueryDto, @Req() req: Request) {
-    const { sub, at } = req.user as SessionUser;
+    const { sub, at, bucket } = req.user as SessionUser;
     return this.deploymentsService.listDeployments(
       sub,
       at,
+      bucket,
       query.interface_type,
     );
   }
@@ -82,5 +84,51 @@ export class DeploymentsController {
       sub,
       at,
     );
+  }
+
+  @Get(':deployment/limits')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Header('Cache-Control', 'private, no-store')
+  @ApiOperation({
+    operationId: 'getDeploymentLimits',
+    summary: 'Get deployment usage limits',
+    description:
+      'Returns spent/limit statistics for a single deployment. ' +
+      "Proxies GET /v1/deployments/{deployment_name}/limits using the caller's session access token. " +
+      'Not cached — every request hits DIAL Core for real-time usage data.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully retrieved deployment limits',
+    type: DeploymentLimitsResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Caller lacks permission to access deployment limits',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Deployment limits not found',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  getDeploymentLimits(
+    @Req() req: Request,
+    @Param('deployment') deployment: string,
+  ) {
+    const { at } = req.user as SessionUser;
+    return this.deploymentsService.getDeploymentLimits(deployment, at);
   }
 }

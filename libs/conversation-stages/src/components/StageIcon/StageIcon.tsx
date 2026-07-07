@@ -23,7 +23,7 @@ export const StageIcon: FC<Props> = ({ status, isLive }) => {
         />
       );
     }
-    return <DialSpinner />;
+    return <DialSpinner size={20} />;
   }
   if (status === StageStatus.Completed) {
     return (
@@ -33,6 +33,7 @@ export const StageIcon: FC<Props> = ({ status, isLive }) => {
       />
     );
   }
+
   return (
     <IconAlertCircle
       size={DIAL_ICON_SIZE.MD}

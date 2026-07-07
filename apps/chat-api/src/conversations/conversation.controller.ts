@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Logger,
+  NotFoundException,
   Patch,
   Post,
   Put,
@@ -20,10 +21,14 @@ import {
   ConversationMetadataDto,
   ConversationResponseDto,
 } from '../openapi/openapi-response.dto';
+import { ConversationGenerationService } from './conversation-generation.service';
 import { ConversationService } from './conversation.service';
 import { ConversationListResponseDto } from './dto/conversation-list.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { DeleteAllConversationsBodyDto } from './dto/delete-all-conversations-body.dto';
+import { DeleteConversationsBodyDto } from './dto/delete-conversations-body.dto';
+import { ConversationDeletionResultDto } from './dto/delete-conversations.dto';
 import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.dto';
 import { GetConversationMetadataDto } from './dto/get-conversation-metadata.dto';
 import { ListConversationsQueryDto } from './dto/list-conversations-query.dto';
@@ -36,6 +41,8 @@ import {
   SaveConversationQueryDto,
 } from './dto/save-conversation.dto';
 import { SendCompletionDto } from './dto/send-completion.dto';
+import { StopCompletionDto } from './dto/stop-completion.dto';
+import { WatchConversationBodyDto } from './dto/watch-conversation.dto';
 
 const SSE_KEEPALIVE_INTERVAL_MS = 15_000;
 const SSE_KEEPALIVE_PAYLOAD = ': keepalive\n\n';
@@ -45,7 +52,10 @@ const SSE_KEEPALIVE_PAYLOAD = ': keepalive\n\n';
 export class ConversationController {
   private readonly logger = new Logger(ConversationController.name);
 
-  constructor(private readonly conversationService: ConversationService) {}
+  constructor(
+    private readonly conversationService: ConversationService,
+    private readonly generationService: ConversationGenerationService,
+  ) {}
 
   @Post()
   @HttpCode(201)
@@ -183,7 +193,7 @@ export class ConversationController {
   @ApiOperation({
     summary: 'Stream a chat completion',
     description:
-      'Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.',
+      'Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.',
   })
   @ApiResponse({ status: 200, description: 'SSE stream of completion chunks' })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
@@ -193,6 +203,10 @@ export class ConversationController {
     description: 'Insufficient permissions on conversation',
   })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Another generation is already active for this conversation',
+  })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
@@ -200,15 +214,75 @@ export class ConversationController {
     @Req() req: Request,
     @Res() res: Response,
     @Body() dto: SendCompletionDto,
-  ) {
-    const { at, bucket } = req.user as SessionUser;
-    const stream = await this.conversationService.streamCompletion(
+  ): Promise<void> {
+    const { at, bucket, sid } = req.user as SessionUser;
+    await this.conversationService.streamCompletion(
       dto.path,
       at,
       bucket,
+      dto.generationId,
+      dto.mode,
       dto.message,
+      dto.messageIndex,
       dto.model,
       dto.custom_content,
+      sid,
+      res,
+    );
+  }
+
+  @Post('completions/stop')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({ summary: 'Stop an active generation' })
+  @ApiResponse({ status: 204, description: 'Generation stopped successfully' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 404,
+    description:
+      'No active generation found for the given path and generationId',
+  })
+  async stopCompletion(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() dto: StopCompletionDto,
+  ): Promise<void> {
+    const { sid } = req.user as SessionUser;
+    const aborted = this.generationService.abort(
+      sid,
+      dto.path,
+      dto.generationId,
+    );
+    if (!aborted) {
+      throw new NotFoundException(
+        'No active generation found for the given path and generationId',
+      );
+    }
+    res.status(204).end();
+  }
+
+  @Post('watch')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'watchConversation',
+    summary: 'Subscribe to conversation resource updates via SSE',
+    description:
+      'Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.',
+  })
+  @ApiResponse({ status: 200, description: 'SSE stream of resource events' })
+  @ApiResponse({ status: 400, description: 'Invalid or missing path' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 502, description: 'DIAL Core subscription failed' })
+  async watchConversation(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() dto: WatchConversationBodyDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    const stream = await this.conversationService.watchConversation(
+      dto.path,
+      at,
+      bucket,
     );
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -252,7 +326,7 @@ export class ConversationController {
       }
     } catch (err) {
       if (!isClientAborted) {
-        this.logger.error('Error while streaming completion to client', err);
+        this.logger.error('Error while streaming watch events to client', err);
       }
     } finally {
       if (keepaliveTimer) clearInterval(keepaliveTimer);
@@ -270,7 +344,7 @@ export class ConversationController {
   @ApiOperation({ summary: 'Rename a conversation by path' })
   @ApiResponse({
     status: 200,
-    description: 'Conversation renamed — new path returned',
+    description: 'Conversation renamed — display name updated, path unchanged',
     type: RenameConversationResponseDto,
   })
   @ApiResponse({
@@ -279,7 +353,6 @@ export class ConversationController {
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
-  @ApiResponse({ status: 409, description: 'Destination path already exists' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
   renameConversation(
@@ -321,6 +394,73 @@ export class ConversationController {
       at,
       bucket,
     );
+  }
+
+  @Post('deletions')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'deleteConversations',
+    summary: 'Delete selected conversations',
+    description:
+      'Deletes up to 100 owned conversations in one request. Returns a result counting deleted, already-absent, and failed items. Already-absent IDs are treated as success. IDs outside the authenticated bucket are rejected with code FORBIDDEN.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Deletion result',
+    type: ConversationDeletionResultDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'ids is empty, exceeds 100, contains non-strings, or body is missing',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 500, description: 'Unexpected internal error' })
+  deleteConversations(
+    @Req() req: Request,
+    @Body() body: DeleteConversationsBodyDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.deleteConversations(body.ids, at, bucket);
+  }
+
+  @Post('deletions/all')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 2, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'deleteAllConversations',
+    summary: 'Delete all conversations in the user bucket',
+    description:
+      "Deletes every conversation in the authenticated user's bucket. Requires { confirm: true } in the request body to prevent accidental deletion. Returns a result counting deleted, already-absent, and failed items.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Deletion result',
+    type: ConversationDeletionResultDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'confirm is missing, false, or non-boolean',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core metadata listing failed (bucket unreadable)',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable during metadata listing',
+  })
+  @ApiResponse({ status: 500, description: 'Unexpected internal error' })
+  deleteAllConversations(
+    @Req() req: Request,
+    @Body() _body: DeleteAllConversationsBodyDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.deleteAllConversations(at, bucket);
   }
 
   @Delete()

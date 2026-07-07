@@ -1,15 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ConversationSource,
-  type ConversationHistoryItem,
-} from '../../../models/ConversationPanel';
+import { ConversationHistoryItem } from '../../../models/panel-props';
+import { ConversationSource } from '../../../types/conversation-source';
 import { ConversationPanel } from '../ConversationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, LG: 24 },
-  DialGhostButton: ({
+  GhostButton: ({
     onClick,
     label,
     'aria-current': ariaCurrent,
@@ -22,7 +20,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
-  DialSearch: ({
+  SearchBar: ({
     onChange,
     placeholder,
     value,
@@ -65,16 +63,136 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
+  ButtonAppearance: { Ghost: 'ghost', Primary: 'primary' },
+  DialDropdown: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  DialIconButton: ({
+    onClick,
+    'aria-label': ariaLabel,
+  }: {
+    onClick?: () => void;
+    'aria-label'?: string;
+  }) => <button onClick={onClick} aria-label={ariaLabel} />,
+  DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DialSkeleton: () => null,
+}));
+
+vi.mock('@epam/ai-dial-chat-shared', () => ({
+  DeploymentIcon: () => null,
+  mergeClasses: (...args: (string | undefined | false | null)[]) =>
+    args.filter(Boolean).join(' '),
+  buildCssVars: () => ({}),
+}));
+
+vi.mock('@epam/ai-dial-kit', () => ({
+  GhostButton: ({
+    onClick,
+    label,
+    'aria-current': ariaCurrent,
+  }: {
+    onClick: () => void;
+    label: React.ReactNode;
+    'aria-current'?: React.AriaAttributes['aria-current'];
+    [key: string]: unknown;
+  }) => (
+    <button onClick={onClick} aria-current={ariaCurrent}>
+      {label}
+    </button>
+  ),
+}));
+
+vi.mock('@epam/ai-dial-sidebar', () => ({
+  PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
+  PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
+  SidebarOrientation: { Left: 'left', Right: 'right' },
+  SearchInput: ({
+    onChange,
+    placeholder,
+    value,
+    clearLabel,
+  }: {
+    onChange: (v: string) => void;
+    placeholder: string;
+    value: string;
+    clearLabel: string;
+  }) => (
+    <>
+      <input
+        type="search"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <button aria-label={clearLabel} onClick={() => onChange('')} />
+    </>
+  ),
+  SidebarPanel: ({
+    children,
+    isOpen,
+    ariaLabel,
+    rightActions,
+  }: {
+    children: React.ReactNode;
+    isOpen?: boolean;
+    ariaLabel: string;
+    rightActions?: React.ReactNode;
+  }) => (
+    <aside role="complementary" aria-label={ariaLabel} aria-hidden={!isOpen}>
+      {rightActions && (
+        <div role="group" aria-label="panel header actions">
+          {rightActions}
+        </div>
+      )}
+      {children}
+    </aside>
+  ),
+}));
+
+vi.mock('react-window', () => ({
+  List: ({
+    rowComponent: RowComponent,
+    rowCount,
+    rowProps,
+    role,
+  }: {
+    rowComponent: React.ComponentType<Record<string, unknown>>;
+    rowCount: number;
+    rowProps: Record<string, unknown>;
+    role?: string;
+    [key: string]: unknown;
+  }) => (
+    <div role={role}>
+      {Array.from({ length: rowCount }, (_, index) => (
+        <RowComponent
+          key={index}
+          index={index}
+          style={{}}
+          ariaAttributes={{}}
+          {...rowProps}
+        />
+      ))}
+    </div>
+  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconPlus: () => <span>plus-icon</span>,
-  IconChevronDown: () => <span>chevron-down</span>,
-  IconChevronRight: () => <span>chevron-right</span>,
-  IconCaretDownFilled: () => <span>caret-down-filled</span>,
-  IconCaretRightFilled: () => <span>caret-right-filled</span>,
-  IconMessageCircle: () => <span>message-circle</span>,
-  IconSearchOff: () => <span>search-off</span>,
+  ...new Proxy(
+    {
+      IconPlus: () => <span>plus-icon</span>,
+      IconChevronDown: () => <span>chevron-down</span>,
+      IconChevronRight: () => <span>chevron-right</span>,
+      IconCaretDownFilled: () => <span>caret-down-filled</span>,
+      IconCaretRightFilled: () => <span>caret-right-filled</span>,
+      IconMessageCircle: () => <span>message-circle</span>,
+      IconSearchOff: () => <span>search-off</span>,
+    },
+    {
+      get: (target, key: string) =>
+        target[key as keyof typeof target] ??
+        (() => <span>{`${key}-icon`}</span>),
+    },
+  ),
 }));
 
 const FILTER_LABELS = {
@@ -93,6 +211,7 @@ const BASE_PROPS = {
   noResultsLabel: 'No results found',
   newChatLabel: 'New chat',
   searchPlaceholder: 'Search chat…',
+  searchClearLabel: 'Clear search',
   filterLabels: FILTER_LABELS,
 };
 
@@ -261,5 +380,26 @@ describe('ConversationPanel', () => {
     expect(
       screen.getByRole('tab', { name: 'All' }).getAttribute('aria-selected'),
     ).toBe('false');
+  });
+
+  it('renders headerActions in the panel header when provided', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        headerActions={<button>Test Action</button>}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Test Action' })).toBeTruthy();
+    expect(
+      screen.getByRole('group', { name: 'panel header actions' }),
+    ).toBeTruthy();
+  });
+
+  it('renders without error when headerActions is omitted', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
+    expect(
+      screen.queryByRole('group', { name: 'panel header actions' }),
+    ).toBeNull();
   });
 });

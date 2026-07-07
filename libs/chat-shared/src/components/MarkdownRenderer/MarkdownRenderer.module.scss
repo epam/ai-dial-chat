@@ -1,0 +1,32 @@
+@keyframes cm-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+/*
+ * Gradient matches Figma "Thinking" node:
+ *   to-l (270deg), from Text&Icon/Inverted (#161b2d) → Text&Icon/Secondary (#9fa6bd)
+ * For the sweep animation the gradient is extended with a symmetric tail so the
+ * secondary "beam" visibly travels across the word.
+ */
+.thinking {
+  background: linear-gradient(
+    270deg,
+    var(--cm-thinking-inverted, var(--bg-inverted, #161b2d)) 0%,
+    var(--cm-thinking-secondary, var(--text-secondary, #575f73)) 40%,
+    var(--cm-thinking-inverted, var(--bg-inverted, #161b2d)) 80%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cm-shimmer 2s linear infinite;
+}
+
+.secondaryBorder {
+  border-color: var(--cm-markdown-border, var(--stroke-secondary, #d1dbea));
+}

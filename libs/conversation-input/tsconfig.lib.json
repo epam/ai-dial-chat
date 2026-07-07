@@ -37,7 +37,13 @@
       "path": "../chat-api-client/tsconfig.lib.json"
     },
     {
+      "path": "../ai-dial-kit/tsconfig.lib.json"
+    },
+    {
       "path": "../chat-shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../attachment-input/tsconfig.lib.json"
     }
   ]
 }

@@ -1,7 +1,5 @@
-import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
+import { type DeploymentItem, DeploymentIcon } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
-import FallbackEntityIcon from '../assets/fallback-entity-icon.svg?react';
-import { DeploymentIcon } from '../components/Input/Icon/DeploymentIcon';
 
 /** Returns the human-readable label for a deployment, falling back to its id. */
 export const getDeploymentLabel = (item: DeploymentItem): string =>
@@ -24,16 +22,19 @@ export const filterDeployments = (
 
 /**
  * Builds the leading icon for a deployment. Uses the resolved image URL when
- * available (with an error fallback and lazy loading) and a type-appropriate
- * icon otherwise (IconApps for applications, FallbackEntityIcon for models).
+ * available (with an error fallback and lazy loading) and an initials avatar otherwise.
  */
 export const buildDeploymentIcon = (
   resolvedIconUrl: string | undefined,
   type: string | undefined,
+  displayName: string,
   size = 18,
-): ReactNode => {
-  if (resolvedIconUrl) {
-    return <DeploymentIcon src={resolvedIconUrl} size={size} />;
-  }
-  return <FallbackEntityIcon width={size} height={size} aria-hidden />;
-};
+  tooltip?: string,
+): ReactNode => (
+  <DeploymentIcon
+    src={resolvedIconUrl}
+    size={size}
+    tooltip={tooltip}
+    initialsName={displayName}
+  />
+);

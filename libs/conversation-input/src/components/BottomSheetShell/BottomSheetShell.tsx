@@ -1,5 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { BASE_ICON_SIZE, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialCloseButton,
+  DialGhostIconButton,
+} from '@epam/ai-dial-ui-kit';
+import { IconArrowLeft } from '@tabler/icons-react';
 import type { CSSProperties, FC, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useBottomSheet } from '../../hooks/useBottomSheet';
@@ -9,15 +14,27 @@ import styles from './BottomSheetShell.module.scss';
 export interface BottomSheetShellProps {
   /** Controls sheet visibility. */
   isOpen: boolean;
-  /** Heading text rendered in the sheet header and used as the dialog accessible name. */
-  title: string;
-  /** Accessible label for the close (×) button. */
-  closeLabel: string;
+  /**
+   * Heading text rendered in the sheet header and used as the dialog
+   * accessible name. When omitted the header is hidden entirely.
+   */
+  title?: string;
+  /** Accessible label for the close (×) button. Required when `title` is provided. */
+  closeLabel?: string;
   /** Called when the sheet should close (backdrop tap, close button, or Escape). */
   onClose: () => void;
+  /** When provided, a back-arrow button is shown at the start of the header. */
+  onBack?: () => void;
+  /** Accessible label for the back button. Required when `onBack` is provided. */
+  backLabel?: string;
+  /**
+   * Accessible name for the dialog when no `title` is shown.
+   * Ignored when `title` is present (title doubles as the accessible name).
+   */
+  'aria-label'?: string;
   /** Inline CSS custom properties forwarded to the sheet root for theming. */
   style?: CSSProperties;
-  /** Typography class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
+  /** CSS class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
   titleClassName?: string;
   /** Extra classes appended to the sheet container (e.g. a max-height constraint). */
   className?: string;
@@ -27,16 +44,19 @@ export interface BottomSheetShellProps {
 
 /**
  * Generic mobile bottom-sheet shell: renders a portal with a backdrop, a fixed
- * bottom-anchored panel, a centered header with a close button, and a divider.
- * Handles Escape-to-close and body scroll locking. Consumers supply the body.
+ * bottom-anchored panel, and an optional header. Handles Escape-to-close and
+ * body scroll locking. Consumers supply the body.
  */
 export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   isOpen,
   title,
   closeLabel,
   onClose,
+  onBack,
+  backLabel,
+  'aria-label': ariaLabel,
   style,
-  titleClassName = 'dial-body-semi-bold-text',
+  titleClassName = 'dial-body-semi-text',
   className,
   children,
 }) => {
@@ -46,9 +66,9 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
 
   return createPortal(
     <>
-      {/* Backdrop */}
+      {/* Backdrop — onPointerDown avoids the touch-synthesized ghost click */}
       <div
-        className="bg-black/50 fixed inset-0 z-40"
+        className={mergeClasses(styles.backdrop, 'fixed inset-0 z-[55]')}
         onPointerDown={onClose}
         aria-hidden
       />
@@ -57,29 +77,48 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
       <div
         role="dialog"
         aria-modal
-        aria-label={title}
+        aria-label={title ?? ariaLabel}
         style={style}
         className={mergeClasses(
           styles.sheet,
-          'fixed inset-x-0 bottom-0 z-50 flex flex-col',
+          'fixed inset-x-0 bottom-0 z-[60] flex max-h-[85dvh] flex-col',
           className,
         )}
       >
-        {/* Header: title centered, close button pinned right */}
-        <div className="relative flex h-[60px] flex-shrink-0 items-center justify-center px-4">
-          <span className={mergeClasses(styles.title, titleClassName)}>
-            {title}
-          </span>
-          <div className="absolute end-2">
-            <DialCloseButton
-              ariaLabel={closeLabel}
-              size={BASE_ICON_SIZE}
-              onClose={onClose}
-            />
-          </div>
-        </div>
-        <div className={mergeClasses(styles.divider, 'h-px flex-shrink-0')} />
-        {children}
+        {title != null && (
+          <>
+            {/* Header: optional back on start, title centered, close on end */}
+            <div className="relative flex h-[60px] flex-shrink-0 items-center justify-center px-4">
+              {onBack && (
+                <div className="absolute start-4">
+                  <DialGhostIconButton
+                    icon={
+                      <IconArrowLeft
+                        size={DIAL_ICON_SIZE.LG}
+                        stroke={1.5}
+                        className="rtl:scale-x-[-1]"
+                      />
+                    }
+                    aria-label={backLabel}
+                    onClick={onBack}
+                  />
+                </div>
+              )}
+              <span className={mergeClasses(styles.title, titleClassName)}>
+                {title}
+              </span>
+              <div className="absolute end-4 m-2">
+                <DialCloseButton
+                  ariaLabel={closeLabel}
+                  size={DIAL_ICON_SIZE.LG}
+                  onClose={onClose}
+                />
+              </div>
+            </div>
+            <div className="h-px flex-shrink-0" />
+          </>
+        )}
+        <div className="overflow-y-auto">{children}</div>
       </div>
     </>,
     document.body,

@@ -1,4 +1,66 @@
-import type { Message, Stage, StreamChunk } from '@epam/ai-dial-chat-shared';
+import type {
+  Annotation,
+  Message,
+  MessageAttachment,
+  Stage,
+  StreamChunk,
+} from '@epam/ai-dial-chat-shared';
+import { normalizeRawAnnotations } from './annotation';
+
+const mergeAnnotations = (
+  existing: Annotation[],
+  incoming: Annotation[],
+): Annotation[] => {
+  const result = [...existing];
+  for (const annotation of incoming) {
+    const idx = result.findIndex((a) => a.index === annotation.index);
+    if (idx >= 0) {
+      const prev = result[idx];
+      result[idx] = {
+        ...prev,
+        ...annotation,
+        body: {
+          ...prev.body,
+          ...annotation.body,
+          title:
+            (prev.body?.title ?? '') + (annotation.body?.title ?? '') ||
+            undefined,
+          quote:
+            (prev.body?.quote ?? '') + (annotation.body?.quote ?? '') ||
+            undefined,
+        },
+      };
+    } else {
+      result.push(annotation);
+    }
+  }
+  return result;
+};
+
+const mergeStageAttachments = (
+  existing: MessageAttachment[],
+  incoming: MessageAttachment[],
+): MessageAttachment[] => {
+  const result = [...existing];
+  for (const att of incoming) {
+    const idx =
+      att.index != null ? result.findIndex((a) => a.index === att.index) : -1;
+    if (idx >= 0) {
+      result[idx] = {
+        ...result[idx],
+        ...att,
+        title: (result[idx].title ?? '') + (att.title ?? ''),
+        data:
+          att.data != null
+            ? (result[idx].data ?? '') + att.data
+            : result[idx].data,
+      };
+    } else {
+      result.push(att);
+    }
+  }
+  return result;
+};
 
 const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
   const result = [...existing];
@@ -11,6 +73,12 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
         name: (result[idx].name ?? '') + (stage.name ?? ''),
         content:
           (result[idx].content ?? '') + (stage.content ?? '') || undefined,
+        attachments: stage.attachments?.length
+          ? mergeStageAttachments(
+              result[idx].attachments ?? [],
+              stage.attachments,
+            )
+          : result[idx].attachments,
       };
     } else {
       result.push(stage);
@@ -26,6 +94,10 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
  * Attachments are accumulated: each chunk's attachments are appended to the
  * existing array rather than replacing it.
  *
+ * Annotations are merged by `index`: partial `body.title` and `body.quote`
+ * strings are concatenated across chunks, matching the same delta-merge
+ * semantics used for stages.
+ *
  * @returns Updated message array, or `null` when the chunk carries no
  *   actionable data (empty content, no form_schema, and no attachments).
  */
@@ -39,31 +111,60 @@ export const applyChunkToMessages = (
   const formSchema = delta?.custom_content?.form_schema;
   const attachments = delta?.custom_content?.attachments;
   const stages = delta?.custom_content?.stages;
+  const annotations = delta?.custom_content?.annotations;
+  const rawAnnotations = delta?.custom_fields?.annotations;
+  const hasContentUpdate =
+    !!content ||
+    !!formSchema ||
+    !!attachments?.length ||
+    !!stages?.length ||
+    !!annotations?.length ||
+    !!rawAnnotations?.length;
+  const responseId =
+    delta?.responseId ?? (hasContentUpdate ? chunk.id : undefined);
 
-  if (!content && !formSchema && !attachments?.length && !stages?.length)
-    return null;
+  if (!hasContentUpdate && !responseId) return null;
 
   return messages.map((message, index) => {
     if (index !== messageIndex) return message;
 
+    const allAttachments = [
+      ...(message.custom_content?.attachments ?? []),
+      ...(attachments ?? []),
+    ];
+    const normalizedRawAnnotations = rawAnnotations?.length
+      ? normalizeRawAnnotations(rawAnnotations, allAttachments)
+      : [];
+    const incomingAnnotations = [
+      ...(annotations ?? []),
+      ...normalizedRawAnnotations,
+    ];
+
     const hasCustomContentUpdate =
-      formSchema || attachments?.length || stages?.length;
+      formSchema ||
+      attachments?.length ||
+      stages?.length ||
+      incomingAnnotations.length;
 
     return {
       ...message,
       content: content ? message.content + content : message.content,
+      ...(responseId && { responseId }),
       ...(hasCustomContentUpdate && {
         custom_content: {
           ...message.custom_content,
           ...(formSchema && { form_schema: formSchema }),
           ...(attachments?.length && {
-            attachments: [
-              ...(message.custom_content?.attachments ?? []),
-              ...attachments,
-            ],
+            attachments: allAttachments,
           }),
           ...(stages?.length && {
             stages: mergeStages(message.custom_content?.stages ?? [], stages),
+          }),
+          ...(incomingAnnotations.length && {
+            annotations: mergeAnnotations(
+              message.custom_content?.annotations ?? [],
+              incomingAnnotations,
+            ),
           }),
         },
       }),

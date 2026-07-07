@@ -1,0 +1,23 @@
+import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
+import { IconMessageCircle } from '@tabler/icons-react';
+import { memo, type FC } from 'react';
+
+/** Props for `PanelEmpty`. */
+export interface PanelEmptyProps {
+  /** Primary message shown beneath the icon. */
+  label: string;
+  /** Icon component rendered above the label. Defaults to `IconMessageCircle`. */
+  icon?: typeof IconMessageCircle;
+  /** Icon size in px. Defaults to `48`. */
+  iconSize?: number;
+}
+
+/** Empty-state block rendered when a panel has no items at all. */
+export const PanelEmpty: FC<PanelEmptyProps> = memo(
+  ({ label, icon: Icon = IconMessageCircle, iconSize = 48 }) => (
+    <PanelEmptyState
+      icon={<Icon aria-hidden size={iconSize} stroke={1} />}
+      label={label}
+    />
+  ),
+);

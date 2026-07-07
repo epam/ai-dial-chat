@@ -1,0 +1,67 @@
+// Color-only rules. Layout, spacing, and border-radius live in Tailwind classes in the TSX file.
+
+.card {
+  border-color: var(--ci-card-border, var(--stroke-secondary, #d1dbea));
+  background: var(--ci-card-bg, var(--bg-layer-0, #fcfcfc));
+}
+
+.cardError {
+  border-color: var(--ci-card-border-error, var(--stroke-error, #ae2f2f));
+}
+
+.cardSelected {
+  background: var(
+    --ci-card-bg-selected,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  );
+  border-color: var(
+    --ci-card-border-selected,
+    var(--stroke-accent-primary, #124ace)
+  );
+}
+
+.cardPrompt,
+.cardPasted {
+  &:hover {
+    background: var(
+      --ci-card-bg-hover,
+      var(--controls-bg-neutral-hover, #d1dbea)
+    );
+  }
+}
+
+.name {
+  color: var(--ci-card-name, var(--text-primary, #161b2d));
+}
+
+.meta {
+  color: var(--ci-card-meta, var(--text-secondary, #575f73));
+}
+
+.loadingOverlay {
+  background: var(--ci-loading-overlay-bg, var(--bg-blackout, #0c101d4d));
+}
+
+.actionBtn {
+  color: var(--ci-card-action-color, var(--text-primary, #161b2d));
+
+  &:hover {
+    background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #fcfcfc));
+  }
+}
+
+.card:focus-within {
+  outline-color: var(
+    --ci-card-focus-outline,
+    var(--controls-stroke-focus, #eef1f7)
+  );
+}
+
+.removeBtnImage {
+  background: var(--ci-card-remove-bg, var(--bg-layer-2, #eef1f7));
+  color: var(--ci-card-remove-color, var(--text-primary, #161b2d));
+
+  &:hover {
+    background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #fcfcfc));
+  }
+}

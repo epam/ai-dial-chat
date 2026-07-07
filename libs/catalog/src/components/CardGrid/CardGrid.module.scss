@@ -1,0 +1,73 @@
+.card {
+  background: var(--bg-layer-0, #fcfcfc);
+  box-shadow:
+    0 1px 3px rgba(16, 24, 40, 0.04),
+    0 6px 20px rgba(16, 24, 40, 0.05);
+  transition:
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out;
+
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 4px 10px rgba(16, 24, 40, 0.06),
+        0 18px 44px rgba(16, 24, 40, 0.1);
+    }
+
+    &:hover .emptyStarHidden {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+
+    .starBtn {
+      transition: none !important;
+    }
+
+    .emptyStarHidden {
+      transition: none !important;
+    }
+  }
+}
+
+.starBtn {
+  transition: transform 150ms ease !important;
+
+  @media (hover: hover) {
+    &:hover {
+      transform: scale(1.15) !important;
+    }
+  }
+}
+
+.emptyStarHidden {
+  opacity: 0;
+  transition: opacity 150ms ease !important;
+}
+
+.description {
+  color: var(--text-secondary, #575f73);
+}
+
+.featuredChip {
+  background: color-mix(
+    in srgb,
+    var(--entity-color, #2764d9) 12%,
+    var(--bg-layer-0, #fcfcfc)
+  ) !important;
+  border: none !important;
+  color: var(--entity-color, #2764d9) !important;
+  font-size: 10px !important;
+  border-radius: 16px !important;
+}
+
+.skeletonCard {
+  background: var(--bg-layer-0, #fcfcfc);
+}

@@ -74,7 +74,7 @@ Not allowed in SCSS (use Tailwind instead):
   color: var(--ci-text, var(--text-primary, #eef1f7));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #9fa6bd));
+    color: var(--ci-placeholder, var(--text-secondary, #575F73));
   }
 }
 
@@ -114,6 +114,19 @@ export interface <Name>Typography {
 export interface <Name>Styles {
   colors?: <Name>Colors;
   typography?: <Name>Typography;
+  /**
+   * Extra class name(s) merged onto a named inner element (e.g. the scrollable
+   * body `<div>`). Add one `<element>ClassName` field per inner element that
+   * consumers may need to style independently.
+   */
+  bodyClassName?: string;
+  /**
+   * Arbitrary CSS custom properties applied inline to the component's root
+   * element. Use as a last-resort escape hatch when the typed `colors` /
+   * `typography` fields do not expose a needed variable. Values are merged
+   * after the `buildCssVars` output, so they can override typed fields.
+   */
+  cssVars?: CSSProperties;
 }
 ```
 
@@ -141,12 +154,6 @@ const noCustomClass = !typography?.fontClassName;
 const cssVars = buildCssVars({
   '--ci-bg': colors?.background,
   '--ci-text': colors?.text,
-  // font class takes priority — skip individual typography vars when fontClassName is set
-  '--ci-font-size': noCustomClass ? typography?.fontSize : undefined,
-  '--ci-font-weight': noCustomClass ? typography?.fontWeight?.toString() : undefined,
-  '--ci-line-height': noCustomClass ? typography?.lineHeight?.toString() : undefined,
-  '--ci-letter-spacing': noCustomClass ? typography?.letterSpacing : undefined,
-  '--ci-font-family': noCustomClass ? typography?.fontFamily : undefined,
 });
 
 return <div style={cssVars} className={mergeClasses(styles.wrapper, 'flex w-full ...', className)}>

@@ -1,0 +1,38 @@
+// Colors are CSS-var-driven so consumers can theme the panel.
+// Layout, spacing, and border-radius live in Tailwind classes in the TSX.
+
+.backdrop {
+  background: rgba(12, 16, 29, 0.7);
+}
+
+.panel {
+  background: var(--bg-layer-0, #fcfcfc);
+  border-inline-start-color: var(--stroke-secondary, #242c42);
+}
+
+.divider {
+  border-block-end: 1px solid var(--stroke-tertiary, #e0e6f0);
+}
+
+.content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--stroke-secondary, #242c42) transparent;
+}
+
+.introCaption {
+  color: var(--text-secondary, #575f73);
+}
+
+.tabsRow {
+  border-bottom-color: var(--stroke-tertiary, #e0e6f0);
+}
+
+.activeTab {
+  border-image: linear-gradient(
+      135deg,
+      var(--bg-accent-secondary, #37babc) 0%,
+      var(--bg-accent-primary, #5c8dea) 30%,
+      var(--bg-accent-tertiary, #a972ff) 100%
+    )
+    1;
+}

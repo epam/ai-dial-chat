@@ -7,7 +7,10 @@ import {
   MessageRole,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import type { ConversationResponseDto } from '@epam/chat-api-client';
+import type {
+  ConversationResponseDto,
+  SendCompletionDtoModeEnum,
+} from '@epam/chat-api-client';
 import {
   type Dispatch,
   type MutableRefObject,
@@ -16,19 +19,20 @@ import {
   useState,
 } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
-import { ROUTES } from '../../constants/routes';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   deleteConversation as apiDeleteConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
-import { uploadFile } from '../../server-api/files.api';
 import { rateMessage } from '../../server-api/rate.api';
+import { ROUTES } from '../../types/routes';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
-import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { createMessagePair } from '../../utils/message-factory';
+import { isMessageChanged } from '../../utils/message-utils';
 import { getStarterSubmitText } from '../../utils/starter-option';
+import { useAttachmentUpload } from './useAttachmentUpload';
 
 interface Params {
   conversation: Conversation | null;
@@ -41,10 +45,14 @@ interface Params {
     messageIndex: number,
     model: string,
     customContent?: MessageCustomContent,
+    generationId?: string,
+    mode?: SendCompletionDtoModeEnum,
   ) => void;
   conversationRef: MutableRefObject<Conversation | null>;
   setConversation: Dispatch<SetStateAction<Conversation | null>>;
   navigate: NavigateFunction;
+  /** Called with batched filenames after a burst of network-error upload failures. */
+  showNetworkError?: (filenames: string[]) => void;
 }
 
 export const useConversationHandlers = ({
@@ -56,6 +64,7 @@ export const useConversationHandlers = ({
   conversationRef,
   setConversation,
   navigate,
+  showNetworkError,
 }: Params) => {
   const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(
     null,
@@ -71,21 +80,10 @@ export const useConversationHandlers = ({
   } | null>(null);
   const { selectedItemId } = useDeployments();
 
-  const handleUploadAttachment = useCallback(
-    async (attachment: Attachment): Promise<string> => {
-      if (!bucket) {
-        throw new Error('User bucket is not available');
-      }
-
-      const response = await uploadFile(
-        bucket,
-        buildUploadPath(attachment),
-        attachment.file,
-      );
-      return response.url;
-    },
-    [bucket],
-  );
+  const { handleUploadAttachment } = useAttachmentUpload({
+    bucket,
+    onNetworkError: showNetworkError,
+  });
 
   const handleSend = useCallback(
     async (message: string, attachments: Attachment[]) => {
@@ -98,8 +96,6 @@ export const useConversationHandlers = ({
         undefined,
         selectedItemId,
       );
-      const conversationPath = getConversationPath(conversationId);
-
       setConversation((prev) => {
         if (!prev) return prev;
         const next = {
@@ -111,11 +107,13 @@ export const useConversationHandlers = ({
       });
 
       startStream(
-        conversationPath,
+        conversationId,
         message,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
         { attachments: attachmentDtos },
+        crypto.randomUUID(),
+        CompletionMode.Append,
       );
     },
     [
@@ -140,8 +138,6 @@ export const useConversationHandlers = ({
 
       const userMsg = conversation.messages[messageIndex - 1];
       if (!userMsg || userMsg.role !== MessageRole.User) return;
-
-      const conversationPath = getConversationPath(conversationId);
 
       setConversation((prev) => {
         if (!prev) return prev;
@@ -170,11 +166,13 @@ export const useConversationHandlers = ({
       );
 
       startStream(
-        conversationPath,
+        conversationId,
         userMsg.content,
         messageIndex,
         selectedItemId ?? conversation.model.id,
         userMsg.custom_content,
+        crypto.randomUUID(),
+        CompletionMode.Regenerate,
       );
     },
     [
@@ -217,7 +215,7 @@ export const useConversationHandlers = ({
         (next.length === 1 && next[0].role === MessageRole.Status)
       ) {
         apiDeleteConversation(conversationPath);
-        navigate(ROUTES.ROOT);
+        navigate(ROUTES.Root);
         return prev;
       }
 
@@ -235,71 +233,80 @@ export const useConversationHandlers = ({
   ]);
 
   const handleRateMessage = useCallback(
-    async (messageIndex: number, rating: MessageRating | null) => {
-      if (!conversationId) return;
+    async (
+      messageIndex: number,
+      rating: MessageRating | null,
+      comment?: string,
+    ): Promise<boolean> => {
+      if (!conversationId || !conversation) return false;
 
-      let previousRating: MessageRating | undefined;
-      setConversation((prev) => {
-        if (!prev) return prev;
-        const msg = prev.messages[messageIndex];
-        if (!msg) return prev;
-        previousRating = msg.rating;
-        const next: Conversation = {
-          ...prev,
-          messages: prev.messages.map((m, i) =>
-            i === messageIndex ? { ...m, rating: rating ?? undefined } : m,
-          ),
-        };
-        conversationRef.current = next;
-        return next;
+      const msg = conversation.messages[messageIndex];
+      if (!msg) return false;
+
+      const previousRating = msg.rating;
+      const updatedConversation: Conversation = {
+        ...conversation,
+        messages: conversation.messages.map((m, i) =>
+          i === messageIndex ? { ...m, rating: rating ?? undefined } : m,
+        ),
+      };
+
+      setConversation(() => {
+        conversationRef.current = updatedConversation;
+        return updatedConversation;
       });
-
-      const updated = conversationRef.current;
-      if (!updated) return;
 
       const conversationPath = getConversationPath(conversationId);
 
+      const revert = () => {
+        setConversation((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            messages: prev.messages.map((m, i) =>
+              i === messageIndex ? { ...m, rating: previousRating } : m,
+            ),
+          };
+        });
+      };
+
       if (rating != null) {
+        const responseId = msg.responseId;
+        if (!responseId) {
+          revert();
+          return false;
+        }
         try {
           await rateMessage({
-            conversationId: updated.id,
-            responseId: updated.messages[messageIndex].responseId || '',
-            modelId: updated.model.id,
+            conversationId: conversation.id,
+            responseId,
+            modelId: conversation.model.id,
             rate: rating,
+            ...(comment ? { comment } : {}),
           });
           await saveConversation(
             conversationPath,
-            updated as ConversationResponseDto,
+            updatedConversation as ConversationResponseDto,
           );
+          return true;
         } catch {
-          setConversation((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              messages: prev.messages.map((m, i) =>
-                i === messageIndex ? { ...m, rating: previousRating } : m,
-              ),
-            };
-          });
+          revert();
+          return false;
         }
       } else {
-        await saveConversation(
-          conversationPath,
-          updated as ConversationResponseDto,
-        ).catch(() => {
-          setConversation((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              messages: prev.messages.map((m, i) =>
-                i === messageIndex ? { ...m, rating: previousRating } : m,
-              ),
-            };
-          });
-        });
+        try {
+          await saveConversation(
+            conversationPath,
+            updatedConversation as ConversationResponseDto,
+          );
+          return true;
+        } catch {
+          revert();
+          return false;
+        }
       }
     },
-    [conversationId, conversationRef, setConversation],
+    [conversation, conversationId, conversationRef, setConversation],
   );
 
   const submitStarter = useCallback(
@@ -318,8 +325,6 @@ export const useConversationHandlers = ({
         configurationValue,
         selectedItemId,
       );
-      const conversationPath = getConversationPath(conversationId);
-
       setConversation((prev) => {
         if (!prev) return prev;
         const next = {
@@ -331,11 +336,13 @@ export const useConversationHandlers = ({
       });
 
       startStream(
-        conversationPath,
+        conversationId,
         submitText,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
         configurationValue ? { form_value: configurationValue } : undefined,
+        crypto.randomUUID(),
+        CompletionMode.Append,
       );
     },
     [
@@ -394,7 +401,22 @@ export const useConversationHandlers = ({
         return;
 
       const originalMessage = conversation.messages[idx];
-      const conversationPath = getConversationPath(conversationId);
+
+      if (
+        !isMessageChanged(
+          originalMessage,
+          text,
+          keptDisplayAttachments,
+          newAttachments,
+        )
+      ) {
+        setEditingMessageIndexes((prev) => {
+          const next = new Set(prev);
+          next.delete(idx);
+          return next;
+        });
+        return;
+      }
 
       const newDtos = attachmentsToDtos(newAttachments);
 
@@ -443,14 +465,15 @@ export const useConversationHandlers = ({
         return updated;
       });
 
-      saveConversation(conversationPath, updated as ConversationResponseDto);
-
+      // Backend will save the conversation at stream start; no pre-save needed.
       startStream(
-        conversationPath,
+        conversationId,
         text,
         updatedMessages.length - 1,
         selectedItemId ?? conversation.model.id,
         allAttachments.length > 0 ? { attachments: allAttachments } : undefined,
+        crypto.randomUUID(),
+        CompletionMode.Edit,
       );
 
       setEditingMessageIndexes(new Set());

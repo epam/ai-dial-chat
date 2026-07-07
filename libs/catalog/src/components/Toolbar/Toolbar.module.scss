@@ -1,0 +1,15 @@
+.section {
+  background: var(--cat-bg, #f5f7fa);
+}
+
+.icon {
+  color: var(--cat-browse-icon, var(--text-secondary, #9fa6bd));
+}
+
+.divider {
+  background: var(--cat-browse-divider, var(--stroke-secondary, #242c42));
+}
+// TODO: add for filters
+.clearAll {
+  color: var(--cat-browse-clear-all, var(--text-error, #f76464));
+}

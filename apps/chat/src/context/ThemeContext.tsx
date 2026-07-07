@@ -8,17 +8,21 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { StorageKey } from '../constants/storage';
 import { useFavicon } from '../hooks/favicon/useFavicon';
 import { ApiEndpoints, get } from '../server-api/base';
-import { applyThemeColors } from '../utils/apply-theme-colors';
-import { getFromLocalStorage } from '../utils/local-storage';
-
-const DEFAULT_THEME = 'dark';
+import { StorageKey } from '../types/storage-key';
+import { ThemeId } from '../types/theme-id';
+import {
+  applyThemeColors,
+  getOsPreferredTheme,
+} from '../utils/apply-theme-colors';
+import { getFromLocalStorage, setToLocalStorage } from '../utils/local-storage';
 
 interface ThemeContextType {
   currentTheme: string;
+  selectedTheme: string;
   currentThemeLogo?: string;
+  currentThemeFavicon?: string;
   themes?: Theme[];
   setTheme: (themeId: string) => void;
   isLoading: boolean;
@@ -28,23 +32,37 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [config, setConfig] = useState<ThemeConfiguration | null>(null);
-  const [currentThemeId, setCurrentThemeId] = useState(DEFAULT_THEME);
+  const [currentThemeId, setCurrentThemeId] = useState<string>(ThemeId.Light);
+  const [selectedThemeId, setSelectedThemeId] = useState<string>(
+    () => getFromLocalStorage(StorageKey.Theme) ?? ThemeId.Light,
+  );
   const [currentLogo, setCurrentLogo] = useState<string | undefined>(void 0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const updateTheme = useCallback(
-    (themeId: string) => {
-      const theme = config?.themes.find((t) => t.id === themeId);
+  const applyResolvedTheme = useCallback(
+    (resolvedId: string) => {
+      const theme = config?.themes.find((t) => t.id === resolvedId);
       const root = document.documentElement;
       applyThemeColors(root, theme);
-      setCurrentThemeId(themeId);
+      setCurrentThemeId(resolvedId);
       const updatedLogo =
-        themeId === DEFAULT_THEME
+        resolvedId === ThemeId.Dark
           ? config?.images['chat-logo-dark']
           : config?.images['chat-logo-light'];
       setCurrentLogo(updatedLogo);
     },
     [config],
+  );
+
+  const updateTheme = useCallback(
+    (themeId: string) => {
+      if (themeId === ThemeId.System) {
+        applyResolvedTheme(getOsPreferredTheme());
+      } else {
+        applyResolvedTheme(themeId);
+      }
+    },
+    [applyResolvedTheme],
   );
 
   useEffect(() => {
@@ -82,14 +100,32 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       typeof window !== 'undefined'
         ? getFromLocalStorage(StorageKey.Theme)
         : null;
-    const configuredTheme = storedTheme || config?.themes?.[0].id;
+    const defaultTheme = config?.themes?.[0].id;
+    const configuredTheme =
+      storedTheme || defaultTheme !== ThemeId.Dark
+        ? defaultTheme
+        : ThemeId.Light;
     if (configuredTheme) {
+      setSelectedThemeId(configuredTheme);
       updateTheme(configuredTheme);
     }
   }, [config, updateTheme]);
 
+  // Subscribe to OS color scheme changes when the stored preference is 'system'
+  useEffect(() => {
+    const storedTheme = getFromLocalStorage(StorageKey.Theme);
+    if (storedTheme !== ThemeId.System) return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => applyResolvedTheme(getOsPreferredTheme());
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [applyResolvedTheme]);
+
   const setTheme = useCallback(
     (themeId: string) => {
+      setToLocalStorage(StorageKey.Theme, themeId);
+      setSelectedThemeId(themeId);
       updateTheme(themeId);
     },
     [updateTheme],
@@ -104,12 +140,21 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       value={useMemo(
         () => ({
           currentTheme: currentThemeId,
+          selectedTheme: selectedThemeId,
           currentThemeLogo: currentLogo,
+          currentThemeFavicon: config?.images?.['chat-favicon'],
           setTheme,
           themes: config?.themes,
           isLoading,
         }),
-        [currentThemeId, setTheme, config, currentLogo, isLoading],
+        [
+          currentThemeId,
+          selectedThemeId,
+          setTheme,
+          config,
+          currentLogo,
+          isLoading,
+        ],
       )}
     >
       {children}

@@ -7,7 +7,8 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "es2021"
+    "target": "es2021",
+    "composite": true
   },
   "include": ["src/**/*.ts"],
   "exclude": [
@@ -18,6 +19,5 @@
     "src/**/*.spec.tsx",
     "src/**/*.test.ts",
     "src/**/*.test.tsx"
-  ],
-  "references": [{ "path": "../../libs/chat-shared/tsconfig.lib.json" }]
+  ]
 }

@@ -47,16 +47,16 @@ describe('MessageBubble', () => {
     expect(getByText('Hello world')).toBeTruthy();
   });
 
-  it('applies rounded-se-[24px] with BubblePosition.Bottom (default)', () => {
+  it('applies rounded-se-[6px] with BubblePosition.Bottom (default)', () => {
     const { container } = render(
       <MessageBubble text="msg" role={MessageRole.User} />,
     );
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
-      'rounded-se-[24px]',
+      'rounded-se-[6px]',
     );
   });
 
-  it('applies rounded-ee-[24px] with BubblePosition.Top', () => {
+  it('applies rounded-ee-[6px] with BubblePosition.Top', () => {
     const { container } = render(
       <MessageBubble
         text="msg"
@@ -65,7 +65,7 @@ describe('MessageBubble', () => {
       />,
     );
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
-      'rounded-ee-[24px]',
+      'rounded-ee-[6px]',
     );
   });
 
@@ -91,9 +91,9 @@ describe('MessageBubble', () => {
     expect(innerClassName).not.toContain('rounded-br-[24px]');
   });
 
-  it('renders default user actions when no actions prop is given', () => {
+  it('renders no action buttons when no actions prop is given (read-only)', () => {
     render(<MessageBubble text="msg" role={MessageRole.User} />);
-    expect(screen.getByRole('button', { name: 'Edit message' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
   });
 
   it('renders user actions from actions prop', () => {
@@ -101,7 +101,7 @@ describe('MessageBubble', () => {
       <MessageBubble
         text="msg"
         role={MessageRole.User}
-        actions={{ role: MessageRole.User }}
+        actions={{ role: MessageRole.User, onEdit: vi.fn() }}
       />,
     );
     expect(screen.getByRole('button', { name: 'Edit message' })).toBeTruthy();
@@ -130,6 +130,36 @@ describe('MessageBubble', () => {
     );
     const actionsWrapper = container.querySelector('[class*="gap-1"]');
     expect(actionsWrapper?.className).not.toContain('opacity-0');
+  });
+
+  it('forwards onAttachmentClick and attachmentClickLabel to user bubble', () => {
+    const onAttachmentClick = vi.fn();
+    render(
+      <MessageBubble
+        text="Hello"
+        role={MessageRole.User}
+        attachments={[ATTACHMENT]}
+        onAttachmentClick={onAttachmentClick}
+        attachmentClickLabel="Download file"
+      />,
+    );
+    fireEvent.click(screen.getByLabelText('Download file'));
+    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
+  });
+
+  it('forwards onAttachmentClick and attachmentClickLabel to assistant bubble', () => {
+    const onAttachmentClick = vi.fn();
+    render(
+      <MessageBubble
+        text="Hello"
+        role={MessageRole.Assistant}
+        attachments={[ATTACHMENT]}
+        onAttachmentClick={onAttachmentClick}
+        attachmentClickLabel="Download file"
+      />,
+    );
+    fireEvent.click(screen.getByLabelText('Download file'));
+    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
   });
 });
 
@@ -183,6 +213,39 @@ describe('UserMessageBubble — attachments', () => {
   it('remove button does not trigger a callback (read-only tray)', () => {
     render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
     expect(screen.queryByRole('button', { name: /remove/i })).toBeNull();
+  });
+
+  it('tray cards are inert when onAttachmentClick is absent', () => {
+    render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
+    expect(
+      screen.queryByRole('button', { name: 'Open attachment' }),
+    ).toBeNull();
+  });
+
+  it('clicking a card invokes onAttachmentClick with the attachment', () => {
+    const onAttachmentClick = vi.fn();
+    render(
+      <UserMessageBubble
+        text="Hello"
+        attachments={[ATTACHMENT]}
+        onAttachmentClick={onAttachmentClick}
+        attachmentClickLabel="Download file"
+      />,
+    );
+    fireEvent.click(screen.getByLabelText('Download file'));
+    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
+  });
+
+  it('forwards attachmentClickLabel to the tray', () => {
+    render(
+      <UserMessageBubble
+        text="Hello"
+        attachments={[ATTACHMENT]}
+        onAttachmentClick={vi.fn()}
+        attachmentClickLabel="Download file"
+      />,
+    );
+    expect(screen.getByLabelText('Download file')).toBeTruthy();
   });
 });
 
@@ -285,22 +348,23 @@ describe('AssistantMessageBubble — attachments', () => {
     const paragraph = screen.getByText(longToken);
     expect(paragraph.className).toContain('[overflow-wrap:anywhere]');
     expect(paragraph.className).toContain('break-words');
+    expect(paragraph.className).toContain('dial-body-paragraph-text');
+    expect(paragraph.className).toContain('mb-3');
+    expect(paragraph.className).toContain('[text-wrap:pretty]');
     expect(container.querySelector('.min-w-0.max-w-full')).not.toBeNull();
   });
 
-  it('allows long unbroken code block lines to wrap inside the bubble', () => {
+  it('allows long unbroken code block lines to scroll horizontally inside the bubble', () => {
     const longToken = `integrity sha512-${'f2'.repeat(120)}`;
 
     const { container } = render(
       <AssistantMessageBubble text={`\`\`\`\n${longToken}\n\`\`\``} />,
     );
 
-    const pre = container.querySelector('pre');
+    const scrollContainer = container.querySelector('[dir="ltr"]');
     const code = container.querySelector('pre code');
-    expect(pre?.className).toContain('whitespace-pre-wrap');
-    expect(pre?.className).toContain('[overflow-wrap:anywhere]');
-    expect(code?.className).toContain('whitespace-pre-wrap');
-    expect(code?.className).toContain('[overflow-wrap:anywhere]');
+    expect(scrollContainer?.className).toContain('overflow-auto');
+    expect(code?.className).toContain('whitespace-pre');
   });
 
   it('reveals appended streaming text gradually', () => {
@@ -386,10 +450,12 @@ describe('AssistantMessageBubble — attachments', () => {
       />,
     );
     const inner = container.querySelector(
-      '.flex.w-fit.flex-col',
+      '.flex.w-full.flex-col.gap-4',
     ) as HTMLElement;
     const children = Array.from(inner?.children ?? []);
-    const textIndex = children.findIndex((el) => el.tagName === 'P');
+    const textIndex = children.findIndex((el) =>
+      el.className.includes('min-w-0'),
+    );
     const trayIndex = children.findIndex(
       (el) => el.getAttribute('role') === 'list',
     );

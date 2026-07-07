@@ -1,0 +1,37 @@
+.sectionHeading {
+  color: var(--text-secondary, #575f73);
+}
+
+.urlBox {
+  background: var(--bg-layer-2, #eeeef0);
+}
+
+.snippetWrapper {
+  border: 1px solid var(--stroke-secondary, #242c42);
+}
+
+.snippetTabs {
+  border-bottom: 1px solid var(--stroke-secondary, #242c42);
+}
+
+.codeBlock {
+  background: var(--bg-layer-1, #0d1425);
+}
+
+.snippetWrapper .codeBlock {
+  border-radius: 0;
+}
+
+.copyButton {
+  background: var(--bg-layer-2, #1a2035);
+  color: var(--text-secondary, #575f73);
+
+  &:hover {
+    background: var(--bg-layer-3, #242c42);
+    color: var(--text-primary, #e4e6f0);
+  }
+}
+
+.pre {
+  color: var(--text-primary, #e4e6f0);
+}

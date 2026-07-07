@@ -1,0 +1,284 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DIAL SDLC Agent Manifest",
+  "description": "Manifest at agents/<name>/agent.yml. The matcher validates every manifest against this schema at discovery time; violations fail the dispatcher loudly. Accepts the framework's v0.1 fields (some recorded-only today; see PLATFORM_REFERENCE.md for which are runtime-honored).",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "name",
+    "skill",
+    "triggers",
+    "allowed_tools"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "enum": ["0.1"],
+      "description": "Manifest schema version. Matcher rejects unrecognized versions."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Kebab-case agent name. Surfaces in PR comments, artifacts, kill-switch var name."
+    },
+    "skill": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9:-]*$",
+      "description": "Local skill the agent wraps. Must be addressable as `/<skill>` in a Claude prompt (e.g. `code-review-and-quality`, `opsx:verify`). Skill-only: no per-agent prompt.md is permitted; the composite action composes a uniform prompt that delegates work to this skill. Reusable agent logic belongs in `.claude/skills/` or `.claude/commands/`, not inlined in agents/."
+    },
+    "agent_version": {
+      "type": "string",
+      "description": "Semver-ish; recorded into the output envelope."
+    },
+    "version": {
+      "type": "string",
+      "description": "Framework's `version` field (alias of agent_version). Recorded but not used by the matcher."
+    },
+    "description": {
+      "type": "string"
+    },
+    "owner_column": {
+      "type": "string",
+      "description": "Framework catalog field. Recorded only."
+    },
+    "catalog_cell": {
+      "type": "string",
+      "description": "Framework catalog field. Recorded only."
+    },
+    "source": {
+      "type": "object",
+      "description": "Pin info for adopted/forked agents (origin/url/sha). Recorded only.",
+      "additionalProperties": true
+    },
+    "license": {
+      "type": "string"
+    },
+    "vetting_report": {
+      "type": "string",
+      "description": "Path to vet-agent report. Recorded only; not validated."
+    },
+    "triggers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["on"],
+            "additionalProperties": false,
+            "properties": {
+              "on": {
+                "type": "string",
+                "enum": [
+                  "pull_request",
+                  "push",
+                  "schedule",
+                  "workflow_dispatch",
+                  "workflow_run"
+                ]
+              },
+              "filters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "paths": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Path globs. NOT YET HONORED by matcher (v0.3)."
+                  },
+                  "branches": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Target branches (e.g. PR base). Honored by matcher."
+                  },
+                  "labels": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Required labels (all must be present). Honored by matcher."
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "allowed_tools": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Comma-separated Claude tool allowlist (passed to claude-code-action via --allowed-tools)."
+    },
+    "needs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Upstream agents this one depends on. Topologically sorted into rounds by the matcher (cap 3)."
+    },
+    "context_tier": {
+      "type": "string",
+      "enum": ["A", "B", "C"],
+      "description": "A=triggering repo only (default). B=sibling repos via additional checkout. C=context bundle. Only A is implemented today."
+    },
+    "sibling_repos": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "For tier B. Reserved; not yet wired."
+    },
+    "permissions": {
+      "type": "object",
+      "description": "GHA permissions the runner job needs. Matcher validates against platform-supported set; fails loudly if exceeded.",
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["read", "write", "none"]
+      }
+    },
+    "secrets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Declared secret names to inject into the agent's job env. run-agent.yml promotes ONLY these from the inherited secret bag (toJSON(secrets)) into $GITHUB_ENV before invoking the agent, and fails loudly if a declared secret is absent. The wrapped skill reads them via committed helper scripts — the model never types secret values (the agent-wrapper forbids shell expansion in Bash tool calls). ANTHROPIC_API_KEY is always passed and need not be declared."
+    },
+    "vars": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Declared NON-secret config names to inject into the agent's job env from the GitHub Actions Variables (`vars`) context. run-agent.yml promotes ONLY these into $GITHUB_ENV before the agent runs; missing ones are skipped (the skill's own default applies). Use for operational knobs an operator changes in Settings → Variables (e.g. JIRA_MAX_FINDINGS) without editing the skill. Sensitive values belong in `secrets`, not here.",
+      "default": []
+    },
+    "private_output": {
+      "type": "boolean",
+      "description": "When true, the agent's stage-output.json is AES-encrypted (openssl, key from the SDLC_ARTIFACT_KEY secret) before it is uploaded as an artifact, and any encrypted upstream artifacts it downloads are decrypted on the runner before the agent reads them. Use for agents whose output is internal/sensitive on a PUBLIC repo (artifacts are world-downloadable). Requires SDLC_ARTIFACT_KEY in this agent's `secrets:` list. Local plaintext (used by the renderer / SARIF emitter on the runner) is never uploaded.",
+      "default": false
+    },
+    "emit_sarif": {
+      "type": "boolean",
+      "description": "When true, the platform converts the agent's payload.findings[] into SARIF 2.1.0 and uploads it to GitHub code scanning (Security tab) — a write-access-gated surface, unlike public PR comments/summaries. Findings with non-actionable verdicts (FALSE_POSITIVE/NOT_APPLICABLE/DUPLICATE) are uploaded as dismissed. If analysis_ref is set, the SARIF is scoped to that branch/commit so alerts render against the scanned code.",
+      "default": false
+    },
+    "publish_inline_comments": {
+      "type": "boolean",
+      "description": "When true on pull_request runs, the platform publishes payload.findings[] entries with file+line as GitHub inline PR review comments when the line is present in the PR diff. Successfully posted inline findings are omitted from the sticky summary to avoid duplication.",
+      "default": false
+    },
+    "diff_mode": {
+      "type": "string",
+      "enum": ["full", "incremental"],
+      "default": "full",
+      "description": "Diff scope the agent reviews on pull_request runs. `full` (default) reviews the whole PR (origin/<base>...HEAD) on every push — unchanged legacy behavior. `incremental` narrows re-reviews to the commits since the one this stage last reviewed — read on the runner from the original_commit_id of this stage's own prior inline comments, so a cancelled or timed-out run (which posts nothing) falls back to the last successfully reviewed commit rather than skipping its commits; the first review, and any force-push or rebase, fall back to the full diff. The range is computed on the runner and substituted into the composed prompt, so opting one agent in does not change the prompt or behavior of any other agent."
+    },
+    "analysis_ref": {
+      "type": "string",
+      "description": "Optional git ref whose code the agent should inspect instead of the PR working tree (e.g. the branch a scanner ran against). run-agent.yml fetches it and overlays its source onto the working tree before invoking the agent, preserving the framework paths (.github, .claude) so the composite action and skills keep working. The agent reads the findings' repo-relative paths directly — no skill/prompt awareness of branches needed. Also scopes emit_sarif uploads to this ref/commit."
+    },
+    "tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "MCP servers and extra CLI tools available to the runner. `extra` items are installed by run-agent.yml before invoking the agent. `mcp` is recorded; not yet wired.",
+      "properties": {
+        "mcp": { "type": "array", "items": { "type": "string" } },
+        "extra": {
+          "type": "array",
+          "description": "CLI tools to install on the runner before invocation. See AGENT_REFERENCE.md → CLI dependencies for the three valid shapes.",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "npm package name; latest stable. Installed via `npm install -g <name>`. Use the object form to pin a version."
+              },
+              {
+                "type": "object",
+                "required": ["name"],
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "For npm: the package name. For shell: a display name used in logs."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "For npm: appended as `@<version>` to the install command (default: latest stable). For shell: available as `{{version}}` placeholder inside `install`."
+                  },
+                  "install": {
+                    "type": "string",
+                    "description": "Shell command to install the tool. When present, overrides the npm path. May reference `{{version}}` for substitution from the sibling `version` field."
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "invocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "action_ref": {
+          "type": "string",
+          "description": "Pinned action ref (org/action@sha). Recorded only; the platform always uses its composite action for native agents. Specialized third-party-action workflows are written as standalone stage-<name>.yml files; see stage-security-review.yml."
+        },
+        "model": {
+          "type": "string",
+          "description": "Claude model. Empty uses action default."
+        }
+      }
+    },
+    "model": {
+      "type": "string",
+      "description": "Top-level shortcut for invocation.model. Either is accepted; top-level takes precedence."
+    },
+    "timeout_minutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 360,
+      "description": "Per-agent timeout. Honored by run-agent.yml. Default 15."
+    },
+    "max_turns": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60,
+      "description": "Max Claude turns for this agent. Honored by run-agent.yml -> composite action. Default 18. Lower it for simple agents — fewer turns means fewer context resends, which cuts input-tokens-per-minute (rate-limit pressure)."
+    },
+    "concurrency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "group": { "type": "string" },
+        "cancel_in_progress": { "type": "boolean" }
+      },
+      "description": "Concurrency group override. If omitted, platform derives `${workflow}-${name}-${ref}` with cancel-in-progress."
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["channel"],
+        "additionalProperties": true,
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": ["pr-comment", "check", "artifact", "issue"]
+          },
+          "format": { "type": "string" },
+          "sticky": { "type": "boolean" }
+        }
+      },
+      "description": "Declared output channels. Recorded; today the platform always emits pr-comment + artifact."
+    },
+    "correlation_id_env": {
+      "type": "string",
+      "description": "Recorded; the run_id envelope field is the canonical correlation ID."
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["sandbox", "pilot", "production"]
+    },
+    "cost_class": {
+      "type": "string",
+      "enum": ["light", "medium", "heavy"]
+    },
+    "kill_switch_var": {
+      "type": "string",
+      "description": "Override the derived STAGE_{NAME_UPPER}_ENABLED var name."
+    }
+  }
+}

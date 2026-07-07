@@ -49,6 +49,7 @@ describe('static assets serving', () => {
       logger: false,
     });
     await app.init();
+    await app.listen(0, '127.0.0.1');
   });
 
   afterEach(async () => {
@@ -74,7 +75,7 @@ describe('static assets serving', () => {
     expect(
       resolveFrontendRootPath(
         join(appsDir, 'chat-api', 'dist'),
-        (candidate) => candidate === frontendDist,
+        (candidate: string) => candidate === frontendDist,
       ),
     ).toBe(frontendDist);
   });

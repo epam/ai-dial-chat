@@ -136,6 +136,29 @@ describe('useConversationHandlers — handleSend', () => {
       1,
       'selected-deployment',
       { attachments: undefined },
+      expect.any(String),
+      'append',
+    );
+  });
+
+  it('preserves encoded separators in the conversation id passed to streaming', async () => {
+    mockAttachmentsToDtos.mockReturnValue(undefined);
+    const params = makeParams({
+      conversationId:
+        'bucket/applications/catalog/Team%2FApp%20One__0.0.1__title',
+    });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await result.current.handleSend('hello', []);
+
+    expect(params.startStream).toHaveBeenCalledWith(
+      'bucket/applications/catalog/Team%2FApp%20One__0.0.1__title',
+      'hello',
+      1,
+      'selected-deployment',
+      { attachments: undefined },
+      expect.any(String),
+      'append',
     );
   });
 
@@ -183,6 +206,54 @@ describe('useConversationHandlers — handleSend', () => {
     await result.current.handleSend('hello', []);
 
     expect(params.startStream).not.toHaveBeenCalled();
+  });
+});
+
+describe('useConversationHandlers — handleUploadAttachment (network error batching)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('batches three simultaneous offline failures into a single showNetworkError call listing all filenames', async () => {
+    vi.useFakeTimers();
+    mockUploadFile.mockRejectedValue(new Error('Failed to fetch'));
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+
+    const showNetworkError = vi.fn();
+    const params = makeParams({ showNetworkError });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await act(async () => {
+      await Promise.allSettled([
+        result.current.handleUploadAttachment({
+          ...makeAttachment(),
+          name: 'a.pdf',
+          id: 'a',
+        }),
+        result.current.handleUploadAttachment({
+          ...makeAttachment(),
+          name: 'b.pdf',
+          id: 'b',
+        }),
+        result.current.handleUploadAttachment({
+          ...makeAttachment(),
+          name: 'c.pdf',
+          id: 'c',
+        }),
+      ]);
+    });
+
+    expect(showNetworkError).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(700);
+    });
+
+    expect(showNetworkError).toHaveBeenCalledOnce();
+    expect(showNetworkError).toHaveBeenCalledWith(['a.pdf', 'b.pdf', 'c.pdf']);
+
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 });
 
@@ -237,6 +308,29 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
       1,
       'selected-deployment',
       undefined,
+      expect.any(String),
+      'regenerate',
+    );
+  });
+
+  it('preserves the bucket and nested application path when starting a stream', async () => {
+    mockAttachmentsToDtos.mockReturnValue(undefined);
+    const params = makeParams({
+      conversationId:
+        'user-bucket/applications/catalog/Untitled%20app%201__0.0.1__hello',
+    });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await result.current.handleSend('hello', []);
+
+    expect(params.startStream).toHaveBeenCalledWith(
+      'user-bucket/applications/catalog/Untitled%20app%201__0.0.1__hello',
+      'hello',
+      1,
+      'selected-deployment',
+      { attachments: undefined },
+      expect.any(String),
+      'append',
     );
   });
 });

@@ -3,18 +3,27 @@ const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const webpack = require('webpack');
 const nodeExternals = require('webpack-node-externals');
+const {
+  NESTJS_IGNORED_WARNINGS,
+  NESTJS_RESOLVE_ALIASES,
+} = require('./webpack.shared');
 
+/*
+ * Watch + auto-restart dev config. NestJS DI/services cannot be hot-swapped via
+ * webpack HMR — a full process restart on each rebuild is the reliable path.
+ */
 module.exports = {
   entry: {
-    main: ['webpack/hot/poll?100', './src/main.ts'],
+    main: './src/main.ts',
   },
   target: 'node',
   devtool: 'inline-source-map',
+  ignoreWarnings: NESTJS_IGNORED_WARNINGS,
   output: {
     path: join(__dirname, 'dist'),
     filename: '[name].js',
   },
-  externals: [nodeExternals({ allowlist: ['webpack/hot/poll?100'] })],
+  externals: [nodeExternals()],
   module: {
     rules: [
       {
@@ -33,11 +42,7 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     alias: {
-      '@nestjs/websockets/socket-module': false,
-      '@nestjs/microservices/microservices-module': false,
-      '@nestjs/microservices': false,
-      'class-transformer/storage': false,
-      '@fastify/static': false,
+      ...NESTJS_RESOLVE_ALIASES,
     },
     plugins: [
       new TsconfigPathsPlugin({
@@ -46,8 +51,7 @@ module.exports = {
     ],
   },
   plugins: [
-    new webpack.HotModuleReplacementPlugin(),
     new webpack.WatchIgnorePlugin({ paths: [/\.js$/, /\.d\.ts$/] }),
-    new RunScriptWebpackPlugin({ name: 'main.js', autoRestart: false }),
+    new RunScriptWebpackPlugin({ name: 'main.js', autoRestart: true }),
   ],
 };

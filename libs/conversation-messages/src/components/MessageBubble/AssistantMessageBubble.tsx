@@ -1,16 +1,15 @@
 import {
+  AttachmentType,
   buildCssVars,
+  DeploymentIcon,
+  MDMessageViewer,
   mergeClasses,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
-import {
-  AttachmentTray,
-  DeploymentIcon,
-} from '@epam/ai-dial-conversation-input';
+import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble';
-import { MDMessageViewer } from '../Markdown/MDMessageViewer';
 import { MessageActions } from '../Message/MessageActions';
 import styles from './MessageBubble.module.scss';
 
@@ -31,22 +30,20 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   deploymentIconUrl,
   deploymentDisplayName,
   thinkingLabel,
+  markdownComponents,
+  onAttachmentClick,
+  attachmentClickLabel,
+  codeBlockCopyLabel,
+  codeBlockCopiedLabel,
+  codeBlockTheme,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
-  const noCustomClass = !typography?.fontClassName;
+  const visibleAttachments = isStreaming
+    ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
+    : (attachments ?? []);
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
     '--cm-starters-divider': colors?.startersDivider,
-    '--cm-bubble-font-family': noCustomClass
-      ? typography?.fontFamily
-      : undefined,
-    '--cm-bubble-font-size': noCustomClass ? typography?.fontSize : undefined,
-    '--cm-bubble-font-weight': noCustomClass
-      ? typography?.fontWeight
-      : undefined,
-    '--cm-bubble-line-height': noCustomClass
-      ? typography?.lineHeight
-      : undefined,
   });
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
@@ -56,19 +53,20 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses('flex w-full items-start gap-5', className)}
+      className={mergeClasses('flex w-full items-start gap-3', className)}
     >
       {hasDeploymentIcon && (
         <DeploymentIcon
           src={deploymentIconUrl}
           size={28}
-          badgeClassName={styles.agentIconBadge}
+          initialsName={deploymentDisplayName ?? ''}
+          tooltip={deploymentDisplayName}
         />
       )}
       <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-5">
         <div
           className={mergeClasses(
-            'flex w-fit min-w-0 max-w-full flex-col items-start gap-4',
+            'flex w-full min-w-0 max-w-full flex-col items-start gap-4',
             bubbleClassName,
           )}
         >
@@ -83,10 +81,19 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                 content={text}
                 isStreaming={isStreaming}
                 thinkingLabel={thinkingLabel}
+                components={markdownComponents}
+                codeBlockCopyLabel={codeBlockCopyLabel}
+                codeBlockCopiedLabel={codeBlockCopiedLabel}
+                codeBlockTheme={codeBlockTheme}
               />
             </div>
           )}
-          <AttachmentTray attachments={attachments ?? []} />
+          <AttachmentTray
+            attachments={visibleAttachments}
+            onAttachmentClick={onAttachmentClick}
+            clickLabel={attachmentClickLabel}
+            className="flex-wrap"
+          />
           {afterContent}
           <MessageActions
             {...actions}

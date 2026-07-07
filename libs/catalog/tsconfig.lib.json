@@ -1,0 +1,33 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "../../dist/libs/catalog",
+    "tsBuildInfoFile": "../../dist/libs/catalog/tsconfig.lib.tsbuildinfo",
+    "jsx": "react-jsx",
+    "declaration": true,
+    "sourceMap": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"],
+    "lib": ["dom"],
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.tsx"
+  ],
+  "references": [
+    {
+      "path": "../chat-shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../ai-dial-kit/tsconfig.lib.json"
+    }
+  ]
+}
