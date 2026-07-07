@@ -90,7 +90,15 @@ export class ApplicationsService extends AppService {
         display_name: body.name,
         display_version: version,
         application_type_schema_id: body.type,
-        application_properties: {},
+        application_properties: body.type.includes('quickapps2')
+          ? {
+              orchestrator: {
+                system_prompt: { type: 'custom', variables: {}, content: '' },
+              },
+              contexts: [],
+              tool_sets: [],
+            }
+          : {},
       };
       if (body.description != null) dialBody.description = body.description;
       if (body.iconUrl != null) dialBody.icon_url = body.iconUrl;
@@ -107,6 +115,8 @@ export class ApplicationsService extends AppService {
       );
 
       if (!response.ok) {
+        const errorBody = await response.text();
+        this.logger.warn(`DIAL Core create application body: ${errorBody}`);
         return mapDialHttpStatus(
           response.status,
           'create application',
@@ -118,7 +128,7 @@ export class ApplicationsService extends AppService {
       this.logger.debug(
         `Created application ${appPath}, invalidated cache for sub: ${userSub}`,
       );
-      return { id: `applications/${bucket}/${encodedPath}` };
+      return { id: `applications/${bucket}/${appPath}` };
     } catch (err) {
       return handleDialFetchError(err, 'create application', this.logger, 0);
     }

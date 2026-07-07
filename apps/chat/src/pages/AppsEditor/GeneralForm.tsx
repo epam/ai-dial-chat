@@ -1,6 +1,5 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { Card, CatalogEntityType } from '@epam/ai-dial-catalog';
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialInput,
   DialNotification,
@@ -8,25 +7,34 @@ import {
   DialTextarea,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
-import type { FC } from 'react';
-import { memo, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-  AppsEditorI18nKeys,
-  ButtonsI18nKeys,
-} from '../../constants/translation-keys';
+  forwardRef,
+  memo,
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
 
 const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
 const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
+export interface GeneralFormHandle {
+  submit: () => Promise<void>;
+}
+
 interface Props {
   schemaId: string;
   onCreated: (appId: string) => void;
-  onCancel: () => void;
 }
 
-const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
+const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
+  { schemaId, onCreated },
+  ref,
+) {
   const { t } = useTranslation();
 
   const [name, setName] = useState('');
@@ -49,7 +57,8 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
     if (versionError) setVersionError('');
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
     const trimmedName = name.trim();
     const trimmedVersion = version.trim();
     if (!trimmedName) {
@@ -83,7 +92,19 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [
+    isSubmitting,
+    name,
+    version,
+    schemaId,
+    description,
+    iconUrl,
+    topics,
+    onCreated,
+    t,
+  ]);
+
+  useImperativeHandle(ref, () => ({ submit: handleSubmit }), [handleSubmit]);
 
   const previewItem = useMemo<CatalogItem>(
     () => ({
@@ -109,8 +130,8 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
         void handleSubmit();
       }}
     >
-      <div className="flex h-full w-1/2 flex-col border-e border-e-primary">
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
+      <div className="flex h-full w-1/2 flex-col overflow-y-auto border-e border-e-primary">
+        <div className="flex flex-1 flex-col gap-4 p-4">
           <DialInput
             id="app-name"
             value={name}
@@ -172,22 +193,6 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
             />
           )}
         </div>
-
-        <div className="flex shrink-0 border-t border-t-primary bg-layer-2 p-2">
-          <div className="flex w-full justify-end gap-3">
-            <NeutralButton
-              type="button"
-              label={t(ButtonsI18nKeys.Cancel)}
-              onClick={onCancel}
-              disabled={isSubmitting}
-            />
-            <PrimaryButton
-              type="submit"
-              label={t(AppsEditorI18nKeys.GeneralFormNextButton)}
-              disabled={isSubmitting}
-            />
-          </div>
-        </div>
       </div>
 
       <div className="flex w-1/2 flex-col bg-layer-1 p-4">
@@ -202,6 +207,6 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
       </div>
     </form>
   );
-};
+});
 
 export default memo(GeneralForm);

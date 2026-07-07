@@ -58,9 +58,19 @@ Field mapping (all optional per upstream contract):
 | `id`            | `$id`                                     |
 | `displayName`   | `dial:applicationTypeDisplayName`         |
 | `viewerUrl`     | `dial:applicationTypeViewerUrl`           |
-| `editorUrl`     | `dial:applicationTypeEditorUrl`           |
+| `editorUrl`     | `dial:applicationTypeEditorUrl` — overridden with `DEV_QUICKAPPS_EDITOR_URL` when the schema `id` includes `quickapps2` and that env var is set (see below) |
 | `schemaEndpoint`| `dial:applicationTypeSchemaEndpoint`      |
 | `iconUrl`       | `dial:applicationTypeIconUrl`             |
+
+### Dev override for the QuickApps 2.0 editor URL
+
+`apps/chat-api/src/config/environment.config.ts` (`EnvironmentVariables`) SHALL define an optional `DEV_QUICKAPPS_EDITOR_URL?: string` (`@IsOptional() @IsUrl({ require_tld: false })`).
+
+When building each `ApplicationSchemaSummaryDto`, the service SHALL:
+- Determine `isQuickApp` from `schema.id?.includes('quickapps2') ?? false`.
+- Set `editorUrl` to `DEV_QUICKAPPS_EDITOR_URL` when `isQuickApp` is true and the env var is set; otherwise use `dial:applicationTypeEditorUrl` unchanged.
+
+This override exists to let developers point the QuickApps 2.0 editor iframe at a local dev server without editing the upstream schema. It has no effect when `DEV_QUICKAPPS_EDITOR_URL` is unset, and no effect on non-QuickApps schemas.
 
 ## Error Responses
 
@@ -175,3 +185,21 @@ export const getApplicationSchemas = (): Promise<ApplicationSchemasResponseDto> 
 
 **Given** DIAL Core returns a schema item without `dial:applicationTypeIconUrl`  
 **Then** the normalised DTO has `iconUrl` as `undefined` (field omitted from response)
+
+### S14 — `DEV_QUICKAPPS_EDITOR_URL` overrides `editorUrl` for a quickapps2 schema
+
+**Given** `DEV_QUICKAPPS_EDITOR_URL=http://localhost:5555` is set  
+**And** DIAL Core returns a schema with `"$id": "https://example.com/schemas/quickapps2"` and `"dial:applicationTypeEditorUrl": "https://prod-editor.example.com"`  
+**Then** the normalised DTO has `editorUrl: "http://localhost:5555"`
+
+### S15 — `DEV_QUICKAPPS_EDITOR_URL` unset leaves `editorUrl` unchanged
+
+**Given** `DEV_QUICKAPPS_EDITOR_URL` is not set  
+**And** DIAL Core returns a schema whose `$id` contains `quickapps2`  
+**Then** the normalised DTO `editorUrl` equals `dial:applicationTypeEditorUrl` unchanged
+
+### S16 — Non-quickapps2 schema is never overridden
+
+**Given** `DEV_QUICKAPPS_EDITOR_URL` is set  
+**And** DIAL Core returns a schema whose `$id` does not include `quickapps2`  
+**Then** the normalised DTO `editorUrl` equals `dial:applicationTypeEditorUrl` unchanged

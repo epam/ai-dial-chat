@@ -53,17 +53,26 @@ export class ApplicationSchemasService extends AppService {
         );
       }
       const items = Array.isArray(result.data) ? result.data : [];
+      const devQuickAppsEditorUrl = this.configService.get(
+        'DEV_QUICKAPPS_EDITOR_URL',
+        { infer: true },
+      );
       const data: ApplicationSchemasResponseDto = {
-        schemas: items.map(
-          (rawItem): ApplicationSchemaSummaryDto => ({
-            id: rawItem['$id'],
+        schemas: items.map((rawItem): ApplicationSchemaSummaryDto => {
+          const id = rawItem['$id'] as string | undefined;
+          const isQuickApp = id?.includes('quickapps2') ?? false;
+          return {
+            id,
             displayName: rawItem['dial:applicationTypeDisplayName'],
             viewerUrl: rawItem['dial:applicationTypeViewerUrl'],
-            editorUrl: rawItem['dial:applicationTypeEditorUrl'],
+            editorUrl:
+              isQuickApp && devQuickAppsEditorUrl
+                ? devQuickAppsEditorUrl
+                : rawItem['dial:applicationTypeEditorUrl'],
             schemaEndpoint: rawItem['dial:applicationTypeSchemaEndpoint'],
             iconUrl: rawItem['dial:applicationTypeIconUrl'],
-          }),
-        ),
+          };
+        }),
       };
       await this.cacheManager.set(cacheKey, data, 60 * 1000);
       return data;
