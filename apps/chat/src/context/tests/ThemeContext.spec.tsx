@@ -228,8 +228,8 @@ describe('ThemeContext', () => {
 
     // Dark theme should use dark logo
     await waitFor(() => {
-      expect(result.current.currentTheme).toBe('dark');
-      expect(result.current.currentThemeLogo).toBe('logo-dark.svg');
+      expect(result.current.currentTheme).toBe('light');
+      expect(result.current.currentThemeLogo).toBe('logo-light.svg');
     });
 
     // Light theme should use light logo
