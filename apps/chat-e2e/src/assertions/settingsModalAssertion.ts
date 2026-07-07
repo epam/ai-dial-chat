@@ -78,6 +78,7 @@ export class SettingsModalAssertion extends BaseAssertion {
     await this.assertElementText(
       this.settingsModal.keyboardShortcutRadioButtonByValueLabel(value),
       expectedLabel,
+      ExpectedMessages.keyboardShortcutOptionIsValid,
     );
   }
 

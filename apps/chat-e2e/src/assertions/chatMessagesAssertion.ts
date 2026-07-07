@@ -151,6 +151,7 @@ export class ChatMessagesAssertion extends BaseAssertion {
     await this.assertElementState(
       this.chatMessages.getChatMessageTextarea(message),
       expectedState,
+      ExpectedMessages.messageContentIsValid,
     );
   }
 
