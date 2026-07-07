@@ -19,18 +19,22 @@ import {
 interface Props {
   isOpen: boolean;
   defaultFilename: string;
+  heading: string;
   onConfirm: (filename: string) => void;
   onClose: () => void;
+  dataQa?: string;
 }
 
-export const DownloadTableCsvModal = ({
+export const ChangeDownloadFileNameModal = ({
   isOpen,
   defaultFilename,
+  heading,
   onConfirm,
   onClose,
+  dataQa = 'change-download-filename-modal',
 }: Props) => {
-  const { t } = useTranslation(Translation.Markdown);
   const { t: tCommon } = useTranslation(Translation.Common);
+  const { t } = useTranslation(Translation.Markdown);
   const [filename, setFilename] = useState(defaultFilename);
 
   useEffect(() => {
@@ -57,18 +61,18 @@ export const DownloadTableCsvModal = ({
       portalId="theme-main"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
-      dataQa="download-csv-modal"
+      dataQa={dataQa}
       containerClassName="inline-block w-full min-w-[90%] px-3 py-4 md:p-6 md:min-w-[300px] md:max-w-[500px]"
       dismissProps={DISALLOW_INTERACTIONS}
       hideClose
-      heading={t(MarkdownI18nKeys.DownloadTableAsCSV)}
+      heading={heading}
     >
       <div className="flex flex-col gap-4">
         <DialInput
           value={filename}
           onChange={(value) => setFilename(value ?? '')}
           onKeyDown={handleKeyDown}
-          data-qa="download-csv-filename-input"
+          data-qa="download-filename-input"
         />
         <div className="flex w-full items-center justify-end gap-3">
           <DialNeutralButton
