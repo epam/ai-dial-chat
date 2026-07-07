@@ -35,7 +35,7 @@ RTL: tab rendering and label alignment are handled by the ui-kit; no physical di
 
 ### Requirement: Per-tab visible columns
 
-`DialFileManagerModal` SHALL pass `gridOptions.visibleColumns` to `DialFileManager` based on `activeTab`:
+`DialFileManagerShell` SHALL pass `gridOptions.visibleColumns` to `DialFileManager` based on `activeTab`:
 
 | Tab | `visibleColumns` |
 |-----|-----------------|
@@ -64,7 +64,7 @@ RTL: tab rendering and label alignment are handled by the ui-kit; no physical di
 
 ### Requirement: Locale-aware UpdatedAt column
 
-`DialFileManagerModal` SHALL pass `gridOptions.dateLocale` and `gridOptions.dateOptions` to format the UpdatedAt column. `dateLocale` SHALL be sourced from `i18n.language` (via `useTranslation`). `dateOptions` SHALL be fixed as `{ year: 'numeric', month: 'short', day: '2-digit' }`. These options SHALL be applied regardless of the active tab.
+`DialFileManagerShell` SHALL pass `gridOptions.dateLocale` and `gridOptions.dateOptions` to format the UpdatedAt column. `dateLocale` SHALL be sourced from `i18n.language` (via `useTranslation`). `dateOptions` SHALL be fixed as `{ year: 'numeric', month: 'short', day: '2-digit' }`. These options SHALL be applied regardless of the active tab.
 
 Items with a missing `updatedAt` SHALL display an empty cell; no error or fallback string is rendered.
 
@@ -87,7 +87,7 @@ Items with a missing `updatedAt` SHALL display an empty cell; no error or fallba
 
 ### Requirement: Per-tab action labels
 
-`DialFileManagerModal` SHALL compute `actionLabels` for `gridOptions`, `treeOptions`, and `bulkActionsToolbarOptions` based on `activeTab`:
+`DialFileManagerShell` SHALL compute `actionLabels` for `gridOptions`, `treeOptions`, and `bulkActionsToolbarOptions` based on `activeTab`:
 
 | Tab | Grid/bulk/tree actions |
 |-----|------------------------|
@@ -138,7 +138,7 @@ Rename SHALL NOT appear in `actionLabels` for `shared` or `organization` tabs. O
 
 ### Requirement: Per-tab upload and new folder rules
 
-`DialFileManagerModal` SHALL pass `uploadEnabled` to `DialFileManager` based on `activeTab` and the current folder:
+`DialFileManagerShell` SHALL pass `uploadEnabled` to `DialFileManager` based on `activeTab` and the current folder:
 
 | Tab | `uploadEnabled` |
 |-----|----------------|
@@ -177,7 +177,7 @@ Rename SHALL NOT appear in `actionLabels` for `shared` or `organization` tabs. O
 
 ### Requirement: sharedWithMeIds wired on Shared tab
 
-When the active tab is `shared`, `DialFileManagerModal` SHALL pass the `sharedWithMeIds` prop to `DialFileManager` containing the API paths of root-level shared items returned by `GET /api/v1/files/shared`. On all other tabs, `sharedWithMeIds` SHALL be `undefined`.
+When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWithMeIds` prop to `DialFileManager` containing the API paths of root-level shared items returned by `GET /api/v1/files/shared`. On all other tabs, `sharedWithMeIds` SHALL be `undefined`.
 
 #### Scenario: sharedWithMeIds populated on Shared tab
 
