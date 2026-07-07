@@ -39,8 +39,8 @@ interface ConversationsContextType {
   pinConversation: (id: string, isPinned: boolean) => Promise<void>;
   /** Delete a conversation by id, removing it from the local list on success. */
   deleteConversation: (id: string) => Promise<void>;
-  /** Rename a conversation; optimistically updates title, reverts on failure. Returns the new conversation id. */
-  renameConversation: (id: string, newTitle: string) => Promise<string>;
+  /** Rename a conversation; optimistically updates title, reverts on failure. The conversation id never changes. */
+  renameConversation: (id: string, newTitle: string) => Promise<void>;
   /** Duplicate a conversation into the user's own bucket; returns the new conversation id. */
   duplicateConversation: (id: string) => Promise<string>;
   /** Re-fetch the full conversation list from the server. */
@@ -271,14 +271,13 @@ export const ConversationsProvider = ({
 
       const conversationPath = getConversationPath(normalizeConversationId(id));
       try {
-        const { newPath } = await apiRenameConversation(
+        const { name } = await apiRenameConversation(
           conversationPath,
           newTitle,
         );
         setConversations((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, id: newPath } : c)),
+          prev.map((c) => (c.id === id ? { ...c, title: name } : c)),
         );
-        return newPath;
       } catch (err) {
         if (originalTitle != null) {
           setConversations((prev) =>

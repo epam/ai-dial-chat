@@ -1,4 +1,8 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  NotFoundException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import type {
@@ -543,10 +547,8 @@ describe('ConversationController (integration)', () => {
   });
 
   describe('PATCH /conversations', () => {
-    it('returns 200 with newPath for a valid request', async () => {
-      const renamed = {
-        newPath: 'conversations/test-bucket/gpt-4o__New Title__uuid',
-      };
+    it('returns 200 with the renamed name and the path unchanged', async () => {
+      const renamed = { name: 'New Title' };
       service.renameConversation.mockReturnValue(renamed);
 
       const result = await request(app.getHttpServer())
@@ -582,6 +584,17 @@ describe('ConversationController (integration)', () => {
         .patch('/conversations')
         .send({ newTitle: 'New Title' })
         .expect(400);
+    });
+
+    it('returns 404 when the conversation does not exist', async () => {
+      service.renameConversation.mockRejectedValue(
+        new NotFoundException('Conversation not found'),
+      );
+
+      await request(app.getHttpServer())
+        .patch('/conversations?path=gpt-4o__Missing__uuid')
+        .send({ newTitle: 'New Title' })
+        .expect(404);
     });
   });
 
