@@ -186,8 +186,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-new-chat-icon-bg': colors?.newChatIconBackground,
       '--cp-new-chat-icon-bg-hover': colors?.newChatIconBackgroundHover,
       '--cp-new-chat-icon-bg-active': colors?.newChatIconBackgroundActive,
-      '--cp-new-chat-icon': colors?.newChatIconColor,
-      '--cp-new-chat-divider': colors?.newChatDivider,
     });
 
     const filteredItems = useMemo(

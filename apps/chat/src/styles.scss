@@ -57,47 +57,6 @@ div[role='menu']:has(> [role='none']) {
   }
 }
 
-// Sidebar inner dividers — visible only between inner sections (header + new-chat + search excluded above)
-aside[class~='dial-h1-text'] [class~='border-b']:not([class~='flex-wrap']) {
-  border-bottom-color: var(--stroke-tertiary);
-}
-
-// Search wrapper — no background, input uses panel text colours.
-// Padding/border-bottom come from the shared `border-b px-2 py-1` rule above.
-aside[class~='dial-h1-text'] [data-cp-search-wrapper] {
-  background: transparent !important;
-
-  input {
-    color: var(--cp-text, var(--text-primary)) !important;
-
-    &::placeholder {
-      color: var(--cp-text-secondary, var(--text-secondary)) !important;
-    }
-  }
-}
-
-// Search row border — match catalog SearchBar strokes.
-// Anchored on [data-cp-search-wrapper] > div (the inner row element);
-// avoids the hashed CSS-module class name and is stable across Tailwind class changes.
-aside[class~='dial-h1-text'] [data-cp-search-wrapper] > div {
-  border-color: rgba(0, 0, 0, 0.05) !important;
-
-  @media (hover: hover) {
-    &:hover:not(:focus-within) {
-      border-color: rgba(0, 0, 0, 0.12) !important;
-    }
-  }
-
-  &:focus-within {
-    border-color: color-mix(
-      in srgb,
-      var(--stroke-accent-primary, #7da4ff) 50%,
-      transparent
-    ) !important;
-    box-shadow: none !important;
-  }
-}
-
 // Filter pill row — remove track background, use flat spaced layout.
 // ui-kit v0.11+ uses flex-nowrap + rounded-full for the row (was flex-wrap).
 aside[class~='dial-h1-text']

@@ -1,7 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
-import panelStyles from '../SidebarPanel/SidebarPanel.module.scss';
 import styles from './SearchInput.module.scss';
 
 /** Props for `SearchInput`. */
@@ -27,13 +26,10 @@ export const SearchInput: FC<SearchInputProps> = memo(
     clearLabel,
     iconClassName = 'text-secondary',
   }) => (
-    <div
-      className={mergeClasses('border-b px-2 py-1', panelStyles.divider)}
-      data-cp-search-wrapper
-    >
+    <div className="px-3 py-2">
       <div
         className={mergeClasses(
-          'flex min-h-11 w-full items-center gap-2 pe-3 ps-3 desktop:min-h-9',
+          'flex min-h-11 w-full items-center gap-2 rounded-full border pe-3 ps-3 desktop:min-h-9',
           styles.row,
         )}
       >

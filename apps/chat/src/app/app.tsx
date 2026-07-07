@@ -185,7 +185,7 @@ const App: FC = () => {
       <main
         id="main-content"
         role="main"
-        className="shadow-main-inset flex min-h-0 min-w-0 flex-1 flex-col"
+        className="flex min-h-0 min-w-0 flex-1 flex-col shadow-main-inset"
       >
         <Header
           onMenuToggle={toggleNav}
