@@ -183,9 +183,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-text-secondary': colors?.textSecondary,
       '--cp-new-chat-hover': colors?.newChatHoverBackground,
       '--cp-new-chat-active': colors?.newChatActiveBackground,
-      '--cp-new-chat-icon-bg': colors?.newChatIconBackground,
-      '--cp-new-chat-icon-bg-hover': colors?.newChatIconBackgroundHover,
-      '--cp-new-chat-icon-bg-active': colors?.newChatIconBackgroundActive,
+      '--cp-new-chat-bg': colors?.newChatBackground,
     });
 
     const filteredItems = useMemo(
