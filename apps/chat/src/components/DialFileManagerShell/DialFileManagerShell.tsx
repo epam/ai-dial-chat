@@ -37,7 +37,7 @@ interface Props {
  * overlays (upload progress, download/delete/rename spinners, error/retry
  * panel) from a `useDialFileManager` result. Does not own popup chrome, an
  * attach footer, or any attach-only selection constraints — those are
- * host-owned (see DialFileManagerModal today; a future standalone page).
+ * host-owned (see DialFileManagerModal and DialFileManagerPage).
  */
 const DialFileManagerShell: FC<Props> = ({
   hookResult,
@@ -282,7 +282,7 @@ const DialFileManagerShell: FC<Props> = ({
           {isDownloading && (
             <div
               aria-live="polite"
-              className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
+              className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"
             >
               <DialSpinner
                 size={32}
@@ -294,7 +294,7 @@ const DialFileManagerShell: FC<Props> = ({
           {isDeleting && (
             <div
               aria-live="polite"
-              className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
+              className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"
             >
               <DialSpinner
                 size={32}
@@ -306,7 +306,7 @@ const DialFileManagerShell: FC<Props> = ({
           {isRenaming && (
             <div
               aria-live="polite"
-              className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
+              className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"
             >
               <DialSpinner
                 size={32}
