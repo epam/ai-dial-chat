@@ -165,20 +165,21 @@ export class ConversationService extends AppService {
 
     try {
       const encodedConversationPath = encodeDialResourcePath(conversationPath);
-      const { data, error } = (await this.client.saveConversation(
+      const { data, error, response } = await this.client.saveConversation(
         bucket,
         encodedConversationPath,
         {
           headers: getBearerAuthHeaders(token),
           body: conversation as never,
         },
-      )) as { data?: unknown; error?: unknown };
+      );
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
         return handleDialSdkError(
           error,
           'conversations.createConversation',
           this.logger,
+          response,
         );
       }
 
@@ -285,13 +286,22 @@ export class ConversationService extends AppService {
       sessionBucket,
     );
 
-    const { data, error } = (await this.client.getConversation(
+    const { data, error, response } = (await this.client.getConversation(
       bucket,
       encodeDialResourcePath(subPath),
       { headers: getBearerAuthHeaders(token) },
-    )) as { data?: unknown; error?: unknown };
+    )) as {
+      data?: unknown;
+      error?: unknown;
+      response: globalThis.Response;
+    };
     if (error != null || !data) {
-      throw error ?? new Error('Conversation not found');
+      handleDialSdkError(
+        error,
+        'conversations.getStoredConversation',
+        this.logger,
+        response,
+      );
     }
 
     return {
@@ -320,17 +330,18 @@ export class ConversationService extends AppService {
     bucket: string,
   ): Promise<void> {
     try {
-      const { error } = (await this.client.deleteConversation(
+      const { error, response } = await this.client.deleteConversation(
         bucket,
         encodeDialResourcePath(conversationPath),
         { headers: getBearerAuthHeaders(token) },
-      )) as { data?: unknown; error?: unknown };
+      );
       if (error != null) {
         this.logger.error('DIAL Core rejected deleteConversation', error);
         handleDialSdkError(
           error,
           'conversations.deleteConversation',
           this.logger,
+          response,
         );
       }
     } catch (error) {
@@ -400,6 +411,7 @@ export class ConversationService extends AppService {
         moveError,
         'conversations.renameConversation',
         this.logger,
+        moveStatus !== undefined ? { status: moveStatus } : undefined,
       );
     }
 
@@ -454,6 +466,7 @@ export class ConversationService extends AppService {
         bucket,
       );
 
+      // Intentionally non-fatal: this is a best-effort name-sync side effect, not routed through handleDialSdkError.
       const { error: saveError } = (await this.client.saveConversation(
         saveBucket,
         encodeDialResourcePath(subPath),
@@ -500,12 +513,19 @@ export class ConversationService extends AppService {
      * Read source first so we can use its `name` field (which may have been
      * updated by LLM naming without renaming the storage path).
      */
-    const { data: sourceData, error: readError } =
-      (await this.client.getConversation(
-        sourceBucket,
-        encodeDialResourcePath(subPath),
-        { headers: getBearerAuthHeaders(token) },
-      )) as { data?: ConversationResponseDto; error?: unknown };
+    const {
+      data: sourceData,
+      error: readError,
+      response: readResponse,
+    } = (await this.client.getConversation(
+      sourceBucket,
+      encodeDialResourcePath(subPath),
+      { headers: getBearerAuthHeaders(token) },
+    )) as {
+      data?: ConversationResponseDto;
+      error?: unknown;
+      response: globalThis.Response;
+    };
     if (readError != null || !sourceData) {
       this.logger.error(
         'Could not read source conversation for duplicate',
@@ -515,6 +535,7 @@ export class ConversationService extends AppService {
         readError,
         'conversations.duplicateConversation',
         this.logger,
+        readResponse,
       );
     }
 
@@ -554,26 +575,28 @@ export class ConversationService extends AppService {
       ? `${sessionBucket}/${decodedFolderSegments.join('/')}`
       : sessionBucket;
 
-    const { error: saveError } = (await this.client.saveConversation(
-      sessionBucket,
-      encodedDestinationSubPath,
-      {
-        headers: getBearerAuthHeaders(token),
-        body: {
-          ...sourceData,
-          id: `${sessionBucket}/${decodedDestinationSubPath}`,
-          folderId,
-          name: uniqueTitle,
-          updatedAt: Date.now(),
-        } as never,
-      },
-    )) as { error?: unknown };
+    const { error: saveError, response: saveResponse } =
+      await this.client.saveConversation(
+        sessionBucket,
+        encodedDestinationSubPath,
+        {
+          headers: getBearerAuthHeaders(token),
+          body: {
+            ...sourceData,
+            id: `${sessionBucket}/${decodedDestinationSubPath}`,
+            folderId,
+            name: uniqueTitle,
+            updatedAt: Date.now(),
+          } as never,
+        },
+      );
     if (saveError != null) {
       this.logger.error('Could not save duplicated conversation', saveError);
       return handleDialSdkError(
         saveError,
         'conversations.duplicateConversation',
         this.logger,
+        saveResponse,
       );
     }
 
@@ -607,7 +630,7 @@ export class ConversationService extends AppService {
                 query: { ...buildQuery(userNextToken), permissions: true },
               },
             },
-          ) as Promise<MetadataResult>,
+          ) as Promise<MetadataResult & { response: globalThis.Response }>,
           (
             this.client.getConversationMetadata(
               PUBLIC_BUCKET,
@@ -642,7 +665,11 @@ export class ConversationService extends AppService {
           this.userConfigService.getPinnedIds(token, bucket),
         ]);
 
-      const { data: userData, error: userError } = userResult;
+      const {
+        data: userData,
+        error: userError,
+        response: userResponse,
+      } = userResult;
       if (userError !== undefined || !userData) {
         this.logger.error(
           'DIAL Core rejected listConversations (user bucket)',
@@ -652,6 +679,7 @@ export class ConversationService extends AppService {
           userError,
           'conversations.listConversations',
           this.logger,
+          userResponse,
         );
       }
 
@@ -827,21 +855,25 @@ export class ConversationService extends AppService {
     permissions?: boolean,
   ): Promise<ConversationMetadataDto> {
     try {
-      const { data, error } = (await this.client.getConversationMetadata(
-        bucket,
-        encodeDialResourcePath(conversationPath),
-        {
-          headers: getBearerAuthHeaders(token),
-          params:
-            permissions !== undefined ? { query: { permissions } } : undefined,
-        },
-      )) as { data?: unknown; error?: unknown };
+      const { data, error, response } =
+        await this.client.getConversationMetadata(
+          bucket,
+          encodeDialResourcePath(conversationPath),
+          {
+            headers: getBearerAuthHeaders(token),
+            params:
+              permissions !== undefined
+                ? { query: { permissions } }
+                : undefined,
+          },
+        );
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected getConversationMetadata', error);
         return handleDialSdkError(
           error,
           'conversations.getConversationMetadata',
           this.logger,
+          response,
         );
       }
       return data as ConversationMetadataDto;
@@ -869,20 +901,21 @@ export class ConversationService extends AppService {
     );
 
     try {
-      const { data, error } = (await this.client.saveConversation(
+      const { data, error, response } = await this.client.saveConversation(
         bucket,
         encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
           body: bodyToSave as never,
         },
-      )) as { data?: unknown; error?: unknown };
+      );
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
         return handleDialSdkError(
           error,
           'conversations.saveConversation',
           this.logger,
+          response,
         );
       }
       const saved = { ...data, ...bodyToSave } as ConversationResponseDto;

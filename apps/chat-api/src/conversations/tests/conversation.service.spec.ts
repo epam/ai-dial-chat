@@ -1,3 +1,8 @@
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
@@ -2035,7 +2040,10 @@ describe('ConversationService', () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockImplementation(
         (bucket: string) => {
           if (bucket === 'test-bucket') {
-            return Promise.resolve({ error: { status: 502 } }) as never;
+            return Promise.resolve({
+              error: { message: 'Bad Gateway' },
+              response: new Response(null, { status: 502 }),
+            }) as never;
           }
           return Promise.resolve({ data: { items: [] } }) as never;
         },
@@ -2050,9 +2058,10 @@ describe('ConversationService', () => {
       ).rejects.toThrow('mapped DIAL error');
 
       expect(handleDialSdkError).toHaveBeenCalledWith(
-        { status: 502 },
+        { message: 'Bad Gateway' },
         'conversations.listConversations',
         expect.anything(),
+        expect.objectContaining({ status: 502 }),
       );
     });
 
@@ -2316,6 +2325,125 @@ describe('ConversationService', () => {
 
       expect(result.requested).toBe(1);
       expect(deleteConversationSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('DIAL SDK error status propagation', () => {
+    beforeEach(async () => {
+      const actual = await vi.importActual<
+        typeof import('../../common/dial/dial-error.mapper')
+      >('../../common/dial/dial-error.mapper');
+      vi.mocked(handleDialSdkError).mockImplementation(
+        actual.handleDialSdkError,
+      );
+    });
+
+    it('deleteConversation throws NotFoundException when DIAL Core reports 404 with no status on the error body', async () => {
+      vi.spyOn(service['client'], 'deleteConversation').mockResolvedValue({
+        error: { message: 'Not found' },
+        response: new Response(null, { status: 404 }),
+      } as never);
+
+      await expect(
+        service.deleteConversation(
+          'gpt-4o__Already deleted__uuid',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('getConversation (via getStoredConversation) throws NotFoundException for a 404 upstream response', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        error: { message: 'Not found' },
+        response: new Response(null, { status: 404 }),
+      } as never);
+
+      await expect(
+        service.getConversation(
+          'gpt-4o__Chat__uuid',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('duplicateConversation throws ForbiddenException for a 403 upstream response on the source read', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        error: { message: 'Forbidden' },
+        response: new Response(null, { status: 403 }),
+      } as never);
+
+      await expect(
+        service.duplicateConversation(
+          'shared-bucket/gpt-4o__Chat',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('renameConversation throws ConflictException for a 409 upstream response from moveResource', async () => {
+      vi.spyOn(service['client'], 'moveResource').mockResolvedValue({
+        error: { message: 'Conflict' },
+        response: new Response(null, { status: 409 }),
+      } as never);
+
+      await expect(
+        service.renameConversation(
+          'gpt-4o__Chat',
+          'New title',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('getConversationMetadata throws NotFoundException for a 404 upstream response', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        error: { message: 'Not found' },
+        response: new Response(null, { status: 404 }),
+      } as never);
+
+      await expect(
+        service.getConversationMetadata(
+          'gpt-4o__Chat',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('saveConversation throws ConflictException for a 409 upstream response', async () => {
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        error: { message: 'Conflict' },
+        response: new Response(null, { status: 409 }),
+      } as never);
+
+      await expect(
+        service.saveConversation(
+          'gpt-4o__Chat',
+          'test-token',
+          'test-bucket',
+          TEST_CONVERSATION,
+        ),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('createConversation throws NotFoundException for a 404 upstream response on the save call', async () => {
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        error: { message: 'Not found' },
+        response: new Response(null, { status: 404 }),
+      } as never);
+
+      await expect(
+        service.createConversation(
+          'Hello',
+          'test-token',
+          'test-bucket',
+          'gpt-4o',
+        ),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

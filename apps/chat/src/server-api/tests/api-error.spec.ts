@@ -2,13 +2,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { getApiErrorMessage, isConversationNotFoundError } from '../api-error';
 
 describe('isConversationNotFoundError', () => {
-  it('returns true for 404 and 502 API responses', () => {
+  it('returns true for a 404 API response', () => {
     expect(
       isConversationNotFoundError({ response: { status: 404, json: vi.fn() } }),
     ).toBe(true);
+  });
+
+  it('returns false for a 502 API response', () => {
     expect(
       isConversationNotFoundError({ response: { status: 502, json: vi.fn() } }),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('returns false for other statuses', () => {

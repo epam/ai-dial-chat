@@ -170,9 +170,10 @@ export class FilesService extends AppService {
         `DIAL Core listFiles returned error: status=${response.status}, bucket=${bucket}`,
       );
       return handleDialSdkError(
-        { status: response.status },
+        error,
         'files.listFiles',
         this.logger,
+        response,
       );
     }
 
@@ -231,9 +232,10 @@ export class FilesService extends AppService {
           `DIAL Core upload returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
         );
         return handleDialSdkError(
-          { status: response.status },
+          error,
           'files.uploadFile',
           this.logger,
+          response,
         );
       }
 
@@ -357,9 +359,10 @@ export class FilesService extends AppService {
           `DIAL Core getSharedResources returned error: status=${response.status}`,
         );
         return handleDialSdkError(
-          { status: response.status },
+          error,
           'files.listSharedFiles',
           this.logger,
+          response,
         );
       }
 
@@ -411,9 +414,10 @@ export class FilesService extends AppService {
           `DIAL Core getFileMetadata returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
         );
         return handleDialSdkError(
-          { status: response.status },
+          error,
           'files.getFileMetadata',
           this.logger,
+          response,
         );
       }
 
@@ -422,9 +426,10 @@ export class FilesService extends AppService {
           `DIAL Core getFileMetadata returned no data: bucket=${bucket}, path=${path}`,
         );
         return handleDialSdkError(
-          { status: response.status },
+          error,
           'files.getFileMetadata',
           this.logger,
+          response,
         );
       }
 
@@ -509,11 +514,9 @@ export class FilesService extends AppService {
           `createFolder marker probe mismatch: requested=${markerPath}, probeName=${probe.name ?? '(none)'}, probeUrl=${probe.url ?? '(none)'}`,
         );
       } else if (metaError != null && metaStatus !== 404) {
-        handleDialSdkError(
-          { status: metaStatus },
-          'files.createFolder',
-          this.logger,
-        );
+        handleDialSdkError(metaError, 'files.createFolder', this.logger, {
+          status: metaStatus,
+        });
       }
 
       await this.uploadFile(
@@ -588,9 +591,10 @@ export class FilesService extends AppService {
 
       if (error != null) {
         return handleDialSdkError(
-          { status: response.status },
+          error,
           'files.downloadFile',
           this.logger,
+          response,
         );
       }
 
@@ -646,9 +650,10 @@ export class FilesService extends AppService {
           `Archive folder metadata failed: bucket=${bucket}, path=${relFolderPath}, page=${page}, status=${response.status}`,
         );
         return handleDialSdkError(
-          { status: (response as { status: number }).status },
+          error,
           'files.expandFolderContents',
           this.logger,
+          response as { status: number },
         );
       }
 

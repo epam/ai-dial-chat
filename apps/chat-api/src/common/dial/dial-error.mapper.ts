@@ -57,13 +57,20 @@ const isHttpError = (error: unknown): error is { status: number } =>
 
 /**
  * Handles an SDK-shaped error (`@epam/ai-dial-typescript-sdk`, `{ status }`)
- * and throws the matching Nest exception. Call this from a service's
- * catch block or when the SDK response carries an `error` field.
+ * and throws the matching Nest exception. Call this from a service's catch
+ * block or when the SDK response carries an `error` field.
+ *
+ * Pass `response` (the raw `Response` the SDK call resolved with) whenever
+ * one is available — `error` is only ever the parsed DIAL Core error body,
+ * which never carries a `status` field itself, so without `response` the
+ * real upstream status is lost and every error falls through to a generic
+ * `BadGatewayException`.
  */
 export const handleDialSdkError = (
   error: unknown,
   context: string,
   logger?: Logger,
+  response?: { status: number },
 ): never => {
   if (error instanceof HttpException) {
     throw error;
@@ -78,8 +85,15 @@ export const handleDialSdkError = (
     throw new ServiceUnavailableException('DIAL Core is unreachable');
   }
 
-  if (isHttpError(error)) {
-    return mapDialHttpStatus(error.status, context, logger);
+  const mappableError = response
+    ? {
+        ...(typeof error === 'object' && error !== null ? error : {}),
+        status: response.status,
+      }
+    : error;
+
+  if (isHttpError(mappableError)) {
+    return mapDialHttpStatus(mappableError.status, context, logger);
   }
 
   logger?.error(`Unexpected response from DIAL Core during ${context}`, error);

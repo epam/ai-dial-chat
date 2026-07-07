@@ -230,9 +230,10 @@ export class UserConfigService extends AppService {
           error,
         );
         return handleDialSdkError(
-          { status: response.status },
+          error,
           'user-config.writeConfig',
           this.logger,
+          response,
         );
       }
     } catch (err) {
