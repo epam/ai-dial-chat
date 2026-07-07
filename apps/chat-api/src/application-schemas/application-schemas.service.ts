@@ -7,6 +7,7 @@ import {
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
+import { isQuickAppSchema } from '../common/utils/application-schema';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import type { EnvironmentVariables } from '../config/environment.config';
 import type {
@@ -60,7 +61,7 @@ export class ApplicationSchemasService extends AppService {
       const data: ApplicationSchemasResponseDto = {
         schemas: items.map((rawItem): ApplicationSchemaSummaryDto => {
           const id = rawItem['$id'] as string | undefined;
-          const isQuickApp = id?.includes('quickapps2') ?? false;
+          const isQuickApp = isQuickAppSchema(id);
           return {
             id,
             displayName: rawItem['dial:applicationTypeDisplayName'],

@@ -206,7 +206,7 @@ describe('ApplicationsService', () => {
         body,
       );
       expect(result).toEqual({
-        id: 'applications/test-bucket/My%20App__0.0.1',
+        id: 'applications/test-bucket/My App__0.0.1',
       });
       expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
     });
@@ -223,7 +223,7 @@ describe('ApplicationsService', () => {
         ...body,
         version: '2.0',
       });
-      expect(result.id).toBe('applications/test-bucket/My%20App__2.0');
+      expect(result.id).toBe('applications/test-bucket/My App__2.0');
       const putUrl = fetchSpy.mock.calls[1][0] as string;
       expect(putUrl).toContain('My%20App__2.0');
     });
@@ -330,7 +330,11 @@ describe('ApplicationsService', () => {
         vi
           .fn()
           .mockResolvedValueOnce(bucketOk)
-          .mockResolvedValueOnce({ ok: false, status: 403 }),
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 403,
+            text: () => Promise.resolve(''),
+          }),
       );
       await expect(service.createApplication('u', 't', body)).rejects.toThrow(
         ForbiddenException,
@@ -344,7 +348,11 @@ describe('ApplicationsService', () => {
         vi
           .fn()
           .mockResolvedValueOnce(bucketOk)
-          .mockResolvedValueOnce({ ok: false, status: 429 }),
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 429,
+            text: () => Promise.resolve(''),
+          }),
       );
       await expect(service.createApplication('u', 't', body)).rejects.toThrow(
         HttpException,
@@ -369,7 +377,11 @@ describe('ApplicationsService', () => {
         vi
           .fn()
           .mockResolvedValueOnce(bucketOk)
-          .mockResolvedValueOnce({ ok: false, status: 409 }),
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 409,
+            text: () => Promise.resolve(''),
+          }),
       );
       await expect(
         service.createApplication('user1', 't', body),

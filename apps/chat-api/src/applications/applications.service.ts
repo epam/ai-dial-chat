@@ -90,15 +90,7 @@ export class ApplicationsService extends AppService {
         display_name: body.name,
         display_version: version,
         application_type_schema_id: body.type,
-        application_properties: body.type.includes('quickapps2')
-          ? {
-              orchestrator: {
-                system_prompt: { type: 'custom', variables: {}, content: '' },
-              },
-              contexts: [],
-              tool_sets: [],
-            }
-          : {},
+        application_properties: body.applicationProperties ?? {},
       };
       if (body.description != null) dialBody.description = body.description;
       if (body.iconUrl != null) dialBody.icon_url = body.iconUrl;

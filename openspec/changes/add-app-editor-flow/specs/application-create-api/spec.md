@@ -31,6 +31,7 @@ The endpoint SHALL:
   iconUrl?: string;      // optional, @IsString, @IsOptional, @IsUrl
   version?: string;      // optional, @IsString, @IsOptional — defaults to "0.0.1" in service
   topics?: string[];     // optional, @IsArray, @IsString({ each: true }), @IsOptional
+  applicationProperties?: Record<string, unknown>; // optional, @IsObject, @IsOptional
 }
 ```
 
@@ -40,22 +41,14 @@ The endpoint SHALL:
   display_name: body.name,
   display_version: body.version ?? '0.0.1',
   application_type_schema_id: body.type,
-  application_properties: body.type.includes('quickapps2')
-    ? {
-        orchestrator: {
-          system_prompt: { type: 'custom', variables: {}, content: '' },
-        },
-        contexts: [],
-        tool_sets: [],
-      }
-    : {},
+  application_properties: body.applicationProperties ?? {},
   description: body.description,  // omitted when undefined
   icon_url: body.iconUrl,          // omitted when undefined
   topics: body.topics,             // omitted when undefined or empty
 }
 ```
 
-`application_properties` SHALL default to `{}` for every non-QuickApps-2.0 application type. When `body.type` includes `quickapps2`, the service SHALL seed `application_properties` with the empty orchestrator/contexts/tool_sets shape shown above so the app is created in a valid, immediately-editable state for the QuickApps 2.0 editor.
+`application_properties` SHALL default to `{}` when `body.applicationProperties` is not supplied. The service SHALL NOT branch on `body.type` to decide `application_properties` content — that decision belongs to the caller. The frontend `GeneralForm` (`apps/chat/src/pages/AppsEditor/GeneralForm.tsx`) is the current caller, and uses the shared `isQuickAppSchema` helper (`apps/chat/src/utils/application-schema.ts`) to decide whether to send the QuickApps 2.0 orchestrator/contexts/tool_sets shape as `applicationProperties`.
 
 **Response DTO** (`CreatedApplicationDto`): `{ id: string }` where `id` is constructed locally as `applications/{bucket}/{appPath}` (unencoded). DIAL Core's PUT response body is not forwarded.
 
@@ -73,14 +66,14 @@ The endpoint SHALL:
 - **THEN** the endpoint responds 201 with `{ "id": "applications/users/alice/My App__0.0.1" }` (unencoded path)
 - **AND** the `applications:list:<userSub>` cache key is deleted
 
-#### Scenario: QuickApps 2.0 type seeds default application_properties
+#### Scenario: Caller-supplied applicationProperties is forwarded as-is
 
-- **WHEN** an authenticated user calls `POST /api/v1/applications` with `type` containing `quickapps2`
-- **THEN** the DIAL Core `PUT` body includes `application_properties: { orchestrator: { system_prompt: { type: 'custom', variables: {}, content: '' } }, contexts: [], tool_sets: [] }`
+- **WHEN** an authenticated user calls `POST /api/v1/applications` with `applicationProperties: { orchestrator: { system_prompt: { type: 'custom', variables: {}, content: '' } }, contexts: [], tool_sets: [] }`
+- **THEN** the DIAL Core `PUT` body includes `application_properties` with that exact value
 
-#### Scenario: Non-QuickApps type sends empty application_properties
+#### Scenario: Missing applicationProperties sends empty application_properties
 
-- **WHEN** an authenticated user calls `POST /api/v1/applications` with a `type` that does not contain `quickapps2`
+- **WHEN** an authenticated user calls `POST /api/v1/applications` without `applicationProperties`
 - **THEN** the DIAL Core `PUT` body includes `application_properties: {}`
 
 #### Scenario: DIAL Core rejection is logged with response body

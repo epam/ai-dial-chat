@@ -58,7 +58,7 @@ Field mapping (all optional per upstream contract):
 | `id`            | `$id`                                     |
 | `displayName`   | `dial:applicationTypeDisplayName`         |
 | `viewerUrl`     | `dial:applicationTypeViewerUrl`           |
-| `editorUrl`     | `dial:applicationTypeEditorUrl` — overridden with `DEV_QUICKAPPS_EDITOR_URL` when the schema `id` includes `quickapps2` and that env var is set (see below) |
+| `editorUrl`     | `dial:applicationTypeEditorUrl` — overridden with `DEV_QUICKAPPS_EDITOR_URL` when `isQuickAppSchema(id)` is true and that env var is set (see below) |
 | `schemaEndpoint`| `dial:applicationTypeSchemaEndpoint`      |
 | `iconUrl`       | `dial:applicationTypeIconUrl`             |
 
@@ -67,8 +67,10 @@ Field mapping (all optional per upstream contract):
 `apps/chat-api/src/config/environment.config.ts` (`EnvironmentVariables`) SHALL define an optional `DEV_QUICKAPPS_EDITOR_URL?: string` (`@IsOptional() @IsUrl({ require_tld: false })`).
 
 When building each `ApplicationSchemaSummaryDto`, the service SHALL:
-- Determine `isQuickApp` from `schema.id?.includes('quickapps2') ?? false`.
+- Determine `isQuickApp` from the shared `isQuickAppSchema(schema.id)` helper (`apps/chat-api/src/common/utils/application-schema.ts`).
 - Set `editorUrl` to `DEV_QUICKAPPS_EDITOR_URL` when `isQuickApp` is true and the env var is set; otherwise use `dial:applicationTypeEditorUrl` unchanged.
+
+*TODO: `isQuickAppSchema` matches on a schema id substring because DIAL Core does not yet expose a stable capability/type field. Replace with a proper identifier once one is available.*
 
 This override exists to let developers point the QuickApps 2.0 editor iframe at a local dev server without editing the upstream schema. It has no effect when `DEV_QUICKAPPS_EDITOR_URL` is unset, and no effect on non-QuickApps schemas.
 

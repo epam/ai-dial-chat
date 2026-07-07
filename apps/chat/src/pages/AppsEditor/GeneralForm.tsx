@@ -18,6 +18,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
+import { isQuickAppSchema } from '../../utils/application-schema';
 
 const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
 const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/;
@@ -78,6 +79,15 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     setIsSubmitting(true);
     setSubmitError('');
     try {
+      const applicationProperties = isQuickAppSchema({ id: schemaId })
+        ? {
+            orchestrator: {
+              system_prompt: { type: 'custom', variables: {}, content: '' },
+            },
+            contexts: [],
+            tool_sets: [],
+          }
+        : undefined;
       const result = await createApplication({
         name: trimmedName,
         type: schemaId,
@@ -85,6 +95,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         iconUrl: iconUrl.trim() || undefined,
         version: trimmedVersion || undefined,
         topics: topics.length > 0 ? topics : undefined,
+        applicationProperties,
       });
       onCreated(result.id);
     } catch {
