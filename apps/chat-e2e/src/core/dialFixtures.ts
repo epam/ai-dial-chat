@@ -99,6 +99,7 @@ import {
   ShareApiAssertion,
   ShareAppModalAssertion,
   ShareModalAssertion,
+  SharedWithMePromptsAssertion,
   SideBarAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
@@ -167,6 +168,7 @@ import {
   PublishToolsetsTree,
   SharedFolderConversations,
   SharedWithMeConversationsTree,
+  SharedWithMePromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
@@ -383,6 +385,8 @@ const dialTest = test.extend<{
   promptBarOrganizationFolderAssertion: FolderAssertion<FolderPrompts>;
   promptAssertion: PromptAssertion;
   promptBarAssertion: SideBarAssertion;
+  sharedWithMePrompts: SharedWithMePromptsTree;
+  sharedWithMePromptAssertion: SharedWithMePromptsAssertion;
   accountSettingsAssertion: AccountSettingsAssertion;
   accountDropdownMenuAssertion: MenuAssertion;
   conversationDropdownMenuAssertion: MenuAssertion;
@@ -1457,6 +1461,16 @@ const dialTest = test.extend<{
   promptBarAssertion: async ({ promptBar }, use) => {
     const promptBarAssertion = new SideBarAssertion(promptBar);
     await use(promptBarAssertion);
+  },
+  sharedWithMePrompts: async ({ promptBar }, use) => {
+    const sharedWithMePrompts = promptBar.getSharedWithMePromptsTree();
+    await use(sharedWithMePrompts);
+  },
+  sharedWithMePromptAssertion: async ({ sharedWithMePrompts }, use) => {
+    const sharedWithMePromptAssertion = new SharedWithMePromptsAssertion(
+      sharedWithMePrompts,
+    );
+    await use(sharedWithMePromptAssertion);
   },
   accountSettingsAssertion: async ({ accountSettings }, use) => {
     const accountSettingsAssertion = new AccountSettingsAssertion(
