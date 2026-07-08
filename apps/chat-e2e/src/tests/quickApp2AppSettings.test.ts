@@ -4,7 +4,7 @@ import dialTest from '@/src/core/dialFixtures';
 import { EntityEditorAppTypes } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
 
-dialTest.only(
+dialTest(
   "[Quick app 2.0] Only Model with the feature 'tools: true' can be set as Orchestrator\n" +
     "[Quick app 2.0] Temperature is not shown on App setting if 'temperature: false' and vice versa", // EPMRTC-7271 + EPMRTC-7092
   async ({
