@@ -2390,6 +2390,96 @@
         "tags": ["files"]
       }
     },
+    "/api/v1/files/copy": {
+      "post": {
+        "operationId": "copyFiles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyFilesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Copy files and folders",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/move": {
+      "post": {
+        "operationId": "moveFiles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveFilesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Move files and folders across folders",
+        "tags": ["files"]
+      }
+    },
     "/api/v1/files/download": {
       "get": {
         "operationId": "downloadFile",
@@ -4934,6 +5024,170 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/RenameItemResultDto"
+            }
+          }
+        },
+        "required": ["results"]
+      },
+      "CopyItemDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "sourcePath": {
+            "type": "string",
+            "description": "Relative source path within bucket",
+            "example": "reports/q1.pdf"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "Relative destination path within bucket",
+            "example": "archive/q1.pdf"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": ["item", "folder"]
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name (last segment) for error messages",
+            "example": "q1.pdf"
+          }
+        },
+        "required": [
+          "bucket",
+          "sourcePath",
+          "destinationPath",
+          "nodeType",
+          "name"
+        ]
+      },
+      "CopyFilesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CopyItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "CopyItemResultDto": {
+        "type": "object",
+        "properties": {
+          "sourcePath": {
+            "type": "string",
+            "description": "Source path from request"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "Destination path from request"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "true when all Core copyResource calls succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error reason when success is false"
+          }
+        },
+        "required": ["sourcePath", "destinationPath", "success"]
+      },
+      "CopyFilesResponseDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CopyItemResultDto"
+            }
+          }
+        },
+        "required": ["results"]
+      },
+      "MoveItemDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "sourcePath": {
+            "type": "string",
+            "description": "Relative source path within bucket",
+            "example": "inbox/draft.pdf"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "Relative destination path within bucket",
+            "example": "reports/draft.pdf"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": ["item", "folder"]
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name (last segment) for error messages",
+            "example": "draft.pdf"
+          }
+        },
+        "required": [
+          "bucket",
+          "sourcePath",
+          "destinationPath",
+          "nodeType",
+          "name"
+        ]
+      },
+      "MoveFilesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MoveItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "MoveItemResultDto": {
+        "type": "object",
+        "properties": {
+          "sourcePath": {
+            "type": "string",
+            "description": "Source path from request"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "Destination path from request"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "true when all Core moveResource calls succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error reason when success is false"
+          }
+        },
+        "required": ["sourcePath", "destinationPath", "success"]
+      },
+      "MoveFilesResponseDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MoveItemResultDto"
             }
           }
         },
