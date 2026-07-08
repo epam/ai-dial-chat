@@ -31,8 +31,9 @@ describe('useStreamedMarkdownContent', () => {
     expect(result.current).toBe('Hi there');
   });
 
-  it('continues reveal after streaming stops using final speed', () => {
+  it('syncs immediately when streaming stops', () => {
     vi.useFakeTimers();
+    const finalContent = `Hi ${'there '.repeat(20)}`;
 
     const { result, rerender } = renderHook(
       ({ content, isStreaming }) =>
@@ -42,21 +43,13 @@ describe('useStreamedMarkdownContent', () => {
       },
     );
 
-    rerender({ content: 'Hi there', isStreaming: true });
+    rerender({ content: finalContent, isStreaming: true });
 
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
+    expect(result.current).not.toBe(finalContent);
 
-    rerender({ content: 'Hi there friend', isStreaming: false });
+    rerender({ content: finalContent, isStreaming: false });
 
-    expect(result.current).not.toBe('Hi there friend');
-
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
-
-    expect(result.current).toBe('Hi there friend');
+    expect(result.current).toBe(finalContent);
   });
 
   it('syncs structural markdown immediately', () => {
