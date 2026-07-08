@@ -58,7 +58,6 @@ import { getConversationSource } from './get-conversation-source';
 const PANEL_STYLES: ConversationPanelStyles = {
   typography: {
     itemIconBadgeClassName: 'rounded-lg',
-    groupHeaderClassName: 'dial-tiny-semi-text uppercase tracking-wider',
     tabClassName: 'dial-tiny-semi-text cp-filter-tab',
   },
   colors: { border: 'rgba(0, 0, 0, 0.016)', text: 'var(--text-primary)' },

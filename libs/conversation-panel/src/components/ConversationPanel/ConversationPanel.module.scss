@@ -29,7 +29,8 @@
 }
 
 .groupHeader {
-  color: var(--cp-text-secondary, var(--text-secondary, #575f73));
+  color: var(--cp-text-secondary, var(--text-tertiary, #808898));
+  opacity: 0.55;
 }
 
 .itemIcon {

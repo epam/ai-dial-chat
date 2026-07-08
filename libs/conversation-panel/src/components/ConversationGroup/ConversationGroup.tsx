@@ -24,9 +24,9 @@ export interface ConversationGroupProps {
   getActions?: (item: ConversationHistoryItem) => DropdownItem[];
   /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
-  /** Typography class applied to the group header button. Defaults to `'dial-tiny-text'`. */
+  /** Typography class applied to the group header button. Defaults to `'dial-tiny-semi-text uppercase'`. */
   groupHeaderClassName?: string;
-  /** Typography class applied to the conversation title text. Defaults to `'dial-small-text'`. */
+  /** Typography class applied to the conversation title text. */
   itemTitleClassName?: string;
 }
 
@@ -39,7 +39,7 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
     onSelectConversation,
     getActions,
     actionsLabel,
-    groupHeaderClassName = 'dial-tiny-text',
+    groupHeaderClassName = 'dial-tiny-semi-text uppercase',
     itemTitleClassName,
   }) => {
     const [isExpanded, setIsExpanded] = useState(true);
