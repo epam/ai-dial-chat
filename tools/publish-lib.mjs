@@ -6,7 +6,8 @@
  *
  * Arguments:
  *   <project-name>   Nx project name (scoped package name, e.g. @epam/ai-dial-conversation-input)
- *   --version        SemVer string to publish as (#.#.#, #.#.#-tag.#, or 'dev')
+ *   --version        SemVer string to publish as (#.#.#, #.#.#-tag.#, or 'dev').
+ *                     Defaults to the root package.json version when omitted.
  *   --tag            npm dist-tag (default: "dev") — never defaults to "latest"
  *   --dry            Pass "true" to perform a dry run without actually publishing
  *
@@ -23,6 +24,8 @@
  *
  * Note: the source package.json is never modified.
  */
+
+import mainPackageJson from '../package.json' with { type: 'json' };
 
 import devkit from '@nx/devkit';
 import { execSync } from 'child_process';
@@ -59,7 +62,9 @@ const { values, positionals } = parseArgs({
 });
 
 const name = positionals[0];
-const version = values.version;
+// Fall back to the root package.json version when --version isn't provided,
+// e.g. plain "npm run publish:npm" after the root version has been bumped for a release.
+const version = values.version || mainPackageJson.version;
 const dry = values.dry === 'true';
 // Default tag to "dev" — never accidentally publish under "latest"
 const tag = values.tag || 'dev';
