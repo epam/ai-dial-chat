@@ -340,6 +340,12 @@ export const AddQuickApp2SettingsFormSelector = {
   attachmentsSection: '[data-qa="attachments-section"]',
   conversationStartersSection: '[data-qa="conversation-starters-section"]',
 
+  // Orchestrator section — model + temperature
+  orchestratorModel: '[data-qa="orchestrator-model"]',
+  orchestratorModelName: '[data-qa="orchestrator-model-name"]',
+  changeModelButtonLabel: 'Change', // aria-label of the model "Change" button
+  temperatureSlider: '[data-qa="temp-slider"]', // shown only for temperature-capable models
+
   // Context & Tools subsections
   agentsAndToolsetsField: '[data-qa="agents-and-toolsets-field"]',
   documentUrlsField: '[data-qa="document-urls-field"]',

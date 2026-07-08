@@ -142,7 +142,10 @@ export const ModelField = () => {
       control={control}
       render={({ field }) => (
         <>
-          <div className="flex items-center justify-between rounded-[4px] border border-tertiary bg-layer-3 px-4 py-3">
+          <div
+            className="flex items-center justify-between rounded-[4px] border border-tertiary bg-layer-3 px-4 py-3"
+            data-qa="orchestrator-model"
+          >
             <div className="flex min-w-0 flex-1 grow items-center gap-3">
               <ModelIcon
                 size={32}
@@ -156,6 +159,7 @@ export const ModelField = () => {
                     'truncate text-sm font-semibold',
                     selectedEntity ? 'text-primary' : 'text-secondary',
                   )}
+                  data-qa="orchestrator-model-name"
                 >
                   <DialEllipsisTooltip
                     text={selectedEntity?.name ?? selectedModelId}

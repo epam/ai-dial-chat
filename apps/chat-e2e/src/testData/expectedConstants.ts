@@ -417,6 +417,13 @@ export const ExpectedConstants = {
     name: string,
     version: string,
   ) => `Not available ${entityType}.${name}v. ${version}`,
+  // Shown in an editable (non-readonly) editor when the chip's entity is deleted.
+  notAvailableEditableChipTooltip: (entityType: string) =>
+    `Not available ${entityType}. Please, change or remove ${entityType} to proceed.`,
+  // Confirmation dialog shown on Save & Exit when the config has invalid items.
+  saveOnlyValidDataTitle: 'Only valid data will be saved',
+  saveOnlyValidDataMessage:
+    'Some fields are invalid or required fields are missing.\nChanges in those fields will not be saved.\nExit and save only valid information?',
   loginToOrgSuccessfulMessage: (name: string, version: string) =>
     `Successful login\nYou have successfully logged into the "${name}" version ${version} with credentials to entire organization.`,
   personalLoginSuccessfulMessage: (name: string, version: string) =>
@@ -527,6 +534,12 @@ export enum EditPromptFormFields {
 }
 
 export enum EntityEditorToolsetTypes {
+  Toolset = 'toolset',
+}
+
+// Entity type words used in chip tooltips / status messages.
+export enum AgentToolsetEntityType {
+  Agent = 'agent',
   Toolset = 'toolset',
 }
 
