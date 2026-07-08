@@ -414,7 +414,9 @@ export enum AppsEditorI18nKeys {
   GeneralFormPreviewTitle = 'appsEditor.generalForm.previewTitle',
   SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
   SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
+  SaveButton = 'appsEditor.saveButton',
   ErrorCreateFailed = 'appsEditor.error.createFailed',
+  ErrorSaveFailed = 'appsEditor.error.saveFailed',
 }
 
 export enum ToolsetEditorI18nKeys {
@@ -423,7 +425,6 @@ export enum ToolsetEditorI18nKeys {
   StepsNavAriaLabel = 'toolsetEditor.stepsNavAriaLabel',
   NextButton = 'toolsetEditor.nextButton',
   SaveButton = 'toolsetEditor.saveButton',
-  PreviewTitle = 'toolsetEditor.previewTitle',
   // General form
   NameLabel = 'toolsetEditor.general.nameLabel',
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',

@@ -5,7 +5,7 @@
 `apps/chat/src/components/CatalogView/CatalogView.tsx` SHALL wire the two `createOptions` entries to navigate to the `/apps-editor` route.
 
 Schema resolution: use `useDeployments().schemas` to find the matching `ApplicationSchemaSummaryDto`:
-- **Quick App**: `schemas.find(s => s.id?.endsWith('quickapps2') || s.displayName === 'Quick app 2.0')`
+- **Quick App**: `schemas.find(s => isQuickAppSchema(s))`, using the shared `isQuickAppSchema` helper from `apps/chat/src/utils/application-schema.ts` *(TODO: this matches on schema id suffix / display name because DIAL Core does not yet expose a stable capability/type field — replace with a proper identifier once one is available)*
 - **Toolset** *(temporary — TODO: replace with a proper identifier once toolset schema has a stable id/displayName)*: `schemas.find(s => s.id?.includes('toolset'))`
 
 Navigation URL for each option:
@@ -46,7 +46,7 @@ The `createOptions` array SHALL be wrapped in `useMemo` with `[schemas, navigate
 
 #### Scenario: Quick App option hidden when no matching schema
 
-- **WHEN** `useDeployments().schemas` contains no entry whose `id` ends with `quickapps2` and no entry with `displayName === 'Quick app 2.0'`
+- **WHEN** `useDeployments().schemas` contains no entry for which `isQuickAppSchema` returns true (i.e. no entry whose `id` ends with `quickapps2` and no entry with `displayName === 'Quick app 2.0'`)
 - **THEN** `createOptions` does NOT include a Quick App entry
 
 #### Scenario: Toolset option hidden when no matching schema

@@ -455,6 +455,7 @@
     "stepGeneral": "General",
     "stepSettings": "Settings",
     "stepsNavAriaLabel": "Editor steps",
+    "saveButton": "Save & Exit",
     "generalForm": {
       "nameLabel": "Name",
       "namePlaceholder": "Enter application name",
@@ -477,7 +478,8 @@
       "noEditorPlaceholder": "Editor not available for this application type yet."
     },
     "error": {
-      "createFailed": "Failed to create application. Please try again."
+      "createFailed": "Failed to create application. Please try again.",
+      "saveFailed": "Failed to save application settings. Please try again."
     }
   },
   "toolsetEditor": {
@@ -486,7 +488,6 @@
     "stepsNavAriaLabel": "Editor steps",
     "nextButton": "Next",
     "saveButton": "Save & Exit",
-    "previewTitle": "Preview",
     "general": {
       "nameLabel": "Name",
       "namePlaceholder": "Enter toolset name",
