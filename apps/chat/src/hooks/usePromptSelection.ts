@@ -25,6 +25,8 @@ import {
 
 import { useTokenizer } from './useTokenizer';
 
+const contentRegex = /\/[\w ]*$/;
+
 /**
  * Custom hook for managing prompt selection in a chat interface.
  * @param maxTokensLength The maximum tokens length of the prompt.
@@ -111,7 +113,7 @@ export const usePromptSelection = (
 
   const addPromptContent = useCallback(
     (newContent: string) => {
-      setContent(content?.replace(/\/\w*$/, newContent));
+      setContent(content?.replace(contentRegex, newContent));
       if (!useLocalContentState) {
         setTimeout(() => dispatch(ChatActions.setShouldFocusAndScroll(true)));
       }
@@ -124,7 +126,7 @@ export const usePromptSelection = (
    * @param text The text entered by the user.
    */
   const updatePromptListVisibility = useCallback((text: string) => {
-    const match = text.match(/\/\w*$/);
+    const match = text.match(contentRegex);
 
     if (match) {
       setShowPromptList(true);
@@ -178,7 +180,7 @@ export const usePromptSelection = (
 
     handlePromptSelect(selectedPrompt);
     if (onChangePrompt) {
-      onChangePrompt(content.replace(/\/\w*$/, selectedPrompt.content));
+      onChangePrompt(content.replace(contentRegex, selectedPrompt.content));
     }
     setShowPromptList(false);
   }, [
