@@ -5,9 +5,8 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialClientService } from '../../dial/dial-client.service';
 import { ApplicationsService } from '../applications.service';
 import type { ApplicationsResponseDto } from '../dto/application.dto';
 import type { CreateApplicationBodyDto } from '../dto/create-application.dto';
@@ -22,12 +21,11 @@ const errResponse = (status: number) =>
   ({ error: {}, response: { status } as Response }) as never;
 
 function makeDeps() {
-  const configService = {
-    get: vi.fn((key: string) => {
-      if (key === 'DIAL_CORE_URL') return 'http://dial-core';
-      return undefined;
-    }),
-  } as unknown as ConfigService<EnvironmentVariables>;
+  const dialClient = {
+    client: { getApplications: vi.fn() },
+    baseUrl: 'http://dial-core',
+    dialApiVersion: '2024-10-21',
+  } as unknown as DialClientService;
 
   const cacheManager = {
     get: vi.fn().mockResolvedValue(undefined),
@@ -35,12 +33,12 @@ function makeDeps() {
     del: vi.fn().mockResolvedValue(undefined),
   };
 
-  return { configService, cacheManager };
+  return { dialClient, cacheManager };
 }
 
 function makeService() {
-  const { configService, cacheManager } = makeDeps();
-  const service = new ApplicationsService(configService, cacheManager as never);
+  const { dialClient, cacheManager } = makeDeps();
+  const service = new ApplicationsService(dialClient, cacheManager as never);
   return { service, cacheManager };
 }
 
@@ -52,9 +50,10 @@ describe('ApplicationsService', () => {
   describe('listApplications', () => {
     it('returns list from upstream on cache miss', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getApplications').mockResolvedValue(
-        okResponse({ data: [mockApp] }),
-      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getApplications',
+      ).mockResolvedValue(okResponse({ data: [mockApp] }));
 
       const result = await service.listApplications('user1', 'token-abc');
       expect(result).toEqual(mockList);
@@ -62,26 +61,27 @@ describe('ApplicationsService', () => {
 
     it('returns empty list when upstream data is missing', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getApplications').mockResolvedValue(
-        okResponse({}),
-      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getApplications',
+      ).mockResolvedValue(okResponse({}));
 
       const result = await service.listApplications('user1', 'token-abc');
       expect(result).toEqual({ data: [] });
     });
 
     it('returns cached list without calling upstream on cache hit', async () => {
-      const { configService } = makeDeps();
+      const { dialClient } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockList),
         set: vi.fn(),
       };
       const service = new ApplicationsService(
-        configService,
+        dialClient,
         cacheManager as never,
       );
       const spy = vi
-        .spyOn(service['client'], 'getApplications')
+        .spyOn(service['dialClient'].client, 'getApplications')
         .mockResolvedValue(okResponse({ data: [mockApp] }));
 
       const result = await service.listApplications('user1', 'token-abc');
@@ -90,7 +90,7 @@ describe('ApplicationsService', () => {
     });
 
     it('uses per-user cache keys — different users get different cache entries', async () => {
-      const { configService } = makeDeps();
+      const { dialClient } = makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -100,12 +100,13 @@ describe('ApplicationsService', () => {
         }),
       };
       const service = new ApplicationsService(
-        configService,
+        dialClient,
         cacheManager as never,
       );
-      vi.spyOn(service['client'], 'getApplications').mockResolvedValue(
-        okResponse({ data: [mockApp] }),
-      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getApplications',
+      ).mockResolvedValue(okResponse({ data: [mockApp] }));
 
       await service.listApplications('user1', 'token1');
       await service.listApplications('user2', 'token2');
@@ -117,7 +118,7 @@ describe('ApplicationsService', () => {
     it('forwards Authorization header to upstream', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['client'], 'getApplications')
+        .spyOn(service['dialClient'].client, 'getApplications')
         .mockResolvedValue(okResponse({ data: [mockApp] }));
 
       await service.listApplications('user1', 'my-token');
@@ -132,9 +133,10 @@ describe('ApplicationsService', () => {
 
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getApplications').mockResolvedValue(
-        errResponse(401),
-      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getApplications',
+      ).mockResolvedValue(errResponse(401));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
         UnauthorizedException,
       );
@@ -142,9 +144,10 @@ describe('ApplicationsService', () => {
 
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getApplications').mockResolvedValue(
-        errResponse(403),
-      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getApplications',
+      ).mockResolvedValue(errResponse(403));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
         ForbiddenException,
       );
@@ -152,9 +155,10 @@ describe('ApplicationsService', () => {
 
     it('throws HttpException(429) on upstream 429', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getApplications').mockResolvedValue(
-        errResponse(429),
-      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getApplications',
+      ).mockResolvedValue(errResponse(429));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
         HttpException,
       );
@@ -162,9 +166,10 @@ describe('ApplicationsService', () => {
 
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getApplications').mockResolvedValue(
-        errResponse(500),
-      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getApplications',
+      ).mockResolvedValue(errResponse(500));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
         BadGatewayException,
       );
@@ -172,9 +177,10 @@ describe('ApplicationsService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getApplications').mockRejectedValue(
-        new TypeError('fetch failed'),
-      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getApplications',
+      ).mockRejectedValue(new TypeError('fetch failed'));
       await expect(service.listApplications('u', 't')).rejects.toThrow(
         ServiceUnavailableException,
       );

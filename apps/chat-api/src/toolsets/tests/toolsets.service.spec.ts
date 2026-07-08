@@ -6,9 +6,8 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialClientService } from '../../dial/dial-client.service';
 import type {
   DialToolsetDto,
   DialToolsetListResponseDto,
@@ -47,12 +46,19 @@ const errResponse = (status: number) =>
   ({ error: {}, response: { status } as Response }) as never;
 
 function makeDeps() {
-  const configService = {
-    get: vi.fn((key: string) => {
-      if (key === 'DIAL_CORE_URL') return 'http://dial-core';
-      return undefined;
-    }),
-  } as unknown as ConfigService<EnvironmentVariables>;
+  const dialClient = {
+    client: {
+      getToolSets: vi.fn(),
+      getToolset: vi.fn(),
+      getUserBucket: vi.fn(),
+      saveToolSet: vi.fn(),
+      deleteToolSet: vi.fn(),
+      toolsetSignin: vi.fn(),
+      toolSetSignout: vi.fn(),
+    },
+    baseUrl: 'http://dial-core',
+    dialApiVersion: '2024-10-21',
+  } as unknown as DialClientService;
 
   const cacheManager = {
     get: vi.fn().mockResolvedValue(undefined),
@@ -65,13 +71,13 @@ function makeDeps() {
       .mockResolvedValue({ toolsets: [], deployments: [] }),
   };
 
-  return { configService, cacheManager, userConfigService };
+  return { dialClient, cacheManager, userConfigService };
 }
 
 function makeService() {
-  const { configService, cacheManager, userConfigService } = makeDeps();
+  const { dialClient, cacheManager, userConfigService } = makeDeps();
   const service = new ToolsetsService(
-    configService,
+    dialClient,
     cacheManager as never,
     userConfigService as never,
   );
@@ -87,7 +93,7 @@ describe('ToolsetsService', () => {
     it('returns list from upstream on cache miss', async () => {
       const { service } = makeService();
       const upstreamList = { ...mockList, object: 'list' };
-      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         okResponse(upstreamList),
       );
 
@@ -97,7 +103,7 @@ describe('ToolsetsService', () => {
 
     it('filters hidden .dial_folder toolsets from upstream list', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         okResponse({
           data: [
             mockToolset,
@@ -115,18 +121,18 @@ describe('ToolsetsService', () => {
     });
 
     it('returns cached list without calling upstream on cache hit', async () => {
-      const { configService, userConfigService } = makeDeps();
+      const { dialClient, userConfigService } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockList),
         set: vi.fn(),
       };
       const service = new ToolsetsService(
-        configService,
+        dialClient,
         cacheManager as never,
         userConfigService as never,
       );
       const spy = vi
-        .spyOn(service['client'], 'getToolSets')
+        .spyOn(service['dialClient'].client, 'getToolSets')
         .mockResolvedValue(okResponse(mockList));
 
       const result = await service.listToolsets('user1', 'token-abc', 'bucket');
@@ -140,7 +146,7 @@ describe('ToolsetsService', () => {
         toolsets: ['my-toolset'],
         deployments: [],
       });
-      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         okResponse(mockList),
       );
 
@@ -154,7 +160,7 @@ describe('ToolsetsService', () => {
 
     it('sets isMy=true when bucket appears as a toolset path segment', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         okResponse({
           data: [
             {
@@ -175,7 +181,7 @@ describe('ToolsetsService', () => {
     });
 
     it('uses per-user cache keys — different users get different cache entries', async () => {
-      const { configService, userConfigService } = makeDeps();
+      const { dialClient, userConfigService } = makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -185,11 +191,11 @@ describe('ToolsetsService', () => {
         }),
       };
       const service = new ToolsetsService(
-        configService,
+        dialClient,
         cacheManager as never,
         userConfigService as never,
       );
-      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         okResponse(mockList),
       );
 
@@ -203,7 +209,7 @@ describe('ToolsetsService', () => {
     it('forwards Authorization header to upstream', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['client'], 'getToolSets')
+        .spyOn(service['dialClient'].client, 'getToolSets')
         .mockResolvedValue(okResponse(mockList));
 
       await service.listToolsets('user1', 'my-token', 'bucket');
@@ -218,7 +224,7 @@ describe('ToolsetsService', () => {
 
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         errResponse(401),
       );
       await expect(service.listToolsets('u', 't', 'bucket')).rejects.toThrow(
@@ -228,7 +234,7 @@ describe('ToolsetsService', () => {
 
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         errResponse(403),
       );
       await expect(service.listToolsets('u', 't', 'bucket')).rejects.toThrow(
@@ -238,7 +244,7 @@ describe('ToolsetsService', () => {
 
     it('throws HttpException(429) on upstream 429', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         errResponse(429),
       );
       await expect(service.listToolsets('u', 't', 'bucket')).rejects.toThrow(
@@ -248,7 +254,7 @@ describe('ToolsetsService', () => {
 
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         errResponse(500),
       );
       await expect(service.listToolsets('u', 't', 'bucket')).rejects.toThrow(
@@ -258,7 +264,7 @@ describe('ToolsetsService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolSets').mockRejectedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockRejectedValue(
         new TypeError('fetch failed'),
       );
       await expect(service.listToolsets('u', 't', 'bucket')).rejects.toThrow(
@@ -276,7 +282,7 @@ describe('ToolsetsService', () => {
           client_secret: 'secret-value',
         } as DialToolsetDto['auth_settings'] & { client_secret: string },
       };
-      vi.spyOn(service['client'], 'getToolSets').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         okResponse({ data: [toolsetWithSecret] }),
       );
 
@@ -295,7 +301,7 @@ describe('ToolsetsService', () => {
   describe('getToolset', () => {
     it('returns toolset from upstream on cache miss', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
         okResponse(mockToolset),
       );
 
@@ -309,18 +315,18 @@ describe('ToolsetsService', () => {
     });
 
     it('returns cached toolset without calling upstream on cache hit', async () => {
-      const { configService, userConfigService } = makeDeps();
+      const { dialClient, userConfigService } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockToolset),
         set: vi.fn(),
       };
       const service = new ToolsetsService(
-        configService,
+        dialClient,
         cacheManager as never,
         userConfigService as never,
       );
       const spy = vi
-        .spyOn(service['client'], 'getToolset')
+        .spyOn(service['dialClient'].client, 'getToolset')
         .mockResolvedValue(okResponse(mockToolset));
 
       const result = await service.getToolset(
@@ -339,7 +345,7 @@ describe('ToolsetsService', () => {
         toolsets: ['toolsets/bucket/my-toolset'],
         deployments: [],
       });
-      vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
         okResponse({
           ...mockToolset,
           id: 'toolsets/bucket/my-toolset',
@@ -362,7 +368,7 @@ describe('ToolsetsService', () => {
 
     it('uses per-user per-toolset cache key', async () => {
       const { service, cacheManager } = makeService();
-      vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
         okResponse(mockToolset),
       );
 
@@ -375,7 +381,7 @@ describe('ToolsetsService', () => {
     it('forwards toolset name and Authorization header to upstream', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['client'], 'getToolset')
+        .spyOn(service['dialClient'].client, 'getToolset')
         .mockResolvedValue(okResponse(mockToolset));
 
       await service.getToolset('user1', 'my-token', 'bucket', 'my-toolset');
@@ -399,7 +405,7 @@ describe('ToolsetsService', () => {
           client_secret: 'secret-value',
         },
       };
-      vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
         okResponse(toolsetWithSecret),
       );
 
@@ -425,7 +431,7 @@ describe('ToolsetsService', () => {
 
     it('throws NotFoundException on upstream 404', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
         errResponse(404),
       );
       await expect(
@@ -435,7 +441,7 @@ describe('ToolsetsService', () => {
 
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
         errResponse(401),
       );
       await expect(
@@ -445,7 +451,7 @@ describe('ToolsetsService', () => {
 
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
         errResponse(403),
       );
       await expect(
@@ -455,7 +461,7 @@ describe('ToolsetsService', () => {
 
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolset').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
         errResponse(502),
       );
       await expect(
@@ -465,7 +471,7 @@ describe('ToolsetsService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getToolset').mockRejectedValue(
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockRejectedValue(
         new TypeError('fetch failed'),
       );
       await expect(
@@ -476,14 +482,14 @@ describe('ToolsetsService', () => {
 });
 
 function makeWriteService() {
-  const { configService, userConfigService } = makeDeps();
+  const { dialClient, userConfigService } = makeDeps();
   const cacheManager = {
     get: vi.fn().mockResolvedValue(undefined),
     set: vi.fn().mockResolvedValue(undefined),
     del: vi.fn().mockResolvedValue(undefined),
   };
   const service = new ToolsetsService(
-    configService,
+    dialClient,
     cacheManager as never,
     userConfigService as never,
   );
@@ -508,10 +514,10 @@ describe('ToolsetsService — write operations', () => {
   describe('createToolset', () => {
     it('creates toolset, returns composite id, and invalidates the list cache', async () => {
       const { service, cacheManager } = makeWriteService();
-      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
         bucketSdkOk,
       );
-      vi.spyOn(service['client'], 'saveToolSet').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
         mutationSdkOk,
       );
 
@@ -524,11 +530,11 @@ describe('ToolsetsService — write operations', () => {
 
     it('encodes slashes inside the display name as filename characters', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
         bucketSdkOk,
       );
       const saveSpy = vi
-        .spyOn(service['client'], 'saveToolSet')
+        .spyOn(service['dialClient'].client, 'saveToolSet')
         .mockResolvedValue(mutationSdkOk);
 
       const result = await service.createToolset('user1', 'token', {
@@ -548,11 +554,11 @@ describe('ToolsetsService — write operations', () => {
 
     it('maps fields to DIAL Core snake_case in the PUT body', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
         bucketSdkOk,
       );
       const saveSpy = vi
-        .spyOn(service['client'], 'saveToolSet')
+        .spyOn(service['dialClient'].client, 'saveToolSet')
         .mockResolvedValue(mutationSdkOk);
 
       await service.createToolset('user1', 'token', {
@@ -595,7 +601,7 @@ describe('ToolsetsService — write operations', () => {
 
     it('throws UnauthorizedException when the bucket call returns 401', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
         errResponse(401),
       );
       await expect(service.createToolset('u', 't', baseBody)).rejects.toThrow(
@@ -605,10 +611,10 @@ describe('ToolsetsService — write operations', () => {
 
     it('does not invalidate cache when the PUT returns an error', async () => {
       const { service, cacheManager } = makeWriteService();
-      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
         bucketSdkOk,
       );
-      vi.spyOn(service['client'], 'saveToolSet').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
         errResponse(409),
       );
       await expect(
@@ -619,7 +625,7 @@ describe('ToolsetsService — write operations', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['client'], 'getUserBucket').mockRejectedValue(
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockRejectedValue(
         new TypeError('fetch failed'),
       );
       await expect(service.createToolset('u', 't', baseBody)).rejects.toThrow(
@@ -634,7 +640,7 @@ describe('ToolsetsService — write operations', () => {
     it('PUTs to the toolset id path and invalidates list + single caches', async () => {
       const { service, cacheManager } = makeWriteService();
       const saveSpy = vi
-        .spyOn(service['client'], 'saveToolSet')
+        .spyOn(service['dialClient'].client, 'saveToolSet')
         .mockResolvedValue(mutationSdkOk);
 
       const result = await service.updateToolset(
@@ -664,7 +670,7 @@ describe('ToolsetsService — write operations', () => {
 
     it('throws NotFoundException on upstream 404', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['client'], 'saveToolSet').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
         errResponse(404),
       );
       await expect(
@@ -679,7 +685,7 @@ describe('ToolsetsService — write operations', () => {
     it('DELETEs the toolset id path and invalidates caches', async () => {
       const { service, cacheManager } = makeWriteService();
       const deleteSpy = vi
-        .spyOn(service['client'], 'deleteToolSet')
+        .spyOn(service['dialClient'].client, 'deleteToolSet')
         .mockResolvedValue(mutationSdkOk);
 
       await service.deleteToolset('user1', 'token', id);
@@ -699,7 +705,7 @@ describe('ToolsetsService — write operations', () => {
 
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['client'], 'deleteToolSet').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'deleteToolSet').mockResolvedValue(
         errResponse(403),
       );
       await expect(service.deleteToolset('u', 't', id)).rejects.toThrow(
@@ -714,7 +720,7 @@ describe('ToolsetsService — write operations', () => {
     it('posts API key credentials to the signin endpoint', async () => {
       const { service } = makeWriteService();
       const signinSpy = vi
-        .spyOn(service['client'], 'toolsetSignin')
+        .spyOn(service['dialClient'].client, 'toolsetSignin')
         .mockResolvedValue(mutationSdkOk);
 
       await service.loginToolset('user1', 'token', id, {
@@ -742,7 +748,7 @@ describe('ToolsetsService — write operations', () => {
     it('posts OAuth code + redirectUri to the signin endpoint', async () => {
       const { service } = makeWriteService();
       const signinSpy = vi
-        .spyOn(service['client'], 'toolsetSignin')
+        .spyOn(service['dialClient'].client, 'toolsetSignin')
         .mockResolvedValue(mutationSdkOk);
 
       await service.loginToolset('user1', 'token', id, {
@@ -766,7 +772,7 @@ describe('ToolsetsService — write operations', () => {
 
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['client'], 'toolsetSignin').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'toolsetSignin').mockResolvedValue(
         errResponse(401),
       );
       await expect(
@@ -786,7 +792,7 @@ describe('ToolsetsService — write operations', () => {
     it('posts to the signout endpoint and invalidates caches', async () => {
       const { service, cacheManager } = makeWriteService();
       const signoutSpy = vi
-        .spyOn(service['client'], 'toolSetSignout')
+        .spyOn(service['dialClient'].client, 'toolSetSignout')
         .mockResolvedValue(mutationSdkOk);
 
       await service.logoutToolset('user1', 'token', id, {

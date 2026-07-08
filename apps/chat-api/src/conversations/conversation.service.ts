@@ -7,15 +7,13 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
-import { AppService } from '../app/app.service';
 import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
-import { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
+import { DialClientService } from '../dial/dial-client.service';
 import {
   ConversationMetadataDto,
   ConversationResponseDto,
@@ -71,18 +69,16 @@ const getValidAttachments = (
   );
 
 @Injectable()
-export class ConversationService extends AppService {
-  protected override logger = new Logger(ConversationService.name);
+export class ConversationService {
+  private readonly logger = new Logger(ConversationService.name);
 
   constructor(
-    configService: ConfigService<EnvironmentVariables>,
+    private readonly dialClient: DialClientService,
     private readonly userConfigService: UserConfigService,
     private readonly generationService: ConversationGenerationService,
     @Inject(forwardRef(() => ConversationNamingService))
     private readonly conversationNamingService: ConversationNamingService,
-  ) {
-    super(configService);
-  }
+  ) {}
 
   private async conversationPathExists(
     token: string,
@@ -90,11 +86,12 @@ export class ConversationService extends AppService {
     relativePath: string,
   ): Promise<boolean> {
     try {
-      const { data, error } = (await this.client.getConversationMetadata(
-        bucket,
-        encodeDialResourcePath(relativePath),
-        { headers: getBearerAuthHeaders(token) },
-      )) as { data?: unknown; error?: unknown };
+      const { data, error } =
+        (await this.dialClient.client.getConversationMetadata(
+          bucket,
+          encodeDialResourcePath(relativePath),
+          { headers: getBearerAuthHeaders(token) },
+        )) as { data?: unknown; error?: unknown };
 
       if (error != null) {
         if (isHttpLikeError(error) && error.status === 404) {
@@ -164,14 +161,15 @@ export class ConversationService extends AppService {
 
     try {
       const encodedConversationPath = encodeDialResourcePath(conversationPath);
-      const { data, error, response } = await this.client.saveConversation(
-        bucket,
-        encodedConversationPath,
-        {
-          headers: getBearerAuthHeaders(token),
-          body: conversation as never,
-        },
-      );
+      const { data, error, response } =
+        await this.dialClient.client.saveConversation(
+          bucket,
+          encodedConversationPath,
+          {
+            headers: getBearerAuthHeaders(token),
+            body: conversation as never,
+          },
+        );
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
         return handleDialSdkError(
@@ -285,15 +283,16 @@ export class ConversationService extends AppService {
       sessionBucket,
     );
 
-    const { data, error, response } = (await this.client.getConversation(
-      bucket,
-      encodeDialResourcePath(subPath),
-      { headers: getBearerAuthHeaders(token) },
-    )) as {
-      data?: unknown;
-      error?: unknown;
-      response: globalThis.Response;
-    };
+    const { data, error, response } =
+      (await this.dialClient.client.getConversation(
+        bucket,
+        encodeDialResourcePath(subPath),
+        { headers: getBearerAuthHeaders(token) },
+      )) as {
+        data?: unknown;
+        error?: unknown;
+        response: globalThis.Response;
+      };
     if (error != null || !data) {
       handleDialSdkError(
         error,
@@ -329,11 +328,12 @@ export class ConversationService extends AppService {
     bucket: string,
   ): Promise<void> {
     try {
-      const { error, response } = await this.client.deleteConversation(
-        bucket,
-        encodeDialResourcePath(conversationPath),
-        { headers: getBearerAuthHeaders(token) },
-      );
+      const { error, response } =
+        await this.dialClient.client.deleteConversation(
+          bucket,
+          encodeDialResourcePath(conversationPath),
+          { headers: getBearerAuthHeaders(token) },
+        );
       if (error != null) {
         this.logger.error('DIAL Core rejected deleteConversation', error);
         handleDialSdkError(
@@ -393,7 +393,7 @@ export class ConversationService extends AppService {
     );
 
     const { error: saveError, response: saveResponse } =
-      await this.client.saveConversation(
+      await this.dialClient.client.saveConversation(
         saveBucket,
         encodeDialResourcePath(subPath),
         {
@@ -468,7 +468,7 @@ export class ConversationService extends AppService {
       data: sourceData,
       error: readError,
       response: readResponse,
-    } = (await this.client.getConversation(
+    } = (await this.dialClient.client.getConversation(
       sourceBucket,
       encodeDialResourcePath(subPath),
       { headers: getBearerAuthHeaders(token) },
@@ -527,7 +527,7 @@ export class ConversationService extends AppService {
       : sessionBucket;
 
     const { error: saveError, response: saveResponse } =
-      await this.client.saveConversation(
+      await this.dialClient.client.saveConversation(
         sessionBucket,
         encodedDestinationSubPath,
         {
@@ -572,7 +572,7 @@ export class ConversationService extends AppService {
     try {
       const [userResult, publicResult, sharedResult, pinnedIds] =
         await Promise.all([
-          this.client.getConversationMetadata(
+          this.dialClient.client.getConversationMetadata(
             bucket,
             encodeDialResourcePath(path ?? ''),
             {
@@ -583,7 +583,7 @@ export class ConversationService extends AppService {
             },
           ) as Promise<MetadataResult & { response: globalThis.Response }>,
           (
-            this.client.getConversationMetadata(
+            this.dialClient.client.getConversationMetadata(
               PUBLIC_BUCKET,
               encodeDialResourcePath(path ?? ''),
               {
@@ -599,7 +599,7 @@ export class ConversationService extends AppService {
             return { data: undefined, error: err } satisfies MetadataResult;
           }),
           (
-            this.client.getSharedResources({
+            this.dialClient.client.getSharedResources({
               headers: getBearerAuthHeaders(token),
               body: { resourceTypes: ['CONVERSATION'], with: 'me' },
             }) as Promise<SharedResourcesResult>
@@ -807,7 +807,7 @@ export class ConversationService extends AppService {
   ): Promise<ConversationMetadataDto> {
     try {
       const { data, error, response } =
-        await this.client.getConversationMetadata(
+        await this.dialClient.client.getConversationMetadata(
           bucket,
           encodeDialResourcePath(conversationPath),
           {
@@ -852,14 +852,15 @@ export class ConversationService extends AppService {
     );
 
     try {
-      const { data, error, response } = await this.client.saveConversation(
-        bucket,
-        encodeDialResourcePath(conversationPath),
-        {
-          headers: getBearerAuthHeaders(token),
-          body: bodyToSave as never,
-        },
-      );
+      const { data, error, response } =
+        await this.dialClient.client.saveConversation(
+          bucket,
+          encodeDialResourcePath(conversationPath),
+          {
+            headers: getBearerAuthHeaders(token),
+            body: bodyToSave as never,
+          },
+        );
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
         return handleDialSdkError(
@@ -1051,7 +1052,7 @@ export class ConversationService extends AppService {
         this.logger.debug(
           `deleteConversations[${i}]: decodedPath=${path} encodedPath=${encodedPath}`,
         );
-        return this.client.deleteConversation(bucket, encodedPath, {
+        return this.dialClient.client.deleteConversation(bucket, encodedPath, {
           headers: getBearerAuthHeaders(token),
         });
       }),
@@ -1101,10 +1102,8 @@ export class ConversationService extends AppService {
 
     try {
       do {
-        const { data, error } = (await this.client.getConversationMetadata(
-          bucket,
-          '',
-          {
+        const { data, error } =
+          (await this.dialClient.client.getConversationMetadata(bucket, '', {
             headers: getBearerAuthHeaders(token),
             params: {
               query: {
@@ -1113,8 +1112,7 @@ export class ConversationService extends AppService {
                 ...(cursor ? { token: cursor } : {}),
               },
             },
-          },
-        )) as MetadataResult;
+          })) as MetadataResult;
 
         if (error != null || !data) {
           this.logger.error(
@@ -1187,7 +1185,7 @@ export class ConversationService extends AppService {
     );
 
     try {
-      const result = (await this.client.subscribeToResources({
+      const result = (await this.dialClient.client.subscribeToResources({
         body: { resources: [{ url: resourceUrl }] },
         headers: {
           ...getBearerAuthHeaders(token),
@@ -1389,16 +1387,17 @@ export class ConversationService extends AppService {
     };
 
     try {
-      const dialResult = (await this.client.sendChatCompletionRequest(model, {
-        body: requestBody as never,
-        headers: {
-          ...getBearerAuthHeaders(token),
-          Accept: 'text/event-stream',
-        },
-        params: { query: { 'api-version': this.dialApiVersion } },
-        parseAs: 'stream',
-        signal: abortController.signal,
-      })) as { response: globalThis.Response; error?: unknown };
+      const dialResult =
+        (await this.dialClient.client.sendChatCompletionRequest(model, {
+          body: requestBody as never,
+          headers: {
+            ...getBearerAuthHeaders(token),
+            Accept: 'text/event-stream',
+          },
+          params: { query: { 'api-version': this.dialClient.dialApiVersion } },
+          parseAs: 'stream',
+          signal: abortController.signal,
+        })) as { response: globalThis.Response; error?: unknown };
 
       if (!dialResult.response.ok || !dialResult.response.body) {
         this.logger.error(
