@@ -30,14 +30,16 @@ interface LimitItemProps {
 
 const LimitItem: FC<LimitItemProps> = ({ limit, title }) => {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1" data-qa="limit-item">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm text-primary">{title}</h4>
+        <h4 className="text-sm text-primary" data-qa="limit-key">
+          {title}
+        </h4>
 
         <div className="flex items-center gap-1 text-xs text-secondary">
-          <span>{formatLimit(limit.used)}</span>
+          <span data-qa="used-limit">{formatLimit(limit.used)}</span>
           <span>/</span>
-          <span>
+          <span data-qa="total-limit">
             {isUnlimitedUsage(limit) ? (
               <IconInfinity size={18} />
             ) : (
@@ -64,7 +66,10 @@ interface ApplicationLimitsViewProps {
 const ApplicationLimitsView: FC<ApplicationLimitsViewProps> = ({ limits }) => {
   return (
     <div className="flex flex-col gap-5 ps-7">
-      <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+      <div
+        className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2"
+        data-qa="limits-grid"
+      >
         {limits.map((limit) => (
           <LimitItem key={limit.title} limit={limit} title={limit.title} />
         ))}
@@ -129,7 +134,7 @@ export const ApplicationLimits: FC<ApplicationLimitsProps> = ({ entity }) => {
       ) : filteredLimits.length ? (
         <ApplicationLimitsView limits={filteredLimits} />
       ) : (
-        <span className="ps-7 text-base text-secondary">
+        <span className="ps-7 text-base text-secondary" data-qa="no-limits">
           {t(MarketplaceI18nKeys.NoLimitsApplied)}
         </span>
       )}
