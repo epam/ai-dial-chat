@@ -200,4 +200,8 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   HIDDEN_ENTITY_TAGS?: string[] = [];
+
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  DEV_QUICKAPPS_EDITOR_URL?: string;
 }

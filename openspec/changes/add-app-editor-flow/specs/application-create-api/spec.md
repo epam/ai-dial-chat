@@ -9,9 +9,10 @@ The endpoint SHALL:
 - Accept a `CreateApplicationBodyDto` request body validated by NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted).
 - Use the session `accessToken` as a Bearer token for all DIAL Core calls.
 - First resolve the user's storage bucket via `GET {DIAL_CORE_BASE_URL}/v1/bucket`.
-- Construct the application path as `{name}__{version}` (URL-encoded), where `version` defaults to `'0.0.1'` when not supplied.
+- Construct the application path as `{name}__{version}` (`appPath`), where `version` defaults to `'0.0.1'` when not supplied; URL-encode it (`encodedPath`) only for the outgoing DIAL Core request URL.
 - Create the application via `PUT {DIAL_CORE_BASE_URL}/v1/applications/{bucket}/{encodedPath}` with a mapped body (see below).
-- On success, invalidate the `applications:list:<userSub>` cache entry via `cacheManager.del` and return `{ id: "applications/{bucket}/{encodedPath}" }`.
+- On success, invalidate the `applications:list:<userSub>` cache entry via `cacheManager.del` and return `{ id: "applications/{bucket}/{appPath}" }` — the **unencoded** path, matching the resource id format used elsewhere (e.g. `listApplications`).
+- On a non-2xx DIAL Core response, read and log the response body (`this.logger.warn`) before mapping the status, to aid diagnosing DIAL Core validation rejections.
 - Map DIAL Core non-2xx responses to the appropriate HTTP status using `mapDialHttpStatus`.
 - Apply `@Throttle({ default: { limit: 10, ttl: 60000 } })`.
 - Not log the access token, session cookie, or any secret. Safe identifiers (`userSub`, app path) MAY be logged at debug level.
@@ -30,6 +31,7 @@ The endpoint SHALL:
   iconUrl?: string;      // optional, @IsString, @IsOptional, @IsUrl
   version?: string;      // optional, @IsString, @IsOptional — defaults to "0.0.1" in service
   topics?: string[];     // optional, @IsArray, @IsString({ each: true }), @IsOptional
+  applicationProperties?: Record<string, unknown>; // optional, @IsObject, @IsOptional
 }
 ```
 
@@ -39,13 +41,16 @@ The endpoint SHALL:
   display_name: body.name,
   display_version: body.version ?? '0.0.1',
   application_type_schema_id: body.type,
+  application_properties: body.applicationProperties ?? {},
   description: body.description,  // omitted when undefined
   icon_url: body.iconUrl,          // omitted when undefined
   topics: body.topics,             // omitted when undefined or empty
 }
 ```
 
-**Response DTO** (`CreatedApplicationDto`): `{ id: string }` where `id` is constructed locally as `applications/{bucket}/{encodedPath}`. DIAL Core's PUT response body is not forwarded.
+`application_properties` SHALL default to `{}` when `body.applicationProperties` is not supplied. The service SHALL NOT branch on `body.type` to decide `application_properties` content — that decision belongs to the caller. The frontend `GeneralForm` (`apps/chat/src/pages/AppsEditor/GeneralForm.tsx`) is the current caller, and uses the shared `isQuickAppSchema` helper (`apps/chat/src/utils/application-schema.ts`) to decide whether to send the QuickApps 2.0 orchestrator/contexts/tool_sets shape as `applicationProperties`.
+
+**Response DTO** (`CreatedApplicationDto`): `{ id: string }` where `id` is constructed locally as `applications/{bucket}/{appPath}` (unencoded). DIAL Core's PUT response body is not forwarded.
 
 **OpenAPI / generated client**: operationId `createApplication`. Generated method in `libs/chat-api-client/src/generated/src/apis/ApplicationsApi.ts` as `createApplicationRaw` + `createApplication`.
 
@@ -53,13 +58,29 @@ The endpoint SHALL:
 
 **RTL / UI impact**: None.
 
-#### Scenario: Successful create returns 201 with constructed id
+#### Scenario: Successful create returns 201 with unencoded id
 
 - **WHEN** an authenticated user calls `POST /api/v1/applications` with `{ "name": "My App", "type": "https://mydial.epam.com/custom_application_schemas/quickapps2" }`
 - **AND** `GET /v1/bucket` returns `{ "bucket": "users/alice" }`
-- **AND** `PUT /v1/applications/users/alice/My%20App__0.0.1` returns 200
-- **THEN** the endpoint responds 201 with `{ "id": "applications/users/alice/My%20App__0.0.1" }`
+- **AND** `PUT /v1/applications/users/alice/My%20App__0.0.1` (URL-encoded path) returns 200
+- **THEN** the endpoint responds 201 with `{ "id": "applications/users/alice/My App__0.0.1" }` (unencoded path)
 - **AND** the `applications:list:<userSub>` cache key is deleted
+
+#### Scenario: Caller-supplied applicationProperties is forwarded as-is
+
+- **WHEN** an authenticated user calls `POST /api/v1/applications` with `applicationProperties: { orchestrator: { system_prompt: { type: 'custom', variables: {}, content: '' } }, contexts: [], tool_sets: [] }`
+- **THEN** the DIAL Core `PUT` body includes `application_properties` with that exact value
+
+#### Scenario: Missing applicationProperties sends empty application_properties
+
+- **WHEN** an authenticated user calls `POST /api/v1/applications` without `applicationProperties`
+- **THEN** the DIAL Core `PUT` body includes `application_properties: {}`
+
+#### Scenario: DIAL Core rejection is logged with response body
+
+- **WHEN** `PUT /v1/applications/{bucket}/{path}` responds with a non-2xx status and a JSON error body
+- **THEN** the service reads the response body and logs it at `warn` level before mapping the status
+- **AND** the access token and session cookie are never included in that log line
 
 #### Scenario: Missing required field returns 400
 

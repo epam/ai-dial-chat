@@ -22,6 +22,7 @@ import useFavoriteApplications, {
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
+import { isQuickAppSchema } from '../../utils/application-schema';
 import {
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
@@ -131,9 +132,7 @@ const CatalogView: FC = () => {
 
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
-    const quickAppSchema = schemas.find(
-      (s) => s.id?.endsWith('quickapps2') || s.displayName === 'Quick app 2.0',
-    );
+    const quickAppSchema = schemas.find((s) => isQuickAppSchema(s));
 
     if (quickAppSchema?.id) {
       const schemaId = quickAppSchema.id;

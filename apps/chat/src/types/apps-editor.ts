@@ -14,4 +14,7 @@ export enum AppsEditorStep {
 export enum AppsEditorEvent {
   ReadyToInteract = 'readyToInteract',
   UpdatedSuccess = 'updatedApplicationSuccess',
+  TriggerSave = 'TRIGGER_SAVE',
+  SaveSuccess = 'SAVE_SUCCESS',
+  SaveError = 'SAVE_ERROR',
 }
