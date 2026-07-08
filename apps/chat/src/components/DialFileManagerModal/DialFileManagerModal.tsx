@@ -528,6 +528,19 @@ const DialFileManagerModal: FC<Props> = ({
       deletingLabel,
       renameLabel: t(DialFileManagerI18nKeys.RenameAction),
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
+      copyLabel: t(DialFileManagerI18nKeys.CopyAction),
+      moveLabel: t(DialFileManagerI18nKeys.MoveAction),
+      copyingLabel: t(DialFileManagerI18nKeys.CopyingLabel),
+      movingLabel: t(DialFileManagerI18nKeys.MovingLabel),
+      operationLoaderCopyTitle: t(
+        DialFileManagerI18nKeys.OperationLoaderCopyTitle,
+      ),
+      operationLoaderMoveTitle: t(
+        DialFileManagerI18nKeys.OperationLoaderMoveTitle,
+      ),
+      operationLoaderCancelLabel: t(
+        DialFileManagerI18nKeys.OperationLoaderCancelLabel,
+      ),
       deleteConfirmTitle,
       deleteConfirmBody,
       deleteConfirmLabel,
