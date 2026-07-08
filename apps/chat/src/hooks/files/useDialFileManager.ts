@@ -1370,7 +1370,7 @@ export const useDialFileManager = ({
         forbiddenSymbolsRegExp != null &&
         forbiddenSymbolsRegExp.test(value)
       ) {
-        return t(DialFileManagerI18nKeys.RenameInvalidChars);
+        return t(DialFileManagerI18nKeys.ForbiddenSymbolsTooltip);
       }
       if (value.length > 255) {
         return t(DialFileManagerI18nKeys.RenameNameTooLong);

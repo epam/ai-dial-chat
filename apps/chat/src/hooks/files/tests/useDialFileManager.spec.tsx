@@ -11,6 +11,7 @@ import type { ListFilesItemDto } from '@epam/chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DialFileManagerI18nKeys } from '../../../constants/translation-keys';
 import * as filesApi from '../../../server-api/files.api';
 import {
   DialFileManagerActionProfile,
@@ -1212,13 +1213,13 @@ describe('useDialFileManager', () => {
     it('returns invalid chars error for name containing forward slash', async () => {
       const result = await renderAndWait();
       const msg = result.current.onRenameValidate('a/b', dummyItem);
-      expect(msg).toBeTruthy();
+      expect(msg).toBe(DialFileManagerI18nKeys.RenameInvalidChars);
     });
 
     it('returns invalid chars error for name containing backslash', async () => {
       const result = await renderAndWait();
       const msg = result.current.onRenameValidate('a\\b', dummyItem);
-      expect(msg).toBeTruthy();
+      expect(msg).toBe(DialFileManagerI18nKeys.RenameInvalidChars);
     });
 
     it('returns too-long error for name longer than 255 chars', async () => {
@@ -1227,12 +1228,12 @@ describe('useDialFileManager', () => {
       expect(msg).toBeTruthy();
     });
 
-    it('returns invalid chars error when name matches forbiddenSymbolsRegExp', async () => {
+    it('returns forbidden-symbols error when name matches forbiddenSymbolsRegExp', async () => {
       const result = await renderAndWait({
         forbiddenSymbolsRegExp: /[<>]/,
       });
       const msg = result.current.onRenameValidate('file<name>', dummyItem);
-      expect(msg).toBeTruthy();
+      expect(msg).toBe(DialFileManagerI18nKeys.ForbiddenSymbolsTooltip);
     });
 
     it('returns null when name does not match forbiddenSymbolsRegExp', async () => {
