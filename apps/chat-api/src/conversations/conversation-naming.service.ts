@@ -1,9 +1,19 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
 import { AppConfigService } from '../app-config/app-config.service';
 import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
-import { getApiKeyAuthHeaders } from '../common/utils/auth-header';
+import {
+  getApiKeyAuthHeaders,
+  getBearerAuthHeaders,
+} from '../common/utils/auth-header';
 import { EnvironmentVariables } from '../config/environment.config';
 import { ConversationResponseDto } from '../openapi/openapi-response.dto';
 import {
@@ -15,6 +25,13 @@ import { CONVERSATION_NAMING_SYSTEM_PROMPT } from './prompts/conversation-naming
 import { prepareEntityName } from './utils/conversation.utils';
 
 const SERVER_APP_CONFIG_CONTEXT = { appId: 'chat-api' };
+
+/*
+ * Upper bound on how many recent non-status messages are fed into the prompt for
+ * on-demand title generation. Keeps the prompt within the utility model context
+ * window while still reflecting the current conversation topic. Tune if needed.
+ */
+const MAX_TITLE_GENERATION_MESSAGES = 50;
 
 interface CompletionResponse {
   choices?: Array<{ message?: { content?: string } }>;
@@ -54,6 +71,91 @@ export class ConversationNamingService extends AppService {
         (error as Error | undefined)?.stack,
       );
     });
+  }
+
+  async generateTitle(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+  ): Promise<string> {
+    const utilityModelId = this.configService.get('UTILITY_MODEL', {
+      infer: true,
+    });
+    if (!utilityModelId) {
+      this.logger.warn(
+        `Cannot generate title for ${conversationPath}: UTILITY_MODEL is not configured`,
+      );
+      throw new ServiceUnavailableException(
+        'LLM title generation is not available',
+      );
+    }
+
+    /* Throws NotFoundException / typed DIAL errors when the conversation is unavailable. */
+    const conversation = await this.conversationPersistence.getConversation(
+      conversationPath,
+      token,
+      bucket,
+    );
+
+    const userContent = this.buildTitleGenerationPrompt(conversation);
+    if (!userContent) {
+      throw new BadRequestException(
+        'Conversation has no content to generate a title from',
+      );
+    }
+
+    const timeoutMs =
+      this.configService.get('UTILITY_NAMING_TIMEOUT_MS', { infer: true }) ??
+      10_000;
+
+    this.logger.debug(
+      `On-demand title generation for ${conversation.id}: model=${utilityModelId} timeoutMs=${timeoutMs} userContentLength=${userContent.length}`,
+    );
+
+    let llmTitle: string;
+    try {
+      llmTitle = await this.sendNamingCompletion(
+        utilityModelId,
+        getBearerAuthHeaders(token),
+        userContent,
+        timeoutMs,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `On-demand LLM title generation failed for ${conversation.id}`,
+        (error as Error | undefined)?.stack,
+      );
+      if (error instanceof Error && error.message.includes('timed out')) {
+        throw new ServiceUnavailableException('LLM title generation timed out');
+      }
+      throw new BadGatewayException('LLM title generation failed');
+    }
+
+    const sanitisedTitle = prepareEntityName(llmTitle);
+    if (!sanitisedTitle) {
+      this.logger.warn(
+        `LLM returned an empty title for conversation ${conversation.id}`,
+      );
+      throw new BadGatewayException('LLM returned an empty title');
+    }
+
+    this.logger.debug(
+      `On-demand LLM title generated for ${conversation.id}: "${conversation.name}" -> "${sanitisedTitle}" (not persisted)`,
+    );
+    return sanitisedTitle;
+  }
+
+  private buildTitleGenerationPrompt(
+    conversation: ConversationResponseDto,
+  ): string {
+    const recentMessages = conversation.messages
+      .filter((message) => message.role !== ConversationMessageRole.Status)
+      .slice(-MAX_TITLE_GENERATION_MESSAGES)
+      .filter((message) => message.content?.trim());
+
+    return recentMessages
+      .map((message) => `${message.role}: ${message.content.trim()}`)
+      .join('\n\n---\n\n');
   }
 
   private async runMaybeRenameAfterFirstReply(
@@ -305,7 +407,7 @@ export class ConversationNamingService extends AppService {
 
       if (!result.response.ok || result.error != null) {
         this.logger.debug(
-          `LLM naming request failed for model=${modelId} auth=Api-Key: status=${result.response.status}`,
+          `LLM naming request failed for model=${modelId}: status=${result.response.status}`,
         );
         throw new Error(
           `DIAL Core rejected LLM naming request (status ${result.response.status})`,
@@ -315,7 +417,7 @@ export class ConversationNamingService extends AppService {
       const data = result.data as CompletionResponse;
       const rawTitle = data.choices?.[0]?.message?.content ?? '';
       this.logger.debug(
-        `LLM naming request succeeded for model=${modelId} auth=Api-Key: status=${result.response.status} rawTitleLength=${rawTitle.length}`,
+        `LLM naming request succeeded for model=${modelId}: status=${result.response.status} rawTitleLength=${rawTitle.length}`,
       );
       return rawTitle;
     } catch (error) {

@@ -17,6 +17,7 @@ import {
   deleteAllConversations as apiDeleteAllConversations,
   deleteConversation as apiDeleteConversation,
   duplicateConversation as apiDuplicateConversation,
+  generateConversationTitle as apiGenerateConversationTitle,
   getConversation,
   listConversations,
   renameConversation as apiRenameConversation,
@@ -41,6 +42,11 @@ interface ConversationsContextType {
   deleteConversation: (id: string) => Promise<void>;
   /** Rename a conversation; optimistically updates title, reverts on failure. The conversation id never changes. */
   renameConversation: (id: string, newTitle: string) => Promise<void>;
+  /**
+   * Requests an LLM-generated title suggestion for a conversation. Returns the
+   * suggested name without persisting it — the caller confirms via renameConversation.
+   */
+  generateConversationTitle: (id: string) => Promise<string>;
   /** Duplicate a conversation into the user's own bucket; returns the new conversation id. */
   duplicateConversation: (id: string) => Promise<string>;
   /** Re-fetch the full conversation list from the server. */
@@ -292,6 +298,12 @@ export const ConversationsProvider = ({
     [],
   );
 
+  const generateConversationTitle = useCallback(async (id: string) => {
+    const conversationPath = getConversationPath(normalizeConversationId(id));
+    const { name } = await apiGenerateConversationTitle(conversationPath);
+    return name;
+  }, []);
+
   const duplicateConversation = useCallback(
     async (id: string) => {
       const conversationPath = normalizeConversationId(id);
@@ -325,6 +337,7 @@ export const ConversationsProvider = ({
       pinConversation,
       deleteConversation,
       renameConversation,
+      generateConversationTitle,
       duplicateConversation,
       refreshConversations,
       updateConversationTitle,
@@ -338,6 +351,7 @@ export const ConversationsProvider = ({
       pinConversation,
       deleteConversation,
       renameConversation,
+      generateConversationTitle,
       duplicateConversation,
       refreshConversations,
       updateConversationTitle,
