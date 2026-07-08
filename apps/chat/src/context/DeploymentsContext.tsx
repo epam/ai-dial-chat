@@ -44,6 +44,8 @@ export interface DeploymentsContextType {
   schemas: ApplicationSchemaSummaryDto[];
   /** Toolsets fetched from the dedicated toolsets API for catalog surfaces. */
   toolsets: DialToolsetDto[];
+  /** Re-fetches toolsets from the API and updates the catalog list. Call after creating/updating a toolset. */
+  refetchToolsets: () => Promise<void>;
 }
 
 export const DeploymentsContext = createContext<
@@ -178,6 +180,15 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [loadDeployments]);
 
+  const refetchToolsets = useCallback(async () => {
+    try {
+      const { data } = await listToolsets();
+      setToolsets(sortToolsets(data ?? []));
+    } catch (err) {
+      console.warn('[DeploymentsContext] Failed to refetch toolsets', err);
+    }
+  }, []);
+
   const items = useMemo<DeploymentItemDto[]>(() => {
     if (schemas.length === 0) return rawDeployments;
     const schemaById = new Map(schemas.map((s) => [s.id, s]));
@@ -252,6 +263,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       error,
       schemas,
       toolsets,
+      refetchToolsets,
     }),
     [
       items,
@@ -263,6 +275,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       error,
       schemas,
       toolsets,
+      refetchToolsets,
     ],
   );
 

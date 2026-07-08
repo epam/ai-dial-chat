@@ -186,6 +186,7 @@ describe('ConversationRoute', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
     mockUseUser.mockReturnValue({
       user: { sub: 'u1', providerId: 'p1', claims: {}, bucket: 'user-bucket' },
@@ -295,6 +296,7 @@ describe('ConversationRoute', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
 
     renderRoute();
@@ -320,6 +322,7 @@ describe('ConversationRoute', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
     renderRoute();
     await waitFor(() => {
@@ -345,6 +348,7 @@ describe('ConversationRoute', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
     renderRoute();
     await waitFor(() => {
@@ -381,6 +385,7 @@ describe('ConversationRoute', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
 
     renderRoute();
@@ -429,6 +434,7 @@ describe('ConversationRoute', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
 
     renderRoute();
@@ -476,6 +482,7 @@ describe('ConversationRoute', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
     mockCreateConversation.mockRejectedValueOnce({
       response: {

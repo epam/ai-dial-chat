@@ -476,5 +476,58 @@ describe('DeploymentsContext', () => {
         expect(result.current.toolsets).toEqual([]);
       });
     });
+
+    it('refetchToolsets re-fetches and exposes the newly created toolset', async () => {
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.toolsets).toEqual([]);
+
+      const created = {
+        id: 'toolsets/b/new-tool__0.0.1',
+        toolset: 'toolsets/b/new-tool__0.0.1',
+        displayName: 'New Tool',
+      };
+      mockListToolsets.mockResolvedValueOnce({ data: [created] });
+
+      await act(async () => {
+        await result.current.refetchToolsets();
+      });
+
+      expect(result.current.toolsets.map((item) => item.id)).toEqual([
+        created.id,
+      ]);
+    });
+
+    it('refetchToolsets leaves toolsets unchanged when the re-fetch fails', async () => {
+      const existing = {
+        id: 'toolsets/b/alpha__0.0.1',
+        toolset: 'toolsets/b/alpha__0.0.1',
+        displayName: 'Alpha Toolset',
+      };
+      mockListToolsets.mockResolvedValueOnce({ data: [existing] });
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() =>
+        expect(result.current.toolsets.map((item) => item.id)).toEqual([
+          existing.id,
+        ]),
+      );
+
+      mockListToolsets.mockRejectedValueOnce(new Error('Toolsets failed'));
+
+      await act(async () => {
+        await result.current.refetchToolsets();
+      });
+
+      expect(result.current.toolsets.map((item) => item.id)).toEqual([
+        existing.id,
+      ]);
+    });
   });
 });
