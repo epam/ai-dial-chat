@@ -1217,6 +1217,126 @@ export class ConversationService extends AppService {
     }
   }
 
+  /**
+   * Calls the model and relays the SSE response chunks to `res`, writing raw
+   * bytes through and building up `assembledMessage` from the parsed chunks.
+   * Shared by `streamCompletion` (persisted) and `streamPreviewCompletion`
+   * (stateless) so both stay on the same chunk-relay implementation; only
+   * persistence (finalize/generation registry) differs between callers.
+   */
+  private async relayModelCompletion(
+    model: string,
+    requestBody: unknown,
+    token: string,
+    signal: AbortSignal,
+    res: Response,
+    initialAssembledMessage: ConversationMessageDto,
+  ): Promise<
+    | {
+        outcome: 'rejected';
+        status: number;
+        assembledMessage: ConversationMessageDto;
+      }
+    | { outcome: 'completed'; assembledMessage: ConversationMessageDto }
+    | { outcome: 'aborted'; assembledMessage: ConversationMessageDto }
+    | {
+        outcome: 'error';
+        error: unknown;
+        assembledMessage: ConversationMessageDto;
+      }
+  > {
+    let assembledMessage = initialAssembledMessage;
+    let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+
+    try {
+      const dialResult = (await this.client.sendChatCompletionRequest(model, {
+        body: requestBody as never,
+        headers: {
+          ...getBearerAuthHeaders(token),
+          Accept: 'text/event-stream',
+        },
+        params: { query: { 'api-version': this.dialApiVersion } },
+        parseAs: 'stream',
+        signal,
+      })) as { response: globalThis.Response; error?: unknown };
+
+      if (!dialResult.response.ok || !dialResult.response.body) {
+        this.logger.error(
+          `DIAL Core rejected completion request — model: ${model}, status: ${dialResult.response.status}`,
+        );
+        return {
+          outcome: 'rejected',
+          status: dialResult.response.status,
+          assembledMessage,
+        };
+      }
+
+      upstreamReader = dialResult.response.body.getReader();
+      const decoder = new TextDecoder();
+      let sseBuffer = '';
+      let receivedDone = false;
+
+      while (true) {
+        const { done, value } = await upstreamReader.read();
+        if (done) break;
+
+        res.write(value);
+
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split('\n');
+        sseBuffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(':')) continue;
+          if (trimmed.startsWith('data:')) {
+            const payload = trimmed.slice(5).trim();
+            if (payload === '[DONE]') {
+              receivedDone = true;
+              continue;
+            }
+            try {
+              const parsed: unknown = JSON.parse(payload);
+              assembledMessage = applyChunkToMessage(assembledMessage, parsed);
+            } catch {
+              // Malformed chunk — skip
+            }
+          }
+        }
+
+        /*
+         * `[DONE]` is the SSE completion signal. Stop here rather than waiting
+         * for the upstream socket to close — some providers keep the connection
+         * open after `[DONE]`, which would otherwise leave this generation
+         * registered as active and reject the next request (e.g. regenerate)
+         * with a 409 conflict.
+         */
+        if (receivedDone) break;
+      }
+
+      return { outcome: 'completed', assembledMessage };
+    } catch (err) {
+      const isAbort =
+        err instanceof Error &&
+        (err.name === 'AbortError' || err.name === 'DOMException');
+      return isAbort
+        ? { outcome: 'aborted', assembledMessage }
+        : { outcome: 'error', error: err, assembledMessage };
+    } finally {
+      if (upstreamReader) {
+        try {
+          /*
+           * cancel() (not releaseLock) so the upstream connection is closed
+           * when we stop early on `[DONE]`, instead of being left dangling.
+           */
+          await upstreamReader.cancel();
+        } catch {
+          /* already closed */
+        }
+      }
+    }
+  }
+
   async streamCompletion(
     conversationPath: string,
     token: string,
@@ -1348,10 +1468,9 @@ export class ConversationService extends AppService {
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    let assembledMessage = {
+    const assembledMessage = {
       ...startConversation.messages[assistantMessageIndex],
     };
-    let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
     const finalize = async (
       status:
@@ -1388,94 +1507,39 @@ export class ConversationService extends AppService {
       }
     };
 
-    try {
-      const dialResult = (await this.client.sendChatCompletionRequest(model, {
-        body: requestBody as never,
-        headers: {
-          ...getBearerAuthHeaders(token),
-          Accept: 'text/event-stream',
-        },
-        params: { query: { 'api-version': this.dialApiVersion } },
-        parseAs: 'stream',
-        signal: abortController.signal,
-      })) as { response: globalThis.Response; error?: unknown };
+    const relayResult = await this.relayModelCompletion(
+      model,
+      requestBody,
+      token,
+      abortController.signal,
+      res,
+      assembledMessage,
+    );
 
-      if (!dialResult.response.ok || !dialResult.response.body) {
-        this.logger.error(
-          `DIAL Core rejected streamCompletion — model: ${model}, status: ${dialResult.response.status}`,
-        );
-        assembledMessage = {
-          ...assembledMessage,
+    switch (relayResult.outcome) {
+      case 'rejected': {
+        const errored = {
+          ...relayResult.assembledMessage,
           custom_content: {
-            ...assembledMessage.custom_content,
+            ...relayResult.assembledMessage.custom_content,
             event_type: undefined,
           } as never,
         };
         (
-          assembledMessage as ConversationMessageDto & {
-            hasStreamError?: boolean;
-          }
+          errored as ConversationMessageDto & { hasStreamError?: boolean }
         ).hasStreamError = true;
-        await finalize(GenerationStatus.Error, assembledMessage);
-        if (!res.writableEnded) res.end();
-        return;
+        await finalize(GenerationStatus.Error, errored);
+        break;
       }
-
-      upstreamReader = dialResult.response.body.getReader();
-      const decoder = new TextDecoder();
-      let sseBuffer = '';
-      let receivedDone = false;
-
-      while (true) {
-        const { done, value } = await upstreamReader.read();
-        if (done) break;
-
-        res.write(value);
-
-        sseBuffer += decoder.decode(value, { stream: true });
-        const lines = sseBuffer.split('\n');
-        sseBuffer = lines.pop() ?? '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith(':')) continue;
-          if (trimmed.startsWith('data:')) {
-            const payload = trimmed.slice(5).trim();
-            if (payload === '[DONE]') {
-              receivedDone = true;
-              continue;
-            }
-            try {
-              const parsed: unknown = JSON.parse(payload);
-              assembledMessage = applyChunkToMessage(assembledMessage, parsed);
-            } catch {
-              // Malformed chunk — skip
-            }
-          }
-        }
-
-        /*
-         * `[DONE]` is the SSE completion signal. Stop here rather than waiting
-         * for the upstream socket to close — some providers keep the connection
-         * open after `[DONE]`, which would otherwise leave this generation
-         * registered as active and reject the next request (e.g. regenerate)
-         * with a 409 conflict.
-         */
-        if (receivedDone) break;
-      }
-
-      await finalize(GenerationStatus.Done, assembledMessage);
-    } catch (err) {
-      const isAbort =
-        err instanceof Error &&
-        (err.name === 'AbortError' || err.name === 'DOMException');
-
-      if (isAbort) {
+      case 'completed':
+        await finalize(GenerationStatus.Done, relayResult.assembledMessage);
+        break;
+      case 'aborted': {
         const wasStopped =
           this.generationService.getStatus(sessionId, conversationPath) ===
           GenerationStatus.Stopped;
         const partialMsg = {
-          ...assembledMessage,
+          ...relayResult.assembledMessage,
           ...(wasStopped
             ? { wasStoppedByUser: true }
             : { hasStreamError: true }),
@@ -1484,28 +1548,94 @@ export class ConversationService extends AppService {
           wasStopped ? GenerationStatus.Stopped : GenerationStatus.Error,
           partialMsg,
         );
-      } else {
-        this.logger.error('DIAL Core streamCompletion failed', err);
+        break;
+      }
+      case 'error': {
+        this.logger.error(
+          'DIAL Core streamCompletion failed',
+          relayResult.error,
+        );
         const partialMsg = {
-          ...assembledMessage,
+          ...relayResult.assembledMessage,
           hasStreamError: true,
         } as ConversationMessageDto;
         await finalize(GenerationStatus.Error, partialMsg);
+        break;
       }
-    } finally {
-      if (upstreamReader) {
-        try {
-          /*
-           * cancel() (not releaseLock) so the upstream connection is closed
-           * when we stop early on `[DONE]`, instead of being left dangling.
-           */
-          await upstreamReader.cancel();
-        } catch {
-          /* already closed */
-        }
-      }
-      if (!res.writableEnded) res.end();
     }
+
+    if (!res.writableEnded) res.end();
+  }
+
+  /**
+   * Stateless sibling of `streamCompletion`: streams a completion for a
+   * client-supplied transcript without reading or writing any persisted
+   * conversation, and without registering with `ConversationGenerationService`.
+   * Headers are only flushed once DIAL Core has accepted the request, so
+   * (unlike `streamCompletion`, which must commit to a 200 before the model
+   * call because it persists a start-state first) genuine 502/503 statuses
+   * can still be returned on rejection.
+   */
+  async streamPreviewCompletion(
+    model: string,
+    messages: { role: string; content: string }[],
+    token: string,
+    signal: AbortSignal,
+    res: Response,
+  ): Promise<void> {
+    this.logger.debug(
+      `streamPreviewCompletion start — model: ${model}, messages: ${messages.length}`,
+    );
+
+    const requestBody = { messages, stream: true };
+    const initialAssembledMessage: ConversationMessageDto = {
+      role: ConversationMessageRole.Assistant,
+      content: '',
+      timestamp: new Date().toISOString(),
+    };
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const relayResult = await this.relayModelCompletion(
+      model,
+      requestBody,
+      token,
+      signal,
+      res,
+      initialAssembledMessage,
+    );
+
+    switch (relayResult.outcome) {
+      case 'rejected':
+        if (!res.headersSent) {
+          return handleDialSdkError(
+            { status: relayResult.status },
+            'conversations.streamPreviewCompletion',
+            this.logger,
+          );
+        }
+        break;
+      case 'error':
+        this.logger.error(
+          'DIAL Core streamPreviewCompletion failed',
+          relayResult.error,
+        );
+        if (!res.headersSent) {
+          return handleDialSdkError(
+            relayResult.error,
+            'conversations.streamPreviewCompletion',
+            this.logger,
+          );
+        }
+        break;
+      case 'completed':
+      case 'aborted':
+        break;
+    }
+
+    if (!res.writableEnded) res.end();
   }
 }
 

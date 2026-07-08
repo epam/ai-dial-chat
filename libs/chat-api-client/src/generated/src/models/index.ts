@@ -2665,6 +2665,62 @@ export interface MutatedToolsetDto {
 /**
  *
  * @export
+ * @interface PreviewCompletionDto
+ */
+export interface PreviewCompletionDto {
+  /**
+   * DIAL Core deployment name (the application under preview)
+   * @type {string}
+   * @memberof PreviewCompletionDto
+   */
+  model: string;
+  /**
+   * Full client-held message transcript. The client is the source of truth — no server-side conversation is read or written.
+   * @type {Array<PreviewMessageDto>}
+   * @memberof PreviewCompletionDto
+   */
+  messages: Array<PreviewMessageDto>;
+  /**
+   * Client-generated id used only for log correlation.
+   * @type {string}
+   * @memberof PreviewCompletionDto
+   */
+  generationId?: string;
+}
+/**
+ *
+ * @export
+ * @interface PreviewMessageDto
+ */
+export interface PreviewMessageDto {
+  /**
+   *
+   * @type {string}
+   * @memberof PreviewMessageDto
+   */
+  role: PreviewMessageDtoRoleEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof PreviewMessageDto
+   */
+  content: string;
+}
+
+/**
+ * @export
+ */
+export const PreviewMessageDtoRoleEnum = {
+  User: 'user',
+  Assistant: 'assistant',
+  System: 'system',
+} as const;
+export type PreviewMessageDtoRoleEnum =
+  (typeof PreviewMessageDtoRoleEnum)[keyof typeof PreviewMessageDtoRoleEnum];
+
+/**
+ *
+ * @export
  * @interface ProviderInfoDto
  */
 export interface ProviderInfoDto {

@@ -33,6 +33,7 @@ import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.d
 import { GenerateTitleResponseDto } from './dto/generate-title.dto';
 import { GetConversationMetadataDto } from './dto/get-conversation-metadata.dto';
 import { ListConversationsQueryDto } from './dto/list-conversations-query.dto';
+import { PreviewCompletionDto } from './dto/preview-completion.dto';
 import {
   RenameConversationBodyDto,
   RenameConversationResponseDto,
@@ -259,6 +260,38 @@ export class ConversationController {
       );
     }
     res.status(204).end();
+  }
+
+  @Post('preview-completions')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'streamPreviewCompletion',
+    summary: 'Stream a stateless preview chat completion',
+    description:
+      'Streams a chat completion for a client-supplied message history. Reads and writes no persisted conversation resource. Stop by aborting the client request.',
+  })
+  @ApiResponse({ status: 200, description: 'SSE stream of completion chunks' })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core error' })
+  @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
+  async streamPreviewCompletion(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() dto: PreviewCompletionDto,
+  ): Promise<void> {
+    const { at } = req.user as SessionUser;
+    const abortController = new AbortController();
+    req.on('close', () => abortController.abort());
+    await this.conversationService.streamPreviewCompletion(
+      dto.model,
+      dto.messages,
+      at,
+      abortController.signal,
+      res,
+    );
   }
 
   @Post('watch')

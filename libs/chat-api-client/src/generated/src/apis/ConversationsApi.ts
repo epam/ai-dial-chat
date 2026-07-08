@@ -23,6 +23,7 @@ import type {
   DeleteConversationsBodyDto,
   DuplicateConversationResponseDto,
   GenerateTitleResponseDto,
+  PreviewCompletionDto,
   RenameConversationBodyDto,
   RenameConversationResponseDto,
   SaveConversationBodyDto,
@@ -86,6 +87,10 @@ export interface StopCompletionRequest {
 
 export interface StreamCompletionRequest {
   sendCompletionDto: SendCompletionDto;
+}
+
+export interface StreamPreviewCompletionRequest {
+  previewCompletionDto: PreviewCompletionDto;
 }
 
 export interface WatchConversationRequest {
@@ -779,6 +784,54 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.streamCompletionRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Streams a chat completion for a client-supplied message history. Reads and writes no persisted conversation resource. Stop by aborting the client request.
+   * Stream a stateless preview chat completion
+   */
+  async streamPreviewCompletionRaw(
+    requestParameters: StreamPreviewCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['previewCompletionDto'] == null) {
+      throw new runtime.RequiredError(
+        'previewCompletionDto',
+        'Required parameter "previewCompletionDto" was null or undefined when calling streamPreviewCompletion().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/preview-completions`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['previewCompletionDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Streams a chat completion for a client-supplied message history. Reads and writes no persisted conversation resource. Stop by aborting the client request.
+   * Stream a stateless preview chat completion
+   */
+  async streamPreviewCompletion(
+    requestParameters: StreamPreviewCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.streamPreviewCompletionRaw(requestParameters, initOverrides);
   }
 
   /**
