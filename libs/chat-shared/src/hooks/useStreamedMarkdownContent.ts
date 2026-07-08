@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
 const DEFAULT_STREAM_CHARACTERS_PER_SECOND = 120;
-const FINAL_STREAM_CHARACTERS_PER_SECOND = 800;
 
 const shouldReduceMotion = () =>
   typeof window !== 'undefined' &&
@@ -29,6 +28,21 @@ const hasMarkdownTableRow = (content: string) =>
 const hasStructuralMarkdown = (content: string) =>
   content.includes('```') || hasMarkdownTableRow(content);
 
+/*
+ * Plain appended text is animated only while streaming. Final content is
+ * synced immediately so parent scroll layout effects see the completed DOM.
+ */
+const shouldSyncInstantly = (
+  displayed: string,
+  content: string,
+  isStreaming: boolean,
+): boolean =>
+  !isStreaming ||
+  shouldReduceMotion() ||
+  displayed === content ||
+  !content.startsWith(displayed) ||
+  hasStructuralMarkdown(content.slice(displayed.length));
+
 export const useStreamedMarkdownContent = (
   content: string,
   isStreaming = false,
@@ -36,16 +50,38 @@ export const useStreamedMarkdownContent = (
 ) => {
   const [displayedContent, setDisplayedContent] = useState(content);
   const displayedRef = useRef(content);
+  const prevContentRef = useRef(content);
+  const prevIsStreamingRef = useRef(isStreaming);
   const frameRef = useRef<number | null>(null);
   const lastFrameRef = useRef<number | null>(null);
   const pendingCharactersRef = useRef(0);
 
-  useEffect(() => {
-    const syncContent = () => {
+  /*
+   * React supports render-time state sync for derived state. Canceling the
+   * queued frame here also prevents an older animation closure from writing
+   * stale content after an instant sync.
+   */
+  if (
+    content !== prevContentRef.current ||
+    isStreaming !== prevIsStreamingRef.current
+  ) {
+    prevContentRef.current = content;
+    prevIsStreamingRef.current = isStreaming;
+    if (shouldSyncInstantly(displayedRef.current, content, isStreaming)) {
       displayedRef.current = content;
-      setDisplayedContent(content);
-    };
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+      lastFrameRef.current = null;
+      pendingCharactersRef.current = 0;
+      if (displayedContent !== content) {
+        setDisplayedContent(content);
+      }
+    }
+  }
 
+  useEffect(() => {
     const cancelFrame = () => {
       if (frameRef.current !== null) {
         cancelAnimationFrame(frameRef.current);
@@ -55,33 +91,16 @@ export const useStreamedMarkdownContent = (
       pendingCharactersRef.current = 0;
     };
 
-    if (shouldReduceMotion()) {
-      cancelFrame();
-      syncContent();
-      return cancelFrame;
-    }
-
     if (
+      !isStreaming ||
       displayedRef.current === content ||
       !content.startsWith(displayedRef.current)
     ) {
       cancelFrame();
-      syncContent();
       return cancelFrame;
     }
 
-    const remainingContent = content.slice(displayedRef.current.length);
-    if (hasStructuralMarkdown(remainingContent)) {
-      cancelFrame();
-      syncContent();
-      return cancelFrame;
-    }
-
-    const effectiveCharactersPerSecond = isStreaming
-      ? charactersPerSecond
-      : FINAL_STREAM_CHARACTERS_PER_SECOND;
-    const charactersPerMillisecond =
-      Math.max(1, effectiveCharactersPerSecond) / 1000;
+    const charactersPerMillisecond = Math.max(1, charactersPerSecond) / 1000;
 
     const animate = (timestamp: number) => {
       const previousTimestamp = lastFrameRef.current ?? timestamp;

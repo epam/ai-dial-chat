@@ -673,9 +673,10 @@ describe('UserConfigService', () => {
       makeUploadSpy(service, { error: 'bad', status: 400 });
       await service.writeConfig(DEFAULT_USER_CONFIG, 'token', 'bucket');
       expect(handleDialSdkError).toHaveBeenCalledWith(
-        { status: 400 },
+        'bad',
         'user-config.writeConfig',
         expect.anything(),
+        expect.objectContaining({ status: 400 }),
       );
     });
 
