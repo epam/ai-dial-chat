@@ -86,6 +86,8 @@ export interface CatalogProps {
   isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked in the details panel. */
   onShare?: (item: CatalogItem) => void;
+  /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
+  onEdit?: (item: CatalogItem) => void;
   /**
    * Called when the details panel opens for an item. Use this to fetch
    * enriched About-tab content from an API and pass it back as a string.
