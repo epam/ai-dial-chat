@@ -2,7 +2,7 @@ import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
@@ -19,7 +19,7 @@ vi.mock('../../hooks/attachment/useOpenAttachmentCanvas', () => ({
   useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
 }));
 vi.mock('../../context/AppConfigContext', () => ({
-  default: ({ children }: { children: React.ReactNode }) => children,
+  default: ({ children }: { children: ReactNode }) => children,
   useAppConfig: () => ({
     status: 'ready',
     features: {},

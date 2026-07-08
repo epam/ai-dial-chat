@@ -1,5 +1,7 @@
 import type {
   ArchiveItemDto,
+  CopyFilesResponseDto,
+  CopyItemDto,
   CreateFolderDto,
   CreateFolderResponseDto,
   DeleteFilesResponseDto,
@@ -9,6 +11,8 @@ import type {
   ListFilesResponseDto,
   ListPublicFilesRequest,
   ListSharedFilesRequest,
+  MoveFilesResponseDto,
+  MoveItemDto,
   RenameFilesResponseDto,
   RenameItemDto,
 } from '@epam/chat-api-client';
@@ -97,6 +101,24 @@ export const renameFiles = (
   items: RenameItemDto[],
 ): Promise<RenameFilesResponseDto> =>
   filesApi.renameFiles({ renameFilesDto: { items } });
+
+export const copyFiles = (
+  items: CopyItemDto[],
+  signal?: AbortSignal,
+): Promise<CopyFilesResponseDto> =>
+  filesApi.copyFiles(
+    { copyFilesDto: { items } },
+    signal ? { signal } : undefined,
+  );
+
+export const moveFiles = (
+  items: MoveItemDto[],
+  signal?: AbortSignal,
+): Promise<MoveFilesResponseDto> =>
+  filesApi.moveFiles(
+    { moveFilesDto: { items } },
+    signal ? { signal } : undefined,
+  );
 
 /*
  * downloadArchiveRaw() is used instead of downloadArchive() for the same reason

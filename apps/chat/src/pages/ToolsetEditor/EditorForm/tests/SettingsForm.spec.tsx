@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolsetEditorI18nKeys } from '../../../../constants/translation-keys';
 import type {
@@ -93,7 +94,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   }: {
     onClick?: () => void;
     'aria-label'?: string;
-    icon?: React.ReactNode;
+    icon?: ReactNode;
   }) => (
     <button type="button" aria-label={ariaLabel} onClick={onClick}>
       {icon}

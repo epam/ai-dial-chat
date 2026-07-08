@@ -1,0 +1,8 @@
+.featuredChip {
+  background: color-mix(
+    in srgb,
+    var(--entity-color, #2764d9) 12%,
+    var(--bg-layer-0, #fcfcfc)
+  ) !important;
+  color: var(--entity-color, #2764d9) !important;
+}

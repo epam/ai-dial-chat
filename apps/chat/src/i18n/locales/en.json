@@ -404,6 +404,17 @@
     "renameReservedName": "This name is reserved",
     "renameInvalidChars": "Name contains invalid characters",
     "renameNameTooLong": "Name must be 255 characters or fewer",
+    "copyAction": "Copy",
+    "moveAction": "Move",
+    "copyingLabel": "Copying...",
+    "movingLabel": "Moving...",
+    "copyError": "Failed to copy the selected items",
+    "copyPartialError": "{{count}} item(s) could not be copied",
+    "moveError": "Failed to move the selected items",
+    "movePartialError": "{{count}} item(s) could not be moved",
+    "operationLoaderCopyTitle": "Copying files",
+    "operationLoaderMoveTitle": "Moving files",
+    "operationLoaderCancelLabel": "Cancel",
     "tab": {
       "myFiles": "My files",
       "shared": "Shared with me",
@@ -455,6 +466,7 @@
     "stepGeneral": "General",
     "stepSettings": "Settings",
     "stepsNavAriaLabel": "Editor steps",
+    "saveButton": "Save & Exit",
     "generalForm": {
       "nameLabel": "Name",
       "namePlaceholder": "Enter application name",
@@ -477,7 +489,8 @@
       "noEditorPlaceholder": "Editor not available for this application type yet."
     },
     "error": {
-      "createFailed": "Failed to create application. Please try again."
+      "createFailed": "Failed to create application. Please try again.",
+      "saveFailed": "Failed to save application settings. Please try again."
     }
   },
   "toolsetEditor": {

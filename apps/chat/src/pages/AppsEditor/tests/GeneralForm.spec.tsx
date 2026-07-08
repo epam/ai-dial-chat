@@ -1,12 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
+import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  AppsEditorI18nKeys,
-  ButtonsI18nKeys,
-} from '../../../constants/translation-keys';
+import { AppsEditorI18nKeys } from '../../../constants/translation-keys';
 import { createApplication } from '../../../server-api/applications';
+import type { GeneralFormHandle } from '../GeneralForm';
 import GeneralForm from '../GeneralForm';
 
 vi.mock('../../../server-api/applications', () => ({
@@ -62,41 +60,6 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         />
       </label>
     ),
-    PrimaryButton: ({
-      label,
-      disabled,
-      type,
-    }: {
-      label?: ReactNode;
-      disabled?: boolean;
-      type?: string;
-    }) => (
-      <button
-        type={type === 'submit' ? 'submit' : 'button'}
-        disabled={disabled}
-      >
-        {label}
-      </button>
-    ),
-    NeutralButton: ({
-      label,
-      disabled,
-      onClick,
-      type,
-    }: {
-      label?: ReactNode;
-      disabled?: boolean;
-      onClick?: () => void;
-      type?: string;
-    }) => (
-      <button
-        type={type === 'submit' ? 'submit' : 'button'}
-        disabled={disabled}
-        onClick={onClick}
-      >
-        {label}
-      </button>
-    ),
     DialTagInput: ({ label }: { label?: string }) => <span>{label}</span>,
     DialNotification: ({ message }: { variant?: string; message?: string }) => (
       <p role="alert">{message}</p>
@@ -108,26 +71,17 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 const DEFAULT_PROPS = {
   schemaId: 'quickapps2-schema',
   onCreated: vi.fn(),
-  onCancel: vi.fn(),
 };
 
-const renderForm = (props?: Partial<typeof DEFAULT_PROPS>) =>
-  render(<GeneralForm {...DEFAULT_PROPS} {...props} />);
+const renderForm = (
+  props?: Partial<typeof DEFAULT_PROPS>,
+  ref?: React.Ref<GeneralFormHandle>,
+) => render(<GeneralForm {...DEFAULT_PROPS} {...props} ref={ref} />);
 
 const getNameInput = () =>
   screen.getByLabelText(
     AppsEditorI18nKeys.GeneralFormNameLabel,
   ) as HTMLInputElement;
-
-const getNextButton = () =>
-  screen.getByRole('button', {
-    name: AppsEditorI18nKeys.GeneralFormNextButton,
-  }) as HTMLButtonElement;
-
-const getCancelButton = () =>
-  screen.getByRole('button', {
-    name: ButtonsI18nKeys.Cancel,
-  }) as HTMLButtonElement;
 
 describe('GeneralForm', () => {
   const user = userEvent.setup({ delay: null });
@@ -150,8 +104,11 @@ describe('GeneralForm', () => {
   });
 
   it('shows required error and does not call API when name is empty', async () => {
-    renderForm();
-    await user.click(getNextButton());
+    const ref = createRef<GeneralFormHandle>();
+    renderForm({}, ref);
+    await act(async () => {
+      await ref.current?.submit();
+    });
     expect(screen.getByRole('alert').textContent).toContain(
       AppsEditorI18nKeys.GeneralFormNameRequired,
     );
@@ -159,9 +116,12 @@ describe('GeneralForm', () => {
   });
 
   it('shows invalid error and does not call API when name contains forbidden characters', async () => {
-    renderForm();
+    const ref = createRef<GeneralFormHandle>();
+    renderForm({}, ref);
     await user.type(getNameInput(), 'bad/name');
-    await user.click(getNextButton());
+    await act(async () => {
+      await ref.current?.submit();
+    });
     expect(screen.getByRole('alert').textContent).toContain(
       AppsEditorI18nKeys.GeneralFormNameInvalid,
     );
@@ -169,7 +129,8 @@ describe('GeneralForm', () => {
   });
 
   it('shows invalid error and does not call API when version contains forbidden characters', async () => {
-    renderForm();
+    const ref = createRef<GeneralFormHandle>();
+    renderForm({}, ref);
     await user.type(getNameInput(), 'My App');
     await user.type(
       screen.getByLabelText(
@@ -177,7 +138,9 @@ describe('GeneralForm', () => {
       ) as HTMLInputElement,
       '1.0/bad',
     );
-    await user.click(getNextButton());
+    await act(async () => {
+      await ref.current?.submit();
+    });
     expect(screen.getByRole('alert').textContent).toContain(
       AppsEditorI18nKeys.GeneralFormVersionInvalid,
     );
@@ -186,12 +149,15 @@ describe('GeneralForm', () => {
 
   it('calls createApplication and onCreated on valid submit', async () => {
     const onCreated = vi.fn();
+    const ref = createRef<GeneralFormHandle>();
     vi.mocked(createApplication).mockResolvedValue({
       id: 'users/u/apps/new',
     });
-    renderForm({ onCreated });
+    renderForm({ onCreated }, ref);
     await user.type(getNameInput(), 'My App');
-    await user.click(getNextButton());
+    await act(async () => {
+      await ref.current?.submit();
+    });
     await waitFor(() =>
       expect(onCreated).toHaveBeenCalledWith('users/u/apps/new'),
     );
@@ -200,35 +166,24 @@ describe('GeneralForm', () => {
       type: 'quickapps2-schema',
       description: undefined,
       iconUrl: undefined,
+      version: undefined,
+      topics: undefined,
+      applicationProperties: undefined,
     });
   });
 
-  it('disables Next button while submitting', async () => {
-    vi.mocked(createApplication).mockReturnValue(
-      new Promise((_resolve) => undefined),
-    );
-    renderForm();
-    await user.type(getNameInput(), 'My App');
-    await user.click(getNextButton());
-    expect(getNextButton().disabled).toBe(true);
-  });
-
   it('shows error message when API call fails', async () => {
+    const ref = createRef<GeneralFormHandle>();
     vi.mocked(createApplication).mockRejectedValue(new Error('network error'));
-    renderForm();
+    renderForm({}, ref);
     await user.type(getNameInput(), 'My App');
-    await user.click(getNextButton());
+    await act(async () => {
+      await ref.current?.submit();
+    });
     await waitFor(() =>
       expect(screen.getByRole('alert').textContent).toContain(
         AppsEditorI18nKeys.ErrorCreateFailed,
       ),
     );
-  });
-
-  it('calls onCancel when Cancel is clicked', async () => {
-    const onCancel = vi.fn();
-    renderForm({ onCancel });
-    await user.click(getCancelButton());
-    expect(onCancel).toHaveBeenCalledOnce();
   });
 });

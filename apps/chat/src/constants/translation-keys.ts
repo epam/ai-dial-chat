@@ -246,6 +246,17 @@ export enum DialFileManagerI18nKeys {
   RenameReservedName = 'dialFileManager.renameReservedName',
   RenameInvalidChars = 'dialFileManager.renameInvalidChars',
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
+  CopyAction = 'dialFileManager.copyAction',
+  MoveAction = 'dialFileManager.moveAction',
+  CopyingLabel = 'dialFileManager.copyingLabel',
+  MovingLabel = 'dialFileManager.movingLabel',
+  CopyError = 'dialFileManager.copyError',
+  CopyPartialError = 'dialFileManager.copyPartialError',
+  MoveError = 'dialFileManager.moveError',
+  MovePartialError = 'dialFileManager.movePartialError',
+  OperationLoaderCopyTitle = 'dialFileManager.operationLoaderCopyTitle',
+  OperationLoaderMoveTitle = 'dialFileManager.operationLoaderMoveTitle',
+  OperationLoaderCancelLabel = 'dialFileManager.operationLoaderCancelLabel',
   SearchEmptyStateTitle = 'dialFileManager.search.emptyStateTitle',
   MyFilesTreeHeader = 'dialFileManager.myFiles.treeHeader',
   SharedTreeHeader = 'dialFileManager.shared.treeHeader',
@@ -414,7 +425,9 @@ export enum AppsEditorI18nKeys {
   GeneralFormPreviewTitle = 'appsEditor.generalForm.previewTitle',
   SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
   SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
+  SaveButton = 'appsEditor.saveButton',
   ErrorCreateFailed = 'appsEditor.error.createFailed',
+  ErrorSaveFailed = 'appsEditor.error.saveFailed',
 }
 
 export enum ToolsetEditorI18nKeys {
