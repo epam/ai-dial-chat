@@ -33,7 +33,7 @@ See `openspec/specs/file-download/spec.md` for full contract. No changes to the 
 7. Sanitize filename: strip path separators and control characters.
 8. Revoke the object URL after click.
 9. `setIsDownloading(false)`.
-10. On error: show error toast (i18n key `dialFileManager.downloadError`); `setIsDownloading(false)`.
+10. On error: show an error toast through `onNotification` using `dialFileManager.downloadFileError`; `setIsDownloading(false)`.
 
 **Generated client gap note**: `filesApi.downloadFileRaw` is used (not `filesApi.downloadFile`) because the generator emits `Blob | void` for binary responses, losing the `Response` object needed to read `Content-Disposition`.
 
@@ -237,8 +237,14 @@ const onDownloadFiles = useCallback(async (items: DialFile[]) => {
       triggerBlobDownload(blob, filename);
     }
   } catch {
-    // show error toast via callback or error state
-    setDownloadError('dialFileManager.downloadError');
+    onNotification?.({
+      variant: NotificationVariant.Error,
+      message: t(
+        items.length === 1
+          ? 'dialFileManager.downloadFileError'
+          : 'dialFileManager.downloadFilesError',
+      ),
+    });
   } finally {
     setIsDownloading(false);
   }
@@ -258,7 +264,8 @@ const onDownloadFiles = useCallback(async (items: DialFile[]) => {
 | Key | English |
 |-----|---------|
 | `dialFileManager.download` | `"Download"` |
-| `dialFileManager.downloadError` | `"Download failed"` |
+| `dialFileManager.downloadFileError` | `"Failed to download file. Please try again later."` |
+| `dialFileManager.downloadFilesError` | `"Failed to download files. Please try again later."` |
 
 ---
 
@@ -377,7 +384,7 @@ Not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`.
 - **WHEN** `POST /api/v1/files/download-archive` processes the expansion
 - **THEN** the BFF returns `413 Payload Too Large` before committing response headers
 - **AND** no partial ZIP is streamed
-- **AND** the frontend shows `dialFileManager.downloadError`
+- **AND** the frontend shows `dialFileManager.downloadFilesError`
 
 ---
 

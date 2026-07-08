@@ -16,8 +16,10 @@ import { ConfigService } from '@nestjs/config';
 import archiver from 'archiver';
 import type { Response as ExpressResponse } from 'express';
 import { AppService } from '../app/app.service';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { handleDialError } from '../common/utils/dial-error';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import { safeDecodeURIComponent } from '../common/utils/uri';
 import type { EnvironmentVariables } from '../config/environment.config';
 import type { CreateFolderResponseDto } from './dto/create-folder.dto';
 import type { DeleteItemDto } from './dto/delete-files.dto';
@@ -30,13 +32,16 @@ import type { ArchiveItemDto } from './dto/download-archive.dto';
 import { ArchiveItemNodeType } from './dto/download-archive.dto';
 import type { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
 import type { ListFilesResponseDto } from './dto/list-files.dto';
+import type { RenameItemDto } from './dto/rename-files.dto';
+import {
+  RenameFilesResponseDto,
+  RenameItemNodeType,
+  RenameItemResultDto,
+} from './dto/rename-files.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import type { UploadMode } from './dto/upload-file.dto';
 import { FOLDER_NODE_TYPE, MARKER_NAME } from './files.constants';
-import {
-  summarizeDialRawItems,
-  summarizeListFilesItems,
-} from './list-items-debug';
+import { summarizeDialRawItems } from './list-items-debug';
 import { markerMetadataMatches } from './marker-metadata';
 import type { DialFileItem } from './normalize-file-item';
 import { normalizeFileItem } from './normalize-file-item';
@@ -65,6 +70,8 @@ const isFailedArchiveStage = (
   result: ArchiveStageResult,
 ): result is FailedArchiveFile => 'error' in result;
 
+const FULL_FILE_LIST_PAGE_LIMIT = 1000;
+
 export const SAFE_DOWNLOAD_HEADERS = [
   'content-type',
   'content-disposition',
@@ -83,6 +90,12 @@ const buildDialFileUrl = (bucket: string, path: string): string =>
 const getFileNameFromPath = (path: string): string =>
   path.split('/').filter(Boolean).pop() ?? 'file';
 
+const safeDecodePathForCompare = (path: string): string =>
+  path.split('/').map(safeDecodeURIComponent).join('/');
+
+const buildDialFileResourceUrl = (bucket: string, path: string): string =>
+  buildDialFileUrl(bucket, encodeDialResourcePath(path));
+
 const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
   const formData = new FormData();
   const fileName = file.originalname ?? getFileNameFromPath(path);
@@ -92,6 +105,20 @@ const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
     fileName,
   );
   return formData;
+};
+
+const getRenameErrorMessage = (error: unknown): string => {
+  try {
+    handleDialSdkError(error, 'files.renameItem');
+  } catch (err) {
+    if (err instanceof HttpException) {
+      if (err.getStatus() === HttpStatus.CONFLICT) return 'Conflict';
+      if (err.getStatus() === HttpStatus.FORBIDDEN) return 'Forbidden';
+      if (err.getStatus() === HttpStatus.NOT_FOUND) return 'Not found';
+    }
+  }
+
+  return 'Rename failed';
 };
 
 @Injectable()
@@ -104,6 +131,63 @@ export class FilesService extends AppService {
 
   private getTimeoutMs(): number {
     return this.configService.get<number>('FILE_TRANSFER_TIMEOUT_MS') ?? 30_000;
+  }
+
+  private async fetchFileMetadataPage(
+    bucket: string,
+    normalizedPath: string,
+    query: {
+      token?: string;
+      limit?: number;
+      recursive?: boolean;
+      permissions?: boolean;
+    },
+    at: string,
+  ): Promise<{
+    items: DialFileItem[];
+    nextToken?: string;
+    permissions?: string[];
+  }> {
+    const { data, error, response } = await this.client.getFileMetadata(
+      bucket,
+      normalizedPath,
+      {
+        headers: getBearerAuthHeaders(at),
+        params: {
+          query: {
+            token: query.token,
+            limit: query.limit,
+            recursive: query.recursive ?? false,
+            permissions: query.permissions ?? true,
+          },
+        },
+        signal: AbortSignal.timeout(this.getTimeoutMs()),
+      },
+    );
+
+    if (error != null) {
+      this.logger.warn(
+        `DIAL Core listFiles returned error: status=${response.status}, bucket=${bucket}`,
+      );
+      return handleDialSdkError(
+        error,
+        'files.listFiles',
+        this.logger,
+        response,
+      );
+    }
+
+    const dialData = (data ?? {}) as typeof data & {
+      nextToken?: string;
+      permissions?: string[];
+      items?: DialFileItem[];
+    };
+
+    return {
+      items: dialData.items ?? [],
+      nextToken: dialData.nextToken,
+      permissions: dialData.permissions,
+    };
   }
 
   async uploadFile(
@@ -147,7 +231,12 @@ export class FilesService extends AppService {
         this.logger.warn(
           `DIAL Core upload returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
         );
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          error,
+          'files.uploadFile',
+          this.logger,
+          response,
+        );
       }
 
       const url = buildDialFileUrl(bucket, path);
@@ -160,7 +249,7 @@ export class FilesService extends AppService {
         throw err;
       }
       this.logger.error(`Upload failed for ${bucket}/${path}`, err);
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.uploadFile', this.logger);
     }
   }
 
@@ -179,37 +268,41 @@ export class FilesService extends AppService {
       path != null && path !== '' && !path.endsWith('/')
         ? `${path}/`
         : (path ?? '');
+
     try {
-      const { data, error, response } = await this.client.getFileMetadata(
-        bucket,
-        normalizedPath,
-        {
-          headers: getBearerAuthHeaders(at),
-          params: {
-            query: {
-              token: query.token,
-              limit: query.limit,
-              recursive: query.recursive ?? false,
-              permissions: query.permissions ?? true,
-            },
+      const shouldAggregateAllPages =
+        query.token == null && query.limit == null;
+      const rawItems: DialFileItem[] = [];
+      let token = query.token;
+      let nextToken: string | undefined;
+      let page = 0;
+      let permissions: string[] | undefined;
+
+      do {
+        page += 1;
+        const pageData = await this.fetchFileMetadataPage(
+          bucket,
+          normalizedPath,
+          {
+            ...query,
+            token,
+            limit: shouldAggregateAllPages
+              ? FULL_FILE_LIST_PAGE_LIMIT
+              : query.limit,
           },
-          signal: AbortSignal.timeout(this.getTimeoutMs()),
-        },
-      );
-
-      if (error != null) {
-        this.logger.warn(
-          `DIAL Core listFiles returned error: status=${response.status}, bucket=${bucket}`,
+          at,
         );
-        return handleDialError({ status: response.status });
-      }
 
-      const dialData = (data ?? {}) as typeof data & {
-        nextToken?: string;
-        permissions?: string[];
-        items?: DialFileItem[];
-      };
-      const rawItems = dialData.items ?? [];
+        rawItems.push(...pageData.items);
+        permissions ??= pageData.permissions;
+        nextToken = pageData.nextToken;
+        token = nextToken;
+
+        this.logger.debug(
+          `listFiles DIAL page: bucket=${bucket}, path=${normalizedPath}, page=${page}, count=${pageData.items.length}, hasNextPage=${nextToken != null}`,
+        );
+      } while (shouldAggregateAllPages && token != null);
+
       this.logger.debug(
         `listFiles DIAL raw: bucket=${bucket}, path=${normalizedPath}, count=${rawItems.length}, items=[${summarizeDialRawItems(rawItems)}]`,
       );
@@ -219,26 +312,81 @@ export class FilesService extends AppService {
         rawItems,
         normalizedPath,
       );
-      const permissions = dialData.permissions ?? resolvedPermissions;
-      const permissionsSource = dialData.permissions
-        ? 'dial'
-        : resolvedPermissions
-          ? 'marker'
-          : 'none';
 
-      this.logger.debug(
-        `listFiles normalized: bucket=${bucket}, path=${normalizedPath}, count=${items.length}, items=[${summarizeListFilesItems(items)}], permissionsSource=${permissionsSource}, permissions=${JSON.stringify(permissions ?? [])}`,
-      );
       return {
         bucket,
         path: normalizedPath,
         items,
-        nextToken: dialData.nextToken,
-        permissions,
+        nextToken: shouldAggregateAllPages ? undefined : nextToken,
+        permissions: permissions ?? resolvedPermissions,
       };
     } catch (err) {
       this.logger.warn(`listFiles failed for bucket=${bucket}`, err);
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.listFiles', this.logger);
+    }
+  }
+
+  async listPublicFiles(
+    query: {
+      path?: string;
+      token?: string;
+      limit?: number;
+      recursive?: boolean;
+    },
+    at: string,
+  ): Promise<ListFilesResponseDto> {
+    return this.listFiles(
+      'public',
+      query.path,
+      { ...query, permissions: false },
+      at,
+    );
+  }
+
+  async listSharedFiles(
+    query: { path?: string; token?: string; limit?: number },
+    at: string,
+  ): Promise<ListFilesResponseDto> {
+    try {
+      const { data, error, response } = await this.client.getSharedResources({
+        headers: getBearerAuthHeaders(at),
+        body: { resourceTypes: ['FILE'], with: 'me', includeUserInfo: true },
+        signal: AbortSignal.timeout(this.getTimeoutMs()),
+      });
+
+      if (error != null) {
+        this.logger.warn(
+          `DIAL Core getSharedResources returned error: status=${response.status}`,
+        );
+        return handleDialSdkError(
+          error,
+          'files.listSharedFiles',
+          this.logger,
+          response,
+        );
+      }
+
+      const sharedData = (data ?? {}) as typeof data & {
+        resources?: DialFileItem[];
+      };
+      const rawItems = sharedData.resources ?? [];
+
+      const allItems = rawItems
+        .map((item) => normalizeFileItem(item, item.bucket ?? ''))
+        .filter((item) => {
+          if (!query.path) return true;
+          return item.path === query.path || item.path.startsWith(query.path);
+        });
+
+      const limit = query.limit;
+      const items = limit != null ? allItems.slice(0, limit) : allItems;
+
+      this.logger.debug(`listSharedFiles: count=${items.length}`);
+
+      return { bucket: '', path: query.path ?? '', items };
+    } catch (err) {
+      this.logger.warn('listSharedFiles failed', err);
+      return handleDialSdkError(err, 'files.listSharedFiles', this.logger);
     }
   }
 
@@ -265,14 +413,24 @@ export class FilesService extends AppService {
         this.logger.warn(
           `DIAL Core getFileMetadata returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
         );
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          error,
+          'files.getFileMetadata',
+          this.logger,
+          response,
+        );
       }
 
       if (data == null) {
         this.logger.warn(
           `DIAL Core getFileMetadata returned no data: bucket=${bucket}, path=${path}`,
         );
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          error,
+          'files.getFileMetadata',
+          this.logger,
+          response,
+        );
       }
 
       this.logger.debug(
@@ -300,7 +458,7 @@ export class FilesService extends AppService {
         `getFileMetadata failed for bucket=${bucket}, path=${path}`,
         err,
       );
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.getFileMetadata', this.logger);
     }
   }
 
@@ -356,7 +514,9 @@ export class FilesService extends AppService {
           `createFolder marker probe mismatch: requested=${markerPath}, probeName=${probe.name ?? '(none)'}, probeUrl=${probe.url ?? '(none)'}`,
         );
       } else if (metaError != null && metaStatus !== 404) {
-        handleDialError({ status: metaStatus });
+        handleDialSdkError(metaError, 'files.createFolder', this.logger, {
+          status: metaStatus,
+        });
       }
 
       await this.uploadFile(
@@ -382,7 +542,7 @@ export class FilesService extends AppService {
         `createFolder failed for ${bucket}/${normalizedParent}${name}`,
         err,
       );
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.createFolder', this.logger);
     }
   }
 
@@ -430,7 +590,12 @@ export class FilesService extends AppService {
       };
 
       if (error != null) {
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          error,
+          'files.downloadFile',
+          this.logger,
+          response,
+        );
       }
 
       const headers = Object.fromEntries(
@@ -442,7 +607,7 @@ export class FilesService extends AppService {
       return { stream: response.body as ReadableStream, headers };
     } catch (err) {
       this.logger.error(`Download failed for ${bucket}/${path}`, err);
-      return handleDialError(err);
+      return handleDialSdkError(err, 'files.downloadFile', this.logger);
     }
   }
 
@@ -452,8 +617,10 @@ export class FilesService extends AppService {
     archiveRoot: string,
     at: string,
   ): Promise<ExpandedFile[]> {
-    // DialFile.path is the full DIAL resource path: "files/{bucket}/reports/"
-    // Both the metadata API and download SDK expect the relative path: "reports/"
+    /*
+     * DialFile.path is the full DIAL resource path: "files/{bucket}/reports/"
+     * Both the metadata API and download SDK expect the relative path: "reports/"
+     */
     const relFolderPath = this.toRelativePath(folderPath, bucket);
 
     const results: ExpandedFile[] = [];
@@ -482,9 +649,12 @@ export class FilesService extends AppService {
         this.logger.warn(
           `Archive folder metadata failed: bucket=${bucket}, path=${relFolderPath}, page=${page}, status=${response.status}`,
         );
-        return handleDialError({
-          status: (response as { status: number }).status,
-        });
+        return handleDialSdkError(
+          error,
+          'files.expandFolderContents',
+          this.logger,
+          response as { status: number },
+        );
       }
 
       const dialData = (data ?? {}) as typeof data & {
@@ -514,9 +684,11 @@ export class FilesService extends AppService {
         const rawUrl = item.url ?? item.name ?? '';
         const relItemPath = this.toRelativePath(rawUrl, bucket);
 
-        const relative = relItemPath.startsWith(relFolderPath)
-          ? relItemPath.slice(relFolderPath.length)
-          : (item.name ?? relItemPath);
+        const relative = this.getRelativeChildPath(
+          relItemPath,
+          relFolderPath,
+          item.name ?? relItemPath,
+        );
 
         const archivePath = this.buildArchivePath(archiveRoot, relative);
         if (archivePath == null) {
@@ -556,6 +728,27 @@ export class FilesService extends AppService {
     }
     const joined = root ? `${root}/${relative}` : relative;
     return joined;
+  }
+
+  private getRelativeChildPath(
+    childPath: string,
+    folderPath: string,
+    fallback: string,
+  ): string {
+    const folderPrefix = folderPath.endsWith('/')
+      ? folderPath
+      : `${folderPath}/`;
+    if (childPath.startsWith(folderPrefix)) {
+      return childPath.slice(folderPrefix.length);
+    }
+
+    const comparableChildPath = safeDecodePathForCompare(childPath);
+    const comparableFolderPrefix = safeDecodePathForCompare(folderPrefix);
+    if (comparableChildPath.startsWith(comparableFolderPrefix)) {
+      return comparableChildPath.slice(comparableFolderPrefix.length);
+    }
+
+    return fallback;
   }
 
   async downloadArchive(
@@ -901,6 +1094,143 @@ export class FilesService extends AppService {
     }
 
     return { path: item.path, success: true };
+  }
+
+  async renameFiles(
+    items: RenameItemDto[],
+    at: string,
+  ): Promise<RenameFilesResponseDto> {
+    this.logger.log(`Rename files started: batchSize=${items.length}`);
+
+    const results: RenameItemResultDto[] = await Promise.all(
+      items.map((item) => this.renameItem(item, at)),
+    );
+
+    const successCount = results.filter((r) => r.success).length;
+    this.logger.log(
+      `Rename files completed: batchSize=${items.length}, successCount=${successCount}, failedCount=${items.length - successCount}`,
+    );
+
+    return { results };
+  }
+
+  private async renameItem(
+    item: RenameItemDto,
+    at: string,
+  ): Promise<RenameItemResultDto> {
+    if (item.nodeType === RenameItemNodeType.Folder) {
+      return this.renameFolderItem(
+        item.bucket,
+        item.sourcePath,
+        item.destinationPath,
+        at,
+      );
+    }
+    return this.renameFileItem(
+      item.bucket,
+      item.sourcePath,
+      item.destinationPath,
+      at,
+    );
+  }
+
+  private async renameFileItem(
+    bucket: string,
+    sourcePath: string,
+    destPath: string,
+    at: string,
+  ): Promise<RenameItemResultDto> {
+    const sourceUrl = buildDialFileResourceUrl(bucket, sourcePath);
+    const destinationUrl = buildDialFileResourceUrl(bucket, destPath);
+
+    try {
+      const { error, response } = (await this.client.moveResource({
+        headers: getBearerAuthHeaders(at),
+        body: { sourceUrl, destinationUrl, overwrite: false },
+        signal: AbortSignal.timeout(this.getTimeoutMs()),
+      })) as { error?: unknown; response: { status: number } };
+
+      if (error == null) {
+        return { sourcePath, destinationPath: destPath, success: true };
+      }
+
+      const status = response.status;
+      this.logger.warn(
+        `renameFileItem failed: bucket=${bucket}, sourcePath=${sourcePath}, destPath=${destPath}, status=${status}`,
+      );
+
+      return {
+        sourcePath,
+        destinationPath: destPath,
+        success: false,
+        error: getRenameErrorMessage({ status }),
+      };
+    } catch (err) {
+      this.logger.error(
+        `renameFileItem exception: bucket=${bucket}, sourcePath=${sourcePath}, err=${err instanceof Error ? err.message : String(err)}`,
+      );
+      return {
+        sourcePath,
+        destinationPath: destPath,
+        success: false,
+        error: getRenameErrorMessage(err),
+      };
+    }
+  }
+
+  private async renameFolderItem(
+    bucket: string,
+    sourceFolderPath: string,
+    destFolderPath: string,
+    at: string,
+  ): Promise<RenameItemResultDto> {
+    const srcPrefix = sourceFolderPath.endsWith('/')
+      ? sourceFolderPath
+      : `${sourceFolderPath}/`;
+    const destPrefix = destFolderPath.endsWith('/')
+      ? destFolderPath
+      : `${destFolderPath}/`;
+
+    let children: ExpandedFile[];
+    try {
+      children = await this.expandFolderContents(bucket, srcPrefix, '', at);
+    } catch {
+      return {
+        sourcePath: sourceFolderPath,
+        destinationPath: destFolderPath,
+        success: false,
+        error: 'Rename failed',
+      };
+    }
+
+    let anyFailed = false;
+    for (const child of children) {
+      const relative = child.archivePath;
+      const destChildPath = `${destPrefix}${relative}`;
+      const result = await this.renameFileItem(
+        bucket,
+        child.path,
+        destChildPath,
+        at,
+      );
+      if (!result.success) {
+        anyFailed = true;
+      }
+    }
+
+    if (anyFailed) {
+      return {
+        sourcePath: sourceFolderPath,
+        destinationPath: destFolderPath,
+        success: false,
+        error: 'Partial rename',
+      };
+    }
+    return {
+      sourcePath: sourceFolderPath,
+      destinationPath: destFolderPath,
+      success: true,
+    };
   }
 
   private fillArchiveDownloadPool(

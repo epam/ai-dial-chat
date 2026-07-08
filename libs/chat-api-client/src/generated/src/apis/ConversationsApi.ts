@@ -22,10 +22,13 @@ import type {
   DeleteAllConversationsBodyDto,
   DeleteConversationsBodyDto,
   DuplicateConversationResponseDto,
+  GenerateTitleResponseDto,
   RenameConversationBodyDto,
   RenameConversationResponseDto,
   SaveConversationBodyDto,
   SendCompletionDto,
+  StopCompletionDto,
+  WatchConversationBodyDto,
 } from '../models/index';
 
 export interface CreateConversationRequest {
@@ -45,6 +48,10 @@ export interface DeleteConversationsRequest {
 }
 
 export interface DuplicateConversationRequest {
+  path: string;
+}
+
+export interface GenerateConversationTitleRequest {
   path: string;
 }
 
@@ -73,8 +80,16 @@ export interface SaveConversationRequest {
   saveConversationBodyDto: SaveConversationBodyDto;
 }
 
+export interface StopCompletionRequest {
+  stopCompletionDto: StopCompletionDto;
+}
+
 export interface StreamCompletionRequest {
   sendCompletionDto: SendCompletionDto;
+}
+
+export interface WatchConversationRequest {
+  watchConversationBodyDto: WatchConversationBodyDto;
 }
 
 /**
@@ -331,6 +346,59 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DuplicateConversationResponseDto> {
     const response = await this.duplicateConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Generates a title for an existing conversation using the operator-configured utility model, based on the most recent messages. The suggestion is returned but NOT persisted — the caller confirms the rename separately. Does not read or set the llmNamingDone flag.
+   * Generate an LLM-based title suggestion for a conversation
+   */
+  async generateConversationTitleRaw(
+    requestParameters: GenerateConversationTitleRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<GenerateTitleResponseDto>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling generateConversationTitle().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/conversations/generate-title`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<GenerateTitleResponseDto>(response);
+  }
+
+  /**
+   * Generates a title for an existing conversation using the operator-configured utility model, based on the most recent messages. The suggestion is returned but NOT persisted — the caller confirms the rename separately. Does not read or set the llmNamingDone flag.
+   * Generate an LLM-based title suggestion for a conversation
+   */
+  async generateConversationTitle(
+    requestParameters: GenerateConversationTitleRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<GenerateTitleResponseDto> {
+    const response = await this.generateConversationTitleRaw(
       requestParameters,
       initOverrides,
     );
@@ -620,7 +688,53 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.
+   * Stop an active generation
+   */
+  async stopCompletionRaw(
+    requestParameters: StopCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['stopCompletionDto'] == null) {
+      throw new runtime.RequiredError(
+        'stopCompletionDto',
+        'Required parameter "stopCompletionDto" was null or undefined when calling stopCompletion().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/completions/stop`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['stopCompletionDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Stop an active generation
+   */
+  async stopCompletion(
+    requestParameters: StopCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.stopCompletionRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.
    * Stream a chat completion
    */
   async streamCompletionRaw(
@@ -657,7 +771,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.
+   * Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.
    * Stream a chat completion
    */
   async streamCompletion(
@@ -665,5 +779,53 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.streamCompletionRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.
+   * Subscribe to conversation resource updates via SSE
+   */
+  async watchConversationRaw(
+    requestParameters: WatchConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['watchConversationBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'watchConversationBodyDto',
+        'Required parameter "watchConversationBodyDto" was null or undefined when calling watchConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/watch`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['watchConversationBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.
+   * Subscribe to conversation resource updates via SSE
+   */
+  async watchConversation(
+    requestParameters: WatchConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.watchConversationRaw(requestParameters, initOverrides);
   }
 }

@@ -1,11 +1,20 @@
-import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  ResponseFormat,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DialDropdown,
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconPaperclip, IconPlus, IconSettings } from '@tabler/icons-react';
+import {
+  IconPaperclip,
+  IconPlus,
+  IconSettings,
+  IconChevronRight,
+} from '@tabler/icons-react';
 import {
   CSSProperties,
   type FC,
@@ -13,7 +22,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useIsMobile } from '../../hooks/useIsMobile';
 import type { ChatSettingsConfig } from '../../models/Input';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { ChatSettingsBottomSheet } from '../ChatSettingsBottomSheet/ChatSettingsBottomSheet';
@@ -38,7 +46,7 @@ interface AddAttachmentButtonProps {
   /** Label for the "Attach file" menu item. */
   attachLabel: string;
   /** Aria-label for the + trigger button. */
-  addMenuLabel: string;
+  addMenuTitle: string;
   /** Title shown in the mobile bottom sheet. */
   menuTitle: string;
   /** Close label for the mobile bottom sheet. */
@@ -58,11 +66,11 @@ interface AddAttachmentButtonProps {
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   onAttachClick,
   attachLabel,
-  addMenuLabel,
+  addMenuTitle,
   menuTitle,
   menuCloseLabel,
   style,
-  listClassName = '!w-[240px] shadow-md',
+  listClassName = 'cp-dropdown-overlay !w-[240px]',
   isDisabled = false,
   chatSettings,
   extraMenuItems,
@@ -90,12 +98,20 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               key: 'chat-settings',
               label: chatSettings.menuItemLabel ?? 'Chat settings',
               icon: <IconSettings size={BASE_ICON_SIZE} aria-hidden />,
+              iconAfter: isMobile ? (
+                <IconChevronRight
+                  size={BASE_ICON_SIZE}
+                  stroke={1.5}
+                  className="text-secondary"
+                  aria-hidden
+                />
+              ) : null,
               onClick: () => setIsChatSettingsOpen(true),
             },
           ]
         : []),
     ],
-    [attachLabel, onAttachClick, chatSettings, extraMenuItems],
+    [attachLabel, onAttachClick, chatSettings, extraMenuItems, isMobile],
   );
 
   if (menuItems.length === 0) return null;
@@ -106,7 +122,8 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
         <>
           <DialGhostIconButton
             icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
-            aria-label={addMenuLabel}
+            aria-label={addMenuTitle}
+            tooltipProps={{ tooltip: addMenuTitle }}
             className={mergeClasses(
               'size-10 flex-shrink-0',
               isDisabled && 'pointer-events-none opacity-50',
@@ -120,6 +137,8 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             onClose={() => setIsSheetOpen(false)}
             style={style}
             items={menuItems}
+            className="pb-4"
+            btnTextClassName="flex-1"
           />
           {chatSettings != null && (
             <ChatSettingsBottomSheet
@@ -154,6 +173,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               temperatureLabels={chatSettings.temperatureLabels}
               temperatureHint={chatSettings.temperatureHint}
               saveLabel={chatSettings.saveLabel}
+              saveDisabledTooltip={chatSettings.saveDisabledTooltip}
             />
           )}
         </>
@@ -167,7 +187,8 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
           >
             <DialGhostIconButton
               icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
-              aria-label={addMenuLabel}
+              aria-label={addMenuTitle}
+              tooltipProps={{ tooltip: addMenuTitle }}
               className="size-10 flex-shrink-0"
               disabled={isDisabled}
             />
@@ -198,6 +219,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               temperatureLabels={chatSettings.temperatureLabels}
               temperatureHint={chatSettings.temperatureHint}
               saveLabel={chatSettings.saveLabel}
+              saveDisabledTooltip={chatSettings.saveDisabledTooltip}
             />
           )}
         </>

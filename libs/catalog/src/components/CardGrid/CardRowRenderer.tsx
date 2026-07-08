@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactElement } from 'react';
+import { type CSSProperties, type FC } from 'react';
 import { CARD_ROW_HEIGHT } from '../../constants/virtual-grid';
 import type { CardRowData } from '../../models/card-row-data';
 import { Card } from './Card';
@@ -14,7 +14,7 @@ export interface CardRowRendererProps extends CardRowData {
  * Empty column slots in the last row are filled with invisible spacer divs
  * so that earlier cards keep their flex-1 width.
  */
-export const CardRowRenderer = ({
+export const CardRowRenderer: FC<CardRowRendererProps> = ({
   rowIndex,
   items,
   columnCount,
@@ -22,7 +22,9 @@ export const CardRowRenderer = ({
   onToggleFavorite,
   onItemClick,
   featuredLabel,
-}: CardRowRendererProps): ReactElement => {
+  addToFavoritesAriaLabel,
+  removeFromFavoritesAriaLabel,
+}) => {
   const start = rowIndex * columnCount;
   const rowItems = items.slice(start, start + columnCount);
 
@@ -40,7 +42,7 @@ export const CardRowRenderer = ({
         return (
           <div
             key={item?.id ?? `spacer-${colIndex}`}
-            className="flex min-w-0 flex-1 flex-col"
+            className="h-full min-w-0 flex-1"
           >
             {item && (
               <Card
@@ -50,7 +52,9 @@ export const CardRowRenderer = ({
                 onToggle={onToggleFavorite}
                 onClick={onItemClick}
                 featuredLabel={featuredLabel}
-                className="flex-1"
+                addToFavoritesAriaLabel={addToFavoritesAriaLabel}
+                removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
+                className="h-full"
               />
             )}
           </div>

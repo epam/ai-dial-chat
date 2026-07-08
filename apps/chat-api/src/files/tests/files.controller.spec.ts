@@ -780,6 +780,158 @@ describe('FilesController — getFileMetadata', () => {
   });
 });
 
+describe('FilesController — listPublicFiles', () => {
+  const MOCK_PUBLIC_RESPONSE = {
+    bucket: 'public',
+    path: '',
+    items: [
+      {
+        name: 'readme.md',
+        path: 'readme.md',
+        folderId: 'public:',
+        nodeType: 'item',
+        bucket: 'public',
+      },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: {
+    listPublicFiles: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    service = {
+      listPublicFiles: vi.fn().mockResolvedValue(MOCK_PUBLIC_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with ListFilesResponseDto shape on success', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/public')
+      .expect(200);
+
+    expect(res.body).toMatchObject({
+      bucket: 'public',
+      items: expect.any(Array),
+    });
+    expect(service.listPublicFiles).toHaveBeenCalledWith(
+      {
+        path: undefined,
+        token: undefined,
+        limit: undefined,
+        recursive: undefined,
+      },
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 200 with empty items array when public bucket is empty', async () => {
+    service.listPublicFiles.mockResolvedValue({
+      bucket: 'public',
+      path: '',
+      items: [],
+    });
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/public')
+      .expect(200);
+
+    expect(res.body.items).toEqual([]);
+  });
+
+  it('returns 400 for path with ..', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/public')
+      .query({ path: '../../etc' })
+      .expect(400);
+    expect(service.listPublicFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.listPublicFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer()).get('/api/v1/files/public').expect(401);
+  });
+
+  it('returns 502 when service throws BadGatewayException', async () => {
+    service.listPublicFiles.mockRejectedValue(new BadGatewayException());
+    await request(app.getHttpServer()).get('/api/v1/files/public').expect(502);
+  });
+});
+
+describe('FilesController — listSharedFiles', () => {
+  const MOCK_SHARED_RESPONSE = {
+    bucket: '',
+    path: '',
+    items: [
+      {
+        name: 'shared-doc.pdf',
+        path: 'shared-doc.pdf',
+        folderId: 'user-bucket:',
+        nodeType: 'item',
+        bucket: 'user-bucket',
+      },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: {
+    listSharedFiles: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    service = {
+      listSharedFiles: vi.fn().mockResolvedValue(MOCK_SHARED_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with shared items on success', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/shared')
+      .expect(200);
+
+    expect(res.body).toMatchObject({ items: expect.any(Array) });
+    expect(service.listSharedFiles).toHaveBeenCalledWith(
+      { path: undefined, token: undefined, limit: undefined },
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 200 with empty items array when no files are shared', async () => {
+    service.listSharedFiles.mockResolvedValue({
+      bucket: '',
+      path: '',
+      items: [],
+    });
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/shared')
+      .expect(200);
+
+    expect(res.body.items).toEqual([]);
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.listSharedFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer()).get('/api/v1/files/shared').expect(401);
+  });
+
+  it('returns 502 when service throws BadGatewayException', async () => {
+    service.listSharedFiles.mockRejectedValue(new BadGatewayException());
+    await request(app.getHttpServer()).get('/api/v1/files/shared').expect(502);
+  });
+});
+
 describe('FilesController — deleteFiles', () => {
   const MOCK_DELETE_RESPONSE = {
     results: [
@@ -861,6 +1013,141 @@ describe('FilesController — deleteFiles', () => {
             path: 'file.pdf',
             name: 'file.pdf',
             nodeType: 'item',
+          },
+        ],
+      })
+      .expect(401);
+  });
+});
+
+describe('FilesController — renameFiles', () => {
+  const MOCK_RENAME_RESPONSE = {
+    results: [
+      {
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'reports/q1-renamed.pdf',
+        success: true,
+      },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: { renameFiles: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      renameFiles: vi.fn().mockResolvedValue(MOCK_RENAME_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with results array for a valid single-file rename', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'reports/q1.pdf',
+            destinationPath: 'reports/q1-renamed.pdf',
+            nodeType: 'item',
+            name: 'q1-renamed.pdf',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.body).toEqual(MOCK_RENAME_RESPONSE);
+    expect(service.renameFiles).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourcePath: 'reports/q1.pdf',
+          destinationPath: 'reports/q1-renamed.pdf',
+          nodeType: 'item',
+        }),
+      ]),
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 200 with results array for a valid folder rename', async () => {
+    service.renameFiles.mockResolvedValue({
+      results: [
+        {
+          sourcePath: 'reports/',
+          destinationPath: 'archived/',
+          success: true,
+        },
+      ],
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'reports/',
+            destinationPath: 'archived/',
+            nodeType: 'folder',
+            name: 'archived',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.body.results[0]).toMatchObject({ success: true });
+  });
+
+  it('returns 400 when items array is missing', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({})
+      .expect(400);
+    expect(service.renameFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({ items: [] })
+      .expect(400);
+    expect(service.renameFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when items array exceeds 100 entries', async () => {
+    const items = Array.from({ length: 101 }, (_, i) => ({
+      bucket: 'user-files',
+      sourcePath: `file${i}.pdf`,
+      destinationPath: `file${i}-renamed.pdf`,
+      nodeType: 'item',
+      name: `file${i}-renamed.pdf`,
+    }));
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({ items })
+      .expect(400);
+    expect(service.renameFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.renameFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'file.pdf',
+            destinationPath: 'file-renamed.pdf',
+            nodeType: 'item',
+            name: 'file-renamed.pdf',
           },
         ],
       })

@@ -73,7 +73,7 @@ describe('Header', () => {
     const header = container.querySelector('header');
     expect(header?.classList.contains('relative')).toBe(true);
     expect(header?.classList.contains('z-30')).toBe(true);
-    expect(header?.classList.contains('min-h-[49px]')).toBe(true);
+    expect(header?.classList.contains('min-h-[64px]')).toBe(true);
     expect(header?.classList.contains('w-full')).toBe(true);
   });
 
@@ -99,8 +99,10 @@ describe('Header', () => {
       name: SidebarI18nKeys.ToggleOpen,
     });
     await user.click(btn);
-    // When sidebar is open the file-icon toggle disappears from the header —
-    // the X button lives inside the sidebar panel itself.
+    /*
+     * When sidebar is open the file-icon toggle disappears from the header —
+     * the X button lives inside the sidebar panel itself.
+     */
     expect(
       screen.queryByRole('button', { name: SidebarI18nKeys.ToggleOpen }),
     ).toBeNull();

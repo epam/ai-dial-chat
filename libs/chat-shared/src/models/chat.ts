@@ -187,6 +187,15 @@ export interface StreamChunkDelta {
     /** Partial annotation updates; merge by `index` into the accumulating annotation list. */
     annotations?: Annotation[];
   };
+  /**
+   * Raw custom fields in the DIAL wire format.
+   * Annotations here use `pdf_region` selectors and `attachment_index` references
+   * and must be normalized to the internal model before use.
+   */
+  custom_fields?: {
+    /** Raw annotations in the DIAL wire format; must be normalized before use. */
+    annotations?: unknown[];
+  };
 }
 
 /** A single server-sent event chunk from the streaming completions endpoint. */
@@ -242,8 +251,14 @@ export interface DisplayAttachment {
   errorReason?: AttachmentErrorReason;
   /** Object URL for image preview; only set when `type === AttachmentType.Image`. */
   previewUrl?: string;
+  /** Resolved playback URL for audio; only set when `type === AttachmentType.Audio`. */
+  playUrl?: string;
   /** Remote URL for an attachment that has already been uploaded. */
   url?: string;
+  /** Alternate reference URL (e.g. from the DIAL API `reference_url` field); used when `url` is absent. */
+  referenceUrl?: string;
+  /** Inline base-64 encoded content; present when the attachment carries data directly rather than via a URL. */
+  data?: string;
 }
 
 /** Attachment selected locally by the user before it is sent to the backend. */

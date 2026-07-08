@@ -1,12 +1,94 @@
-// 1. User override via prop  → --ac-* (set inline by component)
-// 2. App theme variable      → --text-*
-// 3. Hard fallback hex
-
 .body {
-  color: var(--ac-text, var(--text-primary, #eef1f7));
-  font-size: var(--ac-font-size);
-  font-weight: var(--ac-font-weight);
-  line-height: var(--ac-line-height);
-  letter-spacing: var(--ac-letter-spacing);
-  font-family: var(--ac-font-family);
+  color: var(--ac-text, var(--text-primary, #161b2d));
+}
+
+.unsupportedLabel {
+  color: var(--text-secondary, #575f73);
+}
+
+.jsonWrapper {
+  border-color: var(--stroke-secondary, #d1dbea);
+  background-color: var(--bg-layer-1, #e0e6f0);
+}
+
+// Custom monospace stack and em-based sizing cannot be expressed as static Tailwind classes.
+.jsonContainer {
+  font-family:
+    ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas,
+    'DejaVu Sans Mono', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.jsonLabel {
+  color: var(--text-primary, #161b2d);
+}
+
+.jsonClickableLabel {
+  color: var(--text-primary, #161b2d);
+}
+
+.jsonPunctuation {
+  color: var(--text-secondary, #575f73);
+}
+
+.jsonStringValue {
+  color: var(--text-accent-secondary, #007274);
+}
+
+.jsonNumberValue {
+  color: var(--text-accent-primary, #124ace);
+}
+
+.jsonBooleanValue {
+  color: var(--text-warning, #7f6300);
+}
+
+.jsonNullValue {
+  color: var(--text-secondary, #575f73);
+}
+
+.jsonExpandIcon {
+  color: var(--text-secondary, #575f73);
+
+  &:hover {
+    color: var(--text-primary, #161b2d);
+  }
+
+  &::after {
+    content: '▶';
+    font-size: 0.6em;
+    vertical-align: middle;
+  }
+}
+
+.jsonCollapseIcon {
+  color: var(--text-secondary, #575f73);
+
+  &:hover {
+    color: var(--text-primary, #161b2d);
+  }
+
+  &::after {
+    content: '▼';
+    font-size: 0.6em;
+    vertical-align: middle;
+  }
+}
+
+// Remove padding from the first .pdf-container when directly followed by another
+:global {
+  .pdf-container:has(+ .pdf-container) {
+    padding: 0;
+  }
+}
+
+.jsonCollapsedContent {
+  color: var(--text-secondary, #575f73);
+  background-color: var(--bg-layer-3, #fcfcfc);
+  font-size: 0.75em; // em-based — cannot be a static Tailwind class
+
+  &::after {
+    content: '\2026';
+  }
 }

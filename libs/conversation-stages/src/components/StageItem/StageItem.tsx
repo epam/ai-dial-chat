@@ -1,11 +1,13 @@
-import type { Stage } from '@epam/ai-dial-chat-shared';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  messageAttachmentToDisplayAttachment,
+} from '@epam/ai-dial-chat-shared';
 import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type { StageTypography } from '../../models/stages-props';
-import { toDisplayAttachment } from '../../utils/to-display-attachment';
 import { StageIcon } from '../StageIcon/StageIcon';
 import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent';
 import styles from '../StagesPanel/StagesPanel.module.scss';
@@ -21,6 +23,8 @@ interface Props {
   copyAriaLabel?: string;
   /** Accessible label for the attachments tray. Defaults to `'Stage attachments'`. */
   attachmentsAriaLabel?: string;
+  /** Called when the user clicks an attachment card. */
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }
 
 /** A single stage row — plain when no content, collapsible when content or attachments are present. */
@@ -30,6 +34,7 @@ export const StageItem: FC<Props> = ({
   typography,
   copyAriaLabel = 'Copy stage content',
   attachmentsAriaLabel = 'Stage attachments',
+  onAttachmentClick,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -47,7 +52,10 @@ export const StageItem: FC<Props> = ({
     </>
   );
 
-  const displayAttachments = stage.attachments?.map(toDisplayAttachment) ?? [];
+  const displayAttachments =
+    stage.attachments?.map((attachment) =>
+      messageAttachmentToDisplayAttachment(attachment),
+    ) ?? [];
   const hasExpandableContent = !!(stage.content || displayAttachments.length);
 
   if (!hasExpandableContent) {
@@ -99,6 +107,7 @@ export const StageItem: FC<Props> = ({
               <AttachmentTray
                 attachments={displayAttachments}
                 ariaLabel={attachmentsAriaLabel}
+                onAttachmentClick={onAttachmentClick}
               />
             )}
           </div>

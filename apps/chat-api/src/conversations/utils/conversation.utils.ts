@@ -2,7 +2,12 @@ import { StringUtils } from '../../common/utils/string-utils';
 import { COMPOUND_TOKEN_PREFIX } from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 
-const notAllowedSymbolsRegex = /[:;,=/{}%&"]/g;
+/*
+ * Strips characters unsafe in DIAL Core resource names: path separators (/ %),
+ * null bytes, and Unicode bidi codepoints that can spoof filenames (CWE-116).
+ */
+const notAllowedSymbolsRegex =
+  /[:;,=/{}%&"\0\u200E\u200F\u202A-\u202E\u2066-\u2069]/gu;
 const trailingDotsRegex = /\.+$/g;
 const MAX_ENTITY_BYTES = 255;
 const CONVERSATION_NAME_SEPARATOR = '__';
@@ -106,6 +111,16 @@ export const buildRenamedFilename = (
 };
 
 /**
+ * Returns the deployment key (e.g. `"gpt-4o"` or `"app__1.0.0"`) from a
+ * bare conversation filename. Used when building a clean destination path
+ * for duplicate (where the legacy UUID suffix must NOT be carried over).
+ */
+export const getDeploymentKey = (filename: string): string => {
+  const parts = filename.split(CONVERSATION_NAME_SEPARATOR);
+  return getDeploymentNameParts(parts).join(CONVERSATION_NAME_SEPARATOR);
+};
+
+/**
  * Builds the new conversation path by replacing the title segment in the filename.
  * Preserves versioned application deployment IDs and legacy UUID suffixes.
  */
@@ -121,22 +136,6 @@ export const buildRenamedConversationPath = (
     ? [...segments.slice(0, -1), renamedFilename].join('/')
     : renamedFilename;
 };
-
-/** Decodes a URI component, returning the original string if decoding fails. */
-export const safeDecodeURIComponent = (value: string): string => {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-};
-
-// TODO: Remove this once the DIAL SDK encodes resource path segments internally.
-export const encodeDialResourcePath = (path: string): string =>
-  path
-    .split('/')
-    .map((segment) => encodeURIComponent(safeDecodeURIComponent(segment)))
-    .join('/');
 
 /** Builds the full DIAL Core resource URL for a conversation: `conversations/<bucket>/<path>` */
 export const buildConversationUrl = (

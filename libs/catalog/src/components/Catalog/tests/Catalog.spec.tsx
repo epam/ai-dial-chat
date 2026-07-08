@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogEntityType } from '../../../types/entity-type';
 import { Catalog } from '../Catalog';
 
@@ -15,7 +16,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: unknown;
     className?: string;
   }) => <span className={className}>{text as string}</span>,
-  DialPrimaryButton: ({
+  PrimaryButton: ({
     label,
     onClick,
   }: {
@@ -59,10 +60,20 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     title,
     query,
     onQueryChange,
+    filters = new Set(),
+    onFiltersChange,
+    filterValues = new Set(),
+    isMyAppsActive,
+    onMyAppsChange,
   }: {
     title?: string;
     query: string;
     onQueryChange: (q: string) => void;
+    filters?: Set<string>;
+    onFiltersChange?: (filters: Set<string>) => void;
+    filterValues?: Set<string>;
+    isMyAppsActive?: boolean;
+    onMyAppsChange?: (isActive: boolean) => void;
   }) => (
     <div>
       <span>{title ?? 'Browse'}</span>
@@ -71,13 +82,41 @@ vi.mock('../../Toolbar/Toolbar', () => ({
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder="search"
       />
+      {Array.from(filterValues).map((value) => (
+        <button
+          key={value}
+          onClick={() => {
+            const next = new Set(filters);
+            if (next.has(value)) {
+              next.delete(value);
+            } else {
+              next.add(value);
+            }
+            onFiltersChange?.(next);
+          }}
+        >
+          {value}
+        </button>
+      ))}
+      <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
     </div>
   ),
 }));
 vi.mock('../../CardGrid/CardGrid', () => ({
-  CardGrid: ({ items }: { items: { id: string }[] }) => (
+  CardGrid: ({
+    items,
+    onItemClick,
+  }: {
+    items: CatalogItem[];
+    onItemClick: (item: CatalogItem) => void;
+  }) => (
     <div role="grid" aria-label="catalog grid">
       {items.length} items
+      {items.map((item) => (
+        <button key={item.id} onClick={() => onItemClick(item)}>
+          {item.name}
+        </button>
+      ))}
     </div>
   ),
 }));
@@ -89,8 +128,26 @@ vi.mock('../../Favorites/Favorites', () => ({
 vi.mock('../../ListView/ListView', () => ({
   ListView: () => <div role="grid" aria-label="catalog list" />,
 }));
+vi.mock('../../Details/DetailsPanel', () => ({
+  DetailsPanel: ({
+    item,
+    isPrimaryActionVisible,
+  }: {
+    item: CatalogItem;
+    isPrimaryActionVisible?: (item: CatalogItem) => boolean;
+  }) => (
+    <div>
+      <span>{item.name}</span>
+      <span>{String(isPrimaryActionVisible?.(item))}</span>
+    </div>
+  ),
+}));
 
-const makeItem = (id: string, name: string) => ({
+const makeItem = (
+  id: string,
+  name: string,
+  overrides: Partial<CatalogItem> = {},
+): CatalogItem => ({
   id,
   type: CatalogEntityType.Model,
   name,
@@ -99,11 +156,7 @@ const makeItem = (id: string, name: string) => ({
   topics: ['Free'],
   folder: ['EPAM'],
   lastUsed: '',
-  from: '',
-  domain: '',
-  useCase: '',
-  maturity: '',
-  overview: undefined,
+  ...overrides,
 });
 
 describe('Catalog', () => {
@@ -147,12 +200,12 @@ describe('Catalog', () => {
       topics: [],
     };
     render(<Catalog items={[]} favorites={[fav]} />);
-    expect(screen.getByText('Your Favorites')).toBeTruthy();
+    expect(screen.getByText('Your favorites')).toBeTruthy();
   });
 
   it('does not render CatalogFavorites when favorites is empty', () => {
     render(<Catalog items={[]} favorites={[]} />);
-    expect(screen.queryByText('Your Favorites')).toBeNull();
+    expect(screen.queryByText('Your favorites')).toBeNull();
   });
 
   it('renders items in the card grid', () => {
@@ -160,5 +213,55 @@ describe('Catalog', () => {
     expect(
       screen.getByRole('grid', { name: 'catalog grid' }).textContent,
     ).toContain('1 items');
+  });
+
+  it('applies topic filters to rendered items', async () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { topics: ['Free'] }),
+          makeItem('2', 'Gemini', { topics: ['Paid'] }),
+        ]}
+        favorites={[]}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Free' }));
+
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('1 items');
+  });
+
+  it('applies the My Apps filter to rendered items', async () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { isMyApp: true }),
+          makeItem('2', 'Gemini', { isMyApp: false }),
+        ]}
+        favorites={[]}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'My Apps' }));
+
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('1 items');
+  });
+
+  it('passes primary action visibility predicate to the details panel', async () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        isPrimaryActionVisible={(item) => item.id === '1'}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(screen.getByText('true')).toBeTruthy();
   });
 });

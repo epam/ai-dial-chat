@@ -1,9 +1,11 @@
 import type {
   Annotation,
   Message,
+  MessageAttachment,
   Stage,
   StreamChunk,
 } from '@epam/ai-dial-chat-shared';
+import { normalizeRawAnnotations } from './annotation';
 
 const mergeAnnotations = (
   existing: Annotation[],
@@ -35,6 +37,31 @@ const mergeAnnotations = (
   return result;
 };
 
+const mergeStageAttachments = (
+  existing: MessageAttachment[],
+  incoming: MessageAttachment[],
+): MessageAttachment[] => {
+  const result = [...existing];
+  for (const att of incoming) {
+    const idx =
+      att.index != null ? result.findIndex((a) => a.index === att.index) : -1;
+    if (idx >= 0) {
+      result[idx] = {
+        ...result[idx],
+        ...att,
+        title: (result[idx].title ?? '') + (att.title ?? ''),
+        data:
+          att.data != null
+            ? (result[idx].data ?? '') + att.data
+            : result[idx].data,
+      };
+    } else {
+      result.push(att);
+    }
+  }
+  return result;
+};
+
 const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
   const result = [...existing];
   for (const stage of incoming) {
@@ -46,6 +73,12 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
         name: (result[idx].name ?? '') + (stage.name ?? ''),
         content:
           (result[idx].content ?? '') + (stage.content ?? '') || undefined,
+        attachments: stage.attachments?.length
+          ? mergeStageAttachments(
+              result[idx].attachments ?? [],
+              stage.attachments,
+            )
+          : result[idx].attachments,
       };
     } else {
       result.push(stage);
@@ -79,12 +112,14 @@ export const applyChunkToMessages = (
   const attachments = delta?.custom_content?.attachments;
   const stages = delta?.custom_content?.stages;
   const annotations = delta?.custom_content?.annotations;
+  const rawAnnotations = delta?.custom_fields?.annotations;
   const hasContentUpdate =
     !!content ||
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
-    !!annotations?.length;
+    !!annotations?.length ||
+    !!rawAnnotations?.length;
   const responseId =
     delta?.responseId ?? (hasContentUpdate ? chunk.id : undefined);
 
@@ -93,11 +128,23 @@ export const applyChunkToMessages = (
   return messages.map((message, index) => {
     if (index !== messageIndex) return message;
 
+    const allAttachments = [
+      ...(message.custom_content?.attachments ?? []),
+      ...(attachments ?? []),
+    ];
+    const normalizedRawAnnotations = rawAnnotations?.length
+      ? normalizeRawAnnotations(rawAnnotations, allAttachments)
+      : [];
+    const incomingAnnotations = [
+      ...(annotations ?? []),
+      ...normalizedRawAnnotations,
+    ];
+
     const hasCustomContentUpdate =
       formSchema ||
       attachments?.length ||
       stages?.length ||
-      annotations?.length;
+      incomingAnnotations.length;
 
     return {
       ...message,
@@ -108,18 +155,15 @@ export const applyChunkToMessages = (
           ...message.custom_content,
           ...(formSchema && { form_schema: formSchema }),
           ...(attachments?.length && {
-            attachments: [
-              ...(message.custom_content?.attachments ?? []),
-              ...attachments,
-            ],
+            attachments: allAttachments,
           }),
           ...(stages?.length && {
             stages: mergeStages(message.custom_content?.stages ?? [], stages),
           }),
-          ...(annotations?.length && {
+          ...(incomingAnnotations.length && {
             annotations: mergeAnnotations(
               message.custom_content?.annotations ?? [],
-              annotations,
+              incomingAnnotations,
             ),
           }),
         },

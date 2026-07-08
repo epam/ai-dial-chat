@@ -57,9 +57,11 @@ export const getModelIdFromConversationId = (
   // segments[0] = "conversations", segments[1] = bucket
   const deploymentSegments = segments.slice(2);
 
-  // Find the FIRST segment that contains '__'. Everything before it
-  // is the deployment ID prefix; the part before '__' in that segment is the
-  // final piece of the deployment ID.
+  /*
+   * Find the FIRST segment that contains '__'. Everything before it
+   * is the deployment ID prefix; the part before '__' in that segment is the
+   * final piece of the deployment ID.
+   */
   const separatorIndex = deploymentSegments.findIndex((seg) =>
     seg.includes(CONVERSATION_NAME_SEPARATOR),
   );

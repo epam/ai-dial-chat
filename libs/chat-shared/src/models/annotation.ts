@@ -8,12 +8,29 @@ export interface TextCharacterRangeSelector {
   end: number;
 }
 
+/** Selector that targets an axis-aligned bounding box on a specific PDF page. */
+export interface PdfBBoxSelector {
+  /** Discriminator — always `'pdf_bbox'`. */
+  type: 'pdf_bbox';
+  /** 1-based PDF page number. */
+  page: number;
+  /** Left edge coordinate. */
+  x1: number;
+  /** Top edge coordinate. */
+  y1: number;
+  /** Right edge coordinate. */
+  x2: number;
+  /** Bottom edge coordinate. */
+  y2: number;
+}
+
 /**
  * Discriminated union of all recognised annotation selector shapes.
  * Unknown selector types are preserved as an open record to allow forward-compatibility.
  */
 export type AnnotationSelector =
   | TextCharacterRangeSelector
+  | PdfBBoxSelector
   | { type: string; [key: string]: unknown };
 
 /** Identifies the part of the message (or a related resource) that the annotation refers to. */
@@ -30,6 +47,8 @@ export interface AttachmentResource {
   type: string;
   /** Remote URL pointing to the file content. */
   url: string;
+  /** Human-readable display name for the file. Used in citation markers. */
+  title?: string;
 }
 
 /** Identifies the cited document attached to the annotation. */

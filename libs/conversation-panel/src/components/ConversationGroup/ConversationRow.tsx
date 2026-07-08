@@ -1,22 +1,18 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GhostButton } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialDropdown,
   DialEllipsisTooltip,
-  DialGhostButton,
   DialIconButton,
+  DialSkeleton,
+  DialSkeletonVariant,
   ElementSize,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
-import {
-  useCallback,
-  useState,
-  type DragEvent,
-  type FC,
-  type MouseEvent,
-} from 'react';
+import { useCallback, useState, type DragEvent, type FC } from 'react';
 import { ConversationHistoryItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
 import { ConversationGroupKey } from '../../types/conversation-group-key';
@@ -41,6 +37,8 @@ export interface ConversationRowProps {
   actionsLabel?: string;
   /** Typography class for the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
+  /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
+  itemIconBadgeClassName?: string;
   /**
    * The group this row belongs to — required to enable drag-and-drop.
    * When absent the row is not draggable (used by `ConversationGroup`).
@@ -77,6 +75,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   getActions,
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
+  itemIconBadgeClassName,
   rowGroupKey,
   rows,
   draggingId,
@@ -93,34 +92,25 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
 
-  const avatar = (
+  const avatar = item.isIconLoading ? (
+    <DialSkeleton
+      variant={DialSkeletonVariant.Circular}
+      width={DIAL_ICON_SIZE.LG}
+      height={DIAL_ICON_SIZE.LG}
+      color="var(--bg-layer-4)"
+      aria-hidden
+    />
+  ) : (
     <DeploymentIcon
       src={item.iconUrl}
       size={DIAL_ICON_SIZE.LG}
+      initialsName={item.iconTooltip ?? ''}
       tooltip={item.iconTooltip}
+      badgeClassName={itemIconBadgeClassName}
     />
   );
 
   const buttonPaddingRight = getButtonPaddingEnd(hasActions, isMenuOpen);
-
-  const handleAuxClick = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      if (e.button === 1 && item.href) {
-        e.preventDefault();
-        window.open(item.href, '_blank', 'noreferrer');
-      }
-    },
-    [item.href],
-  );
-
-  const handleMouseDown = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      if (e.button === 1 && item.href) {
-        e.preventDefault();
-      }
-    },
-    [item.href],
-  );
 
   const isDragEnabled = rowGroupKey != null;
 
@@ -175,27 +165,32 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       onDragLeave={isDragEnabled ? handleDragLeave : undefined}
       onDrop={isDragEnabled ? handleDrop : undefined}
     >
-      <DialGhostButton
-        iconBefore={avatar}
-        label={
-          <DialEllipsisTooltip
-            text={item.title}
-            className={itemTitleClassName}
-          />
-        }
-        textClassName="min-w-0"
-        aria-current={isActive ? 'page' : undefined}
-        onClick={() => onSelectConversation(item.id)}
-        onMouseDown={item.href ? handleMouseDown : undefined}
-        onAuxClick={item.href ? handleAuxClick : undefined}
-        className={mergeClasses(
-          'h-8 w-full justify-start gap-2 rounded-b rounded-t border-l-2 border-transparent ps-3',
-          buttonPaddingRight,
-          styles.item,
-          isActive && styles.itemActive,
-          isMenuOpen && styles.itemActive,
-        )}
-      />
+      <a
+        href={item.href}
+        className="contents"
+        onClick={(e) => e.preventDefault()}
+      >
+        <GhostButton
+          iconBefore={avatar}
+          label={
+            <DialEllipsisTooltip
+              text={item.title}
+              className={itemTitleClassName}
+            />
+          }
+          textClassName="min-w-0"
+          aria-current={isActive ? 'page' : undefined}
+          onClick={() => onSelectConversation(item.id)}
+          tabIndex={item.href ? -1 : undefined}
+          className={mergeClasses(
+            'h-8 w-full justify-start gap-2 rounded-b rounded-t border-l-2 border-transparent ps-3',
+            buttonPaddingRight,
+            styles.item,
+            isActive && styles.itemActive,
+            isMenuOpen && styles.itemActive,
+          )}
+        />
+      </a>
 
       {hasActions && (
         <div
@@ -210,7 +205,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
             items={menuItems}
             onOpenChange={setIsMenuOpen}
             matchReferenceWidth={false}
-            listClassName="w-[140px] shadow-md"
+            listClassName="w-[140px] cp-dropdown-overlay"
           >
             <DialIconButton
               icon={

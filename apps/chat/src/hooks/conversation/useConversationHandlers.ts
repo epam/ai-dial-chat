@@ -1,5 +1,4 @@
 import {
-  AttachmentErrorReason,
   type Attachment,
   type Conversation,
   type DisplayAttachment,
@@ -8,31 +7,32 @@ import {
   MessageRole,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import type { ConversationResponseDto } from '@epam/chat-api-client';
+import type {
+  ConversationResponseDto,
+  SendCompletionDtoModeEnum,
+} from '@epam/chat-api-client';
 import {
   type Dispatch,
   type MutableRefObject,
   type SetStateAction,
   useCallback,
-  useRef,
   useState,
 } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
-import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   deleteConversation as apiDeleteConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
-import { uploadFile } from '../../server-api/files.api';
 import { rateMessage } from '../../server-api/rate.api';
 import { ROUTES } from '../../types/routes';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
-import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { createMessagePair } from '../../utils/message-factory';
 import { isMessageChanged } from '../../utils/message-utils';
 import { getStarterSubmitText } from '../../utils/starter-option';
+import { useAttachmentUpload } from './useAttachmentUpload';
 
 interface Params {
   conversation: Conversation | null;
@@ -45,6 +45,8 @@ interface Params {
     messageIndex: number,
     model: string,
     customContent?: MessageCustomContent,
+    generationId?: string,
+    mode?: SendCompletionDtoModeEnum,
   ) => void;
   conversationRef: MutableRefObject<Conversation | null>;
   setConversation: Dispatch<SetStateAction<Conversation | null>>;
@@ -64,9 +66,6 @@ export const useConversationHandlers = ({
   navigate,
   showNetworkError,
 }: Params) => {
-  const pendingNetworkFilesRef = useRef<string[]>([]);
-  const networkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(
     null,
   );
@@ -81,43 +80,10 @@ export const useConversationHandlers = ({
   } | null>(null);
   const { selectedItemId } = useDeployments();
 
-  const handleUploadAttachment = useCallback(
-    async (attachment: Attachment): Promise<string> => {
-      if (!bucket) {
-        throw new Error('User bucket is not available');
-      }
-
-      try {
-        const response = await uploadFile(
-          bucket,
-          buildUploadPath(attachment),
-          attachment.file,
-        );
-        return response.url;
-      } catch (err) {
-        if (!navigator.onLine) {
-          pendingNetworkFilesRef.current.push(attachment.name);
-          if (networkTimerRef.current != null) {
-            clearTimeout(networkTimerRef.current);
-          }
-          networkTimerRef.current = setTimeout(() => {
-            const filenames = pendingNetworkFilesRef.current.splice(0);
-            showNetworkError?.(filenames);
-            networkTimerRef.current = null;
-          }, NETWORK_ERROR_DEBOUNCE_MS);
-
-          const error =
-            err instanceof Error ? err : new Error('Network upload failed');
-          (
-            error as Error & { errorReason: AttachmentErrorReason }
-          ).errorReason = AttachmentErrorReason.Network;
-          throw error;
-        }
-        throw err;
-      }
-    },
-    [bucket, showNetworkError],
-  );
+  const { handleUploadAttachment } = useAttachmentUpload({
+    bucket,
+    onNetworkError: showNetworkError,
+  });
 
   const handleSend = useCallback(
     async (message: string, attachments: Attachment[]) => {
@@ -146,6 +112,8 @@ export const useConversationHandlers = ({
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
         { attachments: attachmentDtos },
+        crypto.randomUUID(),
+        CompletionMode.Append,
       );
     },
     [
@@ -203,6 +171,8 @@ export const useConversationHandlers = ({
         messageIndex,
         selectedItemId ?? conversation.model.id,
         userMsg.custom_content,
+        crypto.randomUUID(),
+        CompletionMode.Regenerate,
       );
     },
     [
@@ -371,6 +341,8 @@ export const useConversationHandlers = ({
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
         configurationValue ? { form_value: configurationValue } : undefined,
+        crypto.randomUUID(),
+        CompletionMode.Append,
       );
     },
     [
@@ -429,7 +401,6 @@ export const useConversationHandlers = ({
         return;
 
       const originalMessage = conversation.messages[idx];
-      const conversationPath = getConversationPath(conversationId);
 
       if (
         !isMessageChanged(
@@ -494,14 +465,15 @@ export const useConversationHandlers = ({
         return updated;
       });
 
-      saveConversation(conversationPath, updated as ConversationResponseDto);
-
+      // Backend will save the conversation at stream start; no pre-save needed.
       startStream(
         conversationId,
         text,
         updatedMessages.length - 1,
         selectedItemId ?? conversation.model.id,
         allAttachments.length > 0 ? { attachments: allAttachments } : undefined,
+        crypto.randomUUID(),
+        CompletionMode.Edit,
       );
 
       setEditingMessageIndexes(new Set());

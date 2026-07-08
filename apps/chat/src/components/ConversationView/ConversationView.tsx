@@ -2,7 +2,6 @@ import {
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
-  ResponseFormat,
   StatusEvent,
   type Attachment,
   type Conversation,
@@ -10,17 +9,14 @@ import {
   type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import {
-  FileDndOverlay,
-  type ChatSettingsValues,
-} from '@epam/ai-dial-conversation-input';
+import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
+import { NeutralButton } from '@epam/ai-dial-kit';
 import {
   DialFabButton,
-  DialNeutralButton,
   DialNotification,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
@@ -31,21 +27,18 @@ import {
   memo,
   Suspense,
   useCallback,
-  useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
+import { CONVERSATION_VIEW_INPUT_STYLES } from '../../constants/input-styles';
 import {
-  BasicI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   ChatI18nKeys,
-  ChatSettingsI18nKeys,
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
-  DeploymentsI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
@@ -54,11 +47,21 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
+import { useConversationScroll } from '../../hooks/conversation/useConversationScroll';
+import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
-import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
+import {
+  dialFilesToAttachments,
+  dialFolderPathToAttachment,
+} from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
+import { isMessageChanged } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
+import ModelPickerPanel from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -97,8 +100,10 @@ interface Props {
   editingMessageIndexes?: Set<number>;
   placeholder: string;
   isAssistantTyping?: boolean;
+  canStopAssistant?: boolean;
   initialModelId: string;
   streamErrorText: string;
+  stoppedGeneratingText: string;
   isReadOnly?: boolean;
   onDuplicateConversation?: () => void;
   duplicateError?: string;
@@ -107,9 +112,9 @@ interface Props {
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
   conversation: Conversation;
   onConversationChange: (conv: Conversation) => void;
+  /** Called when the user clicks "Browse full catalog" inside the model picker. */
+  onBrowseCatalog?: () => void;
 }
-
-const NEAR_BOTTOM_THRESHOLD = 80;
 
 const ConversationView: FC<Props> = ({
   messages,
@@ -128,8 +133,10 @@ const ConversationView: FC<Props> = ({
   editingMessageIndexes,
   placeholder,
   isAssistantTyping = false,
+  canStopAssistant = false,
   initialModelId,
   streamErrorText,
+  stoppedGeneratingText,
   isReadOnly = false,
   onDuplicateConversation,
   duplicateError,
@@ -138,6 +145,7 @@ const ConversationView: FC<Props> = ({
   onTranscribeAudio,
   conversation,
   onConversationChange,
+  onBrowseCatalog,
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -159,6 +167,16 @@ const ConversationView: FC<Props> = ({
     isLoading,
     error,
   } = useDeployments();
+  const { favoriteIds, toggleFavorite } = useFavoriteApplications();
+
+  const favoriteCatalogItems = useMemo(
+    () =>
+      items
+        .filter((d) => favoriteIds.has(d.id))
+        .map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
+    [items, favoriteIds],
+  );
+
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),
     [items, selectedItemId],
@@ -215,8 +233,10 @@ const ConversationView: FC<Props> = ({
     [items],
   );
 
-  // For each message, resolve the deployment active at that point in the conversation.
-  // Scans status messages in order so messages before a model change get the initial model icon.
+  /*
+   * For each message, resolve the deployment active at that point in the conversation.
+   * Scans status messages in order so messages before a model change get the initial model icon.
+   */
   const effectiveDeploymentIds = useMemo<(string | undefined)[]>(
     () =>
       messages.reduce<{
@@ -273,20 +293,11 @@ const ConversationView: FC<Props> = ({
     [t],
   );
 
-  const modelSelectorLabels = useMemo(
-    () => ({
-      ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
-      loading: isLoading ? t(DeploymentsI18nKeys.SelectorLoading) : undefined,
-      error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
-      empty:
-        !isLoading && !error && items.length === 0
-          ? t(DeploymentsI18nKeys.SelectorEmpty)
-          : undefined,
-      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
-      closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
-    }),
-    [t, isLoading, error, items.length],
-  );
+  const modelSelectorLabels = useModelSelectorLabels({
+    isLoading,
+    error,
+    itemCount: items.length,
+  });
 
   const formatStatusModelChangedBody = useCallback(
     (from: string, to: string) =>
@@ -297,140 +308,80 @@ const ConversationView: FC<Props> = ({
     [t],
   );
 
-  const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const {
+    containerRef,
+    contentRef,
+    spacerRef,
+    setMessageRef,
+    isScrollButtonVisible,
+    scrollToBottom,
+    armAnchor,
+  } = useConversationScroll({ messages, isAssistantTyping });
 
-  // True when the user has manually scrolled up during a stream.
-  // Pauses auto-scroll until they click the scroll button or send a new message.
-  const userScrolledRef = useRef(false);
-
-  // Prevents the scroll handler from misreading programmatic scrolls as user input.
-  const isProgrammaticRef = useRef(false);
-
-  const scrollToBottom = useCallback((instant = false) => {
-    const container = containerRef.current;
-    if (!container) return;
-    isProgrammaticRef.current = true;
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: instant ? 'instant' : 'smooth',
-    });
-    // Reset flag after the scroll event has fired
-    requestAnimationFrame(() => {
-      isProgrammaticRef.current = false;
-    });
-  }, []);
-
-  // When streaming ends, release user override so the next send auto-scrolls.
-  useEffect(() => {
-    if (!isAssistantTyping) {
-      userScrolledRef.current = false;
-    }
-  }, [isAssistantTyping]);
-
-  // Scroll on message updates.
-  // During streaming: instant + skip if user scrolled up.
-  // On new turns (non-streaming message count change): always smooth-scroll.
-  const prevLengthRef = useRef(messages.length);
-  useEffect(() => {
-    const lengthChanged = messages.length !== prevLengthRef.current;
-    prevLengthRef.current = messages.length;
-
-    if (isAssistantTyping) {
-      // Token arrived — scroll only if user hasn't overridden
-      if (!userScrolledRef.current) {
-        scrollToBottom(true);
-      }
-    } else if (lengthChanged) {
-      // New user message appended (or conversation loaded) — always scroll
-      userScrolledRef.current = false;
-      scrollToBottom(false);
-    }
-  }, [messages, isAssistantTyping, scrollToBottom]);
-
-  // Scroll listener: detect user scrolling up during stream
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-      const isNearBottom = distanceFromBottom < NEAR_BOTTOM_THRESHOLD;
-
-      setIsScrollButtonVisible(!isNearBottom);
-
-      if (isProgrammaticRef.current) return;
-
-      if (isAssistantTyping && !isNearBottom) {
-        userScrolledRef.current = true;
-      } else if (isNearBottom) {
-        userScrolledRef.current = false;
-      }
-    };
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [isAssistantTyping]);
-
-  const handleScrollToBottom = useCallback(() => {
-    userScrolledRef.current = false;
-    scrollToBottom(false);
-  }, [scrollToBottom]);
-
-  const chatSettings = useMemo(
-    () => ({
-      features: {
-        ...(selectedDeployment?.features ?? {
-          systemPrompt: false,
-          temperature: false,
-        }),
-        responseFormat: true,
-      },
-      responseFormat: conversation.responseFormat ?? ResponseFormat.Markdown,
-      systemPrompt: conversation.prompt ?? '',
-      temperature: conversation.temperature ?? 0.5,
-      onSave: (values: ChatSettingsValues) =>
-        onConversationChange({
-          ...conversation,
-          ...(values.responseFormat != null && {
-            responseFormat: values.responseFormat,
-          }),
-          ...(values.systemPrompt != null && {
-            prompt: values.systemPrompt,
-          }),
-          ...(values.temperature != null && {
-            temperature: values.temperature,
-          }),
-        }),
-      menuItemLabel: t(ChatI18nKeys.ChatSettings),
-      title: t(ChatSettingsI18nKeys.Title),
-      responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
-      responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
-      responseFormatMarkdownLabel: t(
-        ChatSettingsI18nKeys.ResponseFormatMarkdown,
-      ),
-      responseFormatPlainTextLabel: t(
-        ChatSettingsI18nKeys.ResponseFormatPlainText,
-      ),
-      systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
-      systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
-      temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),
-      temperatureLabels: [
-        t(ChatSettingsI18nKeys.TemperaturePrecise),
-        t(ChatSettingsI18nKeys.TemperatureNeutral),
-        t(ChatSettingsI18nKeys.TemperatureCreative),
-      ] as [string, string, string],
-      temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
-      saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
-    }),
-    [selectedDeployment?.features, conversation, onConversationChange, t],
+  const handleSendWithAnchor = useCallback(
+    async (message: string, attachments: Attachment[]) => {
+      armAnchor(messages.length);
+      // ConversationInput awaits this to know whether to restore the draft
+      // on failure — forward onSend's result rather than discarding it.
+      await onSend(message, attachments);
+    },
+    [onSend, messages.length, armAnchor],
   );
+
+  const handleRegenerateMessageWithAnchor = useCallback(
+    (messageIndex: number) => {
+      /*
+       * Regenerating while another generation is in flight is a no-op in
+       * handleRegenerateMessage — skip arming the anchor so a later,
+       * unrelated message update doesn't consume a stale index.
+       */
+      if (!isAssistantTyping) {
+        armAnchor(messageIndex - 1);
+      }
+      onRegenerateMessage?.(messageIndex);
+    },
+    [isAssistantTyping, onRegenerateMessage, armAnchor],
+  );
+
+  const handleEditMessageWithAnchor = useCallback(
+    (
+      messageIndex: number,
+      text: string,
+      keptAttachments: DisplayAttachment[],
+      newAttachments: Attachment[],
+    ) => {
+      /*
+       * handleEditMessage no-ops if a generation is in flight or the text is
+       * unchanged (isMessageChanged mirrors that same check) — skip arming
+       * in either case so a later, unrelated update can't consume a stale index.
+       */
+      const originalMessage = messages[messageIndex];
+      if (
+        !isAssistantTyping &&
+        originalMessage != null &&
+        isMessageChanged(originalMessage, text, keptAttachments, newAttachments)
+      ) {
+        armAnchor(messageIndex);
+      }
+      onEditMessage?.(messageIndex, text, keptAttachments, newAttachments);
+    },
+    [isAssistantTyping, messages, onEditMessage, armAnchor],
+  );
+
+  const chatSettings = useChatSettingsFormConfig({
+    mode: 'conversation',
+    conversation,
+    onConversationChange,
+    deploymentFeatures: selectedDeployment?.features,
+  });
 
   const handleAttachDialFiles = useCallback(
     (result: AttachResult) => {
-      setPendingDialAttachments(dialFilesToAttachments(result.files, bucket));
+      const fileAttachments = dialFilesToAttachments(result.files, bucket);
+      const folderAttachments = result.folderPaths.map(
+        dialFolderPathToAttachment,
+      );
+      setPendingDialAttachments([...fileAttachments, ...folderAttachments]);
       setIsDialFileManagerOpen(false);
     },
     [bucket],
@@ -473,81 +424,100 @@ const ConversationView: FC<Props> = ({
           aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
-          className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden"
+          className="mx-auto flex w-full max-w-[760px] flex-1 flex-col overflow-y-auto overflow-x-hidden"
         >
-          <div className="mx-auto flex w-full min-w-0 max-w-[748px] flex-1 flex-col gap-6 overflow-x-hidden px-4 pt-2">
+          <div
+            ref={contentRef}
+            className="flex min-w-0 shrink-0 flex-col gap-[26px] px-6 pt-7"
+          >
             {messages.map((msg, index) => {
               const isThisMessageEditing = editingMessageIndexes?.has(index);
               return (
-                <ConversationMessageItem
+                <div
                   key={index.toString()}
-                  msg={msg}
-                  index={index}
-                  totalCount={messages.length}
-                  isAssistantTyping={isAssistantTyping}
-                  editingMessageIndexes={editingMessageIndexes}
-                  onSelectStarter={onSelectStarter}
-                  onStartEdit={onStartEdit}
-                  onDeleteMessage={onDeleteMessage}
-                  onRegenerateMessage={onRegenerateMessage}
-                  onRateMessage={onRateMessage}
-                  onDislikeMessage={onDislikeMessage}
-                  onCancelEdit={onCancelEdit}
-                  onEditMessage={onEditMessage}
-                  onUploadAttachment={onUploadAttachment}
-                  deploymentLookup={deploymentLookup}
-                  effectiveDeploymentId={effectiveDeploymentIds[index]}
-                  tooltips={tooltips}
-                  ariaLabels={ariaLabels}
-                  cancelLabel={t(ButtonsI18nKeys.Cancel)}
-                  saveLabel={t(ButtonsI18nKeys.SaveAndSubmit)}
-                  editMessageAriaLabel={t(ButtonsI18nKeys.EditMessage)}
-                  quickReplyButtonsAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
-                  showMoreLabel={t(ButtonsI18nKeys.ShowMore)}
-                  showLessLabel={t(ButtonsI18nKeys.ShowLess)}
-                  showMoreUserMessageAriaLabel={t(
-                    ChatI18nKeys.ShowMoreUserMessage,
-                  )}
-                  showLessUserMessageAriaLabel={t(
-                    ChatI18nKeys.ShowLessUserMessage,
-                  )}
-                  statusModelChangedTitle={t(
-                    ConversationI18nKeys.StatusModelChangedTitle,
-                  )}
-                  formatStatusModelChangedBody={formatStatusModelChangedBody}
-                  streamErrorText={streamErrorText}
-                  thinkingLabel={t(ChatI18nKeys.Thinking)}
-                  executedLabel={t(ConversationI18nKeys.StagesExecuted)}
-                  stepsLabel={(count) =>
-                    t(ConversationI18nKeys.StagesStep, { count })
-                  }
-                  pendingDropFiles={
-                    isEditActive && isThisMessageEditing
-                      ? pendingFiles
-                      : undefined
-                  }
-                  onDropFilesConsumed={
-                    isEditActive && isThisMessageEditing
-                      ? onFilesConsumed
-                      : undefined
-                  }
-                  validateAttachment={
-                    selectedDeployment != null ? validateAttachment : undefined
-                  }
-                  hideAttachFile={!isAttachmentsAllowed}
-                  onAttachmentClick={handleMessageAttachmentClick}
-                />
+                  ref={(el) => setMessageRef(index, el)}
+                >
+                  <ConversationMessageItem
+                    msg={msg}
+                    index={index}
+                    totalCount={messages.length}
+                    isAssistantTyping={isAssistantTyping}
+                    editingMessageIndexes={editingMessageIndexes}
+                    onSelectStarter={onSelectStarter}
+                    onStartEdit={isReadOnly ? undefined : onStartEdit}
+                    onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}
+                    onRegenerateMessage={
+                      isReadOnly ? undefined : handleRegenerateMessageWithAnchor
+                    }
+                    onRateMessage={isReadOnly ? undefined : onRateMessage}
+                    onDislikeMessage={isReadOnly ? undefined : onDislikeMessage}
+                    onCancelEdit={onCancelEdit}
+                    onEditMessage={handleEditMessageWithAnchor}
+                    onUploadAttachment={onUploadAttachment}
+                    deploymentLookup={deploymentLookup}
+                    effectiveDeploymentId={effectiveDeploymentIds[index]}
+                    tooltips={tooltips}
+                    ariaLabels={ariaLabels}
+                    cancelLabel={t(ButtonsI18nKeys.Cancel)}
+                    saveLabel={t(ButtonsI18nKeys.SaveAndSubmit)}
+                    editMessageAriaLabel={t(ButtonsI18nKeys.EditMessage)}
+                    quickReplyButtonsAriaLabel={t(
+                      ChatI18nKeys.QuickReplyButtons,
+                    )}
+                    showMoreLabel={t(ButtonsI18nKeys.ShowMore)}
+                    showLessLabel={t(ButtonsI18nKeys.ShowLess)}
+                    showMoreUserMessageAriaLabel={t(
+                      ChatI18nKeys.ShowMoreUserMessage,
+                    )}
+                    showLessUserMessageAriaLabel={t(
+                      ChatI18nKeys.ShowLessUserMessage,
+                    )}
+                    statusModelChangedTitle={t(
+                      ConversationI18nKeys.StatusModelChangedTitle,
+                    )}
+                    formatStatusModelChangedBody={formatStatusModelChangedBody}
+                    streamErrorText={streamErrorText}
+                    stoppedGeneratingText={stoppedGeneratingText}
+                    thinkingLabel={t(ChatI18nKeys.Thinking)}
+                    executedLabel={t(ConversationI18nKeys.StagesExecuted)}
+                    stepsLabel={(count) =>
+                      t(ConversationI18nKeys.StagesStep, { count })
+                    }
+                    pendingDropFiles={
+                      isEditActive && isThisMessageEditing
+                        ? pendingFiles
+                        : undefined
+                    }
+                    onDropFilesConsumed={
+                      isEditActive && isThisMessageEditing
+                        ? onFilesConsumed
+                        : undefined
+                    }
+                    validateAttachment={
+                      selectedDeployment != null
+                        ? validateAttachment
+                        : undefined
+                    }
+                    hideAttachFile={!isAttachmentsAllowed}
+                    onAttachmentClick={handleMessageAttachmentClick}
+                  />
+                </div>
               );
             })}
           </div>
-          <div ref={endRef} />
+          <div
+            ref={spacerRef}
+            aria-hidden="true"
+            className="shrink-0"
+            style={{ height: 0 }}
+          />
         </div>
 
         {isScrollButtonVisible && (
           <DialFabButton
             aria-label={t(ChatI18nKeys.ScrollToBottom)}
-            onClick={handleScrollToBottom}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2"
+            onClick={scrollToBottom}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2"
           />
         )}
       </div>
@@ -555,7 +525,7 @@ const ConversationView: FC<Props> = ({
       <div
         role="region"
         aria-label={t(ChatI18nKeys.MessageInput)}
-        className="w-full"
+        className="relative z-10 w-full px-6 pb-4"
       >
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
@@ -565,7 +535,7 @@ const ConversationView: FC<Props> = ({
                 message={duplicateError}
               />
             )}
-            <DialNeutralButton
+            <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
               iconBefore={<IconCopy />}
               onClick={onDuplicateConversation}
@@ -575,9 +545,10 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
-                onSend={onSend}
+                styles={CONVERSATION_VIEW_INPUT_STYLES}
+                onSend={handleSendWithAnchor}
                 onUploadAttachment={onUploadAttachment}
-                onStop={onStop}
+                onStop={canStopAssistant ? onStop : undefined}
                 isStreaming={isAssistantTyping}
                 onAttachmentsChange={onAttachmentsChange}
                 placeholder={placeholder}
@@ -586,7 +557,9 @@ const ConversationView: FC<Props> = ({
                 onDeploymentChange={setSelectedItemId}
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
+                addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
                 sendLabel={t(ChatI18nKeys.SendMessage)}
+                sendTitle={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
                 isTranscriptionSupported={isTranscriptionSupported}
                 messageHistory={messageHistory}
@@ -620,6 +593,29 @@ const ConversationView: FC<Props> = ({
                 }
                 hideAttachFile={!isAttachmentsAllowed}
                 onAttachmentClick={handleInputAttachmentClick}
+                modelPickerOverlay={(onClose) => (
+                  <ModelPickerPanel
+                    favorites={favoriteCatalogItems}
+                    selectedId={selectedItemId}
+                    onSelect={setSelectedItemId}
+                    onToggleFavorite={toggleFavorite}
+                    onBrowseCatalog={onBrowseCatalog}
+                    onClose={onClose}
+                    labels={{
+                      searchPlaceholder: t(
+                        CatalogI18nKeys.PickerSearchPlaceholder,
+                      ),
+                      searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
+                      emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
+                      browseCatalogLabel: t(
+                        CatalogI18nKeys.PickerBrowseCatalog,
+                      ),
+                      removeFromFavoritesLabel: t(
+                        CatalogI18nKeys.PickerRemoveFromFavorites,
+                      ),
+                    }}
+                  />
+                )}
               />
             </Suspense>
             <Suspense fallback={null}>
@@ -633,6 +629,9 @@ const ConversationView: FC<Props> = ({
                   maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
                   maximumAttachmentsAmount={
                     selectedDeployment?.maxInputAttachments
+                  }
+                  canAttachFolders={
+                    selectedDeployment?.features?.folderAttachments
                   }
                   title={t(DialFileManagerI18nKeys.Title)}
                   attachLabel={t(DialFileManagerI18nKeys.Attach)}

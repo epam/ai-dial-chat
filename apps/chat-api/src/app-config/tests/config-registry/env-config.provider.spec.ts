@@ -52,6 +52,66 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('utility.modelId', () => {
+    it('returns the utility model ID when UTILITY_MODEL is set', async () => {
+      const { provider } = makeProvider({ UTILITY_MODEL: 'gpt-4o-mini' });
+      expect(await provider.resolve('utility.modelId', ctx)).toBe(
+        'gpt-4o-mini',
+      );
+    });
+
+    it('returns undefined when UTILITY_MODEL is not set', async () => {
+      const { provider } = makeProvider({ UTILITY_MODEL: undefined });
+      expect(await provider.resolve('utility.modelId', ctx)).toBeUndefined();
+    });
+  });
+
+  describe('features.llmConversationNaming', () => {
+    it('returns true when UTILITY_MODEL is set and LLM_CONVERSATION_NAMING_ENABLED is true', async () => {
+      const { provider } = makeProvider({
+        UTILITY_MODEL: 'gpt-4o-mini',
+        DIAL_API_KEY: 'dial-api-key',
+        LLM_CONVERSATION_NAMING_ENABLED: true,
+      });
+      expect(
+        await provider.resolve('features.llmConversationNaming', ctx),
+      ).toBe(true);
+    });
+
+    it('returns false when UTILITY_MODEL is set but LLM_CONVERSATION_NAMING_ENABLED is false', async () => {
+      const { provider } = makeProvider({
+        UTILITY_MODEL: 'gpt-4o-mini',
+        DIAL_API_KEY: 'dial-api-key',
+        LLM_CONVERSATION_NAMING_ENABLED: false,
+      });
+      expect(
+        await provider.resolve('features.llmConversationNaming', ctx),
+      ).toBe(false);
+    });
+
+    it('returns undefined when UTILITY_MODEL is absent', async () => {
+      const { provider } = makeProvider({
+        UTILITY_MODEL: undefined,
+        DIAL_API_KEY: 'dial-api-key',
+        LLM_CONVERSATION_NAMING_ENABLED: true,
+      });
+      expect(
+        await provider.resolve('features.llmConversationNaming', ctx),
+      ).toBeUndefined();
+    });
+
+    it('returns undefined when DIAL_API_KEY is absent', async () => {
+      const { provider } = makeProvider({
+        UTILITY_MODEL: 'gpt-4o-mini',
+        DIAL_API_KEY: undefined,
+        LLM_CONVERSATION_NAMING_ENABLED: true,
+      });
+      expect(
+        await provider.resolve('features.llmConversationNaming', ctx),
+      ).toBeUndefined();
+    });
+  });
+
   describe('features.asrEnabled', () => {
     it('returns true when ASR_MODEL is set', async () => {
       const { provider } = makeProvider({ ASR_MODEL: 'whisper-1' });

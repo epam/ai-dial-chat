@@ -1,6 +1,4 @@
 import {
-  Attachment,
-  isAudioTranscriptionSupported,
   MessageRating,
   MessageRole,
   type Conversation,
@@ -9,12 +7,13 @@ import {
 import {
   ConfirmationPopupVariant,
   DialConfirmationPopup,
+  DialSpinner,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
 import { getConversationRoute } from '../../constants/routes';
@@ -29,24 +28,25 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import {
+  ClientGenerationStatus,
+  useGeneration,
+} from '../../context/GenerationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
+import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
-import {
-  transcribeAudio,
-  transcribeAudioWithAsrModel,
-} from '../../server-api/chat.api';
+import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
-import { uploadFile } from '../../server-api/files.api';
 import { ROUTES } from '../../types/routes';
-import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
-import { setLastConversationSettings } from '../../utils/local-storage';
+import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
+import { isAwaitingGenerationResume } from '../../utils/generation-resume';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 interface Props {
@@ -55,16 +55,24 @@ interface Props {
 
 export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const { '*': conversationId } = useParams<{ '*': string }>();
-  const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [isFetching, setIsFetching] = useState(!!conversationId);
+  const { state, pathname, search } = useLocation();
+  const prefetchedConversation =
+    (state as { conversation?: Conversation } | null)?.conversation ?? null;
+  const [conversation, setConversation] = useState<Conversation | null>(
+    prefetchedConversation,
+  );
+  const [isFetching, setIsFetching] = useState(
+    !prefetchedConversation && !!conversationId,
+  );
   const conversationRef = useRef<Conversation | null>(null);
+  const displayNameWatchCleanupRef = useRef<(() => void) | null>(null);
+  const displayNameWatchKeyRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
     config: { asrModelId, transcribeSizeLimitBytes },
   } = useAppConfig();
   const {
-    items: deploymentItems,
     restoreSelectedItemId,
     selectedItemId: currentSelectedItemId,
     isLoading: isDeploymentsLoading,
@@ -73,57 +81,21 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
-  const { conversations, duplicateConversation } = useConversations();
+  const {
+    conversations,
+    duplicateConversation,
+    updateConversationTitle,
+    watchForDisplayNameUpdate,
+  } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
-  const isTranscriptionSupported = useMemo(() => {
-    if (asrModelId != null) return true;
-    const selected = deploymentItems.find(
-      (item) => item.id === currentSelectedItemId,
-    );
-    return isAudioTranscriptionSupported(selected?.inputAttachmentTypes);
-  }, [asrModelId, deploymentItems, currentSelectedItemId]);
-
-  const lastAudioMimeTypeRef = useRef<string>('audio/webm');
-
-  const handleUploadAudio = useCallback(
-    async (file: File, contentType: string): Promise<string> => {
-      if (!bucket) {
-        throw new Error('User bucket is not available');
-      }
-      if (file.size > transcribeSizeLimitBytes) {
-        throw new Error(
-          `Audio file exceeds the ${transcribeSizeLimitBytes} byte limit`,
-        );
-      }
-      lastAudioMimeTypeRef.current = contentType;
-      const response = await uploadFile(
-        bucket,
-        buildUploadPath({ name: file.name } as Attachment),
-        file,
-      );
-      return response.url;
-    },
-    [bucket, transcribeSizeLimitBytes],
-  );
-
-  const handleTranscribeAudio = useCallback(
-    async (audioUrl: string): Promise<string> => {
-      const mimeType = lastAudioMimeTypeRef.current;
-      if (asrModelId != null) {
-        return transcribeAudioWithAsrModel({ audioUrl, mimeType });
-      }
-      if (!currentSelectedItemId) {
-        throw new Error('No model selected');
-      }
-      return transcribeAudio({
-        audioUrl,
-        mimeType,
-        deployment: currentSelectedItemId,
-      });
-    },
-    [asrModelId, currentSelectedItemId],
-  );
+  const { handleUploadAudio, handleTranscribeAudio, isTranscriptionSupported } =
+    useAudioTranscription({
+      bucket,
+      transcribeSizeLimitBytes,
+      asrModelId,
+      selectedDeploymentId: currentSelectedItemId,
+    });
 
   const { showNotification } = useNotification();
 
@@ -176,10 +148,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     (updated: Conversation) => {
       setConversation(updated);
       conversationRef.current = updated;
-      setLastConversationSettings({
-        temperature: updated.temperature,
-        responseFormat: updated.responseFormat,
-      });
       if (conversationId) {
         void saveConversation(
           getConversationPath(conversationId),
@@ -188,7 +156,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       }
     },
     // conversationRef is a stable ref — intentionally omitted from deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [conversationId],
   );
 
@@ -247,22 +215,103 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     isConversationLoaded,
   );
 
-  const { startStream, handleStop, isStreaming } = useConversationStream({
+  const { getGeneration } = useGeneration();
+  /*
+   * Conversation paths whose auto-stream has already been kicked off. Guards
+   * against React 18 StrictMode double-mounting (and any other re-run of
+   * loadConversation) firing two concurrent generations, which the backend
+   * rejects with 409 and surfaces as a spurious "Something went wrong" error.
+   */
+  const autoStartedPathsRef = useRef<Set<string>>(new Set());
+  const handleStopError = useCallback(() => {
+    showNotification({
+      variant: NotificationVariant.Error,
+      message: t(ChatI18nKeys.StreamError),
+    });
+  }, [showNotification, t]);
+
+  const {
+    startStream,
+    handleStop,
+    resumeIfAwaitingGeneration,
+    isStreaming,
+    canStopStreaming,
+  } = useConversationStream({
     conversationId,
-    stoppedGeneratingText: t(ChatI18nKeys.StoppedGenerating),
     setConversation,
     conversationRef,
+    onStopError: handleStopError,
   });
 
-  const loadConversation = useCallback(
-    async (id: string) => {
-      setIsFetching(true);
-      try {
-        const dto = await apiGetConversation(id);
-        const result = dto as Conversation; // adapt if API response shape differs
+  useEffect(() => {
+    return () => {
+      displayNameWatchCleanupRef.current?.();
+    };
+  }, []);
 
-        // Restore the last selected agent from the conversation's change history
-        // so the deployment selector reflects what was active, not the default.
+  const messageCount = conversation?.messages.length ?? 0;
+  const conversationName = conversation?.name ?? '';
+
+  useEffect(() => {
+    if (
+      !conversationId ||
+      !conversation ||
+      !shouldWatchForDisplayNameUpdate(conversation)
+    ) {
+      displayNameWatchKeyRef.current = null;
+      displayNameWatchCleanupRef.current?.();
+      displayNameWatchCleanupRef.current = null;
+      return;
+    }
+
+    const watchKey = `${conversationId}:${messageCount}`;
+    if (displayNameWatchKeyRef.current === watchKey) return;
+    displayNameWatchKeyRef.current = watchKey;
+
+    displayNameWatchCleanupRef.current?.();
+    displayNameWatchCleanupRef.current = watchForDisplayNameUpdate(
+      conversationId,
+      conversationName,
+      (title) => {
+        setConversation((prev) =>
+          prev
+            ? ({ ...prev, name: title, llmNamingDone: true } as Conversation)
+            : prev,
+        );
+        if (conversationRef.current) {
+          conversationRef.current = {
+            ...conversationRef.current,
+            name: title,
+            llmNamingDone: true,
+          } as Conversation;
+        }
+        displayNameWatchCleanupRef.current = null;
+      },
+    );
+  }, [
+    conversation,
+    conversationId,
+    conversationName,
+    messageCount,
+    watchForDisplayNameUpdate,
+  ]);
+
+  const loadConversation = useCallback(
+    async (id: string, initialData?: Conversation | null) => {
+      if (!initialData) {
+        setIsFetching(true);
+      }
+      try {
+        const result: Conversation =
+          initialData ?? ((await apiGetConversation(id)) as Conversation);
+        if (result.name) {
+          updateConversationTitle(id, result.name);
+        }
+
+        /*
+         * Restore the last selected agent from the conversation's change history
+         * so the deployment selector reflects what was active, not the default.
+         */
         const lastDeploymentId = getLastDeploymentId(result.messages);
         const modelToSelect =
           lastDeploymentId ?? (result.assistantModelId || result.model.id);
@@ -273,6 +322,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         const lastMsg = result.messages[result.messages.length - 1];
 
         if (lastMsg?.role === MessageRole.User) {
+          /*
+           * The conversation still awaits an assistant reply: show the typing
+           * placeholder so streamed chunks have a slot to land in.
+           */
           const assistantPlaceholder: Message = {
             role: MessageRole.Assistant,
             content: '',
@@ -284,15 +337,41 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           };
           setConversation(withPlaceholder);
           conversationRef.current = withPlaceholder;
-          startStream(
-            id,
-            lastMsg.content,
-            withPlaceholder.messages.length - 1,
-            lastDeploymentId ?? result.model.id,
-            lastMsg.custom_content,
-          );
+
+          /*
+           * Start the generation only once per conversation. Guards against
+           * React StrictMode double-mounting (and any re-run of loadConversation)
+           * launching a second stream — which the backend rejects with 409.
+           */
+          const conversationPath = getConversationPath(id);
+          const alreadyStarted =
+            autoStartedPathsRef.current.has(conversationPath) ||
+            getGeneration(conversationPath)?.status ===
+              ClientGenerationStatus.Active;
+          if (!alreadyStarted) {
+            autoStartedPathsRef.current.add(conversationPath);
+            startStream(
+              id,
+              lastMsg.content,
+              withPlaceholder.messages.length - 1,
+              lastDeploymentId ?? result.model.id,
+              lastMsg.custom_content,
+              crypto.randomUUID(),
+              CompletionMode.ContinueLastUser,
+            );
+          }
         } else {
           setConversation(result);
+
+          /*
+           * A hard refresh mid-generation loads the backend's empty
+           * start-state placeholder (no incremental save exists to show
+           * partial content). Watch for its resolution instead of leaving a
+           * static empty bubble — see resumeIfAwaitingGeneration.
+           */
+          if (isAwaitingGenerationResume(result)) {
+            resumeIfAwaitingGeneration(id, result);
+          }
         }
       } catch {
         navigate(ROUTES.Root);
@@ -300,7 +379,14 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         setIsFetching(false);
       }
     },
-    [navigate, restoreSelectedItemId, startStream],
+    [
+      navigate,
+      restoreSelectedItemId,
+      startStream,
+      resumeIfAwaitingGeneration,
+      updateConversationTitle,
+      getGeneration,
+    ],
   );
 
   useEffect(() => {
@@ -308,8 +394,26 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       setIsFetching(false);
       return;
     }
-    void loadConversation(conversationId);
+    void loadConversation(conversationId, prefetchedConversation);
+    /*
+     * prefetchedConversation intentionally omitted: it is router state captured at mount,
+     * re-running when it changes would re-initialize an already-loaded conversation.
+     */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, loadConversation]);
+
+  const clearedPrefetchIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!conversationId || !prefetchedConversation) return;
+    if (clearedPrefetchIdRef.current === conversationId) return;
+    clearedPrefetchIdRef.current = conversationId;
+    /*
+     * history.state survives a hard refresh, so leaving the just-created
+     * user-only snapshot in it would make every reload re-run the auto-start
+     * stream instead of fetching the up-to-date conversation from the server.
+     */
+    navigate(`${pathname}${search}`, { replace: true, state: null });
+  }, [conversationId, prefetchedConversation, navigate, pathname, search]);
 
   const {
     handleSend,
@@ -383,7 +487,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     setPendingDislikeMessageIndex(null);
   }, []);
 
-  if (isFetching) return null;
+  if (isFetching)
+    return (
+      <div className="flex size-full items-center justify-center">
+        <DialSpinner />
+      </div>
+    );
 
   if (!conversation) {
     navigate(ROUTES.Root);
@@ -410,9 +519,11 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onEditMessage={handleEditMessage}
           editingMessageIndexes={editingMessageIndexes}
           isAssistantTyping={isStreaming}
+          canStopAssistant={canStopStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
           streamErrorText={t(ChatI18nKeys.StreamError)}
+          stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}
           duplicateError={duplicateError ?? undefined}

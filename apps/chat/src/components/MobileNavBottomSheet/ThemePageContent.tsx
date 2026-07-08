@@ -44,7 +44,7 @@ const ThemePageContent: FC = () => {
   };
 
   return (
-    <ul className="flex flex-col py-2 pb-4">
+    <ul className="flex flex-col pb-4">
       {THEME_ROWS.map(({ id, labelKey, Icon, requiresBoth }) => {
         let isVisible: boolean;
         if (requiresBoth) {

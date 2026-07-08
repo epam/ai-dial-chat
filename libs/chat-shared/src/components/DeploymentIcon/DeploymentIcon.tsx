@@ -1,16 +1,18 @@
 import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react';
-import FallbackEntityIcon from '../../assets/fallback-entity-icon.svg?react';
 import { mergeClasses } from '../../utils/merge-class';
+import { InitialsAvatar } from '../InitialsAvatar/InitialsAvatar';
 import styles from './DeploymentIcon.module.scss';
 
 /** Props for `DeploymentIcon`. */
 export interface DeploymentIconProps {
-  /** Image URL to display. When absent the `fallback` is shown directly. */
+  /** Image URL to display. When absent the fallback is shown directly. */
   src?: string;
   /** Outer badge dimension in pixels. */
   size: number;
-  /** Node rendered when `src` is absent or the image fails to load. */
+  /** Display name used to generate initials when no image is available. */
+  initialsName: string;
+  /** Custom node rendered when `src` is absent or the image fails to load. Overrides `initialsName`. */
   fallback?: ReactNode;
   /** Extra class applied to the outer badge wrapper, e.g. for a custom background variable. */
   badgeClassName?: string;
@@ -22,14 +24,14 @@ export interface DeploymentIconProps {
  * Renders a deployment icon inside a rounded badge.
  * The `size` prop is the outer badge dimension in pixels.
  * The icon image is inset by ~11 % (matching Figma) to leave a visible backdrop.
- * On image load error, or when `src` is absent, the `fallback` node is rendered centred inside the badge.
+ * On image load error, or when `src` is absent, renders `InitialsAvatar` derived from
+ * `initialsName` (or the custom `fallback` node when provided).
  */
 export const DeploymentIcon: FC<DeploymentIconProps> = ({
   src,
   size,
-  fallback = (
-    <FallbackEntityIcon width={size} height={size} className="shrink-0" />
-  ),
+  initialsName,
+  fallback,
   badgeClassName,
   tooltip,
 }) => {
@@ -48,18 +50,22 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
     return () => el.removeEventListener('error', handler);
   }, [src]);
 
+  const defaultFallback = (
+    <InitialsAvatar name={initialsName} size={size} className="shrink-0" />
+  );
+
   const badge = (
     <div
       style={{ width: size, height: size }}
       className={mergeClasses(
         styles.agentIconBadge,
+        'shrink-0 overflow-hidden rounded-md',
         badgeClassName,
-        'shrink-0 overflow-hidden rounded-full',
       )}
     >
       {!src || hasFailed ? (
         <div className="flex size-full items-center justify-center">
-          {fallback}
+          {fallback ?? defaultFallback}
         </div>
       ) : (
         <div className="size-full">

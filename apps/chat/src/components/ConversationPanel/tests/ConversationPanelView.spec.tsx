@@ -191,7 +191,30 @@ vi.mock('../../../utils/icon-path', () => ({
   resolveCatalogIconUrl: (url: string) => url,
 }));
 vi.mock('../../RenameConversationPopup/RenameConversationPopup', () => ({
-  default: () => null,
+  default: ({
+    isOpen,
+    currentTitle,
+    error,
+    onSave,
+    onCancel,
+  }: {
+    isOpen: boolean;
+    currentTitle: string;
+    isSaving: boolean;
+    error: string | null;
+    onSave: (newTitle: string) => void;
+    onCancel: () => void;
+  }) => {
+    if (!isOpen) return null;
+    return (
+      <div role="dialog" aria-label="rename conversation">
+        <span>{currentTitle}</span>
+        {error && <span role="alert">{error}</span>}
+        <button onClick={() => onSave('New Title')}>Save</button>
+        <button onClick={onCancel}>Cancel</button>
+      </div>
+    );
+  },
 }));
 vi.mock('../get-conversation-source', () => ({
   getConversationSource: () => undefined,
@@ -303,8 +326,10 @@ describe('ConversationPanelView — delete-all header action', () => {
       failed: [],
     });
 
-    // Use empty conversations list to guard against stale-closure regression:
-    // navigation must not depend on finding the active conversation in the list.
+    /*
+     * Use empty conversations list to guard against stale-closure regression:
+     * navigation must not depend on finding the active conversation in the list.
+     */
     vi.mocked(useConversations).mockReturnValue({
       ...baseContextValue,
       conversations: [],
@@ -450,7 +475,7 @@ describe('ConversationPanelView — delete-all header action', () => {
     });
   });
 
-  it('does not show a global notification for complete success', async () => {
+  it('shows a success notification for complete success', async () => {
     mockDeleteAllConversations.mockResolvedValueOnce({
       requested: 1,
       deleted: 1,
@@ -467,7 +492,11 @@ describe('ConversationPanelView — delete-all header action', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
-    expect(mockShowNotification).not.toHaveBeenCalled();
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'conversationPanel.deleteAllSuccessTitle',
+      message: 'conversationPanel.deleteAllSuccess',
+    });
   });
 
   it('cancel is a no-op while deletion is in progress', async () => {
@@ -588,9 +617,11 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
   });
 
   it('navigates to root when ID comparison requires decodeURIComponent', async () => {
-    // Simulates a conversation whose title contains a space stored as %20 in the API id.
-    // getConversationRoute double-encodes to %2520; app.tsx decodes once back to %20.
-    // So activeConversationId still contains %20, not a literal space.
+    /*
+     * Simulates a conversation whose title contains a space stored as %20 in the API id.
+     * getConversationRoute double-encodes to %2520; app.tsx decodes once back to %20.
+     * So activeConversationId still contains %20, not a literal space.
+     */
     const encodedConversation = {
       id: 'conversations/bucket/gpt-4__My%20Chat.json',
       title: 'My Chat',
@@ -625,6 +656,45 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+  });
+});
+
+describe('ConversationPanelView — rename', () => {
+  const RENAME_LABEL = 'buttons.rename';
+
+  it('clicking rename opens the popup with the current title', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'rename conversation',
+    });
+    expect(within(dialog).getByText('Chat 1')).toBeTruthy();
+  });
+
+  it('confirming rename does not navigate', async () => {
+    const mockRenameConversation = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      renameConversation: mockRenameConversation,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'rename conversation',
+    });
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    });
+
+    expect(mockRenameConversation).toHaveBeenCalledWith('conv1', 'New Title');
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
 });

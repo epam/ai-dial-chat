@@ -93,12 +93,14 @@ The `MessageActions` component SHALL accept an optional `activeRating?: MessageR
 
 ### Requirement: Optimistic rating toggle in ConversationPage
 
-When the user clicks Like or Dislike on an assistant message, the `ConversationPage` SHALL:
+When the user clicks Like or Dislike on an assistant message in a read-write conversation, the `ConversationPage` SHALL:
 1. Immediately update `message.rating` in local state (optimistic update).
 2. Fire `POST /api/v1/rate` with the new numeric rating (`1` or `-1`).
 3. On success, persist the updated conversation via `saveConversation`.
 4. If the API call or save fails, revert the optimistic update.
 5. If the user clicks the currently-active button, set `rating` to `undefined` (toggle off), skip the API call, and persist the cleared state.
+
+In read-only conversations, the Like and Dislike buttons SHALL NOT be rendered.
 
 #### Scenario: Clicking Like sets rating to 1
 
@@ -125,11 +127,19 @@ When the user clicks Like or Dislike on an assistant message, the `ConversationP
 - **WHEN** `saveConversation` fails after a successful rate API call
 - **THEN** `message.rating` is restored to its value before the click
 
+#### Scenario: Rating buttons hidden in read-only conversation
+
+- **WHEN** the conversation is read-only (isReadonly flag set or user lacks WRITE permission)
+- **THEN** the Like and Dislike buttons are not rendered on any assistant message
+- **AND** the user cannot trigger a rating change
+
 ---
 
 ### Requirement: Negative feedback modal
 
-When the user clicks Dislike on an assistant message that is **not already disliked**, the `ConversationPage` SHALL open a `NegativeFeedbackModal` instead of immediately calling the rate API. The modal collects a required feedback category and an optional free-text comment before the rating is submitted.
+When the user clicks Dislike on an assistant message that is **not already disliked** in a read-write conversation, the `ConversationPage` SHALL open a `NegativeFeedbackModal` instead of immediately calling the rate API. The modal collects a required feedback category and an optional free-text comment before the rating is submitted.
+
+In read-only conversations, the Dislike button is not rendered, so the modal cannot be triggered.
 
 **Component:** `apps/chat/src/components/ConversationView/NegativeFeedbackModal.tsx`
 
@@ -144,7 +154,7 @@ When the user clicks Dislike on an assistant message that is **not already disli
   - "Should have triggered thinking"
   - "Should have search the web"
 - Optional `DialTextarea` with placeholder **"Type an optional comment to your feedback"**
-- `DialPrimaryButton` labelled **"Send"** — disabled until a category is selected
+- `PrimaryButton` labelled **"Send"** — disabled until a category is selected
 - Close (×) icon button
 
 **Comment encoding:** On submit, category and comment are combined as `"${category}: ${comment}"` when both are present, or just `"${category}"` when no comment is entered. This combined string is passed as the `comment` field of `POST /api/v1/rate`. No new backend fields are required.
@@ -230,3 +240,15 @@ After a successful Like toggle-on or a successful negative feedback submission, 
 
 - **WHEN** the user triggers two rating successes within 5 000 ms of each other
 - **THEN** the toast is shown for each action and the auto-dismiss timer resets on the second action
+
+---
+
+### Requirement: Message rating actions disabled in read-only conversations
+
+All message rating UI and interactions SHALL be suppressed when viewing a read-only conversation. The conversation is read-only when the `isReadonly` flag is set on the conversation list item, or when the user lacks WRITE permission on the resource.
+
+#### Scenario: Rating buttons hidden in read-only conversation
+
+- **WHEN** a conversation is read-only
+- **THEN** Like and Dislike buttons are not rendered on any assistant message in the conversation view
+- **AND** the user cannot interact with any rating feature

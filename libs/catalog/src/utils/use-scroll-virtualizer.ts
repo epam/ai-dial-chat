@@ -55,9 +55,14 @@ export const useScrollVirtualizer = (
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [state, setState] = useState<VirtualizerState>(() => {
-    const cols = getColumnCount(
-      typeof window !== 'undefined' ? window.innerWidth : 1440,
-    );
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1440;
+    /*
+     * Approximate the grid container width: content column capped at 1180 px,
+     * minus sidebar (60 px on desktop) and 64 px horizontal padding (px-8 × 2).
+     */
+    const sidebarWidth = w > 768 ? 60 : 0;
+    const approxContainer = Math.min(1180, Math.max(0, w - sidebarWidth)) - 64;
+    const cols = getColumnCount(approxContainer);
     const rows = Math.ceil(itemCount / cols);
     return { startRow: 0, endRow: Math.min(rows, 12), columnCount: cols };
   });

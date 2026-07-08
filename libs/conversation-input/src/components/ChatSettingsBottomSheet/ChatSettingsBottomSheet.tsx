@@ -1,11 +1,12 @@
-import { ResponseFormat } from '@epam/ai-dial-chat-shared';
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
-import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
+import { PrimaryButton } from '@epam/ai-dial-kit';
+import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
-import { ChatSettingsFields } from '../ChatSettingsFields/ChatSettingsFields';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
+import { ChatSettingsFields } from '../ChatSettingsFields/ChatSettingsFields';
 
 /** Props for the ChatSettingsBottomSheet component. */
 export interface ChatSettingsBottomSheetProps {
@@ -53,6 +54,8 @@ export interface ChatSettingsBottomSheetProps {
   temperatureHint?: string;
   /** Label for the save button. Defaults to `'Apply changes'`. */
   saveLabel?: string;
+  /** Tooltip shown on the save button when it is disabled (e.g. no response format selected). */
+  saveDisabledTooltip?: string;
 }
 
 /**
@@ -82,16 +85,19 @@ export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
   temperatureLabels,
   temperatureHint,
   saveLabel = 'Apply changes',
+  saveDisabledTooltip,
 }) => {
   const {
     responseFormat,
     systemPrompt,
     temperature,
+    canSubmit,
     setResponseFormat,
     setSystemPrompt,
     setTemperature,
     handleSubmit,
   } = useChatSettingsForm({
+    isOpen,
     features,
     initialResponseFormat,
     initialSystemPrompt,
@@ -128,12 +134,19 @@ export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
         temperatureLabels={temperatureLabels}
         temperatureHint={temperatureHint}
       />
-      <div className="px-6 py-4">
-        <DialPrimaryButton
-          label={saveLabel}
-          onClick={handleSubmit}
-          className="w-full"
-        />
+      <div className={mergeClasses('px-6 py-4 mobile:pb-8')}>
+        <DialTooltip
+          tooltip={saveDisabledTooltip}
+          hideTooltip={canSubmit || !saveDisabledTooltip}
+          triggerClassName="w-full"
+        >
+          <PrimaryButton
+            label={saveLabel}
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            className="w-full"
+          />
+        </DialTooltip>
       </div>
     </BottomSheetShell>
   );

@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialTag } from '@epam/ai-dial-ui-kit';
+import { DialTag, DialTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, useLayoutEffect, useRef, useState } from 'react';
 import styles from './TopicTag.module.scss';
 
@@ -17,7 +17,7 @@ export const TopicTag: FC<TopicTagProps> = ({
   className = 'dial-tiny-text',
 }) => <DialTag label={label} className={mergeClasses(className, styles.tag)} />;
 
-const MAX_ROWS = 2;
+const MAX_ROWS = 1;
 
 /** Props for TopicsLine. */
 export interface TopicsLineProps {
@@ -75,12 +75,15 @@ export const TopicsLine: FC<TopicsLineProps> = ({
         <TopicTag key={p} label={p} />
       ))}
       {overflow > 0 && (
-        <>
-          <TopicTag label={`+${overflow}`} />
-          <span className="sr-only">
-            {overflowAriaLabel?.(overflow) ?? `and ${overflow} more topics`}
+        <DialTooltip tooltip={topics.slice(visibleCount).join(', ')}>
+          <span
+            aria-label={
+              overflowAriaLabel?.(overflow) ?? `and ${overflow} more topics`
+            }
+          >
+            <TopicTag label={`+${overflow}`} />
           </span>
-        </>
+        </DialTooltip>
       )}
     </div>
   );

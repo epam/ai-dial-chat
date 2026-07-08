@@ -18,6 +18,8 @@ const makeDeploymentsContext = (selectedItemId: string | null) => ({
   selectedDeploymentConfiguration: null,
   isLoading: false,
   error: null,
+  schemas: [],
+  toolsets: [],
 });
 
 describe('useDeploymentChangeEffect', () => {
@@ -116,9 +118,11 @@ describe('useDeploymentChangeEffect', () => {
   });
 
   it('does not call addStatusMessage for the deployment restored on load', () => {
-    // Simulate: default agent is gpt-3, but conversation history had gpt-4.
-    // Caller sets selectedItemId to gpt-4 before isConversationLoaded becomes true,
-    // both changes arrive in the same render.
+    /*
+     * Simulate: default agent is gpt-3, but conversation history had gpt-4.
+     * Caller sets selectedItemId to gpt-4 before isConversationLoaded becomes true,
+     * both changes arrive in the same render.
+     */
     let selectedItemId = 'gpt-3';
     let isConversationLoaded = false;
     mockUseDeployments.mockImplementation(() =>

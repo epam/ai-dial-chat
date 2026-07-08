@@ -47,16 +47,16 @@ describe('MessageBubble', () => {
     expect(getByText('Hello world')).toBeTruthy();
   });
 
-  it('applies rounded-se-[24px] with BubblePosition.Bottom (default)', () => {
+  it('applies rounded-se-[6px] with BubblePosition.Bottom (default)', () => {
     const { container } = render(
       <MessageBubble text="msg" role={MessageRole.User} />,
     );
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
-      'rounded-se-[24px]',
+      'rounded-se-[6px]',
     );
   });
 
-  it('applies rounded-ee-[24px] with BubblePosition.Top', () => {
+  it('applies rounded-ee-[6px] with BubblePosition.Top', () => {
     const { container } = render(
       <MessageBubble
         text="msg"
@@ -65,7 +65,7 @@ describe('MessageBubble', () => {
       />,
     );
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
-      'rounded-ee-[24px]',
+      'rounded-ee-[6px]',
     );
   });
 
@@ -91,9 +91,9 @@ describe('MessageBubble', () => {
     expect(innerClassName).not.toContain('rounded-br-[24px]');
   });
 
-  it('renders default user actions when no actions prop is given', () => {
+  it('renders no action buttons when no actions prop is given (read-only)', () => {
     render(<MessageBubble text="msg" role={MessageRole.User} />);
-    expect(screen.getByRole('button', { name: 'Edit message' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
   });
 
   it('renders user actions from actions prop', () => {
@@ -101,7 +101,7 @@ describe('MessageBubble', () => {
       <MessageBubble
         text="msg"
         role={MessageRole.User}
-        actions={{ role: MessageRole.User }}
+        actions={{ role: MessageRole.User, onEdit: vi.fn() }}
       />,
     );
     expect(screen.getByRole('button', { name: 'Edit message' })).toBeTruthy();
@@ -348,6 +348,9 @@ describe('AssistantMessageBubble — attachments', () => {
     const paragraph = screen.getByText(longToken);
     expect(paragraph.className).toContain('[overflow-wrap:anywhere]');
     expect(paragraph.className).toContain('break-words');
+    expect(paragraph.className).toContain('dial-body-paragraph-text');
+    expect(paragraph.className).toContain('mb-3');
+    expect(paragraph.className).toContain('[text-wrap:pretty]');
     expect(container.querySelector('.min-w-0.max-w-full')).not.toBeNull();
   });
 
@@ -382,10 +385,10 @@ describe('AssistantMessageBubble — attachments', () => {
     expect(screen.getByText('Hi there')).toBeTruthy();
   });
 
-  it('continues revealing remaining text after streaming stops', () => {
+  it('renders remaining text immediately after streaming stops', () => {
     vi.useFakeTimers();
 
-    const { queryByText, rerender } = render(
+    const { rerender } = render(
       <AssistantMessageBubble text="Hi" isStreaming />,
     );
 
@@ -396,12 +399,6 @@ describe('AssistantMessageBubble — attachments', () => {
     });
 
     rerender(<AssistantMessageBubble text="Hi there friend" />);
-
-    expect(queryByText('Hi there friend')).toBeNull();
-
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
 
     expect(screen.getByText('Hi there friend')).toBeTruthy();
   });

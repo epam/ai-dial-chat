@@ -22,6 +22,8 @@ import type {
   FileMetadataResponseDto,
   FileUploadResponseDto,
   ListFilesResponseDto,
+  RenameFilesDto,
+  RenameFilesResponseDto,
 } from '../models/index';
 
 export interface CreateFolderRequest {
@@ -53,6 +55,23 @@ export interface ListFilesRequest {
   limit?: number;
   recursive?: boolean;
   permissions?: boolean;
+}
+
+export interface ListPublicFilesRequest {
+  path?: string;
+  token?: string;
+  limit?: number;
+  recursive?: boolean;
+}
+
+export interface ListSharedFilesRequest {
+  path?: string;
+  token?: string;
+  limit?: number;
+}
+
+export interface RenameFilesRequest {
+  renameFilesDto: RenameFilesDto;
 }
 
 export interface UploadFileRequest {
@@ -407,6 +426,168 @@ export class FilesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ListFilesResponseDto> {
     const response = await this.listFilesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket.
+   * List files from the organization (public) bucket
+   */
+  async listPublicFilesRaw(
+    requestParameters: ListPublicFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListFilesResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['token'] != null) {
+      queryParameters['token'] = requestParameters['token'];
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['recursive'] != null) {
+      queryParameters['recursive'] = requestParameters['recursive'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/public`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListFilesResponseDto>(response);
+  }
+
+  /**
+   * Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket.
+   * List files from the organization (public) bucket
+   */
+  async listPublicFiles(
+    requestParameters: ListPublicFilesRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListFilesResponseDto> {
+    const response = await this.listPublicFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Proxies the DIAL Core sharing API to return files shared with the authenticated user.
+   * List files shared with the current user
+   */
+  async listSharedFilesRaw(
+    requestParameters: ListSharedFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListFilesResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['token'] != null) {
+      queryParameters['token'] = requestParameters['token'];
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/shared`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListFilesResponseDto>(response);
+  }
+
+  /**
+   * Proxies the DIAL Core sharing API to return files shared with the authenticated user.
+   * List files shared with the current user
+   */
+  async listSharedFiles(
+    requestParameters: ListSharedFilesRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListFilesResponseDto> {
+    const response = await this.listSharedFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Rename files and folders
+   */
+  async renameFilesRaw(
+    requestParameters: RenameFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<RenameFilesResponseDto>> {
+    if (requestParameters['renameFilesDto'] == null) {
+      throw new runtime.RequiredError(
+        'renameFilesDto',
+        'Required parameter "renameFilesDto" was null or undefined when calling renameFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/rename`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['renameFilesDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<RenameFilesResponseDto>(response);
+  }
+
+  /**
+   * Rename files and folders
+   */
+  async renameFiles(
+    requestParameters: RenameFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<RenameFilesResponseDto> {
+    const response = await this.renameFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
     return await response.value();
   }
 

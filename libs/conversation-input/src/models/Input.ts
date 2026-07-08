@@ -28,10 +28,16 @@ export interface InputColors {
   text?: string;
   /** Border color in the default (unfocused) state. */
   border?: string;
+  /** Border color on hover (unfocused). */
+  borderHover?: string;
   /** Border color when the input is focused. */
   borderFocus?: string;
   /** Placeholder text color. */
   placeholder?: string;
+  /** Box-shadow in the default state (e.g. a subtle inset shadow). */
+  shadow?: string;
+  /** Box-shadow when the input is focused. Falls back to `shadow` when unset. */
+  shadowFocus?: string;
   /** Background color of the send button. */
   sendBackground?: string;
   /** Icon/text color of the send button. */
@@ -42,14 +48,8 @@ export interface InputColors {
 
 /** Typography overrides for the `Input` component. */
 export interface InputTypography {
-  /** Font family applied to the textarea. */
-  fontFamily?: string;
-  /** Font size applied to the textarea (CSS value, e.g. `'14px'`). */
-  fontSize?: string;
-  /** Font weight applied to the textarea. */
-  fontWeight?: string | number;
-  /** Line height applied to the textarea (CSS value, e.g. `'1.5'`). */
-  lineHeight?: string;
+  /** Typography utility class applied to the textarea (e.g. `'dial-body-paragraph-text'`). */
+  fontClassName?: string;
 }
 
 /** Status labels displayed inside the model selector dropdown and mobile bottom-sheet. */
@@ -97,14 +97,16 @@ export interface InputProps {
   typography?: InputTypography;
   /** Label for the attach-file menu item. */
   attachLabel?: string;
-  /** Accessible label for the add-menu trigger button. */
-  addMenuLabel?: string;
+  /** Tooltip title for the add-menu trigger button. */
+  addMenuTitle?: string;
   /** Accessible label for each attachment card's remove button. */
   removeLabel?: string;
   /** Accessible label for each attachment card's retry button (error state only). */
   retryLabel?: string;
   /** Accessible label for the send button. */
   sendLabel?: string;
+  /** Tooltip shown on hover over the send button. */
+  sendTitle?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */
@@ -235,6 +237,12 @@ export interface InputProps {
    * When absent the card is not rendered as interactive.
    */
   onAttachmentClick?: (attachment: Attachment) => void;
+  /**
+   * When provided, the desktop model-selector chip opens this panel instead of
+   * the flat deployment list. Receives `onClose` so the panel can close the
+   * popover after a selection or an explicit dismiss.
+   */
+  modelPickerOverlay?: (onClose: () => void) => ReactNode;
 }
 
 /** Values emitted by the chat-settings modal when the user clicks Save. */
@@ -283,6 +291,8 @@ export interface ChatSettingsConfig {
   temperatureHint?: string;
   /** Label for the save button. Defaults to `'Apply changes'`. */
   saveLabel?: string;
+  /** Tooltip shown on the save button when it is disabled (e.g. no response format selected). */
+  saveDisabledTooltip?: string;
   /** Accessible label for the back arrow in the mobile bottom-sheet stack. Defaults to `'Back'`. */
   backLabel?: string;
 }

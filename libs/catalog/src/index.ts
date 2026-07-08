@@ -1,10 +1,11 @@
 // Types
-export { CatalogEntityType } from './types/entity-type';
+export type { CatalogSortOption } from './models/sort';
+export { CodeLanguage } from './types/code-language';
 export { CatalogDetailsTab } from './types/detail-tab';
+export { EntityTag } from './types/entity-tag';
+export { CatalogEntityType } from './types/entity-type';
 export { CatalogSortKey } from './types/sort';
 export { CatalogViewMode } from './types/view-mode';
-export { EntityTag } from './types/entity-tag';
-export { CodeLanguage } from './types/code-language';
 
 // Models
 export type { CatalogItem } from './models/catalog-item';
@@ -14,30 +15,31 @@ export type {
   CreateOption,
 } from './models/catalog-props';
 export type { CatalogItemSummary, DailyLimit } from './models/entity-summary';
+export type { EndpointOption } from './models/item-details-data';
 export type {
-  CatalogItemTabData,
-  CatalogItemPricing,
+  ApiResource,
   CatalogItemApiDetails,
+  CatalogItemPricing,
+  CatalogItemTabData,
   CatalogItemTools,
   CodeSnippet,
-  ApiResource,
   PricingRow,
-  UsageLimitRow,
+  ToolAnnotation,
   ToolDefinition,
   ToolInputParam,
-  ToolAnnotation,
+  UsageLimitRow,
 } from './models/item-details-data';
+export type {
+  DetailsPanelProps,
+  ItemDetailsStyles,
+  ItemDetailsTexts,
+  ItemDetailsTypography,
+} from './models/item-details-props';
 export type {
   CatalogItemOverview,
   OverviewSection,
   OverviewSpec,
 } from './models/item-overview';
-export type {
-  DetailsPanelProps,
-  ItemDetailsTexts,
-  ItemDetailsStyles,
-  ItemDetailsTypography,
-} from './models/item-details-props';
 
 // Utils
 export { filterCatalogItems } from './utils/catalog-filter';
@@ -59,10 +61,10 @@ export type {
 } from './models/card-props';
 
 export { CardGrid } from './components/CardGrid/CardGrid';
-export type { CardGridProps, CardGridTitles } from './models/grid-props';
 export { CardRowRenderer } from './components/CardGrid/CardRowRenderer';
 export type { CardRowRendererProps } from './components/CardGrid/CardRowRenderer';
 export type { CardRowData } from './models/card-row-data';
+export type { CardGridProps, CardGridTitles } from './models/grid-props';
 export { useScrollVirtualizer } from './utils/use-scroll-virtualizer';
 export type { ScrollVirtualizerResult } from './utils/use-scroll-virtualizer';
 

@@ -1,6 +1,7 @@
 import type {
   ConversationDeletionResultDto,
   ConversationListItemDto,
+  ConversationResponseDto,
 } from '@epam/chat-api-client';
 import {
   createContext,
@@ -16,11 +17,17 @@ import {
   deleteAllConversations as apiDeleteAllConversations,
   deleteConversation as apiDeleteConversation,
   duplicateConversation as apiDuplicateConversation,
+  generateConversationTitle as apiGenerateConversationTitle,
+  getConversation,
   listConversations,
   renameConversation as apiRenameConversation,
+  watchConversation,
 } from '../server-api/conversations.api';
+import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { getConversationPath } from '../utils/conversation-path';
 import { useUserConfig } from './UserConfigContext';
+
+const DISPLAY_NAME_WATCH_TIMEOUT_MS = 120_000;
 
 interface ConversationsContextType {
   /** Flat list of all loaded conversations. */
@@ -33,12 +40,28 @@ interface ConversationsContextType {
   pinConversation: (id: string, isPinned: boolean) => Promise<void>;
   /** Delete a conversation by id, removing it from the local list on success. */
   deleteConversation: (id: string) => Promise<void>;
-  /** Rename a conversation; optimistically updates title, reverts on failure. Returns the new conversation id. */
-  renameConversation: (id: string, newTitle: string) => Promise<string>;
+  /** Rename a conversation; optimistically updates title, reverts on failure. The conversation id never changes. */
+  renameConversation: (id: string, newTitle: string) => Promise<void>;
+  /**
+   * Requests an LLM-generated title suggestion for a conversation. Returns the
+   * suggested name without persisting it — the caller confirms via renameConversation.
+   */
+  generateConversationTitle: (id: string) => Promise<string>;
   /** Duplicate a conversation into the user's own bucket; returns the new conversation id. */
   duplicateConversation: (id: string) => Promise<string>;
   /** Re-fetch the full conversation list from the server. */
   refreshConversations: () => Promise<void>;
+  /** Updates the sidebar title for a conversation without changing its id. */
+  updateConversationTitle: (id: string, title: string) => void;
+  /**
+   * Polls GET conversation until the display name changes or LLM naming completes.
+   * Returns a cleanup function that cancels polling.
+   */
+  watchForDisplayNameUpdate: (
+    conversationId: string,
+    previousName: string,
+    onUpdated: (title: string) => void,
+  ) => () => void;
   /**
    * Delete every conversation in the authenticated user's bucket.
    * Returns the structured result. The list is re-fetched whenever at least one
@@ -77,6 +100,113 @@ export const ConversationsProvider = ({
       setIsLoading(false);
     }
   }, []);
+
+  const silentRefreshConversations = useCallback(async () => {
+    try {
+      const response = await listConversations();
+      setConversations(response.items);
+    } catch {
+      // Background refresh must not disturb the panel loading state.
+    }
+  }, []);
+
+  const updateConversationTitle = useCallback((id: string, title: string) => {
+    setConversations((prev) =>
+      prev.map((item) =>
+        conversationIdsMatch(item.id, id) ? { ...item, title } : item,
+      ),
+    );
+  }, []);
+
+  const watchForDisplayNameUpdate = useCallback(
+    (
+      conversationId: string,
+      previousName: string,
+      onUpdated: (title: string) => void,
+    ) => {
+      const conversationPath = getConversationPath(
+        normalizeConversationId(conversationId),
+      );
+
+      const controller = new AbortController();
+
+      const run = async () => {
+        let stream: ReadableStream<Uint8Array>;
+        try {
+          stream = await watchConversation(conversationPath, controller.signal);
+        } catch {
+          return;
+        }
+
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        const timeoutId = window.setTimeout(() => {
+          controller.abort();
+        }, DISPLAY_NAME_WATCH_TIMEOUT_MS);
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            const lines = buffer.split('\n');
+            buffer = lines.pop() ?? '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith('data:')) continue;
+
+              const data = trimmed.slice(5).trim();
+              let event: { url?: string; action?: string } | null = null;
+              try {
+                event = JSON.parse(data) as { url?: string; action?: string };
+              } catch {
+                continue;
+              }
+
+              if (event?.action !== 'UPDATE') continue;
+
+              try {
+                const conversation = (await getConversation(
+                  conversationPath,
+                )) as ConversationResponseDto;
+                const nextName = conversation.name?.trim();
+                if (
+                  conversation.llmNamingDone === true ||
+                  (nextName && nextName !== previousName.trim())
+                ) {
+                  if (nextName) {
+                    updateConversationTitle(conversationId, nextName);
+                    onUpdated(nextName);
+                    void silentRefreshConversations();
+                  }
+                  return;
+                }
+              } catch {
+                // Keep watching until stream ends or timeout.
+              }
+            }
+          }
+        } catch {
+          // AbortError on timeout/unmount or unexpected stream error — exit silently.
+        } finally {
+          clearTimeout(timeoutId);
+          reader.releaseLock();
+        }
+      };
+
+      void run();
+
+      return () => {
+        controller.abort();
+      };
+    },
+    [silentRefreshConversations, updateConversationTitle],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -147,14 +277,13 @@ export const ConversationsProvider = ({
 
       const conversationPath = getConversationPath(normalizeConversationId(id));
       try {
-        const { newPath } = await apiRenameConversation(
+        const { name } = await apiRenameConversation(
           conversationPath,
           newTitle,
         );
         setConversations((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, id: newPath } : c)),
+          prev.map((c) => (c.id === id ? { ...c, title: name } : c)),
         );
-        return newPath;
       } catch (err) {
         if (originalTitle != null) {
           setConversations((prev) =>
@@ -168,6 +297,12 @@ export const ConversationsProvider = ({
     },
     [],
   );
+
+  const generateConversationTitle = useCallback(async (id: string) => {
+    const conversationPath = getConversationPath(normalizeConversationId(id));
+    const { name } = await apiGenerateConversationTitle(conversationPath);
+    return name;
+  }, []);
 
   const duplicateConversation = useCallback(
     async (id: string) => {
@@ -202,8 +337,11 @@ export const ConversationsProvider = ({
       pinConversation,
       deleteConversation,
       renameConversation,
+      generateConversationTitle,
       duplicateConversation,
       refreshConversations,
+      updateConversationTitle,
+      watchForDisplayNameUpdate,
       deleteAllConversations,
     }),
     [
@@ -213,8 +351,11 @@ export const ConversationsProvider = ({
       pinConversation,
       deleteConversation,
       renameConversation,
+      generateConversationTitle,
       duplicateConversation,
       refreshConversations,
+      updateConversationTitle,
+      watchForDisplayNameUpdate,
       deleteAllConversations,
     ],
   );

@@ -11,12 +11,16 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import {
+  BUCKET_NAME_PATTERN,
+  BUCKET_NAME_VALIDATION_MESSAGE,
+} from '../../common/validators/bucket-name.pattern';
 import { IsValidFilePath } from './file-path.validator';
 
 export class ListFilesQueryDto {
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[\w.-]+$/)
+  @Matches(BUCKET_NAME_PATTERN, { message: BUCKET_NAME_VALIDATION_MESSAGE })
   @MaxLength(256)
   @ApiProperty({ description: 'DIAL Core bucket name', example: 'my-bucket' })
   bucket!: string;
@@ -110,6 +114,71 @@ export class ListFilesItemDto {
 
   @ApiPropertyOptional()
   author?: string;
+}
+
+export class ListPublicFilesQueryDto {
+  @IsOptional()
+  @IsString()
+  @IsValidFilePath()
+  @MaxLength(1024)
+  @ApiPropertyOptional({
+    description: 'Folder path within public bucket (no leading slash, no ..)',
+    example: 'reports/',
+  })
+  path?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1024)
+  @ApiPropertyOptional({
+    description: 'Pagination token from previous response',
+  })
+  token?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  @ApiPropertyOptional({ description: 'Max items to return', example: 100 })
+  limit?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  @ApiPropertyOptional({
+    description: 'Return items recursively',
+    default: false,
+  })
+  recursive?: boolean;
+}
+
+export class ListSharedFilesQueryDto {
+  @IsOptional()
+  @IsString()
+  @IsValidFilePath()
+  @MaxLength(1024)
+  @ApiPropertyOptional({
+    description: 'Folder path filter (no leading slash, no ..)',
+    example: 'reports/',
+  })
+  path?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1024)
+  @ApiPropertyOptional({
+    description: 'Pagination token from previous response',
+  })
+  token?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  @ApiPropertyOptional({ description: 'Max items to return', example: 100 })
+  limit?: number;
 }
 
 export class ListFilesResponseDto {

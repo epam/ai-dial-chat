@@ -31,7 +31,12 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <DialDropdown items={items} placement="bottom-end" onOpenChange={setIsOpen}>
+    <DialDropdown
+      items={items}
+      placement="bottom-end"
+      listClassName="cp-dropdown-overlay"
+      onOpenChange={setIsOpen}
+    >
       <DialIconButton
         aria-label={label}
         appearance={ButtonAppearance.Ghost}
@@ -113,6 +118,12 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
       if (activeConversationId) {
         navigate(ROUTES.Root);
       }
+
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(ConversationPanelI18nKeys.DeleteAllSuccessTitle),
+        message: t(ConversationPanelI18nKeys.DeleteAllSuccess),
+      });
     } catch {
       setDeleteError(t(ConversationPanelI18nKeys.DeleteAllError));
     } finally {

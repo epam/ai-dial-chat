@@ -16,14 +16,30 @@ const getLabelText = (label: unknown): string | undefined => {
   }
 
   if (
-    label != null &&
-    typeof label === 'object' &&
-    'props' in label &&
-    label.props != null &&
-    typeof label.props === 'object' &&
-    'text' in label.props
+    label == null ||
+    typeof label !== 'object' ||
+    !('props' in label) ||
+    label.props == null ||
+    typeof label.props !== 'object'
   ) {
-    return label.props.text as string;
+    return undefined;
+  }
+
+  const props = label.props as Record<string, unknown>;
+
+  if ('text' in props && typeof props.text === 'string') {
+    return props.text;
+  }
+
+  // label is a wrapper element (e.g. <span>) — look for text in the first child
+  if ('children' in props) {
+    const children = Array.isArray(props.children)
+      ? props.children
+      : [props.children];
+    for (const child of children) {
+      const text = getLabelText(child);
+      if (text !== undefined) return text;
+    }
   }
 
   return undefined;
@@ -227,11 +243,13 @@ describe('useModelSelector — search filtering', () => {
       }),
     );
     act(() => {
-      // Simulate search by closing and re-opening would not work in isolation;
-      // instead we access the internal setter via onOpenChange side-effect.
-      // We need to trigger the search — the hook exposes no direct setter,
-      // so we test filtering indirectly via DialSearch onChange in integration.
-      // Here we verify the baseline (no query) returns all items.
+      /*
+       * Simulate search by closing and re-opening would not work in isolation;
+       * instead we access the internal setter via onOpenChange side-effect.
+       * We need to trigger the search — the hook exposes no direct setter,
+       * so we test filtering indirectly via DialSearch onChange in integration.
+       * Here we verify the baseline (no query) returns all items.
+       */
     });
     expect(result.current.menuItems).toHaveLength(3);
   });

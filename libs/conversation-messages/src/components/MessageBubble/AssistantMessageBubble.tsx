@@ -1,4 +1,5 @@
 import {
+  AttachmentType,
   buildCssVars,
   DeploymentIcon,
   MDMessageViewer,
@@ -37,20 +38,12 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   codeBlockTheme,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
-  const noCustomClass = !typography?.fontClassName;
+  const visibleAttachments = isStreaming
+    ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
+    : (attachments ?? []);
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
     '--cm-starters-divider': colors?.startersDivider,
-    '--cm-bubble-font-family': noCustomClass
-      ? typography?.fontFamily
-      : undefined,
-    '--cm-bubble-font-size': noCustomClass ? typography?.fontSize : undefined,
-    '--cm-bubble-font-weight': noCustomClass
-      ? typography?.fontWeight
-      : undefined,
-    '--cm-bubble-line-height': noCustomClass
-      ? typography?.lineHeight
-      : undefined,
   });
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
@@ -60,13 +53,13 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses('flex w-full items-start gap-5', className)}
+      className={mergeClasses('flex w-full items-start gap-3', className)}
     >
       {hasDeploymentIcon && (
         <DeploymentIcon
           src={deploymentIconUrl}
           size={28}
-          badgeClassName={styles.agentIconBadge}
+          initialsName={deploymentDisplayName ?? ''}
           tooltip={deploymentDisplayName}
         />
       )}
@@ -96,9 +89,10 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             </div>
           )}
           <AttachmentTray
-            attachments={attachments ?? []}
+            attachments={visibleAttachments}
             onAttachmentClick={onAttachmentClick}
             clickLabel={attachmentClickLabel}
+            className="flex-wrap"
           />
           {afterContent}
           <MessageActions

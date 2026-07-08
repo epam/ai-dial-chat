@@ -10,12 +10,8 @@ export interface FavoritesTypography {
 
 /** Color overrides for `CatalogFavorites`, applied via CSS custom properties. */
 export interface FavoritesColors {
-  /** Base section background color. Fallback: `--bg-layer-1`. */
+  /** Base section background color. Fallback: `--bg-layer-2`. */
   backgroundBase?: string;
-  /** Favorites gradient start color. Fallback: `--bg-accent-tertiary-alpha`. */
-  backgroundStart?: string;
-  /** Favorites gradient end color. Fallback: `--bg-accent-primary-alpha`. */
-  backgroundEnd?: string;
   /** Section bottom border color. Fallback: `--stroke-secondary`. */
   border?: string;
   /** Section title color. Fallback: `--text-primary`. */
@@ -50,4 +46,12 @@ export interface FavoritesProps {
   isLeaving?: boolean;
   /** Called when the section exit animation finishes so the parent can safely unmount. */
   onExitComplete?: () => void;
+  /** Accessible label for the "previous page" button. Default: 'Previous page'. */
+  prevPageAriaLabel?: string;
+  /** Accessible label for the "next page" button. Default: 'Next page'. */
+  nextPageAriaLabel?: string;
+  /** Accessible label for the star button when the item is not starred. Default: 'Add to favorites'. */
+  addToFavoritesAriaLabel?: string;
+  /** Accessible label for the star button when the item is already starred. Default: 'Remove from favorites'. */
+  removeFromFavoritesAriaLabel?: string;
 }

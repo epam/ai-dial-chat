@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { mkdir, writeFile } from 'fs/promises';
 import { dirname, join } from 'path';
 import { ValidationPipe, VersioningType } from '@nestjs/common';

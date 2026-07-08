@@ -2,6 +2,7 @@ import {
   AttachmentCanvasContainer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
 import {
   lazy,
@@ -22,6 +23,7 @@ import {
   useMatch,
   useNavigate,
 } from 'react-router-dom';
+import ChatLayout from '../components/ChatLayout/ChatLayout';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
@@ -32,17 +34,34 @@ import {
   getConversationRoute,
   normalizeConversationId,
 } from '../constants/routes';
-import { AttachmentCanvasI18nKeys } from '../constants/translation-keys';
+import {
+  AttachmentCanvasI18nKeys,
+  ButtonsI18nKeys,
+} from '../constants/translation-keys';
+import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
-import useLocalStorage from '../hooks/useLocalStorage';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
-import { StorageKey } from '../types/storage-key';
+import { ThemeId } from '../types/theme-id';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
+const DialFileManagerPage = lazy(
+  () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
+);
+const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
+const ToolsetEditorPage = lazy(
+  () => import('../pages/ToolsetEditor/ToolsetEditor'),
+);
+const ToolsetEditorCallbackPage = lazy(
+  () => import('../pages/ToolsetEditor/ToolsetEditorCallback'),
+);
+const NotFoundPage = lazy(() => import('../pages/NotFound/NotFound'));
+
+// Start loading the module immediately so the Suspense fallback is skipped on first navigation.
+const conversationPageModule = import('../pages/Conversation/Conversation');
 
 const ConversationPage = lazy(async () => {
-  const module = await import('../pages/Conversation/Conversation');
+  const module = await conversationPageModule;
   return { default: module.ConversationPage };
 });
 
@@ -51,15 +70,18 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
+  const canvasDefaultWidth = isMobile
+    ? undefined
+    : Math.min(1500, Math.round(window.innerWidth * (2 / 3)));
+  const { currentTheme } = useTheme();
+  const codeBlockTheme =
+    currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
 
   const [isNavOpen, setIsNavOpen] = useState(false);
   const closeNav = useCallback(() => setIsNavOpen(false), []);
   const toggleNav = useCallback(() => setIsNavOpen((prev) => !prev), []);
 
-  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useLocalStorage(
-    StorageKey.ConversationPanelOpen,
-    false,
-  );
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(true);
   const toggleHistoryPanel = useCallback(
     () => setIsHistoryPanelOpen(!isHistoryPanelOpen),
     [isHistoryPanelOpen, setIsHistoryPanelOpen],
@@ -74,14 +96,23 @@ const App: FC = () => {
     if (isMobile) closeHistoryPanel();
   }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (pathname === ROUTES.Catalog) closeHistoryPanel();
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const { closeCanvas } = useAttachmentCanvas();
+  const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   useEffect(() => {
     closeCanvas();
+    if (
+      pathname !== ROUTES.Root &&
+      pathname !== ROUTES.Conversations &&
+      !pathname.startsWith(ROUTES.Conversations)
+    ) {
+      closeHistoryPanel();
+    } else if (!isMobile && !isCanvasOpen) {
+      setIsHistoryPanelOpen(true);
+    }
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isCanvasOpen) closeHistoryPanel();
+  }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchRoot = useMatch(ROUTES.Root);
   const matchConversation = useMatch(`${ROUTES.Conversations}/*`);
@@ -104,6 +135,11 @@ const App: FC = () => {
   const [panelRequestedFilter, setPanelRequestedFilter] = useState<
     FilterTab | undefined
   >(undefined);
+  const activeFilterRef = useRef<FilterTab>(FilterTab.All);
+
+  const handlePanelActiveFilterChange = useCallback((tab: FilterTab) => {
+    activeFilterRef.current = tab;
+  }, []);
 
   useEffect(() => {
     if (!switchToMyChatsOnNavRef.current) return;
@@ -112,7 +148,10 @@ const App: FC = () => {
   }, [activeConversationId]);
 
   const handleDuplicateReadonly = useCallback(() => {
-    switchToMyChatsOnNavRef.current = true;
+    const filter = activeFilterRef.current;
+    if (filter === FilterTab.Organization || filter === FilterTab.Shared) {
+      switchToMyChatsOnNavRef.current = true;
+    }
   }, []);
 
   const handleSelectConversation = useCallback(
@@ -139,21 +178,45 @@ const App: FC = () => {
         onNewChat={() => navigate(ROUTES.Root)}
         requestedFilter={panelRequestedFilter}
         onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
+        onActiveFilterChange={handlePanelActiveFilterChange}
         onDuplicateReadonly={handleDuplicateReadonly}
       />
 
       <main
         id="main-content"
         role="main"
-        className="flex min-h-0 min-w-0 flex-1 flex-col bg-layer-1"
+        className="flex min-h-0 min-w-0 flex-1 flex-col shadow-main-inset"
       >
         <Header
           onMenuToggle={toggleNav}
           isConversationPanelOpen={isHistoryPanelOpen}
           onConversationPanelToggle={toggleHistoryPanel}
+          onNewChat={() => navigate(ROUTES.Root)}
         />
         <Routes>
-          <Route path={ROUTES.Root} element={<ConversationRoute />} />
+          <Route
+            element={
+              <ChatLayout
+                isHistoryPanelOpen={isHistoryPanelOpen}
+                onToggleHistoryPanel={toggleHistoryPanel}
+                onNewChat={() => navigate(ROUTES.Root)}
+              />
+            }
+          >
+            <Route path={ROUTES.Root} element={<ConversationRoute />} />
+            <Route
+              path="/conversations/*"
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ConversationPage
+                      onDuplicateReadonly={handleDuplicateReadonly}
+                    />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+          </Route>
           <Route
             path={ROUTES.Catalog}
             element={
@@ -165,13 +228,51 @@ const App: FC = () => {
             }
           />
           <Route
-            path="/conversations/*"
+            path={ROUTES.FileManager}
             element={
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
-                  <ConversationPage
-                    onDuplicateReadonly={handleDuplicateReadonly}
-                  />
+                  <DialFileManagerPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.AppsEditor}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <AppsEditorPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.ToolsetEditorCallback}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ToolsetEditorCallbackPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.ToolsetEditor}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ToolsetEditorPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <NotFoundPage />
                 </Suspense>
               </RouteErrorBoundary>
             }
@@ -185,7 +286,13 @@ const App: FC = () => {
           closeLabel={t(AttachmentCanvasI18nKeys.CloseLabel)}
           downloadLabel={t(AttachmentCanvasI18nKeys.DownloadLabel)}
           unsupportedLabel={t(AttachmentCanvasI18nKeys.UnsupportedLabel)}
+          copyMarkdownLabel={t(ButtonsI18nKeys.CopyAsMarkdown)}
+          copiedMarkdownLabel={t(ButtonsI18nKeys.Copied)}
+          copyJsonLabel={t(ButtonsI18nKeys.CopyAsJson)}
+          copiedJsonLabel={t(ButtonsI18nKeys.Copied)}
           isMobile={isMobile}
+          defaultWidth={canvasDefaultWidth}
+          codeBlockTheme={codeBlockTheme}
         />
       )}
     </div>

@@ -1,4 +1,10 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  BadGatewayException,
+  INestApplication,
+  NotFoundException,
+  ServiceUnavailableException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import type {
@@ -9,6 +15,11 @@ import type {
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserConfigService } from '../../user-config/user-config.service';
+import {
+  ConversationGenerationService,
+  GenerationStatus,
+} from '../conversation-generation.service';
+import { ConversationNamingService } from '../conversation-naming.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 
@@ -28,6 +39,7 @@ describe('ConversationController (integration)', () => {
     createConversation: ReturnType<typeof vi.fn>;
     listConversations: ReturnType<typeof vi.fn>;
     renameConversation: ReturnType<typeof vi.fn>;
+    generateTitle: ReturnType<typeof vi.fn>;
     deleteConversations: ReturnType<typeof vi.fn>;
     deleteAllConversations: ReturnType<typeof vi.fn>;
   };
@@ -37,13 +49,28 @@ describe('ConversationController (integration)', () => {
       createConversation: vi.fn(),
       listConversations: vi.fn(),
       renameConversation: vi.fn(),
+      generateTitle: vi.fn(),
       deleteConversations: vi.fn(),
       deleteAllConversations: vi.fn(),
     };
 
+    const mockGenerationService = {
+      register: vi.fn().mockReturnValue(new AbortController()),
+      abort: vi.fn().mockReturnValue(true),
+      complete: vi.fn(),
+      error: vi.fn(),
+      getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
-      providers: [{ provide: ConversationService, useValue: service }],
+      providers: [
+        { provide: ConversationService, useValue: service },
+        {
+          provide: ConversationGenerationService,
+          useValue: mockGenerationService,
+        },
+      ],
     }).compile();
 
     app = module.createNestApplication();
@@ -191,6 +218,11 @@ describe('ConversationController (integration)', () => {
           { provide: ConfigService, useValue: configService },
           ConversationService,
           UserConfigService,
+          ConversationGenerationService,
+          {
+            provide: ConversationNamingService,
+            useValue: { maybeRenameAfterFirstReply: vi.fn() },
+          },
         ],
       }).compile();
 
@@ -210,6 +242,10 @@ describe('ConversationController (integration)', () => {
         realApp.get(ConversationService)['client'],
         'saveConversation',
       ).mockResolvedValue({ data: {} } as never);
+      vi.spyOn(
+        realApp.get(ConversationService)['client'],
+        'getConversationMetadata',
+      ).mockResolvedValue({ data: null, error: { status: 404 } } as never);
 
       const result = await request(realApp.getHttpServer())
         .post('/conversations')
@@ -515,10 +551,8 @@ describe('ConversationController (integration)', () => {
   });
 
   describe('PATCH /conversations', () => {
-    it('returns 200 with newPath for a valid request', async () => {
-      const renamed = {
-        newPath: 'conversations/test-bucket/gpt-4o__New Title__uuid',
-      };
+    it('returns 200 with the renamed name and the path unchanged', async () => {
+      const renamed = { name: 'New Title' };
       service.renameConversation.mockReturnValue(renamed);
 
       const result = await request(app.getHttpServer())
@@ -554,6 +588,74 @@ describe('ConversationController (integration)', () => {
         .patch('/conversations')
         .send({ newTitle: 'New Title' })
         .expect(400);
+    });
+
+    it('returns 404 when the conversation does not exist', async () => {
+      service.renameConversation.mockRejectedValue(
+        new NotFoundException('Conversation not found'),
+      );
+
+      await request(app.getHttpServer())
+        .patch('/conversations?path=gpt-4o__Missing__uuid')
+        .send({ newTitle: 'New Title' })
+        .expect(404);
+    });
+  });
+
+  describe('POST /conversations/generate-title', () => {
+    it('returns 200 with the generated name for a valid path', async () => {
+      service.generateTitle.mockResolvedValue('Docker networking basics');
+
+      const result = await request(app.getHttpServer())
+        .post('/conversations/generate-title?path=gpt-4o__Old+Title__uuid')
+        .expect(200);
+
+      expect(result.body).toEqual({ name: 'Docker networking basics' });
+      expect(service.generateTitle).toHaveBeenCalledWith(
+        'gpt-4o__Old Title__uuid',
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 400 when path query param is missing', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations/generate-title')
+        .expect(400);
+
+      expect(service.generateTitle).not.toHaveBeenCalled();
+    });
+
+    it('returns 404 when the conversation does not exist', async () => {
+      service.generateTitle.mockRejectedValue(
+        new NotFoundException('Conversation not found'),
+      );
+
+      await request(app.getHttpServer())
+        .post('/conversations/generate-title?path=gpt-4o__Missing__uuid')
+        .expect(404);
+    });
+
+    it('returns 502 when LLM title generation fails', async () => {
+      service.generateTitle.mockRejectedValue(
+        new BadGatewayException('LLM title generation failed'),
+      );
+
+      await request(app.getHttpServer())
+        .post('/conversations/generate-title?path=gpt-4o__Old+Title__uuid')
+        .expect(502);
+    });
+
+    it('returns 503 when LLM title generation is unavailable', async () => {
+      service.generateTitle.mockRejectedValue(
+        new ServiceUnavailableException(
+          'LLM title generation is not available',
+        ),
+      );
+
+      await request(app.getHttpServer())
+        .post('/conversations/generate-title?path=gpt-4o__Old+Title__uuid')
+        .expect(503);
     });
   });
 

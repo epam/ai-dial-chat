@@ -13,6 +13,10 @@ export const CardGrid: FC<CardGridProps> = memo(
   ({ items, query = '', onToggleFavorite, onItemClick, titles, isLoading }) => {
     const noResultsTitle = titles?.noResultsTitle ?? 'No results';
     const featuredLabel = titles?.featuredLabel ?? 'Featured';
+    const addToFavoritesAriaLabel =
+      titles?.addToFavoritesAriaLabel ?? 'Add to favorites';
+    const removeFromFavoritesAriaLabel =
+      titles?.removeFromFavoritesAriaLabel ?? 'Remove from favorites';
 
     const { containerRef, startRow, endRow, columnCount, totalHeight } =
       useScrollVirtualizer(items.length);
@@ -25,8 +29,19 @@ export const CardGrid: FC<CardGridProps> = memo(
         onToggleFavorite,
         onItemClick,
         featuredLabel,
+        addToFavoritesAriaLabel,
+        removeFromFavoritesAriaLabel,
       }),
-      [items, columnCount, query, onToggleFavorite, onItemClick, featuredLabel],
+      [
+        items,
+        columnCount,
+        query,
+        onToggleFavorite,
+        onItemClick,
+        featuredLabel,
+        addToFavoritesAriaLabel,
+        removeFromFavoritesAriaLabel,
+      ],
     );
 
     if (isLoading) {

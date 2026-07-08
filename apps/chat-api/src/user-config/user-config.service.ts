@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import {
   CURRENT_CONFIG_VERSION,
@@ -43,7 +43,7 @@ export class UserConfigService extends AppService {
             ...DEFAULT_USER_CONFIG,
             conversations: { pinnedIds: [] },
             toolsets: { installed: [] },
-            deployments: { installed: [] },
+            deployments: { installed: [], selectedId: null },
           };
         }
       }
@@ -62,7 +62,7 @@ export class UserConfigService extends AppService {
         ...DEFAULT_USER_CONFIG,
         conversations: { pinnedIds: [] },
         toolsets: { installed: [] },
-        deployments: { installed: [] },
+        deployments: { installed: [], selectedId: null },
       };
     }
   }
@@ -93,9 +93,14 @@ export class UserConfigService extends AppService {
     bucket: string,
   ): Promise<void> {
     try {
-      await this.client.deleteFile(bucket, path, {
+      const { error, response } = (await this.client.deleteFile(bucket, path, {
         headers: getBearerAuthHeaders(token),
-      });
+      })) as { error?: unknown; response: Response };
+      if (error != null && response.status !== 404) {
+        this.logger.warn(
+          `Failed to delete legacy config file at ${path}: HTTP ${response.status}`,
+        );
+      }
     } catch (err) {
       this.logger.warn(`Failed to delete legacy config file at ${path}`, err);
     }
@@ -112,6 +117,10 @@ export class UserConfigService extends AppService {
     token: string,
     bucket: string,
   ): Promise<{ config: UserConfig; changed: boolean }> {
+    if (config.legacyMigrationDone) {
+      return { config, changed: false };
+    }
+
     let changed = false;
     let current = config;
 
@@ -125,7 +134,9 @@ export class UserConfigService extends AppService {
           parseAs: 'stream',
         })) as { response: Response };
 
-        if (!response.ok) continue;
+        if (!response.ok) {
+          continue;
+        }
 
         const text = await response.text();
         let parsed: unknown;
@@ -166,13 +177,25 @@ export class UserConfigService extends AppService {
         );
 
         if (merged !== current[section].installed) {
-          current = { ...current, [section]: { installed: merged } };
+          current = {
+            ...current,
+            [section]: { ...current[section], installed: merged },
+          };
           changed = true;
         }
+
+        await this.deleteFileBestEffort(path, token, bucket);
       } catch {
         // non-ok download is handled above; unexpected errors are ignored
       }
     }
+
+    /*
+     * Mark migration as done so subsequent readConfig calls skip this block entirely,
+     * regardless of whether any legacy files were found or whether delete succeeded.
+     */
+    current = { ...current, legacyMigrationDone: true };
+    changed = true;
 
     return { config: current, changed };
   }
@@ -188,8 +211,10 @@ export class UserConfigService extends AppService {
         CONFIG_PATH,
         {
           headers: getBearerAuthHeaders(token),
-          // FormData ensures fetch emits Content-Type: multipart/form-data;boundary=…
-          // A plain Buffer causes openapi-fetch to send a boundary-less header, which DIAL Core rejects.
+          /*
+           * FormData ensures fetch emits Content-Type: multipart/form-data;boundary=…
+           * A plain Buffer causes openapi-fetch to send a boundary-less header, which DIAL Core rejects.
+           */
           body: (() => {
             const fd = new FormData();
             fd.append('file', new Blob([JSON.stringify(config)]), CONFIG_PATH);
@@ -204,7 +229,12 @@ export class UserConfigService extends AppService {
           `Failed to write user config — DIAL Core ${response.status}: ${body}`,
           error,
         );
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          error,
+          'user-config.writeConfig',
+          this.logger,
+          response,
+        );
       }
     } catch (err) {
       this.logger.error('Failed to write user config', err);
@@ -322,6 +352,23 @@ export class UserConfigService extends AppService {
       'deployments',
       id,
       isInstalled,
+      token,
+      bucket,
+    );
+  }
+
+  async updateSelectedDeployment(
+    id: string | null,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    const config = await this.readConfig(token, bucket);
+    await this.writeConfig(
+      {
+        ...config,
+        version: CURRENT_CONFIG_VERSION,
+        deployments: { ...config.deployments, selectedId: id },
+      },
       token,
       bucket,
     );

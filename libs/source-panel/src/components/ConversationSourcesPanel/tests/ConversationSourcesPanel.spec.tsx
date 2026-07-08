@@ -87,6 +87,7 @@ const LABELS: ConversationSourcesPanelLabels = {
   ariaLabel: 'Sources panel',
   closeLabel: 'Close',
   searchPlaceholder: 'Search',
+  searchClearLabel: 'Clear search',
   emptyLabel: 'Empty',
   noResultsLabel: 'No results',
   downloadAllLabel: 'Download all',
@@ -112,6 +113,7 @@ const makeSource = (
 ): QuotationSource => ({
   url,
   title,
+  contentType: 'application/pdf',
   quote,
 });
 

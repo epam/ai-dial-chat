@@ -29,6 +29,7 @@
     "publish:npm": "nx run-many -t publish --projects=tag:publishable",
     "publish:dry": "nx run-many -t publish --output-style=static --projects=tag:publishable --dry=true --ver=0.0.0-preview.0 --tag=dev",
     "validate:agent-docs": "node scripts/validate-agent-docs.mjs",
+    "validate:agent-docs:test": "node --test scripts/validate-agent-docs.spec.mjs",
     "prepare": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
@@ -97,8 +98,10 @@
     "yaml": "2.8.3"
   },
   "dependencies": {
+    "@epam/ai-dial-react-pdf-highlighter": "^0.2.0-dev.17",
     "@epam/ai-dial-typescript-sdk": "^0.1.0-dev.24",
-    "@epam/ai-dial-ui-kit": "0.12.0-dev.4",
+    "@epam/ai-dial-ui-kit": "0.12.0-dev.10",
+    "@epam/pdf-highlighter-kit": "^0.0.18",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
@@ -114,12 +117,14 @@
     "i18next": "^26.2.0",
     "i18next-browser-languagedetector": "^8.2.1",
     "mime-types": "^3.0.2",
+    "pdfjs-dist": "5.4.149",
     "polished": "^4.3.1",
     "randomcolor": "^0.6.2",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-error-boundary": "^6.1.2",
     "react-i18next": "^17.0.8",
+    "react-json-view-lite": "^2.5.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.15.1",
     "react-syntax-highlighter": "^16.1.1",

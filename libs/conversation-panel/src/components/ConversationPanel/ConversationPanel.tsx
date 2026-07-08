@@ -57,6 +57,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onNewChat,
     newChatLabel,
     searchPlaceholder,
+    searchClearLabel,
     filterLabels,
     groupLabels,
     styles: panelStyles,
@@ -94,8 +95,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const [allowedDropGroups, setAllowedDropGroups] =
       useState<Set<ConversationGroupKey> | null>(null);
 
-    // Refs let the drop handler read current values without being in the useCallback dep array,
-    // avoiding recreating the handler (and remounting rows) on every drag-state change.
+    /*
+     * Refs let the drop handler read current values without being in the useCallback dep array,
+     * avoiding recreating the handler (and remounting rows) on every drag-state change.
+     */
     const draggingIdRef = useRef<string | null>(null);
     const allowedDropGroupsRef = useRef<Set<ConversationGroupKey> | null>(null);
 
@@ -171,11 +174,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       [clearDragState, onMoveConversation],
     );
 
-    const hasTypographyClass = Boolean(typography?.fontClassName);
     const cssVars = buildCssVars({
       '--cp-bg': colors?.background,
       '--sb-border': colors?.border,
-      '--cp-header-border': colors?.headerBorder,
       '--cp-item-hover': colors?.itemHover,
       '--cp-item-active': colors?.itemActive,
       '--cp-text': colors?.text,
@@ -186,20 +187,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-new-chat-icon-bg-hover': colors?.newChatIconBackgroundHover,
       '--cp-new-chat-icon-bg-active': colors?.newChatIconBackgroundActive,
       '--cp-new-chat-icon': colors?.newChatIconColor,
-      '--cp-new-chat-radius': colors?.newChatBorderRadius,
       '--cp-new-chat-divider': colors?.newChatDivider,
-      '--cp-title-font-family': hasTypographyClass
-        ? undefined
-        : typography?.fontFamily,
-      '--cp-title-font-size': hasTypographyClass
-        ? undefined
-        : typography?.fontSize,
-      '--cp-title-font-weight': hasTypographyClass
-        ? undefined
-        : typography?.fontWeight?.toString(),
-      '--cp-title-line-height': hasTypographyClass
-        ? undefined
-        : typography?.lineHeight,
     });
 
     const filteredItems = useMemo(
@@ -299,6 +287,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         actionsLabel,
         groupHeaderClassName: typography?.groupHeaderClassName,
         itemTitleClassName: typography?.itemTitleClassName,
+        itemIconBadgeClassName: typography?.itemIconBadgeClassName,
         draggingId,
         dragOverId,
         allowedDropGroups,
@@ -318,6 +307,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         actionsLabel,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
+        typography?.itemIconBadgeClassName,
         draggingId,
         dragOverId,
         allowedDropGroups,
@@ -344,12 +334,11 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           colors: {
             background: colors?.background,
             border: colors?.border,
-            headerBorder: colors?.headerBorder,
           },
           typography: {
             fontClassName: typography?.fontClassName,
           },
-          bodyClassName: 'flex flex-col overflow-hidden p-0',
+          bodyClassName: 'flex flex-col overflow-hidden p-0 gap-3',
           cssVars,
           titleClassName: typography?.fontClassName,
         }}
@@ -378,6 +367,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={setSearchQuery}
+          clearLabel={searchClearLabel}
         />
 
         <FilterTabs
@@ -388,7 +378,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             onActiveFilterChange?.(tab);
           }}
           tabClassName={typography?.tabClassName}
-          tabColorClassName={typography?.tabColorClassName}
         />
 
         <div className="flex-1 overflow-hidden px-2 py-1">

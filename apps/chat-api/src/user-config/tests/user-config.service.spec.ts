@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { handleDialError } from '../../common/utils/dial-error';
+import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import {
   DEFAULT_USER_CONFIG,
@@ -9,8 +9,8 @@ import {
 } from '../dto/user-config.dto';
 import { UserConfigService } from '../user-config.service';
 
-vi.mock('../../common/utils/dial-error', () => ({
-  handleDialError: vi.fn(),
+vi.mock('../../common/dial/dial-error.mapper', () => ({
+  handleDialSdkError: vi.fn(),
 }));
 
 const makeConfigService = () =>
@@ -92,52 +92,74 @@ const v2Config = (overrides?: Partial<UserConfig>): UserConfig => ({
   version: 2,
   conversations: { pinnedIds: [] },
   toolsets: { installed: [] },
-  deployments: { installed: [] },
+  deployments: { installed: [], selectedId: null },
+  ...overrides,
+});
+
+const v3Config = (overrides?: Partial<UserConfig>): UserConfig => ({
+  version: 3,
+  conversations: { pinnedIds: [] },
+  toolsets: { installed: [] },
+  deployments: { installed: [], selectedId: null },
+  legacyMigrationDone: true,
   ...overrides,
 });
 
 describe('migrateConfig', () => {
-  it('returns default v2 config for null input', () => {
+  it('returns default v3 config for null input', () => {
     expect(migrateConfig(null)).toEqual(DEFAULT_USER_CONFIG);
   });
 
-  it('returns default v2 config for non-object input', () => {
+  it('returns default v3 config for non-object input', () => {
     expect(migrateConfig('string')).toEqual(DEFAULT_USER_CONFIG);
     expect(migrateConfig(42)).toEqual(DEFAULT_USER_CONFIG);
   });
 
-  it('lifts v1 flat shape into v2', () => {
+  it('lifts v1 flat shape into v3 with selectedId null', () => {
     const v1 = { version: 1, pinnedConversationIds: ['conv-1', 'conv-2'] };
     expect(migrateConfig(v1)).toEqual({
-      version: 2,
+      version: 3,
       conversations: { pinnedIds: ['conv-1', 'conv-2'] },
       toolsets: { installed: [] },
-      deployments: { installed: [] },
+      deployments: { installed: [], selectedId: null },
     });
   });
 
   it('lifts v1 shape without version field', () => {
     const v1 = { pinnedConversationIds: ['conv-1'] };
     expect(migrateConfig(v1)).toEqual({
-      version: 2,
+      version: 3,
       conversations: { pinnedIds: ['conv-1'] },
       toolsets: { installed: [] },
-      deployments: { installed: [] },
+      deployments: { installed: [], selectedId: null },
     });
   });
 
-  it('filters non-string entries in pinnedConversationIds during v1→v2 lift', () => {
+  it('filters non-string entries in pinnedConversationIds during v1→v3 lift', () => {
     const v1 = { pinnedConversationIds: ['valid', 42, null, 'also-valid'] };
     const result = migrateConfig(v1);
     expect(result.conversations.pinnedIds).toEqual(['valid', 'also-valid']);
   });
 
-  it('passes through v2 shape unchanged', () => {
+  it('migrates v2 shape to v3 adding selectedId null', () => {
     const stored = v2Config({ conversations: { pinnedIds: ['conv-1'] } });
+    expect(migrateConfig(stored)).toEqual({
+      version: 3,
+      conversations: { pinnedIds: ['conv-1'] },
+      toolsets: { installed: [] },
+      deployments: { installed: [], selectedId: null },
+    });
+  });
+
+  it('passes through v3 shape with selectedId preserved', () => {
+    const stored = v3Config({
+      conversations: { pinnedIds: ['conv-1'] },
+      deployments: { installed: ['dep-a'], selectedId: 'gpt-4o' },
+    });
     expect(migrateConfig(stored)).toEqual(stored);
   });
 
-  it('sanitises non-string entries in v2 arrays', () => {
+  it('sanitises non-string entries in v2 arrays and migrates to v3', () => {
     const corrupt = {
       version: 2,
       conversations: { pinnedIds: ['valid', 42, null] },
@@ -146,6 +168,8 @@ describe('migrateConfig', () => {
     };
     const result = migrateConfig(corrupt);
     expect(result.conversations.pinnedIds).toEqual(['valid']);
+    expect(result.version).toBe(3);
+    expect(result.deployments.selectedId).toBeNull();
   });
 
   it('fills missing sections with empty arrays for v2+ shape', () => {
@@ -153,6 +177,7 @@ describe('migrateConfig', () => {
     const result = migrateConfig(partial);
     expect(result.toolsets.installed).toEqual([]);
     expect(result.deployments.installed).toEqual([]);
+    expect(result.deployments.selectedId).toBeNull();
   });
 });
 
@@ -161,11 +186,11 @@ describe('UserConfigService', () => {
 
   beforeEach(() => {
     service = new UserConfigService(makeConfigService());
-    vi.mocked(handleDialError).mockReset();
+    vi.mocked(handleDialSdkError).mockReset();
   });
 
   describe('readConfig', () => {
-    it('returns default v2 config when both paths return non-ok', async () => {
+    it('returns default v3 config when both paths return non-ok', async () => {
       vi.spyOn(service['client'], 'downloadFile').mockResolvedValue({
         response: { ok: false, text: async () => '' },
       } as never);
@@ -174,7 +199,7 @@ describe('UserConfigService', () => {
       expect(result).toEqual(DEFAULT_USER_CONFIG);
     });
 
-    it('returns parsed v2 config from new path', async () => {
+    it('migrates stored v2 config to v3 when reading from new path', async () => {
       const stored = v2Config({ conversations: { pinnedIds: ['conv-1'] } });
       makeDownloadSpy(service, [
         {
@@ -185,8 +210,11 @@ describe('UserConfigService', () => {
         { path: 'clientdata/installed_toolsets.json', ok: false },
         { path: 'clientdata/installed_deployments.json', ok: false },
       ]);
+      makeUploadSpy(service);
       const result = await service.readConfig('token', 'bucket');
-      expect(result).toEqual(stored);
+      expect(result).toEqual(
+        v3Config({ conversations: { pinnedIds: ['conv-1'] } }),
+      );
     });
 
     it('falls back to legacy path when new path returns non-ok', async () => {
@@ -202,7 +230,7 @@ describe('UserConfigService', () => {
 
       const result = await service.readConfig('token', 'bucket');
       expect(result.conversations.pinnedIds).toEqual(['conv-1']);
-      expect(result.version).toBe(2);
+      expect(result.version).toBe(3);
       expect(uploadSpy).toHaveBeenCalled();
     });
 
@@ -245,6 +273,7 @@ describe('UserConfigService', () => {
         { path: 'clientdata/installed_toolsets.json', ok: false },
         { path: 'clientdata/installed_deployments.json', ok: false },
       ]);
+      makeUploadSpy(service);
       const result = await service.readConfig('token', 'bucket');
       expect(result.conversations.pinnedIds).toEqual(['valid', 'also-valid']);
     });
@@ -322,7 +351,7 @@ describe('UserConfigService', () => {
         expect(uploadSpy).toHaveBeenCalled();
       });
 
-      it('does not call writeConfig when legacy files are absent', async () => {
+      it('writes config to set legacyMigrationDone even when legacy files are absent', async () => {
         const stored = v2Config({ conversations: { pinnedIds: ['conv-1'] } });
         makeDownloadSpy(service, [
           {
@@ -335,11 +364,12 @@ describe('UserConfigService', () => {
         ]);
         const uploadSpy = makeUploadSpy(service);
 
-        await service.readConfig('token', 'bucket');
-        expect(uploadSpy).not.toHaveBeenCalled();
+        const result = await service.readConfig('token', 'bucket');
+        expect(result.legacyMigrationDone).toBe(true);
+        expect(uploadSpy).toHaveBeenCalledOnce();
       });
 
-      it('does not call writeConfig when legacy file is empty array', async () => {
+      it('writes config to set legacyMigrationDone even when legacy file is empty array', async () => {
         const stored = v2Config();
         makeDownloadSpy(service, [
           {
@@ -353,11 +383,12 @@ describe('UserConfigService', () => {
         const uploadSpy = makeUploadSpy(service);
         makeDeleteSpy(service);
 
-        await service.readConfig('token', 'bucket');
-        expect(uploadSpy).not.toHaveBeenCalled();
+        const result = await service.readConfig('token', 'bucket');
+        expect(result.legacyMigrationDone).toBe(true);
+        expect(uploadSpy).toHaveBeenCalledOnce();
       });
 
-      it('does not call writeConfig when legacy IDs fully overlap with base', async () => {
+      it('writes config to set legacyMigrationDone even when legacy IDs fully overlap with base', async () => {
         const stored = v2Config({ toolsets: { installed: ['ts-a', 'ts-b'] } });
         makeDownloadSpy(service, [
           {
@@ -375,8 +406,12 @@ describe('UserConfigService', () => {
         const uploadSpy = makeUploadSpy(service);
         makeDeleteSpy(service);
 
-        await service.readConfig('token', 'bucket');
-        expect(uploadSpy).not.toHaveBeenCalled();
+        const result = await service.readConfig('token', 'bucket');
+        expect(result.legacyMigrationDone).toBe(true);
+        expect(
+          result.toolsets.installed.filter((id) => id === 'ts-a'),
+        ).toHaveLength(1);
+        expect(uploadSpy).toHaveBeenCalledOnce();
       });
 
       it('logs warning and skips malformed legacy file', async () => {
@@ -399,7 +434,8 @@ describe('UserConfigService', () => {
 
         const result = await service.readConfig('token', 'bucket');
         expect(result.toolsets.installed).toEqual([]);
-        expect(uploadSpy).not.toHaveBeenCalled();
+        expect(result.legacyMigrationDone).toBe(true);
+        expect(uploadSpy).toHaveBeenCalledOnce();
         expect(warnSpy).toHaveBeenCalled();
       });
 
@@ -423,7 +459,8 @@ describe('UserConfigService', () => {
 
         const result = await service.readConfig('token', 'bucket');
         expect(result.toolsets.installed).toEqual([]);
-        expect(uploadSpy).not.toHaveBeenCalled();
+        expect(result.legacyMigrationDone).toBe(true);
+        expect(uploadSpy).toHaveBeenCalledOnce();
         expect(warnSpy).toHaveBeenCalled();
       });
 
@@ -505,7 +542,33 @@ describe('UserConfigService', () => {
         expect(result.toolsets.installed).toEqual(['ts-a']);
       });
 
-      it('is idempotent when legacy file deletion fails', async () => {
+      it('deletes legacy installation file after merging its contents', async () => {
+        const stored = v2Config();
+        makeDownloadSpy(service, [
+          {
+            path: '.client_data/.user-config.json',
+            ok: true,
+            body: JSON.stringify(stored),
+          },
+          {
+            path: 'clientdata/installed_toolsets.json',
+            ok: true,
+            body: '["ts-new"]',
+          },
+          { path: 'clientdata/installed_deployments.json', ok: false },
+        ]);
+        makeUploadSpy(service);
+        const deleteSpy = makeDeleteSpy(service);
+
+        await service.readConfig('token', 'bucket');
+        expect(deleteSpy).toHaveBeenCalledWith(
+          'bucket',
+          'clientdata/installed_toolsets.json',
+          expect.anything(),
+        );
+      });
+
+      it('is idempotent when legacy file deletion fails (thrown error)', async () => {
         const stored = v2Config({ toolsets: { installed: ['ts-a'] } });
         makeDownloadSpy(service, [
           {
@@ -525,12 +588,46 @@ describe('UserConfigService', () => {
           new Error('delete failed'),
         );
 
-        // ts-a is already in base, legacy file also has ts-a → no new IDs → writeConfig not called
+        /*
+         * ts-a is already in base, legacy file also has ts-a → no new IDs merged,
+         * but writeConfig is still called once to persist legacyMigrationDone flag
+         */
         const result = await service.readConfig('token', 'bucket');
         expect(
           result.toolsets.installed.filter((id) => id === 'ts-a'),
         ).toHaveLength(1);
-        expect(uploadSpy).not.toHaveBeenCalled();
+        expect(result.legacyMigrationDone).toBe(true);
+        expect(uploadSpy).toHaveBeenCalledOnce();
+      });
+
+      it('is idempotent when legacy file deletion returns SDK error (non-throw)', async () => {
+        const stored = v2Config({ toolsets: { installed: ['ts-a'] } });
+        makeDownloadSpy(service, [
+          {
+            path: '.client_data/.user-config.json',
+            ok: true,
+            body: JSON.stringify(stored),
+          },
+          {
+            path: 'clientdata/installed_toolsets.json',
+            ok: true,
+            body: '["ts-a"]',
+          },
+          { path: 'clientdata/installed_deployments.json', ok: false },
+        ]);
+        const uploadSpy = makeUploadSpy(service);
+        vi.spyOn(service['client'], 'deleteFile').mockResolvedValue({
+          error: 'Forbidden',
+          response: { status: 403, ok: false },
+        } as never);
+
+        // Even when delete returns an SDK error, readConfig should complete and write legacyMigrationDone
+        const result = await service.readConfig('token', 'bucket');
+        expect(
+          result.toolsets.installed.filter((id) => id === 'ts-a'),
+        ).toHaveLength(1);
+        expect(result.legacyMigrationDone).toBe(true);
+        expect(uploadSpy).toHaveBeenCalledOnce();
       });
 
       it('merges both legacy files when both exist without existing config', async () => {
@@ -572,10 +669,15 @@ describe('UserConfigService', () => {
       expect(uploaded).toEqual(config);
     });
 
-    it('calls handleDialError when DIAL Core returns an error', async () => {
+    it('calls handleDialSdkError when DIAL Core returns an error', async () => {
       makeUploadSpy(service, { error: 'bad', status: 400 });
       await service.writeConfig(DEFAULT_USER_CONFIG, 'token', 'bucket');
-      expect(handleDialError).toHaveBeenCalledWith({ status: 400 });
+      expect(handleDialSdkError).toHaveBeenCalledWith(
+        'bad',
+        'user-config.writeConfig',
+        expect.anything(),
+        expect.objectContaining({ status: 400 }),
+      );
     });
 
     it('re-throws when uploadFile itself throws', async () => {
@@ -592,7 +694,7 @@ describe('UserConfigService', () => {
     it('adds a new id when pinning', async () => {
       makeSingleDownloadSpy(service, {
         ok: true,
-        body: JSON.stringify(v2Config()),
+        body: JSON.stringify(v3Config()),
       });
       const uploadSpy = makeUploadSpy(service);
       await service.updatePin(
@@ -634,7 +736,7 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v2Config({
+          v3Config({
             conversations: { pinnedIds: ['conversations/bucket/id'] },
           }),
         ),
@@ -673,7 +775,7 @@ describe('UserConfigService', () => {
     it('adds a toolset id when installing', async () => {
       makeSingleDownloadSpy(service, {
         ok: true,
-        body: JSON.stringify(v2Config()),
+        body: JSON.stringify(v3Config()),
       });
       const uploadSpy = makeUploadSpy(service);
       await service.updateInstalledToolset(
@@ -711,7 +813,7 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v2Config({ toolsets: { installed: ['toolset-abc'] } }),
+          v3Config({ toolsets: { installed: ['toolset-abc'] } }),
         ),
       });
       const uploadSpy = makeUploadSpy(service);
@@ -748,7 +850,7 @@ describe('UserConfigService', () => {
     it('adds a deployment id when installing', async () => {
       makeSingleDownloadSpy(service, {
         ok: true,
-        body: JSON.stringify(v2Config()),
+        body: JSON.stringify(v3Config()),
       });
       const uploadSpy = makeUploadSpy(service);
       await service.updateInstalledDeployment(
@@ -786,7 +888,9 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v2Config({ deployments: { installed: ['dep-xyz'] } }),
+          v3Config({
+            deployments: { installed: ['dep-xyz'], selectedId: null },
+          }),
         ),
       });
       const uploadSpy = makeUploadSpy(service);
@@ -816,6 +920,50 @@ describe('UserConfigService', () => {
       );
       const uploaded = await getUploadedConfig(uploadSpy);
       expect((uploaded as UserConfig).deployments.installed).toHaveLength(0);
+    });
+  });
+
+  describe('updateSelectedDeployment', () => {
+    it('sets selectedId to the given id', async () => {
+      makeSingleDownloadSpy(service, {
+        ok: true,
+        body: JSON.stringify(v3Config()),
+      });
+      const uploadSpy = makeUploadSpy(service);
+      await service.updateSelectedDeployment('gpt-4o', 'token', 'bucket');
+      const uploaded = await getUploadedConfig(uploadSpy);
+      expect((uploaded as UserConfig).deployments.selectedId).toBe('gpt-4o');
+    });
+
+    it('sets selectedId to null when id is null', async () => {
+      makeSingleDownloadSpy(service, {
+        ok: true,
+        body: JSON.stringify(
+          v3Config({ deployments: { installed: [], selectedId: 'old-dep' } }),
+        ),
+      });
+      const uploadSpy = makeUploadSpy(service);
+      await service.updateSelectedDeployment(null, 'token', 'bucket');
+      const uploaded = await getUploadedConfig(uploadSpy);
+      expect((uploaded as UserConfig).deployments.selectedId).toBeNull();
+    });
+
+    it('preserves deployments.installed when updating selectedId', async () => {
+      makeSingleDownloadSpy(service, {
+        ok: true,
+        body: JSON.stringify(
+          v3Config({
+            deployments: { installed: ['dep-a', 'dep-b'], selectedId: null },
+          }),
+        ),
+      });
+      const uploadSpy = makeUploadSpy(service);
+      await service.updateSelectedDeployment('dep-a', 'token', 'bucket');
+      const uploaded = await getUploadedConfig(uploadSpy);
+      expect((uploaded as UserConfig).deployments.installed).toEqual([
+        'dep-a',
+        'dep-b',
+      ]);
     });
   });
 });

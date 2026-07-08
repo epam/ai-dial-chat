@@ -41,6 +41,7 @@ Use this mode when the review is executed by CI, a scheduled bot, or any non-int
 
 - Review only the PR/diff scope. Do not fail the pipeline for pre-existing issues unless the PR worsens them or makes them newly reachable.
 - Read full changed files and related artifacts for context, but comments/findings must point to changed lines or changed artifacts whenever possible.
+- Do not run Nx `build` targets from this review pipeline. Treat build as a separate CI concern and only record its status when an existing CI check already provides it.
 - Separate review from publishing:
   - Review step produces a structured result artifact.
   - Comment-publishing step may post inline comments and one top-level summary, but only from the structured result.
@@ -84,12 +85,14 @@ Use `verdict: "fail"` when any finding is blocking or a required verification co
 
 Set `anchorable: true` only when the finding points to a line present in the PR diff. If the issue is real but cannot be anchored to a changed line, set `anchorable: false`, keep `file`/`line` as best-effort context if known, and include the finding in `topLevelComment` instead of attempting an inline comment.
 
+Every finding must include a non-empty `message` containing the full review comment body. Do not put the explanation only in custom fields, summary text, or the top-level comment; pipeline publishers use `message` for both inline review comments and the sticky summary table.
+
 ### Pipeline fail rules
 
 Fail the pipeline for:
 
 - Any `critical` or `required` finding.
-- Relevant Nx target failure.
+- Relevant non-build Nx target failure run by this review pipeline, such as test, lint, OpenAPI, or generated-client checks.
 - OpenSpec drift: implementation materially diverges from proposal/design/tasks/specs.
 - API/OpenAPI/generated-client contract mismatch.
 - Hand-authored `libs/*` leaking host/external integration details.
@@ -206,9 +209,9 @@ Use the repository skills and rules as the source of truth before applying gener
 | Change area                            | Read / apply                                                                                                                       |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Workspace structure, project ownership | `openspec/config.yaml`, `AGENTS.md`, `.agents/skills/nx-workspace/SKILL.md`                                                        |
-| Multi-file implementation or refactor  | `.claude/skills/incremental-implementation/SKILL.md`                                                                               |
+| Multi-file implementation or refactor  | thin vertical slices + per-slice verify (`openspec/config.yaml` task rules)                                                        |
 | HTTP API contract or generated client  | `.agents/skills/api-design/SKILL.md`                                                                                               |
-| `apps/chat-api/**`                     | `.agents/skills/nestjs-chat-api/SKILL.md` and `apps/chat-api/AGENTS.md`                                                            |
+| `apps/chat-api/**`                     | `apps/chat-api/AGENTS.md`                                                                                                          |
 | `libs/*` React components              | `openspec/config.yaml`, library isolation rules from `AGENTS.md`, `openspec/lib-styling-guide.md` plus exported-symbol JSDoc rules |
 | UI kit components                      | Use the `@epam/ai-dial-ui-kit` MCP tools before recommending raw HTML primitives                                                   |
 | Responsive / mobile parity             | `.claude/skills/responsive-design/SKILL.md`                                                                                        |
@@ -274,21 +277,24 @@ When checking "tests / build / lint":
 
 - Prefer `npm exec nx test <project>`, `npm exec nx lint <project>`, `npm exec nx build <project>` for touched projects (see `openspec/config.yaml` and `AGENTS.md`).
 - For broad checks, use affected targets with the repository base branch: `npm exec nx affected --target=<target> --base=origin/development-1.0`.
+- In CI pipeline review mode, do not run `npm exec nx build ...` or `npm exec nx affected --target=build ...`; rely on dedicated CI build jobs if build evidence is needed.
 - Do not use `origin/main` as the affected base in this workspace.
 - When unsure which project owns a path, use `npm exec nx show projects` or `npm exec nx show project <name> --json`.
 
 ## Validation matrix
 
+**CI / pipeline review mode: never run `build` targets.** In CI, skip every `build` command in the table below regardless of change type. Rely on dedicated CI build jobs; record their status from existing CI check output instead.
+
 Select the smallest validation set that proves the change:
 
-| Change type                | Expected validation                                                                                                                     |
+| Change type                | Expected validation (interactive/local only — skip build rows in CI)                                                                    |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | Frontend component / hook  | `npm exec nx test chat`, `npm exec nx lint chat`; build if route/bundling/shared imports changed                                        |
 | Backend `apps/chat-api/**` | `npm exec nx test chat-api`, `npm exec nx lint chat-api`, `npm exec nx build chat-api` when startup/module/config wiring changed        |
 | HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npm exec nx build chat-api-client`, `npm exec nx lint chat-api-client` |
 | Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                             |
 | Broad cross-project change | `npm exec nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                       |
-| CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context                                                                  |
+| CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context; do not start build targets from the review job                  |
 
 Record skipped checks with a reason. A review without a verification story is incomplete.
 

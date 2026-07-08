@@ -2,32 +2,41 @@
 // This module contains only CSS custom-property references and their hex fallbacks.
 
 .wrapper {
-  background: var(--sb-bg, var(--bg-layer-3, #1d2439));
-  border-color: var(--sb-border, var(--stroke-tertiary, #0c101d));
+  background: var(--sb-bg, var(--bg-layer-3, #fcfcfc));
+  border-color: var(--sb-border, var(--stroke-tertiary, #e0e6f0));
 }
 
 .header {
-  border-color: var(--sb-header-border, var(--stroke-tertiary, #0c101d));
-  color: var(--sb-text, var(--text-primary, #eef1f7));
+  color: var(--sb-text, var(--text-primary, #161b2d));
 }
 
 .divider {
-  border-color: var(--sb-border, var(--stroke-tertiary, #0c101d));
+  border-color: var(--sb-border, var(--stroke-tertiary, #e0e6f0));
 }
 
 .panel {
-  border-color: var(--sb-border, var(--stroke-tertiary, #0c101d));
+  border-color: var(--sb-border, var(--stroke-tertiary, #e0e6f0));
+  border-inline-end-color: var(
+    --sb-border-inline-end,
+    var(--sb-border, var(--stroke-tertiary, #e0e6f0))
+  );
 }
 
-.headerTitle {
-  font-family: var(--sb-title-font-family, var(--theme-font, sans-serif));
-  font-size: var(--sb-title-font-size, 0.875rem);
-  font-weight: var(--sb-title-font-weight, 600);
-  line-height: var(--sb-title-line-height, 1.25rem);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.appear {
+  animation: fadeIn 200ms ease-out forwards;
 }
 
 .resizeHandler {
   width: 4px !important;
-  color: var(--sb-resize-handler, var(--text-success, #37babc)) !important;
-  background: var(--sb-bg-resize-handler, var(--text-success, #37babc));
+  color: var(--sb-resize-handler, var(--text-success, #007274)) !important;
+  background: var(--sb-bg-resize-handler, var(--text-success, #007274));
 }

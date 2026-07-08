@@ -108,7 +108,13 @@ rules:
   proposal:
     - 'Keep proposals concise but include every required section: Problem, Solution, Non-goals,
       Acceptance criteria (how we know the change is done and correct).'
-    - State an alternatives-considered line — what was rejected and why (prevents re-litigation)
+    - >-
+      Compare alternatives before committing. For broad or architectural changes, weigh 2-4
+      options (include a conservative baseline) oтn correctness, complexity/delivery risk,
+      security/performance, and migration/rollback, then state the pick and why the rest were
+      rejected (prevents re-litigation). Base any "best practice" claim on authoritative sources;
+      separate facts from assumptions and flag unknowns explicitly. For small changes, a one-line
+      alternatives-considered is enough.
     - Include a rollback / backward-compat note — is this breaking, and how do we revert it?
     - Investigate the codebase before proposing — check if the pattern already exists in
       context/, hooks/, server-api/, or common/. Cite the closest existing file as `path:line`
@@ -189,7 +195,13 @@ rules:
 
   tasks:
     - Order tasks as thin vertical slices with explicit dependencies — each slice independently
-      verifiable, following the incremental-implementation skill (not one big-bang task list)
+      verifiable (not one big-bang task list)
+    - >-
+      Choose and state a slicing strategy — vertical (default; one path through the stack working
+      end to end before widening), contract-first (agree types/OpenAPI, then build both sides in
+      parallel), or risk-first (prove the highest-risk part before building on it)
+    - Scope discipline — each task touches only what it requires. No drive-by cleanup or refactors
+      in untouched files. Record out-of-scope findings as explicit follow-up tasks, not inline edits
     - Reference specific file paths — never vague descriptions like "update the service"
     - Follow the file location conventions:
         - Frontend — context in apps/chat/src/context/, hooks in apps/chat/src/hooks/,

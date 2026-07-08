@@ -1,35 +1,33 @@
 import type {
   Annotation,
+  AttachmentDisplayResolvers,
   DisplayAttachment,
   MessageAttachment,
 } from '@epam/ai-dial-chat-shared';
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentType,
+  messageAttachmentToDisplayAttachment,
+  RequestStatus,
+} from '@epam/ai-dial-chat-shared';
+import { resolveDialFileDownloadUrl } from './dial-file';
 import { resolveCatalogIconUrl } from './icon-path';
+
+/**
+ * App-owned resolvers wired into the shared mapper: images preview through the
+ * catalog icon endpoint, audio plays back through the DIAL file download URL.
+ */
+const attachmentDisplayResolvers: AttachmentDisplayResolvers = {
+  resolvePreviewUrl: (dto) => resolveCatalogIconUrl(dto.url),
+  resolvePlayUrl: (dto) => dto.url && resolveDialFileDownloadUrl(dto.url),
+};
 
 /**
  * Maps a message attachment payload to the display-only attachment model used by UI components.
  */
 export const attachmentDtoToDisplayAttachment = (
   dto: MessageAttachment,
-): DisplayAttachment => {
-  const isImage = dto.type?.startsWith('image/') ?? false;
-  const id = dto.url ?? dto.data ?? dto.title;
-  const previewUrl = dto.url
-    ? resolveCatalogIconUrl(dto.url)
-    : dto.type && dto.data
-      ? `data:${dto.type};base64,${dto.data}`
-      : undefined;
-
-  return {
-    id,
-    name: dto.title,
-    contentType: dto.type ?? '',
-    type: isImage ? AttachmentType.Image : AttachmentType.File,
-    status: RequestStatus.Idle,
-    ...(dto.url ? { url: dto.url } : {}),
-    ...(isImage && (dto.url || dto.data) && dto.type ? { previewUrl } : {}),
-  };
-};
+): DisplayAttachment =>
+  messageAttachmentToDisplayAttachment(dto, attachmentDisplayResolvers);
 
 /** Maps an annotation's source attachment to the display-only attachment model. */
 export const annotationToDisplayAttachment = (

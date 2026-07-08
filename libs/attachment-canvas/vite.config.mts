@@ -36,6 +36,7 @@ export default defineConfig(() => ({
         '@epam/ai-dial-sidebar',
         '@epam/ai-dial-ui-kit',
         '@tabler/icons-react',
+        'react-json-view-lite',
       ],
     },
   },
@@ -50,6 +51,14 @@ export default defineConfig(() => ({
     coverage: {
       reportsDirectory: './test-output/vitest/coverage',
       provider: 'v8' as const,
+    },
+    server: {
+      deps: {
+        inline: [
+          '@epam/pdf-highlighter-kit',
+          '@epam/ai-dial-react-pdf-highlighter',
+        ],
+      },
     },
   },
 }));

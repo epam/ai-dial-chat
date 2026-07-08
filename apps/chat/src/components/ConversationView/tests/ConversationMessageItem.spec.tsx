@@ -12,6 +12,15 @@ vi.mock('../../../hooks/attachment/useAttachmentAction', () => ({
   }),
 }));
 
+vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
+  return {
+    ...actual,
+    useAttachmentCanvas: () => ({ openCanvas: vi.fn(), closeCanvas: vi.fn() }),
+  };
+});
+
 vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'dark' }),
 }));
@@ -61,6 +70,7 @@ const defaultProps = {
   statusModelChangedTitle: 'Model switched.',
   formatStatusModelChangedBody: () => '',
   streamErrorText: 'Stream error',
+  stoppedGeneratingText: 'Stopped generating',
   thinkingLabel: 'Thinking',
   executedLabel: 'Executed',
   stepsLabel: (count: number) => `${count} Steps`,
@@ -83,6 +93,38 @@ describe('ConversationMessageItem — main render', () => {
     expect(mockHandleAttachmentClick).toHaveBeenCalledWith(
       expect.objectContaining({ url: 'files/report.pdf', name: 'report.pdf' }),
     );
+  });
+});
+
+describe('ConversationMessageItem — stopped generation', () => {
+  const STOPPED_EMPTY_ASSISTANT: Message = {
+    role: MessageRole.Assistant,
+    content: '',
+    timestamp: '2024-01-01T00:00:01Z',
+    wasStoppedByUser: true,
+  };
+
+  it('shows the stopped-generating label for an empty stopped assistant message', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={STOPPED_EMPTY_ASSISTANT}
+        index={1}
+      />,
+    );
+    expect(screen.getByText('Stopped generating')).toBeTruthy();
+  });
+
+  it('shows the partial content (not the stopped label) when a stopped message has text', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={{ ...STOPPED_EMPTY_ASSISTANT, content: 'Partial answer' }}
+        index={1}
+      />,
+    );
+    expect(screen.getByText('Partial answer')).toBeTruthy();
+    expect(screen.queryByText('Stopped generating')).toBeNull();
   });
 });
 

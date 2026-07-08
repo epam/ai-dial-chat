@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
@@ -7,6 +8,15 @@ import type { ItemDetailsTexts } from './item-details-props';
 export interface CreateOption {
   /** Display label shown in the dropdown menu. */
   label: string;
+  /** Short description shown below the label (single line, truncated). */
+  description?: string;
+  /** Leading icon rendered inside a tinted 32 px square. */
+  icon?: ReactNode;
+  /**
+   * Tailwind classes applied to the icon container — controls background tint
+   * and icon colour. Example: `'bg-accent-secondary-alpha text-accent-secondary'`.
+   */
+  iconContainerClassName?: string;
   /** Called when this option is selected. */
   onClick: () => void;
 }
@@ -36,6 +46,10 @@ export interface CatalogTitles {
   sortNameAZLabel?: string;
   /** Label for the "Featured" tag on cards. Default: 'Featured'. */
   featuredLabel?: string;
+  /** Accessible label for switching to grid view. Default: 'Grid view'. */
+  gridViewLabel?: string;
+  /** Accessible label for switching to list view. Default: 'List view'. */
+  listViewLabel?: string;
   /** ARIA label for the page/grid. Default: 'Catalog'. */
   ariaLabel?: string;
   /**
@@ -44,6 +58,14 @@ export interface CatalogTitles {
    * Guardrail → 'Guardrail', Skill → 'Skill', Mcp → 'MCP'.
    */
   tabLabels?: Partial<Record<CatalogEntityType, string>>;
+  /** Label for the "Clear all" filters button. Default: 'Clear all'. */
+  clearAllLabel?: string;
+  /** Label for the filter button when nothing is filtered. Default: 'From'. */
+  filterFromLabel?: string;
+  /** Label for the "My Apps" filter checkbox. Default: 'My Apps'. */
+  filterMyAppsLabel?: string;
+  /** Label for the Topics section inside the filter dropdown. Default: 'Topics'. */
+  filterTopicsLabel?: string;
 }
 
 /** Props for Catalog. */
@@ -62,6 +84,8 @@ export interface CatalogProps {
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /** Called when the "Use in chat" button is clicked in the details panel. */
   onUseInChat?: (item: CatalogItem) => void;
+  /** Controls whether the primary action button is shown for an item. */
+  isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked in the details panel. */
   onShare?: (item: CatalogItem) => void;
   /**

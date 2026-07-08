@@ -48,6 +48,7 @@ export class AppConfigService {
     const features: Record<string, boolean> = {};
     let asrModelId: string | null = null;
     let transcribeSizeLimitBytes = 5 * 1024 * 1024;
+    let defaultDeploymentId: string | null = null;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -64,6 +65,8 @@ export class AppConfigService {
       } else if (def.key === 'asr.transcribeSizeLimitBytes') {
         transcribeSizeLimitBytes =
           typeof resolved === 'number' ? resolved : 5 * 1024 * 1024;
+      } else if (def.key === 'deployments.defaultDeploymentId') {
+        defaultDeploymentId = typeof resolved === 'string' ? resolved : null;
       }
     }
 
@@ -73,6 +76,7 @@ export class AppConfigService {
       config: {
         asrModelId,
         transcribeSizeLimitBytes,
+        defaultDeploymentId,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),
