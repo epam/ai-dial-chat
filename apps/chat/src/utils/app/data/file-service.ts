@@ -125,6 +125,7 @@ export class FileService {
               contentLength: typedResult.contentLength,
               contentType: typedResult.contentType,
               serverSynced: true,
+              updatedAt: typedResult.updatedAt,
             },
           };
         },
