@@ -18,8 +18,7 @@
     }
   },
   "dependencies": {
-    "react-window": "^2.2.7",
-    "@epam/ai-dial-kit": "0.0.1"
+    "react-window": "^2.2.7"
   },
   "peerDependencies": {
     "react": "^19.0.0",

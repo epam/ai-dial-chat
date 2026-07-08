@@ -28,6 +28,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   defaultWidth = 360,
   minWidth = 280,
   maxWidth = 600,
+  headerClassName,
   onResizeStop,
 }) => {
   const { colors, typography, bodyClassName, cssVars, titleClassName } =
@@ -112,6 +113,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
         >
           <Header
             title={title}
+            className={headerClassName}
             titleClassName={titleClassName}
             leftActions={isOpen && leftActions}
             rightActions={

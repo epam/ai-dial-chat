@@ -35,7 +35,13 @@ export const virtualPathToApiPath = (
       : withoutLeadingSlash;
   }
 
-  return stripped && !stripped.endsWith('/') ? `${stripped}/` : stripped;
+  /*
+   * Collapse duplicate slashes (e.g. "folder//name") that ui-kit may produce
+   * when concatenating paths, preventing BFF from forwarding malformed paths.
+   */
+  const collapsed = stripped.replace(/\/{2,}/g, '/');
+
+  return collapsed && !collapsed.endsWith('/') ? `${collapsed}/` : collapsed;
 };
 
 const looksLikeVirtualDialPath = (path: string, rootLabel: string): boolean =>

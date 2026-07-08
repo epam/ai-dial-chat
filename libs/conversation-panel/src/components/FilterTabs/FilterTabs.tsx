@@ -29,7 +29,7 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
   ({ activeTab, labels, onChange, tabClassName = 'dial-tiny-semi-text' }) => (
     <div
       className={mergeClasses(
-        'mx-3 my-2 flex flex-nowrap gap-2 rounded-full p-1',
+        'mx-3 my-2 flex flex-nowrap gap-1',
         styles.filterTabs,
       )}
     >
@@ -40,7 +40,7 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
           selected={activeTab === value}
           onClick={() => onChange(value)}
           className={mergeClasses(
-            'box-border h-auto flex-1 justify-center rounded-full p-[7px] text-center',
+            'box-border h-auto flex-1 justify-center rounded-full p-2 text-center',
             tabClassName,
             styles.tab,
             activeTab === value && styles.tabActive,

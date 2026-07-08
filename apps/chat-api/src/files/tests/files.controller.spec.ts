@@ -1154,3 +1154,257 @@ describe('FilesController — renameFiles', () => {
       .expect(401);
   });
 });
+
+describe('FilesController — copyFiles', () => {
+  const MOCK_COPY_RESPONSE = {
+    results: [
+      {
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'archive/q1.pdf',
+        success: true,
+      },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: { copyFiles: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      copyFiles: vi.fn().mockResolvedValue(MOCK_COPY_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with results array for a valid single-file copy', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/copy')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'reports/q1.pdf',
+            destinationPath: 'archive/q1.pdf',
+            nodeType: 'item',
+            name: 'q1.pdf',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.body).toEqual(MOCK_COPY_RESPONSE);
+    expect(service.copyFiles).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourcePath: 'reports/q1.pdf',
+          destinationPath: 'archive/q1.pdf',
+          nodeType: 'item',
+        }),
+      ]),
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 200 with results array for a valid folder copy', async () => {
+    service.copyFiles.mockResolvedValue({
+      results: [
+        {
+          sourcePath: 'reports/',
+          destinationPath: 'archive/reports/',
+          success: true,
+        },
+      ],
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/copy')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'reports/',
+            destinationPath: 'archive/reports/',
+            nodeType: 'folder',
+            name: 'reports',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.body.results[0]).toMatchObject({ success: true });
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/copy')
+      .send({ items: [] })
+      .expect(400);
+    expect(service.copyFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when items array exceeds 100 entries', async () => {
+    const items = Array.from({ length: 101 }, (_, i) => ({
+      bucket: 'user-files',
+      sourcePath: `file${i}.pdf`,
+      destinationPath: `archive/file${i}.pdf`,
+      nodeType: 'item',
+      name: `file${i}.pdf`,
+    }));
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files/copy')
+      .send({ items })
+      .expect(400);
+    expect(service.copyFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.copyFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/copy')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'file.pdf',
+            destinationPath: 'archive/file.pdf',
+            nodeType: 'item',
+            name: 'file.pdf',
+          },
+        ],
+      })
+      .expect(401);
+  });
+});
+
+describe('FilesController — moveFiles', () => {
+  const MOCK_MOVE_RESPONSE = {
+    results: [
+      {
+        sourcePath: 'inbox/draft.pdf',
+        destinationPath: 'reports/draft.pdf',
+        success: true,
+      },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: { moveFiles: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      moveFiles: vi.fn().mockResolvedValue(MOCK_MOVE_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with results array for a valid single-file move', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/move')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'inbox/draft.pdf',
+            destinationPath: 'reports/draft.pdf',
+            nodeType: 'item',
+            name: 'draft.pdf',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.body).toEqual(MOCK_MOVE_RESPONSE);
+    expect(service.moveFiles).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourcePath: 'inbox/draft.pdf',
+          destinationPath: 'reports/draft.pdf',
+          nodeType: 'item',
+        }),
+      ]),
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 200 with results array for a valid folder move', async () => {
+    service.moveFiles.mockResolvedValue({
+      results: [
+        {
+          sourcePath: 'drafts/',
+          destinationPath: 'final/drafts/',
+          success: true,
+        },
+      ],
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/move')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'drafts/',
+            destinationPath: 'final/drafts/',
+            nodeType: 'folder',
+            name: 'drafts',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.body.results[0]).toMatchObject({ success: true });
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/move')
+      .send({ items: [] })
+      .expect(400);
+    expect(service.moveFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when items array exceeds 100 entries', async () => {
+    const items = Array.from({ length: 101 }, (_, i) => ({
+      bucket: 'user-files',
+      sourcePath: `file${i}.pdf`,
+      destinationPath: `moved/file${i}.pdf`,
+      nodeType: 'item',
+      name: `file${i}.pdf`,
+    }));
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files/move')
+      .send({ items })
+      .expect(400);
+    expect(service.moveFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.moveFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/move')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'file.pdf',
+            destinationPath: 'moved/file.pdf',
+            nodeType: 'item',
+            name: 'file.pdf',
+          },
+        ],
+      })
+      .expect(401);
+  });
+});

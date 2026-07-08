@@ -1,94 +1,6 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/api/themes": {
-      "get": {
-        "description": "Fetches the complete theme configuration from the external themes service. Returns a JSON object containing all available themes with their properties, colors, and icon references. Results are cached for 5 minutes.",
-        "operationId": "getThemes",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved theme configuration",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ThemeConfigResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Theme configuration not found on the external service"
-          },
-          "502": {
-            "description": "External theme service returned an error response"
-          },
-          "503": {
-            "description": "Theme service is unavailable or request timed out"
-          }
-        },
-        "summary": "Get themes configuration",
-        "tags": ["themes"]
-      }
-    },
-    "/api/themes/icon": {
-      "get": {
-        "description": "Fetches a theme icon as SVG or PNG content from the external themes service. The icon name is validated to prevent path traversal attacks - only alphanumeric characters, dashes, underscores, and dots are allowed. Results are cached for 5 minutes.",
-        "operationId": "getThemeIcon",
-        "parameters": [
-          {
-            "name": "iconName",
-            "required": true,
-            "in": "query",
-            "description": "Icon filename (alphanumeric, dash, underscore, and dot only)",
-            "schema": {
-              "example": "icon-light.svg",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved icon content",
-            "content": {
-              "image/svg+xml": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "<svg xmlns=\"http://www.w3.org/2000/svg\"><circle r=\"10\"/></svg>"
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid icon name (validation failed or path traversal attempt)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "example": {
-                    "statusCode": 400,
-                    "message": [
-                      "Icon name must contain only alphanumeric characters, dash, underscore, and dot"
-                    ],
-                    "error": "Bad Request"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Icon not found on the external service"
-          },
-          "502": {
-            "description": "External theme service returned an error response"
-          },
-          "503": {
-            "description": "Theme service is unavailable or request timed out"
-          }
-        },
-        "summary": "Get theme icon",
-        "tags": ["themes"]
-      }
-    },
     "/api/health": {
       "get": {
         "description": "Returns a simple health check response indicating the application is running. Use this endpoint for load balancer health checks, monitoring, and deployment verification.",
@@ -2478,6 +2390,96 @@
         "tags": ["files"]
       }
     },
+    "/api/v1/files/copy": {
+      "post": {
+        "operationId": "copyFiles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyFilesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Copy files and folders",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/move": {
+      "post": {
+        "operationId": "moveFiles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveFilesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Move files and folders across folders",
+        "tags": ["files"]
+      }
+    },
     "/api/v1/files/download": {
       "get": {
         "operationId": "downloadFile",
@@ -2624,6 +2626,94 @@
         "summary": "Transcribe audio using the configured ASR model",
         "tags": ["transcription"]
       }
+    },
+    "/api/themes": {
+      "get": {
+        "description": "Fetches the complete theme configuration from the external themes service. Returns a JSON object containing all available themes with their properties, colors, and icon references. Results are cached for 5 minutes.",
+        "operationId": "getThemes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved theme configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeConfigResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Theme configuration not found on the external service"
+          },
+          "502": {
+            "description": "External theme service returned an error response"
+          },
+          "503": {
+            "description": "Theme service is unavailable or request timed out"
+          }
+        },
+        "summary": "Get themes configuration",
+        "tags": ["themes"]
+      }
+    },
+    "/api/themes/icon": {
+      "get": {
+        "description": "Fetches a theme icon as SVG or PNG content from the external themes service. The icon name is validated to prevent path traversal attacks - only alphanumeric characters, dashes, underscores, and dots are allowed. Results are cached for 5 minutes.",
+        "operationId": "getThemeIcon",
+        "parameters": [
+          {
+            "name": "iconName",
+            "required": true,
+            "in": "query",
+            "description": "Icon filename (alphanumeric, dash, underscore, and dot only)",
+            "schema": {
+              "example": "icon-light.svg",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved icon content",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "<svg xmlns=\"http://www.w3.org/2000/svg\"><circle r=\"10\"/></svg>"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid icon name (validation failed or path traversal attempt)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "statusCode": 400,
+                    "message": [
+                      "Icon name must contain only alphanumeric characters, dash, underscore, and dot"
+                    ],
+                    "error": "Bad Request"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Icon not found on the external service"
+          },
+          "502": {
+            "description": "External theme service returned an error response"
+          },
+          "503": {
+            "description": "Theme service is unavailable or request timed out"
+          }
+        },
+        "summary": "Get theme icon",
+        "tags": ["themes"]
+      }
     }
   },
   "info": {
@@ -2673,78 +2763,6 @@
       }
     },
     "schemas": {
-      "ThemeDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "light"
-          },
-          "displayName": {
-            "type": "string",
-            "example": "Light Theme"
-          },
-          "colors": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "example": {
-              "primary-color": "#ffffff"
-            }
-          },
-          "app-logo": {
-            "type": "string",
-            "example": "https://example.com/logo-light.svg"
-          }
-        },
-        "required": ["id", "displayName", "colors", "app-logo"]
-      },
-      "ThemeImagesDto": {
-        "type": "object",
-        "properties": {
-          "default-addon": {
-            "type": "string",
-            "example": "https://example.com/addon.png"
-          },
-          "default-model": {
-            "type": "string",
-            "example": "https://example.com/model.png"
-          },
-          "favicon": {
-            "type": "string",
-            "example": "https://example.com/favicon.ico"
-          },
-          "chat-logo-light": {
-            "type": "string",
-            "example": "chat-logo-light.svg"
-          },
-          "chat-logo-dark": {
-            "type": "string",
-            "example": "chat-logo-dark.svg"
-          },
-          "chat-favicon": {
-            "type": "string",
-            "example": "https://example.com/chat-favicon.png"
-          }
-        },
-        "required": ["default-addon", "default-model", "favicon"]
-      },
-      "ThemeConfigResponseDto": {
-        "type": "object",
-        "properties": {
-          "themes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ThemeDto"
-            }
-          },
-          "images": {
-            "$ref": "#/components/schemas/ThemeImagesDto"
-          }
-        },
-        "required": ["themes", "images"]
-      },
       "ProviderInfoDto": {
         "type": "object",
         "properties": {
@@ -2974,6 +2992,20 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          },
+          "applicationProperties": {
+            "type": "object",
+            "example": {
+              "orchestrator": {
+                "system_prompt": {
+                  "type": "custom",
+                  "variables": {},
+                  "content": ""
+                }
+              },
+              "contexts": [],
+              "tool_sets": []
             }
           }
         },
@@ -4997,6 +5029,170 @@
         },
         "required": ["results"]
       },
+      "CopyItemDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "sourcePath": {
+            "type": "string",
+            "description": "Relative source path within bucket",
+            "example": "reports/q1.pdf"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "Relative destination path within bucket",
+            "example": "archive/q1.pdf"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": ["item", "folder"]
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name (last segment) for error messages",
+            "example": "q1.pdf"
+          }
+        },
+        "required": [
+          "bucket",
+          "sourcePath",
+          "destinationPath",
+          "nodeType",
+          "name"
+        ]
+      },
+      "CopyFilesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CopyItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "CopyItemResultDto": {
+        "type": "object",
+        "properties": {
+          "sourcePath": {
+            "type": "string",
+            "description": "Source path from request"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "Destination path from request"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "true when all Core copyResource calls succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error reason when success is false"
+          }
+        },
+        "required": ["sourcePath", "destinationPath", "success"]
+      },
+      "CopyFilesResponseDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CopyItemResultDto"
+            }
+          }
+        },
+        "required": ["results"]
+      },
+      "MoveItemDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "sourcePath": {
+            "type": "string",
+            "description": "Relative source path within bucket",
+            "example": "inbox/draft.pdf"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "Relative destination path within bucket",
+            "example": "reports/draft.pdf"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": ["item", "folder"]
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name (last segment) for error messages",
+            "example": "draft.pdf"
+          }
+        },
+        "required": [
+          "bucket",
+          "sourcePath",
+          "destinationPath",
+          "nodeType",
+          "name"
+        ]
+      },
+      "MoveFilesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MoveItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "MoveItemResultDto": {
+        "type": "object",
+        "properties": {
+          "sourcePath": {
+            "type": "string",
+            "description": "Source path from request"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "Destination path from request"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "true when all Core moveResource calls succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error reason when success is false"
+          }
+        },
+        "required": ["sourcePath", "destinationPath", "success"]
+      },
+      "MoveFilesResponseDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MoveItemResultDto"
+            }
+          }
+        },
+        "required": ["results"]
+      },
       "RateMessageDto": {
         "type": "object",
         "properties": {
@@ -5041,6 +5237,78 @@
           }
         },
         "required": ["audioUrl", "mimeType"]
+      },
+      "ThemeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "light"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Light Theme"
+          },
+          "colors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "primary-color": "#ffffff"
+            }
+          },
+          "app-logo": {
+            "type": "string",
+            "example": "https://example.com/logo-light.svg"
+          }
+        },
+        "required": ["id", "displayName", "colors", "app-logo"]
+      },
+      "ThemeImagesDto": {
+        "type": "object",
+        "properties": {
+          "default-addon": {
+            "type": "string",
+            "example": "https://example.com/addon.png"
+          },
+          "default-model": {
+            "type": "string",
+            "example": "https://example.com/model.png"
+          },
+          "favicon": {
+            "type": "string",
+            "example": "https://example.com/favicon.ico"
+          },
+          "chat-logo-light": {
+            "type": "string",
+            "example": "chat-logo-light.svg"
+          },
+          "chat-logo-dark": {
+            "type": "string",
+            "example": "chat-logo-dark.svg"
+          },
+          "chat-favicon": {
+            "type": "string",
+            "example": "https://example.com/chat-favicon.png"
+          }
+        },
+        "required": ["default-addon", "default-model", "favicon"]
+      },
+      "ThemeConfigResponseDto": {
+        "type": "object",
+        "properties": {
+          "themes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ThemeDto"
+            }
+          },
+          "images": {
+            "$ref": "#/components/schemas/ThemeImagesDto"
+          }
+        },
+        "required": ["themes", "images"]
       }
     }
   }

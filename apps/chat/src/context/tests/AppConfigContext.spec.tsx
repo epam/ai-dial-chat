@@ -1,6 +1,6 @@
 import type { ClientConfigResponseDto } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import React from 'react';
+import { createElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as appConfigApi from '../../server-api/app-config.api';
 import { UserConfigStatus } from '../../types/user-config-status';
@@ -32,8 +32,8 @@ const READY_RESPONSE = {
   metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
 } as unknown as ClientConfigResponseDto;
 
-const wrapper = ({ children }: { children: React.ReactNode }) =>
-  React.createElement(AppConfigProvider, null, children);
+const wrapper = ({ children }: { children: ReactNode }) =>
+  createElement(AppConfigProvider, null, children);
 
 describe('AppConfigContext', () => {
   beforeEach(() => {

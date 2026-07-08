@@ -1,28 +1,23 @@
 .filterTabs {
-  background-color: var(--cp-filter-bg, var(--bg-layer-8, #f0f2f5));
+  background-color: var(--cp-filter-bg, transparent);
 
   .tab {
-    border: none !important;
-    background-color: var(--cp-filter-tab-bg, transparent);
-    color: var(--cp-filter-tab-bg, var(--text-secondary, #6b7280));
+    border-color: transparent;
+    background-color: transparent;
+    color: var(--text-tertiary, #808898);
 
     &:hover {
-      color: var(--cp-filter-tab-hover-bg, var(--text-primary, #161b2d));
-      background-color: transparent !important;
+      color: var(--text-secondary);
+      background-color: rgba(92, 141, 234, 0.06);
     }
 
     > span {
-      text-align: center !important;
+      text-align: center;
     }
 
     &.tabActive {
-      border-color: var(
-        --cp-filter-tab-active-border,
-        var(--stroke-accent-primary, #124ace)
-      );
-      background: var(--cp-filter-tab-active-bg, var(--bg-layer-0, #fcfcfc));
-      color: var(--cp-filter-tab-color, var(--text-accent-primary, #124ace));
-      box-shadow: var(--cp-filter-tab-shadow, 0 1px 2px rgba(16, 24, 40, 0.04));
+      background-color: rgba(39, 100, 217, 0.07);
+      color: var(--text-secondary, #64748b);
     }
   }
 }

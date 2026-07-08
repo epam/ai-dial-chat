@@ -37,6 +37,13 @@ export interface DialFileManagerShellLabels {
   deletingLabel: string;
   renameLabel: string;
   renamingLabel: string;
+  copyLabel: string;
+  moveLabel: string;
+  copyingLabel: string;
+  movingLabel: string;
+  operationLoaderCopyTitle: string;
+  operationLoaderMoveTitle: string;
+  operationLoaderCancelLabel: string;
   deleteConfirmTitle: (names: string[]) => ReactNode;
   deleteConfirmBody: (names: string[]) => ReactNode;
   deleteConfirmLabel: string;

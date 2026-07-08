@@ -1,7 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { IconPlus } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
-import panelStyles from '../ConversationPanel/ConversationPanel.module.scss';
 import styles from './NewChatButton.module.scss';
 
 /** Props for `NewChatButton`. */
@@ -16,8 +15,8 @@ export interface NewChatButtonProps {
 
 /** Full-width button rendered at the top of the conversation panel to start a new chat. */
 export const NewChatButton: FC<NewChatButtonProps> = memo(
-  ({ label, onClick, labelClassName = 'dial-small-text' }) => (
-    <div className={mergeClasses('border-b px-2 py-1', panelStyles.divider)}>
+  ({ label, onClick, labelClassName = 'dial-small-semi-text' }) => (
+    <div className="px-3 py-2">
       <button
         onClick={onClick}
         type="button"

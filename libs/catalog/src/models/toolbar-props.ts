@@ -54,10 +54,6 @@ export interface ToolbarProps {
   query: string;
   /** Called when the query changes. */
   onQueryChange: (q: string) => void;
-  /** Whether at least one filter is active. */
-  isAnyFilterActive: boolean;
-  /** Called when "Clear all" is clicked. */
-  onClearFilters: () => void;
   /** Section heading text. Default: 'Browse'. */
   title?: string;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
@@ -68,8 +64,6 @@ export interface ToolbarProps {
   listViewLabel?: string;
   /** Grouped typography and color overrides. */
   styles?: ToolbarStyles;
-  /** Label for the "Clear all" filters button. Default: 'Clear all'. */
-  clearAllLabel?: string;
   /** Currently selected topic filters. Empty set means no topic filter is active. */
   filters?: Set<string>;
   /** Called when the topic filter selection changes. */

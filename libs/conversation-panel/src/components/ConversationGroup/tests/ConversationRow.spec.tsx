@@ -28,7 +28,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       aria-hidden={ariaHidden ? 'true' : undefined}
     />
   ),
-  DialGhostButton: ({
+  DialButton: ({
     iconBefore,
     label,
     'aria-current': ariaCurrent,
@@ -38,6 +38,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label?: React.ReactNode;
     'aria-current'?: React.AriaAttributes['aria-current'];
     onClick?: () => void;
+    [key: string]: unknown;
   }) => (
     <button aria-current={ariaCurrent} onClick={onClick}>
       {iconBefore}

@@ -41,11 +41,19 @@ be entered as free-entry tags sourced from the application config.
 
 #### Scenario: Edit general fields
 - **WHEN** a user types a name, version, icon URL, description, and adds topic tags
-- **THEN** those values are held in component state and reflected in the live preview
+- **THEN** those values are held in component state without saving
 
 #### Scenario: Name is required
 - **WHEN** a user clears the name field and attempts to proceed or save
 - **THEN** the system shows a required-field error for the name and blocks the save
+
+### Requirement: Form-only editor layout
+The editor SHALL render the active step form as the only content pane beneath the editor
+header. The editor SHALL NOT render a separate live preview or catalog-card preview pane.
+
+#### Scenario: Create toolset layout
+- **WHEN** a user opens the toolset editor in create mode
+- **THEN** the form occupies the available editor content width with no preview pane beside it
 
 ### Requirement: Settings step connection fields
 The Settings step SHALL allow editing the endpoint URL, the transport protocol (HTTP or
@@ -64,14 +72,6 @@ URL to the clipboard.
 #### Scenario: Copy endpoint URL
 - **WHEN** a user clicks the copy-endpoint control
 - **THEN** the endpoint URL is written to the clipboard
-
-### Requirement: Live preview
-The editor SHALL render a read-only preview pane that reflects the current form values
-(name, icon, version, description, topics) as they change.
-
-#### Scenario: Preview updates with edits
-- **WHEN** a user changes the name or description in the form
-- **THEN** the preview pane updates to show the new values without saving
 
 ### Requirement: Unique name generation
 When creating a new toolset, the system SHALL generate a storage-safe, conflict-free default
@@ -95,4 +95,3 @@ keep the user in the editor and show an error.
 #### Scenario: Save failure
 - **WHEN** the backend returns an error during save
 - **THEN** the editor remains open, shows an error, and clears the saving state
-

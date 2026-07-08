@@ -578,15 +578,15 @@ describe('ToolsetsService — write operations', () => {
       );
       const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
       expect(sentBody).toEqual({
-        display_name: 'My toolset',
-        display_version: '0.0.1',
+        displayName: 'My toolset',
+        displayVersion: '0.0.1',
         endpoint: 'https://my-toolset.example.com/mcp',
         transport: 'HTTP',
         allowed_tools: ['tool1'],
         description: 'desc',
-        icon_url: 'https://example.com/icon.svg',
-        description_keywords: ['a', 'b'],
-        auth_settings: {
+        iconUrl: 'https://example.com/icon.svg',
+        descriptionKeywords: ['a', 'b'],
+        authSettings: {
           authentication_type: 'API_KEY',
           api_key_header: 'X-Api-Key',
         },
@@ -652,7 +652,7 @@ describe('ToolsetsService — write operations', () => {
             Authorization: 'Bearer token',
           }),
           body: expect.objectContaining({
-            display_name: 'My toolset',
+            displayName: 'My toolset',
           }),
         }),
       );
@@ -735,7 +735,7 @@ describe('ToolsetsService — write operations', () => {
         string,
         unknown
       >;
-      expect(sentBody.api_key).toBe('secret-key');
+      expect(sentBody.apiKey).toBe('secret-key');
       expect(sentBody.code).toBeUndefined();
     });
 
@@ -758,10 +758,10 @@ describe('ToolsetsService — write operations', () => {
         unknown
       >;
       expect(sentBody.code).toBe('auth-code');
-      expect(sentBody.redirect_uri).toBe(
+      expect(sentBody.redirectUri).toBe(
         'https://chat.example.com/toolset-editor/callback',
       );
-      expect(sentBody.api_key).toBeUndefined();
+      expect(sentBody.apiKey).toBeUndefined();
     });
 
     it('throws UnauthorizedException on upstream 401', async () => {
@@ -801,14 +801,35 @@ describe('ToolsetsService — write operations', () => {
             Authorization: 'Bearer token',
           }),
           body: expect.objectContaining({
-            authentication_type: ToolsetAuthType.OAuth,
-            credentials_level: ToolsetCredentialsLevel.User,
+            authenticationType: ToolsetAuthType.OAuth,
+            credentialsLevel: ToolsetCredentialsLevel.User,
             url: id,
           }),
         }),
       );
       expect(cacheManager.del).toHaveBeenCalledWith(
         `toolsets:single:user1:${id}`,
+      );
+    });
+
+    it('maps the App credentials level to the DIAL Core APPLICATION value', async () => {
+      const { service } = makeWriteService();
+      const signoutSpy = vi
+        .spyOn(service['client'], 'toolSetSignout')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.logoutToolset('user1', 'token', id, {
+        url: id,
+        credentialsLevel: ToolsetCredentialsLevel.App,
+        authenticationType: ToolsetAuthType.ApiKey,
+      });
+
+      expect(signoutSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            credentialsLevel: 'APPLICATION',
+          }),
+        }),
       );
     });
   });
