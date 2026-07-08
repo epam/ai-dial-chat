@@ -1,5 +1,20 @@
 import { vi } from 'vitest';
 
+class MockResizeObserver {
+  observe() {
+    /* no-op */
+  }
+  unobserve() {
+    /* no-op */
+  }
+  disconnect() {
+    /* no-op */
+  }
+}
+
+globalThis.ResizeObserver ??=
+  MockResizeObserver as unknown as typeof ResizeObserver;
+
 vi.mock('@epam/pdf-highlighter-kit', () => ({
   PDFHighlightViewer: () => null,
 }));

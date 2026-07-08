@@ -1,7 +1,11 @@
-import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import {
+  DialNotification,
+  NotificationVariant,
+  StepStatus,
+} from '@epam/ai-dial-ui-kit';
 import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import EditorHeader from '../../components/EditorHeader/EditorHeader';
@@ -75,6 +79,12 @@ const AppsEditor: FC = () => {
   );
 
   const isGeneralStep = step === AppsEditorStep.General;
+  const [hasVisitedGeneralStep, setHasVisitedGeneralStep] =
+    useState(isGeneralStep);
+
+  useEffect(() => {
+    if (isGeneralStep) setHasVisitedGeneralStep(true);
+  }, [isGeneralStep]);
 
   const handleSave = useCallback(() => {
     if (isGeneralStep) {
@@ -120,20 +130,24 @@ const AppsEditor: FC = () => {
     [isPreviewing, t],
   );
 
-  const steps = useMemo(
-    () => [
-      { id: AppsEditorStep.General, name: t(AppsEditorI18nKeys.StepGeneral) },
-      { id: AppsEditorStep.Settings, name: t(AppsEditorI18nKeys.StepSettings) },
-    ],
-    [t],
-  );
-
   const saveButtonLabel = isGeneralStep
     ? t(AppsEditorI18nKeys.GeneralFormNextButton)
     : t(AppsEditorI18nKeys.SaveButton);
 
   const appIdForSettings =
     createdAppId ?? searchParams.get(AppsEditorQuery.AppId) ?? '';
+
+  const steps = useMemo(
+    () => [
+      { id: AppsEditorStep.General, name: t(AppsEditorI18nKeys.StepGeneral) },
+      {
+        id: AppsEditorStep.Settings,
+        name: t(AppsEditorI18nKeys.StepSettings),
+        status: appIdForSettings ? StepStatus.VALID : undefined,
+      },
+    ],
+    [t, appIdForSettings],
+  );
 
   const canPreview =
     !isGeneralStep && !!appIdForSettings && !!schema?.editorUrl;
@@ -167,13 +181,16 @@ const AppsEditor: FC = () => {
       )}
 
       <div className="min-h-0 flex-1 overflow-auto">
-        {isGeneralStep ? (
-          <GeneralForm
-            ref={generalFormRef}
-            schemaId={schemaId}
-            onCreated={handleCreated}
-          />
-        ) : (
+        {hasVisitedGeneralStep && (
+          <div className={isGeneralStep ? 'h-full' : 'hidden'}>
+            <GeneralForm
+              ref={generalFormRef}
+              schemaId={schemaId}
+              onCreated={handleCreated}
+            />
+          </div>
+        )}
+        {!isGeneralStep && (
           <SettingsStep
             ref={settingsStepRef}
             schema={schema}
