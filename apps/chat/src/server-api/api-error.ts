@@ -43,7 +43,7 @@ const getErrorResponse = (error: unknown): ErrorWithResponse['response'] => {
 export const isConversationNotFoundError = (error: unknown): boolean => {
   const response = getErrorResponse(error);
   if (!response?.status) return false;
-  return response.status === 404 || response.status === 502;
+  return response.status === 404;
 };
 
 export const getApiErrorMessage = async (
