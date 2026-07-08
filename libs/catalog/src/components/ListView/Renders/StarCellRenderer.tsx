@@ -1,11 +1,5 @@
 import type { ICellRendererParams } from 'ag-grid-community';
-import {
-  FC,
-  MouseEvent,
-  forwardRef,
-  useImperativeHandle,
-  useState,
-} from 'react';
+import { FC, MouseEvent, useState } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
 import { StarToggleButton } from '../../StarToggleButton/StarToggleButton';
