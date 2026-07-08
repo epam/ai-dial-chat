@@ -58,7 +58,7 @@ module.exports = {
       'controls-accent': 'var(--controls-bg-accent, #5C8DEA)',
       'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
       'controls-accent-hover': 'var(--controls-bg-accent-hover, #4878D2)',
-      'controls-disable': 'var(--controls-bg-disable, #7F8792)',
+      'controls-disable': 'var(--controls-bg-disable, #242C42)',
       'model-icon': 'var(--bg-model-icon, #FFFFFF00)',
       'icon-accent-primary': 'var(--text-accent-primary, #7DA4FF)',
       'controls-enable-primary': 'var(--controls-enable-primary, #FCFCFC)',
