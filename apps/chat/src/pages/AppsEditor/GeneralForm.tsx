@@ -11,8 +11,10 @@ import {
   forwardRef,
   memo,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,13 +29,25 @@ export interface GeneralFormHandle {
   submit: () => Promise<void>;
 }
 
+export interface GeneralFormInitialValues {
+  name?: string;
+  description?: string;
+  iconUrl?: string;
+  version?: string;
+  topics?: string[];
+}
+
 interface Props {
   schemaId: string;
+  /** Id of the app being edited. When set, submitting advances to the next step instead of creating a new app. */
+  appId?: string;
+  /** Existing app values used to prefill the form when editing an app. */
+  initialValues?: GeneralFormInitialValues;
   onCreated: (appId: string) => void;
 }
 
 const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
-  { schemaId, onCreated },
+  { schemaId, appId, initialValues, onCreated },
   ref,
 ) {
   const { t } = useTranslation();
@@ -47,6 +61,17 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   const [versionError, setVersionError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const hasSeededInitialValuesRef = useRef(false);
+
+  useEffect(() => {
+    if (hasSeededInitialValuesRef.current || !initialValues) return;
+    hasSeededInitialValuesRef.current = true;
+    setName(initialValues.name ?? '');
+    setDescription(initialValues.description ?? '');
+    setIconUrl(initialValues.iconUrl ?? '');
+    setVersion(initialValues.version ?? '');
+    setTopics(initialValues.topics ?? []);
+  }, [initialValues]);
 
   const handleNameChange = (value?: string) => {
     setName(value ?? '');
@@ -76,6 +101,12 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     }
     setNameError('');
     setVersionError('');
+
+    if (appId) {
+      onCreated(appId);
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError('');
     try {
@@ -108,6 +139,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     name,
     version,
     schemaId,
+    appId,
     description,
     iconUrl,
     topics,

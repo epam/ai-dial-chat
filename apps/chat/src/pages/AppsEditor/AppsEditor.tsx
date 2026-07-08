@@ -16,7 +16,10 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
-import type { GeneralFormHandle } from './GeneralForm';
+import type {
+  GeneralFormHandle,
+  GeneralFormInitialValues,
+} from './GeneralForm';
 import GeneralForm from './GeneralForm';
 import type { SettingsStepHandle } from './SettingsStep';
 import SettingsStep from './SettingsStep';
@@ -25,7 +28,7 @@ const AppsEditor: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { schemas } = useDeployments();
+  const { schemas, items: deployments } = useDeployments();
 
   const [createdAppId, setCreatedAppId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -48,6 +51,33 @@ const AppsEditor: FC = () => {
   const schema = useMemo<ApplicationSchemaSummaryDto | undefined>(
     () => schemas.find((s) => s.id === schemaId),
     [schemas, schemaId],
+  );
+
+  const existingAppId = searchParams.get(AppsEditorQuery.AppId);
+  const isEditingExistingApp = !createdAppId && !!existingAppId;
+
+  const existingDeployment = useMemo(
+    () =>
+      isEditingExistingApp
+        ? deployments.find((d) => d.id === existingAppId)
+        : undefined,
+    [deployments, isEditingExistingApp, existingAppId],
+  );
+
+  const generalFormInitialValues = useMemo<
+    GeneralFormInitialValues | undefined
+  >(
+    () =>
+      existingDeployment
+        ? {
+            name: existingDeployment.displayName,
+            description: existingDeployment.description,
+            iconUrl: existingDeployment.iconUrl,
+            version: existingDeployment.displayVersion,
+            topics: existingDeployment.topics,
+          }
+        : undefined,
+    [existingDeployment],
   );
 
   const handleCreated = useCallback(
@@ -139,7 +169,11 @@ const AppsEditor: FC = () => {
 
   const steps = useMemo(
     () => [
-      { id: AppsEditorStep.General, name: t(AppsEditorI18nKeys.StepGeneral) },
+      {
+        id: AppsEditorStep.General,
+        name: t(AppsEditorI18nKeys.StepGeneral),
+        status: appIdForSettings ? StepStatus.VALID : undefined,
+      },
       {
         id: AppsEditorStep.Settings,
         name: t(AppsEditorI18nKeys.StepSettings),
@@ -186,6 +220,10 @@ const AppsEditor: FC = () => {
             <GeneralForm
               ref={generalFormRef}
               schemaId={schemaId}
+              appId={
+                isEditingExistingApp ? (existingAppId ?? undefined) : undefined
+              }
+              initialValues={generalFormInitialValues}
               onCreated={handleCreated}
             />
           </div>

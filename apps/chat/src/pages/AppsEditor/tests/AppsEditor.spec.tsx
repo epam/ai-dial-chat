@@ -58,6 +58,7 @@ describe('AppsEditor', () => {
     latestSettingsStepProps = {};
     mockUseDeployments.mockReturnValue({
       schemas: [SCHEMA],
+      items: [],
     } as unknown as ReturnType<typeof DeploymentsContextModule.useDeployments>);
   });
 
