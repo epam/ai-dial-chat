@@ -424,11 +424,11 @@ const ConversationView: FC<Props> = ({
           aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
-          className="mx-auto flex w-full max-w-[760px] flex-1 flex-col overflow-y-auto overflow-x-hidden"
+          className="flex w-full flex-1 flex-col overflow-y-auto overflow-x-hidden"
         >
           <div
             ref={contentRef}
-            className="flex min-w-0 shrink-0 flex-col gap-[26px] px-6 pt-7"
+            className="mx-auto flex w-full min-w-0 max-w-[760px] shrink-0 flex-col gap-[26px] px-6 pt-7"
           >
             {messages.map((msg, index) => {
               const isThisMessageEditing = editingMessageIndexes?.has(index);
