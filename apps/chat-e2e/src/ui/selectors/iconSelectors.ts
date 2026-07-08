@@ -28,6 +28,7 @@ export const IconSelectors = {
   dotsMenuIcon: '.tabler-icon-dots-vertical',
   caretIcon: '.tabler-icon-caret-right-filled',
   chevronsRightIcon: '.tabler-icon-chevrons-right',
+  chevronRightIcon: '.tabler-icon-chevron-right',
   fileTypeIcon: (extension: string) =>
     `tabler-icon tabler-icon-file-type-${extension} `,
   defaultFileIconClass: 'tabler-icon tabler-icon-file ',
