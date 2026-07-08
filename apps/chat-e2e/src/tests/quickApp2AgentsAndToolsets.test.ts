@@ -1027,7 +1027,6 @@ dialTest(
     itemApiHelper,
     modelApiHelper,
     tooltipPortal,
-    confirmationDialog,
     baseAssertion,
     setTestIds,
   }) => {
@@ -1042,6 +1041,7 @@ dialTest(
     );
     let notAvailableAgentId: string;
     let notAvailableToolsetId: string;
+    let toolSupportingModelId: string;
 
     await dialTest.step(
       'Precondition: create an agent and a toolset (to be deleted) and a valid agent',
@@ -1057,14 +1057,22 @@ dialTest(
         await toolsetApiHelper.createToolset(
           toolsetBuilder.withDisplayName(notAvailableToolsetName).build(),
         );
+        const allEntities = await modelApiHelper.getModels();
         notAvailableAgentId = (
-          await modelApiHelper.getAgentByNameAndVersion({
-            name: notAvailableAgentName,
-          })
+          await modelApiHelper.getAgentByNameAndVersion(
+            { name: notAvailableAgentName },
+            allEntities,
+          )
         ).id;
         notAvailableToolsetId = (await toolsetApiHelper.getToolset(
           notAvailableToolsetName,
         ))!.id!;
+        // The orchestrator model must support tools, otherwise the form is
+        // invalid and Save & Exit opens the "save only valid data" dialog.
+        toolSupportingModelId = allEntities.find(
+          (entity) =>
+            entity.type === EntityType.Model && entity.features?.tools,
+        )!.id;
       },
     );
 
@@ -1074,6 +1082,7 @@ dialTest(
         await applicationApiHelper.createApplication(
           quickApp2Builder
             .withDisplayName(quickAppName)
+            .withOrchestratorModel(toolSupportingModelId)
             .addApp({ id: notAvailableAgentId, name: notAvailableAgentName })
             .addToolset(notAvailableToolsetId)
             .build(),
@@ -1143,13 +1152,6 @@ dialTest(
       'Save and exit, then reopen — the not-available agent and toolset are still attached and red',
       async () => {
         await entityEditorHeader.saveAndExitButton.click();
-        // Invalid/missing fields trigger the "save only valid data" dialog.
-        await baseAssertion.assertElementState(confirmationDialog, 'visible');
-        await baseAssertion.assertElementText(
-          confirmationDialog.entityName,
-          ExpectedConstants.saveOnlyValidDataTitle,
-        );
-        await confirmationDialog.confirm();
         await marketplacePage.waitForPageLoaded();
         await baseAssertion.assertElementState(entityDetailsModal, 'hidden');
         await marketplaceHeader
