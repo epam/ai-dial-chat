@@ -25,9 +25,10 @@ import type {
   DialToolsetListResponseDto,
 } from '../openapi/openapi-response.dto';
 import { UserConfigService } from '../user-config/user-config.service';
-import type {
-  ToolsetLoginBodyDto,
-  ToolsetLogoutBodyDto,
+import {
+  ToolsetCredentialsLevel,
+  type ToolsetLoginBodyDto,
+  type ToolsetLogoutBodyDto,
 } from './dto/toolset-auth.dto';
 import { ToolsetAuthType } from './dto/toolset-body.dto';
 import type { MutatedToolsetDto, ToolsetBodyDto } from './dto/toolset-body.dto';
@@ -36,13 +37,19 @@ const DEFAULT_TOOLSET_VERSION = '0.0.1';
 const TOOLSET_RESOURCE_PREFIX = 'toolsets/';
 
 type DialAuthSettings = components['schemas']['ResourceAuthSettings'];
-type DialToolsetBody = components['schemas']['Toolset'];
+type DialToolsetBody = components['schemas']['ToolSet'];
 type DialToolsetSigninBody =
-  operations['toolsetSignin']['requestBody']['content']['application/json'] & {
-    redirect_uri?: string;
-  };
+  operations['toolsetSignin']['requestBody']['content']['application/json'];
 type DialToolsetSignoutBody =
   operations['toolSetSignout']['requestBody']['content']['application/json'];
+type DialCredentialsLevel = NonNullable<
+  DialToolsetSignoutBody['credentialsLevel']
+>;
+
+const toDialCredentialsLevel = (
+  level: ToolsetCredentialsLevel,
+): DialCredentialsLevel =>
+  level === ToolsetCredentialsLevel.App ? 'APPLICATION' : level;
 
 interface DialToolsetResource {
   bucket: string;
@@ -116,16 +123,16 @@ const toDialToolsetBody = (
   version: string,
 ): DialToolsetBody => {
   const dialBody: DialToolsetBody = {
-    display_name: body.name,
-    display_version: version,
+    displayName: body.name,
+    displayVersion: version,
     endpoint: body.endpoint.trim(),
     transport: body.transport,
     allowed_tools: body.allowedTools ?? [],
-    auth_settings: toDialAuthSettings(body.authSettings),
+    authSettings: toDialAuthSettings(body.authSettings),
   };
   if (body.description != null) dialBody.description = body.description;
-  if (body.iconUrl != null) dialBody.icon_url = body.iconUrl;
-  if (body.topics != null) dialBody.description_keywords = body.topics;
+  if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
+  if (body.topics != null) dialBody.descriptionKeywords = body.topics;
   if (body.reference != null) dialBody.reference = body.reference;
   return dialBody;
 };
@@ -135,24 +142,23 @@ const toDialToolsetSigninBody = (
 ): DialToolsetSigninBody => {
   const base = {
     url: body.url,
-    credentials_level:
-      body.credentialsLevel as DialToolsetSigninBody['credentials_level'],
+    credentialsLevel: toDialCredentialsLevel(body.credentialsLevel),
   };
 
   if (body.authenticationType === ToolsetAuthType.ApiKey) {
     return {
       ...base,
-      authentication_type: ToolsetAuthType.ApiKey,
-      api_key: body.apiKey,
+      authenticationType: ToolsetAuthType.ApiKey,
+      apiKey: body.apiKey,
     };
   }
 
   if (body.authenticationType === ToolsetAuthType.OAuth) {
     return {
       ...base,
-      authentication_type: ToolsetAuthType.OAuth,
+      authenticationType: ToolsetAuthType.OAuth,
       code: body.code,
-      redirect_uri: body.redirectUri,
+      redirectUri: body.redirectUri,
     };
   }
 
@@ -171,9 +177,8 @@ const toDialToolsetSignoutBody = (
 
   return {
     url: body.url,
-    credentials_level:
-      body.credentialsLevel as DialToolsetSignoutBody['credentials_level'],
-    authentication_type: body.authenticationType,
+    credentialsLevel: toDialCredentialsLevel(body.credentialsLevel),
+    authenticationType: body.authenticationType,
   };
 };
 
@@ -351,10 +356,11 @@ export class ToolsetsService extends AppService {
     if (result.error) {
       return mapDialHttpStatus(result.response.status, context, this.logger);
     }
-    if (result.data == null) {
+    const { bucket } = result.data ?? {};
+    if (bucket == null) {
       throw new BadGatewayException('DIAL Core returned an empty bucket');
     }
-    return result.data.bucket;
+    return bucket;
   }
 
   private async resolveToolsetResource(

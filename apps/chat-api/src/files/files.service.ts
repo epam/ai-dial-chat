@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { finished, pipeline } from 'node:stream/promises';
+import type { components } from '@epam/ai-dial-typescript-sdk';
 import {
   ConflictException,
   HttpException,
@@ -421,23 +422,11 @@ export class FilesService extends AppService {
         );
       }
 
-      if (data == null) {
-        this.logger.warn(
-          `DIAL Core getFileMetadata returned no data: bucket=${bucket}, path=${path}`,
-        );
-        return handleDialSdkError(
-          error,
-          'files.getFileMetadata',
-          this.logger,
-          response,
-        );
-      }
-
       this.logger.debug(
         `getFileMetadata succeeded: bucket=${bucket}, path=${path}`,
       );
 
-      const fileData = data as typeof data & { etag?: string };
+      const fileData = data as components['schemas']['FileMetadata'];
       return {
         name: fileData.name,
         nodeType: fileData.nodeType,
