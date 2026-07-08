@@ -58,9 +58,7 @@ import { getConversationSource } from './get-conversation-source';
 const PANEL_STYLES: ConversationPanelStyles = {
   typography: {
     itemIconBadgeClassName: 'rounded-lg',
-    tabClassName: 'dial-tiny-semi-text cp-filter-tab',
   },
-  colors: { border: 'rgba(0, 0, 0, 0.016)', text: 'var(--text-primary)' },
 };
 
 interface ConversationPanelViewProps {

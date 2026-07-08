@@ -984,6 +984,12 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   topics?: Array<string>;
+  /**
+   *
+   * @type {object}
+   * @memberof CreateApplicationBodyDto
+   */
+  applicationProperties?: object;
 }
 /**
  *

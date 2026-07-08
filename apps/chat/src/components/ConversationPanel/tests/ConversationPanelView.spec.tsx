@@ -10,7 +10,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
-import React from 'react';
+import { cloneElement, ReactElement, ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
@@ -26,11 +26,11 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
       conversations: panelConversations,
       getActions,
     }: {
-      headerActions?: React.ReactNode;
+      headerActions?: ReactNode;
       conversations?: Array<{ id: string }>;
       getActions?: (item: { id: string }) => Array<{
         key: string;
-        label: React.ReactNode;
+        label: ReactNode;
         onClick?: () => void;
       }>;
     }) => (
@@ -69,7 +69,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       header: string;
       confirmLabel: string;
       cancelLabel: string;
-      description?: React.ReactNode;
+      description?: ReactNode;
       onConfirm: () => void;
       onCancel: () => void;
       isLoading?: boolean;
@@ -94,17 +94,17 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       children,
       items,
     }: {
-      children: React.ReactElement<{ onClick?: () => void }>;
+      children: ReactElement<{ onClick?: () => void }>;
       items: Array<{
         key: string;
-        label: React.ReactNode;
+        label: ReactNode;
         onClick: () => void;
       }>;
     }) => {
-      const [isOpen, setIsOpen] = React.useState(false);
+      const [isOpen, setIsOpen] = useState(false);
       return (
         <div>
-          {React.cloneElement(children, {
+          {cloneElement(children, {
             onClick: () => setIsOpen((value) => !value),
           })}
           {isOpen &&
@@ -123,7 +123,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     }: {
       'aria-label': string;
       onClick?: () => void;
-      icon?: React.ReactNode;
+      icon?: ReactNode;
     }) => (
       <button aria-label={ariaLabel} onClick={onClick}>
         {icon}

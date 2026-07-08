@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CatalogViewMode } from '../../../types/view-mode';
@@ -102,8 +101,6 @@ const renderToolbar = (props?: Partial<React.ComponentProps<typeof Toolbar>>) =>
     <Toolbar
       query=""
       onQueryChange={vi.fn()}
-      isAnyFilterActive={false}
-      onClearFilters={vi.fn()}
       viewMode={CatalogViewMode.Grid}
       onViewModeChange={vi.fn()}
       {...props}
@@ -118,26 +115,5 @@ describe('Toolbar', () => {
   it('renders the section title', () => {
     renderToolbar({ title: 'Browse' });
     expect(screen.getByText('Browse')).toBeTruthy();
-  });
-
-  it('does not render Clear all button when isAnyFilterActive is false', () => {
-    renderToolbar({ isAnyFilterActive: false, clearAllLabel: 'Clear all' });
-    expect(screen.queryByRole('button', { name: 'Clear all' })).toBeNull();
-  });
-
-  it('renders Clear all button when isAnyFilterActive is true', () => {
-    renderToolbar({ isAnyFilterActive: true, clearAllLabel: 'Clear all' });
-    expect(screen.getByRole('button', { name: 'Clear all' })).toBeTruthy();
-  });
-
-  it('calls onClearFilters when Clear all is clicked', async () => {
-    const onClearFilters = vi.fn();
-    renderToolbar({
-      isAnyFilterActive: true,
-      clearAllLabel: 'Clear all',
-      onClearFilters,
-    });
-    await userEvent.click(screen.getByRole('button', { name: 'Clear all' }));
-    expect(onClearFilters).toHaveBeenCalledOnce();
   });
 });

@@ -2993,6 +2993,20 @@
             "items": {
               "type": "string"
             }
+          },
+          "applicationProperties": {
+            "type": "object",
+            "example": {
+              "orchestrator": {
+                "system_prompt": {
+                  "type": "custom",
+                  "variables": {},
+                  "content": ""
+                }
+              },
+              "contexts": [],
+              "tool_sets": []
+            }
           }
         },
         "required": ["name", "type"]
