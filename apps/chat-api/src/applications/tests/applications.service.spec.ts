@@ -226,7 +226,11 @@ describe('ApplicationsService', () => {
         version: '2.0',
       });
       expect(result.id).toBe('applications/test-bucket/My%20App__2.0');
-      expect(saveCustomApplicationSpy.mock.calls[0][1]).toBe('My%20App__2.0');
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        'My%20App__2.0',
+        expect.anything(),
+      );
     });
 
     it('defaults version to 0.0.1 when not provided', async () => {
@@ -249,19 +253,21 @@ describe('ApplicationsService', () => {
         version: '1.0',
       });
 
-      const sentBody = saveCustomApplicationSpy.mock.calls[0][2].body as Record<
-        string,
-        unknown
-      >;
-      expect(sentBody).toEqual({
-        displayName: 'My App',
-        displayVersion: '1.0',
-        application_type_schema_id:
-          'https://mydial.epam.com/custom_application_schemas/quickapps2',
-        application_properties: {},
-        description: 'A description',
-        iconUrl: 'https://example.com/icon.svg',
-      });
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          body: {
+            displayName: 'My App',
+            displayVersion: '1.0',
+            application_type_schema_id:
+              'https://mydial.epam.com/custom_application_schemas/quickapps2',
+            application_properties: {},
+            description: 'A description',
+            iconUrl: 'https://example.com/icon.svg',
+          },
+        }),
+      );
     });
 
     it('maps topics to descriptionKeywords in SDK body', async () => {
@@ -273,13 +279,16 @@ describe('ApplicationsService', () => {
         topics: ['nlp', 'assistant'],
       });
 
-      const sentBody = saveCustomApplicationSpy.mock.calls[0][2].body as Record<
-        string,
-        unknown
-      >;
-      expect(sentBody).toMatchObject({
-        descriptionKeywords: ['nlp', 'assistant'],
-      });
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          body: expect.objectContaining({
+            descriptionKeywords: ['nlp', 'assistant'],
+          }),
+        }),
+      );
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
       expect(sentBody).not.toHaveProperty('topics');
     });
 
@@ -296,7 +305,9 @@ describe('ApplicationsService', () => {
           }),
         }),
       );
-      expect(saveCustomApplicationSpy.mock.calls[0][2]).toEqual(
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: 'Bearer my-token',
@@ -310,6 +321,14 @@ describe('ApplicationsService', () => {
       mockCreateApplicationSdk(service, errResponse(401));
       await expect(service.createApplication('u', 't', body)).rejects.toThrow(
         UnauthorizedException,
+      );
+    });
+
+    it('throws BadGatewayException when bucket call returns an empty body', async () => {
+      const { service } = makeService();
+      mockCreateApplicationSdk(service, okResponse(null));
+      await expect(service.createApplication('u', 't', body)).rejects.toThrow(
+        BadGatewayException,
       );
     });
 
