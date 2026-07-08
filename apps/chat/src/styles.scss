@@ -19,16 +19,6 @@
     @apply size-full bg-layer-5 text-primary;
     font-family: 'Inter', sans-serif;
     --theme-font: 'Inter', sans-serif;
-    --text-tertiary: #808898;
-
-    // ConversationPanel CSS vars not exposed via the styles.colors prop.
-    // These cascade into the panel's shadow DOM through inheritance.
-    --cp-trigger-bg: var(--controls-bg-accent-primary, #3664e2);
-    --cp-trigger-icon: var(--controls-text-permanent, #fff);
-    --cp-filter-tab-active-bg: var(--bg-layer-1);
-    --cp-filter-tab-active-border: var(--stroke-accent-primary);
-    --cp-filter-tab-border: transparent;
-    --cp-item-active-border: var(--bg-accent-secondary, #37babc);
   }
 }
 
@@ -55,46 +45,6 @@ div[role='menu']:has(> [role='none']) {
       }
     }
   }
-}
-
-// Chat row — 8px radius, correct text color, vertical padding.
-// Each item is: <li> → <a class="contents"> → <button class="border-l-2 …">
-// The <a> is display:contents (invisible), so we must target the inner <button>.
-// .dial-primary-ghost-button in the selector raises specificity above the ui-kit's
-// own !important rule on that class, which would otherwise override our color.
-aside[class~='dial-h1-text'] li > a > button.dial-primary-ghost-button {
-  border-radius: 12px !important;
-  padding-block: 9px;
-  color: var(--text-primary) !important;
-}
-
-// Active chat row — grey background, no left indicator bar.
-aside[class~='dial-h1-text'] li:has(> a > button[aria-current='page'])::before {
-  content: none !important;
-}
-
-aside[class~='dial-h1-text'] li > a > button[aria-current='page'] {
-  background: var(--bg-layer-2, #eeeef0) !important;
-  border-inline-start-color: transparent !important;
-}
-
-// Composer input — match catalog search bar radius (not exposed via ci- vars)
-[role='region'] [class~='rounded-xl'][class~='border'] {
-  border-radius: 12px !important;
-}
-
-// Active chat row — 3px brand-gradient start-edge indicator bar
-// Anchor: aria-current="page" on the button; the <a class="contents"> sits between li and button.
-aside[class~='dial-h1-text']
-  [class~='group/conversation']:has(> a > button[aria-current='page'])::before {
-  content: '';
-  position: absolute;
-  inset-block: 4px;
-  inset-inline-start: 0;
-  width: 3px;
-  border-start-end-radius: 2px;
-  border-end-end-radius: 2px;
-  background: linear-gradient(180deg, #37babc 0%, #5c8dea 48%, #a972ff 100%);
 }
 
 // DS token overrides or new tokens
