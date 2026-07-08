@@ -87,16 +87,8 @@ export interface ConversationHistoryColors {
   newChatHoverBackground?: string;
   /** Active/pressed background of the New chat button. */
   newChatActiveBackground?: string;
-  /** Background of the plus-icon circle inside the New chat button. */
-  newChatIconBackground?: string;
-  /** Background of the plus-icon circle on button hover. */
-  newChatIconBackgroundHover?: string;
-  /** Background of the plus-icon circle on button active/press. */
-  newChatIconBackgroundActive?: string;
-  /** Color of the plus icon inside the New chat button. */
-  newChatIconColor?: string;
-  /** Bottom-border color of the New chat button container divider. */
-  newChatDivider?: string;
+  /** Background of the New chat button. */
+  newChatBackground?: string;
 }
 
 /** Combined style overrides (colors and typography) for `ConversationPanel`. */

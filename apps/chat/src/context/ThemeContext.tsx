@@ -102,7 +102,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         : null;
     const defaultTheme = config?.themes?.[0].id;
     const configuredTheme =
-      storedTheme || defaultTheme !== ThemeId.Dark
+      storedTheme && defaultTheme !== ThemeId.Dark
         ? defaultTheme
         : ThemeId.Light;
     if (configuredTheme) {

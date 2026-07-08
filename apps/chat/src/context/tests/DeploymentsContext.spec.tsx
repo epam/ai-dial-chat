@@ -1,5 +1,7 @@
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DeploymentsI18nKeys } from '../../constants/translation-keys';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
 import * as deploymentsApi from '../../server-api/deployments.api';
 import * as toolsetsApi from '../../server-api/toolsets';
@@ -9,6 +11,7 @@ const contextMocks = vi.hoisted(() => ({
   defaultDeploymentId: null as string | null,
   selectedDeploymentId: null as string | null,
   setSelectedDeployment: vi.fn(),
+  showNotification: vi.fn(),
 }));
 
 vi.mock('../../server-api/deployments.api');
@@ -25,6 +28,13 @@ vi.mock('../UserConfigContext', () => ({
   useUserConfig: () => ({
     selectedDeploymentId: contextMocks.selectedDeploymentId,
     setSelectedDeployment: contextMocks.setSelectedDeployment,
+  }),
+}));
+vi.mock('../NotificationContext', () => ({
+  useNotification: () => ({
+    notifications: [],
+    showNotification: contextMocks.showNotification,
+    dismissNotification: vi.fn(),
   }),
 }));
 
@@ -474,6 +484,63 @@ describe('DeploymentsContext', () => {
         expect(result.current.error).toBeNull();
         expect(result.current.items).toEqual(mockResponse.deployments);
         expect(result.current.toolsets).toEqual([]);
+      });
+    });
+
+    it('refetchToolsets re-fetches and exposes the newly created toolset', async () => {
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.toolsets).toEqual([]);
+
+      const created = {
+        id: 'toolsets/b/new-tool__0.0.1',
+        toolset: 'toolsets/b/new-tool__0.0.1',
+        displayName: 'New Tool',
+      };
+      mockListToolsets.mockResolvedValueOnce({ data: [created] });
+
+      await act(async () => {
+        await result.current.refetchToolsets();
+      });
+
+      expect(result.current.toolsets.map((item) => item.id)).toEqual([
+        created.id,
+      ]);
+    });
+
+    it('refetchToolsets leaves toolsets unchanged when the re-fetch fails', async () => {
+      const existing = {
+        id: 'toolsets/b/alpha__0.0.1',
+        toolset: 'toolsets/b/alpha__0.0.1',
+        displayName: 'Alpha Toolset',
+      };
+      mockListToolsets.mockResolvedValueOnce({ data: [existing] });
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() =>
+        expect(result.current.toolsets.map((item) => item.id)).toEqual([
+          existing.id,
+        ]),
+      );
+
+      mockListToolsets.mockRejectedValueOnce(new Error('Toolsets failed'));
+
+      await act(async () => {
+        await result.current.refetchToolsets();
+      });
+
+      expect(result.current.toolsets.map((item) => item.id)).toEqual([
+        existing.id,
+      ]);
+      expect(contextMocks.showNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message: DeploymentsI18nKeys.RefetchToolsetsFailed,
       });
     });
   });
