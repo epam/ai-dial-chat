@@ -1,4 +1,8 @@
+import type { PublishFooterTexts } from '../components/PublishPanel/PublishFooter';
+import type { PublishPanelTexts } from '../components/PublishPanel/PublishPanel';
 import type { CatalogItem } from './catalog-item';
+import type { AccessRole, FolderAccessData } from './folder-access';
+import type { PublishFolderNode, PublishHistoryEntry } from './publish';
 
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
 export interface ItemDetailsTexts {
@@ -32,6 +36,12 @@ export interface ItemDetailsTexts {
   featuredLabel?: string;
   /** Primary action button label. Default: `'Use in chat'`. */
   primaryActionLabel?: string;
+  /** "Publish" action button label. Default: `'Publish'`. */
+  publishLabel?: string;
+  /** Title shown in the panel header while the Publish view is open. Default: `'Publish'`. */
+  publishTitle?: string;
+  /** Accessible label for the back button that returns from the Publish view to details. Default: `'Back'`. */
+  backToDetailsAriaLabel?: string;
   /** When `false`, the primary action button is hidden. Default: `true`. */
   hasPrimaryAction?: boolean;
   /** Label above the daily-limit progress bar. Default: `'Daily limit'`. */
@@ -119,6 +129,32 @@ export interface DetailsPanelProps {
   isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked. */
   onShare?: (item: CatalogItem) => void;
+  /** Controls whether the "Publish" action is shown for the item. */
+  isPublishVisible?: (item: CatalogItem) => boolean;
+  /** Resolves previously published versions for an item, most recent first. */
+  getPublishHistory?: (item: CatalogItem) => PublishHistoryEntry[];
+  /** Root-level destination folder nodes offered by the publish flow. */
+  publishFolderItems?: PublishFolderNode[];
+  /** Resolves whether the current user can publish to a given folder path. */
+  hasPublishWriteAccess?: (folderPath: string[]) => boolean;
+  /** Called with the destination folder path when the user confirms publish/update. */
+  onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+  /** Called after a successful publish; use this to surface a success notification. */
+  onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
+  /** Called when the user confirms a new folder name in the publish flow. */
+  onCreatePublishFolder?: (parentPath: string[], name: string) => void;
+  /** Resolves who has access to a given destination folder path, for the publish flow's "Folder access" section. */
+  getFolderAccess?: (folderPath: string[]) => FolderAccessData;
+  /** The viewer's own id, used to label their own row "(you)" in the folder-access list. */
+  currentUserId?: string;
+  /** Called with the destination folder path, new member name, and selected role when the user adds a member in the folder-access section. */
+  onAddFolderAccessMember?: (
+    folderPath: string[],
+    name: string,
+    role: AccessRole,
+  ) => void;
+  /** Text overrides forwarded to the publish flow. */
+  publishTexts?: PublishPanelTexts & PublishFooterTexts;
   /** Text overrides for all user-visible strings. */
   texts?: ItemDetailsTexts;
   /** Grouped style overrides. */

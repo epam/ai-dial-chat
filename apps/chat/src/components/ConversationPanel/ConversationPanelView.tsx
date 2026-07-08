@@ -61,7 +61,7 @@ const PANEL_STYLES: ConversationPanelStyles = {
     itemIconBadgeClassName: 'rounded-lg',
     newChatLabelClassName: 'dial-small-text',
     groupHeaderClassName: 'dial-tiny-semi-text uppercase tracking-wider',
-    tabClassName: 'dial-tiny-semi-text cp-filter-tab',
+    tabClassName: 'dial-tiny-semi-text',
   },
   colors: { border: 'rgba(0, 0, 0, 0.016)', text: 'var(--text-primary)' },
 };

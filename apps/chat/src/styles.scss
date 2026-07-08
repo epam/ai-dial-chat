@@ -25,9 +25,6 @@
     // These cascade into the panel's shadow DOM through inheritance.
     --cp-trigger-bg: var(--controls-bg-accent-primary, #3664e2);
     --cp-trigger-icon: var(--controls-text-permanent, #fff);
-    --cp-filter-tab-active-bg: var(--bg-layer-1);
-    --cp-filter-tab-active-border: var(--stroke-accent-primary);
-    --cp-filter-tab-border: transparent;
     --cp-item-active-border: var(--bg-accent-secondary, #37babc);
   }
 }
@@ -259,71 +256,6 @@ aside[class~='dial-body-text'] [data-cp-search-wrapper] {
       color: var(--cp-text-secondary, var(--text-secondary)) !important;
     }
   }
-}
-
-// Search row border — match catalog SearchBar strokes.
-// Anchored on [data-cp-search-wrapper] > div (the inner row element);
-// avoids the hashed CSS-module class name and is stable across Tailwind class changes.
-aside[class~='dial-body-text'] [data-cp-search-wrapper] > div {
-  border-color: rgba(0, 0, 0, 0.05) !important;
-
-  @media (hover: hover) {
-    &:hover:not(:focus-within) {
-      border-color: rgba(0, 0, 0, 0.12) !important;
-    }
-  }
-
-  &:focus-within {
-    border-color: color-mix(
-      in srgb,
-      var(--stroke-accent-primary, #7da4ff) 50%,
-      transparent
-    ) !important;
-    box-shadow: none !important;
-  }
-}
-
-// Filter pill row — remove track background, use flat spaced layout.
-// ui-kit v0.11+ uses flex-nowrap + rounded-full for the row (was flex-wrap).
-aside[class~='dial-body-text']
-  [class~='flex-nowrap'][class~='gap-2'][class~='rounded-full'] {
-  gap: 4px !important;
-  padding: 0 !important;
-  background-color: transparent !important;
-  border-radius: 0 !important;
-}
-
-// Individual pill — subtle border outline, muted text.
-// tabClassName='dial-tiny-semi-text cp-filter-tab' is passed from ConversationPanelView
-// so we can hook here without relying on hash-unstable CSS module class names.
-// Specificity (0,2,1) with !important beats the ui-kit module rule (0,2,0) !important.
-aside[class~='dial-body-text'] .cp-filter-tab {
-  border-style: solid !important;
-  border-width: 1px !important;
-  border-color: transparent !important;
-  background-color: transparent !important;
-  border-radius: 9999px !important;
-  color: var(--text-tertiary, #808898) !important;
-
-  &:hover {
-    color: var(--text-secondary) !important;
-    background-color: rgba(92, 141, 234, 0.06) !important;
-    border-color: transparent !important;
-  }
-
-  > span {
-    text-align: center !important;
-    flex: none !important;
-  }
-}
-
-// Active pill — very subtle tint, no border, secondary text
-aside[class~='dial-body-text']
-  .cp-filter-tab[class~='bg-accent-primary-alpha'] {
-  background-color: rgba(39, 100, 217, 0.07) !important;
-  border-color: transparent !important;
-  color: var(--text-secondary, #64748b) !important;
-  box-shadow: none !important;
 }
 
 // Group section headers — muted tertiary colour, reduced prominence

@@ -131,6 +131,8 @@ export enum CatalogI18nKeys {
   FavoriteAdded = 'catalog.favoriteAdded',
   FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
   FavoriteRemoved = 'catalog.favoriteRemoved',
+  PublishSuccessTitle = 'catalog.publishSuccessTitle',
+  PublishSuccess = 'catalog.publishSuccess',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',

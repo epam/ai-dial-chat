@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
+import type { PublishPanelTexts } from '../components/PublishPanel/PublishPanel';
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
+import type { AccessRole, FolderAccessData } from './folder-access';
 import type { ItemDetailsTexts } from './item-details-props';
+import type { PublishFolderNode, PublishHistoryEntry } from './publish';
 
 /** A single option in the Create dropdown. */
 export interface CreateOption {
@@ -88,6 +91,32 @@ export interface CatalogProps {
   isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked in the details panel. */
   onShare?: (item: CatalogItem) => void;
+  /** Controls whether the "Publish" action is shown for an item. */
+  isPublishVisible?: (item: CatalogItem) => boolean;
+  /** Resolves previously published versions for an item, most recent first. */
+  getPublishHistory?: (item: CatalogItem) => PublishHistoryEntry[];
+  /** Root-level destination folder nodes offered by the publish flow. */
+  publishFolderItems?: PublishFolderNode[];
+  /** Resolves whether the current user can publish to a given folder path. */
+  hasPublishWriteAccess?: (folderPath: string[]) => boolean;
+  /** Called with the destination folder path when the user confirms publish/update. */
+  onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+  /** Called after a successful publish; use this to surface a success notification. */
+  onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
+  /** Called when the user confirms a new folder name in the publish flow. */
+  onCreatePublishFolder?: (parentPath: string[], name: string) => void;
+  /** Resolves who has access to a given destination folder path, for the publish flow's "Folder access" section. */
+  getFolderAccess?: (folderPath: string[]) => FolderAccessData;
+  /** The viewer's own id, used to label their own row "(you)" in the folder-access list. */
+  currentUserId?: string;
+  /** Called with the destination folder path, new member name, and selected role when the user adds a member in the folder-access section. */
+  onAddFolderAccessMember?: (
+    folderPath: string[],
+    name: string,
+    role: AccessRole,
+  ) => void;
+  /** Text overrides forwarded to the publish flow. */
+  publishTexts?: PublishPanelTexts;
   /**
    * Called when the details panel opens for an item. Use this to fetch
    * enriched About-tab content from an API and pass it back as a string.

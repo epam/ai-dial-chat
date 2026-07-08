@@ -102,6 +102,8 @@
     "favoriteRemovedTitle": "Removed from Favorites",
     "favoriteAdded": "\"{{name}}\" added to Favorites",
     "favoriteRemoved": "\"{{name}}\" removed from Favorites",
+    "publishSuccessTitle": "Published",
+    "publishSuccess": "\"{{name}}\" published to {{folder}}",
     "tab": {
       "models": "Models",
       "applications": "Agents",

@@ -1,12 +1,15 @@
 import {
+  AccessRole,
   Catalog,
   CatalogEntityType,
   CatalogItem,
   CreateOption,
+  FolderAccessData,
+  PublishHistoryEntry,
 } from '@epam/ai-dial-catalog';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
@@ -23,40 +26,35 @@ import useFavoriteApplications, {
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
 import {
-  mapDeploymentToCatalogItem,
-  mapToolsetToCatalogItem,
-} from '../../utils/map-deployment-to-catalog-item';
+  MOCK_CATALOG_ITEMS,
+  MOCK_FOLDER_ACCESS,
+  MOCK_PUBLISH_FOLDERS,
+  MOCK_PUBLISH_HISTORY,
+} from './mock-catalog-items';
+
+const CURRENT_USER_ID = 'you';
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const {
-    items: deployments,
-    isLoading: isDeploymentsLoading,
-    schemas,
-    toolsets,
-    setSelectedItemId,
-  } = useDeployments();
-  const {
-    favoriteIds,
-    isLoading: isFavoritesLoading,
-    toggleFavorite,
-  } = useFavoriteApplications();
+  const { schemas, setSelectedItemId } = useDeployments();
+  const { isLoading: isFavoritesLoading, toggleFavorite } =
+    useFavoriteApplications();
 
-  const isLoading = isDeploymentsLoading || isFavoritesLoading;
+  const isLoading = isFavoritesLoading;
 
-  const catalogItems = useMemo(
-    () => [
-      ...deployments.map((d) =>
-        mapDeploymentToCatalogItem(d, favoriteIds, undefined, t),
-      ),
-      ...toolsets.map((toolset) =>
-        mapToolsetToCatalogItem(toolset, favoriteIds),
-      ),
-    ],
-    [deployments, favoriteIds, t, toolsets],
-  );
+  // TODO: temporary — demoing the Publish flow against mock data.
+  // Restore deployments/toolsets mapping (mapDeploymentToCatalogItem /
+  // mapToolsetToCatalogItem via useDeployments) once a real publish endpoint exists.
+  const catalogItems = MOCK_CATALOG_ITEMS;
+
+  const [publishHistory, setPublishHistory] =
+    useState<Record<string, PublishHistoryEntry[]>>(MOCK_PUBLISH_HISTORY);
+
+  const [folderAccessOverrides, setFolderAccessOverrides] = useState<
+    Record<string, FolderAccessData>
+  >({});
 
   const favorites = useMemo(
     () => catalogItems.filter((item) => item.isUserFavorite),
@@ -119,6 +117,95 @@ const CatalogView: FC = () => {
     [],
   );
 
+  // TODO: temporary mock wiring for the Publish flow — replace with a real
+  // publish endpoint (history lookup, folder tree, write-access check) once
+  // one exists.
+  const getPublishHistory = useCallback(
+    (item: CatalogItem) => publishHistory[item.id] ?? [],
+    [publishHistory],
+  );
+
+  const hasPublishWriteAccess = useCallback(
+    (folderPath: string[]) => !folderPath.includes('Production'),
+    [],
+  );
+
+  const getFolderAccess = useCallback(
+    (folderPath: string[]): FolderAccessData => {
+      const key = folderPath.join('/');
+      return (
+        folderAccessOverrides[key] ??
+        MOCK_FOLDER_ACCESS[key] ?? {
+          people: [
+            { id: CURRENT_USER_ID, name: 'Yuliia M.', role: AccessRole.Owner },
+          ],
+          groups: [],
+        }
+      );
+    },
+    [folderAccessOverrides],
+  );
+
+  const handleAddFolderAccessMember = useCallback(
+    (folderPath: string[], name: string, role: AccessRole) => {
+      const key = folderPath.join('/');
+      setFolderAccessOverrides((prev) => {
+        const current = getFolderAccess(folderPath);
+        return {
+          ...prev,
+          [key]: {
+            ...current,
+            people: [
+              ...current.people,
+              { id: `member-${Date.now()}`, name, role },
+            ],
+          },
+        };
+      });
+    },
+    [getFolderAccess],
+  );
+
+  const handlePublish = useCallback(
+    async (_item: CatalogItem, _folderPath: string[]) => {
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    },
+    [],
+  );
+
+  const handlePublishSuccess = useCallback(
+    (item: CatalogItem, folderPath: string[]) => {
+      setPublishHistory((prev) => {
+        const existing = prev[item.id] ?? [];
+        const newEntry: PublishHistoryEntry = {
+          version: item.version,
+          publishedAt: Date.now(),
+          publishedBy: CURRENT_USER_ID,
+          folderPath,
+        };
+        const withoutSameVersionInFolder = existing.filter(
+          (entry) =>
+            entry.version !== item.version ||
+            entry.folderPath.join('/') !== folderPath.join('/'),
+        );
+        return {
+          ...prev,
+          [item.id]: [newEntry, ...withoutSameVersionInFolder],
+        };
+      });
+
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.PublishSuccessTitle),
+        message: t(CatalogI18nKeys.PublishSuccess, {
+          name: item.name,
+          folder: folderPath[folderPath.length - 1],
+        }),
+      });
+    },
+    [showNotification, t],
+  );
+
   const buildEditorUrl = useCallback((schemaId: string): string => {
     const params = new URLSearchParams({
       [AppsEditorQuery.Step]: AppsEditorStep.General,
@@ -166,6 +253,14 @@ const CatalogView: FC = () => {
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
       isPrimaryActionVisible={isPrimaryActionVisible}
+      getPublishHistory={getPublishHistory}
+      publishFolderItems={MOCK_PUBLISH_FOLDERS}
+      hasPublishWriteAccess={hasPublishWriteAccess}
+      onPublish={handlePublish}
+      onPublishSuccess={handlePublishSuccess}
+      getFolderAccess={getFolderAccess}
+      currentUserId={CURRENT_USER_ID}
+      onAddFolderAccessMember={handleAddFolderAccessMember}
       styles={{
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },
       }}

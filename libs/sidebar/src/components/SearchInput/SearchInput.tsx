@@ -16,6 +16,12 @@ export interface SearchInputProps {
   clearLabel: string;
   /** CSS class applied to the search icon. Defaults to `'text-secondary'`. */
   iconClassName?: string;
+  /** Whether to show the bottom divider separating this search bar from sibling content below it. Default: `true`. */
+  showDivider?: boolean;
+  /** CSS class applied to the outer wrapper, merged over the default `'px-2 py-1'`. Override to change the pill's horizontal inset. */
+  wrapperClassName?: string;
+  /** CSS class applied to the search row, merged after its own border/radius defaults. Use an important-modifier class (e.g. `'!rounded-lg'`) to override the default pill shape. */
+  rowClassName?: string;
 }
 
 /** Minimal search input with icon positioned to align with sibling action buttons. */
@@ -26,15 +32,23 @@ export const SearchInput: FC<SearchInputProps> = memo(
     onChange,
     clearLabel,
     iconClassName = 'text-secondary',
+    showDivider = true,
+    wrapperClassName,
+    rowClassName,
   }) => (
     <div
-      className={mergeClasses('border-b px-2 py-1', panelStyles.divider)}
+      className={mergeClasses(
+        'px-2 py-1',
+        showDivider && mergeClasses('border-b', panelStyles.divider),
+        wrapperClassName,
+      )}
       data-cp-search-wrapper
     >
       <div
         className={mergeClasses(
           'flex min-h-11 w-full items-center gap-2 pe-3 ps-3 desktop:min-h-9',
           styles.row,
+          rowClassName,
         )}
       >
         <IconSearch

@@ -1,13 +1,23 @@
 .row {
-  border: 1px solid transparent;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 9999px;
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease;
 
+  @media (hover: hover) {
+    &:hover:not(:focus-within) {
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+  }
+
   &:focus-within {
-    border-color: var(--stroke-accent-primary, #7da4ff);
-    box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff26);
+    border-color: color-mix(
+      in srgb,
+      var(--stroke-accent-primary, #7da4ff) 50%,
+      transparent
+    );
+    box-shadow: none;
   }
 }
 

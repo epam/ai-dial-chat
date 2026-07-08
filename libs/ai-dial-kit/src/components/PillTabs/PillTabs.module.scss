@@ -1,0 +1,29 @@
+// !important throughout: DialTag applies its own Tailwind utility classes
+// (e.g. bg-neutral, border-primary) internally, which win over plain
+// CSS-module rules on the same element under this app's cascade-layer order.
+.tab {
+  border-style: solid !important;
+  border-width: 1px !important;
+  border-color: transparent !important;
+  background-color: transparent !important;
+  border-radius: 9999px !important;
+  color: var(--text-tertiary, #808898) !important;
+
+  &:hover {
+    color: var(--text-secondary, #575f73) !important;
+    background-color: rgba(92, 141, 234, 0.06) !important;
+    border-color: transparent !important;
+  }
+
+  > span {
+    text-align: center !important;
+    flex: none !important;
+  }
+
+  &.tabActive {
+    border-color: transparent !important;
+    background-color: rgba(39, 100, 217, 0.07) !important;
+    color: var(--text-secondary, #64748b) !important;
+    box-shadow: none !important;
+  }
+}

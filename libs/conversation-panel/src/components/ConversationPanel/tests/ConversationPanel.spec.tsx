@@ -85,22 +85,26 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
   buildCssVars: () => ({}),
 }));
 
-vi.mock('@epam/ai-dial-kit', () => ({
-  GhostButton: ({
-    onClick,
-    label,
-    'aria-current': ariaCurrent,
-  }: {
-    onClick: () => void;
-    label: React.ReactNode;
-    'aria-current'?: React.AriaAttributes['aria-current'];
-    [key: string]: unknown;
-  }) => (
-    <button onClick={onClick} aria-current={ariaCurrent}>
-      {label}
-    </button>
-  ),
-}));
+vi.mock('@epam/ai-dial-kit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-kit')>();
+  return {
+    ...actual,
+    GhostButton: ({
+      onClick,
+      label,
+      'aria-current': ariaCurrent,
+    }: {
+      onClick: () => void;
+      label: React.ReactNode;
+      'aria-current'?: React.AriaAttributes['aria-current'];
+      [key: string]: unknown;
+    }) => (
+      <button onClick={onClick} aria-current={ariaCurrent}>
+        {label}
+      </button>
+    ),
+  };
+});
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,

@@ -35,6 +35,17 @@ export const Catalog: FC<CatalogProps> = ({
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
+  isPublishVisible,
+  getPublishHistory,
+  publishFolderItems,
+  hasPublishWriteAccess,
+  onPublish,
+  onPublishSuccess,
+  onCreatePublishFolder,
+  getFolderAccess,
+  currentUserId,
+  onAddFolderAccessMember,
+  publishTexts,
   onFetchAboutContent,
   onCreateClick,
   createOptions,
@@ -354,6 +365,17 @@ export const Catalog: FC<CatalogProps> = ({
           onUseInChat={onUseInChat}
           isPrimaryActionVisible={isPrimaryActionVisible}
           onShare={onShare}
+          isPublishVisible={isPublishVisible}
+          getPublishHistory={getPublishHistory}
+          publishFolderItems={publishFolderItems}
+          hasPublishWriteAccess={hasPublishWriteAccess}
+          onPublish={onPublish}
+          onPublishSuccess={onPublishSuccess}
+          onCreatePublishFolder={onCreatePublishFolder}
+          getFolderAccess={getFolderAccess}
+          currentUserId={currentUserId}
+          onAddFolderAccessMember={onAddFolderAccessMember}
+          publishTexts={publishTexts}
           texts={detailsTexts}
         />
       )}

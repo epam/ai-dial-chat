@@ -40,11 +40,30 @@ export type {
   OverviewSection,
   OverviewSpec,
 } from './models/item-overview';
+export { PublishCalloutKind } from './models/publish';
+export type {
+  PublishDerivationInput,
+  PublishDerivedState,
+  PublishFolderNode,
+  PublishHistoryEntry,
+} from './models/publish';
+export { AccessRole } from './models/folder-access';
+export type {
+  FolderAccessData,
+  FolderAccessGroup,
+  FolderAccessMember,
+} from './models/folder-access';
 
 // Utils
 export { filterCatalogItems } from './utils/catalog-filter';
 export { sortCatalogItems } from './utils/catalog-sort';
 export { useFavColumns } from './utils/use-fav-columns';
+export { derivePublishState } from './utils/publish-state';
+export { formatPublishedDate } from './utils/format-published-date';
+export {
+  collectFolderKeys,
+  filterFolderTree,
+} from './utils/publish-folder-tree';
 
 // Components
 export { Catalog } from './components/Catalog/Catalog';
@@ -88,3 +107,27 @@ export type { FilterProps } from './components/Filter/Filter';
 
 export { TopicTag } from './components/TopicTag/TopicTag';
 export type { TopicTagProps } from './components/TopicTag/TopicTag';
+
+export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';
+export type { PublishHistoryListProps } from './components/PublishHistoryList/PublishHistoryList';
+
+export { PublishFolderPicker } from './components/PublishFolderPicker/PublishFolderPicker';
+export type { PublishFolderPickerProps } from './components/PublishFolderPicker/PublishFolderPicker';
+
+export { FolderAccess } from './components/FolderAccess/FolderAccess';
+export type {
+  FolderAccessProps,
+  FolderAccessTexts,
+} from './components/FolderAccess/FolderAccess';
+
+export { PublishPanel } from './components/PublishPanel/PublishPanel';
+export type {
+  PublishPanelProps,
+  PublishPanelTexts,
+} from './components/PublishPanel/PublishPanel';
+
+export { PublishFooter } from './components/PublishPanel/PublishFooter';
+export type {
+  PublishFooterProps,
+  PublishFooterTexts,
+} from './components/PublishPanel/PublishFooter';

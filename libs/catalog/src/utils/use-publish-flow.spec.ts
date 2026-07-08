@@ -1,0 +1,223 @@
+import { act, renderHook } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { CatalogItem } from '../models/catalog-item';
+import { PublishFolderNode, PublishHistoryEntry } from '../models/publish';
+import { CatalogEntityType } from '../types/entity-type';
+import { usePublishFlow } from './use-publish-flow';
+
+const item: CatalogItem = {
+  id: '1',
+  type: CatalogEntityType.Model,
+  name: 'ali.deepseek-v4-flash',
+  version: '4.0.1',
+  lastUsed: 'now',
+  description: '',
+  folder: [],
+  topics: [],
+};
+
+const folderItems: PublishFolderNode[] = [
+  {
+    path: ['Shared'],
+    name: 'Shared',
+    children: [{ path: ['Shared', 'Data Science'], name: 'Data Science' }],
+  },
+];
+
+const history: PublishHistoryEntry[] = [
+  {
+    version: '4.0.1',
+    publishedAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
+    publishedBy: 'you',
+    folderPath: ['Shared', 'Data Science'],
+  },
+];
+
+describe('usePublishFlow', () => {
+  it('starts with no folder selected and no existing version detected', () => {
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onPublish: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    expect(result.current.selectedFolderPath).toBeUndefined();
+    expect(result.current.hasExistingVersionInFolder).toBe(false);
+    expect(result.current.hasWriteAccess).toBe(true);
+  });
+
+  it('detects an existing version once the matching folder is selected', () => {
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onPublish: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared', 'Data Science']);
+    });
+
+    expect(result.current.hasExistingVersionInFolder).toBe(true);
+  });
+
+  it('does not flag an existing version for a different folder', () => {
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onPublish: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+    });
+
+    expect(result.current.hasExistingVersionInFolder).toBe(false);
+  });
+
+  it('resolves hasWriteAccess from the provided predicate once a folder is selected', () => {
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        hasWriteAccess: (path) => !path.includes('Production'),
+        onPublish: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared', 'Production']);
+    });
+
+    expect(result.current.hasWriteAccess).toBe(false);
+  });
+
+  it('adds a locally created folder and reports it to the host', () => {
+    const onCreateFolder = vi.fn();
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onCreateFolder,
+        onPublish: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    act(() => {
+      result.current.handleCreateFolder(['Shared'], 'Releases');
+    });
+
+    expect(onCreateFolder).toHaveBeenCalledWith(['Shared'], 'Releases');
+    expect(
+      result.current.folderItems[0].children?.some(
+        (child) => child.name === 'Releases',
+      ),
+    ).toBe(true);
+  });
+
+  it('calls onPublish and onPublishSuccess with the item and selected folder path', async () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    const onPublishSuccess = vi.fn();
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onPublish,
+        onPublishSuccess,
+      }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(onPublish).toHaveBeenCalledWith(item, ['Shared']);
+    expect(onPublishSuccess).toHaveBeenCalledWith(item, ['Shared']);
+  });
+
+  it('does nothing when submitting without a selected folder', async () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() =>
+      usePublishFlow({ item, history, folderItems, onPublish }),
+    );
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(onPublish).not.toHaveBeenCalled();
+  });
+
+  it('sets isSubmitting while the publish request is in flight', async () => {
+    let resolvePublish: () => void = () => undefined;
+    const onPublish = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvePublish = resolve;
+        }),
+    );
+    const { result } = renderHook(() =>
+      usePublishFlow({ item, history, folderItems, onPublish }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+    });
+
+    let submitPromise: Promise<void> = Promise.resolve();
+    act(() => {
+      submitPromise = result.current.handleSubmit();
+    });
+
+    expect(result.current.isSubmitting).toBe(true);
+
+    await act(async () => {
+      resolvePublish();
+      await submitPromise;
+    });
+
+    expect(result.current.isSubmitting).toBe(false);
+  });
+
+  it('resets folder selection and locally created folders', () => {
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onPublish: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+      result.current.handleCreateFolder(['Shared'], 'Releases');
+    });
+
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(result.current.selectedFolderPath).toBeUndefined();
+    expect(
+      result.current.folderItems[0].children?.some(
+        (child) => child.name === 'Releases',
+      ),
+    ).toBe(false);
+  });
+});

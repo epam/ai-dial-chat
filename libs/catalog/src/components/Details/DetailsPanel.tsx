@@ -1,9 +1,15 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { TabRow } from '@epam/ai-dial-kit';
+import { GhostIconButton, TabRow } from '@epam/ai-dial-kit';
 import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { IconChevronLeft } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import type { DetailsPanelProps } from '../../models/item-details-props';
+import type { PublishFolderNode } from '../../models/publish';
 import { CatalogDetailsTab } from '../../types/detail-tab';
+import { derivePublishState } from '../../utils/publish-state';
+import { usePublishFlow } from '../../utils/use-publish-flow';
+import { PublishFooter } from '../PublishPanel/PublishFooter';
+import { PublishPanel } from '../PublishPanel/PublishPanel';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
 import styles from './DetailsPanel.module.scss';
@@ -13,6 +19,9 @@ import { AboutTab } from './TabsContent/About';
 import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
 import { Tools } from './TabsContent/Tools/Tools';
+
+const NO_OP_PUBLISH = async () => undefined;
+const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
 export const DetailsPanel: FC<DetailsPanelProps> = ({
@@ -26,6 +35,17 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
+  isPublishVisible,
+  getPublishHistory,
+  publishFolderItems = EMPTY_PUBLISH_FOLDERS,
+  hasPublishWriteAccess,
+  onPublish,
+  onPublishSuccess,
+  onCreatePublishFolder,
+  getFolderAccess,
+  currentUserId = '',
+  onAddFolderAccessMember,
+  publishTexts,
   texts,
   styles: detailsStyles,
 }) => {
@@ -38,6 +58,33 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [activeTab, setActiveTab] = useState<string>(CatalogDetailsTab.About);
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+
+  const publishFlow = usePublishFlow({
+    item,
+    history: getPublishHistory?.(item) ?? [],
+    folderItems: publishFolderItems,
+    hasWriteAccess: hasPublishWriteAccess,
+    onCreateFolder: onCreatePublishFolder,
+    onPublish: onPublish ?? NO_OP_PUBLISH,
+    onPublishSuccess,
+  });
+
+  const publishDerived = useMemo(
+    () =>
+      derivePublishState({
+        hasSelectedFolder: Boolean(publishFlow.selectedFolderPath?.length),
+        hasExistingVersionInFolder: publishFlow.hasExistingVersionInFolder,
+        hasWriteAccess: publishFlow.hasWriteAccess,
+        isSubmitting: publishFlow.isSubmitting,
+      }),
+    [
+      publishFlow.selectedFolderPath,
+      publishFlow.hasExistingVersionInFolder,
+      publishFlow.hasWriteAccess,
+      publishFlow.isSubmitting,
+    ],
+  );
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
@@ -45,7 +92,21 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
   useEffect(() => {
     setActiveTab(CatalogDetailsTab.About);
+    setIsPublishOpen(false);
+    publishFlow.reset();
+    // Reset publish-flow-local state only when the displayed item changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
+
+  const handleOpenPublish = useCallback(() => setIsPublishOpen(true), []);
+  const handleClosePublish = useCallback(() => {
+    setIsPublishOpen(false);
+    publishFlow.reset();
+  }, [publishFlow]);
+  const handleSubmitPublish = useCallback(async () => {
+    await publishFlow.handleSubmit();
+    handleClosePublish();
+  }, [publishFlow, handleClosePublish]);
 
   const handleToggleFavorite = useCallback(() => {
     const next = !isStarred;
@@ -99,6 +160,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   const starAriaLabel = isStarred
     ? (texts?.removeFromFavoritesAriaLabel ?? 'Remove from favorites')
     : (texts?.addToFavoritesAriaLabel ?? 'Add to favorites');
+  const publishTitle = texts?.publishTitle ?? 'Publish';
+  const backToDetailsAriaLabel = texts?.backToDetailsAriaLabel ?? 'Back';
 
   return (
     <>
@@ -124,13 +187,32 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           isOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full',
         )}
       >
-        <div className="flex shrink-0 items-center justify-end gap-1.5 px-[22px] py-3">
-          <StarToggleButton
-            isStarred={isStarred}
-            ariaLabel={starAriaLabel}
-            onClick={handleToggleFavorite}
-          />
-          <DialCloseButton onClose={onClose} ariaLabel={closeAriaLabel} />
+        <div className="flex shrink-0 items-center gap-2 px-[22px] py-3">
+          {isPublishOpen ? (
+            <>
+              <GhostIconButton
+                icon={<IconChevronLeft className="rtl:scale-x-[-1]" />}
+                ariaLabel={backToDetailsAriaLabel}
+                disabled={publishFlow.isSubmitting}
+                onClick={handleClosePublish}
+              />
+              <span className="dial-body-semi-text flex-1 text-primary">
+                {publishTitle}
+              </span>
+            </>
+          ) : (
+            <>
+              <div className="flex-1" />
+              <StarToggleButton
+                isStarred={isStarred}
+                ariaLabel={starAriaLabel}
+                onClick={handleToggleFavorite}
+              />
+            </>
+          )}
+          {!isPublishOpen && (
+            <DialCloseButton onClose={onClose} ariaLabel={closeAriaLabel} />
+          )}
         </div>
 
         <div className={mergeClasses('shrink-0', styles.divider)} />
@@ -141,78 +223,129 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             styles.content,
           )}
         >
-          <Header
-            item={item}
-            onUseInChat={onUseInChat}
-            isPrimaryActionVisible={isPrimaryActionVisible}
-            onShare={onShare}
-            texts={texts}
-            detailsStyles={detailsStyles}
-          />
-
-          <div className={styles.divider} />
-
-          <Summary item={item} texts={texts} detailsStyles={detailsStyles} />
-
-          <div className="px-[22px]">
-            <TabRow
-              tabs={tabs}
-              activeTabId={activeTab}
-              onTabChange={setActiveTab}
-              activeTabClassName="text-catalog-tab-active"
-              inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
-            />
-          </div>
-
-          <div
-            className={mergeClasses(
-              activeTab !== CatalogDetailsTab.Overview && 'px-[22px] py-4',
-            )}
-          >
-            {activeTab === CatalogDetailsTab.About && (
-              <AboutTab
+          {isPublishOpen ? (
+            <div className="p-[22px]">
+              <PublishPanel
                 item={item}
-                aboutContent={aboutContent}
-                isAboutLoading={isAboutLoading}
+                history={getPublishHistory?.(item) ?? []}
+                folderItems={publishFlow.folderItems}
+                selectedFolderPath={publishFlow.selectedFolderPath}
+                onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
+                onCreateFolder={publishFlow.handleCreateFolder}
+                hasExistingVersionInFolder={
+                  publishFlow.hasExistingVersionInFolder
+                }
+                hasWriteAccess={publishFlow.hasWriteAccess}
+                isSubmitting={publishFlow.isSubmitting}
+                folderAccess={
+                  publishFlow.selectedFolderPath?.length
+                    ? getFolderAccess?.(publishFlow.selectedFolderPath)
+                    : undefined
+                }
+                currentUserId={currentUserId}
+                onAddFolderAccessMember={onAddFolderAccessMember}
+                texts={publishTexts}
+              />
+            </div>
+          ) : (
+            <>
+              <Header
+                item={item}
+                onUseInChat={onUseInChat}
+                isPrimaryActionVisible={isPrimaryActionVisible}
+                onShare={onShare}
+                isPublishVisible={isPublishVisible}
+                onOpenPublish={handleOpenPublish}
+                texts={texts}
                 detailsStyles={detailsStyles}
               />
-            )}
-            {activeTab === CatalogDetailsTab.Overview && (
-              <Overview
-                sections={item.details?.overview?.sections}
-                sectionClassName={overviewSectionClassName}
-                labelClassName={overviewLabelClassName}
-                valueClassName={overviewValueClassName}
-                valueTrueClassName={overviewValueTrueClassName}
-                yesLabel={overviewYesLabel}
-                noLabel={overviewNoLabel}
+
+              <div className={styles.divider} />
+
+              <Summary
+                item={item}
+                texts={texts}
+                detailsStyles={detailsStyles}
               />
-            )}
-            {activeTab === CatalogDetailsTab.Pricing && (
-              <Pricing
-                pricing={item.details?.pricing}
-                pricesSectionLabel={texts?.pricingPricesSectionLabel}
-                limitsSectionLabel={texts?.pricingLimitsSectionLabel}
-              />
-            )}
-            {activeTab === CatalogDetailsTab.Api &&
-              item.details?.api != null && (
-                <ApiDetails
-                  api={item.details.api}
-                  resourceSectionLabel={texts?.apiResourceSectionLabel}
-                  snippetSectionLabel={texts?.apiSnippetSectionLabel}
-                  modelIdLabel={texts?.apiModelIdLabel}
-                  endpointLabel={texts?.apiEndpointLabel}
-                  requestExampleLabel={texts?.apiRequestExampleLabel}
-                  responseSchemaLabel={texts?.apiResponseSchemaLabel}
-                  copyAriaLabel={texts?.copyCodeAriaLabel}
+
+              <div className="px-[22px]">
+                <TabRow
+                  tabs={tabs}
+                  activeTabId={activeTab}
+                  onTabChange={setActiveTab}
+                  activeTabClassName="text-catalog-tab-active"
+                  inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
                 />
-              )}
-            {activeTab === CatalogDetailsTab.Tools && (
-              <Tools tools={item.details?.tools} />
-            )}
-          </div>
+              </div>
+
+              <div
+                className={mergeClasses(
+                  activeTab !== CatalogDetailsTab.Overview && 'px-[22px] py-4',
+                )}
+              >
+                {activeTab === CatalogDetailsTab.About && (
+                  <AboutTab
+                    item={item}
+                    aboutContent={aboutContent}
+                    isAboutLoading={isAboutLoading}
+                    detailsStyles={detailsStyles}
+                  />
+                )}
+                {activeTab === CatalogDetailsTab.Overview && (
+                  <Overview
+                    sections={item.details?.overview?.sections}
+                    sectionClassName={overviewSectionClassName}
+                    labelClassName={overviewLabelClassName}
+                    valueClassName={overviewValueClassName}
+                    valueTrueClassName={overviewValueTrueClassName}
+                    yesLabel={overviewYesLabel}
+                    noLabel={overviewNoLabel}
+                  />
+                )}
+                {activeTab === CatalogDetailsTab.Pricing && (
+                  <Pricing
+                    pricing={item.details?.pricing}
+                    pricesSectionLabel={texts?.pricingPricesSectionLabel}
+                    limitsSectionLabel={texts?.pricingLimitsSectionLabel}
+                  />
+                )}
+                {activeTab === CatalogDetailsTab.Api &&
+                  item.details?.api != null && (
+                    <ApiDetails
+                      api={item.details.api}
+                      resourceSectionLabel={texts?.apiResourceSectionLabel}
+                      snippetSectionLabel={texts?.apiSnippetSectionLabel}
+                      modelIdLabel={texts?.apiModelIdLabel}
+                      endpointLabel={texts?.apiEndpointLabel}
+                      requestExampleLabel={texts?.apiRequestExampleLabel}
+                      responseSchemaLabel={texts?.apiResponseSchemaLabel}
+                      copyAriaLabel={texts?.copyCodeAriaLabel}
+                    />
+                  )}
+                {activeTab === CatalogDetailsTab.Tools && (
+                  <Tools tools={item.details?.tools} />
+                )}
+              </div>
+            </>
+          )}
         </div>
+
+        {isPublishOpen && (
+          <PublishFooter
+            version={item.version}
+            folderName={
+              publishFlow.selectedFolderPath?.[
+                publishFlow.selectedFolderPath.length - 1
+              ]
+            }
+            hasExistingVersionInFolder={publishFlow.hasExistingVersionInFolder}
+            isSubmitDisabled={publishDerived.isSubmitDisabled}
+            isSubmitLoading={publishDerived.isSubmitLoading}
+            onCancel={handleClosePublish}
+            onSubmit={handleSubmitPublish}
+            texts={publishTexts}
+          />
+        )}
       </div>
     </>
   );

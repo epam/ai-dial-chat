@@ -17,22 +17,20 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock('@epam/ai-dial-catalog', () => ({
-  CatalogEntityType: {
-    Model: 'MODEL',
-    Application: 'APPLICATION',
-    Toolset: 'TOOLSET',
-  },
+vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   Catalog: ({
     createOptions,
     items,
     onToggleFavorite,
     onUseInChat,
+    getFolderAccess,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
+    getFolderAccess?: (folderPath: string[]) => unknown;
   }) => (
     <div>
       <output aria-label="Catalog item ids">
@@ -61,6 +59,9 @@ vi.mock('@epam/ai-dial-catalog', () => ({
           {option.label}
         </button>
       ))}
+      <output aria-label="Folder access for unmapped folder">
+        {JSON.stringify(getFolderAccess?.(['Some', 'Unmapped', 'Folder']))}
+      </output>
     </div>
   ),
 }));
@@ -126,57 +127,18 @@ describe('CatalogView', () => {
     );
   });
 
-  it('adds toolsets from deployments context to catalog items', () => {
-    vi.mocked(useDeployments).mockReturnValue({
-      items: [
-        {
-          id: 'gpt-4o',
-          displayName: 'GPT-4o',
-          type: 'model',
-        },
-      ],
-      selectedItemId: null,
-      setSelectedItemId: vi.fn(),
-      restoreSelectedItemId: vi.fn(),
-      selectedDeploymentConfiguration: null,
-      isLoading: false,
-      error: null,
-      schemas: [],
-      toolsets: [
-        {
-          id: 'toolsets/b/search__0.0.1',
-          toolset: 'toolsets/b/search__0.0.1',
-          displayName: 'Search',
-        },
-      ],
-    });
-
+  // Catalog items currently come from MOCK_CATALOG_ITEMS (see CatalogView's
+  // temporary mock-data wiring) rather than the deployments/toolsets context.
+  it('renders items from the mock catalog data', () => {
     render(<CatalogView />);
 
-    expect(screen.getByLabelText('Catalog item ids').textContent).toBe(
-      'gpt-4o:MODEL,toolsets/b/search__0.0.1:TOOLSET',
+    expect(screen.getByLabelText('Catalog item ids').textContent).toContain(
+      'gpt-4o:MODEL',
     );
   });
 
-  it('toggles toolset favorites through the toolset user-config section', async () => {
+  it('toggles favorites for a mock catalog item', async () => {
     const toggleFavorite = vi.fn();
-    vi.mocked(useDeployments).mockReturnValue({
-      items: [],
-      selectedItemId: null,
-      setSelectedItemId: vi.fn(),
-      restoreSelectedItemId: vi.fn(),
-      selectedDeploymentConfiguration: null,
-      isLoading: false,
-      error: null,
-      schemas: [],
-      toolsets: [
-        {
-          id: 'toolsets/b/search__0.0.1',
-          toolset: 'toolsets/b/search__0.0.1',
-          displayName: 'Search',
-        },
-      ],
-    });
     vi.mocked(useFavoriteApplications).mockReturnValue({
       favoriteIds: new Set(),
       isLoading: false,
@@ -185,29 +147,19 @@ describe('CatalogView', () => {
 
     render(<CatalogView />);
 
-    await user.click(
-      screen.getByRole('button', {
-        name: 'favorite toolsets/b/search__0.0.1',
-      }),
-    );
+    await user.click(screen.getByRole('button', { name: 'favorite gpt-4o' }));
 
     expect(toggleFavorite).toHaveBeenCalledWith(
-      'toolsets/b/search__0.0.1',
+      'gpt-4o',
       true,
-      FavoriteEntityType.Toolset,
+      FavoriteEntityType.Deployment,
     );
   });
 
-  it('selects the model as the deployment and navigates to the root route when Use in chat is clicked', async () => {
+  it('selects the item and navigates to the root route when Use in chat is clicked', async () => {
     const setSelectedItemId = vi.fn();
     vi.mocked(useDeployments).mockReturnValue({
-      items: [
-        {
-          id: 'gpt-4o',
-          displayName: 'GPT-4o',
-          type: 'model',
-        },
-      ],
+      items: [],
       selectedItemId: null,
       setSelectedItemId,
       restoreSelectedItemId: vi.fn(),
@@ -228,59 +180,16 @@ describe('CatalogView', () => {
     expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
   });
 
-  it('selects the application as the deployment and navigates to the root route when Use in chat is clicked', async () => {
-    const setSelectedItemId = vi.fn();
-    vi.mocked(useDeployments).mockReturnValue({
-      items: [
-        {
-          id: 'my-app',
-          displayName: 'My App',
-          type: 'application',
-        },
-      ],
-      selectedItemId: null,
-      setSelectedItemId,
-      restoreSelectedItemId: vi.fn(),
-      selectedDeploymentConfiguration: null,
-      isLoading: false,
-      error: null,
-      schemas: [],
-      toolsets: [],
-    });
-
+  it('resolves folder access for a folder with no mock data instead of throwing', () => {
     render(<CatalogView />);
 
-    await user.click(
-      screen.getByRole('button', { name: 'use in chat my-app' }),
+    const result = JSON.parse(
+      screen.getByLabelText('Folder access for unmapped folder').textContent ??
+        '',
     );
-
-    expect(setSelectedItemId).toHaveBeenCalledWith('my-app');
-    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
-  });
-
-  it('updates the selection when Use in chat is clicked on a different deployment', async () => {
-    const setSelectedItemId = vi.fn();
-    vi.mocked(useDeployments).mockReturnValue({
-      items: [
-        { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
-        { id: 'gpt-4o-mini', displayName: 'GPT-4o mini', type: 'model' },
-      ],
-      selectedItemId: 'gpt-4o',
-      setSelectedItemId,
-      restoreSelectedItemId: vi.fn(),
-      selectedDeploymentConfiguration: null,
-      isLoading: false,
-      error: null,
-      schemas: [],
-      toolsets: [],
-    });
-
-    render(<CatalogView />);
-
-    await user.click(
-      screen.getByRole('button', { name: 'use in chat gpt-4o-mini' }),
-    );
-
-    expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
+    expect(result.groups).toEqual([]);
+    expect(result.people).toEqual([
+      { id: 'you', name: 'Yuliia M.', role: 'owner' },
+    ]);
   });
 });

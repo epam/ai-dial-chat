@@ -1,4 +1,4 @@
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { GhostButton, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import {
   IconChevronDown,
@@ -22,6 +22,10 @@ interface HeaderProps {
   onShare?: (item: CatalogItem) => void;
   texts?: ItemDetailsTexts;
   detailsStyles?: ItemDetailsStyles;
+  /** Controls whether the "Publish" action is shown. Defaults to the same rule as the primary action. */
+  isPublishVisible?: (item: CatalogItem) => boolean;
+  /** Called when the "Publish" button is clicked; the host swaps this panel's content to the publish view. */
+  onOpenPublish?: () => void;
 }
 /** Right-side slide-in panel displaying full details for a catalog item. */
 export const Header: FC<HeaderProps> = ({
@@ -31,6 +35,8 @@ export const Header: FC<HeaderProps> = ({
   onShare,
   texts,
   detailsStyles,
+  isPublishVisible,
+  onOpenPublish,
 }) => {
   const {
     nameClassName = 'dial-body-semi-text text-primary',
@@ -50,6 +56,11 @@ export const Header: FC<HeaderProps> = ({
     (isPrimaryActionVisible?.(item) ??
       (item.type === CatalogEntityType.Model ||
         item.type === CatalogEntityType.Application));
+
+  const shouldShowPublish =
+    isPublishVisible?.(item) ??
+    (item.type === CatalogEntityType.Model ||
+      item.type === CatalogEntityType.Application);
 
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
@@ -82,6 +93,12 @@ export const Header: FC<HeaderProps> = ({
           iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.MD} />}
           onClick={handleShare}
         />
+        {shouldShowPublish && (
+          <GhostButton
+            label={texts?.publishLabel ?? 'Publish'}
+            onClick={onOpenPublish}
+          />
+        )}
       </div>
     </div>
   );
