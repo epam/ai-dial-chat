@@ -33,9 +33,6 @@
   ],
   "references": [
     {
-      "path": "../ai-dial-kit/tsconfig.lib.json"
-    },
-    {
       "path": "../sidebar/tsconfig.lib.json"
     },
     {
