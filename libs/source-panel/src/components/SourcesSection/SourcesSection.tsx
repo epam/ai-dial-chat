@@ -6,11 +6,14 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
-import type { QuotationSource } from '../../../../models/quotation-source';
+import type { QuotationSource } from '../../models/quotation-source';
 
 interface SourcesSectionProps {
+  /** Heading text for the sources section. */
   title: string;
+  /** List of sources to display. */
   sources: QuotationSource[];
+  /** Accessible label for each source's copy-URL button. */
   copyLabel: string;
   /** CSS class applied to the section heading. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;

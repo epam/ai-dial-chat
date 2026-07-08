@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { KeyboardEventHandler, ReactNode, Ref } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
@@ -22,8 +23,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     disableSubmitButton,
   }: {
     open: boolean;
-    header?: React.ReactNode;
-    children?: React.ReactNode;
+    header?: ReactNode;
+    children?: ReactNode;
     onClose?: () => void;
     onCancel?: () => void;
     onSubmit?: () => void;
@@ -60,8 +61,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     value?: string;
     placeholder?: string;
     onChange?: (v?: string) => void;
-    onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
-    inputRef?: React.Ref<HTMLInputElement>;
+    onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
+    inputRef?: Ref<HTMLInputElement>;
     error?: string;
   }) => (
     <>
@@ -84,7 +85,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     disabled,
     'aria-label': ariaLabel,
   }: {
-    icon?: React.ReactNode;
+    icon?: ReactNode;
     onClick?: () => void;
     disabled?: boolean;
     'aria-label'?: string;
