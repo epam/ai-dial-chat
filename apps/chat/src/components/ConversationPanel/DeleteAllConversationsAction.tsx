@@ -44,12 +44,12 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
         icon={
           <IconDotsVertical
             size={DIAL_ICON_SIZE.SM}
-            className={isOpen ? 'text-accent-secondary' : 'text-secondary'}
+            className={isOpen ? 'text-accent-primary' : 'text-secondary'}
           />
         }
         className={mergeClasses(
           'flex items-center justify-center rounded',
-          isOpen && 'bg-controls-accent-secondary-alpha-active',
+          isOpen && 'bg-controls-accent-primary-alpha-active',
         )}
       />
     </DialDropdown>
