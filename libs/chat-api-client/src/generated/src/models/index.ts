@@ -2203,6 +2203,19 @@ export interface FileUploadResponseDto {
 /**
  *
  * @export
+ * @interface GenerateTitleResponseDto
+ */
+export interface GenerateTitleResponseDto {
+  /**
+   * Sanitised LLM-generated title suggestion for the conversation. Not persisted — the caller confirms the rename separately.
+   * @type {string}
+   * @memberof GenerateTitleResponseDto
+   */
+  name: string;
+}
+/**
+ *
+ * @export
  * @interface LimitStatsDto
  */
 export interface LimitStatsDto {

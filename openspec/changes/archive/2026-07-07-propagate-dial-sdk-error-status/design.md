@@ -51,6 +51,48 @@ This exactly matches the shape already used in `files.service.ts` (`{ status: re
 
 Alternative considered: change `handleDialSdkError`'s signature to accept an explicit `status?: number` third-ish parameter instead of requiring callers to shape the error object. Rejected — it would touch the already-correct call sites too (churn with no behavior change) and diverge from the pattern the rest of the codebase already uses; the fix should be minimal and localized to the two broken services.
 
+### 1a. Superseded: fold the status merge into `handleDialSdkError` itself, applied everywhere (revises Decision 1's alternative)
+
+Decision 1 rejected touching the already-correct call sites, and its first revision (now also superseded) added a separate `toSdkError(error, response)` helper callers had to invoke before `handleDialSdkError`. In practice, hand-rolling — or even calling a second helper for — `{ ...(error ?? {}), status: response.status }` at every call site is exactly the kind of repeated, easy-to-get-wrong step this bug class comes from. `chat.service.ts` and `transcription.service.ts`'s existing `result.error ?? { status: result.response.status }` turned out to be a latent instance of the *same* bug (see Risks/Trade-offs): it only attached `status` when `error` was falsy, so a truthy SDK error body without its own `status` still fell through to `BadGatewayException`.
+
+Final decision: give `handleDialSdkError` itself an optional 4th `response` parameter and do the merge internally, so there is nothing extra for callers to call or forget:
+
+```ts
+export const handleDialSdkError = (
+  error: unknown,
+  context: string,
+  logger?: Logger,
+  response?: { status: number },
+): never => {
+  if (error instanceof HttpException) {
+    throw error;
+  }
+  if (error instanceof TypeError || isNetworkError(error) || isTimeoutError(error)) {
+    logger?.error(`DIAL Core is unreachable during ${context}`, error);
+    throw new ServiceUnavailableException('DIAL Core is unreachable');
+  }
+
+  const mappableError = response
+    ? { ...(typeof error === 'object' && error !== null ? error : {}), status: response.status }
+    : error;
+
+  if (isHttpError(mappableError)) {
+    return mapDialHttpStatus(mappableError.status, context, logger);
+  }
+
+  logger?.error(`Unexpected response from DIAL Core during ${context}`, error);
+  throw new BadGatewayException('Unexpected response from DIAL Core');
+};
+```
+
+Call sites go from `handleDialSdkError(toSdkError(error, response), context, logger)` to `handleDialSdkError(error, context, logger, response)` — one function call instead of two, and the merge logic lives in exactly one place instead of being re-derived (or, as `chat.service.ts`/`transcription.service.ts` showed, mis-derived) at each call site.
+
+Applied at **every** SDK-shaped `{ data, error, response }` call site in `chat-api`, not just the two broken services: `conversation.service.ts`, `bucket.service.ts` (this change's fixes), plus `files.service.ts` and `user-config.service.ts` (previously "already correct", now simplified) and `chat.service.ts` / `transcription.service.ts` (previously "already correct" but actually carrying the latent bug above, now fixed).
+
+`rate.service.ts` is explicitly excluded: despite being named in proposal.md's original "already correct" list, it uses a raw `fetch` call (not `this.client.*`), and already attaches `status` to a thrown `Error` via `Object.assign` before its `catch` block — a different, already-correct pattern with nothing to migrate.
+
+This does introduce the churn Decision 1 wanted to avoid in the five originally-correct files, but it removes an entire class of "forgot to merge status" bugs at the source, and it fixed one such bug outright (`chat.service.ts`/`transcription.service.ts`) that Decision 1's narrower scope would have left in place indefinitely.
+
 ### 2. `getStoredConversation`: route through `handleDialSdkError` at the source
 
 Today, `getStoredConversation` does:

@@ -56,9 +56,10 @@ export class TranscriptionService extends AppService {
           result.error,
         );
         return handleDialSdkError(
-          result.error ?? { status: result.response.status },
+          result.error,
           'transcription.transcribeAudio',
           this.logger,
+          result.response,
         );
       }
 

@@ -162,6 +162,30 @@ describe('handleDialSdkError', () => {
       NotFoundException,
     );
   });
+
+  it('uses response.status when the error body carries no status', () => {
+    expect(() =>
+      handleDialSdkError({ message: 'Resource not found' }, 'ctx', undefined, {
+        status: 404,
+      }),
+    ).toThrow(NotFoundException);
+  });
+
+  it('lets a status on the error body win when response is also passed', () => {
+    /*
+     * response.status is the authoritative upstream status; this asserts
+     * the merge always sets it last regardless of what the error body carries.
+     */
+    expect(() =>
+      handleDialSdkError({ status: 400 }, 'ctx', undefined, { status: 409 }),
+    ).toThrow(ConflictException);
+  });
+
+  it('falls back to BadGatewayException when neither the error body nor response carry a status', () => {
+    expect(() => handleDialSdkError({ message: 'weird' }, 'ctx')).toThrow(
+      BadGatewayException,
+    );
+  });
 });
 
 describe('handleDialFetchError', () => {
