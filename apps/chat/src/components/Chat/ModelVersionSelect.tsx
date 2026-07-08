@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -43,6 +43,39 @@ const getDisplayValue = <T extends MarketplaceEntity>(entity: T) => {
   }
   return entity.id;
 };
+
+const getUniqueVersionEntities = <T extends MarketplaceEntity>(
+  entities: T[],
+  currentEntity: T,
+): T[] => {
+  const getVersionKey = (entity: T) =>
+    entity.version && entity.version !== NA_VERSION
+      ? entity.version
+      : NA_VERSION;
+
+  const currentVersionKey = getVersionKey(currentEntity);
+  const hasCurrentEntity = entities.some((e) => e.id === currentEntity.id);
+  const seenVersions = new Set<string>();
+
+  return entities.filter((entity) => {
+    const versionKey = getVersionKey(entity);
+
+    if (
+      hasCurrentEntity &&
+      versionKey === currentVersionKey &&
+      entity.id !== currentEntity.id
+    ) {
+      return false;
+    }
+
+    if (seenVersions.has(versionKey)) {
+      return false;
+    }
+
+    seenVersions.add(versionKey);
+    return true;
+  });
+};
 interface EntityVersionSelectProps<T extends MarketplaceEntity> {
   entities: T[];
   currentEntity: T;
@@ -73,10 +106,16 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
     setIsOpen(false);
   };
 
-  if (entities.length < 2) {
+  const uniqueEntities = useMemo(
+    () => getUniqueVersionEntities(entities, currentEntity),
+    [entities, currentEntity],
+  );
+
+  if (uniqueEntities.length < 2) {
     if (
-      entities.length &&
-      (isCreatedMarketplaceEntity(entities[0]) || entities[0].version)
+      uniqueEntities.length &&
+      (isCreatedMarketplaceEntity(uniqueEntities[0]) ||
+        uniqueEntities[0].version)
     ) {
       return (
         <div
@@ -88,7 +127,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
             data-qa="version"
           >
             <DialEllipsisTooltip
-              text={entities[0].version ?? t(MarketplaceI18nKeys.NA)}
+              text={uniqueEntities[0].version ?? t(MarketplaceI18nKeys.NA)}
             />
           </span>
         </div>
@@ -134,7 +173,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
         </div>
       }
     >
-      {entities.map((entity) => (
+      {uniqueEntities.map((entity) => (
         <MenuItem
           key={entity.id}
           className={classNames(

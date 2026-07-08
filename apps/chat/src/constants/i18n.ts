@@ -28,6 +28,7 @@ export enum MarkdownI18nKeys {
   CopyAsMD = 'Copy as MD',
   DownloadAsCSV = 'Download as CSV',
   DownloadTableAsCSV = 'Download table as CSV',
+  DownloadCodeBlock = 'Download code block',
   FileName = 'File name',
 }
 
@@ -1253,5 +1254,5 @@ export enum MarketplaceI18nKeys {
   FileToolsDescription = 'Enables the orchestrator’s built-in file tools for this app. When enabled, the agent can browse, search, read, and write or edit files in the app’s file context. When disabled, no file tools are exposed to the orchestrator.',
   AllowOrchestratorToProcessLargeFiles = 'Allow orchestrator to process large files',
   ProcessLargeFiles = 'Process large files',
-  ProcessLargeFilesDescription = 'Lets the orchestrator handle large or many attachments by reading file content on demand instead of including all attachment content in the initial prompt. This helps reduce context window usage while preserving access to the files when needed.',
+  ProcessLargeFilesDescription = 'Allows the orchestrator to handle large or many attachments by reading file content on demand instead of including all attachment content in the initial prompt. This helps reduce context window usage while preserving access to the files when needed.',
 }

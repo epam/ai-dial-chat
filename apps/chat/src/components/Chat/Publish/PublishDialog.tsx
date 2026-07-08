@@ -156,7 +156,7 @@ const PublishDialogContainer = ({
           ? mappedWithConversationsFiles.map(({ oldUrl, newUrl }) => ({
               action: PublishActions.ADD_IF_ABSENT,
               sourceUrl: oldUrl,
-              reviewUrl: oldUrl,
+              reviewUrl: newUrl,
               targetUrl: replaceIdWithBucket(newUrl, PUBLIC_URL_PREFIX),
             }))
           : filteredConversationFiles.map(({ id }) => {

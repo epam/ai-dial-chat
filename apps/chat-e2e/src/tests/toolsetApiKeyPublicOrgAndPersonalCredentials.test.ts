@@ -301,7 +301,9 @@ dialAdminTest(
         );
         await adminEntityDetailsModalAssertion.assertElementBackgroundColors(
           adminEntityDetailsModal.credsLabel.getNthElement(2),
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.bgLayer4),
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.controlsBgDisableAccent,
+          ),
         );
       },
     );

@@ -22,6 +22,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { writeTextToClipboard } from '@/src/utils/app/clipboard';
 import { triggerDownload } from '@/src/utils/app/file';
+import { getDefaultExportFileName } from '@/src/utils/app/import-export';
 
 import { CopyTableType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
@@ -29,7 +30,7 @@ import { Translation } from '@/src/types/translation';
 import { MarkdownI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
-import { DownloadTableCsvModal } from '@/src/components/Markdown/DownloadTableCsvModal';
+import { ChangeDownloadFileNameModal } from '@/src/components/Markdown/ChangeDownloadFileNameModal';
 
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
@@ -52,11 +53,6 @@ const buildCsvString = (
         .join(','),
     )
     .join('\n');
-};
-
-const getDefaultFilename = (): string => {
-  const date = new Date().toISOString().slice(0, 10);
-  return `${date}_table.csv`;
 };
 
 interface Props {
@@ -377,11 +373,15 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
           {body}
         </table>
       </div>
-      <DownloadTableCsvModal
+      <ChangeDownloadFileNameModal
         isOpen={isDownloadModalOpen}
-        defaultFilename={getDefaultFilename()}
+        defaultFilename={getDefaultExportFileName('table.csv')}
+        heading={t(MarkdownI18nKeys.DownloadTableAsCSV, {
+          ns: Translation.Markdown,
+        })}
         onConfirm={downloadTableAsCSV}
         onClose={() => setIsDownloadModalOpen(false)}
+        dataQa="download-csv-modal"
       />
     </div>
   );
