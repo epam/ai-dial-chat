@@ -72,6 +72,10 @@ Ground-truth design docs live in `docs/` — app architecture, technical/product
 
 - Use string enums for named finite sets of statuses, modes, variants, or lifecycle states instead of string-literal union types. Prefer `enum UploadStatus { Idle = 'idle' }` over `type UploadStatus = 'idle' | ...` when the values are reused across a module, exported, or compared in component logic/tests.
 
+## Code comments
+
+- Use block comments (`/* ... */`) for explanatory comments that span multiple lines. Keep `//` comments for short, single-line notes only.
+
 ## RTL and Arabic language support
 
 All apps and libs must support Arabic (`ar`) and any other right-to-left locale. Arabic changes the visual direction of the entire UI.

@@ -74,6 +74,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClick?: () => void;
     'aria-label'?: string;
   }) => <button onClick={onClick} aria-label={ariaLabel} />,
+  DialButton: ({
+    onClick,
+    label,
+    'aria-current': ariaCurrent,
+  }: {
+    onClick?: () => void;
+    label?: React.ReactNode;
+    'aria-current'?: React.AriaAttributes['aria-current'];
+    [key: string]: unknown;
+  }) => (
+    <button onClick={onClick} aria-current={ariaCurrent}>
+      {label}
+    </button>
+  ),
   DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DialSkeleton: () => null,
 }));

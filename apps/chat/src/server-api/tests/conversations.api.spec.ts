@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { conversationsApi } from '../api-client';
-import { createConversation, listConversations } from '../conversations.api';
+import {
+  createConversation,
+  generateConversationTitle,
+  listConversations,
+} from '../conversations.api';
 
 describe('createConversation', () => {
   afterEach(() => {
@@ -84,6 +88,23 @@ describe('createConversation', () => {
         },
       },
     });
+  });
+});
+
+describe('generateConversationTitle', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('calls conversationsApi with the conversation path', async () => {
+    const spy = vi
+      .spyOn(conversationsApi, 'generateConversationTitle')
+      .mockResolvedValue({ name: 'Generated name' });
+
+    const result = await generateConversationTitle('gpt-4o__Chat__uuid');
+
+    expect(spy).toHaveBeenCalledWith({ path: 'gpt-4o__Chat__uuid' });
+    expect(result).toEqual({ name: 'Generated name' });
   });
 });
 

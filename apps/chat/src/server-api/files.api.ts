@@ -1,5 +1,7 @@
 import type {
   ArchiveItemDto,
+  CopyFilesResponseDto,
+  CopyItemDto,
   CreateFolderDto,
   CreateFolderResponseDto,
   DeleteFilesResponseDto,
@@ -9,6 +11,8 @@ import type {
   ListFilesResponseDto,
   ListPublicFilesRequest,
   ListSharedFilesRequest,
+  MoveFilesResponseDto,
+  MoveItemDto,
   RenameFilesResponseDto,
   RenameItemDto,
 } from '@epam/chat-api-client';
@@ -69,10 +73,12 @@ export const getFileMetadata = (params: {
   path: string;
 }): Promise<FileMetadataResponseDto> => filesApi.getFileMetadata(params);
 
-// downloadFileRaw() is used instead of downloadFile() because the generator
-// emits `Blob | void` for application/octet-stream responses, which loses stream
-// semantics. The raw method returns the native fetch Response whose `.body` is a
-// ReadableStream and whose `.blob()` buffers the full content when needed.
+/*
+ * downloadFileRaw() is used instead of downloadFile() because the generator
+ * emits `Blob | void` for application/octet-stream responses, which loses stream
+ * semantics. The raw method returns the native fetch Response whose `.body` is a
+ * ReadableStream and whose `.blob()` buffers the full content when needed.
+ */
 export const downloadFile = async (
   bucket: string,
   path: string,
@@ -96,8 +102,28 @@ export const renameFiles = (
 ): Promise<RenameFilesResponseDto> =>
   filesApi.renameFiles({ renameFilesDto: { items } });
 
-// downloadArchiveRaw() is used instead of downloadArchive() for the same reason
-// as downloadFileRaw() above — binary response semantics require the raw fetch Response.
+export const copyFiles = (
+  items: CopyItemDto[],
+  signal?: AbortSignal,
+): Promise<CopyFilesResponseDto> =>
+  filesApi.copyFiles(
+    { copyFilesDto: { items } },
+    signal ? { signal } : undefined,
+  );
+
+export const moveFiles = (
+  items: MoveItemDto[],
+  signal?: AbortSignal,
+): Promise<MoveFilesResponseDto> =>
+  filesApi.moveFiles(
+    { moveFilesDto: { items } },
+    signal ? { signal } : undefined,
+  );
+
+/*
+ * downloadArchiveRaw() is used instead of downloadArchive() for the same reason
+ * as downloadFileRaw() above — binary response semantics require the raw fetch Response.
+ */
 export const downloadArchive = async (
   items: ArchiveItemDto[],
 ): Promise<Response> => {

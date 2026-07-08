@@ -3,11 +3,12 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { AppService } from '../app/app.service';
-import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
-} from '../common/utils/dial-fetch-error';
+} from '../common/dial/dial-error.mapper';
+import { isQuickAppSchema } from '../common/utils/application-schema';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import type { EnvironmentVariables } from '../config/environment.config';
 import type {
   ApplicationSchemasResponseDto,
@@ -53,17 +54,26 @@ export class ApplicationSchemasService extends AppService {
         );
       }
       const items = Array.isArray(result.data) ? result.data : [];
+      const devQuickAppsEditorUrl = this.configService.get(
+        'DEV_QUICKAPPS_EDITOR_URL',
+        { infer: true },
+      );
       const data: ApplicationSchemasResponseDto = {
-        schemas: items.map(
-          (rawItem): ApplicationSchemaSummaryDto => ({
-            id: rawItem['$id'],
+        schemas: items.map((rawItem): ApplicationSchemaSummaryDto => {
+          const id = rawItem['$id'] as string | undefined;
+          const isQuickApp = isQuickAppSchema(id);
+          return {
+            id,
             displayName: rawItem['dial:applicationTypeDisplayName'],
             viewerUrl: rawItem['dial:applicationTypeViewerUrl'],
-            editorUrl: rawItem['dial:applicationTypeEditorUrl'],
+            editorUrl:
+              isQuickApp && devQuickAppsEditorUrl
+                ? devQuickAppsEditorUrl
+                : rawItem['dial:applicationTypeEditorUrl'],
             schemaEndpoint: rawItem['dial:applicationTypeSchemaEndpoint'],
             iconUrl: rawItem['dial:applicationTypeIconUrl'],
-          }),
-        ),
+          };
+        }),
       };
       await this.cacheManager.set(cacheKey, data, 60 * 1000);
       return data;

@@ -1,6 +1,11 @@
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { handleDialError } from '../../common/utils/dial-error';
+import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import {
   ConversationGenerationService,
@@ -13,8 +18,8 @@ import {
 } from '../dto/conversation-message.dto';
 import { CompletionMode } from '../dto/send-completion.dto';
 
-vi.mock('../../common/utils/dial-error', () => ({
-  handleDialError: vi.fn(),
+vi.mock('../../common/dial/dial-error.mapper', () => ({
+  handleDialSdkError: vi.fn(),
 }));
 
 const UUID_REGEX =
@@ -113,15 +118,17 @@ describe('ConversationService', () => {
       mockGenerationService,
       mockConversationNamingService as never,
     );
-    vi.mocked(handleDialError).mockReset();
+    vi.mocked(handleDialSdkError).mockReset();
     vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
       data: {},
     } as never);
     vi.spyOn(service['client'], 'getConversation').mockRejectedValue({
       error: { status: 404 },
     } as never);
-    // Default: no path collision on create (metadata lookup returns empty).
-    // Individual createConversation tests override this when needed.
+    /*
+     * Default: no path collision on create (metadata lookup returns empty).
+     * Individual createConversation tests override this when needed.
+     */
     vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
       data: null,
       error: { status: 404 },
@@ -470,28 +477,40 @@ describe('ConversationService', () => {
       expect(result.name).toBe('Docker networking basics');
     });
 
-    it('prefers the path title when the conversation was path-renamed after LLM naming', async () => {
+    it('returns the manually-renamed stored name even when the filename still encodes the old title', async () => {
       vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
         data: {
           ...TEST_CONVERSATION,
-          name: 'Docker networking basics',
+          name: 'New Title',
           llmNamingDone: true,
-          messages: [
-            {
-              role: ConversationMessageRole.User,
-              content: 'How does Docker networking work?',
-            },
-          ],
         },
       } as never);
 
       const result = await service.getConversation(
-        'test-bucket/gpt-4o__My custom title',
+        'test-bucket/gpt-4o__Old Title__uuid',
         'test-token',
         'test-bucket',
       );
 
-      expect(result.name).toBe('My custom title');
+      expect(result.name).toBe('New Title');
+    });
+
+    it('falls back to the filename-derived title when naming is not yet final', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: {
+          ...TEST_CONVERSATION,
+          name: 'How does Docker networking work?',
+          llmNamingDone: false,
+        },
+      } as never);
+
+      const result = await service.getConversation(
+        'test-bucket/gpt-4o__How does Docker networking work?',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.name).toBe('How does Docker networking work?');
     });
   });
 
@@ -517,16 +536,14 @@ describe('ConversationService', () => {
       );
     });
 
-    it('preserves nested deployment paths when renaming', async () => {
-      const moveSpy = vi
-        .spyOn(service['client'], 'moveResource')
-        .mockResolvedValue({ data: {} } as never);
+    it('renames at the same path without moving the resource', async () => {
+      const moveSpy = vi.spyOn(service['client'], 'moveResource');
       const getSpy = vi
         .spyOn(service['client'], 'getConversation')
         .mockResolvedValue({
           data: {
             ...TEST_CONVERSATION,
-            name: 'LLM generated title',
+            name: 'Old Title',
             llmNamingDone: true,
           },
         } as never);
@@ -541,24 +558,15 @@ describe('ConversationService', () => {
         'test-bucket',
       );
 
-      expect(moveSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: {
-            sourceUrl: `conversations/test-bucket/${conversationPath}`,
-            destinationUrl:
-              'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__renamed',
-            overwrite: false,
-          },
-        }),
-      );
+      expect(moveSpy).not.toHaveBeenCalled();
       expect(getSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+        conversationPath,
         expect.any(Object),
       );
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+        conversationPath,
         expect.objectContaining({
           body: expect.objectContaining({
             name: 'renamed',
@@ -566,9 +574,26 @@ describe('ConversationService', () => {
           }),
         }),
       );
-      expect(result.newPath).toBe(
-        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__renamed',
-      );
+      expect(result).toEqual({ name: 'renamed' });
+    });
+
+    it('throws NotFoundException when the conversation to rename does not exist', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: null,
+        error: { status: 404 },
+      } as never);
+      vi.mocked(handleDialSdkError).mockImplementationOnce(() => {
+        throw new Error('not found');
+      });
+
+      await expect(
+        service.renameConversation(
+          conversationPath,
+          'renamed',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow('Conversation not found');
     });
 
     it('preserves nested deployment paths when duplicating', async () => {
@@ -726,7 +751,7 @@ describe('ConversationService', () => {
         data: null,
         error: { status: 500 },
       } as never);
-      vi.mocked(handleDialError).mockImplementation(() => {
+      vi.mocked(handleDialSdkError).mockImplementation(() => {
         throw new Error('save failed');
       });
 
@@ -828,8 +853,10 @@ describe('ConversationService', () => {
     });
 
     it('uses the stored name field when the conversation was LLM-renamed', async () => {
-      // Storage path still uses the original first-message name, but JSON name
-      // was updated by the LLM to a meaningful title.
+      /*
+       * Storage path still uses the original first-message name, but JSON name
+       * was updated by the LLM to a meaningful title.
+       */
       mockGetConversation({
         ...SHARED_CONVERSATION,
         id: 'shared-bucket/gpt-4o__Hello there',
@@ -959,8 +986,10 @@ describe('ConversationService', () => {
         'test-bucket',
       );
 
-      // getConversationMetadata is called once for the path collision check,
-      // never for a full bucket title scan (which would pass an empty path '').
+      /*
+       * getConversationMetadata is called once for the path collision check,
+       * never for a full bucket title scan (which would pass an empty path '').
+       */
       expect(metadataSpy).not.toHaveBeenCalledWith(
         expect.anything(),
         '',
@@ -1387,8 +1416,10 @@ describe('ConversationService', () => {
       } as never);
 
       const encoder = new TextEncoder();
-      // Stream that emits content + [DONE] but is intentionally never closed,
-      // mimicking a provider that holds the SSE socket open after [DONE].
+      /*
+       * Stream that emits content + [DONE] but is intentionally never closed,
+       * mimicking a provider that holds the SSE socket open after [DONE].
+       */
       const neverClosingStream = new ReadableStream<Uint8Array>({
         start(controller) {
           controller.enqueue(
@@ -1425,8 +1456,10 @@ describe('ConversationService', () => {
         res as never,
       );
 
-      // The generation is released (complete), not left active — so a
-      // subsequent request (e.g. regenerate) would not get a 409.
+      /*
+       * The generation is released (complete), not left active — so a
+       * subsequent request (e.g. regenerate) would not get a 409.
+       */
       expect(mockGenerationService.complete).toHaveBeenCalledWith(
         'test-session-id',
         'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
@@ -2021,17 +2054,20 @@ describe('ConversationService', () => {
       expect(result.items[0].sharedWithMe).toBe(true);
     });
 
-    it('calls handleDialError when the user bucket returns a response-level error', async () => {
+    it('calls handleDialSdkError when the user bucket returns a response-level error', async () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockImplementation(
         (bucket: string) => {
           if (bucket === 'test-bucket') {
-            return Promise.resolve({ error: { status: 502 } }) as never;
+            return Promise.resolve({
+              error: { message: 'Bad Gateway' },
+              response: new Response(null, { status: 502 }),
+            }) as never;
           }
           return Promise.resolve({ data: { items: [] } }) as never;
         },
       );
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
-      vi.mocked(handleDialError).mockImplementation(() => {
+      vi.mocked(handleDialSdkError).mockImplementation(() => {
         throw new Error('mapped DIAL error');
       });
 
@@ -2039,7 +2075,12 @@ describe('ConversationService', () => {
         service.listConversations('test-token', 'test-bucket'),
       ).rejects.toThrow('mapped DIAL error');
 
-      expect(handleDialError).toHaveBeenCalledWith({ status: 502 });
+      expect(handleDialSdkError).toHaveBeenCalledWith(
+        { message: 'Bad Gateway' },
+        'conversations.listConversations',
+        expect.anything(),
+        expect.objectContaining({ status: 502 }),
+      );
     });
 
     it('returns only user items when public bucket returns a response-level error', async () => {
@@ -2302,6 +2343,128 @@ describe('ConversationService', () => {
 
       expect(result.requested).toBe(1);
       expect(deleteConversationSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('DIAL SDK error status propagation', () => {
+    beforeEach(async () => {
+      const actual = await vi.importActual<
+        typeof import('../../common/dial/dial-error.mapper')
+      >('../../common/dial/dial-error.mapper');
+      vi.mocked(handleDialSdkError).mockImplementation(
+        actual.handleDialSdkError,
+      );
+    });
+
+    it('deleteConversation throws NotFoundException when DIAL Core reports 404 with no status on the error body', async () => {
+      vi.spyOn(service['client'], 'deleteConversation').mockResolvedValue({
+        error: { message: 'Not found' },
+        response: new Response(null, { status: 404 }),
+      } as never);
+
+      await expect(
+        service.deleteConversation(
+          'gpt-4o__Already deleted__uuid',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('getConversation (via getStoredConversation) throws NotFoundException for a 404 upstream response', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        error: { message: 'Not found' },
+        response: new Response(null, { status: 404 }),
+      } as never);
+
+      await expect(
+        service.getConversation(
+          'gpt-4o__Chat__uuid',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('duplicateConversation throws ForbiddenException for a 403 upstream response on the source read', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        error: { message: 'Forbidden' },
+        response: new Response(null, { status: 403 }),
+      } as never);
+
+      await expect(
+        service.duplicateConversation(
+          'shared-bucket/gpt-4o__Chat',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('renameConversation throws ConflictException for a 409 upstream response on the save call', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        error: { message: 'Conflict' },
+        response: new Response(null, { status: 409 }),
+      } as never);
+
+      await expect(
+        service.renameConversation(
+          'gpt-4o__Chat',
+          'New title',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('getConversationMetadata throws NotFoundException for a 404 upstream response', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        error: { message: 'Not found' },
+        response: new Response(null, { status: 404 }),
+      } as never);
+
+      await expect(
+        service.getConversationMetadata(
+          'gpt-4o__Chat',
+          'test-token',
+          'test-bucket',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('saveConversation throws ConflictException for a 409 upstream response', async () => {
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        error: { message: 'Conflict' },
+        response: new Response(null, { status: 409 }),
+      } as never);
+
+      await expect(
+        service.saveConversation(
+          'gpt-4o__Chat',
+          'test-token',
+          'test-bucket',
+          TEST_CONVERSATION,
+        ),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('createConversation throws NotFoundException for a 404 upstream response on the save call', async () => {
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        error: { message: 'Not found' },
+        response: new Response(null, { status: 404 }),
+      } as never);
+
+      await expect(
+        service.createConversation(
+          'Hello',
+          'test-token',
+          'test-bucket',
+          'gpt-4o',
+        ),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

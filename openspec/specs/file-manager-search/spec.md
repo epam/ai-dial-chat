@@ -9,7 +9,7 @@ The hook SHALL debounce `onSearchFiles` calls by 300 ms. Any in-flight search re
 The hook SHALL expose `isSearching: boolean` that is `true` while the debounced request is in flight. When the query becomes empty, `isSearching` SHALL return to `false` and `items` SHALL revert to the cached folder contents for the current path.
 
 State ownership: `useDialFileManager` hook — internal `searchQuery` and `searchResults` refs/state; `items` is derived from search results when query is non-empty.
-Feature flag: none — enabled unconditionally when `DialFileManagerModal` sets `searchable: true`.
+Feature flag: none — enabled unconditionally when `DialFileManagerShell` sets `searchable: true`.
 RTL: none — search is direction-agnostic.
 Memoisation: `onSearchFiles` wrapped in `useCallback`; `items` derivation in `useMemo`.
 Cache: search results are NOT stored in the per-folder `Map` cache; they are ephemeral for the duration of the active query.
@@ -44,13 +44,13 @@ No new BFF endpoint — reuses existing `listFiles` / `listSharedFiles` / `listP
 
 ---
 
-### Requirement: DialFileManagerModal enables search UI
+### Requirement: DialFileManagerShell enables search UI
 
-`DialFileManagerModal` SHALL pass `navigationPanelOptions={{ searchable: true, hideSearchPathItemName: true }}` to `DialFileManager` and wire `onSearchFiles` from `useDialFileManager` to the `DialFileManager` search callback prop.
+`DialFileManagerShell` SHALL pass `navigationPanelOptions={{ searchable: true, hideSearchPathItemName: true }}` to `DialFileManager` and wire `onSearchFiles` from `useDialFileManager` to the `DialFileManager` search callback prop.
 
-When `isSearching` is `true`, the modal SHALL display a loading indicator within the file grid area (using the existing skeleton/spinner pattern).
+When `isSearching` is `true`, the shell SHALL display a loading indicator within the file grid area (using the existing skeleton/spinner pattern).
 
-When search returns zero results, the modal SHALL display a generic "No results found" empty state (i18n key: `dialFileManager.search.emptyStateTitle`).
+When search returns zero results, the shell SHALL display a generic "No results found" empty state (i18n key: `dialFileManager.search.emptyStateTitle`).
 
 RTL: none — `DialFileManager` handles search input direction internally.
 i18n keys: `dialFileManager.search.emptyStateTitle`.
@@ -58,7 +58,7 @@ Accessibility: search input provided by `DialFileManager` ui-kit component; no a
 
 #### Scenario: Search input visible in modal
 
-- **WHEN** `DialFileManagerModal` is rendered
+- **WHEN** `DialFileManagerShell` is rendered
 - **THEN** the `DialFileManager` navigation panel shows a search input (`searchable: true`)
 
 #### Scenario: Search path item name hidden

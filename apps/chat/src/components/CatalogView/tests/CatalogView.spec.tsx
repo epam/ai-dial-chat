@@ -100,6 +100,7 @@ describe('CatalogView', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
     vi.mocked(useNotification).mockReturnValue({
       notifications: [],
@@ -127,18 +128,59 @@ describe('CatalogView', () => {
     );
   });
 
-  // Catalog items currently come from MOCK_CATALOG_ITEMS (see CatalogView's
-  // temporary mock-data wiring) rather than the deployments/toolsets context.
-  it('renders items from the mock catalog data', () => {
+  it('adds toolsets from deployments context to catalog items', () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        {
+          id: 'gpt-4o',
+          displayName: 'GPT-4o',
+          type: 'model',
+        },
+      ],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/b/search__0.0.1',
+          toolset: 'toolsets/b/search__0.0.1',
+          displayName: 'Search',
+        },
+      ],
+      refetchToolsets: vi.fn(),
+    });
+
     render(<CatalogView />);
 
-    expect(screen.getByLabelText('Catalog item ids').textContent).toContain(
-      'gpt-4o:MODEL',
+    expect(screen.getByLabelText('Catalog item ids').textContent).toBe(
+      'gpt-4o:MODEL,toolsets/b/search__0.0.1:TOOLSET',
     );
   });
 
-  it('toggles favorites for a mock catalog item', async () => {
+  it('toggles toolset favorites through the toolset user-config section', async () => {
     const toggleFavorite = vi.fn();
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/b/search__0.0.1',
+          toolset: 'toolsets/b/search__0.0.1',
+          displayName: 'Search',
+        },
+      ],
+      refetchToolsets: vi.fn(),
+    });
     vi.mocked(useFavoriteApplications).mockReturnValue({
       favoriteIds: new Set(),
       isLoading: false,
@@ -147,19 +189,29 @@ describe('CatalogView', () => {
 
     render(<CatalogView />);
 
-    await user.click(screen.getByRole('button', { name: 'favorite gpt-4o' }));
+    await user.click(
+      screen.getByRole('button', {
+        name: 'favorite toolsets/b/search__0.0.1',
+      }),
+    );
 
     expect(toggleFavorite).toHaveBeenCalledWith(
-      'gpt-4o',
+      'toolsets/b/search__0.0.1',
       true,
-      FavoriteEntityType.Deployment,
+      FavoriteEntityType.Toolset,
     );
   });
 
-  it('selects the item and navigates to the root route when Use in chat is clicked', async () => {
+  it('selects the model as the deployment and navigates to the root route when Use in chat is clicked', async () => {
     const setSelectedItemId = vi.fn();
     vi.mocked(useDeployments).mockReturnValue({
-      items: [],
+      items: [
+        {
+          id: 'gpt-4o',
+          displayName: 'GPT-4o',
+          type: 'model',
+        },
+      ],
       selectedItemId: null,
       setSelectedItemId,
       restoreSelectedItemId: vi.fn(),
@@ -168,6 +220,7 @@ describe('CatalogView', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -178,6 +231,64 @@ describe('CatalogView', () => {
 
     expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
     expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
+  });
+
+  it('selects the application as the deployment and navigates to the root route when Use in chat is clicked', async () => {
+    const setSelectedItemId = vi.fn();
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        {
+          id: 'my-app',
+          displayName: 'My App',
+          type: 'application',
+        },
+      ],
+      selectedItemId: null,
+      setSelectedItemId,
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'use in chat my-app' }),
+    );
+
+    expect(setSelectedItemId).toHaveBeenCalledWith('my-app');
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
+  });
+
+  it('updates the selection when Use in chat is clicked on a different deployment', async () => {
+    const setSelectedItemId = vi.fn();
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
+        { id: 'gpt-4o-mini', displayName: 'GPT-4o mini', type: 'model' },
+      ],
+      selectedItemId: 'gpt-4o',
+      setSelectedItemId,
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'use in chat gpt-4o-mini' }),
+    );
+
+    expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
   });
 
   it('resolves folder access for a folder with no mock data instead of throwing', () => {

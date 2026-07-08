@@ -59,7 +59,7 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
       style={{ width: size, height: size }}
       className={mergeClasses(
         styles.agentIconBadge,
-        'shrink-0 overflow-hidden rounded-[6px]',
+        'shrink-0 overflow-hidden rounded-md',
         badgeClassName,
       )}
     >

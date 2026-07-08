@@ -1,6 +1,8 @@
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 import type { ProviderInfoDto } from '@epam/chat-api-client';
 import {
   memo,
+  SyntheticEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -15,12 +17,11 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { getProviders } from '../../server-api/auth.api';
 import { getIconPath } from '../../utils/icon-path';
-import { ButtonAppearance, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const getProviderIconUrl = (id: string) =>
   `https://authjs.dev/img/providers/${id.replace(/[1-9]\d*$/, '')}.svg`;
 
-const handleIconError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+const handleIconError = (e: SyntheticEvent<HTMLImageElement>) => {
   e.currentTarget.style.display = 'none';
 };
 
@@ -38,7 +39,6 @@ const renderProviders = (
           <DialNeutralButton
             key={provider.id}
             className="w-full"
-            appearance={ButtonAppearance.Outlined}
             iconBefore={
               <img
                 src={getProviderIconUrl(provider.id)}
@@ -118,7 +118,7 @@ const LoginPage: FC = () => {
         </picture>
       </div>
 
-      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-overlay p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
+      <div className="bg-overlay relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
         {currentThemeFavicon && (
           <span
             style={{
@@ -130,7 +130,7 @@ const LoginPage: FC = () => {
         )}
 
         <div className="flex w-full flex-col items-center gap-8 mobile:gap-6">
-          <h1 className="text-center text-[28px] font-semibold leading-10 text-primary mobile:text-[22px] mobile:leading-8">
+          <h1 className="dial-display2-text mobile:dial-h1-text text-center text-primary">
             {t(AuthI18nKeys.LoginTitle)}
           </h1>
 

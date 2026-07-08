@@ -95,8 +95,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const [allowedDropGroups, setAllowedDropGroups] =
       useState<Set<ConversationGroupKey> | null>(null);
 
-    // Refs let the drop handler read current values without being in the useCallback dep array,
-    // avoiding recreating the handler (and remounting rows) on every drag-state change.
+    /*
+     * Refs let the drop handler read current values without being in the useCallback dep array,
+     * avoiding recreating the handler (and remounting rows) on every drag-state change.
+     */
     const draggingIdRef = useRef<string | null>(null);
     const allowedDropGroupsRef = useRef<Set<ConversationGroupKey> | null>(null);
 
@@ -181,11 +183,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-text-secondary': colors?.textSecondary,
       '--cp-new-chat-hover': colors?.newChatHoverBackground,
       '--cp-new-chat-active': colors?.newChatActiveBackground,
-      '--cp-new-chat-icon-bg': colors?.newChatIconBackground,
-      '--cp-new-chat-icon-bg-hover': colors?.newChatIconBackgroundHover,
-      '--cp-new-chat-icon-bg-active': colors?.newChatIconBackgroundActive,
-      '--cp-new-chat-icon': colors?.newChatIconColor,
-      '--cp-new-chat-divider': colors?.newChatDivider,
+      '--cp-new-chat-bg': colors?.newChatBackground,
     });
 
     const filteredItems = useMemo(
@@ -328,6 +326,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         ariaLabel={title}
         onClose={onToggle}
         closeLabel={closeAriaLabel}
+        headerClassName="h-[64px]"
         styles={{
           colors: {
             background: colors?.background,

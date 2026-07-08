@@ -57,8 +57,8 @@ import { getConversationSource } from './get-conversation-source';
 
 const PANEL_STYLES: ConversationPanelStyles = {
   typography: {
-    fontClassName: 'dial-body-text',
     itemIconBadgeClassName: 'rounded-lg',
+    fontClassName: 'dial-body-text',
     newChatLabelClassName: 'dial-small-text',
     groupHeaderClassName: 'dial-tiny-semi-text uppercase tracking-wider',
     tabClassName: 'dial-tiny-semi-text',
@@ -109,6 +109,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pinConversation,
     deleteConversation,
     renameConversation,
+    generateConversationTitle,
     duplicateConversation,
     refreshConversations,
   } = useConversations();
@@ -374,9 +375,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
       setIsRenaming(true);
       setRenameError(null);
-      let newPath: string;
       try {
-        newPath = await renameConversation(id, newTitle);
+        await renameConversation(id, newTitle);
       } catch {
         setRenameError(t(ConversationPanelI18nKeys.RenameError));
         setIsRenaming(false);
@@ -384,21 +384,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       }
       setIsRenaming(false);
       setPendingRenameItem(null);
-
-      const activeContextId = panelActiveConversationId
-        ? panelToContextId.get(panelActiveConversationId)
-        : undefined;
-      if (activeContextId === id) navigate(getConversationRoute(newPath));
     },
-    [
-      pendingRenameItem,
-      renameConversation,
-      panelActiveConversationId,
-      panelToContextId,
-      navigate,
-      t,
-    ],
+    [pendingRenameItem, renameConversation, t],
   );
+
+  const handleGenerateRenameWithAi = useCallback(async () => {
+    if (!pendingRenameItem) return '';
+    return generateConversationTitle(pendingRenameItem.id);
+  }, [pendingRenameItem, generateConversationTitle]);
 
   const handleCloseRenameDialog = useCallback(() => {
     if (isRenaming) return;
@@ -494,6 +487,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         error={renameError}
         onSave={handleConfirmRename}
         onCancel={handleCloseRenameDialog}
+        onGenerateWithAi={handleGenerateRenameWithAi}
       />
     </>
   );

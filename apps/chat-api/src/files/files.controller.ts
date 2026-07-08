@@ -24,6 +24,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { CopyFilesDto, CopyFilesResponseDto } from './dto/copy-files.dto';
 import {
   CreateFolderDto,
   CreateFolderResponseDto,
@@ -39,6 +40,7 @@ import {
   ListPublicFilesQueryDto,
   ListSharedFilesQueryDto,
 } from './dto/list-files.dto';
+import { MoveFilesDto, MoveFilesResponseDto } from './dto/move-files.dto';
 import { RenameFilesDto, RenameFilesResponseDto } from './dto/rename-files.dto';
 import { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
@@ -357,6 +359,50 @@ export class FilesController {
   ): Promise<RenameFilesResponseDto> {
     const { at } = req.user as SessionUser;
     return this.filesService.renameFiles(body.items, at);
+  }
+
+  @Post('copy')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Copy files and folders' })
+  @ApiBody({ type: CopyFilesDto })
+  @ApiResponse({ status: 200, type: CopyFilesResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async copyFiles(
+    @Body() body: CopyFilesDto,
+    @Req() req: Request,
+  ): Promise<CopyFilesResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.copyFiles(body.items, at);
+  }
+
+  @Post('move')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Move files and folders across folders' })
+  @ApiBody({ type: MoveFilesDto })
+  @ApiResponse({ status: 200, type: MoveFilesResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async moveFiles(
+    @Body() body: MoveFilesDto,
+    @Req() req: Request,
+  ): Promise<MoveFilesResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.moveFiles(body.items, at);
   }
 
   @Get('download')

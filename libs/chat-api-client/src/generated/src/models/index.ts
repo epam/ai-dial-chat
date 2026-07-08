@@ -840,6 +840,111 @@ export interface ConversationsConfigDto {
 /**
  *
  * @export
+ * @interface CopyFilesDto
+ */
+export interface CopyFilesDto {
+  /**
+   *
+   * @type {Array<CopyItemDto>}
+   * @memberof CopyFilesDto
+   */
+  items: Array<CopyItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface CopyFilesResponseDto
+ */
+export interface CopyFilesResponseDto {
+  /**
+   *
+   * @type {Array<CopyItemResultDto>}
+   * @memberof CopyFilesResponseDto
+   */
+  results: Array<CopyItemResultDto>;
+}
+/**
+ *
+ * @export
+ * @interface CopyItemDto
+ */
+export interface CopyItemDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof CopyItemDto
+   */
+  bucket: string;
+  /**
+   * Relative source path within bucket
+   * @type {string}
+   * @memberof CopyItemDto
+   */
+  sourcePath: string;
+  /**
+   * Relative destination path within bucket
+   * @type {string}
+   * @memberof CopyItemDto
+   */
+  destinationPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CopyItemDto
+   */
+  nodeType: CopyItemDtoNodeTypeEnum;
+  /**
+   * Display name (last segment) for error messages
+   * @type {string}
+   * @memberof CopyItemDto
+   */
+  name: string;
+}
+
+/**
+ * @export
+ */
+export const CopyItemDtoNodeTypeEnum = {
+  Item: 'item',
+  Folder: 'folder',
+} as const;
+export type CopyItemDtoNodeTypeEnum =
+  (typeof CopyItemDtoNodeTypeEnum)[keyof typeof CopyItemDtoNodeTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface CopyItemResultDto
+ */
+export interface CopyItemResultDto {
+  /**
+   * Source path from request
+   * @type {string}
+   * @memberof CopyItemResultDto
+   */
+  sourcePath: string;
+  /**
+   * Destination path from request
+   * @type {string}
+   * @memberof CopyItemResultDto
+   */
+  destinationPath: string;
+  /**
+   * true when all Core copyResource calls succeeded
+   * @type {boolean}
+   * @memberof CopyItemResultDto
+   */
+  success: boolean;
+  /**
+   * Human-readable error reason when success is false
+   * @type {string}
+   * @memberof CopyItemResultDto
+   */
+  error?: string;
+}
+/**
+ *
+ * @export
  * @interface CreateApplicationBodyDto
  */
 export interface CreateApplicationBodyDto {
@@ -879,6 +984,12 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   topics?: Array<string>;
+  /**
+   *
+   * @type {object}
+   * @memberof CreateApplicationBodyDto
+   */
+  applicationProperties?: object;
 }
 /**
  *
@@ -2197,6 +2308,19 @@ export interface FileUploadResponseDto {
 /**
  *
  * @export
+ * @interface GenerateTitleResponseDto
+ */
+export interface GenerateTitleResponseDto {
+  /**
+   * Sanitised LLM-generated title suggestion for the conversation. Not persisted — the caller confirms the rename separately.
+   * @type {string}
+   * @memberof GenerateTitleResponseDto
+   */
+  name: string;
+}
+/**
+ *
+ * @export
  * @interface LimitStatsDto
  */
 export interface LimitStatsDto {
@@ -2423,6 +2547,111 @@ export type MessageDtoRoleEnum =
 /**
  *
  * @export
+ * @interface MoveFilesDto
+ */
+export interface MoveFilesDto {
+  /**
+   *
+   * @type {Array<MoveItemDto>}
+   * @memberof MoveFilesDto
+   */
+  items: Array<MoveItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface MoveFilesResponseDto
+ */
+export interface MoveFilesResponseDto {
+  /**
+   *
+   * @type {Array<MoveItemResultDto>}
+   * @memberof MoveFilesResponseDto
+   */
+  results: Array<MoveItemResultDto>;
+}
+/**
+ *
+ * @export
+ * @interface MoveItemDto
+ */
+export interface MoveItemDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof MoveItemDto
+   */
+  bucket: string;
+  /**
+   * Relative source path within bucket
+   * @type {string}
+   * @memberof MoveItemDto
+   */
+  sourcePath: string;
+  /**
+   * Relative destination path within bucket
+   * @type {string}
+   * @memberof MoveItemDto
+   */
+  destinationPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof MoveItemDto
+   */
+  nodeType: MoveItemDtoNodeTypeEnum;
+  /**
+   * Display name (last segment) for error messages
+   * @type {string}
+   * @memberof MoveItemDto
+   */
+  name: string;
+}
+
+/**
+ * @export
+ */
+export const MoveItemDtoNodeTypeEnum = {
+  Item: 'item',
+  Folder: 'folder',
+} as const;
+export type MoveItemDtoNodeTypeEnum =
+  (typeof MoveItemDtoNodeTypeEnum)[keyof typeof MoveItemDtoNodeTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface MoveItemResultDto
+ */
+export interface MoveItemResultDto {
+  /**
+   * Source path from request
+   * @type {string}
+   * @memberof MoveItemResultDto
+   */
+  sourcePath: string;
+  /**
+   * Destination path from request
+   * @type {string}
+   * @memberof MoveItemResultDto
+   */
+  destinationPath: string;
+  /**
+   * true when all Core moveResource calls succeeded
+   * @type {boolean}
+   * @memberof MoveItemResultDto
+   */
+  success: boolean;
+  /**
+   * Human-readable error reason when success is false
+   * @type {string}
+   * @memberof MoveItemResultDto
+   */
+  error?: string;
+}
+/**
+ *
+ * @export
  * @interface MutatedToolsetDto
  */
 export interface MutatedToolsetDto {
@@ -2520,11 +2749,11 @@ export interface RenameConversationBodyDto {
  */
 export interface RenameConversationResponseDto {
   /**
-   * New relative path of the renamed conversation
+   * Sanitised stored display name of the renamed conversation
    * @type {string}
    * @memberof RenameConversationResponseDto
    */
-  newPath: string;
+  name: string;
 }
 /**
  *

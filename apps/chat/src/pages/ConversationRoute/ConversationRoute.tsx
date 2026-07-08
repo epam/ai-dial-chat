@@ -3,15 +3,8 @@ import type {
   DeploymentItem,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import {
-  AttachmentErrorReason,
-  isAudioTranscriptionSupported,
-  ResponseFormat,
-} from '@epam/ai-dial-chat-shared';
-import {
-  FileDndOverlay,
-  type ChatSettingsValues,
-} from '@epam/ai-dial-conversation-input';
+import { ResponseFormat } from '@epam/ai-dial-chat-shared';
+import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
 import {
@@ -33,18 +26,13 @@ import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import {
-  AttachmentsI18nKeys,
-  BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
   ChatI18nKeys,
-  ChatSettingsI18nKeys,
   ConversationI18nKeys,
-  DeploymentsI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
-import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -52,6 +40,10 @@ import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useAttachmentUpload } from '../../hooks/conversation/useAttachmentUpload';
+import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
+import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
+import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
@@ -59,16 +51,11 @@ import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
-  transcribeAudio,
-  transcribeAudioWithAsrModel,
-} from '../../server-api/chat.api';
-import {
   createConversation as apiCreateConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
-import { uploadFile } from '../../server-api/files.api';
+import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
-import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -99,8 +86,10 @@ const CatalogPickerModal = lazy(async () => {
   return { default: module.default };
 });
 
-// TODO: rename page and component
-// TODO: review component after ConversationPage implementation, maybe move ConversationInput here and remove ConversationInput component
+/*
+ * TODO: rename page and component
+ * TODO: review component after ConversationPage implementation, maybe move ConversationInput here and remove ConversationInput component
+ */
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -154,8 +143,25 @@ const ConversationRoute: FC = () => {
   const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
     useAttachmentValidation(selectedDeployment);
 
-  const pendingNetworkFilesRef = useRef<string[]>([]);
-  const networkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleNetworkUploadError = useCallback(
+    (filenames: string[]) => {
+      const { title, message } = buildNetworkUploadErrorNotification(
+        filenames,
+        t,
+      );
+      showNotification({
+        variant: NotificationVariant.Error,
+        title,
+        message,
+      });
+    },
+    [showNotification, t],
+  );
+
+  const { handleUploadAttachment } = useAttachmentUpload({
+    bucket,
+    onNetworkError: handleNetworkUploadError,
+  });
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
@@ -184,68 +190,18 @@ const ConversationRoute: FC = () => {
     [selectedDeploymentConfiguration],
   );
 
-  const chatSettings = useMemo(
-    () => ({
-      features: {
-        ...(selectedDeployment?.features ?? {
-          systemPrompt: false,
-          temperature: false,
-        }),
-        responseFormat: true,
-      },
-      responseFormat: chatSettingsValues.responseFormat,
-      systemPrompt: chatSettingsValues.systemPrompt,
-      temperature: chatSettingsValues.temperature,
-      onSave: (values: ChatSettingsValues) => {
-        setChatSettingsValues((prev) => ({
-          responseFormat: values.responseFormat ?? prev.responseFormat,
-          systemPrompt: values.systemPrompt ?? prev.systemPrompt,
-          temperature: values.temperature ?? prev.temperature,
-        }));
-        showNotification({
-          variant: NotificationVariant.Success,
-          message: t(ChatSettingsI18nKeys.SavedNotification),
-        });
-      },
-      menuItemLabel: t(ChatI18nKeys.ChatSettings),
-      title: t(ChatSettingsI18nKeys.Title),
-      responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
-      responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
-      responseFormatMarkdownLabel: t(
-        ChatSettingsI18nKeys.ResponseFormatMarkdown,
-      ),
-      responseFormatPlainTextLabel: t(
-        ChatSettingsI18nKeys.ResponseFormatPlainText,
-      ),
-      systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
-      systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
-      temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),
-      temperatureLabels: [
-        t(ChatSettingsI18nKeys.TemperaturePrecise),
-        t(ChatSettingsI18nKeys.TemperatureNeutral),
-        t(ChatSettingsI18nKeys.TemperatureCreative),
-      ] as [string, string, string],
-      temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
-      saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
-      saveDisabledTooltip: t(ChatSettingsI18nKeys.SaveDisabledTooltip),
-    }),
-    [selectedDeployment?.features, chatSettingsValues, t, showNotification],
-  );
+  const chatSettings = useChatSettingsFormConfig({
+    mode: 'local',
+    values: chatSettingsValues,
+    onValuesChange: setChatSettingsValues,
+    deploymentFeatures: selectedDeployment?.features,
+  });
 
-  const modelSelectorLabels = useMemo(
-    () => ({
-      ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
-      loading: isLoading ? t(DeploymentsI18nKeys.SelectorLoading) : undefined,
-      error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
-      empty:
-        !isLoading && !error && items.length === 0
-          ? t(DeploymentsI18nKeys.SelectorEmpty)
-          : undefined,
-      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
-      closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
-    }),
-    [t, isLoading, error, items.length],
-  );
+  const modelSelectorLabels = useModelSelectorLabels({
+    isLoading,
+    error,
+    itemCount: items.length,
+  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -304,105 +260,13 @@ const ConversationRoute: FC = () => {
     ],
   );
 
-  const handleUploadAttachment = useCallback(
-    async (attachment: Attachment): Promise<string> => {
-      if (!bucket) {
-        throw new Error('User bucket is not available');
-      }
-      try {
-        const response = await uploadFile(
-          bucket,
-          buildUploadPath(attachment),
-          attachment.file,
-        );
-        return response.url;
-      } catch (err) {
-        if (!navigator.onLine) {
-          pendingNetworkFilesRef.current.push(attachment.name);
-          if (networkTimerRef.current != null) {
-            clearTimeout(networkTimerRef.current);
-          }
-          networkTimerRef.current = setTimeout(() => {
-            const filenames = pendingNetworkFilesRef.current.splice(0);
-            showNotification({
-              variant: NotificationVariant.Error,
-              title: t(AttachmentsI18nKeys.NetworkErrorTitle),
-              message: (
-                <div className="min-w-0 overflow-hidden">
-                  <span className="whitespace-pre-line">
-                    {t(AttachmentsI18nKeys.NetworkErrorMessage)}
-                  </span>
-                  <ul className="mt-1 max-w-[508px]">
-                    {filenames.map((name, i) => (
-                      <li
-                        key={i}
-                        className="flex items-center gap-1 overflow-hidden"
-                      >
-                        <span className="shrink-0" aria-hidden>
-                          •
-                        </span>
-                        <span className="min-w-0 flex-1 truncate">{name}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ),
-            });
-            networkTimerRef.current = null;
-          }, NETWORK_ERROR_DEBOUNCE_MS);
-          const error =
-            err instanceof Error ? err : new Error('Network upload failed');
-          (
-            error as Error & { errorReason: AttachmentErrorReason }
-          ).errorReason = AttachmentErrorReason.Network;
-          throw error;
-        }
-        throw err;
-      }
-    },
-    [bucket, showNotification, t],
-  );
-
-  const lastAudioMimeTypeRef = useRef<string>('audio/webm');
-
-  const handleUploadAudio = useCallback(
-    async (file: File, contentType: string): Promise<string> => {
-      if (!bucket) {
-        throw new Error('User bucket is not available');
-      }
-      if (file.size > transcribeSizeLimitBytes) {
-        throw new Error(
-          `Audio file exceeds the ${transcribeSizeLimitBytes} byte limit`,
-        );
-      }
-      lastAudioMimeTypeRef.current = contentType;
-      const response = await uploadFile(
-        bucket,
-        buildUploadPath({ name: file.name } as Attachment),
-        file,
-      );
-      return response.url;
-    },
-    [bucket, transcribeSizeLimitBytes],
-  );
-
-  const handleTranscribeAudio = useCallback(
-    async (audioUrl: string): Promise<string> => {
-      const mimeType = lastAudioMimeTypeRef.current;
-      if (asrModelId != null) {
-        return transcribeAudioWithAsrModel({ audioUrl, mimeType });
-      }
-      if (!selectedItemId) {
-        throw new Error('No model selected');
-      }
-      return transcribeAudio({
-        audioUrl,
-        mimeType,
-        deployment: selectedItemId,
-      });
-    },
-    [asrModelId, selectedItemId],
-  );
+  const { handleUploadAudio, handleTranscribeAudio, isTranscriptionSupported } =
+    useAudioTranscription({
+      bucket,
+      transcribeSizeLimitBytes,
+      asrModelId,
+      selectedDeploymentId: selectedItemId,
+    });
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
@@ -416,12 +280,6 @@ const ConversationRoute: FC = () => {
     },
     [openAttachmentCanvas],
   );
-
-  const isTranscriptionSupported = useMemo(() => {
-    if (asrModelId != null) return true;
-    const selectedItem = items.find((item) => item.id === selectedItemId);
-    return isAudioTranscriptionSupported(selectedItem?.inputAttachmentTypes);
-  }, [asrModelId, items, selectedItemId]);
 
   const handleStarterSelect = useCallback(
     (starter: StarterOption) => {

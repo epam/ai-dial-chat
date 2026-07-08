@@ -25,10 +25,12 @@ export const useDeploymentChangeEffect = (
   const prevIdRef = useRef<string | null>(selectedItemId);
   const isLoadedRef = useRef(false);
 
-  // When the conversation finishes loading, capture the current selectedItemId
-  // (which has already been restored from conversation history by the caller)
-  // as the baseline. This prevents treating that restoration as a change.
-  // Reset when the conversation unloads so the next load gets a fresh baseline.
+  /*
+   * When the conversation finishes loading, capture the current selectedItemId
+   * (which has already been restored from conversation history by the caller)
+   * as the baseline. This prevents treating that restoration as a change.
+   * Reset when the conversation unloads so the next load gets a fresh baseline.
+   */
   useEffect(() => {
     if (!isConversationLoaded) {
       isLoadedRef.current = false;

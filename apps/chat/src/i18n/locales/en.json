@@ -143,7 +143,8 @@
       "error": "Failed to load models",
       "empty": "No models available",
       "closeLabel": "Close model selector"
-    }
+    },
+    "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date."
   },
   "buttons": {
     "showMore": "Show more",
@@ -234,6 +235,8 @@
     "renameInputPlaceholder": "Chat name",
     "renameError": "Failed to rename. Please try again.",
     "renameTitleTooLong": "The name is too long. Please shorten it and try again.",
+    "renameWithAiLabel": "Rename with AI",
+    "renameWithAiError": "Failed to generate a name. Please try again.",
     "duplicateReadOnlyDescription": "Duplicate the conversation to be able to edit it",
     "duplicateError": "Failed to duplicate the conversation. Please try again.",
     "panelActionsLabel": "Conversation panel actions",
@@ -403,6 +406,17 @@
     "renameReservedName": "This name is reserved",
     "renameInvalidChars": "Name contains invalid characters",
     "renameNameTooLong": "Name must be 255 characters or fewer",
+    "copyAction": "Copy",
+    "moveAction": "Move",
+    "copyingLabel": "Copying...",
+    "movingLabel": "Moving...",
+    "copyError": "Failed to copy the selected items",
+    "copyPartialError": "{{count}} item(s) could not be copied",
+    "moveError": "Failed to move the selected items",
+    "movePartialError": "{{count}} item(s) could not be moved",
+    "operationLoaderCopyTitle": "Copying files",
+    "operationLoaderMoveTitle": "Moving files",
+    "operationLoaderCancelLabel": "Cancel",
     "tab": {
       "myFiles": "My files",
       "shared": "Shared with me",
@@ -430,6 +444,9 @@
       "treeHeader": "Organization",
       "emptyStateTitle": "No organization files",
       "emptyStateDescription": "No files are available in the organization storage"
+    },
+    "page": {
+      "navLabel": "File Manager"
     }
   },
   "userConfig": {
@@ -451,6 +468,7 @@
     "stepGeneral": "General",
     "stepSettings": "Settings",
     "stepsNavAriaLabel": "Editor steps",
+    "saveButton": "Save & Exit",
     "generalForm": {
       "nameLabel": "Name",
       "namePlaceholder": "Enter application name",
@@ -473,7 +491,8 @@
       "noEditorPlaceholder": "Editor not available for this application type yet."
     },
     "error": {
-      "createFailed": "Failed to create application. Please try again."
+      "createFailed": "Failed to create application. Please try again.",
+      "saveFailed": "Failed to save application settings. Please try again."
     }
   },
   "toolsetEditor": {
@@ -482,7 +501,6 @@
     "stepsNavAriaLabel": "Editor steps",
     "nextButton": "Next",
     "saveButton": "Save & Exit",
-    "previewTitle": "Preview",
     "general": {
       "nameLabel": "Name",
       "namePlaceholder": "Enter toolset name",

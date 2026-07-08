@@ -21,13 +21,17 @@ export enum ToolsetAuthType {
   OAuth = 'OAUTH',
 }
 
-// http(s) or sse URL — allowlist regex so endpoint/URL strings that hit a
-// proxied request or a log line cannot carry unexpected characters.
+/*
+ * http(s) or sse URL — allowlist regex so endpoint/URL strings that hit a
+ * proxied request or a log line cannot carry unexpected characters.
+ */
 const ENDPOINT_URL_PATTERN = /^(https?|sse):\/\/[^\s]+$/;
 const ENDPOINT_URL_MESSAGE = 'Must be a valid http(s) or sse URL';
 
-// Display name: excludes ASCII control characters (Unicode Cc category) and
-// surrogates to prevent log-injection through names that appear in log lines.
+/*
+ * Display name: excludes ASCII control characters (Unicode Cc category) and
+ * surrogates to prevent log-injection through names that appear in log lines.
+ */
 const DISPLAY_NAME_PATTERN = /^[^\p{Cc}\p{Cs}]{1,255}$/u;
 const DISPLAY_NAME_MESSAGE =
   'Must not contain control characters and must be 1-255 characters';

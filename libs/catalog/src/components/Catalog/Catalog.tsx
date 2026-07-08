@@ -216,13 +216,6 @@ export const Catalog: FC<CatalogProps> = ({
     setViewMode(mode);
   }, []);
 
-  const clearAllFilters = useCallback(() => {
-    setFilters(new Set());
-    setIsMyAppsActive(false);
-  }, []);
-
-  const isAnyFilterActive = filters.size > 0 || isMyAppsActive;
-
   const emptyTitle = query ? noResultsTitle(query) : 'No items';
   const cardGridTitles = useMemo(
     () => ({ noResultsTitle: emptyTitle, featuredLabel }),
@@ -285,8 +278,6 @@ export const Catalog: FC<CatalogProps> = ({
             onSortChange={setSortKey}
             query={query}
             onQueryChange={setQuery}
-            isAnyFilterActive={isAnyFilterActive}
-            onClearFilters={clearAllFilters}
             title={browseTitle}
             searchPlaceholder={searchPlaceholder}
             gridViewLabel={gridViewLabel}
@@ -297,7 +288,6 @@ export const Catalog: FC<CatalogProps> = ({
             filterValues={allFilterValues}
             isMyAppsActive={isMyAppsActive}
             onMyAppsChange={setIsMyAppsActive}
-            clearAllLabel={titles?.clearAllLabel}
             filterFromLabel={titles?.filterFromLabel}
             filterMyAppsLabel={titles?.filterMyAppsLabel}
             filterTopicsLabel={titles?.filterTopicsLabel}

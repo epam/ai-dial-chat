@@ -13,6 +13,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../attachment-input/src/index.ts',
       ),
+      '@epam/ai-dial-kit': path.resolve(
+        import.meta.dirname,
+        '../ai-dial-kit/src/index.ts',
+      ),
     },
   },
   plugins: [

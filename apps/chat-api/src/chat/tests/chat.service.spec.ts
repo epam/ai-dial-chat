@@ -73,6 +73,18 @@ describe('ChatService', () => {
     );
   });
 
+  it('throws NotFoundException from response.status when the error body carries no status', async () => {
+    sendChatCompletionRequest.mockResolvedValue({
+      data: undefined,
+      error: { message: 'Resource not found' },
+      response: { ok: false, status: 404 },
+    });
+
+    await expect(service.sendCompletion(dto, TOKEN)).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
   it('throws ServiceUnavailableException on network error', async () => {
     sendChatCompletionRequest.mockRejectedValue(new TypeError('fetch failed'));
 

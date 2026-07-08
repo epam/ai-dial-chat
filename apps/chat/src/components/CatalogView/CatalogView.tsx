@@ -25,8 +25,12 @@ import useFavoriteApplications, {
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
+import { isQuickAppSchema } from '../../utils/application-schema';
 import {
-  MOCK_CATALOG_ITEMS,
+  mapDeploymentToCatalogItem,
+  mapToolsetToCatalogItem,
+} from '../../utils/map-deployment-to-catalog-item';
+import {
   MOCK_FOLDER_ACCESS,
   MOCK_PUBLISH_FOLDERS,
   MOCK_PUBLISH_HISTORY,
@@ -38,16 +42,32 @@ const CatalogView: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const { schemas, setSelectedItemId } = useDeployments();
-  const { isLoading: isFavoritesLoading, toggleFavorite } =
-    useFavoriteApplications();
+  const {
+    items: deployments,
+    isLoading: isDeploymentsLoading,
+    schemas,
+    toolsets,
+    setSelectedItemId,
+  } = useDeployments();
+  const {
+    favoriteIds,
+    isLoading: isFavoritesLoading,
+    toggleFavorite,
+  } = useFavoriteApplications();
 
-  const isLoading = isFavoritesLoading;
+  const isLoading = isDeploymentsLoading || isFavoritesLoading;
 
-  // TODO: temporary — demoing the Publish flow against mock data.
-  // Restore deployments/toolsets mapping (mapDeploymentToCatalogItem /
-  // mapToolsetToCatalogItem via useDeployments) once a real publish endpoint exists.
-  const catalogItems = MOCK_CATALOG_ITEMS;
+  const catalogItems = useMemo(
+    () => [
+      ...deployments.map((d) =>
+        mapDeploymentToCatalogItem(d, favoriteIds, undefined, t),
+      ),
+      ...toolsets.map((toolset) =>
+        mapToolsetToCatalogItem(toolset, favoriteIds),
+      ),
+    ],
+    [deployments, favoriteIds, t, toolsets],
+  );
 
   const [publishHistory, setPublishHistory] =
     useState<Record<string, PublishHistoryEntry[]>>(MOCK_PUBLISH_HISTORY);
@@ -218,9 +238,7 @@ const CatalogView: FC = () => {
 
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
-    const quickAppSchema = schemas.find(
-      (s) => s.id?.endsWith('quickapps2') || s.displayName === 'Quick app 2.0',
-    );
+    const quickAppSchema = schemas.find((s) => isQuickAppSchema(s));
 
     if (quickAppSchema?.id) {
       const schemaId = quickAppSchema.id;

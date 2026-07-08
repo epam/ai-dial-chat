@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
+import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import {
   CURRENT_CONFIG_VERSION,
@@ -190,8 +190,10 @@ export class UserConfigService extends AppService {
       }
     }
 
-    // Mark migration as done so subsequent readConfig calls skip this block entirely,
-    // regardless of whether any legacy files were found or whether delete succeeded.
+    /*
+     * Mark migration as done so subsequent readConfig calls skip this block entirely,
+     * regardless of whether any legacy files were found or whether delete succeeded.
+     */
     current = { ...current, legacyMigrationDone: true };
     changed = true;
 
@@ -209,8 +211,10 @@ export class UserConfigService extends AppService {
         CONFIG_PATH,
         {
           headers: getBearerAuthHeaders(token),
-          // FormData ensures fetch emits Content-Type: multipart/form-data;boundary=…
-          // A plain Buffer causes openapi-fetch to send a boundary-less header, which DIAL Core rejects.
+          /*
+           * FormData ensures fetch emits Content-Type: multipart/form-data;boundary=…
+           * A plain Buffer causes openapi-fetch to send a boundary-less header, which DIAL Core rejects.
+           */
           body: (() => {
             const fd = new FormData();
             fd.append('file', new Blob([JSON.stringify(config)]), CONFIG_PATH);
@@ -225,7 +229,12 @@ export class UserConfigService extends AppService {
           `Failed to write user config — DIAL Core ${response.status}: ${body}`,
           error,
         );
-        return handleDialError({ status: response.status });
+        return handleDialSdkError(
+          error,
+          'user-config.writeConfig',
+          this.logger,
+          response,
+        );
       }
     } catch (err) {
       this.logger.error('Failed to write user config', err);

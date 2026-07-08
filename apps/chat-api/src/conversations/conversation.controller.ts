@@ -30,6 +30,7 @@ import { DeleteAllConversationsBodyDto } from './dto/delete-all-conversations-bo
 import { DeleteConversationsBodyDto } from './dto/delete-conversations-body.dto';
 import { ConversationDeletionResultDto } from './dto/delete-conversations.dto';
 import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.dto';
+import { GenerateTitleResponseDto } from './dto/generate-title.dto';
 import { GetConversationMetadataDto } from './dto/get-conversation-metadata.dto';
 import { ListConversationsQueryDto } from './dto/list-conversations-query.dto';
 import {
@@ -344,7 +345,7 @@ export class ConversationController {
   @ApiOperation({ summary: 'Rename a conversation by path' })
   @ApiResponse({
     status: 200,
-    description: 'Conversation renamed — new path returned',
+    description: 'Conversation renamed — display name updated, path unchanged',
     type: RenameConversationResponseDto,
   })
   @ApiResponse({
@@ -352,7 +353,7 @@ export class ConversationController {
     description: 'Missing or invalid path or newTitle',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 409, description: 'Destination path already exists' })
+  @ApiResponse({ status: 404, description: 'Conversation not found' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
   renameConversation(
@@ -367,6 +368,45 @@ export class ConversationController {
       at,
       bucket,
     );
+  }
+
+  @Post('generate-title')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'generateConversationTitle',
+    summary: 'Generate an LLM-based title suggestion for a conversation',
+    description:
+      'Generates a title for an existing conversation using the operator-configured utility model, based on the most recent messages. The suggestion is returned but NOT persisted — the caller confirms the rename separately. Does not read or set the llmNamingDone flag.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Generated title suggestion',
+    type: GenerateTitleResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Missing or invalid path, or conversation has no content',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 404, description: 'Conversation not found' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'LLM title generation failed' })
+  @ApiResponse({
+    status: 503,
+    description: 'LLM title generation unavailable or timed out',
+  })
+  async generateConversationTitle(
+    @Req() req: Request,
+    @Query() query: ConversationPathDto,
+  ): Promise<GenerateTitleResponseDto> {
+    const { at, bucket } = req.user as SessionUser;
+    const name = await this.conversationService.generateTitle(
+      query.path,
+      at,
+      bucket,
+    );
+    return { name };
   }
 
   @Post('duplicate')

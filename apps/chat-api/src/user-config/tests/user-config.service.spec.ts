@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { handleDialError } from '../../common/utils/dial-error';
+import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import {
   DEFAULT_USER_CONFIG,
@@ -9,8 +9,8 @@ import {
 } from '../dto/user-config.dto';
 import { UserConfigService } from '../user-config.service';
 
-vi.mock('../../common/utils/dial-error', () => ({
-  handleDialError: vi.fn(),
+vi.mock('../../common/dial/dial-error.mapper', () => ({
+  handleDialSdkError: vi.fn(),
 }));
 
 const makeConfigService = () =>
@@ -186,7 +186,7 @@ describe('UserConfigService', () => {
 
   beforeEach(() => {
     service = new UserConfigService(makeConfigService());
-    vi.mocked(handleDialError).mockReset();
+    vi.mocked(handleDialSdkError).mockReset();
   });
 
   describe('readConfig', () => {
@@ -588,8 +588,10 @@ describe('UserConfigService', () => {
           new Error('delete failed'),
         );
 
-        // ts-a is already in base, legacy file also has ts-a → no new IDs merged,
-        // but writeConfig is still called once to persist legacyMigrationDone flag
+        /*
+         * ts-a is already in base, legacy file also has ts-a → no new IDs merged,
+         * but writeConfig is still called once to persist legacyMigrationDone flag
+         */
         const result = await service.readConfig('token', 'bucket');
         expect(
           result.toolsets.installed.filter((id) => id === 'ts-a'),
@@ -667,10 +669,15 @@ describe('UserConfigService', () => {
       expect(uploaded).toEqual(config);
     });
 
-    it('calls handleDialError when DIAL Core returns an error', async () => {
+    it('calls handleDialSdkError when DIAL Core returns an error', async () => {
       makeUploadSpy(service, { error: 'bad', status: 400 });
       await service.writeConfig(DEFAULT_USER_CONFIG, 'token', 'bucket');
-      expect(handleDialError).toHaveBeenCalledWith({ status: 400 });
+      expect(handleDialSdkError).toHaveBeenCalledWith(
+        'bad',
+        'user-config.writeConfig',
+        expect.anything(),
+        expect.objectContaining({ status: 400 }),
+      );
     });
 
     it('re-throws when uploadFile itself throws', async () => {

@@ -28,6 +28,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   defaultWidth = 360,
   minWidth = 280,
   maxWidth = 600,
+  headerClassName,
   onResizeStop,
 }) => {
   const { colors, typography, bodyClassName, cssVars, titleClassName } =
@@ -42,8 +43,10 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     [colors],
   );
 
-  // Track actual panel width so the closing animation matches the real size,
-  // not the defaultWidth prop (relevant when the panel has been resized).
+  /*
+   * Track actual panel width so the closing animation matches the real size,
+   * not the defaultWidth prop (relevant when the panel has been resized).
+   */
   const currentWidthRef = useRef(defaultWidth);
   const [animationMaxWidth, setAnimationMaxWidth] = useState(
     isOpen ? defaultWidth : 0,
@@ -110,6 +113,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
         >
           <Header
             title={title}
+            className={headerClassName}
             titleClassName={titleClassName}
             leftActions={isOpen && leftActions}
             rightActions={

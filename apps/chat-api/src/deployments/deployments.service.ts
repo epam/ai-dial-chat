@@ -1,13 +1,14 @@
+import type { operations } from '@epam/ai-dial-typescript-sdk';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { AppService } from '../app/app.service';
-import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
-} from '../common/utils/dial-fetch-error';
+} from '../common/dial/dial-error.mapper';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import type { DeploymentLimitsResponseDto } from '../openapi/openapi-response.dto';
@@ -19,6 +20,12 @@ import type {
 } from './dto/deployment-item.dto';
 import { DeploymentInterfaceType } from './dto/deployments-query.dto';
 import { RawDeploymentDto } from './dto/raw-deployment.dto';
+
+type DialDeploymentInterfaceType = NonNullable<
+  NonNullable<
+    operations['listDeployments']['parameters']['query']
+  >['interface_type']
+>[number];
 
 const isRecord = (val: unknown): val is Record<string, unknown> =>
   val != null && typeof val === 'object' && !Array.isArray(val);
@@ -129,10 +136,11 @@ export class DeploymentsService extends AppService {
     const normalizedTypes = interfaceType?.filter(
       (t) => t !== DeploymentInterfaceType.All,
     );
-    const interfaceFilter =
+    const interfaceFilter = (
       normalizedTypes && normalizedTypes.length > 0
         ? normalizedTypes
-        : undefined;
+        : undefined
+    ) as DialDeploymentInterfaceType[] | undefined;
     const cacheKey = interfaceFilter
       ? `${baseCacheKey}:interface:${interfaceFilter.join(',')}`
       : baseCacheKey;
@@ -148,12 +156,11 @@ export class DeploymentsService extends AppService {
       allItems = cached;
     } else {
       try {
-        const result = await this.client.getDeploymentsByInterfaceType({
+        const result = await this.client.listDeployments({
           headers: getBearerAuthHeaders(accessToken),
-          // Cast needed: SDK type still references old 'embeddings' literal; our enum uses 'embedding'
-          params: (interfaceFilter
+          params: interfaceFilter
             ? { query: { interface_type: interfaceFilter } }
-            : undefined) as never,
+            : undefined,
         });
         if (result.error) {
           return mapDialHttpStatus(
@@ -201,7 +208,7 @@ export class DeploymentsService extends AppService {
 
     const filtered = withInstalled.filter((item) =>
       item.interfaces?.some((iface) =>
-        interfaceFilter.includes(iface as DeploymentInterfaceType),
+        interfaceFilter.includes(iface as DialDeploymentInterfaceType),
       ),
     );
     return { deployments: filtered };

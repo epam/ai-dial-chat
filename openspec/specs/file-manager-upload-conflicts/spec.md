@@ -9,7 +9,7 @@ The system SHALL display a conflict resolution popup when one or more files bein
 
 The popup is the ui-kit's built-in `ConflictResolutionPopup` wired via `conflictResolutionPopupOptions` on `DialFileManager`. No custom conflict modal SHALL be built in the application layer.
 
-`DialFileManagerModal` MUST pass `conflictResolutionPopupOptions` to `DialFileManager`. The hook `useDialFileManager.onValidateUpload` MUST NOT return `{ valid: false }` for name-collision-only cases — name collisions SHALL be delegated to the ui-kit's internal conflict detection.
+`DialFileManagerShell` MUST pass `conflictResolutionPopupOptions` to `DialFileManager`. The hook `useDialFileManager.onValidateUpload` MUST NOT return `{ valid: false }` for name-collision-only cases — name collisions SHALL be delegated to the ui-kit's internal conflict detection.
 
 **Replace behavior:** The ui-kit calls `onUploadFiles` with the conflicting file's original name. `useDialFileManager` SHALL detect that this name exists in the cached listing and upload with `uploadMode: 'overwrite'` (no `If-None-Match` header on the BFF call → DIAL Core overwrites).
 

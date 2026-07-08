@@ -1,19 +1,27 @@
+import type { components } from '@epam/ai-dial-typescript-sdk';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { AppService } from '../app/app.service';
-import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
-} from '../common/utils/dial-fetch-error';
+} from '../common/dial/dial-error.mapper';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import type { EnvironmentVariables } from '../config/environment.config';
 import type { ApplicationsResponseDto } from './dto/application.dto';
 import type {
   CreateApplicationBodyDto,
   CreatedApplicationDto,
 } from './dto/create-application.dto';
+
+type DialApplication = components['schemas']['Application'];
 
 @Injectable()
 export class ApplicationsService extends AppService {
@@ -70,45 +78,48 @@ export class ApplicationsService extends AppService {
     const cacheKey = `applications:list:${userSub}`;
 
     try {
-      const bucketResponse = await fetch(`${this.baseUrl}/v1/bucket`, {
+      const bucketResponse = await this.client.getUserBucket({
         headers: authHeaders,
       });
-      if (!bucketResponse.ok) {
+      if (bucketResponse.error) {
         return mapDialHttpStatus(
-          bucketResponse.status,
+          bucketResponse.response.status,
           'get user bucket',
           this.logger,
         );
       }
-      const { bucket } = (await bucketResponse.json()) as { bucket: string };
+      const { bucket } = bucketResponse.data ?? {};
+      if (bucket == null) {
+        throw new BadGatewayException('DIAL Core returned an empty bucket');
+      }
 
       const version = body.version ?? '0.0.1';
       const appPath = `${body.name}__${version}`;
       const encodedPath = encodeURIComponent(appPath);
 
-      const dialBody: Record<string, unknown> = {
-        display_name: body.name,
-        display_version: version,
+      const dialBody: DialApplication = {
+        displayName: body.name,
+        displayVersion: version,
         application_type_schema_id: body.type,
-        application_properties: {},
+        application_properties: body.applicationProperties ?? {},
       };
       if (body.description != null) dialBody.description = body.description;
-      if (body.iconUrl != null) dialBody.icon_url = body.iconUrl;
+      if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
       if (body.topics != null && body.topics.length > 0)
-        dialBody.description_keywords = body.topics;
+        dialBody.descriptionKeywords = body.topics;
 
-      const response = await fetch(
-        `${this.baseUrl}/v1/applications/${bucket}/${encodedPath}`,
+      const response = await this.client.saveCustomApplication(
+        bucket,
+        encodedPath,
         {
-          method: 'PUT',
-          headers: { ...authHeaders, 'Content-Type': 'application/json' },
-          body: JSON.stringify(dialBody),
+          headers: authHeaders,
+          body: dialBody,
         },
       );
 
-      if (!response.ok) {
+      if (response.error) {
         return mapDialHttpStatus(
-          response.status,
+          response.response.status,
           'create application',
           this.logger,
         );
@@ -118,7 +129,7 @@ export class ApplicationsService extends AppService {
       this.logger.debug(
         `Created application ${appPath}, invalidated cache for sub: ${userSub}`,
       );
-      return { id: `applications/${bucket}/${encodedPath}` };
+      return { id: `applications/${bucket}/${appPath}` };
     } catch (err) {
       return handleDialFetchError(err, 'create application', this.logger, 0);
     }
