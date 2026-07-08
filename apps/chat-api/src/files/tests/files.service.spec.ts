@@ -22,6 +22,7 @@ type SdkClient = {
   getSharedResources: ReturnType<typeof vi.fn>;
   deleteFile: ReturnType<typeof vi.fn>;
   moveResource: ReturnType<typeof vi.fn>;
+  copyResource: ReturnType<typeof vi.fn>;
 };
 
 function makeService() {
@@ -42,6 +43,7 @@ function makeService() {
     getSharedResources: vi.fn(),
     deleteFile: vi.fn(),
     moveResource: vi.fn(),
+    copyResource: vi.fn(),
   };
 
   const dialClient = {
@@ -1813,6 +1815,516 @@ describe('FilesService', () => {
       sdkClient.getFileMetadata.mockResolvedValue(makeFileMetadataPage([]));
 
       const result = await service.renameFiles([folderItem()], 'token');
+
+      expect(result.results[0].success).toBe(true);
+      expect(sdkClient.moveResource).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('copyFiles — single file (copyFileItem)', () => {
+    const okCopy = () => ({
+      error: undefined,
+      response: { status: 200 },
+      data: undefined,
+    });
+
+    const errCopy = (status: number) => ({
+      error: new Error('HTTP error'),
+      response: { status },
+      data: undefined,
+    });
+
+    const singleFileItem = (overrides?: object) => ({
+      bucket: 'user-files',
+      sourcePath: 'reports/q1.pdf',
+      destinationPath: 'archive/q1.pdf',
+      nodeType: 'item' as never,
+      name: 'q1.pdf',
+      ...overrides,
+    });
+
+    it('returns success when DIAL Core copyResource returns 200', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.copyResource.mockResolvedValue(okCopy());
+
+      const result = await service.copyFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'archive/q1.pdf',
+        success: true,
+      });
+      expect(sdkClient.copyResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+          body: expect.objectContaining({
+            sourceUrl: 'files/user-files/reports/q1.pdf',
+            destinationUrl: 'files/user-files/archive/q1.pdf',
+            overwrite: false,
+          }),
+        }),
+      );
+    });
+
+    it('returns success=false with "Conflict" for DIAL Core 409', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.copyResource.mockResolvedValue(errCopy(409));
+
+      const result = await service.copyFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'archive/q1.pdf',
+        success: false,
+        error: 'Conflict',
+      });
+    });
+
+    it('returns success=false with "Forbidden" for DIAL Core 403', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.copyResource.mockResolvedValue(errCopy(403));
+
+      const result = await service.copyFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'archive/q1.pdf',
+        success: false,
+        error: 'Forbidden',
+      });
+    });
+
+    it('returns success=false with "Not found" for DIAL Core 404', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.copyResource.mockResolvedValue(errCopy(404));
+
+      const result = await service.copyFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'archive/q1.pdf',
+        success: false,
+        error: 'Not found',
+      });
+    });
+
+    it('returns success=false with "Copy failed" for unexpected errors', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.copyResource.mockRejectedValue(new TypeError('fetch failed'));
+
+      const result = await service.copyFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'archive/q1.pdf',
+        success: false,
+        error: 'Copy failed',
+      });
+    });
+  });
+
+  describe('copyFiles — folder (copyFolderItem)', () => {
+    const okCopy = () => ({
+      error: undefined,
+      response: { status: 200 },
+      data: undefined,
+    });
+
+    const errCopy = (status: number) => ({
+      error: new Error('HTTP error'),
+      response: { status },
+      data: undefined,
+    });
+
+    const folderItem = (overrides?: object) => ({
+      bucket: 'user-files',
+      sourcePath: 'reports/',
+      destinationPath: 'archive/reports/',
+      nodeType: 'folder' as never,
+      name: 'reports',
+      ...overrides,
+    });
+
+    const makeFileMetadataPage = (items: object[], nextToken?: string) => ({
+      error: undefined,
+      response: { status: 200 },
+      data: { items, ...(nextToken != null ? { nextToken } : {}) },
+    });
+
+    it('copies all children including .dial_folder marker on success', async () => {
+      const { service, sdkClient } = makeService();
+
+      sdkClient.getFileMetadata.mockResolvedValue(
+        makeFileMetadataPage([
+          {
+            url: 'files/user-files/reports/q1.pdf',
+            name: 'q1.pdf',
+            nodeType: 'item',
+            contentLength: 100,
+          },
+          {
+            url: 'files/user-files/reports/.dial_folder',
+            name: '.dial_folder',
+            nodeType: 'item',
+            contentLength: 0,
+          },
+        ]),
+      );
+      sdkClient.copyResource.mockResolvedValue(okCopy());
+
+      const result = await service.copyFiles([folderItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/',
+        destinationPath: 'archive/reports/',
+        success: true,
+      });
+      expect(sdkClient.copyResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            sourceUrl: 'files/user-files/reports/q1.pdf',
+            destinationUrl: 'files/user-files/archive/reports/q1.pdf',
+          }),
+        }),
+      );
+      expect(sdkClient.copyResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            sourceUrl: 'files/user-files/reports/.dial_folder',
+            destinationUrl: 'files/user-files/archive/reports/.dial_folder',
+          }),
+        }),
+      );
+    });
+
+    it('returns success=false with "Partial copy" when one child fails', async () => {
+      const { service, sdkClient } = makeService();
+
+      sdkClient.getFileMetadata.mockResolvedValue(
+        makeFileMetadataPage([
+          {
+            url: 'files/user-files/reports/q1.pdf',
+            name: 'q1.pdf',
+            nodeType: 'item',
+            contentLength: 100,
+          },
+          {
+            url: 'files/user-files/reports/q2.pdf',
+            name: 'q2.pdf',
+            nodeType: 'item',
+            contentLength: 100,
+          },
+        ]),
+      );
+      sdkClient.copyResource
+        .mockResolvedValueOnce(okCopy())
+        .mockResolvedValueOnce(errCopy(403));
+
+      const result = await service.copyFiles([folderItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'reports/',
+        destinationPath: 'archive/reports/',
+        success: false,
+        error: 'Partial copy',
+      });
+    });
+
+    it('follows nextToken pagination to copy all files across multiple pages', async () => {
+      const { service, sdkClient } = makeService();
+
+      sdkClient.getFileMetadata
+        .mockResolvedValueOnce(
+          makeFileMetadataPage(
+            [
+              {
+                url: 'files/user-files/reports/a.pdf',
+                name: 'a.pdf',
+                nodeType: 'item',
+                contentLength: 10,
+              },
+            ],
+            'cursor-1',
+          ),
+        )
+        .mockResolvedValueOnce(
+          makeFileMetadataPage([
+            {
+              url: 'files/user-files/reports/b.pdf',
+              name: 'b.pdf',
+              nodeType: 'item',
+              contentLength: 10,
+            },
+          ]),
+        );
+      sdkClient.copyResource.mockResolvedValue(okCopy());
+
+      const result = await service.copyFiles([folderItem()], 'token');
+
+      expect(result.results[0].success).toBe(true);
+      expect(sdkClient.copyResource).toHaveBeenCalledTimes(2);
+    });
+
+    it('returns success=true with no copyResource calls for an empty folder', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(makeFileMetadataPage([]));
+
+      const result = await service.copyFiles([folderItem()], 'token');
+
+      expect(result.results[0].success).toBe(true);
+      expect(sdkClient.copyResource).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('moveFiles — single file (moveFileItem)', () => {
+    const okMove = () => ({
+      error: undefined,
+      response: { status: 200 },
+      data: undefined,
+    });
+
+    const errMove = (status: number) => ({
+      error: new Error('HTTP error'),
+      response: { status },
+      data: undefined,
+    });
+
+    const singleFileItem = (overrides?: object) => ({
+      bucket: 'user-files',
+      sourcePath: 'inbox/draft.pdf',
+      destinationPath: 'reports/draft.pdf',
+      nodeType: 'item' as never,
+      name: 'draft.pdf',
+      ...overrides,
+    });
+
+    it('returns success when DIAL Core moveResource returns 200', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(okMove());
+
+      const result = await service.moveFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'inbox/draft.pdf',
+        destinationPath: 'reports/draft.pdf',
+        success: true,
+      });
+      expect(sdkClient.moveResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+          body: expect.objectContaining({
+            sourceUrl: 'files/user-files/inbox/draft.pdf',
+            destinationUrl: 'files/user-files/reports/draft.pdf',
+            overwrite: false,
+          }),
+        }),
+      );
+    });
+
+    it('returns success=false with "Conflict" for DIAL Core 409', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(errMove(409));
+
+      const result = await service.moveFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'inbox/draft.pdf',
+        destinationPath: 'reports/draft.pdf',
+        success: false,
+        error: 'Conflict',
+      });
+    });
+
+    it('returns success=false with "Forbidden" for DIAL Core 403', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(errMove(403));
+
+      const result = await service.moveFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'inbox/draft.pdf',
+        destinationPath: 'reports/draft.pdf',
+        success: false,
+        error: 'Forbidden',
+      });
+    });
+
+    it('returns success=false with "Not found" for DIAL Core 404', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(errMove(404));
+
+      const result = await service.moveFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'inbox/draft.pdf',
+        destinationPath: 'reports/draft.pdf',
+        success: false,
+        error: 'Not found',
+      });
+    });
+
+    it('returns success=false with "Move failed" for unexpected errors', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockRejectedValue(new TypeError('fetch failed'));
+
+      const result = await service.moveFiles([singleFileItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'inbox/draft.pdf',
+        destinationPath: 'reports/draft.pdf',
+        success: false,
+        error: 'Move failed',
+      });
+    });
+  });
+
+  describe('moveFiles — folder (moveFolderItem)', () => {
+    const okMove = () => ({
+      error: undefined,
+      response: { status: 200 },
+      data: undefined,
+    });
+
+    const errMove = (status: number) => ({
+      error: new Error('HTTP error'),
+      response: { status },
+      data: undefined,
+    });
+
+    const folderItem = (overrides?: object) => ({
+      bucket: 'user-files',
+      sourcePath: 'drafts/',
+      destinationPath: 'final/drafts/',
+      nodeType: 'folder' as never,
+      name: 'drafts',
+      ...overrides,
+    });
+
+    const makeFileMetadataPage = (items: object[], nextToken?: string) => ({
+      error: undefined,
+      response: { status: 200 },
+      data: { items, ...(nextToken != null ? { nextToken } : {}) },
+    });
+
+    it('moves all children including .dial_folder marker on success', async () => {
+      const { service, sdkClient } = makeService();
+
+      sdkClient.getFileMetadata.mockResolvedValue(
+        makeFileMetadataPage([
+          {
+            url: 'files/user-files/drafts/q1.pdf',
+            name: 'q1.pdf',
+            nodeType: 'item',
+            contentLength: 100,
+          },
+          {
+            url: 'files/user-files/drafts/.dial_folder',
+            name: '.dial_folder',
+            nodeType: 'item',
+            contentLength: 0,
+          },
+        ]),
+      );
+      sdkClient.moveResource.mockResolvedValue(okMove());
+
+      const result = await service.moveFiles([folderItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'drafts/',
+        destinationPath: 'final/drafts/',
+        success: true,
+      });
+      expect(sdkClient.moveResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            sourceUrl: 'files/user-files/drafts/q1.pdf',
+            destinationUrl: 'files/user-files/final/drafts/q1.pdf',
+          }),
+        }),
+      );
+      expect(sdkClient.moveResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            sourceUrl: 'files/user-files/drafts/.dial_folder',
+            destinationUrl: 'files/user-files/final/drafts/.dial_folder',
+          }),
+        }),
+      );
+    });
+
+    it('returns success=false with "Partial move" when one child fails', async () => {
+      const { service, sdkClient } = makeService();
+
+      sdkClient.getFileMetadata.mockResolvedValue(
+        makeFileMetadataPage([
+          {
+            url: 'files/user-files/drafts/q1.pdf',
+            name: 'q1.pdf',
+            nodeType: 'item',
+            contentLength: 100,
+          },
+          {
+            url: 'files/user-files/drafts/q2.pdf',
+            name: 'q2.pdf',
+            nodeType: 'item',
+            contentLength: 100,
+          },
+        ]),
+      );
+      sdkClient.moveResource
+        .mockResolvedValueOnce(okMove())
+        .mockResolvedValueOnce(errMove(403));
+
+      const result = await service.moveFiles([folderItem()], 'token');
+
+      expect(result.results[0]).toEqual({
+        sourcePath: 'drafts/',
+        destinationPath: 'final/drafts/',
+        success: false,
+        error: 'Partial move',
+      });
+    });
+
+    it('follows nextToken pagination to move all files across multiple pages', async () => {
+      const { service, sdkClient } = makeService();
+
+      sdkClient.getFileMetadata
+        .mockResolvedValueOnce(
+          makeFileMetadataPage(
+            [
+              {
+                url: 'files/user-files/drafts/a.pdf',
+                name: 'a.pdf',
+                nodeType: 'item',
+                contentLength: 10,
+              },
+            ],
+            'cursor-1',
+          ),
+        )
+        .mockResolvedValueOnce(
+          makeFileMetadataPage([
+            {
+              url: 'files/user-files/drafts/b.pdf',
+              name: 'b.pdf',
+              nodeType: 'item',
+              contentLength: 10,
+            },
+          ]),
+        );
+      sdkClient.moveResource.mockResolvedValue(okMove());
+
+      const result = await service.moveFiles([folderItem()], 'token');
+
+      expect(result.results[0].success).toBe(true);
+      expect(sdkClient.moveResource).toHaveBeenCalledTimes(2);
+    });
+
+    it('returns success=true with no moveResource calls for an empty folder', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(makeFileMetadataPage([]));
+
+      const result = await service.moveFiles([folderItem()], 'token');
 
       expect(result.results[0].success).toBe(true);
       expect(sdkClient.moveResource).not.toHaveBeenCalled();

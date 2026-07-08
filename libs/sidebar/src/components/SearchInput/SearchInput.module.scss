@@ -1,13 +1,27 @@
 .row {
-  border: 1px solid transparent;
-  border-radius: 9999px;
-  transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease;
+  border-color: rgba(0, 0, 0, 0.05);
+  background: transparent;
+
+  input {
+    color: var(--cp-text, var(--text-primary, #161b2d));
+
+    &::placeholder {
+      color: var(--cp-text-secondary, var(--text-secondary, #575f73));
+    }
+  }
+
+  @media (hover: hover) {
+    &:hover:not(:focus-within) {
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+  }
 
   &:focus-within {
-    border-color: var(--stroke-accent-primary, #7da4ff);
-    box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff26);
+    border-color: color-mix(
+      in srgb,
+      var(--controls-text-accent-primary-active, #7da4ff) 50%,
+      transparent
+    );
   }
 }
 

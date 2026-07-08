@@ -1,49 +1,26 @@
 .button {
-  background: linear-gradient(
-    135deg,
-    var(--bg-accent-secondary, #37babc) 0%,
-    var(--bg-accent-primary, #5c8dea) 50%,
-    var(--bg-accent-tertiary, #a972ff) 100%
-  );
+  background: var(--cp-new-chat-bg, var(--bg-layer-0, #fff));
+  border-radius: 9999px;
 
-  color: var(--cp-new-chat-color, var(--controls-text-permanent, #fcfcfc));
+  box-shadow:
+    0 1px 3px rgba(92, 141, 234, 0.2),
+    0 2px 10px rgba(169, 114, 255, 0.14);
+  color: var(--text-accent-primary, #2764d9);
+  transition:
+    box-shadow 150ms ease,
+    background-color 150ms ease;
 
   &:hover {
-    background: var(
-      --cp-new-chat-hover,
-      var(--bg-accent-secondary-alpha, #37babc2e)
-    );
-
-    .iconCircle {
-      background: var(
-        --cp-new-chat-icon-bg-hover,
-        var(--bg-accent-secondary-alpha-hover, #37babc47)
-      );
-    }
+    background: var(--cp-new-chat-hover, var(--bg-layer-0, #fff));
+    box-shadow:
+      0 2px 6px rgba(92, 141, 234, 0.28),
+      0 4px 16px rgba(169, 114, 255, 0.2);
   }
 
   &:active {
-    background: var(
-      --cp-new-chat-active,
-      var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
-    );
-
-    .iconCircle {
-      background: var(
-        --cp-new-chat-icon-bg-active,
-        var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
-      );
-    }
+    background: var(--cp-new-chat-active, var(--bg-layer-5, #f5f7fa));
+    box-shadow:
+      0 1px 2px rgba(92, 141, 234, 0.15),
+      0 1px 6px rgba(169, 114, 255, 0.1);
   }
-}
-
-.iconCircle {
-  background: var(
-    --cp-new-chat-icon-bg,
-    var(--bg-accent-secondary-alpha, #fcfcfc)
-  );
-}
-
-.iconColor {
-  color: var(--cp-new-chat-icon, var(--controls-text-permanent, #fcfcfc));
 }

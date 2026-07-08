@@ -61,6 +61,6 @@ jobs:
             --max-turns 50
             --allowedTools "Glob,Grep,LS,Read,Task,Skill,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh pr checks:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:--comment*),Bash(gh pr comment:*),mcp__github_comment__update_claude_comment,mcp__github_inline_comment__create_inline_comment"
         env:
-          ANTHROPIC_BASE_URL: "${{ vars.DIAL_CORE_URL }}/anthropic"
+          ANTHROPIC_BASE_URL: "${{ vars.DIAL_CORE_URL }}/${{ vars.DIAL_ROUTE_PATH || 'anthropic' }}"
           ANTHROPIC_AUTH_TOKEN: ${{ secrets.DIAL_API_KEY }}
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: 1

@@ -20,6 +20,7 @@ const makeDeploymentsContext = (selectedItemId: string | null) => ({
   error: null,
   schemas: [],
   toolsets: [],
+  refetchToolsets: vi.fn(),
 });
 
 describe('useDeploymentChangeEffect', () => {

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { QuotationSource } from '../../../../../models/quotation-source';
+import { QuotationSource } from '../../../models/quotation-source';
 import SourcesSection from '../SourcesSection';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({

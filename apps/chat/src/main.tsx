@@ -2,6 +2,8 @@ import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import '@epam/ai-dial-ui-kit/styles.css';
 import '@epam/ai-dial-react-pdf-highlighter/styles.css';
 import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css';
+import { GlobalWorkerOptions } from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { lazy, StrictMode, Suspense } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
@@ -22,6 +24,9 @@ import './i18n/config';
 import './styles.scss';
 
 const LoginPage = lazy(() => import('./pages/auth/Login'));
+
+/* Override the CDN fallback set by @epam/pdf-highlighter-kit at module-load time. */
+GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,

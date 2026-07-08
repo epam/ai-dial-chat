@@ -59,13 +59,16 @@ function makeDeps() {
     set: vi.fn().mockResolvedValue(undefined),
   };
 
-  return { dialClient, cacheManager };
+  const configService = { get: vi.fn().mockReturnValue(undefined) };
+
+  return { dialClient, cacheManager, configService };
 }
 
 function makeService() {
-  const { dialClient, cacheManager } = makeDeps();
+  const { dialClient, cacheManager, configService } = makeDeps();
   const service = new ApplicationSchemasService(
     dialClient,
+    configService as never,
     cacheManager as never,
   );
   return { service, cacheManager };
@@ -111,13 +114,14 @@ describe('ApplicationSchemasService', () => {
     });
 
     it('returns cached result without calling upstream on cache hit', async () => {
-      const { dialClient } = makeDeps();
+      const { dialClient, configService } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockList),
         set: vi.fn(),
       };
       const service = new ApplicationSchemasService(
         dialClient,
+        configService as never,
         cacheManager as never,
       );
       const spy = vi.spyOn(
@@ -131,7 +135,7 @@ describe('ApplicationSchemasService', () => {
     });
 
     it('uses per-user cache keys — different users get different cache entries', async () => {
-      const { dialClient } = makeDeps();
+      const { dialClient, configService } = makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -142,6 +146,7 @@ describe('ApplicationSchemasService', () => {
       };
       const service = new ApplicationSchemasService(
         dialClient,
+        configService as never,
         cacheManager as never,
       );
       vi.spyOn(
@@ -276,13 +281,14 @@ describe('ApplicationSchemasService', () => {
     });
 
     it('returns cached schema without calling upstream on cache hit', async () => {
-      const { dialClient } = makeDeps();
+      const { dialClient, configService } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockSchema),
         set: vi.fn(),
       };
       const service = new ApplicationSchemasService(
         dialClient,
+        configService as never,
         cacheManager as never,
       );
       const spy = vi.spyOn(
@@ -300,7 +306,7 @@ describe('ApplicationSchemasService', () => {
     });
 
     it('uses per-user-per-schema cache key', async () => {
-      const { dialClient } = makeDeps();
+      const { dialClient, configService } = makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -311,6 +317,7 @@ describe('ApplicationSchemasService', () => {
       };
       const service = new ApplicationSchemasService(
         dialClient,
+        configService as never,
         cacheManager as never,
       );
       vi.spyOn(

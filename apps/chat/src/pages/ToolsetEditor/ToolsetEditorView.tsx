@@ -14,7 +14,6 @@ import type {
 import { ToolsetEditorSteps } from '../../types/toolsets';
 import GeneralForm from './EditorForm/GeneralForm';
 import SettingsForm from './EditorForm/SettingsForm';
-import ToolsetPreview from './ToolsetPreview';
 
 interface Props {
   step: ToolsetEditorSteps;
@@ -44,7 +43,7 @@ const ToolsetEditorView: FC<Props> = ({
 
   return (
     <div className="flex min-h-0 flex-1">
-      <div className="flex h-full w-1/2 flex-col border-e border-e-primary">
+      <div className="flex h-full w-full min-w-0 flex-col">
         <div className="flex-1 overflow-y-auto p-4">
           {isGeneralStep ? (
             <GeneralForm form={form} errors={errors} onChange={onChange} />
@@ -75,8 +74,6 @@ const ToolsetEditorView: FC<Props> = ({
           </div>
         )}
       </div>
-
-      <ToolsetPreview form={form} />
     </div>
   );
 };

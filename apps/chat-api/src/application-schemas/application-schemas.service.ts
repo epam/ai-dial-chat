@@ -1,11 +1,14 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
+import { isQuickAppSchema } from '../common/utils/application-schema';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import type { EnvironmentVariables } from '../config/environment.config';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type {
@@ -19,6 +22,7 @@ export class ApplicationSchemasService {
 
   constructor(
     private readonly dialClient: DialClientService,
+    private readonly configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
@@ -45,17 +49,26 @@ export class ApplicationSchemasService {
           );
         }
         const items = Array.isArray(result.data) ? result.data : [];
+        const devQuickAppsEditorUrl = this.configService.get(
+          'DEV_QUICKAPPS_EDITOR_URL',
+          { infer: true },
+        );
         return {
-          schemas: items.map(
-            (rawItem): ApplicationSchemaSummaryDto => ({
-              id: rawItem['$id'],
+          schemas: items.map((rawItem): ApplicationSchemaSummaryDto => {
+            const id = rawItem['$id'] as string | undefined;
+            const isQuickApp = isQuickAppSchema(id);
+            return {
+              id,
               displayName: rawItem['dial:applicationTypeDisplayName'],
               viewerUrl: rawItem['dial:applicationTypeViewerUrl'],
-              editorUrl: rawItem['dial:applicationTypeEditorUrl'],
+              editorUrl:
+                isQuickApp && devQuickAppsEditorUrl
+                  ? devQuickAppsEditorUrl
+                  : rawItem['dial:applicationTypeEditorUrl'],
               schemaEndpoint: rawItem['dial:applicationTypeSchemaEndpoint'],
               iconUrl: rawItem['dial:applicationTypeIconUrl'],
-            }),
-          ),
+            };
+          }),
         };
       },
     });

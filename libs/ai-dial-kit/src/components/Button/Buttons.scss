@@ -55,6 +55,40 @@
   }
 }
 
+.dial-primary-solid-button.dial-primary-solid-button {
+  background-color: transparent;
+  background-image: linear-gradient(135deg, #4b7be6 0%, #9355f4 100%);
+  border: none;
+  border-radius: 9999px;
+  box-shadow: 0 4px 16px rgba(92, 141, 234, 0.32);
+  transition:
+    box-shadow 200ms ease,
+    transform 150ms ease;
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: transparent;
+      background-image: linear-gradient(135deg, #4b7be6 0%, #9355f4 100%);
+      box-shadow: 0 6px 20px rgba(92, 141, 234, 0.42);
+      transform: translateY(-1px);
+    }
+  }
+
+  &:active {
+    background-color: transparent;
+    background-image: linear-gradient(135deg, #4b7be6 0%, #9355f4 100%);
+    filter: brightness(0.92);
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(92, 141, 234, 0.22);
+  }
+
+  &:disabled {
+    background-image: none;
+    box-shadow: none;
+    transform: none;
+  }
+}
+
 // Secondary — soft blue fill + pill, brand blue text
 .dial-neutral-outlined-button {
   border: 1px solid rgba(39, 100, 217, 0.2) !important;
@@ -101,4 +135,8 @@
   &:active:enabled {
     background-color: rgba(39, 100, 217, 0.08) !important;
   }
+}
+
+.dial-icon-button {
+  border-radius: 6px !important;
 }

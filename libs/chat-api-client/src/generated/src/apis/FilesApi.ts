@@ -14,6 +14,8 @@
 
 import * as runtime from '../runtime';
 import type {
+  CopyFilesDto,
+  CopyFilesResponseDto,
   CreateFolderDto,
   CreateFolderResponseDto,
   DeleteFilesDto,
@@ -22,9 +24,15 @@ import type {
   FileMetadataResponseDto,
   FileUploadResponseDto,
   ListFilesResponseDto,
+  MoveFilesDto,
+  MoveFilesResponseDto,
   RenameFilesDto,
   RenameFilesResponseDto,
 } from '../models/index';
+
+export interface CopyFilesRequest {
+  copyFilesDto: CopyFilesDto;
+}
 
 export interface CreateFolderRequest {
   createFolderDto: CreateFolderDto;
@@ -70,6 +78,10 @@ export interface ListSharedFilesRequest {
   limit?: number;
 }
 
+export interface MoveFilesRequest {
+  moveFilesDto: MoveFilesDto;
+}
+
 export interface RenameFilesRequest {
   renameFilesDto: RenameFilesDto;
 }
@@ -85,6 +97,53 @@ export interface UploadFileRequest {
  *
  */
 export class FilesApi extends runtime.BaseAPI {
+  /**
+   * Copy files and folders
+   */
+  async copyFilesRaw(
+    requestParameters: CopyFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<CopyFilesResponseDto>> {
+    if (requestParameters['copyFilesDto'] == null) {
+      throw new runtime.RequiredError(
+        'copyFilesDto',
+        'Required parameter "copyFilesDto" was null or undefined when calling copyFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/copy`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['copyFilesDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<CopyFilesResponseDto>(response);
+  }
+
+  /**
+   * Copy files and folders
+   */
+  async copyFiles(
+    requestParameters: CopyFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<CopyFilesResponseDto> {
+    const response = await this.copyFilesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
   /**
    * Create a folder
    */
@@ -538,6 +597,53 @@ export class FilesApi extends runtime.BaseAPI {
       requestParameters,
       initOverrides,
     );
+    return await response.value();
+  }
+
+  /**
+   * Move files and folders across folders
+   */
+  async moveFilesRaw(
+    requestParameters: MoveFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<MoveFilesResponseDto>> {
+    if (requestParameters['moveFilesDto'] == null) {
+      throw new runtime.RequiredError(
+        'moveFilesDto',
+        'Required parameter "moveFilesDto" was null or undefined when calling moveFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/move`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['moveFilesDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<MoveFilesResponseDto>(response);
+  }
+
+  /**
+   * Move files and folders across folders
+   */
+  async moveFiles(
+    requestParameters: MoveFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<MoveFilesResponseDto> {
+    const response = await this.moveFilesRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
