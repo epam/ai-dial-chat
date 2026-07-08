@@ -1,4 +1,5 @@
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   ListDeploymentsInterfaceTypeEnum,
   type ApplicationSchemaSummaryDto,
@@ -14,11 +15,14 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
+import { DeploymentsI18nKeys } from '../constants/translation-keys';
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
 import { listToolsets } from '../server-api/toolsets';
 import { useAppConfig } from './AppConfigContext';
+import { useNotification } from './NotificationContext';
 import { useUserConfig } from './UserConfigContext';
 
 export interface DeploymentsContextType {
@@ -104,6 +108,8 @@ const resolveInitialSelection = (
 };
 
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
+  const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const { selectedDeploymentId: userConfigSelectedId, setSelectedDeployment } =
     useUserConfig();
   const { config: appConfig } = useAppConfig();
@@ -184,10 +190,13 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data } = await listToolsets();
       setToolsets(sortToolsets(data ?? []));
-    } catch (err) {
-      console.warn('[DeploymentsContext] Failed to refetch toolsets', err);
+    } catch {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(DeploymentsI18nKeys.RefetchToolsetsFailed),
+      });
     }
-  }, []);
+  }, [showNotification, t]);
 
   const items = useMemo<DeploymentItemDto[]>(() => {
     if (schemas.length === 0) return rawDeployments;

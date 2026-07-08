@@ -163,6 +163,7 @@ export enum DeploymentsI18nKeys {
   SelectorError = 'deployments.selector.error',
   SelectorEmpty = 'deployments.selector.empty',
   SelectorCloseLabel = 'deployments.selector.closeLabel',
+  RefetchToolsetsFailed = 'deployments.refetchToolsetsFailed',
 }
 
 export enum ConversationI18nKeys {

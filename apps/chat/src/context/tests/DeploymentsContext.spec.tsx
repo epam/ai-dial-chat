@@ -1,5 +1,7 @@
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DeploymentsI18nKeys } from '../../constants/translation-keys';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
 import * as deploymentsApi from '../../server-api/deployments.api';
 import * as toolsetsApi from '../../server-api/toolsets';
@@ -9,6 +11,7 @@ const contextMocks = vi.hoisted(() => ({
   defaultDeploymentId: null as string | null,
   selectedDeploymentId: null as string | null,
   setSelectedDeployment: vi.fn(),
+  showNotification: vi.fn(),
 }));
 
 vi.mock('../../server-api/deployments.api');
@@ -25,6 +28,13 @@ vi.mock('../UserConfigContext', () => ({
   useUserConfig: () => ({
     selectedDeploymentId: contextMocks.selectedDeploymentId,
     setSelectedDeployment: contextMocks.setSelectedDeployment,
+  }),
+}));
+vi.mock('../NotificationContext', () => ({
+  useNotification: () => ({
+    notifications: [],
+    showNotification: contextMocks.showNotification,
+    dismissNotification: vi.fn(),
   }),
 }));
 
@@ -528,6 +538,10 @@ describe('DeploymentsContext', () => {
       expect(result.current.toolsets.map((item) => item.id)).toEqual([
         existing.id,
       ]);
+      expect(contextMocks.showNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message: DeploymentsI18nKeys.RefetchToolsetsFailed,
+      });
     });
   });
 });
