@@ -91,6 +91,10 @@ dialTest.only(
           talkToAgentDialog.getEntityByName(excludedAppName),
           'hidden',
         );
+        await baseAssertion.assertElementState(
+          talkToAgentDialog.noResultsFound,
+          'visible',
+        );
 
         // A model without the tools feature is not offered either
         await talkToAgentDialog
@@ -99,6 +103,10 @@ dialTest.only(
         await baseAssertion.assertElementState(
           talkToAgentDialog.getEntityByName(toolsUnsupportedModel.name),
           'hidden',
+        );
+        await baseAssertion.assertElementState(
+          talkToAgentDialog.noResultsFound,
+          'visible',
         );
       },
     );
