@@ -226,8 +226,13 @@ describe('ApplicationsService', () => {
         version: '2.0',
       });
       expect(result.id).toBe('applications/test-bucket/My App__2.0');
-      const putUrl = fetchSpy.mock.calls[1][0] as string;
-      expect(putUrl).toContain('My%20App__2.0');
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.stringContaining('My%20App__2.0'),
+        expect.objectContaining({
+          body: expect.objectContaining({ displayVersion: '2.0' }),
+        }),
+      );
     });
 
     it('defaults version to 0.0.1 when not provided', async () => {
@@ -331,17 +336,7 @@ describe('ApplicationsService', () => {
 
     it('throws ForbiddenException when PUT returns 403', async () => {
       const { service } = makeService();
-      vi.stubGlobal(
-        'fetch',
-        vi
-          .fn()
-          .mockResolvedValueOnce(bucketOk)
-          .mockResolvedValueOnce({
-            ok: false,
-            status: 403,
-            text: () => Promise.resolve(''),
-          }),
-      );
+      mockCreateApplicationSdk(service, undefined, errResponse(403));
       await expect(service.createApplication('u', 't', body)).rejects.toThrow(
         ForbiddenException,
       );
@@ -349,17 +344,7 @@ describe('ApplicationsService', () => {
 
     it('throws HttpException(429) when PUT returns 429', async () => {
       const { service } = makeService();
-      vi.stubGlobal(
-        'fetch',
-        vi
-          .fn()
-          .mockResolvedValueOnce(bucketOk)
-          .mockResolvedValueOnce({
-            ok: false,
-            status: 429,
-            text: () => Promise.resolve(''),
-          }),
-      );
+      mockCreateApplicationSdk(service, undefined, errResponse(429));
       await expect(service.createApplication('u', 't', body)).rejects.toThrow(
         HttpException,
       );
@@ -377,17 +362,7 @@ describe('ApplicationsService', () => {
 
     it('does not invalidate cache when PUT returns error', async () => {
       const { service, cacheManager } = makeService();
-      vi.stubGlobal(
-        'fetch',
-        vi
-          .fn()
-          .mockResolvedValueOnce(bucketOk)
-          .mockResolvedValueOnce({
-            ok: false,
-            status: 409,
-            text: () => Promise.resolve(''),
-          }),
-      );
+      mockCreateApplicationSdk(service, undefined, errResponse(409));
       await expect(
         service.createApplication('user1', 't', body),
       ).rejects.toThrow();
