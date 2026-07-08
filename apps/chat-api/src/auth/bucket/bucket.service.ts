@@ -12,12 +12,9 @@ export class BucketService extends AppService {
   ): Promise<{ bucket: string; appdata?: string }> {
     this.logger.debug('Requesting user bucket from DIAL Core');
     try {
-      const { data, error } = (await this.client.getUserBucket({
+      const { data, error, response } = await this.client.getUserBucket({
         headers: getBearerAuthHeaders(token),
-      })) as {
-        data?: { bucket: string; appdata?: string };
-        error?: unknown;
-      };
+      });
       this.logger.debug(
         'Received response from DIAL Core for getUserBucket',
         error,
@@ -27,7 +24,12 @@ export class BucketService extends AppService {
         this.logger.debug(
           'getUserBucket returned error response from DIAL Core',
         );
-        return handleDialSdkError(error, 'bucket.getUserBucket', this.logger);
+        return handleDialSdkError(
+          error,
+          'bucket.getUserBucket',
+          this.logger,
+          response,
+        );
       }
 
       this.logger.debug(`getUserBucket succeeded, bucket=${data.bucket}`);

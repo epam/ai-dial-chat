@@ -22,6 +22,7 @@ import type {
   DeleteAllConversationsBodyDto,
   DeleteConversationsBodyDto,
   DuplicateConversationResponseDto,
+  GenerateTitleResponseDto,
   RenameConversationBodyDto,
   RenameConversationResponseDto,
   SaveConversationBodyDto,
@@ -47,6 +48,10 @@ export interface DeleteConversationsRequest {
 }
 
 export interface DuplicateConversationRequest {
+  path: string;
+}
+
+export interface GenerateConversationTitleRequest {
   path: string;
 }
 
@@ -341,6 +346,59 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DuplicateConversationResponseDto> {
     const response = await this.duplicateConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Generates a title for an existing conversation using the operator-configured utility model, based on the most recent messages. The suggestion is returned but NOT persisted — the caller confirms the rename separately. Does not read or set the llmNamingDone flag.
+   * Generate an LLM-based title suggestion for a conversation
+   */
+  async generateConversationTitleRaw(
+    requestParameters: GenerateConversationTitleRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<GenerateTitleResponseDto>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling generateConversationTitle().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/conversations/generate-title`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<GenerateTitleResponseDto>(response);
+  }
+
+  /**
+   * Generates a title for an existing conversation using the operator-configured utility model, based on the most recent messages. The suggestion is returned but NOT persisted — the caller confirms the rename separately. Does not read or set the llmNamingDone flag.
+   * Generate an LLM-based title suggestion for a conversation
+   */
+  async generateConversationTitle(
+    requestParameters: GenerateConversationTitleRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<GenerateTitleResponseDto> {
+    const response = await this.generateConversationTitleRaw(
       requestParameters,
       initOverrides,
     );

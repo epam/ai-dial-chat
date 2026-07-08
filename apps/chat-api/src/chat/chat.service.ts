@@ -25,9 +25,10 @@ export class ChatService extends AppService {
       if (!result.response.ok || result.error != null) {
         this.logger.error('DIAL Core rejected sendCompletion', result.error);
         return handleDialSdkError(
-          result.error ?? { status: result.response.status },
+          result.error,
           'chat.sendCompletion',
           this.logger,
+          result.response,
         );
       }
       return result.data;
