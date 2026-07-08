@@ -425,7 +425,6 @@ export enum ToolsetEditorI18nKeys {
   StepsNavAriaLabel = 'toolsetEditor.stepsNavAriaLabel',
   NextButton = 'toolsetEditor.nextButton',
   SaveButton = 'toolsetEditor.saveButton',
-  PreviewTitle = 'toolsetEditor.previewTitle',
   // General form
   NameLabel = 'toolsetEditor.general.nameLabel',
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',

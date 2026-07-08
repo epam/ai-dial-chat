@@ -6,7 +6,7 @@ The endpoint:
 - MUST require authentication via `SessionGuard`; respond 401 when no valid session is present.
 - SHALL accept an optional `interface_type` query parameter as a repeatable string value validated against `('chat' | 'embeddings' | 'mcp' | 'custom_ui' | 'all')`; passing an unrecognised value MUST respond 400.
 - SHALL forward the `interface_type` values to DIAL Core `GET /v1/deployments` when provided.
-- SHALL call DIAL Core using the `@epam/ai-dial-typescript-sdk` client (`getDeploymentsByInterfaceType`), passing the session access token.
+- SHALL call DIAL Core using the `@epam/ai-dial-typescript-sdk` client (`listDeployments`), passing the session access token.
 - SHALL map the DIAL Core response `deployments` array to `DeploymentItemDto[]` using the normalisation rules in the `DeploymentItemDto shape` requirement below.
 - SHALL respond 200 with `{ deployments: DeploymentItemDto[] }` on success.
 - SHALL respond 502 when DIAL Core returns a non-2xx response.
@@ -136,7 +136,7 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 The backend SHALL implement the deployments feature in `apps/chat-api/src/deployments/` following the established domain pattern:
 
 - `deployments.controller.ts` — thin controller with `@Get() listDeployments(@Query() query: DeploymentsQueryDto, @Req() req)`
-- `deployments.service.ts` — extends `AppService`; calls SDK `getDeploymentsByInterfaceType`; maps and caches results
+- `deployments.service.ts` — extends `AppService`; calls SDK `listDeployments`; maps and caches results
 - `deployments.module.ts` — `DeploymentsModule` providing `DeploymentsService`; no external domain imports needed
 - `dto/deployment-item.dto.ts` — `DeploymentItemDto` and `DeploymentsResponseDto` with `@ApiProperty` decorators
 - `dto/deployments-query.dto.ts` — `DeploymentsQueryDto` with `interface_type` field: `@IsOptional`, `@IsArray`, `@IsIn([...], { each: true })`, `@Transform` for comma-separated coercion
@@ -224,7 +224,7 @@ All DIAL Core calls SHALL be mocked; no live network calls.
 #### Scenario: Service test — cache hit skips DIAL Core call
 
 - **WHEN** `deployments:list:<userSub>` is populated in cache
-- **THEN** the SDK `getDeploymentsByInterfaceType` is NOT called on the second request
+- **THEN** the SDK `listDeployments` is NOT called on the second request
 
 ---
 

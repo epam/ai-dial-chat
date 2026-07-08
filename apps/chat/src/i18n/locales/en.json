@@ -488,7 +488,6 @@
     "stepsNavAriaLabel": "Editor steps",
     "nextButton": "Next",
     "saveButton": "Save & Exit",
-    "previewTitle": "Preview",
     "general": {
       "nameLabel": "Name",
       "namePlaceholder": "Enter toolset name",

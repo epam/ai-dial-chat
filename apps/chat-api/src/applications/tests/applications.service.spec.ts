@@ -187,18 +187,24 @@ describe('ApplicationsService', () => {
       type: 'https://mydial.epam.com/custom_application_schemas/quickapps2',
     };
 
-    const bucketOk = {
-      ok: true,
-      json: () => Promise.resolve({ bucket: 'test-bucket' }),
+    const mockCreateApplicationSdk = (
+      service: ApplicationsService,
+      bucketResponse = okResponse({ bucket: 'test-bucket' }),
+      saveResponse = okResponse({}),
+    ) => {
+      const getUserBucketSpy = vi
+        .spyOn(service['client'], 'getUserBucket')
+        .mockResolvedValue(bucketResponse);
+      const saveCustomApplicationSpy = vi
+        .spyOn(service['client'], 'saveCustomApplication')
+        .mockResolvedValue(saveResponse);
+
+      return { getUserBucketSpy, saveCustomApplicationSpy };
     };
-    const putOk = { ok: true };
 
     it('creates application, returns composite id, and invalidates cache', async () => {
       const { service, cacheManager } = makeService();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValueOnce(bucketOk).mockResolvedValueOnce(putOk),
-      );
+      mockCreateApplicationSdk(service);
 
       const result = await service.createApplication(
         'user1',
@@ -213,11 +219,7 @@ describe('ApplicationsService', () => {
 
     it('uses provided version in path and body', async () => {
       const { service } = makeService();
-      const fetchSpy = vi
-        .fn()
-        .mockResolvedValueOnce(bucketOk)
-        .mockResolvedValueOnce(putOk);
-      vi.stubGlobal('fetch', fetchSpy);
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
 
       const result = await service.createApplication('user1', 't', {
         ...body,
@@ -230,23 +232,15 @@ describe('ApplicationsService', () => {
 
     it('defaults version to 0.0.1 when not provided', async () => {
       const { service } = makeService();
-      const fetchSpy = vi
-        .fn()
-        .mockResolvedValueOnce(bucketOk)
-        .mockResolvedValueOnce(putOk);
-      vi.stubGlobal('fetch', fetchSpy);
+      mockCreateApplicationSdk(service);
 
       const result = await service.createApplication('user1', 't', body);
       expect(result.id).toContain('__0.0.1');
     });
 
-    it('maps DTO fields to DIAL Core snake_case names in PUT body', async () => {
+    it('maps DTO fields to DIAL Core SDK application body', async () => {
       const { service } = makeService();
-      const fetchSpy = vi
-        .fn()
-        .mockResolvedValueOnce(bucketOk)
-        .mockResolvedValueOnce(putOk);
-      vi.stubGlobal('fetch', fetchSpy);
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
 
       await service.createApplication('user1', 'token', {
         name: 'My App',
@@ -256,70 +250,82 @@ describe('ApplicationsService', () => {
         version: '1.0',
       });
 
-      const sentBody = JSON.parse(
-        fetchSpy.mock.calls[1][1].body as string,
-      ) as Record<string, unknown>;
-      expect(sentBody).toEqual({
-        display_name: 'My App',
-        display_version: '1.0',
-        application_type_schema_id:
-          'https://mydial.epam.com/custom_application_schemas/quickapps2',
-        application_properties: {},
-        description: 'A description',
-        icon_url: 'https://example.com/icon.svg',
-      });
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          body: {
+            displayName: 'My App',
+            displayVersion: '1.0',
+            application_type_schema_id:
+              'https://mydial.epam.com/custom_application_schemas/quickapps2',
+            application_properties: {},
+            description: 'A description',
+            iconUrl: 'https://example.com/icon.svg',
+          },
+        }),
+      );
     });
 
-    it('maps topics to description_keywords in PUT body', async () => {
+    it('maps topics to descriptionKeywords in SDK body', async () => {
       const { service } = makeService();
-      const fetchSpy = vi
-        .fn()
-        .mockResolvedValueOnce(bucketOk)
-        .mockResolvedValueOnce(putOk);
-      vi.stubGlobal('fetch', fetchSpy);
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
 
       await service.createApplication('user1', 'token', {
         ...body,
         topics: ['nlp', 'assistant'],
       });
 
-      const sentBody = JSON.parse(
-        fetchSpy.mock.calls[1][1].body as string,
-      ) as Record<string, unknown>;
-      expect(sentBody).toMatchObject({
-        description_keywords: ['nlp', 'assistant'],
-      });
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          body: expect.objectContaining({
+            descriptionKeywords: ['nlp', 'assistant'],
+          }),
+        }),
+      );
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
       expect(sentBody).not.toHaveProperty('topics');
     });
 
-    it('forwards Authorization header to both bucket and PUT requests', async () => {
+    it('forwards Authorization header to bucket and save application SDK calls', async () => {
       const { service } = makeService();
-      const fetchSpy = vi
-        .fn()
-        .mockResolvedValueOnce(bucketOk)
-        .mockResolvedValueOnce(putOk);
-      vi.stubGlobal('fetch', fetchSpy);
+      const { getUserBucketSpy, saveCustomApplicationSpy } =
+        mockCreateApplicationSdk(service);
 
       await service.createApplication('user1', 'my-token', body);
-      for (const call of fetchSpy.mock.calls) {
-        expect(call[1]).toEqual(
-          expect.objectContaining({
-            headers: expect.objectContaining({
-              Authorization: 'Bearer my-token',
-            }),
+      expect(getUserBucketSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
           }),
-        );
-      }
+        }),
+      );
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
+        }),
+      );
     });
 
     it('throws UnauthorizedException when bucket call returns 401', async () => {
       const { service } = makeService();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 401 }),
-      );
+      mockCreateApplicationSdk(service, errResponse(401));
       await expect(service.createApplication('u', 't', body)).rejects.toThrow(
         UnauthorizedException,
+      );
+    });
+
+    it('throws BadGatewayException when bucket call returns an empty body', async () => {
+      const { service } = makeService();
+      mockCreateApplicationSdk(service, okResponse(null));
+      await expect(service.createApplication('u', 't', body)).rejects.toThrow(
+        BadGatewayException,
       );
     });
 
@@ -361,9 +367,8 @@ describe('ApplicationsService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockRejectedValue(new TypeError('fetch failed')),
+      vi.spyOn(service['client'], 'getUserBucket').mockRejectedValue(
+        new TypeError('fetch failed'),
       );
       await expect(service.createApplication('u', 't', body)).rejects.toThrow(
         ServiceUnavailableException,
