@@ -1,18 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ElementSize } from '@epam/ai-dial-ui-kit';
-import {
-  CSSProperties,
-  FC,
-  KeyboardEvent,
-  MouseEvent,
-  useCallback,
-  useState,
-} from 'react';
-import {
-  ENTITY_TYPE_COLOR,
-  ENTITY_TYPE_SHADOW,
-} from '../../constants/entity-colors';
+import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
+import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import type { CardProps } from '../../models/card-props';
+import { getFeaturedEntityStyle } from '../../utils/styles';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
 import { FolderPath } from '../FolderPath/FolderPath';
@@ -77,14 +68,7 @@ export const Card: FC<CardProps> = ({
           }
         : {})}
       aria-label={item.name}
-      style={
-        item.isFeatured
-          ? ({
-              '--entity-color': ENTITY_TYPE_COLOR[item.type],
-              '--entity-shadow': ENTITY_TYPE_SHADOW[item.type],
-            } as CSSProperties)
-          : undefined
-      }
+      style={getFeaturedEntityStyle(item)}
       className={mergeClasses(
         'relative box-border flex cursor-pointer flex-col gap-[14px]',
         'rounded-[20px] p-[22px]',

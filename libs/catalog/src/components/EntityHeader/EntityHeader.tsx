@@ -1,10 +1,8 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { CSSProperties, FC, ReactNode } from 'react';
-import {
-  ENTITY_TYPE_COLOR,
-  ENTITY_TYPE_SHADOW,
-} from '../../constants/entity-colors';
+import { FC, ReactNode } from 'react';
+import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import { CatalogItem } from '../../models/catalog-item';
+import { getFeaturedEntityStyle } from '../../utils/styles';
 import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
 
@@ -48,12 +46,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   query,
   footer,
 }) => {
-  const featuredStyle = item.isFeatured
-    ? ({
-        '--entity-color': ENTITY_TYPE_COLOR[item.type],
-        '--entity-shadow': ENTITY_TYPE_SHADOW[item.type],
-      } as CSSProperties)
-    : undefined;
+  const featuredStyle = getFeaturedEntityStyle(item);
 
   return (
     <div className="flex items-start gap-2" style={featuredStyle}>
