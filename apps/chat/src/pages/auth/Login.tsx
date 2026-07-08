@@ -2,6 +2,7 @@ import { ButtonAppearance, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 import type { ProviderInfoDto } from '@epam/chat-api-client';
 import {
   memo,
+  SyntheticEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -20,7 +21,7 @@ import { getIconPath } from '../../utils/icon-path';
 const getProviderIconUrl = (id: string) =>
   `https://authjs.dev/img/providers/${id.replace(/[1-9]\d*$/, '')}.svg`;
 
-const handleIconError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+const handleIconError = (e: SyntheticEvent<HTMLImageElement>) => {
   e.currentTarget.style.display = 'none';
 };
 
@@ -118,7 +119,7 @@ const LoginPage: FC = () => {
         </picture>
       </div>
 
-      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-overlay p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
+      <div className="bg-overlay relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
         {currentThemeFavicon && (
           <span
             style={{

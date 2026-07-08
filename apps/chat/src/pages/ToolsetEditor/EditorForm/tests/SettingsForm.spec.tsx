@@ -12,6 +12,7 @@ import {
   WithLogin,
 } from '../../../../types/toolsets';
 import SettingsForm from '../SettingsForm';
+import { ReactNode } from 'react';
 
 vi.mock('../AuthSection', () => ({ default: () => null }));
 
@@ -93,7 +94,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   }: {
     onClick?: () => void;
     'aria-label'?: string;
-    icon?: React.ReactNode;
+    icon?: ReactNode;
   }) => (
     <button type="button" aria-label={ariaLabel} onClick={onClick}>
       {icon}

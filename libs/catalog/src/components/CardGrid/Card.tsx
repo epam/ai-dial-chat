@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialTag, ElementSize } from '@epam/ai-dial-ui-kit';
-import React, {
+import { ElementSize } from '@epam/ai-dial-ui-kit';
+import {
+  CSSProperties,
   FC,
   KeyboardEvent,
   MouseEvent,
@@ -13,6 +14,7 @@ import {
 } from '../../constants/entity-colors';
 import type { CardProps } from '../../models/card-props';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
+import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { TopicsLine } from '../TopicTag/TopicTag';
@@ -36,9 +38,7 @@ export const Card: FC<CardProps> = ({
   const descriptionClassName =
     cardStyles?.typography?.descriptionClassName ??
     'dial-small-text text-secondary';
-  const featuredChipClassName =
-    cardStyles?.typography?.featuredChipClassName ??
-    'dial-tiny-semi-text uppercase tracking-[0.06em]';
+  const featuredChipClassName = cardStyles?.typography?.featuredChipClassName;
   const folderLabelClassName =
     cardStyles?.typography?.folderLabelClassName ?? 'dial-tiny-text';
   const folderLeafClassName =
@@ -82,7 +82,7 @@ export const Card: FC<CardProps> = ({
           ? ({
               '--entity-color': ENTITY_TYPE_COLOR[item.type],
               '--entity-shadow': ENTITY_TYPE_SHADOW[item.type],
-            } as React.CSSProperties)
+            } as CSSProperties)
           : undefined
       }
       className={mergeClasses(
@@ -94,14 +94,12 @@ export const Card: FC<CardProps> = ({
       )}
     >
       {item.isFeatured && (
-        <DialTag
-          label={featuredLabel}
-          className={mergeClasses(
-            'absolute end-[22px] top-0 -translate-y-1/2',
-            featuredChipClassName,
-            styles.featuredChip,
-          )}
-        />
+        <div className="absolute end-[22px] top-0 -translate-y-1/2">
+          <FeaturedChip
+            label={featuredLabel}
+            className={featuredChipClassName}
+          />
+        </div>
       )}
 
       <AppIdentity
