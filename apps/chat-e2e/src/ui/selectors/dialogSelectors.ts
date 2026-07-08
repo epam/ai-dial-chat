@@ -362,6 +362,7 @@ export const AddQuickApp2SettingsFormSelector = {
   chipName: '[data-qa="chip-name"]',
   chipVersion: '[data-qa="chip-version"]',
   chipRemoveButtonLabel: 'Remove item', // aria-label of the chip remove button
+  errorChipClass: 'bg-error', // class on a not-available (red) chip
 
   // Code Interpreter toggle
   codeInterpreterToggle: '[data-qa="toggle-switch"]',

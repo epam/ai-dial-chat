@@ -5,6 +5,7 @@ import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   AddAppMenuOptions,
+  AgentToolsetEntityType,
   EntityEditorAppTypes,
   EntityEditorToolsetTypes,
   ExpectedConstants,
@@ -12,7 +13,10 @@ import {
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { keys } from '@/src/ui/keyboard';
 import { ButtonSelectors } from '@/src/ui/selectors/commonSelectors';
-import { ConfirmationDialogSelectors } from '@/src/ui/selectors/dialogSelectors';
+import {
+  AddQuickApp2SettingsFormSelector,
+  ConfirmationDialogSelectors,
+} from '@/src/ui/selectors/dialogSelectors';
 import { ToolsetLoginModalSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { ToolsetLoginModal } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, UserUtil } from '@/src/utils';
@@ -995,6 +999,178 @@ dialAdminTest(
               name,
               ExpectedConstants.defaultEntityVersion,
             ),
+          );
+        }
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Quick app 2.0]: Not available toolset/agent display\n' +
+    "[Quick app 2.0]: Not available toolset/agent stays attached if edit other items in field 'Agents & Toolsets' and save changes\n" +
+    "[Quick app 2.0]: Not available toolset/agent stays attached if open Editor and click 'Save and exit'", // EPMRTC-6998 + EPMRTC-6999 + EPMRTC-7000
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceEntitiesSection,
+    entityEditorPage,
+    entityEditorHeader,
+    entityDetailsModal,
+    quickApp2EditorViewForm,
+    agentAndToolsetSelectModal,
+    customApplicationBuilder,
+    toolsetBuilder,
+    quickApp2Builder,
+    applicationApiHelper,
+    toolsetApiHelper,
+    itemApiHelper,
+    modelApiHelper,
+    tooltipPortal,
+    confirmationDialog,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-6998', 'EPMRTC-6999', 'EPMRTC-7000');
+    const notAvailableAgentName = GeneratorUtil.randomApplicationName();
+    const notAvailableToolsetName = GeneratorUtil.randomToolsetName();
+    const validAgentName = GeneratorUtil.randomApplicationName();
+    const quickAppName = GeneratorUtil.randomApplicationName();
+    const notAvailableNames = [notAvailableAgentName, notAvailableToolsetName];
+    const errorChipClass = new RegExp(
+      AddQuickApp2SettingsFormSelector.errorChipClass,
+    );
+    let notAvailableAgentId: string;
+    let notAvailableToolsetId: string;
+
+    await dialTest.step(
+      'Precondition: create an agent and a toolset (to be deleted) and a valid agent',
+      async () => {
+        await applicationApiHelper.createApplication(
+          customApplicationBuilder
+            .withDisplayName(notAvailableAgentName)
+            .build(),
+        );
+        await applicationApiHelper.createApplication(
+          customApplicationBuilder.withDisplayName(validAgentName).build(),
+        );
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(notAvailableToolsetName).build(),
+        );
+        notAvailableAgentId = (
+          await modelApiHelper.getAgentByNameAndVersion({
+            name: notAvailableAgentName,
+          })
+        ).id;
+        notAvailableToolsetId = (await toolsetApiHelper.getToolset(
+          notAvailableToolsetName,
+        ))!.id!;
+      },
+    );
+
+    await dialTest.step(
+      'Precondition: create a Quick app 2.0 with the agent and toolset added, then delete them so they become not available',
+      async () => {
+        await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(quickAppName)
+            .addApp({ id: notAvailableAgentId, name: notAvailableAgentName })
+            .addToolset(notAvailableToolsetId)
+            .build(),
+        );
+        await itemApiHelper.deleteEntity(notAvailableAgentId);
+        await itemApiHelper.deleteEntity(notAvailableToolsetId);
+      },
+    );
+
+    await dialTest.step(
+      'Open the Quick app 2.0 in edit — the deleted agent and toolset are shown as red not-available chips with a tooltip',
+      async () => {
+        const quickApp = await modelApiHelper.getAgentByNameAndVersion({
+          name: quickAppName,
+        });
+        await marketplacePage.openEditQuickApp2Page(quickApp.reference);
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+        for (const { name, entityType } of [
+          {
+            name: notAvailableAgentName,
+            entityType: AgentToolsetEntityType.Agent,
+          },
+          {
+            name: notAvailableToolsetName,
+            entityType: AgentToolsetEntityType.Toolset,
+          },
+        ]) {
+          await baseAssertion.assertElementClass(
+            quickApp2EditorViewForm.getChipByName(name),
+            errorChipClass,
+          );
+          await quickApp2EditorViewForm.getChipByName(name).hoverOver();
+          await baseAssertion.assertElementContainsText(
+            tooltipPortal,
+            ExpectedConstants.notAvailableEditableChipTooltip(entityType),
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Add a valid agent — the not-available agent and toolset stay attached (still red)',
+      async () => {
+        await quickApp2EditorViewForm.addAgentsButton.click();
+        await agentAndToolsetSelectModal.selectEntities([validAgentName]);
+        await agentAndToolsetSelectModal.confirmButton.click();
+        await baseAssertion.assertElementState(
+          quickApp2EditorViewForm.getChipByName(validAgentName),
+          'visible',
+        );
+        for (const name of notAvailableNames) {
+          await baseAssertion.assertElementState(
+            quickApp2EditorViewForm.getChipByName(name),
+            'visible',
+          );
+          await baseAssertion.assertElementClass(
+            quickApp2EditorViewForm.getChipByName(name),
+            errorChipClass,
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Save and exit, then reopen — the not-available agent and toolset are still attached and red',
+      async () => {
+        await entityEditorHeader.saveAndExitButton.click();
+        // Invalid/missing fields trigger the "save only valid data" dialog.
+        await baseAssertion.assertElementState(confirmationDialog, 'visible');
+        await baseAssertion.assertElementText(
+          confirmationDialog.entityName,
+          ExpectedConstants.saveOnlyValidDataTitle,
+        );
+        await confirmationDialog.confirm();
+        await marketplacePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(entityDetailsModal, 'hidden');
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(quickAppName);
+        const savedApp =
+          await marketplaceEntitiesSection.findEntityElement(quickAppName);
+        await savedApp.click();
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+        await entityDetailsModal.editButton.click();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+        for (const name of notAvailableNames) {
+          await baseAssertion.assertElementState(
+            quickApp2EditorViewForm.getChipByName(name),
+            'visible',
+          );
+          await baseAssertion.assertElementClass(
+            quickApp2EditorViewForm.getChipByName(name),
+            errorChipClass,
           );
         }
       },

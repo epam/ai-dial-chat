@@ -664,17 +664,24 @@ dialTest(
       },
     );
 
-    await dialTest.step('Open Quick app 2.0 creation page directly', async () => {
-      await marketplacePage.openCreateQuickApp2Page({
-        updateInstalledEntities: false,
-      });
-      await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.QuickApp2);
-      await entityEditorGeneralForm.fillInEntityFields({ name: quickAppName });
-      await entityEditorGeneralForm.goNext();
-      await entityEditorPage.waitForPageLoadedForEdit(
-        EntityEditorAppTypes.QuickApp2,
-      );
-    });
+    await dialTest.step(
+      'Open Quick app 2.0 creation page directly',
+      async () => {
+        await marketplacePage.openCreateQuickApp2Page({
+          updateInstalledEntities: false,
+        });
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.QuickApp2,
+        );
+        await entityEditorGeneralForm.fillInEntityFields({
+          name: quickAppName,
+        });
+        await entityEditorGeneralForm.goNext();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
 
     await dialTest.step(
       'Open the select modal — it shows the empty state with a Go to Marketplace link',
@@ -765,17 +772,24 @@ dialTest(
       },
     );
 
-    await dialTest.step('Open Quick app 2.0 creation page directly', async () => {
-      await marketplacePage.openCreateQuickApp2Page({
-        updateInstalledEntities: false,
-      });
-      await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.QuickApp2);
-      await entityEditorGeneralForm.fillInEntityFields({ name: quickAppName });
-      await entityEditorGeneralForm.goNext();
-      await entityEditorPage.waitForPageLoadedForEdit(
-        EntityEditorAppTypes.QuickApp2,
-      );
-    });
+    await dialTest.step(
+      'Open Quick app 2.0 creation page directly',
+      async () => {
+        await marketplacePage.openCreateQuickApp2Page({
+          updateInstalledEntities: false,
+        });
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.QuickApp2,
+        );
+        await entityEditorGeneralForm.fillInEntityFields({
+          name: quickAppName,
+        });
+        await entityEditorGeneralForm.goNext();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
 
     await dialTest.step(
       'Open the select modal — agents and toolsets are mixed and sorted alphabetically (case-insensitive)',
