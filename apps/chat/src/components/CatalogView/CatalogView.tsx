@@ -20,12 +20,17 @@ import { useNotification } from '../../context/NotificationContext';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { getDeploymentDetails } from '../../server-api/deployments';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
 import {
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
+import {
+  mapDeploymentDetailsDtoToEntityDetails,
+  mapEntityDetailsToCatalogDetails,
+} from '../../utils/map-entity-details-to-catalog';
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
@@ -63,13 +68,15 @@ const CatalogView: FC = () => {
     [catalogItems],
   );
 
-  // TODO: replace with a real API call, e.g. GET /api/catalog/{id}/about
-  const fetchAboutContent = useCallback(
-    (_item: CatalogItem): Promise<string | undefined> => {
-      return Promise.resolve(undefined);
-    },
-    [],
-  );
+  const handleFetchDetails = useCallback(async (item: CatalogItem) => {
+    try {
+      const dto = await getDeploymentDetails(item.id);
+      const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
+      return mapEntityDetailsToCatalogDetails(entityDetails);
+    } catch {
+      return undefined;
+    }
+  }, []);
 
   const onToggleFavorite = useCallback(
     (id: string, isFavorite: boolean) => {
@@ -162,7 +169,7 @@ const CatalogView: FC = () => {
       isLoading={isLoading}
       favorites={favorites}
       createOptions={createOptions}
-      onFetchAboutContent={fetchAboutContent}
+      onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
       isPrimaryActionVisible={isPrimaryActionVisible}

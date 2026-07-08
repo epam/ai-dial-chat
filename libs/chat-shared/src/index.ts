@@ -31,3 +31,4 @@ export * from './components/MarkdownRenderer/MDMessageViewer';
 export * from './components/MarkdownRenderer/CodeBlock/CodeBlock';
 export * from './components/MarkdownRenderer/Table/MarkdownTable';
 export * from './hooks/useIsMobile';
+export * from './hooks/useCollapsedText';

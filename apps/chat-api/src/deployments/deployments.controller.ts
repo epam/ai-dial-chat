@@ -6,6 +6,7 @@ import type { SessionUser } from '../auth/session/session.types';
 import { DeploymentLimitsResponseDto } from '../openapi/openapi-response.dto';
 import { DeploymentsService } from './deployments.service';
 import { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
+import { DeploymentDetailsDto } from './dto/deployment-details.dto';
 import { DeploymentsResponseDto } from './dto/deployment-item.dto';
 import { DeploymentsQueryDto } from './dto/deployments-query.dto';
 
@@ -130,5 +131,40 @@ export class DeploymentsController {
   ) {
     const { at } = req.user as SessionUser;
     return this.deploymentsService.getDeploymentLimits(deployment, at);
+  }
+
+  @Get(':deployment/details')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Header('Cache-Control', 'private, max-age=60')
+  @ApiOperation({
+    operationId: 'getDeploymentDetails',
+    summary: 'Get full details for a single deployment',
+    description:
+      'Fetches the full per-entity payload for a model, application, or toolset by id ' +
+      "(dispatching to DIAL Core's getModel/getApplication/getToolset based on the " +
+      'resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. ' +
+      'Results are cached server-side for 60 seconds.',
+  })
+  @ApiResponse({ status: 200, type: DeploymentDetailsDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 404, description: 'Deployment not found' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  getDeploymentDetails(
+    @Req() req: Request,
+    @Param('deployment') deployment: string,
+  ) {
+    const { at } = req.user as SessionUser;
+    return this.deploymentsService.getDeploymentDetails(deployment, at);
   }
 }

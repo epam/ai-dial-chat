@@ -7,6 +7,7 @@ import {
 } from '../../../models/item-details-props';
 import { TopicTag } from '../../TopicTag/TopicTag';
 import styles from '../DetailsPanel.module.scss';
+import { AboutTab } from '../TabsContent/About';
 import { Limits } from './Limits';
 
 interface SummaryProp {
@@ -15,12 +16,10 @@ interface SummaryProp {
   detailsStyles?: ItemDetailsStyles;
 }
 
-/** Right-side slide-in panel displaying full details for a catalog item. */
+/** Right-side slide-in panel summary: intro/description, topics, and usage limits. */
 export const Summary: FC<SummaryProp> = ({ item, texts, detailsStyles }) => {
-  const {
-    introCaptionClassName = 'dial-caption-text',
-    introTextClassName = 'dial-small-text',
-  } = detailsStyles?.typography ?? {};
+  const { introCaptionClassName = 'dial-caption-text' } =
+    detailsStyles?.typography ?? {};
 
   return (
     <div className="flex shrink-0 flex-col gap-5 px-[22px] py-4">
@@ -30,9 +29,7 @@ export const Summary: FC<SummaryProp> = ({ item, texts, detailsStyles }) => {
         >
           {texts?.introLabel ?? 'Intro'}
         </span>
-        <p className={mergeClasses('m-0', introTextClassName)}>
-          {item.description}
-        </p>
+        <AboutTab item={item} detailsStyles={detailsStyles} />
       </div>
       {item.topics.length > 0 && (
         <div className="flex flex-wrap gap-2">

@@ -603,6 +603,51 @@
         "tags": ["deployments"]
       }
     },
+    "/api/v1/deployments/{deployment}/details": {
+      "get": {
+        "description": "Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core's getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds.",
+        "operationId": "getDeploymentDetails",
+        "parameters": [
+          {
+            "name": "deployment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentDetailsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "Deployment not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get full details for a single deployment",
+        "tags": ["deployments"]
+      }
+    },
     "/api/v1/user-config": {
       "get": {
         "operationId": "getUserConfig",
@@ -3146,6 +3191,371 @@
             "$ref": "#/components/schemas/LimitStatsDto"
           }
         }
+      },
+      "ModelCapabilitiesDto": {
+        "type": "object",
+        "properties": {
+          "completion": {
+            "type": "boolean",
+            "description": "True if the model is a completion"
+          },
+          "chatCompletion": {
+            "type": "boolean",
+            "description": "True if the model is a chat completion"
+          },
+          "embeddings": {
+            "type": "boolean",
+            "description": "True if the model is an embedding"
+          },
+          "fineTune": {
+            "type": "boolean",
+            "description": "True if it is a fine-tuned model"
+          },
+          "inference": {
+            "type": "boolean",
+            "description": "True if the model can be deployed"
+          },
+          "scaleTypes": {
+            "description": "Scale types of the model (defaults to [\"standard\"])",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ModelLimitsDto": {
+        "type": "object",
+        "properties": {
+          "maxTotalTokens": {
+            "type": "number",
+            "description": "Maximum number of tokens allowed in a completion request and response combined"
+          },
+          "maxPromptTokens": {
+            "type": "number",
+            "description": "Maximum number of tokens allowed in a completion request"
+          },
+          "maxCompletionTokens": {
+            "type": "number",
+            "description": "Maximum number of tokens allowed in a completion response"
+          }
+        }
+      },
+      "ModelPricingDto": {
+        "type": "object",
+        "properties": {
+          "unit": {
+            "type": "string",
+            "description": "The pricing unit"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Per-unit price for the completion request"
+          },
+          "completion": {
+            "type": "string",
+            "description": "Per-unit price for the completion response"
+          }
+        }
+      },
+      "DeploymentFeaturesDetailsDto": {
+        "type": "object",
+        "properties": {
+          "rate": {
+            "type": "boolean",
+            "description": "Supports the /rate endpoint"
+          },
+          "mcp": {
+            "type": "boolean",
+            "description": "Supports MCP requests"
+          },
+          "tokenize": {
+            "type": "boolean",
+            "description": "Supports the /tokenize endpoint"
+          },
+          "truncatePrompt": {
+            "type": "boolean",
+            "description": "Supports the /truncate_prompt endpoint"
+          },
+          "hasConfigurationSchema": {
+            "type": "boolean",
+            "description": "Exposes a JSON Schema configuration endpoint"
+          },
+          "systemPrompt": {
+            "type": "boolean",
+            "description": "Supports a custom system prompt"
+          },
+          "tools": {
+            "type": "boolean",
+            "description": "Supports tools/functions in chat completion requests"
+          },
+          "seed": {
+            "type": "boolean",
+            "description": "Supports the seed parameter"
+          },
+          "urlAttachments": {
+            "type": "boolean",
+            "description": "Supports URL attachments"
+          },
+          "folderAttachments": {
+            "type": "boolean",
+            "description": "Supports folder attachments"
+          },
+          "allowResume": {
+            "type": "boolean",
+            "description": "Supports resuming conversations"
+          },
+          "accessibleByPerRequestKey": {
+            "type": "boolean",
+            "description": "Accessible using a per-request API key"
+          },
+          "contentParts": {
+            "type": "boolean",
+            "description": "Supports content parts in messages"
+          },
+          "temperature": {
+            "type": "boolean",
+            "description": "Supports the temperature parameter"
+          },
+          "cache": {
+            "type": "boolean",
+            "description": "Supports LLM prompt caching"
+          },
+          "autoCaching": {
+            "type": "boolean",
+            "description": "Supports automatic prompt caching"
+          },
+          "parallelToolCalls": {
+            "type": "boolean",
+            "description": "Supports parallel tool calls"
+          },
+          "assistantAttachmentsInRequest": {
+            "type": "boolean",
+            "description": "Supports assistant attachments in the request"
+          },
+          "chatCompletion": {
+            "type": "boolean",
+            "description": "Supports chat completion requests"
+          },
+          "responsesApi": {
+            "type": "boolean",
+            "description": "Supports the responses API"
+          },
+          "maxTokensSupported": {
+            "type": "boolean",
+            "description": "Supports the max_tokens parameter"
+          },
+          "maxCompletionTokensSupported": {
+            "type": "boolean",
+            "description": "Supports the max_completion_tokens parameter"
+          },
+          "customTemperatureSupported": {
+            "type": "boolean",
+            "description": "Supports a custom temperature value"
+          },
+          "reasoningEfforts": {
+            "description": "Supported reasoning-effort levels, e.g. [\"low\",\"medium\",\"high\"]",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ModelDetailsDto": {
+        "type": "object",
+        "properties": {
+          "capabilities": {
+            "$ref": "#/components/schemas/ModelCapabilitiesDto"
+          },
+          "lifecycleStatus": {
+            "type": "string",
+            "description": "Lifecycle status of the model"
+          },
+          "tokenizerModel": {
+            "type": "string",
+            "description": "Name of the model whose tokenization algorithm this model uses"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/ModelLimitsDto"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/ModelPricingDto"
+          },
+          "features": {
+            "$ref": "#/components/schemas/DeploymentFeaturesDetailsDto"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Owner of the deployment as reported by DIAL Core"
+          },
+          "inputAttachmentTypes": {
+            "description": "Accepted MIME types for input attachments",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "defaultMaxTokens": {
+            "type": "number",
+            "description": "Default max_tokens value applied when a request omits it"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Timestamp of creation time from DIAL Core (e.g. 1714768496000)"
+          }
+        }
+      },
+      "ApplicationDetailsDto": {
+        "type": "object",
+        "properties": {
+          "applicationProperties": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Non-secret custom application properties reported by DIAL Core"
+          },
+          "functionRuntime": {
+            "type": "string",
+            "description": "Runtime environment for the function"
+          },
+          "functionStatus": {
+            "type": "string",
+            "description": "Current deployment status of the function"
+          },
+          "routes": {
+            "description": "Custom route names exposed by the application",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "owner": {
+            "type": "string",
+            "description": "Owner of the deployment as reported by DIAL Core"
+          },
+          "features": {
+            "$ref": "#/components/schemas/DeploymentFeaturesDetailsDto"
+          },
+          "inputAttachmentTypes": {
+            "description": "Accepted MIME types for input attachments",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "applicationTypeSchemaId": {
+            "type": "string",
+            "description": "URI of the custom application type schema, when present"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Timestamp of creation time from DIAL Core (e.g. 1714768496000)"
+          }
+        }
+      },
+      "ToolsetAuthSettingsDto": {
+        "type": "object",
+        "properties": {
+          "authenticationType": {
+            "type": "string",
+            "description": "Type of authentication",
+            "enum": ["OAUTH", "API_KEY", "NONE"]
+          },
+          "globalAuthStatus": {
+            "type": "string",
+            "description": "Whether the toolset has global (shared) credentials signed in",
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
+          },
+          "appLevelAuthStatus": {
+            "type": "string",
+            "description": "Whether the toolset has app-level credentials signed in",
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
+          },
+          "userLevelAuthStatus": {
+            "type": "string",
+            "description": "Whether the current user has user-level credentials signed in",
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
+          },
+          "scopesSupported": {
+            "description": "OAuth scopes supported by this toolset",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "description": "(OAuth only) Authorization endpoint"
+          },
+          "tokenEndpoint": {
+            "type": "string",
+            "description": "(OAuth only) Token endpoint"
+          },
+          "apiKeyHeader": {
+            "type": "string",
+            "description": "(API key only) Header name the API key is sent in"
+          }
+        }
+      },
+      "ToolsetDetailsDto": {
+        "type": "object",
+        "properties": {
+          "transport": {
+            "type": "string",
+            "description": "Transport supported by the MCP server (HTTP or SSE)"
+          },
+          "allowedTools": {
+            "description": "Names of tools allowed for use from this toolset",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allToolNames": {
+            "description": "Names of all tools supported by the underlying MCP server, regardless of whether they are allow-listed. From GET /v1/toolset/{id}/tools.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authSettings": {
+            "$ref": "#/components/schemas/ToolsetAuthSettingsDto"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Owner of the deployment as reported by DIAL Core"
+          },
+          "features": {
+            "$ref": "#/components/schemas/DeploymentFeaturesDetailsDto"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Timestamp of creation time from DIAL Core (e.g. 1714768496000)"
+          }
+        }
+      },
+      "DeploymentDetailsDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The requested deployment id"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["model", "application", "toolset"]
+          },
+          "modelDetails": {
+            "$ref": "#/components/schemas/ModelDetailsDto"
+          },
+          "applicationDetails": {
+            "$ref": "#/components/schemas/ApplicationDetailsDto"
+          },
+          "toolsetDetails": {
+            "$ref": "#/components/schemas/ToolsetDetailsDto"
+          }
+        },
+        "required": ["id", "type"]
       },
       "ConversationsConfigDto": {
         "type": "object",

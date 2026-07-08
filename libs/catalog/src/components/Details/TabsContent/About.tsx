@@ -1,5 +1,4 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialSkeleton } from '@epam/ai-dial-ui-kit';
 import { FC, useMemo } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import type { ItemDetailsStyles } from '../../../models/item-details-props';
@@ -29,31 +28,22 @@ const AboutRunView: FC<AboutRunViewProps> = ({ run, contentClassName }) => {
 
 interface AboutTabProps {
   item: CatalogItem;
-  aboutContent?: string;
-  isAboutLoading?: boolean;
   detailsStyles?: ItemDetailsStyles;
 }
 
-/** Right-side slide-in panel displaying full details for a catalog item. */
-export const AboutTab: FC<AboutTabProps> = ({
-  item,
-  aboutContent,
-  isAboutLoading = false,
-  detailsStyles,
-}) => {
+/** Intro content for a catalog item (`item.intro`, falling back to `item.description`). */
+export const AboutTab: FC<AboutTabProps> = ({ item, detailsStyles }) => {
   const {
     contentHeadingClassName = 'dial-small-semi-text',
     contentClassName = 'dial-small-text',
   } = detailsStyles?.typography ?? {};
 
   const parsedAboutBlocks = useMemo(
-    () => parseAboutContent(aboutContent ?? item.description),
-    [aboutContent, item.description],
+    () => parseAboutContent(item.intro ?? item.description),
+    [item.intro, item.description],
   );
 
-  return isAboutLoading && aboutContent == null ? (
-    <DialSkeleton showTitle={false} paragraph={{ rows: 8 }} />
-  ) : (
+  return (
     <div className="flex flex-col gap-5">
       {parsedAboutBlocks.map((block, blockIdx) => (
         <div key={blockIdx} className="flex flex-col gap-2">

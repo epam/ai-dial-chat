@@ -58,6 +58,10 @@ function makeService(
     }),
     configurationDeployment: vi.fn(),
     getDeploymentLimits: vi.fn(),
+    getModel: vi.fn(),
+    getApplication: vi.fn(),
+    getToolset: vi.fn(),
+    getAllToolSetTools: vi.fn(),
   };
 
   const configService = {
@@ -727,6 +731,272 @@ describe('DeploymentsService', () => {
       await expect(
         service.getDeploymentLimits('gpt-4o', 'token'),
       ).rejects.toThrow(BadGatewayException);
+    });
+  });
+
+  describe('getDeploymentDetails', () => {
+    it('dispatches to getModel and maps capabilities/limits/pricing for a model', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(
+        okResponse({
+          id: 'gpt-4o',
+          capabilities: { chat_completion: true, scale_types: ['standard'] },
+          lifecycle_status: 'generally-available',
+          tokenizer_model: 'gpt-4o',
+          limits: { max_total_tokens: 128000 },
+          pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails('gpt-4o', 'token');
+
+      expect(result).toEqual({
+        id: 'gpt-4o',
+        type: 'model',
+        modelDetails: {
+          capabilities: {
+            completion: undefined,
+            chatCompletion: true,
+            embeddings: undefined,
+            fineTune: undefined,
+            inference: undefined,
+            scaleTypes: ['standard'],
+          },
+          lifecycleStatus: 'generally-available',
+          tokenizerModel: 'gpt-4o',
+          limits: {
+            maxTotalTokens: 128000,
+            maxPromptTokens: undefined,
+            maxCompletionTokens: undefined,
+          },
+          pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+        },
+      });
+      expect(sdkClient.getApplication).not.toHaveBeenCalled();
+      expect(sdkClient.getToolset).not.toHaveBeenCalled();
+    });
+
+    it('dispatches to getApplication, maps owner/features/inputAttachmentTypes, and excludes function.env/source_folder/target_folder', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({
+          id: 'applications/my-app',
+          owner: 'Yauheniya Hladkaya',
+          application_properties: { customFlag: true },
+          application_type_schema_id: 'https://example.com/schemas/quickapp',
+          input_attachment_types: [],
+          features: { configuration: true, tools: false, mcp: false },
+          function: {
+            runtime: 'python3.11',
+            status: 'DEPLOYED',
+            env: { SECRET: 'value' },
+            source_folder: 'src/',
+            target_folder: 'dist/',
+          },
+          routes: { default: {} },
+          editor_url: 'https://editor.example.com',
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'applications/my-app',
+        'token',
+      );
+
+      expect(result).toEqual({
+        id: 'applications/my-app',
+        type: 'application',
+        applicationDetails: {
+          applicationProperties: { customFlag: true },
+          functionRuntime: 'python3.11',
+          functionStatus: 'DEPLOYED',
+          routes: ['default'],
+          owner: 'Yauheniya Hladkaya',
+          applicationTypeSchemaId: 'https://example.com/schemas/quickapp',
+          inputAttachmentTypes: [],
+          features: expect.objectContaining({
+            hasConfigurationSchema: true,
+            tools: false,
+            mcp: false,
+          }),
+        },
+      });
+      expect(JSON.stringify(result)).not.toContain('SECRET');
+      expect(JSON.stringify(result)).not.toContain('editor.example.com');
+    });
+
+    it('dispatches to getToolset, maps owner/features/auth status, and reduces authSettings to non-secret fields', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getToolset.mockResolvedValue(
+        okResponse({
+          id: 'toolsets/search-tool',
+          toolset: 'toolsets/search-tool',
+          owner: 'Anastasiia Harkot',
+          transport: 'HTTP',
+          allowed_tools: ['search', 'fetch'],
+          features: { mcp: true, tools: false, cache: false },
+          auth_settings: {
+            authentication_type: 'OAUTH',
+            client_id: 'public-client-id',
+            client_secret: 'super-secret',
+            global_auth_status: 'SIGNED_OUT',
+            app_level_auth_status: 'SIGNED_OUT',
+            user_level_auth_status: 'SIGNED_IN',
+            scopes_supported: ['read', 'write'],
+            authorization_endpoint: 'https://mcp.example.com/oauth/authorize',
+            token_endpoint: 'https://mcp.example.com/oauth/token',
+          },
+        }),
+      );
+      sdkClient.getAllToolSetTools.mockResolvedValue(
+        okResponse({
+          id: '1',
+          result: {
+            tools: [
+              { name: 'search', title: 'Search' },
+              { name: 'fetch', title: 'Fetch' },
+              { name: 'browse', title: 'Browse' },
+            ],
+          },
+        }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'toolsets/search-tool',
+        'token',
+      );
+
+      expect(result).toEqual({
+        id: 'toolsets/search-tool',
+        type: 'toolset',
+        toolsetDetails: {
+          transport: 'HTTP',
+          allowedTools: ['search', 'fetch'],
+          allToolNames: ['search', 'fetch', 'browse'],
+          owner: 'Anastasiia Harkot',
+          features: expect.objectContaining({
+            mcp: true,
+            tools: false,
+            cache: false,
+          }),
+          authSettings: {
+            authenticationType: 'OAUTH',
+            globalAuthStatus: 'SIGNED_OUT',
+            appLevelAuthStatus: 'SIGNED_OUT',
+            userLevelAuthStatus: 'SIGNED_IN',
+            scopesSupported: ['read', 'write'],
+            authorizationEndpoint: 'https://mcp.example.com/oauth/authorize',
+            tokenEndpoint: 'https://mcp.example.com/oauth/token',
+          },
+        },
+      });
+      expect(JSON.stringify(result)).not.toContain('super-secret');
+      expect(JSON.stringify(result)).not.toContain('public-client-id');
+    });
+
+    it('omits allToolNames without failing the request when getAllToolSetTools errors', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getToolset.mockResolvedValue(
+        okResponse({ id: 'toolsets/search-tool', transport: 'HTTP' }),
+      );
+      sdkClient.getAllToolSetTools.mockResolvedValue(errResponse(403));
+
+      const result = await service.getDeploymentDetails(
+        'toolsets/search-tool',
+        'token',
+      );
+
+      expect(result.toolsetDetails?.allToolNames).toBeUndefined();
+    });
+
+    it('throws NotFoundException when neither getModel nor the getApplication fallback finds the id', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(errResponse(404));
+      sdkClient.getApplication.mockResolvedValue(errResponse(404));
+      await expect(
+        service.getDeploymentDetails('unknown-id', 'token'),
+      ).rejects.toThrow(NotFoundException);
+      expect(sdkClient.getModel).toHaveBeenCalledOnce();
+      expect(sdkClient.getApplication).toHaveBeenCalledOnce();
+    });
+
+    it('falls back to getApplication when an unprefixed id 404s on getModel', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(errResponse(404));
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({ id: 'root-app', owner: 'someone' }),
+      );
+
+      const result = await service.getDeploymentDetails('root-app', 'token');
+
+      expect(result).toEqual({
+        id: 'root-app',
+        type: 'application',
+        applicationDetails: expect.objectContaining({ owner: 'someone' }),
+      });
+    });
+
+    it('returns cached value without calling the upstream detail SDK method', async () => {
+      const cachedDetails = { id: 'gpt-4o', type: 'model' as const };
+      const { service, sdkClient, cacheManager } = makeService();
+      cacheManager.get.mockImplementation((key: string) =>
+        Promise.resolve(
+          key === 'deployments:details:gpt-4o' ? cachedDetails : undefined,
+        ),
+      );
+
+      const result = await service.getDeploymentDetails('gpt-4o', 'token');
+
+      expect(result).toEqual(cachedDetails);
+      expect(sdkClient.getModel).not.toHaveBeenCalled();
+    });
+
+    it('stores the mapped result in cache with a 60 s TTL', async () => {
+      const { service, sdkClient, cacheManager } = makeService();
+      sdkClient.getModel.mockResolvedValue(okResponse({ id: 'gpt-4o' }));
+
+      await service.getDeploymentDetails('gpt-4o', 'token');
+
+      expect(cacheManager.set).toHaveBeenCalledWith(
+        'deployments:details:gpt-4o',
+        expect.objectContaining({ id: 'gpt-4o', type: 'model' }),
+        60 * 1000,
+      );
+    });
+
+    it('joins an in-flight request instead of firing a second upstream call for concurrent requests', async () => {
+      const { service, sdkClient } = makeService();
+      let resolveModel: (value: unknown) => void = () => undefined;
+      sdkClient.getModel.mockReturnValue(
+        new Promise((resolve) => {
+          resolveModel = resolve;
+        }),
+      );
+
+      const first = service.getDeploymentDetails('gpt-4o', 'token');
+      const second = service.getDeploymentDetails('gpt-4o', 'token');
+
+      resolveModel(okResponse({ id: 'gpt-4o' }));
+      const [firstResult, secondResult] = await Promise.all([first, second]);
+
+      expect(sdkClient.getModel).toHaveBeenCalledOnce();
+      expect(firstResult).toEqual(secondResult);
+    });
+
+    it('throws BadGatewayException when the detail upstream call returns 5xx', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(errResponse(502));
+      await expect(
+        service.getDeploymentDetails('gpt-4o', 'token'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('throws ServiceUnavailableException when the detail upstream call is unreachable', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockRejectedValue(new TypeError('fetch failed'));
+      await expect(
+        service.getDeploymentDetails('gpt-4o', 'token'),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
   });
 });
