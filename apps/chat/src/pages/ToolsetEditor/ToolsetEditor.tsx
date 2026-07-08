@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../constants/translation-keys';
+import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import {
   createToolset,
@@ -40,6 +41,7 @@ import ToolsetEditorView from './ToolsetEditorView';
 const ToolsetEditor: FC = () => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
+  const { refetchToolsets } = useDeployments();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -267,6 +269,7 @@ const ToolsetEditor: FC = () => {
       const result = isEditMode
         ? await updateToolset(toolsetId, body)
         : await createToolset(body);
+      await refetchToolsets();
       try {
         const isRedirecting = await runPostSaveAuth(result.id, form);
         if (!isRedirecting) navigate(returnUrl);
@@ -299,6 +302,7 @@ const ToolsetEditor: FC = () => {
     showNotification,
     handleChangeStep,
     runPostSaveAuth,
+    refetchToolsets,
   ]);
 
   if (isLoading || !form) {

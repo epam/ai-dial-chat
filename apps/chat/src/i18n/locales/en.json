@@ -141,7 +141,8 @@
       "error": "Failed to load models",
       "empty": "No models available",
       "closeLabel": "Close model selector"
-    }
+    },
+    "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date."
   },
   "buttons": {
     "showMore": "Show more",
