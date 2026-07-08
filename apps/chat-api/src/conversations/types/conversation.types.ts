@@ -9,6 +9,7 @@ export interface MetadataItem extends Partial<ConversationMetadataDto> {
 export interface MetadataResult {
   data?: { items?: MetadataItem[]; nextToken?: string };
   error?: unknown;
+  response?: globalThis.Response;
 }
 
 /** Wrapper around a `getSharedResources` SDK call result. */

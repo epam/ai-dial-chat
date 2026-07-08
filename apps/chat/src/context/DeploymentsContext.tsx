@@ -1,4 +1,5 @@
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   ListDeploymentsInterfaceTypeEnum,
   type ApplicationSchemaSummaryDto,
@@ -14,11 +15,14 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
+import { DeploymentsI18nKeys } from '../constants/translation-keys';
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
 import { listToolsets } from '../server-api/toolsets';
 import { useAppConfig } from './AppConfigContext';
+import { useNotification } from './NotificationContext';
 import { useUserConfig } from './UserConfigContext';
 
 export interface DeploymentsContextType {
@@ -44,6 +48,8 @@ export interface DeploymentsContextType {
   schemas: ApplicationSchemaSummaryDto[];
   /** Toolsets fetched from the dedicated toolsets API for catalog surfaces. */
   toolsets: DialToolsetDto[];
+  /** Re-fetches toolsets from the API and updates the catalog list. Call after creating/updating a toolset. */
+  refetchToolsets: () => Promise<void>;
 }
 
 export const DeploymentsContext = createContext<
@@ -102,6 +108,8 @@ const resolveInitialSelection = (
 };
 
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
+  const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const { selectedDeploymentId: userConfigSelectedId, setSelectedDeployment } =
     useUserConfig();
   const { config: appConfig } = useAppConfig();
@@ -178,6 +186,18 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [loadDeployments]);
 
+  const refetchToolsets = useCallback(async () => {
+    try {
+      const { data } = await listToolsets();
+      setToolsets(sortToolsets(data ?? []));
+    } catch {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(DeploymentsI18nKeys.RefetchToolsetsFailed),
+      });
+    }
+  }, [showNotification, t]);
+
   const items = useMemo<DeploymentItemDto[]>(() => {
     if (schemas.length === 0) return rawDeployments;
     const schemaById = new Map(schemas.map((s) => [s.id, s]));
@@ -252,6 +272,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       error,
       schemas,
       toolsets,
+      refetchToolsets,
     }),
     [
       items,
@@ -263,6 +284,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       error,
       schemas,
       toolsets,
+      refetchToolsets,
     ],
   );
 

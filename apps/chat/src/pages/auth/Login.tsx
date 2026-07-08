@@ -1,6 +1,8 @@
+import { ButtonAppearance, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 import type { ProviderInfoDto } from '@epam/chat-api-client';
 import {
   memo,
+  SyntheticEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -15,12 +17,11 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { getProviders } from '../../server-api/auth.api';
 import { getIconPath } from '../../utils/icon-path';
-import { ButtonAppearance, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const getProviderIconUrl = (id: string) =>
   `https://authjs.dev/img/providers/${id.replace(/[1-9]\d*$/, '')}.svg`;
 
-const handleIconError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+const handleIconError = (e: SyntheticEvent<HTMLImageElement>) => {
   e.currentTarget.style.display = 'none';
 };
 

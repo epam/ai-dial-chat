@@ -1,6 +1,3 @@
-// CSS custom-property references and their hex fallbacks.
-// Layout, spacing, and transitions live in Tailwind classes in the TSX file.
-
 .header {
   color: var(--cp-text, var(--text-primary, #161b2d));
 }
@@ -9,45 +6,28 @@
   color: var(--cp-text, var(--text-primary, #161b2d));
 
   &:hover {
-    background: var(
-      --cp-item-hover,
-      var(--bg-accent-secondary-alpha, #37babc2e)
-    );
+    background: var(--cp-item-hover, var(--bg-layer-2, #eeeef0));
   }
 
   &.itemActive {
-    background: var(
-      --cp-item-active,
-      var(--bg-accent-secondary-alpha, #37babc2e)
-    );
-    border-inline-start-color: var(
-      --cp-item-active-border,
-      var(--bg-accent-secondary, #37babc)
-    );
+    background: var(--cp-item-active, var(--bg-layer-2, #eeeef0));
+    color: var(--cp-text, var(--text-primary, #161b2d));
   }
 }
 
-.itemDate {
-  color: var(--cp-text-secondary, var(--text-secondary, #575f73));
-}
-
 .groupHeader {
-  color: var(--cp-text-secondary, var(--text-secondary, #575f73));
-}
-
-.itemIcon {
-  background: var(--cp-item-hover, var(--bg-layer-4, #d1dbea));
-  color: var(--cp-text, var(--text-primary, #161b2d));
+  color: var(--cp-text-secondary, var(--text-tertiary, #808898));
+  opacity: 0.55;
 }
 
 .trigger {
   &.triggerActive {
     background: var(
       --cp-trigger-bg,
-      var(--controls-bg-accent-primary, #124ace)
+      var(--controls-bg-accent-primary-alpha-active, #7da4ff5c)
     );
     .triggerIcon {
-      color: var(--cp-trigger-icon, var(--controls-text-permanent, #fff));
+      color: var(--cp-trigger-icon, var(--text-accent-primary, #124ace));
     }
   }
 }

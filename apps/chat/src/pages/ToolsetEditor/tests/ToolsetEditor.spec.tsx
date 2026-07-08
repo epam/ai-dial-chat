@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
+import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
@@ -19,8 +20,10 @@ vi.mock('../../../server-api/toolsets', () => ({
 }));
 
 vi.mock('../../../context/NotificationContext');
+vi.mock('../../../context/DeploymentsContext');
 
 const mockShowNotification = vi.fn();
+const mockRefetchToolsets = vi.fn();
 
 vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
   default: () => <div>Loading</div>,
@@ -84,6 +87,10 @@ describe('ToolsetEditor', () => {
       showNotification: mockShowNotification,
       dismissNotification: vi.fn(),
     });
+    mockRefetchToolsets.mockResolvedValue(undefined);
+    vi.mocked(useDeployments).mockReturnValue({
+      refetchToolsets: mockRefetchToolsets,
+    } as unknown as ReturnType<typeof useDeployments>);
   });
 
   it('logs in a newly created API-key toolset using the returned id', async () => {
@@ -110,6 +117,23 @@ describe('ToolsetEditor', () => {
         }),
       ),
     );
+  });
+
+  it('refetches toolsets after a successful create so the catalog list stays in sync', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'fill-api-key-toolset',
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: 'save-toolset',
+      }),
+    );
+
+    await waitFor(() => expect(mockRefetchToolsets).toHaveBeenCalledOnce());
   });
 
   it('shows an error notification when create fails', async () => {

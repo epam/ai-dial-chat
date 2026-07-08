@@ -56,18 +56,6 @@
   color: var(--text-secondary, #575f73);
 }
 
-.featuredChip {
-  background: color-mix(
-    in srgb,
-    var(--entity-color, #2764d9) 12%,
-    var(--bg-layer-0, #fcfcfc)
-  ) !important;
-  border: none !important;
-  color: var(--entity-color, #2764d9) !important;
-  font-size: 10px !important;
-  border-radius: 16px !important;
-}
-
 .skeletonCard {
   background: var(--bg-layer-0, #fcfcfc);
 }

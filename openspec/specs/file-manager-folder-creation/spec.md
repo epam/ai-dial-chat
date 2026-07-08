@@ -206,14 +206,14 @@ setRetryCounter((c) => c + 1);
 ## RTL / direction impact
 
 - No directional icons in the folder creation flow.
-- Inline validation messages are rendered by the ui-kit `DialFileManager` internally — no new directional Tailwind needed in `DialFileManagerModal`.
+- Inline validation messages are rendered by the ui-kit `DialFileManager` internally — no new directional Tailwind needed in `DialFileManagerShell`.
 
 ---
 
 ## Accessibility
 
 - Folder name input is managed by `DialFileManager` internally (ui-kit built-in).
-- Validation error messages rendered by `DialFileManager` are inline — no additional ARIA work required in `DialFileManagerModal`.
+- Validation error messages rendered by `DialFileManager` are inline — no additional ARIA work required in `DialFileManagerShell`.
 
 ---
 

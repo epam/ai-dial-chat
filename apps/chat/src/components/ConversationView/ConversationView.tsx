@@ -9,10 +9,7 @@ import {
   type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import {
-  FileDndOverlay,
-  type ChatSettingsValues,
-} from '@epam/ai-dial-conversation-input';
+import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
@@ -30,32 +27,29 @@ import {
   memo,
   Suspense,
   useCallback,
-  useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import { CONVERSATION_VIEW_INPUT_STYLES } from '../../constants/input-styles';
 import {
-  BasicI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
   ChatI18nKeys,
-  ChatSettingsI18nKeys,
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
-  DeploymentsI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSettingsFormConfig';
+import { useConversationScroll } from '../../hooks/conversation/useConversationScroll';
+import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
@@ -65,7 +59,7 @@ import {
 } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
-import { normalizeResponseFormat } from '../../utils/message-utils';
+import { isMessageChanged } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import ModelPickerPanel from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
@@ -122,8 +116,6 @@ interface Props {
   onBrowseCatalog?: () => void;
 }
 
-const NEAR_BOTTOM_THRESHOLD = 80;
-
 const ConversationView: FC<Props> = ({
   messages,
   onSend,
@@ -156,7 +148,6 @@ const ConversationView: FC<Props> = ({
   onBrowseCatalog,
 }) => {
   const { t } = useTranslation();
-  const { showNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -302,20 +293,11 @@ const ConversationView: FC<Props> = ({
     [t],
   );
 
-  const modelSelectorLabels = useMemo(
-    () => ({
-      ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
-      loading: isLoading ? t(DeploymentsI18nKeys.SelectorLoading) : undefined,
-      error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
-      empty:
-        !isLoading && !error && items.length === 0
-          ? t(DeploymentsI18nKeys.SelectorEmpty)
-          : undefined,
-      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
-      closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
-    }),
-    [t, isLoading, error, items.length],
-  );
+  const modelSelectorLabels = useModelSelectorLabels({
+    isLoading,
+    error,
+    itemCount: items.length,
+  });
 
   const formatStatusModelChangedBody = useCallback(
     (from: string, to: string) =>
@@ -326,181 +308,72 @@ const ConversationView: FC<Props> = ({
     [t],
   );
 
-  const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const {
+    containerRef,
+    contentRef,
+    spacerRef,
+    setMessageRef,
+    isScrollButtonVisible,
+    scrollToBottom,
+    armAnchor,
+  } = useConversationScroll({ messages, isAssistantTyping });
 
-  /*
-   * True when the user has manually scrolled up during a stream.
-   * Pauses auto-scroll until they click the scroll button or send a new message.
-   */
-  const userScrolledRef = useRef(false);
-
-  // Prevents the scroll handler from misreading programmatic scrolls as user input.
-  const isProgrammaticRef = useRef(false);
-  // Fallback timer that clears isProgrammaticRef when scrollend is unsupported.
-  const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
+  const handleSendWithAnchor = useCallback(
+    async (message: string, attachments: Attachment[]) => {
+      armAnchor(messages.length);
+      // ConversationInput awaits this to know whether to restore the draft
+      // on failure — forward onSend's result rather than discarding it.
+      await onSend(message, attachments);
+    },
+    [onSend, messages.length, armAnchor],
   );
 
-  const scrollToBottom = useCallback((instant = false) => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    if (smoothScrollTimerRef.current != null) {
-      clearTimeout(smoothScrollTimerRef.current);
-      smoothScrollTimerRef.current = null;
-    }
-
-    isProgrammaticRef.current = true;
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: instant ? 'instant' : 'smooth',
-    });
-
-    if (instant) {
-      // A single frame is enough — instant scroll fires one synchronous event.
-      requestAnimationFrame(() => {
-        isProgrammaticRef.current = false;
-      });
-    } else {
+  const handleRegenerateMessageWithAnchor = useCallback(
+    (messageIndex: number) => {
       /*
-       * Smooth scroll fires scroll events for its entire ~300 ms animation.
-       * Keep the flag set until the browser signals the scroll is complete;
-       * fall back to a timeout for Safari < 17.4 which lacks scrollend.
+       * Regenerating while another generation is in flight is a no-op in
+       * handleRegenerateMessage — skip arming the anchor so a later,
+       * unrelated message update doesn't consume a stale index.
        */
-      const reset = () => {
-        if (smoothScrollTimerRef.current != null) {
-          clearTimeout(smoothScrollTimerRef.current);
-          smoothScrollTimerRef.current = null;
-        }
-        isProgrammaticRef.current = false;
-      };
-      container.addEventListener('scrollend', reset, { once: true });
-      smoothScrollTimerRef.current = setTimeout(reset, 400);
-    }
-  }, []);
-
-  // When streaming ends, release user override so the next send auto-scrolls.
-  useEffect(() => {
-    if (!isAssistantTyping) {
-      userScrolledRef.current = false;
-    }
-  }, [isAssistantTyping]);
-
-  /*
-   * Scroll on message updates.
-   * During streaming: instant + skip if user scrolled up.
-   * On new turns (non-streaming message count change): always smooth-scroll.
-   */
-  const prevLengthRef = useRef(messages.length);
-  useEffect(() => {
-    const lengthChanged = messages.length !== prevLengthRef.current;
-    prevLengthRef.current = messages.length;
-
-    if (isAssistantTyping) {
-      // Token arrived — scroll only if user hasn't overridden
-      if (!userScrolledRef.current) {
-        scrollToBottom(true);
+      if (!isAssistantTyping) {
+        armAnchor(messageIndex - 1);
       }
-    } else if (lengthChanged) {
-      // New user message appended (or conversation loaded) — always scroll
-      userScrolledRef.current = false;
-      scrollToBottom(false);
-    }
-  }, [messages, isAssistantTyping, scrollToBottom]);
-
-  // Scroll listener: detect user scrolling up during stream
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-      const isNearBottom = distanceFromBottom < NEAR_BOTTOM_THRESHOLD;
-
-      setIsScrollButtonVisible(!isNearBottom);
-
-      if (isProgrammaticRef.current) return;
-
-      if (isAssistantTyping && !isNearBottom) {
-        userScrolledRef.current = true;
-      } else if (isNearBottom) {
-        userScrolledRef.current = false;
-      }
-    };
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [isAssistantTyping]);
-
-  const handleScrollToBottom = useCallback(() => {
-    userScrolledRef.current = false;
-    scrollToBottom(false);
-  }, [scrollToBottom]);
-
-  const chatSettings = useMemo(
-    () => ({
-      features: {
-        ...(selectedDeployment?.features ?? {
-          systemPrompt: false,
-          temperature: false,
-        }),
-        responseFormat: true,
-      },
-      responseFormat: normalizeResponseFormat(
-        conversation.responseFormat as string | undefined,
-      ),
-      systemPrompt: conversation.prompt ?? '',
-      temperature: conversation.temperature ?? 0.5,
-      onSave: (values: ChatSettingsValues) => {
-        onConversationChange({
-          ...conversation,
-          ...(values.responseFormat != null && {
-            responseFormat: values.responseFormat,
-          }),
-          ...(values.systemPrompt != null && {
-            prompt: values.systemPrompt,
-          }),
-          ...(values.temperature != null && {
-            temperature: values.temperature,
-          }),
-        });
-        showNotification({
-          variant: NotificationVariant.Success,
-          message: t(ChatSettingsI18nKeys.SavedNotification),
-        });
-      },
-      menuItemLabel: t(ChatI18nKeys.ChatSettings),
-      title: t(ChatSettingsI18nKeys.Title),
-      responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
-      responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
-      responseFormatMarkdownLabel: t(
-        ChatSettingsI18nKeys.ResponseFormatMarkdown,
-      ),
-      responseFormatPlainTextLabel: t(
-        ChatSettingsI18nKeys.ResponseFormatPlainText,
-      ),
-      systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
-      systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
-      temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),
-      temperatureLabels: [
-        t(ChatSettingsI18nKeys.TemperaturePrecise),
-        t(ChatSettingsI18nKeys.TemperatureNeutral),
-        t(ChatSettingsI18nKeys.TemperatureCreative),
-      ] as [string, string, string],
-      temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
-      saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
-    }),
-    [
-      selectedDeployment?.features,
-      conversation,
-      t,
-      onConversationChange,
-      showNotification,
-    ],
+      onRegenerateMessage?.(messageIndex);
+    },
+    [isAssistantTyping, onRegenerateMessage, armAnchor],
   );
+
+  const handleEditMessageWithAnchor = useCallback(
+    (
+      messageIndex: number,
+      text: string,
+      keptAttachments: DisplayAttachment[],
+      newAttachments: Attachment[],
+    ) => {
+      /*
+       * handleEditMessage no-ops if a generation is in flight or the text is
+       * unchanged (isMessageChanged mirrors that same check) — skip arming
+       * in either case so a later, unrelated update can't consume a stale index.
+       */
+      const originalMessage = messages[messageIndex];
+      if (
+        !isAssistantTyping &&
+        originalMessage != null &&
+        isMessageChanged(originalMessage, text, keptAttachments, newAttachments)
+      ) {
+        armAnchor(messageIndex);
+      }
+      onEditMessage?.(messageIndex, text, keptAttachments, newAttachments);
+    },
+    [isAssistantTyping, messages, onEditMessage, armAnchor],
+  );
+
+  const chatSettings = useChatSettingsFormConfig({
+    mode: 'conversation',
+    conversation,
+    onConversationChange,
+    deploymentFeatures: selectedDeployment?.features,
+  });
 
   const handleAttachDialFiles = useCallback(
     (result: AttachResult) => {
@@ -551,84 +424,100 @@ const ConversationView: FC<Props> = ({
           aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
-          className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden"
+          className="flex w-full flex-1 flex-col overflow-y-auto overflow-x-hidden"
         >
-          <div className="mx-auto flex w-full min-w-0 max-w-[760px] flex-1 flex-col gap-[26px] overflow-x-hidden px-6 pt-7">
+          <div
+            ref={contentRef}
+            className="mx-auto flex w-full min-w-0 max-w-[760px] shrink-0 flex-col gap-[26px] px-6 pt-7"
+          >
             {messages.map((msg, index) => {
               const isThisMessageEditing = editingMessageIndexes?.has(index);
               return (
-                <ConversationMessageItem
+                <div
                   key={index.toString()}
-                  msg={msg}
-                  index={index}
-                  totalCount={messages.length}
-                  isAssistantTyping={isAssistantTyping}
-                  editingMessageIndexes={editingMessageIndexes}
-                  onSelectStarter={onSelectStarter}
-                  onStartEdit={isReadOnly ? undefined : onStartEdit}
-                  onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}
-                  onRegenerateMessage={
-                    isReadOnly ? undefined : onRegenerateMessage
-                  }
-                  onRateMessage={isReadOnly ? undefined : onRateMessage}
-                  onDislikeMessage={isReadOnly ? undefined : onDislikeMessage}
-                  onCancelEdit={onCancelEdit}
-                  onEditMessage={onEditMessage}
-                  onUploadAttachment={onUploadAttachment}
-                  deploymentLookup={deploymentLookup}
-                  effectiveDeploymentId={effectiveDeploymentIds[index]}
-                  tooltips={tooltips}
-                  ariaLabels={ariaLabels}
-                  cancelLabel={t(ButtonsI18nKeys.Cancel)}
-                  saveLabel={t(ButtonsI18nKeys.SaveAndSubmit)}
-                  editMessageAriaLabel={t(ButtonsI18nKeys.EditMessage)}
-                  quickReplyButtonsAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
-                  showMoreLabel={t(ButtonsI18nKeys.ShowMore)}
-                  showLessLabel={t(ButtonsI18nKeys.ShowLess)}
-                  showMoreUserMessageAriaLabel={t(
-                    ChatI18nKeys.ShowMoreUserMessage,
-                  )}
-                  showLessUserMessageAriaLabel={t(
-                    ChatI18nKeys.ShowLessUserMessage,
-                  )}
-                  statusModelChangedTitle={t(
-                    ConversationI18nKeys.StatusModelChangedTitle,
-                  )}
-                  formatStatusModelChangedBody={formatStatusModelChangedBody}
-                  streamErrorText={streamErrorText}
-                  stoppedGeneratingText={stoppedGeneratingText}
-                  thinkingLabel={t(ChatI18nKeys.Thinking)}
-                  executedLabel={t(ConversationI18nKeys.StagesExecuted)}
-                  stepsLabel={(count) =>
-                    t(ConversationI18nKeys.StagesStep, { count })
-                  }
-                  pendingDropFiles={
-                    isEditActive && isThisMessageEditing
-                      ? pendingFiles
-                      : undefined
-                  }
-                  onDropFilesConsumed={
-                    isEditActive && isThisMessageEditing
-                      ? onFilesConsumed
-                      : undefined
-                  }
-                  validateAttachment={
-                    selectedDeployment != null ? validateAttachment : undefined
-                  }
-                  hideAttachFile={!isAttachmentsAllowed}
-                  onAttachmentClick={handleMessageAttachmentClick}
-                />
+                  ref={(el) => setMessageRef(index, el)}
+                >
+                  <ConversationMessageItem
+                    msg={msg}
+                    index={index}
+                    totalCount={messages.length}
+                    isAssistantTyping={isAssistantTyping}
+                    editingMessageIndexes={editingMessageIndexes}
+                    onSelectStarter={onSelectStarter}
+                    onStartEdit={isReadOnly ? undefined : onStartEdit}
+                    onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}
+                    onRegenerateMessage={
+                      isReadOnly ? undefined : handleRegenerateMessageWithAnchor
+                    }
+                    onRateMessage={isReadOnly ? undefined : onRateMessage}
+                    onDislikeMessage={isReadOnly ? undefined : onDislikeMessage}
+                    onCancelEdit={onCancelEdit}
+                    onEditMessage={handleEditMessageWithAnchor}
+                    onUploadAttachment={onUploadAttachment}
+                    deploymentLookup={deploymentLookup}
+                    effectiveDeploymentId={effectiveDeploymentIds[index]}
+                    tooltips={tooltips}
+                    ariaLabels={ariaLabels}
+                    cancelLabel={t(ButtonsI18nKeys.Cancel)}
+                    saveLabel={t(ButtonsI18nKeys.SaveAndSubmit)}
+                    editMessageAriaLabel={t(ButtonsI18nKeys.EditMessage)}
+                    quickReplyButtonsAriaLabel={t(
+                      ChatI18nKeys.QuickReplyButtons,
+                    )}
+                    showMoreLabel={t(ButtonsI18nKeys.ShowMore)}
+                    showLessLabel={t(ButtonsI18nKeys.ShowLess)}
+                    showMoreUserMessageAriaLabel={t(
+                      ChatI18nKeys.ShowMoreUserMessage,
+                    )}
+                    showLessUserMessageAriaLabel={t(
+                      ChatI18nKeys.ShowLessUserMessage,
+                    )}
+                    statusModelChangedTitle={t(
+                      ConversationI18nKeys.StatusModelChangedTitle,
+                    )}
+                    formatStatusModelChangedBody={formatStatusModelChangedBody}
+                    streamErrorText={streamErrorText}
+                    stoppedGeneratingText={stoppedGeneratingText}
+                    thinkingLabel={t(ChatI18nKeys.Thinking)}
+                    executedLabel={t(ConversationI18nKeys.StagesExecuted)}
+                    stepsLabel={(count) =>
+                      t(ConversationI18nKeys.StagesStep, { count })
+                    }
+                    pendingDropFiles={
+                      isEditActive && isThisMessageEditing
+                        ? pendingFiles
+                        : undefined
+                    }
+                    onDropFilesConsumed={
+                      isEditActive && isThisMessageEditing
+                        ? onFilesConsumed
+                        : undefined
+                    }
+                    validateAttachment={
+                      selectedDeployment != null
+                        ? validateAttachment
+                        : undefined
+                    }
+                    hideAttachFile={!isAttachmentsAllowed}
+                    onAttachmentClick={handleMessageAttachmentClick}
+                  />
+                </div>
               );
             })}
           </div>
-          <div ref={endRef} />
+          <div
+            ref={spacerRef}
+            aria-hidden="true"
+            className="shrink-0"
+            style={{ height: 0 }}
+          />
         </div>
 
         {isScrollButtonVisible && (
           <DialFabButton
             aria-label={t(ChatI18nKeys.ScrollToBottom)}
-            onClick={handleScrollToBottom}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2"
+            onClick={scrollToBottom}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2"
           />
         )}
       </div>
@@ -657,7 +546,7 @@ const ConversationView: FC<Props> = ({
             <Suspense fallback={null}>
               <ConversationInput
                 styles={CONVERSATION_VIEW_INPUT_STYLES}
-                onSend={onSend}
+                onSend={handleSendWithAnchor}
                 onUploadAttachment={onUploadAttachment}
                 onStop={canStopAssistant ? onStop : undefined}
                 isStreaming={isAssistantTyping}

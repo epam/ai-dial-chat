@@ -1,7 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { KeyboardEventHandler, ReactNode, Ref } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ButtonsI18nKeys } from '../../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  ConversationPanelI18nKeys,
+} from '../../../constants/translation-keys';
 import RenameConversationPopup from '../RenameConversationPopup';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -19,8 +23,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     disableSubmitButton,
   }: {
     open: boolean;
-    header?: React.ReactNode;
-    children?: React.ReactNode;
+    header?: ReactNode;
+    children?: ReactNode;
     onClose?: () => void;
     onCancel?: () => void;
     onSubmit?: () => void;
@@ -57,8 +61,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     value?: string;
     placeholder?: string;
     onChange?: (v?: string) => void;
-    onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
-    inputRef?: React.Ref<HTMLInputElement>;
+    onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
+    inputRef?: Ref<HTMLInputElement>;
     error?: string;
   }) => (
     <>
@@ -73,6 +77,33 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <p role="alert">{error}</p>}
     </>
   ),
+  DialSpinner: () => <span role="status">Loading</span>,
+  DIAL_ICON_SIZE: { SM: 18, MD: 20 },
+  DialGhostIconButton: ({
+    icon,
+    onClick,
+    disabled,
+    'aria-label': ariaLabel,
+  }: {
+    icon?: ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+    'aria-label'?: string;
+    tooltipProps?: unknown;
+  }) => (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {icon}
+    </button>
+  ),
+}));
+
+vi.mock('@tabler/icons-react', () => ({
+  IconSparkles: () => <svg aria-hidden="true" />,
 }));
 
 const DEFAULT_PROPS = {
@@ -82,6 +113,7 @@ const DEFAULT_PROPS = {
   error: null,
   onSave: vi.fn(),
   onCancel: vi.fn(),
+  onGenerateWithAi: vi.fn().mockResolvedValue('AI Suggested Name'),
 };
 
 const getSaveButton = () =>
@@ -96,6 +128,10 @@ const getInput = () =>
   screen.getByRole('textbox', {
     name: 'Conversation title',
   }) as HTMLInputElement;
+const getAiButton = () =>
+  screen.getByRole('button', {
+    name: ConversationPanelI18nKeys.RenameWithAiLabel,
+  }) as HTMLButtonElement;
 
 describe('RenameConversationPopup', () => {
   const user = userEvent.setup({ delay: null });
@@ -176,5 +212,67 @@ describe('RenameConversationPopup', () => {
   it('does not render when isOpen is false', () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} isOpen={false} />);
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('renders the AI rename button', () => {
+    render(<RenameConversationPopup {...DEFAULT_PROPS} />);
+    expect(getAiButton()).toBeTruthy();
+  });
+
+  it('calls onGenerateWithAi and populates the input with the returned name', async () => {
+    const onGenerateWithAi = vi.fn().mockResolvedValue('AI Suggested Name');
+    render(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        onGenerateWithAi={onGenerateWithAi}
+      />,
+    );
+
+    await user.click(getAiButton());
+
+    expect(onGenerateWithAi).toHaveBeenCalledOnce();
+    await waitFor(() => expect(getInput().value).toBe('AI Suggested Name'));
+  });
+
+  it('shows a spinner and disables the AI button while generating', async () => {
+    let resolveGenerate: (name: string) => void = () => undefined;
+    const onGenerateWithAi = vi.fn().mockReturnValue(
+      new Promise<string>((resolve) => {
+        resolveGenerate = resolve;
+      }),
+    );
+    render(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        onGenerateWithAi={onGenerateWithAi}
+      />,
+    );
+
+    await user.click(getAiButton());
+
+    await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+    expect(getAiButton().disabled).toBe(true);
+
+    resolveGenerate('Done');
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+  });
+
+  it('surfaces an error and leaves the input unchanged when generation fails', async () => {
+    const onGenerateWithAi = vi.fn().mockRejectedValue(new Error('boom'));
+    render(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        onGenerateWithAi={onGenerateWithAi}
+      />,
+    );
+
+    await user.click(getAiButton());
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toContain(
+        ConversationPanelI18nKeys.RenameWithAiError,
+      ),
+    );
+    expect(getInput().value).toBe('My Chat');
   });
 });

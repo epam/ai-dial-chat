@@ -1,11 +1,10 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialTag } from '@epam/ai-dial-ui-kit';
-import { IconStarFilled } from '@tabler/icons-react';
 import { FC, ReactNode } from 'react';
 import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import { CatalogItem } from '../../models/catalog-item';
+import { getFeaturedEntityStyle } from '../../utils/styles';
+import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
-import styles from './EntityHeader.module.scss';
 
 /** Props for EntityHeader. */
 export interface EntityHeaderProps {
@@ -29,6 +28,8 @@ export interface EntityHeaderProps {
   query?: string;
   /** Content pinned to the bottom of the text column via `mt-auto`, aligning its baseline with the avatar bottom. When provided, `gap-1` between type and name is removed so the column fills the icon height exactly. */
   footer?: ReactNode;
+  /** CSS class for the featured chip. */
+  featuredChipClassName?: string;
 }
 
 /** Compact card for the Favorites strip with hover lift and star toggle. */
@@ -38,14 +39,17 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   versionClassName,
   typeClassName = 'dial-caption-text font-semibold',
   iconBadgeClassName = 'rounded-[14px]',
+  featuredChipClassName,
   featuredLabel = 'Featured',
   hasFeaturedTag = true,
   iconSize = 48,
   query,
   footer,
 }) => {
+  const featuredStyle = getFeaturedEntityStyle(item);
+
   return (
-    <div className="flex items-start gap-2">
+    <div className="flex items-start gap-2" style={featuredStyle}>
       <DeploymentIcon
         src={item.iconUrl}
         size={iconSize}
@@ -71,13 +75,9 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
           </span>
           {hasFeaturedTag && item.isFeatured && (
             <div className="absolute end-0 top-[-6px]">
-              <DialTag
+              <FeaturedChip
                 label={featuredLabel}
-                icon={<IconStarFilled size={10} />}
-                className={mergeClasses(
-                  'uppercase tracking-[0.06em]',
-                  styles.featuredTag,
-                )}
+                className={featuredChipClassName}
               />
             </div>
           )}

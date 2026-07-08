@@ -1,3 +1,8 @@
+import {
+  BadGatewayException,
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppConfigService } from '../../app-config/app-config.service';
@@ -303,5 +308,201 @@ describe('ConversationNamingService', () => {
     expect(service['client'].sendChatCompletionRequest).toHaveBeenCalledTimes(
       1,
     );
+  });
+
+  describe('generateTitle', () => {
+    it('returns a sanitised name without persisting or setting llmNamingDone', async () => {
+      const name = await service.generateTitle(
+        'gpt-4o__Hello',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(name).toBe('Docker networking basics');
+      expect(mockConversationPersistence.getConversation).toHaveBeenCalledWith(
+        'gpt-4o__Hello',
+        'test-token',
+        'test-bucket',
+      );
+      expect(
+        mockConversationPersistence.saveConversation,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("authenticates the completion call as the calling user, not the operator's DIAL_API_KEY", async () => {
+      await service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket');
+
+      expect(service['client'].sendChatCompletionRequest).toHaveBeenCalledWith(
+        'utility-model',
+        expect.objectContaining({
+          headers: { Authorization: 'Bearer test-token' },
+        }),
+      );
+    });
+
+    it('does not require DIAL_API_KEY to be configured', async () => {
+      vi.mocked(mockConfigService.get).mockImplementation((key: string) => {
+        if (key === 'DIAL_CORE_URL') return 'http://localhost:3000';
+        if (key === 'UTILITY_MODEL') return 'utility-model';
+        if (key === 'UTILITY_NAMING_TIMEOUT_MS') return 10_000;
+        return undefined;
+      });
+
+      const name = await service.generateTitle(
+        'gpt-4o__Hello',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(name).toBe('Docker networking basics');
+    });
+
+    it('generates a name even when llmNamingDone is already true and leaves it unchanged', async () => {
+      mockConversationPersistence.getConversation.mockResolvedValue(
+        makeConversation({ llmNamingDone: true, name: 'Stale name' }),
+      );
+
+      const name = await service.generateTitle(
+        'gpt-4o__Hello',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(name).toBe('Docker networking basics');
+      expect(
+        mockConversationPersistence.saveConversation,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('builds the prompt from the most recent messages beyond the first exchange', async () => {
+      mockConversationPersistence.getConversation.mockResolvedValue(
+        makeConversation({
+          messages: [
+            {
+              id: 'user-1',
+              role: ConversationMessageRole.User,
+              content: 'How does Docker networking work?',
+              timestamp: new Date().toISOString(),
+            },
+            {
+              id: 'assistant-1',
+              role: ConversationMessageRole.Assistant,
+              content: 'Docker uses bridge networks by default.',
+              timestamp: new Date().toISOString(),
+            },
+            {
+              id: 'user-2',
+              role: ConversationMessageRole.User,
+              content: 'Now switch the topic to Kubernetes ingress.',
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        }),
+      );
+
+      await service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket');
+
+      expect(service['client'].sendChatCompletionRequest).toHaveBeenCalledWith(
+        'utility-model',
+        expect.objectContaining({
+          body: expect.objectContaining({
+            messages: expect.arrayContaining([
+              expect.objectContaining({
+                role: 'user',
+                content: expect.stringContaining(
+                  'Now switch the topic to Kubernetes ingress.',
+                ),
+              }),
+            ]),
+          }),
+        }),
+      );
+    });
+
+    it('throws ServiceUnavailableException when the utility model is not configured', async () => {
+      vi.mocked(mockConfigService.get).mockImplementation((key: string) => {
+        if (key === 'DIAL_CORE_URL') return 'http://localhost:3000';
+        if (key === 'UTILITY_NAMING_TIMEOUT_MS') return 10_000;
+        return undefined;
+      });
+
+      await expect(
+        service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      expect(
+        service['client'].sendChatCompletionRequest,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when the conversation has no content', async () => {
+      mockConversationPersistence.getConversation.mockResolvedValue(
+        makeConversation({ messages: [] }),
+      );
+
+      await expect(
+        service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(
+        service['client'].sendChatCompletionRequest,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('throws BadGatewayException when the LLM returns an empty title', async () => {
+      vi.spyOn(
+        service['client'],
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: { ok: true },
+        data: { choices: [{ message: { content: '   ' } }] },
+      } as never);
+
+      await expect(
+        service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+    });
+
+    it('throws BadGatewayException when the upstream request fails', async () => {
+      vi.spyOn(
+        service['client'],
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: { ok: false, status: 500 },
+        error: { message: 'upstream error' },
+      } as never);
+
+      await expect(
+        service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+    });
+
+    it('throws ServiceUnavailableException when the LLM call times out', async () => {
+      vi.useFakeTimers();
+      vi.spyOn(
+        service['client'],
+        'sendChatCompletionRequest',
+      ).mockImplementation(
+        (_modelId, options) =>
+          new Promise((_resolve, reject) => {
+            options?.signal?.addEventListener('abort', () => {
+              const error = new Error('The operation was aborted');
+              error.name = 'AbortError';
+              reject(error);
+            });
+          }) as never,
+      );
+
+      const promise = service.generateTitle(
+        'gpt-4o__Hello',
+        'test-token',
+        'test-bucket',
+      );
+      const assertion = expect(promise).rejects.toBeInstanceOf(
+        ServiceUnavailableException,
+      );
+
+      await vi.advanceTimersByTimeAsync(10_000);
+      await assertion;
+      vi.useRealTimers();
+    });
   });
 });

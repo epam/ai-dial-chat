@@ -54,13 +54,15 @@ Running the full OpenAPI generator for a single new method disrupts the generate
 After a successful create, the cached application list is stale. The service SHALL delete `applications:list:<userSub>` via `cacheManager.del` after the DIAL Core call succeeds, mirroring the cache invalidation pattern in other services. The TTL is 30 000 ms (same as `listApplications`).
 
 ### 7 — Schema identification by ID suffix (same as development branch)
-The development branch uses `schemaId.endsWith(type)` where `type` is the schema ID with `https://` stripped. We use the same approach: find the Quick App 2.0 schema with `schema.id?.includes('quickapps2')` and the Toolset schema with `schema.id?.includes('toolset')`. These suffix checks are resilient to server-side schema ID prefix variation.
+The development branch uses `schemaId.endsWith(type)` where `type` is the schema ID with `https://` stripped. We use the same approach, centralized behind shared `isQuickAppSchema` helpers (`apps/chat/src/utils/application-schema.ts` on the frontend, `apps/chat-api/src/common/utils/application-schema.ts` on the backend) rather than inline checks at each call site, and find the Toolset schema with `schema.id?.includes('toolset')`. These suffix checks are resilient to server-side schema ID prefix variation.
+
+*TODO: `isQuickAppSchema` still relies on matching a schema id substring / display name. Replace with a proper schema capability/type identifier once DIAL Core exposes one — don't keep relying on schema id or display name string matching long-term.*
 
 ## Risks / Trade-offs
 
 - **DIAL Core create-application API contract unknown** → The BFF proxies the request body verbatim, so shape errors surface as DIAL Core 4xx responses forwarded to the frontend. The `CreateApplicationBodyDto` mirrors the fields from the development branch's `ApplicationService.create()` payload: `name`, `description`, `iconUrl`, `type` (schema ID), `version`. *Mitigation*: Map DIAL Core error codes to standard HTTP responses; surface them in the UI.
 - **iframe auth with only `authProvider`** → If the external editor requires an explicit bearer token (not just provider hint), step 2 will silently stall or show an auth error inside the iframe. *Mitigation*: The `AppEditorIframe` component should display a visible spinner until `readyToInteract` and surface a fallback message if the iframe fails to load within a timeout.
-- **Schema suffix check brittleness** → If DIAL Core returns a schema whose `id` coincidentally contains `quickapps2` or `toolset` in a segment other than the terminal one, the wrong schema is matched. *Mitigation*: This is the same risk accepted in the development branch; revisit when the schema registry is more stable.
+- **Schema suffix check brittleness** → If DIAL Core returns a schema whose `id` coincidentally contains `quickapps2` or `toolset` in a segment other than the terminal one, the wrong schema is matched. *Mitigation*: This is the same risk accepted in the development branch; revisit when the schema registry is more stable. The check is now centralized in `isQuickAppSchema` (see item 7) so the eventual fix only needs to change one place per app.
 - **Cache invalidation race** → Between the POST response and the next `GET /api/v1/applications`, a stale cache hit is possible (max 30 s). *Mitigation*: Cache is invalidated on success; the 30-s TTL is acceptable for UX.
 
 ## Open Questions

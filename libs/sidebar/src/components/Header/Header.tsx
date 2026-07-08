@@ -15,6 +15,8 @@ export interface HeaderProps {
    * Defaults to `'dial-body-semi-bold-text'`.
    */
   titleClassName?: string;
+  /** CSS class applied to the root element. */
+  className?: string;
   /** Content rendered in the start (left) group of the header bar. */
   leftActions?: ReactNode;
   /** Content rendered in the end (right) group of the header bar. */
@@ -25,13 +27,15 @@ export interface HeaderProps {
 export const Header: FC<HeaderProps> = memo(
   ({
     title,
-    titleClassName = 'dial-body-semi-text',
+    titleClassName = 'dial-h1-text',
     leftActions,
+    className,
     rightActions,
   }) => (
     <div
       className={mergeClasses(
         'flex h-12 shrink-0 items-center gap-2 px-4',
+        className,
         styles.header,
       )}
     >

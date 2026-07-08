@@ -1,94 +1,6 @@
 {
   "openapi": "3.0.0",
   "paths": {
-    "/api/themes": {
-      "get": {
-        "description": "Fetches the complete theme configuration from the external themes service. Returns a JSON object containing all available themes with their properties, colors, and icon references. Results are cached for 5 minutes.",
-        "operationId": "getThemes",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved theme configuration",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ThemeConfigResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Theme configuration not found on the external service"
-          },
-          "502": {
-            "description": "External theme service returned an error response"
-          },
-          "503": {
-            "description": "Theme service is unavailable or request timed out"
-          }
-        },
-        "summary": "Get themes configuration",
-        "tags": ["themes"]
-      }
-    },
-    "/api/themes/icon": {
-      "get": {
-        "description": "Fetches a theme icon as SVG or PNG content from the external themes service. The icon name is validated to prevent path traversal attacks - only alphanumeric characters, dashes, underscores, and dots are allowed. Results are cached for 5 minutes.",
-        "operationId": "getThemeIcon",
-        "parameters": [
-          {
-            "name": "iconName",
-            "required": true,
-            "in": "query",
-            "description": "Icon filename (alphanumeric, dash, underscore, and dot only)",
-            "schema": {
-              "example": "icon-light.svg",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved icon content",
-            "content": {
-              "image/svg+xml": {
-                "schema": {
-                  "type": "string"
-                },
-                "example": "<svg xmlns=\"http://www.w3.org/2000/svg\"><circle r=\"10\"/></svg>"
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid icon name (validation failed or path traversal attempt)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "example": {
-                    "statusCode": 400,
-                    "message": [
-                      "Icon name must contain only alphanumeric characters, dash, underscore, and dot"
-                    ],
-                    "error": "Bad Request"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Icon not found on the external service"
-          },
-          "502": {
-            "description": "External theme service returned an error response"
-          },
-          "503": {
-            "description": "Theme service is unavailable or request timed out"
-          }
-        },
-        "summary": "Get theme icon",
-        "tags": ["themes"]
-      }
-    },
     "/api/health": {
       "get": {
         "description": "Returns a simple health check response indicating the application is running. Use this endpoint for load balancer health checks, monitoring, and deployment verification.",
@@ -1755,6 +1667,56 @@
         "tags": ["conversations"]
       }
     },
+    "/api/v1/conversations/generate-title": {
+      "post": {
+        "description": "Generates a title for an existing conversation using the operator-configured utility model, based on the most recent messages. The suggestion is returned but NOT persisted — the caller confirms the rename separately. Does not read or set the llmNamingDone flag.",
+        "operationId": "generateConversationTitle",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated title suggestion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateTitleResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid path, or conversation has no content"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "LLM title generation failed"
+          },
+          "503": {
+            "description": "LLM title generation unavailable or timed out"
+          }
+        },
+        "summary": "Generate an LLM-based title suggestion for a conversation",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/conversations/duplicate": {
       "post": {
         "operationId": "duplicateConversation",
@@ -2619,6 +2581,94 @@
         "summary": "Transcribe audio using the configured ASR model",
         "tags": ["transcription"]
       }
+    },
+    "/api/themes": {
+      "get": {
+        "description": "Fetches the complete theme configuration from the external themes service. Returns a JSON object containing all available themes with their properties, colors, and icon references. Results are cached for 5 minutes.",
+        "operationId": "getThemes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved theme configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeConfigResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Theme configuration not found on the external service"
+          },
+          "502": {
+            "description": "External theme service returned an error response"
+          },
+          "503": {
+            "description": "Theme service is unavailable or request timed out"
+          }
+        },
+        "summary": "Get themes configuration",
+        "tags": ["themes"]
+      }
+    },
+    "/api/themes/icon": {
+      "get": {
+        "description": "Fetches a theme icon as SVG or PNG content from the external themes service. The icon name is validated to prevent path traversal attacks - only alphanumeric characters, dashes, underscores, and dots are allowed. Results are cached for 5 minutes.",
+        "operationId": "getThemeIcon",
+        "parameters": [
+          {
+            "name": "iconName",
+            "required": true,
+            "in": "query",
+            "description": "Icon filename (alphanumeric, dash, underscore, and dot only)",
+            "schema": {
+              "example": "icon-light.svg",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved icon content",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "<svg xmlns=\"http://www.w3.org/2000/svg\"><circle r=\"10\"/></svg>"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid icon name (validation failed or path traversal attempt)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "statusCode": 400,
+                    "message": [
+                      "Icon name must contain only alphanumeric characters, dash, underscore, and dot"
+                    ],
+                    "error": "Bad Request"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Icon not found on the external service"
+          },
+          "502": {
+            "description": "External theme service returned an error response"
+          },
+          "503": {
+            "description": "Theme service is unavailable or request timed out"
+          }
+        },
+        "summary": "Get theme icon",
+        "tags": ["themes"]
+      }
     }
   },
   "info": {
@@ -2668,78 +2718,6 @@
       }
     },
     "schemas": {
-      "ThemeDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "light"
-          },
-          "displayName": {
-            "type": "string",
-            "example": "Light Theme"
-          },
-          "colors": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "example": {
-              "primary-color": "#ffffff"
-            }
-          },
-          "app-logo": {
-            "type": "string",
-            "example": "https://example.com/logo-light.svg"
-          }
-        },
-        "required": ["id", "displayName", "colors", "app-logo"]
-      },
-      "ThemeImagesDto": {
-        "type": "object",
-        "properties": {
-          "default-addon": {
-            "type": "string",
-            "example": "https://example.com/addon.png"
-          },
-          "default-model": {
-            "type": "string",
-            "example": "https://example.com/model.png"
-          },
-          "favicon": {
-            "type": "string",
-            "example": "https://example.com/favicon.ico"
-          },
-          "chat-logo-light": {
-            "type": "string",
-            "example": "chat-logo-light.svg"
-          },
-          "chat-logo-dark": {
-            "type": "string",
-            "example": "chat-logo-dark.svg"
-          },
-          "chat-favicon": {
-            "type": "string",
-            "example": "https://example.com/chat-favicon.png"
-          }
-        },
-        "required": ["default-addon", "default-model", "favicon"]
-      },
-      "ThemeConfigResponseDto": {
-        "type": "object",
-        "properties": {
-          "themes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ThemeDto"
-            }
-          },
-          "images": {
-            "$ref": "#/components/schemas/ThemeImagesDto"
-          }
-        },
-        "required": ["themes", "images"]
-      },
       "ProviderInfoDto": {
         "type": "object",
         "properties": {
@@ -2969,6 +2947,20 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          },
+          "applicationProperties": {
+            "type": "object",
+            "example": {
+              "orchestrator": {
+                "system_prompt": {
+                  "type": "custom",
+                  "variables": {},
+                  "content": ""
+                }
+              },
+              "contexts": [],
+              "tool_sets": []
             }
           }
         },
@@ -4881,6 +4873,17 @@
         },
         "required": ["name"]
       },
+      "GenerateTitleResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Sanitised LLM-generated title suggestion for the conversation. Not persisted — the caller confirms the rename separately.",
+            "example": "Refactoring the auth module"
+          }
+        },
+        "required": ["name"]
+      },
       "DuplicateConversationResponseDto": {
         "type": "object",
         "properties": {
@@ -5390,6 +5393,78 @@
           }
         },
         "required": ["audioUrl", "mimeType"]
+      },
+      "ThemeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "light"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Light Theme"
+          },
+          "colors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "primary-color": "#ffffff"
+            }
+          },
+          "app-logo": {
+            "type": "string",
+            "example": "https://example.com/logo-light.svg"
+          }
+        },
+        "required": ["id", "displayName", "colors", "app-logo"]
+      },
+      "ThemeImagesDto": {
+        "type": "object",
+        "properties": {
+          "default-addon": {
+            "type": "string",
+            "example": "https://example.com/addon.png"
+          },
+          "default-model": {
+            "type": "string",
+            "example": "https://example.com/model.png"
+          },
+          "favicon": {
+            "type": "string",
+            "example": "https://example.com/favicon.ico"
+          },
+          "chat-logo-light": {
+            "type": "string",
+            "example": "chat-logo-light.svg"
+          },
+          "chat-logo-dark": {
+            "type": "string",
+            "example": "chat-logo-dark.svg"
+          },
+          "chat-favicon": {
+            "type": "string",
+            "example": "https://example.com/chat-favicon.png"
+          }
+        },
+        "required": ["default-addon", "default-model", "favicon"]
+      },
+      "ThemeConfigResponseDto": {
+        "type": "object",
+        "properties": {
+          "themes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ThemeDto"
+            }
+          },
+          "images": {
+            "$ref": "#/components/schemas/ThemeImagesDto"
+          }
+        },
+        "required": ["themes", "images"]
       }
     }
   }

@@ -124,6 +124,7 @@ describe('CatalogView', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
     vi.mocked(useNotification).mockReturnValue({
       notifications: [],
@@ -174,6 +175,7 @@ describe('CatalogView', () => {
           displayName: 'Search',
         },
       ],
+      refetchToolsets: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -201,6 +203,7 @@ describe('CatalogView', () => {
           displayName: 'Search',
         },
       ],
+      refetchToolsets: vi.fn(),
     });
     vi.mocked(useFavoriteApplications).mockReturnValue({
       favoriteIds: new Set(),
@@ -241,6 +244,7 @@ describe('CatalogView', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -271,6 +275,7 @@ describe('CatalogView', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -298,6 +303,7 @@ describe('CatalogView', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
 
     render(<CatalogView />);

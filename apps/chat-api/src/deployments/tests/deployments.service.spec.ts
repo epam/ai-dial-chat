@@ -51,7 +51,7 @@ function makeService(
   };
 
   const sdkClient = {
-    getDeploymentsByInterfaceType: vi.fn().mockResolvedValue({
+    listDeployments: vi.fn().mockResolvedValue({
       error: false,
       response: { status: 200 },
       data: [mockModel, mockApplication, mockToolset],
@@ -127,7 +127,7 @@ describe('DeploymentsService', () => {
 
     it('skips items without id', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [mockModel, mockNoId],
@@ -143,7 +143,7 @@ describe('DeploymentsService', () => {
 
     it('falls back displayName to id when display_name is absent', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [mockNoDisplayName],
@@ -167,7 +167,7 @@ describe('DeploymentsService', () => {
         'bucket-1',
       );
       expect(result.deployments[0]).toMatchObject(cached[0]);
-      expect(sdkClient.getDeploymentsByInterfaceType).not.toHaveBeenCalled();
+      expect(sdkClient.listDeployments).not.toHaveBeenCalled();
     });
 
     it('applies interface_type filter in-process after cache hit', async () => {
@@ -205,7 +205,7 @@ describe('DeploymentsService', () => {
         DeploymentInterfaceType.Mcp,
       ]);
 
-      expect(sdkClient.getDeploymentsByInterfaceType).toHaveBeenCalledWith(
+      expect(sdkClient.listDeployments).toHaveBeenCalledWith(
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: 'Bearer token',
@@ -221,7 +221,7 @@ describe('DeploymentsService', () => {
 
     it('maps application_type_schema_id to applicationTypeSchemaId for application deployments', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [
@@ -243,7 +243,7 @@ describe('DeploymentsService', () => {
 
     it('does not set applicationTypeSchemaId for model deployments', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [mockModel],
@@ -258,7 +258,7 @@ describe('DeploymentsService', () => {
 
     it('maps input_attachment_types to inputAttachmentTypes', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [
@@ -278,7 +278,7 @@ describe('DeploymentsService', () => {
 
     it('leaves inputAttachmentTypes undefined when source field is absent', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [mockModel],
@@ -293,7 +293,7 @@ describe('DeploymentsService', () => {
 
     it('throws BadGatewayException when DIAL Core returns non-2xx', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: true,
         response: { status: 502 },
         data: undefined,
@@ -307,7 +307,7 @@ describe('DeploymentsService', () => {
       const { service, sdkClient } = makeService();
       const abortError = new Error('fetch failed');
       abortError.name = 'AbortError';
-      sdkClient.getDeploymentsByInterfaceType.mockRejectedValue(abortError);
+      sdkClient.listDeployments.mockRejectedValue(abortError);
       await expect(
         service.listDeployments('user1', 'token', 'bucket-1'),
       ).rejects.toThrow(ServiceUnavailableException);
@@ -389,7 +389,7 @@ describe('DeploymentsService', () => {
 
     it('forwards owner when present in raw payload', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [{ ...mockModel, owner: 'users/alice@example.com' }],
@@ -404,7 +404,7 @@ describe('DeploymentsService', () => {
 
     it('leaves owner undefined when not in raw payload', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [mockModel],
@@ -419,7 +419,7 @@ describe('DeploymentsService', () => {
 
     it('sets applicationFolder for nested application deployment', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [{ ...mockApplication, id: 'folder1/my-app' }],
@@ -434,7 +434,7 @@ describe('DeploymentsService', () => {
 
     it('sets applicationFolder for deeply nested application deployment', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [{ ...mockApplication, id: 'a/b/my-app' }],
@@ -449,7 +449,7 @@ describe('DeploymentsService', () => {
 
     it('leaves applicationFolder absent for root-level application', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [mockApplication],
@@ -464,7 +464,7 @@ describe('DeploymentsService', () => {
 
     it('leaves applicationFolder absent for model deployments', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [{ ...mockModel, id: 'folder/gpt-4o' }],
@@ -479,7 +479,7 @@ describe('DeploymentsService', () => {
 
     it('leaves applicationFolder absent for toolset deployments', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [{ ...mockToolset, id: 'folder/search-tool' }],
@@ -494,7 +494,7 @@ describe('DeploymentsService', () => {
 
     it('sets isMy=true when bucket appears as a path segment in id', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [
@@ -515,7 +515,7 @@ describe('DeploymentsService', () => {
 
     it('sets isMy=false when bucket does not appear in id', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [
@@ -536,7 +536,7 @@ describe('DeploymentsService', () => {
 
     it('sets isMy=false for root-level app whose id has no path segments matching bucket', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+      sdkClient.listDeployments.mockResolvedValue({
         error: false,
         response: { status: 200 },
         data: [mockApplication],

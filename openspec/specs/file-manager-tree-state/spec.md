@@ -45,9 +45,9 @@ Memoisation: `onExpandedPathsChange` in `useCallback`; `expandedPaths` and `load
 
 ---
 
-### Requirement: DialFileManagerModal passes tree header i18n via treeOptions
+### Requirement: DialFileManagerShell passes tree header i18n via treeOptions
 
-`DialFileManagerModal` SHALL pass `treeOptions` to `DialFileManager` with a localized header title per active tab using `dialFileManager.*` i18n keys. The tree header SHALL use the same tab-label keys already used for the tab selector to avoid key duplication.
+`DialFileManagerShell` SHALL pass `treeOptions` to `DialFileManager` with a localized header title per active tab using `dialFileManager.*` i18n keys. The tree header SHALL use the same tab-label keys already used for the tab selector to avoid key duplication.
 
 i18n keys for tree headers:
 - My Files: `dialFileManager.myFiles.treeHeader`

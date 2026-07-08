@@ -57,13 +57,8 @@ import { getConversationSource } from './get-conversation-source';
 
 const PANEL_STYLES: ConversationPanelStyles = {
   typography: {
-    fontClassName: 'dial-body-text',
     itemIconBadgeClassName: 'rounded-lg',
-    newChatLabelClassName: 'dial-small-text',
-    groupHeaderClassName: 'dial-tiny-semi-text uppercase tracking-wider',
-    tabClassName: 'dial-tiny-semi-text cp-filter-tab',
   },
-  colors: { border: 'rgba(0, 0, 0, 0.016)', text: 'var(--text-primary)' },
 };
 
 interface ConversationPanelViewProps {
@@ -109,6 +104,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pinConversation,
     deleteConversation,
     renameConversation,
+    generateConversationTitle,
     duplicateConversation,
     refreshConversations,
   } = useConversations();
@@ -387,6 +383,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [pendingRenameItem, renameConversation, t],
   );
 
+  const handleGenerateRenameWithAi = useCallback(async () => {
+    if (!pendingRenameItem) return '';
+    return generateConversationTitle(pendingRenameItem.id);
+  }, [pendingRenameItem, generateConversationTitle]);
+
   const handleCloseRenameDialog = useCallback(() => {
     if (isRenaming) return;
     setPendingRenameItem(null);
@@ -481,6 +482,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         error={renameError}
         onSave={handleConfirmRename}
         onCancel={handleCloseRenameDialog}
+        onGenerateWithAi={handleGenerateRenameWithAi}
       />
     </>
   );

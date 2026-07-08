@@ -92,6 +92,7 @@ export enum NavigationI18nKeys {
   AriaLabel = 'navigation.ariaLabel',
   Home = 'navigation.home',
   Catalog = 'navigation.catalog',
+  FileManager = 'dialFileManager.page.navLabel',
   OpenMenu = 'navigation.openMenu',
   CloseMenu = 'navigation.closeMenu',
   MobileMenu = 'navigation.mobileMenu',
@@ -162,6 +163,7 @@ export enum DeploymentsI18nKeys {
   SelectorError = 'deployments.selector.error',
   SelectorEmpty = 'deployments.selector.empty',
   SelectorCloseLabel = 'deployments.selector.closeLabel',
+  RefetchToolsetsFailed = 'deployments.refetchToolsetsFailed',
 }
 
 export enum ConversationI18nKeys {
@@ -255,6 +257,7 @@ export enum DialFileManagerI18nKeys {
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
   UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
+  PageNavLabel = 'dialFileManager.page.navLabel',
 }
 
 export enum AuthI18nKeys {
@@ -306,6 +309,8 @@ export enum ConversationPanelI18nKeys {
   RenameInputPlaceholder = 'conversationPanel.renameInputPlaceholder',
   RenameError = 'conversationPanel.renameError',
   RenameTitleTooLong = 'conversationPanel.renameTitleTooLong',
+  RenameWithAiLabel = 'conversationPanel.renameWithAiLabel',
+  RenameWithAiError = 'conversationPanel.renameWithAiError',
   DuplicateReadOnlyDescription = 'conversationPanel.duplicateReadOnlyDescription',
   DuplicateError = 'conversationPanel.duplicateError',
   PanelActionsLabel = 'conversationPanel.panelActionsLabel',
@@ -409,7 +414,9 @@ export enum AppsEditorI18nKeys {
   GeneralFormPreviewTitle = 'appsEditor.generalForm.previewTitle',
   SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
   SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
+  SaveButton = 'appsEditor.saveButton',
   ErrorCreateFailed = 'appsEditor.error.createFailed',
+  ErrorSaveFailed = 'appsEditor.error.saveFailed',
 }
 
 export enum ToolsetEditorI18nKeys {
@@ -418,7 +425,6 @@ export enum ToolsetEditorI18nKeys {
   StepsNavAriaLabel = 'toolsetEditor.stepsNavAriaLabel',
   NextButton = 'toolsetEditor.nextButton',
   SaveButton = 'toolsetEditor.saveButton',
-  PreviewTitle = 'toolsetEditor.previewTitle',
   // General form
   NameLabel = 'toolsetEditor.general.nameLabel',
   NamePlaceholder = 'toolsetEditor.general.namePlaceholder',
