@@ -1220,9 +1220,7 @@ export class ConversationService extends AppService {
   /**
    * Calls the model and relays the SSE response chunks to `res`, writing raw
    * bytes through and building up `assembledMessage` from the parsed chunks.
-   * Shared by `streamCompletion` (persisted) and `streamPreviewCompletion`
-   * (stateless) so both stay on the same chunk-relay implementation; only
-   * persistence (finalize/generation registry) differs between callers.
+   * Used by `streamCompletion`.
    */
   private async relayModelCompletion(
     model: string,
@@ -1562,77 +1560,6 @@ export class ConversationService extends AppService {
         await finalize(GenerationStatus.Error, partialMsg);
         break;
       }
-    }
-
-    if (!res.writableEnded) res.end();
-  }
-
-  /**
-   * Stateless sibling of `streamCompletion`: streams a completion for a
-   * client-supplied transcript without reading or writing any persisted
-   * conversation, and without registering with `ConversationGenerationService`.
-   * Headers are only flushed once DIAL Core has accepted the request, so
-   * (unlike `streamCompletion`, which must commit to a 200 before the model
-   * call because it persists a start-state first) genuine 502/503 statuses
-   * can still be returned on rejection.
-   */
-  async streamPreviewCompletion(
-    model: string,
-    messages: { role: string; content: string }[],
-    token: string,
-    signal: AbortSignal,
-    res: Response,
-  ): Promise<void> {
-    this.logger.debug(
-      `streamPreviewCompletion start — model: ${model}, messages: ${messages.length}`,
-    );
-
-    const requestBody = { messages, stream: true };
-    const initialAssembledMessage: ConversationMessageDto = {
-      role: ConversationMessageRole.Assistant,
-      content: '',
-      timestamp: new Date().toISOString(),
-    };
-
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    const relayResult = await this.relayModelCompletion(
-      model,
-      requestBody,
-      token,
-      signal,
-      res,
-      initialAssembledMessage,
-    );
-
-    switch (relayResult.outcome) {
-      case 'rejected':
-        if (!res.headersSent) {
-          return handleDialSdkError(
-            { status: relayResult.status },
-            'conversations.streamPreviewCompletion',
-            this.logger,
-          );
-        }
-        break;
-      case 'error':
-        this.logger.error(
-          'DIAL Core streamPreviewCompletion failed',
-          relayResult.error,
-        );
-        if (!res.headersSent) {
-          return handleDialSdkError(
-            relayResult.error,
-            'conversations.streamPreviewCompletion',
-            this.logger,
-          );
-        }
-        break;
-      case 'completed':
-      case 'aborted':
-        break;
     }
 
     if (!res.writableEnded) res.end();

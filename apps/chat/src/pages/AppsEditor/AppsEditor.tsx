@@ -26,6 +26,10 @@ const AppsEditor: FC = () => {
   const [createdAppId, setCreatedAppId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [pendingSaveAction, setPendingSaveAction] = useState<
+    'save' | 'preview' | null
+  >(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   const generalFormRef = useRef<GeneralFormHandle>(null);
   const settingsStepRef = useRef<SettingsStepHandle>(null);
@@ -80,20 +84,40 @@ const AppsEditor: FC = () => {
     }
     setSaveError('');
     setIsSaving(true);
+    setPendingSaveAction('save');
     settingsStepRef.current?.triggerSave();
   }, [isGeneralStep]);
 
+  const handlePreview = useCallback(() => {
+    if (isPreviewing) {
+      setIsPreviewing(false);
+      return;
+    }
+    setSaveError('');
+    setIsSaving(true);
+    setPendingSaveAction('preview');
+    settingsStepRef.current?.triggerSave();
+  }, [isPreviewing]);
+
   const handleSaveSuccess = useCallback(() => {
+    if (isPreviewing) return;
     setIsSaving(false);
-    navigate(returnUrl);
-  }, [navigate, returnUrl]);
+    if (pendingSaveAction === 'preview') {
+      setIsPreviewing(true);
+    } else {
+      navigate(returnUrl);
+    }
+    setPendingSaveAction(null);
+  }, [isPreviewing, pendingSaveAction, navigate, returnUrl]);
 
   const handleSaveError = useCallback(
     (error: string) => {
+      if (isPreviewing) return;
       setIsSaving(false);
       setSaveError(error || t(AppsEditorI18nKeys.ErrorSaveFailed));
+      setPendingSaveAction(null);
     },
-    [t],
+    [isPreviewing, t],
   );
 
   const steps = useMemo(
@@ -111,6 +135,9 @@ const AppsEditor: FC = () => {
   const appIdForSettings =
     createdAppId ?? searchParams.get(AppsEditorQuery.AppId) ?? '';
 
+  const canPreview =
+    !isGeneralStep && !!appIdForSettings && !!schema?.editorUrl;
+
   return (
     <div className="flex size-full flex-col">
       <EditorHeader
@@ -124,6 +151,10 @@ const AppsEditor: FC = () => {
         onChangeStep={handleChangeStep}
         onCancel={handleCancel}
         onSave={handleSave}
+        previewButtonLabel={t(AppsEditorI18nKeys.PreviewButton)}
+        exitPreviewButtonLabel={t(AppsEditorI18nKeys.ExitPreviewButton)}
+        isPreviewing={isPreviewing}
+        onPreview={canPreview ? handlePreview : undefined}
       />
 
       {!isGeneralStep && saveError && (
@@ -147,6 +178,7 @@ const AppsEditor: FC = () => {
             ref={settingsStepRef}
             schema={schema}
             appId={appIdForSettings}
+            isPreviewing={isPreviewing}
             onSaveSuccess={handleSaveSuccess}
             onSaveError={handleSaveError}
           />

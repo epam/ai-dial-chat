@@ -6,7 +6,7 @@ import EditorHeader from '../EditorHeader';
 const renderHeader = (props?: Partial<Parameters<typeof EditorHeader>[0]>) =>
   render(
     <EditorHeader
-      steps={[{ id: 'general', label: 'General' }]}
+      steps={[{ id: 'general', name: 'General' }]}
       currentStep="general"
       navAriaLabel="Editor steps"
       isSaving={false}
@@ -23,9 +23,7 @@ describe('EditorHeader', () => {
   it('does not render a preview button when onPreview is not provided', () => {
     renderHeader();
 
-    expect(
-      screen.queryByRole('button', { name: /preview/i }),
-    ).not.toBeTruthy();
+    expect(screen.queryByRole('button', { name: /preview/i })).not.toBeTruthy();
   });
 
   it('renders the preview button labelled "Preview" when isPreviewing is false', () => {
@@ -36,9 +34,7 @@ describe('EditorHeader', () => {
       isPreviewing: false,
     });
 
-    expect(
-      screen.getByRole('button', { name: 'Preview' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy();
   });
 
   it('renders the button labelled "Exit preview" when isPreviewing is true', () => {
@@ -49,9 +45,7 @@ describe('EditorHeader', () => {
       isPreviewing: true,
     });
 
-    expect(
-      screen.getByRole('button', { name: 'Exit preview' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Exit preview' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Preview' })).not.toBeTruthy();
   });
 
@@ -76,7 +70,13 @@ describe('EditorHeader', () => {
       isPreviewing: true,
     });
 
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(
+      (screen.getByRole('button', { name: 'Cancel' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
   });
 });

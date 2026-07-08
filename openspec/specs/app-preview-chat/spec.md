@@ -1,7 +1,10 @@
-## ADDED Requirements
+# app-preview-chat Specification
 
+## Purpose
+TBD - created by archiving change add-app-editor-preview. Update Purpose after archive.
+## Requirements
 ### Requirement: EditorHeader preview button
-`EditorHeader` SHALL accept an optional `onPreview?: () => void` prop and an optional `isPreviewing?: boolean` prop. When `onPreview` is provided, a button with a leading icon SHALL render on the left side of the header, alongside the title and steps nav (not in the Cancel/Save button group on the right). When `onPreview` is not provided, no preview button SHALL render. This requirement applies to `EditorHeader` generically; `ToolsetEditor` is unaffected because it does not render `EditorHeader`.
+`EditorHeader` SHALL accept an optional `onPreview?: () => void` prop and an optional `isPreviewing?: boolean` prop. When `onPreview` is provided, a button with a leading icon SHALL render in the right-hand action group, alongside Cancel and Save (not on the left with the title/steps nav). When `onPreview` is not provided, no preview button SHALL render. This requirement applies to `EditorHeader` generically; `ToolsetEditor` is unaffected because it does not render `EditorHeader`.
 
 #### Scenario: Preview button hidden when no callback supplied
 - **WHEN** `EditorHeader` is rendered without an `onPreview` prop
@@ -9,7 +12,7 @@
 
 #### Scenario: Preview button shown when callback supplied
 - **WHEN** `EditorHeader` is rendered with `onPreview` set and `isPreviewing` is `false` or omitted
-- **THEN** a button labelled with the `AppsEditorI18nKeys.PreviewButton` translation and an `IconEye` leading icon renders on the left side of the header
+- **THEN** a button labelled with the `AppsEditorI18nKeys.PreviewButton` translation and an `IconEye` leading icon renders in the right-hand action group, next to Cancel/Save
 - **AND** clicking it invokes `onPreview`
 
 #### Scenario: Button toggles to Exit preview
@@ -52,48 +55,57 @@ Clicking the preview button SHALL trigger the same save flow as the existing Sav
 - **THEN** `AppsEditor` ignores it (no navigation, no error notification, no state change) because no save was requested while previewing
 
 ### Requirement: Exit preview returns to the settings iframe without reload
-Clicking "Exit preview" SHALL switch the visible pane back to `AppEditorIframe` without re-saving and without remounting/reloading the iframe (its `src`, load state, and internal state are preserved from before Preview was entered).
+Clicking "Exit preview" SHALL switch the visible pane back to `AppEditorIframe` without re-saving and without remounting/reloading the iframe (its `src`, load state, and internal state are preserved from before Preview was entered). It SHALL NOT delete or otherwise affect the preview conversation, since it may be re-entered later in the same session.
 
 #### Scenario: Exit preview
 - **WHEN** the user clicks "Exit preview"
 - **THEN** the settings iframe becomes visible again showing the same state it had when Preview was clicked
 - **AND** no `TriggerSave`, `getConversation`, or navigation call occurs as a side effect
+- **AND** the preview conversation (if one was created) is not deleted
 
-### Requirement: Preview chat uses a fixed model with no model picker
-The preview pane SHALL render the existing `ConversationView` component configured so `conversation.model.id` equals the application's deployment id (the same `appId` used by `AppEditorIframe`), and SHALL NOT supply a `deployments` list or `modelPickerOverlay`, so no model-selection control is rendered or interactable.
+### Requirement: Preview chat uses a fixed model that is disabled, not hidden
+The preview pane SHALL render the existing `ConversationView` component configured with a `fixedModel` equal to the application's deployment id (the same `appId` used by `AppEditorIframe`), its display name, and its icon. The model selector SHALL remain visible, showing the fixed model's name/icon, but SHALL render in a disabled state that does not open a picker — it SHALL NOT be removed from the composer.
 
-#### Scenario: Model is fixed
+#### Scenario: Model chip is visible but disabled
 - **WHEN** the preview chat pane is shown
-- **THEN** the composer shows no model/deployment selector
+- **THEN** the composer shows a model chip displaying the previewed application's name/icon
+- **AND** clicking the chip does not open a model picker or change the selection
 - **AND** every message sent from the preview pane targets the application being edited, regardless of any other deployment configured elsewhere in the app
 
-### Requirement: Preview chat history is ephemeral and session-scoped
-Preview chat messages SHALL be held only in local React state owned by the Apps editor (Settings step subtree). They SHALL NOT be persisted to any backend conversation resource and SHALL NOT appear in the user's conversation sidebar/history at any point. Toggling between the iframe and the preview pane within the same Apps editor mount SHALL preserve the accumulated message history; navigating away from or reloading the Apps editor page SHALL discard it.
+### Requirement: Preview chat is a real, session-scoped conversation
+The preview pane SHALL use the same conversation-creation, streaming, and interaction infrastructure as a normal chat (`apiCreateConversation`, `useConversationStream`, `useConversationHandlers`), so the full feature set of a normal chat (attachments, audio transcription, chat settings, edit/regenerate/rate) is available in preview with no reduced functionality. The conversation is created lazily on the first message sent in preview — before that, the preview pane SHALL show a composer-only welcome state equivalent to a normal new chat. Toggling between the iframe and the preview pane within the same Apps editor mount SHALL preserve the same conversation and its accumulated messages.
+
+#### Scenario: Preview conversation is created on first send
+- **WHEN** the user sends the first message in the preview pane
+- **THEN** a real conversation is created via the same API a normal new chat uses, with its model set to the application being edited
+- **AND** the message streams a response using the same streaming machinery as a normal chat
 
 #### Scenario: History survives toggling within a session
 - **WHEN** the user sends messages in preview, exits preview, and re-enters preview later in the same editor session
-- **THEN** the previously sent and received messages are still shown, and new messages are appended to the same in-memory transcript
+- **THEN** the previously sent and received messages are still shown, and new messages are appended to the same conversation
 
-#### Scenario: History does not leak into conversation list
-- **WHEN** the user sends any number of messages in the preview pane
-- **THEN** no new entry appears in the conversation history sidebar/panel, and no conversation resource is created on the backend
+#### Scenario: Full feature parity with a normal chat
+- **WHEN** the user attaches a file, uses audio transcription, or opens chat settings in the preview pane
+- **THEN** the feature behaves exactly as it does in a normal chat, since the same underlying hooks and endpoints are used
 
-#### Scenario: History resets on leaving the editor
-- **WHEN** the user navigates away from `/apps-editor` (e.g. via Cancel or browser navigation) and later returns
-- **THEN** the preview pane starts with an empty transcript
+### Requirement: Preview conversation is deleted when the editor is left
+The preview conversation, if one was created during the session, SHALL be deleted when the Apps editor Settings step (and therefore the component owning the preview conversation) unmounts — including when the user clicks Cancel, when a normal Save succeeds and navigates away, or when the user otherwise navigates away from `/apps-editor`. Deletion failures SHALL be logged and SHALL NOT block or surface an error during navigation.
 
-### Requirement: Preview send/stream/stop is decoupled from persisted-conversation hooks
-The preview pane SHALL send messages and stream responses through a dedicated hook (`usePreviewCompletion`) that calls the stateless `preview-completion-api` capability, not `useConversationStream`/`useConversationHandlers` (which require a persisted `conversationId`).
+#### Scenario: Cleanup on Cancel
+- **WHEN** the user has sent at least one preview message (creating a conversation) and then clicks Cancel
+- **THEN** the preview conversation is deleted as the editor navigates away
 
-#### Scenario: Sending a preview message
-- **WHEN** the user submits text in the preview composer
-- **THEN** a user message is appended locally and a request is sent to the stateless preview-completion endpoint carrying the full in-memory transcript plus the new message
-- **AND** streamed response chunks are appended to a locally-held assistant message as they arrive
+#### Scenario: Cleanup on normal Save-and-exit
+- **WHEN** the user has sent at least one preview message and then performs a normal Save that succeeds and navigates to `returnUrl`
+- **THEN** the preview conversation is deleted as part of leaving the editor
 
-#### Scenario: Stopping a preview generation
-- **WHEN** the user clicks Stop while a preview response is streaming
-- **THEN** the in-flight request is aborted client-side (`AbortController`) and no further chunks are applied
-- **AND** the partially-received assistant message remains visible, marked as stopped, consistent with how a normal conversation shows a stopped generation
+#### Scenario: No cleanup needed when preview was never used
+- **WHEN** the user never clicks Preview, or clicks Preview but never sends a message
+- **THEN** no conversation was created and no deletion call is made
+
+#### Scenario: Deletion failure does not block navigation
+- **WHEN** the delete-conversation call fails while the editor is being left
+- **THEN** navigation proceeds normally and the failure is only logged, not surfaced to the user
 
 ### Requirement: Cancel/Save disabled while previewing
 While the preview pane is shown, the `EditorHeader` Cancel and Save buttons SHALL be disabled, since the settings form they act on is not visible.
@@ -125,3 +137,4 @@ The preview capability SHALL be available to any user who can already reach the 
 #### Scenario: Available to all Apps-editor users
 - **WHEN** any user who can already open `/apps-editor` for an app reaches the Settings step with a saved app id
 - **THEN** the preview button is shown, with no additional role or feature-flag check beyond existing Apps-editor access
+

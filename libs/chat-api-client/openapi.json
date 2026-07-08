@@ -1671,47 +1671,6 @@
         ]
       }
     },
-    "/api/v1/conversations/preview-completions": {
-      "post": {
-        "description": "Streams a chat completion for a client-supplied message history. Reads and writes no persisted conversation resource. Stop by aborting the client request.",
-        "operationId": "streamPreviewCompletion",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PreviewCompletionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SSE stream of completion chunks"
-          },
-          "400": {
-            "description": "Invalid request body"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
-          "502": {
-            "description": "DIAL Core error"
-          },
-          "503": {
-            "description": "DIAL Core unreachable"
-          }
-        },
-        "summary": "Stream a stateless preview chat completion",
-        "tags": [
-          "conversations"
-        ]
-      }
-    },
     "/api/v1/conversations/watch": {
       "post": {
         "description": "Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.",
@@ -4908,57 +4867,6 @@
         "required": [
           "generationId",
           "path"
-        ]
-      },
-      "PreviewMessageDto": {
-        "type": "object",
-        "properties": {
-          "role": {
-            "type": "string",
-            "enum": [
-              "user",
-              "assistant",
-              "system"
-            ],
-            "example": "user"
-          },
-          "content": {
-            "type": "string",
-            "example": "Hello!",
-            "maxLength": 4000
-          }
-        },
-        "required": [
-          "role",
-          "content"
-        ]
-      },
-      "PreviewCompletionDto": {
-        "type": "object",
-        "properties": {
-          "model": {
-            "type": "string",
-            "description": "DIAL Core deployment name (the application under preview)",
-            "example": "applications/my-custom-app",
-            "maxLength": 256
-          },
-          "messages": {
-            "description": "Full client-held message transcript. The client is the source of truth — no server-side conversation is read or written.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PreviewMessageDto"
-            }
-          },
-          "generationId": {
-            "type": "string",
-            "description": "Client-generated id used only for log correlation.",
-            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "model",
-          "messages"
         ]
       },
       "WatchConversationBodyDto": {

@@ -60,6 +60,8 @@ const EditorHeader: FC<Props> = ({
           onChangeStep={onChangeStep}
         />
       </nav>
+    </div>
+    <div className="flex items-center gap-2">
       {onPreview && (
         <GhostButton
           type="button"
@@ -68,8 +70,6 @@ const EditorHeader: FC<Props> = ({
           onClick={onPreview}
         />
       )}
-    </div>
-    <div className="flex items-center gap-2">
       <NeutralButton
         type="button"
         label={cancelButtonLabel}

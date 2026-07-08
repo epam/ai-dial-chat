@@ -486,6 +486,55 @@ describe('Input — model selector', () => {
   });
 });
 
+describe('Input — isModelSelectorDisabled', () => {
+  it('keeps the model chip visible and marks it aria-disabled', () => {
+    const { container } = render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        isModelSelectorDisabled
+      />,
+    );
+    expect(screen.getByLabelText(/Select model/)).toBeTruthy();
+    expect(
+      container.querySelector('[aria-disabled="true"]'),
+    ).toBeTruthy();
+  });
+
+  it('does not mark the chip aria-disabled when isModelSelectorDisabled is false', () => {
+    const { container } = render(
+      <Input
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        isModelSelectorDisabled={false}
+      />,
+    );
+    expect(container.querySelector('[aria-disabled="true"]')).toBeNull();
+  });
+
+  it('keeps typing and sending enabled while the model selector is disabled', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input
+        onSend={handleSend}
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        isModelSelectorDisabled
+      />,
+    );
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.disabled).toBe(false);
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+    expect(handleSend).toHaveBeenCalledWith('Hello', []);
+  });
+});
+
 describe('Input — isInputDisabled', () => {
   it('textarea has disabled attribute when isInputDisabled is true', () => {
     const { container } = render(<Input isInputDisabled />);
