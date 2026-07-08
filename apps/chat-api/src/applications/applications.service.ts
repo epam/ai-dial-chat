@@ -88,10 +88,10 @@ export class ApplicationsService extends AppService {
           this.logger,
         );
       }
-      if (bucketResponse.data == null) {
+      const { bucket } = bucketResponse.data ?? {};
+      if (bucket == null) {
         throw new BadGatewayException('DIAL Core returned an empty bucket');
       }
-      const { bucket } = bucketResponse.data;
 
       const version = body.version ?? '0.0.1';
       const appPath = `${body.name}__${version}`;
