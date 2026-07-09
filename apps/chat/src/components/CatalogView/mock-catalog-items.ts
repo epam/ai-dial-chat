@@ -1,11 +1,9 @@
 import type {
   CatalogItem,
-  FolderAccessData,
   PublishFolderNode,
   PublishHistoryEntry,
 } from '@epam/ai-dial-catalog';
 import {
-  AccessRole,
   CatalogEntityType,
   CodeLanguage,
   EntityTag,
@@ -1292,27 +1290,8 @@ print(response.choices[0].message.content)`,
 
 // ── Publish flow mock data ──────────────────────────────────────────────────
 
-/**
- * Root-level destination scopes offered by the mock "Publish to folder" flow.
- * Each top-level node is a switchable scope (rendered as a tab by
- * PublishPanel when there is more than one); its `children` are the actual
- * folders shown within that scope.
- */
+/** Destination folders offered by the mock "Publish to folder" flow. */
 export const MOCK_PUBLISH_FOLDERS: PublishFolderNode[] = [
-  {
-    path: ['Shared with me'],
-    name: 'Shared with me',
-    children: [
-      {
-        path: ['Shared with me', 'From Data Science Team'],
-        name: 'From Data Science Team',
-      },
-      {
-        path: ['Shared with me', 'From Marketing'],
-        name: 'From Marketing',
-      },
-    ],
-  },
   {
     path: ['Organization'],
     name: 'Organization',
@@ -1361,77 +1340,4 @@ export const MOCK_PUBLISH_HISTORY: Record<string, PublishHistoryEntry[]> = {
       folderPath: ['Organization', 'Production'],
     },
   ],
-};
-
-/** Mock "who has access" data keyed by folder path (joined with `/`); folders absent here have no access data yet. */
-export const MOCK_FOLDER_ACCESS: Record<string, FolderAccessData> = {
-  'Organization/Data Science/Published models': {
-    groups: [
-      {
-        id: 'data-science-team',
-        name: 'Data Science team',
-        role: AccessRole.Editor,
-        memberCount: 12,
-      },
-    ],
-    people: [
-      { id: 'you', name: 'Yuliia M.', role: AccessRole.Owner },
-      { id: 'a-ivanov', name: 'A. Ivanov', role: AccessRole.Editor },
-      { id: 'k-petrova', name: 'K. Petrova', role: AccessRole.Viewer },
-      { id: 'r-singh', name: 'R. Singh', role: AccessRole.Viewer },
-      { id: 'b-chen', name: 'B. Chen', role: AccessRole.Editor },
-      { id: 'l-martins', name: 'L. Martins', role: AccessRole.Viewer },
-    ],
-  },
-  'Organization/Production': {
-    groups: [],
-    people: [{ id: 'you', name: 'Yuliia M.', role: AccessRole.Owner }],
-  },
-  'Organization/Data Science/Experiments': {
-    groups: [],
-    people: [
-      { id: 'you', name: 'Yuliia M.', role: AccessRole.Owner },
-      { id: 'a-ivanov', name: 'A. Ivanov', role: AccessRole.Editor },
-      { id: 'k-petrova', name: 'K. Petrova', role: AccessRole.Viewer },
-    ],
-  },
-  'Organization/Marketing': {
-    groups: [
-      {
-        id: 'marketing-team',
-        name: 'Marketing team',
-        role: AccessRole.Viewer,
-        memberCount: 8,
-      },
-    ],
-    people: [
-      { id: 'you', name: 'Yuliia M.', role: AccessRole.Owner },
-      { id: 'r-singh', name: 'R. Singh', role: AccessRole.Editor },
-    ],
-  },
-  'Shared with me/From Data Science Team': {
-    groups: [
-      {
-        id: 'data-science-team',
-        name: 'Data Science team',
-        role: AccessRole.Editor,
-        memberCount: 12,
-      },
-      {
-        id: 'data-science-leads',
-        name: 'Data Science leads',
-        role: AccessRole.Owner,
-        memberCount: 3,
-      },
-    ],
-    people: [{ id: 'you', name: 'Yuliia M.', role: AccessRole.Viewer }],
-  },
-  'Shared with me/From Marketing': {
-    groups: [],
-    people: [
-      { id: 'you', name: 'Yuliia M.', role: AccessRole.Editor },
-      { id: 'b-chen', name: 'B. Chen', role: AccessRole.Owner },
-      { id: 'l-martins', name: 'L. Martins', role: AccessRole.Viewer },
-    ],
-  },
 };

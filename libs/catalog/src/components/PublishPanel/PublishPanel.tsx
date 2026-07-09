@@ -1,4 +1,3 @@
-import { TabRow } from '@epam/ai-dial-kit';
 import { SearchInput } from '@epam/ai-dial-sidebar';
 import {
   DialNotification,
@@ -41,12 +40,7 @@ export interface PublishPanelProps {
   item: CatalogItem;
   /** Previously published versions for this entity. */
   history: PublishHistoryEntry[];
-  /**
-   * Root-level destination scopes. When there is more than one, each is
-   * shown as a switchable tab (e.g. "Shared with me" vs "Organization") and
-   * its `children` are the folders offered within that scope. With a single
-   * entry, it is shown directly (as its own root folder) with no tabs.
-   */
+  /** Destination folders available for selection. */
   folderItems: PublishFolderNode[];
   /** Currently selected destination folder path. */
   selectedFolderPath?: string[];
@@ -93,40 +87,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   } = texts;
 
   const [searchQuery, setSearchQuery] = useState('');
-  const hasScopeTabs = folderItems.length > 1;
-  const [activeScopeIndex, setActiveScopeIndex] = useState(() => {
-    if (!selectedFolderPath?.length) {
-      return 0;
-    }
-    const index = folderItems.findIndex(
-      (scope) => scope.path[0] === selectedFolderPath[0],
-    );
-    return index >= 0 ? index : 0;
-  });
-
-  const activeScope = folderItems[activeScopeIndex];
-  const pickerItems = hasScopeTabs
-    ? (activeScope?.children ?? [])
-    : folderItems;
-
-  const handleCreateFolder = (parentPath: string[], name: string) => {
-    const effectiveParentPath =
-      hasScopeTabs && parentPath.length === 0 && activeScope
-        ? activeScope.path
-        : parentPath;
-    onCreateFolder(effectiveParentPath, name);
-  };
-
-  const handleScopeChange = (scopeId: string) => {
-    const index = folderItems.findIndex(
-      (scope) => scope.path.join('/') === scopeId,
-    );
-    if (index >= 0) {
-      setActiveScopeIndex(index);
-      onSelectedFolderPathChange([]);
-      setSearchQuery('');
-    }
-  };
 
   const derived = useMemo(
     () =>
@@ -183,26 +143,11 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             rowClassName="!rounded-lg"
           />
         </div>
-        {hasScopeTabs && (
-          <div className="mb-3">
-            <TabRow
-              tabs={folderItems.map((scope) => ({
-                id: scope.path.join('/'),
-                label: scope.name,
-              }))}
-              activeTabId={activeScope?.path.join('/') ?? ''}
-              onTabChange={handleScopeChange}
-              activeTabClassName="text-catalog-tab-active"
-              inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
-            />
-          </div>
-        )}
         <PublishFolderPicker
-          key={hasScopeTabs ? activeScopeIndex : undefined}
-          items={pickerItems}
+          items={folderItems}
           selectedPath={selectedFolderPath}
           onSelectedPathChange={onSelectedFolderPathChange}
-          onCreateFolder={handleCreateFolder}
+          onCreateFolder={onCreateFolder}
           searchQuery={searchQuery}
           disabled={isSubmitting}
         />

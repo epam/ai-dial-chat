@@ -24,13 +24,11 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     items,
     onToggleFavorite,
     onUseInChat,
-    getFolderAccess,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
-    getFolderAccess?: (folderPath: string[]) => unknown;
   }) => (
     <div>
       <output aria-label="Catalog item ids">
@@ -59,9 +57,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
           {option.label}
         </button>
       ))}
-      <output aria-label="Folder access for unmapped folder">
-        {JSON.stringify(getFolderAccess?.(['Some', 'Unmapped', 'Folder']))}
-      </output>
     </div>
   ),
 }));
@@ -291,16 +286,4 @@ describe('CatalogView', () => {
     expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
   });
 
-  it('resolves folder access for a folder with no mock data instead of throwing', () => {
-    render(<CatalogView />);
-
-    const result = JSON.parse(
-      screen.getByLabelText('Folder access for unmapped folder').textContent ??
-        '',
-    );
-    expect(result.groups).toEqual([]);
-    expect(result.people).toEqual([
-      { id: 'you', name: 'Yuliia M.', role: 'owner' },
-    ]);
-  });
 });

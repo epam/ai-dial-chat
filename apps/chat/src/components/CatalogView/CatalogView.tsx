@@ -1,10 +1,8 @@
 import {
-  AccessRole,
   Catalog,
   CatalogEntityType,
   CatalogItem,
   CreateOption,
-  FolderAccessData,
   PublishHistoryEntry,
 } from '@epam/ai-dial-catalog';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
@@ -31,12 +29,9 @@ import {
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
 import {
-  MOCK_FOLDER_ACCESS,
   MOCK_PUBLISH_FOLDERS,
   MOCK_PUBLISH_HISTORY,
 } from './mock-catalog-items';
-
-const CURRENT_USER_ID = 'you';
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
@@ -71,10 +66,6 @@ const CatalogView: FC = () => {
 
   const [publishHistory, setPublishHistory] =
     useState<Record<string, PublishHistoryEntry[]>>(MOCK_PUBLISH_HISTORY);
-
-  const [folderAccessOverrides, setFolderAccessOverrides] = useState<
-    Record<string, FolderAccessData>
-  >({});
 
   const favorites = useMemo(
     () => catalogItems.filter((item) => item.isUserFavorite),
@@ -151,42 +142,6 @@ const CatalogView: FC = () => {
     [],
   );
 
-  const getFolderAccess = useCallback(
-    (folderPath: string[]): FolderAccessData => {
-      const key = folderPath.join('/');
-      return (
-        folderAccessOverrides[key] ??
-        MOCK_FOLDER_ACCESS[key] ?? {
-          people: [
-            { id: CURRENT_USER_ID, name: 'Yuliia M.', role: AccessRole.Owner },
-          ],
-          groups: [],
-        }
-      );
-    },
-    [folderAccessOverrides],
-  );
-
-  const handleAddFolderAccessMember = useCallback(
-    (folderPath: string[], name: string, role: AccessRole) => {
-      const key = folderPath.join('/');
-      setFolderAccessOverrides((prev) => {
-        const current = getFolderAccess(folderPath);
-        return {
-          ...prev,
-          [key]: {
-            ...current,
-            people: [
-              ...current.people,
-              { id: `member-${Date.now()}`, name, role },
-            ],
-          },
-        };
-      });
-    },
-    [getFolderAccess],
-  );
-
   const handlePublish = useCallback(
     async (_item: CatalogItem, _folderPath: string[]) => {
       await new Promise((resolve) => setTimeout(resolve, 700));
@@ -201,7 +156,7 @@ const CatalogView: FC = () => {
         const newEntry: PublishHistoryEntry = {
           version: item.version,
           publishedAt: Date.now(),
-          publishedBy: CURRENT_USER_ID,
+          publishedBy: 'you',
           folderPath,
         };
         const withoutSameVersionInFolder = existing.filter(
@@ -277,9 +232,6 @@ const CatalogView: FC = () => {
       hasPublishWriteAccess={hasPublishWriteAccess}
       onPublish={handlePublish}
       onPublishSuccess={handlePublishSuccess}
-      getFolderAccess={getFolderAccess}
-      currentUserId={CURRENT_USER_ID}
-      onAddFolderAccessMember={handleAddFolderAccessMember}
       styles={{
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },
       }}
