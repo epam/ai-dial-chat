@@ -601,11 +601,11 @@ describe('ToolsetsService — write operations', () => {
 
     it('maps intro to the top-level intro field in the PUT body', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
         bucketSdkOk,
       );
       const saveSpy = vi
-        .spyOn(service['client'], 'saveToolSet')
+        .spyOn(service['dialClient'].client, 'saveToolSet')
         .mockResolvedValue(mutationSdkOk);
 
       await service.createToolset('user1', 'token', {
@@ -619,11 +619,11 @@ describe('ToolsetsService — write operations', () => {
 
     it('does not set intro when it is omitted', async () => {
       const { service } = makeWriteService();
-      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
         bucketSdkOk,
       );
       const saveSpy = vi
-        .spyOn(service['client'], 'saveToolSet')
+        .spyOn(service['dialClient'].client, 'saveToolSet')
         .mockResolvedValue(mutationSdkOk);
 
       await service.createToolset('user1', 'token', baseBody);
