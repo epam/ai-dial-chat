@@ -39,6 +39,7 @@ export interface Toolset {
 
   auth_settings: {
     authentication_type: ToolsetAuthTypes;
+    dynamically_registered?: boolean;
     // TODO: remove redirectUri after toolset login is stable with new flow (redirectUri will be sent in login request)
     redirect_uri?: string;
     api_key_header?: string;
