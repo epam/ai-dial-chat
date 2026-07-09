@@ -35,6 +35,7 @@ export interface ToolsetModel extends ShareEntity {
 
   authSettings: {
     authenticationType: ToolsetAuthTypes;
+    dynamicallyRegistered?: boolean;
     // API Key flow
     apiKeyHeader?: string;
     // OAuth flow
