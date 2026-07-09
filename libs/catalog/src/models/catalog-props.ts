@@ -99,6 +99,17 @@ export interface CatalogProps {
   createOptions?: CreateOption[];
   /** Called when the Create button is clicked (used when `createOptions` is absent). */
   onCreateClick?: () => void;
+  /** Hides the "Create" button entirely, e.g. when rendering as a read-only picker. Default: false. */
+  hideCreateButton?: boolean;
+  /** Hides the page heading (title row), e.g. when the host renders its own title outside the catalog. Default: false. */
+  hidePageTitle?: boolean;
+  /** ID of an item to visually mark as selected (border, tint, and checkmark) in the Browse grid. */
+  selectedItemId?: string;
+  /**
+   * When provided, clicking a card in the Browse grid calls this instead of
+   * opening the details panel — e.g. to mark it selected in a picker.
+   */
+  onCardClick?: (item: CatalogItem) => void;
   /** Optional color and typography overrides. */
   styles?: CatalogStyles;
   /** Text overrides forwarded to the item details panel. */

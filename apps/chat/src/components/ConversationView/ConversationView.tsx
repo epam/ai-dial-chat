@@ -183,6 +183,14 @@ const ConversationView: FC<Props> = ({
     [items, selectedItemId],
   );
 
+  const selectedCatalogItem = useMemo(
+    () =>
+      selectedDeployment
+        ? mapDeploymentToCatalogItem(selectedDeployment, favoriteIds)
+        : undefined,
+    [selectedDeployment, favoriteIds],
+  );
+
   const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
     useAttachmentValidation(selectedDeployment);
 
@@ -598,6 +606,7 @@ const ConversationView: FC<Props> = ({
                   <ModelPickerPanel
                     favorites={favoriteCatalogItems}
                     selectedId={selectedItemId}
+                    selectedItem={selectedCatalogItem}
                     onSelect={setSelectedItemId}
                     onToggleFavorite={toggleFavorite}
                     onBrowseCatalog={onBrowseCatalog}
@@ -607,12 +616,19 @@ const ConversationView: FC<Props> = ({
                         CatalogI18nKeys.PickerSearchPlaceholder,
                       ),
                       searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
+                      favoritesLabel: t(CatalogI18nKeys.PickerFavoritesLabel),
                       emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
                       browseCatalogLabel: t(
                         CatalogI18nKeys.PickerBrowseCatalog,
                       ),
                       removeFromFavoritesLabel: t(
                         CatalogI18nKeys.PickerRemoveFromFavorites,
+                      ),
+                      currentlySelectedLabel: t(
+                        CatalogI18nKeys.PickerCurrentlySelectedLabel,
+                      ),
+                      addToFavoritesLabel: t(
+                        CatalogI18nKeys.PickerAddToFavorites,
                       ),
                     }}
                   />

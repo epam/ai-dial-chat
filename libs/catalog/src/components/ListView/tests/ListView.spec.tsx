@@ -17,7 +17,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     rowData: CatalogItem[];
     emptyStateTitle?: string;
     additionalGridOptions?: {
-      context?: { onToggleFavorite?: (id: string, isStarred: boolean) => void };
+      context?: {
+        onToggleFavorite?: (id: string, isStarred: boolean) => void;
+        selectedItemId?: string;
+      };
+      getRowClass?: (params: { data: CatalogItem }) => string | undefined;
     };
     ariaLabel?: string;
     [key: string]: unknown;
@@ -27,7 +31,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <div aria-label={ariaLabel}>
         {!rowData?.length && emptyStateTitle && <span>{emptyStateTitle}</span>}
         {rowData?.map((item) => (
-          <div key={item.id}>
+          <div
+            key={item.id}
+            data-row-class={
+              additionalGridOptions?.getRowClass?.({ data: item }) ?? ''
+            }
+          >
+            <span>{item.id === ctx?.selectedItemId ? 'selected' : ''}</span>
             <button
               aria-label={`star ${item.id}`}
               onClick={() =>
@@ -96,5 +106,36 @@ describe('ListView', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'star item-1' }));
     expect(onToggleFavorite).toHaveBeenCalledWith('item-1', true);
+  });
+
+  it('applies the selected-row class only to the row matching selectedItemId', () => {
+    const item1 = makeItem({ id: 'item-1', name: 'Claude' });
+    const item2 = makeItem({ id: 'item-2', name: 'Gemini' });
+    const { container } = render(
+      <ListView
+        items={[item1, item2]}
+        query=""
+        ariaLabel="Catalog"
+        selectedItemId="item-2"
+      />,
+    );
+
+    const rows = container.querySelectorAll('[data-row-class]');
+    expect(rows[0].getAttribute('data-row-class')).toBe('');
+    expect(rows[1].getAttribute('data-row-class')).toBeTruthy();
+  });
+
+  it('passes selectedItemId through to the grid context', () => {
+    const item = makeItem({ id: 'item-1', name: 'Claude' });
+    render(
+      <ListView
+        items={[item]}
+        query=""
+        ariaLabel="Catalog"
+        selectedItemId="item-1"
+      />,
+    );
+
+    expect(screen.getByText('selected')).toBeTruthy();
   });
 });

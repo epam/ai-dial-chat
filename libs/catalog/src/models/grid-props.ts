@@ -26,4 +26,6 @@ export interface CardGridProps {
   onItemClick?: (item: CatalogItem) => void;
   /** When true, renders skeleton placeholder cards instead of actual content. */
   isLoading?: boolean;
+  /** ID of an item to visually mark as selected (border, tint, and checkmark). */
+  selectedItemId?: string;
 }

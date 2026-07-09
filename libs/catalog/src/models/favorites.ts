@@ -54,4 +54,6 @@ export interface FavoritesProps {
   addToFavoritesAriaLabel?: string;
   /** Accessible label for the star button when the item is already starred. Default: 'Remove from favorites'. */
   removeFromFavoritesAriaLabel?: string;
+  /** ID of an item to visually mark as selected (border, tint, and checkmark). */
+  selectedItemId?: string;
 }

@@ -10,6 +10,7 @@ import { IconChevronDown } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useState } from 'react';
 import { useModelSelector } from '../../hooks/useModelSelector';
 import type { InputProps } from '../../models/Input';
+import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet';
 import styles from './Input.module.scss';
 
@@ -72,14 +73,11 @@ export const ModelSelectorControl: FC<Props> = ({
     : undefined;
 
   const caretIcon = (
-    <div
-      className={mergeClasses(
-        styles.modelSelectorCaret,
-        'flex size-5 items-center justify-center rounded-full bg-layer-2',
-      )}
-    >
-      <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
-    </div>
+    <IconChevronDown
+      size={DIAL_ICON_SIZE.SM}
+      className={styles.modelSelectorCaret}
+      aria-hidden
+    />
   );
 
   if (isMobile) {
@@ -87,9 +85,9 @@ export const ModelSelectorControl: FC<Props> = ({
       <>
         <DialGhostIconButton
           icon={
-            <div className="relative flex items-center">
+            <div className="flex items-center gap-1">
               {selectorIcon}
-              <div className="absolute end-[-12px]"> {caretIcon}</div>
+              {caretIcon}
             </div>
           }
           aria-label={selectorAriaLabel}
@@ -99,20 +97,34 @@ export const ModelSelectorControl: FC<Props> = ({
             disabledIconClassName,
           )}
         />
-        <ModelSelectorBottomSheet
-          isOpen={isModelSheetOpen}
-          title={modelSelectorLabels?.ariaLabel ?? 'Select model'}
-          closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
-          searchPlaceholder={modelSelectorLabels?.searchPlaceholder ?? 'Search'}
-          onClose={() => setIsModelSheetOpen(false)}
-          deployments={deployments}
-          selectedDeploymentId={selectedDeploymentId}
-          onSelect={(id) => onDeploymentChange?.(id)}
-          loadingLabel={modelSelectorLabels?.loading}
-          errorLabel={modelSelectorLabels?.error}
-          emptyLabel={modelSelectorLabels?.empty}
-          style={style}
-        />
+        {modelPickerOverlay ? (
+          <BottomSheetShell
+            isOpen={isModelSheetOpen}
+            title={modelSelectorLabels?.ariaLabel ?? 'Select model'}
+            closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
+            onClose={() => setIsModelSheetOpen(false)}
+            style={style}
+          >
+            {modelPickerOverlay(() => setIsModelSheetOpen(false))}
+          </BottomSheetShell>
+        ) : (
+          <ModelSelectorBottomSheet
+            isOpen={isModelSheetOpen}
+            title={modelSelectorLabels?.ariaLabel ?? 'Select model'}
+            closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
+            searchPlaceholder={
+              modelSelectorLabels?.searchPlaceholder ?? 'Search'
+            }
+            onClose={() => setIsModelSheetOpen(false)}
+            deployments={deployments}
+            selectedDeploymentId={selectedDeploymentId}
+            onSelect={(id) => onDeploymentChange?.(id)}
+            loadingLabel={modelSelectorLabels?.loading}
+            errorLabel={modelSelectorLabels?.error}
+            emptyLabel={modelSelectorLabels?.empty}
+            style={style}
+          />
+        )}
       </>
     );
   }
@@ -129,13 +141,13 @@ export const ModelSelectorControl: FC<Props> = ({
         renderOverlay={() =>
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
-        listClassName="cp-dropdown-overlay !w-[480px]"
+        listClassName="cp-dropdown-overlay !w-[320px]"
       >
         <button
           type="button"
           aria-label={selectorAriaLabel}
           className={mergeClasses(
-            'relative flex items-center justify-center rounded-md p-2',
+            'flex items-center justify-center gap-1 rounded-md p-2',
             styles.modelSelectorButton,
             isInputDisabled || isStreaming ? disabledIconClassName : undefined,
             isInputDisabled && styles.modelSelectorButtonDisabled,
@@ -146,10 +158,8 @@ export const ModelSelectorControl: FC<Props> = ({
             }
           }}
         >
-          <div className="relative flex items-center">
-            {selectorIcon}
-            <div className="absolute end-[-12px]">{caretIcon}</div>
-          </div>
+          {selectorIcon}
+          {caretIcon}
         </button>
       </DialDropdown>
     );

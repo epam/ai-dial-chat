@@ -65,6 +65,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     filterValues = new Set(),
     isMyAppsActive,
     onMyAppsChange,
+    onViewModeChange,
   }: {
     title?: string;
     query: string;
@@ -74,6 +75,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     filterValues?: Set<string>;
     isMyAppsActive?: boolean;
     onMyAppsChange?: (isActive: boolean) => void;
+    onViewModeChange?: (mode: string) => void;
   }) => (
     <div>
       <span>{title ?? 'Browse'}</span>
@@ -99,6 +101,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
         </button>
       ))}
       <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
+      <button onClick={() => onViewModeChange?.('list')}>List view</button>
     </div>
   ),
 }));
@@ -106,14 +109,20 @@ vi.mock('../../CardGrid/CardGrid', () => ({
   CardGrid: ({
     items,
     onItemClick,
+    selectedItemId,
   }: {
     items: CatalogItem[];
     onItemClick: (item: CatalogItem) => void;
+    selectedItemId?: string;
   }) => (
     <div role="grid" aria-label="catalog grid">
       {items.length} items
       {items.map((item) => (
-        <button key={item.id} onClick={() => onItemClick(item)}>
+        <button
+          key={item.id}
+          onClick={() => onItemClick(item)}
+          aria-pressed={item.id === selectedItemId}
+        >
           {item.name}
         </button>
       ))}
@@ -121,12 +130,47 @@ vi.mock('../../CardGrid/CardGrid', () => ({
   ),
 }));
 vi.mock('../../Favorites/Favorites', () => ({
-  Favorites: ({ title }: { title?: string }) => (
-    <div>{title ?? 'Your Favorites'}</div>
+  Favorites: ({
+    title,
+    items,
+    onItemClick,
+    selectedItemId,
+  }: {
+    title?: string;
+    items: CatalogItem[];
+    onItemClick?: (item: CatalogItem) => void;
+    selectedItemId?: string;
+  }) => (
+    <div>
+      <span>{title ?? 'Your Favorites'}</span>
+      {items.map((item) => (
+        <button
+          key={item.id}
+          onClick={() => onItemClick?.(item)}
+          aria-pressed={item.id === selectedItemId}
+        >
+          fav-{item.name}
+        </button>
+      ))}
+    </div>
   ),
 }));
 vi.mock('../../ListView/ListView', () => ({
-  ListView: () => <div role="grid" aria-label="catalog list" />,
+  ListView: ({
+    items,
+    onItemClick,
+  }: {
+    items: CatalogItem[];
+    onItemClick?: (item: CatalogItem) => void;
+  }) => (
+    <div role="grid" aria-label="catalog list">
+      {items.map((item) => (
+        <button key={item.id} onClick={() => onItemClick?.(item)}>
+          row-{item.name}
+        </button>
+      ))}
+    </div>
+  ),
 }));
 vi.mock('../../Details/DetailsPanel', () => ({
   DetailsPanel: ({
@@ -263,5 +307,146 @@ describe('Catalog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
 
     expect(screen.getByText('true')).toBeTruthy();
+  });
+
+  it('hides the Create button when hideCreateButton is true', () => {
+    render(<Catalog items={[]} favorites={[]} hideCreateButton />);
+    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
+  });
+
+  it('shows the Create button by default', () => {
+    render(<Catalog items={[]} favorites={[]} />);
+    expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
+  });
+
+  it('hides the page title when hidePageTitle is true', () => {
+    render(<Catalog items={[]} favorites={[]} hidePageTitle />);
+    expect(screen.queryByText('Catalog')).toBeNull();
+  });
+
+  it('shows the page title by default', () => {
+    render(<Catalog items={[]} favorites={[]} />);
+    expect(screen.getByText('Catalog')).toBeTruthy();
+  });
+
+  it('renders neither heading row when both title and Create button are hidden', () => {
+    render(
+      <Catalog items={[]} favorites={[]} hidePageTitle hideCreateButton />,
+    );
+    expect(screen.queryByText('Catalog')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
+  });
+
+  it('passes selectedItemId through to the card grid', () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude'), makeItem('2', 'Gemini')]}
+        favorites={[]}
+        selectedItemId="2"
+      />,
+    );
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Claude' })
+        .getAttribute('aria-pressed'),
+    ).toBe('false');
+    expect(
+      screen
+        .getByRole('button', { name: 'Gemini' })
+        .getAttribute('aria-pressed'),
+    ).toBe('true');
+  });
+
+  it('calls onCardClick instead of opening details when provided', async () => {
+    const onCardClick = vi.fn();
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onCardClick={onCardClick}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(onCardClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1', name: 'Claude' }),
+    );
+    expect(screen.queryByText('true')).toBeNull();
+    expect(screen.queryByText('false')).toBeNull();
+  });
+
+  it('opens details on card click when onCardClick is not provided', async () => {
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(screen.getAllByText('Claude').length).toBeGreaterThan(1);
+  });
+
+  it('passes selectedItemId through to the favorites section', () => {
+    const fav1 = makeItem('1', 'Claude');
+    const fav2 = makeItem('2', 'Gemini');
+    render(<Catalog items={[]} favorites={[fav1, fav2]} selectedItemId="2" />);
+
+    expect(
+      screen
+        .getByRole('button', { name: 'fav-Claude' })
+        .getAttribute('aria-pressed'),
+    ).toBe('false');
+    expect(
+      screen
+        .getByRole('button', { name: 'fav-Gemini' })
+        .getAttribute('aria-pressed'),
+    ).toBe('true');
+  });
+
+  it('calls onCardClick instead of opening details when a favorite card is clicked', async () => {
+    const onCardClick = vi.fn();
+    render(
+      <Catalog
+        items={[]}
+        favorites={[makeItem('1', 'Claude')]}
+        onCardClick={onCardClick}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'fav-Claude' }));
+
+    expect(onCardClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1', name: 'Claude' }),
+    );
+    expect(screen.queryByText('true')).toBeNull();
+    expect(screen.queryByText('false')).toBeNull();
+  });
+
+  it('calls onCardClick instead of opening details when a list-view row is clicked', async () => {
+    const onCardClick = vi.fn();
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onCardClick={onCardClick}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    await userEvent.click(screen.getByRole('button', { name: 'row-Claude' }));
+
+    expect(onCardClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1', name: 'Claude' }),
+    );
+    expect(screen.queryByText('true')).toBeNull();
+    expect(screen.queryByText('false')).toBeNull();
+  });
+
+  it('opens details on list-view row click when onCardClick is not provided', async () => {
+    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
+    await userEvent.click(screen.getByRole('button', { name: 'row-Claude' }));
+
+    expect(screen.getByText('Claude')).toBeTruthy();
   });
 });

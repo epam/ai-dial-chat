@@ -21,23 +21,42 @@ vi.mock('@epam/ai-dial-catalog', () => ({
   CatalogEntityType: {
     Model: 'MODEL',
     Application: 'APPLICATION',
+    Agent: 'AGENT',
     Toolset: 'TOOLSET',
   },
   Catalog: ({
     createOptions,
     items,
+    favorites,
     onToggleFavorite,
     onUseInChat,
+    hideCreateButton,
+    hidePageTitle,
+    selectedItemId,
+    onCardClick,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
+    favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
+    hideCreateButton?: boolean;
+    hidePageTitle?: boolean;
+    selectedItemId?: string;
+    onCardClick?: (item: CatalogItem) => void;
   }) => (
     <div>
       <output aria-label="Catalog item ids">
         {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
       </output>
+      <output aria-label="Favorite item ids">
+        {(favorites ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
+      </output>
+      <output aria-label="hideCreateButton">
+        {String(!!hideCreateButton)}
+      </output>
+      <output aria-label="hidePageTitle">{String(!!hidePageTitle)}</output>
+      <output aria-label="selectedItemId">{selectedItemId ?? ''}</output>
       {(items ?? []).map((item) => (
         <button
           key={`favorite-${item.id}`}
@@ -54,6 +73,15 @@ vi.mock('@epam/ai-dial-catalog', () => ({
           onClick={() => onUseInChat?.(item)}
         >
           use in chat {item.id}
+        </button>
+      ))}
+      {(items ?? []).map((item) => (
+        <button
+          key={`card-click-${item.id}`}
+          type="button"
+          onClick={() => onCardClick?.(item)}
+        >
+          card click {item.id}
         </button>
       ))}
       {(createOptions ?? []).map((option) => (
@@ -288,5 +316,206 @@ describe('CatalogView', () => {
     );
 
     expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
+  });
+
+  describe('picker mode', () => {
+    it('hides the Create button and does not highlight a selected card by default', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: 'gpt-4o',
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(screen.getByLabelText('hideCreateButton').textContent).toBe(
+        'false',
+      );
+      expect(screen.getByLabelText('hidePageTitle').textContent).toBe('false');
+      expect(screen.getByLabelText('selectedItemId').textContent).toBe('');
+    });
+
+    it('hides the Create button and highlights the selected card in picker mode', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: 'gpt-4o',
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+      });
+
+      render(<CatalogView isPickerMode />);
+
+      expect(screen.getByLabelText('hideCreateButton').textContent).toBe(
+        'true',
+      );
+      expect(screen.getByLabelText('hidePageTitle').textContent).toBe('true');
+      expect(screen.getByLabelText('selectedItemId').textContent).toBe(
+        'gpt-4o',
+      );
+    });
+
+    it('selects the clicked card and closes the modal without navigating', async () => {
+      const setSelectedItemId = vi.fn();
+      const onClose = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId,
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+      });
+
+      render(<CatalogView isPickerMode onClose={onClose} />);
+
+      await user.click(
+        screen.getByRole('button', { name: 'card click gpt-4o' }),
+      );
+
+      expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('shows only models and agents, filtering out toolsets', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [
+          { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
+          { id: 'my-app', displayName: 'My App', type: 'application' },
+        ],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [
+          {
+            id: 'toolsets/b/search__0.0.1',
+            toolset: 'toolsets/b/search__0.0.1',
+            displayName: 'Search',
+          },
+        ],
+        refetchToolsets: vi.fn(),
+      });
+
+      render(<CatalogView isPickerMode />);
+
+      expect(screen.getByLabelText('Catalog item ids').textContent).toBe(
+        'gpt-4o:MODEL,my-app:APPLICATION',
+      );
+    });
+
+    it('shows only favorited models and agents, filtering out favorited toolsets', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [
+          { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
+          { id: 'my-app', displayName: 'My App', type: 'application' },
+        ],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [
+          {
+            id: 'toolsets/b/search__0.0.1',
+            toolset: 'toolsets/b/search__0.0.1',
+            displayName: 'Search',
+          },
+        ],
+        refetchToolsets: vi.fn(),
+      });
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set(['gpt-4o', 'my-app', 'toolsets/b/search__0.0.1']),
+        isLoading: false,
+        toggleFavorite: vi.fn(),
+      });
+
+      render(<CatalogView isPickerMode />);
+
+      expect(screen.getByLabelText('Favorite item ids').textContent).toBe(
+        'gpt-4o:MODEL,my-app:APPLICATION',
+      );
+    });
+
+    it('shows favorited toolsets alongside models and agents outside picker mode', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [
+          {
+            id: 'toolsets/b/search__0.0.1',
+            toolset: 'toolsets/b/search__0.0.1',
+            displayName: 'Search',
+          },
+        ],
+        refetchToolsets: vi.fn(),
+      });
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set(['gpt-4o', 'toolsets/b/search__0.0.1']),
+        isLoading: false,
+        toggleFavorite: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(screen.getByLabelText('Favorite item ids').textContent).toBe(
+        'gpt-4o:MODEL,toolsets/b/search__0.0.1:TOOLSET',
+      );
+    });
+
+    it('shows toolsets alongside models and agents outside picker mode', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [
+          {
+            id: 'toolsets/b/search__0.0.1',
+            toolset: 'toolsets/b/search__0.0.1',
+            displayName: 'Search',
+          },
+        ],
+        refetchToolsets: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(screen.getByLabelText('Catalog item ids').textContent).toBe(
+        'gpt-4o:MODEL,toolsets/b/search__0.0.1:TOOLSET',
+      );
+    });
   });
 });
