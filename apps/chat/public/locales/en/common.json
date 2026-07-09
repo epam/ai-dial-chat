@@ -277,5 +277,10 @@
   "RAG": "RAG",
   "Text Generation": "Text Generation",
   "Image Generation": "Image Generation",
-  "Image Recognition": "Image Recognition"
+  "Image Recognition": "Image Recognition",
+  "Continue": "Continue",
+  "Repair": "Repair",
+  "Repair will re-register this toolset with the Authorization Server and sign out all users. They will need to sign in again. Continue?": "Repair will re-register this toolset with the Authorization Server and sign out all users. They will need to sign in again. Continue?",
+  "Toolset repaired. Users must re-authenticate.": "Toolset repaired. Users must re-authenticate.",
+  "Authorization server is currently unavailable. Try again once the AS is back.": "Authorization server is currently unavailable. Try again once the AS is back."
 }

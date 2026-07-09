@@ -14,6 +14,7 @@ export enum ServerSlugs {
   APPLICATION_UNDEPLOY = `application/${SimpleApplicationStatus.UNDEPLOY}`,
   APPLICATION_REDEPLOY = `application/${SimpleApplicationStatus.REDEPLOY}`,
   APPLICATION_LOGS = 'application/logs',
+  TOOLSET = 'toolset',
   TOOLSET_SIGN_IN = 'toolset/signin',
   TOOLSET_SIGN_OUT = 'toolset/signout',
 }
