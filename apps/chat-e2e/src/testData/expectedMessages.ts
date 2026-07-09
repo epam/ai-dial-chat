@@ -1,3 +1,5 @@
+import { MarketplaceI18nKeys } from '@/chat/constants/i18n';
+
 export const ExpectedMessages = {
   newConversationCreated: 'New conversation is created',
   replayConversationCreated: 'Replay conversation is created',
@@ -512,4 +514,10 @@ export const MarketplaceExpectedMessages = {
     'Toolset Sign-out request authentication type is valid',
   toolsetSignOutCredentialsLevelIsValid:
     'Toolset Sign-out request credentials level is valid',
+  usedLimitIsValid: 'Model used limit is valid',
+  totalLimitIsValid: 'Model total limit is valid',
+  limitItemIsVisible: (item: MarketplaceI18nKeys) =>
+    `${item} limit is visible for the model`,
+  limitItemIsHidden: (item: MarketplaceI18nKeys) =>
+    `${item} limit is hidden for the model`,
 };

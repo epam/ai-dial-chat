@@ -19,6 +19,7 @@ export const RatingProgressBar = ({
         'h-1.5 w-full overflow-hidden rounded bg-layer-4',
         wrapperClassName,
       )}
+      data-qa="usage-container"
     >
       <div
         className={classNames(
@@ -26,6 +27,7 @@ export const RatingProgressBar = ({
           progressClassName,
         )}
         style={{ width: `${(count / total) * 100}%` }}
+        data-qa="usage-progress"
       ></div>
     </div>
   );

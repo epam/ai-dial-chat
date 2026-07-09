@@ -1,0 +1,66 @@
+import { AgentUsageStats, DialAIEntityModel } from '@/chat/types/models';
+import { API } from '@/src/testData';
+import { ItemUtil } from '@/src/utils';
+import { Page } from '@playwright/test';
+
+const UNLIMITED_LIMIT = 9e18;
+export const LIMITED_TOKENS = 100_000;
+export const FORMATTED_LIMITED_TOKENS =
+  Intl.NumberFormat('ru-RU').format(LIMITED_TOKENS);
+export const FORMATTED_USED_TOKENS = Intl.NumberFormat('ru-RU').format(0);
+
+export const defaultUnlimitedUsageStats: AgentUsageStats = {
+  hourRequestStats: { total: UNLIMITED_LIMIT, used: 0 },
+  dayRequestStats: { total: UNLIMITED_LIMIT, used: 0 },
+  minuteTokenStats: { total: UNLIMITED_LIMIT, used: 0 },
+  dayTokenStats: { total: UNLIMITED_LIMIT, used: 0 },
+  weekTokenStats: { total: UNLIMITED_LIMIT, used: 0 },
+  monthTokenStats: { total: UNLIMITED_LIMIT, used: 0 },
+  minuteCostStats: { total: UNLIMITED_LIMIT, used: 0 },
+  dayCostStats: { total: UNLIMITED_LIMIT, used: 0 },
+  weekCostStats: { total: UNLIMITED_LIMIT, used: 0 },
+  monthCostStats: { total: UNLIMITED_LIMIT, used: 0 },
+};
+
+export const monthlyTokensStats: AgentUsageStats = {
+  ...defaultUnlimitedUsageStats,
+  monthTokenStats: { total: LIMITED_TOKENS, used: 0 },
+};
+
+export const dailyAndWeeklyTokensStats: AgentUsageStats = {
+  ...defaultUnlimitedUsageStats,
+  dayTokenStats: { total: LIMITED_TOKENS, used: 0 },
+  weekTokenStats: { total: LIMITED_TOKENS, used: 0 },
+};
+
+export const minuteDailyMonthlyTokensStats: AgentUsageStats = {
+  ...defaultUnlimitedUsageStats,
+  minuteTokenStats: { total: LIMITED_TOKENS, used: 0 },
+  dayTokenStats: { total: LIMITED_TOKENS, used: 0 },
+  monthTokenStats: { total: LIMITED_TOKENS, used: 0 },
+};
+
+export class ModelLimitsMockHelper {
+  private readonly page: Page;
+  private readonly model: DialAIEntityModel;
+
+  constructor(page: Page, model: DialAIEntityModel) {
+    this.page = page;
+    this.model = model;
+  }
+
+  async mockLimitsResponse(
+    stats: AgentUsageStats = defaultUnlimitedUsageStats,
+  ): Promise<void> {
+    await this.page.route(
+      API.limitsHost(ItemUtil.getEncodedItemId(this.model.id)),
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(stats),
+        });
+      },
+    );
+  }
+}
