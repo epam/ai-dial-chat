@@ -326,6 +326,7 @@ describe('CatalogView', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'gpt-4o',
@@ -412,6 +413,7 @@ describe('CatalogView', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'my-app',
@@ -469,6 +471,7 @@ describe('CatalogView', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'search-tool',
@@ -542,6 +545,7 @@ describe('CatalogView', () => {
       error: null,
       schemas: [],
       toolsets: [],
+      refetchToolsets: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('502'));
 
