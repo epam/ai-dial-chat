@@ -17,6 +17,7 @@ import type { DeploymentConfigurationDto } from './dto/deployment-configuration.
 import type {
   DeploymentDetailsDto,
   DeploymentFeaturesDetailsDto,
+  ToolsetAuthSettingsDto,
 } from './dto/deployment-details.dto';
 import type {
   DeploymentItemDto,
@@ -56,6 +57,70 @@ const getNumber = (
 ): number | undefined => {
   const value = record[key];
   return typeof value === 'number' ? value : undefined;
+};
+
+const getString = (
+  record: Record<string, unknown>,
+  key: string,
+): string | undefined => {
+  const value = record[key];
+  return typeof value === 'string' ? value : undefined;
+};
+
+const getStringArray = (
+  record: Record<string, unknown>,
+  key: string,
+): string[] | undefined => {
+  const value = record[key];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : undefined;
+};
+
+/**
+ * DIAL Core's `auth_settings` payload carries more fields than the SDK's
+ * `ResourceAuthSettingsData` type declares (e.g. `token_endpoint`,
+ * `token_endpoint_auth_method`), so this reads defensively off the raw
+ * object, mirroring `mapDeploymentFeatures`. `client_secret`/`code_verifier`
+ * are never read, even if present on the raw payload — those are the only
+ * fields excluded per the non-goal of never exposing OAuth client secrets.
+ */
+const mapToolsetAuthSettings = (
+  raw: unknown,
+): ToolsetAuthSettingsDto | undefined => {
+  if (!isRecord(raw)) return undefined;
+
+  return {
+    authenticationType: getString(raw, 'authentication_type'),
+    globalAuthStatus: getString(raw, 'global_auth_status'),
+    appLevelAuthStatus: getString(raw, 'app_level_auth_status'),
+    userLevelAuthStatus: getString(raw, 'user_level_auth_status'),
+    scopesSupported: getStringArray(raw, 'scopes_supported'),
+    authorizationEndpoint: getString(raw, 'authorization_endpoint'),
+    tokenEndpoint: getString(raw, 'token_endpoint'),
+    apiKeyHeader: getString(raw, 'api_key_header'),
+    clientId: getString(raw, 'client_id'),
+    redirectUri: getString(raw, 'redirect_uri'),
+    tokenEndpointAuthMethod: getString(raw, 'token_endpoint_auth_method'),
+    codeChallenge: getString(raw, 'code_challenge'),
+    codeChallengeMethod: getString(raw, 'code_challenge_method'),
+  };
+};
+
+/**
+ * Redacts `auth_settings.client_secret`/`code_verifier` before logging a
+ * raw DIAL Core toolset response — those must never appear in logs, even at
+ * debug level.
+ */
+const redactToolsetAuthSettings = (raw: unknown): unknown => {
+  if (!isRecord(raw) || !isRecord(raw.auth_settings)) return raw;
+
+  const { client_secret, code_verifier, ...safeAuthSettings } =
+    raw.auth_settings;
+  void client_secret;
+  void code_verifier;
+
+  return { ...raw, auth_settings: safeAuthSettings };
 };
 
 /**
@@ -579,6 +644,9 @@ export class DeploymentsService extends AppService {
       throw new NotFoundException('Resource not found');
     }
     const raw = result.data;
+    this.logger.debug(
+      `DIAL Core toolset details for "${deployment}": ${JSON.stringify(redactToolsetAuthSettings(raw))}`,
+    );
     const allToolNames = await this.getAllToolSetToolNames(
       deployment,
       accessToken,
@@ -595,23 +663,16 @@ export class DeploymentsService extends AppService {
             )
           : undefined,
         allToolNames,
-        authSettings: raw.auth_settings
-          ? {
-              authenticationType: raw.auth_settings.authentication_type,
-              globalAuthStatus: raw.auth_settings.global_auth_status,
-              appLevelAuthStatus: raw.auth_settings.app_level_auth_status,
-              userLevelAuthStatus: raw.auth_settings.user_level_auth_status,
-              scopesSupported: raw.auth_settings.scopes_supported,
-              authorizationEndpoint: raw.auth_settings.authorization_endpoint,
-              tokenEndpoint: raw.auth_settings.token_endpoint,
-              apiKeyHeader: raw.auth_settings.api_key_header,
-            }
-          : undefined,
+        authSettings: mapToolsetAuthSettings(raw.auth_settings),
         owner: raw.owner,
         features: mapDeploymentFeatures(raw.features),
         createdAt: raw.created_at,
       },
     };
+
+    this.logger.debug(
+      `Toolset details sent to frontend for "${deployment}": ${JSON.stringify(data)}`,
+    );
 
     return data;
   }

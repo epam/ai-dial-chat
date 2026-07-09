@@ -3638,6 +3638,36 @@ export interface ToolsetAuthSettingsDto {
    * @memberof ToolsetAuthSettingsDto
    */
   apiKeyHeader?: string;
+  /**
+   * (OAuth only) Public OAuth client id — not a secret
+   * @type {string}
+   * @memberof ToolsetAuthSettingsDto
+   */
+  clientId?: string;
+  /**
+   * (OAuth only) OAuth redirect URI
+   * @type {string}
+   * @memberof ToolsetAuthSettingsDto
+   */
+  redirectUri?: string;
+  /**
+   * (OAuth only) Token endpoint authentication method
+   * @type {string}
+   * @memberof ToolsetAuthSettingsDto
+   */
+  tokenEndpointAuthMethod?: string;
+  /**
+   * (OAuth/PKCE only) PKCE code challenge — the challenge itself is not secret, only the verifier is
+   * @type {string}
+   * @memberof ToolsetAuthSettingsDto
+   */
+  codeChallenge?: string;
+  /**
+   * (OAuth/PKCE only) PKCE challenge method (e.g. S256)
+   * @type {string}
+   * @memberof ToolsetAuthSettingsDto
+   */
+  codeChallengeMethod?: string;
 }
 
 /**

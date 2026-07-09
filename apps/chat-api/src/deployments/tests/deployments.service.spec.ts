@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -855,7 +856,7 @@ describe('DeploymentsService', () => {
       expect(JSON.stringify(result)).not.toContain('editor.example.com');
     });
 
-    it('dispatches to getToolset, maps owner/features/auth status, and reduces authSettings to non-secret fields', async () => {
+    it('dispatches to getToolset, maps owner/features/auth status, and forwards all non-secret authSettings fields', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getToolset.mockResolvedValue(
         okResponse({
@@ -869,6 +870,11 @@ describe('DeploymentsService', () => {
             authentication_type: 'OAUTH',
             client_id: 'public-client-id',
             client_secret: 'super-secret',
+            code_verifier: 'super-secret-verifier',
+            code_challenge: 'challenge-value',
+            code_challenge_method: 'S256',
+            redirect_uri: 'https://chat.example.com/oauth/callback',
+            token_endpoint_auth_method: 'client_secret_post',
             global_auth_status: 'SIGNED_OUT',
             app_level_auth_status: 'SIGNED_OUT',
             user_level_auth_status: 'SIGNED_IN',
@@ -908,6 +914,11 @@ describe('DeploymentsService', () => {
           }),
           authSettings: {
             authenticationType: 'OAUTH',
+            clientId: 'public-client-id',
+            codeChallenge: 'challenge-value',
+            codeChallengeMethod: 'S256',
+            redirectUri: 'https://chat.example.com/oauth/callback',
+            tokenEndpointAuthMethod: 'client_secret_post',
             globalAuthStatus: 'SIGNED_OUT',
             appLevelAuthStatus: 'SIGNED_OUT',
             userLevelAuthStatus: 'SIGNED_IN',
@@ -918,7 +929,43 @@ describe('DeploymentsService', () => {
         },
       });
       expect(JSON.stringify(result)).not.toContain('super-secret');
-      expect(JSON.stringify(result)).not.toContain('public-client-id');
+      expect(JSON.stringify(result)).toContain('public-client-id');
+    });
+
+    it('logs the raw DIAL Core toolset response and the mapped response, redacting client_secret/code_verifier from the raw-response log', async () => {
+      const debugSpy = vi
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation(() => undefined);
+      const { service, sdkClient } = makeService();
+      sdkClient.getToolset.mockResolvedValue(
+        okResponse({
+          id: 'toolsets/search-tool',
+          toolset: 'toolsets/search-tool',
+          owner: 'Anastasiia Harkot',
+          transport: 'HTTP',
+          auth_settings: {
+            authentication_type: 'OAUTH',
+            client_id: 'public-client-id',
+            client_secret: 'super-secret',
+            code_verifier: 'super-secret-verifier',
+          },
+        }),
+      );
+      sdkClient.getToolSetTools.mockResolvedValue(errResponse(403));
+
+      await service.getDeploymentDetails('toolsets/search-tool', 'token');
+
+      const logged = debugSpy.mock.calls.map((call) => String(call[0]));
+      expect(logged.some((line) => line.includes('DIAL Core toolset'))).toBe(
+        true,
+      );
+      expect(logged.some((line) => line.includes('sent to frontend'))).toBe(
+        true,
+      );
+      expect(logged.join('\n')).not.toContain('super-secret');
+      expect(logged.join('\n')).toContain('public-client-id');
+
+      debugSpy.mockRestore();
     });
 
     it('omits allToolNames without failing the request when getToolSetTools errors', async () => {

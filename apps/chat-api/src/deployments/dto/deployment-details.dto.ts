@@ -291,6 +291,30 @@ export class ToolsetAuthSettingsDto {
     description: '(API key only) Header name the API key is sent in',
   })
   apiKeyHeader?: string;
+
+  @ApiPropertyOptional({
+    description: '(OAuth only) Public OAuth client id — not a secret',
+  })
+  clientId?: string;
+
+  @ApiPropertyOptional({ description: '(OAuth only) OAuth redirect URI' })
+  redirectUri?: string;
+
+  @ApiPropertyOptional({
+    description: '(OAuth only) Token endpoint authentication method',
+  })
+  tokenEndpointAuthMethod?: string;
+
+  @ApiPropertyOptional({
+    description:
+      '(OAuth/PKCE only) PKCE code challenge — the challenge itself is not secret, only the verifier is',
+  })
+  codeChallenge?: string;
+
+  @ApiPropertyOptional({
+    description: '(OAuth/PKCE only) PKCE challenge method (e.g. S256)',
+  })
+  codeChallengeMethod?: string;
 }
 
 export class ToolsetDetailsDto {
