@@ -28,6 +28,7 @@ export * from './components/Highlight/Highlight';
 export * from './components/PanelEmptyState/PanelEmptyState';
 export * from './components/MarkdownRenderer/MarkdownRenderer';
 export * from './components/MarkdownRenderer/MDMessageViewer';
+export * from './components/MarkdownRenderer/markdown-class-names';
 export * from './components/MarkdownRenderer/CodeBlock/CodeBlock';
 export * from './components/MarkdownRenderer/Table/MarkdownTable';
 export * from './hooks/useIsMobile';

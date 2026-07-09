@@ -72,7 +72,7 @@ const App: FC = () => {
   const isMobile = useIsMobile();
   const canvasDefaultWidth = isMobile
     ? undefined
-    : Math.min(1500, Math.round(window.innerWidth * (2 / 3)));
+    : Math.min(1500, Math.round(window.innerWidth * 0.5));
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
@@ -286,6 +286,8 @@ const App: FC = () => {
           closeLabel={t(AttachmentCanvasI18nKeys.CloseLabel)}
           downloadLabel={t(AttachmentCanvasI18nKeys.DownloadLabel)}
           unsupportedLabel={t(AttachmentCanvasI18nKeys.UnsupportedLabel)}
+          copyTextLabel={t(ButtonsI18nKeys.CopyText)}
+          copiedTextLabel={t(ButtonsI18nKeys.Copied)}
           copyMarkdownLabel={t(ButtonsI18nKeys.CopyAsMarkdown)}
           copiedMarkdownLabel={t(ButtonsI18nKeys.Copied)}
           copyJsonLabel={t(ButtonsI18nKeys.CopyAsJson)}
