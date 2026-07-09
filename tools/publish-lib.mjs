@@ -11,7 +11,7 @@
  *   --tag            npm dist-tag (default: "dev") — never defaults to "latest"
  *   --dry            Pass "true" to perform a dry run without actually publishing
  *   --development    When true and --version is omitted, publish the next
- *                    development version from npm, e.g. #.#.#.N
+ *                    development version from npm, e.g. #.#.#-dev.N
  *
  * What the script does:
  *   1. Reads the Nx project graph to locate the project root and build output (dist/).
@@ -123,12 +123,13 @@ function getDevelopmentVersion(packageName, baseVersion) {
     const stdout = execFileSync('npm', ['view', packageName, 'versions', '--json'], {
       encoding: 'utf-8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      shell: process.platform === 'win32',
     });
     publishedVersions = JSON.parse(stdout);
   } catch (err) {
     const stderr = String(err.stderr || '');
     if (stderr.includes('E404')) {
-      console.warn(`${packageName} has no published versions yet; using ${baseVersion}.0.`);
+      console.warn(`${packageName} has no published versions yet; using ${baseVersion}-dev.0.`);
       publishedVersions = [];
     } else {
       throw new Error(`Could not get published versions for ${packageName}.`);
@@ -141,14 +142,16 @@ function getDevelopmentVersion(packageName, baseVersion) {
       ? [publishedVersions]
       : [];
 
+  // Use a valid semver pre-release identifier (#.#.#-dev.N) — npm rejects a
+  // bare 4th numeric segment (#.#.#.N) as an invalid version.
   const lastNumber = versions
-    .filter((publishedVersion) => publishedVersion.startsWith(`${baseVersion}.`))
+    .filter((publishedVersion) => publishedVersion.startsWith(`${baseVersion}-dev.`))
     .map((publishedVersion) => publishedVersion.match(/\d+$/)?.[0])
     .filter(Boolean)
     .map((publishedVersion) => parseInt(publishedVersion, 10))
     .sort((a, b) => b - a)[0];
 
-  return `${baseVersion}.${typeof lastNumber === 'number' ? lastNumber + 1 : 0}`;
+  return `${baseVersion}-dev.${typeof lastNumber === 'number' ? lastNumber + 1 : 0}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -217,11 +220,11 @@ try {
     console.info(`Development version for ${json.name}: ${version}`);
   }
 
-  // Accept #.#.#, #.#.#.N, #.#.#-pre.N, or the special token "dev".
-  const validVersion = /^\d+\.\d+\.\d+(\.\d+|-[\w.]+)?$/;
+  // Accept #.#.#, #.#.#-pre.N, or the special token "dev".
+  const validVersion = /^\d+\.\d+\.\d+(-[\w.]+)?$/;
   invariant(
     version && (validVersion.test(version) || version === 'dev'),
-    `Version did not match Semantic Versioning.\nExpected: #.#.#  |  #.#.#.N  |  #.#.#-pre.N  |  dev\nGot: ${version}`,
+    `Version did not match Semantic Versioning.\nExpected: #.#.#  |  #.#.#-pre.N  |  dev\nGot: ${version}`,
   );
 
   // Set publish version
@@ -256,6 +259,7 @@ try {
       execFileSync('npm', ['view', `${json.name}@${version}`, 'version'], {
         cwd: outputPath,
         stdio: 'ignore',
+        shell: process.platform === 'win32',
       });
       console.info(`${json.name}@${version} is already published, skipping.`);
       process.exit(0);
