@@ -15,7 +15,7 @@ import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/selectors';
+import { ModelsSelectors, OverlaySelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
@@ -77,6 +77,9 @@ export const ConversationSettings = Inversify.register(
     const { t } = useTranslation(Translation.Chat);
 
     const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+    const overlaySystemPrompt = useAppSelector(
+      OverlaySelectors.selectOverlaySystemPrompt,
+    );
 
     const model = modelsMap[conversation.model.id];
     const isPlayback = isPlaybackConversation(conversation);
@@ -110,6 +113,7 @@ export const ConversationSettings = Inversify.register(
         )}
         {model.type === EntityType.Model &&
           doesModelAllowSystemPrompt(model) &&
+          !overlaySystemPrompt &&
           renderFieldContainer(
             <SystemPrompt
               maxTokensLength={model?.limits?.maxRequestTokens ?? Infinity}
