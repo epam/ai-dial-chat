@@ -62,6 +62,7 @@ import {
 } from '../../utils/file-download';
 import { sanitizeFileName } from '../../utils/file-name';
 import {
+  getParentFolderPath,
   resolveDialFileApiPath,
   virtualPathToApiPath,
 } from '../../utils/resolve-dial-file-api-path';
@@ -239,12 +240,6 @@ const CORE_PERMISSION_MAP: Record<string, DialFilePermission> = {
   READ: DialFilePermission.READ,
   WRITE: DialFilePermission.WRITE,
   SHARE: DialFilePermission.SHARE,
-};
-
-const getParentFolderPath = (path: string): string => {
-  const normalized = path.replace(/\/$/, '');
-  const lastSlash = normalized.lastIndexOf('/');
-  return lastSlash > 0 ? normalized.slice(0, lastSlash + 1) : '';
 };
 
 const mapCorePermissions = (

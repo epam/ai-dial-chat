@@ -11,15 +11,29 @@ import { FileUploadStatus } from '../../DialFileManagerModal/types/upload';
 import DialFileManagerShell from '../DialFileManagerShell';
 import type { DialFileManagerShellLabels } from '../types/labels';
 
+const capturedDialFileManagerProps: {
+  current: { onCreateFolder?: unknown } | null;
+} = { current: null };
+
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     ...actual,
-    DialFileManager: ({ emptyStateTitle }: { emptyStateTitle?: string }) => (
-      <div role="region" aria-label="file manager">
-        {emptyStateTitle}
-      </div>
-    ),
+    DialFileManager: (props: {
+      emptyStateTitle?: string;
+      destinationFolderPopupOptions?: { sourceFolder?: string };
+      onCreateFolder?: unknown;
+    }) => {
+      capturedDialFileManagerProps.current = props;
+      return (
+        <div role="region" aria-label="file manager">
+          {props.emptyStateTitle}
+          <span aria-label="source-folder">
+            {props.destinationFolderPopupOptions?.sourceFolder ?? ''}
+          </span>
+        </div>
+      );
+    },
   };
 });
 
@@ -85,6 +99,15 @@ const baseLabels: DialFileManagerShellLabels = {
   renamingLabel: 'Renaming…',
   copyLabel: 'Copy',
   moveLabel: 'Move',
+  addFolderLabel: 'Add folder',
+  hiddenFilesSwitcherLabel: 'Show hidden files',
+  getCopyHeader: (count, name) =>
+    count === 1 ? `Copy "${name}"` : `Copy ${count} items`,
+  getMoveHeader: (count, name) =>
+    count === 1 ? `Move "${name}"` : `Move ${count} items`,
+  moveSourceDisabledTooltip: 'Unavailable for the original location',
+  folderPickerEmptyStateTitle: 'No folders here',
+  folderPickerEmptyStateDescription: 'Create a folder or choose another',
   copyingLabel: 'Copying…',
   movingLabel: 'Moving…',
   operationLoaderCopyTitle: 'Copying files',
@@ -130,7 +153,10 @@ const baseLabels: DialFileManagerShellLabels = {
   },
 };
 
-const renderShell = (hookResultOverrides?: Partial<UseDialFileManagerResult>) =>
+const renderShell = (
+  hookResultOverrides?: Partial<UseDialFileManagerResult>,
+  selectedPaths: Set<string> = new Set(),
+) =>
   render(
     <DialFileManagerShell
       hookResult={{ ...baseHookResult, ...hookResultOverrides }}
@@ -138,7 +164,7 @@ const renderShell = (hookResultOverrides?: Partial<UseDialFileManagerResult>) =>
       activeTab={DialFileManagerTabs.MyFiles}
       tabs={[{ id: DialFileManagerTabs.MyFiles, label: 'My files' }]}
       onTabChange={vi.fn()}
-      selectedPaths={new Set()}
+      selectedPaths={selectedPaths}
       onSelectedPathsChange={vi.fn()}
     />,
   );
@@ -178,6 +204,32 @@ describe('DialFileManagerShell', () => {
   it('does not render the upload progress modal when there is no active batch', () => {
     renderShell({ uploadBatchState: null });
     expect(screen.queryByText(baseLabels.uploadProgressTitle)).toBeNull();
+  });
+
+  it('sets destinationFolderPopupOptions.sourceFolder to the common parent when all selected items share one', () => {
+    renderShell(
+      undefined,
+      new Set(['/My files/reports/a.pdf', '/My files/reports/b.pdf']),
+    );
+    expect(screen.getByLabelText('source-folder').textContent).toBe(
+      '/My files/reports/',
+    );
+  });
+
+  it('leaves destinationFolderPopupOptions.sourceFolder undefined when selected items have different parents', () => {
+    renderShell(
+      undefined,
+      new Set(['/My files/reports/a.pdf', '/My files/notes/b.pdf']),
+    );
+    expect(screen.getByLabelText('source-folder').textContent).toBe('');
+  });
+
+  it('passes the hook result onCreateFolder straight through to DialFileManager without wrapping it, so the destination-folder popup targets its own browsed path via the same fallback', () => {
+    const onCreateFolder = vi.fn();
+    renderShell({ onCreateFolder });
+    expect(capturedDialFileManagerProps.current?.onCreateFolder).toBe(
+      onCreateFolder,
+    );
   });
 
   it('never imports useTranslation from react-i18next', () => {

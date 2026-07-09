@@ -402,6 +402,50 @@ describe('useDialFileManager', () => {
     });
   });
 
+  it('creates the folder at the call-time path even when the outer grid is browsing a different folder', async () => {
+    mockListFiles.mockResolvedValue({
+      bucket: BUCKET,
+      path: '',
+      items: [],
+      permissions: ['READ', 'WRITE'],
+    });
+    const mockCreateFolder = vi.mocked(filesApi.createFolder);
+    mockCreateFolder.mockResolvedValue({
+      name: '2026',
+      path: `files/${BUCKET}/notes/2026/`,
+      parentPath: 'notes',
+      bucket: BUCKET,
+      nodeType: 'folder',
+      folderId: `${BUCKET}:files/${BUCKET}/notes/2026/`,
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The outer grid is browsing "/My files/reports/" — a different folder
+    // than the one the destination-folder popup will create the new folder in.
+    act(() => result.current.onPathChange('/My files/reports/'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The popup's own currently-browsed path is passed at call time.
+    await act(async () => {
+      await result.current.onCreateFolder(
+        {
+          name: HIDDEN_FILE,
+          fileContent: new File([], HIDDEN_FILE),
+        },
+        '/My files/notes/2026',
+        `/My files/notes/2026/${HIDDEN_FILE}`,
+      );
+    });
+
+    expect(mockCreateFolder).toHaveBeenCalledWith({
+      bucket: BUCKET,
+      parentPath: 'notes/',
+      name: '2026',
+    });
+  });
+
   it('shows the created folder from the refreshed parent listing', async () => {
     const mockCreateFolder = vi.mocked(filesApi.createFolder);
     const createdFolder: ListFilesItemDto = {

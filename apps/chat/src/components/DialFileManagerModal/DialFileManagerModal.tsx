@@ -532,6 +532,27 @@ const DialFileManagerModal: FC<Props> = ({
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
       copyLabel: t(DialFileManagerI18nKeys.CopyAction),
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
+      addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
+      hiddenFilesSwitcherLabel: t(
+        DialFileManagerI18nKeys.FolderPickerHiddenFilesLabel,
+      ),
+      getCopyHeader: (count, name) =>
+        count === 1
+          ? t(DialFileManagerI18nKeys.CopyHeaderSingle, { name })
+          : t(DialFileManagerI18nKeys.CopyHeaderMultiple, { count }),
+      getMoveHeader: (count, name) =>
+        count === 1
+          ? t(DialFileManagerI18nKeys.MoveHeaderSingle, { name })
+          : t(DialFileManagerI18nKeys.MoveHeaderMultiple, { count }),
+      moveSourceDisabledTooltip: t(
+        DialFileManagerI18nKeys.MoveSourceDisabledTooltip,
+      ),
+      folderPickerEmptyStateTitle: t(
+        DialFileManagerI18nKeys.FolderPickerEmptyStateTitle,
+      ),
+      folderPickerEmptyStateDescription: t(
+        DialFileManagerI18nKeys.FolderPickerEmptyStateDescription,
+      ),
       copyingLabel: t(DialFileManagerI18nKeys.CopyingLabel),
       movingLabel: t(DialFileManagerI18nKeys.MovingLabel),
       operationLoaderCopyTitle: t(

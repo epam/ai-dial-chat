@@ -15,7 +15,11 @@ import OperationLoaderModal from '../../components/DialFileManagerModal/Operatio
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
 import type { UseDialFileManagerResult } from '../../hooks/files/useDialFileManager';
-import type { DialFileManagerShellLabels } from './types/labels';
+import { getParentFolderPath } from '../../utils/resolve-dial-file-api-path';
+import type {
+  DialFileManagerDestinationFolderPopupOptions,
+  DialFileManagerShellLabels,
+} from './types/labels';
 
 interface Props {
   hookResult: UseDialFileManagerResult;
@@ -213,6 +217,48 @@ const DialFileManagerShell: FC<Props> = ({
     ],
   );
 
+  const commonSelectedParentFolder = useMemo(() => {
+    let commonParent: string | undefined;
+    for (const selectedPath of selectedPaths) {
+      const parent = getParentFolderPath(selectedPath);
+      if (commonParent === undefined) {
+        commonParent = parent;
+      } else if (commonParent !== parent) {
+        return undefined;
+      }
+    }
+    return commonParent;
+  }, [selectedPaths]);
+
+  const destinationFolderPopupOptions = useMemo(
+    (): DialFileManagerDestinationFolderPopupOptions & {
+      sourceFolder?: string;
+    } => ({
+      copyLabel: labels.copyLabel,
+      moveLabel: labels.moveLabel,
+      addFolderLabel: labels.addFolderLabel,
+      hiddenFilesSwitcherLabel: labels.hiddenFilesSwitcherLabel,
+      getCopyHeader: labels.getCopyHeader,
+      getMoveHeader: labels.getMoveHeader,
+      disabledPathTooltip: labels.moveSourceDisabledTooltip,
+      emptyStateTitle: labels.folderPickerEmptyStateTitle,
+      emptyStateDescription: labels.folderPickerEmptyStateDescription,
+      sourceFolder: commonSelectedParentFolder,
+    }),
+    [
+      labels.copyLabel,
+      labels.moveLabel,
+      labels.addFolderLabel,
+      labels.hiddenFilesSwitcherLabel,
+      labels.getCopyHeader,
+      labels.getMoveHeader,
+      labels.moveSourceDisabledTooltip,
+      labels.folderPickerEmptyStateTitle,
+      labels.folderPickerEmptyStateDescription,
+      commonSelectedParentFolder,
+    ],
+  );
+
   const handleUploadCancel = (): void => {
     cancelUpload();
     clearUploadBatch();
@@ -288,6 +334,7 @@ const DialFileManagerShell: FC<Props> = ({
             conflictResolutionPopupOptions={
               labels.conflictResolutionPopupOptions
             }
+            destinationFolderPopupOptions={destinationFolderPopupOptions}
             forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
             forbiddenSymbolsTooltip={labels.forbiddenSymbolsTooltip}
             getDisabledTooltip={getDisabledTooltip}
