@@ -6,9 +6,8 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialClientService } from '../../dial/dial-client.service';
 import { ApplicationSchemasService } from '../application-schemas.service';
 import type { ApplicationSchemasResponseDto } from '../dto/application-schema.dto';
 
@@ -46,25 +45,30 @@ const errResponse = (status: number) =>
   ({ error: {}, response: { status } as Response }) as never;
 
 function makeDeps() {
-  const configService = {
-    get: vi.fn((key: string) => {
-      if (key === 'DIAL_CORE_URL') return 'http://dial-core';
-      return undefined;
-    }),
-  } as unknown as ConfigService<EnvironmentVariables>;
+  const dialClient = {
+    client: {
+      listCustomApplicationSchemas: vi.fn(),
+      getCustomApplicationSchema: vi.fn(),
+    },
+    baseUrl: 'http://dial-core',
+    dialApiVersion: '2024-10-21',
+  } as unknown as DialClientService;
 
   const cacheManager = {
     get: vi.fn().mockResolvedValue(undefined),
     set: vi.fn().mockResolvedValue(undefined),
   };
 
-  return { configService, cacheManager };
+  const configService = { get: vi.fn().mockReturnValue(undefined) };
+
+  return { dialClient, cacheManager, configService };
 }
 
 function makeService() {
-  const { configService, cacheManager } = makeDeps();
+  const { dialClient, cacheManager, configService } = makeDeps();
   const service = new ApplicationSchemasService(
-    configService,
+    dialClient,
+    configService as never,
     cacheManager as never,
   );
   return { service, cacheManager };
@@ -79,7 +83,7 @@ describe('ApplicationSchemasService', () => {
     it('returns normalized schema list from upstream on cache miss', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockResolvedValue(okListResponse([mockSummary]));
 
@@ -90,7 +94,7 @@ describe('ApplicationSchemasService', () => {
     it('maps upstream fields correctly ($id → id, colon-fields → camelCase)', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockResolvedValue(okListResponse([mockSummary]));
 
@@ -101,7 +105,7 @@ describe('ApplicationSchemasService', () => {
     it('returns empty schemas array when upstream returns empty list', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockResolvedValue(okListResponse([]));
 
@@ -110,16 +114,20 @@ describe('ApplicationSchemasService', () => {
     });
 
     it('returns cached result without calling upstream on cache hit', async () => {
-      const { configService } = makeDeps();
+      const { dialClient, configService } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockList),
         set: vi.fn(),
       };
       const service = new ApplicationSchemasService(
-        configService,
+        dialClient,
+        configService as never,
         cacheManager as never,
       );
-      const spy = vi.spyOn(service['client'], 'listCustomApplicationSchemas');
+      const spy = vi.spyOn(
+        service['dialClient'].client,
+        'listCustomApplicationSchemas',
+      );
 
       const result = await service.listApplicationSchemas('user1', 'tok');
       expect(result).toEqual(mockList);
@@ -127,7 +135,7 @@ describe('ApplicationSchemasService', () => {
     });
 
     it('uses per-user cache keys — different users get different cache entries', async () => {
-      const { configService } = makeDeps();
+      const { dialClient, configService } = makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -137,11 +145,12 @@ describe('ApplicationSchemasService', () => {
         }),
       };
       const service = new ApplicationSchemasService(
-        configService,
+        dialClient,
+        configService as never,
         cacheManager as never,
       );
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockResolvedValue(okListResponse([mockSummary]));
 
@@ -159,7 +168,7 @@ describe('ApplicationSchemasService', () => {
     it('forwards Authorization header to upstream', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['client'], 'listCustomApplicationSchemas')
+        .spyOn(service['dialClient'].client, 'listCustomApplicationSchemas')
         .mockResolvedValue(okListResponse([mockSummary]));
 
       await service.listApplicationSchemas('user1', 'my-token');
@@ -175,7 +184,7 @@ describe('ApplicationSchemasService', () => {
     it('maps dial:applicationTypeIconUrl to iconUrl when present', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockResolvedValue(
         okListResponse([
@@ -192,7 +201,7 @@ describe('ApplicationSchemasService', () => {
     it('leaves iconUrl undefined when dial:applicationTypeIconUrl is absent', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockResolvedValue(okListResponse([mockSummary]));
       const result = await service.listApplicationSchemas('user1', 'token');
@@ -202,7 +211,7 @@ describe('ApplicationSchemasService', () => {
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockResolvedValue(errResponse(401));
       await expect(service.listApplicationSchemas('u', 't')).rejects.toThrow(
@@ -213,7 +222,7 @@ describe('ApplicationSchemasService', () => {
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockResolvedValue(errResponse(403));
       await expect(service.listApplicationSchemas('u', 't')).rejects.toThrow(
@@ -224,7 +233,7 @@ describe('ApplicationSchemasService', () => {
     it('throws HttpException(429) on upstream 429', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockResolvedValue(errResponse(429));
       await expect(service.listApplicationSchemas('u', 't')).rejects.toThrow(
@@ -235,7 +244,7 @@ describe('ApplicationSchemasService', () => {
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockResolvedValue(errResponse(500));
       await expect(service.listApplicationSchemas('u', 't')).rejects.toThrow(
@@ -246,7 +255,7 @@ describe('ApplicationSchemasService', () => {
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'listCustomApplicationSchemas',
       ).mockRejectedValue(new TypeError('fetch failed'));
       await expect(service.listApplicationSchemas('u', 't')).rejects.toThrow(
@@ -259,7 +268,7 @@ describe('ApplicationSchemasService', () => {
     it('returns schema from upstream on cache miss', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'getCustomApplicationSchema',
       ).mockResolvedValue(okItemResponse(mockSchema));
 
@@ -272,16 +281,20 @@ describe('ApplicationSchemasService', () => {
     });
 
     it('returns cached schema without calling upstream on cache hit', async () => {
-      const { configService } = makeDeps();
+      const { dialClient, configService } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockSchema),
         set: vi.fn(),
       };
       const service = new ApplicationSchemasService(
-        configService,
+        dialClient,
+        configService as never,
         cacheManager as never,
       );
-      const spy = vi.spyOn(service['client'], 'getCustomApplicationSchema');
+      const spy = vi.spyOn(
+        service['dialClient'].client,
+        'getCustomApplicationSchema',
+      );
 
       const result = await service.getApplicationSchema(
         'user1',
@@ -293,7 +306,7 @@ describe('ApplicationSchemasService', () => {
     });
 
     it('uses per-user-per-schema cache key', async () => {
-      const { configService } = makeDeps();
+      const { dialClient, configService } = makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -303,11 +316,12 @@ describe('ApplicationSchemasService', () => {
         }),
       };
       const service = new ApplicationSchemasService(
-        configService,
+        dialClient,
+        configService as never,
         cacheManager as never,
       );
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'getCustomApplicationSchema',
       ).mockResolvedValue(okItemResponse(mockSchema));
 
@@ -325,7 +339,7 @@ describe('ApplicationSchemasService', () => {
     it('forwards Authorization header to upstream', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['client'], 'getCustomApplicationSchema')
+        .spyOn(service['dialClient'].client, 'getCustomApplicationSchema')
         .mockResolvedValue(okItemResponse(mockSchema));
 
       await service.getApplicationSchema('user1', 'my-token', 'sid');
@@ -341,7 +355,7 @@ describe('ApplicationSchemasService', () => {
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'getCustomApplicationSchema',
       ).mockResolvedValue(errResponse(401));
       await expect(
@@ -352,7 +366,7 @@ describe('ApplicationSchemasService', () => {
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'getCustomApplicationSchema',
       ).mockResolvedValue(errResponse(403));
       await expect(
@@ -363,7 +377,7 @@ describe('ApplicationSchemasService', () => {
     it('throws NotFoundException on upstream 404', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'getCustomApplicationSchema',
       ).mockResolvedValue(errResponse(404));
       await expect(
@@ -374,7 +388,7 @@ describe('ApplicationSchemasService', () => {
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'getCustomApplicationSchema',
       ).mockResolvedValue(errResponse(500));
       await expect(
@@ -385,7 +399,7 @@ describe('ApplicationSchemasService', () => {
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'getCustomApplicationSchema',
       ).mockRejectedValue(new TypeError('fetch failed'));
       await expect(

@@ -16,12 +16,12 @@ import {
 import { ConfigService } from '@nestjs/config';
 import archiver from 'archiver';
 import type { Response as ExpressResponse } from 'express';
-import { AppService } from '../app/app.service';
 import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { DialClientService } from '../dial/dial-client.service';
 import type { CopyItemDto } from './dto/copy-files.dto';
 import {
   CopyFilesResponseDto,
@@ -159,12 +159,13 @@ const getMoveErrorMessage = (error: unknown): string =>
   getResourceOperationErrorMessage(error, 'files.moveItem', 'Move failed');
 
 @Injectable()
-export class FilesService extends AppService {
-  protected override readonly logger = new Logger(FilesService.name);
+export class FilesService {
+  private readonly logger = new Logger(FilesService.name);
 
-  constructor(configService: ConfigService<EnvironmentVariables>) {
-    super(configService);
-  }
+  constructor(
+    private readonly dialClient: DialClientService,
+    private readonly configService: ConfigService<EnvironmentVariables>,
+  ) {}
 
   private getTimeoutMs(): number {
     return this.configService.get<number>('FILE_TRANSFER_TIMEOUT_MS') ?? 30_000;
@@ -185,10 +186,8 @@ export class FilesService extends AppService {
     nextToken?: string;
     permissions?: string[];
   }> {
-    const { data, error, response } = await this.client.getFileMetadata(
-      bucket,
-      normalizedPath,
-      {
+    const { data, error, response } =
+      await this.dialClient.client.getFileMetadata(bucket, normalizedPath, {
         headers: getBearerAuthHeaders(at),
         params: {
           query: {
@@ -199,8 +198,7 @@ export class FilesService extends AppService {
           },
         },
         signal: AbortSignal.timeout(this.getTimeoutMs()),
-      },
-    );
+      });
 
     if (error != null) {
       this.logger.warn(
@@ -242,18 +240,15 @@ export class FilesService extends AppService {
       const conditionalHeaders =
         uploadMode === 'create-only' ? { 'If-None-Match': '*' } : {};
 
-      const { data, error, response } = (await this.client.uploadFile(
-        bucket,
-        path,
-        {
+      const { data, error, response } =
+        (await this.dialClient.client.uploadFile(bucket, path, {
           headers: {
             ...getBearerAuthHeaders(token),
             ...conditionalHeaders,
           },
           body: buildUploadFormData(file, path) as unknown as string,
           signal: AbortSignal.timeout(this.getTimeoutMs()),
-        },
-      )) as { data?: { url?: string }; error?: unknown; response: Response };
+        })) as { data?: { url?: string }; error?: unknown; response: Response };
 
       if (error != null) {
         if (response.status === 412) {
@@ -385,11 +380,12 @@ export class FilesService extends AppService {
     at: string,
   ): Promise<ListFilesResponseDto> {
     try {
-      const { data, error, response } = await this.client.getSharedResources({
-        headers: getBearerAuthHeaders(at),
-        body: { resourceTypes: ['FILE'], with: 'me', includeUserInfo: true },
-        signal: AbortSignal.timeout(this.getTimeoutMs()),
-      });
+      const { data, error, response } =
+        await this.dialClient.client.getSharedResources({
+          headers: getBearerAuthHeaders(at),
+          body: { resourceTypes: ['FILE'], with: 'me', includeUserInfo: true },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        });
 
       if (error != null) {
         this.logger.warn(
@@ -437,14 +433,11 @@ export class FilesService extends AppService {
         `Getting file metadata from DIAL Core: bucket=${bucket}, path=${path}`,
       );
 
-      const { data, error, response } = await this.client.getFileMetadata(
-        bucket,
-        path,
-        {
+      const { data, error, response } =
+        await this.dialClient.client.getFileMetadata(bucket, path, {
           headers: getBearerAuthHeaders(token),
           signal: AbortSignal.timeout(this.getTimeoutMs()),
-        },
-      );
+        });
 
       if (error != null) {
         this.logger.warn(
@@ -513,7 +506,7 @@ export class FilesService extends AppService {
         data,
         error: metaError,
         response: metaResponse,
-      } = await this.client.getFileMetadata(bucket, markerPath, {
+      } = await this.dialClient.client.getFileMetadata(bucket, markerPath, {
         headers: getBearerAuthHeaders(at),
         signal: AbortSignal.timeout(this.getTimeoutMs()),
       });
@@ -601,7 +594,7 @@ export class FilesService extends AppService {
     const relativePath = this.toRelativePath(path, bucket);
 
     try {
-      const { error, response } = (await this.client.downloadFile(
+      const { error, response } = (await this.dialClient.client.downloadFile(
         bucket,
         relativePath,
         {
@@ -658,17 +651,14 @@ export class FilesService extends AppService {
 
     do {
       page += 1;
-      const { data, error, response } = await this.client.getFileMetadata(
-        bucket,
-        relFolderPath,
-        {
+      const { data, error, response } =
+        await this.dialClient.client.getFileMetadata(bucket, relFolderPath, {
           headers: getBearerAuthHeaders(at),
           params: {
             query: { recursive: true, limit: 1000, token },
           },
           signal: AbortSignal.timeout(this.getTimeoutMs()),
-        },
-      );
+        });
 
       if (error != null) {
         this.logger.warn(
@@ -1046,7 +1036,7 @@ export class FilesService extends AppService {
   ): Promise<DeleteItemResultDto> {
     this.logger.debug(`deleteFileItem: bucket=${bucket}, relPath=${relPath}`);
     try {
-      const { error, response } = (await this.client.deleteFile(
+      const { error, response } = (await this.dialClient.client.deleteFile(
         bucket,
         relPath,
         {
@@ -1169,7 +1159,7 @@ export class FilesService extends AppService {
     const destinationUrl = buildDialFileResourceUrl(bucket, destPath);
 
     try {
-      const { error, response } = (await this.client.moveResource({
+      const { error, response } = (await this.dialClient.client.moveResource({
         headers: getBearerAuthHeaders(at),
         body: { sourceUrl, destinationUrl, overwrite: false },
         signal: AbortSignal.timeout(this.getTimeoutMs()),
@@ -1306,7 +1296,7 @@ export class FilesService extends AppService {
     const destinationUrl = buildDialFileResourceUrl(bucket, destPath);
 
     try {
-      const { error, response } = (await this.client.copyResource({
+      const { error, response } = (await this.dialClient.client.copyResource({
         headers: getBearerAuthHeaders(at),
         body: { sourceUrl, destinationUrl, overwrite: false },
         signal: AbortSignal.timeout(this.getTimeoutMs()),
@@ -1443,7 +1433,7 @@ export class FilesService extends AppService {
     const destinationUrl = buildDialFileResourceUrl(bucket, destPath);
 
     try {
-      const { error, response } = (await this.client.moveResource({
+      const { error, response } = (await this.dialClient.client.moveResource({
         headers: getBearerAuthHeaders(at),
         body: { sourceUrl, destinationUrl, overwrite: false },
         signal: AbortSignal.timeout(this.getTimeoutMs()),
@@ -1611,7 +1601,7 @@ export class FilesService extends AppService {
         data: downloadedStream,
         error,
         response,
-      } = (await this.client.downloadFile(file.bucket, file.path, {
+      } = (await this.dialClient.client.downloadFile(file.bucket, file.path, {
         headers: getBearerAuthHeaders(at),
         parseAs: 'stream',
         signal: AbortSignal.any([
