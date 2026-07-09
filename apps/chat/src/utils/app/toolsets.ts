@@ -73,6 +73,8 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
     authSettings: {
       authenticationType:
         data.auth_settings?.authentication_type ?? ToolsetAuthTypes.NONE,
+      dynamicallyRegistered:
+        data.auth_settings?.dynamically_registered ?? false,
       authStatus: parseToolsetApiAuthStatus(data),
       clientId: data.auth_settings.client_id,
       clientSecret: data.auth_settings.client_secret,
@@ -120,6 +122,9 @@ const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         }),
         ...(data.authSettings.codeChallengeMethod && {
           code_challenge_method: data.authSettings.codeChallengeMethod,
+        }),
+        ...(data.authSettings.dynamicallyRegistered && {
+          dynamically_registered: data.authSettings.dynamicallyRegistered,
         }),
       };
     default:

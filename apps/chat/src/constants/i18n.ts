@@ -326,6 +326,13 @@ export enum CommonI18nKeys {
   ShareLimitExceeded = '"{{name}}" has already been shared with the maximum specified number of users.',
   ShareLimitExceededWithVersion = '"{{name}}" version {{version}} has already been shared with the maximum specified number of users.',
   ShareApplicationWithPublicResourcesFailed = 'Sharing failed. You are only allowed to share applications with resources from "My files"',
+  LogOutBeforeEditingToolset = 'Log out before editing toolset',
+  TraceId = 'Trace ID',
+  Continue = 'Continue',
+  Repair = 'Repair',
+  RepairDescription = 'Repair will re-register this toolset with the Authorization Server and sign out all users. They will need to sign in again. Continue?',
+  ToolsetRepairSuccessMessage = 'Toolset repaired. Users must re-authenticate.',
+  ToolsetRepairFailedMessage = 'Authorization server is currently unavailable. Try again once the AS is back.',
 }
 
 // errors.json
