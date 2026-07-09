@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-attachment-canvas",
+  "description": "Canvas viewer for rendering attachment content — images, PDFs, JSON, markdown, and plain text",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
@@ -20,7 +21,7 @@
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "0.0.1",
     "@epam/ai-dial-sidebar": "0.0.1",
-    "@epam/ai-dial-ui-kit": "0.12.0-dev.21",
+    "@epam/ai-dial-ui-kit": "0.12.0-dev.25",
     "@epam/pdf-highlighter-kit": ">=0.0.14",
     "@tabler/icons-react": "^3.44.0",
     "react": "^19.0.0",

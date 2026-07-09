@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-kit",
+  "description": "UI component primitives for AI DIAL Chat applications",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
