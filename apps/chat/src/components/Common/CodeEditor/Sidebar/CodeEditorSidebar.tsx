@@ -2,8 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getLastPathSegment } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
+import { getLastPathSegment, trimEndDots } from '@/src/utils/app/common';
+import { constructPath, prepareFileName } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import {
@@ -91,13 +91,17 @@ export const CodeEditorSidebar = ({
 
   const handleUploadEmptyFile = useCallback(
     (fileName: string) => {
-      if (fileName) {
+      const preparedFileName = trimEndDots(prepareFileName(fileName));
+
+      if (preparedFileName) {
         dispatch(
           FilesActions.uploadFile({
-            fileContent: new File([''], fileName, { type: 'text/plain' }),
+            fileContent: new File([''], preparedFileName, {
+              type: 'text/plain',
+            }),
             relativePath: getIdWithoutRootPathSegments(sourcesFolderId),
-            id: constructPath(sourcesFolderId, fileName),
-            name: fileName,
+            id: constructPath(sourcesFolderId, preparedFileName),
+            name: preparedFileName,
             bucket,
           }),
         );
