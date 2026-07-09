@@ -41,7 +41,7 @@ const ToolsetEditorHeader: FC<Props> = ({
   );
 
   return (
-    <header className="flex items-center justify-between border-b border-b-primary bg-layer-2 px-4 py-1">
+    <header className="flex items-center justify-between border-b border-b-tertiary bg-layer-2 px-4 py-1">
       <nav
         role="navigation"
         aria-label={t(ToolsetEditorI18nKeys.StepsNavAriaLabel)}

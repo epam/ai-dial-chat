@@ -1,78 +1,210 @@
-## 1. Backend: Quick App create endpoint
+## 1. Explore current forms and design the shared lib
 
-- [ ] 1.1 Add `intro?: string` to `CreateApplicationBodyDto`
+- [x] 1.1 Re-confirm the current field set and ownership shape of
+      `apps/chat/src/pages/AppsEditor/GeneralForm.tsx` (self-contained: local state,
+      `NAME_PATTERN`/`VERSION_PATTERN` validation, `createApplication` call, catalog `Card`
+      preview) and `apps/chat/src/pages/ToolsetEditor/EditorForm/GeneralForm.tsx` (pure
+      controlled view driven by `ToolsetEditor.tsx`), and confirm no other page reuses either
+      component.
+- [x] 1.2 Identify common fields (name, description, iconUrl, version, topics) vs.
+      form-specific behavior (Quick App: `schemaId`, preview, submit call, `onCreated`/
+      `onCancel`; Toolset: `endpoint`/auth/settings sections owned by sibling files) that must
+      stay out of the shared lib.
+- [x] 1.3 Resolved design.md Open Question 5: `NAME_PATTERN`/`VERSION_PATTERN` are fixed
+      constants inside the lib's `validateDeploymentCreationFields`, but pattern checks are
+      opt-in via a `DeploymentCreationFormValidationOptions` flag
+      (`validateNamePattern`/`validateVersionPattern`), defaulting to off. This preserves each
+      flow's current behavior exactly (Quick App enables both flags; Toolset enables neither,
+      since it never enforced a name/version pattern before this change) — only the required-
+      name and intro-length checks are unconditionally shared.
+- [x] 1.4 Confirmed the target lib location/name (`libs/deployment-creation-form`, package
+      `@epam/ai-dial-deployment-creation-form`) against existing `libs/*` naming (e.g.
+      `libs/attachment-input` → `@epam/ai-dial-attachment-input`) and scaffolded it by hand
+      (the `nx-generate` skill was not available in this session), matching
+      `libs/starter-buttons`'s project config as a template. Added the
+      `@epam/ai-dial-deployment-creation-form/*` path in `tsconfig.base.json` and a
+      `tsconfig.lib.json` reference from `apps/chat/tsconfig.app.json` (re-verified after
+      wiring real imports in tasks 3–4, since `nx sync` derives references from actual usage).
+
+## 2. Build `libs/deployment-creation-form`
+
+- [x] 2.1 Defined `DeploymentCreationFormValues`, `DeploymentCreationFormFieldErrors`,
+      `DeploymentCreationFormLabels`, and `DeploymentCreationFormClassNames` models in
+      `libs/deployment-creation-form/src/models/deployment-creation-form.ts` (fields: `name`,
+      `description`, `iconUrl`, `version`, `topics`, `intro`). Validation-related types
+      (`DeploymentCreationFieldErrorCode`, `DeploymentCreationFormErrorCodes`,
+      `DeploymentCreationFormValidationOptions`) live in a separate `models/validation.ts`, since
+      the validator returns untranslated error codes, not display strings (per the
+      no-i18n-in-libs rule) — the host app maps codes to translated messages itself.
+- [x] 2.2 Implemented the pure `validateDeploymentCreationFields(values, options?)` function in
+      `libs/deployment-creation-form/src/utils/validate-deployment-creation-fields.ts`, covering:
+      name required (always) + `NAME_PATTERN` (opt-in), version + `VERSION_PATTERN` (opt-in,
+      only when non-empty), and `intro` max length (default 90, configurable). No side
+      effects, no i18n, no app imports.
+- [x] 2.3 Implemented the controlled `DeploymentCreationForm` component
+      (`libs/deployment-creation-form/src/components/DeploymentCreationForm/DeploymentCreationForm.tsx`)
+      rendering `DialInput` (name), `DialTextarea` (description), `DialInput` (iconUrl),
+      `DialInput` (version), `DialTagInput` (topics), and a new `DialInput` (intro,
+      single-line, `maxLength` HTML attribute) from `@epam/ai-dial-ui-kit`, wired to
+      `values`/`errors`/`onChange`, with a default `flex flex-col gap-4` layout and an
+      optional `classNames.root`/`classNames.field` passthrough.
+- [x] 2.4 Verified library isolation: no imports of `apps/chat/src/server-api`,
+      `@epam/chat-api-client`, `react-i18next`, routing, storage, or DIAL Core types anywhere
+      in `libs/deployment-creation-form/src` (only `react`, `@epam/ai-dial-chat-shared`
+      (`mergeClasses`), and `@epam/ai-dial-ui-kit`).
+- [x] 2.5 Added unit tests for `validateDeploymentCreationFields` (11 cases: valid/empty/
+      over-limit/custom-limit `intro`; name required/pattern opt-in/opt-out; version
+      pattern opt-in/opt-out/empty) and component tests for `DeploymentCreationForm` (7 cases:
+      renders all fields, `onChange` patches per field, surfaces/omits passed-in errors).
+      `npm exec nx test @epam/ai-dial-deployment-creation-form` — 18/18 passing;
+      `npm exec nx lint @epam/ai-dial-deployment-creation-form` and
+      `npm exec nx typecheck @epam/ai-dial-deployment-creation-form` — both clean.
+
+## 3. Wire Quick App creation to the shared form
+
+- [x] 3.1 Refactored `apps/chat/src/pages/AppsEditor/GeneralForm.tsx` to hold its `useState`
+      values in the `DeploymentCreationFormValues` shape (adding `intro`), render
+      `<DeploymentCreationForm>` in place of the inline `DialInput`/`DialTextarea`/`DialTagInput`
+      block, and keep its own two-pane layout, `Card` preview, and Cancel/Next buttons around
+      it.
+- [x] 3.2 `handleSubmit` calls `validateDeploymentCreationFields(values, { validateNamePattern:
+      true, validateVersionPattern: true })` in place of the inline
+      `NAME_PATTERN`/`VERSION_PATTERN`/required checks, mapping the returned error codes to
+      translated messages; kept `submitError`/`isSubmitting` for the network-call outcome.
+- [x] 3.3 `intro` is included in the `createApplication` payload
+      (`apps/chat/src/server-api/applications.ts`) when non-empty (`values.intro.trim() ||
+      undefined`).
+- [x] 3.4 Added the new intro label/placeholder/error i18n keys to
+      `apps/chat/src/constants/translation-keys.ts` (`AppsEditorI18nKeys`) and
+      `apps/chat/src/i18n/locales/en.json`; passed into `DeploymentCreationForm`'s `labels` prop.
+- [x] 3.5 Updated `apps/chat/src/pages/AppsEditor/tests/GeneralForm.spec.tsx` (10 tests): the
+      existing pre-refactor cases still pass, plus new cases for intro length validation
+      blocking submit and a trimmed intro reaching the create call.
+
+## 4. Wire Toolset creation to the shared form
+
+- [x] 4.1 Added `intro: string` to `ToolsetFormData` and `intro?: string`/`version?: string`
+      to `ToolsetFormErrors` (`apps/chat/src/types/toolsets.ts`).
+- [x] 4.2 Refactored `apps/chat/src/pages/ToolsetEditor/EditorForm/GeneralForm.tsx` into a
+      thin wrapper rendering `<DeploymentCreationForm>` with `values`/`errors` mapped from
+      `form`/`errors` and `onChange` forwarded as-is.
+- [x] 4.3 `validate()` (`apps/chat/src/pages/ToolsetEditor/ToolsetEditor.tsx`) calls
+      `validateDeploymentCreationFields(data)` (no pattern flags, preserving prior behavior) for
+      `name`/`intro`, merged with the existing `endpoint`/auth-specific checks; `handleSave`'s
+      step-routing also switches to the General step when `nextErrors.intro` is set.
+- [x] 4.4 `intro` is included in `formToToolsetBody` (`apps/chat/src/utils/toolsets.ts`) as
+      `form.intro.trim() || undefined`, sent to `createToolset`
+      (`apps/chat/src/server-api/toolsets.ts`).
+- [x] 4.5 Added the new intro label/placeholder/error i18n keys to
+      `apps/chat/src/constants/translation-keys.ts` (`ToolsetEditorI18nKeys`) and
+      `apps/chat/src/i18n/locales/en.json`.
+- [x] 4.6 Updated `apps/chat/src/pages/ToolsetEditor/EditorForm/tests/GeneralForm.spec.tsx`
+      (7 tests, including new intro render/error/onChange cases) and fixed the `ToolsetFormData`
+      fixtures broken by the new required `intro` field in
+      `apps/chat/src/pages/ToolsetEditor/EditorForm/tests/SettingsForm.spec.tsx` and
+      `apps/chat/src/utils/tests/toolsets.spec.ts` (added an intro-trimming test there too).
+      `ToolsetEditor.spec.tsx` needed no changes (3 tests, unaffected).
+
+## 5. Backend: Quick App create endpoint
+
+- [x] 5.1 Added `intro?: string` to `CreateApplicationBodyDto`
       (`apps/chat-api/src/applications/dto/create-application.dto.ts`) with
       `@ApiPropertyOptional({ example: '...', maxLength: 90 })`, `@IsString()`,
       `@IsOptional()`, `@MaxLength(90)`.
-- [ ] 1.2 In `applications.service.ts` `createApplication`, forward `intro` into
+- [x] 5.2 In `applications.service.ts` `createApplication`, `intro` is forwarded into
       `dialBody.application_properties.intro` when `body.intro` is set (mirroring the
       existing `if (body.description != null) ...` pattern).
-- [ ] 1.3 Add/update `apps/chat-api/src/applications/applications.service.spec.ts` (or
-      equivalent) covering: create with a valid `intro`, create with `intro` omitted/empty,
-      and DTO validation rejecting `intro` longer than 90 characters with a 400.
+- [x] 5.3 Added `apps/chat-api/src/applications/tests/create-application.dto.spec.ts` (4 new
+      DTO-validation tests: omitted/empty/exactly-90/over-90 `intro`) and two new
+      `applications.service.spec.ts` tests covering `intro` forwarding to
+      `application_properties` and its absence when omitted.
 
-## 2. Backend: Toolset create endpoint
+## 6. Backend: Toolset create endpoint
 
-- [ ] 2.1 Add `intro?: string` to `ToolsetBodyDto`
+- [x] 6.1 Added `intro?: string` to `ToolsetBodyDto`
       (`apps/chat-api/src/toolsets/dto/toolset-body.dto.ts`) with the same
       `@ApiPropertyOptional`/`@IsString`/`@IsOptional`/`@MaxLength(90)` decorators.
-- [ ] 2.2 In `toolsets.service.ts` `toDialToolsetBody`, forward `intro` into
+- [x] 6.2 In `toolsets.service.ts` `toDialToolsetBody`, `intro` is forwarded into
       `dialBody.defaults.intro` when `body.intro` is set (mirroring the existing
       `if (body.description != null) ...` pattern).
-- [ ] 2.3 Add/update `apps/chat-api/src/toolsets/toolsets.service.spec.ts` covering: create
-      with a valid `intro`, create with `intro` omitted/empty, and DTO validation rejecting
-      `intro` longer than 90 characters with a 400.
+- [x] 6.3 Added `apps/chat-api/src/toolsets/tests/toolset-body.dto.spec.ts` (4 new
+      DTO-validation tests) and two new `toolsets.service.spec.ts` tests covering `intro`
+      forwarding to `defaults` and its absence when omitted.
 
-## 3. Generated client regeneration
+## 7. Generated client regeneration
 
-- [ ] 3.1 Run `npm run openapi` to regenerate `libs/chat-api-client/openapi.json` and the
-      generated `ApplicationsApi`/`ToolsetsApi` models so `CreateApplicationBodyDto` and
-      `ToolsetBodyDto` include `intro`.
-- [ ] 3.2 Run `npm run openapi:check` to confirm the regenerated spec matches committed
-      output; commit the regenerated files under `libs/chat-api-client/src/generated/**`
-      without hand edits.
+- [x] 7.1 Ran `npm run openapi`; regenerated `libs/chat-api-client/openapi.json` and the
+      generated `ApplicationsApi`/`ToolsetsApi` models — `CreateApplicationBodyDto` and
+      `ToolsetBodyDto` in `libs/chat-api-client/src/generated/src/models/index.ts` now include
+      `intro?: string`.
+- [x] 7.2 `npm run openapi:check` passes; the regenerated files under
+      `libs/chat-api-client/src/generated/**` were produced entirely by the generator/postprocess
+      pipeline, no hand edits.
 
-## 4. Frontend: Quick App editor
+## 8. Verification
 
-- [ ] 4.1 Add an `intro` field (state + `DialInput` or equivalent) to
-      `apps/chat/src/pages/AppsEditor/GeneralForm.tsx`, alongside `description`/`iconUrl`.
-- [ ] 4.2 Add an `introError` state and a 90-character length check in `handleSubmit`,
-      mirroring the existing `nameError`/`versionError` checks; block submit and show the
-      error when exceeded.
-- [ ] 4.3 Include `intro` in the `CreateApplicationBodyDto` payload built in
-      `GeneralForm.tsx` before calling `createApplication`
-      (`apps/chat/src/server-api/applications.ts`).
-- [ ] 4.4 Add the new label/error i18n keys to
-      `apps/chat/src/constants/translation-keys.ts` (`AppsEditorI18nKeys`) and
-      `apps/chat/src/i18n/locales/en.json`.
-- [ ] 4.5 Add/update component tests for `GeneralForm.tsx` covering: valid intro, empty
-      intro, and intro over 90 characters showing the length error and blocking submit.
+- [x] 8.1 `npm exec nx test @epam/ai-dial-deployment-creation-form` — 18/18 passing;
+      `npm exec nx lint @epam/ai-dial-deployment-creation-form` — clean;
+      `npm exec nx typecheck @epam/ai-dial-deployment-creation-form` — clean.
+- [x] 8.2 `npm exec nx test @epam/chat-api` — 963/963 passing (59 files);
+      `npm exec nx lint @epam/chat-api` — 0 errors (1 pre-existing unrelated warning).
+- [x] 8.3 `npm exec nx test @epam/chat` — 869 passing / 2 skipped (97 files);
+      `npm exec nx lint @epam/chat` — 0 errors (18 pre-existing unrelated warnings);
+      `npm exec nx typecheck @epam/chat` — clean.
+- [x] 8.4 `npm exec nx build @epam/chat-api` — webpack build succeeds; also verified
+      `npm exec nx build @epam/ai-dial-deployment-creation-form` succeeds.
+- [ ] 8.5 Manual verification in the running app (create a Quick App and a Toolset each with a
+      valid intro, an empty intro, and an intro over 90 characters against a live DIAL Core
+      instance) was not performed in this session — automated coverage (unit/DTO/component
+      tests above) confirms the logic, but the DIAL Core round-trip for
+      `application_properties.intro` / `defaults.intro` (design.md Decision 1's flagged risk)
+      still needs manual/Core-team confirmation before this ships broadly.
 
-## 5. Frontend: Toolset editor
+## 9. Visual parity follow-up (post-implementation feedback)
 
-- [ ] 5.1 Add `intro: string` to `ToolsetFormData` and `intro?: string` to
-      `ToolsetFormErrors` (`apps/chat/src/types/toolsets.ts`).
-- [ ] 5.2 Add an `intro` field to
-      `apps/chat/src/pages/ToolsetEditor/EditorForm/GeneralForm.tsx`, alongside
-      `description`/`iconUrl`, wired to `ToolsetFormData`/`ToolsetFormErrors`.
-- [ ] 5.3 Add a 90-character length check for `intro` in `validate()`
-      (`apps/chat/src/pages/ToolsetEditor/ToolsetEditor.tsx`), alongside the existing
-      `name`/`endpoint` checks.
-- [ ] 5.4 Include `intro` in `formToToolsetBody` (`apps/chat/src/utils/toolsets.ts`) so it is
-      sent to `createToolset` (`apps/chat/src/server-api/toolsets.ts`).
-- [ ] 5.5 Add the new label/error i18n keys to
-      `apps/chat/src/constants/translation-keys.ts` (`ToolsetEditorI18nKeys`) and
-      `apps/chat/src/i18n/locales/en.json`.
-- [ ] 5.6 Add/update tests for `GeneralForm.tsx` and `ToolsetEditor.tsx`'s `validate()`
-      covering: valid intro, empty intro, and intro over 90 characters showing the length
-      error and blocking save.
-
-## 6. Verification
-
-- [ ] 6.1 `npm exec nx test chat-api` and `npm exec nx lint chat-api`.
-- [ ] 6.2 `npm exec nx test chat` and `npm exec nx lint chat` (or the affected project names
-      for the frontend app).
-- [ ] 6.3 `npm exec nx build chat-api` to confirm the DTO/Swagger changes compile.
-- [ ] 6.4 Manually verify in the running app: create a Quick App and a Toolset each with a
-      valid intro, an empty intro, and an intro over 90 characters, confirming the UI blocks
-      the over-limit case and the backend rejects it if sent directly.
+- [x] 9.1 Reordered the shared field stack in `DeploymentCreationForm.tsx` so `intro` renders
+      directly under `description` (was after `topics`), per user review against the running
+      app.
+- [x] 9.2 Fixed a real Catalog-parity gap: replaced `border-*-primary` dividers with
+      `border-*-tertiary` (matching `libs/catalog`'s own `Catalog.module.scss`/
+      `DetailsPanel.module.scss` convention) in `AppsEditor.tsx`, `AppsEditor/GeneralForm.tsx`,
+      `ToolsetEditorHeader.tsx`, and `ToolsetEditorView.tsx`; bumped inner form padding from
+      `p-4` to `p-6`.
+- [x] 9.3 Investigated and ruled out two other reported mismatches as out-of-scope,
+      pre-existing, intentional app-shell behavior rather than regressions from this change:
+      the chat-history-panel auto-collapsing to an icon rail on non-conversation routes
+      (`apps/chat/src/app/app.tsx`'s `isHistoryPanelOpen` effect — also affects Catalog and
+      File Manager), and `DialInput`'s built-in 4px corner radius (used identically
+      app-wide, not something specific to the new lib).
+- [x] 9.4 Added `Input`, `Textarea`, and `TagInput` wrappers to `libs/ai-dial-kit`
+      (`libs/ai-dial-kit/src/components/{Input,Textarea,TagInput}/`), following the
+      `Button/Buttons.tsx` wrapper pattern, so the app's field corner radius can be restyled
+      once (`!rounded-xl` on `Input`/`Textarea`, matching `SearchBar`) instead of diverging
+      per call site. Exported from `libs/ai-dial-kit/src/index.ts`; added component tests
+      (`Input.spec.tsx`, `Textarea.spec.tsx`, 4 tests, passing) and JSDoc per `libs.md`.
+- [x] 9.4.1 Follow-up after further review: the field **border color**, not just page-level
+      dividers, was also flagged as mismatched against `libs/catalog`. Added
+      `Input.scss` (imported by both `Input.tsx` and `Textarea.tsx`, since `DialTextarea`
+      shares the `.dial-input` class) overriding the resting `border-color` from
+      `--stroke-primary` to `--stroke-tertiary`, with explicit `!important` restores for the
+      hover/focus/error state colors so those interactions keep working. `TagInput` still has
+      no border-color override (same missing-CSS-hook limitation as its radius).
+- [x] 9.5 Migrated `libs/deployment-creation-form`'s `DeploymentCreationForm.tsx` to import
+      `Input`/`Textarea`/`TagInput` from `@epam/ai-dial-kit` instead of the primitives from
+      `@epam/ai-dial-ui-kit` directly; removed `@epam/ai-dial-ui-kit` from
+      `deployment-creation-form`'s `package.json` peerDependencies and `vite.config.mts`
+      externals (no longer a direct dependency), added `@epam/ai-dial-kit` to both plus a
+      `tsconfig.lib.json` project reference; updated `DeploymentCreationForm.spec.tsx` to mock
+      `@epam/ai-dial-kit` instead of `@epam/ai-dial-ui-kit` (18/18 tests passing).
+- [x] 9.6 Added a "Text fields" entry to `.claude/rules/all-tsx.md` banning direct
+      `DialInput`/`DialTextarea`/`DialTagInput` imports app-wide, alongside the existing
+      Button/SearchBar/Spinner/TabRow entries.
+- [ ] 9.7 Not done (flagged as follow-up, see design.md Open Questions 6–7): no override was
+      found/applied for `TagInput`'s own corner radius (no stable CSS class hook located in
+      the shipped ui-kit bundle); other existing `DialInput`/`DialTextarea`/`DialTagInput`
+      call sites in the app (Toolset's `SettingsForm.tsx`, `AuthSection.tsx`) were not migrated
+      to the new wrappers.
+- [x] 9.8 Re-verified after all 9.x changes: `npm exec nx test/lint/typecheck` clean for
+      `@epam/ai-dial-kit`, `@epam/ai-dial-deployment-creation-form`, and `@epam/chat` (869 tests
+      passing, 0 lint errors); `npm exec nx build @epam/ai-dial-deployment-creation-form`
+      succeeds.

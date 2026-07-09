@@ -73,7 +73,7 @@ const AppsEditor: FC = () => {
 
   return (
     <div className="flex size-full flex-col">
-      <header className="flex items-center justify-between gap-3 border-b border-b-primary bg-layer-2 px-4 pb-1">
+      <header className="flex items-center justify-between gap-3 border-b border-b-tertiary bg-layer-2 px-4 pb-1">
         <div className="flex items-center gap-3">
           {schema?.displayName && (
             <h1 className="dial-caption-text justify-start text-primary">

@@ -4,7 +4,9 @@
 The General step SHALL allow editing the toolset name, version, icon URL, description,
 topics, and intro. The icon SHALL be entered as a plain URL text field (no file-manager).
 Topics SHALL be entered as free-entry tags sourced from the application config. Intro SHALL
-be a single-line text field limited to 90 characters.
+be a single-line text field limited to 90 characters. These fields SHALL be rendered and
+validated through the shared `deployment-creation-form` library component, the same component
+used by Quick App creation's General step.
 
 #### Scenario: Edit general fields
 - **WHEN** a user types a name, version, icon URL, description, intro, and adds topic tags

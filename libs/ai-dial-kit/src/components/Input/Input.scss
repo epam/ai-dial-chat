@@ -1,0 +1,20 @@
+// Lighter resting border to match libs/catalog's border-tertiary convention
+// (Catalog cards use no border at all — box-shadow only — but a fully
+// borderless field would hurt affordance, so this uses the same lighter
+// --stroke-tertiary token already used for Catalog's own dividers).
+// Hover/focus/error keep their original --stroke-accent-primary/--stroke-focus/
+// --stroke-error colors, restored explicitly since `!important` on the base
+// rule would otherwise block the ui-kit's own (non-`!important`) state rules.
+.dial-input:not(.dial-input-error) {
+  border-color: var(--stroke-tertiary, #e0e6f0) !important;
+
+  &:not(:disabled):hover {
+    border-color: var(--stroke-accent-primary, #7da4ff) !important;
+  }
+
+  &:not(:disabled):active,
+  &:not(:disabled):focus,
+  &:not(:disabled):focus-within {
+    border-color: var(--stroke-focus, #eef1f7) !important;
+  }
+}

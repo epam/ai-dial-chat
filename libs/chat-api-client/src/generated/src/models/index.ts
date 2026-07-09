@@ -879,6 +879,12 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   topics?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  intro?: string;
 }
 /**
  *
@@ -2959,6 +2965,12 @@ export interface ToolsetBodyDto {
    * @memberof ToolsetBodyDto
    */
   topics?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  intro?: string;
   /**
    *
    * @type {string}

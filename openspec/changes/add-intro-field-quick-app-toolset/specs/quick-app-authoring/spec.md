@@ -4,7 +4,9 @@
 The Quick App editor's General step SHALL allow editing the application name, version, icon
 URL, description, topics, and intro. The icon SHALL be entered as a plain URL text field. Name
 SHALL be required and restricted to letters, digits, spaces, underscores, dots, and dashes.
-Intro SHALL be a single-line text field limited to 90 characters and SHALL be optional.
+Intro SHALL be a single-line text field limited to 90 characters and SHALL be optional. These
+fields SHALL be rendered and validated through the shared `deployment-creation-form` library
+component, the same component used by Toolset creation's General step.
 
 #### Scenario: Edit general fields
 - **WHEN** a user types a name, version, icon URL, description, intro, and adds topic tags

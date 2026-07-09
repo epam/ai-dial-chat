@@ -136,7 +136,7 @@ describe('GeneralForm', () => {
     vi.clearAllMocks();
   });
 
-  it('renders name, description and icon URL fields', () => {
+  it('renders name, description, icon URL, and intro fields', () => {
     renderForm();
     expect(
       screen.getByLabelText(AppsEditorI18nKeys.GeneralFormNameLabel),
@@ -146,6 +146,9 @@ describe('GeneralForm', () => {
     ).toBeTruthy();
     expect(
       screen.getByLabelText(AppsEditorI18nKeys.GeneralFormIconUrlLabel),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText(AppsEditorI18nKeys.GeneralFormIntroLabel),
     ).toBeTruthy();
   });
 
@@ -200,7 +203,46 @@ describe('GeneralForm', () => {
       type: 'quickapps2-schema',
       description: undefined,
       iconUrl: undefined,
+      version: undefined,
+      topics: undefined,
+      intro: undefined,
     });
+  });
+
+  it('shows length error and does not call API when intro exceeds 90 characters', async () => {
+    renderForm();
+    await user.type(getNameInput(), 'My App');
+    await user.type(
+      screen.getByLabelText(
+        AppsEditorI18nKeys.GeneralFormIntroLabel,
+      ) as HTMLInputElement,
+      'a'.repeat(91),
+    );
+    await user.click(getNextButton());
+    expect(screen.getByRole('alert').textContent).toContain(
+      AppsEditorI18nKeys.GeneralFormIntroTooLong,
+    );
+    expect(createApplication).not.toHaveBeenCalled();
+  });
+
+  it('includes a trimmed intro in the create call when provided', async () => {
+    const onCreated = vi.fn();
+    vi.mocked(createApplication).mockResolvedValue({
+      id: 'users/u/apps/new',
+    });
+    renderForm({ onCreated });
+    await user.type(getNameInput(), 'My App');
+    await user.type(
+      screen.getByLabelText(
+        AppsEditorI18nKeys.GeneralFormIntroLabel,
+      ) as HTMLInputElement,
+      'A short pitch',
+    );
+    await user.click(getNextButton());
+    await waitFor(() => expect(createApplication).toHaveBeenCalledOnce());
+    expect(createApplication).toHaveBeenCalledWith(
+      expect.objectContaining({ intro: 'A short pitch' }),
+    );
   });
 
   it('disables Next button while submitting', async () => {

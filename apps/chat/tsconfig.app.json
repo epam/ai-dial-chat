@@ -45,6 +45,9 @@
   ],
   "references": [
     {
+      "path": "../../libs/deployment-creation-form/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
     },
     {
