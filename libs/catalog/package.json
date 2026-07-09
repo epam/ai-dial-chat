@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-catalog",
+  "description": "Marketplace catalog component for browsing models, tools, and assistants with search, filter, and sort",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
@@ -20,13 +21,15 @@
   "peerDependencies": {
     "react": "^19.0.0",
     "@tabler/icons-react": "^3.0.0",
-    "@epam/ai-dial-ui-kit": "0.12.0-dev.21",
+    "@epam/ai-dial-ui-kit": "0.12.0-dev.25",
     "@epam/ai-dial-kit": "*",
     "@epam/ai-dial-chat-shared": "*",
     "ag-grid-community": "35.3.0"
   },
   "nx": {
-    "tags": ["publishable"],
+    "tags": [
+      "publishable"
+    ],
     "targets": {
       "publish": {
         "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
