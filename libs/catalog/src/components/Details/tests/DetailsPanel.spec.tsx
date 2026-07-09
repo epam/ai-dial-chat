@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { CatalogItem } from '../../../models/catalog-item';
+import type { CatalogItem } from '../../../models/catalog-item';
 import { PublishFolderNode } from '../../../models/publish';
 import { CatalogEntityType } from '../../../types/entity-type';
 import { DetailsPanel } from '../DetailsPanel';
@@ -13,11 +13,11 @@ vi.mock('@epam/ai-dial-kit', () => ({
     onTabChange,
   }: {
     tabs: { id: string; label: string }[];
-    onTabChange: (id: string) => void;
+    onTabChange?: (id: string) => void;
   }) => (
-    <div>
+    <div role="tablist">
       {tabs.map((tab) => (
-        <button key={tab.id} onClick={() => onTabChange(tab.id)}>
+        <button key={tab.id} onClick={() => onTabChange?.(tab.id)}>
           {tab.label}
         </button>
       ))}
@@ -45,6 +45,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClose: () => void;
     ariaLabel: string;
   }) => <button onClick={onClose}>{ariaLabel}</button>,
+  DialSkeleton: () => <div>skeleton</div>,
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconChevronLeft: () => <svg />,
@@ -58,7 +59,9 @@ vi.mock('../Header/Header', () => ({
   ),
 }));
 vi.mock('../Summary/Summary', () => ({ Summary: () => <div>Summary</div> }));
-vi.mock('../TabsContent/About', () => ({ AboutTab: () => <div>About</div> }));
+vi.mock('../TabsContent/About', () => ({
+  AboutTab: () => <div>about content</div>,
+}));
 vi.mock('../TabsContent/Overview', () => ({
   Overview: () => <div>Overview</div>,
 }));
@@ -110,6 +113,18 @@ const item: CatalogItem = {
 };
 
 const folderItems: PublishFolderNode[] = [{ path: ['Shared'], name: 'Shared' }];
+
+const makeItem = (overrides: Partial<CatalogItem> = {}): CatalogItem => ({
+  id: '1',
+  type: CatalogEntityType.Model,
+  name: 'Claude',
+  version: '1',
+  lastUsed: 'now',
+  description: '',
+  folder: [],
+  topics: [],
+  ...overrides,
+});
 
 const renderPanel = (props?: Partial<ComponentProps<typeof DetailsPanel>>) =>
   render(
@@ -221,5 +236,84 @@ describe('DetailsPanel', () => {
       resolvePublish();
       await Promise.resolve();
     });
+  });
+
+  it('shows a loading placeholder next to the tab row when isDetailsLoading is true', () => {
+    render(
+      <DetailsPanel
+        item={makeItem()}
+        isOpen
+        isDetailsLoading
+        onClose={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole('status', { name: 'Loading details' }),
+    ).toBeTruthy();
+  });
+
+  it('does not show a loading placeholder when isDetailsLoading is false', () => {
+    render(
+      <DetailsPanel
+        item={makeItem()}
+        isOpen
+        isDetailsLoading={false}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(
+      screen.queryByRole('status', { name: 'Loading details' }),
+    ).toBeNull();
+  });
+
+  it('uses a custom detailsLoadingAriaLabel', () => {
+    render(
+      <DetailsPanel
+        item={makeItem()}
+        isOpen
+        isDetailsLoading
+        onClose={vi.fn()}
+        texts={{ detailsLoadingAriaLabel: 'Fetching details' }}
+      />,
+    );
+    expect(
+      screen.getByRole('status', { name: 'Fetching details' }),
+    ).toBeTruthy();
+  });
+
+  it('renders the description inline in the intro section', () => {
+    render(
+      <DetailsPanel
+        item={makeItem({
+          details: { overview: { sections: [] } },
+        })}
+        isOpen
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByText('about content').length).toBeGreaterThan(0);
+  });
+
+  it('includes About as the first tab, ahead of the other available tabs', () => {
+    render(
+      <DetailsPanel
+        item={makeItem({
+          details: { overview: { sections: [] } },
+        })}
+        isOpen
+        onClose={vi.fn()}
+      />,
+    );
+
+    const tablist = screen.getByRole('tablist');
+    expect(tablist.textContent).toBe('AboutOverview');
+  });
+
+  it('always includes the About tab even when no other tabs are available', () => {
+    render(<DetailsPanel item={makeItem()} isOpen onClose={vi.fn()} />);
+
+    const tablist = screen.getByRole('tablist');
+    expect(tablist.textContent).toBe('About');
   });
 });

@@ -20,6 +20,7 @@ function makeController() {
     listDeployments: vi.fn().mockResolvedValue({ deployments: [] }),
     getDeploymentConfiguration: vi.fn(),
     getDeploymentLimits: vi.fn(),
+    getDeploymentDetails: vi.fn(),
   } as unknown as DeploymentsService;
 
   const controller = new DeploymentsController(service);
@@ -108,6 +109,31 @@ describe('DeploymentsController', () => {
     );
     await expect(
       controller.getDeploymentLimits(mockReq, 'unknown'),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('getDeploymentDetails returns service result', async () => {
+    const { controller, service } = makeController();
+    const details = { id: 'gpt-4o', type: 'model' as const };
+    (
+      service.getDeploymentDetails as ReturnType<typeof vi.fn>
+    ).mockResolvedValue(details);
+
+    const result = await controller.getDeploymentDetails(mockReq, 'gpt-4o');
+    expect(result).toEqual(details);
+    expect(service.getDeploymentDetails).toHaveBeenCalledWith(
+      'gpt-4o',
+      TEST_USER.at,
+    );
+  });
+
+  it('getDeploymentDetails propagates NotFoundException', async () => {
+    const { controller, service } = makeController();
+    (
+      service.getDeploymentDetails as ReturnType<typeof vi.fn>
+    ).mockRejectedValue(new NotFoundException());
+    await expect(
+      controller.getDeploymentDetails(mockReq, 'unknown'),
     ).rejects.toThrow(NotFoundException);
   });
 });

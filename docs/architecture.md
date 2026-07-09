@@ -316,10 +316,11 @@ One folder per domain. **No `modules/` wrapper** — `{domain}.module.ts` sits d
 
 #### Models & Deployments
 
-| Method | Path               | Description                    |
-| ------ | ------------------ | ------------------------------ |
-| `GET`  | `/api/v1/models`   | List available models (cached) |
-| `GET`  | `/api/deployments` | List available deployments     |
+| Method | Path                                       | Description                                              |
+| ------ | ------------------------------------------ | -------------------------------------------------------- |
+| `GET`  | `/api/v1/models`                           | List available models (cached)                           |
+| `GET`  | `/api/deployments`                         | List available deployments                               |
+| `GET`  | `/api/v1/deployments/{deployment}/details` | Full per-entity detail for one deployment by id (cached) |
 
 #### Infrastructure
 

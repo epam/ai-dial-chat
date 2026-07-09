@@ -4,6 +4,7 @@ import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
+import type { CatalogItemTabData } from '../../models/item-details-data';
 import { CatalogSortKey } from '../../types/sort';
 import { CatalogViewMode } from '../../types/view-mode';
 import {
@@ -43,7 +44,8 @@ export const Catalog: FC<CatalogProps> = ({
   onPublishSuccess,
   onCreatePublishFolder,
   publishTexts,
-  onFetchAboutContent,
+  onFetchDetails,
+  onEdit,
   onCreateClick,
   createOptions,
   isLoading,
@@ -132,33 +134,41 @@ export const Catalog: FC<CatalogProps> = ({
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [aboutContent, setAboutContent] = useState<string | undefined>(
-    undefined,
-  );
-  const [isAboutLoading, setIsAboutLoading] = useState(false);
+  const [fetchedDetails, setFetchedDetails] = useState<
+    CatalogItemTabData | undefined
+  >(undefined);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
   const handleOpenDetails = useCallback(
     async (item: CatalogItem) => {
       setSelectedItem(item);
-      setAboutContent(undefined);
+      setFetchedDetails(undefined);
+      pendingItemIdRef.current = item.id;
 
-      if (onFetchAboutContent) {
-        setIsAboutLoading(true);
-        pendingItemIdRef.current = item.id;
-        try {
-          const content = await onFetchAboutContent(item);
-          if (pendingItemIdRef.current === item.id) {
-            setAboutContent(content);
-          }
-        } finally {
-          if (pendingItemIdRef.current === item.id) {
-            setIsAboutLoading(false);
-          }
-        }
+      const fetches: Promise<void>[] = [];
+
+      if (onFetchDetails) {
+        setIsDetailsLoading(true);
+        fetches.push(
+          (async () => {
+            try {
+              const details = await onFetchDetails(item);
+              if (pendingItemIdRef.current === item.id) {
+                setFetchedDetails(details);
+              }
+            } finally {
+              if (pendingItemIdRef.current === item.id) {
+                setIsDetailsLoading(false);
+              }
+            }
+          })(),
+        );
       }
+
+      await Promise.all(fetches);
     },
-    [onFetchAboutContent],
+    [onFetchDetails],
   );
 
   const handleCloseDetails = useCallback(() => {
@@ -166,10 +176,17 @@ export const Catalog: FC<CatalogProps> = ({
     pendingItemIdRef.current = null;
     setTimeout(() => {
       setSelectedItem(null);
-      setAboutContent(undefined);
-      setIsAboutLoading(false);
+      setFetchedDetails(undefined);
+      setIsDetailsLoading(false);
     }, 300);
   }, []);
+
+  const detailsPanelItem = useMemo<CatalogItem | null>(() => {
+    if (selectedItem == null) return null;
+    return fetchedDetails != null
+      ? { ...selectedItem, details: fetchedDetails }
+      : selectedItem;
+  }, [selectedItem, fetchedDetails]);
 
   const sorted = useMemo(
     () => sortCatalogItems(filteredItems, sortKey),
@@ -340,13 +357,12 @@ export const Catalog: FC<CatalogProps> = ({
         </div>
       </div>
 
-      {selectedItem != null && (
+      {detailsPanelItem != null && (
         <DetailsPanel
-          item={selectedItem}
+          item={detailsPanelItem}
           isOpen={isDetailsOpen}
           isStarred={isSelectedItemStarred}
-          aboutContent={aboutContent}
-          isAboutLoading={isAboutLoading}
+          isDetailsLoading={isDetailsLoading}
           onClose={handleCloseDetails}
           onToggleFavorite={onToggleFavorite}
           onUseInChat={onUseInChat}
@@ -360,6 +376,7 @@ export const Catalog: FC<CatalogProps> = ({
           onPublishSuccess={onPublishSuccess}
           onCreatePublishFolder={onCreatePublishFolder}
           publishTexts={publishTexts}
+          onEdit={onEdit}
           texts={detailsTexts}
         />
       )}

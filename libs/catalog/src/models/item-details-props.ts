@@ -7,7 +7,7 @@ import type { PublishFolderNode, PublishHistoryEntry } from './publish';
 export interface ItemDetailsTexts {
   /** "Share" action button label. Default: `'Share'`. */
   shareLabel?: string;
-  /** Caption above the short intro text. Default: `'Intro'`. */
+  /** Caption above the intro/description text. Default: `'Intro'`. */
   introLabel?: string;
   /** "About" tab label. Default: `'About'`. */
   tabAboutLabel?: string;
@@ -43,6 +43,8 @@ export interface ItemDetailsTexts {
   backToDetailsAriaLabel?: string;
   /** When `false`, the primary action button is hidden. Default: `true`. */
   hasPrimaryAction?: boolean;
+  /** "Edit" action button label. Default: `'Edit'`. */
+  editActionLabel?: string;
   /** Label above the daily-limit progress bar. Default: `'Daily limit'`. */
   dailyLimitLabel?: string;
   /** "Resource" section heading in the API tab. Default: `'Resource'`. */
@@ -65,6 +67,8 @@ export interface ItemDetailsTexts {
   pricingPricesSectionLabel?: string;
   /** "Usage limits" section heading in the Pricing tab. Default: `'Usage limits'`. */
   pricingLimitsSectionLabel?: string;
+  /** Accessible label for the loading placeholder shown next to the tab row while structured details are being fetched. Default: `'Loading details'`. */
+  detailsLoadingAriaLabel?: string;
 }
 
 /** Typography class overrides for `DetailsPanel` text elements. */
@@ -77,11 +81,9 @@ export interface ItemDetailsTypography {
   versionClassName?: string;
   /** Typography class for the intro section caption. Default: `'dial-caption-text'`. */
   introCaptionClassName?: string;
-  /** Typography class for the short intro description. Default: `'dial-small-text'`. */
-  introTextClassName?: string;
-  /** Typography class for section headings inside the About tab. Default: `'dial-small-semi-text'`. */
+  /** Typography class for section headings inside the intro/description content. Default: `'dial-small-semi-text'`. */
   contentHeadingClassName?: string;
-  /** Typography class for the About tab body text. Default: `'dial-small-text'`. */
+  /** Typography class for the intro/description body text. Default: `'dial-small-text'`. */
   contentClassName?: string;
   /** Typography class for Overview section headings. Default: `'dial-caption-text'`. */
   overviewSectionClassName?: string;
@@ -112,12 +114,10 @@ export interface DetailsPanelProps {
   /** Initial starred state for the item. Default: `false`. */
   isStarred?: boolean;
   /**
-   * About-tab body text, typically supplied by an async fetch.
-   * Falls back to `item.longDescription`, then `item.description`.
+   * When `true`, a fetch for structured detail tabs (Overview/Pricing/API/Tools)
+   * is pending; the panel shows a small loading indicator next to the tab row.
    */
-  aboutContent?: string;
-  /** When `true`, the About tab renders a loading skeleton instead of content. */
-  isAboutLoading?: boolean;
+  isDetailsLoading?: boolean;
   /** Called when the panel should close (close button or backdrop click). */
   onClose: () => void;
   /** Called when the star/favorite button is toggled. */
@@ -144,6 +144,8 @@ export interface DetailsPanelProps {
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */
   publishTexts?: PublishPanelTexts & PublishFooterTexts;
+  /** Called when the "Edit" button is clicked. Shown only when the item's `isEditable` is `true`. */
+  onEdit?: (item: CatalogItem) => void;
   /** Text overrides for all user-visible strings. */
   texts?: ItemDetailsTexts;
   /** Grouped style overrides. */

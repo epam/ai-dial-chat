@@ -46,10 +46,16 @@ export interface ModelEndpoint {
 }
 
 export interface ModelCapabilities {
-  hasReasoning: boolean;
-  hasInstructions: boolean;
-  hasTools: boolean;
-  hasStructuredOutput: boolean;
+  hasTools?: boolean;
+  hasMcp?: boolean;
+  hasCaching?: boolean;
+  hasParallelToolCalls?: boolean;
+  hasUrlAttachments?: boolean;
+  hasFolderAttachments?: boolean;
+  hasSeed?: boolean;
+  hasSystemPrompt?: boolean;
+  hasResume?: boolean;
+  reasoningEfforts?: string[];
 }
 
 export interface ModelSpecification {
@@ -59,6 +65,7 @@ export interface ModelSpecification {
   outputTypes?: string[];
   languages?: string[];
   hostedBy?: string;
+  createdAt?: number;
 }
 
 export interface ModelPricing {
@@ -109,6 +116,22 @@ export interface AgentSpecification {
   maturity?: AgentMaturity;
   permissions?: string[];
   skills?: string[];
+  hostedBy?: string;
+  createdAt?: number;
+  routes?: string[];
+}
+
+export interface AgentCapabilities {
+  hasTools?: boolean;
+  hasMcp?: boolean;
+  hasCaching?: boolean;
+  hasParallelToolCalls?: boolean;
+  hasUrlAttachments?: boolean;
+  hasFolderAttachments?: boolean;
+  hasSeed?: boolean;
+  hasSystemPrompt?: boolean;
+  hasResume?: boolean;
+  hasConfiguration?: boolean;
 }
 
 export interface AgentConfiguration {
@@ -132,20 +155,43 @@ export interface AgentApiDetails {
 export interface AgentEntityDetails {
   specification?: AgentSpecification;
   configuration?: AgentConfiguration;
+  capabilities?: AgentCapabilities;
   capabilityLinks?: AgentCapabilityLink[];
   api?: AgentApiDetails;
 }
 
 // ---- Toolset entity ----
 
+export interface ToolsetAuthStatus {
+  global?: string;
+  appLevel?: string;
+  userLevel?: string;
+  scopesSupported?: string[];
+  authorizationEndpoint?: string;
+  tokenEndpoint?: string;
+}
+
 export interface ToolsetSpecification {
   provider?: string;
   authentication?: AuthenticationType;
   permissions?: string[];
+  hostedBy?: string;
+  authStatus?: ToolsetAuthStatus;
+  createdAt?: number;
+  /** Names of all tools the underlying MCP server supports, not just the allow-listed subset in `permissions`. */
+  allTools?: string[];
+}
+
+export interface ToolsetCapabilities {
+  hasMcp?: boolean;
+  hasCaching?: boolean;
+  hasSystemPrompt?: boolean;
+  hasResume?: boolean;
 }
 
 export interface ToolsetEntityDetails {
   specification?: ToolsetSpecification;
+  capabilities?: ToolsetCapabilities;
 }
 
 // ---- Guardrail entity ----
