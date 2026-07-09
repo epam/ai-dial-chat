@@ -77,6 +77,9 @@
       "options": {
         "passWithNoTests": true
       }
+    },
+    "publish": {
+      "dependsOn": ["build"]
     }
   },
   "generators": {

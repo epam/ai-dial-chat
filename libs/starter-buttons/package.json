@@ -21,5 +21,13 @@
     "@epam/ai-dial-ui-kit": "0.12.0-dev.21",
     "@tabler/icons-react": "^3.44.0",
     "react": "^19.0.0"
+  },
+  "nx": {
+    "tags": ["publishable"],
+    "targets": {
+      "publish": {
+        "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      }
+    }
   }
 }
