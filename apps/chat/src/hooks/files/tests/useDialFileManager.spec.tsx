@@ -161,6 +161,43 @@ describe('useDialFileManager', () => {
     expect(result.current.path).toBe('/My files/reports/');
   });
 
+  it("gives a nested file a parentPath matching its folder node's own path", async () => {
+    const reportsFolder: ListFilesItemDto = {
+      name: 'reports',
+      path: 'reports/',
+      folderId: `${BUCKET}:reports/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      bucket: BUCKET,
+    };
+    const q1File: ListFilesItemDto = {
+      name: 'q1.pdf',
+      path: 'reports/q1.pdf',
+      folderId: `${BUCKET}:reports/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+      bucket: BUCKET,
+    };
+    mockListFiles.mockImplementation(async ({ path }) => ({
+      bucket: BUCKET,
+      path: path ?? '',
+      items: path === 'reports/' ? [q1File] : [reportsFolder],
+      nextToken: undefined,
+    }));
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => result.current.onPathChange('/My files/reports/'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const reportsNode = result.current.items[0]?.items?.find(
+      (i) => i.name === 'reports',
+    );
+    expect(reportsNode?.path).toBe('/My files/reports/');
+
+    const q1Node = reportsNode?.items?.find((i) => i.name === 'q1.pdf');
+    expect(q1Node?.parentPath).toBe(reportsNode?.path);
+  });
+
   it('navigates via onPathChange without leading slash (DialFileManager breadcrumb format)', async () => {
     const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));

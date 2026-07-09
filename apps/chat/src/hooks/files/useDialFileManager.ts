@@ -321,12 +321,14 @@ const buildFromCache = (
   const flat = cache.get(apiPath);
   if (flat == null) return [];
 
+  const parentPathBase = virtualBasePath.replace(/\/$/, '');
+
   return flat.map((item): DialFile => {
     const isFolder = item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder;
     const name = safeDecodeURI(item.name);
     const virtualPath = isFolder
-      ? `${virtualBasePath}/${name}/`
-      : `${virtualBasePath}/${name}`;
+      ? `${parentPathBase}/${name}/`
+      : `${parentPathBase}/${name}`;
 
     const base: DialFile = {
       id: item.path,
@@ -355,7 +357,7 @@ const buildFromCache = (
         cache,
         listingPermissionsCache,
         folderApiPath,
-        `${virtualBasePath}/${name}`,
+        virtualPath,
         item.path,
       );
     }
@@ -1413,7 +1415,7 @@ export const useDialFileManager = ({
 
   const onCopyFiles = useCallback(
     (copiedItems: DialCopiedItem[], _destinationFolder: string) => {
-      if (copiedItems.length === 0) return;
+      if (copiedItems.length === 0 || isCopying || isMoving) return;
 
       const controller = new AbortController();
       copyMoveAbortControllerRef.current = controller;
@@ -1494,7 +1496,7 @@ export const useDialFileManager = ({
 
       void run();
     },
-    [bucket, rootLabel, onNotification, t],
+    [bucket, rootLabel, onNotification, t, isCopying, isMoving],
   );
 
   const cancelCopyMove = useCallback(() => {
@@ -1507,7 +1509,9 @@ export const useDialFileManager = ({
       _sourceFolder: string,
       _destinationFolder: string,
     ) => {
-      if (copiedItems.length === 0) return;
+      if (copiedItems.length === 0 || isCopying || isMoving || isRenaming) {
+        return;
+      }
 
       const built = copiedItems.map((item) => {
         const isFolder = item.nodeType === DialFileNodeType.FOLDER;
@@ -1622,7 +1626,7 @@ export const useDialFileManager = ({
 
         const totalCount = renameDtos.length + moveTotal;
         const totalFailed = renameFailedCount + moveFailedCount;
-        const useMoveCopy = moveDtos.length > 0;
+        const useMoveCopy = moveFailedCount > 0;
 
         if (totalFailed > 0) {
           if (totalFailed === totalCount) {
@@ -1690,7 +1694,16 @@ export const useDialFileManager = ({
 
       void run();
     },
-    [bucket, rootLabel, folderPath, onNotification, t],
+    [
+      bucket,
+      rootLabel,
+      folderPath,
+      onNotification,
+      t,
+      isCopying,
+      isMoving,
+      isRenaming,
+    ],
   );
 
   const clearUploadBatch = useCallback(() => {
