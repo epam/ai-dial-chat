@@ -22,6 +22,7 @@ import {
   GeneratorUtil,
   ItemUtil,
   ModelsUtil,
+  SortingUtil,
   UserUtil,
 } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
@@ -1390,6 +1391,87 @@ dialTest(
           ThemesUtil.getRgbColorByKey(
             ThemeColorAttributes.bgAccentSecondaryAlpha,
           ),
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  `The chat from shared folder becomes active, its history is shown on the central part when owner clicks on the link`,
+  async ({
+    localStorageManager,
+    dialHomePage,
+    chatBarFolderAssertion,
+    chatHeaderAssertion,
+    chatMessagesAssertion,
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-8857');
+    let conversationsInFolder: FolderConversation;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+    let openedConversationName: string;
+
+    await dialTest.step(
+      'Prepare conversations inside folder anf share it via API',
+      async () => {
+        conversationsInFolder =
+          conversationData.prepareFolderWithConversations(2);
+        await dataInjector.createConversations(
+          conversationsInFolder.conversations,
+          conversationsInFolder.folders,
+        );
+        shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink(
+          conversationsInFolder.conversations,
+          true,
+        );
+        const sortedConversationNames = SortingUtil.sortStringsArray(
+          conversationsInFolder.conversations.map((c) => c.name),
+          (i) => i.toLowerCase(),
+          'asc',
+        );
+        openedConversationName = sortedConversationNames[0];
+      },
+    );
+
+    await dialTest.step(
+      'Open share folder link by the owner and verify conversation is opened according to the alphabetical order',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.navigateToUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
+            shareByLinkResponse.invitationLink,
+          ),
+        );
+        await dialHomePage.waitForPageLoaded({
+          waitForAgentInfo: false,
+        });
+        await chatBarFolderAssertion.assertFolderEntityState(
+          { name: conversationsInFolder.folders.name },
+          { name: openedConversationName },
+          'visible',
+        );
+        await chatBarFolderAssertion.assertFolderEntityArrowIconState(
+          { name: conversationsInFolder.folders.name },
+          { name: openedConversationName },
+          'hidden',
+        );
+        await chatBarFolderAssertion.assertFolderEntitySelectedState(
+          { name: conversationsInFolder.folders.name },
+          { name: openedConversationName },
+          true,
+        );
+        await chatBarFolderAssertion.assertFolderNameColor(
+          { name: conversationsInFolder.folders.name },
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentSecondary),
+        );
+
+        await chatHeaderAssertion.assertHeaderTitle(openedConversationName);
+        await chatMessagesAssertion.assertMessagesCount(
+          conversationsInFolder.conversations[0].messages.length,
         );
       },
     );

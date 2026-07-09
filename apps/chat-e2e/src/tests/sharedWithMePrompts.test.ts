@@ -14,7 +14,6 @@ dialSharedWithMeTest(
   'Shared with me. Share prompt.\n' +
     'Shared with me section is opened automatically if to click on the link.\n' +
     'Shared with me. Shared Prompt with parameters is used in message box.\n' +
-    'The prompt is opened if the owner clicks on the link.\n' +
     'Delete prompt from shared with me',
   async ({
     additionalShareUserDialHomePage,
@@ -30,20 +29,9 @@ dialSharedWithMeTest(
     additionalShareUserPromptPreviewModalAssertion,
     additionalShareUserVariableModalAssertion,
     additionalShareUserSendMessageAssertion,
-    localStorageManager,
-    dialHomePage,
-    promptPreviewModalAssertion,
-    sharedWithMePromptAssertion,
-    promptAssertion,
     setTestIds,
   }) => {
-    setTestIds(
-      'EPMRTC-1857',
-      'EPMRTC-2036',
-      'EPMRTC-1935',
-      'EPMRTC-3162',
-      'EPMRTC-3173',
-    );
+    setTestIds('EPMRTC-1857', 'EPMRTC-2036', 'EPMRTC-1935', 'EPMRTC-3173');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const promptTemplate = (param: string) => `Hi ${param}`;
@@ -132,38 +120,6 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Open share prompt link by the owner and verify prompt preview is opened but prompt does not appear under "Shared with me" section',
-      async () => {
-        await localStorageManager.setShowSideBarPanels();
-        await dialHomePage.navigateToUrl(
-          ExpectedConstants.sharedSideBarEntityUrl(
-            shareByLinkResponse.invitationLink,
-          ),
-        );
-        await dialHomePage.waitForPageLoaded({
-          isPromptShared: true,
-        });
-        await promptPreviewModalAssertion.assertPromptPreviewModalState(
-          'visible',
-        );
-        await promptPreviewModalAssertion.assertPromptName(prompt.name);
-        await promptAssertion.assertEntityState(
-          { name: prompt.name },
-          'visible',
-        );
-        await promptAssertion.assertEntityArrowIconState(
-          { name: prompt.name },
-          'hidden',
-        );
-        await sharedWithMePromptAssertion.assertEntityState(
-          { name: prompt.name },
-          'hidden',
-        );
-        await promptAssertion.assertSelectedEntity(prompt.name);
-      },
-    );
-
-    await dialSharedWithMeTest.step(
       'Unshare prompt from "Shared with me" section and verify it is not visible any more',
       async () => {
         await additionalShareUserSharedWithMePrompts.openEntityDropdownMenu(
@@ -234,6 +190,71 @@ dialTest(
         shareApiAssertion.assertSharedWithMeEntityState(
           sharedEntities,
           prompt,
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'The prompt is opened if the owner clicks on the link',
+  async ({
+    promptData,
+    dataInjector,
+    mainUserShareApiHelper,
+    localStorageManager,
+    dialHomePage,
+    promptPreviewModalAssertion,
+    sharedWithMePromptAssertion,
+    prompts,
+    promptAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-3162');
+    let prompt: Prompt;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+
+    await dialSharedWithMeTest.step('Prepare shared prompt link', async () => {
+      prompt = promptData.prepareDefaultPrompt();
+      await dataInjector.createPrompts([prompt]);
+      shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
+        prompt,
+      ]);
+    });
+
+    await dialSharedWithMeTest.step(
+      'Open share prompt link by the owner and verify prompt preview is opened but prompt does not appear under "Shared with me" section',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.navigateToUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
+            shareByLinkResponse.invitationLink,
+          ),
+        );
+        await dialHomePage.waitForPageLoaded({
+          isPromptShared: true,
+        });
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+        await promptPreviewModalAssertion.assertPromptName(prompt.name);
+        await promptAssertion.assertEntityState(
+          { name: prompt.name },
+          'visible',
+        );
+        await promptAssertion.assertElementBackgroundColors(
+          prompts.getEntityByExactName(prompt.name),
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.bgAccentTertiaryAlpha,
+          ),
+        );
+        await promptAssertion.assertEntityArrowIconState(
+          { name: prompt.name },
+          'hidden',
+        );
+        await sharedWithMePromptAssertion.assertEntityState(
+          { name: prompt.name },
           'hidden',
         );
       },
