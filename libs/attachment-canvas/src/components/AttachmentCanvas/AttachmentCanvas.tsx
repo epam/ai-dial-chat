@@ -1,5 +1,6 @@
 import {
   buildCssVars,
+  DEFAULT_MARKDOWN_CLASS_NAMES,
   MarkdownRenderer,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
@@ -30,9 +31,12 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   ariaLabel,
   closeLabel = 'Close',
   onDownload,
+  onCopyText,
   onCopyMarkdown,
   onCopyJson,
   downloadLabel = 'Download',
+  copyTextLabel = 'Copy text',
+  copiedTextLabel = 'Copied!',
   copyMarkdownLabel = 'Copy as Markdown',
   copiedMarkdownLabel = 'Copied!',
   copyJsonLabel = 'Copy as JSON',
@@ -48,10 +52,24 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   codeBlockTheme,
   loadPdf,
 }) => {
+  const [isCopiedText, setIsCopiedText] = useState(false);
   const [isCopiedMarkdown, setIsCopiedMarkdown] = useState(false);
   const [isCopiedJson, setIsCopiedJson] = useState(false);
+  const copyTextResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyJsonResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleCopyText = useCallback(() => {
+    onCopyText?.();
+    if (copyTextResetRef.current != null) {
+      clearTimeout(copyTextResetRef.current);
+    }
+    setIsCopiedText(true);
+    copyTextResetRef.current = setTimeout(
+      () => setIsCopiedText(false),
+      COPY_RESET_MS,
+    );
+  }, [onCopyText]);
 
   const handleCopyMarkdown = useCallback(() => {
     onCopyMarkdown?.();
@@ -95,6 +113,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     [stylesProp],
   );
 
+  const showCopyText =
+    onCopyText != null && content.type === AttachmentContentType.PlainText;
   const showCopyMarkdown =
     onCopyMarkdown != null && content.type === AttachmentContentType.Markdown;
   const showCopyJson =
@@ -143,6 +163,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
             content={content.text}
             isStreaming={false}
             codeBlockTheme={codeBlockTheme}
+            classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
           />
         );
       case AttachmentContentType.Json:
@@ -235,8 +256,24 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       className={mergeClasses(isOpen ? 'mobile:w-full' : 'w-0', className)}
       styles={panelStyles}
       rightActions={
-        showCopyMarkdown || showCopyJson || showDownload ? (
+        showCopyText || showCopyMarkdown || showCopyJson || showDownload ? (
           <>
+            {showCopyText && (
+              <DialGhostIconButton
+                icon={
+                  isCopiedText ? (
+                    <IconCheck size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                  ) : (
+                    <IconCopy size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                  )
+                }
+                aria-label={isCopiedText ? copiedTextLabel : copyTextLabel}
+                tooltipProps={{
+                  tooltip: isCopiedText ? copiedTextLabel : copyTextLabel,
+                }}
+                onClick={handleCopyText}
+              />
+            )}
             {showCopyMarkdown && (
               <DialGhostIconButton
                 icon={
