@@ -1,13 +1,11 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { Card, CatalogEntityType } from '@epam/ai-dial-catalog';
 import type {
+  DeploymentCreationFieldErrorCode,
+  DeploymentCreationForm,
   DeploymentCreationFormFieldErrors,
   DeploymentCreationFormLabels,
   DeploymentCreationFormValues,
-} from '@epam/ai-dial-deployment-creation-form';
-import {
-  DeploymentCreationFieldErrorCode,
-  DeploymentCreationForm,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
