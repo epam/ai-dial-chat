@@ -131,6 +131,7 @@ const AuthTypeSection = ({
                 onLogout={onLogout}
                 disabled={isDisabled}
                 fieldsTooltip={tooltip}
+                withRepair
               />
             )}
           </>
