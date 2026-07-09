@@ -248,6 +248,7 @@ export enum DialFileManagerI18nKeys {
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
   CopyAction = 'dialFileManager.copyAction',
   MoveAction = 'dialFileManager.moveAction',
+  DuplicateAction = 'dialFileManager.duplicateAction',
   CopyingLabel = 'dialFileManager.copyingLabel',
   MovingLabel = 'dialFileManager.movingLabel',
   CopyError = 'dialFileManager.copyError',

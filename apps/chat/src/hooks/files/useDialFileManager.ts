@@ -1728,6 +1728,9 @@ export const useDialFileManager = ({
         labels[DialFileManagerActions.Move] = t(
           DialFileManagerI18nKeys.MoveAction,
         );
+        labels[DialFileManagerActions.Duplicate] = t(
+          DialFileManagerI18nKeys.DuplicateAction,
+        );
       }
     }
     return labels;

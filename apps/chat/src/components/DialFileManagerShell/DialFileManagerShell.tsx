@@ -118,6 +118,9 @@ const DialFileManagerShell: FC<Props> = ({
     if (DialFileManagerActions.Move in tabActionLabels) {
       result[DialFileManagerActions.Move] = labels.moveLabel;
     }
+    if (DialFileManagerActions.Duplicate in tabActionLabels) {
+      result[DialFileManagerActions.Duplicate] = labels.duplicateLabel;
+    }
     return result;
   }, [
     tabActionLabels,
@@ -126,6 +129,7 @@ const DialFileManagerShell: FC<Props> = ({
     labels.renameLabel,
     labels.copyLabel,
     labels.moveLabel,
+    labels.duplicateLabel,
   ]);
 
   const gridOptions = useMemo(

@@ -43,6 +43,7 @@ export interface DialFileManagerShellLabels {
   renamingLabel: string;
   copyLabel: string;
   moveLabel: string;
+  duplicateLabel: string;
   addFolderLabel: string;
   hiddenFilesSwitcherLabel: string;
   getCopyHeader: (count: number, name?: string) => string;

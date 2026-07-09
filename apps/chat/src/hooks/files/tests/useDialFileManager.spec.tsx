@@ -1143,6 +1143,74 @@ describe('useDialFileManager', () => {
       });
     });
 
+    describe('actionLabels — Duplicate', () => {
+      it('includes Duplicate on MyFiles tab with WRITE permission', async () => {
+        mockListFiles.mockResolvedValue({
+          bucket: BUCKET,
+          path: '',
+          items: [],
+          permissions: ['READ', 'WRITE'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeDefined();
+      });
+
+      it('omits Duplicate on MyFiles tab without WRITE permission', async () => {
+        mockListFiles.mockResolvedValue({
+          bucket: BUCKET,
+          path: '',
+          items: [],
+          permissions: ['READ'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeUndefined();
+      });
+
+      it('omits Duplicate on Shared tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeUndefined();
+      });
+
+      it('omits Duplicate on Organization tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Organization,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeUndefined();
+      });
+    });
+
     describe.each([
       DialFileManagerTabs.MyFiles,
       DialFileManagerTabs.Shared,
@@ -1776,6 +1844,95 @@ describe('useDialFileManager', () => {
       await waitFor(() =>
         expect(mockNotification).toHaveBeenCalledWith(
           expect.objectContaining({ variant: NotificationVariant.Error }),
+        ),
+      );
+    });
+
+    it('handles a same-folder destination (duplicate) correctly on success', async () => {
+      mockCopyFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'reports/q1.pdf',
+            destinationPath: 'reports/q1 (1).pdf',
+            success: true,
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onCopyFiles(
+          [
+            {
+              sourceUrl: '/My files/reports/q1.pdf',
+              destinationUrl: '/My files/reports/q1 (1).pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() => expect(mockCopyFiles).toHaveBeenCalledOnce());
+      expect(mockCopyFiles).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            bucket: BUCKET,
+            sourcePath: 'reports/q1.pdf',
+            destinationPath: 'reports/q1 (1).pdf',
+          }),
+        ],
+        expect.anything(),
+      );
+      // Source and destination share the same parent folder — invalidated once.
+      expect(mockListFiles).toHaveBeenCalledTimes(2);
+      expect(mockNotification).not.toHaveBeenCalled();
+    });
+
+    it('shows the existing partial-failure toast for a same-folder destination (duplicate)', async () => {
+      mockCopyFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'a.pdf',
+            destinationPath: 'a (1).pdf',
+            success: true,
+          },
+          {
+            sourcePath: 'b.pdf',
+            destinationPath: 'b (1).pdf',
+            success: false,
+            error: 'Forbidden',
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onCopyFiles(
+          [
+            {
+              sourceUrl: '/My files/a.pdf',
+              destinationUrl: '/My files/a (1).pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+            {
+              sourceUrl: '/My files/b.pdf',
+              destinationUrl: '/My files/b (1).pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files',
+        );
+      });
+
+      await waitFor(() =>
+        expect(mockNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: NotificationVariant.Error,
+            message: 'dialFileManager.copyPartialError',
+          }),
         ),
       );
     });

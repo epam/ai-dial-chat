@@ -91,15 +91,13 @@ Items with a missing `updatedAt` SHALL display an empty cell; no error or fallba
 
 | Tab | Grid/bulk/tree actions |
 |-----|------------------------|
-| `my_files` | Download, Delete, Rename, Copy, Move |
+| `my_files` | Download, Delete, Rename, Copy, Move, Duplicate |
 | `shared` | Download only |
 | `organization` | Download only |
 
 Delete SHALL NOT appear in `actionLabels` for `shared` or `organization` tabs even when the current folder has WRITE permission.
 
-Rename SHALL NOT appear in `actionLabels` for `shared` or `organization` tabs. On `my_files`, Rename SHALL be included only when `uploadEnabled` is `true` (WRITE permission on the current folder). `isRenameFileAvailable` SHALL mirror `uploadEnabled`.
-
-Copy and Move SHALL NOT appear in `actionLabels` for `shared` or `organization` tabs. On `my_files`, Copy and Move SHALL each be included only when `uploadEnabled` is `true`, using the same WRITE-permission gate as Rename and Delete.
+Rename, Copy, Move, and Duplicate SHALL NOT appear in `actionLabels` for `shared` or `organization` tabs. On `my_files`, each of Rename, Copy, Move, and Duplicate SHALL be included only when `uploadEnabled` is `true` (WRITE permission on the current folder). `isRenameFileAvailable` SHALL mirror `uploadEnabled`.
 
 #### Scenario: My files shows Delete action
 
@@ -155,6 +153,26 @@ Copy and Move SHALL NOT appear in `actionLabels` for `shared` or `organization` 
 
 - **WHEN** the active tab is `organization`
 - **THEN** `gridOptions.actionLabels` does NOT include `DialFileManagerActions.Copy` or `DialFileManagerActions.Move`
+
+#### Scenario: My files with WRITE shows Duplicate action
+
+- **WHEN** the active tab is `my_files` and the current folder has WRITE permission
+- **THEN** `gridOptions.actionLabels` includes `DialFileManagerActions.Duplicate`
+
+#### Scenario: My files without WRITE hides Duplicate action
+
+- **WHEN** the active tab is `my_files` and the current folder does NOT have WRITE permission
+- **THEN** `gridOptions.actionLabels` does NOT include `DialFileManagerActions.Duplicate`
+
+#### Scenario: Shared tab hides Duplicate action
+
+- **WHEN** the active tab is `shared`
+- **THEN** `gridOptions.actionLabels` does NOT include `DialFileManagerActions.Duplicate`
+
+#### Scenario: Organization tab hides Duplicate action
+
+- **WHEN** the active tab is `organization`
+- **THEN** `gridOptions.actionLabels` does NOT include `DialFileManagerActions.Duplicate`
 
 ---
 

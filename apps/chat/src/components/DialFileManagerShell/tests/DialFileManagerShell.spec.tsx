@@ -12,7 +12,12 @@ import DialFileManagerShell from '../DialFileManagerShell';
 import type { DialFileManagerShellLabels } from '../types/labels';
 
 const capturedDialFileManagerProps: {
-  current: { onCreateFolder?: unknown } | null;
+  current: {
+    onCreateFolder?: unknown;
+    gridOptions?: {
+      actionLabels?: Partial<Record<DialFileManagerActions, string>>;
+    };
+  } | null;
 } = { current: null };
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
@@ -23,6 +28,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       emptyStateTitle?: string;
       destinationFolderPopupOptions?: { sourceFolder?: string };
       onCreateFolder?: unknown;
+      gridOptions?: {
+        actionLabels?: Partial<Record<DialFileManagerActions, string>>;
+      };
     }) => {
       capturedDialFileManagerProps.current = props;
       return (
@@ -99,6 +107,7 @@ const baseLabels: DialFileManagerShellLabels = {
   renamingLabel: 'Renaming…',
   copyLabel: 'Copy',
   moveLabel: 'Move',
+  duplicateLabel: 'Duplicate',
   addFolderLabel: 'Add folder',
   hiddenFilesSwitcherLabel: 'Show hidden files',
   getCopyHeader: (count, name) =>
@@ -230,6 +239,31 @@ describe('DialFileManagerShell', () => {
     expect(capturedDialFileManagerProps.current?.onCreateFolder).toBe(
       onCreateFolder,
     );
+  });
+
+  it('passes Duplicate through to DialFileManager action labels when the hook result includes it', () => {
+    renderShell({
+      actionLabels: {
+        [DialFileManagerActions.Download]: 'Download',
+        [DialFileManagerActions.Duplicate]: 'Duplicate',
+      },
+    });
+    expect(
+      capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
+        DialFileManagerActions.Duplicate
+      ],
+    ).toBe(baseLabels.duplicateLabel);
+  });
+
+  it('omits Duplicate from DialFileManager action labels when the hook result excludes it', () => {
+    renderShell({
+      actionLabels: { [DialFileManagerActions.Download]: 'Download' },
+    });
+    expect(
+      capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
+        DialFileManagerActions.Duplicate
+      ],
+    ).toBeUndefined();
   });
 
   it('never imports useTranslation from react-i18next', () => {

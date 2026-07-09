@@ -406,6 +406,7 @@
     "renameNameTooLong": "Name must be 255 characters or fewer",
     "copyAction": "Copy",
     "moveAction": "Move",
+    "duplicateAction": "Duplicate",
     "copyingLabel": "Copying...",
     "movingLabel": "Moving...",
     "copyError": "Failed to copy the selected items",

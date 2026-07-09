@@ -156,6 +156,7 @@ const DialFileManagerPage: FC = () => {
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
       copyLabel: t(DialFileManagerI18nKeys.CopyAction),
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
+      duplicateLabel: t(DialFileManagerI18nKeys.DuplicateAction),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
       hiddenFilesSwitcherLabel: t(
         DialFileManagerI18nKeys.FolderPickerHiddenFilesLabel,
