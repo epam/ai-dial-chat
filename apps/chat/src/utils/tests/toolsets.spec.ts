@@ -21,6 +21,7 @@ const baseForm = (): ToolsetFormData => ({
   iconUrl: '',
   description: '',
   topics: [],
+  intro: '',
   endpoint: 'https://my-toolset.example.com/mcp',
   protocol: ToolsetTransportType.Http,
   allowedTools: [],
@@ -84,6 +85,14 @@ describe('formToToolsetBody', () => {
     });
     expect(body.description).toBeUndefined();
     expect(body.topics).toBeUndefined();
+    expect(body.intro).toBeUndefined();
+  });
+
+  it('includes a trimmed intro when provided', () => {
+    const form = baseForm();
+    form.intro = '  A short pitch  ';
+    const body = formToToolsetBody(form);
+    expect(body.intro).toBe('A short pitch');
   });
 
   it('includes the API key header when API_KEY auth is selected', () => {

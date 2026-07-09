@@ -19,6 +19,7 @@ import {
   DialFabButton,
   DialNotification,
   NotificationVariant,
+  DIAL_ICON_SIZE,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -559,7 +560,7 @@ const ConversationView: FC<Props> = ({
             )}
             <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
-              iconBefore={<IconCopy />}
+              iconBefore={<IconCopy size={DIAL_ICON_SIZE.MD} />}
               onClick={onDuplicateConversation}
             />
           </div>

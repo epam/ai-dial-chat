@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
 import styles from './SearchInput.module.scss';
@@ -34,7 +35,7 @@ export const SearchInput: FC<SearchInputProps> = memo(
         )}
       >
         <IconSearch
-          size={16}
+          size={DIAL_ICON_SIZE.SM}
           stroke={1.5}
           className={mergeClasses('shrink-0', iconClassName)}
         />

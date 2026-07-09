@@ -593,6 +593,39 @@ describe('ToolsetsService — write operations', () => {
       });
     });
 
+    it('maps intro to the top-level intro field in the PUT body', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+        bucketSdkOk,
+      );
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.createToolset('user1', 'token', {
+        ...baseBody,
+        intro: 'A short pitch',
+      });
+
+      const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
+      expect(sentBody.intro).toBe('A short pitch');
+    });
+
+    it('does not set intro when it is omitted', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+        bucketSdkOk,
+      );
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.createToolset('user1', 'token', baseBody);
+
+      const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
+      expect(sentBody).not.toHaveProperty('intro');
+    });
+
     it('throws UnauthorizedException when the bucket call returns 401', async () => {
       const { service } = makeWriteService();
       vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(

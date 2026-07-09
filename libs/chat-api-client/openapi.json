@@ -2549,7 +2549,9 @@
           }
         },
         "summary": "Copy files and folders",
-        "tags": ["files"]
+        "tags": [
+          "files"
+        ]
       }
     },
     "/api/v1/files/move": {
@@ -2594,7 +2596,9 @@
           }
         },
         "summary": "Move files and folders across folders",
-        "tags": ["files"]
+        "tags": [
+          "files"
+        ]
       }
     },
     "/api/v1/files/download": {
@@ -3085,6 +3089,11 @@
             "type": "string",
             "example": "A custom application."
           },
+          "intro": {
+            "type": "string",
+            "example": "Summarizes long documents in one line.",
+            "maxLength": 90
+          },
           "input_attachment_types": {
             "example": [
               "image/png"
@@ -3150,6 +3159,11 @@
             "items": {
               "type": "string"
             }
+          },
+          "intro": {
+            "type": "string",
+            "example": "Summarizes long documents in one line.",
+            "maxLength": 90
           },
           "applicationProperties": {
             "type": "object",
@@ -3238,6 +3252,11 @@
           "description": {
             "type": "string",
             "description": "Description from DIAL Core"
+          },
+          "intro": {
+            "type": "string",
+            "description": "Short catalog-friendly intro from DIAL Core",
+            "maxLength": 90
           },
           "interfaces": {
             "description": "Interface types supported by this deployment",
@@ -3934,6 +3953,11 @@
             "type": "string",
             "example": "My toolset description"
           },
+          "intro": {
+            "type": "string",
+            "example": "Runs your toolset in one line.",
+            "maxLength": 90
+          },
           "icon_url": {
             "type": "string",
             "example": ""
@@ -4115,6 +4139,11 @@
             "items": {
               "type": "string"
             }
+          },
+          "intro": {
+            "type": "string",
+            "example": "Runs your toolset in one line.",
+            "maxLength": 90
           },
           "endpoint": {
             "type": "string",
@@ -5479,7 +5508,10 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": ["item", "folder"]
+            "enum": [
+              "item",
+              "folder"
+            ]
           },
           "name": {
             "type": "string",
@@ -5505,7 +5537,9 @@
             }
           }
         },
-        "required": ["items"]
+        "required": [
+          "items"
+        ]
       },
       "CopyItemResultDto": {
         "type": "object",
@@ -5527,7 +5561,11 @@
             "description": "Human-readable error reason when success is false"
           }
         },
-        "required": ["sourcePath", "destinationPath", "success"]
+        "required": [
+          "sourcePath",
+          "destinationPath",
+          "success"
+        ]
       },
       "CopyFilesResponseDto": {
         "type": "object",
@@ -5539,7 +5577,9 @@
             }
           }
         },
-        "required": ["results"]
+        "required": [
+          "results"
+        ]
       },
       "MoveItemDto": {
         "type": "object",
@@ -5561,7 +5601,10 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": ["item", "folder"]
+            "enum": [
+              "item",
+              "folder"
+            ]
           },
           "name": {
             "type": "string",
@@ -5587,7 +5630,9 @@
             }
           }
         },
-        "required": ["items"]
+        "required": [
+          "items"
+        ]
       },
       "MoveItemResultDto": {
         "type": "object",
@@ -5609,7 +5654,11 @@
             "description": "Human-readable error reason when success is false"
           }
         },
-        "required": ["sourcePath", "destinationPath", "success"]
+        "required": [
+          "sourcePath",
+          "destinationPath",
+          "success"
+        ]
       },
       "MoveFilesResponseDto": {
         "type": "object",
@@ -5621,7 +5670,9 @@
             }
           }
         },
-        "required": ["results"]
+        "required": [
+          "results"
+        ]
       },
       "RateMessageDto": {
         "type": "object",

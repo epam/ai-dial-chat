@@ -294,6 +294,36 @@ describe('ApplicationsService', () => {
       expect(sentBody).not.toHaveProperty('topics');
     });
 
+    it('maps intro to the top-level intro field in SDK body', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', {
+        ...body,
+        intro: 'A short pitch',
+      });
+
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          body: expect.objectContaining({
+            intro: 'A short pitch',
+          }),
+        }),
+      );
+    });
+
+    it('does not set intro when it is omitted', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
+
+      await service.createApplication('user1', 'token', body);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('intro');
+    });
+
     it('forwards Authorization header to bucket and save application SDK calls', async () => {
       const { service } = makeService();
       const { getUserBucketSpy, saveCustomApplicationSpy } =

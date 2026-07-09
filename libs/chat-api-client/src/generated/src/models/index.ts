@@ -44,6 +44,12 @@ export interface ApplicationDto {
   description?: string;
   /**
    *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  intro?: string;
+  /**
+   *
    * @type {Array<string>}
    * @memberof ApplicationDto
    */
@@ -986,6 +992,12 @@ export interface CreateApplicationBodyDto {
   topics?: Array<string>;
   /**
    *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  intro?: string;
+  /**
+   *
    * @type {object}
    * @memberof CreateApplicationBodyDto
    */
@@ -1326,6 +1338,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   description?: string;
+  /**
+   * Short catalog-friendly intro from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  intro?: string;
   /**
    * Interface types supported by this deployment
    * @type {Array<string>}
@@ -2071,6 +2089,12 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  intro?: string;
   /**
    *
    * @type {string}
@@ -3175,6 +3199,12 @@ export interface ToolsetBodyDto {
    * @memberof ToolsetBodyDto
    */
   topics?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  intro?: string;
   /**
    *
    * @type {string}

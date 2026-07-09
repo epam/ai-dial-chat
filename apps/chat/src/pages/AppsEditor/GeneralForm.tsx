@@ -1,12 +1,16 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { Card, CatalogEntityType } from '@epam/ai-dial-catalog';
+import type {
+  DeploymentCreationFormFieldErrors,
+  DeploymentCreationFormLabels,
+  DeploymentCreationFormValues,
+} from '@epam/ai-dial-deployment-creation-form';
 import {
-  DialInput,
-  DialNotification,
-  DialTagInput,
-  DialTextarea,
-  NotificationVariant,
-} from '@epam/ai-dial-ui-kit';
+  DeploymentCreationFieldErrorCode,
+  DeploymentCreationForm,
+  validateDeploymentCreationFields,
+} from '@epam/ai-dial-deployment-creation-form';
+import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,
   memo,
@@ -21,9 +25,6 @@ import { useTranslation } from 'react-i18next';
 import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
 import { isQuickAppSchema } from '../../utils/application-schema';
-
-const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
-const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
 export interface GeneralFormHandle {
   submit: () => Promise<void>;
@@ -46,19 +47,24 @@ interface Props {
   onCreated: (appId: string) => void;
 }
 
+const EMPTY_VALUES: DeploymentCreationFormValues = {
+  name: '',
+  description: '',
+  iconUrl: '',
+  version: '',
+  topics: [],
+  intro: '',
+};
+
 const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   { schemaId, appId, initialValues, onCreated },
   ref,
 ) {
   const { t } = useTranslation();
 
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [iconUrl, setIconUrl] = useState('');
-  const [version, setVersion] = useState('');
-  const [topics, setTopics] = useState<string[]>([]);
-  const [nameError, setNameError] = useState('');
-  const [versionError, setVersionError] = useState('');
+  const [values, setValues] =
+    useState<DeploymentCreationFormValues>(EMPTY_VALUES);
+  const [errors, setErrors] = useState<DeploymentCreationFormFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const hasSeededInitialValuesRef = useRef(false);
@@ -73,34 +79,74 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     setTopics(initialValues.topics ?? []);
   }, [initialValues]);
 
-  const handleNameChange = (value?: string) => {
-    setName(value ?? '');
-    if (nameError) setNameError('');
-  };
+  const labels: DeploymentCreationFormLabels = useMemo(
+    () => ({
+      name: {
+        label: t(AppsEditorI18nKeys.GeneralFormNameLabel),
+        placeholder: t(AppsEditorI18nKeys.GeneralFormNamePlaceholder),
+      },
+      description: {
+        label: t(AppsEditorI18nKeys.GeneralFormDescriptionLabel),
+        placeholder: t(AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder),
+      },
+      iconUrl: {
+        label: t(AppsEditorI18nKeys.GeneralFormIconUrlLabel),
+        placeholder: t(AppsEditorI18nKeys.GeneralFormIconUrlPlaceholder),
+      },
+      version: {
+        label: t(AppsEditorI18nKeys.GeneralFormVersionLabel),
+        placeholder: t(AppsEditorI18nKeys.GeneralFormVersionPlaceholder),
+      },
+      topics: {
+        label: t(AppsEditorI18nKeys.GeneralFormTopicsLabel),
+        placeholder: t(AppsEditorI18nKeys.GeneralFormTopicsPlaceholder),
+      },
+      intro: {
+        label: t(AppsEditorI18nKeys.GeneralFormIntroLabel),
+        placeholder: t(AppsEditorI18nKeys.GeneralFormIntroPlaceholder),
+      },
+    }),
+    [t],
+  );
 
-  const handleVersionChange = (value?: string) => {
-    setVersion(value ?? '');
-    if (versionError) setVersionError('');
+  const handleChange = (patch: Partial<DeploymentCreationFormValues>) => {
+    setValues((prev) => ({ ...prev, ...patch }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      for (const key of Object.keys(patch)) {
+        delete next[key as keyof DeploymentCreationFormFieldErrors];
+      }
+      return next;
+    });
   };
 
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;
-    const trimmedName = name.trim();
-    const trimmedVersion = version.trim();
-    if (!trimmedName) {
-      setNameError(t(AppsEditorI18nKeys.GeneralFormNameRequired));
+    const codes = validateDeploymentCreationFields(values, {
+      validateNamePattern: true,
+      validateVersionPattern: true,
+    });
+    if (codes.name || codes.version || codes.intro) {
+      let nameError: string | undefined;
+      if (codes.name === DeploymentCreationFieldErrorCode.Required) {
+        nameError = t(AppsEditorI18nKeys.GeneralFormNameRequired);
+      } else if (
+        codes.name === DeploymentCreationFieldErrorCode.InvalidFormat
+      ) {
+        nameError = t(AppsEditorI18nKeys.GeneralFormNameInvalid);
+      }
+
+      setErrors({
+        name: nameError,
+        version: codes.version
+          ? t(AppsEditorI18nKeys.GeneralFormVersionInvalid)
+          : undefined,
+        intro: codes.intro
+          ? t(AppsEditorI18nKeys.GeneralFormIntroTooLong)
+          : undefined,
+      });
       return;
     }
-    if (!NAME_PATTERN.test(trimmedName)) {
-      setNameError(t(AppsEditorI18nKeys.GeneralFormNameInvalid));
-      return;
-    }
-    if (trimmedVersion && !VERSION_PATTERN.test(trimmedVersion)) {
-      setVersionError(t(AppsEditorI18nKeys.GeneralFormVersionInvalid));
-      return;
-    }
-    setNameError('');
-    setVersionError('');
 
     if (appId) {
       onCreated(appId);
@@ -120,12 +166,13 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
           }
         : undefined;
       const result = await createApplication({
-        name: trimmedName,
+        name: values.name.trim(),
         type: schemaId,
-        description: description.trim() || undefined,
-        iconUrl: iconUrl.trim() || undefined,
-        version: trimmedVersion || undefined,
-        topics: topics.length > 0 ? topics : undefined,
+        description: values.description.trim() || undefined,
+        iconUrl: values.iconUrl.trim() || undefined,
+        version: values.version.trim() || undefined,
+        topics: values.topics.length > 0 ? values.topics : undefined,
+        intro: values.intro.trim() || undefined,
         applicationProperties,
       });
       onCreated(result.id);
@@ -134,18 +181,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     } finally {
       setIsSubmitting(false);
     }
-  }, [
-    isSubmitting,
-    name,
-    version,
-    schemaId,
-    appId,
-    description,
-    iconUrl,
-    topics,
-    onCreated,
-    t,
-  ]);
+  }, [isSubmitting, values, appId, t, onCreated, schemaId]);
 
   useImperativeHandle(ref, () => ({ submit: handleSubmit }), [handleSubmit]);
 
@@ -153,15 +189,15 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     () => ({
       id: 'preview',
       type: CatalogEntityType.Application,
-      name,
-      version,
+      name: values.name,
+      version: values.version,
       lastUsed: '',
-      description,
+      description: values.description,
       folder: [],
-      topics,
-      iconUrl: iconUrl.trim() || undefined,
+      topics: values.topics,
+      iconUrl: values.iconUrl.trim() || undefined,
     }),
-    [name, version, description, topics, iconUrl],
+    [values],
   );
 
   return (
@@ -173,60 +209,13 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         void handleSubmit();
       }}
     >
-      <div className="flex h-full w-1/2 flex-col overflow-y-auto border-e border-e-primary">
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          <DialInput
-            id="app-name"
-            value={name}
-            onChange={handleNameChange}
-            labelProps={{
-              label: t(AppsEditorI18nKeys.GeneralFormNameLabel),
-              required: true,
-            }}
-            placeholder={t(AppsEditorI18nKeys.GeneralFormNamePlaceholder)}
-            error={nameError || undefined}
-            invalid={!!nameError}
-          />
-
-          <DialTextarea
-            id="app-description"
-            value={description}
-            onChange={setDescription}
-            labelProps={{
-              label: t(AppsEditorI18nKeys.GeneralFormDescriptionLabel),
-            }}
-            placeholder={t(
-              AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder,
-            )}
-          />
-
-          <DialInput
-            id="app-icon-url"
-            value={iconUrl}
-            onChange={(value) => setIconUrl(value ?? '')}
-            labelProps={{
-              label: t(AppsEditorI18nKeys.GeneralFormIconUrlLabel),
-            }}
-            placeholder={t(AppsEditorI18nKeys.GeneralFormIconUrlPlaceholder)}
-          />
-
-          <DialInput
-            id="app-version"
-            value={version}
-            onChange={handleVersionChange}
-            labelProps={{
-              label: t(AppsEditorI18nKeys.GeneralFormVersionLabel),
-            }}
-            placeholder={t(AppsEditorI18nKeys.GeneralFormVersionPlaceholder)}
-            error={versionError || undefined}
-            invalid={!!versionError}
-          />
-
-          <DialTagInput
-            elementId="app-topics"
-            label={t(AppsEditorI18nKeys.GeneralFormTopicsLabel)}
-            placeholder={t(AppsEditorI18nKeys.GeneralFormTopicsPlaceholder)}
-            onChange={setTopics}
+      <div className="flex h-full w-1/2 flex-col border-e border-e-tertiary">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+          <DeploymentCreationForm
+            values={values}
+            errors={errors}
+            onChange={handleChange}
+            labels={labels}
           />
 
           {submitError && (
