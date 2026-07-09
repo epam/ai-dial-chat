@@ -136,7 +136,7 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 The backend SHALL implement the deployments feature in `apps/chat-api/src/deployments/` following the established domain pattern:
 
 - `deployments.controller.ts` — thin controller with `@Get() listDeployments(@Query() query: DeploymentsQueryDto, @Req() req)`
-- `deployments.service.ts` — extends `AppService`; calls SDK `listDeployments`; maps and caches results
+- `deployments.service.ts` — `DeploymentsService` injects `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) for the shared DIAL SDK client; calls SDK `listDeployments`; maps and caches results
 - `deployments.module.ts` — `DeploymentsModule` providing `DeploymentsService`; no external domain imports needed
 - `dto/deployment-item.dto.ts` — `DeploymentItemDto` and `DeploymentsResponseDto` with `@ApiProperty` decorators
 - `dto/deployments-query.dto.ts` — `DeploymentsQueryDto` with `interface_type` field: `@IsOptional`, `@IsArray`, `@IsIn([...], { each: true })`, `@Transform` for comma-separated coercion

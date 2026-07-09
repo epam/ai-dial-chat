@@ -1,21 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { AppService } from '../app/app.service';
 import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import type { EnvironmentVariables } from '../config/environment.config';
+import { DialClientService } from '../dial/dial-client.service';
 import type { RateMessageDto } from './dto/rate-message.dto';
 
 @Injectable()
-export class RateService extends AppService {
-  protected override logger = new Logger(RateService.name);
+export class RateService {
+  private readonly logger = new Logger(RateService.name);
 
-  constructor(configService: ConfigService<EnvironmentVariables>) {
-    super(configService);
-  }
+  constructor(private readonly dialClient: DialClientService) {}
 
   async rateMessage(dto: RateMessageDto, accessToken: string): Promise<void> {
-    const url = `${this.baseUrl}/v1/${encodeURIComponent(dto.modelId)}/rate`;
+    const url = `${this.dialClient.baseUrl}/v1/${encodeURIComponent(dto.modelId)}/rate`;
 
     this.logger.debug(
       `Rating message: responseId=${dto.responseId}, rate=${dto.rate}, modelId=${dto.modelId}`,

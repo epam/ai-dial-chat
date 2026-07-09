@@ -3,7 +3,6 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
-import { AppService } from '../app/app.service';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
@@ -11,6 +10,7 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
+import { DialClientService } from '../dial/dial-client.service';
 import type { DeploymentLimitsResponseDto } from '../openapi/openapi-response.dto';
 import { UserConfigService } from '../user-config/user-config.service';
 import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
@@ -107,23 +107,23 @@ const mapToDeploymentItem = (
 };
 
 @Injectable()
-export class DeploymentsService extends AppService {
-  protected override readonly logger = new Logger(DeploymentsService.name);
+export class DeploymentsService {
+  private readonly logger = new Logger(DeploymentsService.name);
   private readonly featuredIds: Set<string>;
   private readonly hiddenTags: Set<string>;
 
   constructor(
+    private readonly dialClient: DialClientService,
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly userConfigService: UserConfigService,
   ) {
-    super(configService);
     this.featuredIds = new Set(
-      this.configService.get<string[]>('FEATURED_MODEL_IDS') ?? [],
+      configService.get<string[]>('FEATURED_MODEL_IDS') ?? [],
     );
 
     this.hiddenTags = new Set(
-      this.configService.get<string[]>('HIDDEN_ENTITY_TAGS') ?? [],
+      configService.get<string[]>('HIDDEN_ENTITY_TAGS') ?? [],
     );
   }
 
@@ -157,7 +157,7 @@ export class DeploymentsService extends AppService {
       allItems = cached;
     } else {
       try {
-        const result = await this.client.listDeployments({
+        const result = await this.dialClient.client.listDeployments({
           headers: getBearerAuthHeaders(accessToken),
           params: interfaceFilter
             ? { query: { interface_type: interfaceFilter } }
@@ -231,9 +231,12 @@ export class DeploymentsService extends AppService {
     }
 
     try {
-      const result = await this.client.configurationDeployment(name, {
-        headers: getBearerAuthHeaders(accessToken),
-      });
+      const result = await this.dialClient.client.configurationDeployment(
+        name,
+        {
+          headers: getBearerAuthHeaders(accessToken),
+        },
+      );
       if (result.error) {
         return mapDialHttpStatus(
           result.response.status,
@@ -270,9 +273,12 @@ export class DeploymentsService extends AppService {
     accessToken: string,
   ): Promise<DeploymentLimitsResponseDto> {
     try {
-      const result = await this.client.getDeploymentLimits(deploymentName, {
-        headers: getBearerAuthHeaders(accessToken),
-      });
+      const result = await this.dialClient.client.getDeploymentLimits(
+        deploymentName,
+        {
+          headers: getBearerAuthHeaders(accessToken),
+        },
+      );
       if (result.error) {
         return mapDialHttpStatus(
           result.response.status,
