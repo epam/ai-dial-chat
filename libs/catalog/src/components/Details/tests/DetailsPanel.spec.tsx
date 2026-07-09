@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CatalogItem } from '../../../models/catalog-item';
-import { AccessRole } from '../../../models/folder-access';
 import { PublishFolderNode } from '../../../models/publish';
 import { CatalogEntityType } from '../../../types/entity-type';
 import { DetailsPanel } from '../DetailsPanel';
@@ -73,22 +72,11 @@ vi.mock('../ApiDetails', () => ({ ApiDetails: () => <div>Api</div> }));
 vi.mock('../../PublishPanel/PublishPanel', () => ({
   PublishPanel: ({
     onSelectedFolderPathChange,
-    folderAccess,
-    currentUserId,
   }: {
     onSelectedFolderPathChange: (path: string[]) => void;
-    folderAccess?: { people: { name: string }[] };
-    currentUserId: string;
   }) => (
     <div>
       <span>Publish panel</span>
-      <span>currentUserId: {currentUserId}</span>
-      <span>
-        folderAccess:{' '}
-        {folderAccess
-          ? folderAccess.people.map((p) => p.name).join(', ')
-          : 'none'}
-      </span>
       <button onClick={() => onSelectedFolderPathChange(['Shared'])}>
         Select Shared
       </button>
@@ -210,24 +198,6 @@ describe('DetailsPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(screen.getByText('Summary')).toBeTruthy();
     expect(screen.queryByText('Publish panel')).toBeNull();
-  });
-
-  it('resolves folder access only after a folder is selected, and passes currentUserId through', async () => {
-    const getFolderAccess = vi.fn(() => ({
-      people: [{ id: 'you', name: 'Yuliia M.', role: AccessRole.Owner }],
-      groups: [],
-    }));
-    renderPanel({ getFolderAccess, currentUserId: 'you' });
-    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-    expect(screen.getByText('folderAccess: none')).toBeTruthy();
-    expect(getFolderAccess).not.toHaveBeenCalled();
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Select Shared' }),
-    );
-    expect(getFolderAccess).toHaveBeenCalledWith(['Shared']);
-    expect(screen.getByText('folderAccess: Yuliia M.')).toBeTruthy();
-    expect(screen.getByText('currentUserId: you')).toBeTruthy();
   });
 
   it('disables the Back button while a publish request is in flight', async () => {

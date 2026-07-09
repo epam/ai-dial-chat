@@ -42,9 +42,6 @@ export const Catalog: FC<CatalogProps> = ({
   onPublish,
   onPublishSuccess,
   onCreatePublishFolder,
-  getFolderAccess,
-  currentUserId,
-  onAddFolderAccessMember,
   publishTexts,
   onFetchAboutContent,
   onCreateClick,
@@ -362,9 +359,6 @@ export const Catalog: FC<CatalogProps> = ({
           onPublish={onPublish}
           onPublishSuccess={onPublishSuccess}
           onCreatePublishFolder={onCreatePublishFolder}
-          getFolderAccess={getFolderAccess}
-          currentUserId={currentUserId}
-          onAddFolderAccessMember={onAddFolderAccessMember}
           publishTexts={publishTexts}
           texts={detailsTexts}
         />

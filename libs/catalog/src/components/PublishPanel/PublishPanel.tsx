@@ -7,7 +7,6 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useMemo, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
-import { AccessRole, FolderAccessData } from '../../models/folder-access';
 import {
   PublishCalloutKind,
   PublishFolderNode,
@@ -15,7 +14,6 @@ import {
 } from '../../models/publish';
 import { derivePublishState } from '../../utils/publish-state';
 import { EntityHeader } from '../EntityHeader/EntityHeader';
-import { FolderAccess } from '../FolderAccess/FolderAccess';
 import { PublishFolderPicker } from '../PublishFolderPicker/PublishFolderPicker';
 import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
 
@@ -29,8 +27,6 @@ export interface PublishPanelTexts {
   searchPlaceholder?: string;
   /** Accessible label for the search input's clear button. Default: `'Clear search'`. */
   clearSearchAriaLabel?: string;
-  /** Label above the folder-access section, shown once a folder is selected. Default: `'Folder access'`. */
-  folderAccessLabel?: string;
   /** Label above the publish history list. Default: `'Versions history'`. */
   historyLabel?: string;
   /** Warning callout body shown when the folder already has this version; `{version}` is replaced. */
@@ -64,29 +60,14 @@ export interface PublishPanelProps {
   hasWriteAccess: boolean;
   /** Whether a publish request is currently in flight. */
   isSubmitting: boolean;
-  /** Who has access to `selectedFolderPath`, for the "Folder access" section. Omitted (or `undefined`) while no folder is selected. */
-  folderAccess?: FolderAccessData;
-  /** The viewer's own id, used to label their own row "(you)" in the folder-access list. */
-  currentUserId: string;
-  /**
-   * Called with the new member's name and selected role when the user
-   * confirms the folder-access section's inline add-member row. The row is
-   * hidden when omitted.
-   */
-  onAddFolderAccessMember?: (
-    folderPath: string[],
-    name: string,
-    role: AccessRole,
-  ) => void;
   /** Text overrides for all user-visible strings. */
   texts?: PublishPanelTexts;
 }
 
 /**
  * Scrollable body of the Publish flow: entity summary, destination folder
- * picker (with a replace-warning or no-access callout when applicable), a
- * folder-access section once a folder is selected, and the publish history
- * list. The action footer is a sibling rendered by the host (see
+ * picker (with a replace-warning or no-access callout when applicable), and
+ * the publish history list. The action footer is a sibling rendered by the host (see
  * {@link PublishFooter}) so it can stay pinned outside this scroll area.
  */
 export const PublishPanel: FC<PublishPanelProps> = ({
@@ -99,9 +80,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   hasExistingVersionInFolder,
   hasWriteAccess,
   isSubmitting,
-  folderAccess,
-  currentUserId,
-  onAddFolderAccessMember,
   texts = {},
 }) => {
   const {
@@ -109,7 +87,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     folderLabel = 'Publish to folder',
     searchPlaceholder = 'Search folders',
     clearSearchAriaLabel = 'Clear search',
-    folderAccessLabel = 'Folder access',
     historyLabel = 'Versions history',
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
@@ -244,26 +221,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           </div>
         )}
       </div>
-
-      {Boolean(selectedFolderPath?.length) && (
-        <div>
-          <div className="dial-body-semi-text mb-2 text-primary">
-            {folderAccessLabel}
-          </div>
-          <FolderAccess
-            people={folderAccess?.people ?? []}
-            groups={folderAccess?.groups ?? []}
-            currentUserId={currentUserId}
-            isLoading={folderAccess?.isLoading}
-            error={folderAccess?.error}
-            onAddMember={
-              onAddFolderAccessMember &&
-              ((name, role) =>
-                onAddFolderAccessMember(selectedFolderPath ?? [], name, role))
-            }
-          />
-        </div>
-      )}
 
       {Boolean(selectedFolderPath?.length) && (
         <div>

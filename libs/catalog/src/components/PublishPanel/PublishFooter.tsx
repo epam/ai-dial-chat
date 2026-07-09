@@ -40,8 +40,7 @@ export interface PublishFooterProps {
 /**
  * Action row for the Publish flow: Cancel and Publish/Update buttons.
  * Rendered outside the scrollable body so it stays pinned to the bottom.
- * Both Publish and Cancel use secondary/neutral styling (Publish matches
- * the "Add member" button in the folder-access section) — neither is an
+ * Both Publish and Cancel use secondary/neutral styling — neither is an
  * accented primary action.
  */
 export const PublishFooter: FC<PublishFooterProps> = ({

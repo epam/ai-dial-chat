@@ -1,9 +1,8 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CatalogItem } from '../../../models/catalog-item';
-import { AccessRole } from '../../../models/folder-access';
 import {
   PublishFolderNode,
   PublishHistoryEntry,
@@ -106,7 +105,6 @@ const renderPanel = (props?: Partial<ComponentProps<typeof PublishPanel>>) =>
       hasExistingVersionInFolder={false}
       hasWriteAccess={true}
       isSubmitting={false}
-      currentUserId="you"
       {...props}
     />,
   );
@@ -131,70 +129,6 @@ describe('PublishPanel', () => {
   it('shows the history section once a folder is selected', () => {
     renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
     expect(screen.getByText('Versions history')).toBeTruthy();
-  });
-
-  it('hides the folder-access section until a folder is selected', () => {
-    renderPanel();
-    expect(screen.queryByText('Folder access')).toBeNull();
-  });
-
-  it('shows the folder-access section once a folder is selected', () => {
-    renderPanel({
-      selectedFolderPath: ['Shared', 'Data Science'],
-      folderAccess: {
-        people: [{ id: 'you', name: 'Yuliia M.', role: AccessRole.Owner }],
-        groups: [],
-      },
-    });
-    expect(screen.getByText('Folder access')).toBeTruthy();
-    expect(screen.getByText('Yuliia M. (you)')).toBeTruthy();
-  });
-
-  it('passes folderAccess people/groups through to the folder-access section', () => {
-    renderPanel({
-      selectedFolderPath: ['Shared', 'Data Science'],
-      folderAccess: {
-        people: [{ id: 'you', name: 'Yuliia M.', role: AccessRole.Owner }],
-        groups: [],
-      },
-    });
-    expect(screen.getByText('Yuliia M. (you)')).toBeTruthy();
-  });
-
-  it('calls onAddFolderAccessMember with the selected folder path, name, and role', async () => {
-    const onAddFolderAccessMember = vi.fn();
-    renderPanel({
-      selectedFolderPath: ['Shared', 'Data Science'],
-      folderAccess: { people: [], groups: [] },
-      onAddFolderAccessMember,
-    });
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'New member name' }),
-      'New Person',
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: 'New member role' }),
-    );
-    await userEvent.click(
-      within(screen.getByRole('listbox')).getByRole('option', {
-        name: 'Editor',
-      }),
-    );
-    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
-    expect(onAddFolderAccessMember).toHaveBeenCalledWith(
-      ['Shared', 'Data Science'],
-      'New Person',
-      AccessRole.Editor,
-    );
-  });
-
-  it('shows an empty-state message rather than a stray callout when no folderAccess is provided', () => {
-    renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
-    expect(screen.getByText('Folder access')).toBeTruthy();
-    expect(
-      screen.getByText('No access information for this folder yet.'),
-    ).toBeTruthy();
-    expect(screen.queryByText(/can use,/)).toBeNull();
   });
 
   it('shows the replace-warning callout when the version already exists in the folder, with the folder name bold', () => {

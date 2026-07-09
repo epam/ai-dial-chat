@@ -3,7 +3,6 @@ import type { PublishPanelTexts } from '../components/PublishPanel/PublishPanel'
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
-import type { AccessRole, FolderAccessData } from './folder-access';
 import type { ItemDetailsTexts } from './item-details-props';
 import type { PublishFolderNode, PublishHistoryEntry } from './publish';
 
@@ -103,16 +102,6 @@ export interface CatalogProps {
   onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
-  /** Resolves who has access to a given destination folder path, for the publish flow's "Folder access" section. */
-  getFolderAccess?: (folderPath: string[]) => FolderAccessData;
-  /** The viewer's own id, used to label their own row "(you)" in the folder-access list. */
-  currentUserId?: string;
-  /** Called with the destination folder path, new member name, and selected role when the user adds a member in the folder-access section. */
-  onAddFolderAccessMember?: (
-    folderPath: string[],
-    name: string,
-    role: AccessRole,
-  ) => void;
   /** Text overrides forwarded to the publish flow. */
   publishTexts?: PublishPanelTexts;
   /**

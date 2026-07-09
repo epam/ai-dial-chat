@@ -47,13 +47,6 @@ export type {
   PublishFolderNode,
   PublishHistoryEntry,
 } from './models/publish';
-export { AccessRole } from './models/folder-access';
-export type {
-  FolderAccessData,
-  FolderAccessGroup,
-  FolderAccessMember,
-} from './models/folder-access';
-
 // Utils
 export { filterCatalogItems } from './utils/catalog-filter';
 export { sortCatalogItems } from './utils/catalog-sort';
@@ -113,12 +106,6 @@ export type { PublishHistoryListProps } from './components/PublishHistoryList/Pu
 
 export { PublishFolderPicker } from './components/PublishFolderPicker/PublishFolderPicker';
 export type { PublishFolderPickerProps } from './components/PublishFolderPicker/PublishFolderPicker';
-
-export { FolderAccess } from './components/FolderAccess/FolderAccess';
-export type {
-  FolderAccessProps,
-  FolderAccessTexts,
-} from './components/FolderAccess/FolderAccess';
 
 export { PublishPanel } from './components/PublishPanel/PublishPanel';
 export type {

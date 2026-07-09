@@ -42,9 +42,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onPublish,
   onPublishSuccess,
   onCreatePublishFolder,
-  getFolderAccess,
-  currentUserId = '',
-  onAddFolderAccessMember,
   publishTexts,
   texts,
   styles: detailsStyles,
@@ -237,13 +234,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 }
                 hasWriteAccess={publishFlow.hasWriteAccess}
                 isSubmitting={publishFlow.isSubmitting}
-                folderAccess={
-                  publishFlow.selectedFolderPath?.length
-                    ? getFolderAccess?.(publishFlow.selectedFolderPath)
-                    : undefined
-                }
-                currentUserId={currentUserId}
-                onAddFolderAccessMember={onAddFolderAccessMember}
                 texts={publishTexts}
               />
             </div>
