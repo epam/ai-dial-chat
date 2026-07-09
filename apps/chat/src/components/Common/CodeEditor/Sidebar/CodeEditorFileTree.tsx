@@ -1,10 +1,13 @@
 import { IconCheck, IconFile } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
+import { truncateToUtf8Bytes } from '@/src/utils/app/common';
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
+import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
 import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
@@ -196,7 +199,14 @@ export const CodeEditorFileTree = ({
             type="text"
             value={newFileName}
             name="edit-input"
-            onChange={(e) => onNewFileNameChange(e.target.value)}
+            onChange={(e) =>
+              onNewFileNameChange(
+                truncateToUtf8Bytes(
+                  e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
+                  getResourceMaxSegmentBytes(),
+                ),
+              )
+            }
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 onConfirmNewFile(newFileName);
