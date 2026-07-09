@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-sidebar",
+  "description": "Resizable sidebar panel shell with header, search, and empty state components",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-conversation-messages",
+  "description": "Message bubble components for rendering conversation history with actions and source citations",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

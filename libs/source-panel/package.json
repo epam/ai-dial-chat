@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-source-panel",
+  "description": "Panel for displaying conversation sources — uploaded files and generated citations",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-conversation-input",
+  "description": "Conversation message input with model selection, attachments, voice input, and edit mode",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

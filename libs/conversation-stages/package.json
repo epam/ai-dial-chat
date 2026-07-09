@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-conversation-stages",
+  "description": "Panel for displaying agent processing stages during LLM response streaming",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

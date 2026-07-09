@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-chat-shared",
+  "description": "Shared domain models, utilities, and UI components for AI DIAL Chat libraries",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

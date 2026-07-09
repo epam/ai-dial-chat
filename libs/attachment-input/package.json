@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-attachment-input",
+  "description": "File attachment input components with upload validation, drag-and-drop, and progress tracking",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-attachment-canvas",
+  "description": "Canvas viewer for rendering attachment content — images, PDFs, JSON, markdown, and plain text",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

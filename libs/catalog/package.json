@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-catalog",
+  "description": "Marketplace catalog component for browsing models, tools, and assistants with search, filter, and sort",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
