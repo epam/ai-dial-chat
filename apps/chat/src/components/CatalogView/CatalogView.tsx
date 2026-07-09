@@ -133,6 +133,7 @@ const CatalogView: FC = () => {
   const isPrimaryActionVisible = useCallback(
     (item: CatalogItem) =>
       item.type === CatalogEntityType.Model ||
+      item.type === CatalogEntityType.Toolset ||
       item.type === CatalogEntityType.Application,
     [],
   );

@@ -60,6 +60,7 @@ export const Header: FC<HeaderProps> = ({
   const shouldShowPublish =
     isPublishVisible?.(item) ??
     (item.type === CatalogEntityType.Model ||
+      item.type === CatalogEntityType.Toolset ||
       item.type === CatalogEntityType.Application);
 
   return (
