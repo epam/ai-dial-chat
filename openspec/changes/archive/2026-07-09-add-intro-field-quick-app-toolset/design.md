@@ -3,11 +3,19 @@
 Quick App creation (`POST /api/v1/applications`) and Toolset creation (`POST /api/v1/toolsets`)
 both accept `name`, `description`, `iconUrl`, `version`, and `topics`, validated with
 `class-validator` DTOs in `apps/chat-api/src` and forwarded to DIAL Core via
-`@epam/ai-dial-typescript-sdk` (`saveCustomApplication` / `saveToolSet`). Neither the DIAL
-Core `Application` nor `ToolSet` schema (`node_modules/@epam/ai-dial-typescript-sdk/dist/index.d.ts`)
-has a dedicated `intro` field. Both schemas do expose a generic string-keyed property bag:
-`application_properties` (`MapStringObject`) on `Application`, and `defaults`
-(`MapStringObject`) on `ToolSet`.
+`@epam/ai-dial-typescript-sdk` (`saveCustomApplication` / `saveToolSet`).
+
+**Update**: `@epam/ai-dial-typescript-sdk` was bumped from `0.1.0-dev.28` to `0.1.0-dev.31`
+during implementation (root `package.json` was updated to the new version, but
+`apps/chat-api/package.json` had its own separate, stale pin at `0.1.0-dev.28` — fixed to match
+so npm stops installing a shadowing nested copy under `apps/chat-api/node_modules`). The
+updated SDK's `Application`, `ApplicationData`, `ToolSet`, and `ToolSetData` schemas
+(`node_modules/@epam/ai-dial-typescript-sdk/dist/index.d.ts`) now declare a **native**
+top-level `intro?: string` field, resolving the placement risk originally flagged below —
+`application_properties`/`defaults` are no longer used for `intro` at all. `ApplicationData`/
+`ToolSetData` (the snake_case shapes returned by DIAL Core's listing/get endpoints, part of
+the `DeploymentData` union) also carry `intro`, so it round-trips through `GET` as well as
+`POST`.
 
 On the frontend, `apps/chat/src/pages/AppsEditor/GeneralForm.tsx` and
 `apps/chat/src/pages/ToolsetEditor/EditorForm/GeneralForm.tsx` render the same field set
@@ -83,28 +91,30 @@ variables).
 
 ### 1. Where `intro` lives in the DIAL Core request body
 
-**Decision**: send `intro` inside the existing generic property bag on each schema —
-`application_properties.intro` for `saveCustomApplication`, and `defaults.intro` for
-`saveToolSet` — rather than as a top-level field (which the Core SDK type does not declare
-and would fail TypeScript compilation), and rather than overloading `descriptionKeywords`.
+**Original decision (superseded)**: send `intro` inside the existing generic property bag on
+each schema — `application_properties.intro` for `saveCustomApplication`, and `defaults.intro`
+for `saveToolSet` — since the SDK version available at the time (`0.1.0-dev.28`) had no
+top-level `intro` field on either schema.
 
-**Alternatives considered**:
-- *Top-level field on `DialApplication`/Toolset request body*: not possible without a Core
-  schema change; the SDK types are generated from Core's own OpenAPI contract.
+**Current decision**: now that `@epam/ai-dial-typescript-sdk@0.1.0-dev.31` declares a native
+top-level `intro?: string` on `Application`/`ToolSet` (create/update request schemas) and on
+`ApplicationData`/`ToolSetData` (listing/get response schemas), `intro` is sent as a plain
+top-level field — `dialBody.intro = body.intro` in both `applications.service.ts`'s
+`createApplication` and `toolsets.service.ts`'s `toDialToolsetBody` — instead of nesting it in
+`application_properties`/`defaults`. The now-unnecessary `application_properties: {}`
+initializer in `createApplication`'s `dialBody` was removed since nothing else in this flow
+sets it.
+
+**Alternatives considered (superseded, kept for history)**:
 - *Encode into `descriptionKeywords`*: would corrupt the existing topics/keywords semantics
   and complicate parsing back out.
 - *Store only in chat-api's own layer (not forwarded to Core)*: rejected — the requirement
   explicitly asks for `intro` to be forwarded to Core, and chat-api has no independent
   persistence layer for application/toolset metadata.
 
-**Risk this decision carries**: `application_properties` / `defaults` are generic maps
-historically used for schema-specific configuration values, not simple display metadata, and
-it is **not confirmed** that DIAL Core preserves arbitrary keys under these maps for custom
-application/toolset schemas across writes and reads. This must be verified against a real
-DIAL Core instance during implementation (or confirmed with the Core team) before treating
-this as final. If Core drops or rejects unrecognized keys in these maps, the fallback is to
-request a native `intro` field addition on the Core side; this proposal's frontend/backend
-validation logic does not change either way.
+**Risk resolved**: the original risk — "not confirmed that DIAL Core preserves arbitrary keys
+under `application_properties`/`defaults` for custom schemas" — no longer applies, since
+`intro` is now a schema-declared field, not a smuggled property-bag key.
 
 ### 2. Shape of the extracted `libs/deployment-creation-form` component
 
@@ -250,28 +260,46 @@ chat-api OpenAPI spec using the repository's existing `openapi` / `openapi:check
 (`libs/ai-dial-kit/src/components/{Input,Textarea,TagInput}/`), following the exact structure
 of the existing `PrimaryButton`/`NeutralButton`/`GhostButton` wrappers in
 `libs/ai-dial-kit/src/components/Button/Buttons.tsx`: a `ComponentPropsWithoutRef`-typed prop
-alias, a pass-through `FC`, and (for `Input`/`Textarea`) a `className` override merged via
-`mergeClasses` that bumps the field's corner radius to `!rounded-xl` (12px, matching
-`SearchBar`'s own rounded field treatment already in this lib) on top of `DialInput`'s/
-`DialTextarea`'s built-in 4px radius (`.dial-input { border-radius: 4px; ... }` in
-`@epam/ai-dial-ui-kit`'s stylesheet). `Input.tsx` also imports a new `Input.scss` (reused by
-`Textarea.tsx`, since `DialTextarea` renders with the same `.dial-input` class) that lightens
-the field's **resting** border color from `--stroke-primary` (`#696e7c`) to `--stroke-tertiary`
-(`#e0e6f0`), matching `libs/catalog`'s own divider convention (Decision 4's follow-up) —
-per user review, the field border itself, not just page-level dividers, read as mismatched
-against Catalog. The override explicitly restores the hover (`--stroke-accent-primary`),
-focus (`--stroke-focus`), and error (`--stroke-error`) state colors with their own
-`!important` rules, since overriding the base `.dial-input` rule with `!important` would
-otherwise block the ui-kit's own non-`!important` state rules for those pseudo-classes.
-`TagInput` is a pure pass-through for now — no stable CSS class hook for its outer field
-border was found in the shipped ui-kit bundle to safely target. `libs/deployment-creation-form`
-now imports `Input`/`Textarea`/`TagInput` from
-`@epam/ai-dial-kit` instead of the primitives directly from `@epam/ai-dial-ui-kit`
+alias plus a pass-through `FC`. `Input.tsx`/`Textarea.tsx` import a shared `Input.scss` that
+globally overrides the ui-kit's own `.dial-input` class (used by both `DialInput` and
+`DialTextarea`) rather than passing a `className`/style prop from the wrapper component
+itself — see the corrected sub-decision below for why. `TagInput` is a pure pass-through for
+now — no stable CSS class hook for its outer field border was found in the shipped ui-kit
+bundle to safely target. `libs/deployment-creation-form` imports `Input`/`Textarea`/`TagInput`
+from `@epam/ai-dial-kit` instead of the primitives directly from `@epam/ai-dial-ui-kit`
 (`libs/deployment-creation-form`'s `package.json`/`vite.config.mts` no longer list
 `@epam/ai-dial-ui-kit` at all, since it is now only a transitive dependency through
 `ai-dial-kit`). `.claude/rules/all-tsx.md` gained a "Text fields" entry alongside the existing
 Button/SearchBar/Spinner/TabRow rules, banning direct `DialInput`/`DialTextarea`/`DialTagInput`
 imports app-wide going forward.
+
+**Corrected sub-decision (bug found in the first pass)**: the first version of `Input.tsx`
+passed the radius override through the wrapper's own `className` prop, merged via
+`mergeClasses`. This was wrong for `Input` specifically: `DialInput` renders its real, visibly
+bordered box as a wrapper `<div>` ("input-container", carrying the `.dial-input` class) around
+a separate, always-borderless inner `<input>` (`border-0 bg-transparent`) that receives the
+`className` prop — so the override never reached the actual border (it stayed square), and
+forcing a `border-radius` onto that inner input — which also has `overflow: hidden` for
+text-overflow ellipsis — clipped text and the text cursor near the corners once it did have a
+radius. (`DialTextarea` does put `.dial-input` directly on the `<textarea>` element, so it
+wasn't affected by this specific bug — only `Input` was.) Fixed by moving `border-radius` (and
+the border-color overrides below) into the global `.dial-input` class rule in `Input.scss`,
+which correctly reaches the wrapper `<div>` for `Input` and the `<textarea>` for `Textarea`
+alike; `Input.tsx`/`Textarea.tsx` no longer touch `className` at all.
+
+`Input.scss` lightens the field's **resting** border color from `--stroke-primary`
+(`#696e7c`) to `--stroke-tertiary` (`#e0e6f0`), matching `libs/catalog`'s own divider
+convention (Decision 4's follow-up) — per user review, the field border itself, not just
+page-level dividers, read as mismatched against Catalog. The **focus** border color was
+changed from the ui-kit default `--stroke-focus` (`#eef1f7`, near-white — barely visible
+against a light theme, and after the resting-border change above nearly indistinguishable
+from it, so focus stopped reading as a visible state change) to `--stroke-accent-primary`
+plus a soft `box-shadow` focus ring, borrowing `SearchBar`'s own focus treatment
+(`libs/ai-dial-kit/src/components/SearchBar/SearchBar.module.scss`) per user request to reuse
+Search's/chat's input approach. Hover and error colors are unchanged from the ui-kit default.
+All non-default states are restored with their own `!important` rules, since overriding the
+base `.dial-input` rule with `!important` would otherwise block the ui-kit's own
+non-`!important` state rules for those pseudo-classes.
 
 **This reverses this proposal's original Decision (see the removed "No new UI-kit primitive"
 bullet in `proposal.md`)**, which held that `DialInput`/`DialTextarea`/`DialTagInput` were
@@ -302,15 +330,21 @@ follow-up now that the wrapper exists, but is a separate, broader change.
 
 ## Risks / Trade-offs
 
-- **[Risk]** DIAL Core may not persist unrecognized keys under `application_properties` /
-  `defaults` for custom schemas. → **Mitigation**: verify against a real Core instance during
-  implementation; if it fails, treat this as a Core-side follow-up and keep the
-  frontend/backend validation work (which is independently valuable) while deferring the
-  Core-forwarding piece.
-- **[Risk]** Without a GET-side mapping, `intro` set at creation cannot currently be
-  retrieved back through chat-api's existing read endpoints/DTOs. → **Mitigation**: explicitly
-  scoped as a non-goal in this change (see Open Questions); does not block shipping creation
-  support.
+- **[Resolved]** ~~DIAL Core may not persist unrecognized keys under `application_properties`
+  / `defaults` for custom schemas.~~ No longer applicable — `intro` is a native, schema-declared
+  field as of `@epam/ai-dial-typescript-sdk@0.1.0-dev.31` (see Decision 1).
+- **[Resolved]** ~~Without a GET-side mapping, `intro` set at creation cannot currently be
+  retrieved back through chat-api's existing read endpoints/DTOs.~~ Addressed: `intro` was
+  added to `ApplicationDto` (`apps/chat-api/src/applications/dto/application.dto.ts`),
+  `DialToolsetDto` (`apps/chat-api/src/openapi/openapi-response.dto.ts`), and
+  `DeploymentItemDto`/`RawDeploymentDto` (`apps/chat-api/src/deployments/dto/`), so it now
+  round-trips through `GET /api/v1/applications`, `GET /api/v1/toolsets`, and
+  `GET /api/v1/deployments` (the endpoint that actually backs the Catalog listing via
+  `apps/chat/src/context/DeploymentsContext.tsx`'s `getDeployments`). The OpenAPI client was
+  regenerated so `intro` is typed on the frontend. `apps/chat/src/utils/toolsets.ts`'s
+  `toolsetDtoToForm` now pre-fills `intro` from the fetched DTO instead of hardcoding `''`.
+  Rendering `intro` on Catalog cards themselves (`CatalogItem`/`Card`) is still not done — that
+  remains a separate UI decision, out of scope unless requested.
 - **[Trade-off]** No shared frontend validation schema library is introduced, keeping the
   diff small but continuing the existing pattern of ad hoc manual validation, now centralized
   in one lib function instead of two copies.
@@ -326,17 +360,17 @@ follow-up now that the wrapper exists, but is a separate, broader change.
 
 ## Open Questions
 
-1. Should a follow-up change add `intro` to the GET/list response DTOs
-   (`apps/chat-api/src/applications/dto/application.dto.ts`,
-   `apps/chat-api/src/toolsets/dto/get-toolset.dto.ts`) and to the edit-mode pre-fill in both
-   forms, so an author can see/edit the `intro` they set at creation? This was out of scope
-   for the current request but is a natural next step.
+1. ~~Should a follow-up change add `intro` to the GET/list response DTOs...~~ **Resolved**:
+   done (see the Risks/Trade-offs entry above). The Quick App create-flow's own `GeneralForm.tsx`
+   does not have an edit mode to pre-fill (create-only page); Toolset's `toolsetDtoToForm` now
+   pre-fills `intro` from the fetched DTO.
 2. Should `intro` also be forwarded on **update** (`updateApplication`/`updateToolset`), not
    just create? The current request is scoped to creation only; if `intro` cannot be changed
-   after creation, that should be communicated as a known limitation to authors.
-3. Confirm with the DIAL Core team whether `application_properties.intro` / `defaults.intro`
-   is an acceptable interim placement, or whether a native Core field is preferred before this
-   ships broadly.
+   after creation, that should be communicated as a known limitation to authors. Still open —
+   `toolsets.service.ts`'s update path was not touched in this change.
+3. ~~Confirm with the DIAL Core team whether `application_properties.intro` / `defaults.intro`
+   is an acceptable interim placement...~~ **Resolved**: moot — `intro` is now a native
+   top-level field on Core's schemas (see Decision 1), no interim placement needed.
 4. What concretely is the "Chat" visual context distinct from "Catalog"? Both existing forms
    today are only reachable through the Catalog view inside the single Chat app. If a second
    consumer (e.g. a non-Catalog entry point for creating a Quick App/Toolset from elsewhere in

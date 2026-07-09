@@ -26,7 +26,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 describe('Textarea', () => {
-  it('applies the rounded-corner override alongside a caller className', () => {
+  it('forwards a caller className to the underlying DialTextarea unchanged', () => {
     render(
       <Textarea
         value=""
@@ -37,8 +37,7 @@ describe('Textarea', () => {
     const textarea = screen.getByLabelText(
       'Description',
     ) as HTMLTextAreaElement;
-    expect(textarea.className).toContain('!rounded-xl');
-    expect(textarea.className).toContain('custom');
+    expect(textarea.className).toBe('custom');
   });
 
   it('forwards value and onChange to the underlying DialTextarea', () => {

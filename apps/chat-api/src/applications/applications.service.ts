@@ -101,14 +101,12 @@ export class ApplicationsService extends AppService {
         displayName: body.name,
         displayVersion: version,
         application_type_schema_id: body.type,
-        application_properties: {},
       };
       if (body.description != null) dialBody.description = body.description;
       if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
       if (body.topics != null && body.topics.length > 0)
         dialBody.descriptionKeywords = body.topics;
-      if (body.intro != null)
-        dialBody.application_properties = { intro: body.intro };
+      if (body.intro != null) dialBody.intro = body.intro;
 
       const response = await this.client.saveCustomApplication(
         bucket,

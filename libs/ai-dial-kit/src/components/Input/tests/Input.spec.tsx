@@ -26,13 +26,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 describe('Input', () => {
-  it('applies the rounded-corner override alongside a caller className', () => {
+  it('forwards a caller className to the underlying DialInput unchanged', () => {
     render(
       <Input value="" className="custom" labelProps={{ label: 'Name' }} />,
     );
     const input = screen.getByLabelText('Name') as HTMLInputElement;
-    expect(input.className).toContain('!rounded-xl');
-    expect(input.className).toContain('custom');
+    expect(input.className).toBe('custom');
   });
 
   it('forwards value and onChange to the underlying DialInput', () => {

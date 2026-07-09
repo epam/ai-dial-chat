@@ -1,4 +1,3 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTextarea } from '@epam/ai-dial-ui-kit';
 import { type ComponentPropsWithoutRef, type FC } from 'react';
 import '../Input/Input.scss';
@@ -9,17 +8,17 @@ export type TextareaProps = ComponentPropsWithoutRef<typeof DialTextarea>;
 /**
  * App-level textarea wrapper around `DialTextarea`.
  *
- * Restyles the corner radius and resting border color to match `Input`'s
- * rounded, lighter-bordered field language — `DialTextarea` renders with the
- * same `.dial-input` class as `DialInput`, so it reuses `../Input/Input.scss`
- * rather than duplicating the override. All other behavior (label, error,
- * validation states) is unchanged from `DialTextarea`.
+ * `DialTextarea` renders the `.dial-input` class directly on the `<textarea>`
+ * element (unlike `DialInput`, which puts it on a wrapper `<div>`), so this
+ * reuses `../Input/Input.scss`'s global `.dial-input` override rather than
+ * duplicating it — both end up restyled from one place. All other behavior
+ * (label, error, validation states) is unchanged from `DialTextarea`.
  *
  * @example
  * ```tsx
  * <Textarea id="description" value={description} onChange={setDescription} />
  * ```
  */
-export const Textarea: FC<TextareaProps> = ({ className, ...props }) => (
-  <DialTextarea {...props} className={mergeClasses('!rounded-xl', className)} />
+export const Textarea: FC<TextareaProps> = (props) => (
+  <DialTextarea {...props} />
 );

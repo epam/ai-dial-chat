@@ -44,6 +44,12 @@ export interface ApplicationDto {
   description?: string;
   /**
    *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  intro?: string;
+  /**
+   *
    * @type {Array<string>}
    * @memberof ApplicationDto
    */
@@ -1222,6 +1228,12 @@ export interface DeploymentItemDto {
    */
   description?: string;
   /**
+   * Short catalog-friendly intro from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  intro?: string;
+  /**
    * Interface types supported by this deployment
    * @type {Array<string>}
    * @memberof DeploymentItemDto
@@ -1966,6 +1978,12 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  intro?: string;
   /**
    *
    * @type {string}

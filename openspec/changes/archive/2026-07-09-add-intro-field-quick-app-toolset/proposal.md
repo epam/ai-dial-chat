@@ -156,5 +156,7 @@ does not change either creation flow's user-observable behavior beyond adding `i
 - Creating a separate Catalog application; "Catalog" remains a view inside `apps/chat`
   (`apps/chat/src/components/CatalogView/CatalogView.tsx`). See Open Questions in `design.md`
   for what "Chat context" styling should mean concretely, since no second consumer exists yet.
-- Editing/pre-filling `intro` (or any shared field) on the update flow, or rendering `intro`
-  anywhere in the catalog UI — unchanged from the prior version of this proposal.
+- Editing/pre-filling `intro` on the Toolset **update** flow (`updateToolset`), or rendering
+  `intro` anywhere in the Catalog card UI (`CatalogItem`/`Card`) — still out of scope. (Reading
+  `intro` back through `GET` listing/get endpoints, and pre-filling it in the Toolset edit
+  form, is now done — see design.md's Decisions/Risks for the SDK update that enabled this.)

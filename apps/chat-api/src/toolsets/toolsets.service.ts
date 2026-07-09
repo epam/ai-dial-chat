@@ -134,7 +134,7 @@ const toDialToolsetBody = (
   if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
   if (body.topics != null) dialBody.descriptionKeywords = body.topics;
   if (body.reference != null) dialBody.reference = body.reference;
-  if (body.intro != null) dialBody.defaults = { intro: body.intro };
+  if (body.intro != null) dialBody.intro = body.intro;
   return dialBody;
 };
 

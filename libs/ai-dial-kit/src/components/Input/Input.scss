@@ -1,12 +1,22 @@
-// Lighter resting border to match libs/catalog's border-tertiary convention
-// (Catalog cards use no border at all — box-shadow only — but a fully
-// borderless field would hurt affordance, so this uses the same lighter
-// --stroke-tertiary token already used for Catalog's own dividers).
-// Hover/focus/error keep their original --stroke-accent-primary/--stroke-focus/
-// --stroke-error colors, restored explicitly since `!important` on the base
-// rule would otherwise block the ui-kit's own (non-`!important`) state rules.
+// Restyles DialInput's/DialTextarea's shared `.dial-input` box to match the
+// app's rounded, lighter-bordered field language (SearchBar's own treatment):
+// a bigger corner radius, a lighter resting border (matching libs/catalog's
+// border-tertiary divider convention), and a clearly visible accent-colored
+// focus ring instead of the ui-kit default `--stroke-focus` (near-white,
+// barely visible against a light theme).
+//
+// For `DialInput` this class lives on the wrapper `<div>` ("input-container")
+// around a separate, always-borderless inner `<input>` — not on the input
+// itself — so overriding it here (rather than via a `className`/
+// `wrapperClassName` prop on every call site) is both the correct target and
+// the one place that also reaches `DialTextarea`, which puts `.dial-input`
+// directly on the `<textarea>`. Do not add `border-radius` via `className` on
+// the inner input: it has `overflow: hidden` (for text-overflow ellipsis), so
+// combining the two clips text/cursor near the corners.
 .dial-input:not(.dial-input-error) {
+  border-radius: 0.75rem !important; // matches Tailwind's rounded-xl
   border-color: var(--stroke-tertiary, #e0e6f0) !important;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 
   &:not(:disabled):hover {
     border-color: var(--stroke-accent-primary, #7da4ff) !important;
@@ -15,6 +25,11 @@
   &:not(:disabled):active,
   &:not(:disabled):focus,
   &:not(:disabled):focus-within {
-    border-color: var(--stroke-focus, #eef1f7) !important;
+    border-color: var(--stroke-accent-primary, #124ace) !important;
+    box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff2e) !important;
   }
+}
+
+.dial-input-error {
+  border-radius: 0.75rem !important;
 }

@@ -262,7 +262,6 @@ describe('ApplicationsService', () => {
             displayVersion: '1.0',
             application_type_schema_id:
               'https://mydial.epam.com/custom_application_schemas/quickapps2',
-            application_properties: {},
             description: 'A description',
             iconUrl: 'https://example.com/icon.svg',
           },
@@ -292,7 +291,7 @@ describe('ApplicationsService', () => {
       expect(sentBody).not.toHaveProperty('topics');
     });
 
-    it('maps intro to application_properties.intro in SDK body', async () => {
+    it('maps intro to the top-level intro field in SDK body', async () => {
       const { service } = makeService();
       const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
 
@@ -306,20 +305,20 @@ describe('ApplicationsService', () => {
         expect.anything(),
         expect.objectContaining({
           body: expect.objectContaining({
-            application_properties: { intro: 'A short pitch' },
+            intro: 'A short pitch',
           }),
         }),
       );
     });
 
-    it('does not set application_properties.intro when intro is omitted', async () => {
+    it('does not set intro when it is omitted', async () => {
       const { service } = makeService();
       const { saveCustomApplicationSpy } = mockCreateApplicationSdk(service);
 
       await service.createApplication('user1', 'token', body);
 
       const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
-      expect(sentBody.application_properties).toEqual({});
+      expect(sentBody).not.toHaveProperty('intro');
     });
 
     it('forwards Authorization header to bucket and save application SDK calls', async () => {

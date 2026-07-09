@@ -140,7 +140,7 @@ export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => {
     iconUrl: dto.iconUrl ?? '',
     description: dto.description ?? '',
     topics: dto.descriptionKeywords ?? [],
-    intro: '',
+    intro: dto.intro ?? '',
     endpoint: dto.endpoint ?? '',
     protocol:
       (dto.transport as ToolsetTransportType) ?? ToolsetTransportType.Http,

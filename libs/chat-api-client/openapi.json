@@ -2995,6 +2995,11 @@
             "type": "string",
             "example": "A custom application."
           },
+          "intro": {
+            "type": "string",
+            "example": "Summarizes long documents in one line.",
+            "maxLength": 90
+          },
           "input_attachment_types": {
             "example": [
               "image/png"
@@ -3139,6 +3144,11 @@
           "description": {
             "type": "string",
             "description": "Description from DIAL Core"
+          },
+          "intro": {
+            "type": "string",
+            "description": "Short catalog-friendly intro from DIAL Core",
+            "maxLength": 90
           },
           "interfaces": {
             "description": "Interface types supported by this deployment",
@@ -3834,6 +3844,11 @@
           "description": {
             "type": "string",
             "example": "My toolset description"
+          },
+          "intro": {
+            "type": "string",
+            "example": "Runs your toolset in one line.",
+            "maxLength": 90
           },
           "icon_url": {
             "type": "string",

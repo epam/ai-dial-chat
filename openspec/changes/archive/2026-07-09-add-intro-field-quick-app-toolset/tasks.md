@@ -189,6 +189,25 @@
       `--stroke-primary` to `--stroke-tertiary`, with explicit `!important` restores for the
       hover/focus/error state colors so those interactions keep working. `TagInput` still has
       no border-color override (same missing-CSS-hook limitation as its radius).
+- [x] 9.4.2 Found and fixed a real bug in 9.4/9.4.1: `Input.tsx` was passing the radius/border
+      overrides through the `className` prop, which `DialInput` forwards to its **inner**,
+      always-borderless `<input>` (`border-0 bg-transparent`) — `DialInput`'s real visible
+      border lives on a separate wrapper `<div>` ("input-container"), reachable only via the
+      `wrapperClassName` prop. This meant the radius override never reached the real border
+      (still square), and forcing `border-radius` onto the inner input — which has
+      `overflow: hidden` for text-overflow ellipsis — clipped text/cursor near the corners on
+      focus (`DialTextarea` does put `.dial-input` directly on the `<textarea>`, so it wasn't
+      affected). Fixed by moving `border-radius` into the global `.dial-input` class override
+      in `Input.scss` (reaches the wrapper `<div>` for `Input` and the `<textarea>` for
+      `Textarea` uniformly) and removing all `className` manipulation from `Input.tsx`/
+      `Textarea.tsx`, which are now pure pass-throughs. Also swapped the focus border color
+      from the ui-kit default `--stroke-focus` (near-white, barely visible on a light theme,
+      and after 9.4.1 nearly identical to the new lighter resting `--stroke-tertiary`) to
+      `--stroke-accent-primary` plus a soft focus box-shadow ring, matching `SearchBar`'s own
+      focus treatment. Updated `Input.spec.tsx`/`Textarea.spec.tsx` (className is now forwarded
+      verbatim, no injected class). Re-verified: `@epam/ai-dial-kit` test/lint/typecheck/build,
+      `@epam/ai-dial-deployment-creation-form` test/lint, and `@epam/chat`
+      test/lint/typecheck — all clean (869 chat tests passing).
 - [x] 9.5 Migrated `libs/deployment-creation-form`'s `DeploymentCreationForm.tsx` to import
       `Input`/`Textarea`/`TagInput` from `@epam/ai-dial-kit` instead of the primitives from
       `@epam/ai-dial-ui-kit` directly; removed `@epam/ai-dial-ui-kit` from
@@ -208,3 +227,33 @@
       `@epam/ai-dial-kit`, `@epam/ai-dial-deployment-creation-form`, and `@epam/chat` (869 tests
       passing, 0 lint errors); `npm exec nx build @epam/ai-dial-deployment-creation-form`
       succeeds.
+
+## 10. Native Core `intro` field + GET/listing round-trip (post-implementation, SDK update)
+
+- [x] 10.1 User bumped `@epam/ai-dial-typescript-sdk` to `0.1.0-dev.31` in root `package.json`;
+      found and fixed a stale separate pin (`0.1.0-dev.28`) in `apps/chat-api/package.json`
+      that was shadowing it via a nested `apps/chat-api/node_modules` copy — `npm install`
+      removed the stale nested copy after the fix.
+- [x] 10.2 Switched `applications.service.ts`/`toolsets.service.ts` from stashing `intro` in
+      `application_properties`/`defaults` to setting the SDK's new native top-level
+      `dialBody.intro` field directly; removed the now-unneeded `application_properties: {}`
+      initializer. Updated the corresponding service spec assertions.
+- [x] 10.3 Added `intro?: string` to the GET/listing response DTOs so it round-trips back to
+      the frontend: `ApplicationDto` (`apps/chat-api/src/applications/dto/application.dto.ts`),
+      `DialToolsetDto` (`apps/chat-api/src/openapi/openapi-response.dto.ts`), and
+      `DeploymentItemDto`/`RawDeploymentDto` (`apps/chat-api/src/deployments/dto/`) — the last
+      pair backs `GET /api/v1/deployments`, the endpoint that actually populates the Catalog
+      listing via `DeploymentsContext`. Wired `raw.intro` into `mapToDeploymentItem`. Added
+      4 new tests (2 in `applications`/`toolsets` service specs already counted in section 9;
+      2 new in `deployments.service.spec.ts` for intro forwarding/omission).
+- [x] 10.4 Regenerated `libs/chat-api-client` (`npm run openapi` + `openapi:check`); confirmed
+      `intro` now appears on the generated `ApplicationDto`, `DialToolsetDto`, and
+      `DeploymentItemDto` models.
+- [x] 10.5 Updated `apps/chat/src/utils/toolsets.ts`'s `toolsetDtoToForm` to read
+      `intro: dto.intro ?? ''` instead of hardcoding `''`, so the Toolset edit form now
+      pre-fills the `intro` set at creation.
+- [x] 10.6 Re-verified: `npm exec nx test/lint/build @epam/chat-api` (965 tests passing, 0 lint
+      errors, build succeeds); `npm exec nx test/lint/typecheck @epam/chat` (869 tests passing,
+      0 lint errors, typecheck clean).
+- [ ] 10.7 Not done: forwarding `intro` on toolset **update**, and rendering `intro` on Catalog
+      cards (`CatalogItem`/`Card`) — both remain open per design.md's Open Questions/Non-Goals.
