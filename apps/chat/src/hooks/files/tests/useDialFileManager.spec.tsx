@@ -1144,7 +1144,7 @@ describe('useDialFileManager', () => {
     });
 
     describe('actionLabels — Duplicate', () => {
-      it('includes Duplicate on MyFiles tab with WRITE permission', async () => {
+      it('includes Duplicate on MyFiles tab with WRITE permission and the Browse profile', async () => {
         mockListFiles.mockResolvedValue({
           bucket: BUCKET,
           path: '',
@@ -1156,6 +1156,7 @@ describe('useDialFileManager', () => {
           useDialFileManager({
             bucket: BUCKET,
             activeTab: DialFileManagerTabs.MyFiles,
+            actionProfile: DialFileManagerActionProfile.Browse,
           }),
         );
         await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -1211,8 +1212,152 @@ describe('useDialFileManager', () => {
       });
     });
 
+    describe('actionLabels — actionProfile gating (Copy/Move/Duplicate)', () => {
+      it('excludes Copy/Move/Duplicate but includes Rename and Delete for Attach profile on MyFiles with WRITE', async () => {
+        mockListFiles.mockResolvedValue({
+          bucket: BUCKET,
+          path: '',
+          items: [],
+          permissions: ['READ', 'WRITE'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+            variant: DialFileManagerVariant.Attach,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Rename],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Delete],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Copy],
+        ).toBeUndefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Move],
+        ).toBeUndefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeUndefined();
+      });
+
+      it('includes all six actions for the Standalone variant (Browse profile) on MyFiles with WRITE', async () => {
+        mockListFiles.mockResolvedValue({
+          bucket: BUCKET,
+          path: '',
+          items: [],
+          permissions: ['READ', 'WRITE'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+            variant: DialFileManagerVariant.Standalone,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Download],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Delete],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Rename],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Copy],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Move],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeDefined();
+      });
+
+      it.each([
+        DialFileManagerActionProfile.Attach,
+        DialFileManagerActionProfile.Browse,
+      ])(
+        'shows Download only on Shared tab regardless of actionProfile (%s)',
+        async (actionProfile) => {
+          const { result } = renderHook(() =>
+            useDialFileManager({
+              bucket: BUCKET,
+              activeTab: DialFileManagerTabs.Shared,
+              actionProfile,
+            }),
+          );
+          await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Download],
+          ).toBeDefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Delete],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Rename],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Copy],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Move],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Duplicate],
+          ).toBeUndefined();
+        },
+      );
+
+      it.each([
+        DialFileManagerActionProfile.Attach,
+        DialFileManagerActionProfile.Browse,
+      ])(
+        'shows Download only on Organization tab regardless of actionProfile (%s)',
+        async (actionProfile) => {
+          const { result } = renderHook(() =>
+            useDialFileManager({
+              bucket: BUCKET,
+              activeTab: DialFileManagerTabs.Organization,
+              actionProfile,
+            }),
+          );
+          await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Download],
+          ).toBeDefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Delete],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Rename],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Copy],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Move],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Duplicate],
+          ).toBeUndefined();
+        },
+      );
+    });
+
     describe.each([
-      DialFileManagerTabs.MyFiles,
       DialFileManagerTabs.Shared,
       DialFileManagerTabs.Organization,
     ])('actionLabels parity between attach and browse (%s tab)', (tab) => {

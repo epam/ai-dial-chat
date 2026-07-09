@@ -9,10 +9,10 @@ export enum DialFileManagerVariant {
 }
 
 /**
- * Gates which actions `useDialFileManager` exposes per tab. `Attach` and
- * `Browse` currently compute identical action sets — the split exists so a
- * later change can diverge them without another hook signature change.
- * `Full` is reserved for `DialFileManagerVariant.FolderPicker` (#7503+).
+ * Gates which actions `useDialFileManager` exposes per tab. `Attach` excludes
+ * Copy/Move/Duplicate (it is a file picker, not a management surface); `Browse`
+ * exposes the full #7503 action set. `Full` is reserved for
+ * `DialFileManagerVariant.FolderPicker` (#7503+).
  */
 export enum DialFileManagerActionProfile {
   Attach = 'attach',

@@ -276,6 +276,23 @@ const findFolderByVirtualPath = (
 const hasDialFileWritePermission = (folder?: DialFile): boolean =>
   folder?.permissions?.includes(DialFilePermission.WRITE) ?? false;
 
+/** Copy/Move/Duplicate are Browse/Full-only — the attach picker excludes them. */
+const isCopyMoveDuplicateAllowed = (
+  actionProfile: DialFileManagerActionProfile,
+): boolean => {
+  switch (actionProfile) {
+    case DialFileManagerActionProfile.Attach:
+      return false;
+    case DialFileManagerActionProfile.Browse:
+    case DialFileManagerActionProfile.Full:
+      return true;
+    default: {
+      const exhaustiveCheck: never = actionProfile;
+      throw new Error(`Unhandled actionProfile: ${String(exhaustiveCheck)}`);
+    }
+  }
+};
+
 const parseNewFolderVirtualPath = (
   newFolderVirtualPath: string,
   rootLabel: string,
@@ -587,20 +604,6 @@ export const useDialFileManager = ({
   actionProfile = deriveActionProfile(variant),
 }: UseDialFileManagerOptions): UseDialFileManagerResult => {
   const { t, i18n } = useTranslation();
-
-  // `actionProfile` is not yet branched on below (see design.md Decision 3 —
-  // Attach and Browse must compute identical actionLabels in this change);
-  // this switch only guards that every profile is deliberately accounted for.
-  switch (actionProfile) {
-    case DialFileManagerActionProfile.Attach:
-    case DialFileManagerActionProfile.Browse:
-    case DialFileManagerActionProfile.Full:
-      break;
-    default: {
-      const exhaustiveCheck: never = actionProfile;
-      throw new Error(`Unhandled actionProfile: ${String(exhaustiveCheck)}`);
-    }
-  }
 
   const [folderPath, setFolderPath] = useState('');
   const [cache, setCache] = useState<Map<string, ListFilesItemDto[]>>(
@@ -1722,19 +1725,21 @@ export const useDialFileManager = ({
         labels[DialFileManagerActions.Rename] = t(
           DialFileManagerI18nKeys.RenameAction,
         );
-        labels[DialFileManagerActions.Copy] = t(
-          DialFileManagerI18nKeys.CopyAction,
-        );
-        labels[DialFileManagerActions.Move] = t(
-          DialFileManagerI18nKeys.MoveAction,
-        );
-        labels[DialFileManagerActions.Duplicate] = t(
-          DialFileManagerI18nKeys.DuplicateAction,
-        );
+        if (isCopyMoveDuplicateAllowed(actionProfile)) {
+          labels[DialFileManagerActions.Copy] = t(
+            DialFileManagerI18nKeys.CopyAction,
+          );
+          labels[DialFileManagerActions.Move] = t(
+            DialFileManagerI18nKeys.MoveAction,
+          );
+          labels[DialFileManagerActions.Duplicate] = t(
+            DialFileManagerI18nKeys.DuplicateAction,
+          );
+        }
       }
     }
     return labels;
-  }, [activeTab, uploadEnabled, t]);
+  }, [activeTab, uploadEnabled, actionProfile, t]);
 
   const sharedWithMeIds = useMemo(
     (): string[] | undefined =>
