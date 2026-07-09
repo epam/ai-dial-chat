@@ -1,6 +1,6 @@
 ## Purpose
 
-Defines the naming conventions for files produced by chat export actions (conversations, prompts, and table CSV downloads), ensuring consistent, sortable filenames across all export types.
+Defines the naming conventions for files produced by chat export actions (conversations, prompts, table CSV downloads, and code block downloads), ensuring consistent, sortable filenames across all export types.
 
 ## Requirements
 
@@ -24,6 +24,10 @@ All files exported from the chat UI SHALL begin with a date segment in `YYYY-MM-
 - **WHEN** the user exports all prompts
 - **THEN** the exported filename SHALL begin with `YYYY-MM-DD_` with zero-padded month and day
 
+#### Scenario: Code block download default filename uses zero-padded date
+- **WHEN** the user downloads a code block and no language-specific filename mapping exists
+- **THEN** the default suggested filename SHALL begin with `YYYY-MM-DD_` with zero-padded month and day
+
 ### Requirement: Export filenames SHALL follow a date-first naming pattern
 
 The date prefix SHALL appear at the start of the filename so that exports sort chronologically by name in file browsers. Entity names and type suffixes follow the date.
@@ -35,4 +39,9 @@ The date prefix SHALL appear at the start of the filename so that exports sort c
 #### Scenario: Table CSV download filename structure
 - **WHEN** the user downloads a markdown table as CSV
 - **THEN** the default filename SHALL follow the pattern `YYYY-MM-DD_table.csv`
+- **THEN** the user MAY edit this filename before confirming the download
+
+#### Scenario: Code block download default filename structure
+- **WHEN** the user downloads a code block and no language-specific filename mapping exists
+- **THEN** the default suggested filename SHALL follow the pattern `YYYY-MM-DD_ai-chat-code<ext>` (e.g. `2026-07-06_ai-chat-code.py`)
 - **THEN** the user MAY edit this filename before confirming the download

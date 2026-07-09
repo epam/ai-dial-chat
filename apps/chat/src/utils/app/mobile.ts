@@ -15,7 +15,20 @@ export const isMobile = () => {
   return isMobileOnly && !isTablet;
 };
 export const isTouchable = () => {
+  if (typeof window !== 'undefined') {
+    const hasCoarsePointer =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(pointer: coarse)').matches;
+    const hasTouchPoints =
+      typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+
+    if (hasCoarsePointer || hasTouchPoints) {
+      return true;
+    }
+  }
+
   const { isMobileOnly, isTablet } = getDeviceSelectors();
+
   return isMobileOnly || isTablet;
 };
 

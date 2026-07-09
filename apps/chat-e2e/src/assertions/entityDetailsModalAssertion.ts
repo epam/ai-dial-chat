@@ -1,10 +1,14 @@
+import { MarketplaceI18nKeys } from '@/chat/constants/i18n';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import {
+  ElementCaretState,
   ElementState,
   ExpectedConstants,
   ExpectedMessages,
+  MarketplaceExpectedMessages,
   PublishingExpectedMessages,
 } from '@/src/testData';
+import { Attributes } from '@/src/ui/domData';
 import { BaseElement, EntityDetailsModal } from '@/src/ui/webElements';
 import { DateUtil } from '@/src/utils';
 
@@ -178,5 +182,64 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
           this.entityDetailsModal.openInNewTabButtonTitle.getNthElement(2),
           ExpectedConstants.openInNewTabButtonTitle.split(' ')[0],
         );
+  }
+
+  public async assertLimitItemValues(
+    limitKey: MarketplaceI18nKeys,
+    expectedUsed: string,
+    expectedTotal: string,
+  ) {
+    await this.assertElementText(
+      this.entityDetailsModal.usedLimitByKey(limitKey),
+      expectedUsed,
+      MarketplaceExpectedMessages.usedLimitIsValid,
+    );
+    await this.assertElementText(
+      this.entityDetailsModal.totalLimitByKey(limitKey),
+      expectedTotal,
+      MarketplaceExpectedMessages.totalLimitIsValid,
+    );
+    await this.assertElementState(
+      this.entityDetailsModal.usageContainerByKey(limitKey),
+      'visible',
+    );
+  }
+
+  public async assertLimitItems(expectedVisibleKeys: MarketplaceI18nKeys[]) {
+    const allTokenLimitKeys = [
+      MarketplaceI18nKeys.Minute,
+      MarketplaceI18nKeys.Weekly,
+      MarketplaceI18nKeys.Daily,
+      MarketplaceI18nKeys.Monthly,
+    ];
+    for (const key of allTokenLimitKeys) {
+      const expectedState = expectedVisibleKeys.includes(key)
+        ? 'visible'
+        : 'hidden';
+      await this.assertElementState(
+        this.entityDetailsModal.limitItemByKey(key),
+        expectedState,
+        expectedState === 'visible'
+          ? MarketplaceExpectedMessages.limitItemIsVisible(key)
+          : MarketplaceExpectedMessages.limitItemIsHidden(key),
+      );
+    }
+  }
+
+  public async assertSectionExpandedState(
+    expectedCaretState: ElementCaretState,
+    sectionKey: MarketplaceI18nKeys,
+  ) {
+    const expectedClass =
+      expectedCaretState === 'expanded'
+        ? new RegExp(Attributes.rotated90)
+        : new RegExp(`^(?!.*${Attributes.rotated90}).+$`);
+    await this.assertElementClass(
+      this.entityDetailsModal.sectionByKeyCaret(sectionKey),
+      expectedClass,
+      expectedCaretState === 'expanded'
+        ? ExpectedMessages.caretIsExpanded
+        : ExpectedMessages.caretIsCollapsed,
+    );
   }
 }

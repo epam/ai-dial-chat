@@ -554,3 +554,8 @@ export const updateMessageAttachments = ({
 export function getDownLoadCurrentDate() {
   return new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
 }
+
+export function getDefaultExportFileName(fileName: string): string {
+  const date = new Date().toISOString().slice(0, 10);
+  return `${date}_${fileName}`;
+}

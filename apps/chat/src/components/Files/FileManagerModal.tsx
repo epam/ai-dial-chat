@@ -369,6 +369,8 @@ export const FileManagerModal = memo(
       gridOptions,
       emptyStateTitle,
       emptyStateDescription,
+      showHiddenFiles,
+      handleToggleHiddenFiles,
     } = useFileManager({
       actionLabelsOptions,
       toolbarOptions: {
@@ -488,6 +490,8 @@ export const FileManagerModal = memo(
               navigationPanelOptions={navigationPanelOptions}
               gridOptions={mergedGridOptions}
               toolbarOptions={toolbarOptions}
+              showHiddenFiles={showHiddenFiles}
+              onShowHiddenFilesChange={handleToggleHiddenFiles}
               onDeleteFiles={handleDeleteFiles}
               onDownloadFiles={handleDownloadFiles}
               onTableFileClick={handleTableFileClick}
