@@ -35,21 +35,21 @@ When `onFetchDetails` resolves data, it SHALL take precedence over any staticall
 - **WHEN** an existing consumer of `Catalog` does not pass `onFetchDetails`
 - **THEN** it continues to compile and render without change
 
-### Requirement: Intro section and About tab both read `item.intro`, falling back to `item.description`
+### Requirement: Intro section reads `item.intro`, falling back to `item.description`; the About tab always reads `item.description`
 
-`CatalogItem` (`libs/catalog/src/models/catalog-item.ts`) SHALL gain an optional `intro?: string` field, distinct from the existing required `description: string`. Both the details panel's always-visible Intro section (rendered by `Summary`) and a dedicated `About` tab (`CatalogDetailsTab.About`, `libs/catalog/src/types/detail-tab.ts`) SHALL display the same content — `item.intro ?? item.description` — via the shared `AboutTab` component (`libs/catalog/src/components/Details/TabsContent/About.tsx`). Neither location uses an async fetch, callback prop, or loading state for this content.
+`CatalogItem` (`libs/catalog/src/models/catalog-item.ts`) SHALL gain an optional `intro?: string` field, distinct from the existing required `description: string`. The details panel's always-visible Intro section (rendered by `Summary`) SHALL display `item.intro ?? item.description`. A dedicated `About` tab (`CatalogDetailsTab.About`, `libs/catalog/src/types/detail-tab.ts`) SHALL display `item.description` unconditionally, even when `item.intro` is present. Both surfaces render through the shared `AboutTab` component (`libs/catalog/src/components/Details/TabsContent/About.tsx`), which takes an explicit `content: string` prop rather than deriving its own fallback — each caller (`Summary`, `DetailsPanel`) is responsible for choosing which field to pass. Neither location uses an async fetch, callback prop, or loading state for this content.
 
 The `About` tab SHALL always be present in the tab row, as the first entry, regardless of whether `item.details` is populated — unlike `Overview`/`Pricing`/`Api`/`Tools`, which only appear when their corresponding `item.details` field is non-null.
 
 #### Scenario: Intro field present
 
 - **WHEN** `item.intro` is a non-null string
-- **THEN** both the Intro section and the About tab render `item.intro`, not `item.description`
+- **THEN** the Intro section renders `item.intro`, and the About tab renders `item.description` (not `item.intro`)
 
 #### Scenario: Intro field absent
 
 - **WHEN** `item.intro` is `undefined`
-- **THEN** both the Intro section and the About tab render `item.description`
+- **THEN** the Intro section renders `item.description`, and the About tab also renders `item.description` — the two surfaces show the same text only in this case, incidentally, not by design
 
 #### Scenario: About tab is always first
 
@@ -60,7 +60,7 @@ The `About` tab SHALL always be present in the tab row, as the first entry, rega
 
 `apps/chat/src/components/CatalogView/CatalogView.tsx` SHALL implement `onFetchDetails` by calling a new `apps/chat/src/server-api` wrapper (e.g. `getDeploymentDetails(id)` in `apps/chat/src/server-api/deployments.ts`, following the same pattern as the existing `getDeploymentConfiguration` wrapper) that in turn calls the generated `@epam/chat-api-client` `DeploymentsApi.getDeploymentDetails` method — never `fetch` directly and never a new `base.ts` helper.
 
-`CatalogView.tsx` SHALL convert the returned `DeploymentDetailsDto` into the appropriate `EntitySpecificDetails` variant (`apps/chat/src/types/entity-details.ts`) based on `item.type`, then pass it through the existing `mapEntityDetailsToCatalogDetails` (`apps/chat/src/utils/map-entity-details-to-catalog.ts`) to produce `CatalogItemTabData`. No new tab-shaping logic SHALL be added outside `mapEntityDetailsToCatalogDetails` — only the new DTO → `EntitySpecificDetails` conversion step.
+`CatalogView.tsx` SHALL convert the returned `DeploymentDetailsDto` into the appropriate `EntitySpecificDetails` variant (`apps/chat/src/types/entity-details.ts`) via `mapDeploymentDetailsDtoToEntityDetails(dto: DeploymentDetailsDto): EntitySpecificDetails`, which switches on `dto.type` — the discriminator the backend has already resolved server-side — not on the `CatalogItem`'s own `type` field. The result is then passed through the existing `mapEntityDetailsToCatalogDetails` (`apps/chat/src/utils/map-entity-details-to-catalog.ts`) to produce `CatalogItemTabData`. No new tab-shaping logic SHALL be added outside `mapEntityDetailsToCatalogDetails` — only the new DTO → `EntitySpecificDetails` conversion step.
 
 The `onFetchDetails` callback SHALL be wrapped in `useCallback` (dependency: none beyond the stable wrapper import) to satisfy the design's memoisation requirement and avoid re-triggering `Catalog`'s fetch effect on unrelated `CatalogView` re-renders.
 

@@ -381,9 +381,11 @@ export class DeploymentsService extends AppService {
    * Resolves type from the id prefix convention already used on the
    * frontend (`toolsets/…`, `applications/…`) instead of calling
    * `listDeployments` — avoids an expensive full-catalog fetch just to
-   * classify one id. Ids with neither prefix are ambiguous (root-level
-   * applications don't always carry the `applications/` prefix), so those
-   * try `getModel` first and fall back to `getApplication` on a 404.
+   * classify one id. Ids with neither prefix are ambiguous — root-level
+   * applications and root-level toolsets (e.g. a copied toolset without a
+   * `toolsets/` prefix) are indistinguishable from a model id by shape
+   * alone — so those try `getModel`, then `getApplication`, then
+   * `getToolset` in turn, falling through to the next on a 404.
    */
   private async fetchDeploymentDetails(
     deployment: string,
@@ -397,7 +399,7 @@ export class DeploymentsService extends AppService {
       } else if (deployment.startsWith('applications/')) {
         data = await this.buildApplicationDetails(deployment, accessToken);
       } else {
-        data = await this.buildModelOrApplicationDetails(
+        data = await this.buildUnprefixedDeploymentDetails(
           deployment,
           accessToken,
         );
@@ -415,18 +417,23 @@ export class DeploymentsService extends AppService {
     return data;
   }
 
-  private async buildModelOrApplicationDetails(
+  private async buildUnprefixedDeploymentDetails(
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
     try {
       return await this.buildModelDetails(deployment, accessToken);
     } catch (err) {
-      if (err instanceof NotFoundException) {
-        return this.buildApplicationDetails(deployment, accessToken);
-      }
-      throw err;
+      if (!(err instanceof NotFoundException)) throw err;
     }
+
+    try {
+      return await this.buildApplicationDetails(deployment, accessToken);
+    } catch (err) {
+      if (!(err instanceof NotFoundException)) throw err;
+    }
+
+    return this.buildToolsetDetails(deployment, accessToken);
   }
 
   private async buildModelDetails(
@@ -442,6 +449,12 @@ export class DeploymentsService extends AppService {
         `get model details "${deployment}"`,
         this.logger,
       );
+    }
+    if (result.data == null) {
+      this.logger.warn(
+        `DIAL Core returned no body for get model details "${deployment}"`,
+      );
+      throw new NotFoundException('Resource not found');
     }
     const raw = result.data;
     const limits = raw.limits;
@@ -514,6 +527,12 @@ export class DeploymentsService extends AppService {
         this.logger,
       );
     }
+    if (result.data == null) {
+      this.logger.warn(
+        `DIAL Core returned no body for get application details "${deployment}"`,
+      );
+      throw new NotFoundException('Resource not found');
+    }
     const raw = result.data;
 
     const data: DeploymentDetailsDto = {
@@ -552,6 +571,12 @@ export class DeploymentsService extends AppService {
         `get toolset details "${deployment}"`,
         this.logger,
       );
+    }
+    if (result.data == null) {
+      this.logger.warn(
+        `DIAL Core returned no body for get toolset details "${deployment}"`,
+      );
+      throw new NotFoundException('Resource not found');
     }
     const raw = result.data;
     const allToolNames = await this.getAllToolSetToolNames(

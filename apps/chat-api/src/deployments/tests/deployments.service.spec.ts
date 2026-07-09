@@ -936,15 +936,17 @@ describe('DeploymentsService', () => {
       expect(result.toolsetDetails?.allToolNames).toBeUndefined();
     });
 
-    it('throws NotFoundException when neither getModel nor the getApplication fallback finds the id', async () => {
+    it('throws NotFoundException when getModel, getApplication, and getToolset all fail to find the id', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getModel.mockResolvedValue(errResponse(404));
       sdkClient.getApplication.mockResolvedValue(errResponse(404));
+      sdkClient.getToolset.mockResolvedValue(errResponse(404));
       await expect(
         service.getDeploymentDetails('unknown-id', 'token'),
       ).rejects.toThrow(NotFoundException);
       expect(sdkClient.getModel).toHaveBeenCalledOnce();
       expect(sdkClient.getApplication).toHaveBeenCalledOnce();
+      expect(sdkClient.getToolset).toHaveBeenCalledOnce();
     });
 
     it('falls back to getApplication when an unprefixed id 404s on getModel', async () => {
@@ -961,6 +963,38 @@ describe('DeploymentsService', () => {
         type: 'application',
         applicationDetails: expect.objectContaining({ owner: 'someone' }),
       });
+      expect(sdkClient.getToolset).not.toHaveBeenCalled();
+    });
+
+    it('falls back to getToolset when an unprefixed id 404s on both getModel and getApplication', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(errResponse(404));
+      sdkClient.getApplication.mockResolvedValue(errResponse(404));
+      sdkClient.getToolset.mockResolvedValue(
+        okResponse({ id: 'OauthToolset-copy', owner: 'someone' }),
+      );
+
+      const result = await service.getDeploymentDetails(
+        'OauthToolset-copy',
+        'token',
+      );
+
+      expect(result).toEqual({
+        id: 'OauthToolset-copy',
+        type: 'toolset',
+        toolsetDetails: expect.objectContaining({ owner: 'someone' }),
+      });
+    });
+
+    it('throws NotFoundException instead of a TypeError when getModel resolves no error but no body', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(okResponse(undefined));
+      sdkClient.getApplication.mockResolvedValue(errResponse(404));
+      sdkClient.getToolset.mockResolvedValue(errResponse(404));
+
+      await expect(
+        service.getDeploymentDetails('OauthToolset-copy', 'token'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('returns cached value without calling the upstream detail SDK method', async () => {
