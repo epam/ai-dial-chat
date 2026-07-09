@@ -4,7 +4,7 @@ Panel component for browsing conversation history with virtual scrolling, groupe
 
 ## Overview
 
-This library renders the conversation history sidebar. It uses `react-window` for virtualized rendering of large conversation lists, groups items by time period or source, and supports tab-based filtering and text search.
+`@epam/ai-dial-conversation-panel` renders the conversation history sidebar that lets users navigate between past chats. It addresses the performance and UX challenges that come with displaying large conversation histories: items are rendered with `react-window` for virtualised scrolling so the DOM stays small even with thousands of entries; conversations are grouped by recency (Today, This Week, This Month, Older) or by source (local vs. remote) so users can quickly locate recent work; and a tab bar with a search field narrows the list without a full page reload. Use this library whenever an application needs a left-rail or slide-in drawer that shows the user's chat history with standard navigation affordances. The library is intentionally data-agnostic — it accepts a flat list of `ConversationHistoryItem` objects and emits callbacks for selection, deletion, and moves, leaving storage and routing entirely to the consuming app.
 
 ## Installation
 

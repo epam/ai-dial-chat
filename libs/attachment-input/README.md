@@ -4,7 +4,7 @@ File attachment input components with upload validation, progress tracking, and 
 
 ## Overview
 
-This library provides components and utilities for handling file attachments in a conversation input. It covers upload state display, drag-and-drop overlays, clipboard paste, and MIME type validation.
+`@epam/ai-dial-attachment-input` provides everything needed to let users attach files to a conversation message. It handles the full lifecycle of an upload: MIME type and size validation before the file is sent, an `AttachmentCard` that shows per-file name, progress, error state, and removal actions, an `AttachmentTray` that groups multiple cards in the input area, a drag-and-drop overlay for dropping files anywhere on the input zone, and a clipboard-paste hook for pasting images directly from the clipboard. Use this library rather than building file handling from scratch whenever you need a production-quality attachment UX that enforces rate limits, shows meaningful error states, and lazily loads image previews only when they scroll into view.
 
 ## Installation
 

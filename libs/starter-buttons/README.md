@@ -4,7 +4,7 @@ Responsive starter prompt buttons that overflow into a dropdown when space is li
 
 ## Overview
 
-This library renders a row of quick-action or starter-prompt buttons shown at the beginning of a new conversation. On narrow screens or when there are more buttons than can fit in a single row, the overflow items collapse into a dropdown menu.
+`@epam/ai-dial-starter-buttons` renders the row of quick-action prompt buttons that appear on a new or empty conversation screen, giving users one-tap access to common tasks like summarising a document, writing a draft, or explaining a concept. The core problem it solves is responsive overflow: deployments can expose an arbitrary number of starter prompts, but there is only so much horizontal space available, especially on mobile. This library measures available space and automatically moves excess buttons into a "More" dropdown, ensuring the primary actions stay visible without the layout ever wrapping or clipping. Use it in any view that needs to present a curated set of starter prompts above or inside the conversation input; pass the full list and let the component handle layout and accessibility for both the visible buttons and the overflow menu.
 
 ## Installation
 

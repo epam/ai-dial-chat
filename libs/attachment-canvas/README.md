@@ -4,7 +4,7 @@ Canvas/viewer component for rendering attachment content inline — images, PDFs
 
 ## Overview
 
-This library provides a full-featured attachment preview panel. It supports multiple content types and exposes a React context so that deeply nested components can control what is displayed without prop drilling.
+`@epam/ai-dial-attachment-canvas` solves the problem of rendering heterogeneous attachment content — images, PDFs with text highlighting, JSON trees, markdown documents, and plain text — inside a single unified preview panel. Without this library, each consuming feature would need to independently wire up content-type detection, lazy loading, and a PDF renderer. The library centralises all of that behind a React context, meaning any component in the tree can push new content to the canvas without drilling props through intermediate layers. Use it whenever a conversation view, side panel, or modal needs to display an attachment that the user has opened or clicked. When a MIME type is not natively supported, the library provides a graceful `UnsupportedCanvasContent` fallback and a download utility so users can still retrieve the file.
 
 ## Installation
 

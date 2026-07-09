@@ -4,7 +4,7 @@ Resizable sidebar panel container with a header, search input, and empty/no-resu
 
 ## Overview
 
-This library provides the structural shell used by sidebar-style panels throughout AI DIAL Chat (conversation history, sources, catalog, etc.). It handles responsive resizing, optional search, a configurable header with action buttons, and built-in empty and no-results states.
+`@epam/ai-dial-sidebar` provides the reusable structural shell for every sidebar-style panel in AI DIAL Chat — conversation history, sources, catalog, and any future panels. Without a shared shell, each panel would implement its own header, close button, search bar, scroll container, empty state, and no-results state independently, leading to visual inconsistencies and duplicated layout code. This library solves that by offering a single `SidebarPanel` wrapper that handles responsive sizing, an optional integrated `SearchInput`, a configurable header with a title and action slots, and two ready-made states (`PanelEmpty`, `PanelNoResults`) for when the content area has nothing to show. The panel supports both left and right orientation via the `SidebarOrientation` enum so it can be anchored to either edge of the viewport. Feature libraries like `conversation-panel`, `source-panel`, and `catalog` use this shell as their layout foundation, keeping their own focus on domain-specific content rather than chrome.
 
 ## Installation
 

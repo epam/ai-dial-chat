@@ -4,7 +4,7 @@ Panel component for displaying the processing stages of an agent or LLM response
 
 ## Overview
 
-This library visualises the intermediate steps an AI agent or model takes while generating a response — tool calls, sub-tasks, retrieval steps, and so on. Each stage can be in a running, completed, or failed state. Related stages can be collapsed into a group.
+`@epam/ai-dial-conversation-stages` visualises the intermediate reasoning and execution steps that an AI agent or model produces while streaming a response. When a model performs tool calls, retrieval operations, or multi-step reasoning, users benefit from seeing the progress rather than staring at a blank loading state. This library renders that progress as a live list of labelled stages, each in one of three states — running (animated spinner), completed (check), or failed (error icon). Related stages can be grouped under a collapsible `CollapsedGroup` row to keep the panel compact during long agentic runs. Use this library in any conversation view that consumes streamed agent responses from the DIAL backend; it accepts the raw stage data array directly from the streaming event and handles all display transitions internally.
 
 ## Installation
 

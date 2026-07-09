@@ -4,7 +4,7 @@ UI component primitives for AI DIAL Chat applications.
 
 ## Overview
 
-This library provides a set of low-level, reusable UI components used across the AI DIAL Chat workspace. Components are built on top of `@epam/ai-dial-ui-kit` and styled with Tailwind CSS.
+`@epam/ai-dial-kit` is the shared UI component primitives layer for the AI DIAL Chat workspace. It sits between the base design system (`@epam/ai-dial-ui-kit`) and feature-level libraries, providing the small, composable building blocks — buttons, search inputs, tab rows, icon buttons — that appear in many different panels and views. Use this library when you need a standard interactive control that is more opinionated than the raw design-system primitives but should not carry any domain knowledge (no API calls, no app state). All components are built with Tailwind CSS, support RTL layouts via logical properties, and accept standard className overrides for theming.
 
 ## Installation
 

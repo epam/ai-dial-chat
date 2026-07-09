@@ -4,7 +4,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Overview
 
-This is the foundational library of the AI DIAL Chat workspace. It defines the core data types (chat, annotation, deployment, theme, auth), exposes reusable utilities, and provides shared UI components such as the markdown renderer, code blocks, and avatar generation. All other workspace libraries depend on this package.
+`@epam/ai-dial-chat-shared` is the foundational layer of the AI DIAL Chat workspace. It solves the problem of sharing domain knowledge — data shapes, business logic, and common UI — across every feature library without duplicating code or forcing each lib to declare its own conflicting versions. The package covers three areas: (1) **domain models** — TypeScript interfaces and enums for chats, messages, annotations, deployments, themes, and auth sessions that form the lingua franca between libs and apps; (2) **shared utilities** — string helpers, CSS variable builders, clipboard access, avatar colour generation, MIME type constants, and mobile-breakpoint hooks that every lib needs but should not re-implement; and (3) **shared UI components** — `MarkdownRenderer`, `CodeBlock`, `InitialsAvatar`, `DeploymentIcon`, `PanelEmptyState`, and `Highlight`, which appear in multiple panels and must have a single, consistent implementation. All other workspace libraries list this package as a peer dependency, so changes to the shared models propagate across the entire workspace in a single update.
 
 ## Installation
 
