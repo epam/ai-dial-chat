@@ -77,7 +77,7 @@ export const Header: FC<HeaderProps> = ({
           ) : undefined
         }
       />
-      <div className="flex flex-wrap gap-2 ps-[60px]">
+      <div className="flex flex-wrap items-center gap-2 ps-[60px]">
         {shouldShowPrimaryAction && (
           <PrimaryButton
             label={texts?.primaryActionLabel ?? 'Use in chat'}
