@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -12,7 +12,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
   PromptsSelectors,
-  UISelectors,
 } from '@/src/store/selectors';
 
 import { ConversationComponent } from '@/src/components/Chatbar/Conversation';
@@ -28,6 +27,20 @@ interface Props {
   additionalItemData: AdditionalItemData;
 }
 
+const useScopedFolderExpansion = () => {
+  const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
+
+  const toggleFolder = useCallback((folderId: string) => {
+    setOpenedFoldersIds((ids) =>
+      ids.includes(folderId)
+        ? ids.filter((id) => id !== folderId)
+        : [...ids, folderId],
+    );
+  }, []);
+
+  return { openedFoldersIds, toggleFolder };
+};
+
 export const PromptPublicationSidebarResources = ({
   resources,
   publicationUrl,
@@ -36,12 +49,7 @@ export const PromptPublicationSidebarResources = ({
 }: Props) => {
   const dispatch = useAppDispatch();
 
-  const openedFolderIdsSelector = useMemo(
-    () => UISelectors.selectOpenedFoldersIds(FeatureType.Prompt),
-    [],
-  );
-
-  const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
+  const { openedFoldersIds, toggleFolder } = useScopedFolderExpansion();
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const highlightedFolders = useAppSelector(
@@ -61,7 +69,7 @@ export const PromptPublicationSidebarResources = ({
 
   const handleFolderClick = useCallback(
     (folderId: string) => {
-      dispatch(PromptsActions.toggleFolder({ id: folderId }));
+      toggleFolder(folderId);
 
       const folder = allPublicationFolders.find((f) => f.id === folderId);
       if (folder?.status !== UploadStatus.LOADED) {
@@ -73,7 +81,7 @@ export const PromptPublicationSidebarResources = ({
         );
       }
     },
-    [dispatch, allPublicationFolders],
+    [dispatch, toggleFolder, allPublicationFolders],
   );
 
   const handleRenameFolder = useCallback(
@@ -137,12 +145,7 @@ export const ConversationPublicationSidebarResources = ({
 }: Props) => {
   const dispatch = useAppDispatch();
 
-  const openedFolderIdsSelector = useMemo(
-    () => UISelectors.selectOpenedFoldersIds(FeatureType.Chat),
-    [],
-  );
-
-  const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
+  const { openedFoldersIds, toggleFolder } = useScopedFolderExpansion();
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
@@ -161,7 +164,7 @@ export const ConversationPublicationSidebarResources = ({
 
   const handleFolderClick = useCallback(
     (folderId: string) => {
-      dispatch(ConversationsActions.toggleFolder({ id: folderId }));
+      toggleFolder(folderId);
 
       const folder = allPublicationFolders.find(
         (folder) => folder.id === folderId,
@@ -175,7 +178,7 @@ export const ConversationPublicationSidebarResources = ({
         );
       }
     },
-    [dispatch, allPublicationFolders],
+    [dispatch, toggleFolder, allPublicationFolders],
   );
 
   const handleRenameFolder = useCallback(
