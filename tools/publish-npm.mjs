@@ -11,6 +11,9 @@ if (forwardedArgs.length > 0) {
   publishArgs.push('--', ...forwardedArgs);
 }
 
-const result = spawnSync('npm', publishArgs, { stdio: 'inherit' });
+const result = spawnSync('npm', publishArgs, {
+  stdio: 'inherit',
+  shell: process.platform === 'win32',
+});
 
 process.exit(result.status ?? 1);

@@ -11,6 +11,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialClientService } from '../../dial/dial-client.service';
 import { ArchiveItemNodeType } from '../dto/download-archive.dto';
 import { FilesService } from '../files.service';
 
@@ -45,8 +46,13 @@ function makeService() {
     copyResource: vi.fn(),
   };
 
-  const service = new FilesService(configService);
-  (service as unknown as { client: SdkClient }).client = sdkClient;
+  const dialClient = {
+    client: sdkClient,
+    baseUrl: 'http://dial-core',
+    dialApiVersion: '2024-10-21',
+  } as unknown as DialClientService;
+
+  const service = new FilesService(dialClient, configService);
 
   return { service, sdkClient };
 }

@@ -1,9 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { AppService } from '../app/app.service';
 import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { EnvironmentVariables } from '../config/environment.config';
+import { DialClientService } from '../dial/dial-client.service';
 import {
   CURRENT_CONFIG_VERSION,
   DEFAULT_USER_CONFIG,
@@ -17,12 +15,10 @@ const LEGACY_TOOLSETS_PATH = 'clientdata/installed_toolsets.json';
 const LEGACY_DEPLOYMENTS_PATH = 'clientdata/installed_deployments.json';
 
 @Injectable()
-export class UserConfigService extends AppService {
-  protected override logger = new Logger(UserConfigService.name);
+export class UserConfigService {
+  private readonly logger = new Logger(UserConfigService.name);
 
-  constructor(configService: ConfigService<EnvironmentVariables>) {
-    super(configService);
-  }
+  constructor(private readonly dialClient: DialClientService) {}
 
   async readConfig(token: string, bucket: string): Promise<UserConfig> {
     try {
@@ -73,10 +69,14 @@ export class UserConfigService extends AppService {
     bucket: string,
   ): Promise<UserConfig | null> {
     try {
-      const { response } = (await this.client.downloadFile(bucket, path, {
-        headers: getBearerAuthHeaders(token),
-        parseAs: 'stream',
-      })) as { response: Response };
+      const { response } = (await this.dialClient.client.downloadFile(
+        bucket,
+        path,
+        {
+          headers: getBearerAuthHeaders(token),
+          parseAs: 'stream',
+        },
+      )) as { response: Response };
 
       if (!response.ok) return null;
 
@@ -93,9 +93,13 @@ export class UserConfigService extends AppService {
     bucket: string,
   ): Promise<void> {
     try {
-      const { error, response } = (await this.client.deleteFile(bucket, path, {
-        headers: getBearerAuthHeaders(token),
-      })) as { error?: unknown; response: Response };
+      const { error, response } = (await this.dialClient.client.deleteFile(
+        bucket,
+        path,
+        {
+          headers: getBearerAuthHeaders(token),
+        },
+      )) as { error?: unknown; response: Response };
       if (error != null && response.status !== 404) {
         this.logger.warn(
           `Failed to delete legacy config file at ${path}: HTTP ${response.status}`,
@@ -129,10 +133,14 @@ export class UserConfigService extends AppService {
       [LEGACY_DEPLOYMENTS_PATH, 'deployments'],
     ] as const) {
       try {
-        const { response } = (await this.client.downloadFile(bucket, path, {
-          headers: getBearerAuthHeaders(token),
-          parseAs: 'stream',
-        })) as { response: Response };
+        const { response } = (await this.dialClient.client.downloadFile(
+          bucket,
+          path,
+          {
+            headers: getBearerAuthHeaders(token),
+            parseAs: 'stream',
+          },
+        )) as { response: Response };
 
         if (!response.ok) {
           continue;
@@ -206,7 +214,7 @@ export class UserConfigService extends AppService {
     bucket: string,
   ): Promise<void> {
     try {
-      const { error, response } = (await this.client.uploadFile(
+      const { error, response } = (await this.dialClient.client.uploadFile(
         bucket,
         CONFIG_PATH,
         {

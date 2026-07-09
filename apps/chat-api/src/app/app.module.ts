@@ -13,6 +13,7 @@ import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
 import { ConversationModule } from '../conversations/conversation.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
+import { DialCoreModule } from '../dial/dial-core.module';
 import { FilesModule } from '../files/files.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
@@ -22,7 +23,6 @@ import { ToolsetsModule } from '../toolsets/toolsets.module';
 import { TranscriptionModule } from '../transcription/transcription.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { createServeStaticOptions } from './static-assets';
 
 @Module({
@@ -45,6 +45,7 @@ import { createServeStaticOptions } from './static-assets';
       },
     ]),
     ServeStaticModule.forRoot(createServeStaticOptions()),
+    DialCoreModule,
     AppConfigModule,
     ApplicationSchemasModule,
     ApplicationsModule,
@@ -61,7 +62,6 @@ import { createServeStaticOptions } from './static-assets';
   ],
   controllers: [AppController, HealthController],
   providers: [
-    AppService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
