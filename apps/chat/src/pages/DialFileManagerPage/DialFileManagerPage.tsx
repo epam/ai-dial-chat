@@ -1,5 +1,6 @@
 import {
   DialFileManagerTabs,
+  NOT_ALLOWED_SYMBOLS_REGEXP,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
@@ -58,6 +59,7 @@ const DialFileManagerPage: FC = () => {
     onNotification: showNotification,
     variant: DialFileManagerVariant.Standalone,
     actionProfile: DialFileManagerActionProfile.Browse,
+    forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
   });
 
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
@@ -152,6 +154,19 @@ const DialFileManagerPage: FC = () => {
       deletingLabel: t(DialFileManagerI18nKeys.DeletingLabel),
       renameLabel: t(DialFileManagerI18nKeys.RenameAction),
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
+      copyLabel: t(DialFileManagerI18nKeys.CopyAction),
+      moveLabel: t(DialFileManagerI18nKeys.MoveAction),
+      copyingLabel: t(DialFileManagerI18nKeys.CopyingLabel),
+      movingLabel: t(DialFileManagerI18nKeys.MovingLabel),
+      operationLoaderCopyTitle: t(
+        DialFileManagerI18nKeys.OperationLoaderCopyTitle,
+      ),
+      operationLoaderMoveTitle: t(
+        DialFileManagerI18nKeys.OperationLoaderMoveTitle,
+      ),
+      operationLoaderCancelLabel: t(
+        DialFileManagerI18nKeys.OperationLoaderCancelLabel,
+      ),
       deleteConfirmTitle: (names) =>
         names.length === 1
           ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)

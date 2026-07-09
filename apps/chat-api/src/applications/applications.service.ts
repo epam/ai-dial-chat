@@ -101,6 +101,7 @@ export class ApplicationsService extends AppService {
         displayName: body.name,
         displayVersion: version,
         application_type_schema_id: body.type,
+        application_properties: body.applicationProperties ?? {},
       };
       if (body.description != null) dialBody.description = body.description;
       if (body.iconUrl != null) dialBody.iconUrl = body.iconUrl;
@@ -129,7 +130,7 @@ export class ApplicationsService extends AppService {
       this.logger.debug(
         `Created application ${appPath}, invalidated cache for sub: ${userSub}`,
       );
-      return { id: `applications/${bucket}/${encodedPath}` };
+      return { id: `applications/${bucket}/${appPath}` };
     } catch (err) {
       return handleDialFetchError(err, 'create application', this.logger, 0);
     }

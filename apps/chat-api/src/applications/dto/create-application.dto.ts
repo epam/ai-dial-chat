@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   IsUrl,
@@ -60,6 +61,19 @@ export class CreateApplicationBodyDto {
   @IsOptional()
   @MaxLength(90)
   intro?: string;
+
+  @ApiPropertyOptional({
+    example: {
+      orchestrator: {
+        system_prompt: { type: 'custom', variables: {}, content: '' },
+      },
+      contexts: [],
+      tool_sets: [],
+    },
+  })
+  @IsObject()
+  @IsOptional()
+  applicationProperties?: Record<string, unknown>;
 }
 
 export class CreatedApplicationDto {

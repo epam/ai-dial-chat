@@ -1,13 +1,21 @@
 import {
+  DIAL_ICON_SIZE,
   DialFormPopup,
   DialGhostIconButton,
   DialInput,
   DialSpinner,
-  DIAL_ICON_SIZE,
   PopupSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconSparkles } from '@tabler/icons-react';
-import { memo, useCallback, useEffect, useRef, useState, type FC } from 'react';
+import {
+  KeyboardEvent,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
@@ -63,7 +71,7 @@ const RenameConversationPopup: FC<Props> = ({
   }, [isSaveDisabled, onSave, trimmed]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
+    (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') handleSave();
     },
     [handleSave],

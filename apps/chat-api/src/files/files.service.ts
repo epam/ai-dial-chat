@@ -22,6 +22,12 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import type { EnvironmentVariables } from '../config/environment.config';
+import type { CopyItemDto } from './dto/copy-files.dto';
+import {
+  CopyFilesResponseDto,
+  CopyItemNodeType,
+  CopyItemResultDto,
+} from './dto/copy-files.dto';
 import type { CreateFolderResponseDto } from './dto/create-folder.dto';
 import type { DeleteItemDto } from './dto/delete-files.dto';
 import {
@@ -33,6 +39,12 @@ import type { ArchiveItemDto } from './dto/download-archive.dto';
 import { ArchiveItemNodeType } from './dto/download-archive.dto';
 import type { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
 import type { ListFilesResponseDto } from './dto/list-files.dto';
+import type { MoveItemDto } from './dto/move-files.dto';
+import {
+  MoveFilesResponseDto,
+  MoveItemNodeType,
+  MoveItemResultDto,
+} from './dto/move-files.dto';
 import type { RenameItemDto } from './dto/rename-files.dto';
 import {
   RenameFilesResponseDto,
@@ -121,6 +133,30 @@ const getRenameErrorMessage = (error: unknown): string => {
 
   return 'Rename failed';
 };
+
+const getResourceOperationErrorMessage = (
+  error: unknown,
+  operationTag: string,
+  fallback: string,
+): string => {
+  try {
+    handleDialSdkError(error, operationTag);
+  } catch (err) {
+    if (err instanceof HttpException) {
+      if (err.getStatus() === HttpStatus.CONFLICT) return 'Conflict';
+      if (err.getStatus() === HttpStatus.FORBIDDEN) return 'Forbidden';
+      if (err.getStatus() === HttpStatus.NOT_FOUND) return 'Not found';
+    }
+  }
+
+  return fallback;
+};
+
+const getCopyErrorMessage = (error: unknown): string =>
+  getResourceOperationErrorMessage(error, 'files.copyItem', 'Copy failed');
+
+const getMoveErrorMessage = (error: unknown): string =>
+  getResourceOperationErrorMessage(error, 'files.moveItem', 'Move failed');
 
 @Injectable()
 export class FilesService extends AppService {
@@ -1213,6 +1249,280 @@ export class FilesService extends AppService {
         destinationPath: destFolderPath,
         success: false,
         error: 'Partial rename',
+      };
+    }
+    return {
+      sourcePath: sourceFolderPath,
+      destinationPath: destFolderPath,
+      success: true,
+    };
+  }
+
+  async copyFiles(
+    items: CopyItemDto[],
+    at: string,
+  ): Promise<CopyFilesResponseDto> {
+    this.logger.log(`Copy files started: batchSize=${items.length}`);
+
+    const results: CopyItemResultDto[] = await Promise.all(
+      items.map((item) => this.copyItem(item, at)),
+    );
+
+    const successCount = results.filter((r) => r.success).length;
+    this.logger.log(
+      `Copy files completed: batchSize=${items.length}, successCount=${successCount}, failedCount=${items.length - successCount}`,
+    );
+
+    return { results };
+  }
+
+  private async copyItem(
+    item: CopyItemDto,
+    at: string,
+  ): Promise<CopyItemResultDto> {
+    if (item.nodeType === CopyItemNodeType.Folder) {
+      return this.copyFolderItem(
+        item.bucket,
+        item.sourcePath,
+        item.destinationPath,
+        at,
+      );
+    }
+    return this.copyFileItem(
+      item.bucket,
+      item.sourcePath,
+      item.destinationPath,
+      at,
+    );
+  }
+
+  private async copyFileItem(
+    bucket: string,
+    sourcePath: string,
+    destPath: string,
+    at: string,
+  ): Promise<CopyItemResultDto> {
+    const sourceUrl = buildDialFileResourceUrl(bucket, sourcePath);
+    const destinationUrl = buildDialFileResourceUrl(bucket, destPath);
+
+    try {
+      const { error, response } = (await this.client.copyResource({
+        headers: getBearerAuthHeaders(at),
+        body: { sourceUrl, destinationUrl, overwrite: false },
+        signal: AbortSignal.timeout(this.getTimeoutMs()),
+      })) as { error?: unknown; response: { status: number } };
+
+      if (error == null) {
+        return { sourcePath, destinationPath: destPath, success: true };
+      }
+
+      const status = response.status;
+      this.logger.warn(
+        `copyFileItem failed: bucket=${bucket}, sourcePath=${sourcePath}, destPath=${destPath}, status=${status}`,
+      );
+
+      return {
+        sourcePath,
+        destinationPath: destPath,
+        success: false,
+        error: getCopyErrorMessage({ status }),
+      };
+    } catch (err) {
+      this.logger.error(
+        `copyFileItem exception: bucket=${bucket}, sourcePath=${sourcePath}, err=${err instanceof Error ? err.message : String(err)}`,
+      );
+      return {
+        sourcePath,
+        destinationPath: destPath,
+        success: false,
+        error: getCopyErrorMessage(err),
+      };
+    }
+  }
+
+  private async copyFolderItem(
+    bucket: string,
+    sourceFolderPath: string,
+    destFolderPath: string,
+    at: string,
+  ): Promise<CopyItemResultDto> {
+    const srcPrefix = sourceFolderPath.endsWith('/')
+      ? sourceFolderPath
+      : `${sourceFolderPath}/`;
+    const destPrefix = destFolderPath.endsWith('/')
+      ? destFolderPath
+      : `${destFolderPath}/`;
+
+    let children: ExpandedFile[];
+    try {
+      children = await this.expandFolderContents(bucket, srcPrefix, '', at);
+    } catch {
+      return {
+        sourcePath: sourceFolderPath,
+        destinationPath: destFolderPath,
+        success: false,
+        error: 'Copy failed',
+      };
+    }
+
+    let anyFailed = false;
+    for (const child of children) {
+      const relative = child.archivePath;
+      const destChildPath = `${destPrefix}${relative}`;
+      const result = await this.copyFileItem(
+        bucket,
+        child.path,
+        destChildPath,
+        at,
+      );
+      if (!result.success) {
+        anyFailed = true;
+      }
+    }
+
+    if (anyFailed) {
+      return {
+        sourcePath: sourceFolderPath,
+        destinationPath: destFolderPath,
+        success: false,
+        error: 'Partial copy',
+      };
+    }
+    return {
+      sourcePath: sourceFolderPath,
+      destinationPath: destFolderPath,
+      success: true,
+    };
+  }
+
+  async moveFiles(
+    items: MoveItemDto[],
+    at: string,
+  ): Promise<MoveFilesResponseDto> {
+    this.logger.log(`Move files started: batchSize=${items.length}`);
+
+    const results: MoveItemResultDto[] = await Promise.all(
+      items.map((item) => this.moveItem(item, at)),
+    );
+
+    const successCount = results.filter((r) => r.success).length;
+    this.logger.log(
+      `Move files completed: batchSize=${items.length}, successCount=${successCount}, failedCount=${items.length - successCount}`,
+    );
+
+    return { results };
+  }
+
+  private async moveItem(
+    item: MoveItemDto,
+    at: string,
+  ): Promise<MoveItemResultDto> {
+    if (item.nodeType === MoveItemNodeType.Folder) {
+      return this.moveFolderItem(
+        item.bucket,
+        item.sourcePath,
+        item.destinationPath,
+        at,
+      );
+    }
+    return this.moveFileItem(
+      item.bucket,
+      item.sourcePath,
+      item.destinationPath,
+      at,
+    );
+  }
+
+  private async moveFileItem(
+    bucket: string,
+    sourcePath: string,
+    destPath: string,
+    at: string,
+  ): Promise<MoveItemResultDto> {
+    const sourceUrl = buildDialFileResourceUrl(bucket, sourcePath);
+    const destinationUrl = buildDialFileResourceUrl(bucket, destPath);
+
+    try {
+      const { error, response } = (await this.client.moveResource({
+        headers: getBearerAuthHeaders(at),
+        body: { sourceUrl, destinationUrl, overwrite: false },
+        signal: AbortSignal.timeout(this.getTimeoutMs()),
+      })) as { error?: unknown; response: { status: number } };
+
+      if (error == null) {
+        return { sourcePath, destinationPath: destPath, success: true };
+      }
+
+      const status = response.status;
+      this.logger.warn(
+        `moveFileItem failed: bucket=${bucket}, sourcePath=${sourcePath}, destPath=${destPath}, status=${status}`,
+      );
+
+      return {
+        sourcePath,
+        destinationPath: destPath,
+        success: false,
+        error: getMoveErrorMessage({ status }),
+      };
+    } catch (err) {
+      this.logger.error(
+        `moveFileItem exception: bucket=${bucket}, sourcePath=${sourcePath}, err=${err instanceof Error ? err.message : String(err)}`,
+      );
+      return {
+        sourcePath,
+        destinationPath: destPath,
+        success: false,
+        error: getMoveErrorMessage(err),
+      };
+    }
+  }
+
+  private async moveFolderItem(
+    bucket: string,
+    sourceFolderPath: string,
+    destFolderPath: string,
+    at: string,
+  ): Promise<MoveItemResultDto> {
+    const srcPrefix = sourceFolderPath.endsWith('/')
+      ? sourceFolderPath
+      : `${sourceFolderPath}/`;
+    const destPrefix = destFolderPath.endsWith('/')
+      ? destFolderPath
+      : `${destFolderPath}/`;
+
+    let children: ExpandedFile[];
+    try {
+      children = await this.expandFolderContents(bucket, srcPrefix, '', at);
+    } catch {
+      return {
+        sourcePath: sourceFolderPath,
+        destinationPath: destFolderPath,
+        success: false,
+        error: 'Move failed',
+      };
+    }
+
+    let anyFailed = false;
+    for (const child of children) {
+      const relative = child.archivePath;
+      const destChildPath = `${destPrefix}${relative}`;
+      const result = await this.moveFileItem(
+        bucket,
+        child.path,
+        destChildPath,
+        at,
+      );
+      if (!result.success) {
+        anyFailed = true;
+      }
+    }
+
+    if (anyFailed) {
+      return {
+        sourcePath: sourceFolderPath,
+        destinationPath: destFolderPath,
+        success: false,
+        error: 'Partial move',
       };
     }
     return {

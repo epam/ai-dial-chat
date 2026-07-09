@@ -25,6 +25,10 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "graph": "nx graph",
+    "build:publishable": "nx run-many -t build --projects=tag:publishable",
+    "publish": "nx run-many -t publish --projects=tag:publishable",
+    "publish:npm": "node tools/publish-npm.mjs",
+    "publish:dry": "nx run-many -t publish --output-style=static --projects=tag:publishable --dry=true --ver=0.0.0-preview.0 --tag=dev",
     "validate:agent-docs": "node scripts/validate-agent-docs.mjs",
     "validate:agent-docs:test": "node --test scripts/validate-agent-docs.spec.mjs",
     "prepare": "git config core.hooksPath .githooks"
@@ -97,7 +101,7 @@
   "dependencies": {
     "@epam/ai-dial-react-pdf-highlighter": "^0.2.0-dev.17",
     "@epam/ai-dial-typescript-sdk": "0.1.0-dev.31",
-    "@epam/ai-dial-ui-kit": "0.12.0-dev.10",
+    "@epam/ai-dial-ui-kit": "0.12.0-dev.21",
     "@epam/pdf-highlighter-kit": "^0.0.18",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.0.0",

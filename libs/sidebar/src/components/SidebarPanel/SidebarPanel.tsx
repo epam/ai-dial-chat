@@ -6,7 +6,14 @@ import {
   ResizableContainerSide,
 } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
-import { useCallback, useMemo, useRef, useState, type FC } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from 'react';
 import { type SidebarPanelProps } from '../../models/panel-props';
 import { SidebarOrientation } from '../../types/orientation';
 import { Header } from '../Header/Header';
@@ -52,13 +59,45 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     isOpen ? defaultWidth : 0,
   );
 
+  /* Suppress the width transition while the user is actively dragging so the
+   * outer div tracks the inner re-resizable element without lag.  The
+   * transition is still applied for the open/close animation. */
+  const [isResizing, setIsResizing] = useState(false);
+
+  /* Reset to defaultWidth when the panel closes so the next open always starts
+   * at the expected proportional size, not at a previously resized value.
+   * Also clears isResizing so a close that interrupts an in-progress drag
+   * (e.g. programmatic close) doesn't leave the panel stuck at width: 'auto'. */
+  useEffect(() => {
+    if (!isOpen) {
+      setAnimationMaxWidth(defaultWidth);
+      currentWidthRef.current = defaultWidth;
+      setIsResizing(false);
+    }
+  }, [isOpen, defaultWidth]);
+
+  const handleResize = useCallback(() => {
+    setIsResizing(true);
+  }, []);
+
   const handleResizeStop = useCallback(
     (width: number) => {
       currentWidthRef.current = width;
+      setAnimationMaxWidth(width);
+      setIsResizing(false);
       onResizeStop?.(width);
     },
     [onResizeStop],
   );
+
+  let panelWidth: number | 'auto';
+  if (isResizing) {
+    panelWidth = 'auto';
+  } else if (isOpen) {
+    panelWidth = animationMaxWidth || currentWidthRef.current;
+  } else {
+    panelWidth = 0;
+  }
 
   const dividerClass =
     orientation === SidebarOrientation.Right ? 'border-s' : 'border-e';
@@ -79,10 +118,11 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   return (
     <div
       style={{
-        width: isOpen ? animationMaxWidth || currentWidthRef.current : 0,
+        width: panelWidth,
       }}
       className={mergeClasses(
-        'h-full flex-shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out',
+        'h-full flex-shrink-0 overflow-hidden',
+        !isResizing && 'transition-[width] duration-200 ease-in-out',
         isOpen && 'relative z-50',
         className,
         styles.panel,
@@ -96,7 +136,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
         maxWidth={maxWidth}
         resizeHandlerClassName={styles.resizeHandler}
         onResizeStop={handleResizeStop}
-        onResize={setAnimationMaxWidth}
+        onResize={handleResize}
       >
         <aside
           role="complementary"

@@ -71,6 +71,10 @@ jobs:
           # set this to a deployment your key actually has. If unset, the
           # platform falls back to `anthropic.<manifest model>`.
           DIAL_MODEL: ${{ vars.DIAL_MODEL }}
+          # Route segment appended to DIAL_CORE_URL for the Anthropic-compatible
+          # endpoint. Defaults to `anthropic`; override via the DIAL_ROUTE_PATH
+          # Actions variable (e.g. `claude_code_router`) without editing code.
+          DIAL_ROUTE_PATH: ${{ vars.DIAL_ROUTE_PATH }}
         run: |
           set -euo pipefail
           if [ -n "${DIAL_CORE_URL:-}" ]; then
@@ -78,7 +82,7 @@ jobs:
               echo "::error::DIAL_CORE_URL is set but the DIAL_API_KEY secret is missing."
               exit 1
             fi
-            base="${DIAL_CORE_URL%/}/anthropic"
+            base="${DIAL_CORE_URL%/}/${DIAL_ROUTE_PATH:-anthropic}"
             { echo "ANTHROPIC_BASE_URL=${base}"
               echo "ANTHROPIC_AUTH_TOKEN=${DIAL_API_KEY}"
               echo "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"

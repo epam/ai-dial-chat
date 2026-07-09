@@ -30,6 +30,12 @@ describe('virtualPathToApiPath', () => {
       'reports/',
     );
   });
+
+  it('collapses double slashes from a folder-prefix + leading-slash paste destination', () => {
+    expect(
+      virtualPathToApiPath('/My files/folder_for_test//file.png', ROOT_LABEL),
+    ).toBe('folder_for_test/file.png/');
+  });
 });
 
 describe('resolveDialFileApiPath', () => {

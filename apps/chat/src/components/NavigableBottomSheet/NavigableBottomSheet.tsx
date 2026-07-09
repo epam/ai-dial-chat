@@ -2,6 +2,7 @@ import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
 import {
   type FC,
   memo,
+  ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -15,7 +16,7 @@ import type { SheetPage } from '../../models/sheet-navigation';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
   /** Title shown in the root-level header (no back button). Required for accessibility. */
   title: string;
   className?: string;

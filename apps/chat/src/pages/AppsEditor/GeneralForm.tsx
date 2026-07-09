@@ -10,21 +10,27 @@ import {
   DeploymentCreationForm,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { FC } from 'react';
-import { memo, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-  AppsEditorI18nKeys,
-  ButtonsI18nKeys,
-} from '../../constants/translation-keys';
+  forwardRef,
+  memo,
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
+import { isQuickAppSchema } from '../../utils/application-schema';
+
+export interface GeneralFormHandle {
+  submit: () => Promise<void>;
+}
 
 interface Props {
   schemaId: string;
   onCreated: (appId: string) => void;
-  onCancel: () => void;
 }
 
 const EMPTY_VALUES: DeploymentCreationFormValues = {
@@ -36,7 +42,10 @@ const EMPTY_VALUES: DeploymentCreationFormValues = {
   intro: '',
 };
 
-const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
+const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
+  { schemaId, onCreated },
+  ref,
+) {
   const { t } = useTranslation();
 
   const [values, setValues] =
@@ -86,7 +95,8 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
     });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
     const codes = validateDeploymentCreationFields(values, {
       validateNamePattern: true,
       validateVersionPattern: true,
@@ -117,6 +127,15 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
     setIsSubmitting(true);
     setSubmitError('');
     try {
+      const applicationProperties = isQuickAppSchema({ id: schemaId })
+        ? {
+            orchestrator: {
+              system_prompt: { type: 'custom', variables: {}, content: '' },
+            },
+            contexts: [],
+            tool_sets: [],
+          }
+        : undefined;
       const result = await createApplication({
         name: values.name.trim(),
         type: schemaId,
@@ -125,6 +144,7 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
         version: values.version.trim() || undefined,
         topics: values.topics.length > 0 ? values.topics : undefined,
         intro: values.intro.trim() || undefined,
+        applicationProperties,
       });
       onCreated(result.id);
     } catch {
@@ -132,7 +152,9 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [isSubmitting, values, schemaId, onCreated, t]);
+
+  useImperativeHandle(ref, () => ({ submit: handleSubmit }), [handleSubmit]);
 
   const previewItem = useMemo<CatalogItem>(
     () => ({
@@ -174,22 +196,6 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
             />
           )}
         </div>
-
-        <div className="flex shrink-0 border-t border-t-tertiary bg-layer-2 p-2">
-          <div className="flex w-full justify-end gap-3">
-            <NeutralButton
-              type="button"
-              label={t(ButtonsI18nKeys.Cancel)}
-              onClick={onCancel}
-              disabled={isSubmitting}
-            />
-            <PrimaryButton
-              type="submit"
-              label={t(AppsEditorI18nKeys.GeneralFormNextButton)}
-              disabled={isSubmitting}
-            />
-          </div>
-        </div>
       </div>
 
       <div className="flex w-1/2 flex-col bg-layer-1 p-4">
@@ -204,6 +210,6 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
       </div>
     </form>
   );
-};
+});
 
 export default memo(GeneralForm);

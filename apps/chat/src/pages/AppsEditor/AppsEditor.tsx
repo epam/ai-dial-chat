@@ -1,14 +1,20 @@
-import { DialSteps } from '@epam/ai-dial-ui-kit';
+import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AppsEditorI18nKeys } from '../../constants/translation-keys';
+import EditorHeader from '../../components/EditorHeader/EditorHeader';
+import {
+  AppsEditorI18nKeys,
+  ButtonsI18nKeys,
+} from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
+import type { GeneralFormHandle } from './GeneralForm';
 import GeneralForm from './GeneralForm';
+import type { SettingsStepHandle } from './SettingsStep';
 import SettingsStep from './SettingsStep';
 
 const AppsEditor: FC = () => {
@@ -18,6 +24,11 @@ const AppsEditor: FC = () => {
   const { schemas } = useDeployments();
 
   const [createdAppId, setCreatedAppId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  const generalFormRef = useRef<GeneralFormHandle>(null);
+  const settingsStepRef = useRef<SettingsStepHandle>(null);
 
   const step = searchParams.get(AppsEditorQuery.Step) ?? AppsEditorStep.General;
   const schemaId = searchParams.get(AppsEditorQuery.Schema) ?? '';
@@ -59,6 +70,32 @@ const AppsEditor: FC = () => {
     [setSearchParams],
   );
 
+  const isGeneralStep = step === AppsEditorStep.General;
+
+  const handleSave = useCallback(() => {
+    if (isGeneralStep) {
+      setIsSaving(true);
+      void generalFormRef.current?.submit().finally(() => setIsSaving(false));
+      return;
+    }
+    setSaveError('');
+    setIsSaving(true);
+    settingsStepRef.current?.triggerSave();
+  }, [isGeneralStep]);
+
+  const handleSaveSuccess = useCallback(() => {
+    setIsSaving(false);
+    navigate(returnUrl);
+  }, [navigate, returnUrl]);
+
+  const handleSaveError = useCallback(
+    (error: string) => {
+      setIsSaving(false);
+      setSaveError(error || t(AppsEditorI18nKeys.ErrorSaveFailed));
+    },
+    [t],
+  );
+
   const steps = useMemo(
     () => [
       { id: AppsEditorStep.General, name: t(AppsEditorI18nKeys.StepGeneral) },
@@ -67,42 +104,52 @@ const AppsEditor: FC = () => {
     [t],
   );
 
-  const isGeneralStep = step === AppsEditorStep.General;
+  const saveButtonLabel = isGeneralStep
+    ? t(AppsEditorI18nKeys.GeneralFormNextButton)
+    : t(AppsEditorI18nKeys.SaveButton);
+
   const appIdForSettings =
     createdAppId ?? searchParams.get(AppsEditorQuery.AppId) ?? '';
 
   return (
     <div className="flex size-full flex-col">
-      <header className="flex items-center justify-between gap-3 border-b border-b-tertiary bg-layer-2 px-4 pb-1">
-        <div className="flex items-center gap-3">
-          {schema?.displayName && (
-            <h1 className="dial-caption-text justify-start text-primary">
-              {schema.displayName}
-            </h1>
-          )}
-          <nav
-            role="navigation"
-            aria-label={t(AppsEditorI18nKeys.StepsNavAriaLabel)}
-            className="flex items-center gap-2 text-sm"
-          >
-            <DialSteps
-              steps={steps}
-              currentStep={step}
-              onChangeStep={handleChangeStep}
-            />
-          </nav>
+      <EditorHeader
+        title={schema?.displayName}
+        steps={steps}
+        currentStep={step}
+        navAriaLabel={t(AppsEditorI18nKeys.StepsNavAriaLabel)}
+        isSaving={isSaving}
+        cancelButtonLabel={t(ButtonsI18nKeys.Cancel)}
+        saveButtonLabel={saveButtonLabel}
+        onChangeStep={handleChangeStep}
+        onCancel={handleCancel}
+        onSave={handleSave}
+      />
+
+      {!isGeneralStep && saveError && (
+        <div className="p-2">
+          <DialNotification
+            variant={NotificationVariant.Error}
+            message={saveError}
+          />
         </div>
-      </header>
+      )}
 
       <div className="min-h-0 flex-1 overflow-auto">
         {isGeneralStep ? (
           <GeneralForm
+            ref={generalFormRef}
             schemaId={schemaId}
             onCreated={handleCreated}
-            onCancel={handleCancel}
           />
         ) : (
-          <SettingsStep schema={schema} appId={appIdForSettings} />
+          <SettingsStep
+            ref={settingsStepRef}
+            schema={schema}
+            appId={appIdForSettings}
+            onSaveSuccess={handleSaveSuccess}
+            onSaveError={handleSaveError}
+          />
         )}
       </div>
     </div>

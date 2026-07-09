@@ -1,7 +1,7 @@
 import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import React from 'react';
+import { createElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GenerationProvider } from '../../../context/GenerationContext';
 import {
@@ -96,7 +96,7 @@ const makeAwaitingConversation = (): Conversation =>
   }) as unknown as Conversation;
 
 const wrapper = ({ children }: { children: ReactNode }) =>
-  React.createElement(GenerationProvider, null, children);
+  createElement(GenerationProvider, null, children);
 
 const makeParams = (
   overrides?: Partial<Parameters<typeof useConversationStream>[0]>,

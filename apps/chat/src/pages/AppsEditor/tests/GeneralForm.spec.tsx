@@ -1,103 +1,69 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
+import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  AppsEditorI18nKeys,
-  ButtonsI18nKeys,
-} from '../../../constants/translation-keys';
+import { AppsEditorI18nKeys } from '../../../constants/translation-keys';
 import { createApplication } from '../../../server-api/applications';
+import type { GeneralFormHandle } from '../GeneralForm';
 import GeneralForm from '../GeneralForm';
 
 vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  return {
-    ...actual,
-    DialInput: ({
-      value,
-      onChange,
-      labelProps,
-      error,
-      placeholder,
-    }: {
-      value?: string;
-      onChange?: (v?: string) => void;
-      labelProps?: { label?: string; required?: boolean };
-      error?: string;
-      placeholder?: string;
-    }) => (
-      <>
-        <label>
-          {labelProps?.label}
-          <input
-            value={value ?? ''}
-            placeholder={placeholder}
-            onChange={(e) => onChange?.(e.target.value)}
-          />
-        </label>
-        {error && <p role="alert">{error}</p>}
-      </>
-    ),
-    DialTextarea: ({
-      value,
-      onChange,
-      labelProps,
-      placeholder,
-    }: {
-      value?: string;
-      onChange?: (v: string) => void;
-      labelProps?: { label?: string };
-      placeholder?: string;
-    }) => (
+vi.mock('@epam/ai-dial-kit', () => ({
+  Input: ({
+    value,
+    onChange,
+    labelProps,
+    error,
+    placeholder,
+  }: {
+    value?: string;
+    onChange?: (v?: string) => void;
+    labelProps?: { label?: string; required?: boolean };
+    error?: string;
+    placeholder?: string;
+  }) => (
+    <>
       <label>
         {labelProps?.label}
-        <textarea
+        <input
           value={value ?? ''}
           placeholder={placeholder}
           onChange={(e) => onChange?.(e.target.value)}
         />
       </label>
-    ),
-    PrimaryButton: ({
-      label,
-      disabled,
-      type,
-    }: {
-      label?: ReactNode;
-      disabled?: boolean;
-      type?: string;
-    }) => (
-      <button
-        type={type === 'submit' ? 'submit' : 'button'}
-        disabled={disabled}
-      >
-        {label}
-      </button>
-    ),
-    NeutralButton: ({
-      label,
-      disabled,
-      onClick,
-      type,
-    }: {
-      label?: ReactNode;
-      disabled?: boolean;
-      onClick?: () => void;
-      type?: string;
-    }) => (
-      <button
-        type={type === 'submit' ? 'submit' : 'button'}
-        disabled={disabled}
-        onClick={onClick}
-      >
-        {label}
-      </button>
-    ),
-    DialTagInput: ({ label }: { label?: string }) => <span>{label}</span>,
+      {error && <p role="alert">{error}</p>}
+    </>
+  ),
+  Textarea: ({
+    value,
+    onChange,
+    labelProps,
+    placeholder,
+  }: {
+    value?: string;
+    onChange?: (v: string) => void;
+    labelProps?: { label?: string };
+    placeholder?: string;
+  }) => (
+    <label>
+      {labelProps?.label}
+      <textarea
+        value={value ?? ''}
+        placeholder={placeholder}
+        onChange={(e) => onChange?.(e.target.value)}
+      />
+    </label>
+  ),
+  TagInput: ({ label }: { label?: string }) => <span>{label}</span>,
+}));
+
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    ...actual,
     DialNotification: ({ message }: { variant?: string; message?: string }) => (
       <p role="alert">{message}</p>
     ),
@@ -108,26 +74,17 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 const DEFAULT_PROPS = {
   schemaId: 'quickapps2-schema',
   onCreated: vi.fn(),
-  onCancel: vi.fn(),
 };
 
-const renderForm = (props?: Partial<typeof DEFAULT_PROPS>) =>
-  render(<GeneralForm {...DEFAULT_PROPS} {...props} />);
+const renderForm = (
+  props?: Partial<typeof DEFAULT_PROPS>,
+  ref?: React.Ref<GeneralFormHandle>,
+) => render(<GeneralForm {...DEFAULT_PROPS} {...props} ref={ref} />);
 
 const getNameInput = () =>
   screen.getByLabelText(
     AppsEditorI18nKeys.GeneralFormNameLabel,
   ) as HTMLInputElement;
-
-const getNextButton = () =>
-  screen.getByRole('button', {
-    name: AppsEditorI18nKeys.GeneralFormNextButton,
-  }) as HTMLButtonElement;
-
-const getCancelButton = () =>
-  screen.getByRole('button', {
-    name: ButtonsI18nKeys.Cancel,
-  }) as HTMLButtonElement;
 
 describe('GeneralForm', () => {
   const user = userEvent.setup({ delay: null });
@@ -153,8 +110,11 @@ describe('GeneralForm', () => {
   });
 
   it('shows required error and does not call API when name is empty', async () => {
-    renderForm();
-    await user.click(getNextButton());
+    const ref = createRef<GeneralFormHandle>();
+    renderForm({}, ref);
+    await act(async () => {
+      await ref.current?.submit();
+    });
     expect(screen.getByRole('alert').textContent).toContain(
       AppsEditorI18nKeys.GeneralFormNameRequired,
     );
@@ -162,9 +122,12 @@ describe('GeneralForm', () => {
   });
 
   it('shows invalid error and does not call API when name contains forbidden characters', async () => {
-    renderForm();
+    const ref = createRef<GeneralFormHandle>();
+    renderForm({}, ref);
     await user.type(getNameInput(), 'bad/name');
-    await user.click(getNextButton());
+    await act(async () => {
+      await ref.current?.submit();
+    });
     expect(screen.getByRole('alert').textContent).toContain(
       AppsEditorI18nKeys.GeneralFormNameInvalid,
     );
@@ -172,7 +135,8 @@ describe('GeneralForm', () => {
   });
 
   it('shows invalid error and does not call API when version contains forbidden characters', async () => {
-    renderForm();
+    const ref = createRef<GeneralFormHandle>();
+    renderForm({}, ref);
     await user.type(getNameInput(), 'My App');
     await user.type(
       screen.getByLabelText(
@@ -180,21 +144,45 @@ describe('GeneralForm', () => {
       ) as HTMLInputElement,
       '1.0/bad',
     );
-    await user.click(getNextButton());
+    await act(async () => {
+      await ref.current?.submit();
+    });
     expect(screen.getByRole('alert').textContent).toContain(
       AppsEditorI18nKeys.GeneralFormVersionInvalid,
     );
     expect(createApplication).not.toHaveBeenCalled();
   });
 
+  it('shows length error and does not call API when intro exceeds 90 characters', async () => {
+    const ref = createRef<GeneralFormHandle>();
+    renderForm({}, ref);
+    await user.type(getNameInput(), 'My App');
+    await user.type(
+      screen.getByLabelText(
+        AppsEditorI18nKeys.GeneralFormIntroLabel,
+      ) as HTMLInputElement,
+      'a'.repeat(91),
+    );
+    await act(async () => {
+      await ref.current?.submit();
+    });
+    expect(screen.getByRole('alert').textContent).toContain(
+      AppsEditorI18nKeys.GeneralFormIntroTooLong,
+    );
+    expect(createApplication).not.toHaveBeenCalled();
+  });
+
   it('calls createApplication and onCreated on valid submit', async () => {
     const onCreated = vi.fn();
+    const ref = createRef<GeneralFormHandle>();
     vi.mocked(createApplication).mockResolvedValue({
       id: 'users/u/apps/new',
     });
-    renderForm({ onCreated });
+    renderForm({ onCreated }, ref);
     await user.type(getNameInput(), 'My App');
-    await user.click(getNextButton());
+    await act(async () => {
+      await ref.current?.submit();
+    });
     await waitFor(() =>
       expect(onCreated).toHaveBeenCalledWith('users/u/apps/new'),
     );
@@ -206,31 +194,17 @@ describe('GeneralForm', () => {
       version: undefined,
       topics: undefined,
       intro: undefined,
+      applicationProperties: undefined,
     });
-  });
-
-  it('shows length error and does not call API when intro exceeds 90 characters', async () => {
-    renderForm();
-    await user.type(getNameInput(), 'My App');
-    await user.type(
-      screen.getByLabelText(
-        AppsEditorI18nKeys.GeneralFormIntroLabel,
-      ) as HTMLInputElement,
-      'a'.repeat(91),
-    );
-    await user.click(getNextButton());
-    expect(screen.getByRole('alert').textContent).toContain(
-      AppsEditorI18nKeys.GeneralFormIntroTooLong,
-    );
-    expect(createApplication).not.toHaveBeenCalled();
   });
 
   it('includes a trimmed intro in the create call when provided', async () => {
     const onCreated = vi.fn();
+    const ref = createRef<GeneralFormHandle>();
     vi.mocked(createApplication).mockResolvedValue({
       id: 'users/u/apps/new',
     });
-    renderForm({ onCreated });
+    renderForm({ onCreated }, ref);
     await user.type(getNameInput(), 'My App');
     await user.type(
       screen.getByLabelText(
@@ -238,39 +212,54 @@ describe('GeneralForm', () => {
       ) as HTMLInputElement,
       'A short pitch',
     );
-    await user.click(getNextButton());
+    await act(async () => {
+      await ref.current?.submit();
+    });
     await waitFor(() => expect(createApplication).toHaveBeenCalledOnce());
     expect(createApplication).toHaveBeenCalledWith(
       expect.objectContaining({ intro: 'A short pitch' }),
     );
   });
 
-  it('disables Next button while submitting', async () => {
-    vi.mocked(createApplication).mockReturnValue(
-      new Promise((_resolve) => undefined),
+  it('sets applicationProperties defaults for a Quick App schema', async () => {
+    const ref = createRef<GeneralFormHandle>();
+    vi.mocked(createApplication).mockResolvedValue({
+      id: 'users/u/apps/new',
+    });
+    renderForm(
+      { schemaId: 'https://dial/custom_application_schemas/quickapps2' },
+      ref,
     );
-    renderForm();
     await user.type(getNameInput(), 'My App');
-    await user.click(getNextButton());
-    expect(getNextButton().disabled).toBe(true);
+    await act(async () => {
+      await ref.current?.submit();
+    });
+    await waitFor(() => expect(createApplication).toHaveBeenCalledOnce());
+    expect(createApplication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        applicationProperties: {
+          orchestrator: {
+            system_prompt: { type: 'custom', variables: {}, content: '' },
+          },
+          contexts: [],
+          tool_sets: [],
+        },
+      }),
+    );
   });
 
   it('shows error message when API call fails', async () => {
+    const ref = createRef<GeneralFormHandle>();
     vi.mocked(createApplication).mockRejectedValue(new Error('network error'));
-    renderForm();
+    renderForm({}, ref);
     await user.type(getNameInput(), 'My App');
-    await user.click(getNextButton());
+    await act(async () => {
+      await ref.current?.submit();
+    });
     await waitFor(() =>
       expect(screen.getByRole('alert').textContent).toContain(
         AppsEditorI18nKeys.ErrorCreateFailed,
       ),
     );
-  });
-
-  it('calls onCancel when Cancel is clicked', async () => {
-    const onCancel = vi.fn();
-    renderForm({ onCancel });
-    await user.click(getCancelButton());
-    expect(onCancel).toHaveBeenCalledOnce();
   });
 });
