@@ -34,6 +34,8 @@ export interface ItemDetailsTexts {
   primaryActionLabel?: string;
   /** When `false`, the primary action button is hidden. Default: `true`. */
   hasPrimaryAction?: boolean;
+  /** "Edit" action button label. Default: `'Edit'`. */
+  editActionLabel?: string;
   /** Label above the daily-limit progress bar. Default: `'Daily limit'`. */
   dailyLimitLabel?: string;
   /** "Resource" section heading in the API tab. Default: `'Resource'`. */
@@ -119,6 +121,8 @@ export interface DetailsPanelProps {
   isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked. */
   onShare?: (item: CatalogItem) => void;
+  /** Called when the "Edit" button is clicked. Shown only when the item's `isEditable` is `true`. */
+  onEdit?: (item: CatalogItem) => void;
   /** Text overrides for all user-visible strings. */
   texts?: ItemDetailsTexts;
   /** Grouped style overrides. */

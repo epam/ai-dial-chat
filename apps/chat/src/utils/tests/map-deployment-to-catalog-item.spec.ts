@@ -1,7 +1,62 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
-import type { DialToolsetDto } from '@epam/chat-api-client';
+import type { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import { describe, expect, it } from 'vitest';
-import { mapToolsetToCatalogItem } from '../map-deployment-to-catalog-item';
+import {
+  mapDeploymentToCatalogItem,
+  mapToolsetToCatalogItem,
+} from '../map-deployment-to-catalog-item';
+
+describe('mapDeploymentToCatalogItem', () => {
+  const baseDeployment: DeploymentItemDto = {
+    id: 'applications/bucket/My App__1.0',
+    displayName: 'My App',
+    type: 'application',
+    isMy: true,
+    applicationTypeSchemaId: 'schemas/quickapps2',
+  };
+
+  it('marks a deployment editable when it is the user’s own app built from the given schema', () => {
+    const result = mapDeploymentToCatalogItem(
+      baseDeployment,
+      undefined,
+      undefined,
+      undefined,
+      'schemas/quickapps2',
+    );
+
+    expect(result.isEditable).toBe(true);
+  });
+
+  it('is not editable when the app was built from a different schema', () => {
+    const result = mapDeploymentToCatalogItem(
+      baseDeployment,
+      undefined,
+      undefined,
+      undefined,
+      'schemas/other',
+    );
+
+    expect(result.isEditable).toBe(false);
+  });
+
+  it('is not editable when the deployment does not belong to the current user', () => {
+    const result = mapDeploymentToCatalogItem(
+      { ...baseDeployment, isMy: false },
+      undefined,
+      undefined,
+      undefined,
+      'schemas/quickapps2',
+    );
+
+    expect(result.isEditable).toBe(false);
+  });
+
+  it('is not editable when no editable schema id is supplied', () => {
+    const result = mapDeploymentToCatalogItem(baseDeployment);
+
+    expect(result.isEditable).toBe(false);
+  });
+});
 
 describe('mapToolsetToCatalogItem', () => {
   it('maps real SDK-shaped toolset data into catalog fields', () => {
