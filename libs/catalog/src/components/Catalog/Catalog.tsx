@@ -37,6 +37,7 @@ export const Catalog: FC<CatalogProps> = ({
   isPrimaryActionVisible,
   onShare,
   onFetchDetails,
+  onEdit,
   onCreateClick,
   createOptions,
   isLoading,
@@ -359,6 +360,7 @@ export const Catalog: FC<CatalogProps> = ({
           onUseInChat={onUseInChat}
           isPrimaryActionVisible={isPrimaryActionVisible}
           onShare={onShare}
+          onEdit={onEdit}
           texts={detailsTexts}
         />
       )}

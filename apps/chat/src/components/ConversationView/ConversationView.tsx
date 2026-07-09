@@ -115,6 +115,12 @@ interface Props {
   onConversationChange: (conv: Conversation) => void;
   /** Called when the user clicks "Browse full catalog" inside the model picker. */
   onBrowseCatalog?: () => void;
+  /**
+   * When provided, the model selector shows this model only and renders
+   * disabled (dimmed, does not open) instead of allowing a different model
+   * to be picked. The chip stays visible — it is not hidden.
+   */
+  fixedModel?: { id: string; displayName?: string; iconUrl?: string };
 }
 
 const ConversationView: FC<Props> = ({
@@ -147,7 +153,9 @@ const ConversationView: FC<Props> = ({
   conversation,
   onConversationChange,
   onBrowseCatalog,
+  fixedModel,
 }) => {
+  const isModelFixed = !!fixedModel;
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
@@ -211,6 +219,20 @@ const ConversationView: FC<Props> = ({
         }),
       ),
     [items],
+  );
+
+  const fixedDeploymentItems = useMemo(
+    () =>
+      fixedModel
+        ? [
+            {
+              id: fixedModel.id,
+              displayName: fixedModel.displayName,
+              iconUrl: fixedModel.iconUrl,
+            },
+          ]
+        : undefined,
+    [fixedModel],
   );
 
   const isInputDisabled = useMemo(
@@ -553,9 +575,14 @@ const ConversationView: FC<Props> = ({
                 isStreaming={isAssistantTyping}
                 onAttachmentsChange={onAttachmentsChange}
                 placeholder={placeholder}
-                deployments={deploymentItems}
-                selectedDeploymentId={selectedItemId}
-                onDeploymentChange={setSelectedItemId}
+                deployments={
+                  fixedModel ? fixedDeploymentItems : deploymentItems
+                }
+                selectedDeploymentId={
+                  fixedModel ? fixedModel.id : selectedItemId
+                }
+                onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
+                isModelSelectorDisabled={isModelFixed}
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
@@ -594,29 +621,35 @@ const ConversationView: FC<Props> = ({
                 }
                 hideAttachFile={!isAttachmentsAllowed}
                 onAttachmentClick={handleInputAttachmentClick}
-                modelPickerOverlay={(onClose) => (
-                  <ModelPickerPanel
-                    favorites={favoriteCatalogItems}
-                    selectedId={selectedItemId}
-                    onSelect={setSelectedItemId}
-                    onToggleFavorite={toggleFavorite}
-                    onBrowseCatalog={onBrowseCatalog}
-                    onClose={onClose}
-                    labels={{
-                      searchPlaceholder: t(
-                        CatalogI18nKeys.PickerSearchPlaceholder,
-                      ),
-                      searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
-                      emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
-                      browseCatalogLabel: t(
-                        CatalogI18nKeys.PickerBrowseCatalog,
-                      ),
-                      removeFromFavoritesLabel: t(
-                        CatalogI18nKeys.PickerRemoveFromFavorites,
-                      ),
-                    }}
-                  />
-                )}
+                modelPickerOverlay={
+                  isModelFixed
+                    ? undefined
+                    : (onClose) => (
+                        <ModelPickerPanel
+                          favorites={favoriteCatalogItems}
+                          selectedId={selectedItemId}
+                          onSelect={setSelectedItemId}
+                          onToggleFavorite={toggleFavorite}
+                          onBrowseCatalog={onBrowseCatalog}
+                          onClose={onClose}
+                          labels={{
+                            searchPlaceholder: t(
+                              CatalogI18nKeys.PickerSearchPlaceholder,
+                            ),
+                            searchAriaLabel: t(
+                              CatalogI18nKeys.PickerSearchAriaLabel,
+                            ),
+                            emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
+                            browseCatalogLabel: t(
+                              CatalogI18nKeys.PickerBrowseCatalog,
+                            ),
+                            removeFromFavoritesLabel: t(
+                              CatalogI18nKeys.PickerRemoveFromFavorites,
+                            ),
+                          }}
+                        />
+                      )
+                }
               />
             </Suspense>
             <Suspense fallback={null}>

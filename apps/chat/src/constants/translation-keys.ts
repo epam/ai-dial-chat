@@ -429,6 +429,10 @@ export enum AppsEditorI18nKeys {
   SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
   SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
   SaveButton = 'appsEditor.saveButton',
+  PreviewButton = 'appsEditor.previewButton',
+  ExitPreviewButton = 'appsEditor.exitPreviewButton',
+  PreviewChatPlaceholder = 'appsEditor.previewChat.placeholder',
+  PreviewChatAriaLabel = 'appsEditor.previewChat.ariaLabel',
   ErrorCreateFailed = 'appsEditor.error.createFailed',
   ErrorSaveFailed = 'appsEditor.error.saveFailed',
 }

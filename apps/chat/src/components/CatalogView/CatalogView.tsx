@@ -52,16 +52,27 @@ const CatalogView: FC = () => {
 
   const isLoading = isDeploymentsLoading || isFavoritesLoading;
 
+  const quickAppSchemaId = useMemo(
+    () => schemas.find((s) => isQuickAppSchema(s))?.id,
+    [schemas],
+  );
+
   const catalogItems = useMemo(
     () => [
       ...deployments.map((d) =>
-        mapDeploymentToCatalogItem(d, favoriteIds, undefined, t),
+        mapDeploymentToCatalogItem(
+          d,
+          favoriteIds,
+          undefined,
+          t,
+          quickAppSchemaId,
+        ),
       ),
       ...toolsets.map((toolset) =>
         mapToolsetToCatalogItem(toolset, favoriteIds),
       ),
     ],
-    [deployments, favoriteIds, t, toolsets],
+    [deployments, favoriteIds, t, toolsets, quickAppSchemaId],
   );
 
   const favorites = useMemo(
@@ -127,25 +138,58 @@ const CatalogView: FC = () => {
     [],
   );
 
-  const buildEditorUrl = useCallback((schemaId: string): string => {
-    const params = new URLSearchParams({
-      [AppsEditorQuery.Step]: AppsEditorStep.General,
-      [AppsEditorQuery.Schema]: schemaId,
-      [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
-      [AppsEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
-    });
-    return `${ROUTES.AppsEditor}?${params.toString()}`;
-  }, []);
+  const buildEditorUrl = useCallback(
+    ({
+      schemaId,
+      step,
+      appId,
+      isCreating,
+    }: {
+      schemaId: string;
+      step: AppsEditorStep;
+      appId?: string;
+      isCreating?: boolean;
+    }): string => {
+      const params = new URLSearchParams({
+        [AppsEditorQuery.Step]: step,
+        [AppsEditorQuery.Schema]: schemaId,
+        [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
+      });
+      if (appId) params.set(AppsEditorQuery.AppId, appId);
+      if (isCreating) params.set(AppsEditorQuery.IsCreating, QUERY_VALUE_TRUE);
+      return `${ROUTES.AppsEditor}?${params.toString()}`;
+    },
+    [],
+  );
+
+  const handleEditApp = useCallback(
+    (item: CatalogItem) => {
+      if (!quickAppSchemaId) return;
+      navigate(
+        buildEditorUrl({
+          schemaId: quickAppSchemaId,
+          step: AppsEditorStep.Settings,
+          appId: item.id,
+        }),
+      );
+    },
+    [quickAppSchemaId, navigate, buildEditorUrl],
+  );
 
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
-    const quickAppSchema = schemas.find((s) => isQuickAppSchema(s));
 
-    if (quickAppSchema?.id) {
-      const schemaId = quickAppSchema.id;
+    if (quickAppSchemaId) {
       options.push({
         label: t(CatalogI18nKeys.CreateQuickApp),
-        onClick: () => navigate(buildEditorUrl(schemaId)),
+        onClick: () =>
+          navigate(
+            buildEditorUrl({
+              schemaId: quickAppSchemaId,
+              step: AppsEditorStep.General,
+              isCreating: true,
+            }),
+          ),
       });
     }
 
@@ -160,7 +204,7 @@ const CatalogView: FC = () => {
     });
 
     return options;
-  }, [schemas, navigate, t, buildEditorUrl]);
+  }, [quickAppSchemaId, navigate, t, buildEditorUrl]);
 
   return (
     <Catalog
@@ -171,6 +215,7 @@ const CatalogView: FC = () => {
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
+      onEdit={handleEditApp}
       isPrimaryActionVisible={isPrimaryActionVisible}
       styles={{
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },
@@ -198,6 +243,7 @@ const CatalogView: FC = () => {
       detailsTexts={{
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
+        editActionLabel: t(ButtonsI18nKeys.Edit),
         dailyLimitLabel: t(CatalogI18nKeys.DetailsDailyLimit),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),

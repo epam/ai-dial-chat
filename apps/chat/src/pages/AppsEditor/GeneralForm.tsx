@@ -1,13 +1,11 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { Card, CatalogEntityType } from '@epam/ai-dial-catalog';
-import type {
-  DeploymentCreationFormFieldErrors,
-  DeploymentCreationFormLabels,
-  DeploymentCreationFormValues,
-} from '@epam/ai-dial-deployment-creation-form';
 import {
   DeploymentCreationFieldErrorCode,
   DeploymentCreationForm,
+  DeploymentCreationFormFieldErrors,
+  DeploymentCreationFormLabels,
+  DeploymentCreationFormValues,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
@@ -15,8 +13,10 @@ import {
   forwardRef,
   memo,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,9 +28,21 @@ export interface GeneralFormHandle {
   submit: () => Promise<void>;
 }
 
+export interface GeneralFormInitialValues {
+  name?: string;
+  description?: string;
+  iconUrl?: string;
+  version?: string;
+  topics?: string[];
+}
+
 interface Props {
   schemaId: string;
-  onCreated: (appId: string) => void;
+  /** Id of the app being edited. When set, submitting advances to the next step instead of creating a new app. */
+  appId?: string;
+  /** Existing app values used to prefill the form when editing an app. */
+  initialValues?: GeneralFormInitialValues;
+  onCreated: (appId: string, displayName?: string, iconUrl?: string) => void;
 }
 
 const EMPTY_VALUES: DeploymentCreationFormValues = {
@@ -43,7 +55,7 @@ const EMPTY_VALUES: DeploymentCreationFormValues = {
 };
 
 const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
-  { schemaId, onCreated },
+  { schemaId, appId, initialValues, onCreated },
   ref,
 ) {
   const { t } = useTranslation();
@@ -53,6 +65,13 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   const [errors, setErrors] = useState<DeploymentCreationFormFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const hasSeededInitialValuesRef = useRef(false);
+
+  useEffect(() => {
+    if (hasSeededInitialValuesRef.current || !initialValues) return;
+    hasSeededInitialValuesRef.current = true;
+    setValues({ ...EMPTY_VALUES, ...initialValues });
+  }, [initialValues]);
 
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
@@ -97,6 +116,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
 
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;
+    setErrors({});
     const codes = validateDeploymentCreationFields(values, {
       validateNamePattern: true,
       validateVersionPattern: true,
@@ -123,7 +143,11 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       return;
     }
 
-    setErrors({});
+    if (appId) {
+      onCreated(appId, values.name.trim(), values.iconUrl.trim() || undefined);
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError('');
     try {
@@ -146,20 +170,24 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         intro: values.intro.trim() || undefined,
         applicationProperties,
       });
-      onCreated(result.id);
+      onCreated(
+        result.id,
+        values.name.trim(),
+        values.iconUrl.trim() || undefined,
+      );
     } catch {
       setSubmitError(t(AppsEditorI18nKeys.ErrorCreateFailed));
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, values, schemaId, onCreated, t]);
+  }, [isSubmitting, values, appId, t, onCreated, schemaId]);
 
   useImperativeHandle(ref, () => ({ submit: handleSubmit }), [handleSubmit]);
 
   const previewItem = useMemo<CatalogItem>(
     () => ({
       id: 'preview',
-      type: CatalogEntityType.Model,
+      type: CatalogEntityType.Application,
       name: values.name,
       version: values.version,
       lastUsed: '',
