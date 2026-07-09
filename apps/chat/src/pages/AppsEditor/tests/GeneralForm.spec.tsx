@@ -11,56 +11,59 @@ vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
-  return {
-    ...actual,
-    DialInput: ({
-      value,
-      onChange,
-      labelProps,
-      error,
-      placeholder,
-    }: {
-      value?: string;
-      onChange?: (v?: string) => void;
-      labelProps?: { label?: string; required?: boolean };
-      error?: string;
-      placeholder?: string;
-    }) => (
-      <>
-        <label>
-          {labelProps?.label}
-          <input
-            value={value ?? ''}
-            placeholder={placeholder}
-            onChange={(e) => onChange?.(e.target.value)}
-          />
-        </label>
-        {error && <p role="alert">{error}</p>}
-      </>
-    ),
-    DialTextarea: ({
-      value,
-      onChange,
-      labelProps,
-      placeholder,
-    }: {
-      value?: string;
-      onChange?: (v: string) => void;
-      labelProps?: { label?: string };
-      placeholder?: string;
-    }) => (
+vi.mock('@epam/ai-dial-kit', () => ({
+  Input: ({
+    value,
+    onChange,
+    labelProps,
+    error,
+    placeholder,
+  }: {
+    value?: string;
+    onChange?: (v?: string) => void;
+    labelProps?: { label?: string; required?: boolean };
+    error?: string;
+    placeholder?: string;
+  }) => (
+    <>
       <label>
         {labelProps?.label}
-        <textarea
+        <input
           value={value ?? ''}
           placeholder={placeholder}
           onChange={(e) => onChange?.(e.target.value)}
         />
       </label>
-    ),
-    DialTagInput: ({ label }: { label?: string }) => <span>{label}</span>,
+      {error && <p role="alert">{error}</p>}
+    </>
+  ),
+  Textarea: ({
+    value,
+    onChange,
+    labelProps,
+    placeholder,
+  }: {
+    value?: string;
+    onChange?: (v: string) => void;
+    labelProps?: { label?: string };
+    placeholder?: string;
+  }) => (
+    <label>
+      {labelProps?.label}
+      <textarea
+        value={value ?? ''}
+        placeholder={placeholder}
+        onChange={(e) => onChange?.(e.target.value)}
+      />
+    </label>
+  ),
+  TagInput: ({ label }: { label?: string }) => <span>{label}</span>,
+}));
+
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    ...actual,
     DialNotification: ({ message }: { variant?: string; message?: string }) => (
       <p role="alert">{message}</p>
     ),
@@ -90,7 +93,7 @@ describe('GeneralForm', () => {
     vi.clearAllMocks();
   });
 
-  it('renders name, description and icon URL fields', () => {
+  it('renders name, description, icon URL, and intro fields', () => {
     renderForm();
     expect(
       screen.getByLabelText(AppsEditorI18nKeys.GeneralFormNameLabel),
@@ -100,6 +103,9 @@ describe('GeneralForm', () => {
     ).toBeTruthy();
     expect(
       screen.getByLabelText(AppsEditorI18nKeys.GeneralFormIconUrlLabel),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText(AppsEditorI18nKeys.GeneralFormIntroLabel),
     ).toBeTruthy();
   });
 
@@ -147,6 +153,25 @@ describe('GeneralForm', () => {
     expect(createApplication).not.toHaveBeenCalled();
   });
 
+  it('shows length error and does not call API when intro exceeds 90 characters', async () => {
+    const ref = createRef<GeneralFormHandle>();
+    renderForm({}, ref);
+    await user.type(getNameInput(), 'My App');
+    await user.type(
+      screen.getByLabelText(
+        AppsEditorI18nKeys.GeneralFormIntroLabel,
+      ) as HTMLInputElement,
+      'a'.repeat(91),
+    );
+    await act(async () => {
+      await ref.current?.submit();
+    });
+    expect(screen.getByRole('alert').textContent).toContain(
+      AppsEditorI18nKeys.GeneralFormIntroTooLong,
+    );
+    expect(createApplication).not.toHaveBeenCalled();
+  });
+
   it('calls createApplication and onCreated on valid submit', async () => {
     const onCreated = vi.fn();
     const ref = createRef<GeneralFormHandle>();
@@ -168,8 +193,59 @@ describe('GeneralForm', () => {
       iconUrl: undefined,
       version: undefined,
       topics: undefined,
+      intro: undefined,
       applicationProperties: undefined,
     });
+  });
+
+  it('includes a trimmed intro in the create call when provided', async () => {
+    const onCreated = vi.fn();
+    const ref = createRef<GeneralFormHandle>();
+    vi.mocked(createApplication).mockResolvedValue({
+      id: 'users/u/apps/new',
+    });
+    renderForm({ onCreated }, ref);
+    await user.type(getNameInput(), 'My App');
+    await user.type(
+      screen.getByLabelText(
+        AppsEditorI18nKeys.GeneralFormIntroLabel,
+      ) as HTMLInputElement,
+      'A short pitch',
+    );
+    await act(async () => {
+      await ref.current?.submit();
+    });
+    await waitFor(() => expect(createApplication).toHaveBeenCalledOnce());
+    expect(createApplication).toHaveBeenCalledWith(
+      expect.objectContaining({ intro: 'A short pitch' }),
+    );
+  });
+
+  it('sets applicationProperties defaults for a Quick App schema', async () => {
+    const ref = createRef<GeneralFormHandle>();
+    vi.mocked(createApplication).mockResolvedValue({
+      id: 'users/u/apps/new',
+    });
+    renderForm(
+      { schemaId: 'https://dial/custom_application_schemas/quickapps2' },
+      ref,
+    );
+    await user.type(getNameInput(), 'My App');
+    await act(async () => {
+      await ref.current?.submit();
+    });
+    await waitFor(() => expect(createApplication).toHaveBeenCalledOnce());
+    expect(createApplication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        applicationProperties: {
+          orchestrator: {
+            system_prompt: { type: 'custom', variables: {}, content: '' },
+          },
+          contexts: [],
+          tool_sets: [],
+        },
+      }),
+    );
   });
 
   it('shows error message when API call fails', async () => {

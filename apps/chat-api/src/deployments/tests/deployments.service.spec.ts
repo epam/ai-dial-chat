@@ -417,6 +417,36 @@ describe('DeploymentsService', () => {
       expect(result.deployments[0].owner).toBeUndefined();
     });
 
+    it('forwards intro when present in raw payload', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, intro: 'A short pitch' }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].intro).toBe('A short pitch');
+    });
+
+    it('leaves intro undefined when not in raw payload', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [mockModel],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].intro).toBeUndefined();
+    });
+
     it('sets applicationFolder for nested application deployment', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({

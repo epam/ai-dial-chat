@@ -53,6 +53,7 @@ export interface ToolsetFormData {
   iconUrl: string;
   description: string;
   topics: string[];
+  intro: string;
   endpoint: string;
   protocol: ToolsetTransportType;
   allowedTools: string[];
@@ -62,6 +63,8 @@ export interface ToolsetFormData {
 
 export interface ToolsetFormErrors {
   name?: string;
+  version?: string;
+  intro?: string;
   endpoint?: string;
   keyHeader?: string;
   apiKey?: string;

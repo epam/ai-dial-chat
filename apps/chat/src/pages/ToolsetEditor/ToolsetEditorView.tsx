@@ -44,7 +44,7 @@ const ToolsetEditorView: FC<Props> = ({
   return (
     <div className="flex min-h-0 flex-1">
       <div className="flex h-full w-full min-w-0 flex-col">
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-6">
           {isGeneralStep ? (
             <GeneralForm form={form} errors={errors} onChange={onChange} />
           ) : (
@@ -60,7 +60,7 @@ const ToolsetEditorView: FC<Props> = ({
         </div>
 
         {isGeneralStep && (
-          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-t-primary px-4 py-3">
+          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-t-tertiary px-4 py-3">
             <NeutralButton
               type="button"
               label={t(ButtonsI18nKeys.Cancel)}

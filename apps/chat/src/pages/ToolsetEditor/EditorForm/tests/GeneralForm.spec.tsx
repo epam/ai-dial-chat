@@ -86,6 +86,7 @@ const makeForm = (overrides?: Partial<ToolsetFormData>): ToolsetFormData => ({
   iconUrl: '',
   description: '',
   topics: [],
+  intro: '',
   endpoint: 'https://example.com/mcp',
   protocol: ToolsetTransportType.Http,
   allowedTools: [],
@@ -99,7 +100,7 @@ const makeForm = (overrides?: Partial<ToolsetFormData>): ToolsetFormData => ({
 
 const renderForm = (
   overrides?: Partial<ToolsetFormData>,
-  errors: { name?: string } = {},
+  errors: { name?: string; intro?: string } = {},
   onChange = vi.fn(),
 ) => {
   const form = makeForm(overrides);
@@ -115,7 +116,7 @@ describe('GeneralForm', () => {
     vi.clearAllMocks();
   });
 
-  it('renders name, description, icon URL, version, and topics fields', () => {
+  it('renders name, description, icon URL, version, topics, and intro fields', () => {
     renderForm();
     expect(screen.getByLabelText(ToolsetEditorI18nKeys.NameLabel)).toBeTruthy();
     expect(
@@ -129,6 +130,9 @@ describe('GeneralForm', () => {
     ).toBeTruthy();
     expect(
       screen.getByLabelText(ToolsetEditorI18nKeys.TopicsLabel),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText(ToolsetEditorI18nKeys.IntroLabel),
     ).toBeTruthy();
   });
 
@@ -164,6 +168,23 @@ describe('GeneralForm', () => {
     await user.type(textarea, 'A description');
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ description: expect.any(String) }),
+    );
+  });
+
+  it('displays the intro error message when errors.intro is provided', () => {
+    renderForm(undefined, { intro: 'toolsetEditor.general.introTooLong' });
+    expect(screen.getByText('toolsetEditor.general.introTooLong')).toBeTruthy();
+  });
+
+  it('calls onChange with updated intro when the intro input changes', () => {
+    const onChange = vi.fn();
+    renderForm({}, {}, onChange);
+    const introInput = screen.getByLabelText(
+      ToolsetEditorI18nKeys.IntroLabel,
+    ) as HTMLInputElement;
+    fireEvent.change(introInput, { target: { value: 'A short pitch' } });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ intro: 'A short pitch' }),
     );
   });
 });

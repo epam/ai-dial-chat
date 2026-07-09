@@ -11,6 +11,7 @@ import {
   type ToolbarOptions,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useMemo, type FC } from 'react';
+import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
 import type { UseDialFileManagerResult } from '../../hooks/files/useDialFileManager';
@@ -82,6 +83,10 @@ const DialFileManagerShell: FC<Props> = ({
     onMoveToFiles,
     onRenameValidate,
     isRenaming,
+    onCopyFiles,
+    isCopying,
+    isMoving,
+    cancelCopyMove,
     uploadEnabled,
     isNewButtonDisabled,
     disabledNewButtonTooltip,
@@ -103,12 +108,20 @@ const DialFileManagerShell: FC<Props> = ({
     if (DialFileManagerActions.Rename in tabActionLabels) {
       result[DialFileManagerActions.Rename] = labels.renameLabel;
     }
+    if (DialFileManagerActions.Copy in tabActionLabels) {
+      result[DialFileManagerActions.Copy] = labels.copyLabel;
+    }
+    if (DialFileManagerActions.Move in tabActionLabels) {
+      result[DialFileManagerActions.Move] = labels.moveLabel;
+    }
     return result;
   }, [
     tabActionLabels,
     labels.downloadLabel,
     labels.deleteLabel,
     labels.renameLabel,
+    labels.copyLabel,
+    labels.moveLabel,
   ]);
 
   const gridOptions = useMemo(
@@ -267,6 +280,7 @@ const DialFileManagerShell: FC<Props> = ({
             onDownloadFiles={onDownloadFiles}
             onDeleteFiles={onDeleteFiles}
             onMoveToFiles={onMoveToFiles}
+            onCopyFiles={onCopyFiles}
             onRenameValidate={onRenameValidate}
             renameValidationMessages={labels.renameValidationMessages}
             isRenameFileAvailable={uploadEnabled}
@@ -303,7 +317,7 @@ const DialFileManagerShell: FC<Props> = ({
               />
             </div>
           )}
-          {isRenaming && (
+          {isRenaming && !isMoving && (
             <div
               aria-live="polite"
               className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"
@@ -325,6 +339,19 @@ const DialFileManagerShell: FC<Props> = ({
           uploadProgressText={uploadProgressText}
           cancelLabel={labels.cancelLabel}
           onCancel={handleUploadCancel}
+        />
+      )}
+
+      {(isCopying || isMoving) && (
+        <OperationLoaderModal
+          title={
+            isMoving
+              ? labels.operationLoaderMoveTitle
+              : labels.operationLoaderCopyTitle
+          }
+          text={isMoving ? labels.movingLabel : labels.copyingLabel}
+          cancelLabel={labels.operationLoaderCancelLabel}
+          onCancel={cancelCopyMove}
         />
       )}
     </>

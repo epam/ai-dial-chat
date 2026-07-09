@@ -142,6 +142,7 @@ const mapToDeploymentItem = (
     type,
     iconUrl: raw.icon_url,
     description: raw.description,
+    intro: raw.intro,
     displayVersion: raw.display_version,
     isFeatured: featuredIds.has(raw.id || raw.reference || ''),
     isHidden: topics.some((tag) => hiddenTags.has(tag)),
