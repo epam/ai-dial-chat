@@ -19,20 +19,64 @@
     @apply size-full bg-layer-5 text-primary;
     font-family: 'Inter', sans-serif;
     --theme-font: 'Inter', sans-serif;
-    --text-tertiary: #808898;
-
-    // ConversationPanel CSS vars not exposed via the styles.colors prop.
-    // These cascade into the panel's shadow DOM through inheritance.
-    --cp-trigger-bg: var(--controls-bg-accent-primary, #3664e2);
-    --cp-trigger-icon: var(--controls-text-permanent, #fff);
-    --cp-item-active-border: var(--bg-accent-secondary, #37babc);
   }
 }
 
-// ── Shared dropdown overlay style ────────────────────────────────────────────
-// Applied via listClassName="cp-dropdown-overlay" on every DialDropdown to match
-// the Filter overlay spec: 12px radius, 1px hairline border, large ambient shadow,
-// 6px inset padding, and 8px-radius hover rows replacing the kit defaults.
+// Submenu containers rendered by DialDropdown's nested children prop.
+// These get role="menu" on the outer floating div but have no listClassName hook.
+div[role='menu']:has(> [role='none']) {
+  padding: 6px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 16px 40px rgba(16, 24, 40, 0.12) !important;
+
+  > [role='none'] {
+    padding: 0 !important;
+  }
+
+  button[role='menuitem'] {
+    height: auto !important;
+    border-radius: 8px !important;
+    padding: 9px 10px !important;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--bg-layer-3, rgba(0, 0, 0, 0.04)) !important;
+      }
+    }
+  }
+}
+
+// DS token overrides or new tokens
+.catalog-heading-text {
+  font-size: 22px;
+  line-height: 32px;
+  font-weight: 600;
+}
+
+// DS token overrides
+.dial-small-text {
+  line-height: 24px;
+}
+
+// new chat button in header — primary action button style
+.new-chat-rail-btn {
+  &:hover {
+    background: var(
+      --cp-new-chat-hover,
+      var(--bg-accent-secondary-alpha, #37babc2e)
+    ) !important;
+  }
+
+  &:active {
+    background: var(
+      --cp-new-chat-active,
+      var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
+    ) !important;
+  }
+}
+
+// new dropdown styles
 
 .cp-dropdown-overlay {
   padding: 6px !important;
@@ -65,271 +109,4 @@
     background-color: rgba(0, 0, 0, 0.05) !important;
     margin: 4px 0 !important;
   }
-}
-
-// Submenu containers rendered by DialDropdown's nested children prop.
-// These get role="menu" on the outer floating div but have no listClassName hook.
-div[role='menu']:has(> [role='none']) {
-  padding: 6px !important;
-  border-radius: 12px !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
-  box-shadow: 0 16px 40px rgba(16, 24, 40, 0.12) !important;
-
-  > [role='none'] {
-    padding: 0 !important;
-  }
-
-  button[role='menuitem'] {
-    height: auto !important;
-    border-radius: 8px !important;
-    padding: 9px 10px !important;
-
-    @media (hover: hover) {
-      &:hover {
-        background-color: var(--bg-layer-3, rgba(0, 0, 0, 0.04)) !important;
-      }
-    }
-  }
-}
-
-// Double-class specificity (0,2,0) beats the kit's (0,1,0) base and hover rules.
-.dial-primary-solid-button.dial-primary-solid-button {
-  background-color: transparent;
-  background-image: linear-gradient(135deg, #4b7be6 0%, #9355f4 100%);
-  border: none;
-  border-radius: 9999px;
-  box-shadow: 0 4px 16px rgba(92, 141, 234, 0.32);
-  transition:
-    box-shadow 200ms ease,
-    transform 150ms ease;
-
-  @media (hover: hover) {
-    &:hover {
-      background-color: transparent;
-      background-image: linear-gradient(135deg, #4b7be6 0%, #9355f4 100%);
-      box-shadow: 0 6px 20px rgba(92, 141, 234, 0.42);
-      transform: translateY(-1px);
-    }
-  }
-
-  &:active {
-    background-color: transparent;
-    background-image: linear-gradient(135deg, #4b7be6 0%, #9355f4 100%);
-    filter: brightness(0.92);
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(92, 141, 234, 0.22);
-  }
-
-  &:disabled {
-    background-image: none;
-    box-shadow: none;
-    transform: none;
-  }
-}
-
-// Secondary — soft blue fill + pill, brand blue text
-.dial-neutral-outlined-button {
-  border: 1px solid rgba(39, 100, 217, 0.2);
-  border-radius: 9999px;
-  background-color: rgba(39, 100, 217, 0.08);
-  background-image: none;
-  color: var(--bg-accent-primary, #2764d9);
-  transition:
-    background-color 150ms ease,
-    border-color 150ms ease;
-
-  @media (hover: hover) {
-    &:hover:enabled {
-      background-color: rgba(39, 100, 217, 0.13);
-      border-color: rgba(39, 100, 217, 0.35);
-    }
-  }
-
-  &:active:enabled {
-    background-color: rgba(39, 100, 217, 0.18);
-    border-color: rgba(39, 100, 217, 0.45);
-  }
-
-  &:disabled {
-    border-color: var(--stroke-secondary, #d1dbea);
-    background-color: transparent;
-    background-image: none;
-    color: var(--controls-text-neutral-disable, #575f73);
-  }
-}
-
-// ─── ConversationPanel visual overrides ────────────────────────────────────
-// Anchor: `aside[class~="dial-body-text"]` (set via styles.typography.fontClassName).
-// This scopes every selector below to the ConversationPanel without touching
-// hash-unstable internal module class names where avoidable.
-
-// Pane title row ("Chats") — match app header height, no bottom divider
-aside[class~='dial-body-text'] > [class~='h-12'][class~='shrink-0'] {
-  height: 64px !important;
-  border-bottom: none !important;
-}
-
-aside[class~='dial-body-text']
-  > [class~='h-12'][class~='shrink-0']
-  > span:first-child {
-  font-size: 22px !important;
-  line-height: 32px !important;
-  font-weight: 600 !important;
-}
-
-// New chat button row — no bottom divider, side padding
-aside[class~='dial-body-text']
-  [class~='border-b'][class~='py-1'][class~='px-2'] {
-  background: var(--bg-layer-0);
-  border-bottom: none !important;
-  padding: 8px 12px !important;
-}
-
-// New chat button — white pill, centered icon + label, gradient-tinted shadow
-aside[class~='dial-body-text']
-  [class~='border-b'][class~='py-1'][class~='px-2']
-  > button {
-  background: var(--bg-layer-0, #fff) !important;
-  border: none !important;
-  border-radius: 9999px !important;
-  box-shadow:
-    0 1px 3px rgba(92, 141, 234, 0.2),
-    0 2px 10px rgba(169, 114, 255, 0.14) !important;
-  color: var(--text-accent-primary, #2764d9) !important;
-  transition:
-    box-shadow 150ms ease,
-    background-color 150ms ease !important;
-
-  // Label span — semibold, inherits accent blue from button
-  > span:last-child {
-    font-weight: 600 !important;
-  }
-
-  &:hover {
-    background: var(--bg-layer-0, #fff) !important;
-    box-shadow:
-      0 2px 6px rgba(92, 141, 234, 0.28),
-      0 4px 16px rgba(169, 114, 255, 0.2) !important;
-  }
-
-  &:active {
-    background: var(--bg-layer-1, #f5f7fa) !important;
-    box-shadow:
-      0 1px 2px rgba(92, 141, 234, 0.15),
-      0 1px 6px rgba(169, 114, 255, 0.1) !important;
-  }
-}
-
-// Rail new chat button — primary action button style
-.new-chat-rail-btn {
-  border-radius: var(--cp-new-chat-radius, 4px) !important;
-
-  &:hover {
-    background: var(
-      --cp-new-chat-hover,
-      var(--bg-accent-secondary-alpha, #37babc2e)
-    ) !important;
-  }
-
-  &:active {
-    background: var(
-      --cp-new-chat-active,
-      var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
-    ) !important;
-  }
-}
-
-// Sidebar inner dividers — visible only between inner sections (header + new-chat + search excluded above)
-aside[class~='dial-body-text'] [class~='border-b']:not([class~='flex-wrap']) {
-  border-bottom-color: var(--stroke-tertiary);
-}
-
-// Search wrapper — no background, input uses panel text colours.
-// Padding/border-bottom come from the shared `border-b px-2 py-1` rule above.
-aside[class~='dial-body-text'] [data-cp-search-wrapper] {
-  background: transparent !important;
-
-  input {
-    color: var(--cp-text, var(--text-primary)) !important;
-
-    &::placeholder {
-      color: var(--cp-text-secondary, var(--text-secondary)) !important;
-    }
-  }
-}
-
-// Group section headers — muted tertiary colour, reduced prominence
-aside[class~='dial-body-text'] [class~='uppercase'][class~='tracking-wider'] {
-  color: var(--text-tertiary, #808898) !important;
-  opacity: 0.55;
-}
-
-// Chat row — 8px radius, correct text color, vertical padding.
-// Each item is: <li> → <a class="contents"> → <button class="border-l-2 …">
-// The <a> is display:contents (invisible), so we must target the inner <button>.
-// .dial-primary-ghost-button in the selector raises specificity above the ui-kit's
-// own !important rule on that class, which would otherwise override our color.
-aside[class~='dial-body-text'] li > a > button.dial-primary-ghost-button {
-  border-radius: 12px !important;
-  padding-block: 9px;
-  color: var(--text-primary) !important;
-}
-
-// Active chat row — grey background, no left indicator bar.
-aside[class~='dial-body-text']
-  li:has(> a > button[aria-current='page'])::before {
-  content: none !important;
-}
-
-aside[class~='dial-body-text'] li > a > button[aria-current='page'] {
-  background: var(--bg-layer-2, #eeeef0) !important;
-  border-inline-start-color: transparent !important;
-}
-
-// Composer input — match catalog search bar radius (not exposed via ci- vars)
-[role='region'] [class~='rounded-xl'][class~='border'] {
-  border-radius: 12px !important;
-}
-
-// Tertiary — ghost pill, no border, secondary text
-.dial-primary-ghost-button:not(.dial-icon-button) {
-  border: none;
-  border-radius: 9999px;
-  color: var(--bg-accent-primary, #2764d9);
-
-  @media (hover: hover) {
-    &:hover:enabled {
-      background-color: rgba(39, 100, 217, 0.05);
-    }
-  }
-
-  &:active:enabled {
-    background-color: rgba(39, 100, 217, 0.08);
-  }
-}
-
-// Active chat row — 3px brand-gradient start-edge indicator bar
-// Anchor: aria-current="page" on the button; the <a class="contents"> sits between li and button.
-aside[class~='dial-body-text']
-  [class~='group/conversation']:has(> a > button[aria-current='page'])::before {
-  content: '';
-  position: absolute;
-  inset-block: 4px;
-  inset-inline-start: 0;
-  width: 3px;
-  border-start-end-radius: 2px;
-  border-end-end-radius: 2px;
-  background: linear-gradient(180deg, #37babc 0%, #5c8dea 48%, #a972ff 100%);
-}
-
-// Catalog page heading — matches the "Chats" panel header size (22px / 600 / 32px)
-.catalog-heading-text {
-  font-size: 22px;
-  line-height: 32px;
-  font-weight: 600;
-}
-
-// DS token overrides
-.dial-small-text {
-  line-height: 24px;
 }

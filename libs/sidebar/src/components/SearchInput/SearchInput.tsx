@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
-import panelStyles from '../SidebarPanel/SidebarPanel.module.scss';
 import styles from './SearchInput.module.scss';
 
 /** Props for `SearchInput`. */
@@ -16,8 +16,6 @@ export interface SearchInputProps {
   clearLabel: string;
   /** CSS class applied to the search icon. Defaults to `'text-secondary'`. */
   iconClassName?: string;
-  /** Whether to show the bottom divider separating this search bar from sibling content below it. Default: `true`. */
-  showDivider?: boolean;
   /** CSS class applied to the outer wrapper, merged over the default `'px-2 py-1'`. Override to change the pill's horizontal inset. */
   wrapperClassName?: string;
   /** CSS class applied to the search row, merged after its own border/radius defaults. Use an important-modifier class (e.g. `'!rounded-lg'`) to override the default pill shape. */
@@ -32,27 +30,19 @@ export const SearchInput: FC<SearchInputProps> = memo(
     onChange,
     clearLabel,
     iconClassName = 'text-secondary',
-    showDivider = true,
     wrapperClassName,
     rowClassName,
   }) => (
-    <div
-      className={mergeClasses(
-        'px-2 py-1',
-        showDivider && mergeClasses('border-b', panelStyles.divider),
-        wrapperClassName,
-      )}
-      data-cp-search-wrapper
-    >
+    <div className={mergeClasses('px-3 py-2', wrapperClassName)}>
       <div
         className={mergeClasses(
-          'flex min-h-11 w-full items-center gap-2 pe-3 ps-3 desktop:min-h-9',
+          'flex min-h-11 w-full items-center gap-2 rounded-full border pe-3 ps-3 desktop:min-h-9',
           styles.row,
           rowClassName,
         )}
       >
         <IconSearch
-          size={16}
+          size={DIAL_ICON_SIZE.SM}
           stroke={1.5}
           className={mergeClasses('shrink-0', iconClassName)}
         />

@@ -202,7 +202,6 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             onChange={setSearchQuery}
             placeholder={searchPlaceholder}
             clearLabel={clearSearchAriaLabel}
-            showDivider={false}
             wrapperClassName="px-0"
             rowClassName="!rounded-lg"
           />

@@ -1,6 +1,6 @@
 .row {
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 9999px;
+  border-color: rgba(0, 0, 0, 0.05);
+  background: transparent;
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease;
@@ -14,7 +14,7 @@
   &:focus-within {
     border-color: color-mix(
       in srgb,
-      var(--stroke-accent-primary, #7da4ff) 50%,
+      var(--controls-text-accent-primary-active, #7da4ff) 50%,
       transparent
     );
     box-shadow: none;
