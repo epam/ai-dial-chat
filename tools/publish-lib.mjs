@@ -10,6 +10,8 @@
  *                     Defaults to the root package.json version when omitted.
  *   --tag            npm dist-tag (default: "dev") — never defaults to "latest"
  *   --dry            Pass "true" to perform a dry run without actually publishing
+ *   --development    When true and --version is omitted, publish the next
+ *                    development version from npm, e.g. #.#.#.N
  *
  * What the script does:
  *   1. Reads the Nx project graph to locate the project root and build output (dist/).
@@ -28,7 +30,7 @@
 import mainPackageJson from '../package.json' with { type: 'json' };
 
 import devkit from '@nx/devkit';
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { parseArgs } from 'util';
 import path from 'path';
@@ -56,6 +58,7 @@ const { values, positionals } = parseArgs({
     version: { type: 'string' },
     tag: { type: 'string' },
     dry: { type: 'string' },
+    development: { type: 'string' },
   },
   allowPositionals: true,
   strict: false,
@@ -64,13 +67,14 @@ const { values, positionals } = parseArgs({
 const name = positionals[0];
 // Fall back to the root package.json version when --version isn't provided,
 // e.g. plain "npm run publish:npm" after the root version has been bumped for a release.
-const version = values.version || mainPackageJson.version;
+let version = values.version || mainPackageJson.version;
 const dry = values.dry === 'true';
+const development = values.development === 'true';
 // Default tag to "dev" — never accidentally publish under "latest"
 const tag = values.tag || 'dev';
 
 console.info(
-  `\nPublish run:\n  project : ${name}\n  version : ${version}\n  tag     : ${tag}\n  dry     : ${dry}\n`,
+  `\nPublish run:\n  project : ${name}\n  version : ${version}\n  tag     : ${tag}\n  dry     : ${dry}\n  dev     : ${development}\n`,
 );
 
 // ---------------------------------------------------------------------------
@@ -80,13 +84,6 @@ console.info(
 invariant(
   name,
   'No project name provided.\nUsage: node tools/publish-lib.mjs <project-name> --version=<ver>',
-);
-
-// Accept #.#.#, #.#.#-pre.N, or the special token "dev"
-const validVersion = /^\d+\.\d+\.\d+(-[\w.]+)?$/;
-invariant(
-  version && (validVersion.test(version) || version === 'dev'),
-  `Version did not match Semantic Versioning.\nExpected: #.#.#  |  #.#.#-pre.N  |  dev\nGot: ${version}`,
 );
 
 // ---------------------------------------------------------------------------
@@ -118,6 +115,41 @@ for (const nodeName of Object.keys(graph.nodes)) {
 }
 
 const isWorkspaceLib = (dep) => workspacePackageNames.has(dep);
+
+function getDevelopmentVersion(packageName, baseVersion) {
+  let publishedVersions;
+
+  try {
+    const stdout = execFileSync('npm', ['view', packageName, 'versions', '--json'], {
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    publishedVersions = JSON.parse(stdout);
+  } catch (err) {
+    const stderr = String(err.stderr || '');
+    if (stderr.includes('E404')) {
+      console.warn(`${packageName} has no published versions yet; using ${baseVersion}.0.`);
+      publishedVersions = [];
+    } else {
+      throw new Error(`Could not get published versions for ${packageName}.`);
+    }
+  }
+
+  const versions = Array.isArray(publishedVersions)
+    ? publishedVersions
+    : publishedVersions
+      ? [publishedVersions]
+      : [];
+
+  const lastNumber = versions
+    .filter((publishedVersion) => publishedVersion.startsWith(`${baseVersion}.`))
+    .map((publishedVersion) => publishedVersion.match(/\d+$/)?.[0])
+    .filter(Boolean)
+    .map((publishedVersion) => parseInt(publishedVersion, 10))
+    .sort((a, b) => b - a)[0];
+
+  return `${baseVersion}.${typeof lastNumber === 'number' ? lastNumber + 1 : 0}`;
+}
 
 // ---------------------------------------------------------------------------
 // Resolve project root and build output directory
@@ -180,6 +212,18 @@ const rewriteExportsObj = (obj) => {
 try {
   const json = JSON.parse(readFileSync(sourcePkgPath, 'utf-8'));
 
+  if (development && !values.version) {
+    version = getDevelopmentVersion(json.name, version);
+    console.info(`Development version for ${json.name}: ${version}`);
+  }
+
+  // Accept #.#.#, #.#.#.N, #.#.#-pre.N, or the special token "dev".
+  const validVersion = /^\d+\.\d+\.\d+(\.\d+|-[\w.]+)?$/;
+  invariant(
+    version && (validVersion.test(version) || version === 'dev'),
+    `Version did not match Semantic Versioning.\nExpected: #.#.#  |  #.#.#.N  |  #.#.#-pre.N  |  dev\nGot: ${version}`,
+  );
+
   // Set publish version
   json.version = version;
 
@@ -206,6 +250,19 @@ try {
 
   // Remove dev-only nx configuration block — consumers don't need it
   delete json.nx;
+
+  if (!dry) {
+    try {
+      execFileSync('npm', ['view', `${json.name}@${version}`, 'version'], {
+        cwd: outputPath,
+        stdio: 'ignore',
+      });
+      console.info(`${json.name}@${version} is already published, skipping.`);
+      process.exit(0);
+    } catch {
+      // npm view exits non-zero when the version does not exist; publish below.
+    }
+  }
 
   const destPkgPath = path.join(outputPath, 'package.json');
   writeFileSync(destPkgPath, JSON.stringify(json, null, 2) + '\n');
