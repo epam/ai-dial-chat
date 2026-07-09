@@ -1,6 +1,9 @@
 import { Observable, catchError, map, of } from 'rxjs';
 
-import { isPredefinedEntity } from '@/src/utils/app/id';
+import {
+  getIdWithoutFeatureType,
+  isPredefinedEntity,
+} from '@/src/utils/app/id';
 import { convertToolsetFromApi } from '@/src/utils/app/toolsets';
 import { ApiUtils, getOpsApiUrl } from '@/src/utils/server/api';
 
@@ -72,5 +75,16 @@ export class ToolsetService {
       method: HTTPMethod.POST,
       body: JSON.stringify(data),
     });
+  }
+
+  public static repair(id: string): Observable<void> {
+    const path = getIdWithoutFeatureType(id);
+
+    return ApiUtils.request(
+      `/api/ops/toolset/${ApiUtils.encodeApiUrl(path)}/repair`,
+      {
+        method: HTTPMethod.POST,
+      },
+    );
   }
 }
