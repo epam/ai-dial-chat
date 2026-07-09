@@ -32,29 +32,4 @@ jobs:
       docker-development-tag: 'development-1.0'
       maximize-build-space: true
       draft-stable-releases: true
-      publish-enabled: ${{ github.ref != 'refs/heads/development-1.0' }}
     secrets: inherit
-
-  publish_development_npm:
-    name: Publish development npm packages
-    if: ${{ github.ref == 'refs/heads/development-1.0' }}
-    needs: release
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          lfs: true
-      - uses: epam/ai-dial-ci/actions/node_prepare@4.7.0
-        with:
-          node-version: 24
-          clean-install: true
-          registry-url: 'https://registry.npmjs.org'
-      - name: Build publishable packages
-        run: npm run build:publishable
-      - name: Publish development packages to npmjs
-        run: npm run publish -- --development=true
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
