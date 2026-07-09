@@ -65,15 +65,6 @@ export const TabRow: FC<TabRowProps> = ({
           role="tab"
           aria-selected={isActive}
           onClick={() => onTabChange(tab.id)}
-          // Inline style guarantees this wins over the Tailwind preflight
-          // reset (`border-color: currentcolor`) regardless of stylesheet
-          // cascade/load order — a plain CSS-module class rule proved
-          // unreliable here across dev-server rebuilds.
-          style={
-            isActive
-              ? { borderBottomColor: 'var(--stroke-accent-primary, #7da4ff)' }
-              : undefined
-          }
           className={mergeClasses(
             tabLabelClassName,
             '-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-start transition-colors',

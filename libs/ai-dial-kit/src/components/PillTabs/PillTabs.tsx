@@ -41,7 +41,7 @@ export const PillTabs: FC<PillTabsProps> = memo(
             selected={isActive}
             onClick={() => onTabChange(tab.id)}
             className={mergeClasses(
-              'box-border h-auto shrink-0 justify-center p-[7px] text-center',
+              'box-border h-auto flex-1 justify-center rounded-full p-2 text-center',
               tabClassName,
               styles.tab,
               isActive && styles.tabActive,
