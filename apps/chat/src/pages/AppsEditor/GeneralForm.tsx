@@ -70,6 +70,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   useEffect(() => {
     if (hasSeededInitialValuesRef.current || !initialValues) return;
     hasSeededInitialValuesRef.current = true;
+    setValues({ ...EMPTY_VALUES, ...initialValues });
   }, [initialValues]);
 
   const labels: DeploymentCreationFormLabels = useMemo(
@@ -115,6 +116,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
 
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return;
+    setErrors({});
     const codes = validateDeploymentCreationFields(values, {
       validateNamePattern: true,
       validateVersionPattern: true,

@@ -199,6 +199,14 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     [deploymentId, startStream],
   );
 
+  /*
+   * useConversationHandlers only ever calls `navigate(ROUTES.Root)`, triggered by
+   * deleting the last message in the conversation. This stub handles only that
+   * case and resets local preview state instead of performing a real route
+   * navigation. The cast to NavigateFunction below is intentional: it satisfies
+   * useConversationHandlers's prop type without implementing the full
+   * NavigateFunction contract, since no other call shape is used here.
+   */
   const handlePreviewNavigate = useCallback((to: unknown) => {
     if (to === ROUTES.Root) {
       conversationRef.current = null;

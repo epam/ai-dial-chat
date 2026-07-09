@@ -10,9 +10,9 @@ An earlier iteration of this change added a stateless `POST /api/v1/conversation
 
 ## 2. OpenAPI / generated client: drop the removed endpoint
 
-- [ ] 2.1 Run `npm run openapi` to regenerate the OpenAPI spec and `libs/chat-api-client` now that `preview-completions`/`PreviewCompletionDto`/`PreviewMessageDto` no longer exist (confirms the generated `streamPreviewCompletion` client method and its DTOs are removed).
-- [ ] 2.2 Run `npm run openapi:check` to verify the committed generated client matches; commit the regenerated client files.
-- [ ] 2.3 Build/lint `chat-api-client` (`npm exec nx build chat-api-client`, `npm exec nx lint chat-api-client`).
+- [x] 2.1 Run `npm run openapi` to regenerate the OpenAPI spec and `libs/chat-api-client` now that `preview-completions`/`PreviewCompletionDto`/`PreviewMessageDto` no longer exist (confirms the generated `streamPreviewCompletion` client method and its DTOs are removed). Verified: no `streamPreviewCompletion`/`PreviewCompletionDto`/`PreviewMessageDto` references remain in `libs/chat-api-client` or `apps/chat-api/src`.
+- [x] 2.2 Run `npm run openapi:check` to verify the committed generated client matches; commit the regenerated client files. `npm run openapi:check` passes with no diff — nothing to commit.
+- [x] 2.3 Build/lint `chat-api-client` (`npm exec nx build chat-api-client`, `npm exec nx lint chat-api-client`). Both pass.
 
 ## 3. Frontend: remove the stateless preview hook/api (superseded)
 

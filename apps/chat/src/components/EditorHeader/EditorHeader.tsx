@@ -22,7 +22,7 @@ interface Props {
   exitPreviewButtonLabel?: string;
   /** Whether the preview pane is currently shown. Toggles the button's label/icon. */
   isPreviewing?: boolean;
-  /** Renders the preview/exit-preview button on the left, next to the title/steps nav, only when provided. */
+  /** Renders the preview/exit-preview button in the right-hand action group, before Cancel/Save, only when provided. */
   onPreview?: () => void;
 }
 
