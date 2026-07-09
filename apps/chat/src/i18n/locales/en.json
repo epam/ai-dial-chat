@@ -34,7 +34,7 @@
     "thinking": "Thinking",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message",
-    "chatSettings": "Chat settings"
+    "chatSettings": "Settings"
   },
   "rate": {
     "negativeFeedbackTitle": "Send negative feedback",
@@ -288,7 +288,7 @@
     }
   },
   "chatSettings": {
-    "title": "Chat settings",
+    "title": "Settings",
     "responseFormatLabel": "Response format",
     "responseFormatHint": "Applies to new and existing messages",
     "responseFormatMarkdown": "Markdown",
@@ -484,6 +484,9 @@
       "versionPlaceholder": "e.g. 1.0.0",
       "topicsLabel": "Topics",
       "topicsPlaceholder": "Add a topic",
+      "introLabel": "Intro",
+      "introPlaceholder": "A short one-line pitch",
+      "introTooLong": "Intro must be 90 characters or fewer",
       "previewTitle": "Preview"
     },
     "settingsStep": {
@@ -512,7 +515,10 @@
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe your toolset",
       "topicsLabel": "Topics",
-      "topicsPlaceholder": "Add a topic"
+      "topicsPlaceholder": "Add a topic",
+      "introLabel": "Intro",
+      "introPlaceholder": "A short one-line pitch",
+      "introTooLong": "Intro must be 90 characters or fewer"
     },
     "settings": {
       "endpointLabel": "Endpoint",

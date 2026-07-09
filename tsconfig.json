@@ -47,6 +47,9 @@
     },
     {
       "path": "./libs/ai-dial-kit"
+    },
+    {
+      "path": "./libs/deployment-creation-form"
     }
   ]
 }

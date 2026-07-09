@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-conversation-messages",
+  "description": "Message bubble components for rendering conversation history with actions and source citations",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
@@ -20,13 +21,15 @@
   "peerDependencies": {
     "react": "^19.0.0",
     "@tabler/icons-react": "^3.0.0",
-    "@epam/ai-dial-ui-kit": "0.12.0-dev.21",
+    "@epam/ai-dial-ui-kit": "0.12.0-dev.25",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-conversation-input": "*",
     "react-markdown": "^10.0.0"
   },
   "nx": {
-    "tags": ["publishable"],
+    "tags": [
+      "publishable"
+    ],
     "targets": {
       "publish": {
         "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
