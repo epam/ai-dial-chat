@@ -8,6 +8,7 @@ import {
   DialFileNodeType,
   DialPopup,
   NotificationVariant,
+  NOT_ALLOWED_SYMBOLS_REGEXP,
   PopupSize,
   useDialFileManagerTabs,
   type DialFile,
@@ -143,6 +144,7 @@ const DialFileManagerModal: FC<Props> = ({
     rootLabel,
     onNotification: showNotification,
     variant: DialFileManagerVariant.Attach,
+    forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
   });
 
   const {

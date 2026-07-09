@@ -1,5 +1,6 @@
 import {
   DialFileManagerTabs,
+  NOT_ALLOWED_SYMBOLS_REGEXP,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
@@ -58,6 +59,7 @@ const DialFileManagerPage: FC = () => {
     onNotification: showNotification,
     variant: DialFileManagerVariant.Standalone,
     actionProfile: DialFileManagerActionProfile.Browse,
+    forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
   });
 
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
