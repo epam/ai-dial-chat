@@ -193,7 +193,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             )}
           >
             {activeTab === CatalogDetailsTab.About && (
-              <AboutTab item={item} detailsStyles={detailsStyles} />
+              <AboutTab
+                content={item.description}
+                detailsStyles={detailsStyles}
+              />
             )}
             {activeTab === CatalogDetailsTab.Overview && (
               <Overview

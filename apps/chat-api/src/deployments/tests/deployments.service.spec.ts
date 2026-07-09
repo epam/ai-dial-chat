@@ -61,7 +61,7 @@ function makeService(
     getModel: vi.fn(),
     getApplication: vi.fn(),
     getToolset: vi.fn(),
-    getAllToolSetTools: vi.fn(),
+    getToolSetTools: vi.fn(),
   };
 
   const configService = {
@@ -878,16 +878,13 @@ describe('DeploymentsService', () => {
           },
         }),
       );
-      sdkClient.getAllToolSetTools.mockResolvedValue(
+      sdkClient.getToolSetTools.mockResolvedValue(
         okResponse({
-          id: '1',
-          result: {
-            tools: [
-              { name: 'search', title: 'Search' },
-              { name: 'fetch', title: 'Fetch' },
-              { name: 'browse', title: 'Browse' },
-            ],
-          },
+          tools: [
+            { name: 'search', title: 'Search' },
+            { name: 'fetch', title: 'Fetch' },
+            { name: 'browse', title: 'Browse' },
+          ],
         }),
       );
 
@@ -924,12 +921,12 @@ describe('DeploymentsService', () => {
       expect(JSON.stringify(result)).not.toContain('public-client-id');
     });
 
-    it('omits allToolNames without failing the request when getAllToolSetTools errors', async () => {
+    it('omits allToolNames without failing the request when getToolSetTools errors', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getToolset.mockResolvedValue(
         okResponse({ id: 'toolsets/search-tool', transport: 'HTTP' }),
       );
-      sdkClient.getAllToolSetTools.mockResolvedValue(errResponse(403));
+      sdkClient.getToolSetTools.mockResolvedValue(errResponse(403));
 
       const result = await service.getDeploymentDetails(
         'toolsets/search-tool',

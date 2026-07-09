@@ -1,6 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC, useMemo } from 'react';
-import { CatalogItem } from '../../../models/catalog-item';
 import type { ItemDetailsStyles } from '../../../models/item-details-props';
 import type { AboutRun } from '../../../utils/parse-about-content';
 import { parseAboutContent } from '../../../utils/parse-about-content';
@@ -27,20 +26,21 @@ const AboutRunView: FC<AboutRunViewProps> = ({ run, contentClassName }) => {
 };
 
 interface AboutTabProps {
-  item: CatalogItem;
+  /** Raw text to render (bullets/headings are parsed from it). The caller decides whether this is `intro`, `description`, or a fallback between the two. */
+  content: string;
   detailsStyles?: ItemDetailsStyles;
 }
 
-/** Intro content for a catalog item (`item.intro`, falling back to `item.description`). */
-export const AboutTab: FC<AboutTabProps> = ({ item, detailsStyles }) => {
+/** Renders parsed about-style content (headings/bullets) for a catalog item. */
+export const AboutTab: FC<AboutTabProps> = ({ content, detailsStyles }) => {
   const {
     contentHeadingClassName = 'dial-small-semi-text',
     contentClassName = 'dial-small-text',
   } = detailsStyles?.typography ?? {};
 
   const parsedAboutBlocks = useMemo(
-    () => parseAboutContent(item.intro ?? item.description),
-    [item.intro, item.description],
+    () => parseAboutContent(content),
+    [content],
   );
 
   return (

@@ -1,7 +1,27 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
-import type { DialToolsetDto } from '@epam/chat-api-client';
+import type { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import { describe, expect, it } from 'vitest';
-import { mapToolsetToCatalogItem } from '../map-deployment-to-catalog-item';
+import {
+  mapDeploymentToCatalogItem,
+  mapToolsetToCatalogItem,
+} from '../map-deployment-to-catalog-item';
+
+describe('mapDeploymentToCatalogItem', () => {
+  it('maps the intro field onto the catalog item', () => {
+    const deployment: DeploymentItemDto = {
+      id: 'model-1',
+      type: 'model',
+      displayName: 'Model 1',
+      description: 'Short description',
+      intro: 'A longer intro for the details panel.',
+    };
+
+    const result = mapDeploymentToCatalogItem(deployment);
+
+    expect(result.description).toBe('Short description');
+    expect(result.intro).toBe('A longer intro for the details panel.');
+  });
+});
 
 describe('mapToolsetToCatalogItem', () => {
   it('maps real SDK-shaped toolset data into catalog fields', () => {
@@ -52,5 +72,15 @@ describe('mapToolsetToCatalogItem', () => {
 
     expect(result.folder).toEqual([]);
     expect(result.name).toBe('salesforce');
+  });
+
+  it('maps the intro field onto the catalog item', () => {
+    const result = mapToolsetToCatalogItem({
+      id: 'salesforce',
+      toolset: 'salesforce',
+      intro: 'A longer intro for the details panel.',
+    });
+
+    expect(result.intro).toBe('A longer intro for the details panel.');
   });
 });

@@ -29,7 +29,10 @@ export const Summary: FC<SummaryProp> = ({ item, texts, detailsStyles }) => {
         >
           {texts?.introLabel ?? 'Intro'}
         </span>
-        <AboutTab item={item} detailsStyles={detailsStyles} />
+        <AboutTab
+          content={item.intro ?? item.description}
+          detailsStyles={detailsStyles}
+        />
       </div>
       {item.topics.length > 0 && (
         <div className="flex flex-wrap gap-2">

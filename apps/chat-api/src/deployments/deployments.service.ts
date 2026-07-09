@@ -602,21 +602,21 @@ export class DeploymentsService extends AppService {
     accessToken: string,
   ): Promise<string[] | undefined> {
     try {
-      const result = await this.client.getAllToolSetTools(deployment, {
+      const result = await this.client.getToolSetTools(deployment, {
         headers: getBearerAuthHeaders(accessToken),
       });
       if (result.error) {
         this.logger.warn(
-          `DIAL Core returned ${result.response.status} for getAllToolSetTools "${deployment}"`,
+          `DIAL Core returned ${result.response.status} for getToolSetTools "${deployment}"`,
         );
         return undefined;
       }
-      return result.data?.result?.tools
+      return result.data?.tools
         ?.map((tool) => tool.name)
         .filter((name): name is string => typeof name === 'string');
     } catch (err) {
       this.logger.warn(
-        `getAllToolSetTools "${deployment}" failed: ${err instanceof Error ? err.message : String(err)}`,
+        `getToolSetTools "${deployment}" failed: ${err instanceof Error ? err.message : String(err)}`,
       );
       return undefined;
     }
