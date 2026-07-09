@@ -57,12 +57,6 @@ const negotiateFormat = (
 
   const candidates = getOrderedCandidates(audioTypesDefaultOrder);
   for (const candidate of candidates) {
-    console.log(
-      'candidate.mimeType',
-      candidate.mimeType,
-      'MediaRecorder.isTypeSupported(candidate.mimeType)',
-      MediaRecorder.isTypeSupported(candidate.mimeType),
-    );
     if (!MediaRecorder.isTypeSupported(candidate.mimeType)) {
       continue;
     }
