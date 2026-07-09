@@ -2,9 +2,8 @@ import {
   BadGatewayException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialClientService } from '../../dial/dial-client.service';
 import { MessageRating } from '../dto/rate-message.dto';
 import type { RateMessageDto } from '../dto/rate-message.dto';
 import { RateService } from '../rate.service';
@@ -13,14 +12,13 @@ const BASE_URL = 'http://dial-core';
 const ACCESS_TOKEN = 'test-token';
 
 function makeService() {
-  const configService = {
-    get: vi.fn((key: string) => {
-      if (key === 'DIAL_CORE_URL') return BASE_URL;
-      return undefined;
-    }),
-  } as unknown as ConfigService<EnvironmentVariables>;
+  const dialClient = {
+    client: {},
+    baseUrl: BASE_URL,
+    dialApiVersion: '2024-10-21',
+  } as unknown as DialClientService;
 
-  return new RateService(configService);
+  return new RateService(dialClient);
 }
 
 const validDto: RateMessageDto = {

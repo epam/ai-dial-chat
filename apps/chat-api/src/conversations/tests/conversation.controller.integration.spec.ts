@@ -14,6 +14,7 @@ import type {
 } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DialClientService } from '../../dial/dial-client.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
   ConversationGenerationService,
@@ -216,6 +217,7 @@ describe('ConversationController (integration)', () => {
         controllers: [ConversationController],
         providers: [
           { provide: ConfigService, useValue: configService },
+          DialClientService,
           ConversationService,
           UserConfigService,
           ConversationGenerationService,
@@ -239,11 +241,11 @@ describe('ConversationController (integration)', () => {
       await realApp.init();
 
       vi.spyOn(
-        realApp.get(ConversationService)['client'],
+        realApp.get(DialClientService).client,
         'saveConversation',
       ).mockResolvedValue({ data: {} } as never);
       vi.spyOn(
-        realApp.get(ConversationService)['client'],
+        realApp.get(DialClientService).client,
         'getConversationMetadata',
       ).mockResolvedValue({ data: null, error: { status: 404 } } as never);
 

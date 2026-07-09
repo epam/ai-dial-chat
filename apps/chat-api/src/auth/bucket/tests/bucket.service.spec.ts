@@ -1,20 +1,17 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { EnvironmentVariables } from '../../../config/environment.config';
+import type { DialClientService } from '../../../dial/dial-client.service';
 import { BucketService } from '../bucket.service';
 
 const TOKEN = 'test-token';
 
-const makeService = () => {
-  const configService = {
-    get: vi.fn((key: string) => {
-      if (key === 'DIAL_CORE_URL') return 'http://dial-core';
-      if (key === 'DIAL_API_VERSION') return '2024-10-21';
-      return undefined;
-    }),
-  } as unknown as ConfigService<EnvironmentVariables>;
-  return new BucketService(configService);
+const makeService = (getUserBucket: ReturnType<typeof vi.fn>) => {
+  const dialClient = {
+    client: { getUserBucket },
+    baseUrl: 'http://dial-core',
+    dialApiVersion: '2024-10-21',
+  } as unknown as DialClientService;
+  return new BucketService(dialClient);
 };
 
 describe('BucketService', () => {
@@ -22,11 +19,8 @@ describe('BucketService', () => {
   let getUserBucket: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    service = makeService();
     getUserBucket = vi.fn();
-    (service as unknown as { client: { getUserBucket: unknown } }).client = {
-      getUserBucket,
-    };
+    service = makeService(getUserBucket);
   });
 
   it('returns the bucket on success', async () => {

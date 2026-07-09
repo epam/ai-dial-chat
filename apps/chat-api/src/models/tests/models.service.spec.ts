@@ -6,9 +6,8 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialClientService } from '../../dial/dial-client.service';
 import type {
   DialModelDto,
   DialModelListResponseDto,
@@ -28,24 +27,23 @@ const errResponse = (status: number) =>
   ({ error: {}, response: { status } as Response }) as never;
 
 function makeDeps() {
-  const configService = {
-    get: vi.fn((key: string) => {
-      if (key === 'DIAL_CORE_URL') return 'http://dial-core';
-      return undefined;
-    }),
-  } as unknown as ConfigService<EnvironmentVariables>;
+  const dialClient = {
+    client: { getModels: vi.fn(), getModel: vi.fn() },
+    baseUrl: 'http://dial-core',
+    dialApiVersion: '2024-10-21',
+  } as unknown as DialClientService;
 
   const cacheManager = {
     get: vi.fn().mockResolvedValue(undefined),
     set: vi.fn().mockResolvedValue(undefined),
   };
 
-  return { configService, cacheManager };
+  return { dialClient, cacheManager };
 }
 
 function makeService() {
-  const { configService, cacheManager } = makeDeps();
-  const service = new ModelsService(configService, cacheManager as never);
+  const { dialClient, cacheManager } = makeDeps();
+  const service = new ModelsService(dialClient, cacheManager as never);
   return { service, cacheManager };
 }
 
@@ -58,7 +56,7 @@ describe('ModelsService', () => {
     it('returns list from upstream on cache miss', async () => {
       const { service } = makeService();
       const upstreamList = { ...mockList, object: 'list' };
-      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModels').mockResolvedValue(
         okResponse(upstreamList),
       );
 
@@ -67,14 +65,14 @@ describe('ModelsService', () => {
     });
 
     it('returns cached list without calling upstream on cache hit', async () => {
-      const { configService } = makeDeps();
+      const { dialClient } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockList),
         set: vi.fn(),
       };
-      const service = new ModelsService(configService, cacheManager as never);
+      const service = new ModelsService(dialClient, cacheManager as never);
       const spy = vi
-        .spyOn(service['client'], 'getModels')
+        .spyOn(service['dialClient'].client, 'getModels')
         .mockResolvedValue(okResponse(mockList));
 
       const result = await service.listModels('user1', 'token-abc');
@@ -83,7 +81,7 @@ describe('ModelsService', () => {
     });
 
     it('uses per-user cache keys — different users get different cache entries', async () => {
-      const { configService } = makeDeps();
+      const { dialClient } = makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -92,8 +90,8 @@ describe('ModelsService', () => {
           return Promise.resolve();
         }),
       };
-      const service = new ModelsService(configService, cacheManager as never);
-      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+      const service = new ModelsService(dialClient, cacheManager as never);
+      vi.spyOn(service['dialClient'].client, 'getModels').mockResolvedValue(
         okResponse(mockList),
       );
 
@@ -107,7 +105,7 @@ describe('ModelsService', () => {
     it('forwards Authorization header to upstream', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['client'], 'getModels')
+        .spyOn(service['dialClient'].client, 'getModels')
         .mockResolvedValue(okResponse(mockList));
 
       await service.listModels('user1', 'my-token');
@@ -122,7 +120,7 @@ describe('ModelsService', () => {
 
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModels').mockResolvedValue(
         errResponse(401),
       );
       await expect(service.listModels('u', 't')).rejects.toThrow(
@@ -132,7 +130,7 @@ describe('ModelsService', () => {
 
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModels').mockResolvedValue(
         errResponse(403),
       );
       await expect(service.listModels('u', 't')).rejects.toThrow(
@@ -142,7 +140,7 @@ describe('ModelsService', () => {
 
     it('throws HttpException(429) on upstream 429', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModels').mockResolvedValue(
         errResponse(429),
       );
       await expect(service.listModels('u', 't')).rejects.toThrow(HttpException);
@@ -150,7 +148,7 @@ describe('ModelsService', () => {
 
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModels').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModels').mockResolvedValue(
         errResponse(500),
       );
       await expect(service.listModels('u', 't')).rejects.toThrow(
@@ -160,7 +158,7 @@ describe('ModelsService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModels').mockRejectedValue(
+      vi.spyOn(service['dialClient'].client, 'getModels').mockRejectedValue(
         new TypeError('fetch failed'),
       );
       await expect(service.listModels('u', 't')).rejects.toThrow(
@@ -172,7 +170,7 @@ describe('ModelsService', () => {
   describe('getModel', () => {
     it('returns model from upstream on cache miss', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
         okResponse(mockModel),
       );
 
@@ -181,14 +179,14 @@ describe('ModelsService', () => {
     });
 
     it('returns cached model without calling upstream on cache hit', async () => {
-      const { configService } = makeDeps();
+      const { dialClient } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockModel),
         set: vi.fn(),
       };
-      const service = new ModelsService(configService, cacheManager as never);
+      const service = new ModelsService(dialClient, cacheManager as never);
       const spy = vi
-        .spyOn(service['client'], 'getModel')
+        .spyOn(service['dialClient'].client, 'getModel')
         .mockResolvedValue(okResponse(mockModel));
 
       const result = await service.getModel('user1', 'token-abc', 'gpt-4o');
@@ -198,7 +196,7 @@ describe('ModelsService', () => {
 
     it('uses per-user per-model cache key', async () => {
       const { service, cacheManager } = makeService();
-      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
         okResponse(mockModel),
       );
 
@@ -211,7 +209,7 @@ describe('ModelsService', () => {
     it('forwards model name and Authorization header to upstream', async () => {
       const { service } = makeService();
       const spy = vi
-        .spyOn(service['client'], 'getModel')
+        .spyOn(service['dialClient'].client, 'getModel')
         .mockResolvedValue(okResponse(mockModel));
 
       await service.getModel('user1', 'my-token', 'gpt-4o');
@@ -227,7 +225,7 @@ describe('ModelsService', () => {
 
     it('throws NotFoundException on upstream 404', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
         errResponse(404),
       );
       await expect(service.getModel('u', 't', 'unknown')).rejects.toThrow(
@@ -237,7 +235,7 @@ describe('ModelsService', () => {
 
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
         errResponse(401),
       );
       await expect(service.getModel('u', 't', 'gpt-4o')).rejects.toThrow(
@@ -247,7 +245,7 @@ describe('ModelsService', () => {
 
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
         errResponse(403),
       );
       await expect(service.getModel('u', 't', 'gpt-4o')).rejects.toThrow(
@@ -257,7 +255,7 @@ describe('ModelsService', () => {
 
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModel').mockResolvedValue(
+      vi.spyOn(service['dialClient'].client, 'getModel').mockResolvedValue(
         errResponse(502),
       );
       await expect(service.getModel('u', 't', 'gpt-4o')).rejects.toThrow(
@@ -267,7 +265,7 @@ describe('ModelsService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(service['client'], 'getModel').mockRejectedValue(
+      vi.spyOn(service['dialClient'].client, 'getModel').mockRejectedValue(
         new TypeError('fetch failed'),
       );
       await expect(service.getModel('u', 't', 'gpt-4o')).rejects.toThrow(

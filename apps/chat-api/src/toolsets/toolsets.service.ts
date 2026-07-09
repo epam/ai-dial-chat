@@ -7,9 +7,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
-import { AppService } from '../app/app.service';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
@@ -17,8 +15,8 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
-import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
+import { DialClientService } from '../dial/dial-client.service';
 import type {
   DialToolsetAuthSettingsDto,
   DialToolsetDto,
@@ -201,16 +199,14 @@ const isMyToolset = (toolset: DialToolsetDto, bucket: string): boolean =>
   Boolean(bucket) && toolset.id.split('/').includes(bucket);
 
 @Injectable()
-export class ToolsetsService extends AppService {
-  protected override logger = new Logger(ToolsetsService.name);
+export class ToolsetsService {
+  private readonly logger = new Logger(ToolsetsService.name);
 
   constructor(
-    configService: ConfigService<EnvironmentVariables>,
+    private readonly dialClient: DialClientService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly userConfigService: UserConfigService,
-  ) {
-    super(configService);
-  }
+  ) {}
 
   private enrichToolsetWithOwnership(
     toolset: DialToolsetDto,
@@ -257,7 +253,7 @@ export class ToolsetsService extends AppService {
     }
 
     try {
-      const result = await this.client.getToolSets({
+      const result = await this.dialClient.client.getToolSets({
         headers: getBearerAuthHeaders(accessToken),
       });
       if (result.error) {
@@ -314,7 +310,7 @@ export class ToolsetsService extends AppService {
     }
 
     try {
-      const result = await this.client.getToolset(toolsetName, {
+      const result = await this.dialClient.client.getToolset(toolsetName, {
         headers: getBearerAuthHeaders(accessToken),
       });
       if (result.error) {
@@ -353,7 +349,9 @@ export class ToolsetsService extends AppService {
     authHeaders: ReturnType<typeof getBearerAuthHeaders>,
     context: string,
   ): Promise<string> {
-    const result = await this.client.getUserBucket({ headers: authHeaders });
+    const result = await this.dialClient.client.getUserBucket({
+      headers: authHeaders,
+    });
     if (result.error) {
       return mapDialHttpStatus(result.response.status, context, this.logger);
     }
@@ -394,7 +392,7 @@ export class ToolsetsService extends AppService {
       );
       const id = `${TOOLSET_RESOURCE_PREFIX}${bucket}/${path}`;
 
-      const response = await this.client.saveToolSet(bucket, path, {
+      const response = await this.dialClient.client.saveToolSet(bucket, path, {
         headers: authHeaders,
         body: toDialToolsetBody(body, version),
       });
@@ -427,7 +425,7 @@ export class ToolsetsService extends AppService {
         authHeaders,
         toolsetName,
       );
-      const response = await this.client.saveToolSet(bucket, path, {
+      const response = await this.dialClient.client.saveToolSet(bucket, path, {
         headers: authHeaders,
         body: toDialToolsetBody(body, version),
       });
@@ -463,9 +461,13 @@ export class ToolsetsService extends AppService {
         authHeaders,
         toolsetName,
       );
-      const response = await this.client.deleteToolSet(bucket, path, {
-        headers: authHeaders,
-      });
+      const response = await this.dialClient.client.deleteToolSet(
+        bucket,
+        path,
+        {
+          headers: authHeaders,
+        },
+      );
       if (response.error) {
         return mapDialHttpStatus(
           response.response.status,
@@ -496,7 +498,7 @@ export class ToolsetsService extends AppService {
     const dialBody = toDialToolsetSigninBody(body);
 
     try {
-      const response = await this.client.toolsetSignin({
+      const response = await this.dialClient.client.toolsetSignin({
         headers: authHeaders,
         body: dialBody,
       });
@@ -528,7 +530,7 @@ export class ToolsetsService extends AppService {
     const authHeaders = getBearerAuthHeaders(accessToken);
 
     try {
-      const response = await this.client.toolSetSignout({
+      const response = await this.dialClient.client.toolSetSignout({
         headers: authHeaders,
         body: toDialToolsetSignoutBody(body),
       });

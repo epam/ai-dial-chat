@@ -7,7 +7,6 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppService } from '../app/app.service';
 import { AppConfigService } from '../app-config/app-config.service';
 import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import {
@@ -15,6 +14,7 @@ import {
   getBearerAuthHeaders,
 } from '../common/utils/auth-header';
 import { EnvironmentVariables } from '../config/environment.config';
+import { DialClientService } from '../dial/dial-client.service';
 import { ConversationResponseDto } from '../openapi/openapi-response.dto';
 import {
   CONVERSATION_PERSISTENCE,
@@ -38,18 +38,17 @@ interface CompletionResponse {
 }
 
 @Injectable()
-export class ConversationNamingService extends AppService {
-  protected override logger = new Logger(ConversationNamingService.name);
+export class ConversationNamingService {
+  private readonly logger = new Logger(ConversationNamingService.name);
   private readonly inFlightRenames = new Set<string>();
 
   constructor(
-    configService: ConfigService<EnvironmentVariables>,
+    private readonly dialClient: DialClientService,
+    private readonly configService: ConfigService<EnvironmentVariables>,
     private readonly appConfigService: AppConfigService,
     @Inject(CONVERSATION_PERSISTENCE)
     private readonly conversationPersistence: ConversationPersistencePort,
-  ) {
-    super(configService);
-  }
+  ) {}
 
   maybeRenameAfterFirstReply(
     conversationPath: string,
@@ -382,24 +381,27 @@ export class ConversationNamingService extends AppService {
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     this.logger.debug(
-      `LLM naming request to DIAL Core: model=${modelId} apiVersion=${this.dialApiVersion} headers=${JSON.stringify(this.formatHeadersForLog(headers))}`,
+      `LLM naming request to DIAL Core: model=${modelId} apiVersion=${this.dialClient.dialApiVersion} headers=${JSON.stringify(this.formatHeadersForLog(headers))}`,
     );
 
     try {
-      const result = (await this.client.sendChatCompletionRequest(modelId, {
-        body: {
-          messages: [
-            { role: 'system', content: CONVERSATION_NAMING_SYSTEM_PROMPT },
-            { role: 'user', content: userContent },
-          ],
-          stream: false,
-        } as Parameters<
-          typeof this.client.sendChatCompletionRequest
-        >[1]['body'],
-        headers,
-        params: { query: { 'api-version': this.dialApiVersion } },
-        signal: controller.signal,
-      })) as { data?: unknown; error?: unknown; response: Response };
+      const result = (await this.dialClient.client.sendChatCompletionRequest(
+        modelId,
+        {
+          body: {
+            messages: [
+              { role: 'system', content: CONVERSATION_NAMING_SYSTEM_PROMPT },
+              { role: 'user', content: userContent },
+            ],
+            stream: false,
+          } as Parameters<
+            typeof this.dialClient.client.sendChatCompletionRequest
+          >[1]['body'],
+          headers,
+          params: { query: { 'api-version': this.dialClient.dialApiVersion } },
+          signal: controller.signal,
+        },
+      )) as { data?: unknown; error?: unknown; response: Response };
 
       this.logger.debug(
         `LLM naming response from DIAL Core: model=${modelId} ${this.formatDialResponseForLog(result)}`,
