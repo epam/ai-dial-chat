@@ -1,6 +1,6 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { Card, CatalogEntityType } from '@epam/ai-dial-catalog';
-import type {
+import {
   DeploymentCreationFieldErrorCode,
   DeploymentCreationForm,
   DeploymentCreationFormFieldErrors,
@@ -42,7 +42,7 @@ interface Props {
   appId?: string;
   /** Existing app values used to prefill the form when editing an app. */
   initialValues?: GeneralFormInitialValues;
-  onCreated: (appId: string) => void;
+  onCreated: (appId: string, displayName?: string, iconUrl?: string) => void;
 }
 
 const EMPTY_VALUES: DeploymentCreationFormValues = {
@@ -70,11 +70,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   useEffect(() => {
     if (hasSeededInitialValuesRef.current || !initialValues) return;
     hasSeededInitialValuesRef.current = true;
-    setName(initialValues.name ?? '');
-    setDescription(initialValues.description ?? '');
-    setIconUrl(initialValues.iconUrl ?? '');
-    setVersion(initialValues.version ?? '');
-    setTopics(initialValues.topics ?? []);
   }, [initialValues]);
 
   const labels: DeploymentCreationFormLabels = useMemo(
@@ -147,7 +142,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     }
 
     if (appId) {
-      onCreated(appId);
+      onCreated(appId, values.name.trim(), values.iconUrl.trim() || undefined);
       return;
     }
 
@@ -173,7 +168,11 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         intro: values.intro.trim() || undefined,
         applicationProperties,
       });
-      onCreated(result.id);
+      onCreated(
+        result.id,
+        values.name.trim(),
+        values.iconUrl.trim() || undefined,
+      );
     } catch {
       setSubmitError(t(AppsEditorI18nKeys.ErrorCreateFailed));
     } finally {

@@ -14,6 +14,8 @@ export interface SettingsStepHandle {
 interface Props {
   schema: ApplicationSchemaSummaryDto | undefined;
   appId: string;
+  appDisplayName?: string;
+  appIconUrl?: string;
   isPreviewing?: boolean;
   onSaveSuccess?: () => void;
   onSaveError?: (error: string) => void;
@@ -21,7 +23,15 @@ interface Props {
 
 const SettingsStep = forwardRef<SettingsStepHandle, Props>(
   function SettingsStep(
-    { schema, appId, isPreviewing = false, onSaveSuccess, onSaveError },
+    {
+      schema,
+      appId,
+      appDisplayName,
+      appIconUrl,
+      isPreviewing = false,
+      onSaveSuccess,
+      onSaveError,
+    },
     ref,
   ) {
     const { t } = useTranslation();
@@ -56,8 +66,8 @@ const SettingsStep = forwardRef<SettingsStepHandle, Props>(
             >
               <AppPreviewChat
                 appId={appId}
-                appDisplayName={schema.displayName}
-                appIconUrl={schema.iconUrl}
+                appDisplayName={appDisplayName ?? schema.displayName}
+                appIconUrl={appIconUrl ?? schema.iconUrl}
               />
             </div>
           )}

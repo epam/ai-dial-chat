@@ -31,6 +31,10 @@ const AppsEditor: FC = () => {
   const { schemas, items: deployments } = useDeployments();
 
   const [createdAppId, setCreatedAppId] = useState<string | null>(null);
+  const [submittedAppInfo, setSubmittedAppInfo] = useState<{
+    displayName?: string;
+    iconUrl?: string;
+  } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [pendingSaveAction, setPendingSaveAction] = useState<
@@ -81,8 +85,9 @@ const AppsEditor: FC = () => {
   );
 
   const handleCreated = useCallback(
-    (appId: string) => {
+    (appId: string, displayName?: string, iconUrl?: string) => {
       setCreatedAppId(appId);
+      setSubmittedAppInfo({ displayName, iconUrl });
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.set(AppsEditorQuery.Step, AppsEditorStep.Settings);
@@ -167,6 +172,13 @@ const AppsEditor: FC = () => {
   const appIdForSettings =
     createdAppId ?? searchParams.get(AppsEditorQuery.AppId) ?? '';
 
+  const appDisplayName =
+    submittedAppInfo?.displayName ??
+    existingDeployment?.displayName ??
+    schema?.displayName;
+  const appIconUrl =
+    submittedAppInfo?.iconUrl ?? existingDeployment?.iconUrl ?? schema?.iconUrl;
+
   const steps = useMemo(
     () => [
       {
@@ -233,6 +245,8 @@ const AppsEditor: FC = () => {
             ref={settingsStepRef}
             schema={schema}
             appId={appIdForSettings}
+            appDisplayName={appDisplayName}
+            appIconUrl={appIconUrl}
             isPreviewing={isPreviewing}
             onSaveSuccess={handleSaveSuccess}
             onSaveError={handleSaveError}
