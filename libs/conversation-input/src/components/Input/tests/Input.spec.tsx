@@ -497,9 +497,7 @@ describe('Input — isModelSelectorDisabled', () => {
       />,
     );
     expect(screen.getByLabelText(/Select model/)).toBeTruthy();
-    expect(
-      container.querySelector('[aria-disabled="true"]'),
-    ).toBeTruthy();
+    expect(container.querySelector('[aria-disabled="true"]')).toBeTruthy();
   });
 
   it('does not mark the chip aria-disabled when isModelSelectorDisabled is false', () => {
