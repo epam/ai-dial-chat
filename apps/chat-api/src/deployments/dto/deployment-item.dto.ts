@@ -35,6 +35,12 @@ export class DeploymentItemDto {
   description?: string;
 
   @ApiPropertyOptional({
+    description: 'Short catalog-friendly intro from DIAL Core',
+    maxLength: 90,
+  })
+  intro?: string;
+
+  @ApiPropertyOptional({
     description: 'Interface types supported by this deployment',
   })
   interfaces?: string[];

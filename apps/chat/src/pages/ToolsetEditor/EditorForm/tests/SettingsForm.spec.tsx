@@ -117,6 +117,7 @@ const makeForm = (endpoint = ''): ToolsetFormData => ({
   iconUrl: '',
   description: '',
   topics: [],
+  intro: '',
   endpoint,
   protocol: ToolsetTransportType.Http,
   allowedTools: [],
