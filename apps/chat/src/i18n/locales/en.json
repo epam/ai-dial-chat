@@ -34,7 +34,7 @@
     "thinking": "Thinking",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message",
-    "chatSettings": "Chat settings"
+    "chatSettings": "Settings"
   },
   "rate": {
     "negativeFeedbackTitle": "Send negative feedback",
@@ -286,7 +286,7 @@
     }
   },
   "chatSettings": {
-    "title": "Chat settings",
+    "title": "Settings",
     "responseFormatLabel": "Response format",
     "responseFormatHint": "Applies to new and existing messages",
     "responseFormatMarkdown": "Markdown",
