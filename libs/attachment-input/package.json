@@ -1,5 +1,6 @@
 {
   "name": "@epam/ai-dial-attachment-input",
+  "description": "File attachment input components with upload validation, drag-and-drop, and progress tracking",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
@@ -19,12 +20,14 @@
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "0.12.0-dev.21",
+    "@epam/ai-dial-ui-kit": "0.12.0-dev.25",
     "@tabler/icons-react": "^3.44.0",
     "react": "^19.0.0"
   },
   "nx": {
-    "tags": ["publishable"],
+    "tags": [
+      "publishable"
+    ],
     "targets": {
       "publish": {
         "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"

@@ -2,12 +2,43 @@
 paths:
   - 'libs/**/*.ts'
   - 'libs/**/*.tsx'
-globs: 'libs/**/*.ts,libs/**/*.tsx'
-applyTo: 'libs/**/*.ts,libs/**/*.tsx'
+  - 'libs/*/package.json'
+  - 'libs/*/README.md'
+globs: 'libs/**/*.ts,libs/**/*.tsx,libs/*/package.json,libs/*/README.md'
+applyTo: 'libs/**/*.ts,libs/**/*.tsx,libs/*/package.json,libs/*/README.md'
 alwaysApply: false
 ---
 
 # Libs coding conventions
+
+## package.json requirements
+
+Every lib under `libs/` must have these three fields in its `package.json`:
+
+- **`"license"`** — must be `"Apache-2.0"`.
+- **`"description"`** — a short, plain-English sentence (no period at the end) describing what the lib does. Do not use the lib's package name as the description.
+- These fields must appear directly after `"name"` and `"version"`.
+
+```json
+{
+  "name": "@epam/ai-dial-example",
+  "description": "Short description of what this lib provides",
+  "version": "0.0.1",
+  "license": "Apache-2.0"
+}
+```
+
+## README.md requirements
+
+Every lib under `libs/` must have a `README.md` at its root. The README must include:
+
+1. **H1 heading** — the npm package name (e.g. `# @epam/ai-dial-example`).
+2. **Overview** — a detailed paragraph explaining the lib's purpose, what problems it solves, and when to use it.
+3. **Installation** — a `package.json` snippet showing how to add the dependency.
+4. **Peer Dependencies** — a list of required peer deps.
+5. **Components / Hooks / Utilities** — one subsection per major export with a minimal usage example.
+
+Do not copy Nx scaffold content (`This library was generated with Nx`) into the README — replace it entirely.
 
 ## No i18n inside libs
 
