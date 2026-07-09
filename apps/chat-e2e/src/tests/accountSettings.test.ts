@@ -295,6 +295,7 @@ dialTest(
       'Set cursor in the edit input and press Shift + Enter several times',
       async () => {
         await chatMessages.getChatMessageTextarea(1).click();
+        await page.keyboard.press(keys.end);
         for (let i = 1; i <= newLinesCount; i++) {
           await page.keyboard.press(keys.shiftPlusEnter);
         }
@@ -341,6 +342,7 @@ dialTest(
     settingsModal,
     accountSettings,
     accountDropdownMenu,
+    fileApiHelper,
     setTestIds,
     page,
   }) => {
@@ -354,6 +356,16 @@ dialTest(
     const secondExpectedMessage = '\n'
       .repeat(newLinesCount)
       .concat(firstExpectedMessage);
+
+    await dialTest.step('Add some model to the users workspace', async () => {
+      const randomModel = GeneratorUtil.randomArrayElement(
+        ModelsUtil.getModels(),
+      );
+      await fileApiHelper.updateInstalledDeployments([randomModel]);
+      await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+        randomModel,
+      );
+    });
 
     await dialTest.step(
       'Open home page, open account settings modal and set Ctrl+Enter as keyboard shortcuts',
@@ -406,6 +418,7 @@ dialTest(
       'Set cursor in the edit input and press Enter several times',
       async () => {
         await chatMessages.getChatMessageTextarea(1).click();
+        await page.keyboard.press(keys.home);
         for (let i = 1; i <= newLinesCount; i++) {
           await page.keyboard.press(keys.enter);
         }
