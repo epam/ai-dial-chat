@@ -1,6 +1,7 @@
 import { type FC, memo } from 'react';
 import type { Components } from 'react-markdown';
 import { CodeBlockTheme } from '../../types/code-editor';
+import { DEFAULT_MARKDOWN_CLASS_NAMES } from './markdown-class-names';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 /** Props for the {@link MDMessageViewer} markdown renderer. */
@@ -47,24 +48,7 @@ export const MDMessageViewer: FC<Props> = memo(
       codeBlockCopyLabel={codeBlockCopyLabel}
       codeBlockCopiedLabel={codeBlockCopiedLabel}
       codeBlockTheme={codeBlockTheme}
-      classNames={{
-        h1: 'dial-h1-text mb-3 mt-6 first:mt-0 [text-wrap:balance]',
-        h2: 'dial-h2-text mb-2 mt-5 first:mt-0 [text-wrap:balance]',
-        h3: 'dial-h3-text mb-2 mt-4 first:mt-0 [text-wrap:balance]',
-        h4: 'mb-2 mt-4 text-base font-semibold first:mt-0 [text-wrap:balance]',
-        h5: 'mb-2 mt-4 text-sm font-semibold first:mt-0 [text-wrap:balance]',
-        h6: 'mb-2 mt-4 text-sm font-medium text-secondary first:mt-0 [text-wrap:balance]',
-        p: 'dial-body-paragraph-text mb-3 break-words [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0',
-        ul: 'mb-3 space-y-1',
-        ol: 'mb-3 space-y-1',
-        codeInline:
-          'mx-0.5 bg-layer-3 px-1.5 text-[0.875em] text-primary break-words [overflow-wrap:anywhere]',
-        blockquote: 'my-4',
-        link: 'break-words [overflow-wrap:anywhere]',
-        tableWrapper: 'my-4',
-        tableHeader: 'bg-layer-3',
-        tableBodyCell: 'bg-layer-2',
-      }}
+      classNames={DEFAULT_MARKDOWN_CLASS_NAMES}
     />
   ),
 );

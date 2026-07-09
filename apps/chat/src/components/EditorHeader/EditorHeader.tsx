@@ -29,7 +29,7 @@ const EditorHeader: FC<Props> = ({
   onCancel,
   onSave,
 }) => (
-  <header className="flex items-center justify-between gap-3 border-b border-b-primary bg-layer-2 px-4 py-1">
+  <header className="flex items-center justify-between gap-3 border-b border-b-tertiary bg-layer-2 px-4 py-1">
     <div className="flex items-center gap-3">
       {title && (
         <h1 className="dial-caption-text justify-start text-primary">

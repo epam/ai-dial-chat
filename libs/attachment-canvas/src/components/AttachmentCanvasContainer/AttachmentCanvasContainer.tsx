@@ -7,6 +7,7 @@ import { useAttachmentCanvas } from '../../context/AttachmentCanvasContext';
 import type {
   JsonCanvasContent,
   MarkdownCanvasContent,
+  PlainTextCanvasContent,
 } from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
 import { downloadAttachmentContent } from '../../utils/download';
@@ -22,6 +23,10 @@ export interface AttachmentCanvasContainerProps {
   downloadLabel?: string;
   /** Message shown when the content type is `Unsupported`. Defaults to `'Preview is not supported for this file'`. */
   unsupportedLabel?: string;
+  /** Tooltip and aria-label for the copy-text button in its default state. Defaults to `'Copy text'`. */
+  copyTextLabel?: string;
+  /** Tooltip and aria-label for the copy-text button after a successful copy. Defaults to `'Copied!'`. */
+  copiedTextLabel?: string;
   /** Tooltip and aria-label for the copy-as-markdown button in its default state. Defaults to `'Copy as Markdown'`. */
   copyMarkdownLabel?: string;
   /** Tooltip and aria-label for the copy-as-markdown button after a successful copy. Defaults to `'Copied!'`. */
@@ -46,6 +51,8 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       closeLabel = 'Close',
       downloadLabel = 'Download',
       unsupportedLabel = 'Preview is not supported for this file',
+      copyTextLabel,
+      copiedTextLabel,
       copyMarkdownLabel,
       copiedMarkdownLabel,
       copyJsonLabel,
@@ -59,6 +66,12 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       const handleDownload = useCallback(() => {
         downloadAttachmentContent(content, fileName);
       }, [content, fileName]);
+
+      const handleCopyText = useCallback(() => {
+        if (content.type === AttachmentContentType.PlainText) {
+          void copyToClipboard((content as PlainTextCanvasContent).text);
+        }
+      }, [content]);
 
       const handleCopyMarkdown = useCallback(() => {
         if (content.type === AttachmentContentType.Markdown) {
@@ -84,6 +97,13 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           closeLabel={closeLabel}
           onDownload={handleDownload}
           downloadLabel={downloadLabel}
+          onCopyText={
+            content.type === AttachmentContentType.PlainText
+              ? handleCopyText
+              : undefined
+          }
+          copyTextLabel={copyTextLabel}
+          copiedTextLabel={copiedTextLabel}
           onCopyMarkdown={
             content.type === AttachmentContentType.Markdown
               ? handleCopyMarkdown

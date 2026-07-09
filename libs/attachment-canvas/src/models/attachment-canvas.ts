@@ -124,6 +124,8 @@ export interface AttachmentCanvasProps {
   closeLabel?: string;
   /** Called when the user activates the download button. When omitted the download button is hidden. Hidden automatically when content type is `Unsupported`. */
   onDownload?: () => void;
+  /** Called when the user activates the copy-text button. When omitted the button is hidden. Only relevant when content type is `PlainText`. */
+  onCopyText?: () => void;
   /** Called when the user activates the copy-as-markdown button. When omitted the button is hidden. Only relevant when content type is `Markdown`. */
   onCopyMarkdown?: () => void;
   /** Called when the user activates the copy-JSON button. When omitted the button is hidden. Only relevant when content type is `Json`. */
@@ -132,6 +134,10 @@ export interface AttachmentCanvasProps {
   unsupportedLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download'`. */
   downloadLabel?: string;
+  /** Tooltip and accessible label for the copy-text button in its default state. Defaults to `'Copy text'`. */
+  copyTextLabel?: string;
+  /** Tooltip and accessible label for the copy-text button after a successful copy. Defaults to `'Copied!'`. */
+  copiedTextLabel?: string;
   /** Tooltip and accessible label for the copy-as-markdown button in its default state. Defaults to `'Copy as Markdown'`. */
   copyMarkdownLabel?: string;
   /** Tooltip and accessible label for the copy-as-markdown button after a successful copy. Defaults to `'Copied!'`. */

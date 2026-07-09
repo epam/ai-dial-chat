@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppConfigService } from '../../app-config/app-config.service';
 import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialClientService } from '../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import { ConversationNamingService } from '../conversation-naming.service';
 import { ConversationMessageRole } from '../dto/conversation-message.dto';
@@ -51,6 +52,7 @@ describe('ConversationNamingService', () => {
     saveConversation: ReturnType<typeof vi.fn>;
   };
   let mockConfigService: Partial<ConfigService<EnvironmentVariables>>;
+  let mockDialClient: DialClientService;
 
   beforeEach(() => {
     mockAppConfigService = {
@@ -73,14 +75,23 @@ describe('ConversationNamingService', () => {
         return undefined;
       }),
     };
+    mockDialClient = {
+      client: { sendChatCompletionRequest: vi.fn() },
+      baseUrl: 'http://localhost:3000',
+      dialApiVersion: '2024-10-21',
+    } as unknown as DialClientService;
 
     service = new ConversationNamingService(
+      mockDialClient,
       mockConfigService as ConfigService<EnvironmentVariables>,
       mockAppConfigService as unknown as AppConfigService,
       mockConversationPersistence,
     );
 
-    vi.spyOn(service['client'], 'sendChatCompletionRequest').mockResolvedValue({
+    vi.spyOn(
+      service['dialClient'].client,
+      'sendChatCompletionRequest',
+    ).mockResolvedValue({
       response: { ok: true },
       data: {
         choices: [{ message: { content: 'Docker networking basics' } }],
@@ -100,7 +111,9 @@ describe('ConversationNamingService', () => {
       FeatureKey.LlmConversationNaming,
       expect.any(Object),
     );
-    expect(service['client'].sendChatCompletionRequest).toHaveBeenCalledWith(
+    expect(
+      service['dialClient'].client.sendChatCompletionRequest,
+    ).toHaveBeenCalledWith(
       'utility-model',
       expect.objectContaining({
         body: expect.objectContaining({
@@ -152,7 +165,9 @@ describe('ConversationNamingService', () => {
       makeConversation(),
     );
 
-    expect(service['client'].sendChatCompletionRequest).not.toHaveBeenCalled();
+    expect(
+      service['dialClient'].client.sendChatCompletionRequest,
+    ).not.toHaveBeenCalled();
   });
 
   it('skips naming when the feature flag is off', async () => {
@@ -165,7 +180,9 @@ describe('ConversationNamingService', () => {
       makeConversation(),
     );
 
-    expect(service['client'].sendChatCompletionRequest).not.toHaveBeenCalled();
+    expect(
+      service['dialClient'].client.sendChatCompletionRequest,
+    ).not.toHaveBeenCalled();
   });
 
   it('skips naming when llmNamingDone is already true', async () => {
@@ -176,7 +193,9 @@ describe('ConversationNamingService', () => {
       makeConversation({ llmNamingDone: true }),
     );
 
-    expect(service['client'].sendChatCompletionRequest).not.toHaveBeenCalled();
+    expect(
+      service['dialClient'].client.sendChatCompletionRequest,
+    ).not.toHaveBeenCalled();
   });
 
   it('skips naming when there are more than two non-status messages', async () => {
@@ -210,12 +229,17 @@ describe('ConversationNamingService', () => {
       conversation,
     );
 
-    expect(service['client'].sendChatCompletionRequest).not.toHaveBeenCalled();
+    expect(
+      service['dialClient'].client.sendChatCompletionRequest,
+    ).not.toHaveBeenCalled();
   });
 
   it('keeps the original name when the LLM call times out', async () => {
     vi.useFakeTimers();
-    vi.spyOn(service['client'], 'sendChatCompletionRequest').mockImplementation(
+    vi.spyOn(
+      service['dialClient'].client,
+      'sendChatCompletionRequest',
+    ).mockImplementation(
       (_modelId, options) =>
         new Promise((_resolve, reject) => {
           options?.signal?.addEventListener('abort', () => {
@@ -241,7 +265,10 @@ describe('ConversationNamingService', () => {
   });
 
   it('keeps the original name when the LLM response is empty', async () => {
-    vi.spyOn(service['client'], 'sendChatCompletionRequest').mockResolvedValue({
+    vi.spyOn(
+      service['dialClient'].client,
+      'sendChatCompletionRequest',
+    ).mockResolvedValue({
       response: { ok: true },
       data: { choices: [{ message: { content: '   ' } }] },
     } as never);
@@ -277,7 +304,10 @@ describe('ConversationNamingService', () => {
       releaseCompletion = resolve;
     });
 
-    vi.spyOn(service['client'], 'sendChatCompletionRequest').mockImplementation(
+    vi.spyOn(
+      service['dialClient'].client,
+      'sendChatCompletionRequest',
+    ).mockImplementation(
       () =>
         completionGate.then(() => ({
           response: { ok: true },
@@ -305,9 +335,9 @@ describe('ConversationNamingService', () => {
     releaseCompletion();
     await Promise.all([first, second]);
 
-    expect(service['client'].sendChatCompletionRequest).toHaveBeenCalledTimes(
-      1,
-    );
+    expect(
+      service['dialClient'].client.sendChatCompletionRequest,
+    ).toHaveBeenCalledTimes(1);
   });
 
   describe('generateTitle', () => {
@@ -332,7 +362,9 @@ describe('ConversationNamingService', () => {
     it("authenticates the completion call as the calling user, not the operator's DIAL_API_KEY", async () => {
       await service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket');
 
-      expect(service['client'].sendChatCompletionRequest).toHaveBeenCalledWith(
+      expect(
+        service['dialClient'].client.sendChatCompletionRequest,
+      ).toHaveBeenCalledWith(
         'utility-model',
         expect.objectContaining({
           headers: { Authorization: 'Bearer test-token' },
@@ -402,7 +434,9 @@ describe('ConversationNamingService', () => {
 
       await service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket');
 
-      expect(service['client'].sendChatCompletionRequest).toHaveBeenCalledWith(
+      expect(
+        service['dialClient'].client.sendChatCompletionRequest,
+      ).toHaveBeenCalledWith(
         'utility-model',
         expect.objectContaining({
           body: expect.objectContaining({
@@ -430,7 +464,7 @@ describe('ConversationNamingService', () => {
         service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
       ).rejects.toBeInstanceOf(ServiceUnavailableException);
       expect(
-        service['client'].sendChatCompletionRequest,
+        service['dialClient'].client.sendChatCompletionRequest,
       ).not.toHaveBeenCalled();
     });
 
@@ -443,13 +477,13 @@ describe('ConversationNamingService', () => {
         service.generateTitle('gpt-4o__Hello', 'test-token', 'test-bucket'),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(
-        service['client'].sendChatCompletionRequest,
+        service['dialClient'].client.sendChatCompletionRequest,
       ).not.toHaveBeenCalled();
     });
 
     it('throws BadGatewayException when the LLM returns an empty title', async () => {
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: { ok: true },
@@ -463,7 +497,7 @@ describe('ConversationNamingService', () => {
 
     it('throws BadGatewayException when the upstream request fails', async () => {
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'sendChatCompletionRequest',
       ).mockResolvedValue({
         response: { ok: false, status: 500 },
@@ -478,7 +512,7 @@ describe('ConversationNamingService', () => {
     it('throws ServiceUnavailableException when the LLM call times out', async () => {
       vi.useFakeTimers();
       vi.spyOn(
-        service['client'],
+        service['dialClient'].client,
         'sendChatCompletionRequest',
       ).mockImplementation(
         (_modelId, options) =>

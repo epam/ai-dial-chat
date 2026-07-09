@@ -7,6 +7,7 @@ import {
   IsString,
   IsUrl,
   Matches,
+  MaxLength,
 } from 'class-validator';
 
 export class CreateApplicationBodyDto {
@@ -51,6 +52,15 @@ export class CreateApplicationBodyDto {
   @IsString({ each: true })
   @IsOptional()
   topics?: string[];
+
+  @ApiPropertyOptional({
+    example: 'Summarizes long documents in one line.',
+    maxLength: 90,
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(90)
+  intro?: string;
 
   @ApiPropertyOptional({
     example: {

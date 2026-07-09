@@ -1,3 +1,7 @@
+import {
+  DeploymentCreationFieldErrorCode,
+  validateDeploymentCreationFields,
+} from '@epam/ai-dial-deployment-creation-form';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
@@ -154,8 +158,12 @@ const ToolsetEditor: FC = () => {
   const validate = useCallback(
     (data: ToolsetFormData): ToolsetFormErrors => {
       const nextErrors: ToolsetFormErrors = {};
-      if (!data.name.trim()) {
+      const generalCodes = validateDeploymentCreationFields(data);
+      if (generalCodes.name === DeploymentCreationFieldErrorCode.Required) {
         nextErrors.name = t(ToolsetEditorI18nKeys.NameRequired);
+      }
+      if (generalCodes.intro === DeploymentCreationFieldErrorCode.TooLong) {
+        nextErrors.intro = t(ToolsetEditorI18nKeys.IntroTooLong);
       }
       if (!data.endpoint.trim()) {
         nextErrors.endpoint = t(ToolsetEditorI18nKeys.EndpointRequired);
@@ -249,8 +257,9 @@ const ToolsetEditor: FC = () => {
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       // Surface the General-step error first by switching to it when needed.
-      if (nextErrors.name) handleChangeStep(ToolsetEditorSteps.General);
-      else if (
+      if (nextErrors.name || nextErrors.intro) {
+        handleChangeStep(ToolsetEditorSteps.General);
+      } else if (
         nextErrors.endpoint ||
         nextErrors.keyHeader ||
         nextErrors.apiKey ||
