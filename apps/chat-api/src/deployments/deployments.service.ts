@@ -508,7 +508,7 @@ export class DeploymentsService {
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const result = await this.client.getModel(deployment, {
+    const result = await this.dialClient.client.getModel(deployment, {
       headers: getBearerAuthHeaders(accessToken),
     });
     if (result.error) {
@@ -585,7 +585,7 @@ export class DeploymentsService {
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const result = await this.client.getApplication(deployment, {
+    const result = await this.dialClient.client.getApplication(deployment, {
       headers: getBearerAuthHeaders(accessToken),
     });
     if (result.error) {
@@ -630,7 +630,7 @@ export class DeploymentsService {
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const result = await this.client.getToolset(deployment, {
+    const result = await this.dialClient.client.getToolset(deployment, {
       headers: getBearerAuthHeaders(accessToken),
     });
     if (result.error) {
@@ -691,7 +691,7 @@ export class DeploymentsService {
     accessToken: string,
   ): Promise<string[] | undefined> {
     try {
-      const result = await this.client.getToolSetTools(deployment, {
+      const result = await this.dialClient.client.getToolSetTools(deployment, {
         headers: getBearerAuthHeaders(accessToken),
       });
       if (result.error) {
