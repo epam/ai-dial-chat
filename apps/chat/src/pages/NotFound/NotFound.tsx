@@ -20,6 +20,8 @@ const NotFoundPage: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
+  const digitClassName = mergeClasses('relative inline-block', styles.digit);
+
   return (
     <section
       aria-label={t(NotFoundI18nKeys.AriaLabel)}
@@ -39,26 +41,16 @@ const NotFoundPage: FC = () => {
               styles.code,
             )}
           >
-            <span
-              aria-hidden="true"
-              className={mergeClasses('relative inline-block', styles.digit)}
-            >
+            <span aria-hidden="true" className={digitClassName}>
               4
             </span>
             <span
               aria-hidden="true"
-              className={mergeClasses(
-                'relative inline-block',
-                styles.digit,
-                styles.zero,
-              )}
+              className={mergeClasses(digitClassName, styles.zero)}
             >
               0
             </span>
-            <span
-              aria-hidden="true"
-              className={mergeClasses('relative inline-block', styles.digit)}
-            >
+            <span aria-hidden="true" className={digitClassName}>
               4
             </span>
           </p>
