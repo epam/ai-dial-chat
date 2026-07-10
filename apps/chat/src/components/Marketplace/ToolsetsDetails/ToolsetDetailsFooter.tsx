@@ -13,6 +13,7 @@ import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/EntityContextMenu/MarketplaceEntityContextMenu';
 import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
+import { ToolsetRepairButton } from '@/src/components/Marketplace/ToolsetRepairButton';
 import { LoginButton } from '@/src/components/Marketplace/ToolsetsDetails/LoginButton';
 import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
@@ -35,6 +36,7 @@ export function ToolsetDetailsFooter({
         share: !showContextMenu,
         unshare: !entity?.sharedWithMe,
         login: true,
+        repair: true,
       },
     }),
     [entity, screenState, showContextMenu],
@@ -90,6 +92,8 @@ export function ToolsetDetailsFooter({
           />
 
           <LoginButton entity={entity} />
+
+          <ToolsetRepairButton toolset={entity} />
         </div>
       </div>
     </section>

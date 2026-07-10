@@ -281,6 +281,15 @@ export const toolsetSlice = createSlice({
         shouldSelectToolset?: boolean;
       }>,
     ) => state,
+    repairToolset: (state, _action: PayloadAction<{ id: string }>) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADING;
+    },
+    repairToolsetFailed: (
+      state,
+      _action: PayloadAction<{ id: string; status?: number; traceId?: string }>,
+    ) => {
+      state.toolsetDetailsStatus = UploadStatus.LOADED;
+    },
   },
 });
 

@@ -22,6 +22,7 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+import { ToolsetRepairButton } from '@/src/components/Marketplace/ToolsetRepairButton';
 
 import { ToolsetLoginFormType, WithLogin } from './form';
 
@@ -50,6 +51,7 @@ interface ToolsetLoginFormProps {
   onLogin?: (data: ToolsetLoginFormType) => void;
   hideConfigFields?: boolean;
   fieldsInfo?: Partial<Record<keyof ToolsetLoginFormType, string>>;
+  withRepair?: boolean;
 }
 
 export const ToolsetLoginForm = ({
@@ -64,6 +66,7 @@ export const ToolsetLoginForm = ({
   onLogin,
   hideConfigFields = false,
   fieldsInfo,
+  withRepair = false,
 }: ToolsetLoginFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -81,6 +84,8 @@ export const ToolsetLoginForm = ({
     name: 'withLogin',
     control,
   });
+
+  const showRepair = withRepair && withLogin === WithLogin.WithLogin;
 
   const handleSubmit = useCallback(() => {
     if (isSignedIn) {
@@ -200,19 +205,25 @@ export const ToolsetLoginForm = ({
           </>
         )}
 
-      {withLogin !== WithLogin.WithoutLogin && (
-        <LogInButton
-          className={classNames('flex w-fit items-center', buttonClassName)}
-          disabled={disabled || (!isValid && !isSignedIn)}
-          onClick={handleSubmit}
-          iconBefore={<LoginIcon size={18} />}
-          label={t(
-            isSignedIn
-              ? CommonI18nKeys.LogOutCommon
-              : CommonI18nKeys.LogInCommon,
-          )}
-        />
-      )}
+      <div className="flex items-center gap-2">
+        {withLogin !== WithLogin.WithoutLogin && (
+          <LogInButton
+            className={classNames('flex w-fit items-center', buttonClassName)}
+            disabled={disabled || (!isValid && !isSignedIn)}
+            onClick={handleSubmit}
+            iconBefore={<LoginIcon size={18} />}
+            label={t(
+              isSignedIn
+                ? CommonI18nKeys.LogOutCommon
+                : CommonI18nKeys.LogInCommon,
+            )}
+          />
+        )}
+
+        {showRepair && (
+          <ToolsetRepairButton toolset={toolset} authType={type} />
+        )}
+      </div>
     </div>
   );
 };

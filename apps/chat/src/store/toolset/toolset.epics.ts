@@ -21,6 +21,7 @@ import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
 import {
   getEntityNameFromId,
@@ -1139,6 +1140,62 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
     }),
   );
 
+const repairToolsetEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.repairToolset.type),
+    switchMap(({ payload }) =>
+      ToolsetService.repair(payload.id).pipe(
+        switchMap(() =>
+          ToolsetService.getToolsetById(payload.id).pipe(
+            switchMap((toolset) => {
+              return toolset
+                ? concat(
+                    of(ToolsetActions.getToolsetDetailsSuccess(toolset)),
+                    of(
+                      UIActions.showSuccessToast(
+                        translate(CommonI18nKeys.ToolsetRepairSuccessMessage, {
+                          ns: Translation.Common,
+                        }),
+                      ),
+                    ),
+                  )
+                : of(ToolsetActions.repairToolsetFailed(payload));
+            }),
+          ),
+        ),
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+
+          return of(
+            ToolsetActions.repairToolsetFailed({
+              ...payload,
+              traceId,
+              status: err.status as number | undefined,
+            }),
+          );
+        }),
+      ),
+    ),
+  );
+
+const repairToolsetFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.repairToolsetFailed.type),
+    map(({ payload }) => {
+      const message =
+        payload.status === 424
+          ? CommonI18nKeys.ToolsetRepairFailedMessage
+          : CommonI18nKeys.GeneralServerError;
+
+      return UIActions.showErrorToast({
+        message: translate(message, {
+          ns: Translation.Common,
+        }),
+        traceId: payload.traceId,
+      });
+    }),
+  );
+
 export const ToolsetEpics = combineEpics(
   initEpic,
   getToolsetsEpic,
@@ -1150,6 +1207,8 @@ export const ToolsetEpics = combineEpics(
   setQueryParamsEpic,
   initQueryParamsEpic,
   exitEditorEpic,
+  repairToolsetEpic,
+  repairToolsetFailEpic,
 
   //Delete
   deleteToolsetEpic,
