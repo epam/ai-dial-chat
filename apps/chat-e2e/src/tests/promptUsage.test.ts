@@ -17,7 +17,9 @@ dialTest(
     'Check how to close the prompt drop down list.\n' +
     'Prompt from the list is selected on mouse click.\n' +
     'Check long prompt name with spaces while calling prompts.\n' +
-    'Check long prompt name without spaces while calling prompts',
+    'Check long prompt name without spaces while calling prompts.\n' +
+    'The list of prompts is updated, prompt is found if it contains spaces in the name.\n' +
+    'Check how to close the prompt drop down list',
   async ({
     dialHomePage,
     promptData,
@@ -35,11 +37,13 @@ dialTest(
       'EPMRTC-3834',
       'EPMRTC-1014',
       'EPMRTC-3812',
+      'EPMRTC-3837',
+      'EPMRTC-3843',
     );
     const prompts: Prompt[] = [];
     let promptToSelect: Prompt;
     const promptNames = [
-      ExpectedConstants.newPromptTitle(1),
+      `${ExpectedConstants.newPromptTitle(1)} 1`,
       ExpectedConstants.newPromptTitle(2),
       'The third Prompt',
     ];
@@ -65,7 +69,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        promptToSelect = prompts[1];
+        promptToSelect = prompts[0];
         await sendMessage.messageInput.fillInInput('/');
         await sendMessagePromptListAssertion.assertPromptListOptions(
           promptNames,
