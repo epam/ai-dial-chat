@@ -59,6 +59,8 @@ THEMES_CONFIG_URL=https://your-themes-service.com
 THEMES_SERVICE_TIMEOUT_MS=5000
 # Local HTTP smoke only. Keep true/default for HTTPS and production-like runs.
 AUTH_COOKIE_SECURE=false
+# Allow embedding an external origin in an iframe (CSP frame-src)
+ALLOWED_IFRAME_ORIGINS=
 ```
 
 **Note**: `.env.local` takes precedence over `.env` and is not committed to version control.
@@ -98,6 +100,7 @@ AUTH_COOKIE_SECURE=false
 | `UTILITY_NAMING_TIMEOUT_MS`       | `10000`                 | Timeout in milliseconds for utility-model conversation naming requests.                                                                                                                                                                                                                                                                                                                                  |
 | `FEATURED_MODEL_IDS`              | —                       | Comma-separated list of model (or application) IDs to mark as featured in the catalog. Matching is exact and case-sensitive against the item's `id` field. Example: `chat-hub-v2,gpt-4o,dial-rag`. Takes effect on the next service restart; changing it without a restart has no effect.                                                                                                                |
 | `HIDDEN_ENTITY_TAG`               | No                      | A special topic name for models and toolsets that should remain hidden in the Catalog but be visible in the Quick App 2.0 form.                                                                                                                                                                                                                                                                          | Any string |     |
+| `ALLOWED_IFRAME_ORIGINS`          | —                       | Comma-separated list of origins allowed to embed content in an iframe within the app (added to the CSP `frame-src` directive). Needed when embedding external tools such as Quick Apps editors. Example: `https://quickapps.example.com`                                                                                                                                                                 |
 
 ### 3. Run the Application
 

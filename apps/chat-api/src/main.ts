@@ -19,6 +19,11 @@ async function bootstrap() {
 
   app.enableVersioning({ type: VersioningType.URI });
 
+  const allowedIframeOrigins = (process.env.ALLOWED_IFRAME_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
   // Security headers middleware
   app.use(
     helmet({
@@ -34,6 +39,7 @@ async function bootstrap() {
           scriptSrc: ["'self'"],
           workerSrc: ["'self'", 'blob:'],
           imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+          frameSrc: ["'self'", ...allowedIframeOrigins],
         },
       },
       hsts: {
