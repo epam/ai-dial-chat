@@ -44,6 +44,7 @@ const initialState: MarketplaceState = {
   detailsEntity: undefined,
   loginEntity: undefined,
   connectLinkEntity: undefined,
+  repairEntity: undefined,
 };
 
 export const marketplaceSlice = createSlice({
@@ -185,6 +186,12 @@ export const marketplaceSlice = createSlice({
       { payload }: PayloadAction<MarketplaceEntity | undefined>,
     ) => {
       state.connectLinkEntity = payload;
+    },
+    setRepairEntity: (
+      state,
+      { payload }: PayloadAction<ToolsetModel | undefined>,
+    ) => {
+      state.repairEntity = payload;
     },
   },
 });

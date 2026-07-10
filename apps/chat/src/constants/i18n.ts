@@ -352,6 +352,7 @@ export enum CommonI18nKeys {
   Continue = 'Continue',
   Repair = 'Repair',
   RepairDescription = 'Repair will re-register this toolset with the Authorization Server and sign out all users. They will need to sign in again. Continue?',
+  RepairMyDescription = 'Repair will re-register this toolset with the Authorization Server. Continue?',
   ToolsetRepairSuccessMessage = 'Toolset repaired. Users must re-authenticate.',
   ToolsetRepairFailedMessage = 'Authorization server is currently unavailable. Try again once the AS is back.',
 }
@@ -1260,4 +1261,5 @@ export enum MarketplaceI18nKeys {
   AllowOrchestratorToProcessLargeFiles = 'Allow orchestrator to process large files',
   ProcessLargeFiles = 'Process large files',
   ProcessLargeFilesDescription = 'Allows the orchestrator to handle large or many attachments by reading file content on demand instead of including all attachment content in the initial prompt. This helps reduce context window usage while preserving access to the files when needed.',
+  Repair = 'Repair',
 }
