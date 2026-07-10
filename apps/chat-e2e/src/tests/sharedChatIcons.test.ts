@@ -227,7 +227,7 @@ dialTest(
         expect
           .soft(
             secondShareRequestResponse!.request.resources.find(
-              (r) => r.url === conversation.id,
+              (r) => r.url === ItemUtil.getEncodedItemId(conversation.id),
             ),
             ExpectedMessages.conversationUrlIsValid,
           )
