@@ -1,5 +1,6 @@
 import {
   IconEye,
+  IconHammer,
   IconKey,
   IconLink,
   IconLogin,
@@ -21,6 +22,7 @@ import { isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import {
+  canRepairToolset,
   getToolsetAuthAction,
   getToolsetAuthActionLabel,
   isToolsetWithAuth,
@@ -74,6 +76,7 @@ export const useToolsetMenuItems = ({
     handlePublish,
     handleUnpublish,
     handleConnect,
+    handleRepair,
   } = useToolsetMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
@@ -112,6 +115,14 @@ export const useToolsetMenuItems = ({
           isAdmin,
         Icon: IconKey,
         onClick: handleLogin,
+      },
+      {
+        name: t(MarketplaceI18nKeys.Repair),
+        dataQa: 'toolset-repair',
+        display:
+          disabledActions?.repair !== true && canRepairToolset(entity, isAdmin),
+        Icon: IconHammer,
+        onClick: handleRepair,
       },
       {
         name: t(MarketplaceI18nKeys.Connect),
@@ -183,29 +194,32 @@ export const useToolsetMenuItems = ({
     ],
     [
       t,
-      handleConnect,
+      authAction,
+      screenState,
+      disabledActions.login,
+      disabledActions?.repair,
       disabledActions?.connect,
       disabledActions.copyLink,
       disabledActions.edit,
-      disabledActions.login,
       disabledActions.publish,
       disabledActions.unpublish,
       disabledActions.delete,
+      isWithAuth,
       isPublicApp,
+      isAdmin,
+      handleLogin,
+      entity,
+      handleRepair,
+      dialCoreExternalUrl,
+      handleConnect,
       handleCopy,
       isAppIdPublic,
       canEditOrView,
       handleEdit,
-      isWithAuth,
-      isAdmin,
-      handleLogin,
-      authAction,
-      screenState,
       isMyAppOrPreview,
       handlePublish,
       handleUnpublish,
       handleDelete,
-      dialCoreExternalUrl,
     ],
   );
 
