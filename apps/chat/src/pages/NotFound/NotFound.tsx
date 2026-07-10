@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GhostButton, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import {
@@ -22,26 +23,42 @@ const NotFoundPage: FC = () => {
   return (
     <section
       aria-label={t(NotFoundI18nKeys.AriaLabel)}
-      className={`flex min-h-0 flex-1 flex-col ${styles.root}`}
+      className="flex min-h-0 flex-1 flex-col bg-layer-5"
     >
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-4 py-10 desktop:px-8">
         <div
-          className={`flex w-full max-w-[560px] flex-col items-center text-center ${styles.content}`}
+          className={mergeClasses(
+            'flex w-full max-w-[560px] flex-col items-center text-center',
+            styles.content,
+          )}
         >
           <p
             aria-label={t(NotFoundI18nKeys.Eyebrow)}
-            className={`mb-4 text-accent-primary ${styles.code}`}
+            className={mergeClasses(
+              'relative mb-4 inline-flex items-center justify-center bg-clip-text font-bold text-transparent [gap:0.04em]',
+              styles.code,
+            )}
           >
-            <span aria-hidden="true" className={styles.digit}>
+            <span
+              aria-hidden="true"
+              className={mergeClasses('relative inline-block', styles.digit)}
+            >
               4
             </span>
             <span
               aria-hidden="true"
-              className={`${styles.digit} ${styles.zero}`}
+              className={mergeClasses(
+                'relative inline-block',
+                styles.digit,
+                styles.zero,
+              )}
             >
               0
             </span>
-            <span aria-hidden="true" className={styles.digit}>
+            <span
+              aria-hidden="true"
+              className={mergeClasses('relative inline-block', styles.digit)}
+            >
               4
             </span>
           </p>
