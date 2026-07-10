@@ -1,7 +1,9 @@
 import { DialAIEntityModel } from '@/chat/types/models';
+import { EnterType } from '@/chat/types/settings';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import {
+  CheckboxState,
   ElementState,
   ExpectedMessages,
   ThemeId,
@@ -49,6 +51,34 @@ export class SettingsModalAssertion extends BaseAssertion {
     await this.assertElementBackgroundColors(
       this.settingsModal.fullWidthChatToggleLabel,
       expectedColor,
+    );
+  }
+
+  public async assertKeyboardShortcutsCount(expectedCount: number) {
+    await this.assertElementsCount(
+      this.settingsModal.keyboardShortcutRadioButton,
+      expectedCount,
+    );
+  }
+
+  public async assertKeyboardShortcutState(
+    value: EnterType,
+    expectedState: CheckboxState,
+  ) {
+    await this.assertCheckboxState(
+      this.settingsModal.keyboardShortcutRadioButtonByValue(value),
+      expectedState,
+    );
+  }
+
+  public async assertKeyboardShortcutRadioButtonLabel(
+    value: string,
+    expectedLabel: string,
+  ) {
+    await this.assertElementText(
+      this.settingsModal.keyboardShortcutRadioButtonByValueLabel(value),
+      expectedLabel,
+      ExpectedMessages.keyboardShortcutOptionIsValid,
     );
   }
 

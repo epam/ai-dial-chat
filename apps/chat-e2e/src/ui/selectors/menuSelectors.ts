@@ -1,3 +1,5 @@
+import { Attributes, Tags } from '@/src/ui/domData';
+
 export const MenuSelectors = {
   menuTrigger: '[data-qa="menu-trigger"]',
   dotsMenu: '[aria-haspopup="menu"]',
@@ -22,4 +24,9 @@ export const AccountSettingsModalSelector = {
   startChatWithListboxOptionName: '[data-qa="agent-name"]',
   startChatWithListboxOptionVersion: '[data-qa="agent-version"]',
   noAvailableItems: '[data-qa="no-available-items"]',
+  keyboardShortcutRadioButton: '[type="radio"][name="enter-type-select"]',
+  keyboardShortcutRadioButtonByValue: (value: string) =>
+    `${AccountSettingsModalSelector.keyboardShortcutRadioButton}[${Attributes.value}="${value}"]`,
+  keyboardShortcutRadioButtonByValueLabel: (value: string) =>
+    `${AccountSettingsModalSelector.keyboardShortcutRadioButtonByValue(value)}~*>${Tags.label}`,
 };
