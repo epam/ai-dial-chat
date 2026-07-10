@@ -188,7 +188,7 @@ const ReviewQuickApp2SectionView = ({
 
       {showProcessLargeFiles && (
         <MarketplaceEntityInfoRow
-          label={t(ChatI18nKeys.ProcessLargeFiles)}
+          label={t(ChatI18nKeys.ProcessFiles)}
           value={t(processLargeFiles ? ChatI18nKeys.On : ChatI18nKeys.Off)}
           valueClassName="max-w-[414px] break-all text-primary"
         />
