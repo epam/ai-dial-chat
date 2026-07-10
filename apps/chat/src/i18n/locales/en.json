@@ -110,7 +110,7 @@
     "folder": {
       "personal": "Personal",
       "public": "Public"
-    },
+    }
   },
   "deploymentSelector": {
     "title": "Talk to",

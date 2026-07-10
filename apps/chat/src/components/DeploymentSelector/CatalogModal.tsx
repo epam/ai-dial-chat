@@ -26,7 +26,7 @@ const CatalogModal: FC<Props> = ({ isOpen, onClose }) => {
       dividers={false}
       onClose={onClose}
     >
-      <div className="h-full overflow-auto">
+      <div className="h-full min-h-[400px] overflow-auto">
         <Suspense fallback={null}>
           {isOpen && <CatalogView isSelectorMode onClose={onClose} />}
         </Suspense>

@@ -137,6 +137,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
   const isSelectedInFavorites = talkableItems.some(
     (f) => f.id === selectedItem?.id,
   );
+
   const showCurrentlySelected =
     selectedItem != null &&
     !isSelectedInFavorites &&

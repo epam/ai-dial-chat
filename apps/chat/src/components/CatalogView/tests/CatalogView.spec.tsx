@@ -29,13 +29,8 @@ vi.mock('@epam/ai-dial-catalog', () => ({
   Catalog: ({
     createOptions,
     items,
-    favorites,
     onToggleFavorite,
     onUseInChat,
-    hideCreateButton,
-    hidePageTitle,
-    selectedItemId,
-    onCardClick,
     onFetchDetails,
   }: {
     createOptions?: CreateOption[];

@@ -52,10 +52,7 @@ interface Props {
   onClose?: () => void;
 }
 
-const CatalogView: FC<Props> = ({
-  isSelectorMode: isPickerMode = false,
-  onClose,
-}) => {
+const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -100,10 +97,10 @@ const CatalogView: FC<Props> = ({
 
   const visibleCatalogItems = useMemo(
     () =>
-      isPickerMode
+      isSelectorMode
         ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
         : catalogItems,
-    [catalogItems, isPickerMode],
+    [catalogItems, isSelectorMode],
   );
 
   const favorites = useMemo(
@@ -253,10 +250,12 @@ const CatalogView: FC<Props> = ({
       isLoading={isLoading}
       favorites={favorites}
       createOptions={createOptions}
-      hideCreateButton={isPickerMode}
-      hidePageTitle={isPickerMode}
-      selectedItemId={isPickerMode ? (selectedItemId ?? undefined) : undefined}
-      onCardClick={isPickerMode ? handleCardSelect : undefined}
+      hideCreateButton={isSelectorMode}
+      hidePageTitle={isSelectorMode}
+      selectedItemId={
+        isSelectorMode ? (selectedItemId ?? undefined) : undefined
+      }
+      onCardClick={isSelectorMode ? handleCardSelect : undefined}
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}

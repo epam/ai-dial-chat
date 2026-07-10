@@ -61,8 +61,8 @@ import {
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { isMessageChanged } from '../../utils/message-utils';
-import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import DeploymentSelectorPanel from '../DeploymentSelector/DeploymentSelectorPanel';
+import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
