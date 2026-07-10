@@ -299,11 +299,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 handleSwitch={() => field.onChange(!field.value)}
                 switchOnText="ON"
                 switchOFFText="OFF"
-                label={t(MarketplaceI18nKeys.ProcessLargeFiles)}
+                label={t(MarketplaceI18nKeys.ProcessFiles)}
                 additionalText={t(
-                  MarketplaceI18nKeys.AllowOrchestratorToProcessLargeFiles,
+                  MarketplaceI18nKeys.AllowOrchestratorToProcessFiles,
                 )}
-                info={t(MarketplaceI18nKeys.ProcessLargeFilesDescription)}
+                info={t(MarketplaceI18nKeys.ProcessFilesDescription)}
                 className="flex items-center gap-2"
               />
             )}
