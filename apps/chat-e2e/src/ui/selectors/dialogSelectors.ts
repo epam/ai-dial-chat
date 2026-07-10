@@ -340,6 +340,12 @@ export const AddQuickApp2SettingsFormSelector = {
   attachmentsSection: '[data-qa="attachments-section"]',
   conversationStartersSection: '[data-qa="conversation-starters-section"]',
 
+  // Orchestrator section — model + temperature
+  orchestratorModel: '[data-qa="orchestrator-model"]',
+  orchestratorModelName: '[data-qa="orchestrator-model-name"]',
+  changeModelButtonLabel: 'Change', // aria-label of the model "Change" button
+  temperatureSlider: '[data-qa="temp-slider"]', // shown only for temperature-capable models
+
   // Context & Tools subsections
   agentsAndToolsetsField: '[data-qa="agents-and-toolsets-field"]',
   documentUrlsField: '[data-qa="document-urls-field"]',
@@ -362,6 +368,7 @@ export const AddQuickApp2SettingsFormSelector = {
   chipName: '[data-qa="chip-name"]',
   chipVersion: '[data-qa="chip-version"]',
   chipRemoveButtonLabel: 'Remove item', // aria-label of the chip remove button
+  errorChipClass: 'bg-error', // class on a not-available (red) chip
 
   // Code Interpreter toggle
   codeInterpreterToggle: '[data-qa="toggle-switch"]',
