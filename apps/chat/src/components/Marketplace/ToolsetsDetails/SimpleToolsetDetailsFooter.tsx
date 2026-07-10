@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
+import { ToolsetRepairButton } from '@/src/components/Marketplace/ToolsetRepairButton';
 import { LoginButton } from '@/src/components/Marketplace/ToolsetsDetails/LoginButton';
 import { ToolsetDetailsFooterProps } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
@@ -17,6 +18,7 @@ export const SimpleToolsetDetailsFooter: React.FC<
         showVersionPrefix
       />
       <LoginButton entity={entity} />
+      <ToolsetRepairButton toolset={entity} />
     </div>
   );
 };
