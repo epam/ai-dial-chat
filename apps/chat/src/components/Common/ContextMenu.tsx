@@ -11,6 +11,8 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { Menu, MenuItem } from './DropdownMenu';
 import { Tooltip } from './Tooltip';
 
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
+
 function ContextMenuItemRenderer({
   featureType,
   name,
@@ -110,11 +112,17 @@ export function ContextMenu({
   const menuContent =
     TriggerCustomRenderer ||
     (!hideTriggerIcon && (
-      <TriggerIcon
-        size={triggerIconSize}
-        width={triggerIconSize}
-        height={triggerIconSize}
-        strokeWidth={1.5}
+      <DialGhostIconButton
+        size={ElementSize.Small}
+        disabled={disabled}
+        icon={
+          <TriggerIcon
+            size={triggerIconSize}
+            width={triggerIconSize}
+            height={triggerIconSize}
+            strokeWidth={1.5}
+          />
+        }
         onClick={(e) => {
           e.stopPropagation();
         }}
