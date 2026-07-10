@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import ModelPickerPanel from '../ModelPickerPanel';
+import DeploymentSelectorPanel from '../DeploymentSelectorPanel';
 
 const makeItem = (id: string, type: CatalogEntityType): CatalogItem => ({
   id,
@@ -18,10 +18,10 @@ const makeItem = (id: string, type: CatalogEntityType): CatalogItem => ({
 
 const renderPanel = (
   favorites: CatalogItem[],
-  props?: Partial<ComponentProps<typeof ModelPickerPanel>>,
+  props?: Partial<ComponentProps<typeof DeploymentSelectorPanel>>,
 ) =>
   render(
-    <ModelPickerPanel
+    <DeploymentSelectorPanel
       favorites={favorites}
       onSelect={vi.fn()}
       onToggleFavorite={vi.fn()}
@@ -30,7 +30,7 @@ const renderPanel = (
     />,
   );
 
-describe('ModelPickerPanel', () => {
+describe('DeploymentSelectorPanel', () => {
   it('shows a favorited Application in the list', () => {
     renderPanel([makeItem('app-1', CatalogEntityType.Application)]);
 

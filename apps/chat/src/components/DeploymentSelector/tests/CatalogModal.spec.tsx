@@ -1,19 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { CatalogI18nKeys } from '../../../constants/translation-keys';
-import CatalogPickerModal from '../CatalogPickerModal';
+import { DeploymentSelectorI18nKeys } from '../../../constants/translation-keys';
+import CatalogModal from '../CatalogModal';
 
 vi.mock('../../CatalogView/CatalogView', () => ({
   default: ({
-    isPickerMode,
+    isSelectorMode,
     onClose,
   }: {
-    isPickerMode?: boolean;
+    isSelectorMode?: boolean;
     onClose?: () => void;
   }) => (
     <div>
-      <output aria-label="isPickerMode">{String(!!isPickerMode)}</output>
+      <output aria-label="isSelectorMode">{String(!!isSelectorMode)}</output>
       <button type="button" onClick={onClose}>
         close from catalog view
       </button>
@@ -21,20 +21,22 @@ vi.mock('../../CatalogView/CatalogView', () => ({
   ),
 }));
 
-describe('CatalogPickerModal', () => {
+describe('CatalogModal', () => {
   it('renders nothing when closed', () => {
-    render(<CatalogPickerModal isOpen={false} onClose={vi.fn()} />);
-    expect(screen.queryByLabelText('isPickerMode')).toBeNull();
+    render(<CatalogModal isOpen={false} onClose={vi.fn()} />);
+    expect(screen.queryByLabelText('isSelectorMode')).toBeNull();
   });
 
   it('shows the modal title when open', async () => {
-    render(<CatalogPickerModal isOpen onClose={vi.fn()} />);
-    expect(await screen.findByText(CatalogI18nKeys.PickerTitle)).toBeTruthy();
+    render(<CatalogModal isOpen onClose={vi.fn()} />);
+    expect(
+      await screen.findByText(DeploymentSelectorI18nKeys.Title),
+    ).toBeTruthy();
   });
 
   it('renders CatalogView in picker mode when open', async () => {
-    render(<CatalogPickerModal isOpen onClose={vi.fn()} />);
-    expect((await screen.findByLabelText('isPickerMode')).textContent).toBe(
+    render(<CatalogModal isOpen onClose={vi.fn()} />);
+    expect((await screen.findByLabelText('isSelectorMode')).textContent).toBe(
       'true',
     );
   });
@@ -42,7 +44,7 @@ describe('CatalogPickerModal', () => {
   it('closes when CatalogView selects a card', async () => {
     const user = userEvent.setup({ delay: null });
     const onClose = vi.fn();
-    render(<CatalogPickerModal isOpen onClose={onClose} />);
+    render(<CatalogModal isOpen onClose={onClose} />);
 
     await user.click(
       await screen.findByRole('button', { name: 'close from catalog view' }),

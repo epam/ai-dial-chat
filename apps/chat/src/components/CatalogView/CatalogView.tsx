@@ -47,12 +47,15 @@ interface Props {
    * modal): hides the "Create" button and highlights the currently selected
    * deployment's card. Default: false.
    */
-  isPickerMode?: boolean;
+  isSelectorMode?: boolean;
   /** Called after a card selection commits in picker mode, so the host can close the modal. */
   onClose?: () => void;
 }
 
-const CatalogView: FC<Props> = ({ isPickerMode = false, onClose }) => {
+const CatalogView: FC<Props> = ({
+  isSelectorMode: isPickerMode = false,
+  onClose,
+}) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();

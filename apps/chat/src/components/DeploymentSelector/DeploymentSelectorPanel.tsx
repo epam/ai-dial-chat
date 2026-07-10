@@ -18,10 +18,10 @@ import {
   useRef,
   useState,
 } from 'react';
-import styles from './ModelPickerPanel.module.scss';
+import styles from './DeploymentSelectorPanel.module.scss';
 
-/** Localizable string labels for `ModelPickerPanel`. */
-export interface ModelPickerLabels {
+/** Localizable string labels for `DeploymentSelectorPanel`. */
+export interface DeploymentSelectorLabels {
   /** Placeholder for the search input. Default: `'Search models, agents…'`. */
   searchPlaceholder?: string;
   /** Accessible label for the search input. Default: `'Search models and agents'`. */
@@ -60,7 +60,7 @@ interface Props {
   /** Called by the panel to request that the parent popover close. */
   onClose: () => void;
   /** Optional i18n string overrides. */
-  labels?: ModelPickerLabels;
+  labels?: DeploymentSelectorLabels;
 }
 
 // Matches the conversation panel's group-header color (.groupHeader in
@@ -68,7 +68,7 @@ interface Props {
 const SECTION_HEADING_CLASS_NAME =
   'dial-tiny-semi-text px-3 pb-0.5 pt-2 uppercase tracking-wider text-tertiary opacity-[0.55]';
 
-// Must match the .rowLeaving exit-animation duration in ModelPickerPanel.module.scss.
+// Must match the .rowLeaving exit-animation duration in DeploymentSelectorPanel.module.scss.
 const ROW_LEAVE_ANIMATION_MS = 180;
 
 // Matches the previous max-h-72 cap on the scrollable list.
@@ -83,7 +83,7 @@ const matchesQuery = (item: CatalogItem, query: string): boolean => {
   );
 };
 
-const ModelPickerPanel: FC<Props> = ({
+const DeploymentSelectorPanel: FC<Props> = ({
   favorites,
   selectedId,
   selectedItem,
@@ -337,4 +337,4 @@ const ModelPickerPanel: FC<Props> = ({
   );
 };
 
-export default memo(ModelPickerPanel);
+export default memo(DeploymentSelectorPanel);

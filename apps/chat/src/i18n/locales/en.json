@@ -111,17 +111,17 @@
       "personal": "Personal",
       "public": "Public"
     },
-    "picker": {
-      "title": "Talk to",
-      "searchPlaceholder": "Search models, agents…",
-      "searchAriaLabel": "Search models and agents",
-      "favoritesLabel": "Favorites",
-      "emptyHint": "Star a model or agent to pin it here.",
-      "browseCatalogLabel": "Browse",
-      "removeFromFavoritesLabel": "Remove from favorites",
-      "currentlySelectedLabel": "Currently selected",
-      "addToFavoritesLabel": "Add to favorites"
-    }
+  },
+  "deploymentSelector": {
+    "title": "Talk to",
+    "searchPlaceholder": "Search models, agents…",
+    "searchAriaLabel": "Search models and agents",
+    "favoritesLabel": "Favorites",
+    "emptyHint": "Star a model or agent to pin it here.",
+    "browseCatalogLabel": "Browse",
+    "removeFromFavoritesLabel": "Remove from favorites",
+    "currentlySelectedLabel": "Currently selected",
+    "addToFavoritesLabel": "Add to favorites"
   },
   "notFound": {
     "ariaLabel": "Page not found",
