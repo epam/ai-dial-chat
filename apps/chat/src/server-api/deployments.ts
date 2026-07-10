@@ -1,4 +1,5 @@
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
+import type { DeploymentDetailsDto } from '@epam/chat-api-client';
 import { deploymentsApi } from './api-client';
 
 export const getDeploymentConfiguration = (
@@ -7,3 +8,8 @@ export const getDeploymentConfiguration = (
   deploymentsApi.getDeploymentConfiguration({
     deployment: deploymentName,
   }) as Promise<DeploymentConfigurationSchema>;
+
+export const getDeploymentDetails = (
+  deploymentId: string,
+): Promise<DeploymentDetailsDto> =>
+  deploymentsApi.getDeploymentDetails({ deployment: deploymentId });

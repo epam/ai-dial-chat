@@ -60,6 +60,7 @@ export const mapDeploymentToCatalogItem = (
   favoriteIds: ReadonlySet<string> = new Set(),
   entityDetails?: EntitySpecificDetails, // TODO: need?
   t?: TFunction,
+  editableSchemaId?: string,
 ): CatalogItem => {
   const name = deployment.displayName ?? deployment.id;
   const normalizedType = (deployment.type ?? '').toLowerCase();
@@ -69,6 +70,7 @@ export const mapDeploymentToCatalogItem = (
     type: TYPE_MAP[normalizedType] ?? CatalogEntityType.Model,
     name,
     description: deployment.description ?? '',
+    intro: deployment.intro,
     iconUrl: resolveCatalogIconUrl(deployment.iconUrl),
     version: deployment.displayVersion ?? '',
     lastUsed: formatLastUsed(deployment.updatedAt),
@@ -79,6 +81,10 @@ export const mapDeploymentToCatalogItem = (
     isUserFavorite: favoriteIds.has(deployment.id),
     isStarred: favoriteIds.has(deployment.id),
     isMyApp: deployment.isMy ?? false,
+    isEditable:
+      !!deployment.isMy &&
+      !!editableSchemaId &&
+      deployment.applicationTypeSchemaId === editableSchemaId,
     folder:
       t != null
         ? resolveDeploymentFolder(deployment, t)
@@ -104,6 +110,7 @@ export const mapToolsetToCatalogItem = (
     type: CatalogEntityType.Toolset,
     name,
     description: toolset.description ?? '',
+    intro: toolset.intro,
     iconUrl: resolveCatalogIconUrl(toolset.iconUrl),
     version: toolset.displayVersion ?? '',
     lastUsed: formatLastUsed(toolset.updatedAt),

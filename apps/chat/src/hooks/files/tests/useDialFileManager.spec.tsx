@@ -161,6 +161,43 @@ describe('useDialFileManager', () => {
     expect(result.current.path).toBe('/My files/reports/');
   });
 
+  it("gives a nested file a parentPath matching its folder node's own path", async () => {
+    const reportsFolder: ListFilesItemDto = {
+      name: 'reports',
+      path: 'reports/',
+      folderId: `${BUCKET}:reports/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      bucket: BUCKET,
+    };
+    const q1File: ListFilesItemDto = {
+      name: 'q1.pdf',
+      path: 'reports/q1.pdf',
+      folderId: `${BUCKET}:reports/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+      bucket: BUCKET,
+    };
+    mockListFiles.mockImplementation(async ({ path }) => ({
+      bucket: BUCKET,
+      path: path ?? '',
+      items: path === 'reports/' ? [q1File] : [reportsFolder],
+      nextToken: undefined,
+    }));
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => result.current.onPathChange('/My files/reports/'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const reportsNode = result.current.items[0]?.items?.find(
+      (i) => i.name === 'reports',
+    );
+    expect(reportsNode?.path).toBe('/My files/reports/');
+
+    const q1Node = reportsNode?.items?.find((i) => i.name === 'q1.pdf');
+    expect(q1Node?.parentPath).toBe(reportsNode?.path);
+  });
+
   it('navigates via onPathChange without leading slash (DialFileManager breadcrumb format)', async () => {
     const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -398,6 +435,50 @@ describe('useDialFileManager', () => {
     expect(mockCreateFolder).toHaveBeenCalledWith({
       bucket: BUCKET,
       parentPath: undefined,
+      name: '2026',
+    });
+  });
+
+  it('creates the folder at the call-time path even when the outer grid is browsing a different folder', async () => {
+    mockListFiles.mockResolvedValue({
+      bucket: BUCKET,
+      path: '',
+      items: [],
+      permissions: ['READ', 'WRITE'],
+    });
+    const mockCreateFolder = vi.mocked(filesApi.createFolder);
+    mockCreateFolder.mockResolvedValue({
+      name: '2026',
+      path: `files/${BUCKET}/notes/2026/`,
+      parentPath: 'notes',
+      bucket: BUCKET,
+      nodeType: 'folder',
+      folderId: `${BUCKET}:files/${BUCKET}/notes/2026/`,
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The outer grid is browsing "/My files/reports/" — a different folder
+    // than the one the destination-folder popup will create the new folder in.
+    act(() => result.current.onPathChange('/My files/reports/'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The popup's own currently-browsed path is passed at call time.
+    await act(async () => {
+      await result.current.onCreateFolder(
+        {
+          name: HIDDEN_FILE,
+          fileContent: new File([], HIDDEN_FILE),
+        },
+        '/My files/notes/2026',
+        `/My files/notes/2026/${HIDDEN_FILE}`,
+      );
+    });
+
+    expect(mockCreateFolder).toHaveBeenCalledWith({
+      bucket: BUCKET,
+      parentPath: 'notes/',
       name: '2026',
     });
   });
@@ -1099,8 +1180,221 @@ describe('useDialFileManager', () => {
       });
     });
 
+    describe('actionLabels — Duplicate', () => {
+      it('includes Duplicate on MyFiles tab with WRITE permission and the Browse profile', async () => {
+        mockListFiles.mockResolvedValue({
+          bucket: BUCKET,
+          path: '',
+          items: [],
+          permissions: ['READ', 'WRITE'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+            actionProfile: DialFileManagerActionProfile.Browse,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeDefined();
+      });
+
+      it('omits Duplicate on MyFiles tab without WRITE permission', async () => {
+        mockListFiles.mockResolvedValue({
+          bucket: BUCKET,
+          path: '',
+          items: [],
+          permissions: ['READ'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeUndefined();
+      });
+
+      it('omits Duplicate on Shared tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeUndefined();
+      });
+
+      it('omits Duplicate on Organization tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Organization,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeUndefined();
+      });
+    });
+
+    describe('actionLabels — actionProfile gating (Copy/Move/Duplicate)', () => {
+      it('excludes Copy/Move/Duplicate but includes Rename and Delete for Attach profile on MyFiles with WRITE', async () => {
+        mockListFiles.mockResolvedValue({
+          bucket: BUCKET,
+          path: '',
+          items: [],
+          permissions: ['READ', 'WRITE'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+            variant: DialFileManagerVariant.Attach,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Rename],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Delete],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Copy],
+        ).toBeUndefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Move],
+        ).toBeUndefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeUndefined();
+      });
+
+      it('includes all six actions for the Standalone variant (Browse profile) on MyFiles with WRITE', async () => {
+        mockListFiles.mockResolvedValue({
+          bucket: BUCKET,
+          path: '',
+          items: [],
+          permissions: ['READ', 'WRITE'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+            variant: DialFileManagerVariant.Standalone,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Download],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Delete],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Rename],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Copy],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Move],
+        ).toBeDefined();
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeDefined();
+      });
+
+      it.each([
+        DialFileManagerActionProfile.Attach,
+        DialFileManagerActionProfile.Browse,
+      ])(
+        'shows Download only on Shared tab regardless of actionProfile (%s)',
+        async (actionProfile) => {
+          const { result } = renderHook(() =>
+            useDialFileManager({
+              bucket: BUCKET,
+              activeTab: DialFileManagerTabs.Shared,
+              actionProfile,
+            }),
+          );
+          await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Download],
+          ).toBeDefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Delete],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Rename],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Copy],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Move],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Duplicate],
+          ).toBeUndefined();
+        },
+      );
+
+      it.each([
+        DialFileManagerActionProfile.Attach,
+        DialFileManagerActionProfile.Browse,
+      ])(
+        'shows Download only on Organization tab regardless of actionProfile (%s)',
+        async (actionProfile) => {
+          const { result } = renderHook(() =>
+            useDialFileManager({
+              bucket: BUCKET,
+              activeTab: DialFileManagerTabs.Organization,
+              actionProfile,
+            }),
+          );
+          await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Download],
+          ).toBeDefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Delete],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Rename],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Copy],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Move],
+          ).toBeUndefined();
+          expect(
+            result.current.actionLabels[DialFileManagerActions.Duplicate],
+          ).toBeUndefined();
+        },
+      );
+    });
+
     describe.each([
-      DialFileManagerTabs.MyFiles,
       DialFileManagerTabs.Shared,
       DialFileManagerTabs.Organization,
     ])('actionLabels parity between attach and browse (%s tab)', (tab) => {
@@ -1732,6 +2026,95 @@ describe('useDialFileManager', () => {
       await waitFor(() =>
         expect(mockNotification).toHaveBeenCalledWith(
           expect.objectContaining({ variant: NotificationVariant.Error }),
+        ),
+      );
+    });
+
+    it('handles a same-folder destination (duplicate) correctly on success', async () => {
+      mockCopyFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'reports/q1.pdf',
+            destinationPath: 'reports/q1 (1).pdf',
+            success: true,
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onCopyFiles(
+          [
+            {
+              sourceUrl: '/My files/reports/q1.pdf',
+              destinationUrl: '/My files/reports/q1 (1).pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() => expect(mockCopyFiles).toHaveBeenCalledOnce());
+      expect(mockCopyFiles).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            bucket: BUCKET,
+            sourcePath: 'reports/q1.pdf',
+            destinationPath: 'reports/q1 (1).pdf',
+          }),
+        ],
+        expect.anything(),
+      );
+      // Source and destination share the same parent folder — invalidated once.
+      expect(mockListFiles).toHaveBeenCalledTimes(2);
+      expect(mockNotification).not.toHaveBeenCalled();
+    });
+
+    it('shows the existing partial-failure toast for a same-folder destination (duplicate)', async () => {
+      mockCopyFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'a.pdf',
+            destinationPath: 'a (1).pdf',
+            success: true,
+          },
+          {
+            sourcePath: 'b.pdf',
+            destinationPath: 'b (1).pdf',
+            success: false,
+            error: 'Forbidden',
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onCopyFiles(
+          [
+            {
+              sourceUrl: '/My files/a.pdf',
+              destinationUrl: '/My files/a (1).pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+            {
+              sourceUrl: '/My files/b.pdf',
+              destinationUrl: '/My files/b (1).pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files',
+        );
+      });
+
+      await waitFor(() =>
+        expect(mockNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: NotificationVariant.Error,
+            message: 'dialFileManager.copyPartialError',
+          }),
         ),
       );
     });

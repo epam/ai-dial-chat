@@ -53,4 +53,6 @@ export interface ListViewProps {
    * sits flush below it while the page scrolls.
    */
   stickyHeaderTop?: number;
+  /** ID of an item to visually mark as selected (border, tint, and checkmark). */
+  selectedItemId?: string;
 }

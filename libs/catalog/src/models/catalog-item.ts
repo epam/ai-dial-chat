@@ -24,12 +24,16 @@ export interface CatalogItem {
   isFeatured?: boolean;
   /** Short description, typically 1–2 lines. */
   description: string;
+  /** Longer-form intro text shown in the details panel's Intro section. Falls back to `description` when absent. */
+  intro?: string;
   /** When true the item is hidden from the main Browse view and only shown in Search results. */
   isHidden?: boolean;
   /** Whether the item is marked as a favorite by the user. */
   isUserFavorite?: boolean;
   /** Whether the item belongs to the current user (e.g. created by them or in their personal space). */
   isMyApp?: boolean;
+  /** Whether the item can be edited by the current user. When true and `onEdit` is supplied, an "Edit" action is shown in the details panel. */
+  isEditable?: boolean;
   /** Provider name shown below the entity name in the details header, e.g. `'OpenAI'` or `'Anthropic'`. */
   provider?: string;
   /** Folder breadcrumb path segments, outermost first. */

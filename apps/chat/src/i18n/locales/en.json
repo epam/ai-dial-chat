@@ -110,16 +110,18 @@
     "folder": {
       "personal": "Personal",
       "public": "Public"
-    },
-    "picker": {
-      "title": "Talk to",
-      "searchPlaceholder": "Search models, agents…",
-      "searchAriaLabel": "Search models and agents",
-      "favoritesLabel": "Favorites",
-      "emptyHint": "Star a model or agent to pin it here.",
-      "browseCatalogLabel": "Browse",
-      "removeFromFavoritesLabel": "Remove from favorites"
     }
+  },
+  "deploymentSelector": {
+    "title": "Talk to",
+    "searchPlaceholder": "Search models, agents…",
+    "searchAriaLabel": "Search models and agents",
+    "favoritesLabel": "Favorites",
+    "emptyHint": "Star a model or agent to pin it here.",
+    "browseCatalogLabel": "Browse",
+    "removeFromFavoritesLabel": "Remove from favorites",
+    "currentlySelectedLabel": "Currently selected",
+    "addToFavoritesLabel": "Add to favorites"
   },
   "notFound": {
     "ariaLabel": "Page not found",
@@ -325,7 +327,7 @@
     "overlayDeniedSubtitle": "Attachments can't be added to message"
   },
   "dialFileManager": {
-    "title": "DIAL file system",
+    "title": "Attach files",
     "attach": "Attach",
     "empty": "This folder is empty",
     "error": "Failed to load files",
@@ -406,6 +408,7 @@
     "renameNameTooLong": "Name must be 255 characters or fewer",
     "copyAction": "Copy",
     "moveAction": "Move",
+    "duplicateAction": "Duplicate",
     "copyingLabel": "Copying...",
     "movingLabel": "Moving...",
     "copyError": "Failed to copy the selected items",
@@ -415,6 +418,15 @@
     "operationLoaderCopyTitle": "Copying files",
     "operationLoaderMoveTitle": "Moving files",
     "operationLoaderCancelLabel": "Cancel",
+    "folderPickerAddFolderLabel": "Add folder",
+    "folderPickerHiddenFilesLabel": "Show hidden files",
+    "copyHeaderSingle": "Copy \"{{name}}\"",
+    "copyHeaderMultiple": "Copy {{count}} items",
+    "moveHeaderSingle": "Move \"{{name}}\"",
+    "moveHeaderMultiple": "Move {{count}} items",
+    "moveSourceDisabledTooltip": "Unavailable for the original location. Please select another folder",
+    "folderPickerEmptyStateTitle": "No folders here",
+    "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "tab": {
       "myFiles": "My files",
       "shared": "Shared with me",
@@ -429,7 +441,7 @@
       "emptyStateTitle": "No results found"
     },
     "myFiles": {
-      "treeHeader": "My files",
+      "treeHeader": "Folder tree",
       "emptyStateTitle": "No files yet",
       "emptyStateDescription": "Upload files to your personal storage"
     },
@@ -467,6 +479,12 @@
     "stepSettings": "Settings",
     "stepsNavAriaLabel": "Editor steps",
     "saveButton": "Save & Exit",
+    "previewButton": "Preview",
+    "exitPreviewButton": "Exit preview",
+    "previewChat": {
+      "placeholder": "Send a message to preview this application…",
+      "ariaLabel": "Application preview chat"
+    },
     "generalForm": {
       "nameLabel": "Name",
       "namePlaceholder": "Enter application name",

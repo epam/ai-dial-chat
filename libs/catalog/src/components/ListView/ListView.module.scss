@@ -23,3 +23,8 @@
 .starFilledIcon {
   color: var(--cat-card-star-filled, var(--text-warning-icon, #eec840));
 }
+
+.selectedRow {
+  border: 2px solid var(--stroke-accent-primary, #124ace) !important;
+  background-color: var(--bg-accent-primary-alpha, #7da4ff2e) !important;
+}
