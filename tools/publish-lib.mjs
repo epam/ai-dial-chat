@@ -117,6 +117,13 @@ for (const nodeName of Object.keys(graph.nodes)) {
 const isWorkspaceLib = (dep) => workspacePackageNames.has(dep);
 
 function getDevelopmentVersion(packageName, baseVersion) {
+  // If the base version is already a pre-release (e.g. computed per-build by
+  // CI as #.#.#-dev.N), it's already unique — reuse it as-is. Appending our
+  // own "-dev.N" on top would produce an invalid double pre-release version.
+  if (baseVersion.includes('-')) {
+    return baseVersion;
+  }
+
   let publishedVersions;
 
   try {
