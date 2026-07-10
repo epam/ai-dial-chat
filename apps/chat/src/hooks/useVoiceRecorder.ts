@@ -18,9 +18,9 @@ const MIME_CANDIDATES = [
   {
     mimeType: 'audio/webm;codecs=opus',
     baseMime: AudioMimeType.WEBM,
-    ext: '.webm',
+    ext: '.weba',
   },
-  { mimeType: AudioMimeType.WEBM, baseMime: AudioMimeType.WEBM, ext: '.webm' },
+  { mimeType: AudioMimeType.WEBM, baseMime: AudioMimeType.WEBM, ext: '.weba' },
   { mimeType: AudioMimeType.MP4, baseMime: AudioMimeType.MP4, ext: '.m4a' },
 ];
 

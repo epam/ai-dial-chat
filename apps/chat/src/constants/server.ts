@@ -43,6 +43,9 @@ export const mappingServerUrls: Record<string, { response: boolean }> = {
   [ServerSlugs.TOOLSET_SIGN_OUT]: {
     response: false,
   },
+  [ServerSlugs.TOOLSET]: {
+    response: true,
+  },
 };
 
 export enum HeadersNames {

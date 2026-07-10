@@ -61,6 +61,7 @@ export function DropdownSelector({
                 ...props.innerProps,
                 style: {
                   ...props.innerProps.style,
+                  fontSize: '12px',
                   backgroundColor: 'transparent',
                 },
                 className: 'group',
@@ -82,6 +83,7 @@ export function DropdownSelector({
           input: (styles) => ({
             ...styles,
             height: '21px',
+            fontSize: '12px',
             padding: 0,
             margin: 0,
             color: 'var(--text-primary)',
@@ -138,6 +140,7 @@ export function DropdownSelector({
             display: 'flex',
             alignItems: 'center',
             padding: '0 4px',
+            fontSize: '12px',
             color: 'var(--text-primary)',
           }),
           valueContainer: (styles) => ({
@@ -163,12 +166,14 @@ export function DropdownSelector({
             border: '1px solid var(--stroke-primary)',
             boxShadow: 'none',
             transition: 'all 0',
+            fontSize: '12px !important',
             ':hover': {
               border: '1px solid var(--stroke-accent-primary)',
             },
           }),
           singleValue: (styles) => ({
             ...styles,
+            fontSize: '12px',
             color: 'var(--text-primary)',
           }),
         }}
