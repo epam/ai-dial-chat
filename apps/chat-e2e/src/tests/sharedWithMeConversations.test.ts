@@ -1416,7 +1416,7 @@ dialTest(
     let openedConversationName: string;
 
     await dialTest.step(
-      'Prepare conversations inside folder anf share it via API',
+      'Prepare conversations inside folder and share it via API',
       async () => {
         conversationsInFolder =
           conversationData.prepareFolderWithConversations(2);
