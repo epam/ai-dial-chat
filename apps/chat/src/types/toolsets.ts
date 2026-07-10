@@ -103,4 +103,5 @@ export type ToolsetContextMenuDisabledActions = Partial<{
   delete: boolean;
   login: boolean;
   connect: boolean;
+  repair: boolean;
 }>;

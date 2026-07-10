@@ -141,6 +141,15 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     [dispatch, toolset],
   );
 
+  const handleRepair = useCallback(
+    (e?: React.MouseEvent) => {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      dispatch(MarketplaceActions.setRepairEntity(toolset));
+    },
+    [dispatch, toolset],
+  );
+
   return {
     handleCopy,
     handleEdit,
@@ -151,5 +160,6 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     handleOpenUnshare,
     handleLogin,
     handleConnect,
+    handleRepair,
   };
 };
