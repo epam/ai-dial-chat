@@ -8,10 +8,10 @@ import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
-import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
-
 import { Menu, MenuItem } from './DropdownMenu';
 import { Tooltip } from './Tooltip';
+
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 function ContextMenuItemRenderer({
   featureType,
