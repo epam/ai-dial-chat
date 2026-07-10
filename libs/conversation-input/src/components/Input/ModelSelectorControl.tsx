@@ -22,6 +22,11 @@ interface Props {
   isStreaming: boolean;
   isMobile: boolean;
   isInputDisabled?: boolean;
+  /**
+   * When `true`, the control renders dimmed and does not open, regardless of
+   * `isInputDisabled`/`isStreaming` — the current model stays visible.
+   */
+  isDisabled?: boolean;
   style: CSSProperties;
   modelPickerOverlay: InputProps['modelPickerOverlay'];
   /** Whether the model picker popover is open (controlled from Input). */
@@ -43,6 +48,7 @@ export const ModelSelectorControl: FC<Props> = ({
   isStreaming,
   isMobile,
   isInputDisabled = false,
+  isDisabled = false,
   style,
   modelPickerOverlay,
   isPickerOpen,
@@ -68,9 +74,10 @@ export const ModelSelectorControl: FC<Props> = ({
     return null;
   }
 
-  const disabledIconClassName = isStreaming
-    ? 'pointer-events-none opacity-50 cursor-not-allowed'
-    : undefined;
+  const disabledIconClassName =
+    isStreaming || isDisabled
+      ? 'pointer-events-none opacity-50 cursor-not-allowed'
+      : undefined;
 
   const caretIcon = (
     <IconChevronDown
@@ -91,7 +98,9 @@ export const ModelSelectorControl: FC<Props> = ({
             </div>
           }
           aria-label={selectorAriaLabel}
-          onClick={() => setIsModelSheetOpen(true)}
+          onClick={() => {
+            if (!isDisabled) setIsModelSheetOpen(true);
+          }}
           className={mergeClasses(
             styles.modelSelectorButton,
             disabledIconClassName,
@@ -149,11 +158,14 @@ export const ModelSelectorControl: FC<Props> = ({
           className={mergeClasses(
             'flex items-center justify-center gap-1 rounded-md p-2',
             styles.modelSelectorButton,
-            isInputDisabled || isStreaming ? disabledIconClassName : undefined,
-            isInputDisabled && styles.modelSelectorButtonDisabled,
+            isInputDisabled || isStreaming || isDisabled
+              ? disabledIconClassName
+              : undefined,
+            (isInputDisabled || isDisabled) &&
+              styles.modelSelectorButtonDisabled,
           )}
           onClick={() => {
-            if (!isInputDisabled && !isStreaming) {
+            if (!isInputDisabled && !isStreaming && !isDisabled) {
               onPickerToggle?.();
             }
           }}
@@ -166,25 +178,32 @@ export const ModelSelectorControl: FC<Props> = ({
   }
 
   return (
-    <DialDropdownIcon
-      icon={selectorIcon}
-      ariaLabel={selectorAriaLabel}
-      items={menuItems}
-      menuHeader={menuHeader}
-      placement="bottom-end"
-      matchReferenceWidth={false}
-      listClassName="cp-dropdown-overlay !w-[240px] !max-h-80"
-      onOpenChange={handleModelSelectorOpenChange}
-      size={ElementSize.Standard}
-      caretIcon={caretIcon}
-      iconClassName={isInputDisabled ? disabledIconClassName : undefined}
-      buttonClassName={mergeClasses(
-        'bg-transparent',
-        styles.modelSelectorButton,
-        isInputDisabled &&
-          disabledIconClassName &&
-          styles.modelSelectorButtonDisabled,
-      )}
-    />
+    <div
+      className={mergeClasses(isDisabled && disabledIconClassName)}
+      aria-disabled={isDisabled || undefined}
+    >
+      <DialDropdownIcon
+        icon={selectorIcon}
+        ariaLabel={selectorAriaLabel}
+        items={menuItems}
+        menuHeader={menuHeader}
+        placement="bottom-end"
+        matchReferenceWidth={false}
+        listClassName="cp-dropdown-overlay !w-[240px] !max-h-80"
+        onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
+        size={ElementSize.Standard}
+        caretIcon={caretIcon}
+        iconClassName={
+          isInputDisabled || isDisabled ? disabledIconClassName : undefined
+        }
+        buttonClassName={mergeClasses(
+          'bg-transparent',
+          styles.modelSelectorButton,
+          (isInputDisabled || isDisabled) &&
+            disabledIconClassName &&
+            styles.modelSelectorButtonDisabled,
+        )}
+      />
+    </div>
   );
 };

@@ -76,7 +76,7 @@ export const CardGrid: FC<CardGridProps> = memo(
                 showTitle={{ width: `${60 + ((i * 17) % 30)}%` }}
                 paragraph={{ rows: 3 }}
                 active
-                color="var(--cat-skeleton-bg)"
+                color="var(--bg-layer-4)"
               />
             </div>
           ))}

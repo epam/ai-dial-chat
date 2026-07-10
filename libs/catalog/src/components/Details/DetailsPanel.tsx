@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { TabRow } from '@epam/ai-dial-kit';
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DialCloseButton, DialSkeleton } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogDetailsTab } from '../../types/detail-tab';
@@ -19,13 +19,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   item,
   isOpen,
   isStarred: initialIsStarred = false,
-  aboutContent,
-  isAboutLoading = false,
+  isDetailsLoading = false,
   onClose,
   onToggleFavorite,
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
+  onEdit,
   texts,
   styles: detailsStyles,
 }) => {
@@ -37,15 +37,24 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   } = detailsStyles?.typography ?? {};
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
-  const [activeTab, setActiveTab] = useState<string>(CatalogDetailsTab.About);
+  const [activeTab, setActiveTab] = useState<string>('');
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
   }, [item.id, initialIsStarred]);
 
   useEffect(() => {
-    setActiveTab(CatalogDetailsTab.About);
-  }, [item.id]);
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const handleToggleFavorite = useCallback(() => {
     const next = !isStarred;
@@ -54,7 +63,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   }, [isStarred, item.id, onToggleFavorite]);
 
   const tabs = useMemo(() => {
-    const result = [
+    const result: { id: string; label: string }[] = [
       { id: CatalogDetailsTab.About, label: texts?.tabAboutLabel ?? 'About' },
     ];
     if (item.details?.overview != null) {
@@ -84,12 +93,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     return result;
   }, [item.details, texts]);
 
-  // Reset to About when the active tab is no longer in the available list.
+  // Reset to the first available tab when the item changes or the active
+  // tab is no longer in the (possibly newly-fetched) available list.
   useEffect(() => {
     if (!tabs.some((t) => t.id === activeTab)) {
-      setActiveTab(CatalogDetailsTab.About);
+      setActiveTab(tabs[0]?.id ?? '');
     }
-  }, [tabs, activeTab]);
+  }, [item.id, tabs, activeTab]);
 
   const overviewYesLabel = texts?.overviewYesLabel ?? 'Yes';
   const overviewNoLabel = texts?.overviewNoLabel ?? 'No';
@@ -146,6 +156,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             onUseInChat={onUseInChat}
             isPrimaryActionVisible={isPrimaryActionVisible}
             onShare={onShare}
+            onEdit={onEdit}
             texts={texts}
             detailsStyles={detailsStyles}
           />
@@ -154,7 +165,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
           <Summary item={item} texts={texts} detailsStyles={detailsStyles} />
 
-          <div className="px-[22px]">
+          <div className="flex items-center gap-2 px-[22px]">
             <TabRow
               tabs={tabs}
               activeTabId={activeTab}
@@ -162,6 +173,20 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               activeTabClassName="text-catalog-tab-active"
               inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
             />
+            {isDetailsLoading && (
+              <div
+                role="status"
+                aria-label={texts?.detailsLoadingAriaLabel ?? 'Loading details'}
+                className="shrink-0"
+              >
+                <DialSkeleton
+                  showTitle={false}
+                  paragraph={{ rows: 1, width: '72px' }}
+                  active
+                  color="var(--bg-layer-4)"
+                />
+              </div>
+            )}
           </div>
 
           <div
@@ -171,9 +196,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           >
             {activeTab === CatalogDetailsTab.About && (
               <AboutTab
-                item={item}
-                aboutContent={aboutContent}
-                isAboutLoading={isAboutLoading}
+                content={item.description}
                 detailsStyles={detailsStyles}
               />
             )}

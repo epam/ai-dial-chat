@@ -1,6 +1,7 @@
 import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
@@ -8,6 +9,7 @@ import { useNotification } from '../../../context/NotificationContext';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { getDeploymentDetails } from '../../../server-api/deployments';
 import { ROUTES } from '../../../types/routes';
 import CatalogView from '../CatalogView';
 
@@ -34,67 +36,69 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     hidePageTitle,
     selectedItemId,
     onCardClick,
+    onFetchDetails,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
     favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
-    hideCreateButton?: boolean;
-    hidePageTitle?: boolean;
-    selectedItemId?: string;
-    onCardClick?: (item: CatalogItem) => void;
-  }) => (
-    <div>
-      <output aria-label="Catalog item ids">
-        {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
-      </output>
-      <output aria-label="Favorite item ids">
-        {(favorites ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
-      </output>
-      <output aria-label="hideCreateButton">
-        {String(!!hideCreateButton)}
-      </output>
-      <output aria-label="hidePageTitle">{String(!!hidePageTitle)}</output>
-      <output aria-label="selectedItemId">{selectedItemId ?? ''}</output>
-      {(items ?? []).map((item) => (
-        <button
-          key={`favorite-${item.id}`}
-          type="button"
-          onClick={() => onToggleFavorite?.(item.id, true)}
-        >
-          favorite {item.id}
-        </button>
-      ))}
-      {(items ?? []).map((item) => (
-        <button
-          key={`use-in-chat-${item.id}`}
-          type="button"
-          onClick={() => onUseInChat?.(item)}
-        >
-          use in chat {item.id}
-        </button>
-      ))}
-      {(items ?? []).map((item) => (
-        <button
-          key={`card-click-${item.id}`}
-          type="button"
-          onClick={() => onCardClick?.(item)}
-        >
-          card click {item.id}
-        </button>
-      ))}
-      {(createOptions ?? []).map((option) => (
-        <button key={option.label} type="button" onClick={option.onClick}>
-          {option.label}
-        </button>
-      ))}
-    </div>
-  ),
+    onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
+  }) => {
+    const [fetchResult, setFetchResult] = useState<string>('');
+
+    return (
+      <div>
+        <output aria-label="Catalog item ids">
+          {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
+        </output>
+        {(items ?? []).map((item) => (
+          <button
+            key={`favorite-${item.id}`}
+            type="button"
+            onClick={() => onToggleFavorite?.(item.id, true)}
+          >
+            favorite {item.id}
+          </button>
+        ))}
+        {(items ?? []).map((item) => (
+          <button
+            key={`use-in-chat-${item.id}`}
+            type="button"
+            onClick={() => onUseInChat?.(item)}
+          >
+            use in chat {item.id}
+          </button>
+        ))}
+        {(items ?? []).map((item) => (
+          <button
+            key={`fetch-details-${item.id}`}
+            type="button"
+            onClick={async () => {
+              const result = await onFetchDetails?.(item);
+              setFetchResult(JSON.stringify(result ?? null));
+            }}
+          >
+            fetch details {item.id}
+          </button>
+        ))}
+        <output aria-label="Fetch details result">{fetchResult}</output>
+        {(createOptions ?? []).map((option) => (
+          <button key={option.label} type="button" onClick={option.onClick}>
+            {option.label}
+          </button>
+        ))}
+      </div>
+    );
+  },
 }));
 
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
+}));
+
+vi.mock('../../../server-api/deployments', () => ({
+  getDeploymentDetails: vi.fn(),
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
@@ -318,204 +322,249 @@ describe('CatalogView', () => {
     expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
   });
 
-  describe('picker mode', () => {
-    it('hides the Create button and does not highlight a selected card by default', () => {
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
-        selectedItemId: 'gpt-4o',
-        setSelectedItemId: vi.fn(),
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [],
-        refetchToolsets: vi.fn(),
-      });
-
-      render(<CatalogView />);
-
-      expect(screen.getByLabelText('hideCreateButton').textContent).toBe(
-        'false',
-      );
-      expect(screen.getByLabelText('hidePageTitle').textContent).toBe('false');
-      expect(screen.getByLabelText('selectedItemId').textContent).toBe('');
+  it('maps a fetched model DeploymentDetailsDto into structured catalog tab data', async () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+    });
+    vi.mocked(getDeploymentDetails).mockResolvedValue({
+      id: 'gpt-4o',
+      type: 'model',
+      modelDetails: {
+        limits: { maxTotalTokens: 128000 },
+        pricing: { unit: 'token', prompt: '0.01', completion: '0.03' },
+        features: {
+          tools: true,
+          mcp: false,
+          cache: true,
+          parallelToolCalls: true,
+          urlAttachments: false,
+          folderAttachments: false,
+          seed: false,
+          systemPrompt: true,
+          allowResume: true,
+          reasoningEfforts: ['low', 'medium', 'high'],
+        },
+        owner: 'organization-owner',
+        inputAttachmentTypes: ['text/*', 'image/*'],
+        createdAt: 1780387921823,
+      },
     });
 
-    it('hides the Create button and highlights the selected card in picker mode', () => {
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
-        selectedItemId: 'gpt-4o',
-        setSelectedItemId: vi.fn(),
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [],
-        refetchToolsets: vi.fn(),
-      });
+    render(<CatalogView />);
 
-      render(<CatalogView isPickerMode />);
+    await user.click(
+      screen.getByRole('button', { name: 'fetch details gpt-4o' }),
+    );
 
-      expect(screen.getByLabelText('hideCreateButton').textContent).toBe(
-        'true',
-      );
-      expect(screen.getByLabelText('hidePageTitle').textContent).toBe('true');
-      expect(screen.getByLabelText('selectedItemId').textContent).toBe(
-        'gpt-4o',
-      );
+    const result = JSON.parse(
+      await screen.findByLabelText('Fetch details result').then((el) => {
+        expect(el.textContent).toBeTruthy();
+        return el.textContent as string;
+      }),
+    );
+    expect(result.pricing).toEqual({
+      prices: [
+        { label: 'Input tokens', price: '0.01' },
+        { label: 'Output tokens', price: '0.03' },
+      ],
+      limits: [],
     });
-
-    it('selects the clicked card and closes the modal without navigating', async () => {
-      const setSelectedItemId = vi.fn();
-      const onClose = vi.fn();
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
-        selectedItemId: null,
-        setSelectedItemId,
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [],
-        refetchToolsets: vi.fn(),
-      });
-
-      render(<CatalogView isPickerMode onClose={onClose} />);
-
-      await user.click(
-        screen.getByRole('button', { name: 'card click gpt-4o' }),
-      );
-
-      expect(setSelectedItemId).toHaveBeenCalledWith('gpt-4o');
-      expect(onClose).toHaveBeenCalledOnce();
-      expect(mockNavigate).not.toHaveBeenCalled();
-    });
-
-    it('shows only models and agents, filtering out toolsets', () => {
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [
-          { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
-          { id: 'my-app', displayName: 'My App', type: 'application' },
+    expect(result.overview.sections).toEqual([
+      {
+        title: 'Capabilities',
+        specs: [
+          { label: 'Tools', value: true },
+          { label: 'MCP', value: false },
+          { label: 'Prompt caching', value: true },
+          { label: 'Parallel tool calls', value: true },
+          { label: 'URL attachments', value: false },
+          { label: 'Folder attachments', value: false },
+          { label: 'Seed', value: false },
+          { label: 'System prompt', value: true },
+          { label: 'Resume', value: true },
+          { label: 'Reasoning efforts', value: 'low · medium · high' },
         ],
-        selectedItemId: null,
-        setSelectedItemId: vi.fn(),
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [
+      },
+      {
+        title: 'Specification',
+        specs: [
+          { label: 'Hosted by', value: 'organization-owner' },
           {
-            id: 'toolsets/b/search__0.0.1',
-            toolset: 'toolsets/b/search__0.0.1',
-            displayName: 'Search',
+            label: 'Release date',
+            value: new Date(1780387921823).toLocaleDateString(),
+          },
+          { label: 'Context window', value: '128K tokens' },
+          { label: 'Input type', value: 'text/* · image/*' },
+        ],
+      },
+    ]);
+  });
+
+  it('maps a fetched application DeploymentDetailsDto into specification/capabilities/configuration', async () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [{ id: 'my-app', displayName: 'My App', type: 'application' }],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+    });
+    vi.mocked(getDeploymentDetails).mockResolvedValue({
+      id: 'my-app',
+      type: 'application',
+      applicationDetails: {
+        routes: ['default', 'health'],
+        owner: 'Yauheniya Hladkaya',
+        inputAttachmentTypes: ['text/*'],
+        features: { mcp: false, tools: false, cache: false },
+      },
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'fetch details my-app' }),
+    );
+
+    const result = JSON.parse(
+      (await screen.findByLabelText('Fetch details result')).textContent ?? '',
+    );
+    expect(result.overview.sections).toEqual([
+      {
+        title: 'Specification',
+        specs: [
+          { label: 'Hosted by', value: 'Yauheniya Hladkaya' },
+          { label: 'Routes', value: 'default · health' },
+        ],
+      },
+      {
+        title: 'Capabilities',
+        specs: [
+          { label: 'Tools', value: false },
+          { label: 'MCP', value: false },
+          { label: 'Prompt caching', value: false },
+        ],
+      },
+      {
+        title: 'Configuration',
+        specs: [{ label: 'Input attachments', value: 'text/*' }],
+      },
+    ]);
+  });
+
+  it('maps a fetched toolset DeploymentDetailsDto into authentication and permissions', async () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        { id: 'search-tool', displayName: 'Search Tool', type: 'toolset' },
+      ],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+    });
+    vi.mocked(getDeploymentDetails).mockResolvedValue({
+      id: 'search-tool',
+      type: 'toolset',
+      toolsetDetails: {
+        transport: 'HTTP',
+        allowedTools: ['search', 'fetch'],
+        allToolNames: ['search', 'fetch', 'browse'],
+        owner: 'Anastasiia Harkot',
+        features: { mcp: true, cache: false, systemPrompt: true },
+        authSettings: {
+          authenticationType: 'OAUTH',
+          globalAuthStatus: 'SIGNED_OUT',
+          appLevelAuthStatus: 'SIGNED_OUT',
+          userLevelAuthStatus: 'SIGNED_IN',
+          scopesSupported: ['read', 'write'],
+          authorizationEndpoint: 'https://mcp.example.com/oauth/authorize',
+          tokenEndpoint: 'https://mcp.example.com/oauth/token',
+        },
+      },
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'fetch details search-tool' }),
+    );
+
+    const result = JSON.parse(
+      (await screen.findByLabelText('Fetch details result')).textContent ?? '',
+    );
+    expect(result.overview.sections).toEqual([
+      {
+        title: 'Specification',
+        specs: [
+          { label: 'Authentication', value: 'OAUTH' },
+          { label: 'Allowed tools', value: 'search · fetch' },
+          { label: 'All supported tools', value: 'search · fetch · browse' },
+          { label: 'Hosted by', value: 'Anastasiia Harkot' },
+          { label: 'Sign-in status', value: 'SIGNED_IN' },
+          { label: 'OAuth scopes', value: 'read · write' },
+          {
+            label: 'Authorization endpoint',
+            value: 'https://mcp.example.com/oauth/authorize',
+          },
+          {
+            label: 'Token endpoint',
+            value: 'https://mcp.example.com/oauth/token',
           },
         ],
-        refetchToolsets: vi.fn(),
-      });
-
-      render(<CatalogView isPickerMode />);
-
-      expect(screen.getByLabelText('Catalog item ids').textContent).toBe(
-        'gpt-4o:MODEL,my-app:APPLICATION',
-      );
-    });
-
-    it('shows only favorited models and agents, filtering out favorited toolsets', () => {
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [
-          { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
-          { id: 'my-app', displayName: 'My App', type: 'application' },
+      },
+      {
+        title: 'Capabilities',
+        specs: [
+          { label: 'MCP', value: true },
+          { label: 'Prompt caching', value: false },
+          { label: 'System prompt', value: true },
         ],
-        selectedItemId: null,
-        setSelectedItemId: vi.fn(),
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [
-          {
-            id: 'toolsets/b/search__0.0.1',
-            toolset: 'toolsets/b/search__0.0.1',
-            displayName: 'Search',
-          },
-        ],
-        refetchToolsets: vi.fn(),
-      });
-      vi.mocked(useFavoriteApplications).mockReturnValue({
-        favoriteIds: new Set(['gpt-4o', 'my-app', 'toolsets/b/search__0.0.1']),
-        isLoading: false,
-        toggleFavorite: vi.fn(),
-      });
+      },
+    ]);
+  });
 
-      render(<CatalogView isPickerMode />);
-
-      expect(screen.getByLabelText('Favorite item ids').textContent).toBe(
-        'gpt-4o:MODEL,my-app:APPLICATION',
-      );
+  it('resolves undefined without throwing when the details fetch fails', async () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
     });
+    vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('502'));
 
-    it('shows favorited toolsets alongside models and agents outside picker mode', () => {
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
-        selectedItemId: null,
-        setSelectedItemId: vi.fn(),
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [
-          {
-            id: 'toolsets/b/search__0.0.1',
-            toolset: 'toolsets/b/search__0.0.1',
-            displayName: 'Search',
-          },
-        ],
-        refetchToolsets: vi.fn(),
-      });
-      vi.mocked(useFavoriteApplications).mockReturnValue({
-        favoriteIds: new Set(['gpt-4o', 'toolsets/b/search__0.0.1']),
-        isLoading: false,
-        toggleFavorite: vi.fn(),
-      });
+    render(<CatalogView />);
 
-      render(<CatalogView />);
+    await user.click(
+      screen.getByRole('button', { name: 'fetch details gpt-4o' }),
+    );
 
-      expect(screen.getByLabelText('Favorite item ids').textContent).toBe(
-        'gpt-4o:MODEL,toolsets/b/search__0.0.1:TOOLSET',
-      );
-    });
-
-    it('shows toolsets alongside models and agents outside picker mode', () => {
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
-        selectedItemId: null,
-        setSelectedItemId: vi.fn(),
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [
-          {
-            id: 'toolsets/b/search__0.0.1',
-            toolset: 'toolsets/b/search__0.0.1',
-            displayName: 'Search',
-          },
-        ],
-        refetchToolsets: vi.fn(),
-      });
-
-      render(<CatalogView />);
-
-      expect(screen.getByLabelText('Catalog item ids').textContent).toBe(
-        'gpt-4o:MODEL,toolsets/b/search__0.0.1:TOOLSET',
-      );
-    });
+    expect(await screen.findByLabelText('Fetch details result')).toHaveProperty(
+      'textContent',
+      'null',
+    );
   });
 });

@@ -70,6 +70,7 @@ describe('DeploymentsController (integration)', () => {
     listDeployments: ReturnType<typeof vi.fn>;
     getDeploymentConfiguration: ReturnType<typeof vi.fn>;
     getDeploymentLimits: ReturnType<typeof vi.fn>;
+    getDeploymentDetails: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -77,6 +78,7 @@ describe('DeploymentsController (integration)', () => {
       listDeployments: vi.fn().mockResolvedValue(mockResponse),
       getDeploymentConfiguration: vi.fn(),
       getDeploymentLimits: vi.fn(),
+      getDeploymentDetails: vi.fn(),
     };
     app = await buildApp(service);
   });
@@ -311,6 +313,65 @@ describe('DeploymentsController (integration)', () => {
 
       await request(app.getHttpServer())
         .get('/api/v1/deployments/gpt-4o/limits')
+        .expect(503);
+    });
+  });
+
+  describe('GET /api/v1/deployments/:deployment/details', () => {
+    const mockDetails = {
+      id: 'gpt-4o',
+      type: 'model',
+      modelDetails: { lifecycleStatus: 'generally-available' },
+    };
+
+    it('returns 200 with deployment details', async () => {
+      service.getDeploymentDetails.mockResolvedValue(mockDetails);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/deployments/gpt-4o/details')
+        .expect(200);
+
+      expect(res.body).toEqual(mockDetails);
+      expect(service.getDeploymentDetails).toHaveBeenCalledWith(
+        'gpt-4o',
+        TEST_USER.at,
+      );
+    });
+
+    it('returns 401 when service throws UnauthorizedException', async () => {
+      service.getDeploymentDetails.mockRejectedValue(
+        new UnauthorizedException(),
+      );
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/gpt-4o/details')
+        .expect(401);
+    });
+
+    it('returns 404 when deployment is not found', async () => {
+      const { NotFoundException } = await import('@nestjs/common');
+      service.getDeploymentDetails.mockRejectedValue(new NotFoundException());
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/unknown/details')
+        .expect(404);
+    });
+
+    it('returns 502 when DIAL Core returns an error response', async () => {
+      service.getDeploymentDetails.mockRejectedValue(new BadGatewayException());
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/gpt-4o/details')
+        .expect(502);
+    });
+
+    it('returns 503 when DIAL Core is unreachable', async () => {
+      service.getDeploymentDetails.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/gpt-4o/details')
         .expect(503);
     });
   });

@@ -73,6 +73,7 @@ export const Input: FC<InputProps> = ({
   hideActionBar = false,
   renderFooterActions,
   isInputDisabled = false,
+  isModelSelectorDisabled = false,
   isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
@@ -404,6 +405,7 @@ export const Input: FC<InputProps> = ({
                   isStreaming={isStreaming}
                   isMobile={isMobile}
                   isInputDisabled={isInputDisabled}
+                  isDisabled={isModelSelectorDisabled}
                   style={cssVars}
                   modelPickerOverlay={modelPickerOverlay}
                   isPickerOpen={isPickerOpen}

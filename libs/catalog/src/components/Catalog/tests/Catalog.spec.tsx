@@ -176,13 +176,17 @@ vi.mock('../../Details/DetailsPanel', () => ({
   DetailsPanel: ({
     item,
     isPrimaryActionVisible,
+    isDetailsLoading,
   }: {
     item: CatalogItem;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
+    isDetailsLoading?: boolean;
   }) => (
     <div>
       <span>{item.name}</span>
       <span>{String(isPrimaryActionVisible?.(item))}</span>
+      <span>{`details:${JSON.stringify(item.details ?? null)}`}</span>
+      <span>{`isDetailsLoading:${String(isDetailsLoading)}`}</span>
     </div>
   ),
 }));
@@ -309,144 +313,78 @@ describe('Catalog', () => {
     expect(screen.getByText('true')).toBeTruthy();
   });
 
-  it('hides the Create button when hideCreateButton is true', () => {
-    render(<Catalog items={[]} favorites={[]} hideCreateButton />);
-    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
-  });
-
-  it('shows the Create button by default', () => {
-    render(<Catalog items={[]} favorites={[]} />);
-    expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
-  });
-
-  it('hides the page title when hidePageTitle is true', () => {
-    render(<Catalog items={[]} favorites={[]} hidePageTitle />);
-    expect(screen.queryByText('Catalog')).toBeNull();
-  });
-
-  it('shows the page title by default', () => {
-    render(<Catalog items={[]} favorites={[]} />);
-    expect(screen.getByText('Catalog')).toBeTruthy();
-  });
-
-  it('renders neither heading row when both title and Create button are hidden', () => {
-    render(
-      <Catalog items={[]} favorites={[]} hidePageTitle hideCreateButton />,
-    );
-    expect(screen.queryByText('Catalog')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
-  });
-
-  it('passes selectedItemId through to the card grid', () => {
-    render(
-      <Catalog
-        items={[makeItem('1', 'Claude'), makeItem('2', 'Gemini')]}
-        favorites={[]}
-        selectedItemId="2"
-      />,
-    );
-
-    expect(
-      screen
-        .getByRole('button', { name: 'Claude' })
-        .getAttribute('aria-pressed'),
-    ).toBe('false');
-    expect(
-      screen
-        .getByRole('button', { name: 'Gemini' })
-        .getAttribute('aria-pressed'),
-    ).toBe('true');
-  });
-
-  it('calls onCardClick instead of opening details when provided', async () => {
-    const onCardClick = vi.fn();
+  it('calls onFetchDetails when the details panel opens', async () => {
+    const onFetchDetails = vi.fn().mockResolvedValue(undefined);
     render(
       <Catalog
         items={[makeItem('1', 'Claude')]}
         favorites={[]}
-        onCardClick={onCardClick}
+        onFetchDetails={onFetchDetails}
       />,
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
 
-    expect(onCardClick).toHaveBeenCalledWith(
-      expect.objectContaining({ id: '1', name: 'Claude' }),
+    expect(onFetchDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1' }),
     );
-    expect(screen.queryByText('true')).toBeNull();
-    expect(screen.queryByText('false')).toBeNull();
   });
 
-  it('opens details on card click when onCardClick is not provided', async () => {
+  it('renders fetched details, overriding static item.details, once resolved', async () => {
+    const fetched = { overview: { sections: [] } };
+    let resolveFetch: (value: typeof fetched) => void = () => undefined;
+    const onFetchDetails = vi.fn(
+      () =>
+        new Promise<typeof fetched>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', {
+            details: { pricing: { prices: [] } },
+          }),
+        ]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+    expect(screen.getByText('isDetailsLoading:true')).toBeTruthy();
+
+    resolveFetch(fetched);
+    await screen.findByText(`details:${JSON.stringify(fetched)}`);
+    expect(screen.getByText('isDetailsLoading:false')).toBeTruthy();
+  });
+
+  it('falls back to static item.details when onFetchDetails resolves undefined', async () => {
+    const staticDetails = { pricing: { prices: [] } };
+    const onFetchDetails = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude', { details: staticDetails })]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(
+      await screen.findByText(`details:${JSON.stringify(staticDetails)}`),
+    ).toBeTruthy();
+  });
+
+  it('does not fetch details or show a loading state when onFetchDetails is absent', async () => {
     render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
 
-    expect(screen.getAllByText('Claude').length).toBeGreaterThan(1);
-  });
-
-  it('passes selectedItemId through to the favorites section', () => {
-    const fav1 = makeItem('1', 'Claude');
-    const fav2 = makeItem('2', 'Gemini');
-    render(<Catalog items={[]} favorites={[fav1, fav2]} selectedItemId="2" />);
-
-    expect(
-      screen
-        .getByRole('button', { name: 'fav-Claude' })
-        .getAttribute('aria-pressed'),
-    ).toBe('false');
-    expect(
-      screen
-        .getByRole('button', { name: 'fav-Gemini' })
-        .getAttribute('aria-pressed'),
-    ).toBe('true');
-  });
-
-  it('calls onCardClick instead of opening details when a favorite card is clicked', async () => {
-    const onCardClick = vi.fn();
-    render(
-      <Catalog
-        items={[]}
-        favorites={[makeItem('1', 'Claude')]}
-        onCardClick={onCardClick}
-      />,
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: 'fav-Claude' }));
-
-    expect(onCardClick).toHaveBeenCalledWith(
-      expect.objectContaining({ id: '1', name: 'Claude' }),
-    );
-    expect(screen.queryByText('true')).toBeNull();
-    expect(screen.queryByText('false')).toBeNull();
-  });
-
-  it('calls onCardClick instead of opening details when a list-view row is clicked', async () => {
-    const onCardClick = vi.fn();
-    render(
-      <Catalog
-        items={[makeItem('1', 'Claude')]}
-        favorites={[]}
-        onCardClick={onCardClick}
-      />,
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
-    await userEvent.click(screen.getByRole('button', { name: 'row-Claude' }));
-
-    expect(onCardClick).toHaveBeenCalledWith(
-      expect.objectContaining({ id: '1', name: 'Claude' }),
-    );
-    expect(screen.queryByText('true')).toBeNull();
-    expect(screen.queryByText('false')).toBeNull();
-  });
-
-  it('opens details on list-view row click when onCardClick is not provided', async () => {
-    render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
-
-    await userEvent.click(screen.getByRole('button', { name: 'List view' }));
-    await userEvent.click(screen.getByRole('button', { name: 'row-Claude' }));
-
-    expect(screen.getByText('Claude')).toBeTruthy();
+    expect(screen.getByText('isDetailsLoading:false')).toBeTruthy();
+    expect(screen.getByText('details:null')).toBeTruthy();
   });
 });

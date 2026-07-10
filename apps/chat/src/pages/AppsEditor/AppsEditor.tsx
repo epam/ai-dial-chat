@@ -1,7 +1,11 @@
-import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import {
+  DialNotification,
+  NotificationVariant,
+  StepStatus,
+} from '@epam/ai-dial-ui-kit';
 import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import EditorHeader from '../../components/EditorHeader/EditorHeader';
@@ -12,7 +16,10 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
-import type { GeneralFormHandle } from './GeneralForm';
+import type {
+  GeneralFormHandle,
+  GeneralFormInitialValues,
+} from './GeneralForm';
 import GeneralForm from './GeneralForm';
 import type { SettingsStepHandle } from './SettingsStep';
 import SettingsStep from './SettingsStep';
@@ -21,11 +28,19 @@ const AppsEditor: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { schemas } = useDeployments();
+  const { schemas, items: deployments } = useDeployments();
 
   const [createdAppId, setCreatedAppId] = useState<string | null>(null);
+  const [submittedAppInfo, setSubmittedAppInfo] = useState<{
+    displayName?: string;
+    iconUrl?: string;
+  } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [pendingSaveAction, setPendingSaveAction] = useState<
+    'save' | 'preview' | null
+  >(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   const generalFormRef = useRef<GeneralFormHandle>(null);
   const settingsStepRef = useRef<SettingsStepHandle>(null);
@@ -42,9 +57,37 @@ const AppsEditor: FC = () => {
     [schemas, schemaId],
   );
 
+  const existingAppId = searchParams.get(AppsEditorQuery.AppId);
+  const isEditingExistingApp = !createdAppId && !!existingAppId;
+
+  const existingDeployment = useMemo(
+    () =>
+      isEditingExistingApp
+        ? deployments.find((d) => d.id === existingAppId)
+        : undefined,
+    [deployments, isEditingExistingApp, existingAppId],
+  );
+
+  const generalFormInitialValues = useMemo<
+    GeneralFormInitialValues | undefined
+  >(
+    () =>
+      existingDeployment
+        ? {
+            name: existingDeployment.displayName,
+            description: existingDeployment.description,
+            iconUrl: existingDeployment.iconUrl,
+            version: existingDeployment.displayVersion,
+            topics: existingDeployment.topics,
+          }
+        : undefined,
+    [existingDeployment],
+  );
+
   const handleCreated = useCallback(
-    (appId: string) => {
+    (appId: string, displayName?: string, iconUrl?: string) => {
       setCreatedAppId(appId);
+      setSubmittedAppInfo({ displayName, iconUrl });
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.set(AppsEditorQuery.Step, AppsEditorStep.Settings);
@@ -71,6 +114,12 @@ const AppsEditor: FC = () => {
   );
 
   const isGeneralStep = step === AppsEditorStep.General;
+  const [hasVisitedGeneralStep, setHasVisitedGeneralStep] =
+    useState(isGeneralStep);
+
+  useEffect(() => {
+    if (isGeneralStep) setHasVisitedGeneralStep(true);
+  }, [isGeneralStep]);
 
   const handleSave = useCallback(() => {
     if (isGeneralStep) {
@@ -80,28 +129,40 @@ const AppsEditor: FC = () => {
     }
     setSaveError('');
     setIsSaving(true);
+    setPendingSaveAction('save');
     settingsStepRef.current?.triggerSave();
   }, [isGeneralStep]);
 
+  const handlePreview = useCallback(() => {
+    if (isPreviewing) {
+      setIsPreviewing(false);
+      return;
+    }
+    setSaveError('');
+    setIsSaving(true);
+    setPendingSaveAction('preview');
+    settingsStepRef.current?.triggerSave();
+  }, [isPreviewing]);
+
   const handleSaveSuccess = useCallback(() => {
+    if (isPreviewing) return;
     setIsSaving(false);
-    navigate(returnUrl);
-  }, [navigate, returnUrl]);
+    if (pendingSaveAction === 'preview') {
+      setIsPreviewing(true);
+    } else {
+      navigate(returnUrl);
+    }
+    setPendingSaveAction(null);
+  }, [isPreviewing, pendingSaveAction, navigate, returnUrl]);
 
   const handleSaveError = useCallback(
     (error: string) => {
+      if (isPreviewing) return;
       setIsSaving(false);
       setSaveError(error || t(AppsEditorI18nKeys.ErrorSaveFailed));
+      setPendingSaveAction(null);
     },
-    [t],
-  );
-
-  const steps = useMemo(
-    () => [
-      { id: AppsEditorStep.General, name: t(AppsEditorI18nKeys.StepGeneral) },
-      { id: AppsEditorStep.Settings, name: t(AppsEditorI18nKeys.StepSettings) },
-    ],
-    [t],
+    [isPreviewing, t],
   );
 
   const saveButtonLabel = isGeneralStep
@@ -110,6 +171,32 @@ const AppsEditor: FC = () => {
 
   const appIdForSettings =
     createdAppId ?? searchParams.get(AppsEditorQuery.AppId) ?? '';
+
+  const appDisplayName =
+    submittedAppInfo?.displayName ??
+    existingDeployment?.displayName ??
+    schema?.displayName;
+  const appIconUrl =
+    submittedAppInfo?.iconUrl ?? existingDeployment?.iconUrl ?? schema?.iconUrl;
+
+  const steps = useMemo(
+    () => [
+      {
+        id: AppsEditorStep.General,
+        name: t(AppsEditorI18nKeys.StepGeneral),
+        status: appIdForSettings ? StepStatus.VALID : undefined,
+      },
+      {
+        id: AppsEditorStep.Settings,
+        name: t(AppsEditorI18nKeys.StepSettings),
+        status: appIdForSettings ? StepStatus.VALID : undefined,
+      },
+    ],
+    [t, appIdForSettings],
+  );
+
+  const canPreview =
+    !isGeneralStep && !!appIdForSettings && !!schema?.editorUrl;
 
   return (
     <div className="flex size-full flex-col">
@@ -124,6 +211,10 @@ const AppsEditor: FC = () => {
         onChangeStep={handleChangeStep}
         onCancel={handleCancel}
         onSave={handleSave}
+        previewButtonLabel={t(AppsEditorI18nKeys.PreviewButton)}
+        exitPreviewButtonLabel={t(AppsEditorI18nKeys.ExitPreviewButton)}
+        isPreviewing={isPreviewing}
+        onPreview={canPreview ? handlePreview : undefined}
       />
 
       {!isGeneralStep && saveError && (
@@ -136,17 +227,27 @@ const AppsEditor: FC = () => {
       )}
 
       <div className="min-h-0 flex-1 overflow-auto">
-        {isGeneralStep ? (
-          <GeneralForm
-            ref={generalFormRef}
-            schemaId={schemaId}
-            onCreated={handleCreated}
-          />
-        ) : (
+        {hasVisitedGeneralStep && (
+          <div className={isGeneralStep ? 'h-full' : 'hidden'}>
+            <GeneralForm
+              ref={generalFormRef}
+              schemaId={schemaId}
+              appId={
+                isEditingExistingApp ? (existingAppId ?? undefined) : undefined
+              }
+              initialValues={generalFormInitialValues}
+              onCreated={handleCreated}
+            />
+          </div>
+        )}
+        {!isGeneralStep && (
           <SettingsStep
             ref={settingsStepRef}
             schema={schema}
             appId={appIdForSettings}
+            appDisplayName={appDisplayName}
+            appIconUrl={appIconUrl}
+            isPreviewing={isPreviewing}
             onSaveSuccess={handleSaveSuccess}
             onSaveError={handleSaveError}
           />
