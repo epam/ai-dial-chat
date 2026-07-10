@@ -637,8 +637,6 @@ dialTest(
     quickApp2EditorViewForm,
     agentAndToolsetSelectModal,
     agentAndToolsetSelectModalAssertion,
-    itemApiHelper,
-    toolsetApiHelper,
     fileApiHelper,
     mainUserShareApiHelper,
     localStorageManager,
@@ -651,8 +649,6 @@ dialTest(
     await dialTest.step(
       'Precondition: the user has no created, shared or bookmarked agents and toolsets',
       async () => {
-        await itemApiHelper.deleteAllData();
-        await toolsetApiHelper.deleteAllToolsets();
         const sharedApps = await mainUserShareApiHelper.listSharedWithMeApps();
         await mainUserShareApiHelper.deleteSharedWithMeEntities(
           sharedApps.resources,
@@ -727,7 +723,6 @@ dialTest(
     toolsetBuilder,
     applicationApiHelper,
     toolsetApiHelper,
-    itemApiHelper,
     fileApiHelper,
     mainUserShareApiHelper,
     localStorageManager,
@@ -749,8 +744,6 @@ dialTest(
     await dialTest.step(
       'Precondition: start from a clean workspace, then create a mix of ASCII-boundary named agents and toolsets',
       async () => {
-        await itemApiHelper.deleteAllData();
-        await toolsetApiHelper.deleteAllToolsets();
         const sharedApps = await mainUserShareApiHelper.listSharedWithMeApps();
         await mainUserShareApiHelper.deleteSharedWithMeEntities(
           sharedApps.resources,
@@ -802,14 +795,14 @@ dialTest(
         await agentAndToolsetSelectModalAssertion.assertTabIsActive(
           agentAndToolsetSelectModal.myWorkspaceTab,
         );
-        const displayedNames = await agentAndToolsetSelectModal
-          .getEntities()
-          .getEntityNames();
-        baseAssertion.assertValue(
-          displayedNames.length,
+        await baseAssertion.assertElementsCount(
+          agentAndToolsetSelectModal.getEntities(),
           appNames.length + toolsetNames.length,
           ExpectedMessages.elementsCountIsValid,
         );
+        const displayedNames = await agentAndToolsetSelectModal
+          .getEntities()
+          .getEntityNames();
         baseAssertion.assertStringsSorting(displayedNames, 'asc');
       },
     );

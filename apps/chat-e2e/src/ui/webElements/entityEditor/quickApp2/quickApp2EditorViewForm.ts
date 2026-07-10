@@ -185,8 +185,4 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public async getAllChipNameTexts(): Promise<string[]> {
     return this.allChipNames.getElementLocator().allTextContents();
   }
-
-  public async getSelectedModelName(): Promise<string> {
-    return this.orchestratorModelName.getElementInnerContent();
-  }
 }

@@ -121,9 +121,9 @@ dialTest(
           .getEntityByName(modelNoTemperature.name)
           .click();
         await baseAssertion.assertElementState(talkToAgentDialog, 'hidden');
-        await baseAssertion.assertElementContainsText(
+        await baseAssertion.assertElementInnerText(
           quickApp2EditorViewForm.orchestratorModelName,
-          modelNoTemperature.name,
+          [modelNoTemperature.name],
         );
         await baseAssertion.assertElementState(
           quickApp2EditorViewForm.temperatureSlider,
@@ -145,9 +145,9 @@ dialTest(
           .getEntityByName(modelWithTemperature.name)
           .click();
         await baseAssertion.assertElementState(talkToAgentDialog, 'hidden');
-        await baseAssertion.assertElementContainsText(
+        await baseAssertion.assertElementInnerText(
           quickApp2EditorViewForm.orchestratorModelName,
-          modelWithTemperature.name,
+          [modelWithTemperature.name],
         );
         await baseAssertion.assertElementState(
           quickApp2EditorViewForm.temperatureSlider,
