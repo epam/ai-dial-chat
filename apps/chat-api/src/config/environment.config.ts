@@ -221,5 +221,10 @@ export class EnvironmentVariables {
     },
     { each: true },
   )
+  @Matches(/^https?:\/\/[^/\s?#]+$/, {
+    each: true,
+    message:
+      'Each allowed iframe origin must be an origin URL with no path or query string',
+  })
   ALLOWED_IFRAME_ORIGINS?: string[] = [];
 }

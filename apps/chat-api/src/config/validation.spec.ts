@@ -45,6 +45,24 @@ describe('validate - ALLOWED_IFRAME_ORIGINS', () => {
     ).toThrow(/Environment validation failed/);
   });
 
+  it('rejects an entry with a path', () => {
+    expect(() =>
+      validate({
+        ...validBaseConfig,
+        ALLOWED_IFRAME_ORIGINS: 'https://quickapps.aks.dev.dial.parts/embed',
+      }),
+    ).toThrow(/Environment validation failed/);
+  });
+
+  it('rejects an entry with a query string', () => {
+    expect(() =>
+      validate({
+        ...validBaseConfig,
+        ALLOWED_IFRAME_ORIGINS: 'https://quickapps.aks.dev.dial.parts?x=1',
+      }),
+    ).toThrow(/Environment validation failed/);
+  });
+
   it('rejects an entry containing CSP-breaking characters', () => {
     expect(() =>
       validate({
