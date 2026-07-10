@@ -40,15 +40,16 @@ const SECTION_LABEL_CLASS_NAME =
 const LINK_BUTTON_ID = 'share-popover-back-button';
 const QR_BUTTON_ID = 'share-popover-qr-button';
 /*
- * Only Agent-tab entities (Agent + Application, both shown under the
- * "Agents" catalog tab — see libs/catalog/src/utils/catalog-tabs.ts) and
- * Skill support edit access. Model and Toolset can only ever be shared
- * view-only, so their access control is a static label, not a dropdown.
+ * Agent-tab entities (Agent + Application, both shown under the "Agents"
+ * catalog tab — see libs/catalog/src/utils/catalog-tabs.ts), Skill, and
+ * Toolset support edit access. Model can only ever be shared view-only, so
+ * its access control is a static label, not a dropdown.
  */
 const EDITABLE_ACCESS_TYPES = new Set<CatalogEntityType>([
   CatalogEntityType.Agent,
   CatalogEntityType.Application,
   CatalogEntityType.Skill,
+  CatalogEntityType.Toolset,
 ]);
 /*
  * DialSkeleton's own default color resolves to `--bg-layer-3`, which is the

@@ -242,6 +242,7 @@ describe('SharePopover', () => {
     CatalogEntityType.Agent,
     CatalogEntityType.Application,
     CatalogEntityType.Skill,
+    CatalogEntityType.Toolset,
   ])('shows the interactive access dropdown for a %s item', (type) => {
     vi.mocked(useShareLink).mockReturnValue(makeResult());
     render(<SharePopover item={makeItem(type)} onClose={onClose} />);
@@ -251,18 +252,20 @@ describe('SharePopover', () => {
     ).toBeTruthy();
   });
 
-  it.each([CatalogEntityType.Model, CatalogEntityType.Toolset])(
-    'hides the access dropdown and shows a static Can view label for a %s item',
-    (type) => {
-      vi.mocked(useShareLink).mockReturnValue(makeResult());
-      render(<SharePopover item={makeItem(type)} onClose={onClose} />);
+  it('hides the access dropdown and shows a static Can view label for a Model item', () => {
+    vi.mocked(useShareLink).mockReturnValue(makeResult());
+    render(
+      <SharePopover
+        item={makeItem(CatalogEntityType.Model)}
+        onClose={onClose}
+      />,
+    );
 
-      expect(
-        screen.queryByRole('button', { name: ShareI18nKeys.AccessViewLabel }),
-      ).toBeNull();
-      expect(screen.getByText(ShareI18nKeys.AccessViewLabel)).toBeTruthy();
-    },
-  );
+    expect(
+      screen.queryByRole('button', { name: ShareI18nKeys.AccessViewLabel }),
+    ).toBeNull();
+    expect(screen.getByText(ShareI18nKeys.AccessViewLabel)).toBeTruthy();
+  });
 
   it('never shows the edit-access visibility note for a Model item', () => {
     vi.mocked(useShareLink).mockReturnValue(
