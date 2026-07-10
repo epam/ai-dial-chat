@@ -9,13 +9,9 @@ describe('buildFrameSrcDirective', () => {
   it('appends configured origins after self', () => {
     expect(
       buildFrameSrcDirective([
-        'https://quickapps.aks.dev.dial.parts',
+        'https://quickapps.test',
         'http://localhost:4300',
       ]),
-    ).toEqual([
-      "'self'",
-      'https://quickapps.aks.dev.dial.parts',
-      'http://localhost:4300',
-    ]);
+    ).toEqual(["'self'", 'https://quickapps.test', 'http://localhost:4300']);
   });
 });

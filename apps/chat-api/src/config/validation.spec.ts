@@ -18,12 +18,11 @@ describe('validate - ALLOWED_IFRAME_ORIGINS', () => {
   it('parses a comma-separated list of valid https/http origins', () => {
     const config = validate({
       ...validBaseConfig,
-      ALLOWED_IFRAME_ORIGINS:
-        'https://quickapps.aks.dev.dial.parts, http://localhost:4300',
+      ALLOWED_IFRAME_ORIGINS: 'https://quickapps.test, http://localhost:4300',
     });
 
     expect(config.ALLOWED_IFRAME_ORIGINS).toEqual([
-      'https://quickapps.aks.dev.dial.parts',
+      'https://quickapps.test',
       'http://localhost:4300',
     ]);
   });
@@ -50,7 +49,7 @@ describe('validate - ALLOWED_IFRAME_ORIGINS', () => {
     expect(() =>
       validate({
         ...validBaseConfig,
-        ALLOWED_IFRAME_ORIGINS: 'https://quickapps.aks.dev.dial.parts/embed',
+        ALLOWED_IFRAME_ORIGINS: 'https://quickapps.test/embed',
       }),
     ).toThrow(/Environment validation failed/);
   });
@@ -59,7 +58,7 @@ describe('validate - ALLOWED_IFRAME_ORIGINS', () => {
     expect(() =>
       validate({
         ...validBaseConfig,
-        ALLOWED_IFRAME_ORIGINS: 'https://quickapps.aks.dev.dial.parts?x=1',
+        ALLOWED_IFRAME_ORIGINS: 'https://quickapps.test?x=1',
       }),
     ).toThrow(/Environment validation failed/);
   });
