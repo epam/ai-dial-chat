@@ -347,7 +347,7 @@ const defaultProps = {
   onClose: vi.fn(),
   onAttach: vi.fn(),
   bucket: 'test-bucket',
-  title: 'DIAL file system',
+  title: 'Attach files',
   attachLabel: 'Attach',
   emptyTitle: 'This folder is empty',
   emptyDescription: '',
@@ -386,7 +386,17 @@ describe('DialFileManagerModal', () => {
   it('renders with the given title when isOpen is true', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
-    expect(screen.getByText('DIAL file system')).toBeTruthy();
+    expect(screen.getByText('Attach files')).toBeTruthy();
+  });
+
+  it('calls onClose when the header close button is clicked', () => {
+    const onClose = vi.fn();
+
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('renders error card with role="alert" when error is set', () => {
@@ -588,7 +598,7 @@ describe('DialFileManagerModal', () => {
   it('does not render content when isOpen is false', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} isOpen={false} />);
-    expect(screen.queryByText('DIAL file system')).toBeNull();
+    expect(screen.queryByText('Attach files')).toBeNull();
   });
 
   it('shows a loader while an archive is being prepared', () => {

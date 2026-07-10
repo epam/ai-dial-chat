@@ -325,7 +325,7 @@
     "overlayDeniedSubtitle": "Attachments can't be added to message"
   },
   "dialFileManager": {
-    "title": "DIAL file system",
+    "title": "Attach files",
     "attach": "Attach",
     "empty": "This folder is empty",
     "error": "Failed to load files",
@@ -439,7 +439,7 @@
       "emptyStateTitle": "No results found"
     },
     "myFiles": {
-      "treeHeader": "My files",
+      "treeHeader": "Folder tree",
       "emptyStateTitle": "No files yet",
       "emptyStateDescription": "Upload files to your personal storage"
     },
