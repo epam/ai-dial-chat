@@ -108,6 +108,10 @@ const DialFileManagerShell: FC<Props> = ({
     isSharing,
     onUnshareFiles,
     onRemoveFilesAccess,
+    fileMetadata,
+    isFileMetadataLoading,
+    onGetInfo,
+    clearMetadata,
   } = hookResult;
 
   const actionLabels = useMemo(() => {
@@ -154,6 +158,17 @@ const DialFileManagerShell: FC<Props> = ({
   ]);
 
   /*
+   * Info is grid-only — the installed ui-kit exposes no tree or bulk-toolbar
+   * surface for it (FileTreeOptions/BulkActionsToolbarOptions.actionLabels
+   * have no Info key), so it is kept out of the shared `actionLabels` above
+   * and layered onto a grid-specific variant instead.
+   */
+  const gridActionLabels = useMemo(() => {
+    if (!(DialFileManagerActions.Info in tabActionLabels)) return actionLabels;
+    return { ...actionLabels, [DialFileManagerActions.Info]: labels.infoLabel };
+  }, [actionLabels, tabActionLabels, labels.infoLabel]);
+
+  /*
    * Bulk toolbar never shows Share (single-item only, no bulk affordance);
    * Remove access is additionally hidden unless every selected path is
    * present in sharedByMePaths (mirrors legacy allSelectedItemsShared).
@@ -194,9 +209,15 @@ const DialFileManagerShell: FC<Props> = ({
           isRowSelectable: isRowSelectable ?? ((): boolean => true),
         },
       },
-      actionLabels,
+      actionLabels: gridActionLabels,
     }),
-    [visibleColumns, dateLocale, dateOptions, actionLabels, isRowSelectable],
+    [
+      visibleColumns,
+      dateLocale,
+      dateOptions,
+      gridActionLabels,
+      isRowSelectable,
+    ],
   );
 
   const treeOptions = useMemo(
@@ -317,6 +338,31 @@ const DialFileManagerShell: FC<Props> = ({
     clearUploadBatch();
   };
 
+  const fileMetadataPopupOptions = useMemo(
+    () => ({
+      fileMetadata,
+      loading: isFileMetadataLoading,
+      clearMetadata,
+      header: labels.metadataHeader,
+      nameLabel: labels.metadataNameLabel,
+      pathLabel: labels.metadataPathLabel,
+      modifiedDateLabel: labels.metadataModifiedDateLabel,
+      sizeLabel: labels.metadataSizeLabel,
+      authorLabel: labels.metadataAuthorLabel,
+    }),
+    [
+      fileMetadata,
+      isFileMetadataLoading,
+      clearMetadata,
+      labels.metadataHeader,
+      labels.metadataNameLabel,
+      labels.metadataPathLabel,
+      labels.metadataModifiedDateLabel,
+      labels.metadataSizeLabel,
+      labels.metadataAuthorLabel,
+    ],
+  );
+
   const uploadProgressText = useMemo(() => {
     if (uploadBatchState == null) {
       return '';
@@ -376,6 +422,8 @@ const DialFileManagerShell: FC<Props> = ({
             onManagePermissions={onManagePermissions}
             onUnshareFiles={onUnshareFiles}
             onRemoveFilesAccess={onRemoveFilesAccess}
+            fileMetadataPopupOptions={fileMetadataPopupOptions}
+            onGetInfo={onGetInfo}
             onUploadFiles={onUploadFiles}
             onValidateUpload={onValidateUpload}
             onCreateFolder={onCreateFolder}

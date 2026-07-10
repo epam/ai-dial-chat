@@ -45,6 +45,7 @@ const mockMoveFiles = vi.mocked(filesApi.moveFiles);
 const mockShareFiles = vi.mocked(filesApi.shareFiles);
 const mockDiscardShared = vi.mocked(filesApi.discardShared);
 const mockRevokeAccess = vi.mocked(filesApi.revokeAccess);
+const mockGetFileMetadata = vi.mocked(filesApi.getFileMetadata);
 
 const BUCKET = 'test-bucket';
 
@@ -1251,6 +1252,43 @@ describe('useDialFileManager', () => {
         await waitFor(() => expect(result.current.isLoading).toBe(false));
         expect(
           result.current.actionLabels[DialFileManagerActions.Duplicate],
+        ).toBeUndefined();
+      });
+    });
+
+    describe('actionLabels — Info', () => {
+      it.each([
+        DialFileManagerTabs.MyFiles,
+        DialFileManagerTabs.Shared,
+        DialFileManagerTabs.Organization,
+      ])('includes Info on the %s tab with the Full profile', async (tab) => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: tab,
+            actionProfile: DialFileManagerActionProfile.Full,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Info],
+        ).toBeDefined();
+      });
+
+      it.each([
+        DialFileManagerActionProfile.Browse,
+        DialFileManagerActionProfile.Attach,
+      ])('omits Info when actionProfile is %s', async (actionProfile) => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+            actionProfile,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Info],
         ).toBeUndefined();
       });
     });
@@ -2699,6 +2737,188 @@ describe('useDialFileManager', () => {
           { bucket: OWNER_BUCKET, path: 'notes.txt' },
         ]),
       );
+    });
+  });
+
+  describe('onGetInfo and clearMetadata', () => {
+    const myFilesItem = {
+      id: `files/${BUCKET}/report.pdf`,
+      name: 'report.pdf',
+      path: '/My files/report.pdf',
+      parentPath: '/My files',
+      nodeType: DialFileNodeType.ITEM,
+      folderId: `${BUCKET}:`,
+      bucket: BUCKET,
+    };
+
+    const metadataResponse = {
+      name: 'report.pdf',
+      nodeType: 'item',
+      bucket: BUCKET,
+      contentLength: 1234,
+      contentType: 'application/pdf',
+      author: 'Jane Doe',
+      permissions: ['READ', 'WRITE'],
+      updatedAt: 1700000000000,
+    };
+
+    it('resolves the current user bucket for a my_files item', async () => {
+      mockGetFileMetadata.mockResolvedValue(metadataResponse);
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          activeTab: DialFileManagerTabs.MyFiles,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onGetInfo(myFilesItem));
+      expect(result.current.isFileMetadataLoading).toBe(true);
+
+      await waitFor(() =>
+        expect(mockGetFileMetadata).toHaveBeenCalledWith({
+          bucket: BUCKET,
+          path: 'report.pdf',
+        }),
+      );
+      await waitFor(() =>
+        expect(result.current.isFileMetadataLoading).toBe(false),
+      );
+      expect(result.current.fileMetadata).toMatchObject({
+        path: '/My files/report.pdf',
+        contentLength: 1234,
+        author: 'Jane Doe',
+      });
+    });
+
+    it('resolves the owner bucket for a root-level shared item', async () => {
+      mockGetFileMetadata.mockResolvedValue(metadataResponse);
+      const sharedRootFile = {
+        id: `files/${OWNER_BUCKET}/notes.txt`,
+        name: 'notes.txt',
+        path: '/Shared with me/notes.txt',
+        parentPath: '/Shared with me',
+        nodeType: DialFileNodeType.ITEM,
+        folderId: `${OWNER_BUCKET}:`,
+        bucket: OWNER_BUCKET,
+      };
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          activeTab: DialFileManagerTabs.Shared,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onGetInfo(sharedRootFile));
+
+      await waitFor(() =>
+        expect(mockGetFileMetadata).toHaveBeenCalledWith({
+          bucket: OWNER_BUCKET,
+          path: 'notes.txt',
+        }),
+      );
+    });
+
+    it('resolves the owner bucket for a nested shared item', async () => {
+      mockGetFileMetadata.mockResolvedValue(metadataResponse);
+      const nestedSharedFile = {
+        id: `files/${OWNER_BUCKET}/team-docs/report.pdf`,
+        name: 'report.pdf',
+        path: '/Shared with me/team-docs/report.pdf',
+        parentPath: '/Shared with me/team-docs',
+        nodeType: DialFileNodeType.ITEM,
+        folderId: `${OWNER_BUCKET}:files/${OWNER_BUCKET}/team-docs/`,
+        bucket: OWNER_BUCKET,
+      };
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          activeTab: DialFileManagerTabs.Shared,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onGetInfo(nestedSharedFile));
+
+      await waitFor(() =>
+        expect(mockGetFileMetadata).toHaveBeenCalledWith({
+          bucket: OWNER_BUCKET,
+          path: 'team-docs/report.pdf',
+        }),
+      );
+    });
+
+    it('resolves the item bucket for an organization item', async () => {
+      mockGetFileMetadata.mockResolvedValue(metadataResponse);
+      const publicBucket = 'public-bucket';
+      const orgFile = {
+        id: `files/${publicBucket}/guide.pdf`,
+        name: 'guide.pdf',
+        path: '/Organization/guide.pdf',
+        parentPath: '/Organization',
+        nodeType: DialFileNodeType.ITEM,
+        folderId: `${publicBucket}:`,
+        bucket: publicBucket,
+      };
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          activeTab: DialFileManagerTabs.Organization,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onGetInfo(orgFile));
+
+      await waitFor(() =>
+        expect(mockGetFileMetadata).toHaveBeenCalledWith({
+          bucket: publicBucket,
+          path: 'guide.pdf',
+        }),
+      );
+    });
+
+    it('shows an error toast and clears loading when getFileMetadata rejects', async () => {
+      mockGetFileMetadata.mockRejectedValue(new Error('failed'));
+      const onNotification = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET, onNotification }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onGetInfo(myFilesItem));
+
+      await waitFor(() =>
+        expect(onNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: NotificationVariant.Error }),
+        ),
+      );
+      expect(result.current.isFileMetadataLoading).toBe(false);
+    });
+
+    it('clearMetadata resets fileMetadata and isFileMetadataLoading', async () => {
+      mockGetFileMetadata.mockResolvedValue(metadataResponse);
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onGetInfo(myFilesItem));
+      await waitFor(() =>
+        expect(result.current.fileMetadata).not.toBeUndefined(),
+      );
+
+      act(() => result.current.clearMetadata());
+
+      expect(result.current.fileMetadata).toBeUndefined();
+      expect(result.current.isFileMetadataLoading).toBe(false);
     });
   });
 });

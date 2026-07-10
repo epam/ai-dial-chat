@@ -602,6 +602,15 @@ const DialFileManagerModal: FC<Props> = ({
       ),
       shareModalCancelLabel: cancelLabel,
       shareErrorMessage: t(DialFileManagerI18nKeys.ShareError),
+      infoLabel: t(DialFileManagerI18nKeys.InfoAction),
+      metadataHeader: t(DialFileManagerI18nKeys.MetadataHeader),
+      metadataNameLabel: t(DialFileManagerI18nKeys.MetadataNameLabel),
+      metadataPathLabel: t(DialFileManagerI18nKeys.MetadataPathLabel),
+      metadataModifiedDateLabel: t(
+        DialFileManagerI18nKeys.MetadataModifiedDateLabel,
+      ),
+      metadataSizeLabel: t(DialFileManagerI18nKeys.MetadataSizeLabel),
+      metadataAuthorLabel: t(DialFileManagerI18nKeys.MetadataAuthorLabel),
     }),
     [
       errorMessage,

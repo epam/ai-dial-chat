@@ -297,6 +297,14 @@ export enum DialFileManagerI18nKeys {
   ShareError = 'dialFileManager.shareError',
   UnshareError = 'dialFileManager.unshareError',
   RemoveAccessError = 'dialFileManager.removeAccessError',
+  InfoAction = 'dialFileManager.infoAction',
+  GetInfoError = 'dialFileManager.getInfoError',
+  MetadataHeader = 'dialFileManager.metadataHeader',
+  MetadataNameLabel = 'dialFileManager.metadataNameLabel',
+  MetadataPathLabel = 'dialFileManager.metadataPathLabel',
+  MetadataModifiedDateLabel = 'dialFileManager.metadataModifiedDateLabel',
+  MetadataSizeLabel = 'dialFileManager.metadataSizeLabel',
+  MetadataAuthorLabel = 'dialFileManager.metadataAuthorLabel',
 }
 
 export enum AuthI18nKeys {

@@ -80,4 +80,11 @@ export interface DialFileManagerShellLabels {
   shareModalLinkCopiedConfirmation: string;
   shareModalCancelLabel: string;
   shareErrorMessage: string;
+  infoLabel: string;
+  metadataHeader: string;
+  metadataNameLabel: string;
+  metadataPathLabel: string;
+  metadataModifiedDateLabel: string;
+  metadataSizeLabel: string;
+  metadataAuthorLabel: string;
 }

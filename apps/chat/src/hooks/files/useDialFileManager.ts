@@ -18,6 +18,7 @@ import type {
   CreateFolderResponseDto,
   DeleteItemDto,
   DiscardSharedItemDto,
+  FileMetadataResponseDto,
   ListFilesItemDto,
   MoveItemDto,
   RenameItemDto,
@@ -47,6 +48,7 @@ import {
   discardShared,
   downloadArchive,
   downloadFile,
+  getFileMetadata,
   listFiles,
   listPublicFiles,
   listSharedByMe,
@@ -230,6 +232,15 @@ export interface UseDialFileManagerResult {
   onRemoveFilesAccess: (files: DialFile[]) => void;
   /** True while a remove-access request is in flight. */
   isRemovingAccess: boolean;
+
+  /** Metadata: populated once onGetInfo resolves; passed to fileMetadataPopupOptions.fileMetadata. */
+  fileMetadata: DialFile | undefined;
+  /** True while a metadata request is in flight. */
+  isFileMetadataLoading: boolean;
+  /** Metadata: called by DialFileManager.onGetInfo to fetch and display a file's details. */
+  onGetInfo: (file: DialFile) => void;
+  /** Metadata: resets fileMetadata/isFileMetadataLoading; passed to fileMetadataPopupOptions.clearMetadata. */
+  clearMetadata: () => void;
 }
 
 export interface ShareTarget {
@@ -663,6 +674,34 @@ const mapSearchItem = (
 };
 
 /**
+ * Overlays a `FileMetadataResponseDto` response onto the clicked grid row so
+ * `fileMetadataPopupOptions.fileMetadata` receives a value structurally
+ * consistent with any other `DialFile` — the row already carries the correct
+ * virtual `path`/`id`/`name`/`nodeType`/`folderId`, while size/date/author/
+ * permissions are refreshed from the just-fetched server response.
+ */
+const mapFileMetadataToDialFile = (
+  metadata: FileMetadataResponseDto,
+  original: DialFile,
+): DialFile => ({
+  ...original,
+  bucket: metadata.bucket ?? original.bucket,
+  author: metadata.author,
+  contentLength: metadata.contentLength,
+  contentType: metadata.contentType,
+  resourceType:
+    (metadata.resourceType as DialFile['resourceType']) ??
+    original.resourceType,
+  permissions: mapCorePermissions(metadata.permissions) ?? original.permissions,
+  updatedAt: metadata.updatedAt
+    ? new Date(metadata.updatedAt).toISOString()
+    : original.updatedAt,
+  createdAt: metadata.createdAt
+    ? new Date(metadata.createdAt).toISOString()
+    : original.createdAt,
+});
+
+/**
  * Manages DIAL file-storage browsing state for DialFileManager.
  *
  * Supports three listing sources via `activeTab`:
@@ -708,6 +747,10 @@ export const useDialFileManager = ({
   const [isSharing, setIsSharing] = useState(false);
   const [isUnsharing, setIsUnsharing] = useState(false);
   const [isRemovingAccess, setIsRemovingAccess] = useState(false);
+  const [fileMetadata, setFileMetadata] = useState<DialFile | undefined>(
+    undefined,
+  );
+  const [isFileMetadataLoading, setIsFileMetadataLoading] = useState(false);
 
   // Maps shared root folder name → { bucket, dialCorePath } for subfolder navigation.
   const sharedRootMetaRef = useRef<Map<string, SharedRootMeta>>(new Map());
@@ -1600,6 +1643,37 @@ export const useDialFileManager = ({
     [bucket, rootLabel, onNotification, t],
   );
 
+  const onGetInfo = useCallback(
+    (file: DialFile) => {
+      const run = async () => {
+        setIsFileMetadataLoading(true);
+        try {
+          const itemBucket = file.bucket ?? bucket;
+          const itemPath = resolveDialFileApiPath(file, itemBucket, rootLabel);
+          const metadata = await getFileMetadata({
+            bucket: itemBucket,
+            path: itemPath,
+          });
+          setFileMetadata(mapFileMetadataToDialFile(metadata, file));
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.GetInfoError),
+          });
+        } finally {
+          setIsFileMetadataLoading(false);
+        }
+      };
+      void run();
+    },
+    [bucket, rootLabel, onNotification, t],
+  );
+
+  const clearMetadata = useCallback(() => {
+    setFileMetadata(undefined);
+    setIsFileMetadataLoading(false);
+  }, []);
+
   const path = folderPath ? `/${rootLabel}/${folderPath}` : `/${rootLabel}`;
 
   const currentFolder = useMemo((): DialFile | undefined => {
@@ -1998,6 +2072,12 @@ export const useDialFileManager = ({
         DialFileManagerI18nKeys.UnshareAction,
       );
     }
+    // Info is read-only and available on all three tabs — not tab-branched.
+    if (actionProfile === DialFileManagerActionProfile.Full) {
+      labels[DialFileManagerActions.Info] = t(
+        DialFileManagerI18nKeys.InfoAction,
+      );
+    }
     return labels;
   }, [activeTab, uploadEnabled, actionProfile, t]);
 
@@ -2060,5 +2140,9 @@ export const useDialFileManager = ({
     isUnsharing,
     onRemoveFilesAccess,
     isRemovingAccess,
+    fileMetadata,
+    isFileMetadataLoading,
+    onGetInfo,
+    clearMetadata,
   };
 };

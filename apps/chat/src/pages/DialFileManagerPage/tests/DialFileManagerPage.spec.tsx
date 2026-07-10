@@ -168,6 +168,10 @@ const defaultHookResult: UseDialFileManagerResult = {
   isUnsharing: false,
   onRemoveFilesAccess: vi.fn(),
   isRemovingAccess: false,
+  fileMetadata: undefined,
+  isFileMetadataLoading: false,
+  onGetInfo: vi.fn(),
+  clearMetadata: vi.fn(),
 };
 
 beforeEach(() => {
