@@ -92,6 +92,7 @@ dialTest(
     });
 
     await dialTest.step('Hover over chat1', async () => {
+      await chatMessages.hoverOver();
       await conversations.getEntityByName(firstConversation.name).hover();
       await conversationAssertion.assertEntityBackgroundColor(
         { name: firstConversation.name },

@@ -255,7 +255,7 @@ export class Chat extends BaseElement {
     }
   }
 
-  private async sendRequest(
+  public async sendRequest(
     message: string | undefined,
     sendMethod: () => Promise<void>,
     waitForAnswer = true,

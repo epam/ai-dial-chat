@@ -36,6 +36,7 @@ export function ToolsetDetailsFooter({
         share: !showContextMenu,
         unshare: !entity?.sharedWithMe,
         login: true,
+        repair: true,
       },
     }),
     [entity, screenState, showContextMenu],
