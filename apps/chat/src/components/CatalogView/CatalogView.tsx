@@ -27,6 +27,7 @@ import {
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
+import SharePopover from '../SharePopover/SharePopover';
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
@@ -165,6 +166,9 @@ const CatalogView: FC = () => {
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
       isPrimaryActionVisible={isPrimaryActionVisible}
+      shareOverlay={(item, onClose) => (
+        <SharePopover item={item} onClose={onClose} />
+      )}
       styles={{
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },
       }}

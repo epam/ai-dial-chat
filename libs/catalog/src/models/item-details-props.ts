@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { CatalogItem } from './catalog-item';
 
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
@@ -119,6 +120,11 @@ export interface DetailsPanelProps {
   isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked. */
   onShare?: (item: CatalogItem) => void;
+  /**
+   * Renders the Share popover content anchored to the Share button. When
+   * provided, clicking Share opens this popover instead of calling `onShare`.
+   */
+  shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   /** Text overrides for all user-visible strings. */
   texts?: ItemDetailsTexts;
   /** Grouped style overrides. */

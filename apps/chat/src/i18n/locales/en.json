@@ -462,6 +462,26 @@
     "retryLabel": "Try again",
     "reloadLabel": "Reload the page"
   },
+  "share": {
+    "title": "Share",
+    "qrButtonLabel": "QR",
+    "linkButtonLabel": "Link",
+    "linkLabel": "Link",
+    "anyoneWithLinkTitle": "Anyone with the link",
+    "anyoneWithLinkSubtitle": "in your organization",
+    "accessViewLabel": "Can view",
+    "accessEditLabel": "Can edit",
+    "accessAriaLabel": "Link access level",
+    "visibilityNote": "This application and its updates will be visible to users with the link.",
+    "visibilityNoteEdit": "Anyone with the link will be able to view and edit this application.",
+    "copyButtonLabel": "Copy",
+    "copiedButtonLabel": "Copied",
+    "linkAriaLabel": "Share link",
+    "expiryNote": "This link is active for {{days}} days.",
+    "qrCodeAriaLabel": "QR code for the share link",
+    "loadingLabel": "Creating share link…",
+    "errorTitle": "Couldn't create the share link. Please try again."
+  },
   "appsEditor": {
     "stepGeneral": "General",
     "stepSettings": "Settings",

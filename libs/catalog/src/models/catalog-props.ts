@@ -87,6 +87,12 @@ export interface CatalogProps {
   /** Called when the "Share" button is clicked in the details panel. */
   onShare?: (item: CatalogItem) => void;
   /**
+   * Renders the Share popover content anchored to the Share button in the
+   * details panel. When provided, clicking Share opens this popover instead
+   * of calling `onShare`.
+   */
+  shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /**
    * Called when the details panel opens for an item. Use this to fetch
    * enriched About-tab content from an API and pass it back as a string.
    * Returns `undefined` to let the panel fall back to `item.longDescription`.

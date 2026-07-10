@@ -132,13 +132,16 @@ vi.mock('../../Details/DetailsPanel', () => ({
   DetailsPanel: ({
     item,
     isPrimaryActionVisible,
+    shareOverlay,
   }: {
     item: CatalogItem;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
+    shareOverlay?: (item: CatalogItem, onClose: () => void) => React.ReactNode;
   }) => (
     <div>
       <span>{item.name}</span>
       <span>{String(isPrimaryActionVisible?.(item))}</span>
+      {shareOverlay?.(item, () => undefined)}
     </div>
   ),
 }));
@@ -263,5 +266,24 @@ describe('Catalog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
 
     expect(screen.getByText('true')).toBeTruthy();
+  });
+
+  it('passes shareOverlay through to the details panel', async () => {
+    const shareOverlay = vi.fn(() => <span>share overlay content</span>);
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        shareOverlay={shareOverlay}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(shareOverlay).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1', name: 'Claude' }),
+      expect.any(Function),
+    );
+    expect(screen.getByText('share overlay content')).toBeTruthy();
   });
 });

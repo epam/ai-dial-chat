@@ -1,0 +1,149 @@
+/*
+ * Compact variant of libs/catalog/src/components/Filter/Filter.module.scss's
+ * .filterBtn treatment, reusing the same DialDropdown + hand-built
+ * trigger/menu mechanism as the Catalog filter. Unlike the previous
+ * DialSelect-based approach, this trigger has no competing internal
+ * `.dial-input` rule to out-specificity, so no `!important` is needed here.
+ * The "open" look is driven by `isAccessOpen` (via `.accessTriggerBtnOpen`,
+ * mirroring Filter's own `isOpen && styles.filterBtnOpen`) rather than a
+ * focus pseudo-class — this way the trigger reads as focused for as long as
+ * the menu is open, but reverts to default the instant an option is picked
+ * and the menu closes, even though DOM focus is restored to the trigger for
+ * keyboard users. `:focus-visible` remains as a separate, real keyboard-nav
+ * indicator for when the (unopened) trigger is simply tabbed to.
+ */
+.accessTriggerBtn {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+
+  @media (hover: hover) {
+    &:hover:not(:focus-visible) {
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: color-mix(
+      in srgb,
+      var(--stroke-accent-primary, #7da4ff) 50%,
+      transparent
+    );
+    box-shadow: none;
+  }
+}
+
+/*
+ * Repeated to out-specificity `.accessTriggerBtn`'s own `:hover` rule (0,3,0)
+ * — otherwise, while the pointer still rests on the trigger right after the
+ * click that opened the menu, `:hover` would mask this "open" look.
+ */
+.accessTriggerBtnOpen.accessTriggerBtnOpen.accessTriggerBtnOpen.accessTriggerBtnOpen {
+  border-color: color-mix(
+    in srgb,
+    var(--stroke-accent-primary, #7da4ff) 50%,
+    transparent
+  );
+}
+
+/*
+ * Non-interactive stand-in for `.accessTriggerBtn`, used when the item type
+ * only ever supports view access (Model, Toolset) — same resting look, no
+ * hover/focus/open states or chevron, since there is nothing to open.
+ */
+.accessStaticLabel {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.accessTriggerLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #131a29);
+}
+
+.accessTriggerChevron {
+  color: var(--text-tertiary, #98a2b3);
+  transition: transform 150ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.accessMenuItem {
+  /*
+   * Matches Filter.module.scss's own `.row:hover` intent, but hardcoded
+   * rather than reading `--bg-layer-3` — that token resolves to the same
+   * white as this popover's own background in this app's theme (the same
+   * invisible white-on-white issue documented for DialSkeleton's default
+   * color above), which would make the hover invisible here too.
+   */
+  @media (hover: hover) {
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(125, 164, 255, 0.5);
+  }
+}
+
+.accessMenuItemChecked {
+  background: var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.15));
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.15));
+    }
+  }
+}
+
+.accessMenuItemLabel {
+  font-size: 14px;
+  color: var(--text-primary, #131a29);
+}
+
+/*
+ * Header/body divider — inset by the surrounding `mx-4` so it aligns with
+ * the popover's own content padding instead of running edge-to-edge, and
+ * lighter than `border-tertiary` for a subtler hairline.
+ */
+.divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/*
+ * Overrides libs/ai-dial-kit/src/components/Input/Input.scss's own
+ * `.dial-input:not(.dial-input-error)` rule and its `:hover`/`:focus(-within)`
+ * variants (all !important, specificity up to (0,4,0)) so the link field's
+ * default, hover, and focus stroke all match
+ * libs/catalog/src/components/SearchBar/SearchBar.module.scss's `.container`
+ * exactly, instead of the app-wide Input's default border language.
+ * The class is repeated to reach equal specificity.
+ */
+.linkInputWrapper.linkInputWrapper.linkInputWrapper.linkInputWrapper {
+  border-color: rgba(0, 0, 0, 0.05) !important;
+
+  @media (hover: hover) {
+    &:not(:disabled):hover:not(:focus-within) {
+      border-color: rgba(0, 0, 0, 0.12) !important;
+    }
+  }
+
+  &:not(:disabled):active,
+  &:not(:disabled):focus,
+  &:not(:disabled):focus-within {
+    border-color: color-mix(
+      in srgb,
+      var(--stroke-accent-primary, #7da4ff) 50%,
+      transparent
+    ) !important;
+    box-shadow: none !important;
+  }
+}
