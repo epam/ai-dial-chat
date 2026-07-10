@@ -213,6 +213,13 @@ export class EnvironmentVariables {
       .map((s: string) => s.trim())
       .filter((s: string) => s.length > 0);
   })
-  @IsUrl({ require_tld: false }, { each: true })
+  @IsUrl(
+    {
+      require_tld: false,
+      require_protocol: true,
+      protocols: ['https', 'http'],
+    },
+    { each: true },
+  )
   ALLOWED_IFRAME_ORIGINS?: string[] = [];
 }
