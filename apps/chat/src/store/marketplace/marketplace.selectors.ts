@@ -202,6 +202,9 @@ const selectFiltersContent = createSelector(
 const selectConnectLinkEntity = (state: RootState) =>
   rootSelector(state).connectLinkEntity;
 
+const selectRepairEntity = (state: RootState) =>
+  rootSelector(state).repairEntity;
+
 export const MarketplaceSelectors = {
   selectSelectedViewType,
   selectTableSort,
@@ -224,4 +227,5 @@ export const MarketplaceSelectors = {
   selectShowLoader,
   selectFiltersContent,
   selectConnectLinkEntity,
+  selectRepairEntity,
 };
