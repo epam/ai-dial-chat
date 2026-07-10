@@ -1203,6 +1203,62 @@ const expireLoggedInToolsetsCredsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const repairToolsetEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.repairToolset.type),
+    switchMap(({ payload }) =>
+      ToolsetService.repair(payload.id).pipe(
+        switchMap(() =>
+          ToolsetService.getToolsetById(payload.id).pipe(
+            switchMap((toolset) => {
+              return toolset
+                ? concat(
+                    of(ToolsetActions.getToolsetDetailsSuccess(toolset)),
+                    of(
+                      UIActions.showSuccessToast(
+                        translate(CommonI18nKeys.ToolsetRepairSuccessMessage, {
+                          ns: Translation.Common,
+                        }),
+                      ),
+                    ),
+                  )
+                : of(ToolsetActions.repairToolsetFailed(payload));
+            }),
+          ),
+        ),
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+
+          return of(
+            ToolsetActions.repairToolsetFailed({
+              ...payload,
+              traceId,
+              status: err.status as number | undefined,
+            }),
+          );
+        }),
+      ),
+    ),
+  );
+
+const repairToolsetFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.repairToolsetFailed.type),
+    map(({ payload }) => {
+      const message =
+        payload.status === 424
+          ? CommonI18nKeys.ToolsetRepairFailedMessage
+          : CommonI18nKeys.GeneralServerError;
+
+      return UIActions.showErrorToast({
+        message: translate(message, {
+          ns: Translation.Common,
+        }),
+        traceId: payload.traceId,
+      });
+    }),
+  );
+
 export const ToolsetEpics = combineEpics(
   initEpic,
   getToolsetsEpic,
@@ -1215,6 +1271,8 @@ export const ToolsetEpics = combineEpics(
   initQueryParamsEpic,
   exitEditorEpic,
   expireLoggedInToolsetsCredsEpic,
+  repairToolsetEpic,
+  repairToolsetFailEpic,
 
   //Delete
   deleteToolsetEpic,

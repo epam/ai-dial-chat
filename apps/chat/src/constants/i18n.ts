@@ -343,6 +343,12 @@ export enum CommonI18nKeys {
   ShareApplicationWithPublicResourcesFailed = 'Sharing failed. You are only allowed to share applications with resources from "My files"',
   LogOutBeforeEditingToolset = 'Log out before editing toolset',
   TraceId = 'Trace ID',
+  Continue = 'Continue',
+  Repair = 'Repair',
+  RepairDescription = 'Repair will re-register this toolset with the Authorization Server. All users will need to sign in again once their current session expires. Continue?',
+  RepairMyDescription = 'Repair will re-register this toolset with the Authorization Server. Continue?',
+  ToolsetRepairSuccessMessage = 'Toolset repaired. Users must re-authenticate.',
+  ToolsetRepairFailedMessage = 'Authorization server is currently unavailable. Try again once the AS is back.',
 }
 
 // errors.json
@@ -1241,4 +1247,11 @@ export enum MarketplaceI18nKeys {
   NoAgents = 'No agents',
   YouDontHaveAnyAgents = "You don't have any agents.",
   AbsentChatCompletionDisabledMessage = 'This application has no chat endpoint and cannot be selected for conversations',
+  FileTools = 'File tools',
+  AllowTheAgentToAccessAppFiles = 'Allow the agent to access app files',
+  FileToolsDescription = 'Enables the orchestrator’s built-in file tools for this app. When enabled, the agent can browse, search, read, and write or edit files in the app’s file context. When disabled, no file tools are exposed to the orchestrator.',
+  AllowOrchestratorToProcessLargeFiles = 'Allow orchestrator to process large files',
+  ProcessLargeFiles = 'Process large files',
+  ProcessLargeFilesDescription = 'Allows the orchestrator to handle large or many attachments by reading file content on demand instead of including all attachment content in the initial prompt. This helps reduce context window usage while preserving access to the files when needed.',
+  Repair = 'Repair',
 }

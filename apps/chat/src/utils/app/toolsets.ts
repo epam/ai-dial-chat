@@ -11,7 +11,12 @@ import {
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getEntityBucket, getToolsetRootId } from '@/src/utils/app/id';
+import {
+  getEntityBucket,
+  getToolsetRootId,
+  isEntityIdExternal,
+  isMyToolset,
+} from '@/src/utils/app/id';
 import { ApiUtils, getMarketplaceEntityApiKey } from '@/src/utils/server/api';
 import { ServerUtils } from '@/src/utils/server/server';
 
@@ -29,6 +34,7 @@ import { Routes } from '@/src/constants/routes';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import {
+  SharePermission,
   Toolset,
   ToolsetAuthStatus,
   ToolsetAuthTypes,
@@ -73,6 +79,8 @@ export const convertToolsetFromApi = (data: Toolset): ToolsetModel => {
     authSettings: {
       authenticationType:
         data.auth_settings?.authentication_type ?? ToolsetAuthTypes.NONE,
+      dynamicallyRegistered:
+        data.auth_settings?.dynamically_registered ?? false,
       authStatus: parseToolsetApiAuthStatus(data),
       clientId: data.auth_settings.client_id,
       clientSecret: data.auth_settings.client_secret,
@@ -120,6 +128,9 @@ const convertToolsetAuthSettingsToApi = (data: ToolsetModel) => {
         }),
         ...(data.authSettings.codeChallengeMethod && {
           code_challenge_method: data.authSettings.codeChallengeMethod,
+        }),
+        ...(data.authSettings.dynamicallyRegistered && {
+          dynamically_registered: data.authSettings.dynamicallyRegistered,
         }),
       };
     default:
@@ -361,3 +372,31 @@ export const getToolsetAuthActionLabel = (
 
 export const getToolsetMcpUrl = (id: string) =>
   `${DefaultsService.get('dialCoreExternalUrl')}/v1/toolset/${ServerUtils.encodeSlugs(id.split('/'))}/mcp`;
+
+export const canRepairToolset = (
+  toolset?: ToolsetModel,
+  isAdmin?: boolean,
+  authType?: ToolsetAuthTypes,
+): boolean => {
+  if (!toolset) return false;
+
+  const isPublicAndAdmin = !!isAdmin && isMarketplaceEntityPublic(toolset);
+  const isPrivateAndSignedOut =
+    isMyToolset(toolset) && !isToolsetSignedIn(toolset);
+
+  const hasRepairRights =
+    isPublicAndAdmin ||
+    isPrivateAndSignedOut ||
+    !!(
+      isEntityIdExternal(toolset) &&
+      toolset.sharedWithMe &&
+      toolset.permissions?.includes(SharePermission.WRITE)
+    );
+
+  return (
+    hasRepairRights &&
+    !!toolset.authSettings?.dynamicallyRegistered &&
+    (authType ?? toolset.authSettings?.authenticationType) ===
+      ToolsetAuthTypes.OAUTH
+  );
+};

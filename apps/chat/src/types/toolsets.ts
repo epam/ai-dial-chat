@@ -35,6 +35,7 @@ export interface ToolsetModel extends ShareEntity {
 
   authSettings: {
     authenticationType: ToolsetAuthTypes;
+    dynamicallyRegistered?: boolean;
     // API Key flow
     apiKeyHeader?: string;
     // OAuth flow
@@ -102,4 +103,5 @@ export type ToolsetContextMenuDisabledActions = Partial<{
   delete: boolean;
   login: boolean;
   connect: boolean;
+  repair: boolean;
 }>;
