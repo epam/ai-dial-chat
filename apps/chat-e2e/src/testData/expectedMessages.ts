@@ -466,6 +466,7 @@ export const ExpectedMessages = {
   popupContentIsValid: 'Popup content is valid',
   gridRowIsVisible: 'Grid row is visible',
   gridRowIsNotVisible: 'Grid row is not visible',
+  keyboardShortcutOptionIsValid: 'Keyboard shortcut option is valid',
 };
 
 export const PublishingExpectedMessages = {

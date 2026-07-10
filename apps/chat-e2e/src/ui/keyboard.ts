@@ -6,6 +6,7 @@ export const keys = {
   ctrlPlusC: isMac ? 'Meta+C' : 'Control+C',
   ctrlPlusV: isMac ? 'Meta+V' : 'Control+V',
   shiftPlusEnter: 'Shift+Enter',
+  ctrlPlusEnter: isMac ? 'Meta+Enter' : 'Control+Enter',
   home: 'Home',
   end: 'End',
   space: 'Space',
