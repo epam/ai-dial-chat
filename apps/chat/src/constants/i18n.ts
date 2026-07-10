@@ -352,6 +352,7 @@ export enum CommonI18nKeys {
   Continue = 'Continue',
   Repair = 'Repair',
   RepairDescription = 'Repair will re-register this toolset with the Authorization Server and sign out all users. They will need to sign in again. Continue?',
+  RepairMyDescription = 'Repair will re-register this toolset with the Authorization Server. Continue?',
   ToolsetRepairSuccessMessage = 'Toolset repaired. Users must re-authenticate.',
   ToolsetRepairFailedMessage = 'Authorization server is currently unavailable. Try again once the AS is back.',
 }

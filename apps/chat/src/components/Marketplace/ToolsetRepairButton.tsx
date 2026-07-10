@@ -60,6 +60,11 @@ export const ToolsetRepairButton: FC<ToolsetRepairButtonProps> = ({
     toolset?.authSettings?.dynamicallyRegistered &&
     authType === ToolsetAuthTypes.OAUTH;
 
+  const confirmDescription =
+    toolset && isMyToolset(toolset)
+      ? t(CommonI18nKeys.RepairMyDescription)
+      : t(CommonI18nKeys.RepairDescription);
+
   const handleRepair = useCallback(() => {
     dispatch(ToolsetActions.repairToolset({ id: toolset?.id as string }));
     setIsRepairing(false);
@@ -79,7 +84,7 @@ export const ToolsetRepairButton: FC<ToolsetRepairButtonProps> = ({
         isOpen={isRepairing}
         overlayClassName="!z-[101]"
         heading={t(CommonI18nKeys.Repair)}
-        description={t(CommonI18nKeys.RepairDescription)}
+        description={confirmDescription}
         confirmLabel={t(CommonI18nKeys.Continue)}
         cancelLabel={t(CommonI18nKeys.Cancel)}
         onClose={(isConfirmed) => {
