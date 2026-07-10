@@ -23,6 +23,7 @@ import {
   isQuickApp2,
 } from '@/src/utils/app/application';
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
@@ -44,6 +45,7 @@ import {
   isPromptId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { mergeFeatures } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { hasWritePermission } from '@/src/utils/app/share';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
@@ -55,6 +57,7 @@ import { Conversation } from '@/src/types/chat';
 import { ApiKeys, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import {
   ShareByLinkResponseModel,
@@ -610,6 +613,24 @@ const acceptInvitationSuccessEpic: AppEpic = (action$, state$, { router }) =>
                   },
                 ],
               }),
+            ),
+
+            ApplicationService.getDialEntity(applicationFromState.id).pipe(
+              filter((dialEntity): dialEntity is DialAIEntityModel =>
+                Boolean(dialEntity),
+              ),
+              map((dialEntity) =>
+                ModelsActions.updateModel({
+                  model: {
+                    ...applicationFromState,
+                    features: mergeFeatures({ ...dialEntity.features }),
+                    sharedWithMe: true,
+                    permissions,
+                  },
+                  oldApplicationId: applicationFromState.reference,
+                }),
+              ),
+              catchError(() => EMPTY),
             ),
 
             of(
