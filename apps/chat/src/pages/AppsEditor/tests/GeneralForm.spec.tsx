@@ -184,7 +184,11 @@ describe('GeneralForm', () => {
       await ref.current?.submit();
     });
     await waitFor(() =>
-      expect(onCreated).toHaveBeenCalledWith('users/u/apps/new'),
+      expect(onCreated).toHaveBeenCalledWith(
+        'users/u/apps/new',
+        'My App',
+        undefined,
+      ),
     );
     expect(createApplication).toHaveBeenCalledWith({
       name: 'My App',

@@ -178,6 +178,13 @@ export interface InputProps {
   /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
   isInputDisabled?: boolean;
   /**
+   * When `true`, the model selector renders in a disabled, non-interactive
+   * state (dimmed, does not open) while still showing the current model.
+   * Independent of `isInputDisabled`, which disables the rest of the
+   * composer — typing and sending remain usable.
+   */
+  isModelSelectorDisabled?: boolean;
+  /**
    * When `true`, the mic button is rendered and voice recording is enabled.
    * Derived by the host app from the selected deployment's `inputAttachmentTypes`.
    */

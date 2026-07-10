@@ -2,6 +2,7 @@ import {
   buildCssVars,
   mergeClasses,
   MessageRole,
+  useCollapsedText,
 } from '@epam/ai-dial-chat-shared';
 import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import {
@@ -11,7 +12,6 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { FC } from 'react';
-import { useCollapsedText } from '../../hooks/useCollapsedText';
 import type { UserMessageBubbleProps } from '../../models/MessageBubble';
 import { BubblePosition } from '../../types/bubble-position';
 import { MessageActions } from '../Message/MessageActions';
@@ -47,7 +47,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     expandedMaxHeight,
     isCollapsed,
     toggleCollapsed,
-  } = useCollapsedText({ text, collapsedLineCount });
+  } = useCollapsedText<HTMLParagraphElement>({ text, collapsedLineCount });
 
   const cssVars = buildCssVars({
     '--cm-bubble-user-bg': colors?.userBackground,

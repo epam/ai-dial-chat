@@ -10,7 +10,15 @@ import { CardRowRenderer } from './CardRowRenderer';
 
 /** Three-column virtualized grid of Card items with loading skeleton and empty state. */
 export const CardGrid: FC<CardGridProps> = memo(
-  ({ items, query = '', onToggleFavorite, onItemClick, titles, isLoading }) => {
+  ({
+    items,
+    query = '',
+    onToggleFavorite,
+    onItemClick,
+    titles,
+    isLoading,
+    selectedItemId,
+  }) => {
     const noResultsTitle = titles?.noResultsTitle ?? 'No results';
     const featuredLabel = titles?.featuredLabel ?? 'Featured';
     const addToFavoritesAriaLabel =
@@ -31,6 +39,7 @@ export const CardGrid: FC<CardGridProps> = memo(
         featuredLabel,
         addToFavoritesAriaLabel,
         removeFromFavoritesAriaLabel,
+        selectedItemId,
       }),
       [
         items,
@@ -41,6 +50,7 @@ export const CardGrid: FC<CardGridProps> = memo(
         featuredLabel,
         addToFavoritesAriaLabel,
         removeFromFavoritesAriaLabel,
+        selectedItemId,
       ],
     );
 
@@ -66,7 +76,7 @@ export const CardGrid: FC<CardGridProps> = memo(
                 showTitle={{ width: `${60 + ((i * 17) % 30)}%` }}
                 paragraph={{ rows: 3 }}
                 active
-                color="var(--cat-skeleton-bg)"
+                color="var(--bg-layer-4)"
               />
             </div>
           ))}

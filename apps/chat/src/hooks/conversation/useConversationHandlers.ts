@@ -53,6 +53,13 @@ interface Params {
   navigate: NavigateFunction;
   /** Called with batched filenames after a burst of network-error upload failures. */
   showNetworkError?: (filenames: string[]) => void;
+  /**
+   * When provided, overrides the globally-selected deployment for every
+   * message sent through this hook. Used by callers that pin the
+   * conversation to a specific model regardless of the user's current
+   * deployment selection elsewhere in the app.
+   */
+  fixedModelId?: string;
 }
 
 export const useConversationHandlers = ({
@@ -65,6 +72,7 @@ export const useConversationHandlers = ({
   setConversation,
   navigate,
   showNetworkError,
+  fixedModelId,
 }: Params) => {
   const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(
     null,
@@ -78,7 +86,8 @@ export const useConversationHandlers = ({
     propertyKey?: string;
     description?: string;
   } | null>(null);
-  const { selectedItemId } = useDeployments();
+  const { selectedItemId: contextSelectedItemId } = useDeployments();
+  const selectedItemId = fixedModelId ?? contextSelectedItemId;
 
   const { handleUploadAttachment } = useAttachmentUpload({
     bucket,

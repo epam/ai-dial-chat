@@ -7,7 +7,11 @@ import type {
   OverviewSection,
 } from '@epam/ai-dial-catalog';
 import { CodeLanguage } from '@epam/ai-dial-catalog';
-import { ModelEndpointType } from '../types/entity-details';
+import type {
+  DeploymentDetailsDto,
+  DeploymentFeaturesDetailsDto,
+} from '@epam/chat-api-client';
+import { AuthenticationType, ModelEndpointType } from '../types/entity-details';
 import type {
   AgentEntityDetails,
   EntitySpecificDetails,
@@ -16,6 +20,7 @@ import type {
   ModelEntityDetails,
   ModelPricing,
   SkillEntityDetails,
+  ToolsetAuthStatus,
   ToolsetEntityDetails,
 } from '../types/entity-details';
 
@@ -31,6 +36,9 @@ const formatTokens = (n: number): string =>
     : n >= 1_000
       ? `${n / 1_000}K tokens`
       : `${n} tokens`;
+
+const formatReleaseDate = (timestampMs: number): string =>
+  new Date(timestampMs).toLocaleDateString();
 
 const mapEndpointSnippets = (endpoint: ModelEndpoint): CodeSnippet[] => {
   const snippets: CodeSnippet[] = [];
@@ -50,15 +58,36 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
 
   if (data.capabilities != null) {
     const { capabilities: c } = data;
-    sections.push({
-      title: 'Capabilities',
-      specs: [
-        { label: 'Reasoning', value: c.hasReasoning },
-        { label: 'Instructions', value: c.hasInstructions },
-        { label: 'Tools', value: c.hasTools },
-        { label: 'Structured output', value: c.hasStructuredOutput },
-      ],
-    });
+    const specs: OverviewSection['specs'] = [];
+
+    if (c.hasTools != null) specs.push({ label: 'Tools', value: c.hasTools });
+    if (c.hasMcp != null) specs.push({ label: 'MCP', value: c.hasMcp });
+    if (c.hasCaching != null)
+      specs.push({ label: 'Prompt caching', value: c.hasCaching });
+    if (c.hasParallelToolCalls != null)
+      specs.push({
+        label: 'Parallel tool calls',
+        value: c.hasParallelToolCalls,
+      });
+    if (c.hasUrlAttachments != null)
+      specs.push({ label: 'URL attachments', value: c.hasUrlAttachments });
+    if (c.hasFolderAttachments != null)
+      specs.push({
+        label: 'Folder attachments',
+        value: c.hasFolderAttachments,
+      });
+    if (c.hasSeed != null) specs.push({ label: 'Seed', value: c.hasSeed });
+    if (c.hasSystemPrompt != null)
+      specs.push({ label: 'System prompt', value: c.hasSystemPrompt });
+    if (c.hasResume != null)
+      specs.push({ label: 'Resume', value: c.hasResume });
+    if (c.reasoningEfforts?.length)
+      specs.push({
+        label: 'Reasoning efforts',
+        value: c.reasoningEfforts.join(' · '),
+      });
+
+    if (specs.length > 0) sections.push({ title: 'Capabilities', specs });
   }
 
   if (data.specification != null) {
@@ -67,6 +96,11 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
 
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });
+    if (s.createdAt != null)
+      specs.push({
+        label: 'Release date',
+        value: formatReleaseDate(s.createdAt),
+      });
     if (s.contextWindowTokens != null)
       specs.push({
         label: 'Context window',
@@ -176,8 +210,48 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
       specs.push({ label: 'Permissions', value: s.permissions.join(' · ') });
     if (s.skills?.length)
       specs.push({ label: 'Skills', value: s.skills.join(' · ') });
+    if (s.hostedBy != null)
+      specs.push({ label: 'Hosted by', value: s.hostedBy });
+    if (s.createdAt != null)
+      specs.push({
+        label: 'Release date',
+        value: formatReleaseDate(s.createdAt),
+      });
+    if (s.routes?.length)
+      specs.push({ label: 'Routes', value: s.routes.join(' · ') });
 
     if (specs.length > 0) sections.push({ title: 'Specification', specs });
+  }
+
+  if (data.capabilities != null) {
+    const { capabilities: c } = data;
+    const specs: OverviewSection['specs'] = [];
+
+    if (c.hasTools != null) specs.push({ label: 'Tools', value: c.hasTools });
+    if (c.hasMcp != null) specs.push({ label: 'MCP', value: c.hasMcp });
+    if (c.hasCaching != null)
+      specs.push({ label: 'Prompt caching', value: c.hasCaching });
+    if (c.hasParallelToolCalls != null)
+      specs.push({
+        label: 'Parallel tool calls',
+        value: c.hasParallelToolCalls,
+      });
+    if (c.hasUrlAttachments != null)
+      specs.push({ label: 'URL attachments', value: c.hasUrlAttachments });
+    if (c.hasFolderAttachments != null)
+      specs.push({
+        label: 'Folder attachments',
+        value: c.hasFolderAttachments,
+      });
+    if (c.hasSeed != null) specs.push({ label: 'Seed', value: c.hasSeed });
+    if (c.hasSystemPrompt != null)
+      specs.push({ label: 'System prompt', value: c.hasSystemPrompt });
+    if (c.hasResume != null)
+      specs.push({ label: 'Resume', value: c.hasResume });
+    if (c.hasConfiguration != null)
+      specs.push({ label: 'Configuration schema', value: c.hasConfiguration });
+
+    if (specs.length > 0) sections.push({ title: 'Capabilities', specs });
   }
 
   if (data.configuration != null) {
@@ -242,9 +316,56 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
     if (s.authentication != null)
       specs.push({ label: 'Authentication', value: s.authentication });
     if (s.permissions?.length)
-      specs.push({ label: 'Permissions', value: s.permissions.join(' · ') });
+      specs.push({ label: 'Allowed tools', value: s.permissions.join(' · ') });
+    if (s.allTools?.length)
+      specs.push({
+        label: 'All supported tools',
+        value: s.allTools.join(' · '),
+      });
+    if (s.hostedBy != null)
+      specs.push({ label: 'Hosted by', value: s.hostedBy });
+    if (s.createdAt != null)
+      specs.push({
+        label: 'Release date',
+        value: formatReleaseDate(s.createdAt),
+      });
+    if (s.authStatus?.userLevel != null)
+      specs.push({
+        label: 'Sign-in status',
+        value: s.authStatus.userLevel,
+      });
+    if (s.authStatus?.scopesSupported?.length)
+      specs.push({
+        label: 'OAuth scopes',
+        value: s.authStatus.scopesSupported.join(' · '),
+      });
+    if (s.authStatus?.authorizationEndpoint != null)
+      specs.push({
+        label: 'Authorization endpoint',
+        value: s.authStatus.authorizationEndpoint,
+      });
+    if (s.authStatus?.tokenEndpoint != null)
+      specs.push({
+        label: 'Token endpoint',
+        value: s.authStatus.tokenEndpoint,
+      });
 
     if (specs.length > 0) sections.push({ title: 'Specification', specs });
+  }
+
+  if (data.capabilities != null) {
+    const { capabilities: c } = data;
+    const specs: OverviewSection['specs'] = [];
+
+    if (c.hasMcp != null) specs.push({ label: 'MCP', value: c.hasMcp });
+    if (c.hasCaching != null)
+      specs.push({ label: 'Prompt caching', value: c.hasCaching });
+    if (c.hasSystemPrompt != null)
+      specs.push({ label: 'System prompt', value: c.hasSystemPrompt });
+    if (c.hasResume != null)
+      specs.push({ label: 'Resume', value: c.hasResume });
+
+    if (specs.length > 0) sections.push({ title: 'Capabilities', specs });
   }
 
   return {
@@ -331,5 +452,209 @@ export const mapEntityDetailsToCatalogDetails = (
       return mapGuardrailDetails(details.data);
     case 'SKILL':
       return mapSkillDetails(details.data);
+  }
+};
+
+/**
+ * Superset of the `has*` capability flags used by `ModelCapabilities`,
+ * `AgentCapabilities`, and `ToolsetCapabilities` — all fields on those types
+ * are optional, so this can be assigned to any of them directly.
+ */
+interface DeploymentCapabilities {
+  hasTools?: boolean;
+  hasMcp?: boolean;
+  hasCaching?: boolean;
+  hasParallelToolCalls?: boolean;
+  hasUrlAttachments?: boolean;
+  hasFolderAttachments?: boolean;
+  hasSeed?: boolean;
+  hasSystemPrompt?: boolean;
+  hasResume?: boolean;
+  hasConfiguration?: boolean;
+  reasoningEfforts?: string[];
+}
+
+/**
+ * Feature flags are structurally identical across model, application, and
+ * toolset detail responses (`DeploymentFeaturesDetailsDto`), so one mapper
+ * produces the superset of `has*` capability flags; callers assign the
+ * result to whichever entity-specific `*Capabilities` type they need.
+ */
+const mapFeaturesToCapabilities = (
+  features: DeploymentFeaturesDetailsDto | undefined,
+): DeploymentCapabilities | undefined => {
+  if (features == null) return undefined;
+
+  return {
+    hasTools: features.tools,
+    hasMcp: features.mcp,
+    hasCaching: features.cache,
+    hasParallelToolCalls: features.parallelToolCalls,
+    hasUrlAttachments: features.urlAttachments,
+    hasFolderAttachments: features.folderAttachments,
+    hasSeed: features.seed,
+    hasSystemPrompt: features.systemPrompt,
+    hasResume: features.allowResume,
+    hasConfiguration: features.hasConfigurationSchema,
+    reasoningEfforts: features.reasoningEfforts,
+  };
+};
+
+const mapModelDetailsDto = (
+  dto: DeploymentDetailsDto,
+): EntitySpecificDetails => {
+  const {
+    limits,
+    pricing,
+    features,
+    owner,
+    inputAttachmentTypes,
+    defaultMaxTokens,
+    createdAt,
+  } = dto.modelDetails ?? {};
+
+  const hasSpecification =
+    limits != null ||
+    owner != null ||
+    createdAt != null ||
+    (inputAttachmentTypes?.length ?? 0) > 0;
+
+  return {
+    type: 'MODEL',
+    data: {
+      capabilities: mapFeaturesToCapabilities(features),
+      specification: hasSpecification
+        ? {
+            contextWindowTokens: limits?.maxTotalTokens,
+            maxOutputTokens: limits?.maxCompletionTokens ?? defaultMaxTokens,
+            inputTypes: inputAttachmentTypes,
+            hostedBy: owner,
+            createdAt,
+          }
+        : undefined,
+      pricing:
+        pricing != null
+          ? {
+              inputTokensPrice: pricing.prompt,
+              outputTokensPrice: pricing.completion,
+            }
+          : undefined,
+      api: { modelId: dto.id },
+    },
+  };
+};
+
+const mapApplicationDetailsDto = (
+  dto: DeploymentDetailsDto,
+): EntitySpecificDetails => {
+  const { routes, owner, inputAttachmentTypes, features, createdAt } =
+    dto.applicationDetails ?? {};
+
+  const hasSpecification =
+    owner != null || createdAt != null || (routes?.length ?? 0) > 0;
+
+  return {
+    type: 'AGENT',
+    data: {
+      capabilities: mapFeaturesToCapabilities(features),
+      specification: hasSpecification
+        ? {
+            hostedBy: owner,
+            createdAt,
+            routes,
+          }
+        : undefined,
+      configuration: inputAttachmentTypes?.length
+        ? { inputAttachmentTypes }
+        : undefined,
+    },
+  };
+};
+
+const isKnownToolsetAuthType = (
+  value: string | undefined,
+): value is AuthenticationType =>
+  value === AuthenticationType.None ||
+  value === AuthenticationType.ApiKey ||
+  value === AuthenticationType.OAuth;
+
+const mapToolsetAuthStatus = (
+  authSettings: NonNullable<
+    DeploymentDetailsDto['toolsetDetails']
+  >['authSettings'],
+): ToolsetAuthStatus | undefined => {
+  if (authSettings == null) return undefined;
+  const {
+    globalAuthStatus,
+    appLevelAuthStatus,
+    userLevelAuthStatus,
+    scopesSupported,
+    authorizationEndpoint,
+    tokenEndpoint,
+  } = authSettings;
+
+  if (
+    globalAuthStatus == null &&
+    appLevelAuthStatus == null &&
+    userLevelAuthStatus == null &&
+    authorizationEndpoint == null &&
+    tokenEndpoint == null &&
+    !scopesSupported?.length
+  ) {
+    return undefined;
+  }
+
+  return {
+    global: globalAuthStatus,
+    appLevel: appLevelAuthStatus,
+    userLevel: userLevelAuthStatus,
+    scopesSupported,
+    authorizationEndpoint,
+    tokenEndpoint,
+  };
+};
+
+const mapToolsetDetailsDto = (
+  dto: DeploymentDetailsDto,
+): EntitySpecificDetails => {
+  const toolsetDetails = dto.toolsetDetails;
+  const authenticationType = toolsetDetails?.authSettings?.authenticationType;
+
+  return {
+    type: 'TOOLSET',
+    data: {
+      capabilities: mapFeaturesToCapabilities(toolsetDetails?.features),
+      specification:
+        toolsetDetails != null
+          ? {
+              authentication: isKnownToolsetAuthType(authenticationType)
+                ? authenticationType
+                : undefined,
+              permissions: toolsetDetails.allowedTools,
+              allTools: toolsetDetails.allToolNames,
+              hostedBy: toolsetDetails.owner,
+              createdAt: toolsetDetails.createdAt,
+              authStatus: mapToolsetAuthStatus(toolsetDetails.authSettings),
+            }
+          : undefined,
+    },
+  };
+};
+
+/**
+ * Converts the backend `DeploymentDetailsDto` (model/application/toolset,
+ * fetched by id) into the strongly-typed `EntitySpecificDetails` domain model
+ * consumed by `mapEntityDetailsToCatalogDetails`.
+ */
+export const mapDeploymentDetailsDtoToEntityDetails = (
+  dto: DeploymentDetailsDto,
+): EntitySpecificDetails => {
+  switch (dto.type) {
+    case 'model':
+      return mapModelDetailsDto(dto);
+    case 'application':
+      return mapApplicationDetailsDto(dto);
+    case 'toolset':
+      return mapToolsetDetailsDto(dto);
   }
 };

@@ -1,6 +1,7 @@
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { GhostButton, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DialSteps } from '@epam/ai-dial-ui-kit';
 import type { Step } from '@epam/ai-dial-ui-kit';
+import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
 
@@ -15,6 +16,14 @@ interface Props {
   onChangeStep: (stepId: string) => void;
   onCancel: () => void;
   onSave: () => void;
+  /** Preview label shown when `isPreviewing` is falsy. Required together with `onPreview`. */
+  previewButtonLabel?: string;
+  /** "Exit preview" label shown when `isPreviewing` is truthy. Required together with `onPreview`. */
+  exitPreviewButtonLabel?: string;
+  /** Whether the preview pane is currently shown. Toggles the button's label/icon. */
+  isPreviewing?: boolean;
+  /** Renders the preview/exit-preview button in the right-hand action group, before Cancel/Save, only when provided. */
+  onPreview?: () => void;
 }
 
 const EditorHeader: FC<Props> = ({
@@ -28,6 +37,10 @@ const EditorHeader: FC<Props> = ({
   onChangeStep,
   onCancel,
   onSave,
+  previewButtonLabel,
+  exitPreviewButtonLabel,
+  isPreviewing = false,
+  onPreview,
 }) => (
   <header className="flex items-center justify-between gap-3 border-b border-b-tertiary bg-layer-2 px-4 py-1">
     <div className="flex items-center gap-3">
@@ -49,17 +62,25 @@ const EditorHeader: FC<Props> = ({
       </nav>
     </div>
     <div className="flex items-center gap-2">
+      {onPreview && (
+        <GhostButton
+          type="button"
+          label={isPreviewing ? exitPreviewButtonLabel : previewButtonLabel}
+          iconBefore={isPreviewing ? <IconEyeOff /> : <IconEye />}
+          onClick={onPreview}
+        />
+      )}
       <NeutralButton
         type="button"
         label={cancelButtonLabel}
         onClick={onCancel}
-        disabled={isSaving}
+        disabled={isSaving || isPreviewing}
       />
       <PrimaryButton
         type="button"
         label={saveButtonLabel}
         onClick={onSave}
-        disabled={isSaving}
+        disabled={isSaving || isPreviewing}
       />
     </div>
   </header>

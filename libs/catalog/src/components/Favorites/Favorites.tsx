@@ -63,6 +63,7 @@ export const Favorites: FC<FavoritesProps> = ({
   nextPageAriaLabel = 'Next page',
   addToFavoritesAriaLabel,
   removeFromFavoritesAriaLabel,
+  selectedItemId,
 }) => {
   const titleClassName =
     favoritesStyles?.typography?.titleClassName ??
@@ -448,6 +449,7 @@ export const Favorites: FC<FavoritesProps> = ({
               onClick={onItemClick}
               addToFavoritesAriaLabel={addToFavoritesAriaLabel}
               removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
+              isSelected={item.id === selectedItemId}
             />
           ))}
         </div>

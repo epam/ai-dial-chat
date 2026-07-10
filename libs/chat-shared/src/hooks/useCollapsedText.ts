@@ -1,5 +1,4 @@
-import type { RefObject } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const DEFAULT_LINE_HEIGHT_FALLBACK = 24;
 const OVERFLOW_TOLERANCE = 1;
@@ -11,9 +10,15 @@ export interface UseCollapsedTextOptions {
   collapsedLineCount: number;
 }
 
-export interface UseCollapsedTextResult {
-  /** Ref attached to the text element whose rendered height should be measured. */
-  textRef: RefObject<HTMLParagraphElement | null>;
+export interface UseCollapsedTextResult<T extends HTMLElement> {
+  /**
+   * Ref callback attached to the text element whose rendered height should
+   * be measured. Using a callback (rather than a `RefObject`) ensures
+   * measurement re-runs as soon as the node mounts, even if the element is
+   * hidden behind a conditional (e.g. a loading skeleton) when `text` first
+   * becomes available.
+   */
+  textRef: (node: T | null) => void;
   /** Whether the full text is currently hidden behind the collapsed viewport. */
   isTextCollapsed: boolean;
   /** Whether the measured text is taller than the collapsed viewport. */
@@ -29,12 +34,12 @@ export interface UseCollapsedTextResult {
 }
 
 /** Measures rendered text and owns the expand/collapse state for long plain-text content. */
-export const useCollapsedText = ({
+export const useCollapsedText = <T extends HTMLElement = HTMLElement>({
   text,
   collapsedLineCount,
-}: UseCollapsedTextOptions): UseCollapsedTextResult => {
+}: UseCollapsedTextOptions): UseCollapsedTextResult<T> => {
   const effectiveCollapsedLineCount = Math.max(1, collapsedLineCount);
-  const textRef = useRef<HTMLParagraphElement>(null);
+  const [node, setNode] = useState<T | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [collapsedMaxHeight, setCollapsedMaxHeight] = useState(
@@ -42,11 +47,14 @@ export const useCollapsedText = ({
   );
   const [expandedMaxHeight, setExpandedMaxHeight] = useState(0);
 
-  const measureOverflow = useCallback(() => {
-    const el = textRef.current;
-    if (!el) return;
+  const textRef = useCallback((next: T | null) => {
+    setNode(next);
+  }, []);
 
-    const computedStyle = window.getComputedStyle(el);
+  const measureOverflow = useCallback(() => {
+    if (!node) return;
+
+    const computedStyle = window.getComputedStyle(node);
     const parsedFontSize = Number.parseFloat(computedStyle.fontSize);
     const fontSize = Number.isNaN(parsedFontSize) ? 16 : parsedFontSize;
     const parsedLineHeight = Number.parseFloat(computedStyle.lineHeight);
@@ -64,9 +72,9 @@ export const useCollapsedText = ({
     const nextMaxHeight = lineHeight * effectiveCollapsedLineCount;
 
     setCollapsedMaxHeight(nextMaxHeight);
-    setExpandedMaxHeight(el.scrollHeight);
-    setIsOverflowing(el.scrollHeight - nextMaxHeight > OVERFLOW_TOLERANCE);
-  }, [effectiveCollapsedLineCount]);
+    setExpandedMaxHeight(node.scrollHeight);
+    setIsOverflowing(node.scrollHeight - nextMaxHeight > OVERFLOW_TOLERANCE);
+  }, [node, effectiveCollapsedLineCount]);
 
   useEffect(() => {
     setIsCollapsed(true);
@@ -75,14 +83,13 @@ export const useCollapsedText = ({
   useEffect(() => {
     measureOverflow();
 
-    const el = textRef.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
+    if (!node || typeof ResizeObserver === 'undefined') return;
 
     const resizeObserver = new ResizeObserver(measureOverflow);
-    resizeObserver.observe(el);
+    resizeObserver.observe(node);
 
     return () => resizeObserver.disconnect();
-  }, [measureOverflow, text]);
+  }, [measureOverflow, node, text]);
 
   const toggleCollapsed = useCallback(() => {
     setIsCollapsed((current) => !current);

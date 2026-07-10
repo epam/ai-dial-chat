@@ -4,6 +4,7 @@ import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
+import type { CatalogItemTabData } from '../../models/item-details-data';
 import { CatalogSortKey } from '../../types/sort';
 import { CatalogViewMode } from '../../types/view-mode';
 import {
@@ -35,9 +36,14 @@ export const Catalog: FC<CatalogProps> = ({
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
-  onFetchAboutContent,
+  onFetchDetails,
+  onEdit,
   onCreateClick,
   createOptions,
+  hideCreateButton = false,
+  hidePageTitle = false,
+  selectedItemId,
+  onCardClick,
   isLoading,
   styles: catalogStyles,
   detailsTexts,
@@ -124,33 +130,41 @@ export const Catalog: FC<CatalogProps> = ({
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [aboutContent, setAboutContent] = useState<string | undefined>(
-    undefined,
-  );
-  const [isAboutLoading, setIsAboutLoading] = useState(false);
+  const [fetchedDetails, setFetchedDetails] = useState<
+    CatalogItemTabData | undefined
+  >(undefined);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
   const handleOpenDetails = useCallback(
     async (item: CatalogItem) => {
       setSelectedItem(item);
-      setAboutContent(undefined);
+      setFetchedDetails(undefined);
+      pendingItemIdRef.current = item.id;
 
-      if (onFetchAboutContent) {
-        setIsAboutLoading(true);
-        pendingItemIdRef.current = item.id;
-        try {
-          const content = await onFetchAboutContent(item);
-          if (pendingItemIdRef.current === item.id) {
-            setAboutContent(content);
-          }
-        } finally {
-          if (pendingItemIdRef.current === item.id) {
-            setIsAboutLoading(false);
-          }
-        }
+      const fetches: Promise<void>[] = [];
+
+      if (onFetchDetails) {
+        setIsDetailsLoading(true);
+        fetches.push(
+          (async () => {
+            try {
+              const details = await onFetchDetails(item);
+              if (pendingItemIdRef.current === item.id) {
+                setFetchedDetails(details);
+              }
+            } finally {
+              if (pendingItemIdRef.current === item.id) {
+                setIsDetailsLoading(false);
+              }
+            }
+          })(),
+        );
       }
+
+      await Promise.all(fetches);
     },
-    [onFetchAboutContent],
+    [onFetchDetails],
   );
 
   const handleCloseDetails = useCallback(() => {
@@ -158,10 +172,17 @@ export const Catalog: FC<CatalogProps> = ({
     pendingItemIdRef.current = null;
     setTimeout(() => {
       setSelectedItem(null);
-      setAboutContent(undefined);
-      setIsAboutLoading(false);
+      setFetchedDetails(undefined);
+      setIsDetailsLoading(false);
     }, 300);
   }, []);
+
+  const detailsPanelItem = useMemo<CatalogItem | null>(() => {
+    if (selectedItem == null) return null;
+    return fetchedDetails != null
+      ? { ...selectedItem, details: fetchedDetails }
+      : selectedItem;
+  }, [selectedItem, fetchedDetails]);
 
   const sorted = useMemo(
     () => sortCatalogItems(filteredItems, sortKey),
@@ -213,7 +234,7 @@ export const Catalog: FC<CatalogProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center">
+      <div className="flex size-full min-h-0 flex-1 items-center justify-center">
         <DialSpinner />
       </div>
     );
@@ -225,23 +246,29 @@ export const Catalog: FC<CatalogProps> = ({
       className={mergeClasses('flex min-h-0 flex-1 flex-col', styles.root)}
       style={cssVars}
     >
-      <div className={mergeClasses('shrink-0', styles.heading)}>
-        <div className="flex h-[64px] w-full items-center justify-between px-8">
-          <h1
-            className={mergeClasses(
-              typography?.pageHeadingFontClassName ?? 'dial-display2-text',
-              styles.headingTitle,
+      {(!hidePageTitle || !hideCreateButton) && (
+        <div className={mergeClasses('shrink-0', styles.heading)}>
+          <div className="flex h-[64px] w-full items-center justify-between px-8">
+            {!hidePageTitle && (
+              <h1
+                className={mergeClasses(
+                  typography?.pageHeadingFontClassName ?? 'dial-display2-text',
+                  styles.headingTitle,
+                )}
+              >
+                {pageTitle}
+              </h1>
             )}
-          >
-            {pageTitle}
-          </h1>
-          <CreateButton
-            label={createLabel}
-            options={createOptions}
-            onClick={onCreateClick}
-          />
+            {!hideCreateButton && (
+              <CreateButton
+                label={createLabel}
+                options={createOptions}
+                onClick={onCreateClick}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="min-h-0 flex-1 overflow-auto">
         {isFavoritesRendered && (
@@ -251,9 +278,10 @@ export const Catalog: FC<CatalogProps> = ({
               totalCount={favorites.length}
               title={favoritesTitle}
               onToggleFavorite={onToggleFavorite}
-              onItemClick={handleOpenDetails}
+              onItemClick={onCardClick ?? handleOpenDetails}
               isLeaving={isFavoritesLeaving}
               onExitComplete={handleFavoritesExitComplete}
+              selectedItemId={selectedItemId}
             />
           </div>
         )}
@@ -310,8 +338,9 @@ export const Catalog: FC<CatalogProps> = ({
                 items={tabFiltered}
                 query={query}
                 onToggleFavorite={onToggleFavorite}
-                onItemClick={handleOpenDetails}
+                onItemClick={onCardClick ?? handleOpenDetails}
                 titles={cardGridTitles}
+                selectedItemId={selectedItemId}
               />
             </div>
           )}
@@ -324,26 +353,27 @@ export const Catalog: FC<CatalogProps> = ({
                 ariaLabel={resolvedAriaLabel}
                 emptyStateTitle={emptyTitle}
                 onToggleFavorite={onToggleFavorite}
-                onItemClick={handleOpenDetails}
+                onItemClick={onCardClick ?? handleOpenDetails}
                 stickyHeaderTop={0}
+                selectedItemId={selectedItemId}
               />
             </div>
           )}
         </div>
       </div>
 
-      {selectedItem != null && (
+      {detailsPanelItem != null && (
         <DetailsPanel
-          item={selectedItem}
+          item={detailsPanelItem}
           isOpen={isDetailsOpen}
           isStarred={isSelectedItemStarred}
-          aboutContent={aboutContent}
-          isAboutLoading={isAboutLoading}
+          isDetailsLoading={isDetailsLoading}
           onClose={handleCloseDetails}
           onToggleFavorite={onToggleFavorite}
           onUseInChat={onUseInChat}
           isPrimaryActionVisible={isPrimaryActionVisible}
           onShare={onShare}
+          onEdit={onEdit}
           texts={detailsTexts}
         />
       )}

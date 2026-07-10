@@ -35,7 +35,6 @@ import {
 import {
   formToToolsetBody,
   getDefaultToolsetForm,
-  initiateOAuthLogin,
   isValidEndpointUrl,
   toolsetDtoToForm,
 } from '../../utils/toolsets';
@@ -122,6 +121,17 @@ const ToolsetEditor: FC = () => {
     [],
   );
 
+  const setEditorStep = useCallback(
+    (stepId: string) => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set(ToolsetEditorQuery.Step, stepId);
+        return next;
+      });
+    },
+    [setSearchParams],
+  );
+
   const handleNext = useCallback(() => {
     if (!form) return;
     if (!form.name.trim()) {
@@ -129,12 +139,8 @@ const ToolsetEditor: FC = () => {
       return;
     }
     setErrors({});
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.set(ToolsetEditorQuery.Step, ToolsetEditorSteps.Settings);
-      return next;
-    });
-  }, [form, t, setSearchParams]);
+    setEditorStep(ToolsetEditorSteps.Settings);
+  }, [form, t, setEditorStep]);
 
   const handleChangeStep = useCallback(
     (stepId: string) => {
@@ -142,13 +148,9 @@ const ToolsetEditor: FC = () => {
         handleNext();
         return;
       }
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        next.set(ToolsetEditorQuery.Step, stepId);
-        return next;
-      });
+      setEditorStep(stepId);
     },
-    [setSearchParams, isEditMode, handleNext],
+    [isEditMode, handleNext, setEditorStep],
   );
 
   const handleCancel = useCallback(() => {
@@ -201,21 +203,9 @@ const ToolsetEditor: FC = () => {
     [t],
   );
 
-  const buildEditorCallbackUrl = useCallback(
-    (savedToolsetId: string): string => {
-      const params = new URLSearchParams({
-        [ToolsetEditorQuery.Id]: savedToolsetId,
-        [ToolsetEditorQuery.Step]: ToolsetEditorSteps.Settings,
-        [ToolsetEditorQuery.ReturnUrl]: returnUrl,
-      });
-      return `${ROUTES.ToolsetEditor}?${params.toString()}`;
-    },
-    [returnUrl],
-  );
-
   const runPostSaveAuth = useCallback(
-    async (savedToolsetId: string, data: ToolsetFormData): Promise<boolean> => {
-      if (data.auth.isLoggedIn) return false;
+    async (savedToolsetId: string, data: ToolsetFormData): Promise<void> => {
+      if (data.auth.isLoggedIn) return;
 
       if (
         data.auth.authenticationType === ToolsetAuthTypes.ApiKey &&
@@ -230,25 +220,9 @@ const ToolsetEditor: FC = () => {
           apiKey: data.auth.apiKey?.trim(),
         };
         await loginToolset(savedToolsetId, body);
-        return false;
       }
-
-      if (
-        data.auth.authenticationType === ToolsetAuthTypes.OAuth &&
-        data.auth.withLogin === WithLogin.WithConfig
-      ) {
-        const started = initiateOAuthLogin(
-          data.auth,
-          savedToolsetId,
-          buildEditorCallbackUrl(savedToolsetId),
-        );
-        if (!started) throw new Error('OAuth authorization URL is invalid.');
-        return true;
-      }
-
-      return false;
     },
-    [buildEditorCallbackUrl],
+    [],
   );
 
   const handleSave = useCallback(async () => {
@@ -258,7 +232,7 @@ const ToolsetEditor: FC = () => {
       setErrors(nextErrors);
       // Surface the General-step error first by switching to it when needed.
       if (nextErrors.name || nextErrors.intro) {
-        handleChangeStep(ToolsetEditorSteps.General);
+        setEditorStep(ToolsetEditorSteps.General);
       } else if (
         nextErrors.endpoint ||
         nextErrors.keyHeader ||
@@ -266,7 +240,7 @@ const ToolsetEditor: FC = () => {
         nextErrors.clientId ||
         nextErrors.clientSecret
       ) {
-        handleChangeStep(ToolsetEditorSteps.Settings);
+        setEditorStep(ToolsetEditorSteps.Settings);
       }
       return;
     }
@@ -280,8 +254,8 @@ const ToolsetEditor: FC = () => {
         : await createToolset(body);
       await refetchToolsets();
       try {
-        const isRedirecting = await runPostSaveAuth(result.id, form);
-        if (!isRedirecting) navigate(returnUrl);
+        await runPostSaveAuth(result.id, form);
+        navigate(returnUrl);
       } catch {
         showNotification({
           variant: NotificationVariant.Error,
@@ -309,7 +283,7 @@ const ToolsetEditor: FC = () => {
     returnUrl,
     t,
     showNotification,
-    handleChangeStep,
+    setEditorStep,
     runPostSaveAuth,
     refetchToolsets,
   ]);
@@ -323,6 +297,7 @@ const ToolsetEditor: FC = () => {
       <ToolsetEditorHeader
         step={step}
         isSaving={isSaving}
+        canOpenSettings={Boolean(form.name.trim())}
         onChangeStep={handleChangeStep}
         onCancel={handleCancel}
         onSave={handleSave}
