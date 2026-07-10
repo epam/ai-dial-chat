@@ -1261,4 +1261,5 @@ export enum MarketplaceI18nKeys {
   AllowOrchestratorToProcessLargeFiles = 'Allow orchestrator to process large files',
   ProcessLargeFiles = 'Process large files',
   ProcessLargeFilesDescription = 'Allows the orchestrator to handle large or many attachments by reading file content on demand instead of including all attachment content in the initial prompt. This helps reduce context window usage while preserving access to the files when needed.',
+  Repair = 'Repair',
 }
