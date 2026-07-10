@@ -1,5 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { ElementSize } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
+import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import type { CardProps } from '../../models/card-props';
@@ -21,6 +22,7 @@ export const Card: FC<CardProps> = ({
   featuredLabel = 'Featured',
   addToFavoritesAriaLabel = 'Add to favorites',
   removeFromFavoritesAriaLabel = 'Remove from favorites',
+  isSelected = false,
   className,
   styles: cardStyles,
 }) => {
@@ -71,9 +73,12 @@ export const Card: FC<CardProps> = ({
       style={getFeaturedEntityStyle(item)}
       className={mergeClasses(
         'relative box-border flex cursor-pointer flex-col gap-[14px]',
-        'rounded-[20px] p-[22px]',
+        'rounded-[20px] border-2 p-[22px]',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
+        isSelected
+          ? 'border-accent-primary !bg-accent-primary-alpha'
+          : 'border-transparent',
         className,
       )}
     >
@@ -84,6 +89,14 @@ export const Card: FC<CardProps> = ({
             className={featuredChipClassName}
           />
         </div>
+      )}
+
+      {isSelected && (
+        <IconCheck
+          size={DIAL_ICON_SIZE.SM}
+          className="absolute end-3 top-3 shrink-0 text-accent-primary"
+          aria-hidden
+        />
       )}
 
       <AppIdentity

@@ -137,12 +137,18 @@ export enum CatalogI18nKeys {
   TabToolsets = 'catalog.tab.toolsets',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
-  PickerTitle = 'catalog.picker.title',
-  PickerSearchPlaceholder = 'catalog.picker.searchPlaceholder',
-  PickerSearchAriaLabel = 'catalog.picker.searchAriaLabel',
-  PickerEmptyHint = 'catalog.picker.emptyHint',
-  PickerBrowseCatalog = 'catalog.picker.browseCatalogLabel',
-  PickerRemoveFromFavorites = 'catalog.picker.removeFromFavoritesLabel',
+}
+
+export enum DeploymentSelectorI18nKeys {
+  Title = 'deploymentSelector.title',
+  SearchPlaceholder = 'deploymentSelector.searchPlaceholder',
+  SearchAriaLabel = 'deploymentSelector.searchAriaLabel',
+  FavoritesLabel = 'deploymentSelector.favoritesLabel',
+  EmptyHint = 'deploymentSelector.emptyHint',
+  BrowseCatalog = 'deploymentSelector.browseCatalogLabel',
+  RemoveFromFavorites = 'deploymentSelector.removeFromFavoritesLabel',
+  CurrentlySelectedLabel = 'deploymentSelector.currentlySelectedLabel',
+  AddToFavorites = 'deploymentSelector.addToFavoritesLabel',
 }
 
 export enum NotFoundI18nKeys {

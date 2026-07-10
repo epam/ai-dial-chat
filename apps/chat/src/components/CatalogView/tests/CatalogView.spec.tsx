@@ -23,6 +23,7 @@ vi.mock('@epam/ai-dial-catalog', () => ({
   CatalogEntityType: {
     Model: 'MODEL',
     Application: 'APPLICATION',
+    Agent: 'AGENT',
     Toolset: 'TOOLSET',
   },
   Catalog: ({
@@ -34,6 +35,7 @@ vi.mock('@epam/ai-dial-catalog', () => ({
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
+    favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;

@@ -65,6 +65,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     filterValues = new Set(),
     isMyAppsActive,
     onMyAppsChange,
+    onViewModeChange,
   }: {
     title?: string;
     query: string;
@@ -74,6 +75,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     filterValues?: Set<string>;
     isMyAppsActive?: boolean;
     onMyAppsChange?: (isActive: boolean) => void;
+    onViewModeChange?: (mode: string) => void;
   }) => (
     <div>
       <span>{title ?? 'Browse'}</span>
@@ -99,6 +101,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
         </button>
       ))}
       <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
+      <button onClick={() => onViewModeChange?.('list')}>List view</button>
     </div>
   ),
 }));
@@ -106,14 +109,20 @@ vi.mock('../../CardGrid/CardGrid', () => ({
   CardGrid: ({
     items,
     onItemClick,
+    selectedItemId,
   }: {
     items: CatalogItem[];
     onItemClick: (item: CatalogItem) => void;
+    selectedItemId?: string;
   }) => (
     <div role="grid" aria-label="catalog grid">
       {items.length} items
       {items.map((item) => (
-        <button key={item.id} onClick={() => onItemClick(item)}>
+        <button
+          key={item.id}
+          onClick={() => onItemClick(item)}
+          aria-pressed={item.id === selectedItemId}
+        >
           {item.name}
         </button>
       ))}
@@ -121,12 +130,47 @@ vi.mock('../../CardGrid/CardGrid', () => ({
   ),
 }));
 vi.mock('../../Favorites/Favorites', () => ({
-  Favorites: ({ title }: { title?: string }) => (
-    <div>{title ?? 'Your Favorites'}</div>
+  Favorites: ({
+    title,
+    items,
+    onItemClick,
+    selectedItemId,
+  }: {
+    title?: string;
+    items: CatalogItem[];
+    onItemClick?: (item: CatalogItem) => void;
+    selectedItemId?: string;
+  }) => (
+    <div>
+      <span>{title ?? 'Your Favorites'}</span>
+      {items.map((item) => (
+        <button
+          key={item.id}
+          onClick={() => onItemClick?.(item)}
+          aria-pressed={item.id === selectedItemId}
+        >
+          fav-{item.name}
+        </button>
+      ))}
+    </div>
   ),
 }));
 vi.mock('../../ListView/ListView', () => ({
-  ListView: () => <div role="grid" aria-label="catalog list" />,
+  ListView: ({
+    items,
+    onItemClick,
+  }: {
+    items: CatalogItem[];
+    onItemClick?: (item: CatalogItem) => void;
+  }) => (
+    <div role="grid" aria-label="catalog list">
+      {items.map((item) => (
+        <button key={item.id} onClick={() => onItemClick?.(item)}>
+          row-{item.name}
+        </button>
+      ))}
+    </div>
+  ),
 }));
 vi.mock('../../Details/DetailsPanel', () => ({
   DetailsPanel: ({

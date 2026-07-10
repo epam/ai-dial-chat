@@ -40,6 +40,10 @@ export const Catalog: FC<CatalogProps> = ({
   onEdit,
   onCreateClick,
   createOptions,
+  hideCreateButton = false,
+  hidePageTitle = false,
+  selectedItemId,
+  onCardClick,
   isLoading,
   styles: catalogStyles,
   detailsTexts,
@@ -230,7 +234,7 @@ export const Catalog: FC<CatalogProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center">
+      <div className="flex size-full min-h-0 flex-1 items-center justify-center">
         <DialSpinner />
       </div>
     );
@@ -242,23 +246,29 @@ export const Catalog: FC<CatalogProps> = ({
       className={mergeClasses('flex min-h-0 flex-1 flex-col', styles.root)}
       style={cssVars}
     >
-      <div className={mergeClasses('shrink-0', styles.heading)}>
-        <div className="flex h-[64px] w-full items-center justify-between px-8">
-          <h1
-            className={mergeClasses(
-              typography?.pageHeadingFontClassName ?? 'dial-display2-text',
-              styles.headingTitle,
+      {(!hidePageTitle || !hideCreateButton) && (
+        <div className={mergeClasses('shrink-0', styles.heading)}>
+          <div className="flex h-[64px] w-full items-center justify-between px-8">
+            {!hidePageTitle && (
+              <h1
+                className={mergeClasses(
+                  typography?.pageHeadingFontClassName ?? 'dial-display2-text',
+                  styles.headingTitle,
+                )}
+              >
+                {pageTitle}
+              </h1>
             )}
-          >
-            {pageTitle}
-          </h1>
-          <CreateButton
-            label={createLabel}
-            options={createOptions}
-            onClick={onCreateClick}
-          />
+            {!hideCreateButton && (
+              <CreateButton
+                label={createLabel}
+                options={createOptions}
+                onClick={onCreateClick}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="min-h-0 flex-1 overflow-auto">
         {isFavoritesRendered && (
@@ -268,9 +278,10 @@ export const Catalog: FC<CatalogProps> = ({
               totalCount={favorites.length}
               title={favoritesTitle}
               onToggleFavorite={onToggleFavorite}
-              onItemClick={handleOpenDetails}
+              onItemClick={onCardClick ?? handleOpenDetails}
               isLeaving={isFavoritesLeaving}
               onExitComplete={handleFavoritesExitComplete}
+              selectedItemId={selectedItemId}
             />
           </div>
         )}
@@ -327,8 +338,9 @@ export const Catalog: FC<CatalogProps> = ({
                 items={tabFiltered}
                 query={query}
                 onToggleFavorite={onToggleFavorite}
-                onItemClick={handleOpenDetails}
+                onItemClick={onCardClick ?? handleOpenDetails}
                 titles={cardGridTitles}
+                selectedItemId={selectedItemId}
               />
             </div>
           )}
@@ -341,8 +353,9 @@ export const Catalog: FC<CatalogProps> = ({
                 ariaLabel={resolvedAriaLabel}
                 emptyStateTitle={emptyTitle}
                 onToggleFavorite={onToggleFavorite}
-                onItemClick={handleOpenDetails}
+                onItemClick={onCardClick ?? handleOpenDetails}
                 stickyHeaderTop={0}
+                selectedItemId={selectedItemId}
               />
             </div>
           )}

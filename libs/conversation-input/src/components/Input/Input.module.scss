@@ -61,22 +61,6 @@
       --ci-model-selector-hover-bg,
       var(--controls-bg-accent-primary-alpha-active, #7da4ff5c)
     );
-
-    .modelSelectorCaret {
-      background: var(
-        --ci-model-selector-caret-hover-bg,
-        var(--bg-accent-primary-alpha, #7da4ff2e)
-      );
-    }
-  }
-
-  &:active {
-    .modelSelectorCaret {
-      background: var(
-        --ci-model-selector-hover-bg,
-        var(--controls-bg-accent-primary-alpha-active, #7da4ff5c)
-      );
-    }
   }
 
   &.modelSelectorButtonDisabled {
@@ -90,7 +74,6 @@
         --ci-model-selector-disabled-color,
         var(--controls-text-primary-disable, #696e7c)
       );
-      background: var(--ci-bg-disabled, var(--controls-bg-disable, #d1dbea));
     }
   }
 }

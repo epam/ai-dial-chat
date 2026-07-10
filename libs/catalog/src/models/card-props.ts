@@ -66,4 +66,6 @@ export interface CardProps {
   addToFavoritesAriaLabel?: string;
   /** Accessible label for the star button when the item is already starred. Default: `'Remove from favorites'`. */
   removeFromFavoritesAriaLabel?: string;
+  /** Whether this card represents the currently selected item — shows an accent border, tinted background, and a checkmark. Default: false. */
+  isSelected?: boolean;
 }

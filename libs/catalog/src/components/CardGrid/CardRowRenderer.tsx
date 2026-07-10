@@ -24,6 +24,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
   featuredLabel,
   addToFavoritesAriaLabel,
   removeFromFavoritesAriaLabel,
+  selectedItemId,
 }) => {
   const start = rowIndex * columnCount;
   const rowItems = items.slice(start, start + columnCount);
@@ -54,6 +55,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
                 featuredLabel={featuredLabel}
                 addToFavoritesAriaLabel={addToFavoritesAriaLabel}
                 removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
+                isSelected={item.id === selectedItemId}
                 className="h-full"
               />
             )}

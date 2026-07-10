@@ -33,12 +33,32 @@ import {
   mapEntityDetailsToCatalogDetails,
 } from '../../utils/map-entity-details-to-catalog';
 
-const CatalogView: FC = () => {
+/** Entity types shown in the catalog picker modal: models and agents only. */
+const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
+  CatalogEntityType.Model,
+  CatalogEntityType.Application,
+  CatalogEntityType.Agent,
+]);
+
+/** Props for `CatalogView`. */
+interface Props {
+  /**
+   * Renders the catalog for read-only model selection (e.g. inside a picker
+   * modal): hides the "Create" button and highlights the currently selected
+   * deployment's card. Default: false.
+   */
+  isSelectorMode?: boolean;
+  /** Called after a card selection commits in picker mode, so the host can close the modal. */
+  onClose?: () => void;
+}
+
+const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const {
     items: deployments,
+    selectedItemId,
     isLoading: isDeploymentsLoading,
     schemas,
     toolsets,
@@ -75,9 +95,17 @@ const CatalogView: FC = () => {
     [deployments, favoriteIds, t, toolsets, quickAppSchemaId],
   );
 
+  const visibleCatalogItems = useMemo(
+    () =>
+      isSelectorMode
+        ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
+        : catalogItems,
+    [catalogItems, isSelectorMode],
+  );
+
   const favorites = useMemo(
-    () => catalogItems.filter((item) => item.isUserFavorite),
-    [catalogItems],
+    () => visibleCatalogItems.filter((item) => item.isUserFavorite),
+    [visibleCatalogItems],
   );
 
   const handleFetchDetails = useCallback(async (item: CatalogItem) => {
@@ -129,6 +157,16 @@ const CatalogView: FC = () => {
       navigate(ROUTES.Root);
     },
     [setSelectedItemId, navigate],
+  );
+
+  // Picker mode: a card click selects it and closes the modal immediately,
+  // without opening its details.
+  const handleCardSelect = useCallback(
+    (item: CatalogItem) => {
+      setSelectedItemId(item.id);
+      onClose?.();
+    },
+    [setSelectedItemId, onClose],
   );
 
   const isPrimaryActionVisible = useCallback(
@@ -208,10 +246,16 @@ const CatalogView: FC = () => {
 
   return (
     <Catalog
-      items={catalogItems}
+      items={visibleCatalogItems}
       isLoading={isLoading}
       favorites={favorites}
       createOptions={createOptions}
+      hideCreateButton={isSelectorMode}
+      hidePageTitle={isSelectorMode}
+      selectedItemId={
+        isSelectorMode ? (selectedItemId ?? undefined) : undefined
+      }
+      onCardClick={isSelectorMode ? handleCardSelect : undefined}
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
