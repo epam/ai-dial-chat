@@ -6,6 +6,8 @@ import type {
   CreateFolderResponseDto,
   DeleteFilesResponseDto,
   DeleteItemDto,
+  DiscardSharedItemDto,
+  DiscardSharedResponseDto,
   FileMetadataResponseDto,
   FileUploadResponseDto,
   ListFilesResponseDto,
@@ -15,6 +17,11 @@ import type {
   MoveItemDto,
   RenameFilesResponseDto,
   RenameItemDto,
+  RevokeAccessItemDto,
+  RevokeAccessResponseDto,
+  ShareFilesDtoPermissionEnum,
+  ShareFilesResponseDto,
+  ShareItemDto,
 } from '@epam/chat-api-client';
 import { filesApi } from './api-client';
 import {
@@ -132,3 +139,22 @@ export const downloadArchive = async (
   });
   return raw.raw;
 };
+
+export const shareFiles = (
+  items: ShareItemDto[],
+  permission: ShareFilesDtoPermissionEnum,
+): Promise<ShareFilesResponseDto> =>
+  filesApi.shareFiles({ shareFilesDto: { items, permission } });
+
+export const revokeAccess = (
+  items: RevokeAccessItemDto[],
+): Promise<RevokeAccessResponseDto> =>
+  filesApi.revokeAccess({ revokeAccessDto: { items } });
+
+export const discardShared = (
+  items: DiscardSharedItemDto[],
+): Promise<DiscardSharedResponseDto> =>
+  filesApi.discardShared({ discardSharedDto: { items } });
+
+export const listSharedByMe = (bucket: string): Promise<ListFilesResponseDto> =>
+  filesApi.listSharedByMe({ bucket });

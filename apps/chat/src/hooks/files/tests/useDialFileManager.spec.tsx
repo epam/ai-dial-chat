@@ -37,10 +37,14 @@ vi.mock('../../../utils/file-download', () => ({
 const mockListFiles = vi.mocked(filesApi.listFiles);
 const mockListSharedFiles = vi.mocked(filesApi.listSharedFiles);
 const mockListPublicFiles = vi.mocked(filesApi.listPublicFiles);
+const mockListSharedByMe = vi.mocked(filesApi.listSharedByMe);
 const mockDownloadArchive = vi.mocked(filesApi.downloadArchive);
 const mockDeleteFiles = vi.mocked(filesApi.deleteFiles);
 const mockCopyFiles = vi.mocked(filesApi.copyFiles);
 const mockMoveFiles = vi.mocked(filesApi.moveFiles);
+const mockShareFiles = vi.mocked(filesApi.shareFiles);
+const mockDiscardShared = vi.mocked(filesApi.discardShared);
+const mockRevokeAccess = vi.mocked(filesApi.revokeAccess);
 
 const BUCKET = 'test-bucket';
 
@@ -48,6 +52,7 @@ const OWNER_BUCKET = 'owner-bucket';
 
 const emptySharedListResponse = { bucket: '', path: '', items: [] };
 const emptyPublicListResponse = { bucket: 'public', path: '', items: [] };
+const emptySharedByMeResponse = { bucket: BUCKET, path: '', items: [] };
 
 beforeEach(() => {
   mockListFiles.mockResolvedValue({
@@ -58,6 +63,7 @@ beforeEach(() => {
   });
   mockListSharedFiles.mockResolvedValue(emptySharedListResponse);
   mockListPublicFiles.mockResolvedValue(emptyPublicListResponse);
+  mockListSharedByMe.mockResolvedValue(emptySharedByMeResponse);
 });
 
 afterEach(() => {
@@ -1424,7 +1430,7 @@ describe('useDialFileManager', () => {
     });
 
     describe('sharedWithMeIds', () => {
-      it('is populated from root Shared listing items', async () => {
+      it('is populated with virtual DialFile paths matching root Shared listing items', async () => {
         mockListSharedFiles.mockResolvedValue({
           bucket: '',
           path: '',
@@ -1440,7 +1446,7 @@ describe('useDialFileManager', () => {
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
         expect(result.current.sharedWithMeIds).toEqual([
-          `files/${OWNER_BUCKET}/team-docs/`,
+          '/My files/team-docs/',
         ]);
       });
 
@@ -1464,6 +1470,104 @@ describe('useDialFileManager', () => {
         );
         await waitFor(() => expect(result.current.isLoading).toBe(false));
         expect(result.current.sharedWithMeIds).toBeUndefined();
+      });
+
+      it('matches the actual root item virtual path exposed via items', async () => {
+        mockListSharedFiles.mockResolvedValue({
+          bucket: '',
+          path: '',
+          items: [sharedRootItem],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+            rootLabel: 'Shared with me',
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        const rootFolder = result.current.items[0];
+        const teamDocsNode = rootFolder.items?.find(
+          (i) => i.name === 'team-docs',
+        );
+        expect(teamDocsNode).toBeDefined();
+        expect(result.current.sharedWithMeIds).toEqual([teamDocsNode?.path]);
+      });
+    });
+
+    describe('sharedByMePaths', () => {
+      it('is populated with virtual DialFile paths matching listSharedByMe items', async () => {
+        mockListSharedByMe.mockResolvedValue({
+          bucket: BUCKET,
+          path: '',
+          items: [
+            {
+              name: 'a.pdf',
+              path: `files/${BUCKET}/a.pdf`,
+              folderId: `${BUCKET}:`,
+              nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+              bucket: BUCKET,
+            },
+            {
+              name: 'nested.pdf',
+              path: `files/${BUCKET}/reports/2024/nested.pdf`,
+              folderId: `${BUCKET}:`,
+              nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+              bucket: BUCKET,
+            },
+            {
+              name: 'shared-folder',
+              path: `files/${BUCKET}/shared-folder/`,
+              folderId: `${BUCKET}:`,
+              nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+              bucket: BUCKET,
+            },
+          ],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        await waitFor(() =>
+          expect(result.current.sharedByMePaths.size).toBe(3),
+        );
+
+        expect(result.current.sharedByMePaths).toEqual(
+          new Set([
+            '/My files/a.pdf',
+            '/My files/reports/2024/nested.pdf',
+            '/My files/shared-folder/',
+          ]),
+        );
+      });
+
+      it('is empty on the Shared tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.sharedByMePaths.size).toBe(0);
+        expect(mockListSharedByMe).not.toHaveBeenCalled();
+      });
+
+      it('is empty on the Organization tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Organization,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.sharedByMePaths.size).toBe(0);
       });
     });
   });
@@ -2312,6 +2416,289 @@ describe('useDialFileManager', () => {
       } finally {
         vi.useRealTimers();
       }
+    });
+  });
+
+  describe('onManagePermissions', () => {
+    it('resolves the correct item and opens the share modal target', async () => {
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [
+          {
+            name: 'report.pdf',
+            path: `files/${BUCKET}/report.pdf`,
+            folderId: `${BUCKET}:`,
+            nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+            bucket: BUCKET,
+          },
+        ],
+        nextToken: undefined,
+      });
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          actionProfile: DialFileManagerActionProfile.Full,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.shareTarget).toBeNull();
+
+      act(() =>
+        result.current.onManagePermissions(`files/${BUCKET}/report.pdf`),
+      );
+
+      expect(result.current.shareTarget).toEqual({
+        bucket: BUCKET,
+        path: 'report.pdf',
+        name: 'report.pdf',
+      });
+    });
+
+    it('does nothing when path does not resolve to a loaded item', async () => {
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          actionProfile: DialFileManagerActionProfile.Full,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onManagePermissions('unknown-path'));
+
+      expect(result.current.shareTarget).toBeNull();
+    });
+
+    it('onCloseShareModal clears the share target', async () => {
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [
+          {
+            name: 'report.pdf',
+            path: `files/${BUCKET}/report.pdf`,
+            folderId: `${BUCKET}:`,
+            nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+            bucket: BUCKET,
+          },
+        ],
+        nextToken: undefined,
+      });
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          actionProfile: DialFileManagerActionProfile.Full,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() =>
+        result.current.onManagePermissions(`files/${BUCKET}/report.pdf`),
+      );
+      expect(result.current.shareTarget).not.toBeNull();
+
+      act(() => result.current.onCloseShareModal());
+      expect(result.current.shareTarget).toBeNull();
+    });
+
+    it('onCreateShareLink calls shareFiles with the resolved target and permission', async () => {
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [
+          {
+            name: 'report.pdf',
+            path: `files/${BUCKET}/report.pdf`,
+            folderId: `${BUCKET}:`,
+            nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+            bucket: BUCKET,
+          },
+        ],
+        nextToken: undefined,
+      });
+      mockShareFiles.mockResolvedValue({
+        invitationLink: 'https://chat.example.com/share/abc',
+      });
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          actionProfile: DialFileManagerActionProfile.Full,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() =>
+        result.current.onManagePermissions(`files/${BUCKET}/report.pdf`),
+      );
+
+      let link: string | undefined;
+      await act(async () => {
+        link = await result.current.onCreateShareLink('read');
+      });
+
+      expect(mockShareFiles).toHaveBeenCalledWith(
+        [{ bucket: BUCKET, path: 'report.pdf' }],
+        'read',
+      );
+      expect(link).toBe('https://chat.example.com/share/abc');
+    });
+  });
+
+  describe('onUnshareFiles and onRemoveFilesAccess', () => {
+    const sharedWithMeFile = {
+      id: `files/${OWNER_BUCKET}/team-docs/`,
+      name: 'team-docs',
+      path: '/Shared with me/team-docs/',
+      parentPath: '/Shared with me',
+      nodeType: DialFileNodeType.FOLDER,
+      folderId: `${OWNER_BUCKET}:files/${OWNER_BUCKET}/team-docs/`,
+      bucket: OWNER_BUCKET,
+    };
+
+    const myOwnedFile = {
+      id: `files/${BUCKET}/report.pdf`,
+      name: 'report.pdf',
+      path: '/My files/report.pdf',
+      parentPath: '/My files',
+      nodeType: DialFileNodeType.ITEM,
+      folderId: `${BUCKET}:`,
+      bucket: BUCKET,
+    };
+
+    it('onUnshareFiles calls discardShared and triggers a retry with no toast on success', async () => {
+      mockDiscardShared.mockResolvedValue({ success: true });
+      const onNotification = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          activeTab: DialFileManagerTabs.Shared,
+          actionProfile: DialFileManagerActionProfile.Full,
+          onNotification,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      mockListSharedFiles.mockClear();
+
+      act(() => result.current.onUnshareFiles([sharedWithMeFile]));
+
+      await waitFor(() =>
+        expect(mockDiscardShared).toHaveBeenCalledWith([
+          { bucket: OWNER_BUCKET, path: 'team-docs/' },
+        ]),
+      );
+      await waitFor(() => expect(mockListSharedFiles).toHaveBeenCalled());
+      expect(onNotification).not.toHaveBeenCalled();
+    });
+
+    it('onUnshareFiles shows an error toast on failure', async () => {
+      mockDiscardShared.mockRejectedValue(new Error('failed'));
+      const onNotification = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          activeTab: DialFileManagerTabs.Shared,
+          actionProfile: DialFileManagerActionProfile.Full,
+          onNotification,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onUnshareFiles([sharedWithMeFile]));
+
+      await waitFor(() =>
+        expect(onNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: NotificationVariant.Error }),
+        ),
+      );
+    });
+
+    it('onRemoveFilesAccess calls revokeAccess and triggers a retry with no toast on success', async () => {
+      mockRevokeAccess.mockResolvedValue({ success: true });
+      const onNotification = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          activeTab: DialFileManagerTabs.MyFiles,
+          actionProfile: DialFileManagerActionProfile.Full,
+          onNotification,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      mockListFiles.mockClear();
+
+      act(() => result.current.onRemoveFilesAccess([myOwnedFile]));
+
+      await waitFor(() =>
+        expect(mockRevokeAccess).toHaveBeenCalledWith([
+          { bucket: BUCKET, path: 'report.pdf' },
+        ]),
+      );
+      await waitFor(() => expect(mockListFiles).toHaveBeenCalled());
+      expect(onNotification).not.toHaveBeenCalled();
+    });
+
+    it('onRemoveFilesAccess shows an error toast on failure', async () => {
+      mockRevokeAccess.mockRejectedValue(new Error('failed'));
+      const onNotification = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          activeTab: DialFileManagerTabs.MyFiles,
+          actionProfile: DialFileManagerActionProfile.Full,
+          onNotification,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onRemoveFilesAccess([myOwnedFile]));
+
+      await waitFor(() =>
+        expect(onNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: NotificationVariant.Error }),
+        ),
+      );
+    });
+
+    it('resolves bucket/path correctly for a batch of items', async () => {
+      mockDiscardShared.mockResolvedValue({ success: true });
+
+      const secondSharedFile = {
+        id: `files/${OWNER_BUCKET}/notes.txt`,
+        name: 'notes.txt',
+        path: '/Shared with me/notes.txt',
+        parentPath: '/Shared with me',
+        nodeType: DialFileNodeType.ITEM,
+        folderId: `${OWNER_BUCKET}:`,
+        bucket: OWNER_BUCKET,
+      };
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          activeTab: DialFileManagerTabs.Shared,
+          actionProfile: DialFileManagerActionProfile.Full,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() =>
+        result.current.onUnshareFiles([sharedWithMeFile, secondSharedFile]),
+      );
+
+      await waitFor(() =>
+        expect(mockDiscardShared).toHaveBeenCalledWith([
+          { bucket: OWNER_BUCKET, path: 'team-docs/' },
+          { bucket: OWNER_BUCKET, path: 'notes.txt' },
+        ]),
+      );
     });
   });
 });

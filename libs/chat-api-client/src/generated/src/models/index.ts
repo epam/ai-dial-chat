@@ -2469,6 +2469,51 @@ export interface DialToolsetListResponseDto {
 /**
  *
  * @export
+ * @interface DiscardSharedDto
+ */
+export interface DiscardSharedDto {
+  /**
+   *
+   * @type {Array<DiscardSharedItemDto>}
+   * @memberof DiscardSharedDto
+   */
+  items: Array<DiscardSharedItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface DiscardSharedItemDto
+ */
+export interface DiscardSharedItemDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof DiscardSharedItemDto
+   */
+  bucket: string;
+  /**
+   * Relative path within bucket
+   * @type {string}
+   * @memberof DiscardSharedItemDto
+   */
+  path: string;
+}
+/**
+ *
+ * @export
+ * @interface DiscardSharedResponseDto
+ */
+export interface DiscardSharedResponseDto {
+  /**
+   * true when the Core discard call succeeded
+   * @type {boolean}
+   * @memberof DiscardSharedResponseDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
  * @interface DownloadArchiveDto
  */
 export interface DownloadArchiveDto {
@@ -3308,6 +3353,51 @@ export interface RenameItemResultDto {
 /**
  *
  * @export
+ * @interface RevokeAccessDto
+ */
+export interface RevokeAccessDto {
+  /**
+   *
+   * @type {Array<RevokeAccessItemDto>}
+   * @memberof RevokeAccessDto
+   */
+  items: Array<RevokeAccessItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface RevokeAccessItemDto
+ */
+export interface RevokeAccessItemDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof RevokeAccessItemDto
+   */
+  bucket: string;
+  /**
+   * Relative path within bucket
+   * @type {string}
+   * @memberof RevokeAccessItemDto
+   */
+  path: string;
+}
+/**
+ *
+ * @export
+ * @interface RevokeAccessResponseDto
+ */
+export interface RevokeAccessResponseDto {
+  /**
+   * true when the Core revoke call succeeded
+   * @type {boolean}
+   * @memberof RevokeAccessResponseDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
  * @interface SaveConversationBodyDto
  */
 export interface SaveConversationBodyDto {
@@ -3380,6 +3470,68 @@ export const SendCompletionDtoModeEnum = {
 export type SendCompletionDtoModeEnum =
   (typeof SendCompletionDtoModeEnum)[keyof typeof SendCompletionDtoModeEnum];
 
+/**
+ *
+ * @export
+ * @interface ShareFilesDto
+ */
+export interface ShareFilesDto {
+  /**
+   *
+   * @type {Array<ShareItemDto>}
+   * @memberof ShareFilesDto
+   */
+  items: Array<ShareItemDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof ShareFilesDto
+   */
+  permission: ShareFilesDtoPermissionEnum;
+}
+
+/**
+ * @export
+ */
+export const ShareFilesDtoPermissionEnum = {
+  Read: 'read',
+  ReadWrite: 'readWrite',
+} as const;
+export type ShareFilesDtoPermissionEnum =
+  (typeof ShareFilesDtoPermissionEnum)[keyof typeof ShareFilesDtoPermissionEnum];
+
+/**
+ *
+ * @export
+ * @interface ShareFilesResponseDto
+ */
+export interface ShareFilesResponseDto {
+  /**
+   * Invitation link covering all shared resources
+   * @type {string}
+   * @memberof ShareFilesResponseDto
+   */
+  invitationLink: string;
+}
+/**
+ *
+ * @export
+ * @interface ShareItemDto
+ */
+export interface ShareItemDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof ShareItemDto
+   */
+  bucket: string;
+  /**
+   * Relative path within bucket
+   * @type {string}
+   * @memberof ShareItemDto
+   */
+  path: string;
+}
 /**
  *
  * @export

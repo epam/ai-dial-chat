@@ -1408,3 +1408,235 @@ describe('FilesController — moveFiles', () => {
       .expect(401);
   });
 });
+
+describe('FilesController — shareFiles', () => {
+  let app: INestApplication;
+  let service: { shareFiles: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      shareFiles: vi.fn().mockResolvedValue({
+        invitationLink: 'https://chat.example.com/share/abc',
+      }),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with the invitation link on a valid request', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/share')
+      .send({
+        items: [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+        permission: 'read',
+      })
+      .expect(200);
+
+    expect(res.body).toEqual({
+      invitationLink: 'https://chat.example.com/share/abc',
+    });
+    expect(service.shareFiles).toHaveBeenCalledWith(
+      [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+      'read',
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/share')
+      .send({ items: [], permission: 'read' })
+      .expect(400);
+    expect(service.shareFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when more than 50 items are sent', async () => {
+    const items = Array.from({ length: 51 }, (_, i) => ({
+      bucket: 'user-bucket',
+      path: `file${i}.pdf`,
+    }));
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files/share')
+      .send({ items, permission: 'read' })
+      .expect(400);
+    expect(service.shareFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when permission is not a valid enum value', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/share')
+      .send({
+        items: [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+        permission: 'admin',
+      })
+      .expect(400);
+    expect(service.shareFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.shareFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/share')
+      .send({
+        items: [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+        permission: 'read',
+      })
+      .expect(401);
+  });
+});
+
+describe('FilesController — revokeAccess', () => {
+  let app: INestApplication;
+  let service: { revokeAccess: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      revokeAccess: vi.fn().mockResolvedValue({ success: true }),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with success=true on a valid request', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/revoke-access')
+      .send({ items: [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }] })
+      .expect(200);
+
+    expect(res.body).toEqual({ success: true });
+    expect(service.revokeAccess).toHaveBeenCalledWith(
+      [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/revoke-access')
+      .send({ items: [] })
+      .expect(400);
+    expect(service.revokeAccess).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.revokeAccess.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/revoke-access')
+      .send({ items: [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }] })
+      .expect(401);
+  });
+});
+
+describe('FilesController — discardShared', () => {
+  let app: INestApplication;
+  let service: { discardShared: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      discardShared: vi.fn().mockResolvedValue({ success: true }),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with success=true on a valid request', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/discard-shared')
+      .send({ items: [{ bucket: 'owner-bucket', path: 'shared.pdf' }] })
+      .expect(200);
+
+    expect(res.body).toEqual({ success: true });
+    expect(service.discardShared).toHaveBeenCalledWith(
+      [{ bucket: 'owner-bucket', path: 'shared.pdf' }],
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/discard-shared')
+      .send({ items: [] })
+      .expect(400);
+    expect(service.discardShared).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.discardShared.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/discard-shared')
+      .send({ items: [{ bucket: 'owner-bucket', path: 'shared.pdf' }] })
+      .expect(401);
+  });
+});
+
+describe('FilesController — listSharedByMe', () => {
+  const MOCK_SHARED_BY_ME_RESPONSE = {
+    bucket: 'user-bucket',
+    path: '',
+    items: [
+      {
+        name: 'shared-by-me.pdf',
+        path: 'shared-by-me.pdf',
+        folderId: 'user-bucket:',
+        nodeType: 'item',
+        bucket: 'user-bucket',
+      },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: { listSharedByMe: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      listSharedByMe: vi.fn().mockResolvedValue(MOCK_SHARED_BY_ME_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with shared-by-me items on a valid request', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/shared-by-me')
+      .query({ bucket: 'user-bucket' })
+      .expect(200);
+
+    expect(res.body).toMatchObject({ items: expect.any(Array) });
+    expect(service.listSharedByMe).toHaveBeenCalledWith(
+      'user-bucket',
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when bucket is missing', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/shared-by-me')
+      .expect(400);
+    expect(service.listSharedByMe).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.listSharedByMe.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/shared-by-me')
+      .query({ bucket: 'user-bucket' })
+      .expect(401);
+  });
+});

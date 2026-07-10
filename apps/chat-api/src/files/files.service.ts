@@ -35,6 +35,10 @@ import {
   DeleteItemNodeType,
   DeleteItemResultDto,
 } from './dto/delete-files.dto';
+import type {
+  DiscardSharedItemDto,
+  DiscardSharedResponseDto,
+} from './dto/discard-shared.dto';
 import type { ArchiveItemDto } from './dto/download-archive.dto';
 import { ArchiveItemNodeType } from './dto/download-archive.dto';
 import type { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
@@ -51,6 +55,15 @@ import {
   RenameItemNodeType,
   RenameItemResultDto,
 } from './dto/rename-files.dto';
+import type {
+  RevokeAccessItemDto,
+  RevokeAccessResponseDto,
+} from './dto/revoke-access.dto';
+import type {
+  ShareItemDto,
+  ShareFilesResponseDto,
+} from './dto/share-files.dto';
+import { SharePermission } from './dto/share-files.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import type { UploadMode } from './dto/upload-file.dto';
 import { FOLDER_NODE_TYPE, MARKER_NAME } from './files.constants';
@@ -108,6 +121,11 @@ const safeDecodePathForCompare = (path: string): string =>
 
 const buildDialFileResourceUrl = (bucket: string, path: string): string =>
   buildDialFileUrl(bucket, encodeDialResourcePath(path));
+
+const mapSharePermission = (
+  permission: SharePermission,
+): Array<components['schemas']['ResourceAccessType']> =>
+  permission === SharePermission.ReadWrite ? ['READ', 'WRITE'] : ['READ'];
 
 const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
   const formData = new FormData();
@@ -409,6 +427,190 @@ export class FilesService {
     } catch (err) {
       this.logger.warn('listSharedFiles failed', err);
       return handleDialSdkError(err, 'files.listSharedFiles', this.logger);
+    }
+  }
+
+  async listSharedByMe(
+    bucket: string,
+    at: string,
+  ): Promise<ListFilesResponseDto> {
+    try {
+      const { data, error, response } =
+        await this.dialClient.client.getSharedResources({
+          headers: getBearerAuthHeaders(at),
+          body: {
+            resourceTypes: ['FILE'],
+            with: 'others',
+            includeUserInfo: false,
+          },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        });
+
+      if (error != null) {
+        this.logger.warn(
+          `DIAL Core getSharedResources (others) returned error: status=${response.status}`,
+        );
+        return handleDialSdkError(
+          error,
+          'files.listSharedByMe',
+          this.logger,
+          response,
+        );
+      }
+
+      const sharedData = (data ?? {}) as typeof data & {
+        resources?: DialFileItem[];
+      };
+      const rawItems = sharedData.resources ?? [];
+
+      const items = rawItems
+        .filter((item) => (item.bucket ?? '') === bucket)
+        .map((item) => normalizeFileItem(item, bucket));
+
+      this.logger.debug(
+        `listSharedByMe: bucket=${bucket}, count=${items.length}`,
+      );
+
+      return { bucket, path: '', items };
+    } catch (err) {
+      this.logger.warn(`listSharedByMe failed for bucket=${bucket}`, err);
+      return handleDialSdkError(err, 'files.listSharedByMe', this.logger);
+    }
+  }
+
+  async shareFiles(
+    items: ShareItemDto[],
+    permission: SharePermission,
+    at: string,
+  ): Promise<ShareFilesResponseDto> {
+    this.logger.log(`Share files started: itemCount=${items.length}`);
+
+    try {
+      const permissions = mapSharePermission(permission);
+      const { data, error, response } =
+        await this.dialClient.client.shareResource({
+          headers: getBearerAuthHeaders(at),
+          body: {
+            invitationType: 'LINK',
+            resources: items.map((item) => ({
+              url: buildDialFileResourceUrl(item.bucket, item.path),
+              permissions,
+            })),
+          },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        });
+
+      if (error != null) {
+        this.logger.warn(
+          `Share files failed: itemCount=${items.length}, status=${response.status}`,
+        );
+        return handleDialSdkError(
+          error,
+          'files.shareFiles',
+          this.logger,
+          response,
+        );
+      }
+
+      this.logger.log(
+        `Share files completed: itemCount=${items.length}, success=true`,
+      );
+
+      return { invitationLink: data?.invitationLink ?? '' };
+    } catch (err) {
+      this.logger.error(
+        `Share files exception: itemCount=${items.length}`,
+        err,
+      );
+      return handleDialSdkError(err, 'files.shareFiles', this.logger);
+    }
+  }
+
+  async revokeAccess(
+    items: RevokeAccessItemDto[],
+    at: string,
+  ): Promise<RevokeAccessResponseDto> {
+    this.logger.log(`Revoke access started: itemCount=${items.length}`);
+
+    try {
+      const { error, response } =
+        await this.dialClient.client.revokeSharedResources({
+          headers: getBearerAuthHeaders(at),
+          body: {
+            resources: items.map((item) => ({
+              url: buildDialFileResourceUrl(item.bucket, item.path),
+            })),
+          },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        });
+
+      if (error != null) {
+        this.logger.warn(
+          `Revoke access failed: itemCount=${items.length}, status=${response.status}`,
+        );
+        return handleDialSdkError(
+          error,
+          'files.revokeAccess',
+          this.logger,
+          response,
+        );
+      }
+
+      this.logger.log(
+        `Revoke access completed: itemCount=${items.length}, success=true`,
+      );
+
+      return { success: true };
+    } catch (err) {
+      this.logger.error(
+        `Revoke access exception: itemCount=${items.length}`,
+        err,
+      );
+      return handleDialSdkError(err, 'files.revokeAccess', this.logger);
+    }
+  }
+
+  async discardShared(
+    items: DiscardSharedItemDto[],
+    at: string,
+  ): Promise<DiscardSharedResponseDto> {
+    this.logger.log(`Discard shared started: itemCount=${items.length}`);
+
+    try {
+      const { error, response } =
+        await this.dialClient.client.discardSharedResources({
+          headers: getBearerAuthHeaders(at),
+          body: {
+            resources: items.map((item) => ({
+              url: buildDialFileResourceUrl(item.bucket, item.path),
+            })),
+          },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        });
+
+      if (error != null) {
+        this.logger.warn(
+          `Discard shared failed: itemCount=${items.length}, status=${response.status}`,
+        );
+        return handleDialSdkError(
+          error,
+          'files.discardShared',
+          this.logger,
+          response,
+        );
+      }
+
+      this.logger.log(
+        `Discard shared completed: itemCount=${items.length}, success=true`,
+      );
+
+      return { success: true };
+    } catch (err) {
+      this.logger.error(
+        `Discard shared exception: itemCount=${items.length}`,
+        err,
+      );
+      return handleDialSdkError(err, 'files.discardShared', this.logger);
     }
   }
 

@@ -69,4 +69,15 @@ export interface DialFileManagerShellLabels {
   treeHeaderByTab: Record<DialFileManagerTabs, string>;
   renameValidationMessages: RenameValidationMessages;
   conflictResolutionPopupOptions: ConflictResolutionPopupOptions;
+  shareLabel: string;
+  unshareLabel: string;
+  removeAccessLabel: string;
+  getShareModalTitle: (name: string) => string;
+  shareModalReadPermissionLabel: string;
+  shareModalReadWritePermissionLabel: string;
+  shareModalCreateLinkButtonLabel: string;
+  shareModalCopyLinkButtonLabel: string;
+  shareModalLinkCopiedConfirmation: string;
+  shareModalCancelLabel: string;
+  shareErrorMessage: string;
 }

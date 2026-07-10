@@ -86,6 +86,16 @@ const baseHookResult: UseDialFileManagerResult = {
   dateOptions: {},
   actionLabels: { [DialFileManagerActions.Download]: 'Download' },
   sharedWithMeIds: undefined,
+  sharedByMePaths: new Set(),
+  shareTarget: null,
+  onManagePermissions: vi.fn(),
+  onCloseShareModal: vi.fn(),
+  onCreateShareLink: vi.fn(),
+  isSharing: false,
+  onUnshareFiles: vi.fn(),
+  isUnsharing: false,
+  onRemoveFilesAccess: vi.fn(),
+  isRemovingAccess: false,
 };
 
 const emptyStateCopy = { title: 'No files', description: 'Nothing here yet' };
@@ -160,6 +170,17 @@ const baseLabels: DialFileManagerShellLabels = {
     confirmLabel: 'Confirm',
     cancelLabel: 'Cancel',
   },
+  shareLabel: 'Share',
+  unshareLabel: 'Unshare',
+  removeAccessLabel: 'Remove access',
+  getShareModalTitle: (name) => `Share "${name}"`,
+  shareModalReadPermissionLabel: 'Can view',
+  shareModalReadWritePermissionLabel: 'Can edit',
+  shareModalCreateLinkButtonLabel: 'Create link',
+  shareModalCopyLinkButtonLabel: 'Copy link',
+  shareModalLinkCopiedConfirmation: 'Link copied',
+  shareModalCancelLabel: 'Cancel',
+  shareErrorMessage: 'Failed to create the share link',
 };
 
 const renderShell = (

@@ -580,6 +580,28 @@ const DialFileManagerModal: FC<Props> = ({
       treeHeaderByTab,
       renameValidationMessages,
       conflictResolutionPopupOptions,
+      shareLabel: t(DialFileManagerI18nKeys.ShareAction),
+      unshareLabel: t(DialFileManagerI18nKeys.UnshareAction),
+      removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
+      getShareModalTitle: (name: string) =>
+        t(DialFileManagerI18nKeys.ShareModalTitle, { name }),
+      shareModalReadPermissionLabel: t(
+        DialFileManagerI18nKeys.ShareModalReadPermission,
+      ),
+      shareModalReadWritePermissionLabel: t(
+        DialFileManagerI18nKeys.ShareModalReadWritePermission,
+      ),
+      shareModalCreateLinkButtonLabel: t(
+        DialFileManagerI18nKeys.ShareModalCreateLinkButton,
+      ),
+      shareModalCopyLinkButtonLabel: t(
+        DialFileManagerI18nKeys.ShareModalCopyLinkButton,
+      ),
+      shareModalLinkCopiedConfirmation: t(
+        DialFileManagerI18nKeys.ShareModalLinkCopiedConfirmation,
+      ),
+      shareModalCancelLabel: cancelLabel,
+      shareErrorMessage: t(DialFileManagerI18nKeys.ShareError),
     }),
     [
       errorMessage,

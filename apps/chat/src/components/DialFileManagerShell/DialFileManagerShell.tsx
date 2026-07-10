@@ -12,6 +12,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { memo, useMemo, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
+import ShareFileModal from '../../components/DialFileManagerModal/ShareFileModal';
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
 import type { UseDialFileManagerResult } from '../../hooks/files/useDialFileManager';
@@ -99,6 +100,14 @@ const DialFileManagerShell: FC<Props> = ({
     dateOptions,
     actionLabels: tabActionLabels,
     sharedWithMeIds,
+    sharedByMePaths,
+    shareTarget,
+    onManagePermissions,
+    onCloseShareModal,
+    onCreateShareLink,
+    isSharing,
+    onUnshareFiles,
+    onRemoveFilesAccess,
   } = hookResult;
 
   const actionLabels = useMemo(() => {
@@ -121,6 +130,15 @@ const DialFileManagerShell: FC<Props> = ({
     if (DialFileManagerActions.Duplicate in tabActionLabels) {
       result[DialFileManagerActions.Duplicate] = labels.duplicateLabel;
     }
+    if (DialFileManagerActions.ManagePermissions in tabActionLabels) {
+      result[DialFileManagerActions.ManagePermissions] = labels.shareLabel;
+    }
+    if (DialFileManagerActions.Unshare in tabActionLabels) {
+      result[DialFileManagerActions.Unshare] = labels.unshareLabel;
+    }
+    if (DialFileManagerActions.RemoveAccess in tabActionLabels) {
+      result[DialFileManagerActions.RemoveAccess] = labels.removeAccessLabel;
+    }
     return result;
   }, [
     tabActionLabels,
@@ -130,7 +148,38 @@ const DialFileManagerShell: FC<Props> = ({
     labels.copyLabel,
     labels.moveLabel,
     labels.duplicateLabel,
+    labels.shareLabel,
+    labels.unshareLabel,
+    labels.removeAccessLabel,
   ]);
+
+  /*
+   * Bulk toolbar never shows Share (single-item only, no bulk affordance);
+   * Remove access is additionally hidden unless every selected path is
+   * present in sharedByMePaths (mirrors legacy allSelectedItemsShared).
+   */
+  const allSelectedItemsSharedByMe = useMemo(() => {
+    if (selectedPaths.size === 0) return false;
+    for (const selectedPath of selectedPaths) {
+      if (!sharedByMePaths.has(selectedPath)) return false;
+    }
+    return true;
+  }, [selectedPaths, sharedByMePaths]);
+
+  const bulkActionLabels = useMemo(() => {
+    const {
+      [DialFileManagerActions.ManagePermissions]: _managePermissions,
+      ...rest
+    } = actionLabels;
+    if (allSelectedItemsSharedByMe) {
+      return rest;
+    }
+    const {
+      [DialFileManagerActions.RemoveAccess]: _removeAccess,
+      ...withoutRemoveAccess
+    } = rest;
+    return withoutRemoveAccess;
+  }, [actionLabels, allSelectedItemsSharedByMe]);
 
   const gridOptions = useMemo(
     () => ({
@@ -201,9 +250,9 @@ const DialFileManagerShell: FC<Props> = ({
   const bulkActionsToolbarOptions = useMemo(
     () => ({
       getSelectionLabel: labels.getSelectionLabel,
-      actionLabels,
+      actionLabels: bulkActionLabels,
     }),
-    [labels.getSelectionLabel, actionLabels],
+    [labels.getSelectionLabel, bulkActionLabels],
   );
 
   const deleteConfirmationOptions = useMemo(
@@ -323,6 +372,10 @@ const DialFileManagerShell: FC<Props> = ({
             }
             uploadEnabled={uploadEnabled}
             sharedWithMeIds={sharedWithMeIds}
+            sharedByMePaths={sharedByMePaths}
+            onManagePermissions={onManagePermissions}
+            onUnshareFiles={onUnshareFiles}
+            onRemoveFilesAccess={onRemoveFilesAccess}
             onUploadFiles={onUploadFiles}
             onValidateUpload={onValidateUpload}
             onCreateFolder={onCreateFolder}
@@ -403,6 +456,23 @@ const DialFileManagerShell: FC<Props> = ({
           text={isMoving ? labels.movingLabel : labels.copyingLabel}
           cancelLabel={labels.operationLoaderCancelLabel}
           onCancel={cancelCopyMove}
+        />
+      )}
+
+      {shareTarget != null && (
+        <ShareFileModal
+          targetName={shareTarget.name}
+          isSubmitting={isSharing}
+          getTitle={labels.getShareModalTitle}
+          readPermissionLabel={labels.shareModalReadPermissionLabel}
+          readWritePermissionLabel={labels.shareModalReadWritePermissionLabel}
+          createLinkButtonLabel={labels.shareModalCreateLinkButtonLabel}
+          copyLinkButtonLabel={labels.shareModalCopyLinkButtonLabel}
+          linkCopiedConfirmation={labels.shareModalLinkCopiedConfirmation}
+          cancelLabel={labels.shareModalCancelLabel}
+          errorMessage={labels.shareErrorMessage}
+          onCreateLink={onCreateShareLink}
+          onClose={onCloseShareModal}
         />
       )}
     </>

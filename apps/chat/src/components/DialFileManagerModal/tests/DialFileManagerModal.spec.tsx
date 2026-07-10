@@ -340,6 +340,16 @@ const defaultHookResult: UseDialFileManagerResult = {
     [DialFileManagerActions.Delete]: 'Delete',
   },
   sharedWithMeIds: undefined,
+  sharedByMePaths: new Set<string>(),
+  shareTarget: null,
+  onManagePermissions: vi.fn(),
+  onCloseShareModal: vi.fn(),
+  onCreateShareLink: vi.fn(),
+  isSharing: false,
+  onUnshareFiles: vi.fn(),
+  isUnsharing: false,
+  onRemoveFilesAccess: vi.fn(),
+  isRemovingAccess: false,
 };
 
 const defaultProps = {

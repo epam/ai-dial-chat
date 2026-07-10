@@ -285,6 +285,18 @@ export enum DialFileManagerI18nKeys {
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
   UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
   PageNavLabel = 'dialFileManager.page.navLabel',
+  ShareAction = 'dialFileManager.shareAction',
+  UnshareAction = 'dialFileManager.unshareAction',
+  RemoveAccessAction = 'dialFileManager.removeAccessAction',
+  ShareModalTitle = 'dialFileManager.shareModalTitle',
+  ShareModalReadPermission = 'dialFileManager.shareModalReadPermission',
+  ShareModalReadWritePermission = 'dialFileManager.shareModalReadWritePermission',
+  ShareModalCreateLinkButton = 'dialFileManager.shareModalCreateLinkButton',
+  ShareModalCopyLinkButton = 'dialFileManager.shareModalCopyLinkButton',
+  ShareModalLinkCopiedConfirmation = 'dialFileManager.shareModalLinkCopiedConfirmation',
+  ShareError = 'dialFileManager.shareError',
+  UnshareError = 'dialFileManager.unshareError',
+  RemoveAccessError = 'dialFileManager.removeAccessError',
 }
 
 export enum AuthI18nKeys {
