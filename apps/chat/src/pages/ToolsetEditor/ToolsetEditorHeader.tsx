@@ -1,3 +1,4 @@
+import { StepStatus } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +12,7 @@ import { ToolsetEditorSteps } from '../../types/toolsets';
 interface Props {
   step: ToolsetEditorSteps;
   isSaving: boolean;
+  canOpenSettings: boolean;
   onChangeStep: (stepId: string) => void;
   onCancel: () => void;
   onSave: () => void;
@@ -19,6 +21,7 @@ interface Props {
 const ToolsetEditorHeader: FC<Props> = ({
   step,
   isSaving,
+  canOpenSettings,
   onChangeStep,
   onCancel,
   onSave,
@@ -30,13 +33,15 @@ const ToolsetEditorHeader: FC<Props> = ({
       {
         id: ToolsetEditorSteps.General,
         name: t(ToolsetEditorI18nKeys.StepGeneral),
+        status: canOpenSettings ? StepStatus.VALID : undefined,
       },
       {
         id: ToolsetEditorSteps.Settings,
         name: t(ToolsetEditorI18nKeys.StepSettings),
+        status: canOpenSettings ? StepStatus.VALID : undefined,
       },
     ],
-    [t],
+    [t, canOpenSettings],
   );
 
   return (

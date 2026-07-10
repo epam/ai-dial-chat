@@ -41,8 +41,10 @@
   );
 }
 
+/* Matches dial-small-semi-text (14px / 20px, semibold). */
 .filterBtnLabel {
   font-size: 14px;
+  line-height: 20px;
   font-weight: 600;
   color: var(--text-primary, #131a29);
 }
@@ -97,8 +99,11 @@
   }
 }
 
+/* Matches dial-small-text (14px / 20px, normal). */
 .rowLabel {
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
   color: var(--text-primary, #131a29);
 }
 
@@ -145,16 +150,19 @@
 
 /* Topics section label --------------------------------------- */
 
+/* Matches dial-tiny-semi-text (12px / 16px, semibold). */
 .sectionLabel {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
   color: var(--text-tertiary, #98a2b3);
 }
 
-/* Clear — ghost style */
+/* Clear — ghost style. Matches dial-small-text (14px / 20px, normal). */
 .clearBtn {
   font-size: 14px;
-  font-weight: 500;
+  line-height: 20px;
+  font-weight: 400;
   color: var(--text-secondary, #64748b);
   transition: background-color 150ms ease;
 

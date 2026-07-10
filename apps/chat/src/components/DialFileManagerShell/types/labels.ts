@@ -12,6 +12,10 @@ export type RenameValidationMessages = NonNullable<
   DialFileManagerComponentProps['renameValidationMessages']
 >;
 
+export type DialFileManagerDestinationFolderPopupOptions = NonNullable<
+  DialFileManagerComponentProps['destinationFolderPopupOptions']
+>;
+
 export interface EmptyStateCopy {
   title: string;
   description: string;
@@ -39,6 +43,14 @@ export interface DialFileManagerShellLabels {
   renamingLabel: string;
   copyLabel: string;
   moveLabel: string;
+  duplicateLabel: string;
+  addFolderLabel: string;
+  hiddenFilesSwitcherLabel: string;
+  getCopyHeader: (count: number, name?: string) => string;
+  getMoveHeader: (count: number, name?: string) => string;
+  moveSourceDisabledTooltip: string;
+  folderPickerEmptyStateTitle: string;
+  folderPickerEmptyStateDescription: string;
   copyingLabel: string;
   movingLabel: string;
   operationLoaderCopyTitle: string;

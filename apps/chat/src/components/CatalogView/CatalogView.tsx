@@ -20,6 +20,7 @@ import { useNotification } from '../../context/NotificationContext';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { getDeploymentDetails } from '../../server-api/deployments';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
 import { isQuickAppSchema } from '../../utils/application-schema';
@@ -27,14 +28,38 @@ import {
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
+import {
+  mapDeploymentDetailsDtoToEntityDetails,
+  mapEntityDetailsToCatalogDetails,
+} from '../../utils/map-entity-details-to-catalog';
 import SharePopover from '../SharePopover/SharePopover';
 
-const CatalogView: FC = () => {
+/** Entity types shown in the catalog picker modal: models and agents only. */
+const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
+  CatalogEntityType.Model,
+  CatalogEntityType.Application,
+  CatalogEntityType.Agent,
+]);
+
+/** Props for `CatalogView`. */
+interface Props {
+  /**
+   * Renders the catalog for read-only model selection (e.g. inside a picker
+   * modal): hides the "Create" button and highlights the currently selected
+   * deployment's card. Default: false.
+   */
+  isSelectorMode?: boolean;
+  /** Called after a card selection commits in picker mode, so the host can close the modal. */
+  onClose?: () => void;
+}
+
+const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const {
     items: deployments,
+    selectedItemId,
     isLoading: isDeploymentsLoading,
     schemas,
     toolsets,
@@ -48,30 +73,51 @@ const CatalogView: FC = () => {
 
   const isLoading = isDeploymentsLoading || isFavoritesLoading;
 
+  const quickAppSchemaId = useMemo(
+    () => schemas.find((s) => isQuickAppSchema(s))?.id,
+    [schemas],
+  );
+
   const catalogItems = useMemo(
     () => [
       ...deployments.map((d) =>
-        mapDeploymentToCatalogItem(d, favoriteIds, undefined, t),
+        mapDeploymentToCatalogItem(
+          d,
+          favoriteIds,
+          undefined,
+          t,
+          quickAppSchemaId,
+        ),
       ),
       ...toolsets.map((toolset) =>
         mapToolsetToCatalogItem(toolset, favoriteIds),
       ),
     ],
-    [deployments, favoriteIds, t, toolsets],
+    [deployments, favoriteIds, t, toolsets, quickAppSchemaId],
+  );
+
+  const visibleCatalogItems = useMemo(
+    () =>
+      isSelectorMode
+        ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
+        : catalogItems,
+    [catalogItems, isSelectorMode],
   );
 
   const favorites = useMemo(
-    () => catalogItems.filter((item) => item.isUserFavorite),
-    [catalogItems],
+    () => visibleCatalogItems.filter((item) => item.isUserFavorite),
+    [visibleCatalogItems],
   );
 
-  // TODO: replace with a real API call, e.g. GET /api/catalog/{id}/about
-  const fetchAboutContent = useCallback(
-    (_item: CatalogItem): Promise<string | undefined> => {
-      return Promise.resolve(undefined);
-    },
-    [],
-  );
+  const handleFetchDetails = useCallback(async (item: CatalogItem) => {
+    try {
+      const dto = await getDeploymentDetails(item.id);
+      const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
+      return mapEntityDetailsToCatalogDetails(entityDetails);
+    } catch {
+      return undefined;
+    }
+  }, []);
 
   const onToggleFavorite = useCallback(
     (id: string, isFavorite: boolean) => {
@@ -114,6 +160,16 @@ const CatalogView: FC = () => {
     [setSelectedItemId, navigate],
   );
 
+  // Picker mode: a card click selects it and closes the modal immediately,
+  // without opening its details.
+  const handleCardSelect = useCallback(
+    (item: CatalogItem) => {
+      setSelectedItemId(item.id);
+      onClose?.();
+    },
+    [setSelectedItemId, onClose],
+  );
+
   const isPrimaryActionVisible = useCallback(
     (item: CatalogItem) =>
       item.type === CatalogEntityType.Model ||
@@ -121,25 +177,58 @@ const CatalogView: FC = () => {
     [],
   );
 
-  const buildEditorUrl = useCallback((schemaId: string): string => {
-    const params = new URLSearchParams({
-      [AppsEditorQuery.Step]: AppsEditorStep.General,
-      [AppsEditorQuery.Schema]: schemaId,
-      [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
-      [AppsEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
-    });
-    return `${ROUTES.AppsEditor}?${params.toString()}`;
-  }, []);
+  const buildEditorUrl = useCallback(
+    ({
+      schemaId,
+      step,
+      appId,
+      isCreating,
+    }: {
+      schemaId: string;
+      step: AppsEditorStep;
+      appId?: string;
+      isCreating?: boolean;
+    }): string => {
+      const params = new URLSearchParams({
+        [AppsEditorQuery.Step]: step,
+        [AppsEditorQuery.Schema]: schemaId,
+        [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
+      });
+      if (appId) params.set(AppsEditorQuery.AppId, appId);
+      if (isCreating) params.set(AppsEditorQuery.IsCreating, QUERY_VALUE_TRUE);
+      return `${ROUTES.AppsEditor}?${params.toString()}`;
+    },
+    [],
+  );
+
+  const handleEditApp = useCallback(
+    (item: CatalogItem) => {
+      if (!quickAppSchemaId) return;
+      navigate(
+        buildEditorUrl({
+          schemaId: quickAppSchemaId,
+          step: AppsEditorStep.Settings,
+          appId: item.id,
+        }),
+      );
+    },
+    [quickAppSchemaId, navigate, buildEditorUrl],
+  );
 
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
-    const quickAppSchema = schemas.find((s) => isQuickAppSchema(s));
 
-    if (quickAppSchema?.id) {
-      const schemaId = quickAppSchema.id;
+    if (quickAppSchemaId) {
       options.push({
         label: t(CatalogI18nKeys.CreateQuickApp),
-        onClick: () => navigate(buildEditorUrl(schemaId)),
+        onClick: () =>
+          navigate(
+            buildEditorUrl({
+              schemaId: quickAppSchemaId,
+              step: AppsEditorStep.General,
+              isCreating: true,
+            }),
+          ),
       });
     }
 
@@ -154,17 +243,24 @@ const CatalogView: FC = () => {
     });
 
     return options;
-  }, [schemas, navigate, t, buildEditorUrl]);
+  }, [quickAppSchemaId, navigate, t, buildEditorUrl]);
 
   return (
     <Catalog
-      items={catalogItems}
+      items={visibleCatalogItems}
       isLoading={isLoading}
       favorites={favorites}
       createOptions={createOptions}
-      onFetchAboutContent={fetchAboutContent}
+      hideCreateButton={isSelectorMode}
+      hidePageTitle={isSelectorMode}
+      selectedItemId={
+        isSelectorMode ? (selectedItemId ?? undefined) : undefined
+      }
+      onCardClick={isSelectorMode ? handleCardSelect : undefined}
+      onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
+      onEdit={handleEditApp}
       isPrimaryActionVisible={isPrimaryActionVisible}
       shareOverlay={(item, onClose) => (
         <SharePopover item={item} onClose={onClose} />
@@ -195,6 +291,7 @@ const CatalogView: FC = () => {
       detailsTexts={{
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
+        editActionLabel: t(ButtonsI18nKeys.Edit),
         dailyLimitLabel: t(CatalogI18nKeys.DetailsDailyLimit),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),

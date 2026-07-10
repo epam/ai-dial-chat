@@ -41,6 +41,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconChevronDown: () => <svg />,
+  IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
   IconShare: () => <svg />,
 }));
@@ -206,5 +207,56 @@ describe('Header', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Share' }));
       expect(screen.queryByText('popover body')).toBeNull();
     });
+  });
+
+  it('does not render Edit when onEdit is not supplied', () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Application), isEditable: true }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+  });
+
+  it('does not render Edit when the item is not editable', () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Application), isEditable: false }}
+        onEdit={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
+  });
+
+  it('renders Edit when onEdit is supplied and the item is editable', () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Application), isEditable: true }}
+        onEdit={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeTruthy();
+  });
+
+  it('uses editActionLabel for the Edit button label', () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Application), isEditable: true }}
+        onEdit={vi.fn()}
+        texts={{ editActionLabel: 'Modify' }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Modify' })).toBeTruthy();
+  });
+
+  it('calls onEdit with the item when Edit is clicked', async () => {
+    const onEdit = vi.fn();
+    const item = {
+      ...makeItem(CatalogEntityType.Application),
+      isEditable: true,
+    };
+    render(<Header item={item} onEdit={onEdit} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    expect(onEdit).toHaveBeenCalledWith(item);
   });
 });

@@ -2,6 +2,7 @@ import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
 import {
   IconChevronDown,
+  IconPencil,
   IconPlayerPlayFilled,
   IconShare,
 } from '@tabler/icons-react';
@@ -25,6 +26,7 @@ interface HeaderProps {
    * provided, clicking Share opens this popover instead of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  onEdit?: (item: CatalogItem) => void;
   texts?: ItemDetailsTexts;
   detailsStyles?: ItemDetailsStyles;
 }
@@ -35,6 +37,7 @@ export const Header: FC<HeaderProps> = ({
   isPrimaryActionVisible,
   onShare,
   shareOverlay,
+  onEdit,
   texts,
   detailsStyles,
 }) => {
@@ -57,6 +60,10 @@ export const Header: FC<HeaderProps> = ({
     onShare?.(item);
   }, [item, onShare, shareOverlay]);
 
+  const handleEdit = useCallback(() => {
+    onEdit?.(item);
+  }, [item, onEdit]);
+
   const shouldShowPrimaryAction =
     texts?.hasPrimaryAction !== false &&
     (isPrimaryActionVisible?.(item) ??
@@ -70,6 +77,8 @@ export const Header: FC<HeaderProps> = ({
   const shouldShowShare =
     item.type !== CatalogEntityType.Guardrail &&
     item.type !== CatalogEntityType.Mcp;
+
+  const shouldShowEditAction = !!onEdit && !!item.isEditable;
 
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
@@ -88,12 +97,19 @@ export const Header: FC<HeaderProps> = ({
           ) : undefined
         }
       />
-      <div className="flex flex-wrap gap-2 ps-[60px]">
+      <div className="flex flex-wrap items-center gap-2 ps-[60px]">
         {shouldShowPrimaryAction && (
           <PrimaryButton
             label={texts?.primaryActionLabel ?? 'Use in chat'}
             iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
             onClick={handleUseInChat}
+          />
+        )}
+        {shouldShowEditAction && (
+          <NeutralButton
+            label={texts?.editActionLabel ?? 'Edit'}
+            iconBefore={<IconPencil size={DIAL_ICON_SIZE.MD} />}
+            onClick={handleEdit}
           />
         )}
         {shouldShowShare &&
