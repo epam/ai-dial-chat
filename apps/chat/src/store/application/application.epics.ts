@@ -557,8 +557,13 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ApplicationActions.get.type),
     switchMap(({ payload }) =>
-      ApplicationService.get(payload.applicationId).pipe(
-        switchMap((application) => {
+      forkJoin({
+        application: ApplicationService.get(payload.applicationId),
+        dialEntity: payload.acceptSharePermissions?.length
+          ? ApplicationService.getDialEntity(payload.applicationId)
+          : of(null),
+      }).pipe(
+        switchMap(({ application, dialEntity }) => {
           if (!application) {
             return of(ApplicationActions.getFail());
           }
@@ -583,29 +588,32 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
 
           actions.push(of(successAction));
 
-          if (!modelFromState) {
+          if (!modelFromState || acceptSharedWithMe) {
             const isQuickApp2 =
               application.applicationTypeSchemaId ===
               DEFAULT_QUICK_APPS_SCHEMA_2_ID;
-            actions.push(
-              of(
-                ModelsActions.addModels({
-                  models: [
-                    {
-                      ...application,
-                      ...(isQuickApp2 && {
-                        features: {
-                          ...application.features,
-                          configuration: true,
-                        } as DialAIEntityFeatures,
-                      }),
-                      sharedWithMe: acceptSharedWithMe,
-                      permissions: payload.acceptSharePermissions,
-                    },
-                  ],
-                }),
-              ),
-            );
+            const featuresRecord = {
+              ...(dialEntity?.features ?? application.features ?? {}),
+            };
+            const updatedModel = {
+              ...application,
+              features: {
+                ...mergeFeatures(featuresRecord),
+                ...(isQuickApp2 && { configuration: true }),
+              } as DialAIEntityFeatures,
+              sharedWithMe: acceptSharedWithMe ?? modelFromState?.sharedWithMe,
+              permissions:
+                payload.acceptSharePermissions ?? modelFromState?.permissions,
+            };
+
+            const refreshModelAction = modelFromState
+              ? ModelsActions.updateModel({
+                  model: updatedModel,
+                  oldApplicationId: modelFromState.reference,
+                })
+              : ModelsActions.addModels({ models: [updatedModel] });
+
+            actions.push(of(refreshModelAction));
           }
 
           if (payload.acceptSharePermissions) {
