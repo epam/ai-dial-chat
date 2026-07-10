@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
+import type { CatalogItemTabData } from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
 
 /** A single option in the Create dropdown. */
@@ -86,12 +87,18 @@ export interface CatalogProps {
   isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Share" button is clicked in the details panel. */
   onShare?: (item: CatalogItem) => void;
+  /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
+  onEdit?: (item: CatalogItem) => void;
   /**
    * Called when the details panel opens for an item. Use this to fetch
-   * enriched About-tab content from an API and pass it back as a string.
-   * Returns `undefined` to let the panel fall back to `item.longDescription`.
+   * structured tab data (Overview/Pricing/API/Tools) from an API and pass it
+   * back. The resolved data takes precedence over the item's static `details`
+   * field for the currently open item. Returns `undefined` to let the panel
+   * fall back to `item.details`.
    */
-  onFetchAboutContent?: (item: CatalogItem) => Promise<string | undefined>;
+  onFetchDetails?: (
+    item: CatalogItem,
+  ) => Promise<CatalogItemTabData | undefined>;
   /**
    * Dropdown options for the Create button. When provided, the button opens a
    * menu instead of calling `onCreateClick` directly.

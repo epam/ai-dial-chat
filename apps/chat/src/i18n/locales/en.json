@@ -477,6 +477,12 @@
     "stepSettings": "Settings",
     "stepsNavAriaLabel": "Editor steps",
     "saveButton": "Save & Exit",
+    "previewButton": "Preview",
+    "exitPreviewButton": "Exit preview",
+    "previewChat": {
+      "placeholder": "Send a message to preview this application…",
+      "ariaLabel": "Application preview chat"
+    },
     "generalForm": {
       "nameLabel": "Name",
       "namePlaceholder": "Enter application name",

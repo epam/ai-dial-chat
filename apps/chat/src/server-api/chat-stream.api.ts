@@ -135,7 +135,7 @@ export const streamCompletion = (
   run();
 };
 
-const parseSSELine = (
+export const parseSSELine = (
   line: string,
   onChunk: (chunk: StreamChunk) => void,
   onError: (error: Error) => void,

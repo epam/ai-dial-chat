@@ -16,7 +16,9 @@
 .dial-input:not(.dial-input-error) {
   border-radius: 0.75rem !important; // matches Tailwind's rounded-xl
   border-color: var(--stroke-tertiary, #e0e6f0) !important;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 
   &:not(:disabled):hover {
     border-color: var(--stroke-accent-primary, #7da4ff) !important;

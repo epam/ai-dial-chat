@@ -15,11 +15,16 @@
 import * as runtime from '../runtime';
 import type {
   DeploymentConfigurationDto,
+  DeploymentDetailsDto,
   DeploymentLimitsResponseDto,
   DeploymentsResponseDto,
 } from '../models/index';
 
 export interface GetDeploymentConfigurationRequest {
+  deployment: string;
+}
+
+export interface GetDeploymentDetailsRequest {
   deployment: string;
 }
 
@@ -82,6 +87,59 @@ export class DeploymentsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DeploymentConfigurationDto> {
     const response = await this.getDeploymentConfigurationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core\'s getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds.
+   * Get full details for a single deployment
+   */
+  async getDeploymentDetailsRaw(
+    requestParameters: GetDeploymentDetailsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<DeploymentDetailsDto>> {
+    if (requestParameters['deployment'] == null) {
+      throw new runtime.RequiredError(
+        'deployment',
+        'Required parameter "deployment" was null or undefined when calling getDeploymentDetails().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/deployments/{deployment}/details`;
+    urlPath = urlPath.replace(
+      `{${'deployment'}}`,
+      encodeURIComponent(String(requestParameters['deployment'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<DeploymentDetailsDto>(response);
+  }
+
+  /**
+   * Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core\'s getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds.
+   * Get full details for a single deployment
+   */
+  async getDeploymentDetails(
+    requestParameters: GetDeploymentDetailsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<DeploymentDetailsDto> {
+    const response = await this.getDeploymentDetailsRaw(
       requestParameters,
       initOverrides,
     );
