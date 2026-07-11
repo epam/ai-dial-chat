@@ -32,7 +32,7 @@ import {
   mapDeploymentDetailsDtoToEntityDetails,
   mapEntityDetailsToCatalogDetails,
 } from '../../utils/map-entity-details-to-catalog';
-import SharePopover from '../SharePopover/SharePopover';
+import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
@@ -263,7 +263,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onEdit={handleEditApp}
       isPrimaryActionVisible={isPrimaryActionVisible}
       shareOverlay={(item, onClose) => (
-        <SharePopover item={item} onClose={onClose} />
+        <SharePopoverContainer item={item} onClose={onClose} />
       )}
       styles={{
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },

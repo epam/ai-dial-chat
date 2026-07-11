@@ -1,4 +1,3 @@
-import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
 import { mergeClasses, useCodeCopy } from '@epam/ai-dial-chat-shared';
 import {
   GhostButton,
@@ -28,55 +27,124 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ShareI18nKeys } from '../../constants/translation-keys';
-import { useShareLink } from '../../hooks/useShareLink/useShareLink';
 import { ShareLinkAccess, SharePopoverView } from '../../types/share';
-import { QrPlaceholder } from './QrPlaceholder';
+import { QrCode } from './QrCode';
 import styles from './SharePopover.module.scss';
 
-const SECTION_LABEL_CLASS_NAME =
-  'dial-tiny-semi-text uppercase tracking-wider text-secondary';
 const LINK_BUTTON_ID = 'share-popover-back-button';
 const QR_BUTTON_ID = 'share-popover-qr-button';
-/*
- * Agent-tab entities (Agent + Application, both shown under the "Agents"
- * catalog tab — see libs/catalog/src/utils/catalog-tabs.ts), Skill, and
- * Toolset support edit access. Model can only ever be shared view-only, so
- * its access control is a static label, not a dropdown.
- */
-const EDITABLE_ACCESS_TYPES = new Set<CatalogEntityType>([
-  CatalogEntityType.Agent,
-  CatalogEntityType.Application,
-  CatalogEntityType.Skill,
-  CatalogEntityType.Toolset,
-]);
+
 /*
  * DialSkeleton's own default color resolves to `--bg-layer-3`, which is the
  * same white as this popover's `--bg-layer-0` background in this app's theme
- * (invisible white-on-white) — same issue CardGrid's skeleton already works
- * around by passing an explicit, visibly-contrasting token.
+ * (invisible white-on-white). Pass an explicit contrasting token.
  */
 const SKELETON_COLOR = 'var(--bg-layer-2, #EEF1F7)';
+const SECTION_LABEL_CLASS_NAME =
+  'dial-tiny-semi-text uppercase tracking-wider text-secondary';
+
+/** All user-visible strings in {@link SharePopover}, with English defaults. */
+export interface SharePopoverStrings {
+  /** Popover heading and dialog `aria-label`. Defaults to `"Share"`. */
+  title?: string;
+  /** QR-tab button label. Defaults to `"QR"`. */
+  qrButtonLabel?: string;
+  /** Link-tab (back) button label. Defaults to `"Link"`. */
+  linkButtonLabel?: string;
+  /** Label above the URL input field. Defaults to `"Link"`. */
+  linkLabel?: string;
+  /** Primary row text. Defaults to `"Anyone with the link"`. */
+  anyoneWithLinkTitle?: string;
+  /** Secondary row text. Defaults to `"in your organization"`. */
+  anyoneWithLinkSubtitle?: string;
+  /** `aria-label` for the access-level control. Defaults to `"Link access level"`. */
+  accessAriaLabel?: string;
+  /** Access-dropdown option for view access. Defaults to `"Can view"`. */
+  accessViewLabel?: string;
+  /** Access-dropdown option for edit access. Defaults to `"Can edit"`. */
+  accessEditLabel?: string;
+  /** Visibility note shown when access is View. */
+  visibilityNote?: string;
+  /** Visibility note shown when access is Edit. */
+  visibilityNoteEdit?: string;
+  /** Copy button default label. Defaults to `"Copy"`. */
+  copyButtonLabel?: string;
+  /** Copy button label after copying. Defaults to `"Copied"`. */
+  copiedButtonLabel?: string;
+  /** `aria-label` for the share-link URL input. Defaults to `"Share link"`. */
+  linkAriaLabel?: string;
+  /** Pre-formatted expiry note (e.g. "This link is active for 3 days."). */
+  expiryNote?: string;
+  /** `aria-label` on the QR placeholder image. Defaults to `"QR code for the share link"`. */
+  qrCodeAriaLabel?: string;
+  /** `aria-label` for the loading skeleton. Defaults to `"Creating share link…"`. */
+  loadingLabel?: string;
+  /** Error message shown when share-link creation fails. */
+  errorTitle?: string;
+}
 
 /** Props for {@link SharePopover}. */
-interface SharePopoverProps {
-  /** The catalog item being shared. */
-  item: CatalogItem;
+export interface SharePopoverProps {
+  /** Resolved share URL; `undefined` while loading. */
+  url: string | undefined;
+  /** Whether the share link is still being fetched. */
+  isLoading: boolean;
+  /** Set when the share link could not be created. */
+  error: Error | null;
+  /** Number of days the link stays active; `undefined` while loading. */
+  expiresInDays: number | undefined;
+  /** Current access level. */
+  access: ShareLinkAccess;
+  /** True for editable entity types (Agent, Application, Skill, Toolset); false for Model. */
+  canEditAccess: boolean;
+  /** Called when the user selects a different access level. */
+  onAccessChange: (access: ShareLinkAccess) => void;
   /** Called when the popover should close. */
   onClose: () => void;
+  /** Overrides for user-visible strings. All fields have English defaults. */
+  strings?: SharePopoverStrings;
 }
 
 /**
  * Quick share popover: general link access, copy-to-clipboard, and an
  * in-place QR view-swap — no route change, one surface.
+ *
+ * All runtime data is received via props; this component makes no API calls.
  */
-const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
-  const { t } = useTranslation();
-  const { data, isLoading, error, setAccess } = useShareLink(item.id);
+const SharePopover: FC<SharePopoverProps> = ({
+  url,
+  isLoading,
+  error,
+  expiresInDays,
+  access,
+  canEditAccess,
+  onAccessChange,
+  onClose,
+  strings,
+}) => {
+  const {
+    title = 'Share',
+    qrButtonLabel = 'QR',
+    linkButtonLabel = 'Link',
+    linkLabel = 'Link',
+    anyoneWithLinkTitle = 'Anyone with the link',
+    anyoneWithLinkSubtitle = 'in your organization',
+    accessAriaLabel = 'Link access level',
+    accessViewLabel = 'Can view',
+    accessEditLabel = 'Can edit',
+    visibilityNote = 'This deployment and its updates will be visible to users with the link.',
+    visibilityNoteEdit = 'Anyone with the link will be able to view and edit this deployment.',
+    copyButtonLabel = 'Copy',
+    copiedButtonLabel = 'Copied',
+    linkAriaLabel = 'Share link',
+    expiryNote,
+    qrCodeAriaLabel = 'QR code for the share link',
+    loadingLabel = 'Creating share link…',
+    errorTitle = 'Couldn’t create the share link. Please try again.',
+  } = strings ?? {};
+
   const [view, setView] = useState(SharePopoverView.Link);
-  const { isCopied, copy } = useCodeCopy(data?.url ?? '');
-  const canEditAccess = EDITABLE_ACCESS_TYPES.has(item.type);
+  const { isCopied, copy } = useCodeCopy(url ?? '');
 
   const [isAccessOpen, setIsAccessOpen] = useState(false);
   const accessTriggerRef = useRef<HTMLButtonElement>(null);
@@ -87,7 +155,7 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
     if (!next) accessTriggerRef.current?.focus();
   };
 
-  // Focuses the currently-selected option once the menu opens.
+  /* Focuses the currently-selected option once the menu opens. */
   useEffect(() => {
     if (!isAccessOpen) return;
     const frame = requestAnimationFrame(() => {
@@ -99,7 +167,7 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
   }, [isAccessOpen]);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  // Moves focus into the popover as soon as it opens.
+  /* Moves focus into the popover as soon as it opens. */
   useEffect(() => {
     containerRef.current?.focus();
   }, []);
@@ -120,9 +188,6 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
    * between its own two options (which live in a floating-ui portal, so
    * they're outside `containerRef`'s DOM subtree and need their own
    * boundary check); otherwise cycles within the popover's own controls.
-   * Without this, Tab off the last control escapes to the page behind the
-   * popover, which also auto-closes it via the anchoring dropdown's own
-   * dismiss-on-blur behavior.
    */
   const trapTab = (e: KeyboardEvent<HTMLDivElement>) => {
     const scope = isAccessOpen
@@ -149,8 +214,7 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
   };
 
   /*
-   * Owns Escape handling entirely (rather than relying on the anchoring
-   * dropdown's own dismiss-on-Escape) so the first Escape in QR view returns
+   * Owns Escape handling entirely so the first Escape in QR view returns
    * to the link view instead of closing the popover outright.
    */
   const handleKeyDownCapture = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -191,27 +255,25 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
   };
 
   const accessOptions: { value: ShareLinkAccess; label: string }[] = [
-    { value: ShareLinkAccess.View, label: t(ShareI18nKeys.AccessViewLabel) },
-    { value: ShareLinkAccess.Edit, label: t(ShareI18nKeys.AccessEditLabel) },
+    { value: ShareLinkAccess.View, label: accessViewLabel },
+    { value: ShareLinkAccess.Edit, label: accessEditLabel },
   ];
 
   return (
     <div
       ref={containerRef}
       role="dialog"
-      aria-label={t(ShareI18nKeys.Title)}
+      aria-label={title}
       tabIndex={-1}
       className="flex w-[344px] flex-col outline-none"
       onKeyDownCapture={handleKeyDownCapture}
     >
       <div className="flex items-center gap-2 px-4 py-3">
-        <span className="dial-small-semi-text text-primary">
-          {t(ShareI18nKeys.Title)}
-        </span>
+        <span className="dial-small-semi-text text-primary">{title}</span>
         {view === SharePopoverView.Link ? (
           <GhostButton
             id={QR_BUTTON_ID}
-            label={t(ShareI18nKeys.QrButtonLabel)}
+            label={qrButtonLabel}
             iconBefore={<IconQrcode size={DIAL_ICON_SIZE.SM} aria-hidden />}
             className="ms-auto"
             onClick={() => setView(SharePopoverView.Qr)}
@@ -219,7 +281,7 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
         ) : (
           <GhostButton
             id={LINK_BUTTON_ID}
-            label={t(ShareI18nKeys.LinkButtonLabel)}
+            label={linkButtonLabel}
             iconBefore={<IconLink size={DIAL_ICON_SIZE.SM} aria-hidden />}
             className="ms-auto"
             onClick={() => setView(SharePopoverView.Link)}
@@ -233,7 +295,7 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
         {isLoading && (
           <div
             role="status"
-            aria-label={t(ShareI18nKeys.LoadingLabel)}
+            aria-label={loadingLabel}
             className="flex flex-col gap-3"
           >
             <div aria-hidden className="flex items-center gap-2.5">
@@ -295,16 +357,16 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
           </div>
         )}
 
-        {!isLoading && error && (
+        {!isLoading && error != null && (
           <p
             role="alert"
             className="dial-tiny-text py-6 text-center text-error"
           >
-            {t(ShareI18nKeys.ErrorTitle)}
+            {errorTitle}
           </p>
         )}
 
-        {!isLoading && !error && data && (
+        {!isLoading && error == null && url != null && (
           <>
             <div className="flex items-center gap-2.5">
               <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent-primary-alpha text-accent-primary">
@@ -312,10 +374,10 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="dial-small-semi-text truncate text-primary">
-                  {t(ShareI18nKeys.AnyoneWithLinkTitle)}
+                  {anyoneWithLinkTitle}
                 </p>
                 <p className="dial-tiny-text text-secondary">
-                  {t(ShareI18nKeys.AnyoneWithLinkSubtitle)}
+                  {anyoneWithLinkSubtitle}
                 </p>
               </div>
               {canEditAccess ? (
@@ -329,13 +391,13 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
                     <div
                       ref={accessMenuRef}
                       role="menu"
-                      aria-label={t(ShareI18nKeys.AccessAriaLabel)}
+                      aria-label={accessAriaLabel}
                       tabIndex={-1}
                       className="min-w-[160px]"
                       onKeyDown={handleAccessMenuKeyDown}
                     >
                       {accessOptions.map((option) => {
-                        const isChecked = data.access === option.value;
+                        const isChecked = access === option.value;
                         return (
                           <button
                             key={option.value}
@@ -348,7 +410,7 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
                               isChecked && styles.accessMenuItemChecked,
                             )}
                             onClick={() => {
-                              setAccess(option.value);
+                              onAccessChange(option.value);
                               handleAccessOpenChange(false);
                             }}
                           >
@@ -381,16 +443,15 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
                   >
                     <span className={styles.accessTriggerLabel}>
                       {
-                        accessOptions.find(
-                          (option) => option.value === data.access,
-                        )?.label
+                        accessOptions.find((option) => option.value === access)
+                          ?.label
                       }
                     </span>
                     <IconChevronDown
                       size={14}
                       strokeWidth={2.2}
                       className={mergeClasses(
-                        'shrink-0 transition-transform duration-150',
+                        'shrink-0 transition-transform duration-150 rtl:scale-x-[-1]',
                         styles.accessTriggerChevron,
                         isAccessOpen && 'rotate-180',
                       )}
@@ -400,50 +461,41 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
                 </DialDropdown>
               ) : (
                 <span
-                  aria-label={t(ShareI18nKeys.AccessAriaLabel)}
+                  aria-label={accessAriaLabel}
                   className={mergeClasses(
                     'flex h-9 shrink-0 items-center whitespace-nowrap rounded-lg px-2.5',
                     styles.accessStaticLabel,
                   )}
                 >
                   <span className={styles.accessTriggerLabel}>
-                    {t(ShareI18nKeys.AccessViewLabel)}
+                    {accessViewLabel}
                   </span>
                 </span>
               )}
             </div>
             <p className="dial-tiny-text text-secondary">
-              {t(
-                canEditAccess && data.access === ShareLinkAccess.Edit
-                  ? ShareI18nKeys.VisibilityNoteEdit
-                  : ShareI18nKeys.VisibilityNote,
-              )}
+              {canEditAccess && access === ShareLinkAccess.Edit
+                ? visibilityNoteEdit
+                : visibilityNote}
             </p>
 
             {view === SharePopoverView.Qr ? (
-              <QrPlaceholder
-                value={data.url}
-                ariaLabel={t(ShareI18nKeys.QrCodeAriaLabel)}
-              />
+              <QrCode value={url} ariaLabel={qrCodeAriaLabel} />
             ) : (
               <>
                 <p className={mergeClasses(SECTION_LABEL_CLASS_NAME, 'mt-3')}>
-                  {t(ShareI18nKeys.LinkLabel)}
+                  {linkLabel}
                 </p>
                 <div className="flex items-center gap-2">
                   <Input
                     readOnly
-                    value={data.url}
-                    aria-label={t(ShareI18nKeys.LinkAriaLabel)}
+                    value={url}
+                    aria-label={linkAriaLabel}
                     containerClassName="min-w-0 flex-1"
                     wrapperClassName={styles.linkInputWrapper}
                   />
                   <NeutralButton
-                    label={
-                      isCopied
-                        ? t(ShareI18nKeys.CopiedButtonLabel)
-                        : t(ShareI18nKeys.CopyButtonLabel)
-                    }
+                    label={isCopied ? copiedButtonLabel : copyButtonLabel}
                     iconBefore={
                       isCopied ? (
                         <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
@@ -455,16 +507,15 @@ const SharePopover: FC<SharePopoverProps> = ({ item, onClose }) => {
                     className="shrink-0"
                   />
                 </div>
-                {/* Screen-reader-only announcement: the button's own label
-                    change is visual-only and isn't reliably announced. */}
+                {/* Screen-reader-only announcement: button label change is visual-only. */}
                 <span role="status" aria-live="polite" className="sr-only">
-                  {isCopied ? t(ShareI18nKeys.CopiedButtonLabel) : ''}
+                  {isCopied ? copiedButtonLabel : ''}
                 </span>
               </>
             )}
-            <p className="dial-tiny-text text-secondary">
-              {t(ShareI18nKeys.ExpiryNote, { days: data.expiresInDays })}
-            </p>
+            {expiryNote != null && (
+              <p className="dial-tiny-text text-secondary">{expiryNote}</p>
+            )}
           </>
         )}
       </div>

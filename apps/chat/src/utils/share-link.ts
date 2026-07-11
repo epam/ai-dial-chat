@@ -1,22 +1,18 @@
-import { ShareLinkAccess, ShareLinkData } from '../types/share';
-
-const MOCK_NETWORK_DELAY_MS = 400;
-const MOCK_EXPIRES_IN_DAYS = 3;
+import { ShareLinkAccess, ShareLinkData } from '@epam/ai-dial-share';
+import { createShareLink as createShareLinkRequest } from '../server-api/share.api';
 
 /**
- * Resolves share-link data for a catalog entity.
- *
- * Mock implementation — swap the body for a real API call (e.g. a new
- * `server-api/share.api.ts` module) without changing the signature; callers
- * (`useShareLink`) only depend on this function's shape.
+ * Resolves share-link data for a catalog entity by calling the backend
+ * `POST /api/v1/share` endpoint through the generated API client.
  */
-export const getShareLink = (itemId: string): Promise<ShareLinkData> =>
-  new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        url: `https://chat.dialx.ai/marketplace/share/${itemId}`,
-        expiresInDays: MOCK_EXPIRES_IN_DAYS,
-        access: ShareLinkAccess.View,
-      });
-    }, MOCK_NETWORK_DELAY_MS);
-  });
+export const getShareLink = async (
+  itemId: string,
+  access: ShareLinkAccess = ShareLinkAccess.View,
+): Promise<ShareLinkData> => {
+  const response = await createShareLinkRequest({ itemId, access });
+  return {
+    url: response.url,
+    expiresInDays: response.expiresInDays,
+    access: response.access as ShareLinkAccess,
+  };
+};

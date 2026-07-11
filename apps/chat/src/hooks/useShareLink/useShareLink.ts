@@ -1,5 +1,5 @@
+import { ShareLinkAccess, ShareLinkData } from '@epam/ai-dial-share';
 import { useCallback, useEffect, useState } from 'react';
-import { ShareLinkAccess, ShareLinkData } from '../../types/share';
 import { getShareLink } from '../../utils/share-link';
 
 /** Result returned by {@link useShareLink}. */

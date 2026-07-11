@@ -2759,6 +2759,52 @@
         "summary": "Get theme icon",
         "tags": ["themes"]
       }
+    },
+    "/api/v1/share": {
+      "post": {
+        "description": "Creates a share link for a catalog entity (agent, application, skill, toolset, or model) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
+        "operationId": "createShareLink",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShareLinkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Share link created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLinkResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid itemId or access value"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Create a share link",
+        "tags": ["share"]
+      }
     }
   },
   "info": {
@@ -5764,6 +5810,45 @@
           }
         },
         "required": ["themes", "images"]
+      },
+      "CreateShareLinkDto": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "description": "Identifier (DIAL Core resource path) of the entity to share.",
+            "example": "gpt-4o"
+          },
+          "access": {
+            "type": "string",
+            "description": "Access level granted to holders of the share link.",
+            "enum": ["view", "edit"],
+            "example": "view"
+          }
+        },
+        "required": ["itemId", "access"]
+      },
+      "ShareLinkResponseDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Absolute shareable URL for the entity.",
+            "example": "https://chat.dialx.ai/marketplace/share/gpt-4o"
+          },
+          "expiresInDays": {
+            "type": "number",
+            "description": "Number of days the link stays active before expiring.",
+            "example": 3
+          },
+          "access": {
+            "type": "string",
+            "description": "Access level granted to holders of the share link.",
+            "enum": ["view", "edit"],
+            "example": "view"
+          }
+        },
+        "required": ["url", "expiresInDays", "access"]
       }
     }
   }

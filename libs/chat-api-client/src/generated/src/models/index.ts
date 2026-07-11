@@ -1160,6 +1160,36 @@ export interface CreateFolderResponseDto {
 /**
  *
  * @export
+ * @interface CreateShareLinkDto
+ */
+export interface CreateShareLinkDto {
+  /**
+   * Identifier (DIAL Core resource path) of the entity to share.
+   * @type {string}
+   * @memberof CreateShareLinkDto
+   */
+  itemId: string;
+  /**
+   * Access level granted to holders of the share link.
+   * @type {string}
+   * @memberof CreateShareLinkDto
+   */
+  access: CreateShareLinkDtoAccessEnum;
+}
+
+/**
+ * @export
+ */
+export const CreateShareLinkDtoAccessEnum = {
+  View: 'view',
+  Edit: 'edit',
+} as const;
+export type CreateShareLinkDtoAccessEnum =
+  (typeof CreateShareLinkDtoAccessEnum)[keyof typeof CreateShareLinkDtoAccessEnum];
+
+/**
+ *
+ * @export
  * @interface CreatedApplicationDto
  */
 export interface CreatedApplicationDto {
@@ -3379,6 +3409,42 @@ export const SendCompletionDtoModeEnum = {
 } as const;
 export type SendCompletionDtoModeEnum =
   (typeof SendCompletionDtoModeEnum)[keyof typeof SendCompletionDtoModeEnum];
+
+/**
+ *
+ * @export
+ * @interface ShareLinkResponseDto
+ */
+export interface ShareLinkResponseDto {
+  /**
+   * Absolute shareable URL for the entity.
+   * @type {string}
+   * @memberof ShareLinkResponseDto
+   */
+  url: string;
+  /**
+   * Number of days the link stays active before expiring.
+   * @type {number}
+   * @memberof ShareLinkResponseDto
+   */
+  expiresInDays: number;
+  /**
+   * Access level granted to holders of the share link.
+   * @type {string}
+   * @memberof ShareLinkResponseDto
+   */
+  access: ShareLinkResponseDtoAccessEnum;
+}
+
+/**
+ * @export
+ */
+export const ShareLinkResponseDtoAccessEnum = {
+  View: 'view',
+  Edit: 'edit',
+} as const;
+export type ShareLinkResponseDtoAccessEnum =
+  (typeof ShareLinkResponseDtoAccessEnum)[keyof typeof ShareLinkResponseDtoAccessEnum];
 
 /**
  *

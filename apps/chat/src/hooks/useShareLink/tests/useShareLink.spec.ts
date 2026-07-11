@@ -1,6 +1,6 @@
+import { ShareLinkAccess } from '@epam/ai-dial-share';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ShareLinkAccess } from '../../../types/share';
 import { getShareLink } from '../../../utils/share-link';
 import { useShareLink } from '../useShareLink';
 

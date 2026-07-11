@@ -1,0 +1,32 @@
+{
+  "name": "@epam/ai-dial-share",
+  "description": "Share popover UI component and share-link types for AI DIAL catalog deployments",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@epam/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "@epam/ai-dial-chat-shared": "*",
+    "@epam/ai-dial-kit": "*",
+    "@epam/ai-dial-ui-kit": "0.12.0-dev.25",
+    "@tabler/icons-react": "^3.0.0",
+    "react": "^19.0.0"
+  },
+  "nx": {
+    "tags": [
+      "type:ui"
+    ]
+  }
+}

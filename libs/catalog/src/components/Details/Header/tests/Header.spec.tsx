@@ -61,6 +61,7 @@ const makeItem = (type: CatalogEntityType): CatalogItem => ({
   description: '',
   folder: [],
   topics: [],
+  isMyApp: true,
 });
 
 describe('Header', () => {
@@ -136,6 +137,22 @@ describe('Header', () => {
 
   it('hides Share for an MCP item', () => {
     render(<Header item={makeItem(CatalogEntityType.Mcp)} />);
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+  });
+
+  it('hides Share for an item not owned by the current user', () => {
+    render(
+      <Header
+        item={{ ...makeItem(CatalogEntityType.Application), isMyApp: false }}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+  });
+
+  it('hides Share when isMyApp is not set', () => {
+    const item = makeItem(CatalogEntityType.Application);
+    delete item.isMyApp;
+    render(<Header item={item} />);
     expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
   });
 
