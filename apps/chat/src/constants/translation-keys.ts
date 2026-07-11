@@ -62,6 +62,7 @@ export enum ButtonsI18nKeys {
   Cancel = 'buttons.cancel',
   Confirm = 'buttons.confirm',
   Edit = 'buttons.edit',
+  Link = 'buttons.link',
   SaveAndSubmit = 'buttons.saveAndSubmit',
   Regenerate = 'buttons.regenerate',
   Copy = 'buttons.copy',
@@ -525,8 +526,6 @@ export enum ErrorBoundaryI18nKeys {
 export enum ShareI18nKeys {
   Title = 'share.title',
   QrButtonLabel = 'share.qrButtonLabel',
-  LinkButtonLabel = 'share.linkButtonLabel',
-  LinkLabel = 'share.linkLabel',
   AnyoneWithLinkTitle = 'share.anyoneWithLinkTitle',
   AnyoneWithLinkSubtitle = 'share.anyoneWithLinkSubtitle',
   AccessViewLabel = 'share.accessViewLabel',

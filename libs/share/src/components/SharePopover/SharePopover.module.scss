@@ -108,6 +108,14 @@
   color: var(--text-primary, #131a29);
 }
 
+/* Section heading above the link input, e.g. "Link". */
+.sectionLabel {
+  color: var(--text-secondary, #575f73) !important;
+  input {
+    color: var(--text-secondary, #575f73) !important;
+  }
+}
+
 /*
  * Header/body divider — inset by the surrounding `mx-4` so it aligns with
  * the popover's own content padding instead of running edge-to-edge, and
@@ -116,34 +124,4 @@
 .divider {
   height: 1px;
   background: rgba(0, 0, 0, 0.05);
-}
-
-/*
- * Overrides libs/ai-dial-kit/src/components/Input/Input.scss's own
- * `.dial-input:not(.dial-input-error)` rule and its `:hover`/`:focus(-within)`
- * variants (all !important, specificity up to (0,4,0)) so the link field's
- * default, hover, and focus stroke all match
- * libs/catalog/src/components/SearchBar/SearchBar.module.scss's `.container`
- * exactly, instead of the app-wide Input's default border language.
- * The class is repeated to reach equal specificity.
- */
-.linkInputWrapper.linkInputWrapper.linkInputWrapper.linkInputWrapper {
-  border-color: rgba(0, 0, 0, 0.05) !important;
-
-  @media (hover: hover) {
-    &:not(:disabled):hover:not(:focus-within) {
-      border-color: rgba(0, 0, 0, 0.12) !important;
-    }
-  }
-
-  &:not(:disabled):active,
-  &:not(:disabled):focus,
-  &:not(:disabled):focus-within {
-    border-color: color-mix(
-      in srgb,
-      var(--stroke-accent-primary, #7da4ff) 50%,
-      transparent
-    ) !important;
-    box-shadow: none !important;
-  }
 }

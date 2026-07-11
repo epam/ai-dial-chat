@@ -1,4 +1,7 @@
-import { BadGatewayException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
@@ -100,10 +103,9 @@ describe('ShareService', () => {
 
     it('throws BadGatewayException on upstream 502', async () => {
       const { service } = makeService();
-      vi.spyOn(
-        service['dialClient'].client,
-        'shareResource',
-      ).mockResolvedValue(errResponse(502));
+      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
+        errResponse(502),
+      );
 
       await expect(
         service.createShareLink('token', {
@@ -115,10 +117,9 @@ describe('ShareService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
-      vi.spyOn(
-        service['dialClient'].client,
-        'shareResource',
-      ).mockRejectedValue(new TypeError('fetch failed'));
+      vi.spyOn(service['dialClient'].client, 'shareResource').mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
 
       await expect(
         service.createShareLink('token', {

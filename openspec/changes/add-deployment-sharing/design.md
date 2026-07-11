@@ -31,11 +31,11 @@ interface SharePopoverProps {
   url: string | undefined;
   isLoading: boolean;
   error: Error | null;
-  expiresInDays: number | undefined;
   access: ShareLinkAccess;
   canEditAccess: boolean;           // false for Model
   onAccessChange: (a: ShareLinkAccess) => void;
   onClose: () => void;
+  labels?: SharePopoverLabels;      // includes a pre-formatted expiryNote
 }
 ```
 

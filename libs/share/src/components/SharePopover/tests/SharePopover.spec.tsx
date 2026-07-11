@@ -7,8 +7,9 @@ import {
   useState,
 } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { SharePopoverProps } from '../../../models/share-popover-props';
 import { ShareLinkAccess } from '../../../types/share';
-import SharePopover, { type SharePopoverProps } from '../SharePopover';
+import SharePopover from '../SharePopover';
 
 const { mockCopy } = vi.hoisted(() => ({ mockCopy: vi.fn() }));
 
@@ -78,12 +79,11 @@ const makeProps = (
   url: ITEM_URL,
   isLoading: false,
   error: null,
-  expiresInDays: 3,
   access: ShareLinkAccess.View,
   canEditAccess: true,
   onAccessChange: vi.fn(),
   onClose: vi.fn(),
-  strings: { expiryNote: EXPIRY_NOTE },
+  labels: { expiryNote: EXPIRY_NOTE },
   ...overrides,
 });
 

@@ -3,7 +3,10 @@ import { ShareLinkAccess, SharePopover } from '@epam/ai-dial-share';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ShareI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  ShareI18nKeys,
+} from '../../constants/translation-keys';
 import { useShareLink } from '../../hooks/useShareLink/useShareLink';
 
 /*
@@ -42,16 +45,14 @@ const SharePopoverContainer: FC<Props> = ({ item, onClose }) => {
       url={data?.url}
       isLoading={isLoading}
       error={error}
-      expiresInDays={data?.expiresInDays}
       access={data?.access ?? ShareLinkAccess.View}
       canEditAccess={canEditAccess}
       onAccessChange={setAccess}
       onClose={onClose}
-      strings={{
+      labels={{
         title: t(ShareI18nKeys.Title),
         qrButtonLabel: t(ShareI18nKeys.QrButtonLabel),
-        linkButtonLabel: t(ShareI18nKeys.LinkButtonLabel),
-        linkLabel: t(ShareI18nKeys.LinkLabel),
+        linkLabel: t(ButtonsI18nKeys.Link),
         anyoneWithLinkTitle: t(ShareI18nKeys.AnyoneWithLinkTitle),
         anyoneWithLinkSubtitle: t(ShareI18nKeys.AnyoneWithLinkSubtitle),
         accessAriaLabel: t(ShareI18nKeys.AccessAriaLabel),

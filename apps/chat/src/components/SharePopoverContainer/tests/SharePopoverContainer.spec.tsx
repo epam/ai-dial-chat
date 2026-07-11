@@ -2,6 +2,7 @@ import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
 import { ShareLinkAccess } from '@epam/ai-dial-share';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ShareI18nKeys } from '../../../constants/translation-keys';
 import * as useShareLinkModule from '../../../hooks/useShareLink/useShareLink';
 import SharePopoverContainer from '../SharePopoverContainer';
 
@@ -75,8 +76,8 @@ describe('SharePopoverContainer', () => {
     expect(props.url).toBe('https://chat.dialx.ai/marketplace/share/item-1');
     expect(props.isLoading).toBe(false);
     expect(props.error).toBeNull();
-    expect(props.expiresInDays).toBe(3);
     expect(props.access).toBe(ShareLinkAccess.View);
+    expect(props.labels.expiryNote).toBe(ShareI18nKeys.ExpiryNote);
   });
 
   it('passes canEditAccess true for an Application item', () => {

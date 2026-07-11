@@ -1,12 +1,7 @@
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
-import {
-  IconChevronDown,
-  IconPencil,
-  IconPlayerPlayFilled,
-  IconShare,
-} from '@tabler/icons-react';
-import { FC, type ReactNode, useCallback, useState } from 'react';
+import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { IconPencil, IconPlayerPlayFilled } from '@tabler/icons-react';
+import { FC, type ReactNode, useCallback } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import type {
   ItemDetailsStyles,
@@ -15,6 +10,7 @@ import type {
 import { CatalogEntityType } from '../../../types/entity-type';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import { FolderPath } from '../../FolderPath/FolderPath';
+import { ShareButton } from './ShareButton/ShareButton';
 
 interface HeaderProps {
   item: CatalogItem;
@@ -46,19 +42,10 @@ export const Header: FC<HeaderProps> = ({
     folderLabelClassName = 'dial-tiny-text',
     folderLeafClassName = 'dial-tiny-semi-text',
   } = detailsStyles?.typography ?? {};
-  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const handleUseInChat = useCallback(() => {
     onUseInChat?.(item);
   }, [item, onUseInChat]);
-
-  const handleShare = useCallback(() => {
-    if (shareOverlay) {
-      setIsShareOpen((prev) => !prev);
-      return;
-    }
-    onShare?.(item);
-  }, [item, onShare, shareOverlay]);
 
   const handleEdit = useCallback(() => {
     onEdit?.(item);
@@ -69,17 +56,6 @@ export const Header: FC<HeaderProps> = ({
     (isPrimaryActionVisible?.(item) ??
       (item.type === CatalogEntityType.Model ||
         item.type === CatalogEntityType.Application));
-
-  /*
-   * Guardrail and MCP sharing is descoped for now — hide Share entirely for
-   * those types rather than offering a button with undefined behavior.
-   * Sharing is also limited to entities the current user owns (deployments
-   * and toolsets in their personal space), not the whole catalog.
-   */
-  const shouldShowShare =
-    item.isMyApp === true &&
-    item.type !== CatalogEntityType.Guardrail &&
-    item.type !== CatalogEntityType.Mcp;
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
 
@@ -115,35 +91,12 @@ export const Header: FC<HeaderProps> = ({
             onClick={handleEdit}
           />
         )}
-        {shouldShowShare &&
-          (shareOverlay ? (
-            <DialDropdown
-              placement="bottom-end"
-              matchReferenceWidth={false}
-              open={isShareOpen}
-              onOpenChange={setIsShareOpen}
-              trigger={[]}
-              outsideClosable
-              listClassName="cp-dropdown-overlay"
-              renderOverlay={() =>
-                shareOverlay(item, () => setIsShareOpen(false))
-              }
-            >
-              <NeutralButton
-                label={texts?.shareLabel ?? 'Share'}
-                iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}
-                iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.MD} />}
-                onClick={handleShare}
-              />
-            </DialDropdown>
-          ) : (
-            <NeutralButton
-              label={texts?.shareLabel ?? 'Share'}
-              iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}
-              iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.MD} />}
-              onClick={handleShare}
-            />
-          ))}
+        <ShareButton
+          item={item}
+          onShare={onShare}
+          shareOverlay={shareOverlay}
+          label={texts?.shareLabel}
+        />
       </div>
     </div>
   );

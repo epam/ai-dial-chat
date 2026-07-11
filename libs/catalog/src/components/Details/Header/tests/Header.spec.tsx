@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
 import { CatalogEntityType } from '../../../../types/entity-type';
@@ -24,32 +23,21 @@ vi.mock('@epam/ai-dial-kit', () => ({
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialDropdown: ({
-    children,
-    open,
-    renderOverlay,
-  }: {
-    children: ReactNode;
-    open?: boolean;
-    renderOverlay?: () => ReactNode;
-  }) => (
-    <div>
-      {children}
-      {open && renderOverlay?.()}
-    </div>
-  ),
 }));
 vi.mock('@tabler/icons-react', () => ({
-  IconChevronDown: () => <svg />,
   IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
-  IconShare: () => <svg />,
 }));
 vi.mock('../../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
 }));
 vi.mock('../../../FolderPath/FolderPath', () => ({
   FolderPath: () => <div />,
+}));
+vi.mock('../ShareButton/ShareButton', () => ({
+  ShareButton: ({ label }: { label?: string }) => (
+    <button>{label ?? 'Share'}</button>
+  ),
 }));
 
 const makeItem = (type: CatalogEntityType): CatalogItem => ({
@@ -125,105 +113,19 @@ describe('Header', () => {
     expect(onUseInChat).toHaveBeenCalledWith(item);
   });
 
-  it('still renders Share for a Toolset item', () => {
+  it('renders the Share button', () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
     expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
   });
 
-  it('hides Share for a Guardrail item', () => {
-    render(<Header item={makeItem(CatalogEntityType.Guardrail)} />);
-    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
-  });
-
-  it('hides Share for an MCP item', () => {
-    render(<Header item={makeItem(CatalogEntityType.Mcp)} />);
-    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
-  });
-
-  it('hides Share for an item not owned by the current user', () => {
+  it('passes texts.shareLabel through to the Share button label', () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Application), isMyApp: false }}
+        item={makeItem(CatalogEntityType.Toolset)}
+        texts={{ shareLabel: 'Share this' }}
       />,
     );
-    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
-  });
-
-  it('hides Share when isMyApp is not set', () => {
-    const item = makeItem(CatalogEntityType.Application);
-    delete item.isMyApp;
-    render(<Header item={item} />);
-    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
-  });
-
-  it('calls onShare with the item when Share is clicked', async () => {
-    const onShare = vi.fn();
-    const item = makeItem(CatalogEntityType.Model);
-    render(<Header item={item} onShare={onShare} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(onShare).toHaveBeenCalledWith(item);
-  });
-
-  describe('shareOverlay', () => {
-    it('opens the share popover instead of calling onShare when shareOverlay is provided', async () => {
-      const onShare = vi.fn();
-      const shareOverlay = vi.fn((_item: CatalogItem, onClose: () => void) => (
-        <button onClick={onClose}>close popover</button>
-      ));
-      const item = makeItem(CatalogEntityType.Model);
-      render(
-        <Header item={item} onShare={onShare} shareOverlay={shareOverlay} />,
-      );
-
-      expect(
-        screen.queryByRole('button', { name: 'close popover' }),
-      ).toBeNull();
-
-      await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-
-      expect(onShare).not.toHaveBeenCalled();
-      expect(shareOverlay).toHaveBeenCalledWith(item, expect.any(Function));
-      expect(
-        screen.getByRole('button', { name: 'close popover' }),
-      ).toBeTruthy();
-    });
-
-    it('closes the popover when the overlay calls its onClose callback', async () => {
-      const shareOverlay = (_item: CatalogItem, onClose: () => void) => (
-        <button onClick={onClose}>close popover</button>
-      );
-      render(
-        <Header
-          item={makeItem(CatalogEntityType.Model)}
-          shareOverlay={shareOverlay}
-        />,
-      );
-
-      await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-      await userEvent.click(
-        screen.getByRole('button', { name: 'close popover' }),
-      );
-
-      expect(
-        screen.queryByRole('button', { name: 'close popover' }),
-      ).toBeNull();
-    });
-
-    it('toggles the popover closed when Share is clicked again', async () => {
-      const shareOverlay = () => <div>popover body</div>;
-      render(
-        <Header
-          item={makeItem(CatalogEntityType.Model)}
-          shareOverlay={shareOverlay}
-        />,
-      );
-
-      await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-      expect(screen.getByText('popover body')).toBeTruthy();
-
-      await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-      expect(screen.queryByText('popover body')).toBeNull();
-    });
+    expect(screen.getByRole('button', { name: 'Share this' })).toBeTruthy();
   });
 
   it('does not render Edit when onEdit is not supplied', () => {

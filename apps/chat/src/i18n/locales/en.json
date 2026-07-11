@@ -161,6 +161,7 @@
     "close": "Close",
     "apply": "Apply",
     "edit": "Edit",
+    "link": "Link",
     "regenerate": "Regenerate",
     "copy": "Copy",
     "copied": "Copied!",
@@ -477,8 +478,6 @@
   "share": {
     "title": "Share",
     "qrButtonLabel": "QR",
-    "linkButtonLabel": "Link",
-    "linkLabel": "Link",
     "anyoneWithLinkTitle": "Anyone with the link",
     "anyoneWithLinkSubtitle": "in your organization",
     "accessViewLabel": "Can view",

@@ -28,8 +28,6 @@ interface SharePopoverProps {
   url: string | undefined;
   isLoading: boolean;
   error: Error | null;
-  /** Number of days the link is active; undefined while loading */
-  expiresInDays: number | undefined;
   /** Current access level */
   access: ShareLinkAccess;
   /** True for editable entity types (Agent, Application, Skill, Toolset); false for Model */
@@ -38,11 +36,15 @@ interface SharePopoverProps {
   onAccessChange: (access: ShareLinkAccess) => void;
   /** Called when the popover should close */
   onClose: () => void;
+  /** Overrides for user-visible strings, including a pre-formatted `expiryNote` */
+  labels?: SharePopoverLabels;
 }
 ```
 
+The lib does not receive a raw `expiresInDays` number — since it cannot perform i18n pluralization itself, the host pre-formats the full expiry sentence (e.g. "This link is active for 3 days.") and passes it as `labels.expiryNote`.
+
 #### Scenario: SharePopover renders with resolved data
-- **WHEN** `SharePopover` receives `url`, `expiresInDays`, and `access` with `isLoading: false` and `error: null`
+- **WHEN** `SharePopover` receives `url` and `access` with `isLoading: false`, `error: null`, and `labels.expiryNote` set
 - **THEN** the URL appears in the link input and the expiry note is visible
 
 #### Scenario: SharePopover renders loading state
@@ -91,7 +93,7 @@ RTL impact: the popover is anchored via `DialDropdown` with `placement="bottom-e
 
 #### Scenario: Container wires useShareLink to SharePopover
 - **WHEN** `SharePopoverContainer` mounts with a given item
-- **THEN** it calls `useShareLink(item.id)` and passes `url`, `isLoading`, `error`, `expiresInDays`, `access`, `canEditAccess`, and `onAccessChange` to `SharePopover`
+- **THEN** it calls `useShareLink(item.id)` and passes `url`, `isLoading`, `error`, `access`, `canEditAccess`, and `onAccessChange` to `SharePopover`, formatting `data.expiresInDays` into `labels.expiryNote`
 
 #### Scenario: canEditAccess is false for Model
 - **WHEN** `SharePopoverContainer` receives an item with type Model
@@ -105,7 +107,7 @@ RTL impact: the popover is anchored via `DialDropdown` with `placement="bottom-e
 The `SharePopover` component SHALL display a link view showing the share URL in a read-only input with a Copy button, an access-level control, a visibility note, and a link expiry note.
 
 i18n keys (passed by the host via the translated string props, OR used directly inside the lib via `useTranslation` if the lib bundles its own i18n namespace):
-- `share.linkLabel` — label above the URL field
+- `buttons.link` — label above the URL field (shared generic "Link" label, also reused for the QR view's back-to-link button)
 - `share.copyButtonLabel` — "Copy"
 - `share.copiedButtonLabel` — "Copied"
 - `share.linkAriaLabel` — accessible label for the URL input
@@ -119,8 +121,8 @@ i18n keys (passed by the host via the translated string props, OR used directly 
 - `share.errorTitle` — shown on error
 
 #### Scenario: Share link displayed after load
-- **WHEN** `url` and `expiresInDays` are set with `isLoading: false`
-- **THEN** the URL is shown in a read-only input and the expiry note reads "This link is active for N days."
+- **WHEN** `url` is set, `isLoading: false`, and `labels.expiryNote` is `"This link is active for 3 days."`
+- **THEN** the URL is shown in a read-only input and the expiry note reads "This link is active for 3 days."
 
 #### Scenario: Copy button copies URL to clipboard
 - **WHEN** the user clicks Copy
@@ -156,7 +158,7 @@ Accessibility: trigger button has `aria-haspopup="true"` and `aria-expanded` ref
 ### Requirement: QR view swap
 `SharePopover` SHALL have a QR tab button. Clicking it replaces the link body with a `QrCode` component rendering a scannable QR code that encodes the share URL. A back-to-link button returns to the link view.
 
-i18n keys: `share.qrButtonLabel` ("QR"), `share.linkButtonLabel` ("Link"), `share.qrCodeAriaLabel` — aria-label on the QR code
+i18n keys: `share.qrButtonLabel` ("QR"), `buttons.link` ("Link") — reused for both the back-to-link button and the label above the URL field, `share.qrCodeAriaLabel` — aria-label on the QR code
 
 #### Scenario: QR tab opens QR view
 - **WHEN** the user clicks the QR button
