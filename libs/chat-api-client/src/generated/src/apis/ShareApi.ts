@@ -13,7 +13,15 @@
  */
 
 import * as runtime from '../runtime';
-import type { CreateShareLinkDto, ShareLinkResponseDto } from '../models/index';
+import type {
+  AcceptInvitationResponseDto,
+  CreateShareLinkDto,
+  ShareLinkResponseDto,
+} from '../models/index';
+
+export interface AcceptInvitationRequest {
+  invitationId: string;
+}
 
 export interface CreateShareLinkRequest {
   createShareLinkDto: CreateShareLinkDto;
@@ -23,6 +31,59 @@ export interface CreateShareLinkRequest {
  *
  */
 export class ShareApi extends runtime.BaseAPI {
+  /**
+   * Accepts a share invitation via DIAL Core, granting the authenticated user the invitation\'s access level, and returns the shared entity\'s identifier so the frontend can navigate to it.
+   * Accept a share invitation
+   */
+  async acceptInvitationRaw(
+    requestParameters: AcceptInvitationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<AcceptInvitationResponseDto>> {
+    if (requestParameters['invitationId'] == null) {
+      throw new runtime.RequiredError(
+        'invitationId',
+        'Required parameter "invitationId" was null or undefined when calling acceptInvitation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/share/invitations/{invitationId}`;
+    urlPath = urlPath.replace(
+      `{${'invitationId'}}`,
+      encodeURIComponent(String(requestParameters['invitationId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<AcceptInvitationResponseDto>(response);
+  }
+
+  /**
+   * Accepts a share invitation via DIAL Core, granting the authenticated user the invitation\'s access level, and returns the shared entity\'s identifier so the frontend can navigate to it.
+   * Accept a share invitation
+   */
+  async acceptInvitation(
+    requestParameters: AcceptInvitationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<AcceptInvitationResponseDto> {
+    const response = await this.acceptInvitationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Creates a share link for a catalog entity (agent, application, skill, toolset, or model) by proxying DIAL Core\'s resource-sharing API. Returns the share URL, access level, and expiry.
    * Create a share link

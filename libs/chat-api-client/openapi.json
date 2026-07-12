@@ -2805,6 +2805,57 @@
         "summary": "Create a share link",
         "tags": ["share"]
       }
+    },
+    "/api/v1/share/invitations/{invitationId}": {
+      "get": {
+        "description": "Accepts a share invitation via DIAL Core, granting the authenticated user the invitation's access level, and returns the shared entity's identifier so the frontend can navigate to it.",
+        "operationId": "acceptInvitation",
+        "parameters": [
+          {
+            "name": "invitationId",
+            "required": true,
+            "in": "path",
+            "description": "Invitation identifier extracted from the share link.",
+            "schema": {
+              "pattern": "^[\\w-]+$",
+              "example": "abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptInvitationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid invitationId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "404": {
+            "description": "Invitation not found, expired, or already revoked"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Accept a share invitation",
+        "tags": ["share"]
+      }
     }
   },
   "info": {
@@ -5855,6 +5906,17 @@
           }
         },
         "required": ["url", "expiresInDays", "access"]
+      },
+      "AcceptInvitationResponseDto": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "description": "Identifier (DIAL Core resource path) of the entity the invitation grants access to.",
+            "example": "gpt-4o"
+          }
+        },
+        "required": ["itemId"]
       }
     }
   }

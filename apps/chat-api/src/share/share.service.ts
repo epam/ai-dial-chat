@@ -8,6 +8,7 @@ import {
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { EnvironmentVariables } from '../config/environment.config';
 import { DialClientService } from '../dial/dial-client.service';
+import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
 import { CreateShareLinkDto, ShareAccess } from './dto/create-share-link.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
 
@@ -24,6 +25,13 @@ const ACCESS_PERMISSIONS: Record<ShareAccess, ResourceAccessType[]> = {
   [ShareAccess.View]: ['READ'],
   [ShareAccess.Edit]: ['READ', 'WRITE'],
 };
+
+/*
+ * The generated share link must point at a frontend route the SPA can
+ * render (which then accepts the invitation and redirects into the
+ * catalog), not at DIAL Core's own `/v1/invitations/{id}` API path.
+ */
+const SHARE_INVITATION_ROUTE_PATH = '/catalog/shared';
 
 /** Creates share links for catalog entities by proxying DIAL Core's resource-sharing API. */
 @Injectable()
@@ -42,15 +50,21 @@ export class ShareService {
   }
 
   /*
-   * DIAL Core's `invitationLink` is host-relative (it doesn't know the
-   * frontend's public origin), so the app's own origin is prepended to
-   * produce an absolute, shareable URL.
+   * DIAL Core's `invitationLink` (e.g. `/v1/invitations/{id}`) is an API
+   * path, not a page the SPA can render, and it's host-relative to DIAL
+   * Core rather than the frontend's public origin. Only the trailing id
+   * segment is reused, to build an absolute frontend URL that lands on the
+   * SPA's own accept-invitation route.
    */
-  private toAbsoluteUrl(invitationLink: string): string {
-    if (/^https?:\/\//i.test(invitationLink)) {
-      return invitationLink;
+  private buildInvitationUrl(invitationLink: string): string {
+    const { pathname } = new URL(invitationLink, this.appOrigin);
+    const invitationId = pathname.split('/').filter(Boolean).pop();
+    if (!invitationId) {
+      throw new BadGatewayException(
+        'DIAL Core returned an invalid invitation link',
+      );
     }
-    return `${this.appOrigin}/${invitationLink.replace(/^\/+/, '')}`;
+    return `${this.appOrigin}${SHARE_INVITATION_ROUTE_PATH}/${invitationId}`;
   }
 
   /**
@@ -100,9 +114,53 @@ export class ShareService {
     this.logger.debug(`Created share link for itemId=${itemId}`);
 
     return {
-      url: this.toAbsoluteUrl(invitationLink),
+      url: this.buildInvitationUrl(invitationLink),
       expiresInDays: SHARE_LINK_EXPIRES_IN_DAYS,
       access,
     };
+  }
+
+  /**
+   * Accepts a share invitation via DIAL Core, granting the authenticated
+   * user its access level, and returns the shared entity's identifier.
+   *
+   * @throws {BadGatewayException} When DIAL Core returns an error response
+   * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
+   */
+  async acceptInvitation(
+    accessToken: string,
+    invitationId: string,
+  ): Promise<AcceptInvitationResponseDto> {
+    let result;
+    try {
+      result = await this.dialClient.client.getInvitation(invitationId, {
+        headers: getBearerAuthHeaders(accessToken),
+        params: { query: { accept: true } },
+      });
+    } catch (err) {
+      return handleDialFetchError(err, 'accept invitation', this.logger, 0);
+    }
+
+    if (result.error) {
+      return mapDialHttpStatus(
+        result.response.status,
+        'accept invitation',
+        this.logger,
+      );
+    }
+
+    const itemId = result.data?.resources?.[0]?.url;
+    if (itemId == null) {
+      this.logger.error(
+        `DIAL Core returned an invitation with no shared resource for invitationId=${invitationId}`,
+      );
+      throw new BadGatewayException(
+        'DIAL Core returned an invitation with no shared resource',
+      );
+    }
+
+    this.logger.debug(`Accepted invitation for invitationId=${invitationId}`);
+
+    return { itemId };
   }
 }

@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -16,7 +17,7 @@ const errResponse = (status: number) =>
 
 function makeService(callbackBaseUrl = 'https://chat.dialx.ai/callback') {
   const dialClient = {
-    client: { shareResource: vi.fn() },
+    client: { shareResource: vi.fn(), getInvitation: vi.fn() },
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
   } as unknown as DialClientService;
@@ -47,13 +48,13 @@ describe('ShareService', () => {
       });
 
       expect(result).toEqual({
-        url: 'https://chat.dialx.ai/v1/invitations/abc123',
+        url: 'https://chat.dialx.ai/catalog/shared/abc123',
         expiresInDays: 3,
         access: [ShareAccess.View],
       });
     });
 
-    it('returns the invitation link unchanged when DIAL Core already returns an absolute URL', async () => {
+    it('builds the frontend invitation URL from an absolute DIAL Core link', async () => {
       const { service } = makeService();
       vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
         okResponse({ invitationLink: 'https://dial-core/invite/abc' }),
@@ -64,7 +65,7 @@ describe('ShareService', () => {
         access: [ShareAccess.View],
       });
 
-      expect(result.url).toBe('https://dial-core/invite/abc');
+      expect(result.url).toBe('https://chat.dialx.ai/catalog/shared/abc');
     });
 
     it('forwards the Authorization header and requested permissions to DIAL Core', async () => {
@@ -127,6 +128,58 @@ describe('ShareService', () => {
           access: [ShareAccess.View],
         }),
       ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
+  describe('acceptInvitation', () => {
+    it('accepts the invitation via DIAL Core and returns the shared itemId', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'getInvitation')
+        .mockResolvedValue(
+          okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
+        );
+
+      const result = await service.acceptInvitation('token-abc', 'abc123');
+
+      expect(spy).toHaveBeenCalledWith('abc123', {
+        headers: { Authorization: 'Bearer token-abc' },
+        params: { query: { accept: true } },
+      });
+      expect(result).toEqual({ itemId: 'gpt-4o' });
+    });
+
+    it('throws BadGatewayException when DIAL Core returns no shared resource', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({ id: 'abc123', resources: [] }),
+      );
+
+      await expect(service.acceptInvitation('token', 'abc123')).rejects.toThrow(
+        BadGatewayException,
+      );
+    });
+
+    it('throws NotFoundException on upstream 404', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        errResponse(404),
+      );
+
+      await expect(
+        service.acceptInvitation('token', 'missing'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+
+      await expect(service.acceptInvitation('token', 'abc123')).rejects.toThrow(
+        ServiceUnavailableException,
+      );
     });
   });
 });

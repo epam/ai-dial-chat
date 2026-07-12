@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   INestApplication,
+  NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
   ValidationPipe,
@@ -9,6 +10,7 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AcceptInvitationResponseDto } from '../dto/accept-invitation-response.dto';
 import { ShareAccess } from '../dto/create-share-link.dto';
 import { ShareLinkResponseDto } from '../dto/share-link-response.dto';
 import { ShareController } from '../share.controller';
@@ -57,12 +59,20 @@ async function buildApp(
   return app;
 }
 
+const acceptedInvitation: AcceptInvitationResponseDto = { itemId: 'gpt-4o' };
+
 describe('ShareController (integration)', () => {
   let app: INestApplication;
-  let service: { createShareLink: ReturnType<typeof vi.fn> };
+  let service: {
+    createShareLink: ReturnType<typeof vi.fn>;
+    acceptInvitation: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
-    service = { createShareLink: vi.fn().mockResolvedValue(createdLink) };
+    service = {
+      createShareLink: vi.fn().mockResolvedValue(createdLink),
+      acceptInvitation: vi.fn().mockResolvedValue(acceptedInvitation),
+    };
     app = await buildApp(service);
   });
 
@@ -146,6 +156,58 @@ describe('ShareController (integration)', () => {
       await request(app.getHttpServer())
         .post('/api/v1/share')
         .send(validBody)
+        .expect(503);
+    });
+  });
+
+  describe('GET /api/v1/share/invitations/:invitationId', () => {
+    it('delegates to the service and returns 200 with the shared itemId', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/share/invitations/abc123')
+        .expect(200);
+
+      expect(res.body).toEqual(acceptedInvitation);
+      expect(service.acceptInvitation).toHaveBeenCalledWith(
+        TEST_USER.at,
+        'abc123',
+      );
+    });
+
+    it('returns 400 when invitationId contains unsupported characters', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/share/invitations/abc%2F123')
+        .expect(400);
+
+      expect(service.acceptInvitation).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when the service throws UnauthorizedException', async () => {
+      service.acceptInvitation.mockRejectedValue(new UnauthorizedException());
+      await request(app.getHttpServer())
+        .get('/api/v1/share/invitations/abc123')
+        .expect(401);
+    });
+
+    it('returns 404 when the service throws NotFoundException', async () => {
+      service.acceptInvitation.mockRejectedValue(new NotFoundException());
+      await request(app.getHttpServer())
+        .get('/api/v1/share/invitations/abc123')
+        .expect(404);
+    });
+
+    it('returns 502 when the service throws BadGatewayException', async () => {
+      service.acceptInvitation.mockRejectedValue(new BadGatewayException());
+      await request(app.getHttpServer())
+        .get('/api/v1/share/invitations/abc123')
+        .expect(502);
+    });
+
+    it('returns 503 when the service throws ServiceUnavailableException', async () => {
+      service.acceptInvitation.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+      await request(app.getHttpServer())
+        .get('/api/v1/share/invitations/abc123')
         .expect(503);
     });
   });

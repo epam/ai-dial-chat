@@ -540,4 +540,5 @@ export enum ShareI18nKeys {
   QrCodeAriaLabel = 'share.qrCodeAriaLabel',
   LoadingLabel = 'share.loadingLabel',
   ErrorTitle = 'share.errorTitle',
+  InvitationAcceptError = 'share.invitationAcceptError',
 }

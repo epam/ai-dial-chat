@@ -99,11 +99,26 @@ After the NestJS endpoint is added, run `npm run openapi && npm run openapi:chec
 
 The `access` field is an **array** of this enum rather than a single value, because edit access implies view access: selecting "Can edit" in the UI produces `[View, Edit]`, and "Can view" produces `[View]`. `ShareService` derives the DIAL Core `permissions` for `shareResource` as the union of each array entry's mapped permissions (`View` → `READ`, `Edit` → `READ, WRITE`), rather than a single lookup.
 
+### 9. Opening a share link (accept-invitation flow)
+
+DIAL Core's `shareResource` response (`invitationLink`) is an API path (`/v1/invitations/{id}`), not a page the SPA can render, and accepting the invitation — the step that actually grants the recipient DIAL Core permissions — requires a separate authenticated call: `GET /v1/invitations/{id}?accept=true`. So the share URL returned to the user is **not** DIAL Core's raw link; `ShareService.buildInvitationUrl` extracts only the trailing id segment and rebuilds an absolute URL pointing at the frontend's own route, `{origin}/catalog/shared/{invitationId}`.
+
+Opening that URL renders `apps/chat/src/pages/SharedInvitation/SharedInvitation.tsx`, which:
+
+1. Calls the new `GET /api/v1/share/invitations/:invitationId` endpoint (`ShareController.acceptInvitation` → `ShareService.acceptInvitation`), which proxies DIAL Core's accept call and returns `{ itemId }` — the shared resource's identifier from the invitation's `resources[0].url`.
+2. On success, redirects (`replace: true`) to `/catalog?itemId={itemId}`.
+3. On failure (expired/revoked/invalid invitation), shows an error notification and redirects to `/catalog` with no item selected.
+
+There is no confirm step — acceptance is silent and immediate on landing, matching the "just works" quick-share UX.
+
+`CatalogView` reads the `itemId` query param (`CatalogQuery.ItemId`) and passes it to `Catalog` as `initialDetailsItemId`, a new prop on `libs/catalog`'s `CatalogProps`. `Catalog` opens that item's details panel automatically once, reusing the existing click-driven `handleOpenDetails` flow — no parallel state machine.
+
 ## Risks / Trade-offs
 
 - **DIAL Core share API shape unknown** → The service is built against a placeholder; once the real DIAL Core endpoint contract is confirmed, only `share.service.ts` needs updating. The seam design limits blast radius.
 - **Access-level change on each POST** → Changing "Can view" to "Can edit" generates a new link (same entity, different access parameter). If DIAL Core does not support PATCH for access updates, the old link continues to work until it expires. Documented as a known limitation; no extra UI warning needed for MVP.
 - **No link revocation** → Out of scope per Non-Goals. The expiry window (default 3 days) bounds exposure.
+- **Re-accepting an already-accepted invitation** → DIAL Core's behavior for a second `accept=true` call by the same user (idempotent vs. error) is unconfirmed; if a user revisits the same link, `SharedInvitation` currently retries acceptance rather than skipping straight to the catalog. Revisit once the real DIAL Core contract is confirmed.
 
 ## Migration Plan
 

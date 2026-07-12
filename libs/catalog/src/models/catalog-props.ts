@@ -119,6 +119,12 @@ export interface CatalogProps {
   /** ID of an item to visually mark as selected (border, tint, and checkmark) in the Browse grid. */
   selectedItemId?: string;
   /**
+   * ID of an item whose details panel should open automatically, e.g. when
+   * deep-linking from a share invitation. Opens once per distinct id;
+   * ignored if no matching item is found in `items`.
+   */
+  initialDetailsItemId?: string;
+  /**
    * When provided, clicking a card in the Browse grid calls this instead of
    * opening the details panel — e.g. to mark it selected in a picker.
    */

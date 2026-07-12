@@ -491,7 +491,8 @@
     "expiryNote": "This link is active for {{days}} days.",
     "qrCodeAriaLabel": "QR code for the share link",
     "loadingLabel": "Creating share link…",
-    "errorTitle": "Couldn't create the share link. Please try again."
+    "errorTitle": "Couldn't create the share link. Please try again.",
+    "invitationAcceptError": "This share link is invalid or has expired."
   },
   "appsEditor": {
     "stepGeneral": "General",

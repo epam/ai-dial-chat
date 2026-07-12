@@ -409,4 +409,28 @@ describe('Catalog', () => {
     expect(screen.getByText('isDetailsLoading:false')).toBeTruthy();
     expect(screen.getByText('details:null')).toBeTruthy();
   });
+
+  it('opens the details panel automatically for initialDetailsItemId', () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude'), makeItem('2', 'Gemini')]}
+        favorites={[]}
+        initialDetailsItemId="2"
+      />,
+    );
+
+    expect(screen.getByText('Gemini')).toBeTruthy();
+  });
+
+  it('does nothing when initialDetailsItemId matches no item', () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        initialDetailsItemId="missing"
+      />,
+    );
+
+    expect(screen.queryByText('Claude', { selector: 'span' })).toBeNull();
+  });
 });

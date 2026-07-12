@@ -3,6 +3,19 @@
 /**
  *
  * @export
+ * @interface AcceptInvitationResponseDto
+ */
+export interface AcceptInvitationResponseDto {
+  /**
+   * Identifier (DIAL Core resource path) of the entity the invitation grants access to.
+   * @type {string}
+   * @memberof AcceptInvitationResponseDto
+   */
+  itemId: string;
+}
+/**
+ *
+ * @export
  * @interface ApplicationDetailsDto
  */
 export interface ApplicationDetailsDto {

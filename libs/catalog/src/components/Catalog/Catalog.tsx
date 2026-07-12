@@ -48,6 +48,7 @@ export const Catalog: FC<CatalogProps> = ({
   isLoading,
   styles: catalogStyles,
   detailsTexts,
+  initialDetailsItemId,
 }) => {
   const { typography } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
@@ -167,6 +168,20 @@ export const Catalog: FC<CatalogProps> = ({
     },
     [onFetchDetails],
   );
+
+  const appliedInitialDetailsItemIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialDetailsItemId) return;
+    if (appliedInitialDetailsItemIdRef.current === initialDetailsItemId) {
+      return;
+    }
+    const item = items.find(
+      (catalogItem) => catalogItem.id === initialDetailsItemId,
+    );
+    if (!item) return;
+    appliedInitialDetailsItemIdRef.current = initialDetailsItemId;
+    void handleOpenDetails(item);
+  }, [initialDetailsItemId, items, handleOpenDetails]);
 
   const handleCloseDetails = useCallback(() => {
     setIsDetailsOpen(false);

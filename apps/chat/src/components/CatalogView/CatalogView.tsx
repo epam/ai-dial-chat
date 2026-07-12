@@ -8,7 +8,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
@@ -22,6 +22,7 @@ import useFavoriteApplications, {
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { getDeploymentDetails } from '../../server-api/deployments';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
+import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import {
@@ -56,6 +57,9 @@ interface Props {
 const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialDetailsItemId =
+    searchParams.get(CatalogQuery.ItemId) ?? undefined;
   const { showNotification } = useNotification();
   const {
     items: deployments,
@@ -256,6 +260,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       selectedItemId={
         isSelectorMode ? (selectedItemId ?? undefined) : undefined
       }
+      initialDetailsItemId={initialDetailsItemId}
       onCardClick={isSelectorMode ? handleCardSelect : undefined}
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
