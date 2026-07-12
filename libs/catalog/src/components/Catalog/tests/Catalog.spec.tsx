@@ -419,7 +419,7 @@ describe('Catalog', () => {
       />,
     );
 
-    expect(screen.getByText('Gemini')).toBeTruthy();
+    expect(screen.getByText('Gemini', { selector: 'span' })).toBeTruthy();
   });
 
   it('does nothing when initialDetailsItemId matches no item', () => {

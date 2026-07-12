@@ -77,6 +77,7 @@ describe('SharePopoverContainer', () => {
           expiryNote: ShareI18nKeys.ExpiryNote,
         }),
       }),
+      undefined,
     );
   });
 
@@ -91,6 +92,7 @@ describe('SharePopoverContainer', () => {
 
     expect(mockSharePopover).toHaveBeenCalledWith(
       expect.objectContaining({ canEditAccess: true }),
+      undefined,
     );
   });
 
@@ -105,6 +107,7 @@ describe('SharePopoverContainer', () => {
 
     expect(mockSharePopover).toHaveBeenCalledWith(
       expect.objectContaining({ canEditAccess: false }),
+      undefined,
     );
   });
 });
