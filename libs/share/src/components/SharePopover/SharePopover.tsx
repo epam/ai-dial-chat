@@ -35,6 +35,8 @@ const SharePopover: FC<SharePopoverProps> = ({
   onAccessChange,
   onClose,
   labels,
+  errorClassName = 'dial-tiny-text',
+  noteClassName = 'dial-tiny-text',
 }) => {
   const {
     title = 'Share',
@@ -71,12 +73,9 @@ const SharePopover: FC<SharePopoverProps> = ({
   /* Focuses the currently-selected option once the menu opens. */
   useEffect(() => {
     if (!isAccessOpen) return;
-    const frame = requestAnimationFrame(() => {
-      accessMenuRef.current
-        ?.querySelector<HTMLButtonElement>('[aria-checked="true"]')
-        ?.focus();
-    });
-    return () => cancelAnimationFrame(frame);
+    accessMenuRef.current
+      ?.querySelector<HTMLButtonElement>('[aria-checked="true"]')
+      ?.focus();
   }, [isAccessOpen]);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -184,7 +183,7 @@ const SharePopover: FC<SharePopoverProps> = ({
         onViewChange={setView}
       />
 
-      <div className={mergeClasses('mx-4', styles.divider)} />
+      <div className={mergeClasses('mx-4 h-px', styles.divider)} />
 
       <div className="flex flex-col gap-3 px-4 py-3.5">
         {isLoading && <LoadingSkeleton ariaLabel={loadingLabel} />}
@@ -192,7 +191,11 @@ const SharePopover: FC<SharePopoverProps> = ({
         {!isLoading && error != null && (
           <p
             role="alert"
-            className="dial-tiny-text py-6 text-center text-error"
+            className={mergeClasses(
+              errorClassName,
+              'py-6 text-center',
+              styles.errorText,
+            )}
           >
             {errorTitle}
           </p>
@@ -215,7 +218,7 @@ const SharePopover: FC<SharePopoverProps> = ({
               triggerRef={accessTriggerRef}
               menuRef={accessMenuRef}
             />
-            <p className="dial-tiny-text text-secondary">
+            <p className={mergeClasses(noteClassName, styles.note)}>
               {canEditAccess && access === ShareLinkAccess.Edit
                 ? visibilityNoteEdit
                 : visibilityNote}
@@ -235,7 +238,9 @@ const SharePopover: FC<SharePopoverProps> = ({
               />
             )}
             {expiryNote != null && (
-              <p className="dial-tiny-text text-secondary">{expiryNote}</p>
+              <p className={mergeClasses(noteClassName, styles.note)}>
+                {expiryNote}
+              </p>
             )}
           </>
         )}

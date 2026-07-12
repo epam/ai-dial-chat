@@ -1,17 +1,3 @@
-/*
- * Compact variant of libs/catalog/src/components/Filter/Filter.module.scss's
- * .filterBtn treatment, reusing the same DialDropdown + hand-built
- * trigger/menu mechanism as the Catalog filter. Unlike the previous
- * DialSelect-based approach, this trigger has no competing internal
- * `.dial-input` rule to out-specificity, so no `!important` is needed here.
- * The "open" look is driven by `isAccessOpen` (via `.accessTriggerBtnOpen`,
- * mirroring Filter's own `isOpen && styles.filterBtnOpen`) rather than a
- * focus pseudo-class — this way the trigger reads as focused for as long as
- * the menu is open, but reverts to default the instant an option is picked
- * and the menu closes, even though DOM focus is restored to the trigger for
- * keyboard users. `:focus-visible` remains as a separate, real keyboard-nav
- * indicator for when the (unopened) trigger is simply tabbed to.
- */
 .accessTriggerBtn {
   background-color: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.05);
@@ -36,12 +22,7 @@
   }
 }
 
-/*
- * Repeated to out-specificity `.accessTriggerBtn`'s own `:hover` rule (0,3,0)
- * — otherwise, while the pointer still rests on the trigger right after the
- * click that opened the menu, `:hover` would mask this "open" look.
- */
-.accessTriggerBtnOpen.accessTriggerBtnOpen.accessTriggerBtnOpen.accessTriggerBtnOpen {
+.accessTriggerBtnOpen {
   border-color: color-mix(
     in srgb,
     var(--stroke-accent-primary, #7da4ff) 50%,
@@ -65,6 +46,27 @@
   color: var(--text-primary, #131a29);
 }
 
+/* Popover title in the header bar. */
+.title {
+  color: var(--text-primary, #131a29);
+}
+
+/* Icon badge to the left of the "Anyone with the link" row. */
+.linkIconBadge {
+  background: var(--bg-accent-primary-alpha, #7da4ff2e);
+  color: var(--text-accent-primary, #124ace);
+}
+
+/* Primary text of the "Anyone with the link" row. */
+.anyoneWithLinkTitle {
+  color: var(--text-primary, #131a29);
+}
+
+/* Secondary text of the "Anyone with the link" row. */
+.anyoneWithLinkSubtitle {
+  color: var(--text-secondary, #575f73);
+}
+
 .accessTriggerChevron {
   color: var(--text-tertiary, #98a2b3);
   transition: transform 150ms ease;
@@ -75,13 +77,6 @@
 }
 
 .accessMenuItem {
-  /*
-   * Matches Filter.module.scss's own `.row:hover` intent, but hardcoded
-   * rather than reading `--bg-layer-3` — that token resolves to the same
-   * white as this popover's own background in this app's theme (the same
-   * invisible white-on-white issue documented for DialSkeleton's default
-   * color above), which would make the hover invisible here too.
-   */
   @media (hover: hover) {
     &:hover {
       background: rgba(0, 0, 0, 0.04);
@@ -116,12 +111,21 @@
   }
 }
 
+/* Error message shown when share-link creation fails. */
+.errorText {
+  color: var(--text-error, #ae2f2f);
+}
+
+/* Visibility and expiry notes below the access control. */
+.note {
+  color: var(--text-secondary, #575f73);
+}
+
 /*
- * Header/body divider — inset by the surrounding `mx-4` so it aligns with
- * the popover's own content padding instead of running edge-to-edge, and
- * lighter than `border-tertiary` for a subtler hairline.
+ * Uses the theme-aware stroke token (not a hardcoded rgba) so the hairline
+ * stays visible in dark theme too — a flat `rgba(0, 0, 0, 0.05)` blends into
+ * a dark background and reads as "no divider at all".
  */
 .divider {
-  height: 1px;
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--stroke-tertiary, #e0e6f0);
 }

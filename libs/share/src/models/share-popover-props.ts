@@ -56,4 +56,8 @@ export interface SharePopoverProps {
   onClose: () => void;
   /** Overrides for user-visible strings. All fields have English defaults. */
   labels?: SharePopoverLabels;
+  /** CSS class applied to the error message. Defaults to `'dial-tiny-text'`. */
+  errorClassName?: string;
+  /** CSS class applied to the visibility and expiry notes. Defaults to `'dial-tiny-text'`. */
+  noteClassName?: string;
 }
