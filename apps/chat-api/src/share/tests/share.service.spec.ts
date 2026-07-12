@@ -22,9 +22,11 @@ function makeService(callbackBaseUrl = 'https://chat.dialx.ai/callback') {
     dialApiVersion: '2024-10-21',
   } as unknown as DialClientService;
 
-  const configService = {
-    get: vi.fn(() => callbackBaseUrl),
-  } as unknown as ConfigService;
+const configService = {
+  get: vi.fn((key: string) =>
+    key === 'SHARE_CALLBACK_BASE_URL' ? callbackBaseUrl : undefined,
+  ),
+};
 
   const service = new ShareService(dialClient, configService);
   return { service, dialClient };
