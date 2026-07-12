@@ -70,7 +70,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   };
 });
 
-const ITEM_URL = 'https://chat.dialx.ai/marketplace/share/gpt-4o';
+const ITEM_URL = 'https://example.com/marketplace/share/gpt-4o';
 const EXPIRY_NOTE = 'This link is active for 3 days.';
 
 const makeProps = (

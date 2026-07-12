@@ -3,9 +3,10 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { ShareAccess } from '../dto/create-share-link.dto';
 import { ShareService } from '../share.service';
 
@@ -15,18 +16,18 @@ const okResponse = (data: unknown) =>
 const errResponse = (status: number) =>
   ({ error: {}, response: { status } as Response }) as never;
 
-function makeService(callbackBaseUrl = 'https://chat.dialx.ai/callback') {
+function makeService(callbackBaseUrl = 'https://example.com/callback') {
   const dialClient = {
     client: { shareResource: vi.fn(), getInvitation: vi.fn() },
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
   } as unknown as DialClientService;
 
-const configService = {
-  get: vi.fn((key: string) =>
-    key === 'SHARE_CALLBACK_BASE_URL' ? callbackBaseUrl : undefined,
-  ),
-};
+  const configService = {
+    get: vi.fn((key: string) =>
+      key === 'AUTH_CALLBACK_BASE_URL' ? callbackBaseUrl : undefined,
+    ),
+  } as unknown as ConfigService<EnvironmentVariables>;
 
   const service = new ShareService(dialClient, configService);
   return { service, dialClient };
@@ -50,7 +51,7 @@ describe('ShareService', () => {
       });
 
       expect(result).toEqual({
-        url: 'https://chat.dialx.ai/catalog/shared/abc123',
+        url: 'https://example.com/catalog/shared/abc123',
         expiresInDays: 3,
         access: [ShareAccess.View],
       });
@@ -67,7 +68,7 @@ describe('ShareService', () => {
         access: [ShareAccess.View],
       });
 
-      expect(result.url).toBe('https://chat.dialx.ai/catalog/shared/abc');
+      expect(result.url).toBe('https://example.com/catalog/shared/abc');
     });
 
     it('forwards the Authorization header and requested permissions to DIAL Core', async () => {

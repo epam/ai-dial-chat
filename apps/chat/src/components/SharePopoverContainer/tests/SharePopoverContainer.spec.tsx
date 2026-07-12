@@ -52,7 +52,7 @@ describe('SharePopoverContainer', () => {
   it('calls useShareLink with the item id and wires the result to SharePopover', () => {
     mockUseShareLink({
       data: {
-        url: 'https://chat.dialx.ai/marketplace/share/item-1',
+        url: 'https://example.com/marketplace/share/item-1',
         expiresInDays: 3,
         access: [ShareLinkAccess.View],
       },
@@ -69,7 +69,7 @@ describe('SharePopoverContainer', () => {
 
     expect(mockSharePopover).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: 'https://chat.dialx.ai/marketplace/share/item-1',
+        url: 'https://example.com/marketplace/share/item-1',
         isLoading: false,
         error: null,
         access: [ShareLinkAccess.View],

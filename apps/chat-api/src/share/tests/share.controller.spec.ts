@@ -19,7 +19,7 @@ import { ShareService } from '../share.service';
 const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
 
 const createdLink: ShareLinkResponseDto = {
-  url: 'https://chat.dialx.ai/marketplace/share/gpt-4o',
+  url: 'https://example.com/marketplace/share/gpt-4o',
   expiresInDays: 3,
   access: [ShareAccess.View],
 };
