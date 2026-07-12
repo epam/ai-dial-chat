@@ -44,12 +44,6 @@ const mockUseShareLink = (
   });
 };
 
-const getShareProps = (): SharePopoverProps => {
-  const props = mockSharePopover.mock.calls.at(-1)?.[0];
-  if (!props) throw new Error('SharePopover was not rendered');
-  return props;
-};
-
 describe('SharePopoverContainer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -73,12 +67,17 @@ describe('SharePopoverContainer', () => {
 
     expect(useShareLinkModule.useShareLink).toHaveBeenCalledWith('item-1');
 
-    const props = getShareProps();
-    expect(props.url).toBe('https://chat.dialx.ai/marketplace/share/item-1');
-    expect(props.isLoading).toBe(false);
-    expect(props.error).toBeNull();
-    expect(props.access).toBe(ShareLinkAccess.View);
-    expect(props.labels?.expiryNote).toBe(ShareI18nKeys.ExpiryNote);
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: 'https://chat.dialx.ai/marketplace/share/item-1',
+        isLoading: false,
+        error: null,
+        access: ShareLinkAccess.View,
+        labels: expect.objectContaining({
+          expiryNote: ShareI18nKeys.ExpiryNote,
+        }),
+      }),
+    );
   });
 
   it('passes canEditAccess true for an Application item', () => {
@@ -90,7 +89,9 @@ describe('SharePopoverContainer', () => {
       />,
     );
 
-    expect(getShareProps().canEditAccess).toBe(true);
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({ canEditAccess: true }),
+    );
   });
 
   it('passes canEditAccess false for a Model item', () => {
@@ -102,6 +103,8 @@ describe('SharePopoverContainer', () => {
       />,
     );
 
-    expect(getShareProps().canEditAccess).toBe(false);
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({ canEditAccess: false }),
+    );
   });
 });

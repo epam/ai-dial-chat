@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsValidFilePath } from '../../files/dto/file-path.validator';
 
 /**
  * Access level requested for a share link. Defined locally rather than
@@ -19,9 +20,7 @@ export class CreateShareLinkDto {
   })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^(?!.*\.\.)[a-zA-Z0-9._\-/]+$/, {
-    message: 'itemId contains invalid characters',
-  })
+  @IsValidFilePath()
   itemId!: string;
 
   @ApiProperty({

@@ -77,7 +77,7 @@ export class ShareService {
     }
 
     if (result.error) {
-      throw mapDialHttpStatus(
+      return mapDialHttpStatus(
         result.response.status,
         'create share link',
         this.logger,
