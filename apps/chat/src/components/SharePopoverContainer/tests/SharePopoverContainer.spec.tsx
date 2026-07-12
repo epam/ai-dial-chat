@@ -1,5 +1,5 @@
 import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
-import { ShareLinkAccess } from '@epam/ai-dial-share';
+import { ShareLinkAccess, type SharePopoverProps } from '@epam/ai-dial-share';
 import { render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShareI18nKeys } from '../../../constants/translation-keys';
@@ -7,7 +7,7 @@ import * as useShareLinkModule from '../../../hooks/useShareLink/useShareLink';
 import SharePopoverContainer from '../SharePopoverContainer';
 
 const { mockSharePopover } = vi.hoisted(() => ({
-  mockSharePopover: vi.fn(() => null),
+  mockSharePopover: vi.fn((_props: SharePopoverProps) => null),
 }));
 
 vi.mock('../../../hooks/useShareLink/useShareLink');
@@ -44,8 +44,11 @@ const mockUseShareLink = (
   });
 };
 
-const getShareProps = () =>
-  mockSharePopover.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+const getShareProps = (): SharePopoverProps => {
+  const props = mockSharePopover.mock.calls.at(-1)?.[0];
+  if (!props) throw new Error('SharePopover was not rendered');
+  return props;
+};
 
 describe('SharePopoverContainer', () => {
   beforeEach(() => {
@@ -75,7 +78,7 @@ describe('SharePopoverContainer', () => {
     expect(props.isLoading).toBe(false);
     expect(props.error).toBeNull();
     expect(props.access).toBe(ShareLinkAccess.View);
-    expect(props.labels.expiryNote).toBe(ShareI18nKeys.ExpiryNote);
+    expect(props.labels?.expiryNote).toBe(ShareI18nKeys.ExpiryNote);
   });
 
   it('passes canEditAccess true for an Application item', () => {
