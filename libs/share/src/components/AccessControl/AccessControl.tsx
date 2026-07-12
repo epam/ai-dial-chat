@@ -12,8 +12,11 @@ interface AccessControlProps {
   anyoneWithLinkTitle: string;
   /** Secondary row text, e.g. "in your organization". */
   anyoneWithLinkSubtitle: string;
-  /** Current access level. */
-  access: ShareLinkAccess;
+  /**
+   * Current access levels. Edit access implies view access, so this is
+   * `[View, Edit]` rather than `[Edit]` alone.
+   */
+  access: ShareLinkAccess[];
   /** True to show an interactive dropdown; false shows a static "Can view" label. */
   canEditAccess: boolean;
   /** Access-dropdown option label for view access. */
@@ -27,7 +30,7 @@ interface AccessControlProps {
   /** Called when the dropdown open state should change. */
   onOpenChange: (next: boolean) => void;
   /** Called when the user selects a different access level. */
-  onAccessChange: (access: ShareLinkAccess) => void;
+  onAccessChange: (access: ShareLinkAccess[]) => void;
   /** Arrow-key navigation handler for the open menu. */
   onMenuKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
   /** Ref attached to the dropdown trigger button, so focus can return to it on close. */
@@ -65,6 +68,9 @@ export const AccessControl: FC<AccessControlProps> = ({
     { value: ShareLinkAccess.View, label: accessViewLabel },
     { value: ShareLinkAccess.Edit, label: accessEditLabel },
   ];
+  const selectedAccess = access.includes(ShareLinkAccess.Edit)
+    ? ShareLinkAccess.Edit
+    : ShareLinkAccess.View;
 
   return (
     <div className="flex items-center gap-2.5">
@@ -112,7 +118,7 @@ export const AccessControl: FC<AccessControlProps> = ({
               onKeyDown={onMenuKeyDown}
             >
               {accessOptions.map((option) => {
-                const isChecked = access === option.value;
+                const isChecked = selectedAccess === option.value;
                 return (
                   <button
                     key={option.value}
@@ -125,7 +131,11 @@ export const AccessControl: FC<AccessControlProps> = ({
                       isChecked && styles.accessMenuItemChecked,
                     )}
                     onClick={() => {
-                      onAccessChange(option.value);
+                      onAccessChange(
+                        option.value === ShareLinkAccess.Edit
+                          ? [ShareLinkAccess.View, ShareLinkAccess.Edit]
+                          : [ShareLinkAccess.View],
+                      );
                       onOpenChange(false);
                     }}
                   >
@@ -157,7 +167,10 @@ export const AccessControl: FC<AccessControlProps> = ({
             )}
           >
             <span className={styles.accessTriggerLabel}>
-              {accessOptions.find((option) => option.value === access)?.label}
+              {
+                accessOptions.find((option) => option.value === selectedAccess)
+                  ?.label
+              }
             </span>
             <IconChevronDown
               size={14}

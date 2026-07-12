@@ -1170,11 +1170,11 @@ export interface CreateShareLinkDto {
    */
   itemId: string;
   /**
-   * Access level granted to holders of the share link.
-   * @type {string}
+   * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
+   * @type {Array<string>}
    * @memberof CreateShareLinkDto
    */
-  access: CreateShareLinkDtoAccessEnum;
+  access: Array<CreateShareLinkDtoAccessEnum>;
 }
 
 /**
@@ -3429,11 +3429,11 @@ export interface ShareLinkResponseDto {
    */
   expiresInDays: number;
   /**
-   * Access level granted to holders of the share link.
-   * @type {string}
+   * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
+   * @type {Array<string>}
    * @memberof ShareLinkResponseDto
    */
-  access: ShareLinkResponseDtoAccessEnum;
+  access: Array<ShareLinkResponseDtoAccessEnum>;
 }
 
 /**

@@ -17,7 +17,7 @@ describe('useShareLink', () => {
     vi.mocked(getShareLink).mockResolvedValue({
       url: 'https://chat.dialx.ai/marketplace/share/gpt-4o',
       expiresInDays: 3,
-      access: ShareLinkAccess.View,
+      access: [ShareLinkAccess.View],
     });
 
     const { result } = renderHook(() => useShareLink('gpt-4o'));
@@ -30,7 +30,7 @@ describe('useShareLink', () => {
     expect(result.current.data).toEqual({
       url: 'https://chat.dialx.ai/marketplace/share/gpt-4o',
       expiresInDays: 3,
-      access: ShareLinkAccess.View,
+      access: [ShareLinkAccess.View],
     });
     expect(result.current.error).toBeNull();
   });
@@ -46,28 +46,48 @@ describe('useShareLink', () => {
     expect(result.current.error?.message).toBe('network down');
   });
 
-  it('updates the access level via setAccess', async () => {
+  it('requests a new share link with the new access via setAccess', async () => {
     vi.mocked(getShareLink).mockResolvedValue({
-      url: 'https://chat.dialx.ai/marketplace/share/gpt-4o',
+      url: 'https://chat.dialx.ai/marketplace/share/gpt-4o?access=view',
       expiresInDays: 3,
-      access: ShareLinkAccess.View,
+      access: [ShareLinkAccess.View],
     });
 
     const { result } = renderHook(() => useShareLink('gpt-4o'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    act(() => {
-      result.current.setAccess(ShareLinkAccess.Edit);
+    vi.mocked(getShareLink).mockResolvedValue({
+      url: 'https://chat.dialx.ai/marketplace/share/gpt-4o?access=edit',
+      expiresInDays: 3,
+      access: [ShareLinkAccess.View, ShareLinkAccess.Edit],
     });
 
-    expect(result.current.data?.access).toBe(ShareLinkAccess.Edit);
+    act(() => {
+      result.current.setAccess([ShareLinkAccess.View, ShareLinkAccess.Edit]);
+    });
+
+    expect(result.current.isLoading).toBe(true);
+    expect(getShareLink).toHaveBeenCalledWith('gpt-4o', [
+      ShareLinkAccess.View,
+      ShareLinkAccess.Edit,
+    ]);
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data?.url).toBe(
+      'https://chat.dialx.ai/marketplace/share/gpt-4o?access=edit',
+    );
+    expect(result.current.data?.access).toEqual([
+      ShareLinkAccess.View,
+      ShareLinkAccess.Edit,
+    ]);
   });
 
   it('refetches when itemId changes', async () => {
     vi.mocked(getShareLink).mockResolvedValue({
       url: 'https://chat.dialx.ai/marketplace/share/gpt-4o',
       expiresInDays: 3,
-      access: ShareLinkAccess.View,
+      access: [ShareLinkAccess.View],
     });
 
     const { result, rerender } = renderHook(
@@ -79,7 +99,7 @@ describe('useShareLink', () => {
     vi.mocked(getShareLink).mockResolvedValue({
       url: 'https://chat.dialx.ai/marketplace/share/claude',
       expiresInDays: 3,
-      access: ShareLinkAccess.View,
+      access: [ShareLinkAccess.View],
     });
     rerender({ itemId: 'claude' });
 

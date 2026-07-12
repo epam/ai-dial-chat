@@ -45,7 +45,7 @@ const SharePopoverContainer: FC<Props> = ({ item, onClose }) => {
       url={data?.url}
       isLoading={isLoading}
       error={error}
-      access={data?.access ?? ShareLinkAccess.View}
+      access={data?.access ?? [ShareLinkAccess.View]}
       canEditAccess={canEditAccess}
       onAccessChange={setAccess}
       onClose={onClose}

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+} from 'class-validator';
 import { IsValidFilePath } from '../../files/dto/file-path.validator';
 
 /**
@@ -24,10 +30,14 @@ export class CreateShareLinkDto {
   itemId!: string;
 
   @ApiProperty({
-    description: 'Access level granted to holders of the share link.',
+    description:
+      'Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.',
     enum: ShareAccess,
-    example: ShareAccess.View,
+    isArray: true,
+    example: [ShareAccess.View],
   })
-  @IsEnum(ShareAccess)
-  access!: ShareAccess;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsEnum(ShareAccess, { each: true })
+  access!: ShareAccess[];
 }

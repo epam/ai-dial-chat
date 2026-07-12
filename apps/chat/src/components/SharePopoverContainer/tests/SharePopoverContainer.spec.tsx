@@ -54,7 +54,7 @@ describe('SharePopoverContainer', () => {
       data: {
         url: 'https://chat.dialx.ai/marketplace/share/item-1',
         expiresInDays: 3,
-        access: ShareLinkAccess.View,
+        access: [ShareLinkAccess.View],
       },
     });
 
@@ -72,7 +72,7 @@ describe('SharePopoverContainer', () => {
         url: 'https://chat.dialx.ai/marketplace/share/item-1',
         isLoading: false,
         error: null,
-        access: ShareLinkAccess.View,
+        access: [ShareLinkAccess.View],
         labels: expect.objectContaining({
           expiryNote: ShareI18nKeys.ExpiryNote,
         }),

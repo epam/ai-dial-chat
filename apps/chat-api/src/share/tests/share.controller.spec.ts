@@ -19,7 +19,7 @@ const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
 const createdLink: ShareLinkResponseDto = {
   url: 'https://chat.dialx.ai/marketplace/share/gpt-4o',
   expiresInDays: 3,
-  access: ShareAccess.View,
+  access: [ShareAccess.View],
 };
 
 async function buildApp(
@@ -72,7 +72,7 @@ describe('ShareController (integration)', () => {
   });
 
   describe('POST /api/v1/share', () => {
-    const validBody = { itemId: 'gpt-4o', access: 'view' };
+    const validBody = { itemId: 'gpt-4o', access: ['view'] };
 
     it('delegates to the service and returns 201 with the created share link', async () => {
       const res = await request(app.getHttpServer())
@@ -90,7 +90,16 @@ describe('ShareController (integration)', () => {
     it('returns 400 when access is invalid', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/share')
-        .send({ itemId: 'gpt-4o', access: 'admin' })
+        .send({ itemId: 'gpt-4o', access: ['admin'] })
+        .expect(400);
+
+      expect(service.createShareLink).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when access is empty', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share')
+        .send({ itemId: 'gpt-4o', access: [] })
         .expect(400);
 
       expect(service.createShareLink).not.toHaveBeenCalled();
@@ -99,7 +108,7 @@ describe('ShareController (integration)', () => {
     it('returns 400 when itemId contains a path traversal attempt', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/share')
-        .send({ itemId: '../etc/passwd', access: 'view' })
+        .send({ itemId: '../etc/passwd', access: ['view'] })
         .expect(400);
 
       expect(service.createShareLink).not.toHaveBeenCalled();
@@ -108,7 +117,7 @@ describe('ShareController (integration)', () => {
     it('returns 400 when itemId is missing', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/share')
-        .send({ access: 'view' })
+        .send({ access: ['view'] })
         .expect(400);
 
       expect(service.createShareLink).not.toHaveBeenCalled();

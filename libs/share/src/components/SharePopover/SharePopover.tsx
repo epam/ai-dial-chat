@@ -219,7 +219,7 @@ const SharePopover: FC<SharePopoverProps> = ({
               menuRef={accessMenuRef}
             />
             <p className={mergeClasses(noteClassName, styles.note)}>
-              {canEditAccess && access === ShareLinkAccess.Edit
+              {canEditAccess && access.includes(ShareLinkAccess.Edit)
                 ? visibilityNoteEdit
                 : visibilityNote}
             </p>

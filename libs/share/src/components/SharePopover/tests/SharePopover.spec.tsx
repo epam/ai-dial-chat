@@ -79,7 +79,7 @@ const makeProps = (
   url: ITEM_URL,
   isLoading: false,
   error: null,
-  access: ShareLinkAccess.View,
+  access: [ShareLinkAccess.View],
   canEditAccess: true,
   onAccessChange: vi.fn(),
   onClose: vi.fn(),
@@ -122,7 +122,10 @@ describe('SharePopover', () => {
   it('shows the edit-access visibility note in both the link and QR views', async () => {
     render(
       <SharePopover
-        {...makeProps({ onClose, access: ShareLinkAccess.Edit })}
+        {...makeProps({
+          onClose,
+          access: [ShareLinkAccess.View, ShareLinkAccess.Edit],
+        })}
       />,
     );
 
@@ -148,13 +151,19 @@ describe('SharePopover', () => {
     await user.click(screen.getByRole('button', { name: 'Can view' }));
     await user.click(screen.getByRole('menuitemradio', { name: 'Can edit' }));
 
-    expect(onAccessChange).toHaveBeenCalledWith(ShareLinkAccess.Edit);
+    expect(onAccessChange).toHaveBeenCalledWith([
+      ShareLinkAccess.View,
+      ShareLinkAccess.Edit,
+    ]);
   });
 
   it('shows Can edit as the selected trigger label and checkmark when access starts as Edit', async () => {
     render(
       <SharePopover
-        {...makeProps({ onClose, access: ShareLinkAccess.Edit })}
+        {...makeProps({
+          onClose,
+          access: [ShareLinkAccess.View, ShareLinkAccess.Edit],
+        })}
       />,
     );
 
@@ -219,7 +228,7 @@ describe('SharePopover', () => {
         {...makeProps({
           onClose,
           canEditAccess: false,
-          access: ShareLinkAccess.Edit,
+          access: [ShareLinkAccess.View, ShareLinkAccess.Edit],
         })}
       />,
     );

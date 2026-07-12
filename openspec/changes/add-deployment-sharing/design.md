@@ -97,6 +97,8 @@ After the NestJS endpoint is added, run `npm run openapi && npm run openapi:chec
 
 `ShareLinkAccess` is a string enum (`view` | `edit`) defined in `@epam/ai-dial-share` (`libs/share`) and exported from its `index.ts`. `apps/chat-api` DTOs use `@IsEnum` against the same string values; the enum is not imported from the lib into the backend — the DTO defines the allowed strings directly to avoid a cross-boundary import. DIAL Core may use different values — map them in `ShareService`, not in the DTO or the UI.
 
+The `access` field is an **array** of this enum rather than a single value, because edit access implies view access: selecting "Can edit" in the UI produces `[View, Edit]`, and "Can view" produces `[View]`. `ShareService` derives the DIAL Core `permissions` for `shareResource` as the union of each array entry's mapped permissions (`View` → `READ`, `Edit` → `READ, WRITE`), rather than a single lookup.
+
 ## Risks / Trade-offs
 
 - **DIAL Core share API shape unknown** → The service is built against a placeholder; once the real DIAL Core endpoint contract is confirmed, only `share.service.ts` needs updating. The seam design limits blast radius.

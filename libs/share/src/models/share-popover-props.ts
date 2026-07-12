@@ -46,12 +46,15 @@ export interface SharePopoverProps {
   isLoading: boolean;
   /** Set when the share link could not be created. */
   error: Error | null;
-  /** Current access level. */
-  access: ShareLinkAccess;
+  /**
+   * Current access levels. Edit access implies view access, so this is
+   * `[View, Edit]` rather than `[Edit]` alone.
+   */
+  access: ShareLinkAccess[];
   /** True for editable entity types (Agent, Application, Skill, Toolset); false for Model. */
   canEditAccess: boolean;
   /** Called when the user selects a different access level. */
-  onAccessChange: (access: ShareLinkAccess) => void;
+  onAccessChange: (access: ShareLinkAccess[]) => void;
   /** Called when the popover should close. */
   onClose: () => void;
   /** Overrides for user-visible strings. All fields have English defaults. */

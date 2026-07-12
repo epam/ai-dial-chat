@@ -3,11 +3,13 @@ import { ShareLinkResponseDtoAccessEnum } from '@epam/chat-api-client';
 import { createShareLink as createShareLinkRequest } from '../server-api/share.api';
 
 const toShareLinkAccess = (
-  access: ShareLinkResponseDtoAccessEnum,
-): ShareLinkAccess =>
-  access === ShareLinkResponseDtoAccessEnum.Edit
-    ? ShareLinkAccess.Edit
-    : ShareLinkAccess.View;
+  access: ShareLinkResponseDtoAccessEnum[],
+): ShareLinkAccess[] =>
+  access.map((level) =>
+    level === ShareLinkResponseDtoAccessEnum.Edit
+      ? ShareLinkAccess.Edit
+      : ShareLinkAccess.View,
+  );
 
 /*
  * The backend resolves `url` against its own configured host
@@ -27,7 +29,7 @@ const withCurrentOrigin = (url: string, origin: string): string => {
  */
 export const getShareLink = async (
   itemId: string,
-  access: ShareLinkAccess = ShareLinkAccess.View,
+  access: ShareLinkAccess[] = [ShareLinkAccess.View],
   origin: string = window.location.origin,
 ): Promise<ShareLinkData> => {
   const response = await createShareLinkRequest({ itemId, access });

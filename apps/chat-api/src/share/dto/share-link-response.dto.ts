@@ -16,9 +16,11 @@ export class ShareLinkResponseDto {
   expiresInDays!: number;
 
   @ApiProperty({
-    description: 'Access level granted to holders of the share link.',
+    description:
+      'Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.',
     enum: ShareAccess,
-    example: ShareAccess.View,
+    isArray: true,
+    example: [ShareAccess.View],
   })
-  access!: ShareAccess;
+  access!: ShareAccess[];
 }

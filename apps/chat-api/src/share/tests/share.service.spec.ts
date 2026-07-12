@@ -43,13 +43,13 @@ describe('ShareService', () => {
 
       const result = await service.createShareLink('token-abc', {
         itemId: 'gpt-4o',
-        access: ShareAccess.View,
+        access: [ShareAccess.View],
       });
 
       expect(result).toEqual({
         url: 'https://chat.dialx.ai/v1/invitations/abc123',
         expiresInDays: 3,
-        access: ShareAccess.View,
+        access: [ShareAccess.View],
       });
     });
 
@@ -61,7 +61,7 @@ describe('ShareService', () => {
 
       const result = await service.createShareLink('token-abc', {
         itemId: 'gpt-4o',
-        access: ShareAccess.View,
+        access: [ShareAccess.View],
       });
 
       expect(result.url).toBe('https://dial-core/invite/abc');
@@ -75,7 +75,7 @@ describe('ShareService', () => {
 
       await service.createShareLink('my-token', {
         itemId: 'my-app-id',
-        access: ShareAccess.Edit,
+        access: [ShareAccess.View, ShareAccess.Edit],
       });
 
       expect(spy).toHaveBeenCalledWith({
@@ -96,7 +96,7 @@ describe('ShareService', () => {
       await expect(
         service.createShareLink('token', {
           itemId: 'gpt-4o',
-          access: ShareAccess.View,
+          access: [ShareAccess.View],
         }),
       ).rejects.toThrow(BadGatewayException);
     });
@@ -110,7 +110,7 @@ describe('ShareService', () => {
       await expect(
         service.createShareLink('token', {
           itemId: 'gpt-4o',
-          access: ShareAccess.View,
+          access: [ShareAccess.View],
         }),
       ).rejects.toThrow(BadGatewayException);
     });
@@ -124,7 +124,7 @@ describe('ShareService', () => {
       await expect(
         service.createShareLink('token', {
           itemId: 'gpt-4o',
-          access: ShareAccess.View,
+          access: [ShareAccess.View],
         }),
       ).rejects.toThrow(ServiceUnavailableException);
     });

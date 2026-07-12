@@ -65,11 +65,14 @@ export class ShareService {
   ): Promise<ShareLinkResponseDto> {
     let result;
     try {
+      const permissions = Array.from(
+        new Set(access.flatMap((level) => ACCESS_PERMISSIONS[level])),
+      );
       result = await this.dialClient.client.shareResource({
         headers: getBearerAuthHeaders(accessToken),
         body: {
           invitationType: 'LINK',
-          resources: [{ url: itemId, permissions: ACCESS_PERMISSIONS[access] }],
+          resources: [{ url: itemId, permissions }],
         },
       });
     } catch (err) {
