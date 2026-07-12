@@ -61,6 +61,8 @@ export const ShareButton: FC<ShareButtonProps> = ({
       iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}
       iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.MD} />}
       onClick={handleClick}
+      aria-haspopup={shareOverlay ? 'menu' : undefined}
+      aria-expanded={shareOverlay ? isOpen : undefined}
     />
   );
 

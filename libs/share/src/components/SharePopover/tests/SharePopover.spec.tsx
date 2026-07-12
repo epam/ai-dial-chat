@@ -200,14 +200,11 @@ describe('SharePopover', () => {
     expect(document.activeElement).toBe(editOption);
   });
 
-  it.each([true])(
-    'shows the interactive access dropdown when canEditAccess is true',
-    (canEditAccess) => {
-      render(<SharePopover {...makeProps({ onClose, canEditAccess })} />);
+  it('shows the interactive access dropdown when canEditAccess is true', () => {
+    render(<SharePopover {...makeProps({ onClose, canEditAccess: true })} />);
 
-      expect(screen.getByRole('button', { name: 'Can view' })).toBeTruthy();
-    },
-  );
+    expect(screen.getByRole('button', { name: 'Can view' })).toBeTruthy();
+  });
 
   it('hides the access dropdown and shows a static Can view label when canEditAccess is false', () => {
     render(<SharePopover {...makeProps({ onClose, canEditAccess: false })} />);

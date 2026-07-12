@@ -63,42 +63,43 @@ export class ShareService {
     accessToken: string,
     { itemId, access }: CreateShareLinkDto,
   ): Promise<ShareLinkResponseDto> {
+    let result;
     try {
-      const result = await this.dialClient.client.shareResource({
+      result = await this.dialClient.client.shareResource({
         headers: getBearerAuthHeaders(accessToken),
         body: {
           invitationType: 'LINK',
           resources: [{ url: itemId, permissions: ACCESS_PERMISSIONS[access] }],
         },
       });
-
-      if (result.error) {
-        return mapDialHttpStatus(
-          result.response.status,
-          'create share link',
-          this.logger,
-        );
-      }
-
-      const invitationLink = result.data?.invitationLink;
-      if (invitationLink == null) {
-        this.logger.error(
-          `DIAL Core returned an empty invitation link for itemId=${itemId}`,
-        );
-        throw new BadGatewayException(
-          'DIAL Core returned an empty invitation link',
-        );
-      }
-
-      this.logger.debug(`Created share link for itemId=${itemId}`);
-
-      return {
-        url: this.toAbsoluteUrl(invitationLink),
-        expiresInDays: SHARE_LINK_EXPIRES_IN_DAYS,
-        access,
-      };
     } catch (err) {
       return handleDialFetchError(err, 'create share link', this.logger, 0);
     }
+
+    if (result.error) {
+      throw mapDialHttpStatus(
+        result.response.status,
+        'create share link',
+        this.logger,
+      );
+    }
+
+    const invitationLink = result.data?.invitationLink;
+    if (invitationLink == null) {
+      this.logger.error(
+        `DIAL Core returned an empty invitation link for itemId=${itemId}`,
+      );
+      throw new BadGatewayException(
+        'DIAL Core returned an empty invitation link',
+      );
+    }
+
+    this.logger.debug(`Created share link for itemId=${itemId}`);
+
+    return {
+      url: this.toAbsoluteUrl(invitationLink),
+      expiresInDays: SHARE_LINK_EXPIRES_IN_DAYS,
+      access,
+    };
   }
 }

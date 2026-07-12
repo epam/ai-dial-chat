@@ -6,6 +6,10 @@ import { ShareI18nKeys } from '../../../constants/translation-keys';
 import * as useShareLinkModule from '../../../hooks/useShareLink/useShareLink';
 import SharePopoverContainer from '../SharePopoverContainer';
 
+const { mockSharePopover } = vi.hoisted(() => ({
+  mockSharePopover: vi.fn(() => null),
+}));
+
 vi.mock('../../../hooks/useShareLink/useShareLink');
 
 vi.mock('react-i18next', () => ({
@@ -14,9 +18,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@epam/ai-dial-share', () => ({
   ShareLinkAccess: { View: 'view', Edit: 'edit' },
-  SharePopover: (props: Record<string, unknown>) => (
-    <div data-share-props={JSON.stringify(props)} />
-  ),
+  SharePopover: mockSharePopover,
 }));
 
 const makeItem = (type: CatalogEntityType): CatalogItem => ({
@@ -42,12 +44,8 @@ const mockUseShareLink = (
   });
 };
 
-const getShareProps = (container: HTMLElement) =>
-  JSON.parse(
-    container
-      .querySelector('[data-share-props]')
-      ?.getAttribute('data-share-props') ?? '{}',
-  );
+const getShareProps = () =>
+  mockSharePopover.mock.calls.at(-1)?.[0] as Record<string, unknown>;
 
 describe('SharePopoverContainer', () => {
   beforeEach(() => {
@@ -63,7 +61,7 @@ describe('SharePopoverContainer', () => {
       },
     });
 
-    const { container } = render(
+    render(
       <SharePopoverContainer
         item={makeItem(CatalogEntityType.Application)}
         onClose={vi.fn()}
@@ -72,7 +70,7 @@ describe('SharePopoverContainer', () => {
 
     expect(useShareLinkModule.useShareLink).toHaveBeenCalledWith('item-1');
 
-    const props = getShareProps(container);
+    const props = getShareProps();
     expect(props.url).toBe('https://chat.dialx.ai/marketplace/share/item-1');
     expect(props.isLoading).toBe(false);
     expect(props.error).toBeNull();
@@ -82,25 +80,25 @@ describe('SharePopoverContainer', () => {
 
   it('passes canEditAccess true for an Application item', () => {
     mockUseShareLink();
-    const { container } = render(
+    render(
       <SharePopoverContainer
         item={makeItem(CatalogEntityType.Application)}
         onClose={vi.fn()}
       />,
     );
 
-    expect(getShareProps(container).canEditAccess).toBe(true);
+    expect(getShareProps().canEditAccess).toBe(true);
   });
 
   it('passes canEditAccess false for a Model item', () => {
     mockUseShareLink();
-    const { container } = render(
+    render(
       <SharePopoverContainer
         item={makeItem(CatalogEntityType.Model)}
         onClose={vi.fn()}
       />,
     );
 
-    expect(getShareProps(container).canEditAccess).toBe(false);
+    expect(getShareProps().canEditAccess).toBe(false);
   });
 });

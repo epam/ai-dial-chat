@@ -28,15 +28,16 @@ export const useShareLink = (itemId: string): UseShareLinkResult => {
 
   useEffect(() => {
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
-    setData(undefined);
 
-    getShareLink(itemId)
-      .then((result) => {
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+      setData(undefined);
+
+      try {
+        const result = await getShareLink(itemId);
         if (!cancelled) setData(result);
-      })
-      .catch((err: unknown) => {
+      } catch (err) {
         if (!cancelled) {
           setError(
             err instanceof Error
@@ -44,10 +45,12 @@ export const useShareLink = (itemId: string): UseShareLinkResult => {
               : new Error('Failed to create share link'),
           );
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setIsLoading(false);
-      });
+      }
+    };
+
+    void load();
 
     return () => {
       cancelled = true;
