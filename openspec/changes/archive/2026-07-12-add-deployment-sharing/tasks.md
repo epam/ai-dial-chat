@@ -33,16 +33,40 @@
 - [x] 4.5 Create `apps/chat-api/src/share/share.module.ts` — import `DialCoreModule`; provide `ShareService`; register in `AppModule`
 - [x] 4.6 Write `apps/chat-api/src/share/tests/share.service.spec.ts` — cover: success, DIAL Core 502 → `BadGatewayException`, network error → `ServiceUnavailableException`
 - [x] 4.7 Write `apps/chat-api/src/share/tests/share.controller.spec.ts` — cover: delegates to service, invalid `access` → 400, invalid `itemId` pattern → 400, unauthenticated → 401
-- [ ] 4.8 Run `npm exec nx test chat-api` and `npm exec nx lint chat-api` — fix any failures
+- [x] 4.8 Run `npm exec nx lint chat-api` — passes. `npm exec nx test chat-api` could not be run: the vitest runner fails on every spec file repo-wide in this environment (`Cannot read properties of undefined (reading 'config')`), confirmed pre-existing/unrelated via `git stash`; verified this domain instead via `npm exec nx build chat-api` and `npm exec nx typecheck chat-api` (clean)
 
 ## 5. Generated API Client
 
-- [ ] 5.1 Run `npm run openapi` to regenerate `libs/chat-api-client` from the updated Swagger spec
-- [ ] 5.2 Run `npm run openapi:check` — verify no schema drift
-- [ ] 5.3 Run `npm exec nx build chat-api-client` — confirm clean build
+- [x] 5.1 Run `npm run openapi` to regenerate `libs/chat-api-client` from the updated Swagger spec
+- [x] 5.2 Run `npm run openapi:check` — verify no schema drift
+- [x] 5.3 Run `npm exec nx build chat-api-client` — confirmed via the `chat-api` build, which depends on it
 
 ## 6. Frontend — Wire Real API
 
 - [x] 6.1 Create `apps/chat/src/server-api/share.api.ts` — thin wrapper calling `shareApi.createShareLink({ itemId, access })` from the generated client; export `createShareLink`
 - [x] 6.2 Replace the mock body in `apps/chat/src/utils/share-link.ts` with a call to `createShareLink`; map response to `ShareLinkData`; remove mock constants
-- [ ] 6.3 Run `npm exec nx typecheck chat` and `npm exec nx test chat` — fix any failures
+- [x] 6.3 Run `npm exec nx typecheck chat` — passes. `npm exec nx test chat` blocked by the same repo-wide vitest issue as 4.8
+
+## 7. Access level as an array (edit implies view)
+
+- [x] 7.1 Change `access` from a scalar `ShareLinkAccess`/`ShareAccess` to `ShareLinkAccess[]`/`ShareAccess[]` across `CreateShareLinkDto`, `ShareLinkResponseDto`, `ShareLinkData`, `SharePopoverProps`, `AccessControlProps`; "Can edit" now produces `[View, Edit]`, "Can view" produces `[View]`
+- [x] 7.2 Update `ShareService`'s `ACCESS_PERMISSIONS` lookup to a union-of-permissions computation (`access.flatMap(...)` through a `Set`) instead of a single lookup
+- [x] 7.3 Update `AccessControl`/`SharePopover` comparisons from `===` to `access.includes(ShareLinkAccess.Edit)`
+- [x] 7.4 Regenerate `libs/chat-api-client`; update `apps/chat/src/utils/share-link.ts`'s `toShareLinkAccess` to map array-to-array
+- [x] 7.5 Fix `useShareLink.setAccess`: it was patching `data.access` locally without re-fetching, so changing access never produced a new link. Rewrote it to re-call `getShareLink(itemId, access)` (a real bug found and fixed after the array conversion, not part of the original conversion scope) with a request-id guard against stale responses
+- [x] 7.6 Update all affected tests (`share.service.spec.ts`, `share.controller.spec.ts`, `SharePopover.spec.tsx`, `useShareLink.spec.ts`, `SharePopoverContainer.spec.tsx`) to array fixtures
+
+## 8. Opening a share link (accept-invitation flow)
+
+There was previously no consumer for a generated share link: DIAL Core's `invitationLink` is an API path (`/v1/invitations/{id}`), not a frontend route, so opening a link fell through to `NotFoundPage`. This section closes that gap.
+
+- [x] 8.1 `ShareService.buildInvitationUrl` replaces `toAbsoluteUrl`: extracts the invitation id from DIAL Core's `invitationLink` and rebuilds `{appOrigin}/catalog/shared/{invitationId}` instead of re-anchoring DIAL Core's raw path
+- [x] 8.2 Add `apps/chat-api/src/common/validators/invitation-id.pattern.ts`, `share/dto/get-invitation.dto.ts`, `share/dto/accept-invitation-response.dto.ts`
+- [x] 8.3 Add `ShareService.acceptInvitation` — calls DIAL Core's `getInvitation(id, { accept: true })`, the call that actually grants access; returns `{ itemId }` from `resources[0].url`
+- [x] 8.4 Add `GET /api/v1/share/invitations/:invitationId` on `ShareController`; regenerate `libs/chat-api-client`
+- [x] 8.5 Add `ROUTES.SharedInvitation = '/catalog/shared/:invitationId'`; add `apps/chat/src/pages/SharedInvitation/SharedInvitation.tsx` — silently accepts on mount, redirects to `/catalog?itemId=` on success or shows an error notification + redirects to `/catalog` on failure; register the route in `app.tsx`
+- [x] 8.6 Add `apps/chat/src/server-api/share.api.ts`'s `acceptInvitation`; add `apps/chat/src/types/catalog.ts` (`CatalogQuery.ItemId`)
+- [x] 8.7 Add `initialDetailsItemId?: string` to `libs/catalog`'s `CatalogProps`; `Catalog` opens that item's details panel automatically once via the existing `handleOpenDetails` flow
+- [x] 8.8 Wire `CatalogView` to read `?itemId=` via `useSearchParams` and pass it through as `initialDetailsItemId`
+- [x] 8.9 Add `share.invitationAcceptError` i18n key; write/update tests (`Catalog.spec.tsx`, `CatalogView.spec.tsx`, new `SharedInvitation.spec.tsx`); run typecheck/lint/build on `chat-api`, `ai-dial-catalog`, `chat` — all clean
+- [ ] 8.10 Confirm DIAL Core's actual behavior for re-accepting an already-accepted invitation (idempotent vs. error) once the real DIAL Core contract is available — currently `SharedInvitationPage` always retries acceptance on every visit (see design.md Risks)

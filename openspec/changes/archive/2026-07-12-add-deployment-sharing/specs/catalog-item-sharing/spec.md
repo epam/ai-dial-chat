@@ -147,7 +147,11 @@ Accessibility: trigger button has `aria-haspopup="true"` and `aria-expanded` ref
 
 #### Scenario: Selecting "Can edit" calls onAccessChange
 - **WHEN** the user selects "Can edit" from the access dropdown
-- **THEN** `onAccessChange(ShareLinkAccess.Edit)` is called
+- **THEN** `onAccessChange([ShareLinkAccess.View, ShareLinkAccess.Edit])` is called
+
+#### Scenario: Selecting "Can view" calls onAccessChange
+- **WHEN** the user selects "Can view" from the access dropdown
+- **THEN** `onAccessChange([ShareLinkAccess.View])` is called
 
 #### Scenario: Arrow-key navigation in access menu
 - **WHEN** the access menu is open and the user presses ArrowDown or ArrowUp
@@ -190,9 +194,11 @@ i18n keys: `share.qrButtonLabel` ("QR"), `buttons.link` ("Link") — reused for 
 - **THEN** focus wraps to the last focusable control
 
 ### Requirement: useShareLink hook
-`apps/chat/src/hooks/useShareLink/useShareLink.ts` SHALL fetch share-link data for a given `itemId` via the `getShareLink` seam, expose `url`, `isLoading`, `error`, `expiresInDays`, `access` state, and provide a stable `setAccess` callback for optimistic access-level updates.
+`apps/chat/src/hooks/useShareLink/useShareLink.ts` SHALL fetch share-link data for a given `itemId` via the `getShareLink` seam, expose `url`, `isLoading`, `error`, `expiresInDays`, `access: ShareLinkAccess[]` state, and provide a stable `setAccess: (access: ShareLinkAccess[]) => void` callback.
 
-Memoisation: `setAccess` wrapped in `useCallback`; `data` state updated immutably.
+`setAccess` is not a local patch: DIAL Core issues a distinct link per access level, so changing access re-POSTs via `getShareLink(itemId, access)` for a fresh link rather than mutating the previous response's `access` field in place. A request-id guard (a ref incremented per call, compared before each `setState`) discards a stale response if a newer `setAccess`/mount fetch resolves first.
+
+Memoisation: `load`/`setAccess` wrapped in `useCallback`.
 
 #### Scenario: Fetch on mount
 - **WHEN** `useShareLink` mounts with an `itemId`
@@ -206,10 +212,35 @@ Memoisation: `setAccess` wrapped in `useCallback`; `data` state updated immutabl
 - **WHEN** `itemId` prop changes
 - **THEN** a new fetch is triggered and the previous result is cleared
 
-#### Scenario: setAccess updates data immutably
-- **WHEN** `setAccess(ShareLinkAccess.Edit)` is called with data loaded
-- **THEN** `data.access` updates to `Edit` without re-fetching
+#### Scenario: setAccess requests a new link for the new access levels
+- **WHEN** `setAccess([ShareLinkAccess.View, ShareLinkAccess.Edit])` is called with data loaded
+- **THEN** `getShareLink(itemId, [ShareLinkAccess.View, ShareLinkAccess.Edit])` is called, `isLoading` becomes `true` during the request, and `data.access`/`data.url` update to the new response once it resolves
+
+#### Scenario: A stale setAccess response is discarded
+- **WHEN** `setAccess` is called twice in quick succession
+- **THEN** only the result of the most recent call is applied to `data`, even if the earlier call's request resolves later
 
 #### Scenario: No setState after unmount
 - **WHEN** the component unmounts before `getShareLink` resolves
-- **THEN** no state update is attempted (cancelled flag pattern)
+- **THEN** no state update is attempted (request-id guard discards the stale result)
+
+### Requirement: Opening a share link accepts the invitation and selects the item in the catalog
+`apps/chat/src/pages/SharedInvitation/SharedInvitation.tsx` SHALL render at route `ROUTES.SharedInvitation` (`/catalog/shared/:invitationId`). On mount it SHALL call `acceptInvitation(invitationId)` (the `apps/chat/src/server-api/share.api.ts` wrapper over the generated `GET /api/v1/share/invitations/:invitationId` client method) exactly once per mount, then:
+- on success, navigate (`replace: true`) to `` `${ROUTES.Catalog}?${CatalogQuery.ItemId}=${itemId}` ``, where `itemId` is taken from the response
+- on failure, show an error notification (`ShareI18nKeys.InvitationAcceptError` as fallback message when the error has no message) and navigate (`replace: true`) to `ROUTES.Catalog` with no item selected
+
+There is no confirm step: acceptance is silent and immediate on landing. While the request is in flight, the page renders only `RouteFallback` (a spinner) — no partial content.
+
+`CatalogView` SHALL read the `CatalogQuery.ItemId` (`itemId`) search param from the URL via `useSearchParams` and pass it to `Catalog` as `initialDetailsItemId`.
+
+#### Scenario: Accepting a valid invitation redirects into the catalog with the item selected
+- **WHEN** `SharedInvitationPage` mounts with `invitationId` resolving to `itemId: 'gpt-4o'`
+- **THEN** the user is redirected to `/catalog?itemId=gpt-4o` and no error notification is shown
+
+#### Scenario: Accepting an invalid or expired invitation shows an error and redirects to the catalog
+- **WHEN** `acceptInvitation` rejects
+- **THEN** an error notification is shown and the user is redirected to `/catalog` with no `itemId` param
+
+#### Scenario: CatalogView opens the shared item's details panel
+- **WHEN** `/catalog?itemId=gpt-4o` is loaded and `gpt-4o` is present in `items`
+- **THEN** `CatalogView` passes `initialDetailsItemId="gpt-4o"` to `Catalog`, which opens that item's details panel automatically
