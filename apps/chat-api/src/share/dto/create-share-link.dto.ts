@@ -19,7 +19,7 @@ export class CreateShareLinkDto {
   })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[a-zA-Z0-9._\-/]+$/, {
+  @Matches(/^(?!.*\.\.)[a-zA-Z0-9._\-/]+$/, {
     message: 'itemId contains invalid characters',
   })
   itemId!: string;
