@@ -120,6 +120,30 @@ New keys:
 - **WHEN** `en.json` is loaded
 - **THEN** `conversationPanel.shareLabel` resolves to `"Share"`
 
+### Requirement: `getConversationRoute` rejects path-traversal segments
+
+`getConversationRoute` (`apps/chat/src/constants/routes.ts`) is used both for known-good ids (row clicks, duplication results) and for a backend-returned id in the accept-invitation flow (`getTargetRoute={getConversationRoute}` in `ConversationSharedInvitationPage`), which is not guaranteed well-formed. After `normalizeConversationId`, it SHALL reject any path with an empty, `.`, or `..` segment by returning `ROUTES.Root` instead of building a `/conversations/...` route from the unsafe input — a silent, render-safe fallback rather than throwing, since `getConversationRoute` is also called synchronously during list rendering (`ConversationPanelView`'s `href` computation) where an exception would break the whole panel.
+
+#### Scenario: Parent-directory traversal falls back to root
+
+- **WHEN** `getConversationRoute('tenant/../../evil')` is called
+- **THEN** it returns `'/'`, not a route containing `..`
+
+#### Scenario: Current-directory segment falls back to root
+
+- **WHEN** `getConversationRoute('tenant/./path')` is called
+- **THEN** it returns `'/'`
+
+#### Scenario: Empty segment (double slash) falls back to root
+
+- **WHEN** `getConversationRoute('tenant//path')` is called
+- **THEN** it returns `'/'`
+
+#### Scenario: Well-formed ids are unaffected
+
+- **WHEN** `getConversationRoute('tenant/path')` is called
+- **THEN** it returns `'/conversations/tenant/path'` exactly as before
+
 ### Requirement: RTL — share popover trigger and dropdown item follow logical positioning
 
 The new "Share" `DropdownItem` icon and menu entry SHALL use the same layout primitives as existing menu items (`pin`, `rename`, `duplicate`, `delete`) in `ConversationRow`/`DialDropdown`, which are already logical-property-based (`placement="bottom-end"`). No new physical-direction classes are introduced. The reused `SharePopover` component already follows RTL rules per its own spec/implementation in `libs/share`.

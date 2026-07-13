@@ -33,6 +33,15 @@ const ACCESS_PERMISSIONS: Record<ShareAccess, ResourceAccessType[]> = {
  * frontend route depends on the resource kind: catalog entities land on the
  * catalog accept-invitation route, conversations on the conversation one, so
  * each redirects into the right place after acceptance.
+ *
+ * These string literals MUST stay in sync with `ROUTES.SharedInvitation` and
+ * `ROUTES.ConversationSharedInvitation` in `apps/chat/src/types/routes.ts` —
+ * apps cannot import each other's route constants across the Nx module
+ * boundary, so there is no single shared source of truth. Renaming either
+ * frontend route without updating the matching constant here (or vice versa)
+ * compiles cleanly but silently breaks the generated share link. The tests
+ * in `share.service.spec.ts` assert the exact URL prefix for both kinds —
+ * update them alongside any rename here.
  */
 const CATALOG_SHARE_INVITATION_ROUTE_PATH = '/catalog/shared';
 const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';

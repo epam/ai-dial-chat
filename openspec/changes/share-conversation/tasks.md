@@ -33,10 +33,17 @@
 - [x] 6.5 Add `apps/chat/src/pages/ConversationSharedInvitation/ConversationSharedInvitation.tsx`, rendering `SharedInvitationPage` with `getTargetRoute={getConversationRoute}` and `errorFallbackRoute={ROUTES.Root}`, plus tests
 - [x] 6.6 Register the new route as a lazy top-level `<Route>` in `apps/chat/src/app/app.tsx`, alongside the existing catalog `ROUTES.SharedInvitation` route
 
-## 7. Verification
+## 7. Security review follow-up (PR #7734, automated security-review comment)
 
-- [x] 7.1 `npm exec nx lint chat` and `npm exec nx lint chat-api` (re-run after routing/popup fixes) — clean; the pre-existing `share.service.spec.ts` import-order error was fixed opportunistically while editing that file
-- [x] 7.2 `npm exec nx test chat` and `npm exec nx test chat-api` — blocked repo-wide by a pre-existing Vitest environment failure (`TypeError: Cannot read properties of undefined (reading 'config')`) affecting all 108+ suites in both projects, not introduced by this change; new tests were written and are structurally consistent with passing sibling tests, but could not be executed in this environment
-- [x] 7.3 `npm exec nx build chat-api` and `npm exec nx build chat` (re-run after routing/popup fixes) — both succeed
-- [ ] 7.4 Manually verify in the running app: open the panel row menu for an owned conversation, click Share, confirm the popover shows a link with a single clean header (view-only, no access dropdown, no double-header gap), copy works, the menu is absent for a shared-with-me conversation, and opening the link in another session lands on the conversation (not the catalog)
-- [ ] 7.5 Verify RTL: menu item and popover render correctly with `dir="rtl"`
+- [x] 7.1 Harden `getConversationRoute` (`apps/chat/src/constants/routes.ts`) to reject empty/`.`/`..` path segments after `normalizeConversationId`, falling back to `ROUTES.Root` instead of building a route from an unvalidated backend-returned id (used by the accept-invitation flow) — low-severity open-redirect finding
+- [x] 7.2 Add tests in `apps/chat/src/constants/tests/routes.spec.ts` for traversal, dot, and empty-segment inputs, plus a regression test confirming well-formed ids are unaffected
+- [x] 7.3 Remaining findings in the same review (`info` severity) required no code change: `getInvitationRoutePath`'s prefix check, `IsValidFilePath` validation, `SharedInvitationPage`'s prop refactor, and unchanged `@Throttle` limits were all assessed as already adequate
+
+## 8. Verification
+
+- [x] 8.1 `npm exec nx lint chat` and `npm exec nx lint chat-api` (re-run after routing/popup/security fixes) — clean; the pre-existing `share.service.spec.ts` import-order error was fixed opportunistically while editing that file
+- [x] 8.2 `npm exec nx test chat` and `npm exec nx test chat-api` — blocked repo-wide by a pre-existing Vitest environment failure (`TypeError: Cannot read properties of undefined (reading 'config')`) affecting all 108+ suites in both projects, not introduced by this change; new tests were written and are structurally consistent with passing sibling tests, but could not be executed in this environment
+- [x] 8.3 `npm exec nx build chat-api` and `npm exec nx build chat` (re-run after routing/popup/security fixes) — both succeed
+- [ ] 8.4 Manually verify in the running app: open the panel row menu for an owned conversation, click Share, confirm the popover shows a link with a single clean header (view-only, no access dropdown, no double-header gap), copy works, the menu is absent for a shared-with-me conversation, and opening the link in another session lands on the conversation (not the catalog)
+- [ ] 8.5 Verify RTL: menu item and popover render correctly with `dir="rtl"`
+- [ ] 8.6 Confirm in the running app that a conversation's share link now resolves to `/conversations/shared/:id` (currently reported as still showing `/catalog/shared/:id` — likely a stale `chat-api` dev server; restart/rebuild and re-test)

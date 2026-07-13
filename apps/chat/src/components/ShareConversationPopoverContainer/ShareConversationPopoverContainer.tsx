@@ -1,6 +1,6 @@
 import { ShareLinkAccess, SharePopover } from '@epam/ai-dial-share';
 import type { FC } from 'react';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
@@ -16,6 +16,12 @@ interface Props {
   onClose: () => void;
 }
 
+/** Stable reference so `SharePopover` (wrapped in `memo`) doesn't see a new `access` array every render while loading. */
+const DEFAULT_ACCESS: ShareLinkAccess[] = [ShareLinkAccess.View];
+
+/* canEditAccess=false: the access dropdown is never shown, so this is never called. */
+const handleAccessChangeNoop = (): void => undefined;
+
 /**
  * Wires `useShareLink` to the host-agnostic `SharePopover` for a conversation.
  * Conversations are always shared view-only — unlike catalog entities, there
@@ -28,37 +34,42 @@ const ShareConversationPopoverContainer: FC<Props> = ({
   const { t } = useTranslation();
   const { data, isLoading, error } = useShareLink(conversationPath);
 
+  const labels = useMemo(
+    () => ({
+      title: t(ShareI18nKeys.Title),
+      qrButtonLabel: t(ShareI18nKeys.QrButtonLabel),
+      linkLabel: t(ButtonsI18nKeys.Link),
+      anyoneWithLinkTitle: t(ShareI18nKeys.AnyoneWithLinkTitle),
+      anyoneWithLinkSubtitle: t(ShareI18nKeys.AnyoneWithLinkSubtitle),
+      accessAriaLabel: t(ShareI18nKeys.AccessAriaLabel),
+      accessViewLabel: t(ShareI18nKeys.AccessViewLabel),
+      accessEditLabel: t(ShareI18nKeys.AccessEditLabel),
+      visibilityNote: t(ShareI18nKeys.VisibilityNoteConversation),
+      copyButtonLabel: t(ShareI18nKeys.CopyButtonLabel),
+      copiedButtonLabel: t(ShareI18nKeys.CopiedButtonLabel),
+      linkAriaLabel: t(ShareI18nKeys.LinkAriaLabel),
+      expiryNote:
+        data?.expiresInDays != null
+          ? t(ShareI18nKeys.ExpiryNote, { days: data.expiresInDays })
+          : undefined,
+      qrCodeAriaLabel: t(ShareI18nKeys.QrCodeAriaLabel),
+      loadingLabel: t(ShareI18nKeys.LoadingLabel),
+      errorTitle: t(ShareI18nKeys.ErrorTitle),
+    }),
+    [t, data?.expiresInDays],
+  );
+
   return (
     <SharePopover
       className="w-full"
       url={data?.url}
       isLoading={isLoading}
       error={error}
-      access={data?.access ?? [ShareLinkAccess.View]}
+      access={data?.access ?? DEFAULT_ACCESS}
       canEditAccess={false}
-      onAccessChange={() => undefined}
+      onAccessChange={handleAccessChangeNoop}
       onClose={onClose}
-      labels={{
-        title: t(ShareI18nKeys.Title),
-        qrButtonLabel: t(ShareI18nKeys.QrButtonLabel),
-        linkLabel: t(ButtonsI18nKeys.Link),
-        anyoneWithLinkTitle: t(ShareI18nKeys.AnyoneWithLinkTitle),
-        anyoneWithLinkSubtitle: t(ShareI18nKeys.AnyoneWithLinkSubtitle),
-        accessAriaLabel: t(ShareI18nKeys.AccessAriaLabel),
-        accessViewLabel: t(ShareI18nKeys.AccessViewLabel),
-        accessEditLabel: t(ShareI18nKeys.AccessEditLabel),
-        visibilityNote: t(ShareI18nKeys.VisibilityNoteConversation),
-        copyButtonLabel: t(ShareI18nKeys.CopyButtonLabel),
-        copiedButtonLabel: t(ShareI18nKeys.CopiedButtonLabel),
-        linkAriaLabel: t(ShareI18nKeys.LinkAriaLabel),
-        expiryNote:
-          data?.expiresInDays != null
-            ? t(ShareI18nKeys.ExpiryNote, { days: data.expiresInDays })
-            : undefined,
-        qrCodeAriaLabel: t(ShareI18nKeys.QrCodeAriaLabel),
-        loadingLabel: t(ShareI18nKeys.LoadingLabel),
-        errorTitle: t(ShareI18nKeys.ErrorTitle),
-      }}
+      labels={labels}
     />
   );
 };

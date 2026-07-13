@@ -152,10 +152,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
 
-  const [pendingShareItem, setPendingShareItem] = useState<{
-    id: string;
-    path: string;
-  } | null>(null);
+  const [pendingShareConversationPath, setPendingShareConversationPath] =
+    useState<string | null>(null);
 
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
@@ -308,8 +306,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           icon: (
             <IconShare size={DIAL_ICON_SIZE.SM} className="text-secondary" />
           ),
-          onClick: () =>
-            setPendingShareItem({ id: contextId, path: contextId }),
+          onClick: () => setPendingShareConversationPath(contextId),
         },
         {
           key: 'delete',
@@ -335,7 +332,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   );
 
   const handleCloseSharePopover = useCallback(() => {
-    setPendingShareItem(null);
+    setPendingShareConversationPath(null);
   }, []);
 
   const pendingDeleteTitle = useMemo(() => {
@@ -508,19 +505,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       />
 
       <DialPopup
-        open={pendingShareItem !== null}
+        open={pendingShareConversationPath !== null}
         onClose={handleCloseSharePopover}
         dividers={false}
         hideClose
         headerClassName="hidden"
         size={PopupSize.Sm}
       >
-        {pendingShareItem && (
-          <ShareConversationPopoverContainer
-            conversationPath={pendingShareItem.path}
-            onClose={handleCloseSharePopover}
-          />
-        )}
+        <ShareConversationPopoverContainer
+          conversationPath={pendingShareConversationPath ?? ''}
+          onClose={handleCloseSharePopover}
+        />
       </DialPopup>
     </>
   );
