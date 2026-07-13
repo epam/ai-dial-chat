@@ -16,7 +16,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { List } from 'react-window';
+import { List, type ListImperativeAPI } from 'react-window';
 import { ITEM_ROW_HEIGHT } from '../../constants/virtual-list';
 import { ConversationPanelProps } from '../../models/panel-props';
 import {
@@ -89,6 +89,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       () => ALL_GROUP_KEYS,
     );
     const [overscanCount, setOverscanCount] = useState(5);
+    const listRef = useRef<ListImperativeAPI>(null);
 
     const [draggingId, setDraggingId] = useState<string | null>(null);
     const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -272,6 +273,31 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       return rows;
     }, [groups, expandedGroups]);
 
+    useEffect(() => {
+      if (!activeConversationId) return;
+
+      const groupKey = groups.find((group) =>
+        group.items.some((item) => item.id === activeConversationId),
+      )?.key;
+      if (groupKey && !expandedGroups.has(groupKey)) {
+        setExpandedGroups((prev) => new Set(prev).add(groupKey));
+        return;
+      }
+
+      const index = virtualRows.findIndex(
+        (row) =>
+          row.kind === VirtualRowKind.Item &&
+          row.item.id === activeConversationId,
+      );
+      if (index >= 0) {
+        listRef.current?.scrollToRow({
+          index,
+          align: 'smart',
+          behavior: 'smooth',
+        });
+      }
+    }, [activeConversationId, groups, expandedGroups, virtualRows]);
+
     const rowProps = useMemo<RowRendererData>(
       () => ({
         rows: virtualRows,
@@ -397,6 +423,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             <PanelNoResults label={noResultsLabel} />
           ) : (
             <List<RowRendererData>
+              listRef={listRef}
               role="list"
               style={{ height: '100%' }}
               rowComponent={RowRenderer}

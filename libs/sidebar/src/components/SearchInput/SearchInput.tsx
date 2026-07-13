@@ -12,7 +12,7 @@ export interface SearchInputProps {
   onChange: (value: string) => void;
   /** Accessible label for the clear-search button. */
   clearLabel: string;
-  /** CSS class applied to the search icon. Defaults to `'!text-secondary'`. */
+  /** CSS class applied to the search icon. Defaults to `'text-secondary'`. */
   iconClassName?: string;
 }
 
