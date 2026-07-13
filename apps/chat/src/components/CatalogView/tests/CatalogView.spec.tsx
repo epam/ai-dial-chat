@@ -33,6 +33,7 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     items,
     onToggleFavorite,
     onUseInChat,
+    onEdit,
     onFetchDetails,
     initialDetailsItemId,
   }: {
@@ -41,6 +42,7 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
+    onEdit?: (item: CatalogItem) => void;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
     initialDetailsItemId?: string;
   }) => {
@@ -70,6 +72,15 @@ vi.mock('@epam/ai-dial-catalog', () => ({
             onClick={() => onUseInChat?.(item)}
           >
             use in chat {item.id}
+          </button>
+        ))}
+        {(items ?? []).map((item) => (
+          <button
+            key={`edit-${item.id}`}
+            type="button"
+            onClick={() => onEdit?.(item)}
+          >
+            edit {item.id}
           </button>
         ))}
         {(items ?? []).map((item) => (
@@ -243,6 +254,40 @@ describe('CatalogView', () => {
       'toolsets/b/search__0.0.1',
       true,
       FavoriteEntityType.Toolset,
+    );
+  });
+
+  it('navigates to the toolset editor with the toolset id when Edit is clicked', async () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/b/search__0.0.1',
+          toolset: 'toolsets/b/search__0.0.1',
+          displayName: 'Search',
+          isMy: true,
+        },
+      ],
+      refetchToolsets: vi.fn(),
+    });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'edit toolsets/b/search__0.0.1',
+      }),
+    );
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      `${ROUTES.ToolsetEditor}?id=${encodeURIComponent('toolsets/b/search__0.0.1')}&returnUrl=%2Fcatalog`,
     );
   });
 

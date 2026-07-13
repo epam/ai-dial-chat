@@ -121,6 +121,7 @@ export const mapToolsetToCatalogItem = (
     isUserFavorite: favoriteIds.has(toolset.id),
     isStarred: favoriteIds.has(toolset.id),
     isMyApp: toolset.isMy ?? false,
+    isEditable: toolset.isMy ?? false,
     folder: resolveToolsetFolder(toolset),
     summary: undefined,
     details:
