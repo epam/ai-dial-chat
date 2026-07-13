@@ -120,7 +120,7 @@ const DialFileManagerPage: FC = () => {
       multipleFilesTitle: t(DialFileManagerI18nKeys.ConflictMultipleTitle),
       actionLabels: {
         replace: t(DialFileManagerI18nKeys.ConflictReplace),
-        duplicate: t(DialFileManagerI18nKeys.ConflictDuplicate),
+        duplicate: t(ButtonsI18nKeys.Duplicate),
         cancel: t(ButtonsI18nKeys.Cancel),
       },
       strategyLabels: {
@@ -151,9 +151,9 @@ const DialFileManagerPage: FC = () => {
       deletingLabel: t(DialFileManagerI18nKeys.DeletingLabel),
       renameLabel: t(ButtonsI18nKeys.Rename),
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
-      copyLabel: t(DialFileManagerI18nKeys.CopyAction),
+      copyLabel: t(ButtonsI18nKeys.Copy),
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
-      duplicateLabel: t(DialFileManagerI18nKeys.DuplicateAction),
+      duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
       hiddenFilesSwitcherLabel: t(DialFileManagerI18nKeys.ShowHiddenFiles),
       getCopyHeader: (count, name) =>

@@ -1740,14 +1740,12 @@ export const useDialFileManager = ({
       if (uploadEnabled) {
         labels[DialFileManagerActions.Rename] = t(ButtonsI18nKeys.Rename);
         if (isCopyMoveDuplicateAllowed(actionProfile)) {
-          labels[DialFileManagerActions.Copy] = t(
-            DialFileManagerI18nKeys.CopyAction,
-          );
+          labels[DialFileManagerActions.Copy] = t(ButtonsI18nKeys.Copy);
           labels[DialFileManagerActions.Move] = t(
             DialFileManagerI18nKeys.MoveAction,
           );
           labels[DialFileManagerActions.Duplicate] = t(
-            DialFileManagerI18nKeys.DuplicateAction,
+            ButtonsI18nKeys.Duplicate,
           );
         }
       }

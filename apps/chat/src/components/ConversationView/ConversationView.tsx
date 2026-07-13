@@ -42,6 +42,7 @@ import {
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
+  FavoritesI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -651,18 +652,18 @@ const ConversationView: FC<Props> = ({
                               DeploymentSelectorI18nKeys.SearchPlaceholder,
                             ),
                             favoritesLabel: t(
-                              DeploymentSelectorI18nKeys.FavoritesLabel,
+                              FavoritesI18nKeys.FavoritesLabel,
                             ),
                             emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
                             browseCatalogLabel: t(ButtonsI18nKeys.Browse),
                             removeFromFavoritesLabel: t(
-                              DeploymentSelectorI18nKeys.RemoveFromFavorites,
+                              FavoritesI18nKeys.RemoveFromFavorites,
                             ),
                             currentlySelectedLabel: t(
                               DeploymentSelectorI18nKeys.CurrentlySelectedLabel,
                             ),
                             addToFavoritesLabel: t(
-                              DeploymentSelectorI18nKeys.AddToFavorites,
+                              FavoritesI18nKeys.AddToFavorites,
                             ),
                           }}
                         />

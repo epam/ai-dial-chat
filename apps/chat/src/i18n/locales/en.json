@@ -68,6 +68,16 @@
     "profile": "Profile",
     "back": "Back"
   },
+  "favorites": {
+    "title": "Your Favorites",
+    "addedTitle": "Added to Favorites",
+    "removedTitle": "Removed from Favorites",
+    "added": "\"{{name}}\" added to Favorites",
+    "removed": "\"{{name}}\" removed from Favorites",
+    "favoritesLabel": "Favorites",
+    "addToFavoritesLabel": "Add to favorites",
+    "removeFromFavoritesLabel": "Remove from favorites"
+  },
   "catalog": {
     "searchPlaceholder": "Search models, tools, agents…",
     "noResultsTitle": "No results for \"{{query}}\"",
@@ -95,7 +105,6 @@
       },
       "credentials": {
         "loginLabel": "Log in",
-        "logoutLabel": "Log out",
         "signedInLabel": "Signed in",
         "signedOutLabel": "Signed out",
         "logoutConfirmMessage": "Are you sure you want to log out?",
@@ -121,13 +130,6 @@
       "quickApp": "QuickApp",
       "toolset": "Toolset"
     },
-    "favorites": {
-      "title": "Your Favorites",
-      "addedTitle": "Added to Favorites",
-      "removedTitle": "Removed from Favorites",
-      "added": "\"{{name}}\" added to Favorites",
-      "removed": "\"{{name}}\" removed from Favorites"
-    },
     "tab": {
       "models": "Models",
       "applications": "Agents",
@@ -141,11 +143,8 @@
   "deploymentSelector": {
     "title": "Talk to",
     "searchPlaceholder": "Search models, agents…",
-    "favoritesLabel": "Favorites",
     "emptyHint": "Star a model or agent to pin it here.",
-    "removeFromFavoritesLabel": "Remove from favorites",
     "currentlySelectedLabel": "Currently selected",
-    "addToFavoritesLabel": "Add to favorites",
     "ariaLabel": "Select model",
     "loading": "Loading models…",
     "error": "Failed to load models",
@@ -230,33 +229,43 @@
     "title": "Chats",
     "toggleAriaLabel": "Conversation panel",
     "empty": "No conversations yet",
-    "filterAll": "All",
-    "filterShared": "Shared",
-    "pinnedSection": "Pinned",
-    "myChatsSection": "My chats",
-    "actionsLabel": "More actions",
-    "pinLabel": "Pin",
-    "unpinLabel": "Unpin",
-    "deleteConfirmTitle": "Confirm Deleting Chat",
-    "deleteSuccess": "Conversation deleted successfully",
-    "deleteSuccessTitle": "Conversation deleted",
-    "deleteError": "Failed to delete the conversation. Please try again.",
-    "renameTitle": "Rename Chat",
-    "renameInputPlaceholder": "Chat name",
-    "renameError": "Failed to rename. Please try again.",
-    "renameTitleTooLong": "The name is too long. Please shorten it and try again.",
-    "renameWithAiLabel": "Rename with AI",
-    "renameWithAiError": "Failed to generate a name. Please try again.",
+    "filter": {
+      "all": "All",
+      "shared": "Shared",
+      "pinnedSection": "Pinned",
+      "myChatsSection": "My chats"
+    },
+    "actions": {
+      "actionsLabel": "More actions",
+      "pinLabel": "Pin",
+      "unpinLabel": "Unpin"
+    },
+    "delete": {
+      "deleteConfirmTitle": "Confirm Deleting Chat",
+      "deleteSuccess": "Conversation deleted successfully",
+      "deleteSuccessTitle": "Conversation deleted",
+      "deleteError": "Failed to delete the conversation. Please try again."
+    },
+    "rename": {
+      "renameTitle": "Rename Chat",
+      "renameInputPlaceholder": "Chat name",
+      "renameError": "Failed to rename. Please try again.",
+      "renameTitleTooLong": "The name is too long. Please shorten it and try again.",
+      "renameWithAiLabel": "Rename with AI",
+      "renameWithAiError": "Failed to generate a name. Please try again."
+    },
     "duplicateReadOnlyDescription": "Duplicate the conversation to be able to edit it",
     "duplicateError": "Failed to duplicate the conversation. Please try again.",
     "panelActionsLabel": "Conversation panel actions",
-    "deleteAllChatsLabel": "Delete all conversations",
-    "deleteAllConfirmTitle": "Delete All Conversations?",
-    "deleteAllConfirmDescription": "All conversations will be permanently deleted. This action cannot be undone.",
-    "deleteAllError": "Failed to delete all conversations. Please try again.",
-    "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed.",
-    "deleteAllSuccessTitle": "All conversations deleted",
-    "deleteAllSuccess": "All conversations have been deleted successfully."
+    "deleteAll": {
+      "deleteAllChatsLabel": "Delete all conversations",
+      "deleteAllConfirmTitle": "Delete All Conversations?",
+      "deleteAllConfirmDescription": "All conversations will be permanently deleted. This action cannot be undone.",
+      "deleteAllError": "Failed to delete all conversations. Please try again.",
+      "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed.",
+      "deleteAllSuccessTitle": "All conversations deleted",
+      "deleteAllSuccess": "All conversations have been deleted successfully."
+    }
   },
   "auth": {
     "signedInAs": "Signed in as {{email}}",
@@ -350,7 +359,6 @@
     "conflictSingleTitle": "Replace or Duplicate Item",
     "conflictMultipleTitle": "Replace or Duplicate Items",
     "conflictReplace": "Replace",
-    "conflictDuplicate": "Duplicate",
     "conflictDecideForEach": "Decide for each",
     "conflictReplaceAll": "Replace all",
     "conflictDuplicateAll": "Duplicate all",
@@ -401,9 +409,7 @@
     "renameReservedName": "This name is reserved",
     "renameInvalidChars": "Name contains invalid characters",
     "renameNameTooLong": "Name must be 255 characters or fewer",
-    "copyAction": "Copy",
     "moveAction": "Move",
-    "duplicateAction": "Duplicate",
     "copyingLabel": "Copying...",
     "movingLabel": "Moving...",
     "copyError": "Failed to copy the selected items",
@@ -467,7 +473,6 @@
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
     "visibilityNoteConversation": "This conversation and its updates will be visible to users with the link.",
-    "copyButtonLabel": "Copy",
     "copiedButtonLabel": "Copied",
     "linkAriaLabel": "Share link",
     "expiryNote": "This link is active for {{days}} days.",

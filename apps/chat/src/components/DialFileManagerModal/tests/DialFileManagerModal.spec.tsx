@@ -460,7 +460,7 @@ describe('DialFileManagerModal', () => {
       'dialFileManager.conflictReplace',
     );
     expect(manager.getAttribute('data-conflict-duplicate')).toBe(
-      'dialFileManager.conflictDuplicate',
+      'buttons.duplicate',
     );
     expect(manager.getAttribute('data-conflict-replace-all')).toBe(
       'dialFileManager.conflictReplaceAll',

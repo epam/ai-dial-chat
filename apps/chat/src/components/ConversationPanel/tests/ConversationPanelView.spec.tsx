@@ -251,12 +251,12 @@ vi.mock(
 const mockNavigate = vi.fn();
 
 const PANEL_ACTIONS_LABEL = 'conversationPanel.panelActionsLabel';
-const DELETE_ALL_LABEL = 'conversationPanel.deleteAllChatsLabel';
-const CONFIRM_TITLE = 'conversationPanel.deleteAllConfirmTitle';
+const DELETE_ALL_LABEL = 'conversationPanel.deleteAll.deleteAllChatsLabel';
+const CONFIRM_TITLE = 'conversationPanel.deleteAll.deleteAllConfirmTitle';
 const CONFIRM_BUTTON = 'buttons.deleteAll';
 const CANCEL_BUTTON = 'buttons.cancel';
-const DELETE_ALL_ERROR = 'conversationPanel.deleteAllError';
-const PARTIAL_ERROR = 'conversationPanel.deleteAllPartialError';
+const DELETE_ALL_ERROR = 'conversationPanel.deleteAll.deleteAllError';
+const PARTIAL_ERROR = 'conversationPanel.deleteAll.deleteAllPartialError';
 
 const DELETE_CONFIRM_BUTTON = 'buttons.delete';
 const SHARE_LABEL = 'share.title';
@@ -523,8 +523,8 @@ describe('ConversationPanelView — delete-all header action', () => {
     });
     expect(mockShowNotification).toHaveBeenCalledWith({
       variant: 'success',
-      title: 'conversationPanel.deleteAllSuccessTitle',
-      message: 'conversationPanel.deleteAllSuccess',
+      title: 'conversationPanel.deleteAll.deleteAllSuccessTitle',
+      message: 'conversationPanel.deleteAll.deleteAllSuccess',
     });
   });
 

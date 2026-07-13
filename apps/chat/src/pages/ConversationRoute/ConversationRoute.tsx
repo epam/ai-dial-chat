@@ -27,6 +27,7 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   DeploymentSelectorI18nKeys,
+  FavoritesI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -214,18 +215,16 @@ const ConversationRoute: FC = () => {
                 searchPlaceholder: t(
                   DeploymentSelectorI18nKeys.SearchPlaceholder,
                 ),
-                favoritesLabel: t(DeploymentSelectorI18nKeys.FavoritesLabel),
+                favoritesLabel: t(FavoritesI18nKeys.FavoritesLabel),
                 emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
                 browseCatalogLabel: t(ButtonsI18nKeys.Browse),
                 removeFromFavoritesLabel: t(
-                  DeploymentSelectorI18nKeys.RemoveFromFavorites,
+                  FavoritesI18nKeys.RemoveFromFavorites,
                 ),
                 currentlySelectedLabel: t(
                   DeploymentSelectorI18nKeys.CurrentlySelectedLabel,
                 ),
-                addToFavoritesLabel: t(
-                  DeploymentSelectorI18nKeys.AddToFavorites,
-                ),
+                addToFavoritesLabel: t(FavoritesI18nKeys.AddToFavorites),
               }}
             />
           </Suspense>
