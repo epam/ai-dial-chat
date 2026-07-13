@@ -724,7 +724,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(mockUseDialFileManager).toHaveBeenCalledWith(
       expect.objectContaining({
         activeTab: DialFileManagerTabs.Organization,
-        rootLabel: 'dialFileManager.tab.organization',
+        rootLabel: 'basic.organization',
       }),
     );
   });

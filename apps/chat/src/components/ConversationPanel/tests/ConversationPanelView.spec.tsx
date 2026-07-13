@@ -259,7 +259,7 @@ const DELETE_ALL_ERROR = 'conversationPanel.deleteAllError';
 const PARTIAL_ERROR = 'conversationPanel.deleteAllPartialError';
 
 const DELETE_CONFIRM_BUTTON = 'buttons.delete';
-const SHARE_LABEL = 'conversationPanel.shareLabel';
+const SHARE_LABEL = 'share.title';
 
 const mockDeleteAllConversations =
   vi.fn<() => Promise<ConversationDeletionResultDto>>();
