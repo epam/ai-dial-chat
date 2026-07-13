@@ -78,10 +78,11 @@ None. The canvas is always available to authenticated users.
 
 ### Content type routing
 
-`useOpenAttachmentCanvas` maps a `DisplayAttachment` to a content payload. MIME-type routing runs first (for stage attachments that carry a `contentType` but no file extension), followed by extension-based routing (lowercased):
+`useOpenAttachmentCanvas` maps a `DisplayAttachment` to a content payload. For `AttachmentType.File` attachments, `openFileCanvas` (`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`) first checks for a missing `contentType` with inline data (see "No-type inline-data fallback" below), then runs MIME-type routing (for stage attachments that carry a `contentType` but no file extension), then extension-based routing (lowercased):
 
 | MIME type / Extension(s) | Resolver | Content type returned |
 |---|---|---|
+| No `contentType` (empty string) **and** `attachment.data != null` | `resolveTextCanvasContent` | `PlainTextCanvasContent` |
 | `text/markdown` MIME | `resolveMarkdownCanvasContent` | `MarkdownCanvasContent` |
 | `application/json` MIME | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` |
 | `application/pdf` MIME | `resolvePdfCanvasContent` | `PdfCanvasContent` |
@@ -93,6 +94,12 @@ None. The canvas is always available to authenticated users.
 | Everything else | `createUnsupportedCanvasContent` | `UnsupportedCanvasContent` |
 
 Extension checks for `md`/`markdown` and `json` run *before* the generic `isTextPreviewable` branch.
+
+#### No-type inline-data fallback
+
+Some attachments (e.g. an LLM-revised image prompt saved back onto the conversation) carry inline `data` but no `type`/`contentType` at all — `messageAttachmentToDisplayAttachment` then produces `contentType: ''` with no file extension in `name` to fall back on. Without a special case, such an attachment would fail every MIME/extension check, fail `isTextPreviewable(attachment.name)` (no extension), and incorrectly render as `UnsupportedCanvasContent` even though its `data` is plain, previewable text.
+
+`openFileCanvas` special-cases this: when `attachment.contentType.toLowerCase()` is the empty string **and** `attachment.data != null`, it resolves content via `resolveTextCanvasContent(attachment)` immediately and returns `true` if non-`null`, before running the MIME-type `switch`. When `contentType` is empty but `attachment.data` is also absent (e.g. only a `url`), this fallback is skipped and routing falls through to the normal extension/`isTextPreviewable` path as before.
 
 #### Content renderers
 
@@ -115,14 +122,9 @@ Extension checks for `md`/`markdown` and `json` run *before* the generic `isText
 
 #### Content resolution
 
-`resolveMarkdownCanvasContent` in `apps/chat/src/utils/attachment-canvas.ts`:
+`resolveMarkdownCanvasContent` in `apps/chat/src/utils/attachment-canvas.ts` delegates to the shared `resolveAttachmentText` helper (see "Shared content resolution helpers" below) and wraps a non-`undefined` result as `{ type: AttachmentContentType.Markdown, text }`. Returns `null` when `resolveAttachmentText` resolves to `undefined`.
 
-1. If `attachment.data != null`: return `{ type: AttachmentContentType.Markdown, text: attachment.data }` immediately (inline content from stage attachments).
-2. Resolve the download URL via `resolveDialUrl(attachment)`. If `null`, return `null`.
-3. `fetch` the resolved URL. If not OK, return `null`.
-4. Return `{ type: AttachmentContentType.Markdown, text: await response.text() }`.
-
-For locally-attached files (`'file' in attachment && attachment.file.size > 0`): read text directly from `attachment.file.text()`.
+Precedence (via `resolveAttachmentText`): inline base64 `attachment.data` (decoded to UTF-8 text) → fetched text from `resolveDialUrl(attachment)` → local `attachment.file.text()`.
 
 #### Rendering
 
@@ -149,15 +151,10 @@ For locally-attached files (`'file' in attachment && attachment.file.size > 0`):
 
 `resolveJsonCanvasContent` in `apps/chat/src/utils/attachment-canvas.ts`:
 
-1. If `attachment.data != null`: apply the parse/fallback logic directly on `attachment.data`.
-2. Resolve the download URL. If `null`, return `null`.
-3. `fetch` the URL. If not OK, return `null`.
-4. `const rawText = await response.text()`.
-5. Attempt `JSON.parse(rawText)`.
+1. Resolve `text` via the shared `resolveAttachmentText` helper (inline base64 `attachment.data` decoded to UTF-8 text → fetched text from `resolveDialUrl(attachment)` → local `attachment.file.text()`). If `undefined`, return `null`.
+2. Attempt `JSON.parse(text)`.
    - On success: return `{ type: AttachmentContentType.Json, value: parsed }`.
-   - On `SyntaxError`: return `{ type: AttachmentContentType.PlainText, text: rawText }` — graceful degradation.
-
-For locally-attached files: read text from `attachment.file.text()`, then apply the same parse/fallback logic.
+   - On `SyntaxError`: return `{ type: AttachmentContentType.PlainText, text }` — graceful degradation.
 
 #### Rendering
 
@@ -186,7 +183,52 @@ if (!abortRef.current) {
 
 The reload is guarded by `!abortRef.current` to skip if the user has already started a new stream.
 
-`DisplayAttachment.data?: string` carries this inline content through `toDisplayAttachment` to the canvas resolvers.
+`DisplayAttachment.data?: string` carries this inline content through `toDisplayAttachment` to the canvas resolvers. Per the DTO contract (`MessageAttachment.data`, `libs/chat-shared/src/models/chat.ts`), `data` is documented as base64-encoded — but in practice some backends put already-decoded plain text in this field for text-based content types (e.g. OCR'd markdown containing non-Latin1 characters, which is not valid base64). The canvas resolvers therefore never assume `data` is valid base64: they attempt to base64-decode it and fall back to using it as-is (raw text, or raw bytes for binary content) when decoding fails (see "Shared content resolution helpers" below).
+
+---
+
+### Shared content resolution helpers
+
+`apps/chat/src/utils/attachment-canvas.ts` defines two internal helpers used by every content resolver to avoid duplicating base64-handling logic per content type:
+
+- **`resolveAttachmentBlobUrl(attachment): string | undefined`** — resolves a displayable URL for an attachment's binary content, in this precedence order:
+  1. Local `attachment.file` (locally-picked, not-yet-uploaded) → `URL.createObjectURL(attachment.file)`.
+  2. `resolveDialUrl(attachment)` — an already-uploaded DIAL `files/` URL (checks `attachment.url` then `attachment.referenceUrl`).
+  3. `attachment.previewUrl` — set for `AttachmentType.Image` attachments; already a `data:` URL when the source was inline base64 (see `message-attachment-to-display.ts`).
+  4. Inline `attachment.data`, passed to `base64ToBlobUrl(data, attachment.contentType)`, which builds a `Blob` (`type: attachment.contentType`) from the decoded bytes and returns an object URL via `URL.createObjectURL`.
+  5. Otherwise `undefined`.
+  Used by `resolveImageCanvasContent` and `resolvePdfCanvasContent`.
+- **`resolveAttachmentText(attachment): Promise<string | undefined>`** — resolves an attachment's textual content, in this precedence order:
+  1. Inline `attachment.data`, passed to `base64ToText(data)`.
+  2. `resolveDialUrl(attachment)` fetched via `fetch(...).text()`; returns `undefined` if the response is not OK.
+  3. Local `attachment.file.text()`.
+  4. Otherwise `undefined`.
+  Used by `resolveTextCanvasContent`, `resolveMarkdownCanvasContent`, and `resolveJsonCanvasContent`.
+
+Both helpers build on a shared primitive, **`tryBase64ToBytes(base64): Uint8Array | undefined`**, which calls `atob` and returns the decoded bytes, or `undefined` if `atob` throws (e.g. `InvalidCharacterError` for a string containing characters outside the Latin1 range — a sign that `data` was not actually base64-encoded).
+
+- `base64ToBlobUrl(data, mimeType)`: uses `tryBase64ToBytes(data)` when it succeeds; otherwise falls back to `new TextEncoder().encode(data)` (treats `data` as already-raw content) before building the `Blob`. Either way it never throws.
+- `base64ToText(base64)`: uses `tryBase64ToBytes(base64)` decoded via `TextDecoder` when it succeeds; otherwise returns `base64` unchanged (it was already plain text). Either way it never throws.
+
+This graceful fallback is required because some backends put already-decoded plain text in `data` for text-based content (see "Stage attachment `data` field" above) — attempting a strict base64 decode on that text previously crashed the canvas open flow with an uncaught `InvalidCharacterError`.
+
+---
+
+### Image rendering
+
+#### Trigger
+
+`useOpenAttachmentCanvas` routes to `resolveImageCanvasContent` when `attachment.type === AttachmentType.Image`.
+
+#### Content resolution
+
+`resolveImageCanvasContent` in `apps/chat/src/utils/attachment-canvas.ts` resolves `url` via the shared `resolveAttachmentBlobUrl` helper and wraps a non-`undefined` result as `{ type: AttachmentContentType.Image, url }`. Returns `null` when `resolveAttachmentBlobUrl` resolves to `undefined`.
+
+This covers stage attachments (e.g. annotated PDF page thumbnails from the DIAL Annotation API) that carry the image as inline base64 `data` with no `url` — `message-attachment-to-display.ts` already synthesizes a `data:image/...;base64,...` `previewUrl` for such attachments, which `resolveAttachmentBlobUrl` picks up directly.
+
+#### Rendering
+
+`<img>` centered, `max-h-full max-w-full object-contain` (see "Content renderers" table above).
 
 ---
 
@@ -198,13 +240,11 @@ The reload is guarded by `!abortRef.current` to skip if the user has already sta
 
 #### Content resolution
 
-`resolvePdfCanvasContent` in `apps/chat/src/utils/attachment-canvas.ts`:
+`resolvePdfCanvasContent` in `apps/chat/src/utils/attachment-canvas.ts` resolves `url` via the shared `resolveAttachmentBlobUrl` helper (see "Shared content resolution helpers" below) and wraps a non-`undefined` result as `{ type: AttachmentContentType.Pdf, url }`. Returns `null` when `resolveAttachmentBlobUrl` resolves to `undefined`.
 
-1. If the attachment is a local file (`'file' in attachment` and `attachment.file.size > 0`): return `{ type: AttachmentContentType.Pdf, url: URL.createObjectURL(attachment.file) }`.
-2. Resolve the download URL via `resolveDialUrl(attachment)`. If `null`, return `null`.
-3. Return `{ type: AttachmentContentType.Pdf, url }`.
+Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` (`URL.createObjectURL`) → `resolveDialUrl(attachment)` → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL`.
 
-No server fetch is performed at resolution time; `DocumentPreview` handles file loading internally.
+This covers stage attachments (e.g. from the DIAL Annotation API) that carry the PDF as inline base64 `data` with no `url` — `DocumentPreview` receives a `blob:` object URL and loads it the same way it would a remote URL. No server fetch is performed at resolution time; `DocumentPreview` handles file loading internally.
 
 #### Rendering
 

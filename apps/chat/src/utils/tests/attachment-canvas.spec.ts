@@ -3,8 +3,10 @@ import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
+  resolvePdfCanvasContent,
 } from '../attachment-canvas';
 
 vi.mock('../dial-file', () => {
@@ -70,18 +72,33 @@ describe('resolveMarkdownCanvasContent', () => {
     vi.clearAllMocks();
   });
 
-  it('returns MarkdownCanvasContent from inline data', async () => {
+  it('returns MarkdownCanvasContent from inline base64 data', async () => {
     const result = await resolveMarkdownCanvasContent({
       id: 'stage-att',
       name: '[1] report.pdf',
       contentType: 'text/markdown',
       type: AttachmentType.File,
       status: RequestStatus.Idle,
-      data: '# Hello from stage',
+      data: btoa('# Hello from stage'),
     });
     expect(result).toEqual({
       type: AttachmentContentType.Markdown,
       text: '# Hello from stage',
+    });
+  });
+
+  it('falls back to raw text when inline data is not valid base64', async () => {
+    const result = await resolveMarkdownCanvasContent({
+      id: 'stage-att',
+      name: 'ocr-page.md',
+      contentType: 'text/markdown',
+      type: AttachmentType.File,
+      status: RequestStatus.Idle,
+      data: '# Résumé — café',
+    });
+    expect(result).toEqual({
+      type: AttachmentContentType.Markdown,
+      text: '# Résumé — café',
     });
   });
 
@@ -143,14 +160,14 @@ describe('resolveJsonCanvasContent', () => {
     vi.clearAllMocks();
   });
 
-  it('returns JsonCanvasContent from inline data', async () => {
+  it('returns JsonCanvasContent from inline base64 data', async () => {
     const result = await resolveJsonCanvasContent({
       id: 'stage-att',
       name: '[1] report.pdf',
       contentType: 'application/json',
       type: AttachmentType.File,
       status: RequestStatus.Idle,
-      data: '{"stage":true}',
+      data: btoa('{"stage":true}'),
     });
     expect(result).toEqual({
       type: AttachmentContentType.Json,
@@ -165,7 +182,7 @@ describe('resolveJsonCanvasContent', () => {
       contentType: 'application/json',
       type: AttachmentType.File,
       status: RequestStatus.Idle,
-      data: 'not valid json',
+      data: btoa('not valid json'),
     });
     expect(result).toEqual({
       type: AttachmentContentType.PlainText,
@@ -243,5 +260,96 @@ describe('resolveJsonCanvasContent', () => {
       type: AttachmentContentType.Json,
       value: { via: 'reference' },
     });
+  });
+});
+
+describe('resolveImageCanvasContent', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-image-url');
+  });
+
+  it('returns ImageCanvasContent from a data: previewUrl', async () => {
+    const result = await resolveImageCanvasContent({
+      id: 'stage-att',
+      name: 'Annotated page #1',
+      contentType: 'image/jpeg',
+      type: AttachmentType.Image,
+      status: RequestStatus.Idle,
+      previewUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJ',
+    });
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: 'data:image/jpeg;base64,/9j/4AAQSkZJ',
+    });
+  });
+
+  it('returns ImageCanvasContent from inline base64 data via a Blob URL', async () => {
+    const result = await resolveImageCanvasContent({
+      id: 'stage-att',
+      name: 'Annotated page #1',
+      contentType: 'image/jpeg',
+      type: AttachmentType.Image,
+      status: RequestStatus.Idle,
+      data: btoa('binary-image-bytes'),
+    });
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: 'blob:mock-image-url',
+    });
+  });
+
+  it('returns null when no source is available', async () => {
+    const result = await resolveImageCanvasContent({
+      id: 'stage-att',
+      name: 'Annotated page #1',
+      contentType: 'image/jpeg',
+      type: AttachmentType.Image,
+      status: RequestStatus.Idle,
+    });
+    expect(result).toBeNull();
+  });
+});
+
+describe('resolvePdfCanvasContent', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-pdf-url');
+  });
+
+  it('returns PdfCanvasContent from inline base64 data via a Blob URL', () => {
+    const result = resolvePdfCanvasContent({
+      id: 'stage-att',
+      name: 'doc.pdf',
+      contentType: 'application/pdf',
+      type: AttachmentType.File,
+      status: RequestStatus.Idle,
+      data: btoa('%PDF-1.4'),
+    });
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: 'blob:mock-pdf-url',
+    });
+  });
+
+  it('returns PdfCanvasContent for a DIAL file url', () => {
+    const result = resolvePdfCanvasContent(
+      makeRemoteAttachment('doc.pdf', 'files/bucket/path/doc.pdf'),
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: '/download?path=path/doc.pdf',
+    });
+  });
+
+  it('returns null when no source is available', () => {
+    const result = resolvePdfCanvasContent({
+      id: 'stage-att',
+      name: 'doc.pdf',
+      contentType: 'application/pdf',
+      type: AttachmentType.File,
+      status: RequestStatus.Idle,
+    });
+    expect(result).toBeNull();
   });
 });

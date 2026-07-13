@@ -27,6 +27,14 @@ async function openFileCanvas(
 ): Promise<boolean> {
   const contentType = attachment.contentType.toLowerCase();
 
+  if (!contentType && attachment.data != null) {
+    const content = await resolveTextCanvasContent(attachment);
+    if (content != null) {
+      openCanvas(content, attachment.name);
+      return true;
+    }
+  }
+
   switch (contentType) {
     case MIMEType.PDF: {
       const content = resolvePdfCanvasContent(attachment);
