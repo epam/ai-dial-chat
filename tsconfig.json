@@ -50,6 +50,9 @@
     },
     {
       "path": "./libs/deployment-creation-form"
+    },
+    {
+      "path": "./libs/share"
     }
   ]
 }

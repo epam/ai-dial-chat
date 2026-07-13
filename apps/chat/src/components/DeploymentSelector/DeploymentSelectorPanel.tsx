@@ -22,10 +22,8 @@ import styles from './DeploymentSelectorPanel.module.scss';
 
 /** Localizable string labels for `DeploymentSelectorPanel`. */
 export interface DeploymentSelectorLabels {
-  /** Placeholder for the search input. Default: `'Search models, agents…'`. */
+  /** Placeholder and accessible label for the search input. Default: `'Search models, agents…'`. */
   searchPlaceholder?: string;
-  /** Accessible label for the search input. Default: `'Search models and agents'`. */
-  searchAriaLabel?: string;
   /** Heading above the favorites list. Default: `'Favorites'`. */
   favoritesLabel?: string;
   /** Hint shown when Favorites is empty. Default: `'Star a model or agent to pin it here.'`. */
@@ -66,7 +64,7 @@ interface Props {
 // Matches the conversation panel's group-header color (.groupHeader in
 // ConversationPanel.module.scss: text-tertiary at 55% opacity).
 const SECTION_HEADING_CLASS_NAME =
-  'dial-tiny-semi-text px-3 pb-0.5 pt-2 uppercase tracking-wider text-tertiary opacity-[0.55]';
+  'dial-tiny-semi-text px-3 pb-0.5 pt-2 uppercase text-tertiary opacity-[0.55]';
 
 // Must match the .rowLeaving exit-animation duration in DeploymentSelectorPanel.module.scss.
 const ROW_LEAVE_ANIMATION_MS = 180;
@@ -95,7 +93,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
 }) => {
   const {
     searchPlaceholder = 'Search models, agents…',
-    searchAriaLabel = 'Search models and agents',
     favoritesLabel = 'Favorites',
     emptyHint = 'Star a model or agent to pin it here.',
     browseCatalogLabel = 'Browse',
@@ -159,6 +156,17 @@ const DeploymentSelectorPanel: FC<Props> = ({
     }
   }, [filteredFavorites, showCurrentlySelected]);
 
+  /*
+   * Panel is remounted fresh each time the popover opens, so without this the
+   * scrollable list always starts scrolled to the top even when the selected
+   * item sits further down, making it look like the pick didn't take effect.
+   */
+  const selectedRowRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    selectedRowRef.current?.scrollIntoView({ block: 'nearest' });
+  }, []);
+
   const handleSelect = (item: CatalogItem) => {
     onSelect(item.id);
     onClose();
@@ -204,6 +212,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
     return (
       <li
         key={item.id}
+        ref={isSelected ? selectedRowRef : undefined}
         className={isLeaving ? styles.rowLeaving : styles.rowEnter}
       >
         <div
@@ -288,7 +297,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
         <SearchBar
           value={query}
           placeholder={searchPlaceholder}
-          ariaLabel={searchAriaLabel}
+          ariaLabel={searchPlaceholder}
           onChange={setQuery}
           containerClassName={mergeClasses(
             styles.searchBar,
@@ -316,7 +325,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
           )}
 
           {filteredFavorites.length > 0 ? (
-            <ul className="px-1 pb-1">
+            <ul className="flex flex-col gap-1 px-1 pb-1">
               {filteredFavorites.map((item) => renderRow(item, true))}
             </ul>
           ) : (

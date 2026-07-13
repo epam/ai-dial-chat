@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { NotFoundI18nKeys } from '../../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  NotFoundI18nKeys,
+} from '../../../constants/translation-keys';
 import { ROUTES } from '../../../types/routes';
 import NotFoundPage from '../NotFound';
 
@@ -22,7 +25,7 @@ describe('NotFoundPage', () => {
     render(<NotFoundPage />);
 
     expect(
-      screen.getByRole('region', { name: NotFoundI18nKeys.AriaLabel }),
+      screen.getByRole('region', { name: NotFoundI18nKeys.Title }),
     ).toBeTruthy();
 
     await user.click(
@@ -31,7 +34,7 @@ describe('NotFoundPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Catalog);
 
     await user.click(
-      screen.getByRole('button', { name: NotFoundI18nKeys.NewChat }),
+      screen.getByRole('button', { name: ButtonsI18nKeys.NewChat }),
     );
     expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
   });

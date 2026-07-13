@@ -1,7 +1,7 @@
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DeploymentsI18nKeys } from '../../constants/translation-keys';
+import { DeploymentSelectorI18nKeys } from '../../constants/translation-keys';
 import * as applicationSchemasApi from '../../server-api/application-schemas';
 import * as deploymentsApi from '../../server-api/deployments.api';
 import * as toolsetsApi from '../../server-api/toolsets';
@@ -540,7 +540,7 @@ describe('DeploymentsContext', () => {
       ]);
       expect(contextMocks.showNotification).toHaveBeenCalledWith({
         variant: NotificationVariant.Error,
-        message: DeploymentsI18nKeys.RefetchToolsetsFailed,
+        message: DeploymentSelectorI18nKeys.RefetchToolsetsFailed,
       });
     });
   });

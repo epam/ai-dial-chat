@@ -4,7 +4,11 @@ import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router-dom';
-import { ConversationPanelI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  ConversationPanelI18nKeys,
+} from '../../constants/translation-keys';
+import SourcesSidebarToggle from '../Header/SourcesSidebarToggle';
 
 interface Props {
   isHistoryPanelOpen: boolean;
@@ -27,7 +31,7 @@ const ChatLayout: FC<Props> = ({
             <IconLayoutSidebarRight
               size={DIAL_ICON_SIZE.LG}
               stroke={1.5}
-              className={'rtl:scale-x-[-1]'}
+              className="rtl:scale-x-[-1]"
             />
           }
           aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
@@ -39,12 +43,15 @@ const ChatLayout: FC<Props> = ({
         {!isHistoryPanelOpen && (
           <DialGhostIconButton
             icon={<IconPlus size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-            aria-label={t(ConversationPanelI18nKeys.NewChat)}
-            tooltipProps={{ tooltip: t(ConversationPanelI18nKeys.NewChat) }}
+            aria-label={t(ButtonsI18nKeys.NewChat)}
+            tooltipProps={{ tooltip: t(ButtonsI18nKeys.NewChat) }}
             onClick={onNewChat}
             className="new-chat-rail-btn"
           />
         )}
+        <div className="ms-auto">
+          <SourcesSidebarToggle />
+        </div>
       </div>
       <Outlet />
     </div>

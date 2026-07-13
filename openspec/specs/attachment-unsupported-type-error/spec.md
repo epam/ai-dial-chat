@@ -30,7 +30,7 @@ The `formats` list is produced by a pure app-level utility `mimeTypesToExtension
 
 **Accessibility**: `DialNotification` carries `role="alert"`; no additional ARIA required.
 
-**Memoisation**: `validateAttachment` callback on `ConversationView` / `ConversationRoute` SHALL be wrapped in `useCallback` keyed on `inputAttachmentTypes`.
+**Memoisation**: `validateAttachment` callback on `ConversationView` / `ConversationRoute` SHALL be wrapped in `useCallback` keyed on `inputAttachmentTypes`. Because it is keyed on `inputAttachmentTypes`, its identity changes whenever the user switches the selected model/deployment; `useAttachments` uses that identity change as the trigger to re-validate attachments already in the tray (see `conversation-input-attachments` — "Attachments already in the tray are re-validated when validateAttachment changes").
 
 #### Scenario: File with unsupported MIME type is added
 

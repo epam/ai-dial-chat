@@ -121,6 +121,10 @@ Libs (`libs/*`) must NOT import i18n or read the current language to determine d
 3. Add the locale to the language selector UI.
 4. If the locale is RTL, add its language code to the RTL language list in the dir-switching logic.
 
+## Search result highlighting
+
+Whenever implementing or modifying a search feature (search bars, filterable dropdowns, model/deployment pickers, conversation search, file/attachment search, sources panels, catalog/app search, etc.), render each result's matched text with the shared `Highlight` component (`libs/chat-shared/src/components/Highlight/Highlight.tsx`, exported as `Highlight` from `@epam/ai-dial-chat-shared`) instead of plain text or a bespoke highlighter. Thread the search query down through intermediate props (e.g. `searchQuery`) to whichever component renders the result label. See `.claude/rules/search-results-highlight.md` for details.
+
 ## @epam/ai-dial-ui-kit MCP tools
 
 Use these two tools for all UI kit discovery and documentation needs: `searchEntity(entity, query?)` and `getEntityDetails(entity, name?)`. If you need to look up **ANYTHING** about the ui kit, use the MCP server. **Never** use `grep`, `glob`, `find`, or similar file system tools to discover components — they miss type information and examples.

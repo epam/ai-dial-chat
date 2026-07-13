@@ -1,10 +1,13 @@
-import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  DeploymentIcon,
+  Highlight,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialButton,
   DialDropdown,
-  DialEllipsisTooltip,
   DialIconButton,
   DialSkeleton,
   DialSkeletonVariant,
@@ -27,6 +30,8 @@ export interface ConversationRowProps {
   isActive: boolean;
   /** Called when the user clicks the row to select the conversation. */
   onSelectConversation: (id: string) => void;
+  /** Current search query — matched text in the title is highlighted. */
+  searchQuery?: string;
   /**
    * Builds the dropdown menu items for this row.
    * Receives the item so actions can reflect per-item state (e.g. pin toggle).
@@ -72,6 +77,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   item,
   isActive,
   onSelectConversation,
+  searchQuery = '',
   getActions,
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
@@ -173,9 +179,11 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         <DialButton
           iconBefore={avatar}
           label={
-            <DialEllipsisTooltip
+            <Highlight
               text={item.title}
+              query={searchQuery}
               className={itemTitleClassName}
+              maxLines={1}
             />
           }
           textClassName="min-w-0"

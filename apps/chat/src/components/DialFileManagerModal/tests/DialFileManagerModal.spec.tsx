@@ -460,7 +460,7 @@ describe('DialFileManagerModal', () => {
       'dialFileManager.conflictReplace',
     );
     expect(manager.getAttribute('data-conflict-duplicate')).toBe(
-      'dialFileManager.conflictDuplicate',
+      'buttons.duplicate',
     );
     expect(manager.getAttribute('data-conflict-replace-all')).toBe(
       'dialFileManager.conflictReplaceAll',
@@ -724,7 +724,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(mockUseDialFileManager).toHaveBeenCalledWith(
       expect.objectContaining({
         activeTab: DialFileManagerTabs.Organization,
-        rootLabel: 'dialFileManager.tab.organization',
+        rootLabel: 'basic.organization',
       }),
     );
   });
@@ -916,24 +916,19 @@ describe('DialFileManagerModal — per-tab visibleColumns', () => {
 });
 
 describe('DialFileManagerModal — autoSelectUploadedItems', () => {
-  it('passes autoSelectUploadedItems=true by default', () => {
+  it('passes autoSelectUploadedItems=false by default', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
-      'true',
+      'false',
     );
   });
 
-  it('passes autoSelectUploadedItems=false when prop is false', () => {
-    render(
-      <DialFileManagerModal
-        {...defaultProps}
-        autoSelectUploadedItems={false}
-      />,
-    );
+  it('passes autoSelectUploadedItems=true when prop is true', () => {
+    render(<DialFileManagerModal {...defaultProps} autoSelectUploadedItems />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
-      'false',
+      'true',
     );
   });
 });

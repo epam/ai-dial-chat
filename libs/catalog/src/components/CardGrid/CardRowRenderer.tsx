@@ -25,6 +25,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
   addToFavoritesAriaLabel,
   removeFromFavoritesAriaLabel,
   selectedItemId,
+  credentialsBadgeLoggedOutLabel,
 }) => {
   const start = rowIndex * columnCount;
   const rowItems = items.slice(start, start + columnCount);
@@ -57,6 +58,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = ({
                 removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
                 isSelected={item.id === selectedItemId}
                 className="h-full"
+                credentialsBadgeLoggedOutLabel={credentialsBadgeLoggedOutLabel}
               />
             )}
           </div>

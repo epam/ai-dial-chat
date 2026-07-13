@@ -20,7 +20,10 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppsEditorI18nKeys } from '../../constants/translation-keys';
+import {
+  AppsEditorI18nKeys,
+  BasicI18nKeys,
+} from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
 import { isQuickAppSchema } from '../../utils/application-schema';
 
@@ -85,7 +88,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       },
       iconUrl: {
         label: t(AppsEditorI18nKeys.GeneralFormIconUrlLabel),
-        placeholder: t(AppsEditorI18nKeys.GeneralFormIconUrlPlaceholder),
+        placeholder: t(BasicI18nKeys.UrlPlaceholder),
       },
       version: {
         label: t(AppsEditorI18nKeys.GeneralFormVersionLabel),
@@ -228,7 +231,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
 
       <div className="flex w-1/2 flex-col bg-layer-1 p-4">
         <p className="dial-small-text text-secondary">
-          {t(AppsEditorI18nKeys.GeneralFormPreviewTitle)}
+          {t(BasicI18nKeys.Preview)}
         </p>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-[280px]">

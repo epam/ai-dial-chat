@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthI18nKeys } from '../../constants/translation-keys';
@@ -56,27 +55,26 @@ describe('LoginPage', () => {
       { id: 'auth0', label: 'Auth0' },
     ]);
 
-    const navigatedUrls: string[] = [];
     vi.stubGlobal('location', {
       ...window.location,
       origin: 'http://localhost:4207',
-      set href(v: string) {
-        navigatedUrls.push(v);
-      },
     });
 
-    const user = userEvent.setup();
     renderLogin(
       '/login?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
 
-    await user.click(await screen.findByRole('button', { name: 'Keycloak' }));
-    expect(navigatedUrls[0]).toBe(
+    const keycloakAnchor = (
+      await screen.findByRole('button', { name: 'Keycloak' })
+    ).closest('a');
+    expect(keycloakAnchor?.getAttribute('href')).toBe(
       '/api/v1/auth/login/keycloak?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
 
-    await user.click(screen.getByRole('button', { name: 'Auth0' }));
-    expect(navigatedUrls[1]).toBe(
+    const auth0Anchor = screen
+      .getByRole('button', { name: 'Auth0' })
+      .closest('a');
+    expect(auth0Anchor?.getAttribute('href')).toBe(
       '/api/v1/auth/login/auth0?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
   });
@@ -84,21 +82,17 @@ describe('LoginPage', () => {
   it('defaults callbackUrl to application root when it is absent', async () => {
     mockGetProviders.mockResolvedValue([{ id: 'keycloak', label: 'Keycloak' }]);
 
-    const navigatedUrls: string[] = [];
     vi.stubGlobal('location', {
       ...window.location,
       origin: 'http://localhost',
-      set href(v: string) {
-        navigatedUrls.push(v);
-      },
     });
 
-    const user = userEvent.setup();
     renderLogin();
 
-    await user.click(await screen.findByRole('button', { name: 'Keycloak' }));
-
-    expect(navigatedUrls[0]).toBe(
+    const keycloakAnchor = (
+      await screen.findByRole('button', { name: 'Keycloak' })
+    ).closest('a');
+    expect(keycloakAnchor?.getAttribute('href')).toBe(
       `/api/v1/auth/login/keycloak?callbackUrl=${encodeURIComponent('http://localhost/')}`,
     );
   });
@@ -122,25 +116,22 @@ describe('LoginPage', () => {
   it('replaces an external callbackUrl with the app root', async () => {
     mockGetProviders.mockResolvedValue([{ id: 'keycloak', label: 'Keycloak' }]);
 
-    let assignedHref = '';
     vi.stubGlobal('location', {
       ...window.location,
       origin: 'http://localhost',
-      set href(v: string) {
-        assignedHref = v;
-      },
     });
 
-    const user = userEvent.setup();
     renderLogin('/login?callbackUrl=https%3A%2F%2Fevil.example.com%2Fsteal');
 
-    const keycloakBtn = await screen.findByRole('button', { name: 'Keycloak' });
-    await user.click(keycloakBtn);
+    const keycloakAnchor = (
+      await screen.findByRole('button', { name: 'Keycloak' })
+    ).closest('a');
+    const href = keycloakAnchor?.getAttribute('href') ?? '';
 
-    expect(assignedHref).toContain(
+    expect(href).toContain(
       `callbackUrl=${encodeURIComponent('http://localhost/')}`,
     );
-    expect(assignedHref).not.toContain('evil.example.com');
+    expect(href).not.toContain('evil.example.com');
   });
 
   it('renders theme favicon when currentThemeFavicon is set', () => {

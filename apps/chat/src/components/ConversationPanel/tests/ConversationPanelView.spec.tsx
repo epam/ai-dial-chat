@@ -143,6 +143,16 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         {closable && <button onClick={onClose}>Close notification</button>}
       </div>
     ),
+    DialPopup: ({
+      open,
+      children,
+    }: {
+      open: boolean;
+      children?: ReactNode;
+    }) => {
+      if (!open) return null;
+      return <div role="dialog">{children}</div>;
+    },
   };
 });
 
@@ -152,6 +162,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconPencilMinus: () => null,
   IconPin: () => null,
   IconPinnedFilled: () => null,
+  IconShare: () => null,
   IconTrashX: () => null,
 }));
 
@@ -219,18 +230,36 @@ vi.mock('../../RenameConversationPopup/RenameConversationPopup', () => ({
 vi.mock('../get-conversation-source', () => ({
   getConversationSource: () => undefined,
 }));
+vi.mock(
+  '../../ShareConversationPopoverContainer/ShareConversationPopoverContainer',
+  () => ({
+    default: ({
+      conversationPath,
+      onClose,
+    }: {
+      conversationPath: string;
+      onClose: () => void;
+    }) => (
+      <div aria-label="share conversation">
+        <span>{conversationPath}</span>
+        <button onClick={onClose}>Close share</button>
+      </div>
+    ),
+  }),
+);
 
 const mockNavigate = vi.fn();
 
 const PANEL_ACTIONS_LABEL = 'conversationPanel.panelActionsLabel';
-const DELETE_ALL_LABEL = 'conversationPanel.deleteAllChatsLabel';
-const CONFIRM_TITLE = 'conversationPanel.deleteAllConfirmTitle';
+const DELETE_ALL_LABEL = 'conversationPanel.deleteAll.deleteAllChatsLabel';
+const CONFIRM_TITLE = 'conversationPanel.deleteAll.deleteAllConfirmTitle';
 const CONFIRM_BUTTON = 'buttons.deleteAll';
 const CANCEL_BUTTON = 'buttons.cancel';
-const DELETE_ALL_ERROR = 'conversationPanel.deleteAllError';
-const PARTIAL_ERROR = 'conversationPanel.deleteAllPartialError';
+const DELETE_ALL_ERROR = 'conversationPanel.deleteAll.deleteAllError';
+const PARTIAL_ERROR = 'conversationPanel.deleteAll.deleteAllPartialError';
 
 const DELETE_CONFIRM_BUTTON = 'buttons.delete';
+const SHARE_LABEL = 'share.title';
 
 const mockDeleteAllConversations =
   vi.fn<() => Promise<ConversationDeletionResultDto>>();
@@ -494,8 +523,8 @@ describe('ConversationPanelView — delete-all header action', () => {
     });
     expect(mockShowNotification).toHaveBeenCalledWith({
       variant: 'success',
-      title: 'conversationPanel.deleteAllSuccessTitle',
-      message: 'conversationPanel.deleteAllSuccess',
+      title: 'conversationPanel.deleteAll.deleteAllSuccessTitle',
+      message: 'conversationPanel.deleteAll.deleteAllSuccess',
     });
   });
 
@@ -693,6 +722,58 @@ describe('ConversationPanelView — rename', () => {
 
     expect(mockRenameConversation).toHaveBeenCalledWith('conv1', 'New Title');
     expect(mockNavigate).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+});
+
+describe('ConversationPanelView — share', () => {
+  it('owned conversation menu includes Share', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.getByRole('button', { name: SHARE_LABEL })).toBeTruthy();
+  });
+
+  it('readonly (shared-with-me) conversation menu excludes Share', () => {
+    const sharedConversation = {
+      id: 'conv2',
+      title: 'Shared chat',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: true,
+      publishedWithMe: false,
+    };
+
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="conv2" />,
+    );
+
+    expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
+  });
+
+  it('clicking Share opens the popover for the conversation path', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: SHARE_LABEL }));
+
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('conv1')).toBeTruthy();
+  });
+
+  it('closing the popover clears the pending share state', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: SHARE_LABEL }));
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'Close share' }),
+    );
+
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });

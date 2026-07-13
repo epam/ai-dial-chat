@@ -38,7 +38,7 @@ describe('AppEditorIframe', () => {
     vi.clearAllMocks();
     mockUseUser.mockReturnValue({
       status: AuthStatus.Authenticated,
-      user: { sub: 'u1', providerId: 'local', claims: {} },
+      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
       refresh: vi.fn(),
       reset: vi.fn(),
     });

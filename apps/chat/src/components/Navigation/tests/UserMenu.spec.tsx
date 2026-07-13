@@ -48,6 +48,7 @@ const mockUser = {
     email: 'john.doe@example.com',
     name: 'John Doe',
   },
+  isAdmin: false,
 };
 
 describe('UserMenu', () => {

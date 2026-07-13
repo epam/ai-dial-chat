@@ -3,6 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../models/catalog-item';
 import { CatalogEntityType } from '../../../../types/entity-type';
+import {
+  CredentialStatus,
+  ToolsetAuthenticationType,
+} from '../../../../types/toolset-auth';
 import { Header } from '../Header';
 
 vi.mock('@epam/ai-dial-kit', () => ({
@@ -25,16 +29,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
 }));
 vi.mock('@tabler/icons-react', () => ({
-  IconChevronDown: () => <svg />,
+  IconKey: () => <svg />,
+  IconLogin: () => <svg />,
+  IconLogout: () => <svg />,
   IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
-  IconShare: () => <svg />,
 }));
 vi.mock('../../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
 }));
 vi.mock('../../../FolderPath/FolderPath', () => ({
   FolderPath: () => <div />,
+}));
+vi.mock('../ShareButton/ShareButton', () => ({
+  ShareButton: ({ label }: { label?: string }) => (
+    <button>{label ?? 'Share'}</button>
+  ),
 }));
 
 const makeItem = (type: CatalogEntityType): CatalogItem => ({
@@ -46,6 +56,7 @@ const makeItem = (type: CatalogEntityType): CatalogItem => ({
   description: '',
   folder: [],
   topics: [],
+  isMyApp: true,
 });
 
 describe('Header', () => {
@@ -109,17 +120,19 @@ describe('Header', () => {
     expect(onUseInChat).toHaveBeenCalledWith(item);
   });
 
-  it('still renders Share for a Toolset item', () => {
+  it('renders the Share button', () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
     expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
   });
 
-  it('calls onShare with the item when Share is clicked', async () => {
-    const onShare = vi.fn();
-    const item = makeItem(CatalogEntityType.Model);
-    render(<Header item={item} onShare={onShare} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(onShare).toHaveBeenCalledWith(item);
+  it('passes texts.shareLabel through to the Share button label', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        texts={{ shareLabel: 'Share this' }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Share this' })).toBeTruthy();
   });
 
   it('does not render Edit when onEdit is not supplied', () => {
@@ -171,5 +184,140 @@ describe('Header', () => {
     render(<Header item={item} onEdit={onEdit} />);
     await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
     expect(onEdit).toHaveBeenCalledWith(item);
+  });
+
+  it('does not render a credentials button when the item has no credentials', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        onLogin={vi.fn()}
+        onLogout={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
+  });
+
+  it('does not render a credentials button when authenticationType is NONE', () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: { authenticationType: ToolsetAuthenticationType.None },
+        }}
+        onLogin={vi.fn()}
+        onLogout={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
+  });
+
+  it('renders Log in when not signed in at any level', () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            userStatus: CredentialStatus.SignedOut,
+          },
+        }}
+        onLogin={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy();
+  });
+
+  it('renders Log out when signed in at USER level', () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            userStatus: CredentialStatus.SignedIn,
+          },
+        }}
+        onLogout={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Log out' })).toBeTruthy();
+  });
+
+  it('renders Login with my creds for a public item not signed in at USER level', () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            isPublic: true,
+            globalStatus: CredentialStatus.SignedIn,
+          },
+        }}
+        onLogin={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Login with my creds' }),
+    ).toBeTruthy();
+  });
+
+  it('renders Manage credentials when isManageableByAdmin is true', () => {
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            isManageableByAdmin: true,
+          },
+        }}
+        onLogin={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Manage credentials' }),
+    ).toBeTruthy();
+  });
+
+  it('calls onToggleCredentials when the credentials button is clicked in a non-logout state', async () => {
+    const onToggleCredentials = vi.fn();
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            userStatus: CredentialStatus.SignedOut,
+          },
+        }}
+        onLogin={vi.fn()}
+        onToggleCredentials={onToggleCredentials}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    expect(onToggleCredentials).toHaveBeenCalledOnce();
+  });
+
+  it('calls onRequestLogout instead of onToggleCredentials when signed in', async () => {
+    const onToggleCredentials = vi.fn();
+    const onRequestLogout = vi.fn();
+    render(
+      <Header
+        item={{
+          ...makeItem(CatalogEntityType.Toolset),
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            userStatus: CredentialStatus.SignedIn,
+          },
+        }}
+        onLogout={vi.fn()}
+        onToggleCredentials={onToggleCredentials}
+        onRequestLogout={onRequestLogout}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Log out' }));
+    expect(onRequestLogout).toHaveBeenCalledOnce();
+    expect(onToggleCredentials).not.toHaveBeenCalled();
   });
 });

@@ -9,6 +9,8 @@ interface FilesSectionProps {
   attachments: DisplayAttachment[];
   /** Heading text rendered above the attachment grid. */
   title: string;
+  /** Current search query — used to highlight matches in attachment names. */
+  searchQuery?: string;
   /** CSS class applied to the section heading. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
   /** Called when the user clicks an attachment card. */
@@ -20,6 +22,7 @@ interface FilesSectionProps {
 const FilesSection: FC<FilesSectionProps> = ({
   attachments,
   title,
+  searchQuery,
   titleClassName = 'dial-body-semi-text',
   onAttachmentClick,
   attachmentClickLabel,
@@ -45,6 +48,7 @@ const FilesSection: FC<FilesSectionProps> = ({
           >
             <AttachmentCard
               attachment={att}
+              searchQuery={searchQuery}
               className="w-full"
               onClick={
                 onAttachmentClick ? () => onAttachmentClick(att) : undefined

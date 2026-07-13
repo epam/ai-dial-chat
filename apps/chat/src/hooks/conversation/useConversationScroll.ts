@@ -9,10 +9,12 @@ import {
 } from 'react';
 
 const NEAR_BOTTOM_THRESHOLD = 80;
+const SPACER_CLEAR_TOLERANCE = 1;
 
 interface Params {
   messages: MessageType[];
   isAssistantTyping: boolean;
+  conversationId: string;
 }
 
 interface Result {
@@ -45,18 +47,22 @@ interface Result {
  * the position stable while the response streams, and reports whether the
  * scroll-to-bottom button should be shown.
  *
- * The temporary spacer stays fixed during a turn. Shrinking it while rendered
- * markdown is still growing can reduce total scroll height and make the
- * browser clamp `scrollTop`, which is visible as a jump.
+ * The temporary spacer stays fixed during a turn and can remain after a short
+ * completed reply until removing it cannot clamp `scrollTop`. Shrinking it
+ * while rendered markdown is still growing can reduce total scroll height and
+ * make the browser clamp `scrollTop`, which is visible as a jump.
  */
 export const useConversationScroll = ({
   messages,
   isAssistantTyping,
+  conversationId,
 }: Params): Result => {
   const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const spacerRef = useRef<HTMLDivElement>(null);
+  const isSpacerActiveRef = useRef(false);
+  const isSpacerSettledRef = useRef(false);
 
   /*
    * Message DOM nodes keyed by index, used to anchor the acted-on message
@@ -92,6 +98,14 @@ export const useConversationScroll = ({
     });
   }, []);
 
+  const clearSpacer = useCallback(() => {
+    if (spacerRef.current) {
+      spacerRef.current.style.height = '0px';
+    }
+    isSpacerActiveRef.current = false;
+    isSpacerSettledRef.current = false;
+  }, []);
+
   /*
    * ScrollTop where the real content bottom, excluding spacer space, aligns
    * with the viewport bottom.
@@ -118,6 +132,29 @@ export const useConversationScroll = ({
     [performScroll, getContentBottomScrollTop],
   );
 
+  const getDistanceFromContentBottom = useCallback(() => {
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if (!container || !content) return null;
+    const containerRect = container.getBoundingClientRect();
+    const contentRect = content.getBoundingClientRect();
+    return contentRect.bottom - containerRect.top - container.clientHeight;
+  }, []);
+
+  const clearSettledSpacerIfPossible = useCallback(() => {
+    if (!isSpacerSettledRef.current) return;
+
+    const distanceFromContentBottom = getDistanceFromContentBottom();
+    if (
+      distanceFromContentBottom == null ||
+      distanceFromContentBottom < -SPACER_CLEAR_TOLERANCE
+    ) {
+      return;
+    }
+
+    clearSpacer();
+  }, [clearSpacer, getDistanceFromContentBottom]);
+
   /*
    * Uses rects instead of `offsetTop` because message internals can introduce
    * positioned ancestors for action controls.
@@ -141,17 +178,12 @@ export const useConversationScroll = ({
    * keep the scroll-to-bottom button visible.
    */
   const updateScrollButtonVisibility = useCallback(() => {
-    const container = containerRef.current;
-    const content = contentRef.current;
-    if (!container || !content) return;
-    const containerRect = container.getBoundingClientRect();
-    const contentRect = content.getBoundingClientRect();
-    const distanceFromContentBottom =
-      contentRect.bottom - containerRect.top - container.clientHeight;
+    const distanceFromContentBottom = getDistanceFromContentBottom();
+    if (distanceFromContentBottom == null) return;
     setIsScrollButtonVisible(
       distanceFromContentBottom >= NEAR_BOTTOM_THRESHOLD,
     );
-  }, []);
+  }, [getDistanceFromContentBottom]);
 
   /*
    * Anchor an armed turn once. Other non-streaming length changes, such as
@@ -159,47 +191,77 @@ export const useConversationScroll = ({
    * behavior.
    */
   const prevLengthRef = useRef(messages.length);
+  const prevConversationIdRef = useRef<string | null>(null);
   useLayoutEffect(() => {
     const lengthChanged = messages.length !== prevLengthRef.current;
-    prevLengthRef.current = messages.length;
+    const conversationChanged =
+      conversationId !== prevConversationIdRef.current;
+
+    const commitObservedScrollState = () => {
+      prevLengthRef.current = messages.length;
+      prevConversationIdRef.current = conversationId;
+    };
 
     const container = containerRef.current;
     const spacer = spacerRef.current;
+
+    if (conversationChanged) {
+      clearSpacer();
+    }
 
     const anchorIndex = pendingAnchorIndexRef.current;
     if (anchorIndex != null && messageRefsMap.current.has(anchorIndex)) {
       pendingAnchorIndexRef.current = null;
       if (container && spacer) {
         spacer.style.height = `${container.clientHeight}px`;
+        isSpacerActiveRef.current = true;
+        isSpacerSettledRef.current = false;
       }
       scrollMessageToTop(anchorIndex, false);
+      commitObservedScrollState();
       return;
     }
 
-    if (!isAssistantTyping && lengthChanged) {
+    if (isAssistantTyping) return;
+
+    if (lengthChanged || conversationChanged) {
       scrollToBottom(false);
     }
-  }, [messages, isAssistantTyping, scrollToBottom, scrollMessageToTop]);
+
+    commitObservedScrollState();
+  }, [
+    messages,
+    isAssistantTyping,
+    conversationId,
+    scrollToBottom,
+    scrollMessageToTop,
+    clearSpacer,
+  ]);
 
   /*
-   * MarkdownRenderer flushes buffered typewriter content synchronously when
-   * streaming stops, so clearing the spacer cannot race a growing reply.
+   * Keep a completed short reply anchored with its reserved room until the
+   * user scrolls far enough up that removing the spacer cannot clamp scrollTop.
    */
   useLayoutEffect(() => {
-    if (!isAssistantTyping && spacerRef.current) {
-      spacerRef.current.style.height = '0px';
+    if (!isAssistantTyping && isSpacerActiveRef.current) {
+      isSpacerSettledRef.current = true;
+      clearSettledSpacerIfPossible();
     }
-  }, [isAssistantTyping]);
+  }, [isAssistantTyping, clearSettledSpacerIfPossible]);
+
+  const handleScroll = useCallback(() => {
+    clearSettledSpacerIfPossible();
+    updateScrollButtonVisibility();
+  }, [clearSettledSpacerIfPossible, updateScrollButtonVisibility]);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    container.addEventListener('scroll', updateScrollButtonVisibility, {
+    container.addEventListener('scroll', handleScroll, {
       passive: true,
     });
-    return () =>
-      container.removeEventListener('scroll', updateScrollButtonVisibility);
-  }, [updateScrollButtonVisibility]);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   /*
    * Streaming grows content without firing a native scroll event. Observe
@@ -208,10 +270,13 @@ export const useConversationScroll = ({
   useEffect(() => {
     const content = contentRef.current;
     if (!content) return;
-    const observer = new ResizeObserver(() => updateScrollButtonVisibility());
+    const observer = new ResizeObserver(() => {
+      clearSettledSpacerIfPossible();
+      updateScrollButtonVisibility();
+    });
     observer.observe(content);
     return () => observer.disconnect();
-  }, [updateScrollButtonVisibility]);
+  }, [clearSettledSpacerIfPossible, updateScrollButtonVisibility]);
 
   const handleScrollToBottom = useCallback(() => {
     scrollToBottom(false);

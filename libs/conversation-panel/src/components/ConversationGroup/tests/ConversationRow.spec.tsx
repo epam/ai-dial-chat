@@ -64,6 +64,7 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
       alt={tooltip ?? 'deployment-icon'}
     />
   ),
+  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({

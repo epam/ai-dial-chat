@@ -1,7 +1,7 @@
 import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { TOOLSET_REDIRECT_STATE_KEY } from '../../constants/toolsets';
 import { loginToolset } from '../../server-api/toolsets';
@@ -22,8 +22,13 @@ const readRedirectState = (): ToolsetRedirectState | null => {
   }
 };
 
+/**
+ * This route only ever runs inside the popup window opened by
+ * `initiateOAuthLogin` — it always closes the window on completion rather
+ * than navigating, since the editor/Catalog tab that opened it never
+ * navigated away.
+ */
 const ToolsetEditorCallback: FC = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Guard against React 18 StrictMode double-invocation of the effect.
   const hasRun = useRef(false);
@@ -39,16 +44,15 @@ const ToolsetEditorCallback: FC = () => {
       sessionStorage.removeItem(TOOLSET_REDIRECT_STATE_KEY);
 
       if (!code || !redirectState?.toolsetId) {
-        navigate(ROUTES.Catalog, { replace: true });
+        window.close();
         return;
       }
 
       if (redirectState.state != null && redirectState.state !== state) {
-        navigate(ROUTES.Catalog, { replace: true });
+        window.close();
         return;
       }
 
-      const fallback = redirectState.callbackUrl ?? ROUTES.Catalog;
       try {
         const body: ToolsetLoginBodyDto = {
           url: redirectState.toolsetId,
@@ -61,14 +65,14 @@ const ToolsetEditorCallback: FC = () => {
         };
         await loginToolset(redirectState.toolsetId, body);
       } catch {
-        // Swallow — the editor will reflect the not-logged-in state on return.
+        // Swallow — the opener will reflect the not-logged-in state once reopened.
       } finally {
-        navigate(fallback, { replace: true });
+        window.close();
       }
     };
 
     void complete();
-  }, [navigate, searchParams]);
+  }, [searchParams]);
 
   return <RouteFallback />;
 };

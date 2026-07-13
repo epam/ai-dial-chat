@@ -55,6 +55,13 @@ const ToolsetEditorPage = lazy(
 const ToolsetEditorCallbackPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditorCallback'),
 );
+const SharedInvitationPage = lazy(
+  () => import('../pages/SharedInvitation/SharedInvitation'),
+);
+const ConversationSharedInvitationPage = lazy(
+  () =>
+    import('../pages/ConversationSharedInvitation/ConversationSharedInvitation'),
+);
 const NotFoundPage = lazy(() => import('../pages/NotFound/NotFound'));
 
 // Start loading the module immediately so the Suspense fallback is skipped on first navigation.
@@ -81,19 +88,16 @@ const App: FC = () => {
   const closeNav = useCallback(() => setIsNavOpen(false), []);
   const toggleNav = useCallback(() => setIsNavOpen((prev) => !prev), []);
 
-  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(true);
-  const toggleHistoryPanel = useCallback(
-    () => setIsHistoryPanelOpen(!isHistoryPanelOpen),
-    [isHistoryPanelOpen, setIsHistoryPanelOpen],
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const togglePanel = useCallback(
+    () => setIsPanelOpen(!isPanelOpen),
+    [isPanelOpen, setIsPanelOpen],
   );
-  const closeHistoryPanel = useCallback(
-    () => setIsHistoryPanelOpen(false),
-    [setIsHistoryPanelOpen],
-  );
+  const closePanel = useCallback(() => setIsPanelOpen(false), [setIsPanelOpen]);
 
   // Always close the panel when switching to mobile so a stored desktop `true` doesn't bleed through
   useEffect(() => {
-    if (isMobile) closeHistoryPanel();
+    if (isMobile) closePanel();
   }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
@@ -104,14 +108,14 @@ const App: FC = () => {
       pathname !== ROUTES.Conversations &&
       !pathname.startsWith(ROUTES.Conversations)
     ) {
-      closeHistoryPanel();
+      closePanel();
     } else if (!isMobile && !isCanvasOpen) {
-      setIsHistoryPanelOpen(true);
+      setIsPanelOpen(true);
     }
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (isCanvasOpen) closeHistoryPanel();
+    if (isCanvasOpen) closePanel();
   }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchRoot = useMatch(ROUTES.Root);
@@ -157,13 +161,13 @@ const App: FC = () => {
   const handleSelectConversation = useCallback(
     (id: string) => {
       if (isMobile) {
-        closeHistoryPanel();
+        closePanel();
       }
 
       const conversationRoute = getConversationRoute(id);
       navigate(conversationRoute);
     },
-    [navigate, isMobile, closeHistoryPanel],
+    [navigate, isMobile, closePanel],
   );
 
   return (
@@ -171,9 +175,9 @@ const App: FC = () => {
       <Navigation isOpen={isNavOpen} onClose={closeNav} />
 
       <ConversationPanelView
-        isOpen={isHistoryPanelOpen}
+        isOpen={isPanelOpen}
         activeConversationId={activeConversationId}
-        onClose={closeHistoryPanel}
+        onClose={closePanel}
         onSelectConversation={handleSelectConversation}
         onNewChat={() => navigate(ROUTES.Root)}
         requestedFilter={panelRequestedFilter}
@@ -189,16 +193,16 @@ const App: FC = () => {
       >
         <Header
           onMenuToggle={toggleNav}
-          isConversationPanelOpen={isHistoryPanelOpen}
-          onConversationPanelToggle={toggleHistoryPanel}
+          isConversationPanelOpen={isPanelOpen}
+          onConversationPanelToggle={togglePanel}
           onNewChat={() => navigate(ROUTES.Root)}
         />
         <Routes>
           <Route
             element={
               <ChatLayout
-                isHistoryPanelOpen={isHistoryPanelOpen}
-                onToggleHistoryPanel={toggleHistoryPanel}
+                isHistoryPanelOpen={isPanelOpen}
+                onToggleHistoryPanel={togglePanel}
                 onNewChat={() => navigate(ROUTES.Root)}
               />
             }
@@ -223,6 +227,26 @@ const App: FC = () => {
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
                   <CatalogView />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.SharedInvitation}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <SharedInvitationPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.ConversationSharedInvitation}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ConversationSharedInvitationPage />
                 </Suspense>
               </RouteErrorBoundary>
             }

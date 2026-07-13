@@ -26,6 +26,8 @@ export interface AttachmentCardTypography {
 export interface AttachmentCardProps {
   /** The attachment data to display. */
   attachment: DisplayAttachment;
+  /** Current search query — when set, matches in the file name are highlighted. */
+  searchQuery?: string;
   /** Called when the user activates the remove button. */
   onRemove?: (id: string) => void;
   /** Called when the user activates the retry button (error state only). */

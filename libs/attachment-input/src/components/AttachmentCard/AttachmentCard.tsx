@@ -2,6 +2,7 @@ import {
   AttachmentErrorReason,
   AttachmentType,
   buildCssVars,
+  Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -30,6 +31,7 @@ import styles from './AttachmentCard.module.scss';
 
 export const AttachmentCard: FC<AttachmentCardProps> = ({
   attachment,
+  searchQuery = '',
   onRemove,
   onRetry,
   onExpand,
@@ -128,7 +130,15 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               styles.name,
             )}
           >
-            {attachment.name}
+            {searchQuery ? (
+              <Highlight
+                text={attachment.name}
+                query={searchQuery}
+                maxLines={1}
+              />
+            ) : (
+              attachment.name
+            )}
           </span>
           {onClick && (
             <DialGhostIconButton
@@ -233,7 +243,15 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
                 styles.name,
               )}
             >
-              {displayName}
+              {searchQuery ? (
+                <Highlight
+                  text={displayName}
+                  query={searchQuery}
+                  maxLines={3}
+                />
+              ) : (
+                displayName
+              )}
             </div>
           </div>
         </>
@@ -249,7 +267,15 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
                 styles.name,
               )}
             >
-              {displayName}
+              {searchQuery ? (
+                <Highlight
+                  text={displayName}
+                  query={searchQuery}
+                  maxLines={3}
+                />
+              ) : (
+                displayName
+              )}
             </div>
           </div>
 

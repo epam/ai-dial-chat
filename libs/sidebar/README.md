@@ -20,6 +20,7 @@ Resizable sidebar panel container with a header, search input, and empty/no-resu
 
 - `react`
 - `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-kit`
 - `@epam/ai-dial-ui-kit`
 - `@tabler/icons-react`
 

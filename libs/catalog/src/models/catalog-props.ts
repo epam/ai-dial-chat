@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import type { CatalogEntityType } from '../types/entity-type';
+import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
-import type { CatalogItemTabData } from './item-details-data';
+import type { CatalogItemDetailsFetchResult } from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
 
 /** A single option in the Create dropdown. */
@@ -90,6 +91,30 @@ export interface CatalogProps {
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**
+   * Renders the Share popover content anchored to the Share button in the
+   * details panel. When provided, clicking Share opens this popover instead
+   * of calling `onShare`.
+   */
+  shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /**
+   * Called when the credentials login form is submitted in the details
+   * panel, for the given credentials `level` (`USER` or `GLOBAL`). May
+   * return a promise; awaited before refreshing via `onFetchDetails`.
+   */
+  onLogin?: (
+    item: CatalogItem,
+    params: { level: CredentialsLevel; apiKey?: string },
+  ) => Promise<void> | void;
+  /**
+   * Called when logout is confirmed in the details panel's credentials
+   * section, for the given credentials `level`. May return a promise;
+   * awaited before refreshing via `onFetchDetails`.
+   */
+  onLogout?: (
+    item: CatalogItem,
+    params: { level: CredentialsLevel },
+  ) => Promise<void> | void;
+  /**
    * Called when the details panel opens for an item. Use this to fetch
    * structured tab data (Overview/Pricing/API/Tools) from an API and pass it
    * back. The resolved data takes precedence over the item's static `details`
@@ -98,7 +123,7 @@ export interface CatalogProps {
    */
   onFetchDetails?: (
     item: CatalogItem,
-  ) => Promise<CatalogItemTabData | undefined>;
+  ) => Promise<CatalogItemDetailsFetchResult | undefined>;
   /**
    * Dropdown options for the Create button. When provided, the button opens a
    * menu instead of calling `onCreateClick` directly.
@@ -112,6 +137,12 @@ export interface CatalogProps {
   hidePageTitle?: boolean;
   /** ID of an item to visually mark as selected (border, tint, and checkmark) in the Browse grid. */
   selectedItemId?: string;
+  /**
+   * ID of an item whose details panel should open automatically, e.g. when
+   * deep-linking from a share invitation. Opens once per distinct id;
+   * ignored if no matching item is found in `items`.
+   */
+  initialDetailsItemId?: string;
   /**
    * When provided, clicking a card in the Browse grid calls this instead of
    * opening the details panel — e.g. to mark it selected in a picker.

@@ -11,7 +11,9 @@ import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DialConfirmationPopup,
+  DialPopup,
   NotificationVariant,
+  PopupSize,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -19,6 +21,7 @@ import {
   IconPencilMinus,
   IconPin,
   IconPinnedFilled,
+  IconShare,
   IconTrashX,
 } from '@tabler/icons-react';
 import {
@@ -36,6 +39,7 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
+  ShareI18nKeys,
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -52,6 +56,7 @@ import {
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
+import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 import DeleteAllConversationsAction from './DeleteAllConversationsAction';
 import { getConversationSource } from './get-conversation-source';
 
@@ -148,6 +153,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
 
+  const [pendingShareConversationPath, setPendingShareConversationPath] =
+    useState<string | null>(null);
+
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
     () =>
@@ -188,9 +196,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const filterLabels = useMemo(
     () => ({
       all: t(ConversationPanelI18nKeys.FilterAll),
-      myChats: t(ConversationPanelI18nKeys.FilterMyChats),
+      myChats: t(ConversationPanelI18nKeys.MyChatsSection),
       shared: t(ConversationPanelI18nKeys.FilterShared),
-      organization: t(ConversationPanelI18nKeys.FilterOrganization),
+      organization: t(BasicI18nKeys.Organization),
     }),
     [t],
   );
@@ -200,7 +208,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       pinned: t(ConversationPanelI18nKeys.PinnedSection),
       myChats: t(ConversationPanelI18nKeys.MyChatsSection),
       shared: t(ConversationPanelI18nKeys.FilterShared),
-      organization: t(ConversationPanelI18nKeys.FilterOrganization),
+      organization: t(BasicI18nKeys.Organization),
     }),
     [t],
   );
@@ -294,6 +302,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         },
         duplicateAction,
         {
+          key: 'share',
+          label: t(ShareI18nKeys.Title),
+          icon: (
+            <IconShare size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+          ),
+          onClick: () => setPendingShareConversationPath(contextId),
+        },
+        {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
           icon: (
@@ -315,6 +331,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       showNotification,
     ],
   );
+
+  const handleCloseSharePopover = useCallback(() => {
+    setPendingShareConversationPath(null);
+  }, []);
 
   const pendingDeleteTitle = useMemo(() => {
     if (!pendingDeleteId) return '';
@@ -426,7 +446,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         emptyLabel={t(ConversationPanelI18nKeys.Empty)}
         noResultsLabel={t(BasicI18nKeys.NoResults)}
         onNewChat={onNewChat}
-        newChatLabel={t(ConversationPanelI18nKeys.NewChat)}
+        newChatLabel={t(ButtonsI18nKeys.NewChat)}
         searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
         searchClearLabel={t(BasicI18nKeys.ClearSearch)}
         filterLabels={filterLabels}
@@ -459,7 +479,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         description={
           <>
             <span className="break-all">
-              {t(ConversationPanelI18nKeys.DeleteConfirmDescription)}{' '}
+              {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
               <span className="dial-small-text text-primary">
                 &ldquo;{pendingDeleteTitle}&rdquo;
               </span>
@@ -484,6 +504,20 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onCancel={handleCloseRenameDialog}
         onGenerateWithAi={handleGenerateRenameWithAi}
       />
+
+      <DialPopup
+        open={pendingShareConversationPath !== null}
+        onClose={handleCloseSharePopover}
+        dividers={false}
+        hideClose
+        headerClassName="hidden"
+        size={PopupSize.Sm}
+      >
+        <ShareConversationPopoverContainer
+          conversationPath={pendingShareConversationPath ?? ''}
+          onClose={handleCloseSharePopover}
+        />
+      </DialPopup>
     </>
   );
 };

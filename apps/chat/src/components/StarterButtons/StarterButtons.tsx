@@ -19,7 +19,7 @@ const StarterButtons: FC<Props> = ({ starters, onSelect }) => {
       starters={starters}
       onSelect={onSelect}
       isMobile={isMobile}
-      ariaLabels={{
+      labels={{
         list: t(ChatI18nKeys.ConversationStarters),
         overflow: t(ChatI18nKeys.StarterButtonsOverflow),
       }}

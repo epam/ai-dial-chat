@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
-  DeploymentsI18nKeys,
+  DeploymentSelectorI18nKeys,
 } from '../../constants/translation-keys';
 
 interface Params {
@@ -29,15 +29,15 @@ export const useModelSelectorLabels = ({
 
   return useMemo(
     () => ({
-      ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
-      loading: isLoading ? t(DeploymentsI18nKeys.SelectorLoading) : undefined,
-      error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
+      ariaLabel: t(DeploymentSelectorI18nKeys.AriaLabel),
+      loading: isLoading ? t(DeploymentSelectorI18nKeys.Loading) : undefined,
+      error: error ? t(DeploymentSelectorI18nKeys.Error) : undefined,
       empty:
         !isLoading && !error && itemCount === 0
-          ? t(DeploymentsI18nKeys.SelectorEmpty)
+          ? t(DeploymentSelectorI18nKeys.Empty)
           : undefined,
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
-      closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
+      closeLabel: t(DeploymentSelectorI18nKeys.CloseLabel),
     }),
     [t, isLoading, error, itemCount],
   );

@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AppsEditorI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
@@ -66,7 +67,7 @@ describe('AppsEditor', () => {
     renderEditor('step=general&schema=quickapps2-schema');
 
     expect(
-      screen.queryByRole('button', { name: AppsEditorI18nKeys.PreviewButton }),
+      screen.queryByRole('button', { name: BasicI18nKeys.Preview }),
     ).not.toBeTruthy();
   });
 
@@ -74,7 +75,7 @@ describe('AppsEditor', () => {
     renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
     expect(
-      screen.getByRole('button', { name: AppsEditorI18nKeys.PreviewButton }),
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     ).toBeTruthy();
   });
 
@@ -82,7 +83,7 @@ describe('AppsEditor', () => {
     renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
     await userEvent.click(
-      screen.getByRole('button', { name: AppsEditorI18nKeys.PreviewButton }),
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
     act(() => {
       latestSettingsStepProps.onSaveSuccess?.();
@@ -100,7 +101,7 @@ describe('AppsEditor', () => {
     renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
     await userEvent.click(
-      screen.getByRole('button', { name: AppsEditorI18nKeys.PreviewButton }),
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
     act(() => {
       latestSettingsStepProps.onSaveError?.('boom');
@@ -108,7 +109,7 @@ describe('AppsEditor', () => {
 
     expect(screen.getByText('boom')).toBeTruthy();
     expect(
-      screen.getByRole('button', { name: AppsEditorI18nKeys.PreviewButton }),
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     ).toBeTruthy();
     expect(
       screen.queryByRole('button', {
@@ -138,7 +139,7 @@ describe('AppsEditor', () => {
     renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
     await userEvent.click(
-      screen.getByRole('button', { name: AppsEditorI18nKeys.PreviewButton }),
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
     act(() => {
       latestSettingsStepProps.onSaveSuccess?.();

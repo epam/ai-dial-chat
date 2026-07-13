@@ -20,6 +20,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AuthI18nKeys,
+  ButtonsI18nKeys,
   SettingsI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -196,7 +197,9 @@ export const UserMenu = memo(() => {
     { key: 'divider-1', type: DropdownItemType.Divider },
     {
       key: 'logout',
-      label: <span className="dial-small-text">{t(AuthI18nKeys.LogOut)}</span>,
+      label: (
+        <span className="dial-small-text">{t(ButtonsI18nKeys.LogOut)}</span>
+      ),
       icon: <IconLogout size={DIAL_ICON_SIZE.SM} aria-hidden />,
       onClick: openLogout,
     },
