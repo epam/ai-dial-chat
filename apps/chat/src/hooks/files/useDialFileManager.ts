@@ -57,6 +57,7 @@ import {
   renameFiles,
   revokeAccess,
   shareFiles,
+  uploadArchive,
   uploadFile,
 } from '../../server-api/files.api';
 import {
@@ -132,6 +133,12 @@ export interface UseDialFileManagerResult {
   /** Upload: start a new batch. */
   onUploadFiles: (
     files: DialUploadFileItem[],
+    destinationFolder: string,
+  ) => void;
+  /** Upload: extracts and uploads a ZIP archive's entries to the destination folder. */
+  onUploadArchive: (
+    file: File,
+    name: string,
     destinationFolder: string,
   ) => void;
   /** Upload: validate file names before upload (called by DialFileManager). */
@@ -1253,6 +1260,68 @@ export const useDialFileManager = ({
     [activeTab, bucket, cache, rootLabel, onNotification, t],
   );
 
+  const onUploadArchive = useCallback(
+    (file: File, name: string, destinationFolder: string) => {
+      const destinationApiPath = virtualPathToApiPath(
+        destinationFolder,
+        rootLabel,
+      );
+
+      setUploadBatchState({
+        files: [
+          {
+            id: `${Date.now()}-archive`,
+            name,
+            status: FileUploadStatus.Uploading,
+          },
+        ],
+        isOpen: true,
+      });
+
+      const run = async (): Promise<void> => {
+        try {
+          const { results } = await uploadArchive(
+            file,
+            bucket,
+            destinationApiPath,
+          );
+          const successCount = results.filter((r) => r.success).length;
+          const failedCount = results.length - successCount;
+
+          if (results.length > 0 && successCount === 0) {
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              message: t(DialFileManagerI18nKeys.UploadArchiveError),
+            });
+          } else if (failedCount > 0) {
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              message: t(DialFileManagerI18nKeys.UploadArchivePartialError, {
+                count: failedCount,
+              }),
+            });
+          }
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.UploadArchiveError),
+          });
+        } finally {
+          setCache((prev) => {
+            const next = new Map(prev);
+            next.delete(destinationApiPath);
+            return next;
+          });
+          setRetryCounter((c) => c + 1);
+          setUploadBatchState(null);
+        }
+      };
+
+      void run();
+    },
+    [bucket, rootLabel, onNotification, t],
+  );
+
   const onValidateUpload = useCallback(
     async (
       files: DialUploadFileItem[],
@@ -2104,6 +2173,7 @@ export const useDialFileManager = ({
     loadedPaths,
     onExpandedPathsChange,
     onUploadFiles,
+    onUploadArchive,
     onValidateUpload,
     uploadBatchState,
     cancelUpload,

@@ -16,6 +16,10 @@ import ShareFileModal from '../../components/DialFileManagerModal/ShareFileModal
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
 import type { UseDialFileManagerResult } from '../../hooks/files/useDialFileManager';
+import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+} from '../../types/file-manager-variant';
 import { getParentFolderPath } from '../../utils/resolve-dial-file-api-path';
 import type {
   DialFileManagerDestinationFolderPopupOptions,
@@ -30,6 +34,10 @@ interface Props {
   onTabChange: (tab: DialFileManagerTabs) => void;
   selectedPaths: Set<string>;
   onSelectedPathsChange: (paths: Set<string>) => void;
+  /** Host driving this shell instance — gates the upload-archive toolbar entry (standalone-only). */
+  variant: DialFileManagerVariant;
+  /** Action-set gate for the upload-archive toolbar entry (Full-only). */
+  actionProfile: DialFileManagerActionProfile;
   autoSelectUploadedItems?: boolean;
   allowedFileTypes?: DialFileAcceptType[];
   maxSelectableFileSize?: number;
@@ -53,6 +61,8 @@ const DialFileManagerShell: FC<Props> = ({
   onTabChange,
   selectedPaths,
   onSelectedPathsChange,
+  variant,
+  actionProfile,
   autoSelectUploadedItems = true,
   allowedFileTypes,
   maxSelectableFileSize,
@@ -75,6 +85,7 @@ const DialFileManagerShell: FC<Props> = ({
     loadedPaths,
     onExpandedPathsChange,
     onUploadFiles,
+    onUploadArchive,
     onValidateUpload,
     uploadBatchState,
     cancelUpload,
@@ -238,6 +249,17 @@ const DialFileManagerShell: FC<Props> = ({
     ],
   );
 
+  /*
+   * uploadArchive is standalone-only, my_files-only, WRITE-gated, and
+   * Full-profile-only — absent on shared/organization tabs and in the
+   * attach modal (file-manager-tabs spec).
+   */
+  const showUploadArchiveAction =
+    variant === DialFileManagerVariant.Standalone &&
+    actionProfile === DialFileManagerActionProfile.Full &&
+    activeTab === DialFileManagerTabs.MyFiles &&
+    uploadEnabled;
+
   const toolbarOptions = useMemo(
     () => ({
       tabs,
@@ -252,6 +274,9 @@ const DialFileManagerShell: FC<Props> = ({
       newActions: {
         uploadFiles: { label: labels.uploadFilesLabel },
         newFolder: { label: labels.newFolderLabel },
+        ...(showUploadArchiveAction
+          ? { uploadArchive: { label: labels.uploadArchiveAction } }
+          : {}),
       },
     }),
     [
@@ -265,6 +290,8 @@ const DialFileManagerShell: FC<Props> = ({
       disabledNewButtonTooltip,
       labels.uploadFilesLabel,
       labels.newFolderLabel,
+      showUploadArchiveAction,
+      labels.uploadArchiveAction,
     ],
   );
 
@@ -425,6 +452,7 @@ const DialFileManagerShell: FC<Props> = ({
             fileMetadataPopupOptions={fileMetadataPopupOptions}
             onGetInfo={onGetInfo}
             onUploadFiles={onUploadFiles}
+            onUploadArchive={onUploadArchive}
             onValidateUpload={onValidateUpload}
             onCreateFolder={onCreateFolder}
             onCreateFolderValidate={onCreateFolderValidate}

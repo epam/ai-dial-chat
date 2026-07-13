@@ -6,16 +6,20 @@ import { Readable } from 'node:stream';
 import { finished, pipeline } from 'node:stream/promises';
 import type { components } from '@epam/ai-dial-typescript-sdk';
 import {
+  BadRequestException,
   ConflictException,
   HttpException,
   HttpStatus,
   Injectable,
   Logger,
   PayloadTooLargeException,
+  ServiceUnavailableException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import archiver from 'archiver';
 import type { Response as ExpressResponse } from 'express';
+import * as yauzl from 'yauzl';
 import { handleDialSdkError } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
@@ -64,6 +68,10 @@ import type {
   ShareFilesResponseDto,
 } from './dto/share-files.dto';
 import { SharePermission } from './dto/share-files.dto';
+import type {
+  UploadArchiveEntryResultDto,
+  UploadArchiveResponseDto,
+} from './dto/upload-archive.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import type { UploadMode } from './dto/upload-file.dto';
 import { FOLDER_NODE_TYPE, MARKER_NAME } from './files.constants';
@@ -79,6 +87,11 @@ interface ExpandedFile {
   name: string;
   size: number;
   archivePath: string;
+}
+
+interface ArchiveEntryPathResult {
+  isDirectory: boolean;
+  safeRelativePath: string | null;
 }
 
 type StagedArchiveFile = {
@@ -290,6 +303,197 @@ export class FilesService {
       this.logger.error(`Upload failed for ${bucket}/${path}`, err);
       return handleDialSdkError(err, 'files.uploadFile', this.logger);
     }
+  }
+
+  async uploadArchive(
+    bucket: string,
+    destinationPath: string,
+    archiveFile: { buffer: Buffer },
+    token: string,
+  ): Promise<UploadArchiveResponseDto> {
+    const maxFiles =
+      this.configService.get<number>('ARCHIVE_UPLOAD_MAX_FILES') ?? 1000;
+    const maxUncompressedBytes =
+      this.configService.get<number>('ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES') ??
+      2_147_483_648;
+    const timeoutMs =
+      this.configService.get<number>('ARCHIVE_UPLOAD_TIMEOUT_MS') ?? 300_000;
+
+    let timedOut = false;
+    const extraction = this.extractAndUploadArchive(
+      bucket,
+      destinationPath,
+      archiveFile.buffer,
+      token,
+      maxFiles,
+      maxUncompressedBytes,
+    );
+
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutHandle = setTimeout(() => {
+        timedOut = true;
+        reject(new Error('ARCHIVE_UPLOAD_TIMEOUT'));
+      }, timeoutMs);
+    });
+
+    try {
+      const results = await Promise.race([extraction, timeout]);
+
+      const successCount = results.filter((r) => r.success).length;
+      this.logger.log(
+        `Archive upload completed: successCount=${successCount}, failedCount=${results.length - successCount}`,
+      );
+
+      return { results };
+    } catch (err) {
+      // Prevent an unhandled rejection if extraction loses the timeout race.
+      extraction.catch((extractionErr: unknown) => {
+        this.logger.debug(
+          `Archive upload extraction settled after timeout: bucket=${bucket}, error=${extractionErr instanceof Error ? extractionErr.message : String(extractionErr)}`,
+        );
+      });
+
+      if (timedOut) {
+        this.logger.error(
+          `Archive upload timed out: bucket=${bucket}, timeoutMs=${timeoutMs}`,
+        );
+        throw new ServiceUnavailableException('Archive upload timed out');
+      }
+      if (err instanceof HttpException) {
+        throw err;
+      }
+      this.logger.warn(
+        `Archive upload failed to open or extract: bucket=${bucket}, error=${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw new BadRequestException('Invalid or corrupted ZIP archive');
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
+  }
+
+  private async extractAndUploadArchive(
+    bucket: string,
+    destinationPath: string,
+    buffer: Buffer,
+    token: string,
+    maxFiles: number,
+    maxUncompressedBytes: number,
+  ): Promise<UploadArchiveEntryResultDto[]> {
+    const normalizedDestination = destinationPath.replace(/\/+$/, '');
+    const results: UploadArchiveEntryResultDto[] = [];
+    let entryCount = 0;
+    let cumulativeBytes = 0;
+
+    /*
+     * decodeStrings: false — yauzl's own filename validation aborts the
+     * *whole* archive on the first unsafe entry name, but D4 requires
+     * per-entry rejection (record a failed result, keep processing the
+     * rest). Reading the raw name lets resolveArchiveEntryPath be the sole
+     * zip-slip authority.
+     */
+    const zipfile = await yauzl.fromBufferPromise(buffer, {
+      lazyEntries: true,
+      decodeStrings: false,
+    });
+
+    this.logger.log(
+      `Archive upload started: bucket=${bucket}, entryCount=${zipfile.entryCount}`,
+    );
+
+    try {
+      for await (const entry of zipfile.eachEntry()) {
+        const fileName = this.decodeArchiveEntryName(entry.fileName);
+        const { isDirectory, safeRelativePath } =
+          this.resolveArchiveEntryPath(fileName);
+
+        if (isDirectory) {
+          continue;
+        }
+
+        entryCount += 1;
+        if (entryCount > maxFiles) {
+          throw new UnprocessableEntityException(
+            `Archive contains more than ${maxFiles} files`,
+          );
+        }
+
+        if (safeRelativePath == null) {
+          results.push({
+            path: fileName,
+            success: false,
+            error: 'Invalid path',
+          });
+          continue;
+        }
+
+        const entryPath = normalizedDestination
+          ? `${normalizedDestination}/${safeRelativePath}`
+          : safeRelativePath;
+
+        const stream = await zipfile.openReadStreamPromise(entry);
+        const entryBuffer = await this.readArchiveEntryStream(
+          stream,
+          maxUncompressedBytes - cumulativeBytes,
+        );
+        cumulativeBytes += entryBuffer.length;
+
+        try {
+          await this.uploadFile(
+            bucket,
+            entryPath,
+            { buffer: entryBuffer, mimetype: 'application/octet-stream' },
+            token,
+            'create-only',
+          );
+          results.push({ path: entryPath, success: true });
+        } catch (err) {
+          const isConflict =
+            err instanceof HttpException &&
+            err.getStatus() === HttpStatus.CONFLICT;
+          results.push({
+            path: entryPath,
+            success: false,
+            error: isConflict
+              ? 'Conflict'
+              : err instanceof HttpException
+                ? err.message
+                : 'Upload failed',
+          });
+        }
+      }
+    } finally {
+      zipfile.close();
+    }
+
+    return results;
+  }
+
+  /** Reads a decompression stream into a buffer, aborting once `remainingBudget` bytes are exceeded (D2/D3: incremental, not declared-size, check). */
+  private readArchiveEntryStream(
+    stream: Readable,
+    remainingBudget: number,
+  ): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      let readBytes = 0;
+
+      stream.on('data', (chunk: Buffer) => {
+        readBytes += chunk.length;
+        if (readBytes > remainingBudget) {
+          stream.destroy();
+          reject(
+            new UnprocessableEntityException(
+              'Archive uncompressed size exceeds the configured limit',
+            ),
+          );
+          return;
+        }
+        chunks.push(chunk);
+      });
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', (err) => reject(err));
+    });
   }
 
   async listFiles(
@@ -934,6 +1138,35 @@ export class FilesService {
     }
     const joined = root ? `${root}/${relative}` : relative;
     return joined;
+  }
+
+  /**
+   * Zip-slip defense for an uploaded archive entry (D4): rejects absolute
+   * paths, drive letters, `..` segments, and backslashes. Directory entries
+   * (trailing `/`) are flagged so callers can skip them silently rather than
+   * treat them as a failed result.
+   */
+  resolveArchiveEntryPath(entryFileName: string): ArchiveEntryPathResult {
+    if (entryFileName.endsWith('/')) {
+      return { isDirectory: true, safeRelativePath: null };
+    }
+
+    const isUnsafe =
+      entryFileName.startsWith('/') ||
+      /^[a-zA-Z]:/.test(entryFileName) ||
+      entryFileName.includes('\\') ||
+      entryFileName.split('/').includes('..');
+
+    return {
+      isDirectory: false,
+      safeRelativePath: isUnsafe ? null : entryFileName,
+    };
+  }
+
+  /** Decodes a yauzl entry name read with `decodeStrings: false` (raw `Buffer`), or passes a string through unchanged. */
+  private decodeArchiveEntryName(rawFileName: string): string {
+    const raw: unknown = rawFileName;
+    return Buffer.isBuffer(raw) ? raw.toString('utf8') : rawFileName;
   }
 
   private getRelativeChildPath(

@@ -1,6 +1,7 @@
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -52,6 +53,10 @@ import {
   RevokeAccessResponseDto,
 } from './dto/revoke-access.dto';
 import { ShareFilesDto, ShareFilesResponseDto } from './dto/share-files.dto';
+import {
+  UploadArchiveDto,
+  UploadArchiveResponseDto,
+} from './dto/upload-archive.dto';
 import { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { FilesService } from './files.service';
@@ -110,6 +115,65 @@ export class FilesController {
       file,
       at,
       body.uploadMode,
+    );
+  }
+
+  @Post('upload-archive')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'bucket', 'destinationPath'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        bucket: { type: 'string' },
+        destinationPath: { type: 'string' },
+      },
+    },
+  })
+  @ApiOperation({
+    summary:
+      'Upload a ZIP archive and extract its contents to a destination folder',
+  })
+  @ApiResponse({ status: 200, type: UploadArchiveResponseDto })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid request, non-ZIP file, or empty archive',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 413,
+    description: 'Archive exceeds ARCHIVE_UPLOAD_MAX_BYTES',
+  })
+  @ApiResponse({
+    status: 422,
+    description:
+      'Archive exceeds ARCHIVE_UPLOAD_MAX_FILES or ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description:
+      'DIAL Core unreachable, timed out, or ARCHIVE_UPLOAD_TIMEOUT_MS exceeded',
+  })
+  uploadArchive(
+    @UploadedFile() file: { buffer: Buffer; mimetype: string } | undefined,
+    @Body() body: UploadArchiveDto,
+    @Req() req: Request,
+  ): Promise<UploadArchiveResponseDto> {
+    if (file == null) {
+      throw new BadRequestException('file is required');
+    }
+    const { at } = req.user as SessionUser;
+    return this.filesService.uploadArchive(
+      body.bucket,
+      body.destinationPath,
+      file,
+      at,
     );
   }
 

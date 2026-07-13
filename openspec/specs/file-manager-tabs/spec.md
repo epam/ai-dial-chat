@@ -226,19 +226,19 @@ Bulk toolbar `Remove access` visibility additionally requires every path in the 
 
 ---
 
-### Requirement: Standalone page uses the Browse action profile
+### Requirement: Standalone page uses the Full action profile
 
-`DialFileManagerPage` SHALL pass `actionProfile: DialFileManagerActionProfile.Browse` to `useDialFileManager`. `DialFileManagerActionProfile.Full` is now defined (by `file-manager-sharing`) as the profile that additionally exposes Share (`ManagePermissions`), Unshare, and Remove access on top of everything `Browse` already exposes; a later change (metadata popup / `Info`, and upload-archive) extends `Full`'s action set further. `DialFileManagerPage` SHALL NOT switch to `Full` as part of this change — the switch is deferred until every `Full`-gated action (Share/Unshare/Remove access from this change, Info and upload-archive from their respective follow-up changes) has a working handler, so the standalone page never exposes a `Full`-gated action with no implementation behind it.
+`DialFileManagerPage` SHALL pass `actionProfile: DialFileManagerActionProfile.Full` to `useDialFileManager`. This is the final step of the #7504 roadmap: `Full` was introduced as a reserved, unused profile, then progressively defined by `add-file-manager-sharing` (Share/Unshare/Remove access), `add-file-manager-metadata-ui` (Info), and this change (upload-archive) — each of those three changes' actions now has a working handler, so the standalone page adopts `Full` in full, superseding its prior `Browse` assignment. `Full` is a strict superset of `Browse`: every action `Browse` exposed (Download, Delete, Rename, Copy, Move, Duplicate) remains available, with Share, Unshare, Remove access, Info, and upload-archive added on top.
 
-#### Scenario: Standalone page shows the full my_files matrix
+#### Scenario: Standalone page shows the complete my_files matrix
 
-- **WHEN** `DialFileManagerPage` renders `my_files` with WRITE permission
-- **THEN** `actionLabels` includes Download, Delete, Rename, Copy, Move, and Duplicate, and does NOT include Share or Remove access (still on `Browse`)
+- **WHEN** `DialFileManagerPage` renders `my_files` with WRITE permission and the item has `SHARE` permission
+- **THEN** `actionLabels` includes Download, Delete, Rename, Copy, Move, Duplicate, Share, Remove access (if the item is in `sharedByMePaths`), and Info, and `toolbarOptions.newActions.uploadArchive` is present
 
-#### Scenario: Attach modal shows only Rename and Delete of the WRITE-gated actions
+#### Scenario: Attach modal remains unaffected
 
 - **WHEN** `DialFileManagerModal` renders `my_files` with WRITE permission
-- **THEN** `actionLabels` includes Download, Delete, and Rename, and does NOT include Copy, Move, Duplicate, Share, or Remove access
+- **THEN** `actionLabels` includes Download, Delete, and Rename, and does NOT include Copy, Move, Duplicate, Share, Remove access, Info, or the upload-archive toolbar entry — the attach modal's `actionProfile` remains `Attach`, unaffected by the standalone page's switch to `Full`
 
 ---
 
@@ -253,6 +253,8 @@ Bulk toolbar `Remove access` visibility additionally requires every path in the 
 | `organization` | Always `false` |
 
 `isNewButtonDisabled` and `disabledNewButtonTooltip` in `toolbarOptions` SHALL reflect the same logic.
+
+`toolbarOptions.newActions.uploadArchive` (label + icon) SHALL be populated only when `variant === DialFileManagerVariant.Standalone`, the active tab is `my_files`, the current folder has WRITE permission, and `actionProfile === DialFileManagerActionProfile.Full`. It SHALL be absent for the `shared`/`organization` tabs, for the attach modal (`variant === Attach`), and whenever `uploadEnabled` is `false`.
 
 #### Scenario: Organization tab disables upload
 
@@ -278,6 +280,26 @@ Bulk toolbar `Remove access` visibility additionally requires every path in the 
 
 - **WHEN** the active tab is `my_files` and the current folder does NOT have WRITE permission
 - **THEN** `uploadEnabled` is `false`
+
+#### Scenario: Standalone my_files with WRITE and Full profile shows the upload-archive toolbar entry
+
+- **WHEN** `variant` is `Standalone`, the active tab is `my_files`, the current folder has WRITE permission, and `actionProfile` is `Full`
+- **THEN** `toolbarOptions.newActions.uploadArchive` is present
+
+#### Scenario: Upload-archive toolbar entry hidden on shared and organization tabs
+
+- **WHEN** the active tab is `shared` or `organization`
+- **THEN** `toolbarOptions.newActions.uploadArchive` is `undefined`, regardless of `actionProfile`
+
+#### Scenario: Upload-archive toolbar entry hidden in the attach modal
+
+- **WHEN** `variant` is `Attach`
+- **THEN** `toolbarOptions.newActions.uploadArchive` is `undefined`, regardless of `actionProfile`
+
+#### Scenario: Upload-archive toolbar entry hidden without WRITE permission
+
+- **WHEN** the active tab is `my_files` and the current folder does NOT have WRITE permission
+- **THEN** `toolbarOptions.newActions.uploadArchive` is `undefined`, even if `actionProfile` is `Full`
 
 ---
 

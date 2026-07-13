@@ -34,6 +34,7 @@ export interface DialFileManagerShellLabels {
   hideHiddenFilesLabel: string;
   getSelectionLabel: (count: number) => string;
   uploadFilesLabel: string;
+  uploadArchiveAction: string;
   newFolderLabel: string;
   downloadLabel: string;
   downloadingLabel: string;

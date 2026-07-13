@@ -2921,4 +2921,119 @@ describe('useDialFileManager', () => {
       expect(result.current.isFileMetadataLoading).toBe(false);
     });
   });
+
+  describe('onUploadArchive', () => {
+    const mockUploadArchive = vi.mocked(filesApi.uploadArchive);
+
+    it('invalidates the destination cache and shows no toast on full success', async () => {
+      mockUploadArchive.mockResolvedValue({
+        results: [
+          { path: 'reports/a.txt', success: true },
+          { path: 'reports/b.txt', success: true },
+        ],
+      });
+      const onNotification = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET, onNotification }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => {
+        result.current.onUploadArchive(
+          new File(['zip'], 'archive.zip'),
+          'archive.zip',
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() => expect(result.current.uploadBatchState).toBeNull());
+      expect(onNotification).not.toHaveBeenCalled();
+    });
+
+    it('shows a partial-failure toast with the failed count', async () => {
+      mockUploadArchive.mockResolvedValue({
+        results: [
+          { path: 'reports/a.txt', success: true },
+          { path: 'reports/b.txt', success: false, error: 'Conflict' },
+        ],
+      });
+      const onNotification = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET, onNotification }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => {
+        result.current.onUploadArchive(
+          new File(['zip'], 'archive.zip'),
+          'archive.zip',
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() =>
+        expect(onNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: NotificationVariant.Error,
+            message: 'dialFileManager.uploadArchivePartialError',
+          }),
+        ),
+      );
+    });
+
+    it('shows a full-failure toast when the request rejects', async () => {
+      mockUploadArchive.mockRejectedValue(new Error('network error'));
+      const onNotification = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET, onNotification }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => {
+        result.current.onUploadArchive(
+          new File(['zip'], 'archive.zip'),
+          'archive.zip',
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() =>
+        expect(onNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: NotificationVariant.Error,
+            message: 'dialFileManager.uploadArchiveError',
+          }),
+        ),
+      );
+    });
+
+    it('resolves bucket and destinationPath relative to the destination folder', async () => {
+      mockUploadArchive.mockResolvedValue({ results: [] });
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      const file = new File(['zip'], 'archive.zip');
+      act(() => {
+        result.current.onUploadArchive(
+          file,
+          'archive.zip',
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() =>
+        expect(mockUploadArchive).toHaveBeenCalledWith(
+          file,
+          BUCKET,
+          'reports/',
+        ),
+      );
+    });
+  });
 });

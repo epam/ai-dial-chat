@@ -22,6 +22,7 @@ import type {
   ShareFilesDtoPermissionEnum,
   ShareFilesResponseDto,
   ShareItemDto,
+  UploadArchiveResponseDto,
 } from '@epam/chat-api-client';
 import { filesApi } from './api-client';
 import {
@@ -74,6 +75,13 @@ export const uploadFile = (
     signal ? { signal } : undefined,
   );
 };
+
+export const uploadArchive = (
+  file: File,
+  bucket: string,
+  destinationPath: string,
+): Promise<UploadArchiveResponseDto> =>
+  filesApi.uploadArchive({ file, bucket, destinationPath });
 
 export const getFileMetadata = (params: {
   bucket: string;

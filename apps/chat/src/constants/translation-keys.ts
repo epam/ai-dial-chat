@@ -305,6 +305,9 @@ export enum DialFileManagerI18nKeys {
   MetadataModifiedDateLabel = 'dialFileManager.metadataModifiedDateLabel',
   MetadataSizeLabel = 'dialFileManager.metadataSizeLabel',
   MetadataAuthorLabel = 'dialFileManager.metadataAuthorLabel',
+  UploadArchiveAction = 'dialFileManager.uploadArchiveAction',
+  UploadArchiveError = 'dialFileManager.uploadArchiveError',
+  UploadArchivePartialError = 'dialFileManager.uploadArchivePartialError',
 }
 
 export enum AuthI18nKeys {

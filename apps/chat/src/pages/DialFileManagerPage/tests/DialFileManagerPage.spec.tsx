@@ -52,6 +52,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       items,
       gridOptions,
       bulkActionsToolbarOptions,
+      toolbarOptions,
     }: {
       items?: { path: string }[];
       gridOptions?: {
@@ -59,6 +60,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       };
       bulkActionsToolbarOptions?: {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
+      };
+      toolbarOptions?: {
+        newActions?: { uploadArchive?: { label?: string } };
       };
     }) => (
       <div
@@ -97,6 +101,15 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         data-has-unshare={String(
           Actions.Unshare in (gridOptions?.actionLabels ?? {}),
         )}
+        data-has-share={String(
+          Actions.ManagePermissions in (gridOptions?.actionLabels ?? {}),
+        )}
+        data-has-remove-access={String(
+          Actions.RemoveAccess in (gridOptions?.actionLabels ?? {}),
+        )}
+        data-has-upload-archive={String(
+          toolbarOptions?.newActions?.uploadArchive != null,
+        )}
       >
         {items?.length ?? 0} items
       </div>
@@ -132,6 +145,7 @@ const defaultHookResult: UseDialFileManagerResult = {
   loadedPaths: new Set(),
   onExpandedPathsChange: vi.fn(),
   onUploadFiles: vi.fn(),
+  onUploadArchive: vi.fn(),
   onValidateUpload: vi.fn(),
   uploadBatchState: null,
   cancelUpload: vi.fn(),
@@ -186,13 +200,13 @@ describe('DialFileManagerPage', () => {
     expect(screen.getByText('1 items')).toBeTruthy();
   });
 
-  it('calls useDialFileManager with standalone variant and browse action profile on mount, without any user interaction', () => {
+  it('calls useDialFileManager with standalone variant and full action profile on mount, without any user interaction', () => {
     render(<DialFileManagerPage />);
     expect(mockUseDialFileManager).toHaveBeenCalledWith(
       expect.objectContaining({
         bucket: 'test-bucket',
         variant: DialFileManagerVariant.Standalone,
-        actionProfile: DialFileManagerActionProfile.Browse,
+        actionProfile: DialFileManagerActionProfile.Full,
       }),
     );
   });
@@ -210,7 +224,7 @@ describe('DialFileManagerPage', () => {
 });
 
 describe('DialFileManagerPage — full action matrix on my_files', () => {
-  it('surfaces Copy, Move, Duplicate, Rename, and Delete on my_files', () => {
+  it('surfaces the complete my_files matrix: Copy/Move/Duplicate/Rename/Delete, Share/Remove access, Info, and upload-archive', () => {
     mockActiveTab.value = DialFileManagerTabs.MyFiles;
     mockUseDialFileManager.mockReturnValue({
       ...defaultHookResult,
@@ -221,6 +235,9 @@ describe('DialFileManagerPage — full action matrix on my_files', () => {
         [DialFileManagerActions.Copy]: 'Copy',
         [DialFileManagerActions.Move]: 'Move',
         [DialFileManagerActions.Duplicate]: 'Duplicate',
+        [DialFileManagerActions.ManagePermissions]: 'Share',
+        [DialFileManagerActions.RemoveAccess]: 'Remove access',
+        [DialFileManagerActions.Info]: 'Info',
       },
     });
     render(<DialFileManagerPage />);
@@ -235,9 +252,10 @@ describe('DialFileManagerPage — full action matrix on my_files', () => {
     expect(manager.getAttribute('data-has-bulk-copy')).toBe('true');
     expect(manager.getAttribute('data-has-bulk-move')).toBe('true');
     expect(manager.getAttribute('data-has-bulk-duplicate')).toBe('true');
-    // Share/Info (#7504 legacy-parity actions) are not added by this change.
-    expect(manager.getAttribute('data-has-info')).toBe('false');
-    expect(manager.getAttribute('data-has-unshare')).toBe('false');
+    expect(manager.getAttribute('data-has-share')).toBe('true');
+    expect(manager.getAttribute('data-has-remove-access')).toBe('true');
+    expect(manager.getAttribute('data-has-info')).toBe('true');
+    expect(manager.getAttribute('data-has-upload-archive')).toBe('true');
   });
 
   it('surfaces Download only on the Shared tab', () => {

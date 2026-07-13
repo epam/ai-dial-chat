@@ -1,14 +1,18 @@
 import { PassThrough } from 'node:stream';
+import { crc32 } from 'node:zlib';
 import {
   BadGatewayException,
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   HttpException,
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import archiver from 'archiver';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
@@ -29,9 +33,10 @@ type SdkClient = {
   discardSharedResources: ReturnType<typeof vi.fn>;
 };
 
-function makeService() {
+function makeService(configOverrides: Record<string, unknown> = {}) {
   const configService = {
     get: vi.fn((key: string) => {
+      if (key in configOverrides) return configOverrides[key];
       if (key === 'DIAL_CORE_URL') return 'http://dial-core';
       if (key === 'FILE_TRANSFER_TIMEOUT_MS') return 30_000;
       if (key === 'ARCHIVE_TIMEOUT_MS') return 300_000;
@@ -89,6 +94,96 @@ const errResponse = (status: number) => ({
 });
 
 const mockFile = { buffer: Buffer.from('hello'), mimetype: 'application/pdf' };
+
+const buildZipBuffer = (
+  entries: Array<{ name: string; content?: string }>,
+): Promise<Buffer> =>
+  new Promise((resolve, reject) => {
+    const archive = archiver('zip', { store: true });
+    const chunks: Buffer[] = [];
+    archive.on('data', (chunk: Buffer) => chunks.push(chunk));
+    archive.on('error', reject);
+    archive.on('end', () => resolve(Buffer.concat(chunks)));
+    for (const entry of entries) {
+      archive.append(Buffer.from(entry.content ?? 'content'), {
+        name: entry.name,
+      });
+    }
+    void archive.finalize();
+  });
+
+/*
+ * `archiver` sanitizes entry names (strips `..`/leading `/`) before writing,
+ * so it cannot produce a zip-slip fixture. This hand-rolls a minimal, single
+ * central-directory-record ZIP (stored/uncompressed) with an arbitrary raw
+ * entry name to exercise the service's own path-safety rejection.
+ */
+const buildRawZipBuffer = (
+  entries: Array<{ name: string; content?: string }>,
+): Buffer => {
+  const localEntries: Buffer[] = [];
+  const centralEntries: Buffer[] = [];
+  let offset = 0;
+
+  for (const { name, content = 'content' } of entries) {
+    const nameBuf = Buffer.from(name, 'utf8');
+    const contentBuf = Buffer.from(content, 'utf8');
+    const crc = crc32(contentBuf);
+
+    const localHeader = Buffer.alloc(30);
+    localHeader.writeUInt32LE(0x04034b50, 0);
+    localHeader.writeUInt16LE(20, 4);
+    localHeader.writeUInt16LE(0, 6);
+    localHeader.writeUInt16LE(0, 8);
+    localHeader.writeUInt16LE(0, 10);
+    localHeader.writeUInt16LE(0, 12);
+    localHeader.writeUInt32LE(crc, 14);
+    localHeader.writeUInt32LE(contentBuf.length, 18);
+    localHeader.writeUInt32LE(contentBuf.length, 22);
+    localHeader.writeUInt16LE(nameBuf.length, 26);
+    localHeader.writeUInt16LE(0, 28);
+
+    const localEntry = Buffer.concat([localHeader, nameBuf, contentBuf]);
+    localEntries.push(localEntry);
+
+    const centralHeader = Buffer.alloc(46);
+    centralHeader.writeUInt32LE(0x02014b50, 0);
+    centralHeader.writeUInt16LE(20, 4);
+    centralHeader.writeUInt16LE(20, 6);
+    centralHeader.writeUInt16LE(0, 8);
+    centralHeader.writeUInt16LE(0, 10);
+    centralHeader.writeUInt16LE(0, 12);
+    centralHeader.writeUInt16LE(0, 14);
+    centralHeader.writeUInt32LE(crc, 16);
+    centralHeader.writeUInt32LE(contentBuf.length, 20);
+    centralHeader.writeUInt32LE(contentBuf.length, 24);
+    centralHeader.writeUInt16LE(nameBuf.length, 28);
+    centralHeader.writeUInt16LE(0, 30);
+    centralHeader.writeUInt16LE(0, 32);
+    centralHeader.writeUInt16LE(0, 34);
+    centralHeader.writeUInt16LE(0, 36);
+    centralHeader.writeUInt32LE(0, 38);
+    centralHeader.writeUInt32LE(offset, 42);
+
+    centralEntries.push(Buffer.concat([centralHeader, nameBuf]));
+    offset += localEntry.length;
+  }
+
+  const localSection = Buffer.concat(localEntries);
+  const centralSection = Buffer.concat(centralEntries);
+
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(0, 4);
+  eocd.writeUInt16LE(0, 6);
+  eocd.writeUInt16LE(entries.length, 8);
+  eocd.writeUInt16LE(entries.length, 10);
+  eocd.writeUInt32LE(centralSection.length, 12);
+  eocd.writeUInt32LE(localSection.length, 16);
+  eocd.writeUInt16LE(0, 20);
+
+  return Buffer.concat([localSection, centralSection, eocd]);
+};
 
 describe('FilesService', () => {
   beforeEach(() => {
@@ -1277,6 +1372,196 @@ describe('FilesService', () => {
     it('returns relative path when root is empty', () => {
       const { service } = makeService();
       expect(service.buildArchivePath('', 'file.txt')).toBe('file.txt');
+    });
+  });
+
+  describe('resolveArchiveEntryPath', () => {
+    it('rejects a parent-directory traversal segment', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('../../etc/passwd')).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
+
+    it('rejects an absolute path', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('/etc/passwd')).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
+
+    it('rejects a Windows drive-letter absolute path', () => {
+      const { service } = makeService();
+      expect(
+        service.resolveArchiveEntryPath('C:\\Windows\\System32\\config'),
+      ).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
+
+    it('accepts a valid nested relative path', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('reports/2026/q1.pdf')).toEqual({
+        isDirectory: false,
+        safeRelativePath: 'reports/2026/q1.pdf',
+      });
+    });
+
+    it('identifies directory entries for silent skipping', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('reports/')).toEqual({
+        isDirectory: true,
+        safeRelativePath: null,
+      });
+    });
+  });
+
+  describe('uploadArchive', () => {
+    it('uploads all entries successfully', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadFile.mockResolvedValue(okUpload('ignored'));
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      const result = await service.uploadArchive(
+        'bucket',
+        'reports',
+        { buffer },
+        'token',
+      );
+
+      expect(result.results).toEqual([
+        { path: 'reports/a.txt', success: true },
+        { path: 'reports/b.txt', success: true },
+      ]);
+      expect(sdkClient.uploadFile).toHaveBeenCalledTimes(2);
+    });
+
+    it('returns an empty results array for an empty archive', async () => {
+      const { service } = makeService();
+      const buffer = await buildZipBuffer([]);
+
+      const result = await service.uploadArchive(
+        'bucket',
+        'reports',
+        { buffer },
+        'token',
+      );
+
+      expect(result.results).toEqual([]);
+    });
+
+    it('throws a validation error for a non-ZIP buffer', async () => {
+      const { service } = makeService();
+      const buffer = Buffer.from('not a zip file');
+
+      await expect(
+        service.uploadArchive('bucket', 'reports', { buffer }, 'token'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('aborts once the entry-count limit is exceeded, with zero uploads attempted after the limit', async () => {
+      const { service, sdkClient } = makeService({
+        ARCHIVE_UPLOAD_MAX_FILES: 1,
+      });
+      sdkClient.uploadFile.mockResolvedValue(okUpload('ignored'));
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      await expect(
+        service.uploadArchive('bucket', 'reports', { buffer }, 'token'),
+      ).rejects.toThrow(UnprocessableEntityException);
+      expect(sdkClient.uploadFile).toHaveBeenCalledTimes(1);
+    });
+
+    it('aborts mid-extraction once cumulative uncompressed bytes exceed the limit, retaining prior successful uploads', async () => {
+      const { service, sdkClient } = makeService({
+        ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES: 10,
+      });
+      sdkClient.uploadFile.mockResolvedValue(okUpload('ignored'));
+      const buffer = await buildZipBuffer([
+        { name: 'small.txt', content: 'a'.repeat(5) },
+        { name: 'big.txt', content: 'b'.repeat(50) },
+      ]);
+
+      await expect(
+        service.uploadArchive('bucket', 'reports', { buffer }, 'token'),
+      ).rejects.toThrow(UnprocessableEntityException);
+      expect(sdkClient.uploadFile).toHaveBeenCalledTimes(1);
+      expect(sdkClient.uploadFile).toHaveBeenCalledWith(
+        'bucket',
+        'reports/small.txt',
+        expect.anything(),
+      );
+    });
+
+    it('reports a conflicting entry as failed while other entries still succeed', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadFile
+        .mockResolvedValueOnce(errResponse(412))
+        .mockResolvedValueOnce(okUpload('ignored'));
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      const result = await service.uploadArchive(
+        'bucket',
+        'reports',
+        { buffer },
+        'token',
+      );
+
+      expect(result.results).toEqual([
+        { path: 'reports/a.txt', success: false, error: 'Conflict' },
+        { path: 'reports/b.txt', success: true },
+      ]);
+    });
+
+    it('rejects path-traversal entries without attempting to upload them', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadFile.mockResolvedValue(okUpload('ignored'));
+      const buffer = buildRawZipBuffer([
+        { name: '../../etc/passwd' },
+        { name: 'safe.txt' },
+      ]);
+
+      const result = await service.uploadArchive(
+        'bucket',
+        'reports',
+        { buffer },
+        'token',
+      );
+
+      expect(result.results).toEqual([
+        { path: '../../etc/passwd', success: false, error: 'Invalid path' },
+        { path: 'reports/safe.txt', success: true },
+      ]);
+      expect(sdkClient.uploadFile).toHaveBeenCalledTimes(1);
+    });
+
+    it('throws ServiceUnavailableException when the timeout is exceeded', async () => {
+      const { service, sdkClient } = makeService({
+        ARCHIVE_UPLOAD_TIMEOUT_MS: 10,
+      });
+      sdkClient.uploadFile.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve(okUpload('ignored')), 100),
+          ),
+      );
+      const buffer = await buildZipBuffer([{ name: 'a.txt' }]);
+
+      await expect(
+        service.uploadArchive('bucket', 'reports', { buffer }, 'token'),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
   });
 

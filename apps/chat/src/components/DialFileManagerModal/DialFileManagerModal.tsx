@@ -29,7 +29,10 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
-import { DialFileManagerVariant } from '../../types/file-manager-variant';
+import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+} from '../../types/file-manager-variant';
 import {
   mimeTypesToAttachmentExtensionLabels,
   mimeTypesToDialFileAcceptTypes,
@@ -523,6 +526,7 @@ const DialFileManagerModal: FC<Props> = ({
       hideHiddenFilesLabel,
       getSelectionLabel,
       uploadFilesLabel,
+      uploadArchiveAction: t(DialFileManagerI18nKeys.UploadArchiveAction),
       newFolderLabel,
       downloadLabel,
       downloadingLabel,
@@ -676,6 +680,8 @@ const DialFileManagerModal: FC<Props> = ({
         onTabChange={handleTabChangeWithReset}
         selectedPaths={selectedPaths}
         onSelectedPathsChange={setSelectedPaths}
+        variant={DialFileManagerVariant.Attach}
+        actionProfile={DialFileManagerActionProfile.Attach}
         autoSelectUploadedItems={autoSelectUploadedItems}
         allowedFileTypes={allowedFileTypes}
         maxSelectableFileSize={maxSelectableFileSize}

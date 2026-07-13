@@ -299,6 +299,7 @@ const defaultHookResult: UseDialFileManagerResult = {
   onPathChange: vi.fn(),
   retry: vi.fn(),
   onUploadFiles: vi.fn(),
+  onUploadArchive: vi.fn(),
   onValidateUpload: vi.fn(),
   uploadBatchState: null,
   cancelUpload: vi.fn(),

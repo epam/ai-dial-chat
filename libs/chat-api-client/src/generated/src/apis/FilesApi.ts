@@ -34,6 +34,7 @@ import type {
   RevokeAccessResponseDto,
   ShareFilesDto,
   ShareFilesResponseDto,
+  UploadArchiveResponseDto,
 } from '../models/index';
 
 export interface CopyFilesRequest {
@@ -106,6 +107,12 @@ export interface RevokeAccessRequest {
 
 export interface ShareFilesRequest {
   shareFilesDto: ShareFilesDto;
+}
+
+export interface UploadArchiveRequest {
+  file: Blob;
+  bucket: string;
+  destinationPath: string;
 }
 
 export interface UploadFileRequest {
@@ -914,6 +921,99 @@ export class FilesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ShareFilesResponseDto> {
     const response = await this.shareFilesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Upload a ZIP archive and extract its contents to a destination folder
+   */
+  async uploadArchiveRaw(
+    requestParameters: UploadArchiveRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<UploadArchiveResponseDto>> {
+    if (requestParameters['file'] == null) {
+      throw new runtime.RequiredError(
+        'file',
+        'Required parameter "file" was null or undefined when calling uploadArchive().',
+      );
+    }
+
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling uploadArchive().',
+      );
+    }
+
+    if (requestParameters['destinationPath'] == null) {
+      throw new runtime.RequiredError(
+        'destinationPath',
+        'Required parameter "destinationPath" was null or undefined when calling uploadArchive().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const consumes: runtime.Consume[] = [
+      { contentType: 'multipart/form-data' },
+    ];
+    // @ts-ignore: canConsumeForm may be unused
+    const canConsumeForm = runtime.canConsumeForm(consumes);
+
+    let formParams: { append(name: string, value: string | Blob): void };
+    let useForm = false;
+    // use FormData to transmit files using content-type "multipart/form-data"
+    useForm = canConsumeForm;
+    if (useForm) {
+      formParams = new FormData();
+    } else {
+      formParams = new URLSearchParams();
+    }
+
+    if (requestParameters['file'] != null) {
+      formParams.append('file', requestParameters['file']);
+    }
+
+    if (requestParameters['bucket'] != null) {
+      formParams.append('bucket', requestParameters['bucket']);
+    }
+
+    if (requestParameters['destinationPath'] != null) {
+      formParams.append(
+        'destinationPath',
+        requestParameters['destinationPath'],
+      );
+    }
+
+    let urlPath = `/api/v1/files/upload-archive`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: formParams,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<UploadArchiveResponseDto>(response);
+  }
+
+  /**
+   * Upload a ZIP archive and extract its contents to a destination folder
+   */
+  async uploadArchive(
+    requestParameters: UploadArchiveRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<UploadArchiveResponseDto> {
+    const response = await this.uploadArchiveRaw(
+      requestParameters,
+      initOverrides,
+    );
     return await response.value();
   }
 

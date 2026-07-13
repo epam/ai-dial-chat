@@ -477,7 +477,11 @@
     "metadataPathLabel": "Path:",
     "metadataModifiedDateLabel": "Modified Date:",
     "metadataSizeLabel": "Size:",
-    "metadataAuthorLabel": "Author:"
+    "metadataAuthorLabel": "Author:",
+    "uploadArchiveAction": "Upload archive",
+    "uploadArchiveError": "Failed to upload the archive",
+    "uploadArchivePartialError_one": "{{count}} item in the archive could not be uploaded",
+    "uploadArchivePartialError_other": "{{count}} items in the archive could not be uploaded"
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."

@@ -4209,6 +4209,44 @@ export interface UpdateSelectedDeploymentDto {
 /**
  *
  * @export
+ * @interface UploadArchiveEntryResultDto
+ */
+export interface UploadArchiveEntryResultDto {
+  /**
+   * Destination path of the extracted entry (relative to bucket)
+   * @type {string}
+   * @memberof UploadArchiveEntryResultDto
+   */
+  path: string;
+  /**
+   * true when the entry was extracted and uploaded successfully
+   * @type {boolean}
+   * @memberof UploadArchiveEntryResultDto
+   */
+  success: boolean;
+  /**
+   * Human-readable error reason when success is false
+   * @type {string}
+   * @memberof UploadArchiveEntryResultDto
+   */
+  error?: string;
+}
+/**
+ *
+ * @export
+ * @interface UploadArchiveResponseDto
+ */
+export interface UploadArchiveResponseDto {
+  /**
+   *
+   * @type {Array<UploadArchiveEntryResultDto>}
+   * @memberof UploadArchiveResponseDto
+   */
+  results: Array<UploadArchiveEntryResultDto>;
+}
+/**
+ *
+ * @export
  * @interface UserConfigDto
  */
 export interface UserConfigDto {

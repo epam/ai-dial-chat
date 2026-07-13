@@ -1926,6 +1926,70 @@
         "tags": ["files"]
       }
     },
+    "/api/v1/files/upload-archive": {
+      "post": {
+        "operationId": "uploadArchive",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "bucket", "destinationPath"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "bucket": {
+                    "type": "string"
+                  },
+                  "destinationPath": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadArchiveResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, non-ZIP file, or empty archive"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "413": {
+            "description": "Archive exceeds ARCHIVE_UPLOAD_MAX_BYTES"
+          },
+          "422": {
+            "description": "Archive exceeds ARCHIVE_UPLOAD_MAX_FILES or ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable, timed out, or ARCHIVE_UPLOAD_TIMEOUT_MS exceeded"
+          }
+        },
+        "summary": "Upload a ZIP archive and extract its contents to a destination folder",
+        "tags": ["files"]
+      }
+    },
     "/api/v1/files/list": {
       "get": {
         "description": "Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility.",
@@ -5305,6 +5369,36 @@
           }
         },
         "required": ["url"]
+      },
+      "UploadArchiveEntryResultDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Destination path of the extracted entry (relative to bucket)"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "true when the entry was extracted and uploaded successfully"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error reason when success is false"
+          }
+        },
+        "required": ["path", "success"]
+      },
+      "UploadArchiveResponseDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UploadArchiveEntryResultDto"
+            }
+          }
+        },
+        "required": ["results"]
       },
       "ListFilesItemDto": {
         "type": "object",

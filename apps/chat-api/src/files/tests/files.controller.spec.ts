@@ -293,6 +293,99 @@ describe('FilesController — upload', () => {
   });
 });
 
+describe('FilesController — upload-archive', () => {
+  let app: INestApplication;
+  let service: {
+    uploadFile: ReturnType<typeof vi.fn>;
+    uploadArchive: ReturnType<typeof vi.fn>;
+    downloadFile: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    service = {
+      uploadFile: vi.fn(),
+      uploadArchive: vi.fn().mockResolvedValue({
+        results: [{ path: 'reports/a.txt', success: true }],
+      }),
+      downloadFile: vi.fn(),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with results on a valid multipart request', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', 'reports')
+      .attach('file', Buffer.from('zip-bytes'), 'archive.zip')
+      .expect(200);
+
+    expect(res.body).toEqual({
+      results: [{ path: 'reports/a.txt', success: true }],
+    });
+    expect(service.uploadArchive).toHaveBeenCalledWith(
+      'my-bucket',
+      'reports',
+      expect.objectContaining({ buffer: expect.any(Buffer) }),
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when the file field is missing', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', 'reports')
+      .expect(400);
+    expect(service.uploadArchive).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for a missing bucket', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('destinationPath', 'reports')
+      .attach('file', Buffer.from('zip-bytes'), 'archive.zip')
+      .expect(400);
+    expect(service.uploadArchive).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for an invalid destinationPath (path traversal)', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', '../etc')
+      .attach('file', Buffer.from('zip-bytes'), 'archive.zip')
+      .expect(400);
+    expect(service.uploadArchive).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    service.uploadArchive.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', 'reports')
+      .attach('file', Buffer.from('zip-bytes'), 'archive.zip')
+      .expect(401);
+  });
+
+  it('returns 413 when multer rejects an oversized archive', async () => {
+    await app.close();
+    app = await buildApp(service, { fileSizeLimit: 1 });
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', 'reports')
+      .attach('file', Buffer.from('zip-bytes-too-large'), 'archive.zip')
+      .expect(413);
+  });
+});
+
 describe('FilesController — download', () => {
   let app: INestApplication;
   let service: {

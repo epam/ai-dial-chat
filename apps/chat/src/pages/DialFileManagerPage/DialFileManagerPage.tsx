@@ -58,7 +58,7 @@ const DialFileManagerPage: FC = () => {
     rootLabel,
     onNotification: showNotification,
     variant: DialFileManagerVariant.Standalone,
-    actionProfile: DialFileManagerActionProfile.Browse,
+    actionProfile: DialFileManagerActionProfile.Full,
     forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
   });
 
@@ -147,6 +147,7 @@ const DialFileManagerPage: FC = () => {
       getSelectionLabel: (count) =>
         t(DialFileManagerI18nKeys.ItemsSelected, { count }),
       uploadFilesLabel: t(DialFileManagerI18nKeys.Upload),
+      uploadArchiveAction: t(DialFileManagerI18nKeys.UploadArchiveAction),
       newFolderLabel: t(DialFileManagerI18nKeys.NewFolder),
       downloadLabel: t(DialFileManagerI18nKeys.Download),
       downloadingLabel: t(DialFileManagerI18nKeys.Downloading),
@@ -280,6 +281,8 @@ const DialFileManagerPage: FC = () => {
         onTabChange={handleTabChangeWithReset}
         selectedPaths={selectedPaths}
         onSelectedPathsChange={setSelectedPaths}
+        variant={DialFileManagerVariant.Standalone}
+        actionProfile={DialFileManagerActionProfile.Full}
         autoSelectUploadedItems={true}
       />
     </div>
