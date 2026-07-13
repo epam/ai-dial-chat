@@ -4,8 +4,9 @@ import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
-import type { CatalogItemTabData } from '../../models/item-details-data';
+import type { CatalogItemDetailsFetchResult } from '../../models/item-details-data';
 import { CatalogSortKey } from '../../types/sort';
+import type { CredentialsLevel } from '../../types/toolset-auth';
 import { CatalogViewMode } from '../../types/view-mode';
 import {
   filterByMyApp,
@@ -39,6 +40,8 @@ export const Catalog: FC<CatalogProps> = ({
   shareOverlay,
   onFetchDetails,
   onEdit,
+  onLogin,
+  onLogout,
   onCreateClick,
   createOptions,
   hideCreateButton = false,
@@ -133,7 +136,7 @@ export const Catalog: FC<CatalogProps> = ({
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [fetchedDetails, setFetchedDetails] = useState<
-    CatalogItemTabData | undefined
+    CatalogItemDetailsFetchResult | undefined
   >(undefined);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
@@ -183,6 +186,25 @@ export const Catalog: FC<CatalogProps> = ({
     void handleOpenDetails(item);
   }, [initialDetailsItemId, items, handleOpenDetails]);
 
+  const handleLogin = useCallback(
+    async (
+      item: CatalogItem,
+      params: { level: CredentialsLevel; apiKey?: string },
+    ) => {
+      await onLogin?.(item, params);
+      await handleOpenDetails(item);
+    },
+    [onLogin, handleOpenDetails],
+  );
+
+  const handleLogout = useCallback(
+    async (item: CatalogItem, params: { level: CredentialsLevel }) => {
+      await onLogout?.(item, params);
+      await handleOpenDetails(item);
+    },
+    [onLogout, handleOpenDetails],
+  );
+
   const handleCloseDetails = useCallback(() => {
     setIsDetailsOpen(false);
     pendingItemIdRef.current = null;
@@ -195,9 +217,13 @@ export const Catalog: FC<CatalogProps> = ({
 
   const detailsPanelItem = useMemo<CatalogItem | null>(() => {
     if (selectedItem == null) return null;
-    return fetchedDetails != null
-      ? { ...selectedItem, details: fetchedDetails }
-      : selectedItem;
+    if (fetchedDetails == null) return selectedItem;
+    const { credentials, ...tabData } = fetchedDetails;
+    return {
+      ...selectedItem,
+      details: tabData,
+      credentials: credentials ?? selectedItem.credentials,
+    };
   }, [selectedItem, fetchedDetails]);
 
   const sorted = useMemo(
@@ -244,8 +270,13 @@ export const Catalog: FC<CatalogProps> = ({
 
   const emptyTitle = query ? noResultsTitle(query) : 'No items';
   const cardGridTitles = useMemo(
-    () => ({ noResultsTitle: emptyTitle, featuredLabel }),
-    [emptyTitle, featuredLabel],
+    () => ({
+      noResultsTitle: emptyTitle,
+      featuredLabel,
+      credentialsBadgeLoggedOutLabel:
+        detailsTexts?.credentialsBadgeLoggedOutLabel,
+    }),
+    [emptyTitle, featuredLabel, detailsTexts?.credentialsBadgeLoggedOutLabel],
   );
 
   if (isLoading) {
@@ -372,6 +403,9 @@ export const Catalog: FC<CatalogProps> = ({
                 onItemClick={onCardClick ?? handleOpenDetails}
                 stickyHeaderTop={0}
                 selectedItemId={selectedItemId}
+                credentialsBadgeLoggedOutLabel={
+                  detailsTexts?.credentialsBadgeLoggedOutLabel
+                }
               />
             </div>
           )}
@@ -391,6 +425,8 @@ export const Catalog: FC<CatalogProps> = ({
           onShare={onShare}
           shareOverlay={shareOverlay}
           onEdit={onEdit}
+          onLogin={handleLogin}
+          onLogout={handleLogout}
           texts={detailsTexts}
         />
       )}

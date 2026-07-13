@@ -91,6 +91,28 @@
       "pricing": {
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
+      },
+      "credentials": {
+        "loginLabel": "Log in",
+        "logoutLabel": "Log out",
+        "signedInLabel": "Signed in",
+        "signedOutLabel": "Signed out",
+        "logoutConfirmMessage": "Are you sure you want to log out?",
+        "apiKeyFieldLabel": "API key",
+        "apiKeyFieldHint": "Enter your API key value for \"{{header}}\" header",
+        "loginWithMyCredsLabel": "Login with my creds",
+        "manageLabel": "Manage credentials",
+        "mySectionLabel": "My credentials",
+        "orgSectionLabel": "Entire organization credentials",
+        "badgeLoggedOut": "LOGGED OUT",
+        "loginSuccessTitle": "Successful login",
+        "loginSuccessOrg": "You have successfully logged into the \"{{name}}\" version {{version}} with credentials to entire organization.",
+        "loginSuccessGlobal": "You have successfully logged into the \"{{name}}\" version {{version}}.",
+        "loginSuccessUser": "You have successfully logged into the \"{{name}}\" version {{version}} with personal credentials.",
+        "logoutSuccessTitle": "Successful logout",
+        "logoutSuccessOrg": "You have successfully logged out of the \"{{name}}\" version {{version}} with credentials to entire organization.",
+        "logoutSuccessGlobal": "You have successfully logged out of the \"{{name}}\" version {{version}}.",
+        "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials."
       }
     },
     "create": {
@@ -247,7 +269,8 @@
     "deleteAllError": "Failed to delete all conversations. Please try again.",
     "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed.",
     "deleteAllSuccessTitle": "All conversations deleted",
-    "deleteAllSuccess": "All conversations have been deleted successfully."
+    "deleteAllSuccess": "All conversations have been deleted successfully.",
+    "shareLabel": "Share"
   },
   "auth": {
     "signOut": "Sign out",
@@ -509,6 +532,7 @@
     "accessAriaLabel": "Link access level",
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
+    "visibilityNoteConversation": "This conversation and its updates will be visible to users with the link.",
     "copyButtonLabel": "Copy",
     "copiedButtonLabel": "Copied",
     "linkAriaLabel": "Share link",

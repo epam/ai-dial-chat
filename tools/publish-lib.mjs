@@ -240,6 +240,21 @@ try {
   // Remove "private" so npm allows publishing
   delete json.private;
 
+  // npm's automatic provenance (enabled by the release workflow's
+  // "id-token: write" permission) validates "repository.url" against the
+  // "repository" claim in the OIDC token, which reflects the actual
+  // publishing repo (e.g. a fork) — publish fails with E422 if it's missing
+  // or wrong, so derive it from the CI env instead of hardcoding it.
+  const repoUrl =
+    process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY
+      ? `git+${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}.git`
+      : 'git+https://github.com/epam/ai-dial-chat.git';
+  json.repository = {
+    type: 'git',
+    url: repoUrl,
+    directory: projectRoot.split(path.sep).join('/'),
+  };
+
   // Rewrite entry-point paths (main, module, types, exports)
   if (json.main) json.main = stripDistPrefix(json.main);
   if (json.module) json.module = stripDistPrefix(json.module);

@@ -22,6 +22,7 @@ interface CapturedActionLabels {
 const capturedDialFileManagerProps: {
   current: {
     onCreateFolder?: unknown;
+    autoSelectUploadedItems?: boolean;
     onGetInfo?: unknown;
     gridOptions?: CapturedActionLabels;
     treeOptions?: CapturedActionLabels;
@@ -52,6 +53,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       destinationFolderPopupOptions?: { sourceFolder?: string };
       onCreateFolder?: unknown;
       onGetInfo?: unknown;
+      autoSelectUploadedItems?: boolean;
       gridOptions?: CapturedActionLabels;
       treeOptions?: CapturedActionLabels;
       bulkActionsToolbarOptions?: CapturedActionLabels;
@@ -261,6 +263,13 @@ describe('DialFileManagerShell', () => {
   it('renders DialFileManager (ui-kit) with hook result data', () => {
     renderShell();
     expect(screen.getByRole('region', { name: 'file manager' })).toBeTruthy();
+  });
+
+  it('keeps uploaded items unselected by default', () => {
+    renderShell();
+    expect(capturedDialFileManagerProps.current?.autoSelectUploadedItems).toBe(
+      false,
+    );
   });
 
   it('shows the empty-state title from the current tab when items are empty', () => {

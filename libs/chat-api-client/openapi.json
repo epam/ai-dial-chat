@@ -3025,7 +3025,7 @@
     },
     "/api/v1/share": {
       "post": {
-        "description": "Creates a share link for a catalog entity (agent, application, skill, toolset, or model) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
+        "description": "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — or conversation) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
         "operationId": "createShareLink",
         "parameters": [],
         "requestBody": {
@@ -3195,14 +3195,20 @@
           },
           "claims": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": true,
+            "description": "Allowlisted claims keyed by claim name. A dot-notation rolesClaim (e.g. \"realm_access.roles\") is stored under one flat key equal to that literal string, never as a nested object."
           },
           "bucket": {
             "type": "string",
             "example": "default-bucket"
+          },
+          "isAdmin": {
+            "type": "boolean",
+            "example": false,
+            "description": "Whether the user's roles claim intersects the provider's configured adminRoles"
           }
         },
-        "required": ["sub", "providerId", "claims", "bucket"]
+        "required": ["sub", "providerId", "claims", "bucket", "isAdmin"]
       },
       "ClientConfigDto": {
         "type": "object",

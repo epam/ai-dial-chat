@@ -1,4 +1,5 @@
 import type { CodeLanguage } from '../types/code-language';
+import type { CatalogItemCredentials } from './catalog-item-credentials';
 import type { CatalogItemOverview } from './item-overview';
 
 /** A code snippet for one programming language in the API tab. */
@@ -114,4 +115,14 @@ export interface CatalogItemTabData {
   api?: CatalogItemApiDetails;
   /** Tools tab data (Toolset only). When absent the Tools tab is hidden. */
   tools?: CatalogItemTools;
+}
+
+/**
+ * Result returned by `onFetchDetails`: tab data plus the item's refreshed
+ * credential status, so the details panel can update sign-in state after a
+ * login/logout without a separate fetch path.
+ */
+export interface CatalogItemDetailsFetchResult extends CatalogItemTabData {
+  /** Credential status for the item's own authentication, refreshed alongside tab data. */
+  credentials?: CatalogItemCredentials;
 }

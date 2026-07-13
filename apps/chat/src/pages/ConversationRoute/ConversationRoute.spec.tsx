@@ -189,7 +189,13 @@ describe('ConversationRoute', () => {
       refetchToolsets: vi.fn(),
     });
     mockUseUser.mockReturnValue({
-      user: { sub: 'u1', providerId: 'p1', claims: {}, bucket: 'user-bucket' },
+      user: {
+        sub: 'u1',
+        providerId: 'p1',
+        claims: {},
+        bucket: 'user-bucket',
+        isAdmin: false,
+      },
       status: AuthStatus.Authenticated,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -565,7 +571,13 @@ describe('ConversationRoute', () => {
 
   it('creates a text-only conversation when bucket is empty', async () => {
     mockUseUser.mockReturnValue({
-      user: { sub: 'u1', providerId: 'p1', claims: {}, bucket: '' },
+      user: {
+        sub: 'u1',
+        providerId: 'p1',
+        claims: {},
+        bucket: '',
+        isAdmin: false,
+      },
       status: AuthStatus.Authenticated,
       refresh: vi.fn(),
       reset: vi.fn(),

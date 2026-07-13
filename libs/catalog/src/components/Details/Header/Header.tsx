@@ -1,6 +1,12 @@
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import { IconPencil, IconPlayerPlayFilled } from '@tabler/icons-react';
+import {
+  IconKey,
+  IconLogin,
+  IconLogout,
+  IconPencil,
+  IconPlayerPlayFilled,
+} from '@tabler/icons-react';
 import { FC, type ReactNode, useCallback } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import type {
@@ -8,6 +14,12 @@ import type {
   ItemDetailsTexts,
 } from '../../../models/item-details-props';
 import { CatalogEntityType } from '../../../types/entity-type';
+import {
+  CredentialsUiState,
+  ToolsetAuthenticationType,
+  type CredentialsLevel,
+} from '../../../types/toolset-auth';
+import { getCredentialsUiState } from '../../../utils/toolset-credentials';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import { FolderPath } from '../../FolderPath/FolderPath';
 import { ShareButton } from './ShareButton/ShareButton';
@@ -23,6 +35,26 @@ interface HeaderProps {
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   onEdit?: (item: CatalogItem) => void;
+  onLogin?: (
+    item: CatalogItem,
+    params: { level: CredentialsLevel; apiKey?: string },
+  ) => Promise<void> | void;
+  onLogout?: (
+    item: CatalogItem,
+    params: { level: CredentialsLevel },
+  ) => Promise<void> | void;
+  /**
+   * Called when the credentials trigger button is clicked and the
+   * resolved state is "Log in" / "Login with my creds" / "Manage
+   * credentials" — toggles the inline credentials section.
+   */
+  onToggleCredentials?: () => void;
+  /**
+   * Called instead of `onToggleCredentials` when the resolved state is
+   * "Log out" — opens the logout confirmation directly, without expanding
+   * the full section first.
+   */
+  onRequestLogout?: () => void;
   texts?: ItemDetailsTexts;
   detailsStyles?: ItemDetailsStyles;
 }
@@ -34,6 +66,10 @@ export const Header: FC<HeaderProps> = ({
   onShare,
   shareOverlay,
   onEdit,
+  onLogin,
+  onLogout,
+  onToggleCredentials,
+  onRequestLogout,
   texts,
   detailsStyles,
 }) => {
@@ -58,6 +94,42 @@ export const Header: FC<HeaderProps> = ({
         item.type === CatalogEntityType.Application));
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
+
+  const credentialsUiState =
+    item.credentials != null &&
+    item.credentials.authenticationType !== ToolsetAuthenticationType.None
+      ? getCredentialsUiState(item.credentials)
+      : undefined;
+  const shouldShowCredentialsAction =
+    credentialsUiState != null && (!!onLogin || !!onLogout);
+
+  const handleCredentialsClick = useCallback(() => {
+    if (credentialsUiState === CredentialsUiState.LogOut) {
+      onRequestLogout?.();
+    } else {
+      onToggleCredentials?.();
+    }
+  }, [credentialsUiState, onRequestLogout, onToggleCredentials]);
+
+  const credentialsLabel = {
+    [CredentialsUiState.ManageCredentials]:
+      texts?.manageCredentialsActionLabel ?? 'Manage credentials',
+    [CredentialsUiState.LoginWithMyCreds]:
+      texts?.loginWithMyCredsActionLabel ?? 'Login with my creds',
+    [CredentialsUiState.LogIn]: texts?.loginActionLabel ?? 'Log in',
+    [CredentialsUiState.LogOut]: texts?.logoutActionLabel ?? 'Log out',
+  }[credentialsUiState ?? CredentialsUiState.LogIn];
+
+  const credentialsIcon = {
+    [CredentialsUiState.ManageCredentials]: (
+      <IconKey size={DIAL_ICON_SIZE.MD} />
+    ),
+    [CredentialsUiState.LoginWithMyCreds]: (
+      <IconLogin size={DIAL_ICON_SIZE.MD} />
+    ),
+    [CredentialsUiState.LogIn]: <IconLogin size={DIAL_ICON_SIZE.MD} />,
+    [CredentialsUiState.LogOut]: <IconLogout size={DIAL_ICON_SIZE.MD} />,
+  }[credentialsUiState ?? CredentialsUiState.LogIn];
 
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
@@ -97,6 +169,13 @@ export const Header: FC<HeaderProps> = ({
           shareOverlay={shareOverlay}
           label={texts?.shareLabel}
         />
+        {shouldShowCredentialsAction && (
+          <NeutralButton
+            label={credentialsLabel}
+            iconBefore={credentialsIcon}
+            onClick={handleCredentialsClick}
+          />
+        )}
       </div>
     </div>
   );

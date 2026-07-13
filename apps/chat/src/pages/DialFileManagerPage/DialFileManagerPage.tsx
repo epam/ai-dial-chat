@@ -283,7 +283,7 @@ const DialFileManagerPage: FC = () => {
         onSelectedPathsChange={setSelectedPaths}
         variant={DialFileManagerVariant.Standalone}
         actionProfile={DialFileManagerActionProfile.Full}
-        autoSelectUploadedItems={true}
+        autoSelectUploadedItems={false}
       />
     </div>
   );

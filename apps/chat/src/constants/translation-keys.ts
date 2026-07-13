@@ -138,6 +138,26 @@ export enum CatalogI18nKeys {
   TabToolsets = 'catalog.tab.toolsets',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
+  CredentialsLoginLabel = 'catalog.details.credentials.loginLabel',
+  CredentialsLogoutLabel = 'catalog.details.credentials.logoutLabel',
+  CredentialsSignedInLabel = 'catalog.details.credentials.signedInLabel',
+  CredentialsSignedOutLabel = 'catalog.details.credentials.signedOutLabel',
+  CredentialsLogoutConfirmMessage = 'catalog.details.credentials.logoutConfirmMessage',
+  CredentialsApiKeyFieldLabel = 'catalog.details.credentials.apiKeyFieldLabel',
+  CredentialsApiKeyFieldHint = 'catalog.details.credentials.apiKeyFieldHint',
+  CredentialsLoginWithMyCredsLabel = 'catalog.details.credentials.loginWithMyCredsLabel',
+  CredentialsManageLabel = 'catalog.details.credentials.manageLabel',
+  CredentialsMySectionLabel = 'catalog.details.credentials.mySectionLabel',
+  CredentialsOrgSectionLabel = 'catalog.details.credentials.orgSectionLabel',
+  CredentialsBadgeLoggedOut = 'catalog.details.credentials.badgeLoggedOut',
+  CredentialsLoginSuccessTitle = 'catalog.details.credentials.loginSuccessTitle',
+  CredentialsLoginSuccessOrg = 'catalog.details.credentials.loginSuccessOrg',
+  CredentialsLoginSuccessGlobal = 'catalog.details.credentials.loginSuccessGlobal',
+  CredentialsLoginSuccessUser = 'catalog.details.credentials.loginSuccessUser',
+  CredentialsLogoutSuccessTitle = 'catalog.details.credentials.logoutSuccessTitle',
+  CredentialsLogoutSuccessOrg = 'catalog.details.credentials.logoutSuccessOrg',
+  CredentialsLogoutSuccessGlobal = 'catalog.details.credentials.logoutSuccessGlobal',
+  CredentialsLogoutSuccessUser = 'catalog.details.credentials.logoutSuccessUser',
 }
 
 export enum DeploymentSelectorI18nKeys {
@@ -372,6 +392,7 @@ export enum ConversationPanelI18nKeys {
   DeleteAllPartialError = 'conversationPanel.deleteAllPartialError',
   DeleteAllSuccessTitle = 'conversationPanel.deleteAllSuccessTitle',
   DeleteAllSuccess = 'conversationPanel.deleteAllSuccess',
+  ShareLabel = 'conversationPanel.shareLabel',
 }
 
 export enum SidebarI18nKeys {
@@ -556,6 +577,7 @@ export enum ShareI18nKeys {
   AccessAriaLabel = 'share.accessAriaLabel',
   VisibilityNote = 'share.visibilityNote',
   VisibilityNoteEdit = 'share.visibilityNoteEdit',
+  VisibilityNoteConversation = 'share.visibilityNoteConversation',
   CopyButtonLabel = 'share.copyButtonLabel',
   CopiedButtonLabel = 'share.copiedButtonLabel',
   LinkAriaLabel = 'share.linkAriaLabel',

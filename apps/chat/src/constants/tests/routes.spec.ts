@@ -47,4 +47,16 @@ describe('getConversationRoute', () => {
       '/conversations/tenant/applications/catalog/Team%252FApp%2520One__0.0.1__title',
     );
   });
+
+  it('falls back to root when a segment is a parent-directory traversal', () => {
+    expect(getConversationRoute('tenant/../../evil')).toBe('/');
+  });
+
+  it('falls back to root when a segment is the current-directory dot', () => {
+    expect(getConversationRoute('tenant/./path')).toBe('/');
+  });
+
+  it('falls back to root when a segment is empty (double slash)', () => {
+    expect(getConversationRoute('tenant//path')).toBe('/');
+  });
 });
