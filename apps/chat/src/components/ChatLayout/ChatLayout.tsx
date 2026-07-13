@@ -8,6 +8,7 @@ import {
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
+import SourcesSidebarToggle from '../Header/SourcesSidebarToggle';
 
 interface Props {
   isHistoryPanelOpen: boolean;
@@ -30,7 +31,7 @@ const ChatLayout: FC<Props> = ({
             <IconLayoutSidebarRight
               size={DIAL_ICON_SIZE.LG}
               stroke={1.5}
-              className={'rtl:scale-x-[-1]'}
+              className="rtl:scale-x-[-1]"
             />
           }
           aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
@@ -48,6 +49,9 @@ const ChatLayout: FC<Props> = ({
             className="new-chat-rail-btn"
           />
         )}
+        <div className="ms-auto">
+          <SourcesSidebarToggle />
+        </div>
       </div>
       <Outlet />
     </div>

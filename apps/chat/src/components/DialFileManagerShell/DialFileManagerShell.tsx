@@ -52,7 +52,7 @@ const DialFileManagerShell: FC<Props> = ({
   onTabChange,
   selectedPaths,
   onSelectedPathsChange,
-  autoSelectUploadedItems = true,
+  autoSelectUploadedItems = false,
   allowedFileTypes,
   maxSelectableFileSize,
   isRowSelectable,

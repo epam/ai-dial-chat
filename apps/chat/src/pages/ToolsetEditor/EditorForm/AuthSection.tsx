@@ -96,7 +96,7 @@ const AuthSection: FC<Props> = ({
     if (!canLogIn) return;
 
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
-      const started = initiateOAuthLogin(auth, toolsetId, window.location.href);
+      const started = initiateOAuthLogin(auth, toolsetId);
       if (!started) {
         showNotification({
           variant: NotificationVariant.Error,

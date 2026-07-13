@@ -348,7 +348,11 @@ const ConversationView: FC<Props> = ({
     isScrollButtonVisible,
     scrollToBottom,
     armAnchor,
-  } = useConversationScroll({ messages, isAssistantTyping });
+  } = useConversationScroll({
+    messages,
+    isAssistantTyping,
+    conversationId: conversation.id,
+  });
 
   const handleSendWithAnchor = useCallback(
     async (message: string, attachments: Attachment[]) => {

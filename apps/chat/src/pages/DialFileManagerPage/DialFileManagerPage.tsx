@@ -242,7 +242,7 @@ const DialFileManagerPage: FC = () => {
         onTabChange={handleTabChangeWithReset}
         selectedPaths={selectedPaths}
         onSelectedPathsChange={setSelectedPaths}
-        autoSelectUploadedItems={true}
+        autoSelectUploadedItems={false}
       />
     </div>
   );

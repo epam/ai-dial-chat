@@ -1,5 +1,6 @@
 // Primary — gradient pill
 .dial-primary-solid-button {
+  @apply rounded-full border-none;
   background-color: transparent !important;
   padding-inline: 24px !important;
   background-image: linear-gradient(
@@ -8,8 +9,6 @@
     var(--bg-accent-primary, #5c8dea) 30%,
     var(--bg-accent-tertiary, #a972ff) 100%
   );
-  border: none !important;
-  border-radius: 9999px !important;
   box-shadow:
     0 0 16px rgba(55, 186, 188, 0.25),
     0 4px 12px rgba(169, 114, 255, 0.22);
@@ -58,11 +57,15 @@
   }
 }
 
+.dial-danger-solid-button {
+  border-radius: 9999px !important;
+}
+
 .dial-primary-solid-button.dial-primary-solid-button {
+  @apply rounded-full;
   background-color: transparent;
   background-image: linear-gradient(135deg, #4b7be6 0%, #9355f4 100%);
   border: none;
-  border-radius: 9999px;
   box-shadow: 0 4px 16px rgba(92, 141, 234, 0.32);
   transition:
     box-shadow 200ms ease,
@@ -94,8 +97,8 @@
 
 // Secondary — soft blue fill + pill, brand blue text
 .dial-neutral-outlined-button {
-  border: 1px solid rgba(39, 100, 217, 0.2) !important;
   border-radius: 9999px !important;
+  border: 1px solid rgba(39, 100, 217, 0.2) !important;
   background-color: rgba(39, 100, 217, 0.08) !important;
   background-image: none !important;
   color: var(--bg-accent-primary, #2764d9) !important;
@@ -125,8 +128,7 @@
 
 // Tertiary — ghost pill, no border, brand blue text
 .dial-primary-ghost-button:not(.dial-icon-button) {
-  border: none !important;
-  border-radius: 9999px !important;
+  @apply rounded-full border-none;
   color: var(--bg-accent-primary, #2764d9) !important;
 
   @media (hover: hover) {

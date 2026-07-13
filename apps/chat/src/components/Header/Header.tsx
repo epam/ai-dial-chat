@@ -1,10 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import {
-  IconFileDescription,
-  IconLayoutSidebarRight,
-  IconMenu2,
-} from '@tabler/icons-react';
+import { IconLayoutSidebarRight, IconMenu2 } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,11 +9,10 @@ import {
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
   NavigationI18nKeys,
-  SidebarI18nKeys,
 } from '../../constants/translation-keys';
-import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { ROUTES } from '../../types/routes';
 import Logo from './Logo';
+import SourcesSidebarToggle from './SourcesSidebarToggle';
 
 interface Props {
   onMenuToggle: () => void;
@@ -37,8 +32,6 @@ const Header: FC<Props> = ({
   const isConversationRoute = !!useMatch(`${ROUTES.Conversations}/*`);
   const isRootRoute = !!useMatch(ROUTES.Root);
   const isConversationPanel = isConversationRoute || isRootRoute;
-  const { isOpen: isSourcesSidebarOpen, handleOpen: handleOpenSourcesSidebar } =
-    useSourcesSidebar();
 
   return (
     <header className="relative z-30 grid min-h-[64px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-tertiary bg-layer-0 desktop:hidden">
@@ -142,15 +135,7 @@ const Header: FC<Props> = ({
       </div>
       <Logo />
       <div className="flex justify-end pe-3">
-        {isConversationRoute && !isSourcesSidebarOpen && (
-          <DialGhostIconButton
-            icon={<IconFileDescription size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-            aria-label={t(SidebarI18nKeys.ToggleOpen)}
-            aria-pressed={isSourcesSidebarOpen}
-            tooltipProps={{ tooltip: t(SidebarI18nKeys.ToggleOpen) }}
-            onClick={handleOpenSourcesSidebar}
-          />
-        )}
+        <SourcesSidebarToggle />
       </div>
     </header>
   );
