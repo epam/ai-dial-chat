@@ -1,12 +1,17 @@
 import type {
   CatalogItemApiDetails,
+  CatalogItemCredentials,
   CatalogItemPricing,
   CatalogItemTabData,
   CodeSnippet,
   EndpointOption,
   OverviewSection,
 } from '@epam/ai-dial-catalog';
-import { CodeLanguage } from '@epam/ai-dial-catalog';
+import {
+  CodeLanguage,
+  CredentialStatus,
+  ToolsetAuthenticationType,
+} from '@epam/ai-dial-catalog';
 import type {
   DeploymentDetailsDto,
   DeploymentFeaturesDetailsDto,
@@ -23,6 +28,7 @@ import type {
   ToolsetAuthStatus,
   ToolsetEntityDetails,
 } from '../types/entity-details';
+import { isPublicToolsetId } from './toolsets';
 
 const ENDPOINT_LABELS: Record<ModelEndpointType, string> = {
   [ModelEndpointType.AzureOpenAI]: 'Azure OpenAI Endpoint',
@@ -304,6 +310,50 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
   };
 };
 
+const TOOLSET_AUTHENTICATION_TYPE_MAP: Partial<
+  Record<AuthenticationType, ToolsetAuthenticationType>
+> = {
+  [AuthenticationType.None]: ToolsetAuthenticationType.None,
+  [AuthenticationType.ApiKey]: ToolsetAuthenticationType.ApiKey,
+  [AuthenticationType.OAuth]: ToolsetAuthenticationType.OAuth,
+};
+
+const TOOLSET_AUTH_STATUS_MAP: Record<string, CredentialStatus> = {
+  SIGNED_IN: CredentialStatus.SignedIn,
+  SIGNED_OUT: CredentialStatus.SignedOut,
+  FAILED: CredentialStatus.Failed,
+};
+
+/**
+ * Maps a toolset's specification into the lib's credential-status shape,
+ * for refreshing the details panel after login/logout. Includes both
+ * `USER` and `GLOBAL` status, whether the toolset is public, and whether
+ * the current user (if an admin) may manage both levels.
+ */
+export const mapToolsetCredentials = (
+  toolsetId: string,
+  data: ToolsetEntityDetails,
+  isAdmin: boolean,
+): CatalogItemCredentials | undefined => {
+  const authenticationType =
+    TOOLSET_AUTHENTICATION_TYPE_MAP[
+      data.specification?.authentication ?? AuthenticationType.None
+    ];
+  if (authenticationType == null) return undefined;
+
+  const { userLevel, global } = data.specification?.authStatus ?? {};
+  const isPublic = isPublicToolsetId(toolsetId);
+
+  return {
+    authenticationType,
+    userStatus: userLevel ? TOOLSET_AUTH_STATUS_MAP[userLevel] : undefined,
+    globalStatus: global ? TOOLSET_AUTH_STATUS_MAP[global] : undefined,
+    isPublic,
+    isManageableByAdmin: isAdmin && isPublic,
+    apiKeyHeader: data.specification?.authStatus?.apiKeyHeader,
+  };
+};
+
 const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
 
@@ -328,11 +378,6 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
       specs.push({
         label: 'Release date',
         value: formatReleaseDate(s.createdAt),
-      });
-    if (s.authStatus?.userLevel != null)
-      specs.push({
-        label: 'Sign-in status',
-        value: s.authStatus.userLevel,
       });
     if (s.authStatus?.scopesSupported?.length)
       specs.push({
@@ -591,6 +636,7 @@ const mapToolsetAuthStatus = (
     scopesSupported,
     authorizationEndpoint,
     tokenEndpoint,
+    apiKeyHeader,
   } = authSettings;
 
   if (
@@ -599,6 +645,7 @@ const mapToolsetAuthStatus = (
     userLevelAuthStatus == null &&
     authorizationEndpoint == null &&
     tokenEndpoint == null &&
+    apiKeyHeader == null &&
     !scopesSupported?.length
   ) {
     return undefined;
@@ -611,6 +658,7 @@ const mapToolsetAuthStatus = (
     scopesSupported,
     authorizationEndpoint,
     tokenEndpoint,
+    apiKeyHeader,
   };
 };
 

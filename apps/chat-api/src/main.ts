@@ -15,7 +15,10 @@ import {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['log', 'error', 'warn'],
+    logger:
+      process.env['NODE_ENV'] === 'production'
+        ? ['log', 'error', 'warn']
+        : ['log', 'error', 'warn', 'debug'],
   });
 
   app.use(cookieParser());

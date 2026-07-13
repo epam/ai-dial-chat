@@ -68,4 +68,6 @@ export interface CardProps {
   removeFromFavoritesAriaLabel?: string;
   /** Whether this card represents the currently selected item — shows an accent border, tinted background, and a checkmark. Default: false. */
   isSelected?: boolean;
+  /** Credentials-status badge label shown when signed out. Default: `'LOGGED OUT'`. */
+  credentialsBadgeLoggedOutLabel?: string;
 }

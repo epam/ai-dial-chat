@@ -9,6 +9,7 @@ import type { ICellRendererParams } from 'ag-grid-community';
 import { FC } from 'react';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
+import { CredentialsBadge } from '../../CredentialsBadge/CredentialsBadge';
 import { ItemHeader } from '../../ItemHeader/ItemHeader';
 import styles from '../ListView.module.scss';
 
@@ -49,6 +50,11 @@ export const NameCellRenderer: FC<
           <Highlight text={data.description} query={searchQuery} />
         </p>
       </div>
+      <CredentialsBadge
+        credentials={data.credentials}
+        loggedOutLabel={context?.credentialsBadgeLoggedOutLabel}
+        className="ms-2 shrink-0"
+      />
     </div>
   );
 };
