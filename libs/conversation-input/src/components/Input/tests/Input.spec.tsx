@@ -1,4 +1,5 @@
 import {
+  AttachmentErrorReason,
   AttachmentType,
   RequestStatus,
   type Attachment,
@@ -699,6 +700,45 @@ describe('Input — attachment status transitions', () => {
     await waitFor(() => {
       expect(handleUploadAttachment).toHaveBeenCalledTimes(2);
       expect(screen.getByLabelText('Send message')).toBeTruthy();
+    });
+  });
+
+  it('flags an already-attached file as an error when the model changes to one that no longer supports it', async () => {
+    const handleUploadAttachment = vi
+      .fn()
+      .mockResolvedValue('https://example.com/doc.pdf');
+    const allowAll = () => undefined;
+
+    const { rerender } = render(
+      <Input
+        onUploadAttachment={handleUploadAttachment}
+        validateAttachment={allowAll}
+      />,
+    );
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+      ).toBe(false);
+    });
+
+    rerender(
+      <Input
+        onUploadAttachment={handleUploadAttachment}
+        validateAttachment={() => AttachmentErrorReason.UnsupportedType}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Retry upload')).toBeNull();
+      expect(
+        (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+      ).toBe(true);
     });
   });
 });
