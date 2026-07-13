@@ -11,6 +11,24 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public orchestratorSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.orchestratorSection,
   );
+
+  // Orchestrator model card + its name + the "Change" button that opens the picker
+  public orchestratorModel = this.orchestratorSection.getChildElementBySelector(
+    AddQuickApp2SettingsFormSelector.orchestratorModel,
+  );
+  public orchestratorModelName =
+    this.orchestratorModel.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.orchestratorModelName,
+    );
+  public changeModelButton = new Button(
+    this.page,
+    AddQuickApp2SettingsFormSelector.changeModelButtonLabel,
+    this.orchestratorModel.getElementLocator(),
+  );
+  // Temperature slider — rendered only when the selected model allows temperature
+  public temperatureSlider = this.orchestratorSection.getChildElementBySelector(
+    AddQuickApp2SettingsFormSelector.temperatureSlider,
+  );
   public contextToolsSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.contextToolsSection,
   );

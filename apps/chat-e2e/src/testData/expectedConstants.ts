@@ -9,6 +9,9 @@ import { Toolset } from '@epam/ai-dial-shared';
 import path from 'path';
 
 export const ExpectedConstants = {
+  // Agents & toolsets select modal — empty state (no created/bookmarked items)
+  noAgentsAndToolsets: 'No Agents and Toolsets',
+  goToMarketplaceLink: 'Go to Marketplace',
   settingsTooltip: (entityType: EntityType, temperature?: number | string) =>
     entityType === EntityType.Application
       ? 'Change conversation settings:\nThere are no conversation settings for this agent'
@@ -415,6 +418,13 @@ export const ExpectedConstants = {
     name: string,
     version: string,
   ) => `Not available ${entityType}.${name}v. ${version}`,
+  // Shown in an editable (non-readonly) editor when the chip's entity is deleted.
+  notAvailableEditableChipTooltip: (entityType: string) =>
+    `Not available ${entityType}. Please, change or remove ${entityType} to proceed.`,
+  // Confirmation dialog shown on Save & Exit when the config has invalid items.
+  saveOnlyValidDataTitle: 'Only valid data will be saved',
+  saveOnlyValidDataMessage:
+    'Some fields are invalid or required fields are missing.\nChanges in those fields will not be saved.\nExit and save only valid information?',
   loginToOrgSuccessfulMessage: (name: string, version: string) =>
     `Successful login\nYou have successfully logged into the "${name}" version ${version} with credentials to entire organization.`,
   personalLoginSuccessfulMessage: (name: string, version: string) =>
@@ -527,6 +537,12 @@ export enum EditPromptFormFields {
 }
 
 export enum EntityEditorToolsetTypes {
+  Toolset = 'toolset',
+}
+
+// Entity type words used in chip tooltips / status messages.
+export enum AgentToolsetEntityType {
+  Agent = 'agent',
   Toolset = 'toolset',
 }
 

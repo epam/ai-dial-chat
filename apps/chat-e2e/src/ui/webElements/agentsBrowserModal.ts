@@ -1,3 +1,4 @@
+import { ExpectedConstants } from '@/src/testData/expectedConstants';
 import { AgentsBrowserModalSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Popup } from '@/src/ui/webElements/common/popup';
@@ -25,6 +26,15 @@ export class AgentsBrowserModal extends Popup {
   // Shown in the entity grid when a search returns nothing.
   public noResultsFound = this.getChildElementBySelector(
     AgentsBrowserModalSelectors.noResultsFound,
+  );
+  // Empty state when the user has no created/bookmarked items (no data-qa — by text).
+  public noItemsPlaceholder = this.createElementFromLocator(
+    this.rootLocator.getByText(ExpectedConstants.noAgentsAndToolsets, {
+      exact: true,
+    }),
+  );
+  public goToMarketplaceLink = this.createElementFromLocator(
+    this.rootLocator.getByText(ExpectedConstants.goToMarketplaceLink),
   );
 
   getEntities(): MarketplaceEntities {
