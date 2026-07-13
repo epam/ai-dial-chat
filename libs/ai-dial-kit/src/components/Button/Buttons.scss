@@ -58,7 +58,7 @@
 }
 
 .dial-danger-solid-button {
-  @apply rounded-full;
+  border-radius: 9999px !important;
 }
 
 .dial-primary-solid-button.dial-primary-solid-button {
@@ -97,7 +97,7 @@
 
 // Secondary — soft blue fill + pill, brand blue text
 .dial-neutral-outlined-button {
-  @apply rounded-full;
+  border-radius: 9999px !important;
   border: 1px solid rgba(39, 100, 217, 0.2) !important;
   background-color: rgba(39, 100, 217, 0.08) !important;
   background-image: none !important;

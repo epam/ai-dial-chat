@@ -38,6 +38,8 @@ export interface RowRendererData {
   onToggleGroup: (key: string) => void;
   /** `id` of the currently active conversation. */
   activeConversationId?: string;
+  /** Current search query — used to highlight matches in conversation titles. */
+  searchQuery: string;
   /** Called when the user selects a conversation row. */
   onSelectConversation: (id: string) => void;
   /** Builds dropdown actions for a conversation item. */
