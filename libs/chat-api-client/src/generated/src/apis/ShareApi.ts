@@ -85,7 +85,7 @@ export class ShareApi extends runtime.BaseAPI {
   }
 
   /**
-   * Creates a share link for a catalog entity (agent, application, skill, toolset, or model) by proxying DIAL Core\'s resource-sharing API. Returns the share URL, access level, and expiry.
+   * Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — or conversation) by proxying DIAL Core\'s resource-sharing API. Returns the share URL, access level, and expiry.
    * Create a share link
    */
   async createShareLinkRaw(
@@ -122,7 +122,7 @@ export class ShareApi extends runtime.BaseAPI {
   }
 
   /**
-   * Creates a share link for a catalog entity (agent, application, skill, toolset, or model) by proxying DIAL Core\'s resource-sharing API. Returns the share URL, access level, and expiry.
+   * Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — or conversation) by proxying DIAL Core\'s resource-sharing API. Returns the share URL, access level, and expiry.
    * Create a share link
    */
   async createShareLink(

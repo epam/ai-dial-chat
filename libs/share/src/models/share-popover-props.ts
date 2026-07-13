@@ -63,4 +63,6 @@ export interface SharePopoverProps {
   errorClassName?: string;
   /** CSS class applied to the visibility and expiry notes. Defaults to `'dial-tiny-text'`. */
   noteClassName?: string;
+  /** CSS class applied to the popover container. */
+  className?: string;
 }

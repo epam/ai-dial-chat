@@ -10,12 +10,29 @@ import { acceptInvitation } from '../../server-api/share.api';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
 
+interface Props {
+  /** Builds the route to navigate to once the invitation is accepted, from the shared resource's itemId. */
+  getTargetRoute?: (itemId: string) => string;
+  /** Route to fall back to when accepting the invitation fails. */
+  errorFallbackRoute?: string;
+}
+
+const getDefaultTargetRoute = (itemId: string): string => {
+  const params = new URLSearchParams({ [CatalogQuery.ItemId]: itemId });
+  return `${ROUTES.Catalog}?${params.toString()}`;
+};
+
 /**
  * Landing route for an opened share link. Silently accepts the invitation
- * via the backend, then redirects into the catalog with the shared item
- * selected. Shows nothing but a loading spinner — there is no confirm step.
+ * via the backend, then redirects to the shared item — the catalog by
+ * default, or wherever `getTargetRoute` points for other resource kinds
+ * (e.g. conversations). Shows nothing but a loading spinner — there is no
+ * confirm step.
  */
-const SharedInvitationPage: FC = () => {
+const SharedInvitationPage: FC<Props> = ({
+  getTargetRoute = getDefaultTargetRoute,
+  errorFallbackRoute = ROUTES.Catalog,
+}) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -29,20 +46,26 @@ const SharedInvitationPage: FC = () => {
     const accept = async () => {
       try {
         const { itemId } = await acceptInvitation(invitationId);
-        const params = new URLSearchParams({ [CatalogQuery.ItemId]: itemId });
-        navigate(`${ROUTES.Catalog}?${params.toString()}`, { replace: true });
+        navigate(getTargetRoute(itemId), { replace: true });
       } catch (err) {
         const errorMessage = await getApiErrorMessage(err);
         showNotification({
           variant: NotificationVariant.Error,
           message: errorMessage ?? t(ShareI18nKeys.InvitationAcceptError),
         });
-        navigate(ROUTES.Catalog, { replace: true });
+        navigate(errorFallbackRoute, { replace: true });
       }
     };
 
     void accept();
-  }, [invitationId, navigate, showNotification, t]);
+  }, [
+    invitationId,
+    navigate,
+    showNotification,
+    t,
+    getTargetRoute,
+    errorFallbackRoute,
+  ]);
 
   return <RouteFallback />;
 };
