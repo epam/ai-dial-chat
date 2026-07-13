@@ -13,7 +13,7 @@ const NEAR_BOTTOM_THRESHOLD = 80;
 interface Params {
   messages: MessageType[];
   isAssistantTyping: boolean;
-  conversationId?: string;
+  conversationId: string;
 }
 
 interface Result {
@@ -160,14 +160,17 @@ export const useConversationScroll = ({
    * loading a conversation or deleting a message, keep the old bottom-scroll
    * behavior.
    */
-  const prevLengthRef = useRef(0);
-  const prevConversationIdRef = useRef<string | undefined>(undefined);
+  const prevLengthRef = useRef(messages.length);
+  const prevConversationIdRef = useRef<string | null>(null);
   useLayoutEffect(() => {
     const lengthChanged = messages.length !== prevLengthRef.current;
     const conversationChanged =
       conversationId !== prevConversationIdRef.current;
-    prevLengthRef.current = messages.length;
-    prevConversationIdRef.current = conversationId;
+
+    const commitObservedScrollState = () => {
+      prevLengthRef.current = messages.length;
+      prevConversationIdRef.current = conversationId;
+    };
 
     const container = containerRef.current;
     const spacer = spacerRef.current;
@@ -179,12 +182,17 @@ export const useConversationScroll = ({
         spacer.style.height = `${container.clientHeight}px`;
       }
       scrollMessageToTop(anchorIndex, false);
+      commitObservedScrollState();
       return;
     }
 
-    if (!isAssistantTyping && (lengthChanged || conversationChanged)) {
+    if (isAssistantTyping) return;
+
+    if (lengthChanged || conversationChanged) {
       scrollToBottom(false);
     }
+
+    commitObservedScrollState();
   }, [
     messages,
     isAssistantTyping,

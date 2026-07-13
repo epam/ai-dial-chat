@@ -138,4 +138,35 @@ describe('useConversationScroll', () => {
       behavior: 'smooth',
     });
   });
+
+  it('scrolls a selected conversation to the bottom after streaming stops when the switch happened during streaming', () => {
+    const messages = makeMessages(6);
+    const { rerender } = render(
+      <ScrollHarness conversationId="conversation-a" messages={messages} />,
+    );
+    scrollToMock.mockClear();
+
+    rerender(
+      <ScrollHarness
+        conversationId="conversation-b"
+        isAssistantTyping
+        messages={messages}
+      />,
+    );
+
+    expect(scrollToMock).not.toHaveBeenCalled();
+
+    rerender(
+      <ScrollHarness
+        conversationId="conversation-b"
+        isAssistantTyping={false}
+        messages={messages}
+      />,
+    );
+
+    expect(scrollToMock).toHaveBeenCalledWith({
+      top: 800,
+      behavior: 'smooth',
+    });
+  });
 });
