@@ -651,9 +651,7 @@ const ConversationView: FC<Props> = ({
                             searchPlaceholder: t(
                               DeploymentSelectorI18nKeys.SearchPlaceholder,
                             ),
-                            favoritesLabel: t(
-                              FavoritesI18nKeys.FavoritesLabel,
-                            ),
+                            favoritesLabel: t(FavoritesI18nKeys.FavoritesLabel),
                             emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
                             browseCatalogLabel: t(ButtonsI18nKeys.Browse),
                             removeFromFavoritesLabel: t(

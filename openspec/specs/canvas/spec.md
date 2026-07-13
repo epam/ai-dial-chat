@@ -78,10 +78,11 @@ None. The canvas is always available to authenticated users.
 
 ### Content type routing
 
-`useOpenAttachmentCanvas` maps a `DisplayAttachment` to a content payload. MIME-type routing runs first (for stage attachments that carry a `contentType` but no file extension), followed by extension-based routing (lowercased):
+`useOpenAttachmentCanvas` maps a `DisplayAttachment` to a content payload. Before any MIME-type or extension routing, `openFileCanvas` checks whether the attachment is reference-only (`attachment.url == null && attachment.referenceUrl != null` — a RAG/search-grounding chunk). When true, it calls `referenceAttachmentToPdfCanvasContent({ type: attachment.contentType, url: attachment.referenceUrl, title: attachment.name })`; if that returns a non-`null` `PdfCanvasContent` (the `referenceUrl` targets a `.pdf`, optionally with a `#page=N` fragment), the canvas opens with it immediately and no further routing runs. If it returns `null`, routing falls through to the table below unchanged — this applies uniformly to `CollapsedGroup` stage attachments and the plain attachment tray, so a reference-only PDF-page chunk (e.g. `reference_url: 'files/{bucket}/report.pdf#page=81'`) opens the actual referenced PDF at the referenced page instead of rendering its own `data`/`contentType` as Markdown or plain text. Otherwise, MIME-type routing runs first (for stage attachments that carry a `contentType` but no file extension), followed by extension-based routing (lowercased):
 
 | MIME type / Extension(s) | Resolver | Content type returned |
 |---|---|---|
+| Reference-only, PDF-page-detectable `referenceUrl` | `referenceAttachmentToPdfCanvasContent` | `PdfCanvasContent` (scrolled to the referenced page when present) |
 | `text/markdown` MIME | `resolveMarkdownCanvasContent` | `MarkdownCanvasContent` |
 | `application/json` MIME | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` |
 | `application/pdf` MIME | `resolvePdfCanvasContent` | `PdfCanvasContent` |

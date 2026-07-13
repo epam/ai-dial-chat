@@ -11,6 +11,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import {
+  referenceAttachmentToPdfCanvasContent,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
@@ -25,6 +26,18 @@ async function openFileCanvas(
   attachment: DisplayAttachment,
   openCanvas: OpenCanvas,
 ): Promise<boolean> {
+  if (attachment.url == null && attachment.referenceUrl != null) {
+    const pdfContent = referenceAttachmentToPdfCanvasContent({
+      type: attachment.contentType,
+      url: attachment.referenceUrl,
+      title: attachment.name,
+    });
+    if (pdfContent != null) {
+      openCanvas(pdfContent, attachment.name);
+      return true;
+    }
+  }
+
   const contentType = attachment.contentType.toLowerCase();
 
   switch (contentType) {

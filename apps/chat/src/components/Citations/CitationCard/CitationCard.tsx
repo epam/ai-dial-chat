@@ -1,5 +1,9 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
-import { MIMEType } from '@epam/ai-dial-chat-shared';
+import {
+  MarkdownRenderer,
+  mergeClasses,
+  MIMEType,
+} from '@epam/ai-dial-chat-shared';
 import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialEllipsisTooltip,
@@ -24,9 +28,13 @@ interface Props {
   activeIndex: number;
   /** Called when the user navigates to a different annotation within the group. */
   onIndexChange: (index: number) => void;
-  /** Called when the user clicks the "Preview" button. */
-  onPreview: (annotation: Annotation) => void;
-  /** Called when the user clicks the "Open in browser" button. */
+  /**
+   * Called when the user clicks the "Preview" button. Omit when the group has
+   * nothing previewable (e.g. reference-only chunks) — the "Preview" button is
+   * hidden and the remaining button is always labelled "Open in browser".
+   */
+  onPreview?: (annotation: Annotation) => void;
+  /** Called when the user clicks the "Open in browser"/"Download" button. */
   onOpenInBrowser: (annotation: Annotation) => void;
 }
 
@@ -41,10 +49,13 @@ const CitationCard: FC<Props> = ({
   const total = group.annotations.length;
   const annotation = group.annotations[activeIndex] ?? group.primaryAnnotation;
   const hasSwitcher = total > 1;
+  const groupHasTitle = group.annotations.some((a) => a.body?.title);
   const sourceContentType =
     group.primaryAnnotation.body?.source?.attachment?.type;
   const isWebLink =
-    sourceContentType === MIMEType.HTML || sourceContentType === MIMEType.XHTML;
+    onPreview == null ||
+    sourceContentType === MIMEType.HTML ||
+    sourceContentType === MIMEType.XHTML;
 
   return (
     <div
@@ -94,29 +105,42 @@ const CitationCard: FC<Props> = ({
         )}
       </div>
 
-      {/* Body */}
-      {(annotation.body?.title || annotation.body?.quote) && (
+      {(annotation.body?.title || annotation.body?.quote || hasSwitcher) && (
         <div className="flex flex-col gap-3">
-          {annotation.body.title && (
-            <p className="dial-body-semi-text text-primary">
-              {annotation.body.title}
+          {(annotation.body?.title || (hasSwitcher && groupHasTitle)) && (
+            <p
+              className={mergeClasses(
+                'dial-body-semi-text text-primary',
+                hasSwitcher && groupHasTitle && 'min-h-[1lh]',
+              )}
+            >
+              {annotation.body?.title}
             </p>
           )}
-          {annotation.body.quote && (
-            <p className="dial-small-text line-clamp-6 text-secondary">
-              {annotation.body.quote}
-            </p>
+          {(annotation.body?.quote || hasSwitcher) && (
+            <div className={mergeClasses(hasSwitcher && 'min-h-[3lh]')}>
+              {annotation.body?.quote && (
+                <MarkdownRenderer
+                  content={annotation.body.quote}
+                  classNames={{
+                    p: 'dial-small-text line-clamp-6 text-secondary',
+                  }}
+                />
+              )}
+            </div>
           )}
         </div>
       )}
 
       {/* Footer */}
       <div className="flex justify-start gap-2">
-        <PrimaryButton
-          label={t(BasicI18nKeys.Preview)}
-          size={ElementSize.Small}
-          onClick={() => onPreview(annotation)}
-        />
+        {onPreview && (
+          <PrimaryButton
+            label={t(BasicI18nKeys.Preview)}
+            size={ElementSize.Small}
+            onClick={() => onPreview(annotation)}
+          />
+        )}
         <PrimaryButton
           label={t(
             isWebLink

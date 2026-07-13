@@ -3,16 +3,13 @@ import type { Annotation, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { useCallback, useMemo } from 'react';
 import type { Components } from 'react-markdown';
 import CitationDropdown from '../../components/Citations/CitationDropdown/CitationDropdown';
+import { openAnnotationAttachment } from '../../utils/annotation';
 import { annotationToPdfCanvasContent } from '../../utils/attachment-canvas';
 import { annotationToDisplayAttachment } from '../../utils/attachment-dto-to-display';
 import {
   injectCitationSentinels,
   replaceSentinelsInChildren,
 } from '../../utils/citation-injection';
-import {
-  isDialFileId,
-  resolveDialFileDownloadUrl,
-} from '../../utils/dial-file';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 
 /**
@@ -39,19 +36,7 @@ export const useCitationMarkdownComponents = (
 
   const onOpenInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
-    const url = attachment?.url;
-    if (url == null) return;
-
-    if (isDialFileId(url)) {
-      const downloadUrl = resolveDialFileDownloadUrl(url);
-      if (downloadUrl == null) return;
-      const anchor = document.createElement('a');
-      anchor.href = downloadUrl;
-      anchor.download = attachment?.title ?? url.split('/').pop() ?? '';
-      anchor.click();
-    } else {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
+    if (attachment) openAnnotationAttachment(attachment);
   }, []);
 
   const onPreview = useCallback(

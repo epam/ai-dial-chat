@@ -1,8 +1,10 @@
+import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import {
   CodeBlockTheme,
   isStatusMessage,
   mergeClasses,
   MessageRole,
+  type Annotation,
   type Attachment,
   type AttachmentErrorReason,
   type DisplayAttachment,
@@ -17,7 +19,8 @@ import {
 } from '@epam/ai-dial-conversation-messages';
 import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { FC, lazy, memo, Suspense, useMemo } from 'react';
+import { IconLink } from '@tabler/icons-react';
+import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AttachmentsI18nKeys,
@@ -30,9 +33,16 @@ import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction'
 import { useCitationCard } from '../../hooks/citations/useCitationCard';
 import { useCitationMarkdownComponents } from '../../hooks/citations/useCitationMarkdownComponents';
 import { ThemeId } from '../../types/theme-id';
+import { openAnnotationAttachment } from '../../utils/annotation';
+import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
 import { groupAnnotationsBySource } from '../../utils/group-annotations-by-source';
 import { messageHasStages } from '../../utils/message-utils';
+import {
+  getReferenceAttachmentGroups,
+  isReferenceOnlyAttachment,
+} from '../../utils/reference-attachment';
+import CitationDropdown from '../Citations/CitationDropdown/CitationDropdown';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
@@ -172,6 +182,24 @@ const ConversationMessageItem: FC<Props> = ({
       citationGroups,
       handleAttachmentClick,
     );
+  const { openCanvas } = useAttachmentCanvas();
+  const referenceGroups = useMemo(
+    () => getReferenceAttachmentGroups(msg.custom_content?.attachments),
+    [msg.custom_content?.attachments],
+  );
+  const handleOpenReferenceInBrowser = useCallback((annotation: Annotation) => {
+    const attachment = annotation.body?.source?.attachment;
+    if (attachment) openAnnotationAttachment(attachment);
+  }, []);
+  const handlePreviewReference = useCallback(
+    (annotation: Annotation) => {
+      const attachment = annotation.body?.source?.attachment;
+      if (!attachment) return;
+      const canvasContent = referenceAttachmentToPdfCanvasContent(attachment);
+      if (canvasContent) openCanvas(canvasContent, attachment.title);
+    },
+    [openCanvas],
+  );
 
   if (isEditing) {
     return (
@@ -276,7 +304,9 @@ const ConversationMessageItem: FC<Props> = ({
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }
         attachments={attachmentDtosToDisplayAttachments(
-          msg.custom_content?.attachments,
+          msg.custom_content?.attachments?.filter(
+            (a) => !isReferenceOnlyAttachment(a),
+          ),
         )}
         isStreaming={isStreaming}
         hasAlwaysVisibleActions={!isStreaming}
@@ -299,8 +329,33 @@ const ConversationMessageItem: FC<Props> = ({
           msg.hasStreamError ? 'w-full' : undefined,
         )}
         afterContent={
-          hasStages || msg.hasStreamError ? (
+          referenceGroups.length > 0 || hasStages || msg.hasStreamError ? (
             <>
+              {referenceGroups.length > 0 && (
+                <div className="flex w-full flex-wrap gap-2">
+                  {referenceGroups.map((group) => {
+                    const isPdfPagePreviewable =
+                      group.primaryAnnotation.body?.source?.attachment !=
+                        null &&
+                      referenceAttachmentToPdfCanvasContent(
+                        group.primaryAnnotation.body.source.attachment,
+                      ) != null;
+                    return (
+                      <CitationDropdown
+                        key={group.sourceUrl}
+                        group={group}
+                        onPreview={
+                          isPdfPagePreviewable
+                            ? handlePreviewReference
+                            : undefined
+                        }
+                        onOpenInBrowser={handleOpenReferenceInBrowser}
+                        icon={<IconLink size={14} aria-hidden />}
+                      />
+                    );
+                  })}
+                </div>
+              )}
               {hasStages && (
                 <CollapsedGroup
                   stages={msg.custom_content?.stages ?? []}
