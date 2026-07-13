@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getEmptyLeafFolderIds,
+  getPartialAndFullyChosenFolders,
   getSelectedEntitiesByFolderId,
   updateMovedEntityId,
   updateMovedFolderId,
@@ -197,5 +198,50 @@ describe('getSelectedEntitiesByFolderId', () => {
         chosenItemsIds: [],
       }),
     ).toEqual(['bucket/files/folder01/file1.txt']);
+  });
+});
+
+describe('getPartialAndFullyChosenFolders with directContainerFolderIds', () => {
+  const nestedItems = [
+    { id: 'files/public/folderX/sub/a.png' },
+    { id: 'files/public/folderX/sub/b.png' },
+  ] as ShareEntity[];
+  const nestedFolders = [
+    { id: 'files/public/folderX' },
+    { id: 'files/public/folderX/sub' },
+  ] as FolderInterface[];
+  // only the folder that directly holds files
+  const directContainerFolderIds = ['files/public/folderX/sub'];
+
+  it('marks an ancestor folder fully chosen when all nested items are selected', () => {
+    const { fullyChosenFolderIds, partialChosenFolderIds } =
+      getPartialAndFullyChosenFolders(
+        nestedFolders,
+        nestedItems,
+        nestedItems.map((i) => i.id),
+        undefined,
+        undefined,
+        directContainerFolderIds,
+      );
+
+    expect(fullyChosenFolderIds).toContain('files/public/folderX/');
+    expect(fullyChosenFolderIds).toContain('files/public/folderX/sub/');
+    expect(partialChosenFolderIds).toEqual([]);
+  });
+
+  it('keeps the ancestor folder partial when not all nested items are selected', () => {
+    const { fullyChosenFolderIds, partialChosenFolderIds } =
+      getPartialAndFullyChosenFolders(
+        nestedFolders,
+        nestedItems,
+        ['files/public/folderX/sub/a.png'],
+        undefined,
+        undefined,
+        directContainerFolderIds,
+      );
+
+    expect(fullyChosenFolderIds).toEqual([]);
+    expect(partialChosenFolderIds).toContain('files/public/folderX/');
+    expect(partialChosenFolderIds).toContain('files/public/folderX/sub/');
   });
 });
