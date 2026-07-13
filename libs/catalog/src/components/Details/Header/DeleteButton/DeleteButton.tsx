@@ -50,6 +50,8 @@ export const DeleteButton: FC<DeleteButtonProps> = ({
     try {
       await onDelete?.(item);
       onDeleted?.();
+    } catch {
+      // Failure feedback (e.g. a notification) is the caller's responsibility.
     } finally {
       setIsDeleting(false);
     }

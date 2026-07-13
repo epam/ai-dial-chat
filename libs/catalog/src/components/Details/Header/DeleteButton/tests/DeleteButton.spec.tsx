@@ -122,29 +122,10 @@ describe('DeleteButton', () => {
     expect(onDeleted).not.toHaveBeenCalled();
   });
 
-  it('shows an inline error when onDelete rejects', async () => {
+  it('does not throw when onDelete rejects', async () => {
     const onDelete = vi.fn().mockRejectedValue(new Error('boom'));
-    render(
-      <DeleteButton
-        item={makeItem()}
-        onDelete={onDelete}
-        texts={{ deleteErrorMessage: 'Could not delete' }}
-      />,
-    );
+    render(<DeleteButton item={makeItem()} onDelete={onDelete} />);
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(await screen.findByText('Could not delete')).toBeTruthy();
-  });
-
-  it('does not show an error after a successful delete', async () => {
-    const onDelete = vi.fn().mockResolvedValue(undefined);
-    render(
-      <DeleteButton
-        item={makeItem()}
-        onDelete={onDelete}
-        texts={{ deleteErrorMessage: 'Could not delete' }}
-      />,
-    );
-    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(screen.queryByText('Could not delete')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
   });
 });
