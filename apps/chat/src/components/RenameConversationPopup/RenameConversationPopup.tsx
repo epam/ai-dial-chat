@@ -130,7 +130,7 @@ const RenameConversationPopup: FC<Props> = ({
           tooltipProps={{ tooltip: renameWithAiLabel }}
           disabled={isGenerating || isSaving}
           onClick={handleGenerateWithAi}
-          className="text-accent-primary"
+          className="!text-accent-primary"
           icon={
             isGenerating ? (
               <DialSpinner size={DIAL_ICON_SIZE.MD} />

@@ -4,6 +4,7 @@ import {
   DialDropdown,
   DialDropdownIcon,
   DialGhostIconButton,
+  DialTooltip,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
@@ -60,6 +61,7 @@ export const ModelSelectorControl: FC<Props> = ({
   const {
     selectorIcon,
     selectorAriaLabel,
+    selectedLabel,
     menuItems,
     menuHeader,
     onOpenChange: handleModelSelectorOpenChange,
@@ -90,22 +92,24 @@ export const ModelSelectorControl: FC<Props> = ({
   if (isMobile) {
     return (
       <>
-        <DialGhostIconButton
-          icon={
-            <div className="flex items-center gap-1">
-              {selectorIcon}
-              {caretIcon}
-            </div>
-          }
-          aria-label={selectorAriaLabel}
-          onClick={() => {
-            if (!isDisabled) setIsModelSheetOpen(true);
-          }}
-          className={mergeClasses(
-            styles.modelSelectorButton,
-            disabledIconClassName,
-          )}
-        />
+        <DialTooltip tooltip={selectedLabel}>
+          <DialGhostIconButton
+            icon={
+              <div className="flex items-center gap-1">
+                {selectorIcon}
+                {caretIcon}
+              </div>
+            }
+            aria-label={selectorAriaLabel}
+            onClick={() => {
+              if (!isDisabled) setIsModelSheetOpen(true);
+            }}
+            className={mergeClasses(
+              styles.modelSelectorButton,
+              disabledIconClassName,
+            )}
+          />
+        </DialTooltip>
         {modelPickerOverlay ? (
           <BottomSheetShell
             isOpen={isModelSheetOpen}
@@ -152,27 +156,29 @@ export const ModelSelectorControl: FC<Props> = ({
         }
         listClassName="cp-dropdown-overlay !w-[320px]"
       >
-        <button
-          type="button"
-          aria-label={selectorAriaLabel}
-          className={mergeClasses(
-            'flex items-center justify-center gap-1 rounded-md p-2',
-            styles.modelSelectorButton,
-            isInputDisabled || isStreaming || isDisabled
-              ? disabledIconClassName
-              : undefined,
-            (isInputDisabled || isDisabled) &&
-              styles.modelSelectorButtonDisabled,
-          )}
-          onClick={() => {
-            if (!isInputDisabled && !isStreaming && !isDisabled) {
-              onPickerToggle?.();
-            }
-          }}
-        >
-          {selectorIcon}
-          {caretIcon}
-        </button>
+        <DialTooltip tooltip={selectedLabel}>
+          <button
+            type="button"
+            aria-label={selectorAriaLabel}
+            className={mergeClasses(
+              'flex items-center justify-center gap-1 rounded-md p-2',
+              styles.modelSelectorButton,
+              isInputDisabled || isStreaming || isDisabled
+                ? disabledIconClassName
+                : undefined,
+              (isInputDisabled || isDisabled) &&
+                styles.modelSelectorButtonDisabled,
+            )}
+            onClick={() => {
+              if (!isInputDisabled && !isStreaming && !isDisabled) {
+                onPickerToggle?.();
+              }
+            }}
+          >
+            {selectorIcon}
+            {caretIcon}
+          </button>
+        </DialTooltip>
       </DialDropdown>
     );
   }
@@ -182,28 +188,30 @@ export const ModelSelectorControl: FC<Props> = ({
       className={mergeClasses(isDisabled && disabledIconClassName)}
       aria-disabled={isDisabled || undefined}
     >
-      <DialDropdownIcon
-        icon={selectorIcon}
-        ariaLabel={selectorAriaLabel}
-        items={menuItems}
-        menuHeader={menuHeader}
-        placement="bottom-end"
-        matchReferenceWidth={false}
-        listClassName="cp-dropdown-overlay !w-[240px] !max-h-80"
-        onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
-        size={ElementSize.Standard}
-        caretIcon={caretIcon}
-        iconClassName={
-          isInputDisabled || isDisabled ? disabledIconClassName : undefined
-        }
-        buttonClassName={mergeClasses(
-          'bg-transparent',
-          styles.modelSelectorButton,
-          (isInputDisabled || isDisabled) &&
-            disabledIconClassName &&
-            styles.modelSelectorButtonDisabled,
-        )}
-      />
+      <DialTooltip tooltip={selectedLabel}>
+        <DialDropdownIcon
+          icon={selectorIcon}
+          ariaLabel={selectorAriaLabel}
+          items={menuItems}
+          menuHeader={menuHeader}
+          placement="bottom-end"
+          matchReferenceWidth={false}
+          listClassName="cp-dropdown-overlay !w-[240px] !max-h-80"
+          onOpenChange={isDisabled ? undefined : handleModelSelectorOpenChange}
+          size={ElementSize.Standard}
+          caretIcon={caretIcon}
+          iconClassName={
+            isInputDisabled || isDisabled ? disabledIconClassName : undefined
+          }
+          buttonClassName={mergeClasses(
+            'bg-transparent',
+            styles.modelSelectorButton,
+            (isInputDisabled || isDisabled) &&
+              disabledIconClassName &&
+              styles.modelSelectorButtonDisabled,
+          )}
+        />
+      </DialTooltip>
     </div>
   );
 };

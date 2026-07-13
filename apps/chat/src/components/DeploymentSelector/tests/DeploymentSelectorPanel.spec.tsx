@@ -2,8 +2,12 @@ import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import DeploymentSelectorPanel from '../DeploymentSelectorPanel';
+
+beforeAll(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+});
 
 const makeItem = (id: string, type: CatalogEntityType): CatalogItem => ({
   id,

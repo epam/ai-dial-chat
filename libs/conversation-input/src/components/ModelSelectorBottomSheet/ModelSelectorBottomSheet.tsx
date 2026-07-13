@@ -1,8 +1,11 @@
-import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  type DeploymentItem,
+  Highlight,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialButton,
-  DialEllipsisTooltip,
   DialSearch,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
@@ -27,6 +30,8 @@ interface ModelRowData {
   selectedDeploymentId?: string | null;
   /** Typography class applied to the item label. */
   labelClassName: string;
+  /** Current search query — used to highlight matches in item labels. */
+  query: string;
   /** Invoked when a row is tapped. */
   onSelect: (id: string) => void;
 }
@@ -39,6 +44,7 @@ const ModelRow = ({
   items,
   selectedDeploymentId,
   labelClassName,
+  query,
   onSelect,
 }: RowComponentProps<ModelRowData>) => {
   const item = items[index];
@@ -61,8 +67,10 @@ const ModelRow = ({
         iconBefore={<span className={styles.itemIcon}>{modelIcon}</span>}
         label={
           <span className="flex flex-1 items-center justify-between gap-2">
-            <DialEllipsisTooltip
+            <Highlight
               text={item.displayName ?? item.id}
+              query={query}
+              maxLines={1}
               className={mergeClasses(
                 labelClassName,
                 'min-w-0 flex-1 text-left',
@@ -209,6 +217,7 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
             items: filtered,
             selectedDeploymentId,
             labelClassName,
+            query,
             onSelect: handleSelect,
           }}
         />

@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { Highlight, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialGhostIconButton,
@@ -15,6 +15,8 @@ interface SourcesSectionProps {
   sources: QuotationSource[];
   /** Accessible label for each source's copy-URL button. */
   copyLabel: string;
+  /** Current search query — used to highlight matches in source titles and quotes. */
+  searchQuery?: string;
   /** CSS class applied to the section heading. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
   /** CSS class applied to each source link. Defaults to `'dial-small-text !text-accent-primary'`. */
@@ -29,6 +31,7 @@ const SourcesSection: FC<SourcesSectionProps> = ({
   title,
   sources,
   copyLabel,
+  searchQuery = '',
   titleClassName = 'dial-body-semi-text',
   linkClassName = 'dial-small-text !text-accent-primary',
   quoteClassName = 'dial-tiny-text text-secondary',
@@ -62,7 +65,15 @@ const SourcesSection: FC<SourcesSectionProps> = ({
                     : undefined
                 }
               >
-                {source.title}
+                {searchQuery ? (
+                  <Highlight
+                    text={source.title}
+                    query={searchQuery}
+                    maxLines={1}
+                  />
+                ) : (
+                  source.title
+                )}
               </a>
               <DialGhostIconButton
                 size={ElementSize.Small}

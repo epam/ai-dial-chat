@@ -159,6 +159,17 @@ const DeploymentSelectorPanel: FC<Props> = ({
     }
   }, [filteredFavorites, showCurrentlySelected]);
 
+  /*
+   * Panel is remounted fresh each time the popover opens, so without this the
+   * scrollable list always starts scrolled to the top even when the selected
+   * item sits further down, making it look like the pick didn't take effect.
+   */
+  const selectedRowRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    selectedRowRef.current?.scrollIntoView({ block: 'nearest' });
+  }, []);
+
   const handleSelect = (item: CatalogItem) => {
     onSelect(item.id);
     onClose();
@@ -204,6 +215,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
     return (
       <li
         key={item.id}
+        ref={isSelected ? selectedRowRef : undefined}
         className={isLeaving ? styles.rowLeaving : styles.rowEnter}
       >
         <div
@@ -316,7 +328,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
           )}
 
           {filteredFavorites.length > 0 ? (
-            <ul className="px-1 pb-1">
+            <ul className="flex flex-col gap-1 px-1 pb-1">
               {filteredFavorites.map((item) => renderRow(item, true))}
             </ul>
           ) : (

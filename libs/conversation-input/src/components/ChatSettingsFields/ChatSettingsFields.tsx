@@ -66,7 +66,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
   temperatureLabels = ['Precise', 'Neutral', 'Creative'],
   temperatureHint,
 }) => (
-  <div className="flex flex-col px-6">
+  <div className="flex flex-col gap-4 px-6 py-3">
     {features.responseFormat && (
       <DialRadioGroup
         fieldTitle={responseFormatLabel}
@@ -96,7 +96,6 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
           label: systemPromptLabel,
           className: LABEL_CLASS_NAME,
         }}
-        containerClassName="py-4 gap-3"
         onChange={(value) => onSystemPromptChange(value ?? '')}
       />
     )}
@@ -107,7 +106,6 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
           className: LABEL_CLASS_NAME,
           caption: temperatureHint,
         }}
-        className="gap-3 py-4"
         value={temperature}
         min={0}
         max={1}
