@@ -13,11 +13,11 @@ export const DEFAULT_TOOLSET_NAME = 'New toolset';
 export const DEFAULT_TOOLSET_VERSION = '0.0.1';
 
 /*
- * sessionStorage key for the OAuth redirect handshake. Persists the toolset
- * being authorized across the external provider redirect so the callback route
- * can complete the code exchange.
+ * window.name marker set by ai-dial-quickapps-frontend before opening the
+ * OAuth popup, used to distinguish the popup-based login handshake from the
+ * admin's own `state`-encoded one on the shared callback route.
  */
-export const TOOLSET_REDIRECT_STATE_KEY = 'toolset-redirect-state';
+export const QUICKAPPS_TOOLSET_AUTH_POPUP_NAME = 'quickapps-toolset-auth-popup';
 
 export interface AuthTypeOption {
   labelKey: ToolsetEditorI18nKeys;

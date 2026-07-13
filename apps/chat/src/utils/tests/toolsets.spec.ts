@@ -2,16 +2,25 @@ import type { DialToolsetDto } from '@epam/chat-api-client';
 import { describe, expect, it } from 'vitest';
 import {
   ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
   ToolsetTransportType,
   WithLogin,
 } from '../../types/toolsets';
-import type { ToolsetFormData } from '../../types/toolsets';
+import type {
+  ToolsetFormData,
+  ToolsetPopupState,
+  ToolsetRedirectState,
+} from '../../types/toolsets';
 import {
   buildToolsetAuthorizeUrl,
+  decodeToolsetPopupState,
+  decodeToolsetRedirectState,
+  encodeToolsetRedirectState,
   formToToolsetBody,
   getStorageSafeUniqueToolsetName,
   isToolsetAuthValid,
   isValidEndpointUrl,
+  isValidPostMessageOrigin,
   toolsetDtoToForm,
 } from '../toolsets';
 
@@ -131,7 +140,7 @@ describe('formToToolsetBody', () => {
 });
 
 describe('buildToolsetAuthorizeUrl', () => {
-  it('builds an OAuth authorize URL with state and scopes', () => {
+  it('builds an OAuth authorize URL with the given state and scopes', () => {
     const result = buildToolsetAuthorizeUrl(
       {
         authenticationType: ToolsetAuthTypes.OAuth,
@@ -142,14 +151,30 @@ describe('buildToolsetAuthorizeUrl', () => {
         scopes: ['read', 'write'],
       },
       'http://localhost/toolset-editor/callback',
+      'encoded-state',
     );
 
     expect(result).not.toBeNull();
-    const url = new URL(result?.url ?? '');
+    const url = new URL(result ?? '');
     expect(url.searchParams.get('response_type')).toBe('code');
     expect(url.searchParams.get('client_id')).toBe('client');
     expect(url.searchParams.get('scope')).toBe('read write');
-    expect(url.searchParams.get('state')).toBe(result?.state);
+    expect(url.searchParams.get('state')).toBe('encoded-state');
+  });
+
+  it('returns null when the auth config is missing a client id', () => {
+    const result = buildToolsetAuthorizeUrl(
+      {
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+      },
+      'http://localhost/toolset-editor/callback',
+      'encoded-state',
+    );
+
+    expect(result).toBeNull();
   });
 });
 
@@ -218,5 +243,127 @@ describe('toolsetDtoToForm', () => {
     expect(form.protocol).toBe(ToolsetTransportType.Http);
     expect(form.auth.authenticationType).toBe(ToolsetAuthTypes.None);
     expect(form.auth.isLoggedIn).toBe(false);
+  });
+});
+
+describe('isValidPostMessageOrigin', () => {
+  it('accepts a well-formed absolute URL origin', () => {
+    expect(isValidPostMessageOrigin('https://quickapps.example.com')).toBe(
+      true,
+    );
+  });
+
+  it('rejects a wildcard', () => {
+    expect(isValidPostMessageOrigin('*')).toBe(false);
+  });
+
+  it('rejects an origin with a path or trailing garbage', () => {
+    expect(isValidPostMessageOrigin('https://quickapps.example.com/path')).toBe(
+      false,
+    );
+  });
+});
+
+describe('decodeToolsetPopupState', () => {
+  const encode = (payload: Partial<ToolsetPopupState>): string => {
+    const json = JSON.stringify(payload);
+    const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(json)));
+    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  };
+
+  const validPayload: ToolsetPopupState = {
+    toolsetId: 'toolsets/b/my__1.0.0',
+    credentialsLevel: ToolsetCredentialsLevel.User,
+    originatingOrigin: 'https://quickapps.example.com',
+    nonce: 'nonce-123',
+  };
+
+  it('round-trips a well-formed payload', () => {
+    expect(decodeToolsetPopupState(encode(validPayload))).toEqual(validPayload);
+  });
+
+  it('returns null when toolsetId is missing', () => {
+    const { toolsetId: _toolsetId, ...rest } = validPayload;
+    expect(decodeToolsetPopupState(encode(rest))).toBeNull();
+  });
+
+  it('returns null when originatingOrigin is missing', () => {
+    const { originatingOrigin: _originatingOrigin, ...rest } = validPayload;
+    expect(decodeToolsetPopupState(encode(rest))).toBeNull();
+  });
+
+  it('returns null when nonce is missing', () => {
+    const { nonce: _nonce, ...rest } = validPayload;
+    expect(decodeToolsetPopupState(encode(rest))).toBeNull();
+  });
+
+  it('returns null when credentialsLevel is invalid', () => {
+    expect(
+      decodeToolsetPopupState(
+        encode({ ...validPayload, credentialsLevel: 'APP' as never }),
+      ),
+    ).toBeNull();
+  });
+
+  it('returns null for malformed base64', () => {
+    expect(decodeToolsetPopupState('%%%not-base64%%%')).toBeNull();
+  });
+
+  it('returns null when originatingOrigin fails the origin-format check', () => {
+    expect(
+      decodeToolsetPopupState(
+        encode({
+          ...validPayload,
+          originatingOrigin: 'https://quickapps.example.com/extra',
+        }),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe('encodeToolsetRedirectState / decodeToolsetRedirectState', () => {
+  const validState: ToolsetRedirectState = {
+    toolsetId: 'toolsets/b/my__1.0.0',
+    credentialsLevel: ToolsetCredentialsLevel.User,
+    csrfToken: 'token-123',
+  };
+
+  it('round-trips a well-formed redirect state', () => {
+    expect(
+      decodeToolsetRedirectState(encodeToolsetRedirectState(validState)),
+    ).toEqual(validState);
+  });
+
+  it('returns null when toolsetId is missing', () => {
+    const { toolsetId: _toolsetId, ...rest } = validState;
+    expect(
+      decodeToolsetRedirectState(
+        encodeToolsetRedirectState(rest as ToolsetRedirectState),
+      ),
+    ).toBeNull();
+  });
+
+  it('returns null when csrfToken is missing', () => {
+    const { csrfToken: _csrfToken, ...rest } = validState;
+    expect(
+      decodeToolsetRedirectState(
+        encodeToolsetRedirectState(rest as ToolsetRedirectState),
+      ),
+    ).toBeNull();
+  });
+
+  it('returns null when credentialsLevel is invalid', () => {
+    expect(
+      decodeToolsetRedirectState(
+        encodeToolsetRedirectState({
+          ...validState,
+          credentialsLevel: 'APP' as never,
+        }),
+      ),
+    ).toBeNull();
+  });
+
+  it('returns null for malformed base64', () => {
+    expect(decodeToolsetRedirectState('%%%not-base64%%%')).toBeNull();
   });
 });

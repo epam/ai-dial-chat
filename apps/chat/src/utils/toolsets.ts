@@ -2,12 +2,12 @@ import type { DialToolsetDto, ToolsetBodyDto } from '@epam/chat-api-client';
 import {
   DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,
-  TOOLSET_REDIRECT_STATE_KEY,
 } from '../constants/toolsets';
 import { ROUTES } from '../types/routes';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
+  ToolsetPopupState,
   ToolsetRedirectState,
 } from '../types/toolsets';
 import {
@@ -61,16 +61,21 @@ export const getDefaultToolsetForm = (
 const isSignedIn = (status?: string): boolean =>
   status === ToolsetAuthStatus.SignedIn;
 
+/**
+ * Builds the OAuth authorize URL for a given, already-encoded `state` value.
+ * The caller owns what `state` carries — see `encodeToolsetRedirectState` for
+ * the admin flow and `design.md` D2 for the QuickApps popup flow.
+ */
 export const buildToolsetAuthorizeUrl = (
   auth: ToolsetAuthFormData,
   redirectUri: string,
-): { url: string; state: string } | null => {
+  state: string,
+): string | null => {
   if (!auth.authorizationEndpoint?.trim() || !auth.clientId?.trim()) {
     return null;
   }
   try {
     const url = new URL(auth.authorizationEndpoint.trim());
-    const state = crypto.randomUUID();
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('client_id', auth.clientId.trim());
     url.searchParams.set('redirect_uri', redirectUri);
@@ -84,20 +89,26 @@ export const buildToolsetAuthorizeUrl = (
     if (auth.scopes && auth.scopes.length > 0) {
       url.searchParams.set('scope', auth.scopes.join(' '));
     }
-    return { url: url.toString(), state };
+    return url.toString();
   } catch {
     return null;
   }
 };
 
 /**
- * Builds the OAuth authorize URL, persists the redirect state to
- * `sessionStorage`, and opens the provider in a new browser window/tab
- * (rather than navigating the current page away), so the current page stays
- * put. Shared by the post-save auto-login flow (Editor, always `USER`) and
- * the manual Log In action (Editor or Catalog, `USER` or `GLOBAL`) so all
- * trigger points stay in sync. Returns `false` (without opening a window)
- * when the auth config is invalid or the popup was blocked.
+ * Builds the OAuth authorize URL and opens the provider in a new browser
+ * window/tab (rather than navigating the current page away), so the current
+ * page stays put. Shared by the post-save auto-login flow (Editor, always
+ * `USER`) and the manual Log In action (Editor or Catalog, `USER` or
+ * `GLOBAL`) so all trigger points stay in sync. Returns `false` (without
+ * opening a window) when the auth config is invalid or the popup was
+ * blocked.
+ *
+ * The redirect state (`toolsetId`, `credentialsLevel`) is encoded into the
+ * OAuth `state` query parameter rather than persisted to `sessionStorage`:
+ * the window opened below uses `noopener`, which severs `sessionStorage`
+ * sharing with it, so anything stashed in this tab's `sessionStorage` would
+ * never be readable from the callback route running in that window.
  */
 export const initiateOAuthLogin = (
   auth: ToolsetAuthFormData,
@@ -105,18 +116,13 @@ export const initiateOAuthLogin = (
   credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
 ): boolean => {
   const redirectUri = `${window.location.origin}${ROUTES.ToolsetEditorCallback}`;
-  const result = buildToolsetAuthorizeUrl(auth, redirectUri);
-  if (!result) return false;
-
-  const redirectState: ToolsetRedirectState = {
+  const state = encodeToolsetRedirectState({
     toolsetId,
     credentialsLevel,
-    state: result.state,
-  };
-  sessionStorage.setItem(
-    TOOLSET_REDIRECT_STATE_KEY,
-    JSON.stringify(redirectState),
-  );
+    csrfToken: crypto.randomUUID(),
+  });
+  const url = buildToolsetAuthorizeUrl(auth, redirectUri, state);
+  if (!url) return false;
 
   /*
    * `noopener` (not a post-hoc `authWindow.opener = null`) is required to
@@ -125,7 +131,7 @@ export const initiateOAuthLogin = (
    * With `noopener`, some browsers return `null` even though the tab opened,
    * so a `null` result here is treated as success rather than popup-blocked.
    */
-  window.open(result.url, '_blank', 'noopener,noreferrer');
+  window.open(url, '_blank', 'noopener,noreferrer');
   return true;
 };
 
@@ -137,6 +143,104 @@ export const isPublicToolsetId = (toolsetId: string): boolean => {
   if (!toolsetId.startsWith(TOOLSETS_ID_PREFIX)) return false;
   const bucket = toolsetId.slice(TOOLSETS_ID_PREFIX.length).split('/')[0];
   return bucket === PUBLIC_BUCKET_SEGMENT;
+};
+
+/** Returns whether `origin` is a well-formed absolute URL origin (never `'*'`). */
+export const isValidPostMessageOrigin = (origin: string): boolean => {
+  try {
+    return new URL(origin).origin === origin;
+  } catch {
+    return false;
+  }
+};
+
+/** Base64url-encodes a UTF-8 string (`+`→`-`, `/`→`_`, no `=` padding). */
+const encodeBase64Url = (value: string): string =>
+  btoa(String.fromCharCode(...new TextEncoder().encode(value)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+/** Reverses `encodeBase64Url`. Throws on malformed input — caller catches. */
+const decodeBase64Url = (value: string): string => {
+  const b64 = value
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(Math.ceil(value.length / 4) * 4, '=');
+  return new TextDecoder().decode(
+    Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)),
+  );
+};
+
+const isValidCredentialsLevel = (
+  value: unknown,
+): value is ToolsetCredentialsLevel =>
+  value === ToolsetCredentialsLevel.Global ||
+  value === ToolsetCredentialsLevel.User;
+
+/**
+ * Decodes and strictly validates the base64url-encoded JSON `state` payload
+ * used by the popup-based toolset login handshake (see design.md D2). Returns
+ * `null` on any parse failure or missing/invalid field so the caller never
+ * falls back to an unsafe default for `originatingOrigin`.
+ */
+export const decodeToolsetPopupState = (
+  state: string,
+): ToolsetPopupState | null => {
+  try {
+    const parsed = JSON.parse(
+      decodeBase64Url(state),
+    ) as Partial<ToolsetPopupState>;
+    if (
+      typeof parsed.toolsetId !== 'string' ||
+      !parsed.toolsetId ||
+      typeof parsed.originatingOrigin !== 'string' ||
+      !parsed.originatingOrigin ||
+      !isValidPostMessageOrigin(parsed.originatingOrigin) ||
+      typeof parsed.nonce !== 'string' ||
+      !parsed.nonce ||
+      !isValidCredentialsLevel(parsed.credentialsLevel)
+    ) {
+      return null;
+    }
+    return parsed as ToolsetPopupState;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Encodes the admin flow's redirect state as the base64url-encoded JSON that
+ * travels in the OAuth `state` query parameter (see `initiateOAuthLogin`).
+ */
+export const encodeToolsetRedirectState = (
+  redirectState: ToolsetRedirectState,
+): string => encodeBase64Url(JSON.stringify(redirectState));
+
+/**
+ * Decodes and strictly validates the admin flow's `state` payload. Returns
+ * `null` on any parse failure or missing/invalid field.
+ */
+export const decodeToolsetRedirectState = (
+  state: string,
+): ToolsetRedirectState | null => {
+  try {
+    const parsed = JSON.parse(
+      decodeBase64Url(state),
+    ) as Partial<ToolsetRedirectState>;
+    if (
+      typeof parsed.toolsetId !== 'string' ||
+      !parsed.toolsetId ||
+      typeof parsed.csrfToken !== 'string' ||
+      !parsed.csrfToken ||
+      !isValidCredentialsLevel(parsed.credentialsLevel)
+    ) {
+      return null;
+    }
+    return parsed as ToolsetRedirectState;
+  } catch {
+    return null;
+  }
 };
 
 /** Maps a loaded toolset DTO (snake_case) into editor form state. */

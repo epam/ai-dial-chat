@@ -617,6 +617,9 @@
       "updateFailed": "Failed to update toolset. Please try again.",
       "loginFailed": "Failed to log in. Please check your credentials and try again.",
       "logoutFailed": "Failed to log out. Please try again."
+    },
+    "popup": {
+      "closeFallback": "You can close this window."
     }
   }
 }

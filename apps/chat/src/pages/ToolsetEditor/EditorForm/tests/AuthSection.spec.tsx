@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TOOLSET_REDIRECT_STATE_KEY } from '../../../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../../../constants/translation-keys';
 import { useNotification } from '../../../../context/NotificationContext';
 import * as toolsetsApi from '../../../../server-api/toolsets';
@@ -13,6 +12,7 @@ import {
   ToolsetCredentialsLevel,
   WithLogin,
 } from '../../../../types/toolsets';
+import { decodeToolsetRedirectState } from '../../../../utils/toolsets';
 import AuthSection from '../AuthSection';
 
 vi.mock('../../../../server-api/toolsets', () => ({
@@ -204,7 +204,6 @@ describe('AuthSection', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    sessionStorage.clear();
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: { origin: 'http://localhost', href: 'http://localhost/' },
@@ -302,21 +301,25 @@ describe('AuthSection', () => {
   });
 
   describe('OAuth login redirect', () => {
-    it('stores redirect state in sessionStorage when OAuth Log in is clicked', async () => {
+    it('encodes the redirect state into the state param and opens the authorize URL', async () => {
+      const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
       renderSection(oauthWithConfigAuth());
       await user.click(
         screen.getByRole('button', {
           name: ToolsetEditorI18nKeys.LogInButton,
         }),
       );
-      const stored = sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY);
-      expect(stored).not.toBeNull();
-      const state = JSON.parse(stored as string);
-      expect(state.toolsetId).toBe('toolsets/b/my__1.0.0');
-      expect(state.credentialsLevel).toBe(ToolsetCredentialsLevel.User);
+      expect(openSpy).toHaveBeenCalledOnce();
+      const [url] = openSpy.mock.calls[0] as [string, string, string];
+      const state = new URL(url).searchParams.get('state') as string;
+      expect(decodeToolsetRedirectState(state)).toMatchObject({
+        toolsetId: 'toolsets/b/my__1.0.0',
+        credentialsLevel: ToolsetCredentialsLevel.User,
+      });
     });
 
-    it('does not store sessionStorage state when authorizationEndpoint is missing', async () => {
+    it('does not open a window when authorizationEndpoint is missing', async () => {
+      const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
       renderSection({
         ...oauthWithConfigAuth(),
         authorizationEndpoint: '',
@@ -326,7 +329,7 @@ describe('AuthSection', () => {
           name: ToolsetEditorI18nKeys.LogInButton,
         }),
       );
-      expect(sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY)).toBeNull();
+      expect(openSpy).not.toHaveBeenCalled();
     });
 
     it('enables the Log In button before the toolset is saved when the form is valid', () => {

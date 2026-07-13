@@ -526,6 +526,8 @@ export enum ToolsetEditorI18nKeys {
   ErrorUpdateFailed = 'toolsetEditor.error.updateFailed',
   ErrorLoginFailed = 'toolsetEditor.error.loginFailed',
   ErrorLogoutFailed = 'toolsetEditor.error.logoutFailed',
+  // Popup login callback
+  PopupCloseFallback = 'toolsetEditor.popup.closeFallback',
 }
 
 export enum ErrorBoundaryI18nKeys {
