@@ -6,6 +6,7 @@ import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import type { CardProps } from '../../models/card-props';
 import { getFeaturedEntityStyle } from '../../utils/styles';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
+import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
 import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
@@ -25,6 +26,7 @@ export const Card: FC<CardProps> = ({
   isSelected = false,
   className,
   styles: cardStyles,
+  credentialsBadgeLoggedOutLabel,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
 
@@ -122,8 +124,12 @@ export const Card: FC<CardProps> = ({
         {item.description}
       </p>
 
-      <div className="min-h-[28px]">
+      <div className="flex min-h-[28px] items-center justify-between gap-2">
         <TopicsLine topics={item.topics} />
+        <CredentialsBadge
+          credentials={item.credentials}
+          loggedOutLabel={credentialsBadgeLoggedOutLabel}
+        />
       </div>
 
       <div className="mt-auto border-t border-tertiary pt-3">

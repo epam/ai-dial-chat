@@ -4,10 +4,17 @@ export interface UserProfile {
   sub: string;
   /** ID of the identity provider that authenticated the user. */
   providerId: string;
-  /** Raw claims from the ID token, keyed by claim name. */
+  /**
+   * Allowlisted claims, keyed by claim name. A dot-notation provider
+   * `rolesClaim` (e.g. `"realm_access.roles"`) is stored under one flat key
+   * equal to that literal string, never as a nested object — look it up
+   * with `claims[rolesClaim]`, not a nested path.
+   */
   claims: Record<string, unknown>;
   /** DIAL Core storage bucket for the authenticated user. Empty string when the bucket has not been resolved yet. */
   bucket?: string;
+  /** Whether the user's roles claim intersects the provider's configured adminRoles. */
+  isAdmin: boolean;
 }
 
 /** Describes an available identity provider. */

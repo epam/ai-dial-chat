@@ -16,11 +16,25 @@ export class UserProfileDto {
   @ApiProperty({ example: 'local' })
   providerId!: string;
 
-  @ApiProperty({ type: 'object', additionalProperties: true })
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    description:
+      'Allowlisted claims keyed by claim name. A dot-notation rolesClaim ' +
+      '(e.g. "realm_access.roles") is stored under one flat key equal to ' +
+      'that literal string, never as a nested object.',
+  })
   claims!: Record<string, unknown>;
 
   @ApiProperty({ example: 'default-bucket' })
   bucket!: string;
+
+  @ApiProperty({
+    example: false,
+    description:
+      "Whether the user's roles claim intersects the provider's configured adminRoles",
+  })
+  isAdmin!: boolean;
 }
 
 export class DialModelFeaturesDto {

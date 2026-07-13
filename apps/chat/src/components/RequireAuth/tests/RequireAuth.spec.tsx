@@ -61,7 +61,7 @@ describe('RequireAuth', () => {
   it('renders children when status is authenticated', () => {
     mockUseUser.mockReturnValue({
       status: AuthStatus.Authenticated,
-      user: { sub: 'u1', providerId: 'keycloak', claims: {} },
+      user: { sub: 'u1', providerId: 'keycloak', claims: {}, isAdmin: false },
       refresh: vi.fn(),
       reset: vi.fn(),
     });
