@@ -10,6 +10,7 @@ import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
+  ButtonsI18nKeys,
   NavigationI18nKeys,
   NotFoundI18nKeys,
 } from '../../constants/translation-keys';
@@ -24,7 +25,7 @@ const NotFoundPage: FC = () => {
 
   return (
     <section
-      aria-label={t(NotFoundI18nKeys.AriaLabel)}
+      aria-label={t(NotFoundI18nKeys.Title)}
       className="flex min-h-0 flex-1 flex-col bg-layer-5"
     >
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-4 py-10 desktop:px-8">
@@ -68,7 +69,7 @@ const NotFoundPage: FC = () => {
               onClick={() => navigate(ROUTES.Catalog)}
             />
             <NeutralButton
-              label={t(NotFoundI18nKeys.NewChat)}
+              label={t(ButtonsI18nKeys.NewChat)}
               iconBefore={<IconMessagePlus size={DIAL_ICON_SIZE.SM} />}
               onClick={() => navigate(ROUTES.Root)}
             />

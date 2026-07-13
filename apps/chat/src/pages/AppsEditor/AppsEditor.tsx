@@ -11,6 +11,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import EditorHeader from '../../components/EditorHeader/EditorHeader';
 import {
   AppsEditorI18nKeys,
+  BasicI18nKeys,
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -188,7 +189,7 @@ const AppsEditor: FC = () => {
       },
       {
         id: AppsEditorStep.Settings,
-        name: t(AppsEditorI18nKeys.StepSettings),
+        name: t(BasicI18nKeys.Settings),
         status: appIdForSettings ? StepStatus.VALID : undefined,
       },
     ],
@@ -211,7 +212,7 @@ const AppsEditor: FC = () => {
         onChangeStep={handleChangeStep}
         onCancel={handleCancel}
         onSave={handleSave}
-        previewButtonLabel={t(AppsEditorI18nKeys.PreviewButton)}
+        previewButtonLabel={t(BasicI18nKeys.Preview)}
         exitPreviewButtonLabel={t(AppsEditorI18nKeys.ExitPreviewButton)}
         isPreviewing={isPreviewing}
         onPreview={canPreview ? handlePreview : undefined}

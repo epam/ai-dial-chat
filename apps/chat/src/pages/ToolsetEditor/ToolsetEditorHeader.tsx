@@ -4,6 +4,7 @@ import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import EditorHeader from '../../components/EditorHeader/EditorHeader';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
@@ -37,7 +38,7 @@ const ToolsetEditorHeader: FC<Props> = ({
       },
       {
         id: ToolsetEditorSteps.Settings,
-        name: t(ToolsetEditorI18nKeys.StepSettings),
+        name: t(BasicI18nKeys.Settings),
         status: canOpenSettings ? StepStatus.VALID : undefined,
       },
     ],

@@ -24,6 +24,7 @@ import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import {
+  ButtonsI18nKeys,
   ChatI18nKeys,
   DeploymentSelectorI18nKeys,
 } from '../../constants/translation-keys';
@@ -216,7 +217,7 @@ const ConversationRoute: FC = () => {
                 searchAriaLabel: t(DeploymentSelectorI18nKeys.SearchAriaLabel),
                 favoritesLabel: t(DeploymentSelectorI18nKeys.FavoritesLabel),
                 emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
-                browseCatalogLabel: t(DeploymentSelectorI18nKeys.BrowseCatalog),
+                browseCatalogLabel: t(ButtonsI18nKeys.Browse),
                 removeFromFavoritesLabel: t(
                   DeploymentSelectorI18nKeys.RemoveFromFavorites,
                 ),

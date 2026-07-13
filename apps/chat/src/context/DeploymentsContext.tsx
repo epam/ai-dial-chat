@@ -16,7 +16,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DeploymentsI18nKeys } from '../constants/translation-keys';
+import { DeploymentSelectorI18nKeys } from '../constants/translation-keys';
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
@@ -193,7 +193,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     } catch {
       showNotification({
         variant: NotificationVariant.Error,
-        message: t(DeploymentsI18nKeys.RefetchToolsetsFailed),
+        message: t(DeploymentSelectorI18nKeys.RefetchToolsetsFailed),
       });
     }
   }, [showNotification, t]);

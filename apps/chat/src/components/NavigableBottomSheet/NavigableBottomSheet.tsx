@@ -9,7 +9,10 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavigationI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  NavigationI18nKeys,
+} from '../../constants/translation-keys';
 import { SheetNavigationContext } from '../../context/SheetNavigationContext';
 import type { SheetPage } from '../../models/sheet-navigation';
 
@@ -62,7 +65,7 @@ const NavigableBottomSheet: FC<Props> = ({
         isOpen={isOpen}
         onClose={close}
         title={topPage?.title ?? title}
-        closeLabel={t(NavigationI18nKeys.Close)}
+        closeLabel={t(ButtonsI18nKeys.Close)}
         onBack={topPage ? pop : undefined}
         backLabel={topPage ? t(NavigationI18nKeys.Back) : undefined}
         className={className}

@@ -19,6 +19,7 @@ import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AUTH_TYPE_OPTIONS } from '../../../constants/toolsets';
 import {
+  AuthI18nKeys,
   ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
@@ -160,7 +161,7 @@ const AuthSection: FC<Props> = ({
           <PrimaryButton
             type="button"
             size={ElementSize.Small}
-            label={t(ToolsetEditorI18nKeys.LogOutButton)}
+            label={t(ButtonsI18nKeys.LogOut)}
             onClick={() => setShowLogoutConfirm(true)}
             disabled={isSaving || isAuthBusy}
           />
@@ -371,9 +372,9 @@ const AuthSection: FC<Props> = ({
       {showLogoutConfirm && (
         <DialConfirmationPopup
           open={showLogoutConfirm}
-          header={t(ToolsetEditorI18nKeys.LogoutConfirmTitle)}
+          header={t(AuthI18nKeys.LogOutConfirmTitle)}
           description={t(ToolsetEditorI18nKeys.LogoutConfirmDescription)}
-          confirmLabel={t(ToolsetEditorI18nKeys.LogOutButton)}
+          confirmLabel={t(ButtonsI18nKeys.LogOut)}
           cancelLabel={t(ButtonsI18nKeys.Cancel)}
           variant={ConfirmationPopupVariant.Danger}
           isLoading={isAuthBusy}

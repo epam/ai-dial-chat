@@ -27,7 +27,6 @@ export enum ChatI18nKeys {
   Thinking = 'chat.thinking',
   ShowMoreUserMessage = 'chat.showMoreUserMessage',
   ShowLessUserMessage = 'chat.showLessUserMessage',
-  ChatSettings = 'chat.chatSettings',
 }
 
 export enum RateI18nKeys {
@@ -42,7 +41,6 @@ export enum RateI18nKeys {
   LikeToastTitle = 'rate.likeToastTitle',
   LikeToastDescription = 'rate.likeToastDescription',
   DislikeToastTitle = 'rate.dislikeToastTitle',
-  DislikeToastDescription = 'rate.dislikeToastDescription',
 }
 
 export enum BasicI18nKeys {
@@ -50,6 +48,16 @@ export enum BasicI18nKeys {
   ClearSearch = 'basic.clearSearch',
   NoResults = 'basic.noResults',
   Empty = 'basic.noData',
+  Organization = 'basic.organization',
+  UrlPlaceholder = 'basic.urlPlaceholder',
+  Preview = 'basic.preview',
+  Settings = 'basic.settings',
+  AttachFiles = 'basic.attachFiles',
+  DeleteConfirmDescription = 'basic.deleteConfirmDescription',
+}
+
+export enum ApiI18nKeys {
+  EndpointLabel = 'api.endpointLabel',
 }
 
 export enum ButtonsI18nKeys {
@@ -85,8 +93,9 @@ export enum ButtonsI18nKeys {
   Close = 'buttons.close',
   Send = 'buttons.send',
   UseInChat = 'buttons.useInChat',
-  Deploy = 'buttons.deploy',
-  Connect = 'buttons.connect',
+  NewChat = 'buttons.newChat',
+  Download = 'buttons.download',
+  LogOut = 'buttons.logOut',
 }
 
 export enum NavigationI18nKeys {
@@ -95,18 +104,12 @@ export enum NavigationI18nKeys {
   Catalog = 'navigation.catalog',
   FileManager = 'dialFileManager.page.navLabel',
   OpenMenu = 'navigation.openMenu',
-  CloseMenu = 'navigation.closeMenu',
-  MobileMenu = 'navigation.mobileMenu',
   Menu = 'navigation.menu',
   Profile = 'navigation.profile',
   Back = 'navigation.back',
-  Close = 'navigation.close',
 }
 
 export enum CatalogI18nKeys {
-  AriaLabel = 'catalog.ariaLabel',
-  PageTitle = 'catalog.pageTitle',
-  FavoritesTitle = 'catalog.favoritesTitle',
   SearchPlaceholder = 'catalog.searchPlaceholder',
   NoResultsTitle = 'catalog.noResultsTitle',
   SortRecentlyUpdated = 'catalog.sortRecentlyUpdated',
@@ -121,18 +124,17 @@ export enum CatalogI18nKeys {
   DetailsApiResourceSection = 'catalog.details.api.resourceSection',
   DetailsApiSnippetSection = 'catalog.details.api.snippetSection',
   DetailsApiModelId = 'catalog.details.api.modelId',
-  DetailsApiEndpoint = 'catalog.details.api.endpoint',
   DetailsApiRequestExample = 'catalog.details.api.requestExample',
   DetailsApiResponseSchema = 'catalog.details.api.responseSchema',
-  DetailsApiCopy = 'catalog.details.api.copy',
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
   CreateQuickApp = 'catalog.create.quickApp',
   CreateToolset = 'catalog.create.toolset',
-  FavoriteAddedTitle = 'catalog.favoriteAddedTitle',
-  FavoriteAdded = 'catalog.favoriteAdded',
-  FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
-  FavoriteRemoved = 'catalog.favoriteRemoved',
+  FavoritesTitle = 'catalog.favorites.title',
+  FavoriteAddedTitle = 'catalog.favorites.addedTitle',
+  FavoriteAdded = 'catalog.favorites.added',
+  FavoriteRemovedTitle = 'catalog.favorites.removedTitle',
+  FavoriteRemoved = 'catalog.favorites.removed',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',
@@ -146,31 +148,22 @@ export enum DeploymentSelectorI18nKeys {
   SearchAriaLabel = 'deploymentSelector.searchAriaLabel',
   FavoritesLabel = 'deploymentSelector.favoritesLabel',
   EmptyHint = 'deploymentSelector.emptyHint',
-  BrowseCatalog = 'deploymentSelector.browseCatalogLabel',
   RemoveFromFavorites = 'deploymentSelector.removeFromFavoritesLabel',
   CurrentlySelectedLabel = 'deploymentSelector.currentlySelectedLabel',
   AddToFavorites = 'deploymentSelector.addToFavoritesLabel',
+  AriaLabel = 'deploymentSelector.ariaLabel',
+  Loading = 'deploymentSelector.loading',
+  Error = 'deploymentSelector.error',
+  Empty = 'deploymentSelector.empty',
+  CloseLabel = 'deploymentSelector.closeLabel',
+  RefetchToolsetsFailed = 'deploymentSelector.refetchToolsetsFailed',
 }
 
 export enum NotFoundI18nKeys {
-  AriaLabel = 'notFound.ariaLabel',
   Eyebrow = 'notFound.eyebrow',
   Title = 'notFound.title',
   Description = 'notFound.description',
   OpenCatalog = 'notFound.openCatalog',
-  NewChat = 'notFound.newChat',
-}
-
-export enum DeploymentsI18nKeys {
-  Empty = 'deployments.empty',
-  TypeModel = 'deployments.type.model',
-  TypeApplication = 'deployments.type.application',
-  SelectorAriaLabel = 'deployments.selector.ariaLabel',
-  SelectorLoading = 'deployments.selector.loading',
-  SelectorError = 'deployments.selector.error',
-  SelectorEmpty = 'deployments.selector.empty',
-  SelectorCloseLabel = 'deployments.selector.closeLabel',
-  RefetchToolsetsFailed = 'deployments.refetchToolsetsFailed',
 }
 
 export enum ConversationI18nKeys {
@@ -183,7 +176,6 @@ export enum ConversationI18nKeys {
 }
 
 export enum DialFileManagerI18nKeys {
-  Title = 'dialFileManager.title',
   Attach = 'dialFileManager.attach',
   Empty = 'dialFileManager.empty',
   Error = 'dialFileManager.error',
@@ -194,7 +186,6 @@ export enum DialFileManagerI18nKeys {
   ItemsSelected = 'dialFileManager.itemsSelected',
   Upload = 'dialFileManager.upload',
   NewFolder = 'dialFileManager.newFolder',
-  Download = 'dialFileManager.download',
   Downloading = 'dialFileManager.downloading',
   UploadProgressTitle = 'dialFileManager.uploadProgressTitle',
   MaxSizeSupportedTypes = 'dialFileManager.maxSizeSupportedTypes',
@@ -207,14 +198,11 @@ export enum DialFileManagerI18nKeys {
   UnsupportedFilesDescription = 'dialFileManager.unsupportedFilesDescription',
   TooManyFilesSelected = 'dialFileManager.tooManyFilesSelected',
   TooManyFilesDescription = 'dialFileManager.tooManyFilesDescription',
-  DeleteAction = 'dialFileManager.deleteAction',
   DeletingLabel = 'dialFileManager.deletingLabel',
   DeleteConfirmTitleSingle = 'dialFileManager.deleteConfirmTitleSingle',
   DeleteConfirmTitleMultiple = 'dialFileManager.deleteConfirmTitleMultiple',
-  DeleteConfirmBodySingle = 'dialFileManager.deleteConfirmBodySingle',
   DeleteConfirmBodyMultiple = 'dialFileManager.deleteConfirmBodyMultiple',
   DeleteConfirmBodyItems = 'dialFileManager.deleteConfirmBodyItems',
-  DeleteConfirmButton = 'dialFileManager.deleteConfirmButton',
   ConflictSingleTitle = 'dialFileManager.conflictSingleTitle',
   ConflictMultipleTitle = 'dialFileManager.conflictMultipleTitle',
   ConflictReplace = 'dialFileManager.conflictReplace',
@@ -240,11 +228,6 @@ export enum DialFileManagerI18nKeys {
   SomeItemsNotDeleted = 'dialFileManager.someItemsNotDeleted',
   TabMyFiles = 'dialFileManager.tab.myFiles',
   TabShared = 'dialFileManager.tab.shared',
-  TabOrganization = 'dialFileManager.tab.organization',
-  ColumnModifiedDate = 'dialFileManager.column.modifiedDate',
-  ColumnSize = 'dialFileManager.column.size',
-  ColumnAuthor = 'dialFileManager.column.author',
-  RenameAction = 'dialFileManager.renameAction',
   RenamingLabel = 'dialFileManager.renamingLabel',
   RenameError = 'dialFileManager.renameError',
   RenamePartialError = 'dialFileManager.renamePartialError',
@@ -264,9 +247,7 @@ export enum DialFileManagerI18nKeys {
   MovePartialError = 'dialFileManager.movePartialError',
   OperationLoaderCopyTitle = 'dialFileManager.operationLoaderCopyTitle',
   OperationLoaderMoveTitle = 'dialFileManager.operationLoaderMoveTitle',
-  OperationLoaderCancelLabel = 'dialFileManager.operationLoaderCancelLabel',
   FolderPickerAddFolderLabel = 'dialFileManager.folderPickerAddFolderLabel',
-  FolderPickerHiddenFilesLabel = 'dialFileManager.folderPickerHiddenFilesLabel',
   CopyHeaderSingle = 'dialFileManager.copyHeaderSingle',
   CopyHeaderMultiple = 'dialFileManager.copyHeaderMultiple',
   MoveHeaderSingle = 'dialFileManager.moveHeaderSingle',
@@ -274,10 +255,7 @@ export enum DialFileManagerI18nKeys {
   MoveSourceDisabledTooltip = 'dialFileManager.moveSourceDisabledTooltip',
   FolderPickerEmptyStateTitle = 'dialFileManager.folderPickerEmptyStateTitle',
   FolderPickerEmptyStateDescription = 'dialFileManager.folderPickerEmptyStateDescription',
-  SearchEmptyStateTitle = 'dialFileManager.search.emptyStateTitle',
   MyFilesTreeHeader = 'dialFileManager.myFiles.treeHeader',
-  SharedTreeHeader = 'dialFileManager.shared.treeHeader',
-  OrganizationTreeHeader = 'dialFileManager.organization.treeHeader',
   MyFilesEmptyStateTitle = 'dialFileManager.myFiles.emptyStateTitle',
   MyFilesEmptyStateDescription = 'dialFileManager.myFiles.emptyStateDescription',
   SharedEmptyStateTitle = 'dialFileManager.shared.emptyStateTitle',
@@ -285,19 +263,14 @@ export enum DialFileManagerI18nKeys {
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
   UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
-  PageNavLabel = 'dialFileManager.page.navLabel',
 }
 
 export enum AuthI18nKeys {
-  SignOut = 'auth.signOut',
   SignedInAs = 'auth.signedInAs',
   Loading = 'auth.loading',
   LoginTitle = 'auth.loginTitle',
   LoginDescription = 'auth.loginDescription',
-  ProviderButtonLabel = 'auth.providerButtonLabel',
   ProvidersError = 'auth.providersError',
-  UserMenuLabel = 'auth.userMenuLabel',
-  LogOut = 'auth.logOut',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
   UserAvatar = 'auth.userAvatar',
@@ -318,11 +291,8 @@ export enum ConversationPanelI18nKeys {
   Title = 'conversationPanel.title',
   ToggleAriaLabel = 'conversationPanel.toggleAriaLabel',
   Empty = 'conversationPanel.empty',
-  NewChat = 'conversationPanel.newChat',
   FilterAll = 'conversationPanel.filterAll',
-  FilterMyChats = 'conversationPanel.filterMyChats',
   FilterShared = 'conversationPanel.filterShared',
-  FilterOrganization = 'conversationPanel.filterOrganization',
   PinnedSection = 'conversationPanel.pinnedSection',
   MyChatsSection = 'conversationPanel.myChatsSection',
   ActionsLabel = 'conversationPanel.actionsLabel',
@@ -331,7 +301,6 @@ export enum ConversationPanelI18nKeys {
   DeleteSuccess = 'conversationPanel.deleteSuccess',
   DeleteSuccessTitle = 'conversationPanel.deleteSuccessTitle',
   DeleteConfirmTitle = 'conversationPanel.deleteConfirmTitle',
-  DeleteConfirmDescription = 'conversationPanel.deleteConfirmDescription',
   DeleteError = 'conversationPanel.deleteError',
   RenameTitle = 'conversationPanel.renameTitle',
   RenameInputPlaceholder = 'conversationPanel.renameInputPlaceholder',
@@ -349,12 +318,10 @@ export enum ConversationPanelI18nKeys {
   DeleteAllPartialError = 'conversationPanel.deleteAllPartialError',
   DeleteAllSuccessTitle = 'conversationPanel.deleteAllSuccessTitle',
   DeleteAllSuccess = 'conversationPanel.deleteAllSuccess',
-  ShareLabel = 'conversationPanel.shareLabel',
 }
 
 export enum SidebarI18nKeys {
   ToggleOpen = 'sidebar.base.toggleOpen',
-  ToggleClose = 'sidebar.base.toggleClose',
   AriaLabel = 'sidebar.sources.ariaLabel',
   DownloadAll = 'sidebar.sources.downloadAll',
   SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
@@ -378,16 +345,12 @@ export enum CitationsI18nKeys {
   MarkerLabelWithOverflow = 'citations.marker.labelWithOverflow',
   MarkerAriaLabel = 'citations.marker.ariaLabel',
   PopupSwitcher = 'citations.popup.switcher',
-  PopupPreview = 'citations.popup.preview',
   PopupOpenInBrowser = 'citations.popup.openInBrowser',
-  PopupDownload = 'citations.popup.download',
   PopupPreviousCitation = 'citations.popup.previousCitation',
   PopupNextCitation = 'citations.popup.nextCitation',
-  PopupAriaLabel = 'citations.popup.ariaLabel',
 }
 
 export enum FileDndI18nKeys {
-  OverlayTitle = 'fileDnd.overlayTitle',
   OverlaySubtitle = 'fileDnd.overlaySubtitle',
   OverlayDeniedTitle = 'fileDnd.overlayDeniedTitle',
   OverlayDeniedSubtitle = 'fileDnd.overlayDeniedSubtitle',
@@ -398,7 +361,6 @@ export enum UserConfigI18nKeys {
 }
 
 export enum ChatSettingsI18nKeys {
-  Title = 'chatSettings.title',
   ResponseFormatLabel = 'chatSettings.responseFormatLabel',
   ResponseFormatHint = 'chatSettings.responseFormatHint',
   ResponseFormatMarkdown = 'chatSettings.responseFormatMarkdown',
@@ -424,14 +386,12 @@ export enum AttachmentCanvasI18nKeys {
 
 export enum AppsEditorI18nKeys {
   StepGeneral = 'appsEditor.stepGeneral',
-  StepSettings = 'appsEditor.stepSettings',
   StepsNavAriaLabel = 'appsEditor.stepsNavAriaLabel',
   GeneralFormNameLabel = 'appsEditor.generalForm.nameLabel',
   GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
   GeneralFormDescriptionLabel = 'appsEditor.generalForm.descriptionLabel',
   GeneralFormDescriptionPlaceholder = 'appsEditor.generalForm.descriptionPlaceholder',
   GeneralFormIconUrlLabel = 'appsEditor.generalForm.iconUrlLabel',
-  GeneralFormIconUrlPlaceholder = 'appsEditor.generalForm.iconUrlPlaceholder',
   GeneralFormNextButton = 'appsEditor.generalForm.nextButton',
   GeneralFormNameRequired = 'appsEditor.generalForm.nameRequired',
   GeneralFormNameInvalid = 'appsEditor.generalForm.nameInvalid',
@@ -443,11 +403,9 @@ export enum AppsEditorI18nKeys {
   GeneralFormIntroLabel = 'appsEditor.generalForm.introLabel',
   GeneralFormIntroPlaceholder = 'appsEditor.generalForm.introPlaceholder',
   GeneralFormIntroTooLong = 'appsEditor.generalForm.introTooLong',
-  GeneralFormPreviewTitle = 'appsEditor.generalForm.previewTitle',
   SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
   SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
   SaveButton = 'appsEditor.saveButton',
-  PreviewButton = 'appsEditor.previewButton',
   ExitPreviewButton = 'appsEditor.exitPreviewButton',
   PreviewChatPlaceholder = 'appsEditor.previewChat.placeholder',
   PreviewChatAriaLabel = 'appsEditor.previewChat.ariaLabel',
@@ -457,7 +415,6 @@ export enum AppsEditorI18nKeys {
 
 export enum ToolsetEditorI18nKeys {
   StepGeneral = 'toolsetEditor.stepGeneral',
-  StepSettings = 'toolsetEditor.stepSettings',
   StepsNavAriaLabel = 'toolsetEditor.stepsNavAriaLabel',
   NextButton = 'toolsetEditor.nextButton',
   SaveButton = 'toolsetEditor.saveButton',
@@ -468,7 +425,6 @@ export enum ToolsetEditorI18nKeys {
   VersionLabel = 'toolsetEditor.general.versionLabel',
   VersionPlaceholder = 'toolsetEditor.general.versionPlaceholder',
   IconUrlLabel = 'toolsetEditor.general.iconUrlLabel',
-  IconUrlPlaceholder = 'toolsetEditor.general.iconUrlPlaceholder',
   DescriptionLabel = 'toolsetEditor.general.descriptionLabel',
   DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',
   TopicsLabel = 'toolsetEditor.general.topicsLabel',
@@ -477,8 +433,6 @@ export enum ToolsetEditorI18nKeys {
   IntroPlaceholder = 'toolsetEditor.general.introPlaceholder',
   IntroTooLong = 'toolsetEditor.general.introTooLong',
   // Settings form
-  EndpointLabel = 'toolsetEditor.settings.endpointLabel',
-  EndpointPlaceholder = 'toolsetEditor.settings.endpointPlaceholder',
   EndpointRequired = 'toolsetEditor.settings.endpointRequired',
   EndpointInvalid = 'toolsetEditor.settings.endpointInvalid',
   ProtocolLabel = 'toolsetEditor.settings.protocolLabel',
@@ -506,9 +460,7 @@ export enum ToolsetEditorI18nKeys {
   ScopesLabel = 'toolsetEditor.auth.scopesLabel',
   ScopesPlaceholder = 'toolsetEditor.auth.scopesPlaceholder',
   LogInButton = 'toolsetEditor.auth.logInButton',
-  LogOutButton = 'toolsetEditor.auth.logOutButton',
   LoggedInLabel = 'toolsetEditor.auth.loggedInLabel',
-  LogoutConfirmTitle = 'toolsetEditor.auth.logoutConfirmTitle',
   LogoutConfirmDescription = 'toolsetEditor.auth.logoutConfirmDescription',
   // Errors
   ErrorCreateFailed = 'toolsetEditor.error.createFailed',

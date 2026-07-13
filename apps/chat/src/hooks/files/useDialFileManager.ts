@@ -36,7 +36,10 @@ import type {
   FileUploadEntry,
 } from '../../components/DialFileManagerModal/types/upload';
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
-import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  DialFileManagerI18nKeys,
+} from '../../constants/translation-keys';
 import {
   copyFiles,
   createFolder,
@@ -1733,11 +1736,9 @@ export const useDialFileManager = ({
       [DialFileManagerActions.Download]: t('dialFileManager.download'),
     };
     if (activeTab === DialFileManagerTabs.MyFiles) {
-      labels[DialFileManagerActions.Delete] = t('dialFileManager.deleteAction');
+      labels[DialFileManagerActions.Delete] = t(ButtonsI18nKeys.Delete);
       if (uploadEnabled) {
-        labels[DialFileManagerActions.Rename] = t(
-          DialFileManagerI18nKeys.RenameAction,
-        );
+        labels[DialFileManagerActions.Rename] = t(ButtonsI18nKeys.Rename);
         if (isCopyMoveDuplicateAllowed(actionProfile)) {
           labels[DialFileManagerActions.Copy] = t(
             DialFileManagerI18nKeys.CopyAction,
