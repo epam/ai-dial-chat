@@ -235,6 +235,48 @@ When `validateAttachment` is not provided, existing behaviour is unchanged.
 
 ---
 
+### Requirement: Attachments already in the tray are re-validated when validateAttachment changes
+
+`useAttachments` (`libs/conversation-input/src/hooks/useAttachments.ts`) SHALL re-run `validateAttachment` against every attachment already in the tray whenever the `validateAttachment` callback identity changes (e.g., because the host recomputed it after the user switched the selected model/deployment).
+
+Attachments currently in `RequestStatus.Loading` are skipped by this re-validation pass — an in-flight upload is never interrupted.
+
+- If `validateAttachment` now returns an `AttachmentErrorReason` for an attachment that was not already in that exact error state, the attachment SHALL transition to `{ status: RequestStatus.Error, errorReason: reason }`. This reuses the existing error-card rendering, retry-button suppression rules, and `hasBlockedAttachments` gating — no new UI or send-blocking mechanism is introduced.
+- If `validateAttachment` now returns `undefined` for an attachment whose `errorReason` was `AttachmentErrorReason.UnsupportedType`, the attachment SHALL transition back to `RequestStatus.Idle` with `errorReason` cleared. When that attachment has no `url` yet (it was never uploaded because it was invalid at add time), `useAttachments` SHALL call `onUploadAttachment` for it as part of the transition.
+- Attachments with any other error reason (e.g. `AttachmentErrorReason.Network`) or with no error are left untouched by this pass beyond the unsupported-type checks above.
+- When `validateAttachment` is not provided (`undefined`), no re-validation pass runs.
+
+This closes the gap where a file attached while compatible with the selected model, followed by switching to a model that no longer supports that file's type, previously left the attachment silently valid until send failed.
+
+#### Scenario: Switching to an incompatible model flags an already-attached file
+
+- **WHEN** a PDF attachment is idle and uploaded under a model that allows PDFs
+- **AND** the user switches to a model whose `inputAttachmentTypes` no longer include `application/pdf`
+- **THEN** the attachment card transitions to `status: RequestStatus.Error` with `errorReason: AttachmentErrorReason.UnsupportedType`
+- **AND** the send action becomes unavailable
+- **AND** the retry button is not rendered on that card
+
+#### Scenario: Switching back to a compatible model clears the error and uploads if needed
+
+- **WHEN** an attachment is in `status: RequestStatus.Error` with `errorReason: AttachmentErrorReason.UnsupportedType` and no `url`
+- **AND** the user switches to a model whose `inputAttachmentTypes` include that attachment's MIME type
+- **THEN** the attachment transitions to `status: RequestStatus.Idle` with `errorReason` cleared
+- **AND** `onUploadAttachment` is called for that attachment
+
+#### Scenario: In-flight uploads are not disturbed by a model switch
+
+- **WHEN** an attachment is in `status: RequestStatus.Loading`
+- **AND** the selected model changes while the upload is still pending
+- **THEN** the re-validation pass leaves that attachment's status untouched
+
+#### Scenario: Unrelated error reasons are not cleared by re-validation
+
+- **WHEN** an attachment is in `status: RequestStatus.Error` with `errorReason: AttachmentErrorReason.Network`
+- **AND** the selected model changes to one that supports the attachment's MIME type
+- **THEN** the attachment remains in `status: RequestStatus.Error` with `errorReason: AttachmentErrorReason.Network`
+
+---
+
 ### Requirement: Input wrapper removes inline-end padding when the tray is full
 
 When the total attachment count (prefix + new) reaches 7 or more, the `Input` wrapper SHALL drop its inline-end (`padding-right`) to `0`. For fewer than 7 attachments the default `p-3` (12 px on all sides) applies.

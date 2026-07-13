@@ -169,6 +169,7 @@ export interface ToolsetAuthStatus {
   scopesSupported?: string[];
   authorizationEndpoint?: string;
   tokenEndpoint?: string;
+  apiKeyHeader?: string;
 }
 
 export interface ToolsetSpecification {

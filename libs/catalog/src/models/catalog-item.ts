@@ -1,4 +1,5 @@
 import type { CatalogEntityType } from '../types/entity-type';
+import type { CatalogItemCredentials } from './catalog-item-credentials';
 import type { CatalogItemSummary } from './entity-summary';
 import type { CatalogItemTabData } from './item-details-data';
 
@@ -44,4 +45,6 @@ export interface CatalogItem {
   summary?: CatalogItemSummary;
   /** Tab-specific detail data. A tab is shown only when its field is non-null. */
   details?: CatalogItemTabData;
+  /** Credential status for the item's own authentication. Absent when the item requires no authentication. */
+  credentials?: CatalogItemCredentials;
 }
