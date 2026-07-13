@@ -17,7 +17,10 @@ export interface SearchBarProps {
   ariaLabel?: string;
   /** Additional CSS class applied to the container for layout purposes (e.g. flex-1). */
   className?: string;
-  /** Accessible label for the clear-search button. When provided, a clear (X) button is shown once `value` is non-empty. */
+  /**
+   * Accessible label for the clear-search button. When provided, a clear (X) button is shown once `value` is non-empty.
+   * App callers must pass a translated label.
+   */
   clearLabel?: string;
 }
 
@@ -31,17 +34,16 @@ export const SearchBar: FC<SearchBarProps> = ({
   className,
   ...rest
 }) => (
-  <div className="flex-1">
-    <BaseSearchBar
-      placeholder={placeholder}
-      {...rest}
-      iconSize={18}
-      iconStrokeWidth={1.8}
-      containerClassName={mergeClasses(
-        'h-[50px] rounded-xl px-[18px]',
-        className,
-      )}
-      inputClassName="text-[15px]"
-    />
-  </div>
+  <BaseSearchBar
+    placeholder={placeholder}
+    {...rest}
+    iconSize={18}
+    iconStrokeWidth={1.8}
+    containerClassName={mergeClasses(
+      'h-[50px] flex-1 rounded-xl px-[18px]',
+      className,
+    )}
+    inputClassName="text-[15px]"
+    clearButtonClassName="size-11 desktop:size-auto"
+  />
 );

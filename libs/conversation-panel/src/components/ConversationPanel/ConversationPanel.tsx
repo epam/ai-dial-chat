@@ -90,6 +90,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     );
     const [overscanCount, setOverscanCount] = useState(5);
     const listRef = useRef<ListImperativeAPI>(null);
+    const lastScrolledIdRef = useRef<string | null>(null);
 
     const [draggingId, setDraggingId] = useState<string | null>(null);
     const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -284,6 +285,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         return;
       }
 
+      if (lastScrolledIdRef.current === activeConversationId) return;
+
       const index = virtualRows.findIndex(
         (row) =>
           row.kind === VirtualRowKind.Item &&
@@ -295,6 +298,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           align: 'smart',
           behavior: 'smooth',
         });
+        lastScrolledIdRef.current = activeConversationId;
       }
     }, [activeConversationId, groups, expandedGroups, virtualRows]);
 
