@@ -52,6 +52,9 @@
     background-image: none;
     box-shadow: none;
     transform: none;
+    background-color: var(--controls-bg-disable, #d1dbea) !important;
+    color: var(--text-white, #ffffff) !important;
+    cursor: not-allowed;
   }
 }
 

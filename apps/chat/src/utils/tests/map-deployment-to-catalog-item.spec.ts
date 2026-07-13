@@ -110,6 +110,7 @@ describe('mapToolsetToCatalogItem', () => {
       topics: ['crm'],
       folder: ['folder'],
       isMyApp: true,
+      isEditable: true,
       updatedAt: 1782803923271,
       details: {
         tools: {
@@ -117,6 +118,16 @@ describe('mapToolsetToCatalogItem', () => {
         },
       },
     });
+  });
+
+  it('marks a toolset owned by another user as not editable', () => {
+    const result = mapToolsetToCatalogItem({
+      id: 'salesforce',
+      toolset: 'salesforce',
+      isMy: false,
+    });
+
+    expect(result.isEditable).toBe(false);
   });
 
   it('keeps root-level toolsets without a folder', () => {

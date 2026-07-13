@@ -37,6 +37,7 @@ const SharePopover: FC<SharePopoverProps> = ({
   labels,
   errorClassName = 'dial-tiny-text',
   noteClassName = 'dial-tiny-text',
+  className,
 }) => {
   const {
     title = 'Share',
@@ -172,7 +173,10 @@ const SharePopover: FC<SharePopoverProps> = ({
       role="dialog"
       aria-label={title}
       tabIndex={-1}
-      className="flex w-[344px] flex-col outline-none"
+      className={mergeClasses(
+        'flex w-[344px] flex-col outline-none',
+        className,
+      )}
       onKeyDownCapture={handleKeyDownCapture}
     >
       <SharePopoverHeader

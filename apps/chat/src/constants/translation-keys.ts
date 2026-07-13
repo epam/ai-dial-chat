@@ -369,6 +369,7 @@ export enum ConversationPanelI18nKeys {
   DeleteAllPartialError = 'conversationPanel.deleteAllPartialError',
   DeleteAllSuccessTitle = 'conversationPanel.deleteAllSuccessTitle',
   DeleteAllSuccess = 'conversationPanel.deleteAllSuccess',
+  ShareLabel = 'conversationPanel.shareLabel',
 }
 
 export enum SidebarI18nKeys {
@@ -553,6 +554,7 @@ export enum ShareI18nKeys {
   AccessAriaLabel = 'share.accessAriaLabel',
   VisibilityNote = 'share.visibilityNote',
   VisibilityNoteEdit = 'share.visibilityNoteEdit',
+  VisibilityNoteConversation = 'share.visibilityNoteConversation',
   CopyButtonLabel = 'share.copyButtonLabel',
   CopiedButtonLabel = 'share.copiedButtonLabel',
   LinkAriaLabel = 'share.linkAriaLabel',

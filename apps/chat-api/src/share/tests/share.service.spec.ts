@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DialClientService } from '../../dial/dial-client.service';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialClientService } from '../../dial/dial-client.service';
 import { ShareAccess } from '../dto/create-share-link.dto';
 import { ShareService } from '../share.service';
 
@@ -89,6 +89,22 @@ describe('ShareService', () => {
           resources: [{ url: 'my-app-id', permissions: ['READ', 'WRITE'] }],
         },
       });
+    });
+
+    it('routes conversation itemIds to the conversation accept-invitation path', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'shareResource').mockResolvedValue(
+        okResponse({ invitationLink: '/v1/invitations/conv-abc' }),
+      );
+
+      const result = await service.createShareLink('token-abc', {
+        itemId: 'conversations/bucket/my-chat.json',
+        access: [ShareAccess.View],
+      });
+
+      expect(result.url).toBe(
+        'https://example.com/conversations/shared/conv-abc',
+      );
     });
 
     it('throws BadGatewayException when DIAL Core returns an empty invitation link', async () => {
