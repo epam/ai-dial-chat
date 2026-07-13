@@ -3,11 +3,13 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /**
  * Formats a publish timestamp for display: a relative phrase ("Today",
  * "Yesterday", "N days ago") within the last week, and an exact date
- * (e.g. "Nov 20, 2024") once it's a week old or more.
+ * (e.g. "Nov 20, 2024") once it's a week old or more. The exact date uses
+ * `locale` (default: the browser/runtime locale) rather than a fixed one.
  */
 export const formatPublishedDate = (
   publishedAt: number,
   now: number = Date.now(),
+  locale?: string,
 ): string => {
   const daysElapsed = Math.floor((now - publishedAt) / DAY_MS);
 
@@ -21,7 +23,7 @@ export const formatPublishedDate = (
     return `${daysElapsed} days ago`;
   }
 
-  return new Date(publishedAt).toLocaleDateString('en-US', {
+  return new Date(publishedAt).toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

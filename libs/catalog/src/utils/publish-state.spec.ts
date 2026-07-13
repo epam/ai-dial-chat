@@ -7,6 +7,7 @@ const baseInput: PublishDerivationInput = {
   hasExistingVersionInFolder: false,
   hasWriteAccess: true,
   isSubmitting: false,
+  hasSubmitError: false,
 };
 
 describe('derivePublishState', () => {
@@ -76,6 +77,42 @@ describe('derivePublishState', () => {
         ...baseInput,
         hasWriteAccess: false,
         hasExistingVersionInFolder: true,
+      }),
+    ).toEqual({
+      calloutKind: PublishCalloutKind.NoAccess,
+      isSubmitDisabled: true,
+      isSubmitLoading: false,
+    });
+  });
+
+  it('shows the submit-error callout but keeps submit enabled after a failed attempt', () => {
+    expect(derivePublishState({ ...baseInput, hasSubmitError: true })).toEqual({
+      calloutKind: PublishCalloutKind.SubmitError,
+      isSubmitDisabled: false,
+      isSubmitLoading: false,
+    });
+  });
+
+  it('prioritizes a submit error over an existing version in the folder', () => {
+    expect(
+      derivePublishState({
+        ...baseInput,
+        hasSubmitError: true,
+        hasExistingVersionInFolder: true,
+      }),
+    ).toEqual({
+      calloutKind: PublishCalloutKind.SubmitError,
+      isSubmitDisabled: false,
+      isSubmitLoading: false,
+    });
+  });
+
+  it('prioritizes missing write access over a submit error', () => {
+    expect(
+      derivePublishState({
+        ...baseInput,
+        hasWriteAccess: false,
+        hasSubmitError: true,
       }),
     ).toEqual({
       calloutKind: PublishCalloutKind.NoAccess,

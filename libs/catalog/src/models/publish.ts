@@ -30,6 +30,8 @@ export enum PublishCalloutKind {
   ReplaceWarning = 'replaceWarning',
   /** Error callout — the user lacks write access to the selected folder. */
   NoAccess = 'noAccess',
+  /** Error callout — the most recent submit attempt failed. */
+  SubmitError = 'submitError',
 }
 
 /** Inputs used to derive the publish panel's callout and submit-button state. */
@@ -42,6 +44,8 @@ export interface PublishDerivationInput {
   hasWriteAccess: boolean;
   /** Whether a publish request is currently in flight. */
   isSubmitting: boolean;
+  /** Whether the most recent submit attempt failed. */
+  hasSubmitError: boolean;
 }
 
 /** Derived, render-ready state for the publish panel. */

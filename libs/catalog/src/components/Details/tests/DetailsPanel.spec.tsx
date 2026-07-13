@@ -243,6 +243,20 @@ describe('DetailsPanel', () => {
     expect(screen.queryByText('Publish panel')).toBeNull();
   });
 
+  it('stays on the publish panel when the publish submit fails', async () => {
+    const onPublish = vi.fn().mockRejectedValue(new Error('network error'));
+    const onPublishSuccess = vi.fn();
+    renderPanel({ onPublish, onPublishSuccess });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Shared' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    expect(screen.getByText('Publish panel')).toBeTruthy();
+    expect(screen.queryByText('Summary')).toBeNull();
+    expect(onPublishSuccess).not.toHaveBeenCalled();
+  });
+
   it('disables the Back button while a publish request is in flight', async () => {
     let resolvePublish: () => void = () => undefined;
     const onPublish = vi.fn(

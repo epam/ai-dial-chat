@@ -67,9 +67,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   const [activeTab, setActiveTab] = useState<string>('');
   const [isPublishOpen, setIsPublishOpen] = useState(false);
 
+  const publishHistory = useMemo(
+    () => getPublishHistory?.(item) ?? [],
+    [getPublishHistory, item],
+  );
+
   const publishFlow = usePublishFlow({
     item,
-    history: getPublishHistory?.(item) ?? [],
+    history: publishHistory,
     folderItems: publishFolderItems,
     hasWriteAccess: hasPublishWriteAccess,
     onCreateFolder: onCreatePublishFolder,
@@ -84,12 +89,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         hasExistingVersionInFolder: publishFlow.hasExistingVersionInFolder,
         hasWriteAccess: publishFlow.hasWriteAccess,
         isSubmitting: publishFlow.isSubmitting,
+        hasSubmitError: publishFlow.hasSubmitError,
       }),
     [
       publishFlow.selectedFolderPath,
       publishFlow.hasExistingVersionInFolder,
       publishFlow.hasWriteAccess,
       publishFlow.isSubmitting,
+      publishFlow.hasSubmitError,
     ],
   );
   const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
@@ -147,8 +154,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     publishFlow.reset();
   }, [publishFlow]);
   const handleSubmitPublish = useCallback(async () => {
-    await publishFlow.handleSubmit();
-    handleClosePublish();
+    const isSuccess = await publishFlow.handleSubmit();
+    if (isSuccess) {
+      handleClosePublish();
+    }
   }, [publishFlow, handleClosePublish]);
 
   const handleToggleFavorite = useCallback(() => {
@@ -271,7 +280,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             <div className="p-[22px]">
               <PublishPanel
                 item={item}
-                history={getPublishHistory?.(item) ?? []}
+                history={publishHistory}
                 folderItems={publishFlow.folderItems}
                 selectedFolderPath={publishFlow.selectedFolderPath}
                 onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
@@ -281,6 +290,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 }
                 hasWriteAccess={publishFlow.hasWriteAccess}
                 isSubmitting={publishFlow.isSubmitting}
+                hasSubmitError={publishFlow.hasSubmitError}
                 texts={publishTexts}
               />
             </div>

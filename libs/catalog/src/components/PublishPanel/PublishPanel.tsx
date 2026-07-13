@@ -32,6 +32,8 @@ export interface PublishPanelTexts {
   replaceWarning?: string;
   /** Error callout body shown when the user lacks write access. */
   noAccessError?: string;
+  /** Error callout body shown when the most recent submit attempt failed. */
+  submitError?: string;
 }
 
 /** Props for {@link PublishPanel}. */
@@ -54,6 +56,8 @@ export interface PublishPanelProps {
   hasWriteAccess: boolean;
   /** Whether a publish request is currently in flight. */
   isSubmitting: boolean;
+  /** Whether the most recent submit attempt failed. */
+  hasSubmitError?: boolean;
   /** Text overrides for all user-visible strings. */
   texts?: PublishPanelTexts;
 }
@@ -74,6 +78,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   hasExistingVersionInFolder,
   hasWriteAccess,
   isSubmitting,
+  hasSubmitError = false,
   texts = {},
 }) => {
   const {
@@ -84,6 +89,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     historyLabel = 'Versions history',
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
+    submitError = 'Publishing failed. Please try again.',
   } = texts;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,12 +101,14 @@ export const PublishPanel: FC<PublishPanelProps> = ({
         hasExistingVersionInFolder,
         hasWriteAccess,
         isSubmitting,
+        hasSubmitError,
       }),
     [
       selectedFolderPath,
       hasExistingVersionInFolder,
       hasWriteAccess,
       isSubmitting,
+      hasSubmitError,
     ],
   );
 
@@ -151,20 +159,21 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           searchQuery={searchQuery}
           disabled={isSubmitting}
         />
-        {(derived.calloutKind === PublishCalloutKind.ReplaceWarning ||
-          derived.calloutKind === PublishCalloutKind.NoAccess) && (
-          <div className="mt-3">
-            <DialNotification
-              variant={calloutVariant(derived.calloutKind)}
-              message={calloutMessage(derived.calloutKind, {
-                replaceWarning,
-                noAccessError,
-                folderName,
-                version: item.version,
-              })}
-            />
-          </div>
-        )}
+        {derived.calloutKind !== PublishCalloutKind.None &&
+          derived.calloutKind !== PublishCalloutKind.Info && (
+            <div className="mt-3">
+              <DialNotification
+                variant={calloutVariant(derived.calloutKind)}
+                message={calloutMessage(derived.calloutKind, {
+                  replaceWarning,
+                  noAccessError,
+                  submitError,
+                  folderName,
+                  version: item.version,
+                })}
+              />
+            </div>
+          )}
       </div>
 
       {Boolean(selectedFolderPath?.length) && (
@@ -183,7 +192,10 @@ export const PublishPanel: FC<PublishPanelProps> = ({
 };
 
 const calloutVariant = (
-  kind: PublishCalloutKind.ReplaceWarning | PublishCalloutKind.NoAccess,
+  kind:
+    | PublishCalloutKind.ReplaceWarning
+    | PublishCalloutKind.NoAccess
+    | PublishCalloutKind.SubmitError,
 ): NotificationVariant =>
   kind === PublishCalloutKind.ReplaceWarning
     ? NotificationVariant.Warning
@@ -207,17 +219,26 @@ const withBoldFolderName = (
 };
 
 const calloutMessage = (
-  kind: PublishCalloutKind.ReplaceWarning | PublishCalloutKind.NoAccess,
+  kind:
+    | PublishCalloutKind.ReplaceWarning
+    | PublishCalloutKind.NoAccess
+    | PublishCalloutKind.SubmitError,
   strings: {
     replaceWarning: string;
     noAccessError: string;
+    submitError: string;
     folderName: string;
     version: string;
   },
-): ReactNode =>
-  kind === PublishCalloutKind.ReplaceWarning
-    ? withBoldFolderName(
-        strings.replaceWarning.replace('{version}', strings.version),
-        strings.folderName,
-      )
-    : withBoldFolderName(strings.noAccessError, strings.folderName);
+): ReactNode => {
+  if (kind === PublishCalloutKind.ReplaceWarning) {
+    return withBoldFolderName(
+      strings.replaceWarning.replace('{version}', strings.version),
+      strings.folderName,
+    );
+  }
+  if (kind === PublishCalloutKind.NoAccess) {
+    return withBoldFolderName(strings.noAccessError, strings.folderName);
+  }
+  return strings.submitError;
+};

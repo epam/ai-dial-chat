@@ -169,6 +169,12 @@ export const PublishFolderPicker: FC<PublishFolderPickerProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- isExpanded is derived from the same deps already listed.
   }, [visibleItems, isSearching, searchExpandedKeys, expandedKeys]);
 
+  const flatNodeIndexByKey = useMemo(() => {
+    const map = new Map<string, number>();
+    flatNodes.forEach((flat, index) => map.set(flat.key, index));
+    return map;
+  }, [flatNodes]);
+
   const selectedKey = selectedPath ? pathKey(selectedPath) : undefined;
 
   const toggleExpanded = (key: string) => {
@@ -195,7 +201,7 @@ export const PublishFolderPicker: FC<PublishFolderPickerProps> = ({
   ) => {
     const hasChildren = Boolean(flat.node.children?.length);
     const key = flat.key;
-    const index = flatNodes.findIndex((f) => f.key === key);
+    const index = flatNodeIndexByKey.get(key) ?? -1;
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -372,9 +378,13 @@ export const PublishFolderPicker: FC<PublishFolderPickerProps> = ({
             }}
             disabled={disabled}
             onClick={() => onSelectedPathChange(isSelected ? [] : node.path)}
-            onKeyDown={(e) =>
-              handleRowKeyDown(e, flatNodes.find((f) => f.key === key) ?? flat)
-            }
+            onKeyDown={(e) => {
+              const index = flatNodeIndexByKey.get(key);
+              handleRowKeyDown(
+                e,
+                index !== undefined ? flatNodes[index] : flat,
+              );
+            }}
             className={mergeClasses(
               'min-w-0 flex-1 truncate text-start',
               nodeClassName,

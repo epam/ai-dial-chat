@@ -71,9 +71,15 @@ export interface UsePublishFlowResult {
   hasWriteAccess: boolean;
   /** Whether a publish request is currently in flight. */
   isSubmitting: boolean;
-  /** Submits the publish/update request for the selected folder. */
-  handleSubmit: () => Promise<void>;
-  /** Resets folder selection and any locally-created folders back to `folderItems`. */
+  /** Whether the most recent submit attempt failed. */
+  hasSubmitError: boolean;
+  /**
+   * Submits the publish/update request for the selected folder. Resolves to
+   * `true` on success and `false` if `onPublish` rejected, so the caller can
+   * decide whether to close the flow.
+   */
+  handleSubmit: () => Promise<boolean>;
+  /** Resets folder selection, any locally-created folders, and the submit error back to their initial state. */
   reset: () => void;
 }
 
@@ -94,6 +100,7 @@ export const usePublishFlow = ({
   const [folderItems, setFolderItems] = useState(initialFolderItems);
   const [selectedFolderPath, setSelectedFolderPath] = useState<string[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSubmitError, setHasSubmitError] = useState(false);
 
   const hasExistingVersionInFolder = useMemo(() => {
     if (!selectedFolderPath) {
@@ -116,12 +123,17 @@ export const usePublishFlow = ({
 
   const handleSubmit = useCallback(async () => {
     if (!selectedFolderPath) {
-      return;
+      return false;
     }
     setIsSubmitting(true);
+    setHasSubmitError(false);
     try {
       await onPublish(item, selectedFolderPath);
       onPublishSuccess?.(item, selectedFolderPath);
+      return true;
+    } catch {
+      setHasSubmitError(true);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -130,6 +142,7 @@ export const usePublishFlow = ({
   const reset = useCallback(() => {
     setFolderItems(initialFolderItems);
     setSelectedFolderPath(undefined);
+    setHasSubmitError(false);
   }, [initialFolderItems]);
 
   return {
@@ -142,6 +155,7 @@ export const usePublishFlow = ({
       ? resolveWriteAccess(selectedFolderPath)
       : true,
     isSubmitting,
+    hasSubmitError,
     handleSubmit,
     reset,
   };

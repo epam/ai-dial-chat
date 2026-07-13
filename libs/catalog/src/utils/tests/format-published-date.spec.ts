@@ -24,4 +24,10 @@ describe('formatPublishedDate', () => {
   it('returns an exact date for a timestamp months old', () => {
     expect(formatPublishedDate(NOW - 90 * DAY_MS, NOW)).toBe('Apr 7, 2026');
   });
+
+  it('formats the exact date using the provided locale', () => {
+    expect(formatPublishedDate(NOW - 7 * DAY_MS, NOW, 'de-DE')).toBe(
+      '29. Juni 2026',
+    );
+  });
 });

@@ -11,7 +11,10 @@ export interface FilterTabsProps {
   labels: FilterLabels;
   /** Called when the user selects a different tab. */
   onChange: (tab: FilterTab) => void;
-  /** Typography class applied to each tab label. Defaults to `'dial-tiny-semi-text'`. */
+  /**
+   * Class applied to each tab. Defaults to `'flex-1 dial-tiny-semi-text'` so
+   * the tabs fill the row equally, overriding `PillTabs`'s own `shrink-0` default.
+   */
   tabClassName?: string;
 }
 
@@ -24,7 +27,12 @@ const TABS: { value: FilterTab; labelKey: keyof FilterLabels }[] = [
 
 /** Segmented pill-tab control for filtering conversations by source. */
 export const FilterTabs: FC<FilterTabsProps> = memo(
-  ({ activeTab, labels, onChange, tabClassName }) => (
+  ({
+    activeTab,
+    labels,
+    onChange,
+    tabClassName = 'flex-1 dial-tiny-semi-text',
+  }) => (
     <div className="mx-3 my-2">
       <PillTabs
         tabs={TABS.map(({ value, labelKey }) => ({

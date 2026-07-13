@@ -7,8 +7,8 @@ import {
 /**
  * Derives the publish panel's callout and submit-button state from the
  * current destination-folder context. Priority (highest first): a request
- * in flight, no folder selected yet, missing write access, replacing an
- * existing version, then the default informational callout.
+ * in flight, no folder selected yet, missing write access, a failed submit,
+ * replacing an existing version, then the default informational callout.
  */
 export const derivePublishState = (
   input: PublishDerivationInput,
@@ -33,6 +33,14 @@ export const derivePublishState = (
     return {
       calloutKind: PublishCalloutKind.NoAccess,
       isSubmitDisabled: true,
+      isSubmitLoading: false,
+    };
+  }
+
+  if (input.hasSubmitError) {
+    return {
+      calloutKind: PublishCalloutKind.SubmitError,
+      isSubmitDisabled: false,
       isSubmitLoading: false,
     };
   }

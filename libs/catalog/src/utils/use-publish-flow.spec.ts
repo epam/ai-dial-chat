@@ -179,7 +179,7 @@ describe('usePublishFlow', () => {
       result.current.setSelectedFolderPath(['Shared']);
     });
 
-    let submitPromise: Promise<void> = Promise.resolve();
+    let submitPromise: Promise<boolean> = Promise.resolve(true);
     act(() => {
       submitPromise = result.current.handleSubmit();
     });
@@ -192,6 +192,56 @@ describe('usePublishFlow', () => {
     });
 
     expect(result.current.isSubmitting).toBe(false);
+  });
+
+  it('sets hasSubmitError and resolves handleSubmit to false when onPublish rejects', async () => {
+    const onPublish = vi.fn().mockRejectedValue(new Error('network error'));
+    const onPublishSuccess = vi.fn();
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onPublish,
+        onPublishSuccess,
+      }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+    });
+
+    let isSuccess = true;
+    await act(async () => {
+      isSuccess = await result.current.handleSubmit();
+    });
+
+    expect(isSuccess).toBe(false);
+    expect(result.current.hasSubmitError).toBe(true);
+    expect(result.current.isSubmitting).toBe(false);
+    expect(onPublishSuccess).not.toHaveBeenCalled();
+  });
+
+  it('clears hasSubmitError on reset', async () => {
+    const onPublish = vi.fn().mockRejectedValue(new Error('network error'));
+    const { result } = renderHook(() =>
+      usePublishFlow({ item, history, folderItems, onPublish }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath(['Shared']);
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+    expect(result.current.hasSubmitError).toBe(true);
+
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(result.current.hasSubmitError).toBe(false);
   });
 
   it('resets folder selection and locally created folders', () => {

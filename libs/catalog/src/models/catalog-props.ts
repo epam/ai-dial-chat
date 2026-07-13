@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { PublishFooterTexts } from '../components/PublishPanel/PublishFooter';
 import type { PublishPanelTexts } from '../components/PublishPanel/PublishPanel';
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CredentialsLevel } from '../types/toolset-auth';
@@ -105,7 +106,7 @@ export interface CatalogProps {
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */
-  publishTexts?: PublishPanelTexts;
+  publishTexts?: PublishPanelTexts & PublishFooterTexts;
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**

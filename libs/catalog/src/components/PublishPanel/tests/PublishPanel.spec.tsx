@@ -154,6 +154,16 @@ describe('PublishPanel', () => {
     expect(container.querySelector('strong')?.textContent).toBe('Data Science');
   });
 
+  it('shows the submit-error callout when the most recent submit attempt failed', () => {
+    renderPanel({
+      selectedFolderPath: ['Shared', 'Data Science'],
+      hasSubmitError: true,
+    });
+    expect(
+      screen.getByText('Publishing failed. Please try again.'),
+    ).toBeTruthy();
+  });
+
   it('hides the callout while submitting', () => {
     renderPanel({
       selectedFolderPath: ['Shared', 'Data Science'],
