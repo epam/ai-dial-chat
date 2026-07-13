@@ -76,6 +76,10 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/ai-dial-kit/src/index.ts',
       ),
+      '@epam/ai-dial-share': path.resolve(
+        __dirname,
+        '../../libs/share/src/index.ts',
+      ),
       '@epam/ai-dial-deployment-creation-form': path.resolve(
         __dirname,
         '../../libs/deployment-creation-form/src/index.ts',

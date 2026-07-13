@@ -14,9 +14,11 @@ import { ROUTES } from '../../../types/routes';
 import CatalogView from '../CatalogView';
 
 const mockNavigate = vi.fn();
+let mockSearchParams = new URLSearchParams();
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  useSearchParams: () => [mockSearchParams],
 }));
 
 vi.mock('@epam/ai-dial-catalog', () => ({
@@ -32,6 +34,7 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     onToggleFavorite,
     onUseInChat,
     onFetchDetails,
+    initialDetailsItemId,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
@@ -39,6 +42,7 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
+    initialDetailsItemId?: string;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
 
@@ -46,6 +50,9 @@ vi.mock('@epam/ai-dial-catalog', () => ({
       <div>
         <output aria-label="Catalog item ids">
           {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
+        </output>
+        <output aria-label="Initial details item id">
+          {initialDetailsItemId ?? ''}
         </output>
         {(items ?? []).map((item) => (
           <button
@@ -116,6 +123,7 @@ describe('CatalogView', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSearchParams = new URLSearchParams();
     vi.mocked(useDeployments).mockReturnValue({
       items: [],
       selectedItemId: null,
@@ -151,6 +159,16 @@ describe('CatalogView', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith(
       `${ROUTES.ToolsetEditor}?returnUrl=%2Fcatalog`,
+    );
+  });
+
+  it('passes the itemId search param through as initialDetailsItemId', () => {
+    mockSearchParams = new URLSearchParams({ itemId: 'gpt-4o' });
+
+    render(<CatalogView />);
+
+    expect(screen.getByLabelText('Initial details item id').textContent).toBe(
+      'gpt-4o',
     );
   });
 

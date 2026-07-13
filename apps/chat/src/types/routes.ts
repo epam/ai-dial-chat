@@ -2,6 +2,7 @@ export enum ROUTES {
   Root = '/',
   Login = '/login',
   Catalog = '/catalog',
+  SharedInvitation = '/catalog/shared/:invitationId',
   Conversations = '/conversations',
   AppsEditor = '/apps-editor',
   ToolsetEditor = '/toolset-editor',

@@ -62,6 +62,7 @@ export enum ButtonsI18nKeys {
   Cancel = 'buttons.cancel',
   Confirm = 'buttons.confirm',
   Edit = 'buttons.edit',
+  Link = 'buttons.link',
   SaveAndSubmit = 'buttons.saveAndSubmit',
   Regenerate = 'buttons.regenerate',
   Copy = 'buttons.copy',
@@ -520,4 +521,24 @@ export enum ErrorBoundaryI18nKeys {
   Description = 'errorBoundary.description',
   RetryLabel = 'errorBoundary.retryLabel',
   ReloadLabel = 'errorBoundary.reloadLabel',
+}
+
+export enum ShareI18nKeys {
+  Title = 'share.title',
+  QrButtonLabel = 'share.qrButtonLabel',
+  AnyoneWithLinkTitle = 'share.anyoneWithLinkTitle',
+  AnyoneWithLinkSubtitle = 'share.anyoneWithLinkSubtitle',
+  AccessViewLabel = 'share.accessViewLabel',
+  AccessEditLabel = 'share.accessEditLabel',
+  AccessAriaLabel = 'share.accessAriaLabel',
+  VisibilityNote = 'share.visibilityNote',
+  VisibilityNoteEdit = 'share.visibilityNoteEdit',
+  CopyButtonLabel = 'share.copyButtonLabel',
+  CopiedButtonLabel = 'share.copiedButtonLabel',
+  LinkAriaLabel = 'share.linkAriaLabel',
+  ExpiryNote = 'share.expiryNote',
+  QrCodeAriaLabel = 'share.qrCodeAriaLabel',
+  LoadingLabel = 'share.loadingLabel',
+  ErrorTitle = 'share.errorTitle',
+  InvitationAcceptError = 'share.invitationAcceptError',
 }

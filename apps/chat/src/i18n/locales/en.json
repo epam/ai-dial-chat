@@ -161,6 +161,7 @@
     "close": "Close",
     "apply": "Apply",
     "edit": "Edit",
+    "link": "Link",
     "regenerate": "Regenerate",
     "copy": "Copy",
     "copied": "Copied!",
@@ -473,6 +474,25 @@
     "description": "An unexpected error occurred. You can try again or reload the page.",
     "retryLabel": "Try again",
     "reloadLabel": "Reload the page"
+  },
+  "share": {
+    "title": "Share",
+    "qrButtonLabel": "QR",
+    "anyoneWithLinkTitle": "Anyone with the link",
+    "anyoneWithLinkSubtitle": "in your organization",
+    "accessViewLabel": "Can view",
+    "accessEditLabel": "Can edit",
+    "accessAriaLabel": "Link access level",
+    "visibilityNote": "This deployment and its updates will be visible to users with the link.",
+    "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
+    "copyButtonLabel": "Copy",
+    "copiedButtonLabel": "Copied",
+    "linkAriaLabel": "Share link",
+    "expiryNote": "This link is active for {{days}} days.",
+    "qrCodeAriaLabel": "QR code for the share link",
+    "loadingLabel": "Creating share link…",
+    "errorTitle": "Couldn't create the share link. Please try again.",
+    "invitationAcceptError": "This share link is invalid or has expired."
   },
   "appsEditor": {
     "stepGeneral": "General",

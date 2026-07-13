@@ -25,6 +25,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
+  shareOverlay,
   onEdit,
   texts,
   styles: detailsStyles,
@@ -156,6 +157,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             onUseInChat={onUseInChat}
             isPrimaryActionVisible={isPrimaryActionVisible}
             onShare={onShare}
+            shareOverlay={shareOverlay}
             onEdit={onEdit}
             texts={texts}
             detailsStyles={detailsStyles}
