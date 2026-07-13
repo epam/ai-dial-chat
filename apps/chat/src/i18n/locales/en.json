@@ -71,9 +71,11 @@
   "catalog": {
     "searchPlaceholder": "Search models, tools, agents…",
     "noResultsTitle": "No results for \"{{query}}\"",
-    "sortRecentlyUpdated": "Recently Updated",
-    "sortNewest": "Newest",
-    "sortNameAZ": "Name A-Z",
+    "sorts": {
+      "recentlyUpdated": "Recently Updated",
+      "newest": "Newest",
+      "nameAZ": "Name A-Z"
+    },
     "featuredLabel": "Featured",
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
@@ -139,7 +141,6 @@
   "deploymentSelector": {
     "title": "Talk to",
     "searchPlaceholder": "Search models, agents…",
-    "searchAriaLabel": "Search models and agents",
     "favoritesLabel": "Favorites",
     "emptyHint": "Star a model or agent to pin it here.",
     "removeFromFavoritesLabel": "Remove from favorites",

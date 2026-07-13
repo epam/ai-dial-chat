@@ -112,9 +112,9 @@ export enum NavigationI18nKeys {
 export enum CatalogI18nKeys {
   SearchPlaceholder = 'catalog.searchPlaceholder',
   NoResultsTitle = 'catalog.noResultsTitle',
-  SortRecentlyUpdated = 'catalog.sortRecentlyUpdated',
-  SortNewest = 'catalog.sortNewest',
-  SortNameAZ = 'catalog.sortNameAZ',
+  SortRecentlyUpdated = 'catalog.sorts.recentlyUpdated',
+  SortNewest = 'catalog.sorts.newest',
+  SortNameAZ = 'catalog.sorts.nameAZ',
   FeaturedLabel = 'catalog.featuredLabel',
   GridViewLabel = 'catalog.gridViewLabel',
   ListViewLabel = 'catalog.listViewLabel',
@@ -165,7 +165,6 @@ export enum CatalogI18nKeys {
 export enum DeploymentSelectorI18nKeys {
   Title = 'deploymentSelector.title',
   SearchPlaceholder = 'deploymentSelector.searchPlaceholder',
-  SearchAriaLabel = 'deploymentSelector.searchAriaLabel',
   FavoritesLabel = 'deploymentSelector.favoritesLabel',
   EmptyHint = 'deploymentSelector.emptyHint',
   RemoveFromFavorites = 'deploymentSelector.removeFromFavoritesLabel',

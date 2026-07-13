@@ -650,9 +650,6 @@ const ConversationView: FC<Props> = ({
                             searchPlaceholder: t(
                               DeploymentSelectorI18nKeys.SearchPlaceholder,
                             ),
-                            searchAriaLabel: t(
-                              DeploymentSelectorI18nKeys.SearchAriaLabel,
-                            ),
                             favoritesLabel: t(
                               DeploymentSelectorI18nKeys.FavoritesLabel,
                             ),

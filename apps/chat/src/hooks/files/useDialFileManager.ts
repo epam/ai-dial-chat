@@ -1733,7 +1733,7 @@ export const useDialFileManager = ({
 
   const actionLabels = useMemo(() => {
     const labels: Partial<Record<DialFileManagerActions, string>> = {
-      [DialFileManagerActions.Download]: t('dialFileManager.download'),
+      [DialFileManagerActions.Download]: t(ButtonsI18nKeys.Download),
     };
     if (activeTab === DialFileManagerTabs.MyFiles) {
       labels[DialFileManagerActions.Delete] = t(ButtonsI18nKeys.Delete);

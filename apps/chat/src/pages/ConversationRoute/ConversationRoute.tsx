@@ -214,7 +214,6 @@ const ConversationRoute: FC = () => {
                 searchPlaceholder: t(
                   DeploymentSelectorI18nKeys.SearchPlaceholder,
                 ),
-                searchAriaLabel: t(DeploymentSelectorI18nKeys.SearchAriaLabel),
                 favoritesLabel: t(DeploymentSelectorI18nKeys.FavoritesLabel),
                 emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
                 browseCatalogLabel: t(ButtonsI18nKeys.Browse),

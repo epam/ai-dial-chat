@@ -22,10 +22,8 @@ import styles from './DeploymentSelectorPanel.module.scss';
 
 /** Localizable string labels for `DeploymentSelectorPanel`. */
 export interface DeploymentSelectorLabels {
-  /** Placeholder for the search input. Default: `'Search models, agents…'`. */
+  /** Placeholder and accessible label for the search input. Default: `'Search models, agents…'`. */
   searchPlaceholder?: string;
-  /** Accessible label for the search input. Default: `'Search models and agents'`. */
-  searchAriaLabel?: string;
   /** Heading above the favorites list. Default: `'Favorites'`. */
   favoritesLabel?: string;
   /** Hint shown when Favorites is empty. Default: `'Star a model or agent to pin it here.'`. */
@@ -95,7 +93,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
 }) => {
   const {
     searchPlaceholder = 'Search models, agents…',
-    searchAriaLabel = 'Search models and agents',
     favoritesLabel = 'Favorites',
     emptyHint = 'Star a model or agent to pin it here.',
     browseCatalogLabel = 'Browse',
@@ -300,7 +297,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
         <SearchBar
           value={query}
           placeholder={searchPlaceholder}
-          ariaLabel={searchAriaLabel}
+          ariaLabel={searchPlaceholder}
           onChange={setQuery}
           containerClassName={mergeClasses(
             styles.searchBar,
