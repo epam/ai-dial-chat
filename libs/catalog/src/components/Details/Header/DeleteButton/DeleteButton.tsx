@@ -12,8 +12,7 @@ interface DeleteButtonProps {
   item: CatalogItem;
   /**
    * Called when the Delete button is clicked. May return a promise; the
-   * button shows a disabled/loading state while pending and an inline error
-   * if it rejects.
+   * button shows a disabled state while pending.
    */
   onDelete?: (item: CatalogItem) => Promise<void> | void;
   /** Called after `onDelete` resolves successfully, e.g. to close the whole details panel. */
@@ -44,35 +43,26 @@ export const DeleteButton: FC<DeleteButtonProps> = ({
   texts,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleClick = useCallback(async () => {
     setIsDeleting(true);
-    setDeleteError(null);
 
     try {
       await onDelete?.(item);
       onDeleted?.();
-    } catch {
-      setDeleteError(
-        texts?.deleteErrorMessage ?? 'Failed to delete. Please try again.',
-      );
     } finally {
       setIsDeleting(false);
     }
-  }, [item, onDelete, onDeleted, texts?.deleteErrorMessage]);
+  }, [item, onDelete, onDeleted]);
 
   if (!shouldShowDelete(item)) return null;
 
   return (
-    <div className="flex flex-col gap-1">
-      <NeutralButton
-        label={texts?.deleteActionLabel ?? 'Delete'}
-        iconBefore={<IconTrash size={DIAL_ICON_SIZE.MD} />}
-        onClick={handleClick}
-        disabled={isDeleting}
-      />
-      {deleteError && <span className="text-error">{deleteError}</span>}
-    </div>
+    <NeutralButton
+      label={texts?.deleteActionLabel ?? 'Delete'}
+      iconBefore={<IconTrash size={DIAL_ICON_SIZE.MD} />}
+      onClick={handleClick}
+      disabled={isDeleting}
+    />
   );
 };

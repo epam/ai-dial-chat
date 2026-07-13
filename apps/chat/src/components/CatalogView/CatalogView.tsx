@@ -417,19 +417,27 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
   const handleDelete = useCallback(
     async (item: CatalogItem) => {
-      if (item.type === CatalogEntityType.Toolset) {
-        await deleteToolset(item.id);
-        await refetchToolsets();
-      } else {
-        await deleteApplication(item.id);
-        await refetchDeployments();
-      }
+      try {
+        if (item.type === CatalogEntityType.Toolset) {
+          await deleteToolset(item.id);
+          await refetchToolsets();
+        } else {
+          await deleteApplication(item.id);
+          await refetchDeployments();
+        }
 
-      showNotification({
-        variant: NotificationVariant.Success,
-        title: t(CatalogI18nKeys.DetailsDeleteSuccessTitle),
-        message: t(CatalogI18nKeys.DetailsDeleteSuccess, { name: item.name }),
-      });
+        showNotification({
+          variant: NotificationVariant.Success,
+          title: t(CatalogI18nKeys.DetailsDeleteSuccessTitle),
+          message: t(CatalogI18nKeys.DetailsDeleteSuccess, { name: item.name }),
+        });
+      } catch (err) {
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: t(CatalogI18nKeys.DetailsDeleteError),
+        });
+        throw err;
+      }
     },
     [refetchToolsets, refetchDeployments, showNotification, t],
   );
