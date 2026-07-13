@@ -1,4 +1,7 @@
-import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
+import {
+  AttachmentContentType,
+  AttachmentErrorType,
+} from '@epam/ai-dial-attachment-canvas';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -136,12 +139,49 @@ describe('resolveMarkdownCanvasContent', () => {
     });
   });
 
-  it('returns null when the remote response is not ok', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
+  it('returns a LoadFailed error content when the remote response is not ok', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 500 }),
+    );
     const result = await resolveMarkdownCanvasContent(
       makeRemoteAttachment('readme.md', 'files/bucket/path/readme.md'),
     );
-    expect(result).toBeNull();
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.LoadFailed,
+      url: '/download?path=path/readme.md',
+    });
+  });
+
+  it('returns a Forbidden error content when the remote response is a 403', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
+    );
+    const result = await resolveMarkdownCanvasContent(
+      makeRemoteAttachment('readme.md', 'files/bucket/path/readme.md'),
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.Forbidden,
+      url: '/download?path=path/readme.md',
+    });
+  });
+
+  it('returns a LoadFailed error content when the fetch throws', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('network error')),
+    );
+    const result = await resolveMarkdownCanvasContent(
+      makeRemoteAttachment('readme.md', 'files/bucket/path/readme.md'),
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.LoadFailed,
+      url: '/download?path=path/readme.md',
+    });
   });
 
   it('returns MarkdownCanvasContent from a local File', async () => {
@@ -224,12 +264,19 @@ describe('resolveJsonCanvasContent', () => {
     });
   });
 
-  it('returns null when the remote response is not ok', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
+  it('returns a Forbidden error content when the remote response is a 403', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
+    );
     const result = await resolveJsonCanvasContent(
       makeRemoteAttachment('data.json', 'files/bucket/path/data.json'),
     );
-    expect(result).toBeNull();
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.Forbidden,
+      url: '/download?path=path/data.json',
+    });
   });
 
   it('returns JsonCanvasContent from a local File with valid JSON', async () => {
@@ -309,6 +356,48 @@ describe('resolveImageCanvasContent', () => {
     });
     expect(result).toBeNull();
   });
+
+  it('returns ImageCanvasContent via a Blob URL for a successful DIAL fetch', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['bytes'])),
+      }),
+    );
+    const result = await resolveImageCanvasContent({
+      id: 'photo.jpg',
+      name: 'photo.jpg',
+      contentType: 'image/jpeg',
+      type: AttachmentType.Image,
+      status: RequestStatus.Idle,
+      url: 'files/bucket/path/photo.jpg',
+    } as DisplayAttachment);
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: 'blob:mock-image-url',
+    });
+  });
+
+  it('returns a Forbidden error content when the DIAL fetch is a 403', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
+    );
+    const result = await resolveImageCanvasContent({
+      id: 'photo.jpg',
+      name: 'photo.jpg',
+      contentType: 'image/jpeg',
+      type: AttachmentType.Image,
+      status: RequestStatus.Idle,
+      url: 'files/bucket/path/photo.jpg',
+    } as DisplayAttachment);
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.Forbidden,
+      url: '/download?path=path/photo.jpg',
+    });
+  });
 });
 
 describe('resolvePdfCanvasContent', () => {
@@ -317,8 +406,8 @@ describe('resolvePdfCanvasContent', () => {
     URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-pdf-url');
   });
 
-  it('returns PdfCanvasContent from inline base64 data via a Blob URL', () => {
-    const result = resolvePdfCanvasContent({
+  it('returns PdfCanvasContent from inline base64 data via a Blob URL', async () => {
+    const result = await resolvePdfCanvasContent({
       id: 'stage-att',
       name: 'doc.pdf',
       contentType: 'application/pdf',
@@ -332,18 +421,40 @@ describe('resolvePdfCanvasContent', () => {
     });
   });
 
-  it('returns PdfCanvasContent for a DIAL file url', () => {
-    const result = resolvePdfCanvasContent(
+  it('returns PdfCanvasContent via a Blob URL for a successful DIAL fetch', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['%PDF-1.4'])),
+      }),
+    );
+    const result = await resolvePdfCanvasContent(
       makeRemoteAttachment('doc.pdf', 'files/bucket/path/doc.pdf'),
     );
     expect(result).toEqual({
       type: AttachmentContentType.Pdf,
+      url: 'blob:mock-pdf-url',
+    });
+  });
+
+  it('returns a LoadFailed error content when the DIAL fetch is not ok', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 500 }),
+    );
+    const result = await resolvePdfCanvasContent(
+      makeRemoteAttachment('doc.pdf', 'files/bucket/path/doc.pdf'),
+    );
+    expect(result).toEqual({
+      type: AttachmentContentType.Error,
+      errorType: AttachmentErrorType.LoadFailed,
       url: '/download?path=path/doc.pdf',
     });
   });
 
-  it('returns null when no source is available', () => {
-    const result = resolvePdfCanvasContent({
+  it('returns null when no source is available', async () => {
+    const result = await resolvePdfCanvasContent({
       id: 'stage-att',
       name: 'doc.pdf',
       contentType: 'application/pdf',

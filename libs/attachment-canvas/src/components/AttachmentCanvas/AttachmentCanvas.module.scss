@@ -6,6 +6,10 @@
   color: var(--text-secondary, #575f73);
 }
 
+.errorIcon {
+  color: var(--text-error, #ae2f2f);
+}
+
 .jsonWrapper {
   border-color: var(--stroke-secondary, #d1dbea);
   background-color: var(--bg-layer-1, #e0e6f0);

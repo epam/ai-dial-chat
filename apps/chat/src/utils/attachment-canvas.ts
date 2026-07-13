@@ -1,11 +1,15 @@
 import type {
+  ErrorCanvasContent,
   ImageCanvasContent,
   JsonCanvasContent,
   MarkdownCanvasContent,
   PdfCanvasContent,
   PlainTextCanvasContent,
 } from '@epam/ai-dial-attachment-canvas';
-import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
+import {
+  AttachmentContentType,
+  AttachmentErrorType,
+} from '@epam/ai-dial-attachment-canvas';
 import type {
   Annotation,
   Attachment,
@@ -63,20 +67,49 @@ const base64ToText = (base64: string): string => {
   return bytes != null ? new TextDecoder().decode(bytes) : base64;
 };
 
+/** Classifies a failed fetch response by HTTP status into an `ErrorCanvasContent`. */
+const classifyFetchFailure = (
+  status: number,
+  url: string,
+): ErrorCanvasContent => ({
+  type: AttachmentContentType.Error,
+  errorType:
+    status === 403
+      ? AttachmentErrorType.Forbidden
+      : AttachmentErrorType.LoadFailed,
+  url,
+});
+
+/** Builds an `ErrorCanvasContent` for a thrown fetch (network) failure. */
+const networkFailureContent = (url: string): ErrorCanvasContent => ({
+  type: AttachmentContentType.Error,
+  errorType: AttachmentErrorType.LoadFailed,
+  url,
+});
+
 /**
  * Resolves a displayable Blob/object URL for an attachment's binary content: a
  * locally-picked `File`, an already-uploaded DIAL file, an existing preview
  * URL, or inline base64 `data` decoded into a Blob URL. Returns `undefined`
- * when none of these sources are available.
+ * when none of these sources are available, or an `ErrorCanvasContent` when a
+ * DIAL file fetch fails.
  */
-const resolveAttachmentBlobUrl = (
+const resolveAttachmentBlobUrl = async (
   attachment: DisplayAttachment,
-): string | undefined => {
+): Promise<string | ErrorCanvasContent | undefined> => {
   if ('file' in attachment && (attachment as Attachment).file.size > 0) {
     return URL.createObjectURL((attachment as Attachment).file);
   }
   const dialUrl = resolveDialUrl(attachment);
-  if (dialUrl != null) return dialUrl;
+  if (dialUrl != null) {
+    try {
+      const response = await fetch(dialUrl);
+      if (!response.ok) return classifyFetchFailure(response.status, dialUrl);
+      return URL.createObjectURL(await response.blob());
+    } catch {
+      return networkFailureContent(dialUrl);
+    }
+  }
   if (attachment.previewUrl != null) return attachment.previewUrl;
   if (attachment.data != null) {
     return base64ToBlobUrl(attachment.data, attachment.contentType);
@@ -88,16 +121,23 @@ const resolveAttachmentBlobUrl = (
  * Resolves an attachment's textual content: a locally-picked `File`'s text,
  * fetched text from an already-uploaded DIAL file, or inline base64 `data`
  * decoded into UTF-8 text. Returns `undefined` when none of these sources are
- * available, or the fetch failed.
+ * available, or an `ErrorCanvasContent` when the fetch failed.
  */
 const resolveAttachmentText = async (
   attachment: DisplayAttachment,
-): Promise<string | undefined> => {
+): Promise<string | ErrorCanvasContent | undefined> => {
   if (attachment.data != null) return base64ToText(attachment.data);
   const downloadUrl = resolveDialUrl(attachment);
   if (downloadUrl != null) {
-    const response = await fetch(downloadUrl);
-    return response.ok ? response.text() : undefined;
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        return classifyFetchFailure(response.status, downloadUrl);
+      }
+      return response.text();
+    } catch {
+      return networkFailureContent(downloadUrl);
+    }
   }
   if ('file' in attachment && (attachment as Attachment).file.size > 0) {
     return (attachment as Attachment).file.text();
@@ -108,25 +148,31 @@ const resolveAttachmentText = async (
 /** Resolves an image canvas content payload from a DisplayAttachment, or `null` if unavailable. */
 export const resolveImageCanvasContent = async (
   attachment: DisplayAttachment,
-): Promise<ImageCanvasContent | null> => {
-  const url = resolveAttachmentBlobUrl(attachment);
-  return url != null ? { type: AttachmentContentType.Image, url } : null;
+): Promise<ImageCanvasContent | ErrorCanvasContent | null> => {
+  const result = await resolveAttachmentBlobUrl(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
+  return { type: AttachmentContentType.Image, url: result };
 };
 
 /** Resolves a plain-text canvas content payload from a DisplayAttachment, or `null` if unavailable. */
 export const resolveTextCanvasContent = async (
   attachment: DisplayAttachment,
-): Promise<PlainTextCanvasContent | null> => {
-  const text = await resolveAttachmentText(attachment);
-  return text != null ? { type: AttachmentContentType.PlainText, text } : null;
+): Promise<PlainTextCanvasContent | ErrorCanvasContent | null> => {
+  const result = await resolveAttachmentText(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
+  return { type: AttachmentContentType.PlainText, text: result };
 };
 
 /** Resolves a Markdown canvas content payload from a DisplayAttachment, or `null` if unavailable. */
 export const resolveMarkdownCanvasContent = async (
   attachment: DisplayAttachment,
-): Promise<MarkdownCanvasContent | null> => {
-  const text = await resolveAttachmentText(attachment);
-  return text != null ? { type: AttachmentContentType.Markdown, text } : null;
+): Promise<MarkdownCanvasContent | ErrorCanvasContent | null> => {
+  const result = await resolveAttachmentText(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
+  return { type: AttachmentContentType.Markdown, text: result };
 };
 
 /**
@@ -159,11 +205,13 @@ export const annotationToPdfCanvasContent = (
 };
 
 /** Resolves a PDF canvas content payload from a DisplayAttachment, or `null` if unavailable. */
-export const resolvePdfCanvasContent = (
+export const resolvePdfCanvasContent = async (
   attachment: DisplayAttachment,
-): PdfCanvasContent | null => {
-  const url = resolveAttachmentBlobUrl(attachment);
-  return url != null ? { type: AttachmentContentType.Pdf, url } : null;
+): Promise<PdfCanvasContent | ErrorCanvasContent | null> => {
+  const result = await resolveAttachmentBlobUrl(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
+  return { type: AttachmentContentType.Pdf, url: result };
 };
 
 /**
@@ -172,14 +220,17 @@ export const resolvePdfCanvasContent = (
  */
 export const resolveJsonCanvasContent = async (
   attachment: DisplayAttachment,
-): Promise<JsonCanvasContent | PlainTextCanvasContent | null> => {
-  const text = await resolveAttachmentText(attachment);
-  if (text == null) return null;
+): Promise<
+  JsonCanvasContent | PlainTextCanvasContent | ErrorCanvasContent | null
+> => {
+  const result = await resolveAttachmentText(attachment);
+  if (result == null) return null;
+  if (typeof result !== 'string') return result;
 
   try {
-    const value = JSON.parse(text);
+    const value = JSON.parse(result);
     return { type: AttachmentContentType.Json, value };
   } catch {
-    return { type: AttachmentContentType.PlainText, text };
+    return { type: AttachmentContentType.PlainText, text: result };
   }
 };
