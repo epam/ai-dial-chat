@@ -5,9 +5,8 @@
 The Catalog details panel (`Header.tsx`, via a new `DeleteButton` component in
 `libs/catalog/src/components/Details/Header/DeleteButton/`) SHALL accept an optional
 `onDelete?: (item: CatalogItem) => Promise<void> | void` prop (threaded through
-`DetailsPanelProps` and `CatalogProps`), plus optional text overrides on `ItemDetailsTexts`:
-`deleteActionLabel` (default `'Delete'`) and `deleteErrorMessage` (default
-`'Failed to delete. Please try again.'`). When `onDelete` is supplied AND the currently
+`DetailsPanelProps` and `CatalogProps`), plus an optional `deleteActionLabel` text override
+on `ItemDetailsTexts` (default `'Delete'`). When `onDelete` is supplied AND the currently
 displayed item's `isMyApp` is `true` AND its `type` is `CatalogEntityType.Application` or
 `CatalogEntityType.Toolset`, a `NeutralButton` labelled with `deleteActionLabel` and a
 leading trash icon SHALL render in the same action row as "Use in chat", "Edit", and
@@ -48,11 +47,10 @@ this gating — it reuses the existing `isMyApp` and `type` fields.
 
 Clicking the Delete button SHALL call `onDelete` with the currently displayed item
 immediately — there is no confirmation popup or intermediate dialog. While the promise
-returned by `onDelete` is pending, the Delete button SHALL be disabled. If the promise
-rejects, the button SHALL re-enable and an inline error (`deleteErrorMessage`, or an
-override supplied by the rejection if the calling app throws a specific message) SHALL be
-shown below the button; the user may click Delete again to retry. If the promise resolves,
-no error is shown.
+returned by `onDelete` is pending, the Delete button SHALL be disabled. On resolution
+(success or rejection) the button SHALL re-enable. The `DeleteButton` component itself does
+not render any error UI; if `onDelete` rejects, surfacing that failure to the user (e.g. via
+a notification) is the responsibility of the app supplying `onDelete`, not the lib.
 
 #### Scenario: Delete button calls onDelete with no confirmation
 - **WHEN** the user clicks the Delete button
@@ -65,12 +63,12 @@ no error is shown.
 
 #### Scenario: Delete succeeds
 - **WHEN** the `onDelete` promise resolves
-- **THEN** the Delete button re-enables and no error is shown
+- **THEN** the Delete button re-enables, and the `onDeleted` callback (if supplied) is invoked
 
 #### Scenario: Delete fails
 - **WHEN** the `onDelete` promise rejects
-- **THEN** the Delete button re-enables and `deleteErrorMessage` is shown inline below it
-- **AND** the user may retry by clicking Delete again
+- **THEN** the Delete button re-enables, `onDeleted` is NOT invoked, and no error is rendered
+  by `DeleteButton` itself — the user may click Delete again to retry
 
 ### Requirement: apps/chat wires Delete to the toolset and application delete APIs
 
@@ -82,12 +80,14 @@ already resolves either a full `toolsets/{bucket}/{path}` id or a bare name via 
 caller's own bucket). For `CatalogEntityType.Application` items it SHALL call a new
 `deleteApplication(applicationName)` server-api function
 (`apps/chat/src/server-api/applications.ts`), passing the item's `id` directly using the
-same convention. On success, `CatalogView` SHALL close the details panel (via the
+same convention — this permanently deletes the application from DIAL Core, the same as
+Delete does for toolsets. On success, `CatalogView` SHALL close the details panel (via the
 `DeleteButton`'s `onDeleted` callback), refresh the affected list (`refetchToolsets` /
 `refetchDeployments`), and show a success notification via the existing
-`useNotification()`/`NotificationVariant.Success` pattern. On failure, the error
-propagates back to the `DeleteButton` via the rejected `onDelete` promise (see the
-Delete-button error requirement above) and no success notification is shown.
+`useNotification()`/`NotificationVariant.Success` pattern. On failure, `CatalogView` SHALL
+show an error notification (`NotificationVariant.Error`, `CatalogI18nKeys.DetailsDeleteError`)
+and re-throw so the `DeleteButton` knows not to invoke `onDeleted`; the item remains in the
+catalog list and the details panel stays open.
 
 #### Scenario: Deleting an owned toolset
 - **WHEN** the user clicks Delete for a toolset they own
@@ -97,11 +97,12 @@ Delete-button error requirement above) and no success notification is shown.
 
 #### Scenario: Deleting an owned application
 - **WHEN** the user clicks Delete for an application (QuickApp) they own
-- **THEN** `CatalogView` calls `deleteApplication` with the application's `id`
+- **THEN** `CatalogView` calls `deleteApplication` with the application's `id`, permanently
+  deleting it from DIAL Core
 - **AND** on success, the details panel closes, the application disappears from the
   catalog list, and a success notification is shown
 
 #### Scenario: Delete request fails
 - **WHEN** either `deleteToolset` or `deleteApplication` rejects
-- **THEN** the details panel stays open, showing the Delete button's inline error, and
+- **THEN** `CatalogView` shows an error notification, the details panel stays open, and
   the item remains in the catalog list

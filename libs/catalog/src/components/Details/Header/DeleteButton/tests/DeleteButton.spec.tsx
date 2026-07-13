@@ -126,6 +126,9 @@ describe('DeleteButton', () => {
     const onDelete = vi.fn().mockRejectedValue(new Error('boom'));
     render(<DeleteButton item={makeItem()} onDelete={onDelete} />);
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
+    const button = screen.getByRole('button', {
+      name: 'Delete',
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
   });
 });

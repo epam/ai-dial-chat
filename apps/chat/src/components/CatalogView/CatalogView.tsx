@@ -524,7 +524,6 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),
         deleteActionLabel: t(ButtonsI18nKeys.Delete),
-        deleteErrorMessage: t(CatalogI18nKeys.DetailsDeleteError),
         dailyLimitLabel: t(CatalogI18nKeys.DetailsDailyLimit),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),

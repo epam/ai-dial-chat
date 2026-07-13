@@ -15,9 +15,9 @@
 
 ## 3. libs/catalog: Delete button (one-click, no confirmation)
 
-- [x] 3.1 Add `deleteActionLabel`, `deleteErrorMessage` to `ItemDetailsTexts` (`libs/catalog/src/models/item-details-props.ts`), each documented with its default per the spec. (Originally also added `deleteConfirmTitle`/`deleteConfirmDescription`/`deleteConfirmLabel`/`deleteCancelLabel` for a confirmation popup; removed per explicit follow-up request — Delete is now one click, no confirmation step, same as Edit/Share.)
+- [x] 3.1 Add `deleteActionLabel` to `ItemDetailsTexts` (`libs/catalog/src/models/item-details-props.ts`), documented with its default per the spec. (Originally also added `deleteConfirmTitle`/`deleteConfirmDescription`/`deleteConfirmLabel`/`deleteCancelLabel` for a confirmation popup, and `deleteErrorMessage` for an inline error message; both removed per explicit follow-up requests — Delete is now one click, no confirmation step and no in-lib error UI, same as Edit/Share. Failure notification moved to `CatalogView`.)
 - [x] 3.2 Add `onDelete?: (item: CatalogItem) => Promise<void> | void` to `DetailsPanelProps` and `CatalogProps` (`item-details-props.ts`, `catalog-props.ts`).
-- [x] 3.3 Create `libs/catalog/src/components/Details/Header/DeleteButton/DeleteButton.tsx`: `shouldShowDelete(item)` gating (`isMyApp === true && type in {Application, Toolset}`), `NeutralButton` with a trash icon that calls `onDelete` directly on click (no popup), local `isDeleting`/`deleteError` state — button disables while pending, shows an inline error below it on rejection.
+- [x] 3.3 Create `libs/catalog/src/components/Details/Header/DeleteButton/DeleteButton.tsx`: `shouldShowDelete(item)` gating (`isMyApp === true && type in {Application, Toolset}`), `NeutralButton` with a trash icon that calls `onDelete` directly on click (no popup), local `isDeleting` state — button disables while pending, re-enables on settle. No error UI in the component itself.
 - [x] 3.4 Wire `DeleteButton` into `Header.tsx`, placed immediately after `ShareButton` in the action row; pass `onDelete`, `onDeleted` (calls back up to close the details panel via `onCloseDetails`), `texts`, `item`.
 - [x] 3.5 Thread `onDelete` through `DetailsPanel.tsx` → `Header.tsx` (same pattern as `onEdit`/`onShare`).
 - [x] 3.6 Thread `onDelete` through `Catalog.tsx` → `DetailsPanel` (same pattern as `onEdit`/`onShare`).
@@ -30,7 +30,7 @@
 - [x] 4.2 Add a `refetchDeployments`-style method to `DeploymentsContext` (mirroring the existing `refetchToolsets`) so `CatalogView` can refresh the applications list after a delete, or confirm an existing mechanism covers this before adding new API surface.
 - [x] 4.3 In `CatalogView.tsx`, add a `handleDelete(item)` that branches on `item.type`: `Toolset` → call `deleteToolset(item.id)`; `Application` → call the new `deleteApplication(item.id)`. Both backend endpoints resolve bucket/path from the full id themselves, so no frontend id-parsing is needed.
 - [x] 4.4 On success: close the details panel (via `DeleteButton`'s `onDeleted` callback), refresh the affected list (`refetchToolsets` / the new applications refetch), show a success notification (`NotificationVariant.Success`, `DetailsDeleteSuccessTitle`/`DetailsDeleteSuccess`).
-- [x] 4.5 Pass `handleDelete` and the delete texts (`deleteActionLabel`, `deleteErrorMessage`) into `<Catalog onDelete={...} detailsTexts={{ ... }} />`.
+- [x] 4.5 Pass `handleDelete` and the delete text (`deleteActionLabel`) into `<Catalog onDelete={...} detailsTexts={{ ... }} />`. `CatalogView.handleDelete` itself catches failures, shows an error notification (`CatalogI18nKeys.DetailsDeleteError`), and re-throws so `DeleteButton` knows not to fire `onDeleted`.
 - [x] 4.6 Add/extend `CatalogView.spec.tsx` tests: delete a toolset, delete an application, delete failure shows an error and keeps the item in the list.
 - [x] 4.7 Run `npm exec nx test chat`, `npm exec nx lint chat`, `npm exec nx build chat`. (test blocked by pre-existing broken vitest/rolldown toolchain repo-wide, confirmed independent of this change; lint clean, typecheck clean, build succeeds)
 
