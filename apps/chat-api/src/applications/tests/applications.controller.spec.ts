@@ -62,12 +62,14 @@ describe('ApplicationsController (integration)', () => {
   let service: {
     listApplications: ReturnType<typeof vi.fn>;
     createApplication: ReturnType<typeof vi.fn>;
+    deleteApplication: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     service = {
       listApplications: vi.fn().mockResolvedValue(mockList),
       createApplication: vi.fn().mockResolvedValue(createdApp),
+      deleteApplication: vi.fn().mockResolvedValue(undefined),
     };
     app = await buildApp(service);
   });
@@ -177,6 +179,42 @@ describe('ApplicationsController (integration)', () => {
       await request(app.getHttpServer())
         .post('/api/v1/applications')
         .send(validBody)
+        .expect(503);
+    });
+  });
+
+  describe('DELETE /api/v1/applications/:applicationName', () => {
+    it('returns 204 on success', async () => {
+      await request(app.getHttpServer())
+        .delete('/api/v1/applications/my-app')
+        .expect(204);
+      expect(service.deleteApplication).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'my-app',
+      );
+    });
+
+    it('returns 400 for an application name with invalid characters', async () => {
+      await request(app.getHttpServer())
+        .delete('/api/v1/applications/bad;name')
+        .expect(400);
+      expect(service.deleteApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when service throws UnauthorizedException', async () => {
+      service.deleteApplication.mockRejectedValue(new UnauthorizedException());
+      await request(app.getHttpServer())
+        .delete('/api/v1/applications/my-app')
+        .expect(401);
+    });
+
+    it('returns 503 when service throws ServiceUnavailableException', async () => {
+      service.deleteApplication.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+      await request(app.getHttpServer())
+        .delete('/api/v1/applications/my-app')
         .expect(503);
     });
   });

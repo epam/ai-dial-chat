@@ -543,5 +543,45 @@ describe('DeploymentsContext', () => {
         message: DeploymentSelectorI18nKeys.RefetchToolsetsFailed,
       });
     });
+
+    it('refetchDeployments re-fetches and exposes the updated deployment list', async () => {
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.items).toEqual(mockResponse.deployments);
+
+      mockGetDeployments.mockResolvedValueOnce({ deployments: [mockItem1] });
+
+      await act(async () => {
+        await result.current.refetchDeployments();
+      });
+
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        mockItem1.id,
+      ]);
+    });
+
+    it('refetchDeployments leaves deployments unchanged when the re-fetch fails', async () => {
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.items).toEqual(mockResponse.deployments);
+
+      mockGetDeployments.mockRejectedValueOnce(new Error('Deployments failed'));
+
+      await act(async () => {
+        await result.current.refetchDeployments();
+      });
+
+      expect(result.current.items).toEqual(mockResponse.deployments);
+      expect(contextMocks.showNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message: DeploymentSelectorI18nKeys.RefetchDeploymentsFailed,
+      });
+    });
   });
 });

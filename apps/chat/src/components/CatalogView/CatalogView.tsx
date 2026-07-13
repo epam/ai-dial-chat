@@ -33,8 +33,13 @@ import { useNotification } from '../../context/NotificationContext';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentDetails } from '../../server-api/deployments';
-import { loginToolset, logoutToolset } from '../../server-api/toolsets';
+import {
+  deleteToolset,
+  loginToolset,
+  logoutToolset,
+} from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
@@ -92,6 +97,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     toolsets,
     setSelectedItemId,
     refetchToolsets,
+    refetchDeployments,
   } = useDeployments();
   const {
     favoriteIds,
@@ -118,7 +124,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         ),
       ),
       ...toolsets.map((toolset) =>
-        mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin),
+        mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
       ),
     ],
     [deployments, favoriteIds, t, toolsets, quickAppSchemaId, isAdmin],
@@ -409,6 +415,25 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [quickAppSchemaId, navigate, buildEditorUrl],
   );
 
+  const handleDelete = useCallback(
+    async (item: CatalogItem) => {
+      if (item.type === CatalogEntityType.Toolset) {
+        await deleteToolset(item.id);
+        await refetchToolsets();
+      } else {
+        await deleteApplication(item.id);
+        await refetchDeployments();
+      }
+
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.DetailsDeleteSuccessTitle),
+        message: t(CatalogI18nKeys.DetailsDeleteSuccess, { name: item.name }),
+      });
+    },
+    [refetchToolsets, refetchDeployments, showNotification, t],
+  );
+
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
 
@@ -458,6 +483,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onLogin={handleLogin}
       onLogout={handleLogout}
       onEdit={handleEdit}
+      onDelete={handleDelete}
       isPrimaryActionVisible={isPrimaryActionVisible}
       shareOverlay={(item, onClose) => (
         <SharePopoverContainer item={item} onClose={onClose} />
@@ -489,6 +515,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),
+        deleteActionLabel: t(ButtonsI18nKeys.Delete),
+        deleteErrorMessage: t(CatalogI18nKeys.DetailsDeleteError),
         dailyLimitLabel: t(CatalogI18nKeys.DetailsDailyLimit),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),

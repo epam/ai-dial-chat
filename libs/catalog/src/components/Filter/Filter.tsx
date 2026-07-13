@@ -74,7 +74,7 @@ export const Filter: FC<FilterProps> = ({
   values,
   isMyAppsActive,
   onMyAppsChange,
-  myAppsLabel = 'My Apps',
+  myAppsLabel = 'My',
   topicsLabel = 'Topics',
   defaultLabel = 'From',
   clearLabel = 'Clear',
