@@ -118,9 +118,14 @@ export const initiateOAuthLogin = (
     JSON.stringify(redirectState),
   );
 
-  const authWindow = window.open(result.url, '_blank');
-  if (authWindow == null) return false;
-  authWindow.opener = null;
+  /*
+   * `noopener` (not a post-hoc `authWindow.opener = null`) is required to
+   * actually sever the opener reference for a cross-origin popup — setting
+   * `.opener` after `window.open` is a no-op once navigation has started.
+   * With `noopener`, some browsers return `null` even though the tab opened,
+   * so a `null` result here is treated as success rather than popup-blocked.
+   */
+  window.open(result.url, '_blank', 'noopener,noreferrer');
   return true;
 };
 

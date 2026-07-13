@@ -576,6 +576,25 @@ describe('AuthController (integration)', () => {
       expect(res.body.isAdmin).toBe(false);
     });
 
+    it('returns isAdmin true for a dot-notation rolesClaim stored as a flat key', async () => {
+      providerConfigOverride = {
+        rolesClaim: 'realm_access.roles',
+        adminRoles: ['admin'],
+      };
+      const sessCookie = await makeSessionCookie({
+        ...sampleSession,
+        claims: {
+          ...sampleSession.claims,
+          'realm_access.roles': ['admin'],
+        },
+      });
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(200);
+      expect(res.body.isAdmin).toBe(true);
+    });
+
     it('returns isAdmin false when the provider has no adminRoles configured', async () => {
       const sessCookie = await makeSessionCookie({
         ...sampleSession,

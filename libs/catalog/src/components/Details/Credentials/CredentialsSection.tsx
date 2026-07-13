@@ -22,6 +22,8 @@ interface CredentialsSectionProps {
   ) => void;
   onLogout?: (item: CatalogItem, params: { level: CredentialsLevel }) => void;
   texts?: ItemDetailsTexts;
+  /** Typography class for the signed-in/signed-out status label. Default: `'dial-small-semi-text text-primary'`. */
+  statusLabelClassName?: string;
 }
 
 /** One level's (`USER` or `GLOBAL`) login/logout form: status, API key/OAuth input, logout confirmation. */
@@ -34,6 +36,7 @@ interface LevelFormProps {
   onLogin?: CredentialsSectionProps['onLogin'];
   onLogout?: CredentialsSectionProps['onLogout'];
   texts?: ItemDetailsTexts;
+  statusLabelClassName?: string;
 }
 
 const LevelForm: FC<LevelFormProps> = ({
@@ -45,6 +48,7 @@ const LevelForm: FC<LevelFormProps> = ({
   onLogin,
   onLogout,
   texts,
+  statusLabelClassName = 'dial-small-semi-text text-primary',
 }) => {
   const [apiKey, setApiKey] = useState('');
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -84,7 +88,7 @@ const LevelForm: FC<LevelFormProps> = ({
 
   return (
     <div className="flex flex-col gap-3">
-      <span className="dial-small-semi-text text-primary">{statusLabel}</span>
+      <span className={statusLabelClassName}>{statusLabel}</span>
 
       {!isSignedIn &&
         authenticationType === ToolsetAuthenticationType.ApiKey && (
@@ -137,6 +141,7 @@ export const CredentialsSection: FC<CredentialsSectionProps> = ({
   onLogin,
   onLogout,
   texts,
+  statusLabelClassName,
 }) => {
   const [openLevel, setOpenLevel] = useState<CredentialsLevel>(
     CredentialsLevel.User,
@@ -170,6 +175,7 @@ export const CredentialsSection: FC<CredentialsSectionProps> = ({
             onLogin={onLogin}
             onLogout={onLogout}
             texts={texts}
+            statusLabelClassName={statusLabelClassName}
           />
         </DialAccordion>
         <DialAccordion
@@ -191,6 +197,7 @@ export const CredentialsSection: FC<CredentialsSectionProps> = ({
             onLogin={onLogin}
             onLogout={onLogout}
             texts={texts}
+            statusLabelClassName={statusLabelClassName}
           />
         </DialAccordion>
       </div>
@@ -226,6 +233,7 @@ export const CredentialsSection: FC<CredentialsSectionProps> = ({
         onLogin={onLogin}
         onLogout={onLogout}
         texts={texts}
+        statusLabelClassName={statusLabelClassName}
       />
     </div>
   );

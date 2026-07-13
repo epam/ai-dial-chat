@@ -124,6 +124,8 @@ export interface ItemDetailsTypography {
   folderLabelClassName?: string;
   /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
   folderLeafClassName?: string;
+  /** Typography class for the credentials section's signed-in/signed-out status label. Default: `'dial-small-semi-text text-primary'`. */
+  credentialsStatusLabelClassName?: string;
 }
 
 /** Grouped style overrides for `DetailsPanel`. */

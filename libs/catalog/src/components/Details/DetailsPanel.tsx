@@ -43,6 +43,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     overviewLabelClassName = 'dial-small-semi-text',
     overviewValueClassName = 'dial-small-text',
     overviewValueTrueClassName = 'dial-small-text',
+    credentialsStatusLabelClassName,
   } = detailsStyles?.typography ?? {};
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
@@ -207,6 +208,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               onLogin={onLogin}
               onLogout={onLogout}
               texts={texts}
+              statusLabelClassName={credentialsStatusLabelClassName}
             />
           )}
 

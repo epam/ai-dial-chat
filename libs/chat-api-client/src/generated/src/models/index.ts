@@ -4183,7 +4183,7 @@ export interface UserProfileDto {
    */
   providerId: string;
   /**
-   *
+   * Allowlisted claims keyed by claim name. A dot-notation rolesClaim (e.g. "realm_access.roles") is stored under one flat key equal to that literal string, never as a nested object.
    * @type {{ [key: string]: unknown }}
    * @memberof UserProfileDto
    */
