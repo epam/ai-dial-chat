@@ -916,24 +916,19 @@ describe('DialFileManagerModal — per-tab visibleColumns', () => {
 });
 
 describe('DialFileManagerModal — autoSelectUploadedItems', () => {
-  it('passes autoSelectUploadedItems=true by default', () => {
+  it('passes autoSelectUploadedItems=false by default', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
-      'true',
+      'false',
     );
   });
 
-  it('passes autoSelectUploadedItems=false when prop is false', () => {
-    render(
-      <DialFileManagerModal
-        {...defaultProps}
-        autoSelectUploadedItems={false}
-      />,
-    );
+  it('passes autoSelectUploadedItems=true when prop is true', () => {
+    render(<DialFileManagerModal {...defaultProps} autoSelectUploadedItems />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
-      'false',
+      'true',
     );
   });
 });

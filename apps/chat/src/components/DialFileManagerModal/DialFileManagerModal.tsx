@@ -107,7 +107,7 @@ const DialFileManagerModal: FC<Props> = ({
   maximumAttachmentsAmount,
   canAttachFolders = false,
   allowedTypesLabel,
-  autoSelectUploadedItems = true,
+  autoSelectUploadedItems = false,
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
