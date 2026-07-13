@@ -240,6 +240,15 @@ try {
   // Remove "private" so npm allows publishing
   delete json.private;
 
+  // npm's automatic provenance (enabled by the release workflow's
+  // "id-token: write" permission) validates "repository.url" against the
+  // GitHub repo it was built from — publish fails with E422 if it's missing.
+  json.repository = {
+    type: 'git',
+    url: 'git+https://github.com/epam/ai-dial-chat.git',
+    directory: projectRoot,
+  };
+
   // Rewrite entry-point paths (main, module, types, exports)
   if (json.main) json.main = stripDistPrefix(json.main);
   if (json.module) json.module = stripDistPrefix(json.module);
