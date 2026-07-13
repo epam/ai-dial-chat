@@ -14,8 +14,6 @@ import { FeatureType, ScreenState, isNotLoaded } from '@/src/types/common';
 import { ContextMenuProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import {
   ChatActions,
   ConversationsActions,
@@ -31,6 +29,8 @@ import {
   PublicationSelectors,
   SettingsSelectors,
 } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
 
