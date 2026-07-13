@@ -24,6 +24,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   DialFileManagerI18nKeys,
 } from '../../constants/translation-keys';
@@ -116,9 +117,7 @@ const DialFileManagerModal: FC<Props> = ({
     () => ({
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
-      [DialFileManagerTabs.Organization]: t(
-        DialFileManagerI18nKeys.TabOrganization,
-      ),
+      [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -462,7 +461,7 @@ const DialFileManagerModal: FC<Props> = ({
       multipleFilesTitle: t(DialFileManagerI18nKeys.ConflictMultipleTitle),
       actionLabels: {
         replace: t(DialFileManagerI18nKeys.ConflictReplace),
-        duplicate: t(DialFileManagerI18nKeys.ConflictDuplicate),
+        duplicate: t(ButtonsI18nKeys.Duplicate),
         cancel: t(ButtonsI18nKeys.Cancel),
       },
       strategyLabels: {
@@ -505,10 +504,8 @@ const DialFileManagerModal: FC<Props> = ({
       [DialFileManagerTabs.MyFiles]: t(
         DialFileManagerI18nKeys.MyFilesTreeHeader,
       ),
-      [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.SharedTreeHeader),
-      [DialFileManagerTabs.Organization]: t(
-        DialFileManagerI18nKeys.OrganizationTreeHeader,
-      ),
+      [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
+      [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -528,15 +525,13 @@ const DialFileManagerModal: FC<Props> = ({
       downloadingLabel,
       deleteLabel,
       deletingLabel,
-      renameLabel: t(DialFileManagerI18nKeys.RenameAction),
+      renameLabel: t(ButtonsI18nKeys.Rename),
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
-      copyLabel: t(DialFileManagerI18nKeys.CopyAction),
+      copyLabel: t(ButtonsI18nKeys.Copy),
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
-      duplicateLabel: t(DialFileManagerI18nKeys.DuplicateAction),
+      duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
-      hiddenFilesSwitcherLabel: t(
-        DialFileManagerI18nKeys.FolderPickerHiddenFilesLabel,
-      ),
+      hiddenFilesSwitcherLabel: t(DialFileManagerI18nKeys.ShowHiddenFiles),
       getCopyHeader: (count, name) =>
         count === 1
           ? t(DialFileManagerI18nKeys.CopyHeaderSingle, { name })
@@ -562,9 +557,7 @@ const DialFileManagerModal: FC<Props> = ({
       operationLoaderMoveTitle: t(
         DialFileManagerI18nKeys.OperationLoaderMoveTitle,
       ),
-      operationLoaderCancelLabel: t(
-        DialFileManagerI18nKeys.OperationLoaderCancelLabel,
-      ),
+      operationLoaderCancelLabel: t(ButtonsI18nKeys.Cancel),
       deleteConfirmTitle,
       deleteConfirmBody,
       deleteConfirmLabel,
@@ -572,7 +565,7 @@ const DialFileManagerModal: FC<Props> = ({
       uploadProgressTitle,
       cancelLabel,
       getUploadProgressText,
-      searchEmptyStateTitle: t(DialFileManagerI18nKeys.SearchEmptyStateTitle),
+      searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       forbiddenSymbolsTooltip: t(
         DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
       ),

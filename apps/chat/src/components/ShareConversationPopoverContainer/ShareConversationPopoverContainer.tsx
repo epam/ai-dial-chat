@@ -44,7 +44,7 @@ const ShareConversationPopoverContainer: FC<Props> = ({
     accessViewLabel: t(ShareI18nKeys.AccessViewLabel),
     accessEditLabel: t(ShareI18nKeys.AccessEditLabel),
     visibilityNote: t(ShareI18nKeys.VisibilityNoteConversation),
-    copyButtonLabel: t(ShareI18nKeys.CopyButtonLabel),
+    copyButtonLabel: t(ButtonsI18nKeys.Copy),
     copiedButtonLabel: t(ShareI18nKeys.CopiedButtonLabel),
     linkAriaLabel: t(ShareI18nKeys.LinkAriaLabel),
     expiryNote:

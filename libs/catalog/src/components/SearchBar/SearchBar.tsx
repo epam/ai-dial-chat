@@ -34,16 +34,18 @@ export const SearchBar: FC<SearchBarProps> = ({
   className,
   ...rest
 }) => (
-  <BaseSearchBar
-    placeholder={placeholder}
-    {...rest}
-    iconSize={18}
-    iconStrokeWidth={1.8}
-    containerClassName={mergeClasses(
-      'h-[50px] flex-1 rounded-xl px-[18px]',
-      className,
-    )}
-    inputClassName="text-[15px]"
-    clearButtonClassName="size-11 desktop:size-auto"
-  />
+  <div className="flex-1">
+    <BaseSearchBar
+      placeholder={placeholder}
+      {...rest}
+      iconSize={18}
+      iconStrokeWidth={1.8}
+      containerClassName={mergeClasses(
+        'h-[50px] flex-1 rounded-xl px-[18px]',
+        className,
+      )}
+      inputClassName="text-[15px]"
+      clearButtonClassName="size-11 desktop:size-auto"
+    />
+  </div>
 );

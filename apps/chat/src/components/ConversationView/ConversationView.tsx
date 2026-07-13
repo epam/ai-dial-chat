@@ -35,12 +35,14 @@ import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import { CONVERSATION_VIEW_INPUT_STYLES } from '../../constants/input-styles';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   DeploymentSelectorI18nKeys,
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
+  FavoritesI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -443,7 +445,7 @@ const ConversationView: FC<Props> = ({
         isAttachmentsAllowed={isAttachmentsAllowed}
         title={t(
           isAttachmentsAllowed
-            ? FileDndI18nKeys.OverlayTitle
+            ? BasicI18nKeys.AttachFiles
             : FileDndI18nKeys.OverlayDeniedTitle,
         )}
         subtitle={t(
@@ -649,24 +651,19 @@ const ConversationView: FC<Props> = ({
                             searchPlaceholder: t(
                               DeploymentSelectorI18nKeys.SearchPlaceholder,
                             ),
-                            searchAriaLabel: t(
-                              DeploymentSelectorI18nKeys.SearchAriaLabel,
-                            ),
                             favoritesLabel: t(
-                              DeploymentSelectorI18nKeys.FavoritesLabel,
+                              FavoritesI18nKeys.FavoritesLabel,
                             ),
                             emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
-                            browseCatalogLabel: t(
-                              DeploymentSelectorI18nKeys.BrowseCatalog,
-                            ),
+                            browseCatalogLabel: t(ButtonsI18nKeys.Browse),
                             removeFromFavoritesLabel: t(
-                              DeploymentSelectorI18nKeys.RemoveFromFavorites,
+                              FavoritesI18nKeys.RemoveFromFavorites,
                             ),
                             currentlySelectedLabel: t(
                               DeploymentSelectorI18nKeys.CurrentlySelectedLabel,
                             ),
                             addToFavoritesLabel: t(
-                              DeploymentSelectorI18nKeys.AddToFavorites,
+                              FavoritesI18nKeys.AddToFavorites,
                             ),
                           }}
                         />
@@ -689,7 +686,7 @@ const ConversationView: FC<Props> = ({
                   canAttachFolders={
                     selectedDeployment?.features?.folderAttachments
                   }
-                  title={t(DialFileManagerI18nKeys.Title)}
+                  title={t(BasicI18nKeys.AttachFiles)}
                   attachLabel={t(DialFileManagerI18nKeys.Attach)}
                   emptyTitle={t(DialFileManagerI18nKeys.Empty)}
                   emptyDescription=""
@@ -707,9 +704,9 @@ const ConversationView: FC<Props> = ({
                   }
                   uploadFilesLabel={t(DialFileManagerI18nKeys.Upload)}
                   newFolderLabel={t(DialFileManagerI18nKeys.NewFolder)}
-                  downloadLabel={t(DialFileManagerI18nKeys.Download)}
+                  downloadLabel={t(ButtonsI18nKeys.Download)}
                   downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
-                  deleteLabel={t(DialFileManagerI18nKeys.DeleteAction)}
+                  deleteLabel={t(ButtonsI18nKeys.Delete)}
                   deletingLabel={t(DialFileManagerI18nKeys.DeletingLabel)}
                   deleteConfirmTitle={(names) =>
                     names.length === 1
@@ -721,7 +718,7 @@ const ConversationView: FC<Props> = ({
                       <p className="mb-3 text-secondary">
                         {names.length === 1 ? (
                           <>
-                            {t(DialFileManagerI18nKeys.DeleteConfirmBodySingle)}{' '}
+                            {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
                             <span className="break-all text-primary">
                               &quot;{names[0].split('/').pop()}&quot;?
                             </span>
@@ -742,9 +739,7 @@ const ConversationView: FC<Props> = ({
                       </p>
                     </div>
                   )}
-                  deleteConfirmLabel={t(
-                    DialFileManagerI18nKeys.DeleteConfirmButton,
-                  )}
+                  deleteConfirmLabel={t(ButtonsI18nKeys.Delete)}
                   deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}
                   uploadProgressTitle={t(
                     DialFileManagerI18nKeys.UploadProgressTitle,

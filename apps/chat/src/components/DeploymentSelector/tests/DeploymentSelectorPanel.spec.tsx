@@ -115,7 +115,7 @@ describe('DeploymentSelectorPanel', () => {
       });
 
       await user.type(
-        screen.getByRole('textbox', { name: 'Search models and agents' }),
+        screen.getByRole('textbox', { name: 'Search models, agents\u2026' }),
         'gpt',
       );
 
