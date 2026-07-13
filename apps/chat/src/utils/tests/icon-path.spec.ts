@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ApiEndpoints } from '../../server-api/base';
 import {
+  resolveDialFileBucketAndPath,
   resolveDialFileDownloadUrl,
   resolveRelativeDialFilePath,
 } from '../dial-file';
@@ -82,6 +83,30 @@ describe('resolveDialFileDownloadUrl', () => {
 
   it('returns undefined when there is no path segment after the bucket', () => {
     expect(resolveDialFileDownloadUrl('files/only-bucket')).toBeUndefined();
+  });
+});
+
+describe('resolveDialFileBucketAndPath', () => {
+  it('extracts bucket and decoded path from a valid DIAL file ID', () => {
+    expect(
+      resolveDialFileBucketAndPath('files/my-bucket/reports/q1.pdf'),
+    ).toEqual({ bucket: 'my-bucket', path: 'reports/q1.pdf' });
+  });
+
+  it('decodes a percent-encoded path segment', () => {
+    expect(
+      resolveDialFileBucketAndPath('files/my-bucket/folder%2Fname.pdf'),
+    ).toEqual({ bucket: 'my-bucket', path: 'folder/name.pdf' });
+  });
+
+  it('returns undefined for a non-DIAL URL', () => {
+    expect(
+      resolveDialFileBucketAndPath('https://external.com/file.pdf'),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when there is no path segment after the bucket', () => {
+    expect(resolveDialFileBucketAndPath('files/only-bucket')).toBeUndefined();
   });
 });
 

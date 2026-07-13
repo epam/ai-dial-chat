@@ -9,6 +9,7 @@ export * from './models/deployment-features';
 export * from './types/attachment';
 export * from './types/mime-type';
 export * from './types/code-editor';
+export * from './types/import-export';
 export * from './utils/string-utils';
 export * from './utils/merge-class';
 export * from './utils/build-css-vars';

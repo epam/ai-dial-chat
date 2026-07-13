@@ -14,6 +14,11 @@ import { cloneElement, ReactElement, ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { useConversationExport } from '../../../hooks/useConversationExport';
+import {
+  ConversationExportMode,
+  ExportJobStatus,
+} from '../../../types/conversation-export';
 import ConversationPanelView from '../ConversationPanelView';
 
 vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
@@ -32,17 +37,34 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
         key: string;
         label: ReactNode;
         onClick?: () => void;
+        children?: Array<{
+          key: string;
+          label: ReactNode;
+          onClick?: () => void;
+        }>;
       }>;
     }) => (
       <div role="region" aria-label="conversation panel">
         {headerActions}
         {panelConversations?.map((item) => (
           <div key={item.id}>
-            {(getActions?.(item) ?? []).map((action) => (
-              <button key={action.key} onClick={action.onClick}>
-                {action.label}
-              </button>
-            ))}
+            {(getActions?.(item) ?? []).map((action) =>
+              action.children ? (
+                // Simulates the hover-revealed submenu: children render as sibling buttons.
+                <div key={action.key}>
+                  <span>{action.label}</span>
+                  {action.children.map((child) => (
+                    <button key={child.key} onClick={child.onClick}>
+                      {child.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <button key={action.key} onClick={action.onClick}>
+                  {action.label}
+                </button>
+              ),
+            )}
           </div>
         ))}
       </div>
@@ -159,6 +181,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
 vi.mock('@tabler/icons-react', () => ({
   IconCopy: () => null,
   IconDotsVertical: () => null,
+  IconDownload: () => null,
   IconPencilMinus: () => null,
   IconPin: () => null,
   IconPinnedFilled: () => null,
@@ -227,6 +250,35 @@ vi.mock('../../RenameConversationPopup/RenameConversationPopup', () => ({
     );
   },
 }));
+vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
+  default: ({
+    jobs,
+    onDismiss,
+    onRetry,
+  }: {
+    title: string;
+    jobs: Array<{ id: string; label: string; status: string }>;
+    onClose: () => void;
+    onDismiss: (jobId: string) => void;
+    onRetry: (jobId: string) => void;
+  }) => {
+    if (jobs.length === 0) return null;
+    return (
+      <div role="status">
+        {jobs.map((job) => (
+          <div key={job.id}>
+            <span>{job.label}</span>
+            {job.status === 'failed' && (
+              <button onClick={() => onRetry(job.id)}>Retry</button>
+            )}
+            <button onClick={() => onDismiss(job.id)}>Close</button>
+          </div>
+        ))}
+      </div>
+    );
+  },
+}));
+vi.mock('../../../hooks/useConversationExport');
 vi.mock('../get-conversation-source', () => ({
   getConversationSource: () => undefined,
 }));
@@ -264,6 +316,13 @@ const SHARE_LABEL = 'conversationPanel.shareLabel';
 const mockDeleteAllConversations =
   vi.fn<() => Promise<ConversationDeletionResultDto>>();
 const mockShowNotification = vi.fn();
+const mockExportSingle = vi.fn().mockResolvedValue(undefined);
+const mockExportAll = vi.fn().mockResolvedValue(undefined);
+const mockDismissJob = vi.fn();
+const mockRetryJob = vi.fn();
+
+const EXPORT_LABEL = 'conversationExport.exportLabel';
+const EXPORT_ALL_LABEL = 'conversationExport.exportAllLabel';
 
 const baseContextValue = {
   conversations: [
@@ -312,6 +371,14 @@ beforeEach(() => {
     showNotification: mockShowNotification,
     dismissNotification: vi.fn(),
   });
+  vi.mocked(useConversationExport).mockReturnValue({
+    jobs: [],
+    exportSingle: mockExportSingle,
+    exportAll: mockExportAll,
+    dismissJob: mockDismissJob,
+    retryJob: mockRetryJob,
+    dismissAll: vi.fn(),
+  });
 });
 
 describe('ConversationPanelView — delete-all header action', () => {
@@ -322,11 +389,24 @@ describe('ConversationPanelView — delete-all header action', () => {
     ).toBeTruthy();
   });
 
-  it('dropdown contains exactly one item: Delete all conversations', () => {
+  it('dropdown contains Export all conversations and Delete all conversations', () => {
     render(<ConversationPanelView {...defaultProps} />);
     openDropdown();
-    const items = screen.getAllByRole('button', { name: DELETE_ALL_LABEL });
-    expect(items).toHaveLength(1);
+    expect(
+      screen.getAllByRole('button', { name: DELETE_ALL_LABEL }),
+    ).toHaveLength(1);
+    expect(
+      screen.getAllByRole('button', { name: EXPORT_ALL_LABEL }),
+    ).toHaveLength(1);
+  });
+
+  it('clicking Export all conversations starts export-all without a modal', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    openDropdown();
+    fireEvent.click(screen.getByRole('button', { name: EXPORT_ALL_LABEL }));
+
+    expect(mockExportAll).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('clicking the item opens the confirmation popup without calling the API', () => {
@@ -777,5 +857,120 @@ describe('ConversationPanelView — share', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
+  });
+});
+
+describe('ConversationPanelView — export', () => {
+  it('row action list contains an Export item (submenu trigger, no onClick of its own)', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.getByText(EXPORT_LABEL)).toBeTruthy();
+  });
+
+  it('the Export submenu offers "with attachments" and "without attachments" — no modal', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(
+      screen.getByRole('button', {
+        name: 'conversationExport.withAttachmentsOption',
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', {
+        name: 'conversationExport.withoutAttachmentsOption',
+      }),
+    ).toBeTruthy();
+    expect(mockExportSingle).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('choosing "with attachments" calls exportSingle with the conversation id, title, and mode', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'conversationExport.withAttachmentsOption',
+      }),
+    );
+
+    expect(mockExportSingle).toHaveBeenCalledWith(
+      'conv1',
+      'Chat 1',
+      ConversationExportMode.WithAttachments,
+    );
+  });
+
+  it('choosing "without attachments" calls exportSingle with the conversation id, title, and mode', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'conversationExport.withoutAttachmentsOption',
+      }),
+    );
+
+    expect(mockExportSingle).toHaveBeenCalledWith(
+      'conv1',
+      'Chat 1',
+      ConversationExportMode.WithoutAttachments,
+    );
+  });
+
+  it('shows the non-modal export queue while jobs are present', () => {
+    vi.mocked(useConversationExport).mockReturnValue({
+      jobs: [
+        {
+          id: 'job-1',
+          label: 'Chat 1',
+          status: ExportJobStatus.InProgress,
+        },
+      ],
+      exportSingle: mockExportSingle,
+      exportAll: mockExportAll,
+      dismissJob: mockDismissJob,
+      retryJob: mockRetryJob,
+      dismissAll: vi.fn(),
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+
+    expect(screen.getByRole('status')).toBeTruthy();
+    expect(screen.getByText('Chat 1')).toBeTruthy();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('hides the export queue when there are no jobs', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('clicking close on a queue job calls dismissJob with its id', () => {
+    vi.mocked(useConversationExport).mockReturnValue({
+      jobs: [
+        { id: 'job-2', label: 'Chat 2', status: ExportJobStatus.InProgress },
+      ],
+      exportSingle: mockExportSingle,
+      exportAll: mockExportAll,
+      dismissJob: mockDismissJob,
+      retryJob: mockRetryJob,
+      dismissAll: vi.fn(),
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(mockDismissJob).toHaveBeenCalledWith('job-2');
+  });
+
+  it('clicking retry on a failed queue job calls retryJob with its id', () => {
+    vi.mocked(useConversationExport).mockReturnValue({
+      jobs: [{ id: 'job-3', label: 'Chat 3', status: ExportJobStatus.Failed }],
+      exportSingle: mockExportSingle,
+      exportAll: mockExportAll,
+      dismissJob: mockDismissJob,
+      retryJob: mockRetryJob,
+      dismissAll: vi.fn(),
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(mockRetryJob).toHaveBeenCalledWith('job-3');
   });
 });

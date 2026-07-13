@@ -82,8 +82,12 @@ export const getFileMetadata = (params: {
 export const downloadFile = async (
   bucket: string,
   path: string,
+  signal?: AbortSignal,
 ): Promise<Response> => {
-  const raw = await filesApi.downloadFileRaw({ bucket, path });
+  const raw = await filesApi.downloadFileRaw(
+    { bucket, path },
+    ...(signal ? [{ signal }] : []),
+  );
   return raw.raw;
 };
 
