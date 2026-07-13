@@ -21,11 +21,11 @@ export class UploadArchiveDto {
   bucket!: string;
 
   @IsString()
-  @IsNotEmpty()
   @IsValidFilePath()
   @MaxLength(1024)
   @ApiProperty({
-    description: 'Destination folder, relative to bucket',
+    description:
+      'Destination folder, relative to bucket. Empty string uploads to bucket root.',
     example: 'reports/2026',
   })
   destinationPath!: string;

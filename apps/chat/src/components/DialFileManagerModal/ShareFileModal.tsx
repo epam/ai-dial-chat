@@ -74,7 +74,7 @@ const ShareFileModal: FC<Props> = ({
 
   return (
     <DialPopup
-      className="!h-fit !max-h-full !w-[400px]"
+      className="!h-fit !max-h-full !w-[calc(100vw-32px)] !max-w-[400px]"
       open
       dividers={false}
       onClose={onClose}

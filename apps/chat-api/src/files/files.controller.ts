@@ -25,6 +25,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ArchiveUploadInterceptor } from './archive-upload.interceptor';
 import { CopyFilesDto, CopyFilesResponseDto } from './dto/copy-files.dto';
 import {
   CreateFolderDto,
@@ -121,7 +122,7 @@ export class FilesController {
   @Post('upload-archive')
   @HttpCode(200)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(ArchiveUploadInterceptor)
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -161,7 +162,7 @@ export class FilesController {
       'DIAL Core unreachable, timed out, or ARCHIVE_UPLOAD_TIMEOUT_MS exceeded',
   })
   uploadArchive(
-    @UploadedFile() file: { buffer: Buffer; mimetype: string } | undefined,
+    @UploadedFile() file: Express.Multer.File | undefined,
     @Body() body: UploadArchiveDto,
     @Req() req: Request,
   ): Promise<UploadArchiveResponseDto> {

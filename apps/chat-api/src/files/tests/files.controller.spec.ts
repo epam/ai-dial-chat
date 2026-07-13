@@ -10,11 +10,13 @@ import {
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { Test, TestingModule } from '@nestjs/testing';
 import { memoryStorage } from 'multer';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ArchiveUploadInterceptor } from '../archive-upload.interceptor';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../files.service';
 
@@ -52,7 +54,18 @@ async function buildApp(
       }),
     ],
     controllers: [FilesController],
-    providers: [{ provide: FilesService, useValue: service }],
+    providers: [
+      ArchiveUploadInterceptor,
+      { provide: FilesService, useValue: service },
+      {
+        provide: ConfigService,
+        useValue: {
+          get: vi.fn((key: string) =>
+            key === 'ARCHIVE_UPLOAD_MAX_BYTES' ? fileSizeLimit : undefined,
+          ),
+        },
+      },
+    ],
   }).compile();
 
   const app = module.createNestApplication();
@@ -331,7 +344,29 @@ describe('FilesController — upload-archive', () => {
     expect(service.uploadArchive).toHaveBeenCalledWith(
       'my-bucket',
       'reports',
-      expect.objectContaining({ buffer: expect.any(Buffer) }),
+      expect.objectContaining({
+        path: expect.any(String),
+        size: expect.any(Number),
+      }),
+      TEST_USER.at,
+    );
+  });
+
+  it('accepts an empty destinationPath for bucket-root archive upload', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', '')
+      .attach('file', Buffer.from('zip-bytes'), 'archive.zip')
+      .expect(200);
+
+    expect(service.uploadArchive).toHaveBeenCalledWith(
+      'my-bucket',
+      '',
+      expect.objectContaining({
+        path: expect.any(String),
+        size: expect.any(Number),
+      }),
       TEST_USER.at,
     );
   });
