@@ -1,11 +1,17 @@
 import type { Message as MessageType } from '@epam/ai-dial-chat-shared';
 import { MessageRole } from '@epam/ai-dial-chat-shared';
-import { render } from '@testing-library/react';
-import type { RefObject } from 'react';
+import { act, fireEvent, render } from '@testing-library/react';
+import {
+  createRef,
+  forwardRef,
+  useImperativeHandle,
+  type RefObject,
+} from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversationScroll } from '../useConversationScroll';
 
 const scrollToMock = vi.fn();
+const CONTAINER_HEIGHT = 400;
 
 const makeMessages = (count: number): MessageType[] =>
   Array.from({ length: count }, (_, index) => ({
@@ -20,87 +26,184 @@ const assignRef = (
   (ref as { current: HTMLDivElement | null }).current = el;
 };
 
+const makeRect = (top: number, bottom: number): DOMRect =>
+  ({
+    top,
+    bottom,
+    left: 0,
+    right: 100,
+    width: 100,
+    height: bottom - top,
+    x: 0,
+    y: top,
+    toJSON: () => ({}),
+  }) as DOMRect;
+
 const setRect = (el: HTMLDivElement, rect: Pick<DOMRect, 'top' | 'bottom'>) => {
-  el.getBoundingClientRect = vi.fn(
-    () =>
-      ({
-        top: rect.top,
-        bottom: rect.bottom,
-        left: 0,
-        right: 100,
-        width: 100,
-        height: rect.bottom - rect.top,
-        x: 0,
-        y: rect.top,
-        toJSON: () => ({}),
-      }) as DOMRect,
+  el.getBoundingClientRect = vi.fn(() => makeRect(rect.top, rect.bottom));
+};
+
+const setScrolledRect = (
+  el: HTMLDivElement,
+  container: HTMLDivElement,
+  rect: Pick<DOMRect, 'top' | 'bottom'>,
+) => {
+  el.getBoundingClientRect = vi.fn(() =>
+    makeRect(rect.top - container.scrollTop, rect.bottom - container.scrollTop),
   );
 };
 
 const configureContainer = (el: HTMLDivElement) => {
+  const scrollTop = el.scrollTop;
   Object.defineProperty(el, 'clientHeight', {
     configurable: true,
-    value: 400,
+    value: CONTAINER_HEIGHT,
   });
   Object.defineProperty(el, 'scrollTop', {
     configurable: true,
     writable: true,
-    value: 0,
+    value: scrollTop,
   });
   Object.defineProperty(el, 'scrollTo', {
     configurable: true,
-    value: scrollToMock,
+    value: (options: ScrollToOptions) => {
+      el.scrollTop = options.top ?? el.scrollTop;
+      scrollToMock(options);
+    },
   });
-  setRect(el, { top: 0, bottom: 400 });
+  setRect(el, { top: 0, bottom: CONTAINER_HEIGHT });
 };
 
-const configureContent = (el: HTMLDivElement) => {
-  setRect(el, { top: 0, bottom: 1_200 });
+const configureContent = (
+  el: HTMLDivElement,
+  container: HTMLDivElement,
+  contentHeight: number,
+) => {
+  setScrolledRect(el, container, { top: 0, bottom: contentHeight });
 };
 
-const ScrollHarness = ({
-  messages,
-  conversationId,
-  isAssistantTyping = false,
-}: {
+interface ScrollHarnessHandle {
+  armAnchor: (index: number) => void;
+}
+
+interface ScrollHarnessProps {
   messages: MessageType[];
   conversationId: string;
+  contentHeight?: number;
   isAssistantTyping?: boolean;
-}) => {
-  const { containerRef, contentRef, spacerRef, setMessageRef } =
-    useConversationScroll({
-      messages,
-      isAssistantTyping,
-      conversationId,
-    });
+}
 
-  return (
-    <div
-      ref={(el) => {
-        if (el) configureContainer(el);
-        assignRef(containerRef, el);
-      }}
-    >
+const ScrollHarness = forwardRef<ScrollHarnessHandle, ScrollHarnessProps>(
+  (
+    {
+      messages,
+      conversationId,
+      contentHeight = 1_200,
+      isAssistantTyping = false,
+    },
+    ref,
+  ) => {
+    const { containerRef, contentRef, spacerRef, setMessageRef, armAnchor } =
+      useConversationScroll({
+        messages,
+        isAssistantTyping,
+        conversationId,
+      });
+
+    useImperativeHandle(ref, () => ({
+      armAnchor,
+    }));
+
+    return (
       <div
         ref={(el) => {
-          if (el) configureContent(el);
-          assignRef(contentRef, el);
+          if (el) configureContainer(el);
+          assignRef(containerRef, el);
         }}
       >
-        {messages.map((_, index) => (
-          <div
-            key={index}
-            ref={(el) => {
-              if (el)
-                setRect(el, { top: index * 100, bottom: index * 100 + 50 });
-              setMessageRef(index, el);
-            }}
-          />
-        ))}
+        <div
+          ref={(el) => {
+            const container = el?.parentElement as HTMLDivElement | null;
+            if (el && container) configureContent(el, container, contentHeight);
+            assignRef(contentRef, el);
+          }}
+        >
+          {messages.map((_, index) => (
+            <div
+              key={index}
+              ref={(el) => {
+                const container = el?.parentElement
+                  ?.parentElement as HTMLDivElement | null;
+                if (el && container)
+                  setScrolledRect(el, container, {
+                    top: index * 100,
+                    bottom: index * 100 + 50,
+                  });
+                setMessageRef(index, el);
+              }}
+            />
+          ))}
+        </div>
+        <div ref={(el) => assignRef(spacerRef, el)} />
       </div>
-      <div ref={(el) => assignRef(spacerRef, el)} />
-    </div>
+    );
+  },
+);
+
+ScrollHarness.displayName = 'ScrollHarness';
+
+const getScrollContainer = (container: HTMLElement) =>
+  container.firstElementChild as HTMLDivElement;
+
+const getSpacer = (container: HTMLElement) =>
+  getScrollContainer(container).lastElementChild as HTMLDivElement;
+
+const renderCompletedShortReply = () => {
+  const harnessRef = createRef<ScrollHarnessHandle>();
+  const initialMessages = makeMessages(4);
+  const replyMessages = makeMessages(6);
+  const result = render(
+    <ScrollHarness
+      ref={harnessRef}
+      conversationId="conversation-a"
+      messages={initialMessages}
+      contentHeight={600}
+    />,
   );
+
+  scrollToMock.mockClear();
+
+  act(() => {
+    harnessRef.current?.armAnchor(4);
+  });
+
+  result.rerender(
+    <ScrollHarness
+      ref={harnessRef}
+      conversationId="conversation-a"
+      messages={replyMessages}
+      contentHeight={650}
+      isAssistantTyping
+    />,
+  );
+
+  scrollToMock.mockClear();
+
+  result.rerender(
+    <ScrollHarness
+      ref={harnessRef}
+      conversationId="conversation-a"
+      messages={replyMessages}
+      contentHeight={650}
+      isAssistantTyping={false}
+    />,
+  );
+
+  return {
+    ...result,
+    scrollContainer: getScrollContainer(result.container),
+    spacer: getSpacer(result.container),
+  };
 };
 
 describe('useConversationScroll', () => {
@@ -168,5 +271,27 @@ describe('useConversationScroll', () => {
       top: 800,
       behavior: 'smooth',
     });
+  });
+
+  it('keeps reserved spacer after streaming stops while the reply is above the viewport bottom', () => {
+    const { scrollContainer, spacer } = renderCompletedShortReply();
+
+    expect(spacer.style.height).toBe(`${CONTAINER_HEIGHT}px`);
+    expect(scrollContainer.scrollTop).toBe(400);
+    expect(scrollToMock).not.toHaveBeenCalled();
+  });
+
+  it('clears completed reserved spacer when the user scrolls to the real content bottom', () => {
+    const { scrollContainer, spacer } = renderCompletedShortReply();
+    scrollToMock.mockClear();
+
+    act(() => {
+      scrollContainer.scrollTop = 250;
+      fireEvent.scroll(scrollContainer);
+    });
+
+    expect(spacer.style.height).toBe('0px');
+    expect(scrollContainer.scrollTop).toBe(250);
+    expect(scrollToMock).not.toHaveBeenCalled();
   });
 });
