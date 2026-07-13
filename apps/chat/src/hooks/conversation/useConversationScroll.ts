@@ -13,6 +13,7 @@ const NEAR_BOTTOM_THRESHOLD = 80;
 interface Params {
   messages: MessageType[];
   isAssistantTyping: boolean;
+  conversationId?: string;
 }
 
 interface Result {
@@ -52,6 +53,7 @@ interface Result {
 export const useConversationScroll = ({
   messages,
   isAssistantTyping,
+  conversationId,
 }: Params): Result => {
   const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -158,10 +160,14 @@ export const useConversationScroll = ({
    * loading a conversation or deleting a message, keep the old bottom-scroll
    * behavior.
    */
-  const prevLengthRef = useRef(messages.length);
+  const prevLengthRef = useRef(0);
+  const prevConversationIdRef = useRef<string | undefined>(undefined);
   useLayoutEffect(() => {
     const lengthChanged = messages.length !== prevLengthRef.current;
+    const conversationChanged =
+      conversationId !== prevConversationIdRef.current;
     prevLengthRef.current = messages.length;
+    prevConversationIdRef.current = conversationId;
 
     const container = containerRef.current;
     const spacer = spacerRef.current;
@@ -176,10 +182,16 @@ export const useConversationScroll = ({
       return;
     }
 
-    if (!isAssistantTyping && lengthChanged) {
+    if (!isAssistantTyping && (lengthChanged || conversationChanged)) {
       scrollToBottom(false);
     }
-  }, [messages, isAssistantTyping, scrollToBottom, scrollMessageToTop]);
+  }, [
+    messages,
+    isAssistantTyping,
+    conversationId,
+    scrollToBottom,
+    scrollMessageToTop,
+  ]);
 
   /*
    * MarkdownRenderer flushes buffered typewriter content synchronously when

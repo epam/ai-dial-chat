@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DialClientService } from '../../dial/dial-client.service';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialClientService } from '../../dial/dial-client.service';
 import { ShareAccess } from '../dto/create-share-link.dto';
 import { ShareService } from '../share.service';
 
