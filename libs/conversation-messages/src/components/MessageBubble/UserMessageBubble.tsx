@@ -4,7 +4,7 @@ import {
   MessageRole,
   useCollapsedText,
 } from '@epam/ai-dial-chat-shared';
-import { AttachmentTray } from '@epam/ai-dial-conversation-input';
+import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
 import {
   DIAL_ICON_SIZE,
   DialLinkButton,
@@ -36,6 +36,10 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   showLessAriaLabel,
   onAttachmentClick,
   attachmentClickLabel,
+  onAttachmentRetry,
+  attachmentRetryLabel,
+  getAttachmentSizeLabel,
+  attachmentTheme,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
 
@@ -73,12 +77,22 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   const ToggleIcon = isCollapsed ? IconChevronDown : IconChevronUp;
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
-      <div className="ms-auto flex w-fit flex-col items-end gap-4">
-        <AttachmentTray
+      {/*
+       * `min-w-0` is required alongside `w-fit`: without it, this flex item
+       * defaults to `min-width: auto` and never actually shrinks below the
+       * attachment group's own content width on a narrow viewport — it just
+       * overflows this row instead of respecting the available space.
+       */}
+      <div className="ms-auto flex w-fit min-w-0 max-w-full flex-col items-end gap-4">
+        <AttachmentGroup
           attachments={attachments ?? []}
           onAttachmentClick={onAttachmentClick}
+          onRetry={onAttachmentRetry}
           clickLabel={attachmentClickLabel}
-          className="max-w-[640px] flex-wrap justify-end overflow-x-visible"
+          retryLabel={attachmentRetryLabel}
+          getSizeLabel={getAttachmentSizeLabel}
+          theme={attachmentTheme}
+          className="max-w-[640px]"
         />
         {text && (
           <div

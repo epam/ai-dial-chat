@@ -65,3 +65,8 @@
     background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #fcfcfc));
   }
 }
+
+.hoverDownloadIcon {
+  background: var(--ci-card-hover-icon-bg, var(--bg-layer-2, #161b2d));
+  color: var(--ci-card-hover-icon-color, var(--text-primary, #eef1f7));
+}

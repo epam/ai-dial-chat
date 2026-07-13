@@ -1,0 +1,71 @@
+// Color-only rules. Layout, spacing, and border-radius live in Tailwind classes in the TSX file.
+// Neutral tile surface — the same bg-layer-3 "card" token used by image
+// tiles, so file and image tiles read as one uniform set. Color is reserved
+// for state (error below), never for file type.
+
+.tile {
+  background: var(--ci-tile-bg, var(--bg-layer-3, #1d2439));
+  border-color: var(--ci-tile-border, var(--stroke-secondary, #d1dbea));
+
+  /*
+   * Same subtle overlay the composer's own input box uses for hover
+   * (Input.module.scss's `--ci-border-hover`) — a low-opacity black tint
+   * rather than a solid stroke color, so hover reads as a gentle nudge
+   * instead of a strong outline change.
+   */
+  &:hover {
+    border-color: var(--ci-tile-border-hover, rgba(0, 0, 0, 0.12));
+  }
+
+  &:focus-visible {
+    outline-color: var(--ci-tile-focus-outline, var(--controls-stroke-focus, #eef1f7));
+  }
+}
+
+/*
+ * Same light-theme-only override as the markdown code block
+ * (CodeBlock.module.scss's `.containerLight`, #F8FAFC) — the live theme API
+ * has no dark-theme value for --bg-layer-6, so it can only be used as a
+ * conditional light-only class, never as the unconditional default. Without
+ * this, the tile falls back to --bg-layer-3's light value (near-white),
+ * which reads as plain white — hence the explicit override here.
+ */
+.tileLight {
+  background: var(--ci-tile-bg, var(--bg-layer-6, #f8fafc));
+}
+
+.tileError {
+  background: var(--ci-tile-bg-error, var(--bg-error, #402027));
+  border-color: var(--ci-tile-border-error, var(--stroke-error, #f76464));
+
+  &:hover {
+    border-color: var(--ci-tile-border-error, var(--stroke-error, #f76464));
+  }
+}
+
+.hoverIcon {
+  background: var(--ci-tile-hover-icon-bg, var(--bg-layer-2, #161b2d));
+  color: var(--ci-tile-hover-icon-color, var(--text-primary, #eef1f7));
+}
+
+.track {
+  background: var(--ci-tile-track-bg, var(--bg-layer-1, #0c101d));
+}
+
+.indeterminateFill {
+  background: var(--ci-tile-fill-bg, var(--bg-accent-primary, #5c8dea));
+  animation: attachment-tile-indeterminate 1.2s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes attachment-tile-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}

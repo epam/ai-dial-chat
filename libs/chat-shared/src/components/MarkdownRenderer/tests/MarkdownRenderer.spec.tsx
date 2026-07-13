@@ -9,10 +9,6 @@ vi.mock('react-syntax-highlighter', () => ({
     </pre>
   ),
 }));
-vi.mock('react-syntax-highlighter/dist/cjs/styles/prism', () => ({
-  oneDark: {},
-  oneLight: {},
-}));
 
 const TABLE_MARKDOWN = `| Name | Description |
 | --- | --- |
@@ -107,7 +103,7 @@ describe('MarkdownRenderer', () => {
       />,
     );
 
-    const labelSpan = container.querySelector('span.opacity-60');
+    const labelSpan = container.querySelector('span.uppercase');
     expect(labelSpan?.textContent).toBe('');
     expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
   });

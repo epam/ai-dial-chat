@@ -1,0 +1,11 @@
+// Color-only rules. Layout, spacing, and border-radius live in Tailwind classes in the TSX file.
+// Container uses bg-layer-2 ("surface"), tiles inside use bg-layer-3
+// ("card") — two distinct, theme-reactive DS surface tokens (confirmed
+// present in both light and dark) so tiles visually separate from the group
+// background, per the square-tile redesign. bg-layer-6 is avoided (no
+// dark-theme value exists for it anywhere in the DS).
+
+.container {
+  background: var(--ci-group-bg, var(--bg-layer-2, #161b2d));
+  border-color: var(--ci-group-border, var(--stroke-secondary, #d1dbea));
+}
