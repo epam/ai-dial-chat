@@ -13,6 +13,7 @@ const NEAR_BOTTOM_THRESHOLD = 80;
 interface Params {
   messages: MessageType[];
   isAssistantTyping: boolean;
+  conversationId: string;
 }
 
 interface Result {
@@ -52,6 +53,7 @@ interface Result {
 export const useConversationScroll = ({
   messages,
   isAssistantTyping,
+  conversationId,
 }: Params): Result => {
   const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -159,9 +161,16 @@ export const useConversationScroll = ({
    * behavior.
    */
   const prevLengthRef = useRef(messages.length);
+  const prevConversationIdRef = useRef<string | null>(null);
   useLayoutEffect(() => {
     const lengthChanged = messages.length !== prevLengthRef.current;
-    prevLengthRef.current = messages.length;
+    const conversationChanged =
+      conversationId !== prevConversationIdRef.current;
+
+    const commitObservedScrollState = () => {
+      prevLengthRef.current = messages.length;
+      prevConversationIdRef.current = conversationId;
+    };
 
     const container = containerRef.current;
     const spacer = spacerRef.current;
@@ -173,13 +182,24 @@ export const useConversationScroll = ({
         spacer.style.height = `${container.clientHeight}px`;
       }
       scrollMessageToTop(anchorIndex, false);
+      commitObservedScrollState();
       return;
     }
 
-    if (!isAssistantTyping && lengthChanged) {
+    if (isAssistantTyping) return;
+
+    if (lengthChanged || conversationChanged) {
       scrollToBottom(false);
     }
-  }, [messages, isAssistantTyping, scrollToBottom, scrollMessageToTop]);
+
+    commitObservedScrollState();
+  }, [
+    messages,
+    isAssistantTyping,
+    conversationId,
+    scrollToBottom,
+    scrollMessageToTop,
+  ]);
 
   /*
    * MarkdownRenderer flushes buffered typewriter content synchronously when
