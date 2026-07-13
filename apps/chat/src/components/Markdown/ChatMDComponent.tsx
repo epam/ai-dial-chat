@@ -211,7 +211,7 @@ const getMDComponents = (
         </a>
       );
     },
-    img({ src, ...props }) {
+    img({ src, width, height, alt }) {
       // Strip external images entirely to prevent silent data exfiltration
       // via auto-loaded image URLs. Only same-origin, `data:` and explicitly
       // allowlisted hosts are rendered.
@@ -224,7 +224,7 @@ const getMDComponents = (
         return null;
       }
 
-      return <img src={src} {...props} />;
+      return <img src={src} width={width} height={height} alt={alt} />;
     },
   };
 };
