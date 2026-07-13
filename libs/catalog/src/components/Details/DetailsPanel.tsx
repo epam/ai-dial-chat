@@ -1,11 +1,17 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { TabRow } from '@epam/ai-dial-kit';
-import { DialCloseButton, DialSkeleton } from '@epam/ai-dial-ui-kit';
+import {
+  DialCloseButton,
+  DialConfirmationPopup,
+  DialSkeleton,
+} from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogDetailsTab } from '../../types/detail-tab';
+import { getSignedInLevel } from '../../utils/toolset-credentials';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
+import { CredentialsSection } from './Credentials/CredentialsSection';
 import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
 import { Summary } from './Summary/Summary';
@@ -27,6 +33,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onShare,
   shareOverlay,
   onEdit,
+  onLogin,
+  onLogout,
   texts,
   styles: detailsStyles,
 }) => {
@@ -39,10 +47,36 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [activeTab, setActiveTab] = useState<string>('');
+  const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
+  const [isDirectLogoutConfirmOpen, setIsDirectLogoutConfirmOpen] =
+    useState(false);
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
   }, [item.id, initialIsStarred]);
+
+  useEffect(() => {
+    setIsCredentialsOpen(false);
+    setIsDirectLogoutConfirmOpen(false);
+  }, [item.id]);
+
+  const handleToggleCredentials = useCallback(() => {
+    setIsCredentialsOpen((prev) => !prev);
+  }, []);
+
+  const handleRequestLogout = useCallback(() => {
+    setIsDirectLogoutConfirmOpen(true);
+  }, []);
+
+  const handleCancelDirectLogout = useCallback(() => {
+    setIsDirectLogoutConfirmOpen(false);
+  }, []);
+
+  const handleConfirmDirectLogout = useCallback(() => {
+    setIsDirectLogoutConfirmOpen(false);
+    if (item.credentials == null) return;
+    onLogout?.(item, { level: getSignedInLevel(item.credentials) });
+  }, [item, onLogout]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -159,8 +193,33 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             onShare={onShare}
             shareOverlay={shareOverlay}
             onEdit={onEdit}
+            onLogin={onLogin}
+            onLogout={onLogout}
+            onToggleCredentials={handleToggleCredentials}
+            onRequestLogout={handleRequestLogout}
             texts={texts}
             detailsStyles={detailsStyles}
+          />
+
+          {isCredentialsOpen && (
+            <CredentialsSection
+              item={item}
+              onLogin={onLogin}
+              onLogout={onLogout}
+              texts={texts}
+            />
+          )}
+
+          <DialConfirmationPopup
+            open={isDirectLogoutConfirmOpen}
+            header={texts?.logoutActionLabel ?? 'Log out'}
+            description={
+              texts?.logoutConfirmMessage ?? 'Are you sure you want to log out?'
+            }
+            confirmLabel={texts?.logoutActionLabel ?? 'Log out'}
+            onConfirm={handleConfirmDirectLogout}
+            onCancel={handleCancelDirectLogout}
+            onClose={handleCancelDirectLogout}
           />
 
           <div className={styles.divider} />

@@ -149,7 +149,7 @@ describe('useAuthRedirect', () => {
   it('authenticated on /login: navigate to same-origin callbackUrl', async () => {
     mockUseUser.mockReturnValue({
       status: AuthStatus.Authenticated,
-      user: { sub: 'u1', providerId: 'keycloak', claims: {} },
+      user: { sub: 'u1', providerId: 'keycloak', claims: {}, isAdmin: false },
       refresh: vi.fn(),
       reset: vi.fn(),
     });
@@ -180,7 +180,7 @@ describe('useAuthRedirect', () => {
   it('authenticated on /login: navigate to / when callbackUrl is missing', async () => {
     mockUseUser.mockReturnValue({
       status: AuthStatus.Authenticated,
-      user: { sub: 'u1', providerId: 'keycloak', claims: {} },
+      user: { sub: 'u1', providerId: 'keycloak', claims: {}, isAdmin: false },
       refresh: vi.fn(),
       reset: vi.fn(),
     });

@@ -21,6 +21,13 @@ export class UserProfileDto {
 
   @ApiProperty({ example: 'default-bucket' })
   bucket!: string;
+
+  @ApiProperty({
+    example: false,
+    description:
+      "Whether the user's roles claim intersects the provider's configured adminRoles",
+  })
+  isAdmin!: boolean;
 }
 
 export class DialModelFeaturesDto {

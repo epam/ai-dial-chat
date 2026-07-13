@@ -8,6 +8,8 @@ export interface UserProfile {
   claims: Record<string, unknown>;
   /** DIAL Core storage bucket for the authenticated user. Empty string when the bucket has not been resolved yet. */
   bucket?: string;
+  /** Whether the user's roles claim intersects the provider's configured adminRoles. */
+  isAdmin: boolean;
 }
 
 /** Describes an available identity provider. */

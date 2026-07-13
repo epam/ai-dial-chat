@@ -91,6 +91,28 @@
       "pricing": {
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
+      },
+      "credentials": {
+        "loginLabel": "Log in",
+        "logoutLabel": "Log out",
+        "signedInLabel": "Signed in",
+        "signedOutLabel": "Signed out",
+        "logoutConfirmMessage": "Are you sure you want to log out?",
+        "apiKeyFieldLabel": "API key",
+        "apiKeyFieldHint": "Enter your API key value for \"{{header}}\" header",
+        "loginWithMyCredsLabel": "Login with my creds",
+        "manageLabel": "Manage credentials",
+        "mySectionLabel": "My credentials",
+        "orgSectionLabel": "Entire organization credentials",
+        "badgeLoggedOut": "LOGGED OUT",
+        "loginSuccessTitle": "Successful login",
+        "loginSuccessOrg": "You have successfully logged into the \"{{name}}\" version {{version}} with credentials to entire organization.",
+        "loginSuccessGlobal": "You have successfully logged into the \"{{name}}\" version {{version}}.",
+        "loginSuccessUser": "You have successfully logged into the \"{{name}}\" version {{version}} with personal credentials.",
+        "logoutSuccessTitle": "Successful logout",
+        "logoutSuccessOrg": "You have successfully logged out of the \"{{name}}\" version {{version}} with credentials to entire organization.",
+        "logoutSuccessGlobal": "You have successfully logged out of the \"{{name}}\" version {{version}}.",
+        "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials."
       }
     },
     "create": {

@@ -74,6 +74,12 @@ export const buildToolsetAuthorizeUrl = (
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('client_id', auth.clientId.trim());
     url.searchParams.set('redirect_uri', redirectUri);
+    if (auth.codeChallenge) {
+      url.searchParams.set('code_challenge', auth.codeChallenge);
+    }
+    if (auth.codeChallengeMethod) {
+      url.searchParams.set('code_challenge_method', auth.codeChallengeMethod);
+    }
     url.searchParams.set('state', state);
     if (auth.scopes && auth.scopes.length > 0) {
       url.searchParams.set('scope', auth.scopes.join(' '));
@@ -86,15 +92,17 @@ export const buildToolsetAuthorizeUrl = (
 
 /**
  * Builds the OAuth authorize URL, persists the redirect state to
- * `sessionStorage`, and navigates to the provider. Shared by the post-save
- * auto-login flow and the manual Log In action so both trigger points stay
- * in sync. Returns `false` (without navigating) when the auth config is
- * invalid.
+ * `sessionStorage`, and opens the provider in a new browser window/tab
+ * (rather than navigating the current page away), so the current page stays
+ * put. Shared by the post-save auto-login flow (Editor, always `USER`) and
+ * the manual Log In action (Editor or Catalog, `USER` or `GLOBAL`) so all
+ * trigger points stay in sync. Returns `false` (without opening a window)
+ * when the auth config is invalid or the popup was blocked.
  */
 export const initiateOAuthLogin = (
   auth: ToolsetAuthFormData,
   toolsetId: string,
-  callbackUrl: string,
+  credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
 ): boolean => {
   const redirectUri = `${window.location.origin}${ROUTES.ToolsetEditorCallback}`;
   const result = buildToolsetAuthorizeUrl(auth, redirectUri);
@@ -102,16 +110,28 @@ export const initiateOAuthLogin = (
 
   const redirectState: ToolsetRedirectState = {
     toolsetId,
-    credentialsLevel: ToolsetCredentialsLevel.User,
-    callbackUrl,
+    credentialsLevel,
     state: result.state,
   };
   sessionStorage.setItem(
     TOOLSET_REDIRECT_STATE_KEY,
     JSON.stringify(redirectState),
   );
-  window.location.href = result.url;
+
+  const authWindow = window.open(result.url, '_blank');
+  if (authWindow == null) return false;
+  authWindow.opener = null;
   return true;
+};
+
+const TOOLSETS_ID_PREFIX = 'toolsets/';
+const PUBLIC_BUCKET_SEGMENT = 'public';
+
+/** Whether a toolset id belongs to the `public` bucket (shared with all users), mirroring the legacy `isEntityIdPublic` check. */
+export const isPublicToolsetId = (toolsetId: string): boolean => {
+  if (!toolsetId.startsWith(TOOLSETS_ID_PREFIX)) return false;
+  const bucket = toolsetId.slice(TOOLSETS_ID_PREFIX.length).split('/')[0];
+  return bucket === PUBLIC_BUCKET_SEGMENT;
 };
 
 /** Maps a loaded toolset DTO (snake_case) into editor form state. */

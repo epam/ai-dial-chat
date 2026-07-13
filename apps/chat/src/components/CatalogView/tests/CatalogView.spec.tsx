@@ -4,12 +4,15 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
+import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { getDeploymentDetails } from '../../../server-api/deployments';
+import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
+import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
 import CatalogView from '../CatalogView';
 
@@ -28,12 +31,28 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     Agent: 'AGENT',
     Toolset: 'TOOLSET',
   },
+  ToolsetAuthenticationType: {
+    None: 'NONE',
+    ApiKey: 'API_KEY',
+    OAuth: 'OAUTH',
+  },
+  CredentialStatus: {
+    SignedIn: 'SIGNED_IN',
+    SignedOut: 'SIGNED_OUT',
+    Failed: 'FAILED',
+  },
+  CredentialsLevel: {
+    User: 'USER',
+    Global: 'GLOBAL',
+  },
   Catalog: ({
     createOptions,
     items,
     onToggleFavorite,
     onUseInChat,
     onFetchDetails,
+    onLogin,
+    onLogout,
     initialDetailsItemId,
   }: {
     createOptions?: CreateOption[];
@@ -42,6 +61,11 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
+    onLogin?: (
+      item: CatalogItem,
+      params: { level: string; apiKey?: string },
+    ) => Promise<void>;
+    onLogout?: (item: CatalogItem, params: { level: string }) => Promise<void>;
     initialDetailsItemId?: string;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
@@ -85,6 +109,42 @@ vi.mock('@epam/ai-dial-catalog', () => ({
           </button>
         ))}
         <output aria-label="Fetch details result">{fetchResult}</output>
+        {(items ?? []).map((item) => (
+          <button
+            key={`login-user-${item.id}`}
+            type="button"
+            onClick={() => onLogin?.(item, { level: 'USER', apiKey: 'k' })}
+          >
+            login user {item.id}
+          </button>
+        ))}
+        {(items ?? []).map((item) => (
+          <button
+            key={`login-global-${item.id}`}
+            type="button"
+            onClick={() => onLogin?.(item, { level: 'GLOBAL', apiKey: 'k' })}
+          >
+            login global {item.id}
+          </button>
+        ))}
+        {(items ?? []).map((item) => (
+          <button
+            key={`logout-user-${item.id}`}
+            type="button"
+            onClick={() => onLogout?.(item, { level: 'USER' })}
+          >
+            logout user {item.id}
+          </button>
+        ))}
+        {(items ?? []).map((item) => (
+          <button
+            key={`logout-global-${item.id}`}
+            type="button"
+            onClick={() => onLogout?.(item, { level: 'GLOBAL' })}
+          >
+            logout global {item.id}
+          </button>
+        ))}
         {(createOptions ?? []).map((option) => (
           <button key={option.label} type="button" onClick={option.onClick}>
             {option.label}
@@ -95,12 +155,21 @@ vi.mock('@epam/ai-dial-catalog', () => ({
   },
 }));
 
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: vi.fn(),
+}));
+
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
 }));
 
 vi.mock('../../../server-api/deployments', () => ({
   getDeploymentDetails: vi.fn(),
+}));
+
+vi.mock('../../../server-api/toolsets', () => ({
+  loginToolset: vi.fn(),
+  logoutToolset: vi.fn(),
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
@@ -124,6 +193,17 @@ describe('CatalogView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSearchParams = new URLSearchParams();
+    vi.mocked(useUser).mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: {
+        sub: 'user-1',
+        providerId: 'keycloak',
+        claims: {},
+        isAdmin: false,
+      },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
     vi.mocked(useDeployments).mockReturnValue({
       items: [],
       selectedItemId: null,
@@ -531,7 +611,6 @@ describe('CatalogView', () => {
           { label: 'Allowed tools', value: 'search · fetch' },
           { label: 'All supported tools', value: 'search · fetch · browse' },
           { label: 'Hosted by', value: 'Anastasiia Harkot' },
-          { label: 'Sign-in status', value: 'SIGNED_IN' },
           { label: 'OAuth scopes', value: 'read · write' },
           {
             label: 'Authorization endpoint',
@@ -578,6 +657,166 @@ describe('CatalogView', () => {
     expect(await screen.findByLabelText('Fetch details result')).toHaveProperty(
       'textContent',
       'null',
+    );
+  });
+
+  it('calls loginToolset with credentialsLevel USER for a USER-level login and refetches toolsets', async () => {
+    const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/public/search__0.0.1',
+          toolset: 'toolsets/public/search__0.0.1',
+          displayName: 'Search',
+          authSettings: { authenticationType: 'API_KEY' },
+        },
+      ],
+      refetchToolsets,
+    });
+    vi.mocked(loginToolset).mockResolvedValue({ success: true });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'login user toolsets/public/search__0.0.1',
+      }),
+    );
+
+    expect(loginToolset).toHaveBeenCalledWith(
+      'toolsets/public/search__0.0.1',
+      expect.objectContaining({
+        credentialsLevel: 'USER',
+        apiKey: 'k',
+      }),
+    );
+    expect(refetchToolsets).toHaveBeenCalledOnce();
+  });
+
+  it('calls loginToolset with credentialsLevel GLOBAL for a GLOBAL-level login', async () => {
+    const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/public/search__0.0.1',
+          toolset: 'toolsets/public/search__0.0.1',
+          displayName: 'Search',
+          authSettings: { authenticationType: 'API_KEY' },
+        },
+      ],
+      refetchToolsets,
+    });
+    vi.mocked(loginToolset).mockResolvedValue({ success: true });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'login global toolsets/public/search__0.0.1',
+      }),
+    );
+
+    expect(loginToolset).toHaveBeenCalledWith(
+      'toolsets/public/search__0.0.1',
+      expect.objectContaining({ credentialsLevel: 'GLOBAL' }),
+    );
+  });
+
+  it('calls logoutToolset with the requested level and refetches toolsets', async () => {
+    const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/public/search__0.0.1',
+          toolset: 'toolsets/public/search__0.0.1',
+          displayName: 'Search',
+          authSettings: {
+            authenticationType: 'API_KEY',
+            userLevelAuthStatus: 'SIGNED_IN',
+          },
+        },
+      ],
+      refetchToolsets,
+    });
+    vi.mocked(logoutToolset).mockResolvedValue({ success: true });
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'logout user toolsets/public/search__0.0.1',
+      }),
+    );
+
+    expect(logoutToolset).toHaveBeenCalledWith(
+      'toolsets/public/search__0.0.1',
+      expect.objectContaining({ credentialsLevel: 'USER' }),
+    );
+    expect(refetchToolsets).toHaveBeenCalledOnce();
+  });
+
+  it('shows an error notification when loginToolset rejects', async () => {
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue({
+      notifications: [],
+      showNotification,
+      dismissNotification: vi.fn(),
+    });
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/public/search__0.0.1',
+          toolset: 'toolsets/public/search__0.0.1',
+          displayName: 'Search',
+          authSettings: { authenticationType: 'API_KEY' },
+        },
+      ],
+      refetchToolsets: vi.fn(),
+    });
+    vi.mocked(loginToolset).mockRejectedValue(new Error('network error'));
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'login user toolsets/public/search__0.0.1',
+      }),
+    );
+
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'error' }),
     );
   });
 });

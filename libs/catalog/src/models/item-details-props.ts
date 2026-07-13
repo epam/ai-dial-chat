@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogItem } from './catalog-item';
 
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
@@ -61,6 +62,40 @@ export interface ItemDetailsTexts {
   pricingLimitsSectionLabel?: string;
   /** Accessible label for the loading placeholder shown next to the tab row while structured details are being fetched. Default: `'Loading details'`. */
   detailsLoadingAriaLabel?: string;
+  /** "Log in" action button label, shown when the item's credentials are not signed in. Default: `'Log in'`. */
+  loginActionLabel?: string;
+  /** "Log out" action button label, shown when the item's credentials are signed in. Default: `'Log out'`. */
+  logoutActionLabel?: string;
+  /**
+   * "Login with my creds" action button label, shown to a non-admin user on
+   * a public item they are not personally signed into (organization-wide
+   * credentials may already be active). Default: `'Login with my creds'`.
+   */
+  loginWithMyCredsActionLabel?: string;
+  /**
+   * "Manage credentials" action button label, shown to an admin on a public
+   * item — expands both the `USER` and `GLOBAL` sections. Default: `'Manage credentials'`.
+   */
+  manageCredentialsActionLabel?: string;
+  /** Heading for the personal-credentials section when both levels are shown. Default: `'My credentials'`. */
+  myCredentialsSectionLabel?: string;
+  /** Heading for the organization-wide-credentials section when both levels are shown. Default: `'Entire organization credentials'`. */
+  organizationCredentialsSectionLabel?: string;
+  /** Status label shown in the credentials section when signed in. Default: `'Signed in'`. */
+  credentialsSignedInLabel?: string;
+  /** Status label shown in the credentials section when signed out. Default: `'Signed out'`. */
+  credentialsSignedOutLabel?: string;
+  /** Confirmation dialog message shown before logging out. Default: `'Are you sure you want to log out?'`. */
+  logoutConfirmMessage?: string;
+  /** Label for the API key input field in the credentials section. Default: `'API key'`. */
+  apiKeyFieldLabel?: string;
+  /**
+   * Returns the API-key field hint naming the required header. Default:
+   * `(header) => \`Enter your API key value for "${header}" header\``.
+   */
+  apiKeyFieldHint?: (apiKeyHeader: string) => string;
+  /** Credentials-status badge label shown on catalog cards when signed out. Default: `'LOGGED OUT'`. */
+  credentialsBadgeLoggedOutLabel?: string;
 }
 
 /** Typography class overrides for `DetailsPanel` text elements. */
@@ -127,6 +162,30 @@ export interface DetailsPanelProps {
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   /** Called when the "Edit" button is clicked. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
+  /**
+   * Called when the credentials login form is submitted. `level` identifies
+   * which credentials slot the call applies to (`USER` for the current
+   * user's own credentials; `GLOBAL` for organization-wide credentials,
+   * only reachable by an admin managing a public item). `apiKey` is present
+   * for API-key authentication and absent for OAuth (where this call should
+   * initiate a redirect). Shown only when the item's `credentials` field is
+   * present with an `authenticationType` other than `NONE`. May return a
+   * promise; the panel awaits it before refreshing credential status via
+   * `onFetchDetails`.
+   */
+  onLogin?: (
+    item: CatalogItem,
+    params: { level: CredentialsLevel; apiKey?: string },
+  ) => Promise<void> | void;
+  /**
+   * Called when logout is confirmed in the credentials section, for the
+   * given credentials `level`. May return a promise; the panel awaits it
+   * before refreshing credential status via `onFetchDetails`.
+   */
+  onLogout?: (
+    item: CatalogItem,
+    params: { level: CredentialsLevel },
+  ) => Promise<void> | void;
   /** Text overrides for all user-visible strings. */
   texts?: ItemDetailsTexts;
   /** Grouped style overrides. */

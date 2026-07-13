@@ -1,12 +1,67 @@
-import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
+import {
+  CatalogEntityType,
+  CredentialStatus,
+  ToolsetAuthenticationType,
+  type CatalogItem,
+  type CatalogItemCredentials,
+} from '@epam/ai-dial-catalog';
 import { formatLastUsed } from '@epam/ai-dial-chat-shared';
-import type { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
+import type {
+  DeploymentItemDto,
+  DialToolsetAuthSettingsDto,
+  DialToolsetDto,
+} from '@epam/chat-api-client';
 import type { TFunction } from 'i18next';
 import { CatalogI18nKeys } from '../constants/translation-keys';
 import type { EntitySpecificDetails } from '../types/entity-details';
 import { resolveCatalogIconUrl } from './icon-path';
 import { mapEntityDetailsToCatalogDetails } from './map-entity-details-to-catalog';
 import { safeDecodeURIComponent } from './string-utils';
+import { isPublicToolsetId } from './toolsets';
+
+const AUTHENTICATION_TYPE_MAP: Record<
+  DialToolsetAuthSettingsDto['authenticationType'],
+  ToolsetAuthenticationType
+> = {
+  NONE: ToolsetAuthenticationType.None,
+  API_KEY: ToolsetAuthenticationType.ApiKey,
+  OAUTH: ToolsetAuthenticationType.OAuth,
+};
+
+const AUTH_STATUS_MAP: Record<string, CredentialStatus> = {
+  SIGNED_IN: CredentialStatus.SignedIn,
+  SIGNED_OUT: CredentialStatus.SignedOut,
+  FAILED: CredentialStatus.Failed,
+};
+
+/**
+ * Maps a toolset's auth settings into the lib's credential-status shape,
+ * including both `USER` and `GLOBAL` sign-in status, whether the toolset is
+ * public, and whether the current user (if an admin) may manage both levels.
+ */
+export const mapToolsetCredentials = (
+  toolsetId: string,
+  authSettings: DialToolsetAuthSettingsDto | undefined,
+  isAdmin: boolean,
+): CatalogItemCredentials | undefined => {
+  if (authSettings == null) return undefined;
+
+  const isPublic = isPublicToolsetId(toolsetId);
+
+  return {
+    authenticationType:
+      AUTHENTICATION_TYPE_MAP[authSettings.authenticationType],
+    userStatus: authSettings.userLevelAuthStatus
+      ? AUTH_STATUS_MAP[authSettings.userLevelAuthStatus]
+      : undefined,
+    globalStatus: authSettings.globalAuthStatus
+      ? AUTH_STATUS_MAP[authSettings.globalAuthStatus]
+      : undefined,
+    isPublic,
+    isManageableByAdmin: isAdmin && isPublic,
+    apiKeyHeader: authSettings.apiKeyHeader,
+  };
+};
 
 const TYPE_MAP: Record<string, CatalogEntityType> = {
   model: CatalogEntityType.Model,
@@ -100,6 +155,7 @@ export const mapDeploymentToCatalogItem = (
 export const mapToolsetToCatalogItem = (
   toolset: DialToolsetDto,
   favoriteIds: ReadonlySet<string> = new Set(),
+  isAdmin = false,
 ): CatalogItem => {
   const name =
     toolset.displayName ?? toolset.toolset ?? toolset.reference ?? toolset.id;
@@ -123,6 +179,11 @@ export const mapToolsetToCatalogItem = (
     isMyApp: toolset.isMy ?? false,
     folder: resolveToolsetFolder(toolset),
     summary: undefined,
+    credentials: mapToolsetCredentials(
+      toolset.id,
+      toolset.authSettings,
+      isAdmin,
+    ),
     details:
       allowedTools.length > 0
         ? {

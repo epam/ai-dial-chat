@@ -1,8 +1,13 @@
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
+import {
+  CatalogEntityType,
+  CredentialStatus,
+  ToolsetAuthenticationType,
+} from '@epam/ai-dial-catalog';
 import type { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import { describe, expect, it } from 'vitest';
 import {
   mapDeploymentToCatalogItem,
+  mapToolsetCredentials,
   mapToolsetToCatalogItem,
 } from '../map-deployment-to-catalog-item';
 
@@ -132,5 +137,114 @@ describe('mapToolsetToCatalogItem', () => {
     });
 
     expect(result.intro).toBe('A longer intro for the details panel.');
+  });
+
+  it('marks a public toolset as isPublic and manageable by an admin', () => {
+    const result = mapToolsetToCatalogItem(
+      {
+        id: 'toolsets/public/search__0.0.1',
+        toolset: 'toolsets/public/search__0.0.1',
+        authSettings: { authenticationType: 'API_KEY' },
+      },
+      undefined,
+      true,
+    );
+
+    expect(result.credentials).toMatchObject({
+      isPublic: true,
+      isManageableByAdmin: true,
+    });
+  });
+
+  it('does not mark a public toolset as manageable for a non-admin', () => {
+    const result = mapToolsetToCatalogItem(
+      {
+        id: 'toolsets/public/search__0.0.1',
+        toolset: 'toolsets/public/search__0.0.1',
+        authSettings: { authenticationType: 'API_KEY' },
+      },
+      undefined,
+      false,
+    );
+
+    expect(result.credentials).toMatchObject({
+      isPublic: true,
+      isManageableByAdmin: false,
+    });
+  });
+
+  it('does not mark a private toolset as public even for an admin', () => {
+    const result = mapToolsetToCatalogItem(
+      {
+        id: 'toolsets/bucket/search__0.0.1',
+        toolset: 'toolsets/bucket/search__0.0.1',
+        authSettings: { authenticationType: 'API_KEY' },
+      },
+      undefined,
+      true,
+    );
+
+    expect(result.credentials).toMatchObject({
+      isPublic: false,
+      isManageableByAdmin: false,
+    });
+  });
+
+  it('maps both USER and GLOBAL sign-in status', () => {
+    const result = mapToolsetToCatalogItem({
+      id: 'toolsets/public/search__0.0.1',
+      toolset: 'toolsets/public/search__0.0.1',
+      authSettings: {
+        authenticationType: 'API_KEY',
+        userLevelAuthStatus: 'SIGNED_OUT',
+        globalAuthStatus: 'SIGNED_IN',
+      },
+    });
+
+    expect(result.credentials).toMatchObject({
+      userStatus: CredentialStatus.SignedOut,
+      globalStatus: CredentialStatus.SignedIn,
+    });
+  });
+
+  it('maps the API key header hint', () => {
+    const result = mapToolsetToCatalogItem({
+      id: 'toolsets/bucket/search__0.0.1',
+      toolset: 'toolsets/bucket/search__0.0.1',
+      authSettings: {
+        authenticationType: 'API_KEY',
+        apiKeyHeader: 'X-Api-Key',
+      },
+    });
+
+    expect(result.credentials).toMatchObject({ apiKeyHeader: 'X-Api-Key' });
+  });
+});
+
+describe('mapToolsetCredentials', () => {
+  it('returns undefined when authSettings is absent', () => {
+    expect(
+      mapToolsetCredentials('toolsets/public/x__1.0', undefined, false),
+    ).toBeUndefined();
+  });
+
+  it('maps authenticationType and both status levels', () => {
+    const result = mapToolsetCredentials(
+      'toolsets/public/x__1.0',
+      {
+        authenticationType: 'OAUTH',
+        userLevelAuthStatus: 'SIGNED_IN',
+        globalAuthStatus: 'SIGNED_OUT',
+      },
+      true,
+    );
+
+    expect(result).toMatchObject({
+      authenticationType: ToolsetAuthenticationType.OAuth,
+      userStatus: CredentialStatus.SignedIn,
+      globalStatus: CredentialStatus.SignedOut,
+      isPublic: true,
+      isManageableByAdmin: true,
+    });
   });
 });

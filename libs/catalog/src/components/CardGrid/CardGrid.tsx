@@ -25,6 +25,8 @@ export const CardGrid: FC<CardGridProps> = memo(
       titles?.addToFavoritesAriaLabel ?? 'Add to favorites';
     const removeFromFavoritesAriaLabel =
       titles?.removeFromFavoritesAriaLabel ?? 'Remove from favorites';
+    const credentialsBadgeLoggedOutLabel =
+      titles?.credentialsBadgeLoggedOutLabel ?? 'LOGGED OUT';
 
     const { containerRef, startRow, endRow, columnCount, totalHeight } =
       useScrollVirtualizer(items.length);
@@ -40,6 +42,7 @@ export const CardGrid: FC<CardGridProps> = memo(
         addToFavoritesAriaLabel,
         removeFromFavoritesAriaLabel,
         selectedItemId,
+        credentialsBadgeLoggedOutLabel,
       }),
       [
         items,
@@ -51,6 +54,7 @@ export const CardGrid: FC<CardGridProps> = memo(
         addToFavoritesAriaLabel,
         removeFromFavoritesAriaLabel,
         selectedItemId,
+        credentialsBadgeLoggedOutLabel,
       ],
     );
 

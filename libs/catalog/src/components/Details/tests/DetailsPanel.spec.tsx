@@ -21,9 +21,27 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialSkeleton: () => <div>skeleton</div>,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  DialConfirmationPopup: ({ open }: { open: boolean }) =>
+    open ? <div role="dialog" /> : null,
+  DialAccordion: ({
+    title,
+    children,
+  }: {
+    title: string;
+    children?: React.ReactNode;
+  }) => (
+    <section>
+      <span>{title}</span>
+      {children}
+    </section>
+  ),
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconChevronDown: () => <svg />,
+  IconKey: () => <svg />,
+  IconLogin: () => <svg />,
+  IconLogout: () => <svg />,
+  IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
   IconShare: () => <svg />,
 }));

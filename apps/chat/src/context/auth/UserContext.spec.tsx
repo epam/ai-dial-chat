@@ -17,6 +17,7 @@ const mockProfile: UserProfileDto = {
   providerId: 'keycloak',
   claims: { email: 'u@x.io' },
   bucket: 'test-bucket',
+  isAdmin: false,
 };
 
 const wrapper = ({ children }: { children: ReactNode }) => (

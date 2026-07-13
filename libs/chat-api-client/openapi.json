@@ -2937,9 +2937,14 @@
           "bucket": {
             "type": "string",
             "example": "default-bucket"
+          },
+          "isAdmin": {
+            "type": "boolean",
+            "example": false,
+            "description": "Whether the user's roles claim intersects the provider's configured adminRoles"
           }
         },
-        "required": ["sub", "providerId", "claims", "bucket"]
+        "required": ["sub", "providerId", "claims", "bucket", "isAdmin"]
       },
       "ClientConfigDto": {
         "type": "object",

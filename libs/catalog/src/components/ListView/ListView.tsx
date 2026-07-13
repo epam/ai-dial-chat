@@ -46,6 +46,7 @@ export const ListView: FC<ListViewProps> = ({
   onItemClick,
   stickyHeaderTop,
   selectedItemId,
+  credentialsBadgeLoggedOutLabel,
 }) => {
   const typography = listStyles?.typography ?? {};
   const colors = listStyles?.colors;
@@ -145,6 +146,7 @@ export const ListView: FC<ListViewProps> = ({
             typography,
             onToggleFavorite,
             selectedItemId,
+            credentialsBadgeLoggedOutLabel,
           } satisfies GridContext,
           onCellClicked: onItemClick
             ? (event) => {

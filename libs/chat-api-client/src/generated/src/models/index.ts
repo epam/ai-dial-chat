@@ -4194,6 +4194,12 @@ export interface UserProfileDto {
    * @memberof UserProfileDto
    */
   bucket: string;
+  /**
+   * Whether the user's roles claim intersects the provider's configured adminRoles
+   * @type {boolean}
+   * @memberof UserProfileDto
+   */
+  isAdmin: boolean;
 }
 /**
  *
