@@ -32,4 +32,5 @@ export * from './components/MarkdownRenderer/markdown-class-names';
 export * from './components/MarkdownRenderer/CodeBlock/CodeBlock';
 export * from './components/MarkdownRenderer/Table/MarkdownTable';
 export * from './hooks/useIsMobile';
+export * from './hooks/useCodeCopy';
 export * from './hooks/useCollapsedText';

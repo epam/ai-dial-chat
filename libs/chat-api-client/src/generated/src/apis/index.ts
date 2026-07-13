@@ -10,6 +10,7 @@ export * from './FilesApi';
 export * from './HealthApi';
 export * from './ModelsApi';
 export * from './RateApi';
+export * from './ShareApi';
 export * from './ThemesApi';
 export * from './ToolsetsApi';
 export * from './TranscriptionApi';

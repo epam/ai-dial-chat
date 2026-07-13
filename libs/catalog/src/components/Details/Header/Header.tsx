@@ -1,12 +1,7 @@
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import {
-  IconChevronDown,
-  IconPencil,
-  IconPlayerPlayFilled,
-  IconShare,
-} from '@tabler/icons-react';
-import { FC, useCallback } from 'react';
+import { IconPencil, IconPlayerPlayFilled } from '@tabler/icons-react';
+import { FC, type ReactNode, useCallback } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import type {
   ItemDetailsStyles,
@@ -15,12 +10,18 @@ import type {
 import { CatalogEntityType } from '../../../types/entity-type';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import { FolderPath } from '../../FolderPath/FolderPath';
+import { ShareButton } from './ShareButton/ShareButton';
 
 interface HeaderProps {
   item: CatalogItem;
   onUseInChat?: (item: CatalogItem) => void;
   isPrimaryActionVisible?: (item: CatalogItem) => boolean;
   onShare?: (item: CatalogItem) => void;
+  /**
+   * Renders the Share popover content anchored to the Share button. When
+   * provided, clicking Share opens this popover instead of calling `onShare`.
+   */
+  shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   onEdit?: (item: CatalogItem) => void;
   texts?: ItemDetailsTexts;
   detailsStyles?: ItemDetailsStyles;
@@ -31,6 +32,7 @@ export const Header: FC<HeaderProps> = ({
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
+  shareOverlay,
   onEdit,
   texts,
   detailsStyles,
@@ -40,13 +42,10 @@ export const Header: FC<HeaderProps> = ({
     folderLabelClassName = 'dial-tiny-text',
     folderLeafClassName = 'dial-tiny-semi-text',
   } = detailsStyles?.typography ?? {};
+
   const handleUseInChat = useCallback(() => {
     onUseInChat?.(item);
   }, [item, onUseInChat]);
-
-  const handleShare = useCallback(() => {
-    onShare?.(item);
-  }, [item, onShare]);
 
   const handleEdit = useCallback(() => {
     onEdit?.(item);
@@ -92,11 +91,11 @@ export const Header: FC<HeaderProps> = ({
             onClick={handleEdit}
           />
         )}
-        <NeutralButton
-          label={texts?.shareLabel ?? 'Share'}
-          iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}
-          iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.MD} />}
-          onClick={handleShare}
+        <ShareButton
+          item={item}
+          onShare={onShare}
+          shareOverlay={shareOverlay}
+          label={texts?.shareLabel}
         />
       </div>
     </div>

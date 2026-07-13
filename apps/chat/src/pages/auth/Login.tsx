@@ -1,4 +1,4 @@
-import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
+import { NeutralButton } from '@epam/ai-dial-kit';
 import type { ProviderInfoDto } from '@epam/chat-api-client';
 import {
   memo,
@@ -36,23 +36,22 @@ const renderProviders = (
       {providers.map((provider) => {
         const href = `/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
         return (
-          <DialNeutralButton
-            key={provider.id}
-            className="w-full"
-            iconBefore={
-              <img
-                src={getProviderIconUrl(provider.id)}
-                alt=""
-                aria-hidden="true"
-                className="size-5 shrink-0"
-                onError={handleIconError}
-              />
-            }
-            label={provider.label}
-            onClick={() => {
-              window.location.href = href;
-            }}
-          />
+          <a key={provider.id} href={href} className="w-full">
+            <NeutralButton
+              className="w-full"
+              tabIndex={-1}
+              iconBefore={
+                <img
+                  src={getProviderIconUrl(provider.id)}
+                  alt=""
+                  aria-hidden="true"
+                  className="size-5 shrink-0"
+                  onError={handleIconError}
+                />
+              }
+              label={provider.label}
+            />
+          </a>
         );
       })}
     </div>

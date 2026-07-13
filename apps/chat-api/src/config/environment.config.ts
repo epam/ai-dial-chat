@@ -228,4 +228,27 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsUrl({ require_tld: false })
   DEV_QUICKAPPS_EDITOR_URL?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsUrl(
+    {
+      require_tld: false,
+      require_protocol: true,
+      protocols: ['https', 'http'],
+    },
+    { each: true },
+  )
+  @Matches(/^https?:\/\/[^/\s?#]+$/, {
+    each: true,
+    message:
+      'Each allowed iframe origin must be an origin URL with no path or query string',
+  })
+  ALLOWED_IFRAME_ORIGINS?: string[] = [];
 }

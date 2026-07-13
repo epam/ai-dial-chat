@@ -25,16 +25,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
 }));
 vi.mock('@tabler/icons-react', () => ({
-  IconChevronDown: () => <svg />,
   IconPencil: () => <svg />,
   IconPlayerPlayFilled: () => <svg />,
-  IconShare: () => <svg />,
 }));
 vi.mock('../../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
 }));
 vi.mock('../../../FolderPath/FolderPath', () => ({
   FolderPath: () => <div />,
+}));
+vi.mock('../ShareButton/ShareButton', () => ({
+  ShareButton: ({ label }: { label?: string }) => (
+    <button>{label ?? 'Share'}</button>
+  ),
 }));
 
 const makeItem = (type: CatalogEntityType): CatalogItem => ({
@@ -46,6 +49,7 @@ const makeItem = (type: CatalogEntityType): CatalogItem => ({
   description: '',
   folder: [],
   topics: [],
+  isMyApp: true,
 });
 
 describe('Header', () => {
@@ -109,17 +113,19 @@ describe('Header', () => {
     expect(onUseInChat).toHaveBeenCalledWith(item);
   });
 
-  it('still renders Share for a Toolset item', () => {
+  it('renders the Share button', () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
     expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
   });
 
-  it('calls onShare with the item when Share is clicked', async () => {
-    const onShare = vi.fn();
-    const item = makeItem(CatalogEntityType.Model);
-    render(<Header item={item} onShare={onShare} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(onShare).toHaveBeenCalledWith(item);
+  it('passes texts.shareLabel through to the Share button label', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        texts={{ shareLabel: 'Share this' }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Share this' })).toBeTruthy();
   });
 
   it('does not render Edit when onEdit is not supplied', () => {
