@@ -28,12 +28,24 @@ const ACCESS_PERMISSIONS: Record<ShareAccess, ResourceAccessType[]> = {
 
 /*
  * The generated share link must point at a frontend route the SPA can
- * render (which then accepts the invitation and redirects into the
- * catalog), not at DIAL Core's own `/v1/invitations/{id}` API path.
+ * render (which then accepts the invitation and redirects into the shared
+ * resource), not at DIAL Core's own `/v1/invitations/{id}` API path. Which
+ * frontend route depends on the resource kind: catalog entities land on the
+ * catalog accept-invitation route, conversations on the conversation one, so
+ * each redirects into the right place after acceptance.
  */
-const SHARE_INVITATION_ROUTE_PATH = '/catalog/shared';
+const CATALOG_SHARE_INVITATION_ROUTE_PATH = '/catalog/shared';
+const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
 
-/** Creates share links for catalog entities by proxying DIAL Core's resource-sharing API. */
+/** DIAL Core conversation resource paths always start with this prefix. */
+const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
+
+const getInvitationRoutePath = (itemId: string): string =>
+  itemId.startsWith(CONVERSATION_RESOURCE_PREFIX)
+    ? CONVERSATION_SHARE_INVITATION_ROUTE_PATH
+    : CATALOG_SHARE_INVITATION_ROUTE_PATH;
+
+/** Creates share links for DIAL Core resources (catalog entities or conversations) by proxying DIAL Core's resource-sharing API. */
 @Injectable()
 export class ShareService {
   private readonly logger = new Logger(ShareService.name);
@@ -56,7 +68,7 @@ export class ShareService {
    * segment is reused, to build an absolute frontend URL that lands on the
    * SPA's own accept-invitation route.
    */
-  private buildInvitationUrl(invitationLink: string): string {
+  private buildInvitationUrl(invitationLink: string, itemId: string): string {
     const { pathname } = new URL(invitationLink, this.appOrigin);
     const invitationId = pathname.split('/').filter(Boolean).pop();
     if (!invitationId) {
@@ -64,11 +76,11 @@ export class ShareService {
         'DIAL Core returned an invalid invitation link',
       );
     }
-    return `${this.appOrigin}${SHARE_INVITATION_ROUTE_PATH}/${invitationId}`;
+    return `${this.appOrigin}${getInvitationRoutePath(itemId)}/${invitationId}`;
   }
 
   /**
-   * Creates a share link for a catalog entity via DIAL Core.
+   * Creates a share link for a DIAL Core resource (catalog entity or conversation).
    *
    * @throws {BadGatewayException} When DIAL Core returns an error response
    * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
@@ -114,7 +126,7 @@ export class ShareService {
     this.logger.debug(`Created share link for itemId=${itemId}`);
 
     return {
-      url: this.buildInvitationUrl(invitationLink),
+      url: this.buildInvitationUrl(invitationLink, itemId),
       expiresInDays: SHARE_LINK_EXPIRES_IN_DAYS,
       access,
     };
