@@ -2762,7 +2762,7 @@
     },
     "/api/v1/share": {
       "post": {
-        "description": "Creates a share link for a catalog entity (agent, application, skill, toolset, or model) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
+        "description": "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — or conversation) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
         "operationId": "createShareLink",
         "parameters": [],
         "requestBody": {

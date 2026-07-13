@@ -17,7 +17,7 @@ import { GetInvitationDto } from './dto/get-invitation.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
 import { ShareService } from './share.service';
 
-/** Controller for creating catalog-entity share links. */
+/** Controller for creating share links for DIAL Core resources. */
 @ApiTags('share')
 @Controller({ path: 'share', version: '1' })
 export class ShareController {
@@ -30,9 +30,10 @@ export class ShareController {
     operationId: 'createShareLink',
     summary: 'Create a share link',
     description:
-      'Creates a share link for a catalog entity (agent, application, skill, toolset, ' +
-      "or model) by proxying DIAL Core's resource-sharing API. Returns the share URL, " +
-      'access level, and expiry.',
+      'Creates a share link for a DIAL Core resource (catalog entity — agent, ' +
+      'application, skill, toolset, or model — or conversation) by proxying ' +
+      "DIAL Core's resource-sharing API. Returns the share URL, access level, " +
+      'and expiry.',
   })
   @ApiBody({ type: CreateShareLinkDto })
   @ApiResponse({
