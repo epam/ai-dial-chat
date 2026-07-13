@@ -45,6 +45,8 @@ export const ListView: FC<ListViewProps> = ({
   onToggleFavorite,
   onItemClick,
   stickyHeaderTop,
+  selectedItemId,
+  credentialsBadgeLoggedOutLabel,
 }) => {
   const typography = listStyles?.typography ?? {};
   const colors = listStyles?.colors;
@@ -113,6 +115,14 @@ export const ListView: FC<ListViewProps> = ({
     gridApiRef.current?.refreshCells({ force: true });
   }, [query]);
 
+  /*
+   * getRowClass is only re-evaluated on row redraw, not on refreshCells, so
+   * the selected-row border/tint needs an explicit redraw when selection changes.
+   */
+  useEffect(() => {
+    gridApiRef.current?.redrawRows();
+  }, [selectedItemId]);
+
   return (
     <div
       style={cssVars}
@@ -135,6 +145,8 @@ export const ListView: FC<ListViewProps> = ({
             searchQuery: query,
             typography,
             onToggleFavorite,
+            selectedItemId,
+            credentialsBadgeLoggedOutLabel,
           } satisfies GridContext,
           onCellClicked: onItemClick
             ? (event) => {
@@ -144,6 +156,8 @@ export const ListView: FC<ListViewProps> = ({
               }
             : undefined,
           rowClass: onItemClick ? 'cursor-pointer' : undefined,
+          getRowClass: (params) =>
+            params.data?.id === selectedItemId ? styles.selectedRow : undefined,
         }}
         ariaLabel={ariaLabel}
       />

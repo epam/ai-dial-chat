@@ -55,6 +55,13 @@ const ToolsetEditorPage = lazy(
 const ToolsetEditorCallbackPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditorCallback'),
 );
+const SharedInvitationPage = lazy(
+  () => import('../pages/SharedInvitation/SharedInvitation'),
+);
+const ConversationSharedInvitationPage = lazy(
+  () =>
+    import('../pages/ConversationSharedInvitation/ConversationSharedInvitation'),
+);
 const NotFoundPage = lazy(() => import('../pages/NotFound/NotFound'));
 
 // Start loading the module immediately so the Suspense fallback is skipped on first navigation.
@@ -223,6 +230,26 @@ const App: FC = () => {
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
                   <CatalogView />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.SharedInvitation}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <SharedInvitationPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.ConversationSharedInvitation}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ConversationSharedInvitationPage />
                 </Suspense>
               </RouteErrorBoundary>
             }

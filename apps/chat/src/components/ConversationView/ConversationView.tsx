@@ -36,8 +36,8 @@ import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import { CONVERSATION_VIEW_INPUT_STYLES } from '../../constants/input-styles';
 import {
   ButtonsI18nKeys,
-  CatalogI18nKeys,
   ChatI18nKeys,
+  DeploymentSelectorI18nKeys,
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
@@ -61,8 +61,8 @@ import {
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { isMessageChanged } from '../../utils/message-utils';
+import DeploymentSelectorPanel from '../DeploymentSelector/DeploymentSelectorPanel';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
-import ModelPickerPanel from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -189,6 +189,14 @@ const ConversationView: FC<Props> = ({
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),
     [items, selectedItemId],
+  );
+
+  const selectedCatalogItem = useMemo(
+    () =>
+      selectedDeployment
+        ? mapDeploymentToCatalogItem(selectedDeployment, favoriteIds)
+        : undefined,
+    [selectedDeployment, favoriteIds],
   );
 
   const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
@@ -339,7 +347,11 @@ const ConversationView: FC<Props> = ({
     isScrollButtonVisible,
     scrollToBottom,
     armAnchor,
-  } = useConversationScroll({ messages, isAssistantTyping });
+  } = useConversationScroll({
+    messages,
+    isAssistantTyping,
+    conversationId: conversation.id,
+  });
 
   const handleSendWithAnchor = useCallback(
     async (message: string, attachments: Attachment[]) => {
@@ -625,26 +637,36 @@ const ConversationView: FC<Props> = ({
                   isModelFixed
                     ? undefined
                     : (onClose) => (
-                        <ModelPickerPanel
+                        <DeploymentSelectorPanel
                           favorites={favoriteCatalogItems}
                           selectedId={selectedItemId}
+                          selectedItem={selectedCatalogItem}
                           onSelect={setSelectedItemId}
                           onToggleFavorite={toggleFavorite}
                           onBrowseCatalog={onBrowseCatalog}
                           onClose={onClose}
                           labels={{
                             searchPlaceholder: t(
-                              CatalogI18nKeys.PickerSearchPlaceholder,
+                              DeploymentSelectorI18nKeys.SearchPlaceholder,
                             ),
                             searchAriaLabel: t(
-                              CatalogI18nKeys.PickerSearchAriaLabel,
+                              DeploymentSelectorI18nKeys.SearchAriaLabel,
                             ),
-                            emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
+                            favoritesLabel: t(
+                              DeploymentSelectorI18nKeys.FavoritesLabel,
+                            ),
+                            emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
                             browseCatalogLabel: t(
-                              CatalogI18nKeys.PickerBrowseCatalog,
+                              DeploymentSelectorI18nKeys.BrowseCatalog,
                             ),
                             removeFromFavoritesLabel: t(
-                              CatalogI18nKeys.PickerRemoveFromFavorites,
+                              DeploymentSelectorI18nKeys.RemoveFromFavorites,
+                            ),
+                            currentlySelectedLabel: t(
+                              DeploymentSelectorI18nKeys.CurrentlySelectedLabel,
+                            ),
+                            addToFavoritesLabel: t(
+                              DeploymentSelectorI18nKeys.AddToFavorites,
                             ),
                           }}
                         />

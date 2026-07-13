@@ -1,10 +1,13 @@
-import 'reflect-metadata';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import 'reflect-metadata';
 import { AppModule } from './app/app.module';
+import { buildFrameSrcDirective } from './config/csp';
+import { EnvironmentVariables } from './config/environment.config';
 import {
   createOpenApiConfig,
   openApiDocumentOptions,
@@ -12,12 +15,20 @@ import {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['log', 'error', 'warn'],
+    logger:
+      process.env['NODE_ENV'] === 'production'
+        ? ['log', 'error', 'warn']
+        : ['log', 'error', 'warn', 'debug'],
   });
 
   app.use(cookieParser());
 
   app.enableVersioning({ type: VersioningType.URI });
+
+  const configService = app.get(ConfigService<EnvironmentVariables, true>);
+  const allowedIframeOrigins = configService.get('ALLOWED_IFRAME_ORIGINS', {
+    infer: true,
+  });
 
   // Security headers middleware
   app.use(
@@ -34,6 +45,7 @@ async function bootstrap() {
           scriptSrc: ["'self'"],
           workerSrc: ["'self'", 'blob:'],
           imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+          frameSrc: buildFrameSrcDirective(allowedIframeOrigins),
         },
       },
       hsts: {

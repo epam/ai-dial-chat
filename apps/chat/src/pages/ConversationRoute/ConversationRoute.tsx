@@ -24,8 +24,8 @@ import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import {
-  CatalogI18nKeys,
   ChatI18nKeys,
+  DeploymentSelectorI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -44,13 +44,13 @@ import {
   getStartersFromSchema,
 } from '../../utils/starter-option';
 
-const ModelPickerPanel = lazy(
-  () => import('../../components/ModelPicker/ModelPickerPanel'),
+const DeploymentSelectorPanel = lazy(
+  () => import('../../components/DeploymentSelector/DeploymentSelectorPanel'),
 );
 
-const CatalogPickerModal = lazy(async () => {
+const CatalogModal = lazy(async () => {
   const module =
-    await import('../../components/ModelPicker/CatalogPickerModal');
+    await import('../../components/DeploymentSelector/CatalogModal');
   return { default: module.default };
 });
 
@@ -88,6 +88,13 @@ const ConversationRoute: FC = () => {
     [items, favoriteIds],
   );
 
+  const selectedCatalogItem = useMemo(
+    () =>
+      selectedDeployment
+        ? mapDeploymentToCatalogItem(selectedDeployment, favoriteIds)
+        : undefined,
+    [selectedDeployment, favoriteIds],
+  );
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
       items.map(({ id, displayName, iconUrl, type, inputAttachmentTypes }) => ({
@@ -194,20 +201,30 @@ const ConversationRoute: FC = () => {
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={(onClose) => (
           <Suspense fallback={null}>
-            <ModelPickerPanel
+            <DeploymentSelectorPanel
               favorites={favoriteCatalogItems}
               selectedId={selectedItemId}
+              selectedItem={selectedCatalogItem}
               onSelect={setSelectedItemId}
               onToggleFavorite={toggleFavorite}
               onBrowseCatalog={() => setIsCatalogPickerOpen(true)}
               onClose={onClose}
               labels={{
-                searchPlaceholder: t(CatalogI18nKeys.PickerSearchPlaceholder),
-                searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
-                emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
-                browseCatalogLabel: t(CatalogI18nKeys.PickerBrowseCatalog),
+                searchPlaceholder: t(
+                  DeploymentSelectorI18nKeys.SearchPlaceholder,
+                ),
+                searchAriaLabel: t(DeploymentSelectorI18nKeys.SearchAriaLabel),
+                favoritesLabel: t(DeploymentSelectorI18nKeys.FavoritesLabel),
+                emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
+                browseCatalogLabel: t(DeploymentSelectorI18nKeys.BrowseCatalog),
                 removeFromFavoritesLabel: t(
-                  CatalogI18nKeys.PickerRemoveFromFavorites,
+                  DeploymentSelectorI18nKeys.RemoveFromFavorites,
+                ),
+                currentlySelectedLabel: t(
+                  DeploymentSelectorI18nKeys.CurrentlySelectedLabel,
+                ),
+                addToFavoritesLabel: t(
+                  DeploymentSelectorI18nKeys.AddToFavorites,
                 ),
               }}
             />
@@ -217,7 +234,7 @@ const ConversationRoute: FC = () => {
         <StarterButtons starters={starters} onSelect={handleStarterSelect} />
       </NewConversationComposer>
       <Suspense fallback={null}>
-        <CatalogPickerModal
+        <CatalogModal
           isOpen={isCatalogPickerOpen}
           onClose={() => setIsCatalogPickerOpen(false)}
         />

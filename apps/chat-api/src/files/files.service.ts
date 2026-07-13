@@ -120,20 +120,6 @@ const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
   return formData;
 };
 
-const getRenameErrorMessage = (error: unknown): string => {
-  try {
-    handleDialSdkError(error, 'files.renameItem');
-  } catch (err) {
-    if (err instanceof HttpException) {
-      if (err.getStatus() === HttpStatus.CONFLICT) return 'Conflict';
-      if (err.getStatus() === HttpStatus.FORBIDDEN) return 'Forbidden';
-      if (err.getStatus() === HttpStatus.NOT_FOUND) return 'Not found';
-    }
-  }
-
-  return 'Rename failed';
-};
-
 const getResourceOperationErrorMessage = (
   error: unknown,
   operationTag: string,
@@ -151,6 +137,9 @@ const getResourceOperationErrorMessage = (
 
   return fallback;
 };
+
+const getRenameErrorMessage = (error: unknown): string =>
+  getResourceOperationErrorMessage(error, 'files.renameItem', 'Rename failed');
 
 const getCopyErrorMessage = (error: unknown): string =>
   getResourceOperationErrorMessage(error, 'files.copyItem', 'Copy failed');
@@ -1209,7 +1198,10 @@ export class FilesService {
     let children: ExpandedFile[];
     try {
       children = await this.expandFolderContents(bucket, srcPrefix, '', at);
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `renameFolderItem expandFolderContents exception: bucket=${bucket}, sourceFolderPath=${sourceFolderPath}, err=${err instanceof Error ? err.message : String(err)}`,
+      );
       return {
         sourcePath: sourceFolderPath,
         destinationPath: destFolderPath,
@@ -1346,7 +1338,10 @@ export class FilesService {
     let children: ExpandedFile[];
     try {
       children = await this.expandFolderContents(bucket, srcPrefix, '', at);
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `copyFolderItem expandFolderContents exception: bucket=${bucket}, sourceFolderPath=${sourceFolderPath}, err=${err instanceof Error ? err.message : String(err)}`,
+      );
       return {
         sourcePath: sourceFolderPath,
         destinationPath: destFolderPath,
@@ -1483,7 +1478,10 @@ export class FilesService {
     let children: ExpandedFile[];
     try {
       children = await this.expandFolderContents(bucket, srcPrefix, '', at);
-    } catch {
+    } catch (err) {
+      this.logger.error(
+        `moveFolderItem expandFolderContents exception: bucket=${bucket}, sourceFolderPath=${sourceFolderPath}, err=${err instanceof Error ? err.message : String(err)}`,
+      );
       return {
         sourcePath: sourceFolderPath,
         destinationPath: destFolderPath,

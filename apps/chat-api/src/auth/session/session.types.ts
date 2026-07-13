@@ -31,6 +31,14 @@ export interface SessionUser {
   sid: string;
   sub: string;
   providerId: string;
+  /**
+   * Allowlisted OIDC claims, keyed by claim name. A provider's `rolesClaim`
+   * config value is used verbatim as the key here even when it looks like a
+   * dot-notation path (e.g. `"realm_access.roles"` from an access token) —
+   * it is stored as one flat key equal to that literal string, never as a
+   * nested object. Always read it back with `claims[rolesClaim]`, not a
+   * nested path lookup.
+   */
   claims: Record<string, unknown>;
   at: string;
   bucket: string;

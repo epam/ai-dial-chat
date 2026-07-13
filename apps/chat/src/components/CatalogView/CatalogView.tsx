@@ -2,28 +2,45 @@ import {
   Catalog,
   CatalogEntityType,
   CatalogItem,
+  CatalogItemDetailsFetchResult,
+  CredentialsLevel,
+  CredentialStatus,
   CreateOption,
   PublishHistoryEntry,
+  ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import type {
+  ToolsetLoginBodyDto,
+  ToolsetLogoutBodyDto,
+} from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
+  ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
+import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { getDeploymentDetails } from '../../server-api/deployments';
+import { loginToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
+import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
+import {
+  ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  WithLogin,
+} from '../../types/toolsets';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import {
   mapDeploymentToCatalogItem,
@@ -32,22 +49,51 @@ import {
 import {
   mapDeploymentDetailsDtoToEntityDetails,
   mapEntityDetailsToCatalogDetails,
+  mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
+import { initiateOAuthLogin } from '../../utils/toolsets';
+import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import {
   MOCK_PUBLISH_FOLDERS,
   MOCK_PUBLISH_HISTORY,
 } from './mock-catalog-items';
 
-const CatalogView: FC = () => {
+/** Entity types shown in the catalog picker modal: models and agents only. */
+const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
+  CatalogEntityType.Model,
+  CatalogEntityType.Application,
+  CatalogEntityType.Agent,
+]);
+
+/** Props for `CatalogView`. */
+interface Props {
+  /**
+   * Renders the catalog for read-only model selection (e.g. inside a picker
+   * modal): hides the "Create" button and highlights the currently selected
+   * deployment's card. Default: false.
+   */
+  isSelectorMode?: boolean;
+  /** Called after a card selection commits in picker mode, so the host can close the modal. */
+  onClose?: () => void;
+}
+
+const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialDetailsItemId =
+    searchParams.get(CatalogQuery.ItemId) ?? undefined;
   const { showNotification } = useNotification();
+  const { user } = useUser();
+  const isAdmin = user?.isAdmin ?? false;
   const {
     items: deployments,
+    selectedItemId,
     isLoading: isDeploymentsLoading,
     schemas,
     toolsets,
     setSelectedItemId,
+    refetchToolsets,
   } = useDeployments();
   const {
     favoriteIds,
@@ -74,29 +120,196 @@ const CatalogView: FC = () => {
         ),
       ),
       ...toolsets.map((toolset) =>
-        mapToolsetToCatalogItem(toolset, favoriteIds),
+        mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin),
       ),
     ],
-    [deployments, favoriteIds, t, toolsets, quickAppSchemaId],
+    [deployments, favoriteIds, t, toolsets, quickAppSchemaId, isAdmin],
+  );
+
+  const visibleCatalogItems = useMemo(
+    () =>
+      isSelectorMode
+        ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
+        : catalogItems,
+    [catalogItems, isSelectorMode],
   );
 
   const [publishHistory, setPublishHistory] =
     useState<Record<string, PublishHistoryEntry[]>>(MOCK_PUBLISH_HISTORY);
 
   const favorites = useMemo(
-    () => catalogItems.filter((item) => item.isUserFavorite),
-    [catalogItems],
+    () => visibleCatalogItems.filter((item) => item.isUserFavorite),
+    [visibleCatalogItems],
   );
 
-  const handleFetchDetails = useCallback(async (item: CatalogItem) => {
-    try {
-      const dto = await getDeploymentDetails(item.id);
-      const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
-      return mapEntityDetailsToCatalogDetails(entityDetails);
-    } catch {
-      return undefined;
-    }
-  }, []);
+  const handleFetchDetails = useCallback(
+    async (
+      item: CatalogItem,
+    ): Promise<CatalogItemDetailsFetchResult | undefined> => {
+      try {
+        const dto = await getDeploymentDetails(item.id);
+        const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
+        return {
+          ...mapEntityDetailsToCatalogDetails(entityDetails),
+          credentials:
+            entityDetails.type === 'TOOLSET'
+              ? mapToolsetCredentials(item.id, entityDetails.data, isAdmin)
+              : undefined,
+        };
+      } catch {
+        return undefined;
+      }
+    },
+    [isAdmin],
+  );
+
+  const getLevelStatus = useCallback(
+    (
+      item: CatalogItem,
+      level: CredentialsLevel,
+    ): CredentialStatus | undefined =>
+      level === CredentialsLevel.User
+        ? item.credentials?.userStatus
+        : item.credentials?.globalStatus,
+    [],
+  );
+
+  const showLoginSuccess = useCallback(
+    (item: CatalogItem, level: CredentialsLevel) => {
+      const isAdminAndPublic = isAdmin && !!item.credentials?.isPublic;
+      const messageKey =
+        level === CredentialsLevel.User
+          ? CatalogI18nKeys.CredentialsLoginSuccessUser
+          : isAdminAndPublic
+            ? CatalogI18nKeys.CredentialsLoginSuccessOrg
+            : CatalogI18nKeys.CredentialsLoginSuccessGlobal;
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.CredentialsLoginSuccessTitle),
+        message: t(messageKey, { name: item.name, version: item.version }),
+      });
+    },
+    [isAdmin, showNotification, t],
+  );
+
+  const showLogoutSuccess = useCallback(
+    (item: CatalogItem, level: CredentialsLevel) => {
+      const isAdminAndPublic = isAdmin && !!item.credentials?.isPublic;
+      const messageKey =
+        level === CredentialsLevel.User
+          ? CatalogI18nKeys.CredentialsLogoutSuccessUser
+          : isAdminAndPublic
+            ? CatalogI18nKeys.CredentialsLogoutSuccessOrg
+            : CatalogI18nKeys.CredentialsLogoutSuccessGlobal;
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.CredentialsLogoutSuccessTitle),
+        message: t(messageKey, { name: item.name, version: item.version }),
+      });
+    },
+    [isAdmin, showNotification, t],
+  );
+
+  const handleLogin = useCallback(
+    async (
+      item: CatalogItem,
+      params: { level: CredentialsLevel; apiKey?: string },
+    ) => {
+      const authenticationType = item.credentials?.authenticationType;
+      const credentialsLevel =
+        params.level === CredentialsLevel.User
+          ? ToolsetCredentialsLevel.User
+          : ToolsetCredentialsLevel.Global;
+
+      if (authenticationType === ToolsetAuthenticationType.OAuth) {
+        const toolset = toolsets.find((t) => t.id === item.id);
+        const started = initiateOAuthLogin(
+          {
+            authenticationType: ToolsetAuthTypes.OAuth,
+            withLogin: WithLogin.WithConfig,
+            isLoggedIn: false,
+            clientId: toolset?.authSettings?.clientId,
+            authorizationEndpoint: toolset?.authSettings?.authorizationEndpoint,
+            scopes: toolset?.authSettings?.scopesSupported,
+            codeChallenge: toolset?.authSettings?.codeChallenge,
+            codeChallengeMethod: toolset?.authSettings?.codeChallengeMethod,
+          },
+          item.id,
+          credentialsLevel,
+        );
+        if (!started) {
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+          });
+        }
+        return;
+      }
+
+      try {
+        if (getLevelStatus(item, params.level) === CredentialStatus.Failed) {
+          await logoutToolset(item.id, {
+            url: item.id,
+            credentialsLevel:
+              credentialsLevel as ToolsetLogoutBodyDto['credentialsLevel'],
+            authenticationType:
+              authenticationType as ToolsetLogoutBodyDto['authenticationType'],
+          });
+        }
+        const body: ToolsetLoginBodyDto = {
+          url: item.id,
+          credentialsLevel:
+            credentialsLevel as ToolsetLoginBodyDto['credentialsLevel'],
+          authenticationType:
+            authenticationType as ToolsetLoginBodyDto['authenticationType'],
+          apiKey: params.apiKey?.trim(),
+        };
+        await loginToolset(item.id, body);
+        showLoginSuccess(item, params.level);
+        await refetchToolsets();
+      } catch {
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+        });
+      }
+    },
+    [
+      toolsets,
+      showNotification,
+      t,
+      getLevelStatus,
+      showLoginSuccess,
+      refetchToolsets,
+    ],
+  );
+
+  const handleLogout = useCallback(
+    async (item: CatalogItem, params: { level: CredentialsLevel }) => {
+      const credentialsLevel =
+        params.level === CredentialsLevel.User
+          ? ToolsetCredentialsLevel.User
+          : ToolsetCredentialsLevel.Global;
+      try {
+        const body: ToolsetLogoutBodyDto = {
+          url: item.id,
+          credentialsLevel:
+            credentialsLevel as ToolsetLogoutBodyDto['credentialsLevel'],
+          authenticationType: item.credentials
+            ?.authenticationType as ToolsetLogoutBodyDto['authenticationType'],
+        };
+        await logoutToolset(item.id, body);
+        showLogoutSuccess(item, params.level);
+        await refetchToolsets();
+      } catch {
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
+        });
+      }
+    },
+    [showNotification, t, showLogoutSuccess, refetchToolsets],
+  );
 
   const onToggleFavorite = useCallback(
     (id: string, isFavorite: boolean) => {
@@ -137,6 +350,16 @@ const CatalogView: FC = () => {
       navigate(ROUTES.Root);
     },
     [setSelectedItemId, navigate],
+  );
+
+  // Picker mode: a card click selects it and closes the modal immediately,
+  // without opening its details.
+  const handleCardSelect = useCallback(
+    (item: CatalogItem) => {
+      setSelectedItemId(item.id);
+      onClose?.();
+    },
+    [setSelectedItemId, onClose],
   );
 
   const isPrimaryActionVisible = useCallback(
@@ -224,8 +447,17 @@ const CatalogView: FC = () => {
     [showNotification, t],
   );
 
-  const handleEditApp = useCallback(
+  const handleEdit = useCallback(
     (item: CatalogItem) => {
+      if (item.type === CatalogEntityType.Toolset) {
+        const params = new URLSearchParams({
+          [ToolsetEditorQuery.Id]: item.id,
+          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        });
+        navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
+        return;
+      }
+
       if (!quickAppSchemaId) return;
       navigate(
         buildEditorUrl({
@@ -270,20 +502,32 @@ const CatalogView: FC = () => {
 
   return (
     <Catalog
-      items={catalogItems}
+      items={visibleCatalogItems}
       isLoading={isLoading}
       favorites={favorites}
       createOptions={createOptions}
+      hideCreateButton={isSelectorMode}
+      hidePageTitle={isSelectorMode}
+      selectedItemId={
+        isSelectorMode ? (selectedItemId ?? undefined) : undefined
+      }
+      initialDetailsItemId={initialDetailsItemId}
+      onCardClick={isSelectorMode ? handleCardSelect : undefined}
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
-      onEdit={handleEditApp}
+      onLogin={handleLogin}
+      onLogout={handleLogout}
+      onEdit={handleEdit}
       isPrimaryActionVisible={isPrimaryActionVisible}
       getPublishHistory={getPublishHistory}
       publishFolderItems={MOCK_PUBLISH_FOLDERS}
       hasPublishWriteAccess={hasPublishWriteAccess}
       onPublish={handlePublish}
       onPublishSuccess={handlePublishSuccess}
+      shareOverlay={(item, onClose) => (
+        <SharePopoverContainer item={item} onClose={onClose} />
+      )}
       styles={{
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },
       }}
@@ -324,6 +568,27 @@ const CatalogView: FC = () => {
         ),
         pricingLimitsSectionLabel: t(
           CatalogI18nKeys.DetailsPricingLimitsSection,
+        ),
+        loginActionLabel: t(CatalogI18nKeys.CredentialsLoginLabel),
+        logoutActionLabel: t(CatalogI18nKeys.CredentialsLogoutLabel),
+        loginWithMyCredsActionLabel: t(
+          CatalogI18nKeys.CredentialsLoginWithMyCredsLabel,
+        ),
+        manageCredentialsActionLabel: t(CatalogI18nKeys.CredentialsManageLabel),
+        myCredentialsSectionLabel: t(CatalogI18nKeys.CredentialsMySectionLabel),
+        organizationCredentialsSectionLabel: t(
+          CatalogI18nKeys.CredentialsOrgSectionLabel,
+        ),
+        credentialsSignedInLabel: t(CatalogI18nKeys.CredentialsSignedInLabel),
+        credentialsSignedOutLabel: t(CatalogI18nKeys.CredentialsSignedOutLabel),
+        logoutConfirmMessage: t(
+          CatalogI18nKeys.CredentialsLogoutConfirmMessage,
+        ),
+        apiKeyFieldLabel: t(CatalogI18nKeys.CredentialsApiKeyFieldLabel),
+        apiKeyFieldHint: (header) =>
+          t(CatalogI18nKeys.CredentialsApiKeyFieldHint, { header }),
+        credentialsBadgeLoggedOutLabel: t(
+          CatalogI18nKeys.CredentialsBadgeLoggedOut,
         ),
       }}
     />

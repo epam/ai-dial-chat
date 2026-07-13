@@ -1,10 +1,12 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { ElementSize } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
+import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import type { CardProps } from '../../models/card-props';
 import { getFeaturedEntityStyle } from '../../utils/styles';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
+import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
 import { FeaturedChip } from '../FeaturedChip/FeaturedChip';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
@@ -21,8 +23,10 @@ export const Card: FC<CardProps> = ({
   featuredLabel = 'Featured',
   addToFavoritesAriaLabel = 'Add to favorites',
   removeFromFavoritesAriaLabel = 'Remove from favorites',
+  isSelected = false,
   className,
   styles: cardStyles,
+  credentialsBadgeLoggedOutLabel,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
 
@@ -71,9 +75,12 @@ export const Card: FC<CardProps> = ({
       style={getFeaturedEntityStyle(item)}
       className={mergeClasses(
         'relative box-border flex cursor-pointer flex-col gap-[14px]',
-        'rounded-[20px] p-[22px]',
+        'rounded-[20px] border-2 p-[22px]',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
+        isSelected
+          ? 'border-accent-primary !bg-accent-primary-alpha'
+          : 'border-transparent',
         className,
       )}
     >
@@ -84,6 +91,14 @@ export const Card: FC<CardProps> = ({
             className={featuredChipClassName}
           />
         </div>
+      )}
+
+      {isSelected && (
+        <IconCheck
+          size={DIAL_ICON_SIZE.SM}
+          className="absolute end-3 top-3 shrink-0 text-accent-primary"
+          aria-hidden
+        />
       )}
 
       <AppIdentity
@@ -109,8 +124,12 @@ export const Card: FC<CardProps> = ({
         {item.description}
       </p>
 
-      <div className="min-h-[28px]">
+      <div className="flex min-h-[28px] items-center justify-between gap-2">
         <TopicsLine topics={item.topics} />
+        <CredentialsBadge
+          credentials={item.credentials}
+          loggedOutLabel={credentialsBadgeLoggedOutLabel}
+        />
       </div>
 
       <div className="mt-auto border-t border-tertiary pt-3">

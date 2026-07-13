@@ -1,5 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { ElementSize } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
+import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import { CatalogItem } from '../../models/catalog-item';
@@ -29,6 +30,8 @@ export interface FavoriteCardProps {
   addToFavoritesAriaLabel?: string;
   /** Accessible label for the star button when the item is already starred. Default: `'Remove from favorites'`. */
   removeFromFavoritesAriaLabel?: string;
+  /** Whether this card represents the currently selected item — shows an accent border, tinted background, and a checkmark. Default: false. */
+  isSelected?: boolean;
 }
 
 /** Compact favorite card: logo + type + name + version + last-used, star aligned right. */
@@ -43,6 +46,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   query,
   addToFavoritesAriaLabel = 'Add to favorites',
   removeFromFavoritesAriaLabel = 'Remove from favorites',
+  isSelected = false,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -78,10 +82,13 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       tabIndex={handleClick != null ? 0 : undefined}
       aria-label={item.name}
       className={mergeClasses(
-        'box-border flex min-w-0 cursor-pointer items-start gap-1',
-        'rounded-[20px] p-[22px] text-start',
+        'relative box-border flex min-w-0 cursor-pointer items-start gap-1',
+        'rounded-[20px] border-2 p-[22px] text-start',
         styles.card,
         isLeaving && styles.cardLeaving,
+        isSelected
+          ? 'border-accent-primary !bg-accent-primary-alpha'
+          : 'border-transparent',
       )}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -93,6 +100,14 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
           : undefined
       }
     >
+      {isSelected && (
+        <IconCheck
+          size={DIAL_ICON_SIZE.SM}
+          className="absolute end-3 top-3 shrink-0 text-accent-primary"
+          aria-hidden
+        />
+      )}
+
       <AppIdentity
         icon={item.iconUrl}
         type={item.type}

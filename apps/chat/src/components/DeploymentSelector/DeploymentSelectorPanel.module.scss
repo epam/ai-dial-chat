@@ -1,0 +1,71 @@
+/* Matches the catalog Favorites grid's fade convention (favFadeIn/cardFadeOut
+   in libs/catalog/src/components/Favorites/Favorites.module.scss). */
+.rowEnter {
+  animation: rowFadeIn 200ms ease-out;
+}
+
+.rowLeaving {
+  animation: rowFadeOut 180ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes rowFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rowFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* Animates the scrollable list's own height across structural changes
+   (a row moving to/from the "Currently selected" section); see
+   listContentRef/listHeight in DeploymentSelectorPanel.tsx. */
+.listContent {
+  transition: height 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rowEnter,
+  .rowLeaving {
+    animation: none;
+  }
+
+  .listContent {
+    transition: none;
+  }
+}
+
+.searchBar {
+  border-color: rgba(0, 0, 0, 0.05) !important;
+
+  @media (hover: hover) {
+    &:hover:not(:focus-within) {
+      border-color: rgba(0, 0, 0, 0.12) !important;
+    }
+  }
+
+  &:focus-within {
+    border-color: color-mix(
+      in srgb,
+      var(--stroke-accent-primary, #7da4ff) 50%,
+      transparent
+    ) !important;
+    box-shadow: none !important;
+  }
+}

@@ -4,8 +4,9 @@ import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
-import type { CatalogItemTabData } from '../../models/item-details-data';
+import type { CatalogItemDetailsFetchResult } from '../../models/item-details-data';
 import { CatalogSortKey } from '../../types/sort';
+import type { CredentialsLevel } from '../../types/toolset-auth';
 import { CatalogViewMode } from '../../types/view-mode';
 import {
   filterByMyApp,
@@ -44,13 +45,21 @@ export const Catalog: FC<CatalogProps> = ({
   onPublishSuccess,
   onCreatePublishFolder,
   publishTexts,
+  shareOverlay,
   onFetchDetails,
   onEdit,
+  onLogin,
+  onLogout,
   onCreateClick,
   createOptions,
+  hideCreateButton = false,
+  hidePageTitle = false,
+  selectedItemId,
+  onCardClick,
   isLoading,
   styles: catalogStyles,
   detailsTexts,
+  initialDetailsItemId,
 }) => {
   const { typography } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
@@ -135,7 +144,7 @@ export const Catalog: FC<CatalogProps> = ({
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [fetchedDetails, setFetchedDetails] = useState<
-    CatalogItemTabData | undefined
+    CatalogItemDetailsFetchResult | undefined
   >(undefined);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
@@ -171,6 +180,39 @@ export const Catalog: FC<CatalogProps> = ({
     [onFetchDetails],
   );
 
+  const appliedInitialDetailsItemIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!initialDetailsItemId) return;
+    if (appliedInitialDetailsItemIdRef.current === initialDetailsItemId) {
+      return;
+    }
+    const item = items.find(
+      (catalogItem) => catalogItem.id === initialDetailsItemId,
+    );
+    if (!item) return;
+    appliedInitialDetailsItemIdRef.current = initialDetailsItemId;
+    void handleOpenDetails(item);
+  }, [initialDetailsItemId, items, handleOpenDetails]);
+
+  const handleLogin = useCallback(
+    async (
+      item: CatalogItem,
+      params: { level: CredentialsLevel; apiKey?: string },
+    ) => {
+      await onLogin?.(item, params);
+      await handleOpenDetails(item);
+    },
+    [onLogin, handleOpenDetails],
+  );
+
+  const handleLogout = useCallback(
+    async (item: CatalogItem, params: { level: CredentialsLevel }) => {
+      await onLogout?.(item, params);
+      await handleOpenDetails(item);
+    },
+    [onLogout, handleOpenDetails],
+  );
+
   const handleCloseDetails = useCallback(() => {
     setIsDetailsOpen(false);
     pendingItemIdRef.current = null;
@@ -183,9 +225,13 @@ export const Catalog: FC<CatalogProps> = ({
 
   const detailsPanelItem = useMemo<CatalogItem | null>(() => {
     if (selectedItem == null) return null;
-    return fetchedDetails != null
-      ? { ...selectedItem, details: fetchedDetails }
-      : selectedItem;
+    if (fetchedDetails == null) return selectedItem;
+    const { credentials, ...tabData } = fetchedDetails;
+    return {
+      ...selectedItem,
+      details: tabData,
+      credentials: credentials ?? selectedItem.credentials,
+    };
   }, [selectedItem, fetchedDetails]);
 
   const sorted = useMemo(
@@ -232,13 +278,18 @@ export const Catalog: FC<CatalogProps> = ({
 
   const emptyTitle = query ? noResultsTitle(query) : 'No items';
   const cardGridTitles = useMemo(
-    () => ({ noResultsTitle: emptyTitle, featuredLabel }),
-    [emptyTitle, featuredLabel],
+    () => ({
+      noResultsTitle: emptyTitle,
+      featuredLabel,
+      credentialsBadgeLoggedOutLabel:
+        detailsTexts?.credentialsBadgeLoggedOutLabel,
+    }),
+    [emptyTitle, featuredLabel, detailsTexts?.credentialsBadgeLoggedOutLabel],
   );
 
   if (isLoading) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center">
+      <div className="flex size-full min-h-0 flex-1 items-center justify-center">
         <DialSpinner />
       </div>
     );
@@ -250,23 +301,29 @@ export const Catalog: FC<CatalogProps> = ({
       className={mergeClasses('flex min-h-0 flex-1 flex-col', styles.root)}
       style={cssVars}
     >
-      <div className={mergeClasses('shrink-0', styles.heading)}>
-        <div className="flex h-[64px] w-full items-center justify-between px-8">
-          <h1
-            className={mergeClasses(
-              typography?.pageHeadingFontClassName ?? 'dial-display2-text',
-              styles.headingTitle,
+      {(!hidePageTitle || !hideCreateButton) && (
+        <div className={mergeClasses('shrink-0', styles.heading)}>
+          <div className="flex h-[64px] w-full items-center justify-between px-8">
+            {!hidePageTitle && (
+              <h1
+                className={mergeClasses(
+                  typography?.pageHeadingFontClassName ?? 'dial-display2-text',
+                  styles.headingTitle,
+                )}
+              >
+                {pageTitle}
+              </h1>
             )}
-          >
-            {pageTitle}
-          </h1>
-          <CreateButton
-            label={createLabel}
-            options={createOptions}
-            onClick={onCreateClick}
-          />
+            {!hideCreateButton && (
+              <CreateButton
+                label={createLabel}
+                options={createOptions}
+                onClick={onCreateClick}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="min-h-0 flex-1 overflow-auto">
         {isFavoritesRendered && (
@@ -276,9 +333,10 @@ export const Catalog: FC<CatalogProps> = ({
               totalCount={favorites.length}
               title={favoritesTitle}
               onToggleFavorite={onToggleFavorite}
-              onItemClick={handleOpenDetails}
+              onItemClick={onCardClick ?? handleOpenDetails}
               isLeaving={isFavoritesLeaving}
               onExitComplete={handleFavoritesExitComplete}
+              selectedItemId={selectedItemId}
             />
           </div>
         )}
@@ -335,8 +393,9 @@ export const Catalog: FC<CatalogProps> = ({
                 items={tabFiltered}
                 query={query}
                 onToggleFavorite={onToggleFavorite}
-                onItemClick={handleOpenDetails}
+                onItemClick={onCardClick ?? handleOpenDetails}
                 titles={cardGridTitles}
+                selectedItemId={selectedItemId}
               />
             </div>
           )}
@@ -349,8 +408,12 @@ export const Catalog: FC<CatalogProps> = ({
                 ariaLabel={resolvedAriaLabel}
                 emptyStateTitle={emptyTitle}
                 onToggleFavorite={onToggleFavorite}
-                onItemClick={handleOpenDetails}
+                onItemClick={onCardClick ?? handleOpenDetails}
                 stickyHeaderTop={0}
+                selectedItemId={selectedItemId}
+                credentialsBadgeLoggedOutLabel={
+                  detailsTexts?.credentialsBadgeLoggedOutLabel
+                }
               />
             </div>
           )}
@@ -376,7 +439,10 @@ export const Catalog: FC<CatalogProps> = ({
           onPublishSuccess={onPublishSuccess}
           onCreatePublishFolder={onCreatePublishFolder}
           publishTexts={publishTexts}
+          shareOverlay={shareOverlay}
           onEdit={onEdit}
+          onLogin={handleLogin}
+          onLogout={handleLogout}
           texts={detailsTexts}
         />
       )}

@@ -24,11 +24,11 @@ vi.mock('@epam/ai-dial-kit', () => ({
     </div>
   ),
   GhostIconButton: ({
-    ariaLabel,
+    'aria-label': ariaLabel,
     onClick,
     disabled,
   }: {
-    ariaLabel: string;
+    'aria-label': string;
     onClick: () => void;
     disabled?: boolean;
   }) => (
@@ -46,9 +46,37 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     ariaLabel: string;
   }) => <button onClick={onClose}>{ariaLabel}</button>,
   DialSkeleton: () => <div>skeleton</div>,
+  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  DialConfirmationPopup: ({ open }: { open: boolean }) =>
+    open ? <div role="dialog" /> : null,
+  DialAccordion: ({
+    title,
+    children,
+  }: {
+    title: string;
+    children?: React.ReactNode;
+  }) => (
+    <section>
+      <span>{title}</span>
+      {children}
+    </section>
+  ),
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconChevronLeft: () => <svg />,
+  IconChevronDown: () => <svg />,
+  IconKey: () => <svg />,
+  IconLogin: () => <svg />,
+  IconLogout: () => <svg />,
+  IconPencil: () => <svg />,
+  IconPlayerPlayFilled: () => <svg />,
+  IconShare: () => <svg />,
+}));
+vi.mock('../../EntityHeader/EntityHeader', () => ({
+  EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
+}));
+vi.mock('../../FolderPath/FolderPath', () => ({
+  FolderPath: () => <div />,
 }));
 vi.mock('../../StarToggleButton/StarToggleButton', () => ({
   StarToggleButton: () => <div>Star</div>,

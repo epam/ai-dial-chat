@@ -3,12 +3,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { TOOLSET_REDIRECT_STATE_KEY } from '../../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
-import { ToolsetAuthTypes } from '../../../types/toolsets';
+import {
+  ToolsetAuthTypes,
+  ToolsetEditorSteps,
+  WithLogin,
+} from '../../../types/toolsets';
 import ToolsetEditor from '../ToolsetEditor';
 
 vi.mock('../../../server-api/toolsets', () => ({
@@ -39,35 +44,60 @@ vi.mock('../ToolsetEditorHeader', () => ({
 
 vi.mock('../ToolsetEditorView', () => ({
   default: ({
+    step,
+    errors,
     onChange,
     onAuthChange,
   }: {
+    step: string;
+    errors: { endpoint?: string };
     onChange: (patch: Record<string, unknown>) => void;
     onAuthChange: (patch: Record<string, unknown>) => void;
   }) => (
-    <button
-      type="button"
-      onClick={() => {
-        onChange({ endpoint: 'https://example.com/mcp' });
-        onAuthChange({
-          authenticationType: 'API_KEY',
-          withLogin: 'with-login',
-          keyHeader: 'X-API-Key',
-          apiKey: 'secret',
-        });
-      }}
-    >
-      fill-api-key-toolset
-    </button>
+    <div>
+      <span>{`current-step-${step}`}</span>
+      {errors.endpoint && <p role="alert">{errors.endpoint}</p>}
+      <button
+        type="button"
+        onClick={() => {
+          onChange({ endpoint: 'https://example.com/mcp' });
+          onAuthChange({
+            authenticationType: ToolsetAuthTypes.ApiKey,
+            withLogin: WithLogin.WithLogin,
+            keyHeader: 'X-API-Key',
+            apiKey: 'secret',
+          });
+        }}
+      >
+        fill-api-key-toolset
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          onChange({ endpoint: 'https://example.com/mcp' });
+          onAuthChange({
+            authenticationType: ToolsetAuthTypes.OAuth,
+            withLogin: WithLogin.WithConfig,
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+            authorizationEndpoint: 'https://auth.example.com/oauth/authorize',
+            tokenEndpoint: 'https://auth.example.com/oauth/token',
+          });
+        }}
+      >
+        fill-oauth-toolset
+      </button>
+    </div>
   ),
 }));
 
-const renderEditor = () =>
+const renderEditor = (initialEntry: string = ROUTES.ToolsetEditor) =>
   render(
-    <MemoryRouter initialEntries={[ROUTES.ToolsetEditor]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path={ROUTES.ToolsetEditor} element={<ToolsetEditor />} />
         <Route path={ROUTES.Catalog} element={<div>Catalog</div>} />
+        <Route path="/previous" element={<div>Previous screen</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -77,6 +107,7 @@ describe('ToolsetEditor', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
     vi.mocked(toolsetsApi.listToolsets).mockResolvedValue({ data: [] });
     vi.mocked(toolsetsApi.createToolset).mockResolvedValue({
       id: 'toolsets/b/my__0.0.1',
@@ -91,6 +122,24 @@ describe('ToolsetEditor', () => {
     vi.mocked(useDeployments).mockReturnValue({
       refetchToolsets: mockRefetchToolsets,
     } as unknown as ReturnType<typeof useDeployments>);
+  });
+
+  it('keeps validation errors visible after Save & Exit switches to Settings', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'save-toolset',
+      }),
+    );
+
+    expect(
+      await screen.findByText(`current-step-${ToolsetEditorSteps.Settings}`),
+    ).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toContain(
+      ToolsetEditorI18nKeys.EndpointRequired,
+    );
+    expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
   });
 
   it('logs in a newly created API-key toolset using the returned id', async () => {
@@ -117,6 +166,25 @@ describe('ToolsetEditor', () => {
         }),
       ),
     );
+  });
+
+  it('returns to the requested screen after saving a new OAuth toolset without starting login', async () => {
+    renderEditor(`${ROUTES.ToolsetEditor}?returnUrl=%2Fprevious`);
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'fill-oauth-toolset',
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: 'save-toolset',
+      }),
+    );
+
+    expect(await screen.findByText('Previous screen')).toBeTruthy();
+    expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY)).toBeNull();
   });
 
   it('refetches toolsets after a successful create so the catalog list stays in sync', async () => {

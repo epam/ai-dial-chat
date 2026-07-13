@@ -3,6 +3,7 @@ import {
   Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import styles from './AppIdentity.module.scss';
 
@@ -107,20 +108,22 @@ export const AppIdentity: FC<AppIdentityProps> = ({
           {/* Name + version: version sits immediately after name text */}
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
             <span
-              className={mergeClasses('min-w-0 shrink truncate', nameClassName)}
+              className={mergeClasses(
+                'flex-3 min-w-0 shrink truncate',
+                nameClassName,
+              )}
             >
               {query ? <Highlight text={name} query={query} /> : name}
             </span>
             {version != null && (
-              <span
+              <DialEllipsisTooltip
+                text={version}
                 className={mergeClasses(
-                  'shrink-0',
+                  'flex-1',
                   styles.numericText,
                   versionClassName,
                 )}
-              >
-                {version}
-              </span>
+              />
             )}
           </div>
 

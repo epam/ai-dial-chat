@@ -8,6 +8,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as useDialFileManagerModule from '../../../hooks/files/useDialFileManager';
 import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileManager';
+import { DialFileManagerVariant } from '../../../types/file-manager-variant';
 import DialFileManagerModal from '../DialFileManagerModal';
 
 vi.mock('../../../hooks/files/useDialFileManager');
@@ -158,6 +159,24 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         )}
         data-has-bulk-delete={String(
           Actions.Delete in (bulkActionsToolbarOptions?.actionLabels ?? {}),
+        )}
+        data-has-copy={String(
+          Actions.Copy in (gridOptions?.actionLabels ?? {}),
+        )}
+        data-has-move={String(
+          Actions.Move in (gridOptions?.actionLabels ?? {}),
+        )}
+        data-has-duplicate={String(
+          Actions.Duplicate in (gridOptions?.actionLabels ?? {}),
+        )}
+        data-has-bulk-copy={String(
+          Actions.Copy in (bulkActionsToolbarOptions?.actionLabels ?? {}),
+        )}
+        data-has-bulk-move={String(
+          Actions.Move in (bulkActionsToolbarOptions?.actionLabels ?? {}),
+        )}
+        data-has-bulk-duplicate={String(
+          Actions.Duplicate in (bulkActionsToolbarOptions?.actionLabels ?? {}),
         )}
         data-visible-columns={gridOptions?.visibleColumns?.join(',')}
         data-shared-with-me-ids={
@@ -328,7 +347,7 @@ const defaultProps = {
   onClose: vi.fn(),
   onAttach: vi.fn(),
   bucket: 'test-bucket',
-  title: 'DIAL file system',
+  title: 'Attach files',
   attachLabel: 'Attach',
   emptyTitle: 'This folder is empty',
   emptyDescription: '',
@@ -367,7 +386,17 @@ describe('DialFileManagerModal', () => {
   it('renders with the given title when isOpen is true', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
-    expect(screen.getByText('DIAL file system')).toBeTruthy();
+    expect(screen.getByText('Attach files')).toBeTruthy();
+  });
+
+  it('calls onClose when the header close button is clicked', () => {
+    const onClose = vi.fn();
+
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /close/i }));
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('renders error card with role="alert" when error is set', () => {
@@ -569,7 +598,7 @@ describe('DialFileManagerModal', () => {
   it('does not render content when isOpen is false', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} isOpen={false} />);
-    expect(screen.queryByText('DIAL file system')).toBeNull();
+    expect(screen.queryByText('Attach files')).toBeNull();
   });
 
   it('shows a loader while an archive is being prepared', () => {
@@ -760,6 +789,37 @@ describe('DialFileManagerModal — per-tab Delete action visibility', () => {
   });
 });
 
+describe('DialFileManagerModal — Copy/Move/Duplicate excluded (Attach profile)', () => {
+  it('does not surface Copy/Move/Duplicate in row/tree/bulk menus on my_files', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      actionLabels: {
+        [DialFileManagerActions.Download]: 'Download',
+        [DialFileManagerActions.Delete]: 'Delete',
+        [DialFileManagerActions.Rename]: 'Rename',
+      },
+    });
+    render(<DialFileManagerModal {...defaultProps} />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+
+    expect(manager.getAttribute('data-has-copy')).toBe('false');
+    expect(manager.getAttribute('data-has-move')).toBe('false');
+    expect(manager.getAttribute('data-has-duplicate')).toBe('false');
+    expect(manager.getAttribute('data-has-bulk-copy')).toBe('false');
+    expect(manager.getAttribute('data-has-bulk-move')).toBe('false');
+    expect(manager.getAttribute('data-has-bulk-duplicate')).toBe('false');
+    expect(manager.getAttribute('data-has-delete')).toBe('true');
+  });
+
+  it('passes variant Attach to useDialFileManager so actionProfile resolves to Attach', () => {
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    expect(mockUseDialFileManager).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: DialFileManagerVariant.Attach }),
+    );
+  });
+});
+
 describe('DialFileManagerModal — per-tab uploadEnabled', () => {
   it('passes uploadEnabled=false when organization tab is active', () => {
     mockUseDialFileManager.mockReturnValue({
@@ -856,24 +916,19 @@ describe('DialFileManagerModal — per-tab visibleColumns', () => {
 });
 
 describe('DialFileManagerModal — autoSelectUploadedItems', () => {
-  it('passes autoSelectUploadedItems=true by default', () => {
+  it('passes autoSelectUploadedItems=false by default', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
-      'true',
+      'false',
     );
   });
 
-  it('passes autoSelectUploadedItems=false when prop is false', () => {
-    render(
-      <DialFileManagerModal
-        {...defaultProps}
-        autoSelectUploadedItems={false}
-      />,
-    );
+  it('passes autoSelectUploadedItems=true when prop is true', () => {
+    render(<DialFileManagerModal {...defaultProps} autoSelectUploadedItems />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
-      'false',
+      'true',
     );
   });
 });

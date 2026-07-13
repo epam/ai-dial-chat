@@ -5,10 +5,18 @@ export { CatalogDetailsTab } from './types/detail-tab';
 export { EntityTag } from './types/entity-tag';
 export { CatalogEntityType } from './types/entity-type';
 export { CatalogSortKey } from './types/sort';
+export {
+  CredentialsBadgeState,
+  CredentialsLevel,
+  CredentialStatus,
+  CredentialsUiState,
+  ToolsetAuthenticationType,
+} from './types/toolset-auth';
 export { CatalogViewMode } from './types/view-mode';
 
 // Models
 export type { CatalogItem } from './models/catalog-item';
+export type { CatalogItemCredentials } from './models/catalog-item-credentials';
 export type {
   CatalogProps,
   CatalogTitles,
@@ -19,6 +27,7 @@ export type { EndpointOption } from './models/item-details-data';
 export type {
   ApiResource,
   CatalogItemApiDetails,
+  CatalogItemDetailsFetchResult,
   CatalogItemPricing,
   CatalogItemTabData,
   CatalogItemTools,
@@ -57,6 +66,11 @@ export {
   collectFolderKeys,
   filterFolderTree,
 } from './utils/publish-folder-tree';
+export {
+  getCredentialsBadgeState,
+  getCredentialsUiState,
+  getSignedInLevel,
+} from './utils/toolset-credentials';
 
 // Components
 export { Catalog } from './components/Catalog/Catalog';
@@ -118,3 +132,6 @@ export type {
   PublishFooterProps,
   PublishFooterTexts,
 } from './components/PublishPanel/PublishFooter';
+
+export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
+export type { CredentialsBadgeProps } from './components/CredentialsBadge/CredentialsBadge';

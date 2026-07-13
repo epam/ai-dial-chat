@@ -75,6 +75,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     filterValues = new Set(),
     isMyAppsActive,
     onMyAppsChange,
+    onViewModeChange,
   }: {
     title?: string;
     query: string;
@@ -84,6 +85,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     filterValues?: Set<string>;
     isMyAppsActive?: boolean;
     onMyAppsChange?: (isActive: boolean) => void;
+    onViewModeChange?: (mode: string) => void;
   }) => (
     <div>
       <span>{title ?? 'Browse'}</span>
@@ -109,6 +111,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
         </button>
       ))}
       <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
+      <button onClick={() => onViewModeChange?.('list')}>List view</button>
     </div>
   ),
 }));
@@ -116,14 +119,20 @@ vi.mock('../../CardGrid/CardGrid', () => ({
   CardGrid: ({
     items,
     onItemClick,
+    selectedItemId,
   }: {
     items: CatalogItem[];
     onItemClick: (item: CatalogItem) => void;
+    selectedItemId?: string;
   }) => (
     <div role="grid" aria-label="catalog grid">
       {items.length} items
       {items.map((item) => (
-        <button key={item.id} onClick={() => onItemClick(item)}>
+        <button
+          key={item.id}
+          onClick={() => onItemClick(item)}
+          aria-pressed={item.id === selectedItemId}
+        >
           {item.name}
         </button>
       ))}
@@ -131,26 +140,64 @@ vi.mock('../../CardGrid/CardGrid', () => ({
   ),
 }));
 vi.mock('../../Favorites/Favorites', () => ({
-  Favorites: ({ title }: { title?: string }) => (
-    <div>{title ?? 'Your Favorites'}</div>
+  Favorites: ({
+    title,
+    items,
+    onItemClick,
+    selectedItemId,
+  }: {
+    title?: string;
+    items: CatalogItem[];
+    onItemClick?: (item: CatalogItem) => void;
+    selectedItemId?: string;
+  }) => (
+    <div>
+      <span>{title ?? 'Your Favorites'}</span>
+      {items.map((item) => (
+        <button
+          key={item.id}
+          onClick={() => onItemClick?.(item)}
+          aria-pressed={item.id === selectedItemId}
+        >
+          fav-{item.name}
+        </button>
+      ))}
+    </div>
   ),
 }));
 vi.mock('../../ListView/ListView', () => ({
-  ListView: () => <div role="grid" aria-label="catalog list" />,
+  ListView: ({
+    items,
+    onItemClick,
+  }: {
+    items: CatalogItem[];
+    onItemClick?: (item: CatalogItem) => void;
+  }) => (
+    <div role="grid" aria-label="catalog list">
+      {items.map((item) => (
+        <button key={item.id} onClick={() => onItemClick?.(item)}>
+          row-{item.name}
+        </button>
+      ))}
+    </div>
+  ),
 }));
 vi.mock('../../Details/DetailsPanel', () => ({
   DetailsPanel: ({
     item,
     isPrimaryActionVisible,
+    shareOverlay,
     isDetailsLoading,
   }: {
     item: CatalogItem;
     isPrimaryActionVisible?: (item: CatalogItem) => boolean;
+    shareOverlay?: (item: CatalogItem, onClose: () => void) => React.ReactNode;
     isDetailsLoading?: boolean;
   }) => (
     <div>
       <span>{item.name}</span>
       <span>{String(isPrimaryActionVisible?.(item))}</span>
+      {shareOverlay?.(item, () => undefined)}
       <span>{`details:${JSON.stringify(item.details ?? null)}`}</span>
       <span>{`isDetailsLoading:${String(isDetailsLoading)}`}</span>
     </div>
@@ -279,6 +326,25 @@ describe('Catalog', () => {
     expect(screen.getByText('true')).toBeTruthy();
   });
 
+  it('passes shareOverlay through to the details panel', async () => {
+    const shareOverlay = vi.fn(() => <span>share overlay content</span>);
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        shareOverlay={shareOverlay}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Claude' }));
+
+    expect(shareOverlay).toHaveBeenCalledWith(
+      expect.objectContaining({ id: '1', name: 'Claude' }),
+      expect.any(Function),
+    );
+    expect(screen.getByText('share overlay content')).toBeTruthy();
+  });
+
   it('calls onFetchDetails when the details panel opens', async () => {
     const onFetchDetails = vi.fn().mockResolvedValue(undefined);
     render(
@@ -352,5 +418,29 @@ describe('Catalog', () => {
 
     expect(screen.getByText('isDetailsLoading:false')).toBeTruthy();
     expect(screen.getByText('details:null')).toBeTruthy();
+  });
+
+  it('opens the details panel automatically for initialDetailsItemId', () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude'), makeItem('2', 'Gemini')]}
+        favorites={[]}
+        initialDetailsItemId="2"
+      />,
+    );
+
+    expect(screen.getByText('Gemini', { selector: 'span' })).toBeTruthy();
+  });
+
+  it('does nothing when initialDetailsItemId matches no item', () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        initialDetailsItemId="missing"
+      />,
+    );
+
+    expect(screen.queryByText('Claude', { selector: 'span' })).toBeNull();
   });
 });

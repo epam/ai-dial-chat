@@ -3,6 +3,19 @@
 /**
  *
  * @export
+ * @interface AcceptInvitationResponseDto
+ */
+export interface AcceptInvitationResponseDto {
+  /**
+   * Identifier (DIAL Core resource path) of the entity the invitation grants access to.
+   * @type {string}
+   * @memberof AcceptInvitationResponseDto
+   */
+  itemId: string;
+}
+/**
+ *
+ * @export
  * @interface ApplicationDetailsDto
  */
 export interface ApplicationDetailsDto {
@@ -1157,6 +1170,36 @@ export interface CreateFolderResponseDto {
    */
   folderId: string;
 }
+/**
+ *
+ * @export
+ * @interface CreateShareLinkDto
+ */
+export interface CreateShareLinkDto {
+  /**
+   * Identifier (DIAL Core resource path) of the entity to share.
+   * @type {string}
+   * @memberof CreateShareLinkDto
+   */
+  itemId: string;
+  /**
+   * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
+   * @type {Array<string>}
+   * @memberof CreateShareLinkDto
+   */
+  access: Array<CreateShareLinkDtoAccessEnum>;
+}
+
+/**
+ * @export
+ */
+export const CreateShareLinkDtoAccessEnum = {
+  View: 'view',
+  Edit: 'edit',
+} as const;
+export type CreateShareLinkDtoAccessEnum =
+  (typeof CreateShareLinkDtoAccessEnum)[keyof typeof CreateShareLinkDtoAccessEnum];
+
 /**
  *
  * @export
@@ -3383,6 +3426,42 @@ export type SendCompletionDtoModeEnum =
 /**
  *
  * @export
+ * @interface ShareLinkResponseDto
+ */
+export interface ShareLinkResponseDto {
+  /**
+   * Absolute shareable URL for the entity.
+   * @type {string}
+   * @memberof ShareLinkResponseDto
+   */
+  url: string;
+  /**
+   * Number of days the link stays active before expiring.
+   * @type {number}
+   * @memberof ShareLinkResponseDto
+   */
+  expiresInDays: number;
+  /**
+   * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
+   * @type {Array<string>}
+   * @memberof ShareLinkResponseDto
+   */
+  access: Array<ShareLinkResponseDtoAccessEnum>;
+}
+
+/**
+ * @export
+ */
+export const ShareLinkResponseDtoAccessEnum = {
+  View: 'view',
+  Edit: 'edit',
+} as const;
+export type ShareLinkResponseDtoAccessEnum =
+  (typeof ShareLinkResponseDtoAccessEnum)[keyof typeof ShareLinkResponseDtoAccessEnum];
+
+/**
+ *
+ * @export
  * @interface StopCompletionDto
  */
 export interface StopCompletionDto {
@@ -4104,7 +4183,7 @@ export interface UserProfileDto {
    */
   providerId: string;
   /**
-   *
+   * Allowlisted claims keyed by claim name. A dot-notation rolesClaim (e.g. "realm_access.roles") is stored under one flat key equal to that literal string, never as a nested object.
    * @type {{ [key: string]: unknown }}
    * @memberof UserProfileDto
    */
@@ -4115,6 +4194,12 @@ export interface UserProfileDto {
    * @memberof UserProfileDto
    */
   bucket: string;
+  /**
+   * Whether the user's roles claim intersects the provider's configured adminRoles
+   * @type {boolean}
+   * @memberof UserProfileDto
+   */
+  isAdmin: boolean;
 }
 /**
  *

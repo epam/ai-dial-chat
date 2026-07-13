@@ -18,6 +18,7 @@ import { FilesModule } from '../files/files.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
 import { RateModule } from '../rate/rate.module';
+import { ShareModule } from '../share/share.module';
 import { ThemesModule } from '../themes/themes.module';
 import { ToolsetsModule } from '../toolsets/toolsets.module';
 import { TranscriptionModule } from '../transcription/transcription.module';
@@ -59,6 +60,7 @@ import { createServeStaticOptions } from './static-assets';
     RateModule,
     TranscriptionModule,
     ThemesModule,
+    ShareModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

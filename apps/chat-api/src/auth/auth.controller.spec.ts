@@ -547,6 +547,64 @@ describe('AuthController (integration)', () => {
         .expect(200);
       expect(res.body.sub).toBe('user-1');
       expect(res.body.providerId).toBe('keycloak');
+      expect(res.body.isAdmin).toBe(false);
+    });
+
+    it('returns isAdmin true when the roles claim intersects adminRoles', async () => {
+      providerConfigOverride = { adminRoles: ['org-admin'] };
+      const sessCookie = await makeSessionCookie({
+        ...sampleSession,
+        claims: { ...sampleSession.claims, roles: ['member', 'org-admin'] },
+      });
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(200);
+      expect(res.body.isAdmin).toBe(true);
+    });
+
+    it('returns isAdmin false when the roles claim does not intersect adminRoles', async () => {
+      providerConfigOverride = { adminRoles: ['org-admin'] };
+      const sessCookie = await makeSessionCookie({
+        ...sampleSession,
+        claims: { ...sampleSession.claims, roles: ['member'] },
+      });
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(200);
+      expect(res.body.isAdmin).toBe(false);
+    });
+
+    it('returns isAdmin true for a dot-notation rolesClaim stored as a flat key', async () => {
+      providerConfigOverride = {
+        rolesClaim: 'realm_access.roles',
+        adminRoles: ['admin'],
+      };
+      const sessCookie = await makeSessionCookie({
+        ...sampleSession,
+        claims: {
+          ...sampleSession.claims,
+          'realm_access.roles': ['admin'],
+        },
+      });
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(200);
+      expect(res.body.isAdmin).toBe(true);
+    });
+
+    it('returns isAdmin false when the provider has no adminRoles configured', async () => {
+      const sessCookie = await makeSessionCookie({
+        ...sampleSession,
+        claims: { ...sampleSession.claims, roles: ['org-admin'] },
+      });
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', `${COOKIE_NAME}=${sessCookie}`)
+        .expect(200);
+      expect(res.body.isAdmin).toBe(false);
     });
 
     it('returns 401 without session cookie', async () => {

@@ -107,7 +107,7 @@ const DialFileManagerModal: FC<Props> = ({
   maximumAttachmentsAmount,
   canAttachFolders = false,
   allowedTypesLabel,
-  autoSelectUploadedItems = true,
+  autoSelectUploadedItems = false,
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
@@ -532,6 +532,28 @@ const DialFileManagerModal: FC<Props> = ({
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
       copyLabel: t(DialFileManagerI18nKeys.CopyAction),
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
+      duplicateLabel: t(DialFileManagerI18nKeys.DuplicateAction),
+      addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
+      hiddenFilesSwitcherLabel: t(
+        DialFileManagerI18nKeys.FolderPickerHiddenFilesLabel,
+      ),
+      getCopyHeader: (count, name) =>
+        count === 1
+          ? t(DialFileManagerI18nKeys.CopyHeaderSingle, { name })
+          : t(DialFileManagerI18nKeys.CopyHeaderMultiple, { count }),
+      getMoveHeader: (count, name) =>
+        count === 1
+          ? t(DialFileManagerI18nKeys.MoveHeaderSingle, { name })
+          : t(DialFileManagerI18nKeys.MoveHeaderMultiple, { count }),
+      moveSourceDisabledTooltip: t(
+        DialFileManagerI18nKeys.MoveSourceDisabledTooltip,
+      ),
+      folderPickerEmptyStateTitle: t(
+        DialFileManagerI18nKeys.FolderPickerEmptyStateTitle,
+      ),
+      folderPickerEmptyStateDescription: t(
+        DialFileManagerI18nKeys.FolderPickerEmptyStateDescription,
+      ),
       copyingLabel: t(DialFileManagerI18nKeys.CopyingLabel),
       movingLabel: t(DialFileManagerI18nKeys.MovingLabel),
       operationLoaderCopyTitle: t(
@@ -603,7 +625,6 @@ const DialFileManagerModal: FC<Props> = ({
       size={PopupSize.Lg}
       className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-2 [&>[aria-label='popup-description']]:flex [&>[aria-label='popup-description']]:min-h-0 [&>[aria-label='popup-description']]:flex-col"
       onClose={onClose}
-      hideClose={true}
       footer={
         <div className="flex justify-end px-6 py-4">
           <PrimaryButton

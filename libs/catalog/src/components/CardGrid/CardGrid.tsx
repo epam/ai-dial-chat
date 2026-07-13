@@ -10,13 +10,23 @@ import { CardRowRenderer } from './CardRowRenderer';
 
 /** Three-column virtualized grid of Card items with loading skeleton and empty state. */
 export const CardGrid: FC<CardGridProps> = memo(
-  ({ items, query = '', onToggleFavorite, onItemClick, titles, isLoading }) => {
+  ({
+    items,
+    query = '',
+    onToggleFavorite,
+    onItemClick,
+    titles,
+    isLoading,
+    selectedItemId,
+  }) => {
     const noResultsTitle = titles?.noResultsTitle ?? 'No results';
     const featuredLabel = titles?.featuredLabel ?? 'Featured';
     const addToFavoritesAriaLabel =
       titles?.addToFavoritesAriaLabel ?? 'Add to favorites';
     const removeFromFavoritesAriaLabel =
       titles?.removeFromFavoritesAriaLabel ?? 'Remove from favorites';
+    const credentialsBadgeLoggedOutLabel =
+      titles?.credentialsBadgeLoggedOutLabel ?? 'LOGGED OUT';
 
     const { containerRef, startRow, endRow, columnCount, totalHeight } =
       useScrollVirtualizer(items.length);
@@ -31,6 +41,8 @@ export const CardGrid: FC<CardGridProps> = memo(
         featuredLabel,
         addToFavoritesAriaLabel,
         removeFromFavoritesAriaLabel,
+        selectedItemId,
+        credentialsBadgeLoggedOutLabel,
       }),
       [
         items,
@@ -41,6 +53,8 @@ export const CardGrid: FC<CardGridProps> = memo(
         featuredLabel,
         addToFavoritesAriaLabel,
         removeFromFavoritesAriaLabel,
+        selectedItemId,
+        credentialsBadgeLoggedOutLabel,
       ],
     );
 

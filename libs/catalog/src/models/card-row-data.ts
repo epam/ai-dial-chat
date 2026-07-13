@@ -18,4 +18,8 @@ export interface CardRowData {
   addToFavoritesAriaLabel: string;
   /** Accessible label for the star button when the item is already starred. */
   removeFromFavoritesAriaLabel: string;
+  /** ID of an item to visually mark as selected (border, tint, and checkmark). */
+  selectedItemId?: string;
+  /** Credentials-status badge label shown when signed out. */
+  credentialsBadgeLoggedOutLabel: string;
 }

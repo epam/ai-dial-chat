@@ -8,4 +8,8 @@ export interface GridContext {
   typography: ListViewTypography;
   /** Called when the star button is toggled in a row. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /** ID of an item to visually mark as selected (border, tint, and checkmark). */
+  selectedItemId?: string;
+  /** Credentials-status badge label shown when signed out. */
+  credentialsBadgeLoggedOutLabel?: string;
 }
