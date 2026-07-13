@@ -205,8 +205,17 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [],
   );
 
-  const handleEditApp = useCallback(
+  const handleEdit = useCallback(
     (item: CatalogItem) => {
+      if (item.type === CatalogEntityType.Toolset) {
+        const params = new URLSearchParams({
+          [ToolsetEditorQuery.Id]: item.id,
+          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        });
+        navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
+        return;
+      }
+
       if (!quickAppSchemaId) return;
       navigate(
         buildEditorUrl({
@@ -265,7 +274,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
-      onEdit={handleEditApp}
+      onEdit={handleEdit}
       isPrimaryActionVisible={isPrimaryActionVisible}
       shareOverlay={(item, onClose) => (
         <SharePopoverContainer item={item} onClose={onClose} />
