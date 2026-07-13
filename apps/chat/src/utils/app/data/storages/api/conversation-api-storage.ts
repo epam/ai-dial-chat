@@ -104,7 +104,10 @@ export const getOrUploadConversation = <T extends { id: string }>(
     return forkJoin({
       conversation: ConversationService.getConversation(conversation).pipe(
         catchError((err) => {
-          console.error('The conversation was not found:', err);
+          console.warn(
+            'The conversation was not found:',
+            err instanceof Error ? err.message : err,
+          );
           return of(null);
         }),
       ),

@@ -2,6 +2,7 @@ import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { MouseEventHandler, useCallback, useEffect, useMemo } from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   isPlaybackConversation,
@@ -11,6 +12,9 @@ import {
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ScreenState, isNotLoaded } from '@/src/types/common';
 import { ContextMenuProps } from '@/src/types/menu';
+import { Translation } from '@/src/types/translation';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import {
   ChatActions,
@@ -58,6 +62,7 @@ export const ConversationContextMenu = ({
   disabledState,
 }: ConversationContextMenuProps) => {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const applicationTypeSchemas = useAppSelector(
@@ -91,6 +96,24 @@ export const ConversationContextMenu = ({
       );
     }
   }, [conversation.id, conversation.status, dispatch, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || conversation.status !== UploadStatus.FAILED) {
+      return;
+    }
+
+    setIsOpen(false);
+    dispatch(
+      UIActions.showErrorToast({
+        message: t(ChatI18nKeys.ConversationHasBeenDeleted),
+      }),
+    );
+    dispatch(
+      ConversationsActions.createNewConversations({
+        names: [t(ChatI18nKeys.NewConversation)],
+      }),
+    );
+  }, [conversation.status, dispatch, isOpen, setIsOpen, t]);
 
   const isReplay = isReplayConversation(conversation);
   const isPlayback = isPlaybackConversation(conversation);
@@ -318,7 +341,10 @@ export const ConversationContextMenu = ({
         onUnpublish={isUnpublishVisible ? handleOpenUnpublishing : undefined}
         onOpenChange={setIsOpen}
         isOpen={isOpen}
-        isLoading={conversation.status !== UploadStatus.LOADED}
+        isLoading={
+          conversation.status !== UploadStatus.LOADED &&
+          conversation.status !== UploadStatus.FAILED
+        }
         onSelect={isHeaderMenu ? undefined : handleSelect}
         useStandardColor={isHeaderMenu}
         onShowInfo={handleOpenInfoModal}
