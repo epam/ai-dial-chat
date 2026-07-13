@@ -14,6 +14,7 @@ import type { DialFileManagerShellLabels } from '../types/labels';
 const capturedDialFileManagerProps: {
   current: {
     onCreateFolder?: unknown;
+    autoSelectUploadedItems?: boolean;
     gridOptions?: {
       actionLabels?: Partial<Record<DialFileManagerActions, string>>;
     };
@@ -28,6 +29,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       emptyStateTitle?: string;
       destinationFolderPopupOptions?: { sourceFolder?: string };
       onCreateFolder?: unknown;
+      autoSelectUploadedItems?: boolean;
       gridOptions?: {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
       };
@@ -182,6 +184,13 @@ describe('DialFileManagerShell', () => {
   it('renders DialFileManager (ui-kit) with hook result data', () => {
     renderShell();
     expect(screen.getByRole('region', { name: 'file manager' })).toBeTruthy();
+  });
+
+  it('keeps uploaded items unselected by default', () => {
+    renderShell();
+    expect(capturedDialFileManagerProps.current?.autoSelectUploadedItems).toBe(
+      false,
+    );
   });
 
   it('shows the empty-state title from the current tab when items are empty', () => {

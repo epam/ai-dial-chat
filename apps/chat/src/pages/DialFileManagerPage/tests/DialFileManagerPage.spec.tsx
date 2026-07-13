@@ -52,6 +52,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       items,
       gridOptions,
       bulkActionsToolbarOptions,
+      autoSelectUploadedItems,
     }: {
       items?: { path: string }[];
       gridOptions?: {
@@ -60,6 +61,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       bulkActionsToolbarOptions?: {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
       };
+      autoSelectUploadedItems?: boolean;
     }) => (
       <div
         role="region"
@@ -96,6 +98,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         )}
         data-has-unshare={String(
           Actions.Unshare in (gridOptions?.actionLabels ?? {}),
+        )}
+        data-auto-select-uploaded-items={String(
+          autoSelectUploadedItems ?? true,
         )}
       >
         {items?.length ?? 0} items
@@ -186,6 +191,14 @@ describe('DialFileManagerPage', () => {
   it('does not render an Attach button or attach footer', () => {
     render(<DialFileManagerPage />);
     expect(screen.queryByRole('button', { name: /attach/i })).toBeNull();
+  });
+
+  it('keeps uploaded items unselected', () => {
+    render(<DialFileManagerPage />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
+      'false',
+    );
   });
 
   it('renders the tab navigation for My files, Shared, and Organization', () => {
