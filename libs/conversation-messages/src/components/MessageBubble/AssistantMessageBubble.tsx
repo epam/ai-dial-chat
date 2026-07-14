@@ -16,8 +16,6 @@ import styles from './MessageBubble.module.scss';
 /** Assistant-authored message bubble, left-aligned with markdown content and optional quick-reply starters. */
 export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   text,
-  className,
-  bubbleClassName,
   styles: bubbleStyles,
   actions,
   hasAlwaysVisibleActions,
@@ -26,23 +24,26 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   afterContent,
   starters,
   onSelectStarter,
-  startersAriaLabel = 'Quick reply buttons',
   deploymentIconUrl,
   deploymentDisplayName,
-  thinkingLabel,
   markdownComponents,
   onAttachmentClick,
   onDownloadAll,
-  attachmentClickLabel,
   onAttachmentRetry,
-  attachmentRetryLabel,
   getAttachmentSizeLabel,
   attachmentTheme,
-  codeBlockCopyLabel,
-  codeBlockCopiedLabel,
   codeBlockTheme,
+  labels,
 }) => {
-  const { colors, typography } = bubbleStyles ?? {};
+  const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
+  const {
+    attachmentClickLabel,
+    attachmentRetryLabel,
+    startersAriaLabel = 'Quick reply buttons',
+    thinkingLabel,
+    codeBlockCopyLabel,
+    codeBlockCopiedLabel,
+  } = labels ?? {};
   const visibleAttachments = isStreaming
     ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
     : (attachments ?? []);

@@ -75,7 +75,7 @@ describe('MessageBubble', () => {
       <MessageBubble
         text="msg"
         role={MessageRole.User}
-        className="my-custom-class"
+        styles={{ className: 'my-custom-class' }}
       />,
     );
     expect(container.querySelector(':scope > *')?.className).toContain(
@@ -141,7 +141,7 @@ describe('MessageBubble', () => {
         role={MessageRole.User}
         attachments={[ATTACHMENT]}
         onAttachmentClick={onAttachmentClick}
-        attachmentClickLabel="Download file"
+        labels={{ attachmentClickLabel: 'Download file' }}
       />,
     );
     fireEvent.click(screen.getByLabelText('Download file'));
@@ -156,7 +156,7 @@ describe('MessageBubble', () => {
         role={MessageRole.Assistant}
         attachments={[ATTACHMENT]}
         onAttachmentClick={onAttachmentClick}
-        attachmentClickLabel="Download file"
+        labels={{ attachmentClickLabel: 'Download file' }}
       />,
     );
     fireEvent.click(screen.getByLabelText('Download file'));
@@ -233,7 +233,7 @@ describe('UserMessageBubble — attachments', () => {
         text="Hello"
         attachments={[ATTACHMENT]}
         onAttachmentClick={onAttachmentClick}
-        attachmentClickLabel="Download file"
+        labels={{ attachmentClickLabel: 'Download file' }}
       />,
     );
     fireEvent.click(screen.getByLabelText('Download file'));
@@ -246,7 +246,7 @@ describe('UserMessageBubble — attachments', () => {
         text="Hello"
         attachments={[ATTACHMENT]}
         onAttachmentClick={vi.fn()}
-        attachmentClickLabel="Download file"
+        labels={{ attachmentClickLabel: 'Download file' }}
       />,
     );
     expect(screen.getByLabelText('Download file')).toBeTruthy();
@@ -332,10 +332,12 @@ describe('UserMessageBubble — collapsed text', () => {
       <UserMessageBubble
         text={longMessage}
         collapsedLineCount={2}
-        showMoreLabel="More"
-        showLessLabel="Less"
-        showMoreAriaLabel="Expand user message"
-        showLessAriaLabel="Collapse user message"
+        labels={{
+          showMoreLabel: 'More',
+          showLessLabel: 'Less',
+          showMoreAriaLabel: 'Expand user message',
+          showLessAriaLabel: 'Collapse user message',
+        }}
       />,
     );
 

@@ -16,6 +16,7 @@ export type {
 export type { StatusMessageBubbleProps } from './components/MessageBubble/StatusMessageBubble';
 export type {
   MessageActionsProps,
+  MessageActionLabels,
   MessageActionTooltips,
   MessageActionAriaLabels,
 } from './models/message-actions';

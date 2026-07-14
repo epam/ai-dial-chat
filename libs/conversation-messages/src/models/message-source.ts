@@ -14,14 +14,8 @@ export interface MessageSourceColors {
 
 /** Typography overrides for the `MessageSource` component. */
 export interface MessageSourceTypography {
-  /** Tailwind (or custom) class applied to the button — takes precedence over the individual font properties below. */
+  /** Tailwind (or custom) class applied to the button. */
   fontClassName?: string;
-  /** Font size of the label (CSS value, e.g. `'10px'`). Ignored when `fontClassName` is set. */
-  fontSize?: string;
-  /** Font weight of the label. Ignored when `fontClassName` is set. */
-  fontWeight?: string | number;
-  /** Line height of the label (CSS value, e.g. `'0.75rem'`). Ignored when `fontClassName` is set. */
-  lineHeight?: string;
 }
 
 /** Combined style overrides (colors and typography) for the `MessageSource` component. */

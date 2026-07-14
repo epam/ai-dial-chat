@@ -21,16 +21,8 @@ export interface MessageBubbleColors {
 
 /** Typography overrides for message bubble components. */
 export interface MessageBubbleTypography {
-  /** Tailwind (or custom) class applied to message text — takes precedence over the individual font properties below. */
+  /** Tailwind (or custom) class applied to message text. */
   fontClassName?: string;
-  /** Font family of message text (CSS value, e.g. `"'Inter', sans-serif"`). Ignored when `fontClassName` is set. */
-  fontFamily?: string;
-  /** Font size of message text (CSS value, e.g. `'16px'`). Ignored when `fontClassName` is set. */
-  fontSize?: string;
-  /** Font weight of message text. Ignored when `fontClassName` is set. */
-  fontWeight?: string | number;
-  /** Line height of message text (CSS value, e.g. `'1.5'`). Ignored when `fontClassName` is set. */
-  lineHeight?: string;
 }
 
 /** Combined style overrides (colors and typography) for message bubble components. */
@@ -39,16 +31,57 @@ export interface MessageBubbleStyles {
   colors?: MessageBubbleColors;
   /** Typography overrides applied via CSS custom properties. */
   typography?: MessageBubbleTypography;
+  /** Extra class name(s) merged onto the outer row wrapper. */
+  className?: string;
+  /** Extra class name(s) merged onto the bubble element itself. */
+  bubbleClassName?: string;
+}
+
+/** Localised labels for message bubble components. */
+export interface MessageBubbleLabels {
+  /** Button label shown when a collapsed user message can be expanded. Defaults to `"Show more"`. */
+  showMoreLabel?: string;
+  /** Button label shown when an expanded user message can be collapsed. Defaults to `"Show less"`. */
+  showLessLabel?: string;
+  /** Accessible label for the expand button. Defaults to the `showMoreLabel` value. */
+  showMoreAriaLabel?: string;
+  /** Accessible label for the collapse button. Defaults to the `showLessLabel` value. */
+  showLessAriaLabel?: string;
+  /** Accessible label forwarded to each attachment tile/row when it is interactive. */
+  attachmentClickLabel?: string;
+  /** Accessible label for each attachment row's retry action. */
+  attachmentRetryLabel?: string;
+  /**
+   * Bold prefix text for the status message banner.
+   * Only used when `role === MessageRole.Status`. Defaults to `"Model switched."`.
+   */
+  statusTitleText?: string;
+  /**
+   * Full description text for the status message banner, e.g. "The model has been switched from GPT to Imagen."
+   * Required when `role === MessageRole.Status`.
+   */
+  statusBodyText?: string;
+}
+
+/** Localised labels for the `AssistantMessageBubble` component. */
+export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
+  /** Accessible label for the quick-reply buttons list. Defaults to `"Quick reply buttons"`. */
+  startersAriaLabel?: string;
+  /**
+   * Label shown with a shimmer animation while `isStreaming` is true and the message text is still empty.
+   * Pass a translated string from the consuming app. Defaults to `'Thinking'`.
+   */
+  thinkingLabel?: string;
+  /** Accessible label for the copy button in code blocks. Forwarded to `MDMessageViewer`. */
+  codeBlockCopyLabel?: string;
+  /** Accessible label for the copy button after copying. Forwarded to `MDMessageViewer`. */
+  codeBlockCopiedLabel?: string;
 }
 
 /** Shared props for user and assistant message bubble components. */
 interface BaseMessageBubbleProps {
   /** Plain-text (or Markdown) content of the message. */
   text: string;
-  /** Extra class name(s) merged onto the outer row wrapper. */
-  className?: string;
-  /** Extra class name(s) merged onto the bubble element itself. */
-  bubbleClassName?: string;
   /** Color and typography overrides applied as CSS custom properties. */
   styles?: MessageBubbleStyles;
   /** Props forwarded to the `MessageActions` bar rendered below the bubble. */
@@ -59,22 +92,8 @@ interface BaseMessageBubbleProps {
   isStreaming?: boolean;
   /** Display attachments associated with the message. Rendered above text for user messages and below text for assistant messages. */
   attachments?: DisplayAttachment[];
-}
-
-/** Props accepted by the `UserMessageBubble` component. */
-export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
-  /** Position within a message group — controls which corner is rounded. Defaults to `BubblePosition.Bottom`. */
-  position?: BubblePosition;
-  /** Maximum number of text lines shown while a long user message is collapsed. Defaults to `10`. */
-  collapsedLineCount?: number;
-  /** Button label shown when a collapsed user message can be expanded. Defaults to `"Show more"`. */
-  showMoreLabel?: string;
-  /** Button label shown when an expanded user message can be collapsed. Defaults to `"Show less"`. */
-  showLessLabel?: string;
-  /** Accessible label for the expand button. Defaults to the `showMoreLabel` value. */
-  showMoreAriaLabel?: string;
-  /** Accessible label for the collapse button. Defaults to the `showLessLabel` value. */
-  showLessAriaLabel?: string;
+  /** Localised labels for the bubble's toggle button and attachment rows. */
+  labels?: MessageBubbleLabels;
   /** Called when the user clicks an attachment tile/row. Passed through to `AttachmentGroup`. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /**
@@ -83,12 +102,8 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
    * `AttachmentGroup`.
    */
   onDownloadAll?: (attachments: DisplayAttachment[]) => void;
-  /** Accessible label forwarded to each attachment tile/row when it is interactive. */
-  attachmentClickLabel?: string;
   /** Called when the user retries a failed attachment upload. */
   onAttachmentRetry?: (id: string) => void;
-  /** Accessible label for each attachment row's retry action. */
-  attachmentRetryLabel?: string;
   /** Resolves a human-readable size label for an attachment, when derivable. Omitted from display when absent. */
   getAttachmentSizeLabel?: (
     attachment: DisplayAttachment,
@@ -101,32 +116,16 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
   attachmentTheme?: CodeBlockTheme;
 }
 
+/** Props accepted by the `UserMessageBubble` component. */
+export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
+  /** Position within a message group — controls which corner is rounded. Defaults to `BubblePosition.Bottom`. */
+  position?: BubblePosition;
+  /** Maximum number of text lines shown while a long user message is collapsed. Defaults to `10`. */
+  collapsedLineCount?: number;
+}
+
 /** Props accepted by the `AssistantMessageBubble` component. */
 export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
-  /** Called when the user clicks an attachment tile/row in the assistant bubble's group. */
-  onAttachmentClick?: (attachment: DisplayAttachment) => void;
-  /**
-   * Called with every currently downloadable attachment when the user
-   * activates the group's "download all" action. Passed through to
-   * `AttachmentGroup`.
-   */
-  onDownloadAll?: (attachments: DisplayAttachment[]) => void;
-  /** Accessible label forwarded to each attachment tile/row when it is interactive. */
-  attachmentClickLabel?: string;
-  /** Called when the user retries a failed attachment upload. */
-  onAttachmentRetry?: (id: string) => void;
-  /** Accessible label for each attachment row's retry action. */
-  attachmentRetryLabel?: string;
-  /** Resolves a human-readable size label for an attachment, when derivable. Omitted from display when absent. */
-  getAttachmentSizeLabel?: (
-    attachment: DisplayAttachment,
-  ) => string | undefined;
-  /**
-   * Surface color theme for non-previewable attachment tiles, matching the
-   * markdown code block's own light/dark surface (never plain white).
-   * Forwarded to `AttachmentGroup`. Defaults to `'dark'`.
-   */
-  attachmentTheme?: CodeBlockTheme;
   /**
    * react-markdown component overrides merged on top of the built-in map.
    * Pass a custom `p` (or other element) renderer here to inject React nodes
@@ -140,8 +139,6 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   starters?: StarterOption[];
   /** Called with the selected `StarterOption` when a quick-reply button is clicked. */
   onSelectStarter?: (starter: StarterOption) => void;
-  /** Accessible label for the quick-reply buttons list. Defaults to `"Quick reply buttons"`. */
-  startersAriaLabel?: string;
   /** Content rendered between the message body and the actions bar (e.g. a stages panel). */
   afterContent?: ReactNode;
   /**
@@ -151,103 +148,19 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   deploymentIconUrl?: string;
   /** Human-readable deployment name shown as the icon's accessible label. */
   deploymentDisplayName?: string;
-  /**
-   * Label shown with a shimmer animation while `isStreaming` is true and the message text is still empty.
-   * Pass a translated string from the consuming app. Defaults to `'Thinking'`.
-   */
-  thinkingLabel?: string;
-  /** Accessible label for the copy button in code blocks. Forwarded to `MDMessageViewer`. */
-  codeBlockCopyLabel?: string;
-  /** Accessible label for the copy button after copying. Forwarded to `MDMessageViewer`. */
-  codeBlockCopiedLabel?: string;
   /** Syntax highlight color theme for code blocks. Forwarded to `MDMessageViewer`. Defaults to `'dark'`. */
   codeBlockTheme?: CodeBlockTheme;
+  /** Localised labels for quick replies, the thinking indicator, and code block copy actions. */
+  labels?: AssistantMessageBubbleLabels;
 }
 
-/** Props accepted by the `MessageBubble` role-switching wrapper. */
-export interface MessageBubbleProps extends BaseMessageBubbleProps {
-  /** Whether the message was authored by the user or the assistant. */
-  role: MessageRole;
-  /** Position within a message group — controls which corner is rounded (user messages only). Defaults to `BubblePosition.Bottom`. */
-  position?: BubblePosition;
-  /** Maximum number of text lines shown while a long user message is collapsed. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
-  collapsedLineCount?: number;
-  /** Button label shown when a collapsed user message can be expanded. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
-  showMoreLabel?: string;
-  /** Button label shown when an expanded user message can be collapsed. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
-  showLessLabel?: string;
-  /** Accessible label for the expand button. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
-  showMoreAriaLabel?: string;
-  /** Accessible label for the collapse button. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
-  showLessAriaLabel?: string;
-  /**
-   * Quick-reply buttons derived from the assistant message's `form_schema`.
-   * Forwarded to `AssistantMessageBubble`; ignored for user messages.
-   */
-  starters?: StarterOption[];
-  /** Called with the selected `StarterOption` when a quick-reply button is clicked. Forwarded to `AssistantMessageBubble`. */
-  onSelectStarter?: (starter: StarterOption) => void;
-  /** Accessible label for the quick-reply buttons list. Forwarded to `AssistantMessageBubble`; ignored for user messages. */
-  startersAriaLabel?: string;
-  /** Content rendered between the message body and the actions bar. Forwarded to `AssistantMessageBubble`; ignored for user messages. */
-  afterContent?: ReactNode;
-  /**
-   * Resolved deployment icon URL. Forwarded to `AssistantMessageBubble` when role is `Assistant`;
-   * used to render the `StatusMessageBubble` icon when role is `Status`.
-   * Omitted for legacy messages that pre-date this feature.
-   */
-  deploymentIconUrl?: string;
-  /** Human-readable deployment name. Forwarded to `AssistantMessageBubble`; used in status message text when role is `Status`. */
-  deploymentDisplayName?: string;
-  /**
-   * Bold prefix text for the status message banner.
-   * Only used when `role === MessageRole.Status`. Defaults to `"Model switched."`.
-   */
-  statusTitleText?: string;
-  /**
-   * Full description text for the status message banner, e.g. "The model has been switched from GPT to Imagen."
-   * Required when `role === MessageRole.Status`.
-   */
-  statusBodyText?: string;
-  /**
-   * Label shown with a shimmer animation while `isStreaming` is true and the message text is still empty.
-   * Forwarded to `AssistantMessageBubble`. Defaults to `'Thinking'`.
-   */
-  thinkingLabel?: string;
-  /**
-   * react-markdown component overrides forwarded to `AssistantMessageBubble`.
-   * Ignored for user and status messages.
-   */
-  markdownComponents?: Components;
-  /** Accessible label for the copy button in code blocks. Forwarded to `AssistantMessageBubble`. */
-  codeBlockCopyLabel?: string;
-  /** Accessible label for the copy button after copying. Forwarded to `AssistantMessageBubble`. */
-  codeBlockCopiedLabel?: string;
-  /** Syntax highlight color theme for code blocks. Forwarded to `AssistantMessageBubble`. Defaults to `'dark'`. */
-  codeBlockTheme?: CodeBlockTheme;
-  /** Called when the user clicks an attachment tile/row. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
-  onAttachmentClick?: (attachment: DisplayAttachment) => void;
-  /**
-   * Called with every currently downloadable attachment when the user
-   * activates the group's "download all" action. Forwarded to both
-   * `UserMessageBubble` and `AssistantMessageBubble`.
-   */
-  onDownloadAll?: (attachments: DisplayAttachment[]) => void;
-  /** Accessible label forwarded to each attachment tile/row when it is interactive. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
-  attachmentClickLabel?: string;
-  /** Called when the user retries a failed attachment upload. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
-  onAttachmentRetry?: (id: string) => void;
-  /** Accessible label for each attachment row's retry action. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
-  attachmentRetryLabel?: string;
-  /** Resolves a human-readable size label for an attachment, when derivable. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
-  getAttachmentSizeLabel?: (
-    attachment: DisplayAttachment,
-  ) => string | undefined;
-  /**
-   * Surface color theme for non-previewable attachment tiles, matching the
-   * markdown code block's own light/dark surface (never plain white).
-   * Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`.
-   * Defaults to `'dark'`.
-   */
-  attachmentTheme?: CodeBlockTheme;
-}
+/**
+ * Props accepted by the `MessageBubble` role-switching wrapper — the union of
+ * `AssistantMessageBubbleProps` (the richer variant) with the user-only
+ * `position`/`collapsedLineCount` fields, plus the discriminant `role`.
+ */
+export type MessageBubbleProps = AssistantMessageBubbleProps &
+  Pick<UserMessageBubbleProps, 'position' | 'collapsedLineCount'> & {
+    /** Whether the message was authored by the user, the assistant, or is a status banner. */
+    role: MessageRole;
+  };

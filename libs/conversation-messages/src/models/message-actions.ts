@@ -40,6 +40,14 @@ export interface MessageActionAriaLabels {
   dislikeResponse?: string;
 }
 
+/** Tooltip and accessible label overrides for the `MessageActions` component. */
+export interface MessageActionLabels {
+  /** Override tooltip labels for individual action buttons. */
+  tooltips?: MessageActionTooltips;
+  /** Override accessible labels (aria-label) for individual action buttons. */
+  ariaLabels?: MessageActionAriaLabels;
+}
+
 /** Props accepted by the `MessageActions` component. */
 export interface MessageActionsProps {
   /** Which action set to render — `'User'` shows Edit/Delete, `'Agent'` shows Regenerate/Copy/Markdown/Like/Dislike. Defaults to `'User'`. */
@@ -48,10 +56,8 @@ export interface MessageActionsProps {
   className?: string;
   /** When `true`, actions are always visible instead of appearing only on group hover. */
   isAlwaysVisible?: boolean;
-  /** Override tooltip labels for individual action buttons. */
-  tooltips?: MessageActionTooltips;
-  /** Override accessible labels (aria-label) for individual action buttons. */
-  ariaLabels?: MessageActionAriaLabels;
+  /** Override tooltip and accessible labels for individual action buttons. */
+  labels?: MessageActionLabels;
   /** Called when the user clicks the Edit button (User source only). */
   onEdit?: () => void;
   /** Called when the user hovers over the Edit button (User source only). Useful for preloading the edit UI. */

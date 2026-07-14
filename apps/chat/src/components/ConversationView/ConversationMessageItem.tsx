@@ -217,18 +217,19 @@ const ConversationMessageItem: FC<Props> = ({
             <MessageBubble
               role={msg.role}
               text={msg.content}
-              styles={USER_MESSAGE_TEXT_STYLES}
+              styles={{ ...USER_MESSAGE_TEXT_STYLES, className: 'justify-end' }}
               attachments={attachmentDtosToDisplayAttachments(
                 msg.custom_content?.attachments,
               )}
-              showMoreLabel={showMoreLabel}
-              showLessLabel={showLessLabel}
-              showMoreAriaLabel={showMoreUserMessageAriaLabel}
-              showLessAriaLabel={showLessUserMessageAriaLabel}
+              labels={{
+                showMoreLabel,
+                showLessLabel,
+                showMoreAriaLabel: showMoreUserMessageAriaLabel,
+                showLessAriaLabel: showLessUserMessageAriaLabel,
+                attachmentClickLabel: t(AttachmentsI18nKeys.Download),
+              }}
               onAttachmentClick={handleAttachmentClick}
               onDownloadAll={handleDownloadAll}
-              attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
-              className="justify-end"
             />
           }
         >
@@ -306,9 +307,13 @@ const ConversationMessageItem: FC<Props> = ({
       <MessageBubble
         role={msg.role}
         text={messageText}
-        styles={
-          msg.role === MessageRole.User ? USER_MESSAGE_TEXT_STYLES : undefined
-        }
+        styles={{
+          ...(msg.role === MessageRole.User ? USER_MESSAGE_TEXT_STYLES : {}),
+          className: isUserMessage ? 'justify-end' : 'justify-start',
+          bubbleClassName: mergeClasses(
+            msg.hasStreamError ? 'w-full' : undefined,
+          ),
+        }}
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }
@@ -332,10 +337,6 @@ const ConversationMessageItem: FC<Props> = ({
           },
           tooltips,
           ariaLabels,
-        )}
-        className={isUserMessage ? 'justify-end' : 'justify-start'}
-        bubbleClassName={mergeClasses(
-          msg.hasStreamError ? 'w-full' : undefined,
         )}
         afterContent={
           referenceGroups.length > 0 || hasStages || msg.hasStreamError ? (
@@ -387,21 +388,23 @@ const ConversationMessageItem: FC<Props> = ({
         }
         starters={activeStarters}
         onSelectStarter={handleSelectStarter}
-        startersAriaLabel={quickReplyButtonsAriaLabel}
-        showMoreLabel={showMoreLabel}
-        showLessLabel={showLessLabel}
-        showMoreAriaLabel={showMoreUserMessageAriaLabel}
-        showLessAriaLabel={showLessUserMessageAriaLabel}
+        labels={{
+          showMoreLabel,
+          showLessLabel,
+          showMoreAriaLabel: showMoreUserMessageAriaLabel,
+          showLessAriaLabel: showLessUserMessageAriaLabel,
+          attachmentClickLabel: t(AttachmentsI18nKeys.Download),
+          startersAriaLabel: quickReplyButtonsAriaLabel,
+          thinkingLabel,
+          codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
+          codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+        }}
         deploymentIconUrl={deploymentEntry?.iconUrl}
         deploymentDisplayName={deploymentEntry?.displayName}
-        thinkingLabel={thinkingLabel}
-        codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
-        codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
         codeBlockTheme={codeBlockTheme}
         attachmentTheme={codeBlockTheme}
         onAttachmentClick={handleAttachmentClick}
         onDownloadAll={handleDownloadAll}
-        attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
         {...statusProps}
       />
     </CitationCardProvider>

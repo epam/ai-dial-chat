@@ -23,26 +23,27 @@ const DEFAULT_COLLAPSED_LINE_COUNT = 10;
 export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   text,
   position = BubblePosition.Bottom,
-  className,
-  bubbleClassName,
   styles: bubbleStyles,
   actions,
   hasAlwaysVisibleActions,
   attachments,
   collapsedLineCount = DEFAULT_COLLAPSED_LINE_COUNT,
-  showMoreLabel = 'Show more',
-  showLessLabel = 'Show less',
-  showMoreAriaLabel,
-  showLessAriaLabel,
+  labels,
   onAttachmentClick,
   onDownloadAll,
-  attachmentClickLabel,
   onAttachmentRetry,
-  attachmentRetryLabel,
   getAttachmentSizeLabel,
   attachmentTheme,
 }) => {
-  const { colors, typography } = bubbleStyles ?? {};
+  const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
+  const {
+    showMoreLabel = 'Show more',
+    showLessLabel = 'Show less',
+    showMoreAriaLabel,
+    showLessAriaLabel,
+    attachmentClickLabel,
+    attachmentRetryLabel,
+  } = labels ?? {};
 
   const {
     textRef,

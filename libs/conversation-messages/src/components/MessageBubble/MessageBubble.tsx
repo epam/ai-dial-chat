@@ -9,26 +9,21 @@ import { UserMessageBubble } from './UserMessageBubble';
 export const MessageBubble: FC<MessageBubbleProps> = ({
   role,
   onAttachmentClick,
-  attachmentClickLabel,
   markdownComponents,
   ...props
 }) => {
   if (role === MessageRole.Status) {
     return (
       <StatusMessageBubble
-        titleText={props.statusTitleText}
-        bodyText={props.statusBodyText ?? ''}
+        titleText={props.labels?.statusTitleText}
+        bodyText={props.labels?.statusBodyText ?? ''}
       />
     );
   }
 
   if (role === MessageRole.User) {
     return (
-      <UserMessageBubble
-        {...props}
-        onAttachmentClick={onAttachmentClick}
-        attachmentClickLabel={attachmentClickLabel}
-      />
+      <UserMessageBubble {...props} onAttachmentClick={onAttachmentClick} />
     );
   }
 
@@ -37,7 +32,6 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
       {...props}
       markdownComponents={markdownComponents}
       onAttachmentClick={onAttachmentClick}
-      attachmentClickLabel={attachmentClickLabel}
     />
   );
 };

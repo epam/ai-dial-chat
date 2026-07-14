@@ -37,9 +37,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
   activeRating,
   isAlwaysVisible,
   className,
-  tooltips,
-  ariaLabels,
+  labels,
 }) => {
+  const { tooltips, ariaLabels } = labels ?? {};
   const [copied, setCopied] = useState<'copy' | 'markdown' | null>(null);
 
   const handleCopy = useCallback(() => {
