@@ -26,7 +26,7 @@ export interface FilterProps {
   isMyAppsActive?: boolean;
   /** Called when the "My Apps" toggle changes. */
   onMyAppsChange?: (isActive: boolean) => void;
-  /** Label for the "My Apps" checkbox. Default: 'My Apps'. */
+  /** Label for the "My Apps" checkbox. Default: 'My'. */
   myAppsLabel?: string;
   /** Label for the Topics section heading. Default: 'Topics'. */
   topicsLabel?: string;
@@ -74,7 +74,7 @@ export const Filter: FC<FilterProps> = ({
   values,
   isMyAppsActive,
   onMyAppsChange,
-  myAppsLabel = 'My Apps',
+  myAppsLabel = 'My',
   topicsLabel = 'Topics',
   defaultLabel = 'From',
   clearLabel = 'Clear',
