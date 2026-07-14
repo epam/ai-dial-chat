@@ -95,7 +95,14 @@ export const resolveDeploymentFolder = (
   return segments;
 };
 
-const resolveToolsetFolder = (toolset: DialToolsetDto): string[] => {
+const resolveToolsetFolder = (
+  toolset: DialToolsetDto,
+  t?: TFunction,
+): string[] => {
+  if (toolset.isMy && t != null) {
+    return [t(CatalogI18nKeys.FolderPersonal)];
+  }
+
   const raw = toolset.toolset || toolset.id;
   if (!raw.startsWith(TOOLSETS_PREFIX)) {
     return [];
@@ -113,7 +120,7 @@ const resolveToolsetFolder = (toolset: DialToolsetDto): string[] => {
 export const mapDeploymentToCatalogItem = (
   deployment: DeploymentItemDto,
   favoriteIds: ReadonlySet<string> = new Set(),
-  entityDetails?: EntitySpecificDetails, // TODO: need?
+  entityDetails?: EntitySpecificDetails,
   t?: TFunction,
   editableSchemaId?: string,
 ): CatalogItem => {
@@ -156,6 +163,7 @@ export const mapToolsetToCatalogItem = (
   toolset: DialToolsetDto,
   favoriteIds: ReadonlySet<string> = new Set(),
   isAdmin = false,
+  t?: TFunction,
 ): CatalogItem => {
   const name =
     toolset.displayName ?? toolset.toolset ?? toolset.reference ?? toolset.id;
@@ -178,7 +186,7 @@ export const mapToolsetToCatalogItem = (
     isStarred: favoriteIds.has(toolset.id),
     isMyApp: toolset.isMy ?? false,
     isEditable: toolset.isMy ?? false,
-    folder: resolveToolsetFolder(toolset),
+    folder: resolveToolsetFolder(toolset, t),
     summary: undefined,
     credentials: mapToolsetCredentials(
       toolset.id,

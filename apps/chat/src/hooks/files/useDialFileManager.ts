@@ -17,9 +17,13 @@ import type {
   CopyItemDto,
   CreateFolderResponseDto,
   DeleteItemDto,
+  DiscardSharedItemDto,
+  FileMetadataResponseDto,
   ListFilesItemDto,
   MoveItemDto,
   RenameItemDto,
+  RevokeAccessItemDto,
+  ShareFilesDtoPermissionEnum,
 } from '@epam/chat-api-client';
 import {
   ArchiveItemDtoNodeTypeEnum,
@@ -44,13 +48,19 @@ import {
   copyFiles,
   createFolder,
   deleteFiles,
+  discardShared,
   downloadArchive,
   downloadFile,
+  getFileMetadata,
   listFiles,
   listPublicFiles,
+  listSharedByMe,
   listSharedFiles,
   moveFiles,
   renameFiles,
+  revokeAccess,
+  shareFiles,
+  uploadArchive,
   uploadFile,
 } from '../../server-api/files.api';
 import {
@@ -128,6 +138,12 @@ export interface UseDialFileManagerResult {
     files: DialUploadFileItem[],
     destinationFolder: string,
   ) => void;
+  /** Upload: extracts and uploads a ZIP archive's entries to the destination folder. */
+  onUploadArchive: (
+    file: File,
+    name: string,
+    destinationFolder: string,
+  ) => void;
   /** Upload: validate file names before upload (called by DialFileManager). */
   onValidateUpload: (
     files: DialUploadFileItem[],
@@ -202,6 +218,45 @@ export interface UseDialFileManagerResult {
   actionLabels: Partial<Record<DialFileManagerActions, string>>;
   /** Root-level shared item paths, populated only on the Shared tab. */
   sharedWithMeIds: string[] | undefined;
+
+  /** Share: paths the user has shared with others, populated only on my_files tab. */
+  sharedByMePaths: Set<string>;
+  /** Share: non-null while ShareFileModal should be open. */
+  shareTarget: ShareTarget | null;
+  /** Share: called by DialFileManager.onManagePermissions to open the modal for `path`. */
+  onManagePermissions: (path?: string) => void;
+  /** Share: closes ShareFileModal, clearing `shareTarget`. */
+  onCloseShareModal: () => void;
+  /** Share: called by ShareFileModal to create the invitation link; throws on failure. */
+  onCreateShareLink: (
+    permission: ShareFilesDtoPermissionEnum,
+  ) => Promise<string>;
+  /** True while a share request is in flight. */
+  isSharing: boolean;
+
+  /** Unshare: called when user removes a shared-with-me item (Shared tab only). */
+  onUnshareFiles: (files: DialFile[]) => void;
+  /** True while an unshare request is in flight. */
+  isUnsharing: boolean;
+  /** Remove access: called when user revokes access to an owned shared item (my_files tab only). */
+  onRemoveFilesAccess: (files: DialFile[]) => void;
+  /** True while a remove-access request is in flight. */
+  isRemovingAccess: boolean;
+
+  /** Metadata: populated once onGetInfo resolves; passed to fileMetadataPopupOptions.fileMetadata. */
+  fileMetadata: DialFile | undefined;
+  /** True while a metadata request is in flight. */
+  isFileMetadataLoading: boolean;
+  /** Metadata: called by DialFileManager.onGetInfo to fetch and display a file's details. */
+  onGetInfo: (file: DialFile) => void;
+  /** Metadata: resets fileMetadata/isFileMetadataLoading; passed to fileMetadataPopupOptions.clearMetadata. */
+  clearMetadata: () => void;
+}
+
+export interface ShareTarget {
+  bucket: string;
+  path: string;
+  name: string;
 }
 
 interface FileUploadValidationResult {
@@ -279,6 +334,18 @@ const findFolderByVirtualPath = (
 const hasDialFileWritePermission = (folder?: DialFile): boolean =>
   folder?.permissions?.includes(DialFilePermission.WRITE) ?? false;
 
+const findDialFileByPath = (
+  nodes: DialFile[],
+  targetPath: string,
+): DialFile | undefined => {
+  for (const node of nodes) {
+    if (node.path === targetPath || node.id === targetPath) return node;
+    const nested = findDialFileByPath(node.items ?? [], targetPath);
+    if (nested) return nested;
+  }
+  return undefined;
+};
+
 /** Copy/Move/Duplicate are Browse/Full-only — the attach picker excludes them. */
 const isCopyMoveDuplicateAllowed = (
   actionProfile: DialFileManagerActionProfile,
@@ -295,6 +362,11 @@ const isCopyMoveDuplicateAllowed = (
     }
   }
 };
+
+/** Share/Unshare/Remove access are Full-only — Browse and Attach never expose them. */
+const isShareActionsAllowed = (
+  actionProfile: DialFileManagerActionProfile,
+): boolean => actionProfile === DialFileManagerActionProfile.Full;
 
 const parseNewFolderVirtualPath = (
   newFolderVirtualPath: string,
@@ -430,6 +502,29 @@ const dialCorePathToRelative = (
   return dialCorePath.startsWith(prefix)
     ? dialCorePath.slice(prefix.length)
     : dialCorePath;
+};
+
+/**
+ * Converts a bucket-relative path (e.g. "reports/q1.pdf") to the virtual
+ * DialFile.path format ("/My files/reports/q1.pdf") that ui-kit compares
+ * row items against for `sharedByMePaths`/`sharedWithMeIds` gating — the
+ * DIAL Core resource path ("files/{bucket}/...") is a different identifier
+ * space and never matches. Decodes each path segment independently, matching
+ * how buildFromCache derives virtual paths.
+ */
+const buildSharedItemVirtualPath = (
+  relativePath: string,
+  rootLabel: string,
+  isFolder: boolean,
+): string => {
+  const trimmed = relativePath.replace(/\/+$/, '');
+  const joined = trimmed
+    .split('/')
+    .filter(Boolean)
+    .map(safeDecodeURI)
+    .join('/');
+  const base = joined ? `/${rootLabel}/${joined}` : `/${rootLabel}`;
+  return isFolder ? `${base}/` : base;
 };
 
 /**
@@ -589,6 +684,34 @@ const mapSearchItem = (
 };
 
 /**
+ * Overlays a `FileMetadataResponseDto` response onto the clicked grid row so
+ * `fileMetadataPopupOptions.fileMetadata` receives a value structurally
+ * consistent with any other `DialFile` — the row already carries the correct
+ * virtual `path`/`id`/`name`/`nodeType`/`folderId`, while size/date/author/
+ * permissions are refreshed from the just-fetched server response.
+ */
+const mapFileMetadataToDialFile = (
+  metadata: FileMetadataResponseDto,
+  original: DialFile,
+): DialFile => ({
+  ...original,
+  bucket: metadata.bucket ?? original.bucket,
+  author: metadata.author,
+  contentLength: metadata.contentLength,
+  contentType: metadata.contentType,
+  resourceType:
+    (metadata.resourceType as DialFile['resourceType']) ??
+    original.resourceType,
+  permissions: mapCorePermissions(metadata.permissions) ?? original.permissions,
+  updatedAt: metadata.updatedAt
+    ? new Date(metadata.updatedAt).toISOString()
+    : original.updatedAt,
+  createdAt: metadata.createdAt
+    ? new Date(metadata.createdAt).toISOString()
+    : original.createdAt,
+});
+
+/**
  * Manages DIAL file-storage browsing state for DialFileManager.
  *
  * Supports three listing sources via `activeTab`:
@@ -627,6 +750,18 @@ export const useDialFileManager = ({
   const [sharedRootIds, setSharedRootIds] = useState<string[] | undefined>(
     undefined,
   );
+  const [sharedByMePaths, setSharedByMePaths] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const shareAbortControllerRef = useRef<AbortController | null>(null);
+  const [isUnsharing, setIsUnsharing] = useState(false);
+  const [isRemovingAccess, setIsRemovingAccess] = useState(false);
+  const [fileMetadata, setFileMetadata] = useState<DialFile | undefined>(
+    undefined,
+  );
+  const [isFileMetadataLoading, setIsFileMetadataLoading] = useState(false);
 
   // Maps shared root folder name → { bucket, dialCorePath } for subfolder navigation.
   const sharedRootMetaRef = useRef<Map<string, SharedRootMeta>>(new Map());
@@ -712,7 +847,19 @@ export const useDialFileManager = ({
         );
         // Capture root-level shared item paths for sharedWithMeIds and subfolder navigation
         if (activeTab === DialFileManagerTabs.Shared && folderPath === '') {
-          setSharedRootIds(flat.map((item) => item.path));
+          setSharedRootIds(
+            flat.map((item) => {
+              const relative = dialCorePathToRelative(
+                item.path,
+                item.bucket ?? '',
+              );
+              return buildSharedItemVirtualPath(
+                relative,
+                rootLabel,
+                item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder,
+              );
+            }),
+          );
           sharedRootMetaRef.current = new Map(
             flat.map((item) => [
               safeDecodeURI(item.name),
@@ -732,7 +879,41 @@ export const useDialFileManager = ({
     return () => {
       cancelled = true;
     };
-  }, [activeTab, bucket, folderPath, retryCounter]);
+  }, [activeTab, bucket, folderPath, retryCounter, rootLabel]);
+
+  // sharedByMePaths is bucket-scoped (not folder-scoped) — fetched once per
+  // my_files tab activation/retry, independent of the folder-listing effect above.
+  useEffect(() => {
+    if (activeTab !== DialFileManagerTabs.MyFiles) {
+      setSharedByMePaths(new Set());
+      return;
+    }
+
+    let cancelled = false;
+    listSharedByMe(bucket)
+      .then((res) => {
+        if (cancelled) return;
+        setSharedByMePaths(
+          new Set(
+            res.items.map((item) => {
+              const relative = dialCorePathToRelative(item.path, bucket);
+              return buildSharedItemVirtualPath(
+                relative,
+                rootLabel,
+                item.nodeType === ListFilesItemDtoNodeTypeEnum.Folder,
+              );
+            }),
+          ),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setSharedByMePaths(new Set());
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, bucket, retryCounter, rootLabel]);
 
   const items = useMemo(
     (): DialFile[] => [
@@ -1083,6 +1264,68 @@ export const useDialFileManager = ({
     [activeTab, bucket, cache, rootLabel, onNotification, t],
   );
 
+  const onUploadArchive = useCallback(
+    (file: File, name: string, destinationFolder: string) => {
+      const destinationApiPath = virtualPathToApiPath(
+        destinationFolder,
+        rootLabel,
+      );
+
+      setUploadBatchState({
+        files: [
+          {
+            id: `${Date.now()}-archive`,
+            name,
+            status: FileUploadStatus.Uploading,
+          },
+        ],
+        isOpen: true,
+      });
+
+      const run = async (): Promise<void> => {
+        try {
+          const { results } = await uploadArchive(
+            file,
+            bucket,
+            destinationApiPath,
+          );
+          const successCount = results.filter((r) => r.success).length;
+          const failedCount = results.length - successCount;
+
+          if (results.length > 0 && successCount === 0) {
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              message: t(DialFileManagerI18nKeys.UploadArchiveError),
+            });
+          } else if (failedCount > 0) {
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              message: t(DialFileManagerI18nKeys.UploadArchivePartialError, {
+                count: failedCount,
+              }),
+            });
+          }
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.UploadArchiveError),
+          });
+        } finally {
+          setCache((prev) => {
+            const next = new Map(prev);
+            next.delete(destinationApiPath);
+            return next;
+          });
+          setRetryCounter((c) => c + 1);
+          setUploadBatchState(null);
+        }
+      };
+
+      void run();
+    },
+    [bucket, rootLabel, onNotification, t],
+  );
+
   const onValidateUpload = useCallback(
     async (
       files: DialUploadFileItem[],
@@ -1370,6 +1613,148 @@ export const useDialFileManager = ({
     },
     [activeTab, bucket, rootLabel, t, folderPath, onNotification],
   );
+
+  const onManagePermissions = useCallback(
+    (targetPath?: string) => {
+      if (targetPath == null) return;
+      const root = items[0];
+      const target = findDialFileByPath(root?.items ?? [], targetPath);
+      if (target == null) return;
+      const targetBucket = target.bucket ?? bucket;
+      setShareTarget({
+        bucket: targetBucket,
+        path: resolveDialFileApiPath(target, targetBucket, rootLabel),
+        name: target.name,
+      });
+    },
+    [bucket, items, rootLabel],
+  );
+
+  const onCloseShareModal = useCallback(() => {
+    shareAbortControllerRef.current?.abort();
+    shareAbortControllerRef.current = null;
+    setIsSharing(false);
+    setShareTarget(null);
+  }, []);
+
+  const onCreateShareLink = useCallback(
+    async (permission: ShareFilesDtoPermissionEnum): Promise<string> => {
+      if (shareTarget == null) {
+        throw new Error('No share target selected');
+      }
+      const controller = new AbortController();
+      shareAbortControllerRef.current = controller;
+      setIsSharing(true);
+      try {
+        const { invitationLink } = await shareFiles(
+          [{ bucket: shareTarget.bucket, path: shareTarget.path }],
+          permission,
+          controller.signal,
+        );
+        setRetryCounter((c) => c + 1);
+        return invitationLink;
+      } finally {
+        if (shareAbortControllerRef.current === controller) {
+          shareAbortControllerRef.current = null;
+          setIsSharing(false);
+        }
+      }
+    },
+    [shareTarget],
+  );
+
+  const onUnshareFiles = useCallback(
+    (files: DialFile[]) => {
+      if (files.length === 0) return;
+
+      const run = async () => {
+        setIsUnsharing(true);
+        const dtos: DiscardSharedItemDto[] = files.map((file) => {
+          const itemBucket = file.bucket ?? bucket;
+          return {
+            bucket: itemBucket,
+            path: resolveDialFileApiPath(file, itemBucket, rootLabel),
+          };
+        });
+
+        try {
+          await discardShared(dtos);
+          setRetryCounter((c) => c + 1);
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.UnshareError),
+          });
+        } finally {
+          setIsUnsharing(false);
+        }
+      };
+      void run();
+    },
+    [bucket, rootLabel, onNotification, t],
+  );
+
+  const onRemoveFilesAccess = useCallback(
+    (files: DialFile[]) => {
+      if (files.length === 0) return;
+
+      const run = async () => {
+        setIsRemovingAccess(true);
+        const dtos: RevokeAccessItemDto[] = files.map((file) => {
+          const itemBucket = file.bucket ?? bucket;
+          return {
+            bucket: itemBucket,
+            path: resolveDialFileApiPath(file, itemBucket, rootLabel),
+          };
+        });
+
+        try {
+          await revokeAccess(dtos);
+          setRetryCounter((c) => c + 1);
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.RemoveAccessError),
+          });
+        } finally {
+          setIsRemovingAccess(false);
+        }
+      };
+      void run();
+    },
+    [bucket, rootLabel, onNotification, t],
+  );
+
+  const onGetInfo = useCallback(
+    (file: DialFile) => {
+      const run = async () => {
+        setIsFileMetadataLoading(true);
+        try {
+          const itemBucket = file.bucket ?? bucket;
+          const itemPath = resolveDialFileApiPath(file, itemBucket, rootLabel);
+          const metadata = await getFileMetadata({
+            bucket: itemBucket,
+            path: itemPath,
+          });
+          setFileMetadata(mapFileMetadataToDialFile(metadata, file));
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.GetInfoError),
+          });
+        } finally {
+          setIsFileMetadataLoading(false);
+        }
+      };
+      void run();
+    },
+    [bucket, rootLabel, onNotification, t],
+  );
+
+  const clearMetadata = useCallback(() => {
+    setFileMetadata(undefined);
+    setIsFileMetadataLoading(false);
+  }, []);
 
   const path = folderPath ? `/${rootLabel}/${folderPath}` : `/${rootLabel}`;
 
@@ -1752,6 +2137,27 @@ export const useDialFileManager = ({
           );
         }
       }
+      if (isShareActionsAllowed(actionProfile)) {
+        labels[DialFileManagerActions.ManagePermissions] = t(
+          DialFileManagerI18nKeys.ShareAction,
+        );
+        labels[DialFileManagerActions.RemoveAccess] = t(
+          DialFileManagerI18nKeys.RemoveAccessAction,
+        );
+      }
+    } else if (
+      activeTab === DialFileManagerTabs.Shared &&
+      isShareActionsAllowed(actionProfile)
+    ) {
+      labels[DialFileManagerActions.Unshare] = t(
+        DialFileManagerI18nKeys.UnshareAction,
+      );
+    }
+    // Info is read-only and available on all three tabs — not tab-branched.
+    if (actionProfile === DialFileManagerActionProfile.Full) {
+      labels[DialFileManagerActions.Info] = t(
+        DialFileManagerI18nKeys.InfoAction,
+      );
     }
     return labels;
   }, [activeTab, uploadEnabled, actionProfile, t]);
@@ -1779,6 +2185,7 @@ export const useDialFileManager = ({
     loadedPaths,
     onExpandedPathsChange,
     onUploadFiles,
+    onUploadArchive,
     onValidateUpload,
     uploadBatchState,
     cancelUpload,
@@ -1805,5 +2212,19 @@ export const useDialFileManager = ({
     dateOptions: DATE_OPTIONS,
     actionLabels,
     sharedWithMeIds,
+    sharedByMePaths,
+    shareTarget,
+    onManagePermissions,
+    onCloseShareModal,
+    onCreateShareLink,
+    isSharing,
+    onUnshareFiles,
+    isUnsharing,
+    onRemoveFilesAccess,
+    isRemovingAccess,
+    fileMetadata,
+    isFileMetadataLoading,
+    onGetInfo,
+    clearMetadata,
   };
 };

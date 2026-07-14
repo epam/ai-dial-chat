@@ -1,22 +1,32 @@
+import { randomUUID } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Readable } from 'node:stream';
+import { Readable, Transform } from 'node:stream';
 import { finished, pipeline } from 'node:stream/promises';
 import type { components } from '@epam/ai-dial-typescript-sdk';
 import {
+  BadGatewayException,
+  BadRequestException,
   ConflictException,
   HttpException,
   HttpStatus,
   Injectable,
   Logger,
   PayloadTooLargeException,
+  ServiceUnavailableException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import archiver from 'archiver';
 import type { Response as ExpressResponse } from 'express';
-import { handleDialSdkError } from '../common/dial/dial-error.mapper';
+import * as yauzl from 'yauzl';
+import {
+  handleDialFetchError,
+  handleDialSdkError,
+  mapDialHttpStatus,
+} from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
@@ -35,6 +45,10 @@ import {
   DeleteItemNodeType,
   DeleteItemResultDto,
 } from './dto/delete-files.dto';
+import type {
+  DiscardSharedItemDto,
+  DiscardSharedResponseDto,
+} from './dto/discard-shared.dto';
 import type { ArchiveItemDto } from './dto/download-archive.dto';
 import { ArchiveItemNodeType } from './dto/download-archive.dto';
 import type { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
@@ -51,6 +65,19 @@ import {
   RenameItemNodeType,
   RenameItemResultDto,
 } from './dto/rename-files.dto';
+import type {
+  RevokeAccessItemDto,
+  RevokeAccessResponseDto,
+} from './dto/revoke-access.dto';
+import type {
+  ShareItemDto,
+  ShareFilesResponseDto,
+} from './dto/share-files.dto';
+import { SharePermission } from './dto/share-files.dto';
+import type {
+  UploadArchiveEntryResultDto,
+  UploadArchiveResponseDto,
+} from './dto/upload-archive.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import type { UploadMode } from './dto/upload-file.dto';
 import { FOLDER_NODE_TYPE, MARKER_NAME } from './files.constants';
@@ -66,6 +93,11 @@ interface ExpandedFile {
   name: string;
   size: number;
   archivePath: string;
+}
+
+interface ArchiveEntryPathResult {
+  isDirectory: boolean;
+  safeRelativePath: string | null;
 }
 
 type StagedArchiveFile = {
@@ -97,6 +129,11 @@ interface UploadedFile {
   originalname?: string;
 }
 
+interface UploadedArchiveFile {
+  path: string;
+  size?: number;
+}
+
 const buildDialFileUrl = (bucket: string, path: string): string =>
   `files/${bucket}/${path}`;
 
@@ -108,6 +145,11 @@ const safeDecodePathForCompare = (path: string): string =>
 
 const buildDialFileResourceUrl = (bucket: string, path: string): string =>
   buildDialFileUrl(bucket, encodeDialResourcePath(path));
+
+const mapSharePermission = (
+  permission: SharePermission,
+): Array<components['schemas']['ResourceAccessType']> =>
+  permission === SharePermission.ReadWrite ? ['READ', 'WRITE'] : ['READ'];
 
 const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
   const formData = new FormData();
@@ -214,6 +256,13 @@ export class FilesService {
     };
   }
 
+  /*
+   * Parallels uploadFileStream() below: both independently implement the
+   * DIAL Core create-only upload contract (`If-None-Match: '*'`, 412 -> 409
+   * Conflict). uploadFileStream() can't reuse this SDK/FormData path without
+   * re-buffering the staged archive entry into memory (design D2). If the
+   * upload contract changes, update both.
+   */
   async uploadFile(
     bucket: string,
     path: string,
@@ -271,6 +320,359 @@ export class FilesService {
       }
       this.logger.error(`Upload failed for ${bucket}/${path}`, err);
       return handleDialSdkError(err, 'files.uploadFile', this.logger);
+    }
+  }
+
+  async uploadArchive(
+    bucket: string,
+    destinationPath: string,
+    archiveFile: UploadedArchiveFile,
+    token: string,
+  ): Promise<UploadArchiveResponseDto> {
+    if (archiveFile.path === '') {
+      throw new BadRequestException('file is required');
+    }
+
+    const maxArchiveBytes =
+      this.configService.get<number>('ARCHIVE_UPLOAD_MAX_BYTES') ?? 536_870_912;
+    if (archiveFile.size != null && archiveFile.size > maxArchiveBytes) {
+      throw new PayloadTooLargeException('Archive payload too large');
+    }
+
+    const maxFiles =
+      this.configService.get<number>('ARCHIVE_UPLOAD_MAX_FILES') ?? 1000;
+    const maxUncompressedBytes =
+      this.configService.get<number>('ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES') ??
+      2_147_483_648;
+    const timeoutMs =
+      this.configService.get<number>('ARCHIVE_UPLOAD_TIMEOUT_MS') ?? 300_000;
+
+    const abortController = new AbortController();
+    const timeoutHandle = setTimeout(() => abortController.abort(), timeoutMs);
+
+    try {
+      const results = await this.extractAndUploadArchive(
+        bucket,
+        destinationPath,
+        archiveFile.path,
+        token,
+        maxFiles,
+        maxUncompressedBytes,
+        abortController.signal,
+      );
+
+      const successCount = results.filter((r) => r.success).length;
+      this.logger.log(
+        `Archive upload completed: successCount=${successCount}, failedCount=${results.length - successCount}`,
+      );
+
+      return { results };
+    } catch (err) {
+      if (abortController.signal.aborted) {
+        this.logger.error(
+          `Archive upload timed out: bucket=${bucket}, timeoutMs=${timeoutMs}`,
+        );
+        throw new ServiceUnavailableException('Archive upload timed out');
+      }
+      if (err instanceof HttpException) {
+        throw err;
+      }
+      this.logger.warn(
+        `Archive upload failed to open or extract: bucket=${bucket}, error=${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw new BadRequestException('Invalid or corrupted ZIP archive');
+    } finally {
+      clearTimeout(timeoutHandle);
+    }
+  }
+
+  private async extractAndUploadArchive(
+    bucket: string,
+    destinationPath: string,
+    archivePath: string,
+    token: string,
+    maxFiles: number,
+    maxUncompressedBytes: number,
+    signal: AbortSignal,
+  ): Promise<UploadArchiveEntryResultDto[]> {
+    let normalizedDestination = destinationPath;
+    while (normalizedDestination.endsWith('/')) {
+      normalizedDestination = normalizedDestination.slice(0, -1);
+    }
+    const results: UploadArchiveEntryResultDto[] = [];
+    let entryCount = 0;
+    let cumulativeBytes = 0;
+    const tempDirectory = await mkdtemp(join(tmpdir(), 'dial-upload-archive-'));
+
+    /*
+     * decodeStrings: false — yauzl's own filename validation aborts the
+     * *whole* archive on the first unsafe entry name, but D4 requires
+     * per-entry rejection (record a failed result, keep processing the
+     * rest). Reading the raw name lets resolveArchiveEntryPath be the sole
+     * zip-slip authority.
+     */
+    const zipfile = await yauzl
+      .openPromise(archivePath, {
+        lazyEntries: true,
+        decodeStrings: false,
+      })
+      .catch(async (err: unknown) => {
+        await this.removeArchiveUploadTempDirectory(tempDirectory);
+        throw err;
+      });
+
+    this.logger.log(
+      `Archive upload started: bucket=${bucket}, entryCount=${zipfile.entryCount}`,
+    );
+
+    try {
+      for await (const entry of zipfile.eachEntry()) {
+        this.throwIfArchiveUploadAborted(signal);
+
+        const fileName = this.decodeArchiveEntryName(entry.fileName);
+        const { isDirectory, safeRelativePath } =
+          this.resolveArchiveEntryPath(fileName);
+
+        if (isDirectory) {
+          continue;
+        }
+
+        entryCount += 1;
+        if (entryCount > maxFiles) {
+          throw new UnprocessableEntityException(
+            `Archive contains more than ${maxFiles} files`,
+          );
+        }
+
+        if (safeRelativePath == null) {
+          results.push({
+            path: fileName,
+            success: false,
+            error: 'Invalid path',
+          });
+          continue;
+        }
+
+        const entryPath = normalizedDestination
+          ? `${normalizedDestination}/${safeRelativePath}`
+          : safeRelativePath;
+        const entryTempPath = join(
+          tempDirectory,
+          `${entryCount}-${randomUUID()}.entry`,
+        );
+
+        const stream = await zipfile.openReadStreamPromise(entry);
+        const entryBytes = await this.stageArchiveEntryToTemp(
+          stream,
+          entryTempPath,
+          maxUncompressedBytes - cumulativeBytes,
+          signal,
+        );
+        cumulativeBytes += entryBytes;
+
+        try {
+          await this.uploadArchiveEntryFromTemp(
+            bucket,
+            entryPath,
+            entryTempPath,
+            token,
+            signal,
+          );
+          results.push({ path: entryPath, success: true });
+        } catch (err) {
+          this.throwIfArchiveUploadAborted(signal);
+
+          const isConflict =
+            err instanceof HttpException &&
+            err.getStatus() === HttpStatus.CONFLICT;
+          results.push({
+            path: entryPath,
+            success: false,
+            error: isConflict
+              ? 'Conflict'
+              : err instanceof HttpException
+                ? err.message
+                : 'Upload failed',
+          });
+        }
+      }
+    } finally {
+      zipfile.close();
+      await this.removeArchiveUploadTempDirectory(tempDirectory);
+    }
+
+    return results;
+  }
+
+  private async stageArchiveEntryToTemp(
+    stream: Readable,
+    tempPath: string,
+    remainingBudget: number,
+    signal: AbortSignal,
+  ): Promise<number> {
+    this.throwIfArchiveUploadAborted(signal);
+
+    if (remainingBudget < 0) {
+      throw new UnprocessableEntityException(
+        'Archive uncompressed size exceeds the configured limit',
+      );
+    }
+
+    let readBytes = 0;
+    const limiter = new Transform({
+      transform(chunk: Buffer, _encoding, callback) {
+        readBytes += chunk.length;
+        if (readBytes > remainingBudget) {
+          callback(
+            new UnprocessableEntityException(
+              'Archive uncompressed size exceeds the configured limit',
+            ),
+          );
+          return;
+        }
+        callback(null, chunk);
+      },
+    });
+    const abortCurrentEntry = (): void => {
+      const error = new Error('ARCHIVE_UPLOAD_ABORTED');
+      stream.destroy(error);
+      limiter.destroy(error);
+    };
+
+    signal.addEventListener('abort', abortCurrentEntry, { once: true });
+
+    try {
+      await pipeline(stream, limiter, createWriteStream(tempPath));
+      this.throwIfArchiveUploadAborted(signal);
+      return readBytes;
+    } finally {
+      signal.removeEventListener('abort', abortCurrentEntry);
+    }
+  }
+
+  private async uploadArchiveEntryFromTemp(
+    bucket: string,
+    path: string,
+    tempPath: string,
+    token: string,
+    signal: AbortSignal,
+  ): Promise<void> {
+    const stream = createReadStream(tempPath);
+    await this.uploadFileStream(bucket, path, stream, token, signal);
+  }
+
+  /*
+   * Parallels uploadFile() above: both independently implement the DIAL Core
+   * create-only upload contract (`If-None-Match: '*'`, 412 -> 409 Conflict).
+   * This raw-fetch path exists only so archive extraction can stream from
+   * disk instead of re-buffering into a FormData/Blob (design D2). If the
+   * upload contract changes, update both.
+   */
+  private async uploadFileStream(
+    bucket: string,
+    path: string,
+    fileStream: Readable,
+    token: string,
+    signal: AbortSignal,
+  ): Promise<void> {
+    this.throwIfArchiveUploadAborted(signal);
+
+    const boundary = `dial-upload-${randomUUID()}`;
+    const multipartStream = this.createMultipartFileStream(
+      fileStream,
+      boundary,
+      getFileNameFromPath(path),
+    );
+    const abortCurrentUpload = (): void => {
+      const error = new Error('ARCHIVE_UPLOAD_ABORTED');
+      fileStream.destroy(error);
+      multipartStream.destroy(error);
+    };
+
+    signal.addEventListener('abort', abortCurrentUpload, { once: true });
+
+    try {
+      /*
+       * The SDK upload helper requires FormData/Blob, which would buffer the
+       * staged file again. Raw fetch lets archive uploads stream from disk.
+       */
+      const response = await fetch(this.buildDialUploadUrl(bucket, path), {
+        method: 'PUT',
+        headers: {
+          ...getBearerAuthHeaders(token),
+          'If-None-Match': '*',
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        },
+        body: Readable.toWeb(multipartStream) as unknown as BodyInit,
+        signal,
+        duplex: 'half',
+      } as RequestInit & { duplex: 'half' });
+
+      if (response.status === 412) {
+        throw new ConflictException('File already exists at this path');
+      }
+
+      if (!response.ok) {
+        return mapDialHttpStatus(
+          response.status,
+          'files.uploadFile',
+          this.logger,
+        );
+      }
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        'files.uploadFile',
+        this.logger,
+        this.getTimeoutMs(),
+      );
+    } finally {
+      signal.removeEventListener('abort', abortCurrentUpload);
+      fileStream.destroy();
+      multipartStream.destroy();
+    }
+  }
+
+  private createMultipartFileStream(
+    fileStream: Readable,
+    boundary: string,
+    fileName: string,
+  ): Readable {
+    const safeFileName = fileName.replace(/[\r\n"]/g, '_');
+
+    async function* parts(): AsyncGenerator<Buffer> {
+      yield Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${safeFileName}"\r\nContent-Type: application/octet-stream\r\n\r\n`,
+      );
+      for await (const chunk of fileStream) {
+        yield Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      }
+      yield Buffer.from(`\r\n--${boundary}--\r\n`);
+    }
+
+    return Readable.from(parts());
+  }
+
+  private buildDialUploadUrl(bucket: string, path: string): string {
+    const baseUrl = this.dialClient.baseUrl.replace(/\/+$/, '');
+    return `${baseUrl}/v1/files/${encodeURIComponent(bucket)}/${encodeDialResourcePath(path)}`;
+  }
+
+  private async removeArchiveUploadTempDirectory(
+    tempDirectory: string,
+  ): Promise<void> {
+    await rm(tempDirectory, { recursive: true, force: true }).catch(
+      (err: unknown) => {
+        this.logger.warn(
+          `Failed to remove archive upload temp directory: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      },
+    );
+  }
+
+  private throwIfArchiveUploadAborted(signal: AbortSignal): void {
+    if (signal.aborted) {
+      throw new ServiceUnavailableException('Archive upload timed out');
     }
   }
 
@@ -409,6 +811,202 @@ export class FilesService {
     } catch (err) {
       this.logger.warn('listSharedFiles failed', err);
       return handleDialSdkError(err, 'files.listSharedFiles', this.logger);
+    }
+  }
+
+  async listSharedByMe(
+    bucket: string,
+    at: string,
+  ): Promise<ListFilesResponseDto> {
+    try {
+      const { data, error, response } =
+        await this.dialClient.client.getSharedResources({
+          headers: getBearerAuthHeaders(at),
+          body: {
+            resourceTypes: ['FILE'],
+            with: 'others',
+            includeUserInfo: false,
+          },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        });
+
+      if (error != null) {
+        this.logger.warn(
+          `DIAL Core getSharedResources (others) returned error: status=${response.status}`,
+        );
+        return handleDialSdkError(
+          error,
+          'files.listSharedByMe',
+          this.logger,
+          response,
+        );
+      }
+
+      const sharedData = (data ?? {}) as typeof data & {
+        resources?: DialFileItem[];
+      };
+      const rawItems = sharedData.resources ?? [];
+
+      const items = rawItems
+        .filter((item) => (item.bucket ?? '') === bucket)
+        .map((item) => normalizeFileItem(item, bucket));
+
+      this.logger.debug(
+        `listSharedByMe: bucket=${bucket}, count=${items.length}`,
+      );
+
+      return { bucket, path: '', items };
+    } catch (err) {
+      this.logger.warn(`listSharedByMe failed for bucket=${bucket}`, err);
+      return handleDialSdkError(err, 'files.listSharedByMe', this.logger);
+    }
+  }
+
+  async shareFiles(
+    items: ShareItemDto[],
+    permission: SharePermission,
+    at: string,
+  ): Promise<ShareFilesResponseDto> {
+    this.logger.log(`Share files started: itemCount=${items.length}`);
+
+    try {
+      const permissions = mapSharePermission(permission);
+      const { data, error, response } =
+        await this.dialClient.client.shareResource({
+          headers: getBearerAuthHeaders(at),
+          body: {
+            invitationType: 'LINK',
+            resources: items.map((item) => ({
+              url: buildDialFileResourceUrl(item.bucket, item.path),
+              permissions,
+            })),
+          },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        });
+
+      if (error != null) {
+        this.logger.warn(
+          `Share files failed: itemCount=${items.length}, status=${response.status}`,
+        );
+        return handleDialSdkError(
+          error,
+          'files.shareFiles',
+          this.logger,
+          response,
+        );
+      }
+
+      if (!data?.invitationLink) {
+        this.logger.warn(
+          `DIAL Core returned success with no invitation link: itemCount=${items.length}`,
+        );
+        throw new BadGatewayException(
+          'DIAL Core did not return an invitation link',
+        );
+      }
+
+      this.logger.log(
+        `Share files completed: itemCount=${items.length}, success=true`,
+      );
+
+      return { invitationLink: data.invitationLink };
+    } catch (err) {
+      if (err instanceof HttpException) {
+        throw err;
+      }
+      this.logger.error(
+        `Share files exception: itemCount=${items.length}`,
+        err,
+      );
+      return handleDialSdkError(err, 'files.shareFiles', this.logger);
+    }
+  }
+
+  async revokeAccess(
+    items: RevokeAccessItemDto[],
+    at: string,
+  ): Promise<RevokeAccessResponseDto> {
+    this.logger.log(`Revoke access started: itemCount=${items.length}`);
+
+    try {
+      const { error, response } =
+        await this.dialClient.client.revokeSharedResources({
+          headers: getBearerAuthHeaders(at),
+          body: {
+            resources: items.map((item) => ({
+              url: buildDialFileResourceUrl(item.bucket, item.path),
+            })),
+          },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        });
+
+      if (error != null) {
+        this.logger.warn(
+          `Revoke access failed: itemCount=${items.length}, status=${response.status}`,
+        );
+        return handleDialSdkError(
+          error,
+          'files.revokeAccess',
+          this.logger,
+          response,
+        );
+      }
+
+      this.logger.log(
+        `Revoke access completed: itemCount=${items.length}, success=true`,
+      );
+
+      return { success: true };
+    } catch (err) {
+      this.logger.error(
+        `Revoke access exception: itemCount=${items.length}`,
+        err,
+      );
+      return handleDialSdkError(err, 'files.revokeAccess', this.logger);
+    }
+  }
+
+  async discardShared(
+    items: DiscardSharedItemDto[],
+    at: string,
+  ): Promise<DiscardSharedResponseDto> {
+    this.logger.log(`Discard shared started: itemCount=${items.length}`);
+
+    try {
+      const { error, response } =
+        await this.dialClient.client.discardSharedResources({
+          headers: getBearerAuthHeaders(at),
+          body: {
+            resources: items.map((item) => ({
+              url: buildDialFileResourceUrl(item.bucket, item.path),
+            })),
+          },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        });
+
+      if (error != null) {
+        this.logger.warn(
+          `Discard shared failed: itemCount=${items.length}, status=${response.status}`,
+        );
+        return handleDialSdkError(
+          error,
+          'files.discardShared',
+          this.logger,
+          response,
+        );
+      }
+
+      this.logger.log(
+        `Discard shared completed: itemCount=${items.length}, success=true`,
+      );
+
+      return { success: true };
+    } catch (err) {
+      this.logger.error(
+        `Discard shared exception: itemCount=${items.length}`,
+        err,
+      );
+      return handleDialSdkError(err, 'files.discardShared', this.logger);
     }
   }
 
@@ -732,6 +1330,36 @@ export class FilesService {
     }
     const joined = root ? `${root}/${relative}` : relative;
     return joined;
+  }
+
+  /**
+   * Zip-slip defense for an uploaded archive entry (D4): rejects absolute
+   * paths, drive letters, `..` segments, and backslashes. Directory entries
+   * (trailing `/`) are flagged so callers can skip them silently rather than
+   * treat them as a failed result.
+   */
+  resolveArchiveEntryPath(entryFileName: string): ArchiveEntryPathResult {
+    if (entryFileName.endsWith('/')) {
+      return { isDirectory: true, safeRelativePath: null };
+    }
+
+    const isUnsafe =
+      entryFileName === '' ||
+      entryFileName.startsWith('/') ||
+      /^[a-zA-Z]:/.test(entryFileName) ||
+      entryFileName.includes('\\') ||
+      entryFileName.split('/').includes('..');
+
+    return {
+      isDirectory: false,
+      safeRelativePath: isUnsafe ? null : entryFileName,
+    };
+  }
+
+  /** Decodes a yauzl entry name read with `decodeStrings: false` (raw `Buffer`), or passes a string through unchanged. */
+  private decodeArchiveEntryName(rawFileName: string): string {
+    const raw: unknown = rawFileName;
+    return Buffer.isBuffer(raw) ? raw.toString('utf8') : rawFileName;
   }
 
   private getRelativeChildPath(

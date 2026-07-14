@@ -12,6 +12,7 @@ import {
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { ApplicationsResponseDto } from './dto/application.dto';
@@ -22,6 +23,30 @@ import type {
 
 type DialApplication = components['schemas']['Application'];
 
+const APPLICATION_RESOURCE_PREFIX = 'applications/';
+
+interface DialApplicationResource {
+  bucket: string;
+  path: string;
+}
+
+const parseDialApplicationResource = (
+  applicationName: string,
+): DialApplicationResource | undefined => {
+  if (!applicationName.startsWith(APPLICATION_RESOURCE_PREFIX)) {
+    return undefined;
+  }
+
+  const resource = applicationName.slice(APPLICATION_RESOURCE_PREFIX.length);
+  const [bucket, ...pathSegments] = resource.split('/');
+  const path = pathSegments.join('/');
+  if (!bucket || !path) {
+    return undefined;
+  }
+
+  return { bucket, path: encodeDialResourcePath(path) };
+};
+
 @Injectable()
 export class ApplicationsService {
   private readonly logger = new Logger(ApplicationsService.name);
@@ -30,6 +55,38 @@ export class ApplicationsService {
     private readonly dialClient: DialClientService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
+
+  private async getUserBucket(
+    authHeaders: ReturnType<typeof getBearerAuthHeaders>,
+    context: string,
+  ): Promise<string> {
+    const result = await this.dialClient.client.getUserBucket({
+      headers: authHeaders,
+    });
+    if (result.error) {
+      return mapDialHttpStatus(result.response.status, context, this.logger);
+    }
+    const { bucket } = result.data ?? {};
+    if (bucket == null) {
+      throw new BadGatewayException('DIAL Core returned an empty bucket');
+    }
+    return bucket;
+  }
+
+  private async resolveApplicationResource(
+    authHeaders: ReturnType<typeof getBearerAuthHeaders>,
+    applicationName: string,
+  ): Promise<DialApplicationResource> {
+    const resource = parseDialApplicationResource(applicationName);
+    if (resource != null) {
+      return resource;
+    }
+
+    return {
+      bucket: await this.getUserBucket(authHeaders, 'get user bucket'),
+      path: encodeDialResourcePath(applicationName),
+    };
+  }
 
   async listApplications(
     userSub: string,
@@ -125,6 +182,46 @@ export class ApplicationsService {
       return { id: `applications/${bucket}/${appPath}` };
     } catch (err) {
       return handleDialFetchError(err, 'create application', this.logger, 0);
+    }
+  }
+
+  async deleteApplication(
+    userSub: string,
+    accessToken: string,
+    applicationName: string,
+  ): Promise<void> {
+    const authHeaders = getBearerAuthHeaders(accessToken);
+
+    try {
+      const { bucket, path } = await this.resolveApplicationResource(
+        authHeaders,
+        applicationName,
+      );
+      const response = await this.dialClient.client.deleteCustomApplication(
+        bucket,
+        path,
+        {
+          headers: authHeaders,
+        },
+      );
+      if (response.error) {
+        return mapDialHttpStatus(
+          response.response.status,
+          `delete application "${applicationName}"`,
+          this.logger,
+        );
+      }
+      await this.cacheManager.del(`applications:list:${userSub}`);
+      this.logger.debug(
+        `Deleted application ${applicationName} (sub: ${userSub})`,
+      );
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        `delete application "${applicationName}"`,
+        this.logger,
+        0,
+      );
     }
   }
 }

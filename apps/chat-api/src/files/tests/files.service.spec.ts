@@ -1,18 +1,26 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { PassThrough } from 'node:stream';
+import { crc32 } from 'node:zlib';
 import {
   BadGatewayException,
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   HttpException,
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import archiver from 'archiver';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { ArchiveItemNodeType } from '../dto/download-archive.dto';
+import { SharePermission } from '../dto/share-files.dto';
 import { FilesService } from '../files.service';
 
 type SdkClient = {
@@ -23,11 +31,15 @@ type SdkClient = {
   deleteFile: ReturnType<typeof vi.fn>;
   moveResource: ReturnType<typeof vi.fn>;
   copyResource: ReturnType<typeof vi.fn>;
+  shareResource: ReturnType<typeof vi.fn>;
+  revokeSharedResources: ReturnType<typeof vi.fn>;
+  discardSharedResources: ReturnType<typeof vi.fn>;
 };
 
-function makeService() {
+function makeService(configOverrides: Record<string, unknown> = {}) {
   const configService = {
     get: vi.fn((key: string) => {
+      if (key in configOverrides) return configOverrides[key];
       if (key === 'DIAL_CORE_URL') return 'http://dial-core';
       if (key === 'FILE_TRANSFER_TIMEOUT_MS') return 30_000;
       if (key === 'ARCHIVE_TIMEOUT_MS') return 300_000;
@@ -44,6 +56,9 @@ function makeService() {
     deleteFile: vi.fn(),
     moveResource: vi.fn(),
     copyResource: vi.fn(),
+    shareResource: vi.fn(),
+    revokeSharedResources: vi.fn(),
+    discardSharedResources: vi.fn(),
   };
 
   const dialClient = {
@@ -82,6 +97,113 @@ const errResponse = (status: number) => ({
 });
 
 const mockFile = { buffer: Buffer.from('hello'), mimetype: 'application/pdf' };
+
+const buildZipBuffer = (
+  entries: Array<{ name: string; content?: string }>,
+): Promise<Buffer> =>
+  new Promise((resolve, reject) => {
+    const archive = archiver('zip', { store: true });
+    const chunks: Buffer[] = [];
+    archive.on('data', (chunk: Buffer) => chunks.push(chunk));
+    archive.on('error', reject);
+    archive.on('end', () => resolve(Buffer.concat(chunks)));
+    for (const entry of entries) {
+      archive.append(Buffer.from(entry.content ?? 'content'), {
+        name: entry.name,
+      });
+    }
+    void archive.finalize();
+  });
+
+const okFetchUpload = (): Response => new Response(null, { status: 200 });
+
+const withArchiveFixture = async <T>(
+  buffer: Buffer,
+  run: (archiveFile: { path: string; size: number }) => Promise<T>,
+): Promise<T> => {
+  const directory = await mkdtemp(join(tmpdir(), 'files-service-archive-'));
+  const archivePath = join(directory, 'archive.zip');
+  await writeFile(archivePath, buffer);
+
+  try {
+    return await run({ path: archivePath, size: buffer.length });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+};
+
+/*
+ * `archiver` sanitizes entry names (strips `..`/leading `/`) before writing,
+ * so it cannot produce a zip-slip fixture. This hand-rolls a minimal, single
+ * central-directory-record ZIP (stored/uncompressed) with an arbitrary raw
+ * entry name to exercise the service's own path-safety rejection.
+ */
+const buildRawZipBuffer = (
+  entries: Array<{ name: string; content?: string }>,
+): Buffer => {
+  const localEntries: Buffer[] = [];
+  const centralEntries: Buffer[] = [];
+  let offset = 0;
+
+  for (const { name, content = 'content' } of entries) {
+    const nameBuf = Buffer.from(name, 'utf8');
+    const contentBuf = Buffer.from(content, 'utf8');
+    const crc = crc32(contentBuf);
+
+    const localHeader = Buffer.alloc(30);
+    localHeader.writeUInt32LE(0x04034b50, 0);
+    localHeader.writeUInt16LE(20, 4);
+    localHeader.writeUInt16LE(0, 6);
+    localHeader.writeUInt16LE(0, 8);
+    localHeader.writeUInt16LE(0, 10);
+    localHeader.writeUInt16LE(0, 12);
+    localHeader.writeUInt32LE(crc, 14);
+    localHeader.writeUInt32LE(contentBuf.length, 18);
+    localHeader.writeUInt32LE(contentBuf.length, 22);
+    localHeader.writeUInt16LE(nameBuf.length, 26);
+    localHeader.writeUInt16LE(0, 28);
+
+    const localEntry = Buffer.concat([localHeader, nameBuf, contentBuf]);
+    localEntries.push(localEntry);
+
+    const centralHeader = Buffer.alloc(46);
+    centralHeader.writeUInt32LE(0x02014b50, 0);
+    centralHeader.writeUInt16LE(20, 4);
+    centralHeader.writeUInt16LE(20, 6);
+    centralHeader.writeUInt16LE(0, 8);
+    centralHeader.writeUInt16LE(0, 10);
+    centralHeader.writeUInt16LE(0, 12);
+    centralHeader.writeUInt16LE(0, 14);
+    centralHeader.writeUInt32LE(crc, 16);
+    centralHeader.writeUInt32LE(contentBuf.length, 20);
+    centralHeader.writeUInt32LE(contentBuf.length, 24);
+    centralHeader.writeUInt16LE(nameBuf.length, 28);
+    centralHeader.writeUInt16LE(0, 30);
+    centralHeader.writeUInt16LE(0, 32);
+    centralHeader.writeUInt16LE(0, 34);
+    centralHeader.writeUInt16LE(0, 36);
+    centralHeader.writeUInt32LE(0, 38);
+    centralHeader.writeUInt32LE(offset, 42);
+
+    centralEntries.push(Buffer.concat([centralHeader, nameBuf]));
+    offset += localEntry.length;
+  }
+
+  const localSection = Buffer.concat(localEntries);
+  const centralSection = Buffer.concat(centralEntries);
+
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(0, 4);
+  eocd.writeUInt16LE(0, 6);
+  eocd.writeUInt16LE(entries.length, 8);
+  eocd.writeUInt16LE(entries.length, 10);
+  eocd.writeUInt32LE(centralSection.length, 12);
+  eocd.writeUInt32LE(localSection.length, 16);
+  eocd.writeUInt16LE(0, 20);
+
+  return Buffer.concat([localSection, centralSection, eocd]);
+};
 
 describe('FilesService', () => {
   beforeEach(() => {
@@ -1273,6 +1395,283 @@ describe('FilesService', () => {
     });
   });
 
+  describe('resolveArchiveEntryPath', () => {
+    it('rejects a parent-directory traversal segment', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('../../etc/passwd')).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
+
+    it('rejects an absolute path', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('/etc/passwd')).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
+
+    it('rejects a Windows drive-letter absolute path', () => {
+      const { service } = makeService();
+      expect(
+        service.resolveArchiveEntryPath('C:\\Windows\\System32\\config'),
+      ).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
+
+    it('accepts a valid nested relative path', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('reports/2026/q1.pdf')).toEqual({
+        isDirectory: false,
+        safeRelativePath: 'reports/2026/q1.pdf',
+      });
+    });
+
+    it('identifies directory entries for silent skipping', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('reports/')).toEqual({
+        isDirectory: true,
+        safeRelativePath: null,
+      });
+    });
+
+    it('rejects a blank (non-directory) entry name', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('')).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
+
+    it('rejects a bare parent-directory entry name', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('..')).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
+  });
+
+  describe('uploadArchive', () => {
+    it('uploads all entries successfully', async () => {
+      const { service } = makeService();
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValue(okFetchUpload());
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([
+        { path: 'reports/a.txt', success: true },
+        { path: 'reports/b.txt', success: true },
+      ]);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(fetchSpy.mock.calls[0]?.[0]).toBe(
+        'http://dial-core/v1/files/bucket/reports/a.txt',
+      );
+    });
+
+    it('returns an empty results array for an empty archive', async () => {
+      const { service } = makeService();
+      const buffer = await buildZipBuffer([]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([]);
+    });
+
+    it('uploads archive entries to the bucket root when destination is empty', async () => {
+      const { service } = makeService();
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValue(okFetchUpload());
+      const buffer = await buildZipBuffer([{ name: 'a.txt' }]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', '', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([{ path: 'a.txt', success: true }]);
+      expect(fetchSpy.mock.calls[0]?.[0]).toBe(
+        'http://dial-core/v1/files/bucket/a.txt',
+      );
+    });
+
+    it('throws a validation error for a non-ZIP buffer', async () => {
+      const { service } = makeService();
+      const buffer = Buffer.from('not a zip file');
+
+      await withArchiveFixture(buffer, async (archiveFile) => {
+        await expect(
+          service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+        ).rejects.toThrow(BadRequestException);
+      });
+    });
+
+    it('aborts once the entry-count limit is exceeded, with zero uploads attempted after the limit', async () => {
+      const { service } = makeService({
+        ARCHIVE_UPLOAD_MAX_FILES: 1,
+      });
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValue(okFetchUpload());
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      await withArchiveFixture(buffer, async (archiveFile) => {
+        await expect(
+          service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+        ).rejects.toThrow(UnprocessableEntityException);
+      });
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('aborts mid-extraction once cumulative uncompressed bytes exceed the limit, retaining prior successful uploads', async () => {
+      const { service } = makeService({
+        ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES: 10,
+      });
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValue(okFetchUpload());
+      const buffer = await buildZipBuffer([
+        { name: 'small.txt', content: 'a'.repeat(5) },
+        { name: 'big.txt', content: 'b'.repeat(50) },
+      ]);
+
+      await withArchiveFixture(buffer, async (archiveFile) => {
+        await expect(
+          service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+        ).rejects.toThrow(UnprocessableEntityException);
+      });
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchSpy.mock.calls[0]?.[0]).toBe(
+        'http://dial-core/v1/files/bucket/reports/small.txt',
+      );
+    });
+
+    it('reports a conflicting entry as failed while other entries still succeed', async () => {
+      const { service } = makeService();
+      vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(new Response(null, { status: 412 }))
+        .mockResolvedValueOnce(okFetchUpload());
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([
+        { path: 'reports/a.txt', success: false, error: 'Conflict' },
+        { path: 'reports/b.txt', success: true },
+      ]);
+    });
+
+    it('rejects path-traversal entries without attempting to upload them', async () => {
+      const { service } = makeService();
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValue(okFetchUpload());
+      const buffer = buildRawZipBuffer([
+        { name: '../../etc/passwd' },
+        { name: 'safe.txt' },
+      ]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([
+        { path: '../../etc/passwd', success: false, error: 'Invalid path' },
+        { path: 'reports/safe.txt', success: true },
+      ]);
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('throws ServiceUnavailableException and stops scheduling uploads when the timeout is exceeded', async () => {
+      const { service } = makeService({
+        ARCHIVE_UPLOAD_TIMEOUT_MS: 250,
+      });
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
+        (_input, init) =>
+          new Promise<Response>((resolve, reject) => {
+            const signal = (init as RequestInit | undefined)?.signal;
+            signal?.addEventListener(
+              'abort',
+              () => {
+                reject(
+                  Object.assign(new Error('Aborted'), {
+                    name: 'AbortError',
+                  }),
+                );
+              },
+              { once: true },
+            );
+            setTimeout(() => resolve(okFetchUpload()), 1_000);
+          }),
+      );
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      await withArchiveFixture(buffer, async (archiveFile) => {
+        await expect(
+          service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+        ).rejects.toThrow(ServiceUnavailableException);
+      });
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('throws ServiceUnavailableException when the final entry upload times out', async () => {
+      const { service } = makeService({
+        ARCHIVE_UPLOAD_TIMEOUT_MS: 250,
+      });
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(
+        (_input, init) =>
+          new Promise<Response>((resolve, reject) => {
+            const signal = (init as RequestInit | undefined)?.signal;
+            signal?.addEventListener(
+              'abort',
+              () => {
+                reject(
+                  Object.assign(new Error('Aborted'), {
+                    name: 'AbortError',
+                  }),
+                );
+              },
+              { once: true },
+            );
+            setTimeout(() => resolve(okFetchUpload()), 1_000);
+          }),
+      );
+      const buffer = await buildZipBuffer([{ name: 'only.txt' }]);
+
+      await withArchiveFixture(buffer, async (archiveFile) => {
+        await expect(
+          service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+        ).rejects.toThrow(ServiceUnavailableException);
+      });
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('downloadArchive', () => {
     it('uses the archive timeout for downloading archive entries', async () => {
       const { service, sdkClient } = makeService();
@@ -2354,6 +2753,390 @@ describe('FilesService', () => {
 
       expect(result.results[0].success).toBe(true);
       expect(sdkClient.moveResource).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('shareFiles', () => {
+    const okShare = (invitationLink: string) => ({
+      error: undefined,
+      response: { status: 200 },
+      data: { invitationLink },
+    });
+
+    it('returns the invitation link for a single-item share with read permission', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.shareResource = vi
+        .fn()
+        .mockResolvedValue(okShare('https://chat.example.com/share/abc123'));
+
+      const result = await service.shareFiles(
+        [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+        SharePermission.Read,
+        'token',
+      );
+
+      expect(result).toEqual({
+        invitationLink: 'https://chat.example.com/share/abc123',
+      });
+      expect(sdkClient.shareResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+          body: {
+            invitationType: 'LINK',
+            resources: [
+              {
+                url: 'files/user-bucket/reports/q1.pdf',
+                permissions: ['READ'],
+              },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('maps readWrite permission to READ and WRITE', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.shareResource = vi
+        .fn()
+        .mockResolvedValue(okShare('https://chat.example.com/share/xyz'));
+
+      await service.shareFiles(
+        [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+        SharePermission.ReadWrite,
+        'token',
+      );
+
+      expect(sdkClient.shareResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            resources: [
+              expect.objectContaining({ permissions: ['READ', 'WRITE'] }),
+            ],
+          }),
+        }),
+      );
+    });
+
+    it('issues exactly one Core call for a multi-item share', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.shareResource = vi
+        .fn()
+        .mockResolvedValue(okShare('https://chat.example.com/share/multi'));
+
+      const result = await service.shareFiles(
+        [
+          { bucket: 'user-bucket', path: 'a.pdf' },
+          { bucket: 'user-bucket', path: 'b.pdf' },
+          { bucket: 'user-bucket', path: 'c.pdf' },
+        ],
+        SharePermission.Read,
+        'token',
+      );
+
+      expect(sdkClient.shareResource).toHaveBeenCalledOnce();
+      expect(sdkClient.shareResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            resources: [
+              { url: 'files/user-bucket/a.pdf', permissions: ['READ'] },
+              { url: 'files/user-bucket/b.pdf', permissions: ['READ'] },
+              { url: 'files/user-bucket/c.pdf', permissions: ['READ'] },
+            ],
+          }),
+        }),
+      );
+      expect(result.invitationLink).toBe(
+        'https://chat.example.com/share/multi',
+      );
+    });
+
+    it('throws ForbiddenException on 403', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.shareResource = vi.fn().mockResolvedValue(errResponse(403));
+
+      await expect(
+        service.shareFiles(
+          [{ bucket: 'user-bucket', path: 'a.pdf' }],
+          SharePermission.Read,
+          'token',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws NotFoundException on 404', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.shareResource = vi.fn().mockResolvedValue(errResponse(404));
+
+      await expect(
+        service.shareFiles(
+          [{ bucket: 'user-bucket', path: 'a.pdf' }],
+          SharePermission.Read,
+          'token',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadGatewayException on an unexpected error', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.shareResource = vi.fn().mockResolvedValue(errResponse(500));
+
+      await expect(
+        service.shareFiles(
+          [{ bucket: 'user-bucket', path: 'a.pdf' }],
+          SharePermission.Read,
+          'token',
+        ),
+      ).rejects.toThrow(BadGatewayException);
+    });
+  });
+
+  describe('revokeAccess', () => {
+    const okRevoke = () => ({
+      error: undefined,
+      response: { status: 200 },
+      data: undefined,
+    });
+
+    it('returns success=true for an owned, previously-shared resource', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.revokeSharedResources = vi.fn().mockResolvedValue(okRevoke());
+
+      const result = await service.revokeAccess(
+        [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+        'token',
+      );
+
+      expect(result).toEqual({ success: true });
+      expect(sdkClient.revokeSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+          body: {
+            resources: [{ url: 'files/user-bucket/reports/q1.pdf' }],
+          },
+        }),
+      );
+    });
+
+    it('calls Core once with the full item list for a batch', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.revokeSharedResources = vi.fn().mockResolvedValue(okRevoke());
+
+      await service.revokeAccess(
+        [
+          { bucket: 'user-bucket', path: 'a.pdf' },
+          { bucket: 'user-bucket', path: 'b.pdf' },
+          { bucket: 'user-bucket', path: 'c.pdf' },
+          { bucket: 'user-bucket', path: 'd.pdf' },
+        ],
+        'token',
+      );
+
+      expect(sdkClient.revokeSharedResources).toHaveBeenCalledOnce();
+      expect(sdkClient.revokeSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: {
+            resources: [
+              { url: 'files/user-bucket/a.pdf' },
+              { url: 'files/user-bucket/b.pdf' },
+              { url: 'files/user-bucket/c.pdf' },
+              { url: 'files/user-bucket/d.pdf' },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('throws ForbiddenException when the caller does not own the resource', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.revokeSharedResources = vi
+        .fn()
+        .mockResolvedValue(errResponse(403));
+
+      await expect(
+        service.revokeAccess(
+          [{ bucket: 'user-bucket', path: 'a.pdf' }],
+          'token',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws NotFoundException on 404', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.revokeSharedResources = vi
+        .fn()
+        .mockResolvedValue(errResponse(404));
+
+      await expect(
+        service.revokeAccess(
+          [{ bucket: 'user-bucket', path: 'a.pdf' }],
+          'token',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadGatewayException on an unexpected error', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.revokeSharedResources = vi
+        .fn()
+        .mockResolvedValue(errResponse(500));
+
+      await expect(
+        service.revokeAccess(
+          [{ bucket: 'user-bucket', path: 'a.pdf' }],
+          'token',
+        ),
+      ).rejects.toThrow(BadGatewayException);
+    });
+  });
+
+  describe('discardShared', () => {
+    const okDiscard = () => ({
+      error: undefined,
+      response: { status: 200 },
+      data: undefined,
+    });
+
+    it('returns success=true for an item shared with the caller', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.discardSharedResources = vi.fn().mockResolvedValue(okDiscard());
+
+      const result = await service.discardShared(
+        [{ bucket: 'owner-bucket', path: 'shared.pdf' }],
+        'token',
+      );
+
+      expect(result).toEqual({ success: true });
+      expect(sdkClient.discardSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+          body: {
+            resources: [{ url: 'files/owner-bucket/shared.pdf' }],
+          },
+        }),
+      );
+    });
+
+    it('calls Core once with the full item list for a batch', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.discardSharedResources = vi.fn().mockResolvedValue(okDiscard());
+
+      await service.discardShared(
+        [
+          { bucket: 'owner-bucket', path: 'a.pdf' },
+          { bucket: 'owner-bucket', path: 'b.pdf' },
+        ],
+        'token',
+      );
+
+      expect(sdkClient.discardSharedResources).toHaveBeenCalledOnce();
+    });
+
+    it('throws ForbiddenException when the resource is not shared with the caller', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.discardSharedResources = vi
+        .fn()
+        .mockResolvedValue(errResponse(403));
+
+      await expect(
+        service.discardShared(
+          [{ bucket: 'owner-bucket', path: 'a.pdf' }],
+          'token',
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws NotFoundException on 404', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.discardSharedResources = vi
+        .fn()
+        .mockResolvedValue(errResponse(404));
+
+      await expect(
+        service.discardShared(
+          [{ bucket: 'owner-bucket', path: 'a.pdf' }],
+          'token',
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadGatewayException on an unexpected error', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.discardSharedResources = vi
+        .fn()
+        .mockResolvedValue(errResponse(500));
+
+      await expect(
+        service.discardShared(
+          [{ bucket: 'owner-bucket', path: 'a.pdf' }],
+          'token',
+        ),
+      ).rejects.toThrow(BadGatewayException);
+    });
+  });
+
+  describe('listSharedByMe', () => {
+    it('returns normalized items for the given bucket, filtering out other buckets', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getSharedResources.mockResolvedValue({
+        error: undefined,
+        response: { status: 200 },
+        data: {
+          resources: [
+            {
+              nodeType: 'ITEM',
+              name: 'shared-by-me.pdf',
+              url: 'files/user-bucket/shared-by-me.pdf',
+              bucket: 'user-bucket',
+            },
+            {
+              nodeType: 'ITEM',
+              name: 'other-bucket.pdf',
+              url: 'files/other-bucket/other-bucket.pdf',
+              bucket: 'other-bucket',
+            },
+          ],
+        },
+      });
+
+      const result = await service.listSharedByMe('user-bucket', 'token');
+
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          name: 'shared-by-me.pdf',
+          bucket: 'user-bucket',
+        }),
+      ]);
+      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: {
+            resourceTypes: ['FILE'],
+            with: 'others',
+            includeUserInfo: false,
+          },
+        }),
+      );
+    });
+
+    it('returns an empty items array, not an error, when nothing has been shared', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getSharedResources.mockResolvedValue({
+        error: undefined,
+        response: { status: 200 },
+        data: { resources: [] },
+      });
+
+      const result = await service.listSharedByMe('user-bucket', 'token');
+
+      expect(result.items).toEqual([]);
+    });
+
+    it('throws BadGatewayException on a Core error', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getSharedResources.mockResolvedValue(errResponse(500));
+
+      await expect(
+        service.listSharedByMe('user-bucket', 'token'),
+      ).rejects.toThrow(BadGatewayException);
     });
   });
 });
