@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { SearchBar } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
@@ -14,6 +15,10 @@ export interface SearchInputProps {
   clearLabel: string;
   /** CSS class applied to the search icon. Defaults to `'text-secondary'`. */
   iconClassName?: string;
+  /** CSS class applied to the outer wrapper, merged over the default `'px-2 py-1'`. Override to change the pill's horizontal inset. */
+  wrapperClassName?: string;
+  /** CSS class applied to the search row, merged after its own border/radius defaults. Use an important-modifier class (e.g. `'!rounded-lg'`) to override the default pill shape. */
+  rowClassName?: string;
 }
 
 /**
@@ -28,8 +33,10 @@ export const SearchInput: FC<SearchInputProps> = memo(
     onChange,
     clearLabel,
     iconClassName = 'text-secondary',
+    wrapperClassName,
+    rowClassName,
   }) => (
-    <div className="px-3 py-2">
+    <div className={mergeClasses('px-3 py-2', wrapperClassName)}>
       <SearchBar
         value={value}
         onChange={onChange}
@@ -38,7 +45,10 @@ export const SearchInput: FC<SearchInputProps> = memo(
         iconClassName={iconClassName}
         iconSize={DIAL_ICON_SIZE.SM}
         iconStrokeWidth={1.5}
-        containerClassName="min-h-11 w-full gap-2 rounded-full border pe-3 ps-3 desktop:min-h-9"
+        containerClassName={mergeClasses(
+          'min-h-11 w-full gap-2 rounded-full border pe-3 ps-3 desktop:min-h-9',
+          rowClassName,
+        )}
         clearButtonClassName="size-11 desktop:size-6"
       />
     </div>

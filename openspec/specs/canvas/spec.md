@@ -80,10 +80,11 @@ None. The canvas is always available to authenticated users.
 
 ### Content type routing
 
-`useOpenAttachmentCanvas` maps a `DisplayAttachment` to a content payload. For `AttachmentType.File` attachments, `openFileCanvas` (`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`) first checks for a missing `contentType` with inline data (see "No-type inline-data fallback" below), then runs MIME-type routing (for stage attachments that carry a `contentType` but no file extension), then extension-based routing (lowercased):
+`useOpenAttachmentCanvas` maps a `DisplayAttachment` to a content payload. For `AttachmentType.File` attachments, `openFileCanvas` (`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`) first checks whether the attachment is reference-only (`attachment.url == null && attachment.referenceUrl != null` — a RAG/search-grounding chunk). When true, it calls `referenceAttachmentToPdfCanvasContent({ type: attachment.contentType, url: attachment.referenceUrl, title: attachment.name })`; if that returns a non-`null` `PdfCanvasContent` (the `referenceUrl` targets a `.pdf`, optionally with a `#page=N` fragment), the canvas opens with it immediately and no further routing runs. If it returns `null`, routing falls through unchanged — this applies uniformly to `CollapsedGroup` stage attachments and the plain attachment tray, so a reference-only PDF-page chunk (e.g. `reference_url: 'files/{bucket}/report.pdf#page=81'`) opens the actual referenced PDF at the referenced page instead of rendering its own `data`/`contentType` as Markdown or plain text. Otherwise, it checks for a missing `contentType` with inline data (see "No-type inline-data fallback" below), then runs MIME-type routing (for stage attachments that carry a `contentType` but no file extension), then extension-based routing (lowercased):
 
 | MIME type / Extension(s) | Resolver | Content type returned |
 |---|---|---|
+| Reference-only, PDF-page-detectable `referenceUrl` | `referenceAttachmentToPdfCanvasContent` | `PdfCanvasContent` (scrolled to the referenced page when present) |
 | No `contentType` (empty string) **and** `attachment.data != null` | `resolveTextCanvasContent` | `PlainTextCanvasContent` |
 | `text/markdown` MIME | `resolveMarkdownCanvasContent` | `MarkdownCanvasContent` |
 | `application/json` MIME | `resolveJsonCanvasContent` | `JsonCanvasContent` or `PlainTextCanvasContent` |

@@ -1,14 +1,23 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { TabRow } from '@epam/ai-dial-kit';
+import { GhostIconButton, TabRow } from '@epam/ai-dial-kit';
 import {
   DialCloseButton,
   DialConfirmationPopup,
   DialSkeleton,
 } from '@epam/ai-dial-ui-kit';
+import { IconChevronLeft } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import type { DetailsPanelProps } from '../../models/item-details-props';
+import type {
+  PublishFolderNode,
+  PublishHistoryEntry,
+} from '../../models/publish';
 import { CatalogDetailsTab } from '../../types/detail-tab';
+import { derivePublishState } from '../../utils/publish-state';
 import { getSignedInLevel } from '../../utils/toolset-credentials';
+import { usePublishFlow } from '../../utils/use-publish-flow';
+import { PublishFooter } from '../PublishPanel/PublishFooter';
+import { PublishPanel } from '../PublishPanel/PublishPanel';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
 import { CredentialsSection } from './Credentials/CredentialsSection';
@@ -19,6 +28,9 @@ import { AboutTab } from './TabsContent/About';
 import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
 import { Tools } from './TabsContent/Tools/Tools';
+
+const NO_OP_PUBLISH = async () => undefined;
+const EMPTY_PUBLISH_FOLDERS: PublishFolderNode[] = [];
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
 export const DetailsPanel: FC<DetailsPanelProps> = ({
@@ -31,6 +43,17 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
+  isPublishVisible,
+  getPublishHistory,
+  publishFolderItems = EMPTY_PUBLISH_FOLDERS,
+  publishExpandedPaths,
+  onPublishExpandedPathsChange,
+  publishLoadingPaths,
+  hasPublishWriteAccess,
+  onPublish,
+  onPublishSuccess,
+  onCreatePublishFolder,
+  publishTexts,
   shareOverlay,
   onEdit,
   onDelete,
@@ -49,6 +72,62 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [activeTab, setActiveTab] = useState<string>('');
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const [publishHistory, setPublishHistory] = useState<PublishHistoryEntry[]>(
+    [],
+  );
+  const [isPublishHistoryLoading, setIsPublishHistoryLoading] = useState(false);
+  const [hasPublishHistoryError, setHasPublishHistoryError] = useState(false);
+
+  useEffect(() => {
+    if (!isPublishOpen || !getPublishHistory) {
+      return;
+    }
+    let isCancelled = false;
+    setIsPublishHistoryLoading(true);
+    setHasPublishHistoryError(false);
+    getPublishHistory(item)
+      .then((entries) => {
+        if (!isCancelled) setPublishHistory(entries);
+      })
+      .catch(() => {
+        if (!isCancelled) setHasPublishHistoryError(true);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsPublishHistoryLoading(false);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [isPublishOpen, getPublishHistory, item]);
+
+  const publishFlow = usePublishFlow({
+    item,
+    history: publishHistory,
+    folderItems: publishFolderItems,
+    hasWriteAccess: hasPublishWriteAccess,
+    onCreateFolder: onCreatePublishFolder,
+    onPublish: onPublish ?? NO_OP_PUBLISH,
+    onPublishSuccess,
+  });
+
+  const publishDerived = useMemo(
+    () =>
+      derivePublishState({
+        hasSelectedFolder: publishFlow.selectedFolderPath != null,
+        hasExistingVersionInFolder: publishFlow.hasExistingVersionInFolder,
+        hasWriteAccess: publishFlow.hasWriteAccess,
+        isSubmitting: publishFlow.isSubmitting,
+        hasSubmitError: publishFlow.hasSubmitError,
+      }),
+    [
+      publishFlow.selectedFolderPath,
+      publishFlow.hasExistingVersionInFolder,
+      publishFlow.hasWriteAccess,
+      publishFlow.isSubmitting,
+      publishFlow.hasSubmitError,
+    ],
+  );
   const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
   const [isDirectLogoutConfirmOpen, setIsDirectLogoutConfirmOpen] =
     useState(false);
@@ -58,8 +137,15 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   }, [item.id, initialIsStarred]);
 
   useEffect(() => {
+    setActiveTab(CatalogDetailsTab.About);
+    setIsPublishOpen(false);
+    publishFlow.reset();
+    setPublishHistory([]);
+    setHasPublishHistoryError(false);
     setIsCredentialsOpen(false);
     setIsDirectLogoutConfirmOpen(false);
+    // Reset publish-flow-local state only when the displayed item changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
 
   const handleToggleCredentials = useCallback(() => {
@@ -92,6 +178,18 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  const handleOpenPublish = useCallback(() => setIsPublishOpen(true), []);
+  const handleClosePublish = useCallback(() => {
+    setIsPublishOpen(false);
+    publishFlow.reset();
+  }, [publishFlow]);
+  const handleSubmitPublish = useCallback(async () => {
+    const isSuccess = await publishFlow.handleSubmit();
+    if (isSuccess) {
+      handleClosePublish();
+    }
+  }, [publishFlow, handleClosePublish]);
 
   const handleToggleFavorite = useCallback(() => {
     const next = !isStarred;
@@ -146,6 +244,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   const starAriaLabel = isStarred
     ? (texts?.removeFromFavoritesAriaLabel ?? 'Remove from favorites')
     : (texts?.addToFavoritesAriaLabel ?? 'Add to favorites');
+  const publishTitle = texts?.publishTitle ?? 'Publish';
+  const backToDetailsAriaLabel = texts?.backToDetailsAriaLabel ?? 'Back';
 
   return (
     <>
@@ -171,13 +271,32 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           isOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full',
         )}
       >
-        <div className="flex shrink-0 items-center justify-end gap-1.5 px-[22px] py-3">
-          <StarToggleButton
-            isStarred={isStarred}
-            ariaLabel={starAriaLabel}
-            onClick={handleToggleFavorite}
-          />
-          <DialCloseButton onClose={onClose} ariaLabel={closeAriaLabel} />
+        <div className="flex shrink-0 items-center gap-2 px-[22px] py-3">
+          {isPublishOpen ? (
+            <>
+              <GhostIconButton
+                icon={<IconChevronLeft className="rtl:scale-x-[-1]" />}
+                aria-label={backToDetailsAriaLabel}
+                disabled={publishFlow.isSubmitting}
+                onClick={handleClosePublish}
+              />
+              <span className="dial-body-semi-text flex-1 text-primary">
+                {publishTitle}
+              </span>
+            </>
+          ) : (
+            <>
+              <div className="flex-1" />
+              <StarToggleButton
+                isStarred={isStarred}
+                ariaLabel={starAriaLabel}
+                onClick={handleToggleFavorite}
+              />
+            </>
+          )}
+          {!isPublishOpen && (
+            <DialCloseButton onClose={onClose} ariaLabel={closeAriaLabel} />
+          )}
         </div>
 
         <div className={mergeClasses('shrink-0', styles.divider)} />
@@ -188,120 +307,168 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             styles.content,
           )}
         >
-          <Header
-            item={item}
-            onUseInChat={onUseInChat}
-            isPrimaryActionVisible={isPrimaryActionVisible}
-            onShare={onShare}
-            shareOverlay={shareOverlay}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onCloseDetails={onClose}
-            onLogin={onLogin}
-            onLogout={onLogout}
-            onToggleCredentials={handleToggleCredentials}
-            onRequestLogout={handleRequestLogout}
-            texts={texts}
-            detailsStyles={detailsStyles}
-          />
-
-          {isCredentialsOpen && (
-            <CredentialsSection
-              item={item}
-              onLogin={onLogin}
-              onLogout={onLogout}
-              texts={texts}
-              statusLabelClassName={credentialsStatusLabelClassName}
-            />
-          )}
-
-          <DialConfirmationPopup
-            open={isDirectLogoutConfirmOpen}
-            header={texts?.logoutActionLabel ?? 'Log out'}
-            description={
-              texts?.logoutConfirmMessage ?? 'Are you sure you want to log out?'
-            }
-            confirmLabel={texts?.logoutActionLabel ?? 'Log out'}
-            onConfirm={handleConfirmDirectLogout}
-            onCancel={handleCancelDirectLogout}
-            onClose={handleCancelDirectLogout}
-          />
-
-          <div className={styles.divider} />
-
-          <Summary item={item} texts={texts} detailsStyles={detailsStyles} />
-
-          <div className="flex items-center gap-2 px-[22px]">
-            <TabRow
-              tabs={tabs}
-              activeTabId={activeTab}
-              onTabChange={setActiveTab}
-              activeTabClassName="text-catalog-tab-active"
-              inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
-            />
-            {isDetailsLoading && (
-              <div
-                role="status"
-                aria-label={texts?.detailsLoadingAriaLabel ?? 'Loading details'}
-                className="shrink-0"
-              >
-                <DialSkeleton
-                  showTitle={false}
-                  paragraph={{ rows: 1, width: '72px' }}
-                  active
-                  color="var(--bg-layer-4)"
-                />
-              </div>
-            )}
-          </div>
-
-          <div
-            className={mergeClasses(
-              activeTab !== CatalogDetailsTab.Overview && 'px-[22px] py-4',
-            )}
-          >
-            {activeTab === CatalogDetailsTab.About && (
-              <AboutTab
-                content={item.description}
+          {isPublishOpen ? (
+            <div className="p-[22px]">
+              <PublishPanel
+                item={item}
+                history={publishHistory}
+                isHistoryLoading={isPublishHistoryLoading}
+                hasHistoryError={hasPublishHistoryError}
+                folderItems={publishFlow.folderItems}
+                selectedFolderPath={publishFlow.selectedFolderPath}
+                onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
+                onCreateFolder={publishFlow.handleCreateFolder}
+                expandedPaths={publishExpandedPaths}
+                onExpandedPathsChange={onPublishExpandedPathsChange}
+                loadingPaths={publishLoadingPaths}
+                hasExistingVersionInFolder={
+                  publishFlow.hasExistingVersionInFolder
+                }
+                hasWriteAccess={publishFlow.hasWriteAccess}
+                isSubmitting={publishFlow.isSubmitting}
+                hasSubmitError={publishFlow.hasSubmitError}
+                texts={publishTexts}
+              />
+            </div>
+          ) : (
+            <>
+              <Header
+                item={item}
+                onUseInChat={onUseInChat}
+                isPrimaryActionVisible={isPrimaryActionVisible}
+                onShare={onShare}
+                shareOverlay={shareOverlay}
+                isPublishVisible={isPublishVisible}
+                onOpenPublish={handleOpenPublish}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onCloseDetails={onClose}
+                onLogin={onLogin}
+                onLogout={onLogout}
+                onToggleCredentials={handleToggleCredentials}
+                onRequestLogout={handleRequestLogout}
+                texts={texts}
                 detailsStyles={detailsStyles}
               />
-            )}
-            {activeTab === CatalogDetailsTab.Overview && (
-              <Overview
-                sections={item.details?.overview?.sections}
-                sectionClassName={overviewSectionClassName}
-                labelClassName={overviewLabelClassName}
-                valueClassName={overviewValueClassName}
-                valueTrueClassName={overviewValueTrueClassName}
-                yesLabel={overviewYesLabel}
-                noLabel={overviewNoLabel}
-              />
-            )}
-            {activeTab === CatalogDetailsTab.Pricing && (
-              <Pricing
-                pricing={item.details?.pricing}
-                pricesSectionLabel={texts?.pricingPricesSectionLabel}
-                limitsSectionLabel={texts?.pricingLimitsSectionLabel}
-              />
-            )}
-            {activeTab === CatalogDetailsTab.Api &&
-              item.details?.api != null && (
-                <ApiDetails
-                  api={item.details.api}
-                  resourceSectionLabel={texts?.apiResourceSectionLabel}
-                  snippetSectionLabel={texts?.apiSnippetSectionLabel}
-                  modelIdLabel={texts?.apiModelIdLabel}
-                  endpointLabel={texts?.apiEndpointLabel}
-                  requestExampleLabel={texts?.apiRequestExampleLabel}
-                  responseSchemaLabel={texts?.apiResponseSchemaLabel}
-                  copyAriaLabel={texts?.copyCodeAriaLabel}
+
+              {isCredentialsOpen && (
+                <CredentialsSection
+                  item={item}
+                  onLogin={onLogin}
+                  onLogout={onLogout}
+                  texts={texts}
+                  statusLabelClassName={credentialsStatusLabelClassName}
                 />
               )}
-            {activeTab === CatalogDetailsTab.Tools && (
-              <Tools tools={item.details?.tools} />
-            )}
-          </div>
+
+              <DialConfirmationPopup
+                open={isDirectLogoutConfirmOpen}
+                header={texts?.logoutActionLabel ?? 'Log out'}
+                description={
+                  texts?.logoutConfirmMessage ??
+                  'Are you sure you want to log out?'
+                }
+                confirmLabel={texts?.logoutActionLabel ?? 'Log out'}
+                onConfirm={handleConfirmDirectLogout}
+                onCancel={handleCancelDirectLogout}
+                onClose={handleCancelDirectLogout}
+              />
+
+              <div className={styles.divider} />
+
+              <Summary
+                item={item}
+                texts={texts}
+                detailsStyles={detailsStyles}
+              />
+
+              <div className="flex items-center gap-2 px-[22px]">
+                <TabRow
+                  tabs={tabs}
+                  activeTabId={activeTab}
+                  onTabChange={setActiveTab}
+                  activeTabClassName="text-catalog-tab-active"
+                  inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
+                />
+                {isDetailsLoading && (
+                  <div
+                    role="status"
+                    aria-label={
+                      texts?.detailsLoadingAriaLabel ?? 'Loading details'
+                    }
+                    className="shrink-0"
+                  >
+                    <DialSkeleton
+                      showTitle={false}
+                      paragraph={{ rows: 1, width: '72px' }}
+                      active
+                      color="var(--bg-layer-4)"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div
+                className={mergeClasses(
+                  activeTab !== CatalogDetailsTab.Overview && 'px-[22px] py-4',
+                )}
+              >
+                {activeTab === CatalogDetailsTab.About && (
+                  <AboutTab
+                    content={item.description}
+                    detailsStyles={detailsStyles}
+                  />
+                )}
+                {activeTab === CatalogDetailsTab.Overview && (
+                  <Overview
+                    sections={item.details?.overview?.sections}
+                    sectionClassName={overviewSectionClassName}
+                    labelClassName={overviewLabelClassName}
+                    valueClassName={overviewValueClassName}
+                    valueTrueClassName={overviewValueTrueClassName}
+                    yesLabel={overviewYesLabel}
+                    noLabel={overviewNoLabel}
+                  />
+                )}
+                {activeTab === CatalogDetailsTab.Pricing && (
+                  <Pricing
+                    pricing={item.details?.pricing}
+                    pricesSectionLabel={texts?.pricingPricesSectionLabel}
+                    limitsSectionLabel={texts?.pricingLimitsSectionLabel}
+                  />
+                )}
+                {activeTab === CatalogDetailsTab.Api &&
+                  item.details?.api != null && (
+                    <ApiDetails
+                      api={item.details.api}
+                      resourceSectionLabel={texts?.apiResourceSectionLabel}
+                      snippetSectionLabel={texts?.apiSnippetSectionLabel}
+                      modelIdLabel={texts?.apiModelIdLabel}
+                      endpointLabel={texts?.apiEndpointLabel}
+                      requestExampleLabel={texts?.apiRequestExampleLabel}
+                      responseSchemaLabel={texts?.apiResponseSchemaLabel}
+                      copyAriaLabel={texts?.copyCodeAriaLabel}
+                    />
+                  )}
+                {activeTab === CatalogDetailsTab.Tools && (
+                  <Tools tools={item.details?.tools} />
+                )}
+              </div>
+            </>
+          )}
         </div>
+
+        {isPublishOpen && (
+          <PublishFooter
+            version={item.version}
+            hasExistingVersionInFolder={publishFlow.hasExistingVersionInFolder}
+            isSubmitDisabled={publishDerived.isSubmitDisabled}
+            isSubmitLoading={publishDerived.isSubmitLoading}
+            onCancel={handleClosePublish}
+            onSubmit={handleSubmitPublish}
+            texts={publishTexts}
+          />
+        )}
       </div>
     </>
   );

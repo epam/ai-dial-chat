@@ -1,14 +1,16 @@
 import type {
   Annotation,
+  AttachmentResource,
   Message,
   MessageAttachment,
   PdfBBoxSelector,
 } from '@epam/ai-dial-chat-shared';
-import { MIMEType } from '@epam/ai-dial-chat-shared';
+import { MIMEType, triggerAnchorDownload } from '@epam/ai-dial-chat-shared';
 import type {
   HighlightStyle,
   InputHighlightData,
 } from '@epam/pdf-highlighter-kit';
+import { isDialFileId, resolveDialFileDownloadUrl } from './dial-file';
 
 const CITATION_HIGHLIGHT_STYLE: HighlightStyle = {
   backgroundColor: 'transparent',
@@ -158,6 +160,30 @@ export const normalizeRawAnnotations = (
       },
     ];
   });
+
+/**
+ * Opens a cited/referenced attachment: triggers a browser download for
+ * DIAL-hosted files (`files/...` ids), otherwise opens the URL in a new tab.
+ * No-ops when the attachment has no URL or the download URL cannot be resolved.
+ */
+export const openAnnotationAttachment = (
+  attachment: AttachmentResource,
+): void => {
+  const { url } = attachment;
+  if (url == null) return;
+
+  const fileId = url.split('#')[0];
+  if (isDialFileId(fileId)) {
+    const downloadUrl = resolveDialFileDownloadUrl(fileId);
+    if (downloadUrl == null) return;
+    triggerAnchorDownload(
+      downloadUrl,
+      attachment.title ?? fileId.split('/').pop() ?? '',
+    );
+  } else {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+};
 
 /**
  * Resolves the annotation list for a message regardless of how it was loaded.

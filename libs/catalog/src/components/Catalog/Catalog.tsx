@@ -37,6 +37,17 @@ export const Catalog: FC<CatalogProps> = ({
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
+  isPublishVisible,
+  getPublishHistory,
+  publishFolderItems,
+  publishExpandedPaths,
+  onPublishExpandedPathsChange,
+  publishLoadingPaths,
+  hasPublishWriteAccess,
+  onPublish,
+  onPublishSuccess,
+  onCreatePublishFolder,
+  publishTexts,
   shareOverlay,
   onFetchDetails,
   onEdit,
@@ -424,6 +435,17 @@ export const Catalog: FC<CatalogProps> = ({
           onUseInChat={onUseInChat}
           isPrimaryActionVisible={isPrimaryActionVisible}
           onShare={onShare}
+          isPublishVisible={isPublishVisible}
+          getPublishHistory={getPublishHistory}
+          publishFolderItems={publishFolderItems}
+          publishExpandedPaths={publishExpandedPaths}
+          onPublishExpandedPathsChange={onPublishExpandedPathsChange}
+          publishLoadingPaths={publishLoadingPaths}
+          hasPublishWriteAccess={hasPublishWriteAccess}
+          onPublish={onPublish}
+          onPublishSuccess={onPublishSuccess}
+          onCreatePublishFolder={onCreatePublishFolder}
+          publishTexts={publishTexts}
           shareOverlay={shareOverlay}
           onEdit={onEdit}
           onDelete={onDelete}

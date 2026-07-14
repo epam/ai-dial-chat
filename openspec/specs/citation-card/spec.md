@@ -15,10 +15,10 @@
 - Description: `body.quote` (optional, omitted when absent), `dial-small-text text-secondary`
 
 **Footer** (buttons fit content, left-aligned):
-- "Preview" button (`PrimaryButton`, `ElementSize.Small`)
-- Second button label depends on source type:
-  - `text/html` or `application/xhtml+xml` → "Open in browser" (`citations.popup.openInBrowser`)
-  - All other types → "Download" (`citations.popup.download`)
+- "Preview" button (`PrimaryButton`, `ElementSize.Small`) — rendered only when the `onPreview` prop is provided.
+- Second button, always rendered:
+  - When `onPreview` is provided: label depends on source type — `text/html` or `application/xhtml+xml` → "Open in browser" (`citations.popup.openInBrowser`); all other types → "Download" (`citations.popup.download`).
+  - When `onPreview` is **not** provided: label is always "Open in browser" (`citations.popup.openInBrowser`), regardless of source content type — a group with no preview capability is by definition an external reference, never a local download.
 
 Panel styling: `w-[400px]`, `bg-layer-0`, `border border-primary`, `rounded-lg`, `p-4`, `shadow-lg`.
 
@@ -28,7 +28,7 @@ interface CitationCardProps {
   group: AnnotationGroup;
   activeIndex: number;
   onIndexChange: (i: number) => void;
-  onPreview: (annotation: Annotation) => void;
+  onPreview?: (annotation: Annotation) => void;
   onOpenInBrowser: (annotation: Annotation) => void;
 }
 ```
@@ -37,10 +37,11 @@ interface CitationCardProps {
 ```ts
 interface CitationDropdownProps {
   group: AnnotationGroup;
-  onPreview: (annotation: Annotation) => void;
+  onPreview?: (annotation: Annotation) => void;
   onOpenInBrowser: (annotation: Annotation) => void;
 }
 ```
+`CitationDropdown` SHALL only invoke `citationCard.closePopup()` on preview (see next requirement) when `onPreview` is provided; when `onPreview` is absent, there is no preview action to wrap.
 
 **i18n keys**: `citations.popup.switcher`, `citations.popup.preview`, `citations.popup.openInBrowser`, `citations.popup.download`, `citations.popup.previousCitation`, `citations.popup.nextCitation`, `citations.popup.ariaLabel`.
 **RTL**: switcher chevron icons SHALL be mirrored with `rtl:scale-x-[-1]`; all layout uses logical flex properties.
@@ -69,16 +70,21 @@ interface CitationDropdownProps {
 
 #### Scenario: "Preview" button triggers onPreview with the active annotation
 
-- **WHEN** the user clicks the "Preview" button
+- **WHEN** `onPreview` is provided and the user clicks the "Preview" button
 - **THEN** `onPreview` is called with the current active `Annotation`
+
+#### Scenario: Preview button hidden when onPreview is omitted
+
+- **WHEN** `CitationCard` is rendered without an `onPreview` prop
+- **THEN** no "Preview" button is rendered, and the footer shows a single button labelled "Open in browser"
 
 ---
 
 ### Requirement: Citation popup closes only on "Preview"; navigation and download buttons leave it open
 
-`CitationDropdown` SHALL close the popup immediately after forwarding the `onPreview` event — by calling `citationCard.closePopup()` from `CitationCardContext`. No other button in `CitationCard` (Previous, Next, "Open in browser", "Download") SHALL close the popup.
+`CitationDropdown` SHALL close the popup immediately after forwarding the `onPreview` event, when `onPreview` is provided — by calling `citationCard.closePopup()` from `CitationCardContext`. No other button in `CitationCard` (Previous, Next, "Open in browser", "Download") SHALL close the popup.
 
-The `CitationCard` component itself only calls the `onPreview` prop; closing is the responsibility of `CitationDropdown`.
+The `CitationCard` component itself only calls the `onPreview` prop when present; closing is the responsibility of `CitationDropdown`.
 
 The reason navigation buttons (Prev/Next) must not cause a close: they update `activeIndex` in `useCitationCard`, which previously triggered `markdownComponents` to recompute with new function references, causing ReactMarkdown to unmount and remount the paragraph subtree (including `CitationDropdown` and its `DialTooltip`). The context-based architecture prevents this — see the `CitationCardContext` requirement below.
 
@@ -94,13 +100,18 @@ The reason navigation buttons (Prev/Next) must not cause a close: they update `a
 
 #### Scenario: File source shows "Download" button
 
-- **WHEN** the source content type is `application/pdf`
+- **WHEN** the source content type is `application/pdf` and `onPreview` is provided
 - **THEN** the second footer button is labelled "Download"
 
 #### Scenario: Web link source shows "Open in browser" button
 
-- **WHEN** the source content type is `text/html`
+- **WHEN** the source content type is `text/html` and `onPreview` is provided
 - **THEN** the second footer button is labelled "Open in browser"
+
+#### Scenario: Popup with no Preview action stays open on its single button click
+
+- **WHEN** `onPreview` is not provided and the user clicks the single "Open in browser" button
+- **THEN** the popup remains open (only `onOpenInBrowser` is invoked; `closePopup` is not called)
 
 ---
 

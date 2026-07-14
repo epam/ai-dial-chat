@@ -124,4 +124,33 @@ describe('CitationCard', () => {
     );
     expect(onOpenInBrowser).toHaveBeenCalledWith(group.annotations[0]);
   });
+
+  it('hides the Preview button and labels the remaining button "Open in browser" when onPreview is omitted', () => {
+    const group = makeGroup(1, 'application/pdf');
+    render(<CitationCard {...defaultProps({ group, onPreview: undefined })} />);
+    expect(
+      screen.queryByRole('button', { name: BasicI18nKeys.Preview }),
+    ).toBeFalsy();
+    expect(
+      screen.getByRole('button', {
+        name: CitationsI18nKeys.PopupOpenInBrowser,
+      }),
+    ).toBeTruthy();
+  });
+
+  it('calls onOpenInBrowser without closing when onPreview is omitted', async () => {
+    const onOpenInBrowser = vi.fn();
+    const group = makeGroup(1, 'application/pdf');
+    render(
+      <CitationCard
+        {...defaultProps({ group, onPreview: undefined, onOpenInBrowser })}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: CitationsI18nKeys.PopupOpenInBrowser,
+      }),
+    );
+    expect(onOpenInBrowser).toHaveBeenCalledWith(group.annotations[0]);
+  });
 });

@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GhostButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { DialDropdown } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconFilter } from '@tabler/icons-react';
 import {
   FC,
@@ -323,7 +323,7 @@ export const Filter: FC<FilterProps> = ({
         )}
       >
         <IconFilter
-          size={16}
+          size={DIAL_ICON_SIZE.SM}
           strokeWidth={1.8}
           className={mergeClasses('shrink-0', styles.filterBtnFunnel)}
           aria-hidden
