@@ -12,6 +12,7 @@ export const RowRenderer = ({
   expandedGroups,
   onToggleGroup,
   activeConversationId,
+  searchQuery,
   onSelectConversation,
   getActions,
   actionsLabel,
@@ -57,6 +58,7 @@ export const RowRenderer = ({
       <ConversationRow
         item={row.item}
         isActive={row.item.id === activeConversationId}
+        searchQuery={searchQuery}
         onSelectConversation={onSelectConversation}
         getActions={getActions}
         actionsLabel={actionsLabel}

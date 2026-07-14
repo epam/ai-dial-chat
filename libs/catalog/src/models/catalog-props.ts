@@ -91,6 +91,13 @@ export interface CatalogProps {
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**
+   * Called immediately when the "Delete" button in the details panel is
+   * clicked, with no confirmation step. Shown only when the item's `isMyApp`
+   * is `true` and its `type` is `Application` or `Toolset`. May return a
+   * promise; the button shows a disabled state while pending.
+   */
+  onDelete?: (item: CatalogItem) => Promise<void> | void;
+  /**
    * Renders the Share popover content anchored to the Share button in the
    * details panel. When provided, clicking Share opens this popover instead
    * of calling `onShare`.

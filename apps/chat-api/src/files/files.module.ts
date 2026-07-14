@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { ArchiveUploadInterceptor } from './archive-upload.interceptor';
 import { FilesController } from './files.controller';
 import { FilesService } from './files.service';
 
@@ -20,6 +21,6 @@ import { FilesService } from './files.service';
     }),
   ],
   controllers: [FilesController],
-  providers: [FilesService],
+  providers: [ArchiveUploadInterceptor, FilesService],
 })
 export class FilesModule {}

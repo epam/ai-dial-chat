@@ -12,9 +12,14 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { memo, useMemo, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
+import ShareFileModal from '../../components/DialFileManagerModal/ShareFileModal';
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
 import type { UseDialFileManagerResult } from '../../hooks/files/useDialFileManager';
+import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+} from '../../types/file-manager-variant';
 import { getParentFolderPath } from '../../utils/resolve-dial-file-api-path';
 import type {
   DialFileManagerDestinationFolderPopupOptions,
@@ -29,6 +34,10 @@ interface Props {
   onTabChange: (tab: DialFileManagerTabs) => void;
   selectedPaths: Set<string>;
   onSelectedPathsChange: (paths: Set<string>) => void;
+  /** Host driving this shell instance — gates the upload-archive toolbar entry (standalone-only). */
+  variant: DialFileManagerVariant;
+  /** Action-set gate for the upload-archive toolbar entry (Full-only). */
+  actionProfile: DialFileManagerActionProfile;
   autoSelectUploadedItems?: boolean;
   allowedFileTypes?: DialFileAcceptType[];
   maxSelectableFileSize?: number;
@@ -52,6 +61,8 @@ const DialFileManagerShell: FC<Props> = ({
   onTabChange,
   selectedPaths,
   onSelectedPathsChange,
+  variant,
+  actionProfile,
   autoSelectUploadedItems = false,
   allowedFileTypes,
   maxSelectableFileSize,
@@ -74,6 +85,7 @@ const DialFileManagerShell: FC<Props> = ({
     loadedPaths,
     onExpandedPathsChange,
     onUploadFiles,
+    onUploadArchive,
     onValidateUpload,
     uploadBatchState,
     cancelUpload,
@@ -99,6 +111,18 @@ const DialFileManagerShell: FC<Props> = ({
     dateOptions,
     actionLabels: tabActionLabels,
     sharedWithMeIds,
+    sharedByMePaths,
+    shareTarget,
+    onManagePermissions,
+    onCloseShareModal,
+    onCreateShareLink,
+    isSharing,
+    onUnshareFiles,
+    onRemoveFilesAccess,
+    fileMetadata,
+    isFileMetadataLoading,
+    onGetInfo,
+    clearMetadata,
   } = hookResult;
 
   const actionLabels = useMemo(() => {
@@ -121,6 +145,15 @@ const DialFileManagerShell: FC<Props> = ({
     if (DialFileManagerActions.Duplicate in tabActionLabels) {
       result[DialFileManagerActions.Duplicate] = labels.duplicateLabel;
     }
+    if (DialFileManagerActions.ManagePermissions in tabActionLabels) {
+      result[DialFileManagerActions.ManagePermissions] = labels.shareLabel;
+    }
+    if (DialFileManagerActions.Unshare in tabActionLabels) {
+      result[DialFileManagerActions.Unshare] = labels.unshareLabel;
+    }
+    if (DialFileManagerActions.RemoveAccess in tabActionLabels) {
+      result[DialFileManagerActions.RemoveAccess] = labels.removeAccessLabel;
+    }
     return result;
   }, [
     tabActionLabels,
@@ -130,7 +163,49 @@ const DialFileManagerShell: FC<Props> = ({
     labels.copyLabel,
     labels.moveLabel,
     labels.duplicateLabel,
+    labels.shareLabel,
+    labels.unshareLabel,
+    labels.removeAccessLabel,
   ]);
+
+  /*
+   * Info is grid-only — the installed ui-kit exposes no tree or bulk-toolbar
+   * surface for it (FileTreeOptions/BulkActionsToolbarOptions.actionLabels
+   * have no Info key), so it is kept out of the shared `actionLabels` above
+   * and layered onto a grid-specific variant instead.
+   */
+  const gridActionLabels = useMemo(() => {
+    if (!(DialFileManagerActions.Info in tabActionLabels)) return actionLabels;
+    return { ...actionLabels, [DialFileManagerActions.Info]: labels.infoLabel };
+  }, [actionLabels, tabActionLabels, labels.infoLabel]);
+
+  /*
+   * Bulk toolbar never shows Share (single-item only, no bulk affordance);
+   * Remove access is additionally hidden unless every selected path is
+   * present in sharedByMePaths (mirrors legacy allSelectedItemsShared).
+   */
+  const allSelectedItemsSharedByMe = useMemo(() => {
+    if (selectedPaths.size === 0) return false;
+    for (const selectedPath of selectedPaths) {
+      if (!sharedByMePaths.has(selectedPath)) return false;
+    }
+    return true;
+  }, [selectedPaths, sharedByMePaths]);
+
+  const bulkActionLabels = useMemo(() => {
+    const {
+      [DialFileManagerActions.ManagePermissions]: _managePermissions,
+      ...rest
+    } = actionLabels;
+    if (allSelectedItemsSharedByMe) {
+      return rest;
+    }
+    const {
+      [DialFileManagerActions.RemoveAccess]: _removeAccess,
+      ...withoutRemoveAccess
+    } = rest;
+    return withoutRemoveAccess;
+  }, [actionLabels, allSelectedItemsSharedByMe]);
 
   const gridOptions = useMemo(
     () => ({
@@ -145,9 +220,15 @@ const DialFileManagerShell: FC<Props> = ({
           isRowSelectable: isRowSelectable ?? ((): boolean => true),
         },
       },
-      actionLabels,
+      actionLabels: gridActionLabels,
     }),
-    [visibleColumns, dateLocale, dateOptions, actionLabels, isRowSelectable],
+    [
+      visibleColumns,
+      dateLocale,
+      dateOptions,
+      gridActionLabels,
+      isRowSelectable,
+    ],
   );
 
   const treeOptions = useMemo(
@@ -168,6 +249,17 @@ const DialFileManagerShell: FC<Props> = ({
     ],
   );
 
+  /*
+   * uploadArchive is standalone-only, my_files-only, WRITE-gated, and
+   * Full-profile-only — absent on shared/organization tabs and in the
+   * attach modal (file-manager-tabs spec).
+   */
+  const showUploadArchiveAction =
+    variant === DialFileManagerVariant.Standalone &&
+    actionProfile === DialFileManagerActionProfile.Full &&
+    activeTab === DialFileManagerTabs.MyFiles &&
+    uploadEnabled;
+
   const toolbarOptions = useMemo(
     () => ({
       tabs,
@@ -182,6 +274,9 @@ const DialFileManagerShell: FC<Props> = ({
       newActions: {
         uploadFiles: { label: labels.uploadFilesLabel },
         newFolder: { label: labels.newFolderLabel },
+        ...(showUploadArchiveAction
+          ? { uploadArchive: { label: labels.uploadArchiveAction } }
+          : {}),
       },
     }),
     [
@@ -195,15 +290,17 @@ const DialFileManagerShell: FC<Props> = ({
       disabledNewButtonTooltip,
       labels.uploadFilesLabel,
       labels.newFolderLabel,
+      showUploadArchiveAction,
+      labels.uploadArchiveAction,
     ],
   );
 
   const bulkActionsToolbarOptions = useMemo(
     () => ({
       getSelectionLabel: labels.getSelectionLabel,
-      actionLabels,
+      actionLabels: bulkActionLabels,
     }),
-    [labels.getSelectionLabel, actionLabels],
+    [labels.getSelectionLabel, bulkActionLabels],
   );
 
   const deleteConfirmationOptions = useMemo(
@@ -268,6 +365,31 @@ const DialFileManagerShell: FC<Props> = ({
     clearUploadBatch();
   };
 
+  const fileMetadataPopupOptions = useMemo(
+    () => ({
+      fileMetadata,
+      loading: isFileMetadataLoading,
+      clearMetadata,
+      header: labels.metadataHeader,
+      nameLabel: labels.metadataNameLabel,
+      pathLabel: labels.metadataPathLabel,
+      modifiedDateLabel: labels.metadataModifiedDateLabel,
+      sizeLabel: labels.metadataSizeLabel,
+      authorLabel: labels.metadataAuthorLabel,
+    }),
+    [
+      fileMetadata,
+      isFileMetadataLoading,
+      clearMetadata,
+      labels.metadataHeader,
+      labels.metadataNameLabel,
+      labels.metadataPathLabel,
+      labels.metadataModifiedDateLabel,
+      labels.metadataSizeLabel,
+      labels.metadataAuthorLabel,
+    ],
+  );
+
   const uploadProgressText = useMemo(() => {
     if (uploadBatchState == null) {
       return '';
@@ -323,7 +445,14 @@ const DialFileManagerShell: FC<Props> = ({
             }
             uploadEnabled={uploadEnabled}
             sharedWithMeIds={sharedWithMeIds}
+            sharedByMePaths={sharedByMePaths}
+            onManagePermissions={onManagePermissions}
+            onUnshareFiles={onUnshareFiles}
+            onRemoveFilesAccess={onRemoveFilesAccess}
+            fileMetadataPopupOptions={fileMetadataPopupOptions}
+            onGetInfo={onGetInfo}
             onUploadFiles={onUploadFiles}
+            onUploadArchive={onUploadArchive}
             onValidateUpload={onValidateUpload}
             onCreateFolder={onCreateFolder}
             onCreateFolderValidate={onCreateFolderValidate}
@@ -403,6 +532,23 @@ const DialFileManagerShell: FC<Props> = ({
           text={isMoving ? labels.movingLabel : labels.copyingLabel}
           cancelLabel={labels.operationLoaderCancelLabel}
           onCancel={cancelCopyMove}
+        />
+      )}
+
+      {shareTarget != null && (
+        <ShareFileModal
+          targetName={shareTarget.name}
+          isSubmitting={isSharing}
+          getTitle={labels.getShareModalTitle}
+          readPermissionLabel={labels.shareModalReadPermissionLabel}
+          readWritePermissionLabel={labels.shareModalReadWritePermissionLabel}
+          createLinkButtonLabel={labels.shareModalCreateLinkButtonLabel}
+          copyLinkButtonLabel={labels.shareModalCopyLinkButtonLabel}
+          linkCopiedConfirmation={labels.shareModalLinkCopiedConfirmation}
+          cancelLabel={labels.shareModalCancelLabel}
+          errorMessage={labels.shareErrorMessage}
+          onCreateLink={onCreateShareLink}
+          onClose={onCloseShareModal}
         />
       )}
     </>

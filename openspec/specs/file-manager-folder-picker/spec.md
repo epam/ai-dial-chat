@@ -38,11 +38,11 @@ Confirming a destination in the popup SHALL invoke the same `onCopyFiles(items, 
 
 `DialFileManagerShell` SHALL pass a `destinationFolderPopupOptions` object to `DialFileManager` containing i18n-resolved `copyLabel`, `moveLabel`, `addFolderLabel`, and `hiddenFilesSwitcherLabel`. No hardcoded English string SHALL be visible in the popup regardless of active locale.
 
-`copyLabel`/`moveLabel` SHALL reuse the same translation keys already used for the Copy/Move action labels (`DialFileManagerI18nKeys.CopyAction`/`.MoveAction`).
+`copyLabel`/`moveLabel` SHALL reuse the same translation keys already used for the Copy/Move action labels (`ButtonsI18nKeys.Copy`/`DialFileManagerI18nKeys.MoveAction`).
 
 #### Scenario: Popup shows translated Copy button label
 
-- **WHEN** the popup opens in copy mode with `i18n.language` set to a non-English locale that has a translation for `dialFileManager.copyAction`
+- **WHEN** the popup opens in copy mode with `i18n.language` set to a non-English locale that has a translation for `buttons.copy`
 - **THEN** the popup's confirm button displays the translated string, not the ui-kit default `"Copy"`
 
 #### Scenario: Popup shows translated Add folder button

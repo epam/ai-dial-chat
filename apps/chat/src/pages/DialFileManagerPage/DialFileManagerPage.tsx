@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import DialFileManagerShell from '../../components/DialFileManagerShell/DialFileManagerShell';
 import type { DialFileManagerShellLabels } from '../../components/DialFileManagerShell/types/labels';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   DialFileManagerI18nKeys,
 } from '../../constants/translation-keys';
@@ -30,9 +31,7 @@ const DialFileManagerPage: FC = () => {
     () => ({
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
-      [DialFileManagerTabs.Organization]: t(
-        DialFileManagerI18nKeys.TabOrganization,
-      ),
+      [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -58,7 +57,7 @@ const DialFileManagerPage: FC = () => {
     rootLabel,
     onNotification: showNotification,
     variant: DialFileManagerVariant.Standalone,
-    actionProfile: DialFileManagerActionProfile.Browse,
+    actionProfile: DialFileManagerActionProfile.Full,
     forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
   });
 
@@ -100,10 +99,8 @@ const DialFileManagerPage: FC = () => {
       [DialFileManagerTabs.MyFiles]: t(
         DialFileManagerI18nKeys.MyFilesTreeHeader,
       ),
-      [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.SharedTreeHeader),
-      [DialFileManagerTabs.Organization]: t(
-        DialFileManagerI18nKeys.OrganizationTreeHeader,
-      ),
+      [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
+      [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -123,7 +120,7 @@ const DialFileManagerPage: FC = () => {
       multipleFilesTitle: t(DialFileManagerI18nKeys.ConflictMultipleTitle),
       actionLabels: {
         replace: t(DialFileManagerI18nKeys.ConflictReplace),
-        duplicate: t(DialFileManagerI18nKeys.ConflictDuplicate),
+        duplicate: t(ButtonsI18nKeys.Duplicate),
         cancel: t(ButtonsI18nKeys.Cancel),
       },
       strategyLabels: {
@@ -147,20 +144,19 @@ const DialFileManagerPage: FC = () => {
       getSelectionLabel: (count) =>
         t(DialFileManagerI18nKeys.ItemsSelected, { count }),
       uploadFilesLabel: t(DialFileManagerI18nKeys.Upload),
+      uploadArchiveAction: t(DialFileManagerI18nKeys.UploadArchiveAction),
       newFolderLabel: t(DialFileManagerI18nKeys.NewFolder),
-      downloadLabel: t(DialFileManagerI18nKeys.Download),
+      downloadLabel: t(ButtonsI18nKeys.Download),
       downloadingLabel: t(DialFileManagerI18nKeys.Downloading),
-      deleteLabel: t(DialFileManagerI18nKeys.DeleteAction),
+      deleteLabel: t(ButtonsI18nKeys.Delete),
       deletingLabel: t(DialFileManagerI18nKeys.DeletingLabel),
-      renameLabel: t(DialFileManagerI18nKeys.RenameAction),
+      renameLabel: t(ButtonsI18nKeys.Rename),
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
       copyLabel: t(DialFileManagerI18nKeys.CopyAction),
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
-      duplicateLabel: t(DialFileManagerI18nKeys.DuplicateAction),
+      duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
-      hiddenFilesSwitcherLabel: t(
-        DialFileManagerI18nKeys.FolderPickerHiddenFilesLabel,
-      ),
+      hiddenFilesSwitcherLabel: t(DialFileManagerI18nKeys.HiddenFiles),
       getCopyHeader: (count, name) =>
         count === 1
           ? t(DialFileManagerI18nKeys.CopyHeaderSingle, { name })
@@ -186,9 +182,7 @@ const DialFileManagerPage: FC = () => {
       operationLoaderMoveTitle: t(
         DialFileManagerI18nKeys.OperationLoaderMoveTitle,
       ),
-      operationLoaderCancelLabel: t(
-        DialFileManagerI18nKeys.OperationLoaderCancelLabel,
-      ),
+      operationLoaderCancelLabel: t(ButtonsI18nKeys.Cancel),
       deleteConfirmTitle: (names) =>
         names.length === 1
           ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)
@@ -198,7 +192,7 @@ const DialFileManagerPage: FC = () => {
           <p className="mb-3 text-secondary">
             {names.length === 1 ? (
               <>
-                {t(DialFileManagerI18nKeys.DeleteConfirmBodySingle)}{' '}
+                {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
                 <span className="break-all text-primary">
                   &quot;{names[0].split('/').pop()}&quot;?
                 </span>
@@ -215,13 +209,13 @@ const DialFileManagerPage: FC = () => {
           </p>
         </div>
       ),
-      deleteConfirmLabel: t(DialFileManagerI18nKeys.DeleteConfirmButton),
+      deleteConfirmLabel: t(ButtonsI18nKeys.Delete),
       deleteCancelLabel: t(ButtonsI18nKeys.Cancel),
       uploadProgressTitle: t(DialFileManagerI18nKeys.UploadProgressTitle),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
       getUploadProgressText: (done, total) =>
         t(DialFileManagerI18nKeys.UploadProgressSummary, { done, total }),
-      searchEmptyStateTitle: t(DialFileManagerI18nKeys.SearchEmptyStateTitle),
+      searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       forbiddenSymbolsTooltip: t(
         DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
       ),
@@ -229,6 +223,37 @@ const DialFileManagerPage: FC = () => {
       treeHeaderByTab,
       renameValidationMessages,
       conflictResolutionPopupOptions,
+      shareLabel: t(DialFileManagerI18nKeys.ShareAction),
+      unshareLabel: t(DialFileManagerI18nKeys.UnshareAction),
+      removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
+      getShareModalTitle: (name: string) =>
+        t(DialFileManagerI18nKeys.ShareModalTitle, { name }),
+      shareModalReadPermissionLabel: t(
+        DialFileManagerI18nKeys.ShareModalReadPermission,
+      ),
+      shareModalReadWritePermissionLabel: t(
+        DialFileManagerI18nKeys.ShareModalReadWritePermission,
+      ),
+      shareModalCreateLinkButtonLabel: t(
+        DialFileManagerI18nKeys.ShareModalCreateLinkButton,
+      ),
+      shareModalCopyLinkButtonLabel: t(
+        DialFileManagerI18nKeys.ShareModalCopyLinkButton,
+      ),
+      shareModalLinkCopiedConfirmation: t(
+        DialFileManagerI18nKeys.ShareModalLinkCopiedConfirmation,
+      ),
+      shareModalCancelLabel: t(ButtonsI18nKeys.Cancel),
+      shareErrorMessage: t(DialFileManagerI18nKeys.ShareError),
+      infoLabel: t(DialFileManagerI18nKeys.InfoAction),
+      metadataHeader: t(DialFileManagerI18nKeys.MetadataHeader),
+      metadataNameLabel: t(DialFileManagerI18nKeys.MetadataNameLabel),
+      metadataPathLabel: t(DialFileManagerI18nKeys.MetadataPathLabel),
+      metadataModifiedDateLabel: t(
+        DialFileManagerI18nKeys.MetadataModifiedDateLabel,
+      ),
+      metadataSizeLabel: t(DialFileManagerI18nKeys.MetadataSizeLabel),
+      metadataAuthorLabel: t(DialFileManagerI18nKeys.MetadataAuthorLabel),
     }),
     [
       t,
@@ -249,6 +274,8 @@ const DialFileManagerPage: FC = () => {
         onTabChange={handleTabChangeWithReset}
         selectedPaths={selectedPaths}
         onSelectedPathsChange={setSelectedPaths}
+        variant={DialFileManagerVariant.Standalone}
+        actionProfile={DialFileManagerActionProfile.Full}
         autoSelectUploadedItems={false}
       />
     </div>

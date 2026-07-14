@@ -3,7 +3,16 @@
     "searchPlaceholder": "Search...",
     "clearSearch": "Clear search",
     "noResults": "No results found",
-    "noData": "No data"
+    "noData": "No data",
+    "organization": "Organization",
+    "urlPlaceholder": "https://...",
+    "preview": "Preview",
+    "settings": "Settings",
+    "attachFiles": "Attach files",
+    "deleteConfirmDescription": "Are you sure you want to delete"
+  },
+  "api": {
+    "endpointLabel": "Endpoint"
   },
   "chat": {
     "greetingMorning": "Good morning, {{name}}",
@@ -33,8 +42,7 @@
     "stoppedGenerating": "You stopped generating the response",
     "thinking": "Thinking",
     "showMoreUserMessage": "Show full user message",
-    "showLessUserMessage": "Collapse user message",
-    "chatSettings": "Settings"
+    "showLessUserMessage": "Collapse user message"
   },
   "rate": {
     "negativeFeedbackTitle": "Send negative feedback",
@@ -49,30 +57,35 @@
     "feedbackCommentPlaceholder": "Type an optional comment to your feedback",
     "likeToastTitle": "Thank you for your positive feedback!",
     "likeToastDescription": "You help us make better products",
-    "dislikeToastTitle": "Thank you for letting us know about this issue",
-    "dislikeToastDescription": "You help us make better products"
+    "dislikeToastTitle": "Thank you for letting us know about this issue"
   },
   "navigation": {
     "ariaLabel": "Main navigation",
     "home": "Chat",
     "catalog": "Catalog",
     "openMenu": "Open navigation menu",
-    "closeMenu": "Close navigation menu",
-    "mobileMenu": "Navigation menu",
     "menu": "Main menu",
     "profile": "Profile",
-    "back": "Back",
-    "close": "Close"
+    "back": "Back"
+  },
+  "favorites": {
+    "title": "Your Favorites",
+    "addedTitle": "Added to Favorites",
+    "removedTitle": "Removed from Favorites",
+    "added": "\"{{name}}\" added to Favorites",
+    "removed": "\"{{name}}\" removed from Favorites",
+    "favoritesLabel": "Favorites",
+    "addToFavoritesLabel": "Add to favorites",
+    "removeFromFavoritesLabel": "Remove from favorites"
   },
   "catalog": {
-    "ariaLabel": "Catalog",
-    "pageTitle": "Catalog",
-    "favoritesTitle": "Your Favorites",
     "searchPlaceholder": "Search models, tools, agents…",
     "noResultsTitle": "No results for \"{{query}}\"",
-    "sortRecentlyUpdated": "Recently Updated",
-    "sortNewest": "Newest",
-    "sortNameAZ": "Name A-Z",
+    "sorts": {
+      "recentlyUpdated": "Recently Updated",
+      "newest": "Newest",
+      "nameAZ": "Name A-Z"
+    },
     "featuredLabel": "Featured",
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
@@ -83,10 +96,8 @@
         "resourceSection": "Resource",
         "snippetSection": "Code snippet",
         "modelId": "Model ID",
-        "endpoint": "Endpoint",
         "requestExample": "Request example",
-        "responseSchema": "Response schema",
-        "copy": "Copy"
+        "responseSchema": "Response schema"
       },
       "pricing": {
         "pricesSection": "Token pricing",
@@ -94,7 +105,6 @@
       },
       "credentials": {
         "loginLabel": "Log in",
-        "logoutLabel": "Log out",
         "signedInLabel": "Signed in",
         "signedOutLabel": "Signed out",
         "logoutConfirmMessage": "Are you sure you want to log out?",
@@ -113,6 +123,11 @@
         "logoutSuccessOrg": "You have successfully logged out of the \"{{name}}\" version {{version}} with credentials to entire organization.",
         "logoutSuccessGlobal": "You have successfully logged out of the \"{{name}}\" version {{version}}.",
         "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials."
+      },
+      "delete": {
+        "error": "Failed to delete. Please try again.",
+        "successTitle": "Deleted successfully",
+        "success": "\"{{name}}\" was deleted."
       }
     },
     "create": {
@@ -120,10 +135,6 @@
       "quickApp": "QuickApp",
       "toolset": "Toolset"
     },
-    "favoriteAddedTitle": "Added to Favorites",
-    "favoriteRemovedTitle": "Removed from Favorites",
-    "favoriteAdded": "\"{{name}}\" added to Favorites",
-    "favoriteRemoved": "\"{{name}}\" removed from Favorites",
     "tab": {
       "models": "Models",
       "applications": "Agents",
@@ -137,36 +148,21 @@
   "deploymentSelector": {
     "title": "Talk to",
     "searchPlaceholder": "Search models, agents…",
-    "searchAriaLabel": "Search models and agents",
-    "favoritesLabel": "Favorites",
     "emptyHint": "Star a model or agent to pin it here.",
-    "browseCatalogLabel": "Browse",
-    "removeFromFavoritesLabel": "Remove from favorites",
     "currentlySelectedLabel": "Currently selected",
-    "addToFavoritesLabel": "Add to favorites"
+    "ariaLabel": "Select model",
+    "loading": "Loading models…",
+    "error": "Failed to load models",
+    "empty": "No models available",
+    "closeLabel": "Close model selector",
+    "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date.",
+    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date."
   },
   "notFound": {
-    "ariaLabel": "Page not found",
     "eyebrow": "404",
     "title": "Page not found",
     "description": "This route is not available. Open the catalog to continue browsing models, agents, and toolsets, or start a new chat.",
-    "openCatalog": "Open catalog",
-    "newChat": "New chat"
-  },
-  "deployments": {
-    "empty": "No models or applications available.",
-    "type": {
-      "model": "Model",
-      "application": "Application"
-    },
-    "selector": {
-      "ariaLabel": "Select model",
-      "loading": "Loading models…",
-      "error": "Failed to load models",
-      "empty": "No models available",
-      "closeLabel": "Close model selector"
-    },
-    "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date."
+    "openCatalog": "Open catalog"
   },
   "buttons": {
     "showMore": "Show more",
@@ -203,13 +199,13 @@
     "likeResponse": "Like response",
     "dislikeResponse": "Dislike response",
     "useInChat": "Use in chat",
-    "deploy": "Deploy",
-    "connect": "Connect"
+    "newChat": "New chat",
+    "download": "Download",
+    "logOut": "Log out"
   },
   "sidebar": {
     "base": {
-      "toggleOpen": "Open sidebar",
-      "toggleClose": "Close sidebar"
+      "toggleOpen": "Open sidebar"
     },
     "sources": {
       "ariaLabel": "Conversation sources",
@@ -239,38 +235,43 @@
     "title": "Chats",
     "toggleAriaLabel": "Conversation panel",
     "empty": "No conversations yet",
-    "newChat": "New chat",
-    "filterAll": "All",
-    "filterMyChats": "My chats",
-    "filterShared": "Shared",
-    "filterOrganization": "Organization",
-    "pinnedSection": "Pinned",
-    "myChatsSection": "My chats",
-    "actionsLabel": "More actions",
-    "pinLabel": "Pin",
-    "unpinLabel": "Unpin",
-    "deleteConfirmTitle": "Confirm Deleting Chat",
-    "deleteSuccess": "Conversation deleted successfully",
-    "deleteSuccessTitle": "Conversation deleted",
-    "deleteConfirmDescription": "Are you sure you want to delete",
-    "deleteError": "Failed to delete the conversation. Please try again.",
-    "renameTitle": "Rename Chat",
-    "renameInputPlaceholder": "Chat name",
-    "renameError": "Failed to rename. Please try again.",
-    "renameTitleTooLong": "The name is too long. Please shorten it and try again.",
-    "renameWithAiLabel": "Rename with AI",
-    "renameWithAiError": "Failed to generate a name. Please try again.",
+    "filter": {
+      "all": "All",
+      "shared": "Shared",
+      "pinnedSection": "Pinned",
+      "myChatsSection": "My chats"
+    },
+    "actions": {
+      "actionsLabel": "More actions",
+      "pinLabel": "Pin",
+      "unpinLabel": "Unpin"
+    },
+    "delete": {
+      "deleteConfirmTitle": "Confirm Deleting Chat",
+      "deleteSuccess": "Conversation deleted successfully",
+      "deleteSuccessTitle": "Conversation deleted",
+      "deleteError": "Failed to delete the conversation. Please try again."
+    },
+    "rename": {
+      "renameTitle": "Rename Chat",
+      "renameInputPlaceholder": "Chat name",
+      "renameError": "Failed to rename. Please try again.",
+      "renameTitleTooLong": "The name is too long. Please shorten it and try again.",
+      "renameWithAiLabel": "Rename with AI",
+      "renameWithAiError": "Failed to generate a name. Please try again."
+    },
     "duplicateReadOnlyDescription": "Duplicate the conversation to be able to edit it",
     "duplicateError": "Failed to duplicate the conversation. Please try again.",
     "panelActionsLabel": "Conversation panel actions",
-    "deleteAllChatsLabel": "Delete all conversations",
-    "deleteAllConfirmTitle": "Delete All Conversations?",
-    "deleteAllConfirmDescription": "All conversations will be permanently deleted. This action cannot be undone.",
-    "deleteAllError": "Failed to delete all conversations. Please try again.",
-    "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed.",
-    "deleteAllSuccessTitle": "All conversations deleted",
-    "deleteAllSuccess": "All conversations have been deleted successfully.",
-    "shareLabel": "Share"
+    "deleteAll": {
+      "deleteAllChatsLabel": "Delete all conversations",
+      "deleteAllConfirmTitle": "Delete All Conversations?",
+      "deleteAllConfirmDescription": "All conversations will be permanently deleted. This action cannot be undone.",
+      "deleteAllError": "Failed to delete all conversations. Please try again.",
+      "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed.",
+      "deleteAllSuccessTitle": "All conversations deleted",
+      "deleteAllSuccess": "All conversations have been deleted successfully."
+    }
   },
   "conversationExport": {
     "exportLabel": "Export",
@@ -296,15 +297,11 @@
     "closeQueueConfirmButton": "Close"
   },
   "auth": {
-    "signOut": "Sign out",
     "signedInAs": "Signed in as {{email}}",
     "loading": "Checking your session…",
     "loginTitle": "Welcome to DIAL Chat",
     "loginDescription": "Sign in with:",
-    "providerButtonLabel": "Sign in with {{provider}}",
     "providersError": "Could not load identity providers. Please retry.",
-    "userMenuLabel": "User menu",
-    "logOut": "Log out",
     "logOutConfirmTitle": "Log out?",
     "logOutConfirmDescription": "Are you sure you want to log out?",
     "userAvatar": "User avatar"
@@ -335,7 +332,6 @@
     }
   },
   "chatSettings": {
-    "title": "Settings",
     "responseFormatLabel": "Response format",
     "responseFormatHint": "Applies to new and existing messages",
     "responseFormatMarkdown": "Markdown",
@@ -359,22 +355,17 @@
     },
     "popup": {
       "switcher": "{{current}}/{{total}}",
-      "preview": "Preview",
       "openInBrowser": "Open in browser",
-      "download": "Download",
       "previousCitation": "Previous citation",
-      "nextCitation": "Next citation",
-      "ariaLabel": "Citation from {{source}}"
+      "nextCitation": "Next citation"
     }
   },
   "fileDnd": {
-    "overlayTitle": "Attach files",
     "overlaySubtitle": "Drop files here to attach them to message",
     "overlayDeniedTitle": "No attachments allowed",
     "overlayDeniedSubtitle": "Attachments can't be added to message"
   },
   "dialFileManager": {
-    "title": "Attach files",
     "attach": "Attach",
     "empty": "This folder is empty",
     "error": "Failed to load files",
@@ -386,7 +377,6 @@
     "itemsSelected_other": "{{count}} items selected",
     "upload": "Upload files",
     "newFolder": "New folder",
-    "download": "Download",
     "downloading": "Preparing download…",
     "uploadProgressTitle": "Uploading files",
     "uploadProgressSummary": "{{done}} of {{total}} complete",
@@ -398,7 +388,6 @@
     "conflictSingleTitle": "Replace or Duplicate Item",
     "conflictMultipleTitle": "Replace or Duplicate Items",
     "conflictReplace": "Replace",
-    "conflictDuplicate": "Duplicate",
     "conflictDecideForEach": "Decide for each",
     "conflictReplaceAll": "Replace all",
     "conflictDuplicateAll": "Duplicate all",
@@ -425,14 +414,11 @@
     "unsupportedFilesDescription": "Files with unsupported type were not attached",
     "tooManyFilesSelected": "Too many files selected",
     "tooManyFilesDescription": "You selected {{count}} files, limit is {{limit}}",
-    "deleteAction": "Delete",
     "deletingLabel": "Deleting…",
     "deleteConfirmTitleSingle": "Confirm deleting",
     "deleteConfirmTitleMultiple": "Confirm deleting items",
-    "deleteConfirmBodySingle": "Are you sure you want to delete",
     "deleteConfirmBodyMultiple": "Do you want to delete following",
     "deleteConfirmBodyItems": "items?",
-    "deleteConfirmButton": "Delete",
     "deleteError": "Delete failed. Please try again.",
     "deleteFilesError": "Failed to delete files. Please try again later.",
     "createFolderError": "Failed to create folder. Please try again.",
@@ -444,7 +430,6 @@
     "itemsDeletedFromFolder": "{{count}} items deleted from {{folder}}",
     "andOtherItems": " and {{count}} other items",
     "someItemsNotDeleted": "{{files}}{{rest}} were not deleted. Please try again.",
-    "renameAction": "Rename",
     "renamingLabel": "Renaming…",
     "renameError": "Rename failed. Please try again.",
     "renamePartialError": "{{count}} item(s) could not be renamed.",
@@ -453,9 +438,8 @@
     "renameReservedName": "This name is reserved",
     "renameInvalidChars": "Name contains invalid characters",
     "renameNameTooLong": "Name must be 255 characters or fewer",
-    "copyAction": "Copy",
-    "moveAction": "Move",
-    "duplicateAction": "Duplicate",
+    "copyAction": "Copy to",
+    "moveAction": "Move to",
     "copyingLabel": "Copying...",
     "movingLabel": "Moving...",
     "copyError": "Failed to copy the selected items",
@@ -464,9 +448,7 @@
     "movePartialError": "{{count}} item(s) could not be moved",
     "operationLoaderCopyTitle": "Copying files",
     "operationLoaderMoveTitle": "Moving files",
-    "operationLoaderCancelLabel": "Cancel",
     "folderPickerAddFolderLabel": "Add folder",
-    "folderPickerHiddenFilesLabel": "Show hidden files",
     "copyHeaderSingle": "Copy \"{{name}}\"",
     "copyHeaderMultiple": "Copy {{count}} items",
     "moveHeaderSingle": "Move \"{{name}}\"",
@@ -475,17 +457,8 @@
     "folderPickerEmptyStateTitle": "No folders here",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "tab": {
-      "myFiles": "My files",
-      "shared": "Shared with me",
-      "organization": "Organization"
-    },
-    "column": {
-      "modifiedDate": "Modified date",
-      "size": "Size",
-      "author": "Author"
-    },
-    "search": {
-      "emptyStateTitle": "No results found"
+      "myFiles": "My Files",
+      "shared": "Shared with Me"
     },
     "myFiles": {
       "treeHeader": "Folder tree",
@@ -493,18 +466,40 @@
       "emptyStateDescription": "Upload files to your personal storage"
     },
     "shared": {
-      "treeHeader": "Shared with me",
       "emptyStateTitle": "No shared files",
       "emptyStateDescription": "Files shared with you will appear here"
     },
     "organization": {
-      "treeHeader": "Organization",
       "emptyStateTitle": "No organization files",
       "emptyStateDescription": "No files are available in the organization storage"
     },
     "page": {
       "navLabel": "File Manager"
-    }
+    },
+    "shareAction": "Share",
+    "unshareAction": "Unshare",
+    "removeAccessAction": "Remove access",
+    "shareModalTitle": "Share \"{{name}}\"",
+    "shareModalReadPermission": "Can view",
+    "shareModalReadWritePermission": "Can edit",
+    "shareModalCreateLinkButton": "Create link",
+    "shareModalCopyLinkButton": "Copy link",
+    "shareModalLinkCopiedConfirmation": "Link copied",
+    "shareError": "Failed to create the share link",
+    "unshareError": "Failed to remove the shared item",
+    "removeAccessError": "Failed to remove access",
+    "infoAction": "Info",
+    "getInfoError": "Failed to load file details",
+    "metadataHeader": "Information",
+    "metadataNameLabel": "Name:",
+    "metadataPathLabel": "Path:",
+    "metadataModifiedDateLabel": "Modified Date:",
+    "metadataSizeLabel": "Size:",
+    "metadataAuthorLabel": "Author:",
+    "uploadArchiveAction": "Upload archive",
+    "uploadArchiveError": "Failed to upload the archive",
+    "uploadArchivePartialError_one": "{{count}} item in the archive could not be uploaded",
+    "uploadArchivePartialError_other": "{{count}} items in the archive could not be uploaded"
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."
@@ -532,7 +527,6 @@
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
     "visibilityNoteConversation": "This conversation and its updates will be visible to users with the link.",
-    "copyButtonLabel": "Copy",
     "copiedButtonLabel": "Copied",
     "linkAriaLabel": "Share link",
     "expiryNote": "This link is active for {{days}} days.",
@@ -543,10 +537,8 @@
   },
   "appsEditor": {
     "stepGeneral": "General",
-    "stepSettings": "Settings",
     "stepsNavAriaLabel": "Editor steps",
     "saveButton": "Save & Exit",
-    "previewButton": "Preview",
     "exitPreviewButton": "Exit preview",
     "previewChat": {
       "placeholder": "Send a message to preview this application…",
@@ -558,7 +550,6 @@
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe your application",
       "iconUrlLabel": "Icon URL",
-      "iconUrlPlaceholder": "https://...",
       "nextButton": "Next",
       "nameRequired": "Name is required",
       "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
@@ -569,8 +560,7 @@
       "topicsPlaceholder": "Add a topic",
       "introLabel": "Intro",
       "introPlaceholder": "A short one-line pitch",
-      "introTooLong": "Intro must be 90 characters or fewer",
-      "previewTitle": "Preview"
+      "introTooLong": "Intro must be 90 characters or fewer"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -583,7 +573,6 @@
   },
   "toolsetEditor": {
     "stepGeneral": "General",
-    "stepSettings": "Settings",
     "stepsNavAriaLabel": "Editor steps",
     "nextButton": "Next",
     "saveButton": "Save & Exit",
@@ -594,7 +583,6 @@
       "versionLabel": "Version",
       "versionPlaceholder": "e.g. 1.0.0",
       "iconUrlLabel": "Icon URL",
-      "iconUrlPlaceholder": "https://...",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe your toolset",
       "topicsLabel": "Topics",
@@ -604,8 +592,6 @@
       "introTooLong": "Intro must be 90 characters or fewer"
     },
     "settings": {
-      "endpointLabel": "Endpoint",
-      "endpointPlaceholder": "https://...",
       "endpointRequired": "Endpoint is required",
       "endpointInvalid": "Enter a valid http(s) or sse URL",
       "protocolLabel": "Protocol",
@@ -634,9 +620,7 @@
       "scopesLabel": "Scopes",
       "scopesPlaceholder": "Add a scope",
       "logInButton": "Log in",
-      "logOutButton": "Log out",
       "loggedInLabel": "Logged in",
-      "logoutConfirmTitle": "Log out",
       "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."
     },
     "error": {

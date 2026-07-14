@@ -11,7 +11,11 @@ import { IconCheck, IconCopy } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
+import {
+  ApiI18nKeys,
+  BasicI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../../../constants/translation-keys';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
@@ -74,10 +78,10 @@ const SettingsForm: FC<Props> = ({
             value={form.endpoint}
             onChange={(value) => onChange({ endpoint: value ?? '' })}
             labelProps={{
-              label: t(ToolsetEditorI18nKeys.EndpointLabel),
+              label: t(ApiI18nKeys.EndpointLabel),
               required: true,
             }}
-            placeholder={t(ToolsetEditorI18nKeys.EndpointPlaceholder)}
+            placeholder={t(BasicI18nKeys.UrlPlaceholder)}
             error={errors.endpoint || undefined}
             invalid={!!errors.endpoint}
           />

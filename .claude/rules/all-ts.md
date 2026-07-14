@@ -93,3 +93,18 @@ In app TypeScript code, never pass a raw string literal translation key to
 in `apps/chat/src/constants/translation-keys.ts` and referenced through that
 enum (for example, `t(DialFileManagerI18nKeys.ConflictReplace)`). When adding a
 key to a locale JSON file, add the matching enum member in the same change.
+
+### Avoid duplicate translation values
+
+Before adding a new key to `apps/chat/src/i18n/locales/en.json`, check whether
+the exact English string already exists under `ButtonsI18nKeys` (or another
+shared namespace) in `translation-keys.ts`. Generic, short UI strings —
+button/action labels such as "Copy", "Duplicate", "Log out", "Cancel", "Save"
+— belong in `ButtonsI18nKeys` and must be reused across features via that one
+key, not re-declared per feature (`catalog.details.credentials.logoutLabel`,
+`dialFileManager.copyAction`, `share.copyButtonLabel`, etc.). Only give a
+string its own feature-scoped key when the wording is, or is expected to
+become, genuinely feature-specific (longer sentences, domain-specific nouns,
+or text that a translator would phrase differently in context). When in
+doubt, grep the value in `en.json` first — if it already exists, reuse that
+key instead of adding a duplicate.

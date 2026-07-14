@@ -2,7 +2,10 @@ import { StepStatus } from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
+import {
+  BasicI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../../../constants/translation-keys';
 import { ToolsetEditorSteps } from '../../../types/toolsets';
 import ToolsetEditorHeader from '../ToolsetEditorHeader';
 
@@ -66,7 +69,7 @@ describe('ToolsetEditorHeader', () => {
       },
       {
         id: ToolsetEditorSteps.Settings,
-        name: ToolsetEditorI18nKeys.StepSettings,
+        name: BasicI18nKeys.Settings,
         status: undefined,
       },
     ]);
@@ -96,7 +99,7 @@ describe('ToolsetEditorHeader', () => {
       },
       {
         id: ToolsetEditorSteps.Settings,
-        name: ToolsetEditorI18nKeys.StepSettings,
+        name: BasicI18nKeys.Settings,
         status: StepStatus.VALID,
       },
     ]);
@@ -117,7 +120,7 @@ describe('ToolsetEditorHeader', () => {
 
     await userEvent.click(
       screen.getByRole('button', {
-        name: ToolsetEditorI18nKeys.StepSettings,
+        name: BasicI18nKeys.Settings,
       }),
     );
 

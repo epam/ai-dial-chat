@@ -10,11 +10,13 @@ import {
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { Test, TestingModule } from '@nestjs/testing';
 import { memoryStorage } from 'multer';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ArchiveUploadInterceptor } from '../archive-upload.interceptor';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../files.service';
 
@@ -52,7 +54,18 @@ async function buildApp(
       }),
     ],
     controllers: [FilesController],
-    providers: [{ provide: FilesService, useValue: service }],
+    providers: [
+      ArchiveUploadInterceptor,
+      { provide: FilesService, useValue: service },
+      {
+        provide: ConfigService,
+        useValue: {
+          get: vi.fn((key: string) =>
+            key === 'ARCHIVE_UPLOAD_MAX_BYTES' ? fileSizeLimit : undefined,
+          ),
+        },
+      },
+    ],
   }).compile();
 
   const app = module.createNestApplication();
@@ -290,6 +303,121 @@ describe('FilesController — upload', () => {
       .field('uploadMode', 'create-only')
       .attach('file', Buffer.from('hello'), 'file.pdf')
       .expect(409);
+  });
+});
+
+describe('FilesController — upload-archive', () => {
+  let app: INestApplication;
+  let service: {
+    uploadFile: ReturnType<typeof vi.fn>;
+    uploadArchive: ReturnType<typeof vi.fn>;
+    downloadFile: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    service = {
+      uploadFile: vi.fn(),
+      uploadArchive: vi.fn().mockResolvedValue({
+        results: [{ path: 'reports/a.txt', success: true }],
+      }),
+      downloadFile: vi.fn(),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with results on a valid multipart request', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', 'reports')
+      .attach('file', Buffer.from('zip-bytes'), 'archive.zip')
+      .expect(200);
+
+    expect(res.body).toEqual({
+      results: [{ path: 'reports/a.txt', success: true }],
+    });
+    expect(service.uploadArchive).toHaveBeenCalledWith(
+      'my-bucket',
+      'reports',
+      expect.objectContaining({
+        path: expect.any(String),
+        size: expect.any(Number),
+      }),
+      TEST_USER.at,
+    );
+  });
+
+  it('accepts an empty destinationPath for bucket-root archive upload', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', '')
+      .attach('file', Buffer.from('zip-bytes'), 'archive.zip')
+      .expect(200);
+
+    expect(service.uploadArchive).toHaveBeenCalledWith(
+      'my-bucket',
+      '',
+      expect.objectContaining({
+        path: expect.any(String),
+        size: expect.any(Number),
+      }),
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when the file field is missing', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', 'reports')
+      .expect(400);
+    expect(service.uploadArchive).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for a missing bucket', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('destinationPath', 'reports')
+      .attach('file', Buffer.from('zip-bytes'), 'archive.zip')
+      .expect(400);
+    expect(service.uploadArchive).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for an invalid destinationPath (path traversal)', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', '../etc')
+      .attach('file', Buffer.from('zip-bytes'), 'archive.zip')
+      .expect(400);
+    expect(service.uploadArchive).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    service.uploadArchive.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', 'reports')
+      .attach('file', Buffer.from('zip-bytes'), 'archive.zip')
+      .expect(401);
+  });
+
+  it('returns 413 when multer rejects an oversized archive', async () => {
+    await app.close();
+    app = await buildApp(service, { fileSizeLimit: 1 });
+    await request(app.getHttpServer())
+      .post('/api/v1/files/upload-archive')
+      .field('bucket', 'my-bucket')
+      .field('destinationPath', 'reports')
+      .attach('file', Buffer.from('zip-bytes-too-large'), 'archive.zip')
+      .expect(413);
   });
 });
 
@@ -1405,6 +1533,238 @@ describe('FilesController — moveFiles', () => {
           },
         ],
       })
+      .expect(401);
+  });
+});
+
+describe('FilesController — shareFiles', () => {
+  let app: INestApplication;
+  let service: { shareFiles: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      shareFiles: vi.fn().mockResolvedValue({
+        invitationLink: 'https://chat.example.com/share/abc',
+      }),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with the invitation link on a valid request', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/share')
+      .send({
+        items: [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+        permission: 'read',
+      })
+      .expect(200);
+
+    expect(res.body).toEqual({
+      invitationLink: 'https://chat.example.com/share/abc',
+    });
+    expect(service.shareFiles).toHaveBeenCalledWith(
+      [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+      'read',
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/share')
+      .send({ items: [], permission: 'read' })
+      .expect(400);
+    expect(service.shareFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when more than 50 items are sent', async () => {
+    const items = Array.from({ length: 51 }, (_, i) => ({
+      bucket: 'user-bucket',
+      path: `file${i}.pdf`,
+    }));
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files/share')
+      .send({ items, permission: 'read' })
+      .expect(400);
+    expect(service.shareFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when permission is not a valid enum value', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/share')
+      .send({
+        items: [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+        permission: 'admin',
+      })
+      .expect(400);
+    expect(service.shareFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.shareFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/share')
+      .send({
+        items: [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+        permission: 'read',
+      })
+      .expect(401);
+  });
+});
+
+describe('FilesController — revokeAccess', () => {
+  let app: INestApplication;
+  let service: { revokeAccess: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      revokeAccess: vi.fn().mockResolvedValue({ success: true }),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with success=true on a valid request', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/revoke-access')
+      .send({ items: [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }] })
+      .expect(200);
+
+    expect(res.body).toEqual({ success: true });
+    expect(service.revokeAccess).toHaveBeenCalledWith(
+      [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }],
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/revoke-access')
+      .send({ items: [] })
+      .expect(400);
+    expect(service.revokeAccess).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.revokeAccess.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/revoke-access')
+      .send({ items: [{ bucket: 'user-bucket', path: 'reports/q1.pdf' }] })
+      .expect(401);
+  });
+});
+
+describe('FilesController — discardShared', () => {
+  let app: INestApplication;
+  let service: { discardShared: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      discardShared: vi.fn().mockResolvedValue({ success: true }),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with success=true on a valid request', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/discard-shared')
+      .send({ items: [{ bucket: 'owner-bucket', path: 'shared.pdf' }] })
+      .expect(200);
+
+    expect(res.body).toEqual({ success: true });
+    expect(service.discardShared).toHaveBeenCalledWith(
+      [{ bucket: 'owner-bucket', path: 'shared.pdf' }],
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/discard-shared')
+      .send({ items: [] })
+      .expect(400);
+    expect(service.discardShared).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.discardShared.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/discard-shared')
+      .send({ items: [{ bucket: 'owner-bucket', path: 'shared.pdf' }] })
+      .expect(401);
+  });
+});
+
+describe('FilesController — listSharedByMe', () => {
+  const MOCK_SHARED_BY_ME_RESPONSE = {
+    bucket: 'user-bucket',
+    path: '',
+    items: [
+      {
+        name: 'shared-by-me.pdf',
+        path: 'shared-by-me.pdf',
+        folderId: 'user-bucket:',
+        nodeType: 'item',
+        bucket: 'user-bucket',
+      },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: { listSharedByMe: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      listSharedByMe: vi.fn().mockResolvedValue(MOCK_SHARED_BY_ME_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with shared-by-me items on a valid request', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/shared-by-me')
+      .query({ bucket: 'user-bucket' })
+      .expect(200);
+
+    expect(res.body).toMatchObject({ items: expect.any(Array) });
+    expect(service.listSharedByMe).toHaveBeenCalledWith(
+      'user-bucket',
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when bucket is missing', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/shared-by-me')
+      .expect(400);
+    expect(service.listSharedByMe).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.listSharedByMe.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/shared-by-me')
+      .query({ bucket: 'user-bucket' })
       .expect(401);
   });
 });

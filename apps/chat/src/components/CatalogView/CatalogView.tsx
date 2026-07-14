@@ -20,8 +20,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
+  ApiI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
+  FavoritesI18nKeys,
+  NavigationI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -30,8 +33,13 @@ import { useNotification } from '../../context/NotificationContext';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentDetails } from '../../server-api/deployments';
-import { loginToolset, logoutToolset } from '../../server-api/toolsets';
+import {
+  deleteToolset,
+  loginToolset,
+  logoutToolset,
+} from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
@@ -89,6 +97,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     toolsets,
     setSelectedItemId,
     refetchToolsets,
+    refetchDeployments,
   } = useDeployments();
   const {
     favoriteIds,
@@ -115,7 +124,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         ),
       ),
       ...toolsets.map((toolset) =>
-        mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin),
+        mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
       ),
     ],
     [deployments, favoriteIds, t, toolsets, quickAppSchemaId, isAdmin],
@@ -322,13 +331,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           : NotificationVariant.Info,
         title: t(
           isFavorite
-            ? CatalogI18nKeys.FavoriteAddedTitle
-            : CatalogI18nKeys.FavoriteRemovedTitle,
+            ? FavoritesI18nKeys.AddedTitle
+            : FavoritesI18nKeys.RemovedTitle,
         ),
         message: t(
-          isFavorite
-            ? CatalogI18nKeys.FavoriteAdded
-            : CatalogI18nKeys.FavoriteRemoved,
+          isFavorite ? FavoritesI18nKeys.Added : FavoritesI18nKeys.Removed,
           { name },
         ),
       });
@@ -408,6 +415,33 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [quickAppSchemaId, navigate, buildEditorUrl],
   );
 
+  const handleDelete = useCallback(
+    async (item: CatalogItem) => {
+      try {
+        if (item.type === CatalogEntityType.Toolset) {
+          await deleteToolset(item.id);
+          await refetchToolsets();
+        } else {
+          await deleteApplication(item.id);
+          await refetchDeployments();
+        }
+
+        showNotification({
+          variant: NotificationVariant.Success,
+          title: t(CatalogI18nKeys.DetailsDeleteSuccessTitle),
+          message: t(CatalogI18nKeys.DetailsDeleteSuccess, { name: item.name }),
+        });
+      } catch (err) {
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: t(CatalogI18nKeys.DetailsDeleteError),
+        });
+        throw err;
+      }
+    },
+    [refetchToolsets, refetchDeployments, showNotification, t],
+  );
+
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
 
@@ -457,6 +491,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onLogin={handleLogin}
       onLogout={handleLogout}
       onEdit={handleEdit}
+      onDelete={handleDelete}
       isPrimaryActionVisible={isPrimaryActionVisible}
       shareOverlay={(item, onClose) => (
         <SharePopoverContainer item={item} onClose={onClose} />
@@ -465,9 +500,9 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },
       }}
       titles={{
-        pageTitle: t(CatalogI18nKeys.PageTitle),
+        pageTitle: t(NavigationI18nKeys.Catalog),
         createLabel: t(ButtonsI18nKeys.Create),
-        favoritesTitle: t(CatalogI18nKeys.FavoritesTitle),
+        favoritesTitle: t(FavoritesI18nKeys.Title),
         browseTitle: t(ButtonsI18nKeys.Browse),
         searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
         noResultsTitle: (query) => t(CatalogI18nKeys.NoResultsTitle, { query }),
@@ -477,7 +512,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
         gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
         listViewLabel: t(CatalogI18nKeys.ListViewLabel),
-        ariaLabel: t(CatalogI18nKeys.AriaLabel),
+        ariaLabel: t(NavigationI18nKeys.Catalog),
         tabLabels: {
           [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
           [CatalogEntityType.Application]: t(CatalogI18nKeys.TabApplications),
@@ -488,14 +523,15 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),
+        deleteActionLabel: t(ButtonsI18nKeys.Delete),
         dailyLimitLabel: t(CatalogI18nKeys.DetailsDailyLimit),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
         apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
-        apiEndpointLabel: t(CatalogI18nKeys.DetailsApiEndpoint),
+        apiEndpointLabel: t(ApiI18nKeys.EndpointLabel),
         apiRequestExampleLabel: t(CatalogI18nKeys.DetailsApiRequestExample),
         apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
-        copyCodeAriaLabel: t(CatalogI18nKeys.DetailsApiCopy),
+        copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
         pricingPricesSectionLabel: t(
           CatalogI18nKeys.DetailsPricingPricesSection,
         ),
@@ -503,7 +539,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           CatalogI18nKeys.DetailsPricingLimitsSection,
         ),
         loginActionLabel: t(CatalogI18nKeys.CredentialsLoginLabel),
-        logoutActionLabel: t(CatalogI18nKeys.CredentialsLogoutLabel),
+        logoutActionLabel: t(ButtonsI18nKeys.LogOut),
         loginWithMyCredsActionLabel: t(
           CatalogI18nKeys.CredentialsLoginWithMyCredsLabel,
         ),
