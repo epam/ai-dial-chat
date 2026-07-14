@@ -225,6 +225,56 @@ describe('useOpenAttachmentCanvas routing', () => {
     expect(opened).toBe(false);
     expect(mockOpenCanvas).not.toHaveBeenCalled();
   });
+
+  it('routes attachments with no contentType and inline data to the plain-text resolver', async () => {
+    mockResolveText.mockResolvedValue({
+      type: 'plain_text',
+      text: 'A serene sunrise over a tranquil landscape.',
+    });
+
+    const attachment = {
+      id: 'Revised prompt',
+      name: 'Revised prompt',
+      contentType: '',
+      type: AttachmentType.File,
+      data: 'A serene sunrise over a tranquil landscape.',
+    } as DisplayAttachment;
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(attachment);
+
+    expect(opened).toBe(true);
+    expect(mockResolveText).toHaveBeenCalledOnce();
+    expect(mockResolveMarkdown).not.toHaveBeenCalled();
+    expect(mockResolveJson).not.toHaveBeenCalled();
+    expect(mockResolvePdf).not.toHaveBeenCalled();
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      {
+        type: 'plain_text',
+        text: 'A serene sunrise over a tranquil landscape.',
+      },
+      'Revised prompt',
+    );
+  });
+
+  it('falls through to extension/unsupported routing when contentType is empty and no data is present', async () => {
+    mockResolvePdf.mockReturnValue(null);
+
+    const attachment = {
+      id: 'mystery.pdf',
+      name: 'mystery.pdf',
+      contentType: '',
+      type: AttachmentType.File,
+      url: 'files/bucket/path/mystery.pdf',
+    } as DisplayAttachment;
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(attachment);
+
+    expect(opened).toBe(false);
+    expect(mockResolveText).not.toHaveBeenCalled();
+    expect(mockResolvePdf).toHaveBeenCalledOnce();
+  });
 });
 
 describe('annotationsToPdfHighlights', () => {
