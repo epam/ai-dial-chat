@@ -98,7 +98,9 @@ Copy mode SHALL NOT set `sourceFolder` — copying an item into its own current 
 
 ### Requirement: Folder-only, action-free browsing inside the popup
 
-The popup SHALL display only folders (no files) and SHALL NOT render row-level context actions (no Rename/Delete/etc. on folders shown inside the popup). This is the current behavior of the installed `@epam/ai-dial-ui-kit` version and is not configurable by the host application — `DialFileManagerDestinationFolderPopupOptions` exposes no `actionLabels` override for the popup's internal tree.
+The popup SHALL display only folders (no files) and SHALL NOT render row-level context actions (no Rename/Delete/etc. on folders shown inside the popup).
+
+The application SHALL still keep the popup's browsed folder listing complete in the `DialFileManager.items` tree, including files, so ui-kit's copy/move conflict resolver can detect destination-name collisions. Files are hidden only from the popup grid/tree presentation.
 
 #### Scenario: Files are not shown in the popup
 
@@ -109,6 +111,31 @@ The popup SHALL display only folders (no files) and SHALL NOT render row-level c
 
 - **WHEN** the user right-clicks or opens the row menu on a folder inside the popup
 - **THEN** no Rename/Delete/other action menu appears (known ui-kit limitation)
+
+---
+
+### Requirement: Popup blocks Copy/Move confirmation while destination contents are loading
+
+When the popup browses into a folder whose listing is not already cached, `useDialFileManager` SHALL preload the folder contents through the same active-tab list API used by normal navigation, without changing the outer file-manager path. The preloaded listing SHALL include both files and folders for conflict detection, while the popup presentation remains folder-only per the previous requirement.
+
+While that destination-folder preload request is pending, `DialFileManagerShell` SHALL pass a popup loading state and SHALL temporarily disable confirmation for the currently browsed destination folder. The disabled-state tooltip SHALL use `t(DialFileManagerI18nKeys.FolderPickerLoadingTooltip)`.
+
+#### Scenario: Uncached destination disables confirmation until loaded
+
+- **WHEN** the popup navigates to `/My files/Folder1/` and that folder is not yet present in the listing cache
+- **THEN** the app starts a preload request for `Folder1/`
+- **AND** the popup disables the Copy/Move confirm action for `/My files/Folder1/` while the request is pending
+
+#### Scenario: Loaded destination can trigger conflict resolution
+
+- **WHEN** the preload for `/My files/Folder1/` completes and the folder contains `requirements.txt`
+- **AND** the user confirms copying or moving an item named `requirements.txt` there
+- **THEN** ui-kit's conflict resolver sees the loaded file and can show the Replace/Duplicate decision before dispatching the copy/move handler
+
+#### Scenario: Cached destination does not show a loading block
+
+- **WHEN** the popup browses to a destination folder already present in the listing cache
+- **THEN** no additional preload is started and the Copy/Move confirm action remains governed only by the normal destination-validity rules
 
 ---
 
@@ -147,6 +174,7 @@ The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with m
 | `dialFileManager.moveHeaderSingle` | `Move "{{name}}"` |
 | `dialFileManager.moveHeaderMultiple` | `Move {{count}} items` |
 | `dialFileManager.moveSourceDisabledTooltip` | `Unavailable for the original location. Please select another folder` |
+| `dialFileManager.folderPickerLoadingTooltip` | `Loading folder contents. Please wait` |
 | `dialFileManager.folderPickerEmptyStateTitle` | `No folders here` |
 | `dialFileManager.folderPickerEmptyStateDescription` | `Create a folder or choose another location` |
 

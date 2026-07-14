@@ -132,6 +132,10 @@ export interface UseDialFileManagerResult {
   loadedPaths: Set<string>;
   /** Tree: called by DialFileManager when a folder is expanded/collapsed. */
   onExpandedPathsChange: (paths: Set<string>) => void;
+  /** Destination folder popup: preloads the browsed folder without changing the outer grid path. */
+  onFolderPopupPathChange: (nextPath?: string) => void;
+  /** Destination folder popup: normalized virtual paths currently being preloaded. */
+  folderPopupLoadingPaths: Set<string>;
 
   /** Upload: start a new batch. */
   onUploadFiles: (
@@ -792,6 +796,9 @@ export const useDialFileManager = ({
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
     () => new Set(),
   );
+  const [folderPopupLoadingPaths, setFolderPopupLoadingPaths] = useState<
+    Set<string>
+  >(() => new Set());
 
   // Clear cache and reset path on tab switch
   const prevTabRef = useRef(activeTab);
@@ -805,6 +812,7 @@ export const useDialFileManager = ({
     sharedRootMetaRef.current = new Map();
     expandingApiPathsRef.current = new Set();
     erroredApiPathsRef.current = new Set();
+    setFolderPopupLoadingPaths(new Set());
     if (searchDebounceRef.current != null) {
       clearTimeout(searchDebounceRef.current);
       searchDebounceRef.current = null;
@@ -979,6 +987,68 @@ export const useDialFileManager = ({
     setRetryCounter((c) => c + 1);
   }, []);
 
+  const onFolderPopupPathChange = useCallback(
+    (nextPath?: string) => {
+      const apiPath =
+        nextPath == null ? '' : virtualPathToApiPath(nextPath, rootLabel);
+      const virtualPath =
+        nextPath == null ? `/${rootLabel}` : normalizeVirtualPath(nextPath);
+
+      if (cacheRef.current.has(apiPath)) {
+        return;
+      }
+
+      if (expandingApiPathsRef.current.has(apiPath)) {
+        setFolderPopupLoadingPaths((prev) => {
+          const next = new Set(prev);
+          next.add(virtualPath);
+          return next;
+        });
+        return;
+      }
+
+      expandingApiPathsRef.current.add(apiPath);
+      setFolderPopupLoadingPaths((prev) => {
+        const next = new Set(prev);
+        next.add(virtualPath);
+        return next;
+      });
+
+      const loadFolder = async (): Promise<void> => {
+        try {
+          const { items: flat, permissions } = await fetchByTab(
+            activeTab,
+            bucket,
+            apiPath,
+            sharedRootMetaRef.current,
+          );
+          setCache((prev) => new Map(prev).set(apiPath, flat));
+          if (permissions != null) {
+            setListingPermissionsCache((prev) =>
+              new Map(prev).set(apiPath, permissions),
+            );
+          }
+          erroredApiPathsRef.current.delete(apiPath);
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.FolderLoadError),
+          });
+        } finally {
+          expandingApiPathsRef.current.delete(apiPath);
+          setFolderPopupLoadingPaths((prev) => {
+            const next = new Set(prev);
+            next.delete(virtualPath);
+            return next;
+          });
+        }
+      };
+
+      void loadFolder();
+    },
+    [activeTab, bucket, onNotification, rootLabel, t],
+  );
+
   const loadedPaths = useMemo(() => {
     const result = new Set<string>();
     for (const virtualPath of expandedPaths) {
@@ -1036,6 +1106,11 @@ export const useDialFileManager = ({
             });
           } finally {
             expandingApiPathsRef.current.delete(apiPath);
+            setFolderPopupLoadingPaths((prev) => {
+              const next = new Set(prev);
+              next.delete(normalizeVirtualPath(virtualPath));
+              return next;
+            });
           }
         };
         void loadFolder();
@@ -2184,6 +2259,8 @@ export const useDialFileManager = ({
     expandedPaths,
     loadedPaths,
     onExpandedPathsChange,
+    onFolderPopupPathChange,
+    folderPopupLoadingPaths,
     onUploadFiles,
     onUploadArchive,
     onValidateUpload,
