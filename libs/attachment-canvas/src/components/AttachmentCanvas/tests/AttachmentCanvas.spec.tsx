@@ -53,7 +53,7 @@ describe('AttachmentCanvas', () => {
   it('hides the panel when isOpen is false', () => {
     render(<AttachmentCanvas {...defaultProps} isOpen={false} />);
     const panel = screen.getByRole('complementary', { hidden: true });
-    expect(panel.getAttribute('aria-hidden')).toBe('true');
+    expect(panel.getAttribute('aria-hidden')).toBeNull();
   });
 
   it('shows the file name as the panel title', () => {
