@@ -47,7 +47,7 @@ export const NameCellRenderer: FC<
           }
         />
         <p className={mergeClasses(descriptionClassName, styles.secondaryText)}>
-          <Highlight text={data.description} query={searchQuery} />
+          <Highlight text={data.description} query={searchQuery} maxLines={2} />
         </p>
       </div>
       <CredentialsBadge

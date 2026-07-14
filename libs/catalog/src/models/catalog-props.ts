@@ -65,7 +65,7 @@ export interface CatalogTitles {
   tabLabels?: Partial<Record<CatalogEntityType, string>>;
   /** Label for the filter button when nothing is filtered. Default: 'From'. */
   filterFromLabel?: string;
-  /** Label for the "My Apps" filter checkbox. Default: 'My Apps'. */
+  /** Label for the "My Apps" filter checkbox. Default: 'My'. */
   filterMyAppsLabel?: string;
   /** Label for the Topics section inside the filter dropdown. Default: 'Topics'. */
   filterTopicsLabel?: string;
