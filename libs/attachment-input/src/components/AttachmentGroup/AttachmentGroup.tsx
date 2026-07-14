@@ -37,6 +37,7 @@ const pluralize = (count: number, noun: string): string =>
 export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   attachments,
   onAttachmentClick,
+  onDownloadAll,
   onRetry,
   getSizeLabel,
   ariaLabel = 'Attachments',
@@ -70,9 +71,17 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
     // Skip attachments that individual tiles themselves wouldn't allow
     // downloading (still uploading, or failed) — "download all" must not
     // fire on a broken/incomplete attachment just because it's in the list.
-    attachments
-      .filter((attachment) => attachment.status === RequestStatus.Idle)
-      .forEach((attachment) => onAttachmentClick?.(attachment));
+    const downloadableAttachments = attachments.filter(
+      (attachment) => attachment.status === RequestStatus.Idle,
+    );
+
+    if (onDownloadAll) {
+      onDownloadAll(downloadableAttachments);
+    } else {
+      downloadableAttachments.forEach((attachment) =>
+        onAttachmentClick?.(attachment),
+      );
+    }
   };
 
   return (
@@ -97,7 +106,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
         >
           {headerLabel}
         </span>
-        {attachments.length >= 2 && onAttachmentClick && (
+        {attachments.length >= 2 && (onDownloadAll || onAttachmentClick) && (
           <DialGhostIconButton
             icon={<IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />}
             className={mergeClasses(
