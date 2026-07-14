@@ -1,24 +1,3 @@
-/*
- * Header stays on the plain `--bg-layer-3` surface — genuinely white in
- * light mode (#FCFCFC) and correctly reactive in dark (#1D2439), since the
- * theme API returns a value for it in both themes.
- *
- * The body (`.container`) is deliberately a shade *greyer* than the header
- * in light mode, matching the reference mockup's header (`--card: #FFFFFF`)
- * vs. code surface (`--code-surface: #F8F9FB`) distinction. `.containerLight`
- * (applied by `CodeBlock.tsx` from its `theme` prop, which tracks the app's
- * live theme via `useTheme()` in `app.tsx`) overrides only the body to
- * `--bg-layer-6` (#F8FAFC) — one step past the chat's own `--bg-layer-5`
- * (#F5F7FA) in the same DS scale (`tailwind.config.js`), so it reads as a
- * shade lighter than the chat background while still being visibly grey.
- *
- * Known gap (accepted, deferred): the live theme API doesn't return a
- * dark-theme value for `--bg-layer-6`, so it can't be used as a single
- * theme-reactive swap the way `--bg-layer-3` is — hence the light-only
- * class on `.container` only (the header never needs it). Same
- * "accept and document" precedent as the inline-code chip's dark-mode AA
- * gap (see `syntax-theme.ts`).
- */
 .container {
   background: var(--cm-code-block-bg, var(--bg-layer-3, #1d2439));
   border-color: var(--cm-code-block-border, var(--stroke-secondary, #d1dbea));

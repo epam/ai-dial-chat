@@ -41,12 +41,6 @@ export interface MarkdownCodeBlockProps {
   codeClassName?: string;
 }
 
-/*
- * Both keys point to the same theme object: its colors are CSS custom
- * properties (see `restrainedSyntaxTheme`), so it already resolves
- * correctly for whichever theme is active. Kept as a two-key lookup so the
- * `theme` prop's shape and usage stay unchanged.
- */
 const syntaxTheme = {
   dark: restrainedSyntaxTheme,
   light: restrainedSyntaxTheme,

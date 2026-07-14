@@ -36,10 +36,6 @@ import { StopButton } from './Buttons/StopButton';
 import styles from './Input.module.scss';
 import { ModelSelectorControl } from './ModelSelectorControl';
 
-/*
- * Must match the CSS `sendButtonExit` animation's duration
- * (`.sendButtonExiting` in Input.module.scss).
- */
 const SEND_BUTTON_EXIT_MS = 160;
 
 export const Input: FC<InputProps> = ({
@@ -458,13 +454,6 @@ export const Input: FC<InputProps> = ({
                 <DialGhostIconButton
                   icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
                   aria-label={micLabel}
-                  /*
-                   * size-8 (32px), matching SendButton's size-[32px]: the mic
-                   * button used to be size-10 (40px), so swapping between the
-                   * two on every keystroke shifted the model selector by the
-                   * 8px difference even without the send button's exit delay
-                   * in play.
-                   */
                   className="size-8 flex-shrink-0"
                   onClick={startRecording}
                   disabled={isInputDisabled || isStreaming}

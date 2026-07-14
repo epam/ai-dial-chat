@@ -12,12 +12,7 @@ export interface SendButtonProps {
   ariaLabel?: string;
   /** Tooltip shown on hover. */
   title?: string;
-  /**
-   * Plays the exit animation and blocks interaction while true. Deliberately
-   * not wired to the `disabled` attribute: that would trigger the `:disabled`
-   * CSS rule's flat grey background, flashing over the gradient mid fade-out.
-   * `.sendButtonExiting` blocks clicks with `pointer-events: none` instead.
-   */
+  /** Whether the button is in the process of exiting (e.g., during an animation). */
   isExiting?: boolean;
 }
 
@@ -32,9 +27,9 @@ export const SendButton: FC<SendButtonProps> = ({
     <DialTooltip tooltip={title} hideTooltip={!title}>
       <button
         className={mergeClasses(
+          'flex size-[32px] cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed',
           styles.sendButton,
           isExiting && styles.sendButtonExiting,
-          'flex size-[32px] cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed',
         )}
         aria-label={ariaLabel}
         onClick={() => onSend?.()}

@@ -43,15 +43,25 @@ const LANGUAGE_EXTENSIONS: Record<string, string> = {
 export const getFileExtensionForLanguage = (language: string): string =>
   LANGUAGE_EXTENSIONS[language.toLowerCase()] ?? 'txt';
 
+/** Creates a temporary anchor element and clicks it to trigger a browser download for `href`. */
+export const triggerAnchorDownload = (href: string, filename: string): void => {
+  const anchor = document.createElement('a');
+  anchor.href = href;
+  anchor.download = filename;
+  anchor.click();
+};
+
+/** Triggers a browser download of `blob`, using a temporary object URL that is revoked afterward. */
+export const triggerBlobDownload = (blob: Blob, filename: string): void => {
+  const url = URL.createObjectURL(blob);
+  triggerAnchorDownload(url, filename);
+  URL.revokeObjectURL(url);
+};
+
 /** Triggers a browser download of `content` as a text file named `filename`. */
 export const downloadTextFile = (content: string, filename: string): void => {
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+  triggerBlobDownload(
+    new Blob([content], { type: 'text/plain;charset=utf-8' }),
+    filename,
+  );
 };

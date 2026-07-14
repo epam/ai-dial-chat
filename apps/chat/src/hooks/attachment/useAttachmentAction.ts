@@ -1,4 +1,5 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { triggerAnchorDownload } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import {
   isDialFileId,
@@ -14,10 +15,7 @@ export const useAttachmentAction = () => {
       const downloadUrl = resolveDialFileDownloadUrl(url);
       if (downloadUrl == null) return;
 
-      const anchor = document.createElement('a');
-      anchor.href = downloadUrl;
-      anchor.download = attachment.name;
-      anchor.click();
+      triggerAnchorDownload(downloadUrl, attachment.name);
     },
     [],
   );

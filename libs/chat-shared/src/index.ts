@@ -18,6 +18,7 @@ export * from './utils/is-audio-transcription-supported';
 export * from './utils/copy-to-clipboard';
 export * from './utils/format-last-used';
 export * from './utils/format-file-size';
+export * from './utils/file-download';
 export * from './constants/mime-types';
 export * from './constants/dial';
 
