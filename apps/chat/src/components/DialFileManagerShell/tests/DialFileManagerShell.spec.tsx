@@ -41,9 +41,6 @@ const capturedDialFileManagerProps: {
       sizeLabel?: string;
       authorLabel?: string;
     };
-    bulkActionsToolbarOptions?: {
-      actionLabels?: Partial<Record<DialFileManagerActions, string>>;
-    };
     destinationFolderPopupOptions?: {
       copyLabel?: string;
       moveLabel?: string;
@@ -84,9 +81,6 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         modifiedDateLabel?: string;
         sizeLabel?: string;
         authorLabel?: string;
-      };
-      bulkActionsToolbarOptions?: {
-        actionLabels?: Partial<Record<DialFileManagerActions, string>>;
       };
     }) => {
       capturedDialFileManagerProps.current = props;
@@ -392,9 +386,9 @@ describe('DialFileManagerShell', () => {
     expect(props?.destinationFolderPopupOptions?.moveLabel).toBe(
       baseLabels.moveLabel,
     );
-    expect(
-      props?.destinationFolderPopupOptions?.hiddenFilesSwitcherLabel,
-    ).toBe(baseLabels.hiddenFilesSwitcherLabel);
+    expect(props?.destinationFolderPopupOptions?.hiddenFilesSwitcherLabel).toBe(
+      baseLabels.hiddenFilesSwitcherLabel,
+    );
   });
 
   it('omits Duplicate from DialFileManager action labels when the hook result excludes it', () => {
