@@ -13,6 +13,10 @@ import type { MessageActionsProps } from './message-actions';
 export interface MessageBubbleColors {
   /** Background color of the user message bubble. */
   userBackground?: string;
+  /** Border color of the user message bubble. */
+  userBorder?: string;
+  /** Starting color of the fade-out gradient shown over a collapsed user message. Defaults to transparent. */
+  fadeStart?: string;
   /** Text color applied to all message bubbles. */
   text?: string;
   /** Border color of the divider line above quick-reply starter buttons. Falls back to `--color-secondary` when omitted. */

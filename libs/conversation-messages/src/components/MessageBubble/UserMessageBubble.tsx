@@ -58,6 +58,8 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
 
   const cssVars = buildCssVars({
     '--cm-bubble-user-bg': colors?.userBackground,
+    '--cm-bubble-user-border': colors?.userBorder,
+    '--cm-bubble-fade-start': colors?.fadeStart,
     '--cm-bubble-text': colors?.text,
     '--cm-bubble-collapsed-height': isOverflowing
       ? `${collapsedMaxHeight}px`
@@ -102,7 +104,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           <div
             className={mergeClasses(
               styles.userBubble,
-              'flex w-fit items-center justify-end rounded-es-[16px] rounded-ss-[16px] border px-6 py-4',
+              'flex w-fit items-center justify-end rounded-es-2xl rounded-ss-2xl border px-6 py-4',
               positionRadius,
               bubbleClassName,
             )}
