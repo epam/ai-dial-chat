@@ -13,6 +13,7 @@ import { ToolsetEditorSteps } from '../../types/toolsets';
 interface Props {
   step: ToolsetEditorSteps;
   isSaving: boolean;
+  isSaveDisabled: boolean;
   canOpenSettings: boolean;
   onChangeStep: (stepId: string) => void;
   onCancel: () => void;
@@ -22,6 +23,7 @@ interface Props {
 const ToolsetEditorHeader: FC<Props> = ({
   step,
   isSaving,
+  isSaveDisabled,
   canOpenSettings,
   onChangeStep,
   onCancel,
@@ -51,6 +53,7 @@ const ToolsetEditorHeader: FC<Props> = ({
       currentStep={step}
       navAriaLabel={t(EditorI18nKeys.StepsNavAriaLabel)}
       isSaving={isSaving}
+      isSaveDisabled={isSaveDisabled}
       cancelButtonLabel={t(ButtonsI18nKeys.Cancel)}
       saveButtonLabel={t(EditorI18nKeys.SaveButton)}
       onChangeStep={onChangeStep}

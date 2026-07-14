@@ -11,6 +11,7 @@ interface Props {
   currentStep: string;
   navAriaLabel: string;
   isSaving: boolean;
+  isSaveDisabled?: boolean;
   cancelButtonLabel: string;
   saveButtonLabel: string;
   onChangeStep: (stepId: string) => void;
@@ -32,6 +33,7 @@ const EditorHeader: FC<Props> = ({
   currentStep,
   navAriaLabel,
   isSaving,
+  isSaveDisabled = false,
   cancelButtonLabel,
   saveButtonLabel,
   onChangeStep,
@@ -80,7 +82,7 @@ const EditorHeader: FC<Props> = ({
         type="button"
         label={saveButtonLabel}
         onClick={onSave}
-        disabled={isSaving || isPreviewing}
+        disabled={isSaving || isPreviewing || isSaveDisabled}
       />
     </div>
   </header>

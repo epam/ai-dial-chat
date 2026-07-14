@@ -364,6 +364,12 @@ export class DialToolsetDto {
       'True when the toolset id/path belongs to the current session user bucket',
   })
   is_my?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'True when the current user may edit this toolset — owns it, or was granted WRITE access via a share invitation',
+  })
+  can_edit?: boolean;
 }
 
 export class DialToolsetListResponseDto {

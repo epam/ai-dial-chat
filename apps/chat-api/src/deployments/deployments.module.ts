@@ -7,5 +7,6 @@ import { DeploymentsService } from './deployments.service';
   imports: [UserConfigModule],
   controllers: [DeploymentsController],
   providers: [DeploymentsService],
+  exports: [DeploymentsService],
 })
 export class DeploymentsModule {}

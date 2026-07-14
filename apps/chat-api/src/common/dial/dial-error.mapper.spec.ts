@@ -75,6 +75,54 @@ describe('mapDialHttpStatus', () => {
   it('does not require a logger', () => {
     expect(() => mapDialHttpStatus(404, 'ctx')).toThrow(NotFoundException);
   });
+
+  it('uses the upstream message for 400 instead of the generic text when provided', () => {
+    try {
+      mapDialHttpStatus(
+        400,
+        'ctx',
+        undefined,
+        undefined,
+        "The specified endpoint 'https://x' is invalid or unreachable.",
+      );
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(BadRequestException);
+      expect((err as BadRequestException).message).toBe(
+        "The specified endpoint 'https://x' is invalid or unreachable.",
+      );
+    }
+  });
+
+  it('falls back to the generic 400 message when no upstream message is provided', () => {
+    try {
+      mapDialHttpStatus(400, 'ctx');
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect((err as BadRequestException).message).toBe(
+        'Invalid request to DIAL Core',
+      );
+    }
+  });
+
+  it('does not use the upstream message for 401/403/404', () => {
+    try {
+      mapDialHttpStatus(404, 'ctx', undefined, undefined, 'internal detail');
+      expect.fail('should have thrown');
+    } catch (err) {
+      expect((err as NotFoundException).message).toBe('Resource not found');
+    }
+  });
+
+  it('logs the raw error body at debug level when provided', () => {
+    const logger = { warn: vi.fn(), debug: vi.fn() } as unknown as Logger;
+    expect(() =>
+      mapDialHttpStatus(400, 'ctx', logger, { code: 'bad' }),
+    ).toThrow(BadRequestException);
+    expect(logger.debug).toHaveBeenCalledWith(
+      'DIAL Core error body for ctx: {"code":"bad"}',
+    );
+  });
 });
 
 describe('handleDialSdkError', () => {

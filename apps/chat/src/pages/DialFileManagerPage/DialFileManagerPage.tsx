@@ -168,6 +168,9 @@ const DialFileManagerPage: FC = () => {
       moveSourceDisabledTooltip: t(
         DialFileManagerI18nKeys.MoveSourceDisabledTooltip,
       ),
+      folderPickerLoadingTooltip: t(
+        DialFileManagerI18nKeys.FolderPickerLoadingTooltip,
+      ),
       folderPickerEmptyStateTitle: t(
         DialFileManagerI18nKeys.FolderPickerEmptyStateTitle,
       ),

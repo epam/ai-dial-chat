@@ -56,8 +56,21 @@ const ORDERED_AUTH_TYPES = [
   ToolsetAuthTypes.None,
 ];
 
-const defaultWithLoginFor = (type: ToolsetAuthTypes): WithLogin => {
+/*
+ * OAuth defaults to WithConfig when no client is configured yet, so a
+ * brand-new toolset can't be saved with an empty OAuth registration — the
+ * config fields only render in WithConfig mode. Once a client exists (e.g.
+ * loaded from a saved toolset), WithLogin becomes the default so switching
+ * back to OAuth just reauthenticates against the existing config.
+ */
+const defaultWithLoginFor = (
+  type: ToolsetAuthTypes,
+  hasExistingOAuthConfig: boolean,
+): WithLogin => {
   if (type === ToolsetAuthTypes.None) return WithLogin.WithoutLogin;
+  if (type === ToolsetAuthTypes.OAuth && !hasExistingOAuthConfig) {
+    return WithLogin.WithConfig;
+  }
   return WithLogin.WithLogin;
 };
 
@@ -73,19 +86,20 @@ const AuthSection: FC<Props> = ({
   const { showNotification } = useNotification();
   const [isAuthBusy, setIsAuthBusy] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const isEditMode = Boolean(toolsetId);
 
   const isControlsDisabled = auth.isLoggedIn || isSaving || isAuthBusy;
 
   const canLogIn =
     isValidEndpointUrl(endpoint) &&
-    isToolsetAuthValid(auth) &&
+    isToolsetAuthValid(auth, isEditMode) &&
     !isControlsDisabled;
 
   const handleSelectType = (type: ToolsetAuthTypes) => {
     if (isControlsDisabled || type === auth.authenticationType) return;
     onAuthChange({
       authenticationType: type,
-      withLogin: defaultWithLoginFor(type),
+      withLogin: defaultWithLoginFor(type, Boolean(auth.clientId?.trim())),
     });
   };
 
@@ -225,7 +239,7 @@ const AuthSection: FC<Props> = ({
             onChange={(value) => onAuthChange({ clientSecret: value ?? '' })}
             labelProps={{
               label: t(ToolsetEditorI18nKeys.ClientSecretLabel),
-              required: true,
+              required: !isEditMode,
             }}
             error={errors.clientSecret || undefined}
             invalid={!!errors.clientSecret}
@@ -240,13 +254,19 @@ const AuthSection: FC<Props> = ({
             labelProps={{
               label: t(ToolsetEditorI18nKeys.AuthorizationEndpointLabel),
             }}
+            error={errors.authorizationEndpoint || undefined}
+            invalid={!!errors.authorizationEndpoint}
             disabled={isControlsDisabled}
           />
           <DialInput
             id="toolset-token-endpoint"
             value={auth.tokenEndpoint ?? ''}
             onChange={(value) => onAuthChange({ tokenEndpoint: value ?? '' })}
-            labelProps={{ label: t(ToolsetEditorI18nKeys.TokenEndpointLabel) }}
+            labelProps={{
+              label: t(ToolsetEditorI18nKeys.TokenEndpointLabel),
+            }}
+            error={errors.tokenEndpoint || undefined}
+            invalid={!!errors.tokenEndpoint}
             disabled={isControlsDisabled}
           />
           <DialTagInput
@@ -287,20 +307,21 @@ const AuthSection: FC<Props> = ({
         />
       </div>
 
-      {auth.withLogin === WithLogin.WithLogin && (
-        <div className="flex flex-col gap-3">
-          <DialInput
-            id="toolset-key-header"
-            value={auth.keyHeader ?? ''}
-            onChange={(value) => onAuthChange({ keyHeader: value ?? '' })}
-            labelProps={{
-              label: t(ToolsetEditorI18nKeys.KeyHeaderLabel),
-              required: true,
-            }}
-            error={errors.keyHeader || undefined}
-            invalid={!!errors.keyHeader}
-            disabled={isControlsDisabled}
-          />
+      <div className="flex flex-col gap-3">
+        <DialInput
+          id="toolset-key-header"
+          value={auth.keyHeader ?? ''}
+          onChange={(value) => onAuthChange({ keyHeader: value ?? '' })}
+          labelProps={{
+            label: t(ToolsetEditorI18nKeys.KeyHeaderLabel),
+            required: true,
+          }}
+          error={errors.keyHeader || undefined}
+          invalid={!!errors.keyHeader}
+          disabled={isControlsDisabled}
+        />
+
+        {auth.withLogin === WithLogin.WithLogin && (
           <DialInput
             id="toolset-api-key"
             value={auth.apiKey ?? ''}
@@ -313,8 +334,8 @@ const AuthSection: FC<Props> = ({
             invalid={!!errors.apiKey}
             disabled={isControlsDisabled}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       {auth.withLogin !== WithLogin.WithoutLogin && renderLoginStatus()}
     </div>

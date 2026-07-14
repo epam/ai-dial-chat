@@ -17,27 +17,52 @@ import {
  * the SDK-shaped (`handleDialSdkError`) and fetch-shaped (`handleDialFetchError`)
  * entry points so every `chat-api` domain throws the same exception subtype
  * for a given upstream status code.
+ *
+ * `upstreamMessage`, when provided, replaces the generic 400/409/413/429/5xx
+ * text with DIAL Core's own explanation (e.g. "The specified endpoint
+ * 'https://x' is invalid or unreachable") so the client can show the actual
+ * reason instead of a meaningless generic message. It's never used for
+ * 401/403/404 — those stay generic since the upstream body could describe
+ * an internal auth/resource detail that shouldn't reach the client.
  */
 export const mapDialHttpStatus = (
   status: number,
   context: string,
   logger?: Logger,
+  errorBody?: unknown,
+  upstreamMessage?: string,
 ): never => {
   logger?.warn(`DIAL Core returned ${status} for ${context}`);
+  if (errorBody !== undefined) {
+    logger?.debug(
+      `DIAL Core error body for ${context}: ${JSON.stringify(errorBody)}`,
+    );
+  }
 
   if (status === 400)
-    throw new BadRequestException('Invalid request to DIAL Core');
+    throw new BadRequestException(
+      upstreamMessage ?? 'Invalid request to DIAL Core',
+    );
   if (status === 401) throw new UnauthorizedException();
   if (status === 403) throw new ForbiddenException();
   if (status === 404) throw new NotFoundException('Resource not found');
-  if (status === 409) throw new ConflictException('Conflict');
-  if (status === 413) throw new PayloadTooLargeException('Payload too large');
+  if (status === 409)
+    throw new ConflictException(upstreamMessage ?? 'Conflict');
+  if (status === 413)
+    throw new PayloadTooLargeException(upstreamMessage ?? 'Payload too large');
   if (status === 429)
-    throw new HttpException('Too Many Requests', HttpStatus.TOO_MANY_REQUESTS);
+    throw new HttpException(
+      upstreamMessage ?? 'Too Many Requests',
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
   if (status >= 500)
-    throw new BadGatewayException('DIAL Core returned a server error');
+    throw new BadGatewayException(
+      upstreamMessage ?? 'DIAL Core returned a server error',
+    );
 
-  throw new BadGatewayException(`Unexpected upstream status ${status}`);
+  throw new BadGatewayException(
+    upstreamMessage ?? `Unexpected upstream status ${status}`,
+  );
 };
 
 const isTimeoutError = (error: unknown): boolean =>

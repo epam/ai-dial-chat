@@ -78,6 +78,30 @@ describe('mapDeploymentToCatalogItem', () => {
 
     expect(result.isEditable).toBe(false);
   });
+
+  it('marks a shared deployment editable when the user has WRITE access', () => {
+    const result = mapDeploymentToCatalogItem(
+      { ...baseDeployment, isMy: false, canEdit: true },
+      undefined,
+      undefined,
+      undefined,
+      'schemas/quickapps2',
+    );
+
+    expect(result.isEditable).toBe(true);
+  });
+
+  it('is not editable when shared with only READ access', () => {
+    const result = mapDeploymentToCatalogItem(
+      { ...baseDeployment, isMy: false, canEdit: false },
+      undefined,
+      undefined,
+      undefined,
+      'schemas/quickapps2',
+    );
+
+    expect(result.isEditable).toBe(false);
+  });
 });
 
 describe('mapToolsetToCatalogItem', () => {
@@ -130,6 +154,17 @@ describe('mapToolsetToCatalogItem', () => {
     });
 
     expect(result.isEditable).toBe(false);
+  });
+
+  it('marks a shared toolset editable when the user has WRITE access', () => {
+    const result = mapToolsetToCatalogItem({
+      id: 'salesforce',
+      toolset: 'salesforce',
+      isMy: false,
+      canEdit: true,
+    });
+
+    expect(result.isEditable).toBe(true);
   });
 
   it('keeps root-level toolsets without a folder', () => {

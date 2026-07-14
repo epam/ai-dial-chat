@@ -325,6 +325,8 @@ const defaultHookResult: UseDialFileManagerResult = {
   expandedPaths: new Set<string>(),
   loadedPaths: new Set<string>(),
   onExpandedPathsChange: vi.fn(),
+  onFolderPopupPathChange: vi.fn(),
+  folderPopupLoadingPaths: new Set<string>(),
   uploadEnabled: true,
   isNewButtonDisabled: false,
   disabledNewButtonTooltip: 'No permission',

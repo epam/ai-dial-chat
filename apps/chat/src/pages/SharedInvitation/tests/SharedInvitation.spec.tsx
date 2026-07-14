@@ -2,6 +2,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShareI18nKeys } from '../../../constants/translation-keys';
+import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { acceptInvitation } from '../../../server-api/share.api';
 import { ROUTES } from '../../../types/routes';
@@ -23,12 +24,18 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
 
+vi.mock('../../../context/DeploymentsContext', () => ({
+  useDeployments: vi.fn(),
+}));
+
 vi.mock('../../../server-api/share.api', () => ({
   acceptInvitation: vi.fn(),
 }));
 
 describe('SharedInvitationPage', () => {
   const showNotification = vi.fn();
+  const refetchDeployments = vi.fn();
+  const refetchToolsets = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -37,6 +44,21 @@ describe('SharedInvitationPage', () => {
       notifications: [],
       showNotification,
       dismissNotification: vi.fn(),
+    });
+    refetchDeployments.mockResolvedValue(undefined);
+    refetchToolsets.mockResolvedValue(undefined);
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets,
+      refetchDeployments,
     });
   });
 

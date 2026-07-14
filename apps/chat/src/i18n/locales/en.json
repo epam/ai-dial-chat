@@ -438,6 +438,7 @@
     "moveHeaderSingle": "Move \"{{name}}\"",
     "moveHeaderMultiple": "Move {{count}} items",
     "moveSourceDisabledTooltip": "Unavailable for the original location. Please select another folder",
+    "folderPickerLoadingTooltip": "Loading folder contents. Please wait",
     "folderPickerEmptyStateTitle": "No folders here",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "tab": {
@@ -562,6 +563,7 @@
       "endpointRequired": "Endpoint is required",
       "endpointInvalid": "Enter a valid http(s) or sse URL",
       "protocolLabel": "Protocol",
+      "protocolSseDeprecatedLabel": "Deprecated",
       "allowedToolsLabel": "Allowed tools",
       "allowedToolsPlaceholder": "Add a tool",
       "copyUrlLabel": "Copy endpoint URL"
@@ -574,7 +576,7 @@
       "withLoginLabel": "With login",
       "withoutLoginLabel": "Without login",
       "withConfigLabel": "With login & config",
-      "keyHeaderLabel": "Key name",
+      "keyHeaderLabel": "API Key parameter name",
       "keyHeaderRequired": "Key name is required",
       "apiKeyRequired": "API key is required",
       "clientIdLabel": "Client ID",

@@ -36,13 +36,47 @@ import {
   WithLogin,
 } from '../../types/toolsets';
 import {
+  extractToolsetApiErrorMessage,
   formToToolsetBody,
   getDefaultToolsetForm,
+  getToolsetRedirectUri,
+  isToolsetFormValid,
   isValidEndpointUrl,
   toolsetDtoToForm,
 } from '../../utils/toolsets';
 import ToolsetEditorHeader from './ToolsetEditorHeader';
 import ToolsetEditorView from './ToolsetEditorView';
+
+const AUTH_ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
+  'keyHeader',
+  'apiKey',
+  'clientId',
+  'clientSecret',
+  'authorizationEndpoint',
+  'tokenEndpoint',
+];
+
+const ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
+  'name',
+  'version',
+  'intro',
+  'endpoint',
+  ...AUTH_ERROR_FIELDS,
+];
+
+const ERROR_FIELD_SET = new Set<string>(ERROR_FIELDS);
+
+type ToolsetDirtyFields = Partial<Record<keyof ToolsetFormErrors, true>>;
+
+const getDirtyFieldsFromPatch = (patch: object): ToolsetDirtyFields => {
+  const dirtyFields: ToolsetDirtyFields = {};
+  for (const key of Object.keys(patch)) {
+    if (ERROR_FIELD_SET.has(key)) {
+      dirtyFields[key as keyof ToolsetFormErrors] = true;
+    }
+  }
+  return dirtyFields;
+};
 
 const ToolsetEditor: FC = () => {
   const { t } = useTranslation();
@@ -65,6 +99,7 @@ const ToolsetEditor: FC = () => {
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<ToolsetFormErrors>({});
+  const [dirtyFields, setDirtyFields] = useState<ToolsetDirtyFields>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -106,6 +141,10 @@ const ToolsetEditor: FC = () => {
 
   const handleChange = useCallback((patch: Partial<ToolsetFormData>) => {
     setForm((prev) => (prev ? { ...prev, ...patch } : prev));
+    setDirtyFields((prev) => ({
+      ...prev,
+      ...getDirtyFieldsFromPatch(patch),
+    }));
     setErrors((prev) => {
       const next = { ...prev };
       for (const key of Object.keys(patch)) {
@@ -120,6 +159,26 @@ const ToolsetEditor: FC = () => {
       setForm((prev) =>
         prev ? { ...prev, auth: { ...prev.auth, ...patch } } : prev,
       );
+      setDirtyFields((prev) => ({
+        ...prev,
+        ...getDirtyFieldsFromPatch(patch),
+      }));
+      setErrors((prev) => {
+        const next = { ...prev };
+        const shouldClearAllAuthErrors =
+          'authenticationType' in patch ||
+          'withLogin' in patch ||
+          'isLoggedIn' in patch;
+
+        if (shouldClearAllAuthErrors) {
+          for (const key of AUTH_ERROR_FIELDS) delete next[key];
+        } else {
+          for (const key of Object.keys(patch)) {
+            delete next[key as keyof ToolsetFormErrors];
+          }
+        }
+        return next;
+      });
     },
     [],
   );
@@ -176,14 +235,14 @@ const ToolsetEditor: FC = () => {
         nextErrors.endpoint = t(ToolsetEditorI18nKeys.EndpointInvalid);
       }
       if (!data.auth.isLoggedIn) {
-        if (
-          data.auth.authenticationType === ToolsetAuthTypes.ApiKey &&
-          data.auth.withLogin === WithLogin.WithLogin
-        ) {
+        if (data.auth.authenticationType === ToolsetAuthTypes.ApiKey) {
           if (!data.auth.keyHeader?.trim()) {
             nextErrors.keyHeader = t(ToolsetEditorI18nKeys.KeyHeaderRequired);
           }
-          if (!data.auth.apiKey?.trim()) {
+          if (
+            data.auth.withLogin === WithLogin.WithLogin &&
+            !data.auth.apiKey?.trim()
+          ) {
             nextErrors.apiKey = t(ToolsetEditorI18nKeys.ApiKeyRequired);
           }
         }
@@ -194,16 +253,30 @@ const ToolsetEditor: FC = () => {
           if (!data.auth.clientId?.trim()) {
             nextErrors.clientId = t(ToolsetEditorI18nKeys.ClientIdRequired);
           }
-          if (!data.auth.clientSecret?.trim()) {
+          if (!isEditMode && !data.auth.clientSecret?.trim()) {
             nextErrors.clientSecret = t(
               ToolsetEditorI18nKeys.ClientSecretRequired,
             );
+          }
+          if (
+            data.auth.authorizationEndpoint?.trim() &&
+            !isValidEndpointUrl(data.auth.authorizationEndpoint)
+          ) {
+            nextErrors.authorizationEndpoint = t(
+              ToolsetEditorI18nKeys.EndpointInvalid,
+            );
+          }
+          if (
+            data.auth.tokenEndpoint?.trim() &&
+            !isValidEndpointUrl(data.auth.tokenEndpoint)
+          ) {
+            nextErrors.tokenEndpoint = t(ToolsetEditorI18nKeys.EndpointInvalid);
           }
         }
       }
       return nextErrors;
     },
-    [t],
+    [t, isEditMode],
   );
 
   const runPostSaveAuth = useCallback(
@@ -241,7 +314,9 @@ const ToolsetEditor: FC = () => {
         nextErrors.keyHeader ||
         nextErrors.apiKey ||
         nextErrors.clientId ||
-        nextErrors.clientSecret
+        nextErrors.clientSecret ||
+        nextErrors.authorizationEndpoint ||
+        nextErrors.tokenEndpoint
       ) {
         setEditorStep(ToolsetEditorSteps.Settings);
       }
@@ -251,7 +326,7 @@ const ToolsetEditor: FC = () => {
     setErrors({});
     setIsSaving(true);
     try {
-      const body = formToToolsetBody(form);
+      const body = formToToolsetBody(form, getToolsetRedirectUri());
       const result = isEditMode
         ? await updateToolset(toolsetId, body)
         : await createToolset(body);
@@ -265,14 +340,17 @@ const ToolsetEditor: FC = () => {
           message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
         });
       }
-    } catch {
+    } catch (err) {
+      const upstreamMessage = await extractToolsetApiErrorMessage(err);
       showNotification({
         variant: NotificationVariant.Error,
-        message: t(
-          isEditMode
-            ? ToolsetEditorI18nKeys.ErrorUpdateFailed
-            : ToolsetEditorI18nKeys.ErrorCreateFailed,
-        ),
+        message:
+          upstreamMessage ??
+          t(
+            isEditMode
+              ? ToolsetEditorI18nKeys.ErrorUpdateFailed
+              : ToolsetEditorI18nKeys.ErrorCreateFailed,
+          ),
       });
     } finally {
       setIsSaving(false);
@@ -291,6 +369,29 @@ const ToolsetEditor: FC = () => {
     refetchToolsets,
   ]);
 
+  const isSaveDisabled = useMemo(
+    () => !form || !isToolsetFormValid(form, isEditMode),
+    [form, isEditMode],
+  );
+
+  const visibleErrors = useMemo(() => {
+    if (!form) return errors;
+
+    const validationErrors = validate(form);
+    const nextErrors = { ...errors };
+    for (const key of ERROR_FIELDS) {
+      if (!dirtyFields[key]) continue;
+
+      const message = validationErrors[key];
+      if (message) {
+        nextErrors[key] = message;
+      } else {
+        delete nextErrors[key];
+      }
+    }
+    return nextErrors;
+  }, [dirtyFields, errors, form, validate]);
+
   if (isLoading || !form) {
     return <RouteFallback />;
   }
@@ -300,6 +401,7 @@ const ToolsetEditor: FC = () => {
       <ToolsetEditorHeader
         step={step}
         isSaving={isSaving}
+        isSaveDisabled={isSaveDisabled}
         canOpenSettings={Boolean(form.name.trim())}
         onChangeStep={handleChangeStep}
         onCancel={handleCancel}
@@ -308,7 +410,7 @@ const ToolsetEditor: FC = () => {
       <ToolsetEditorView
         step={step}
         form={form}
-        errors={errors}
+        errors={visibleErrors}
         isSaving={isSaving}
         toolsetId={toolsetId}
         onNext={handleNext}

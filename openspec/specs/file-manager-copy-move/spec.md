@@ -27,6 +27,7 @@ Folder = 'folder'
 | `bucket` | `string` | `@IsString @IsNotEmpty @Matches(BUCKET_NAME_PATTERN) @MaxLength(256)` | DIAL Core bucket |
 | `sourcePath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @MaxLength(1024)` | Relative source path within bucket |
 | `destinationPath` | `string` | `@IsString @IsNotEmpty @IsValidFilePath() @MaxLength(1024)` | Relative destination path within bucket |
+| `overwrite` | `boolean?` | `@IsOptional @IsBoolean` | When `true`, replace an existing destination resource. Omitted or `false` preserves the conflict behavior and DIAL Core can return 409. |
 | `nodeType` | `CopyItemNodeType` | `@IsEnum(CopyItemNodeType)` | `'item'` or `'folder'` |
 | `name` | `string` | `@IsString @IsNotEmpty @MaxLength(255)` | Display name (last segment) for error messages |
 
@@ -71,7 +72,7 @@ async copyFiles(
 #### Generated-client impact
 
 - **operationId**: `filesControllerCopyFiles` → generated SDK method `filesApi.copyFiles({ copyFilesDto })`.
-- **Request DTO**: `CopyFilesDto`. **Response DTO**: `CopyFilesResponseDto`.
+- **Request DTO**: `CopyFilesDto` with `CopyItemDto.overwrite?: boolean`. **Response DTO**: `CopyFilesResponseDto`.
 - **Frontend caller**: `apps/chat/src/server-api/files.api.ts` exposes `copyFiles(items: CopyItemDto[]): Promise<CopyFilesResponseDto>` using the normal (non-`Raw`) generated method.
 
 **Example request**:
@@ -83,6 +84,7 @@ POST /api/v1/files/copy
       "bucket": "user-bucket",
       "sourcePath": "reports/q1.pdf",
       "destinationPath": "archive/q1.pdf",
+      "overwrite": true,
       "nodeType": "item",
       "name": "q1.pdf"
     }
@@ -108,6 +110,11 @@ POST /api/v1/files/copy
 
 - **WHEN** DIAL Core returns 409 for `copyResource` because the destination already exists
 - **THEN** `results[0].success = false` and `results[0].error = "Conflict"`
+
+#### Scenario: Single file copy can overwrite an existing destination
+
+- **WHEN** `POST /api/v1/files/copy` is called with `overwrite: true`
+- **THEN** the BFF forwards `overwrite: true` to DIAL Core `copyResource`
 
 #### Scenario: Single file copy returns forbidden
 
@@ -170,7 +177,7 @@ The BFF SHALL expose `POST /api/v1/files/move`, distinct from `POST /api/v1/file
 
 #### Request/Response DTOs
 
-**`MoveItemNodeType`**, **`MoveItemDto`**, **`MoveFilesDto`**, **`MoveItemResultDto`**, **`MoveFilesResponseDto`** (`apps/chat-api/src/files/dto/move-files.dto.ts`) are structurally identical to `CopyItemNodeType`/`CopyItemDto`/`CopyFilesDto`/`CopyItemResultDto`/`CopyFilesResponseDto` above, substituting "move" for "copy" throughout.
+**`MoveItemNodeType`**, **`MoveItemDto`**, **`MoveFilesDto`**, **`MoveItemResultDto`**, **`MoveFilesResponseDto`** (`apps/chat-api/src/files/dto/move-files.dto.ts`) are structurally identical to `CopyItemNodeType`/`CopyItemDto`/`CopyFilesDto`/`CopyItemResultDto`/`CopyFilesResponseDto` above, substituting "move" for "copy" throughout. `MoveItemDto.overwrite?: boolean` has the same validation and default behavior as `CopyItemDto.overwrite`.
 
 #### Controller signature
 
@@ -194,7 +201,7 @@ async moveFiles(
 #### Generated-client impact
 
 - **operationId**: `filesControllerMoveFiles` → `filesApi.moveFiles({ moveFilesDto })`.
-- **Request DTO**: `MoveFilesDto`. **Response DTO**: `MoveFilesResponseDto`.
+- **Request DTO**: `MoveFilesDto` with `MoveItemDto.overwrite?: boolean`. **Response DTO**: `MoveFilesResponseDto`.
 - **Frontend caller**: `apps/chat/src/server-api/files.api.ts` exposes `moveFiles(items: MoveItemDto[]): Promise<MoveFilesResponseDto>` using the normal (non-`Raw`) generated method.
 
 **Example request**:
@@ -206,6 +213,7 @@ POST /api/v1/files/move
       "bucket": "user-bucket",
       "sourcePath": "inbox/draft.pdf",
       "destinationPath": "reports/draft.pdf",
+      "overwrite": true,
       "nodeType": "item",
       "name": "draft.pdf"
     }
@@ -231,6 +239,11 @@ POST /api/v1/files/move
 
 - **WHEN** DIAL Core returns 409 for `moveResource`
 - **THEN** `results[0].success = false` and `results[0].error = "Conflict"`
+
+#### Scenario: Single file move can overwrite an existing destination
+
+- **WHEN** `POST /api/v1/files/move` is called with `overwrite: true`
+- **THEN** the BFF forwards `overwrite: true` to DIAL Core `moveResource`
 
 #### Scenario: Single file move returns forbidden
 
@@ -300,6 +313,8 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 
 **Path normalisation**: `sourcePath`/`destinationPath` derived from `item.sourceUrl`/`item.destinationUrl` via `virtualPathToApiPath` SHALL have consecutive slashes collapsed to one before being sent to the BFF — ui-kit paste/cut-paste interactions can construct a destination virtual path by concatenating a folder path (already ending in `/`) with a leading `/` + item name, producing `folder//name`, which DIAL Core rejects as a malformed resource path.
 
+**Overwrite propagation**: when ui-kit's conflict resolver sets `DialCopiedItem.overwrite === true`, `onCopyFiles` SHALL pass `overwrite: true` on the corresponding `CopyItemDto`; otherwise it SHALL pass `overwrite: false`.
+
 #### Scenario: Copy succeeds and cache is invalidated
 
 - **WHEN** `onCopyFiles` is called with items that all succeed
@@ -314,6 +329,11 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 
 - **WHEN** `onCopyFiles` is called with an item whose `destinationUrl` contains a doubled slash (e.g. `/My files/folder//name.png`)
 - **THEN** the `CopyItemDto.destinationPath` sent to `copyFiles` has the doubled slash collapsed to a single slash
+
+#### Scenario: Conflict resolver overwrite is forwarded for copy
+
+- **WHEN** `onCopyFiles` is called with a copied item containing `overwrite: true`
+- **THEN** the corresponding `CopyItemDto` sent to `copyFiles` contains `overwrite: true`
 
 ---
 
@@ -334,6 +354,8 @@ Both groups run when both are non-empty; a single call to `onMoveToFiles` MAY pr
 
 **Path normalisation**: the same slash-collapsing normalisation described for `onCopyFiles` applies to `sourcePath`/`destinationPath` for both the rename and move DTO groups built here.
 
+**Overwrite propagation**: for cross-folder moves, when ui-kit's conflict resolver sets `DialCopiedItem.overwrite === true`, `onMoveToFiles` SHALL pass `overwrite: true` on the corresponding `MoveItemDto`; otherwise it SHALL pass `overwrite: false`. Same-folder rename DTOs keep the existing rename contract and do not add an overwrite field.
+
 #### Scenario: Same-folder rename is unaffected
 
 - **WHEN** `onMoveToFiles` is called with items whose source and destination share the same parent folder
@@ -348,6 +370,11 @@ Both groups run when both are non-empty; a single call to `onMoveToFiles` MAY pr
 
 - **WHEN** `onMoveToFiles` is called with some items sharing their parent folder and others not
 - **THEN** `renameFiles` is called for the same-folder subset and `moveFiles` is called for the cross-folder subset, and a single merged notification reports the combined failure count if any group has failures
+
+#### Scenario: Conflict resolver overwrite is forwarded for cross-folder move
+
+- **WHEN** `onMoveToFiles` is called with a cross-folder moved item containing `overwrite: true`
+- **THEN** the corresponding `MoveItemDto` sent to `moveFiles` contains `overwrite: true`
 
 ---
 

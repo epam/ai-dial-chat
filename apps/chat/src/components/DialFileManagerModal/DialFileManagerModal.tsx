@@ -547,6 +547,9 @@ const DialFileManagerModal: FC<Props> = ({
       moveSourceDisabledTooltip: t(
         DialFileManagerI18nKeys.MoveSourceDisabledTooltip,
       ),
+      folderPickerLoadingTooltip: t(
+        DialFileManagerI18nKeys.FolderPickerLoadingTooltip,
+      ),
       folderPickerEmptyStateTitle: t(
         DialFileManagerI18nKeys.FolderPickerEmptyStateTitle,
       ),
