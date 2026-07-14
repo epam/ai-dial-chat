@@ -24,7 +24,7 @@
     "@epam/ai-dial-ui-kit": "0.12.0-dev.28",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-conversation-input": "*",
-    "react-markdown": "^10.0.0"
+    "react-markdown": "^10.1.0"
   },
   "nx": {
     "tags": [

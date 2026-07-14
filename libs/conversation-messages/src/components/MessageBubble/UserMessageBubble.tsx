@@ -11,7 +11,7 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
-import { FC } from 'react';
+import { FC, useId } from 'react';
 import type { UserMessageBubbleProps } from '../../models/message-bubble';
 import { BubblePosition } from '../../types/bubble-position';
 import { MessageActions } from '../MessageActions/MessageActions';
@@ -19,7 +19,7 @@ import styles from './MessageBubble.module.scss';
 
 const DEFAULT_COLLAPSED_LINE_COUNT = 10;
 
-/** User-authored message bubble, right-aligned with configurable radius based on group position. */
+/** User-authored message bubble, end-aligned with configurable radius based on group position. */
 export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   text,
   position = BubblePosition.Bottom,
@@ -43,6 +43,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     showLessAriaLabel,
     attachmentClickLabel,
     attachmentRetryLabel,
+    userMessageAriaLabel = 'User message',
   } = labels ?? {};
 
   const {
@@ -77,8 +78,14 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   const toggleLabel = isCollapsed ? showMoreLabel : showLessLabel;
   const toggleAriaLabel = isCollapsed ? expandAriaLabel : collapseAriaLabel;
   const ToggleIcon = isCollapsed ? IconChevronDown : IconChevronUp;
+  const collapsibleTextId = useId();
   return (
-    <div style={cssVars} className={mergeClasses('flex w-full', className)}>
+    <div
+      role="group"
+      aria-label={userMessageAriaLabel}
+      style={cssVars}
+      className={mergeClasses('flex w-full', className)}
+    >
       <div className="ms-auto flex w-fit min-w-0 max-w-full flex-col items-end gap-4">
         <AttachmentGroup
           attachments={attachments ?? []}
@@ -102,6 +109,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           >
             <div className="flex min-w-0 flex-col items-start">
               <div
+                id={collapsibleTextId}
                 className={mergeClasses(
                   'relative overflow-hidden',
                   isOverflowing && styles.collapsibleText,
@@ -126,6 +134,8 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                     <ToggleIcon size={DIAL_ICON_SIZE.SM} aria-hidden="true" />
                   }
                   aria-label={toggleAriaLabel}
+                  aria-expanded={!isCollapsed}
+                  aria-controls={collapsibleTextId}
                   className="mt-3"
                   onClick={toggleCollapsed}
                   size={ElementSize.Small}

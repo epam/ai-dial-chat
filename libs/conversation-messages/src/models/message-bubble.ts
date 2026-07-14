@@ -47,6 +47,10 @@ export interface MessageBubbleLabels {
   showMoreAriaLabel?: string;
   /** Accessible label for the collapse button. Defaults to the `showLessLabel` value. */
   showLessAriaLabel?: string;
+  /** Accessible name for the message region, exposed via `role="group"`. Defaults to `"User message"`. */
+  userMessageAriaLabel?: string;
+  /** Accessible name for the message region, exposed via `role="group"`. Defaults to `"Assistant message"`. */
+  assistantMessageAriaLabel?: string;
   /** Accessible label forwarded to each attachment tile/row when it is interactive. */
   attachmentClickLabel?: string;
   /** Accessible label for each attachment row's retry action. */
@@ -76,6 +80,11 @@ export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
   codeBlockCopyLabel?: string;
   /** Accessible label for the copy button after copying. Forwarded to `MDMessageViewer`. */
   codeBlockCopiedLabel?: string;
+  /**
+   * Fallback accessible name for the deployment icon when `deploymentDisplayName`
+   * is not supplied. Defaults to `'AI'`.
+   */
+  deploymentIconFallbackLabel?: string;
 }
 
 /** Shared props for user and assistant message bubble components. */

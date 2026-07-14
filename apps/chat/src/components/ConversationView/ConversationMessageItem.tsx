@@ -398,6 +398,7 @@ const ConversationMessageItem: FC<Props> = ({
           thinkingLabel,
           codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
           codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+          ...statusProps,
         }}
         deploymentIconUrl={deploymentEntry?.iconUrl}
         deploymentDisplayName={deploymentEntry?.displayName}
@@ -405,7 +406,6 @@ const ConversationMessageItem: FC<Props> = ({
         attachmentTheme={codeBlockTheme}
         onAttachmentClick={handleAttachmentClick}
         onDownloadAll={handleDownloadAll}
-        {...statusProps}
       />
     </CitationCardProvider>
   );

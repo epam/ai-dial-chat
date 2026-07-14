@@ -13,7 +13,7 @@ import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
 import { MessageActions } from '../MessageActions/MessageActions';
 import styles from './MessageBubble.module.scss';
 
-/** Assistant-authored message bubble, left-aligned with markdown content and optional quick-reply starters. */
+/** Assistant-authored message bubble, start-aligned with markdown content and optional quick-reply starters. */
 export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   text,
   styles: bubbleStyles,
@@ -43,6 +43,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
     thinkingLabel,
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
+    assistantMessageAriaLabel = 'Assistant message',
+    deploymentIconFallbackLabel = 'AI',
   } = labels ?? {};
   const visibleAttachments = isStreaming
     ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
@@ -58,6 +60,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
 
   return (
     <div
+      role="group"
+      aria-label={assistantMessageAriaLabel}
       style={cssVars}
       className={mergeClasses('flex w-full items-start gap-3', className)}
     >
@@ -65,8 +69,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
         <DeploymentIcon
           src={deploymentIconUrl}
           size={28}
-          initialsName={deploymentDisplayName ?? ''}
-          tooltip={deploymentDisplayName}
+          initialsName={deploymentDisplayName || deploymentIconFallbackLabel}
+          tooltip={deploymentDisplayName ?? deploymentIconFallbackLabel}
         />
       )}
       <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-5">
@@ -78,6 +82,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
         >
           {(text || isStreaming) && (
             <div
+              aria-live="polite"
+              aria-atomic="false"
               className={mergeClasses(
                 textClass,
                 'min-w-0 max-w-full text-start',

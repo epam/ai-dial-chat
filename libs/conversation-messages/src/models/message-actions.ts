@@ -38,6 +38,12 @@ export interface MessageActionAriaLabels {
   likeResponse?: string;
   /** aria-label for the Dislike button. */
   dislikeResponse?: string;
+  /** Accessible name for the action bar as a whole, exposed via `role="toolbar"`. */
+  actionsGroup?: string;
+  /** Status message announced to assistive tech after copying the response text. */
+  copiedStatus?: string;
+  /** Status message announced to assistive tech after copying the response as Markdown. */
+  copiedMarkdownStatus?: string;
 }
 
 /** Tooltip and accessible label overrides for the `MessageActions` component. */
