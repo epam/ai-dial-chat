@@ -1,3 +1,4 @@
+import { isEntityNameInvalid } from '@/src/utils/app/common';
 import { getEntityBucket, getFileRootId, isRootId } from '@/src/utils/app/id';
 
 import { ApiKeys } from '@/src/types/common';
@@ -19,12 +20,36 @@ export interface DialRootFolder extends UIKitDialFile {
   label: string;
 }
 
+const APPDATA_APPLICATIONS_SEGMENTS = ['appdata', ApiKeys.Applications];
+
+const isUnderAppdataApplications = (path: string): boolean => {
+  const segments = path.split('/');
+  const idx = segments.indexOf(APPDATA_APPLICATIONS_SEGMENTS[0]);
+  return idx !== -1 && segments[idx + 1] === APPDATA_APPLICATIONS_SEGMENTS[1];
+};
+// TODO: remove workarounds with canonicalizePathForMatch after double encoding is fixed on Core side
+export const canonicalizePathForMatch = (path: string): string => {
+  if (
+    !isUnderAppdataApplications(path) &&
+    path.split('/').some((segment) => isEntityNameInvalid(segment))
+  ) {
+    return path;
+  }
+
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+};
+
 const isChildOfFolders = (
   folderId: string,
   parentFolderIds: Set<string>,
 ): boolean => {
+  const normalizedFolderId = canonicalizePathForMatch(folderId);
   return Array.from(parentFolderIds).some((parentId) =>
-    folderId.startsWith(parentId),
+    normalizedFolderId.startsWith(canonicalizePathForMatch(parentId)),
   );
 };
 
@@ -136,17 +161,47 @@ const sortItemsByName = (items: UIKitDialFile[]): UIKitDialFile[] =>
     item.items ? { ...item, items: sortItemsByName(item.items) } : item,
   );
 
+const resolveFolderNode = (
+  folderMap: Map<string, UIKitDialFile>,
+  canonicalIndex: Map<string, string>,
+  folderId: string | undefined,
+): UIKitDialFile | undefined => {
+  if (!folderId) return undefined;
+  const direct = folderMap.get(folderId);
+  if (direct) return direct;
+  const rawId = canonicalIndex.get(canonicalizePathForMatch(folderId));
+  return rawId ? folderMap.get(rawId) : undefined;
+};
+
+const registerFolderNode = (
+  folderMap: Map<string, UIKitDialFile>,
+  canonicalIndex: Map<string, string>,
+  node: UIKitDialFile,
+) => {
+  const nodeId = node.id as string;
+  folderMap.set(nodeId, node);
+  const canonicalId = canonicalizePathForMatch(nodeId);
+  if (!canonicalIndex.has(canonicalId)) {
+    canonicalIndex.set(canonicalId, nodeId);
+  }
+};
+
 const ensureFolderChain = (
   folderMap: Map<string, UIKitDialFile>,
+  canonicalIndex: Map<string, string>,
   folderId?: string,
 ) => {
   let currentId = folderId;
-  while (currentId && !isRootId(currentId) && !folderMap.has(currentId)) {
+  while (
+    currentId &&
+    !isRootId(currentId) &&
+    !resolveFolderNode(folderMap, canonicalIndex, currentId)
+  ) {
     const slashIndex = currentId.lastIndexOf('/');
     if (slashIndex === -1) break;
     const parentId = currentId.slice(0, slashIndex);
     const name = currentId.slice(slashIndex + 1);
-    folderMap.set(currentId, {
+    registerFolderNode(folderMap, canonicalIndex, {
       id: currentId,
       name,
       path: currentId,
@@ -184,6 +239,7 @@ export const buildFileTree = (
   const uikitFiles = files.map(convertToUIKitFile);
 
   const folderMap = new Map<string, UIKitDialFile>();
+  const canonicalIndex = new Map<string, string>();
   const rootItems: UIKitDialFile[] = [];
 
   const loadedFoldersPaths = new Set(
@@ -202,22 +258,30 @@ export const buildFileTree = (
 
   sortedFolders.forEach((folder) => {
     const uikitFolder = convertToUIKitFolder(folder, []);
-    folderMap.set(folder.id, uikitFolder);
+    registerFolderNode(folderMap, canonicalIndex, uikitFolder);
 
     if (folder.isShared && !folder.sharedWithMe) {
       sharedByMePaths.add(folder.id);
     }
   });
 
-  files.forEach((file) => ensureFolderChain(folderMap, file.folderId));
-  folders.forEach((folder) => ensureFolderChain(folderMap, folder.folderId));
+  files.forEach((file) =>
+    ensureFolderChain(folderMap, canonicalIndex, file.folderId),
+  );
+  folders.forEach((folder) =>
+    ensureFolderChain(folderMap, canonicalIndex, folder.folderId),
+  );
 
   const placedFolderIds = new Set<string>();
   const placedFileIds = new Set<string>();
 
   folderMap.forEach((folder) => {
     const parentFolderId = folder.folderId;
-    const parentFolder = folderMap.get(parentFolderId);
+    const parentFolder = resolveFolderNode(
+      folderMap,
+      canonicalIndex,
+      parentFolderId,
+    );
 
     if (parentFolder && parentFolder.items && folder.id) {
       const parentOriginalFolder = folderDataMap.get(parentFolderId);
@@ -266,7 +330,11 @@ export const buildFileTree = (
 
   uikitFiles.forEach((file) => {
     const parentFolderId = file.folderId;
-    const parentFolder = folderMap.get(parentFolderId);
+    const parentFolder = resolveFolderNode(
+      folderMap,
+      canonicalIndex,
+      parentFolderId,
+    );
 
     if (parentFolder && parentFolder.items && file.id) {
       if (allRootBucketIds.has(parentFolderId)) {
