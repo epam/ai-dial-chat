@@ -1,12 +1,16 @@
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import { FileType } from '@/src/assertions';
+import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   API,
   CheckboxState,
   ExpectedConstants,
   ExpectedMessages,
+  MarketplaceExpectedMessages,
+  MarketplaceFilterTypes,
   MenuOptions,
+  SourcesFilterOptions,
 } from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
 import { UserUtil } from '@/src/utils';
@@ -912,6 +916,62 @@ dialSharedWithMeTest(
           sharedWithMeApps,
           appData.backendEntity.url,
           'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'The application is opened if the owner clicks on the link',
+  async ({
+    mainUserShareApiHelper,
+    setTestIds,
+    customApplicationPublishingUtil,
+    marketplacePage,
+    entityDetailsModal,
+    entityDetailsModalAssertion,
+    marketplaceFilter,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-8859');
+
+    let shareByLinkResponse: ShareByLinkResponseModel;
+
+    await dialTest.step('Share custom app via API', async () => {
+      appData = await customApplicationPublishingUtil.createCustomApp();
+      shareByLinkResponse = await mainUserShareApiHelper.shareAppByLink(
+        appData.backendEntity,
+      );
+    });
+
+    await dialTest.step(
+      'Navigate to shared link by the owner and verify app card is opened without arrow icon, "Shared with me" filter is not available',
+      async () => {
+        await marketplacePage.navigateToUrl(
+          ExpectedConstants.sharedAppUrl(shareByLinkResponse.invitationLink),
+        );
+        await marketplacePage.waitForPageLoaded();
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
+          'visible',
+        );
+        await entityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedName: appData.name,
+          expectedVersion: appData.version,
+        });
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal.arrowIcon,
+          'hidden',
+        );
+        const sourceFilterOptions =
+          await marketplaceFilter.filterByPropertyOptionLabels(
+            MarketplaceFilterTypes.sources,
+          );
+        baseAssertion.assertArrayExcludesAll(
+          sourceFilterOptions,
+          [SourcesFilterOptions.sharedWithMe],
+          MarketplaceExpectedMessages.filterOptionsAreValid,
         );
       },
     );

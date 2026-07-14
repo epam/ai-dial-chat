@@ -34,7 +34,8 @@ dialTest(
     'Conversation is shown to owner who clicks on share link.\n' +
     'Shared icon appears in chat model icon if another user clicks on the link.\n' +
     'Share form text differs for chat and folder.\n' +
-    'Confirmation message if to delete shared chat',
+    'Confirmation message if to delete shared chat.\n' +
+    'The chat becomes active, its history is shown on the central part when owner clicks on the link',
   async ({
     dialHomePage,
     conversations,
@@ -51,9 +52,11 @@ dialTest(
     additionalUserShareApiHelper,
     chatHeader,
     chatHeaderAssertion,
+    chatMessagesAssertion,
     chatMessages,
     confirmationDialog,
     conversationAssertion,
+    sharedWithMeConversationAssertion,
     setTestIds,
     localStorageManager,
   }) => {
@@ -71,6 +74,7 @@ dialTest(
       'EPMRTC-1601',
       'EPMRTC-1811',
       'EPMRTC-2810',
+      'EPMRTC-2747',
     );
     let conversation: Conversation;
     let firstShareLinkResponse: ShareByLinkResponseModel;
@@ -249,6 +253,28 @@ dialTest(
         );
         await dialHomePage.waitForPageLoaded({ waitForAgentInfo: false });
         await chatHeaderAssertion.assertHeaderTitle(conversation.name);
+        await chatMessagesAssertion.assertMessagesCount(
+          conversation.messages.length,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify conversation is selected in the panel tree and does not have arrow icon',
+      async () => {
+        await conversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
+        await conversationAssertion.assertSelectedEntity(conversation.name);
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: conversation.name },
+          'hidden',
+        );
+        await sharedWithMeConversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'hidden',
+        );
       },
     );
 
