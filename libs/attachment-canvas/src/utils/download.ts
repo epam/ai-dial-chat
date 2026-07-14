@@ -4,7 +4,10 @@ import {
   triggerBlobDownload,
 } from '@epam/ai-dial-chat-shared';
 import type { AttachmentCanvasContent } from '../models/attachment-canvas';
-import { AttachmentContentType } from '../types/attachment-canvas';
+import {
+  AttachmentContentType,
+  AttachmentErrorType,
+} from '../types/attachment-canvas';
 
 /** Returns true if the given canvas content can be downloaded. */
 export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
@@ -17,6 +20,11 @@ export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
       return true;
     case AttachmentContentType.Unsupported:
       return content.url != null;
+    case AttachmentContentType.Error:
+      return (
+        content.errorType !== AttachmentErrorType.Forbidden &&
+        content.url != null
+      );
   }
 };
 
@@ -63,6 +71,10 @@ export const downloadAttachmentContent = (
     case AttachmentContentType.Unsupported:
       if (content.url == null) return;
       triggerAnchorDownload(content.url, name);
+      return;
+    case AttachmentContentType.Error:
+      if (!isDownloadable(content)) return;
+      triggerAnchorDownload(content.url!, name);
       return;
   }
 };

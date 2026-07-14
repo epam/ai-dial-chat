@@ -2,7 +2,10 @@ import type { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
 import type { CSSProperties } from 'react';
-import { AttachmentContentType } from '../types/attachment-canvas';
+import {
+  AttachmentContentType,
+  AttachmentErrorType,
+} from '../types/attachment-canvas';
 
 /** Content payload for plain-text attachments. */
 export interface PlainTextCanvasContent {
@@ -56,6 +59,16 @@ export interface UnsupportedCanvasContent {
   url?: string;
 }
 
+/** Content payload for attachments whose file failed to load or that the user cannot access. */
+export interface ErrorCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Error;
+  /** The kind of failure that occurred. */
+  errorType: AttachmentErrorType;
+  /** Remote URL of the file, if known. Ignored for download purposes when `errorType` is `Forbidden`. */
+  url?: string;
+}
+
 /** The content payload passed to AttachmentCanvas. */
 export type AttachmentCanvasContent =
   | PlainTextCanvasContent
@@ -63,7 +76,8 @@ export type AttachmentCanvasContent =
   | MarkdownCanvasContent
   | JsonCanvasContent
   | PdfCanvasContent
-  | UnsupportedCanvasContent;
+  | UnsupportedCanvasContent
+  | ErrorCanvasContent;
 
 /** Themeable color overrides for the AttachmentCanvas content body. */
 export interface AttachmentCanvasColors {
@@ -132,6 +146,10 @@ export interface AttachmentCanvasProps {
   onCopyJson?: () => void;
   /** Message shown in the canvas body when the content type is `Unsupported`. Defaults to `'Preview is not supported for this file'`. */
   unsupportedLabel?: string;
+  /** Message shown in the canvas body when content type is `Error` with `errorType: LoadFailed`. Defaults to `'Failed to load file'`. */
+  loadErrorLabel?: string;
+  /** Message shown in the canvas body when content type is `Error` with `errorType: Forbidden`. Defaults to `"You don't have permission to access this file"`. */
+  forbiddenErrorLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download'`. */
   downloadLabel?: string;
   /** Tooltip and accessible label for the copy-text button in its default state. Defaults to `'Copy text'`. */
