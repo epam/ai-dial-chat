@@ -66,7 +66,7 @@ interface Props {
   onExportAll: () => void;
 }
 
-const ConversationPanelHeaderMenu: FC<Props> = ({
+const ConversationPanelMenu: FC<Props> = ({
   activeConversationId,
   onExportAll,
 }) => {
@@ -190,4 +190,4 @@ const ConversationPanelHeaderMenu: FC<Props> = ({
   );
 };
 
-export default memo(ConversationPanelHeaderMenu);
+export default memo(ConversationPanelMenu);

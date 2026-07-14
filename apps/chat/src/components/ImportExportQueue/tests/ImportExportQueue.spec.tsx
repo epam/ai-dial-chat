@@ -1,10 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ExportJobStatus,
-  type ExportJob,
-} from '../../../types/conversation-export';
+import type { ExportJob } from '../../../models/conversation-export';
+import { ExportJobStatus } from '../../../types/conversation-export';
 import ImportExportQueue from '../ImportExportQueue';
 
 vi.mock('react-i18next', () => ({
@@ -20,15 +18,36 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     ariaLabel?: string;
   }) => <div data-progress={value} aria-label={ariaLabel} />,
   DialProgressBarSize: { Small: 'sm', Medium: 'md' },
+  DialIconButton: ({
+    'aria-label': ariaLabel,
+    onClick,
+    className,
+  }: {
+    'aria-label'?: string;
+    onClick?: () => void;
+    className?: string;
+  }) => (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      onClick={onClick}
+      className={className}
+    />
+  ),
+  ButtonAppearance: { Ghost: 'ghost', Solid: 'solid' },
+  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
+  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DialConfirmationPopup: ({
     open,
     header,
+    description,
     confirmLabel,
     onConfirm,
     onClose,
   }: {
     open: boolean;
     header: string;
+    description: string;
     confirmLabel: string;
     onConfirm: () => void;
     onClose: () => void;
@@ -37,6 +56,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     return (
       <div role="dialog">
         <span>{header}</span>
+        <span>{description}</span>
         <button onClick={onConfirm}>{confirmLabel}</button>
         <button onClick={onClose}>Cancel</button>
       </div>
@@ -213,7 +233,7 @@ describe('ImportExportQueue', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('clicking close with an in-progress job shows the confirmation dialog', async () => {
+  it('clicking close with an in-progress job shows the confirmation dialog with the in-progress message', async () => {
     const onClose = vi.fn();
     renderQueue([makeJob({ status: ExportJobStatus.InProgress })], { onClose });
 
@@ -224,10 +244,15 @@ describe('ImportExportQueue', () => {
     );
 
     expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'conversationExport.closeQueueConfirmDescriptionInProgress',
+      ),
+    ).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('clicking close with a failed job shows the confirmation dialog', async () => {
+  it('clicking close with a failed job shows the confirmation dialog with the failed message', async () => {
     const onClose = vi.fn();
     renderQueue([makeJob({ status: ExportJobStatus.Failed })], { onClose });
 
@@ -238,6 +263,32 @@ describe('ImportExportQueue', () => {
     );
 
     expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(
+      screen.getByText('conversationExport.closeQueueConfirmDescriptionFailed'),
+    ).toBeTruthy();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('clicking close with both an in-progress and a failed job shows the mixed message', async () => {
+    const onClose = vi.fn();
+    renderQueue(
+      [
+        makeJob({ id: 'a', status: ExportJobStatus.InProgress }),
+        makeJob({ id: 'b', status: ExportJobStatus.Failed }),
+      ],
+      { onClose },
+    );
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'conversationExport.closeQueueAriaLabel',
+      }),
+    );
+
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(
+      screen.getByText('conversationExport.closeQueueConfirmDescriptionMixed'),
+    ).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();
   });
 
@@ -252,11 +303,54 @@ describe('ImportExportQueue', () => {
     );
     await user.click(
       screen.getByRole('button', {
-        name: 'conversationExport.closeQueueConfirmButton',
+        name: 'buttons.close',
       }),
     );
 
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('does not reopen the confirmation dialog when a new job arrives after confirming', async () => {
+    const onClose = vi.fn();
+    const { rerender } = renderQueue(
+      [makeJob({ id: 'job-1', status: ExportJobStatus.InProgress })],
+      { onClose },
+    );
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'conversationExport.closeQueueAriaLabel',
+      }),
+    );
+    expect(screen.getByRole('dialog')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'buttons.close' }));
+    expect(onClose).toHaveBeenCalledOnce();
+
+    // Parent clears jobs in response to onClose — component stays mounted, renders null.
+    rerender(
+      <ImportExportQueue
+        title={TITLE}
+        jobs={[]}
+        onDismiss={vi.fn()}
+        onRetry={vi.fn()}
+        onClose={onClose}
+      />,
+    );
+    expect(screen.queryByRole('status')).toBeNull();
+
+    // A new export starts — the panel reappears and must not reopen the stale confirmation.
+    rerender(
+      <ImportExportQueue
+        title={TITLE}
+        jobs={[makeJob({ id: 'job-2', status: ExportJobStatus.InProgress })]}
+        onDismiss={vi.fn()}
+        onRetry={vi.fn()}
+        onClose={onClose}
+      />,
+    );
+
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('cancelling the dialog closes it without calling onClose', async () => {

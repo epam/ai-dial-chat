@@ -367,6 +367,36 @@ describe('useConversationExport', () => {
       expect(result.current.jobs[0].status).toBe(ExportJobStatus.Success);
     });
 
+    it('shows no toast and aborts the archive when a 401 occurs during attachment download', async () => {
+      const conversation = makeConversation({
+        messages: [
+          makeAttachmentMessage('files/bucket/ok.png', 'ok'),
+          makeAttachmentMessage('files/bucket/secret.png', 'secret'),
+        ],
+      });
+      mockGetConversation.mockResolvedValue(conversation);
+      vi.mocked(downloadFile).mockImplementation(async (_bucket, path) => {
+        if (path === 'secret.png') {
+          throw new UnauthorizedError('/api/v1/files/download');
+        }
+        return new Response(new Blob(['ok-bytes']));
+      });
+
+      const { result } = renderHook(() => useConversationExport());
+
+      await act(async () => {
+        await result.current.exportSingle(
+          'conv-1',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        );
+      });
+
+      expect(triggerBlobDownload).not.toHaveBeenCalled();
+      expect(mockShowNotification).not.toHaveBeenCalled();
+      expect(result.current.jobs[0].status).toBe(ExportJobStatus.Failed);
+    });
+
     it('shows a single consolidated warning when a failed download and an invalid archive path both occur', async () => {
       const conversation = makeConversation({
         messages: [

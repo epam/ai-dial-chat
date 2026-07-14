@@ -1,12 +1,12 @@
 import type {
-  ExportConversationV5,
+  Conversation,
   ExportFolderV5,
   ExportFormatV5,
 } from '@epam/ai-dial-chat-shared';
 import { ExportFileNameKind } from '../types/conversation-export';
 
 export const buildExportEnvelope = (
-  conversations: ExportConversationV5[],
+  conversations: Conversation[],
   folders: ExportFolderV5[] = [],
 ): ExportFormatV5 => ({
   version: 5,

@@ -1,8 +1,12 @@
 import {
+  ButtonAppearance,
   ConfirmationPopupVariant,
+  DIAL_ICON_SIZE,
   DialConfirmationPopup,
+  DialIconButton,
   DialProgressBar,
   DialProgressBarSize,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertCircleFilled,
@@ -18,10 +22,8 @@ import {
   ButtonsI18nKeys,
   ConversationExportI18nKeys,
 } from '../../constants/translation-keys';
-import {
-  ExportJobStatus,
-  type ExportJob,
-} from '../../types/conversation-export';
+import type { ExportJob } from '../../models/conversation-export';
+import { ExportJobStatus } from '../../types/conversation-export';
 
 interface Props {
   title: string;
@@ -30,6 +32,19 @@ interface Props {
   onDismiss: (jobId: string) => void;
   onRetry: (jobId: string) => void;
 }
+
+const getCloseConfirmDescriptionKey = (
+  hasInProgress: boolean,
+  hasFailed: boolean,
+): ConversationExportI18nKeys => {
+  if (hasInProgress && hasFailed) {
+    return ConversationExportI18nKeys.CloseQueueConfirmDescriptionMixed;
+  }
+  if (hasFailed) {
+    return ConversationExportI18nKeys.CloseQueueConfirmDescriptionFailed;
+  }
+  return ConversationExportI18nKeys.CloseQueueConfirmDescriptionInProgress;
+};
 
 interface JobRowProps {
   job: ExportJob;
@@ -53,30 +68,35 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
       )}
       {job.status === ExportJobStatus.Failed && (
         <>
-          <button
-            type="button"
+          <DialIconButton
             aria-label={t(ConversationExportI18nKeys.RetryJobAriaLabel, {
               title: job.label,
             })}
+            appearance={ButtonAppearance.Ghost}
+            size={ElementSize.Small}
+            icon={
+              <IconRefresh
+                size={DIAL_ICON_SIZE.SM}
+                className="text-secondary"
+              />
+            }
             onClick={() => onRetry(job.id)}
             className="shrink-0"
-          >
-            <IconRefresh size={16} className="text-secondary" />
-          </button>
+          />
           <IconAlertCircleFilled size={16} className="shrink-0 text-error" />
         </>
       )}
       {job.status === ExportJobStatus.InProgress && (
-        <button
-          type="button"
+        <DialIconButton
           aria-label={t(ConversationExportI18nKeys.CloseJobAriaLabel, {
             title: job.label,
           })}
+          appearance={ButtonAppearance.Ghost}
+          size={ElementSize.Small}
+          icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
           onClick={() => onDismiss(job.id)}
           className="shrink-0"
-        >
-          <IconX size={16} className="text-secondary" />
-        </button>
+        />
       )}
     </div>
   );
@@ -106,6 +126,11 @@ const ImportExportQueue: FC<Props> = ({
     }
   }, [jobs, onClose]);
 
+  const handleConfirmClose = useCallback(() => {
+    setIsConfirmOpen(false);
+    onClose();
+  }, [onClose]);
+
   if (jobs.length === 0) return null;
 
   const finishedCount = jobs.filter(
@@ -115,6 +140,10 @@ const ImportExportQueue: FC<Props> = ({
     (job) => job.status === ExportJobStatus.Failed,
   ).length;
   const percentage = Math.round((finishedCount / jobs.length) * 100);
+  const hasInProgress = jobs.some(
+    (job) => job.status === ExportJobStatus.InProgress,
+  );
+  const hasFailed = failedCount > 0;
 
   return (
     <div
@@ -134,28 +163,36 @@ const ImportExportQueue: FC<Props> = ({
           )}
         </div>
         <div className="flex items-center gap-1">
-          <button
-            type="button"
+          <DialIconButton
             aria-label={
               isCollapsed
                 ? t(ConversationExportI18nKeys.ExpandQueueAriaLabel)
                 : t(ConversationExportI18nKeys.CollapseQueueAriaLabel)
             }
+            appearance={ButtonAppearance.Ghost}
+            size={ElementSize.Small}
+            icon={
+              isCollapsed ? (
+                <IconChevronUp
+                  size={DIAL_ICON_SIZE.SM}
+                  className="text-secondary"
+                />
+              ) : (
+                <IconChevronDown
+                  size={DIAL_ICON_SIZE.SM}
+                  className="text-secondary"
+                />
+              )
+            }
             onClick={() => setIsCollapsed((value) => !value)}
-          >
-            {isCollapsed ? (
-              <IconChevronUp size={16} className="text-secondary" />
-            ) : (
-              <IconChevronDown size={16} className="text-secondary" />
-            )}
-          </button>
-          <button
-            type="button"
+          />
+          <DialIconButton
             aria-label={t(ConversationExportI18nKeys.CloseQueueAriaLabel)}
+            appearance={ButtonAppearance.Ghost}
+            size={ElementSize.Small}
+            icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
             onClick={handleClose}
-          >
-            <IconX size={16} className="text-secondary" />
-          </button>
+          />
         </div>
       </div>
       <div className="px-3 pb-2">
@@ -167,7 +204,7 @@ const ImportExportQueue: FC<Props> = ({
         />
       </div>
       {!isCollapsed && (
-        <div className="flex flex-col">
+        <div className="flex max-h-[40vh] flex-col overflow-y-auto">
           {jobs.map((job) => (
             <JobRow
               key={job.id}
@@ -181,11 +218,11 @@ const ImportExportQueue: FC<Props> = ({
       <DialConfirmationPopup
         open={isConfirmOpen}
         header={t(ConversationExportI18nKeys.CloseQueueConfirmHeader)}
-        description={t(ConversationExportI18nKeys.CloseQueueConfirmDescription)}
-        confirmLabel={t(ConversationExportI18nKeys.CloseQueueConfirmButton)}
+        description={t(getCloseConfirmDescriptionKey(hasInProgress, hasFailed))}
+        confirmLabel={t(ButtonsI18nKeys.Close)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
-        onConfirm={onClose}
+        onConfirm={handleConfirmClose}
         onClose={() => setIsConfirmOpen(false)}
       />
     </div>

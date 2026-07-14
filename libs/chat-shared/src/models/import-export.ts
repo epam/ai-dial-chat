@@ -1,4 +1,4 @@
-import { Conversation } from '../models/chat';
+import { Conversation } from './chat';
 
 /** A minimal conversation-folder record carried in an export file. */
 export interface ExportFolderV5 {
@@ -10,25 +10,15 @@ export interface ExportFolderV5 {
   folderId?: string;
 }
 
-/**
- * Conversation as serialized in export format v5.
- * Fork into a standalone frozen interface and bump to `ExportFormatV6` when
- * the domain `Conversation` model diverges from what a v5 file must hold.
- */
-export type ExportConversationV5 = Conversation;
-
 /** Versioned JSON envelope produced by conversation export (current version). */
 export interface ExportFormatV5 {
   /** Format version discriminator. */
   version: 5;
   /** Exported conversations. */
-  history: ExportConversationV5[];
+  history: Conversation[];
   /** Folders the exported conversations belong to. */
   folders: ExportFolderV5[];
 }
-
-/** Alias for the export format this app currently produces. */
-export type LatestExportFormat = ExportFormatV5;
 
 /**
  * Every export format this app can produce or (in the future) import.

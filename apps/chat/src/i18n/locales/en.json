@@ -293,8 +293,9 @@
     "expandQueueAriaLabel": "Expand export queue",
     "closeQueueAriaLabel": "Close export queue",
     "closeQueueConfirmHeader": "Close queue?",
-    "closeQueueConfirmDescription": "Some operations are still running or have failed. Closing will cancel any in-progress operations.",
-    "closeQueueConfirmButton": "Close"
+    "closeQueueConfirmDescriptionInProgress": "Some exports are still in progress.",
+    "closeQueueConfirmDescriptionFailed": "Some exports have failed.",
+    "closeQueueConfirmDescriptionMixed": "Some exports are still in progress, and some have failed."
   },
   "auth": {
     "signedInAs": "Signed in as {{email}}",

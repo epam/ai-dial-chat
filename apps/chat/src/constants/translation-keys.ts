@@ -387,8 +387,9 @@ export enum ConversationExportI18nKeys {
   ExpandQueueAriaLabel = 'conversationExport.expandQueueAriaLabel',
   CloseQueueAriaLabel = 'conversationExport.closeQueueAriaLabel',
   CloseQueueConfirmHeader = 'conversationExport.closeQueueConfirmHeader',
-  CloseQueueConfirmDescription = 'conversationExport.closeQueueConfirmDescription',
-  CloseQueueConfirmButton = 'conversationExport.closeQueueConfirmButton',
+  CloseQueueConfirmDescriptionInProgress = 'conversationExport.closeQueueConfirmDescriptionInProgress',
+  CloseQueueConfirmDescriptionFailed = 'conversationExport.closeQueueConfirmDescriptionFailed',
+  CloseQueueConfirmDescriptionMixed = 'conversationExport.closeQueueConfirmDescriptionMixed',
 }
 
 export enum SidebarI18nKeys {

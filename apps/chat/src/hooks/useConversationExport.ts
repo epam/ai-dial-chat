@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { normalizeConversationId } from '../constants/routes';
 import { ConversationExportI18nKeys } from '../constants/translation-keys';
 import { useNotification } from '../context/NotificationContext';
+import type { ExportJob } from '../models/conversation-export';
 import { UnauthorizedError } from '../server-api/base';
 import {
   getConversation,
@@ -22,7 +23,6 @@ import {
   ConversationExportMode,
   ExportFileNameKind,
   ExportJobStatus,
-  type ExportJob,
 } from '../types/conversation-export';
 import { isDialFileId, resolveDialFileBucketAndPath } from '../utils/dial-file';
 import {
@@ -185,14 +185,19 @@ export const useConversationExport = (): UseConversationExportResult => {
     async (
       refs: AttachmentRef[],
       signal: AbortSignal,
-    ): Promise<{ entries: ZipAttachmentEntry[]; anySkipped: boolean }> => {
+    ): Promise<{
+      entries: ZipAttachmentEntry[];
+      anySkipped: boolean;
+      isUnauthorized: boolean;
+    }> => {
       let anySkipped = false;
+      let isUnauthorized = false;
 
       const entries = await runWithConcurrency(
         refs,
         ATTACHMENT_CONCURRENCY,
         async (ref): Promise<ZipAttachmentEntry | undefined> => {
-          if (signal.aborted) return undefined;
+          if (signal.aborted || isUnauthorized) return undefined;
           const resolved = resolveDialFileBucketAndPath(ref.fileId);
           if (!resolved) {
             anySkipped = true;
@@ -208,14 +213,21 @@ export const useConversationExport = (): UseConversationExportResult => {
             return { path: resolved.path, data };
           } catch (error) {
             if (signal.aborted) return undefined;
+            if (classifyExportError(error).isUnauthorized) {
+              isUnauthorized = true;
+              return undefined;
+            }
             anySkipped = true;
-            console.error('Failed to fetch attachment for export', error);
             return undefined;
           }
         },
       );
 
-      return { entries, anySkipped: !signal.aborted && anySkipped };
+      return {
+        entries,
+        anySkipped: !signal.aborted && !isUnauthorized && anySkipped,
+        isUnauthorized: !signal.aborted && isUnauthorized,
+      };
     },
     [],
   );
@@ -269,11 +281,16 @@ export const useConversationExport = (): UseConversationExportResult => {
         }
 
         const attachmentRefs = collectAttachmentRefs(conversation);
-        const { entries: zipAttachments, anySkipped } = await fetchAttachments(
-          attachmentRefs,
-          signal,
-        );
+        const {
+          entries: zipAttachments,
+          anySkipped,
+          isUnauthorized,
+        } = await fetchAttachments(attachmentRefs, signal);
         if (signal.aborted) return;
+        if (isUnauthorized) {
+          updateJob(jobId, { status: ExportJobStatus.Failed });
+          return;
+        }
         const envelope = buildExportEnvelope([conversation], []);
         const { blob, skippedPaths } = buildDialArchive(
           envelope,

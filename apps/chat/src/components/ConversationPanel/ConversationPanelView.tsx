@@ -62,7 +62,7 @@ import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import ImportExportQueue from '../ImportExportQueue/ImportExportQueue';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
-import ConversationPanelHeaderMenu from './ConversationPanelHeaderMenu';
+import ConversationPanelMenu from './ConversationPanelMenu';
 import { getConversationSource } from './get-conversation-source';
 
 const PANEL_STYLES: ConversationPanelStyles = {
@@ -507,7 +507,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onPanelResizeStop={setStoredPanelWidth}
         onMoveConversation={handleMoveConversation}
         headerActions={
-          <ConversationPanelHeaderMenu
+          <ConversationPanelMenu
             activeConversationId={activeConversationId}
             onExportAll={handleExportAll}
           />
