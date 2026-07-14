@@ -79,4 +79,19 @@ describe('EditorHeader', () => {
         .disabled,
     ).toBe(true);
   });
+
+  it('disables Save when requested by the caller', () => {
+    renderHeader({
+      isSaveDisabled: true,
+    });
+
+    expect(
+      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole('button', { name: 'Cancel' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+  });
 });

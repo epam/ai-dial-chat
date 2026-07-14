@@ -1,4 +1,6 @@
+import { validateDeploymentCreationFields } from '@epam/ai-dial-deployment-creation-form';
 import type { DialToolsetDto, ToolsetBodyDto } from '@epam/chat-api-client';
+import { ResponseError } from '@epam/chat-api-client';
 import {
   DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,
@@ -90,6 +92,9 @@ export const buildToolsetAuthorizeUrl = (
   }
 };
 
+export const getToolsetRedirectUri = (): string =>
+  `${window.location.origin}${ROUTES.ToolsetSignIn}`;
+
 /**
  * Builds the OAuth authorize URL, persists the redirect state to
  * `sessionStorage`, and opens the provider in a new browser window/tab
@@ -104,13 +109,14 @@ export const initiateOAuthLogin = (
   toolsetId: string,
   credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
 ): boolean => {
-  const redirectUri = `${window.location.origin}${ROUTES.ToolsetEditorCallback}`;
+  const redirectUri = getToolsetRedirectUri();
   const result = buildToolsetAuthorizeUrl(auth, redirectUri);
   if (!result) return false;
 
   const redirectState: ToolsetRedirectState = {
     toolsetId,
     credentialsLevel,
+    redirectUri,
     state: result.state,
   };
   sessionStorage.setItem(
@@ -137,6 +143,43 @@ export const isPublicToolsetId = (toolsetId: string): boolean => {
   if (!toolsetId.startsWith(TOOLSETS_ID_PREFIX)) return false;
   const bucket = toolsetId.slice(TOOLSETS_ID_PREFIX.length).split('/')[0];
   return bucket === PUBLIC_BUCKET_SEGMENT;
+};
+
+const isValidEndpointUrlCandidate = (trimmed: string): boolean => {
+  if (!/^(https?|sse):\/\//.test(trimmed)) return false;
+  if (trimmed.endsWith('.') || trimmed.endsWith('//')) return false;
+  try {
+    return Boolean(new URL(trimmed));
+  } catch {
+    return false;
+  }
+};
+
+/** Validates a toolset endpoint URL (http(s) or sse, parseable, no trailing `.`/`//`). */
+export const isValidEndpointUrl = (value: string): boolean =>
+  isValidEndpointUrlCandidate(value.trim());
+
+const repairSingleSlashUrlScheme = (value: string): string =>
+  value.replace(/^(https?|sse):\/([^/])/, '$1://$2');
+
+const normalizeReturnedEndpointUrl = (value?: string): string => {
+  const trimmed = value?.trim() ?? '';
+  if (!trimmed || isValidEndpointUrlCandidate(trimmed)) return trimmed;
+
+  const candidates = [trimmed];
+  try {
+    const decoded = decodeURIComponent(trimmed);
+    if (decoded !== trimmed) candidates.push(decoded);
+  } catch {
+    // Leave malformed percent-encoded values unchanged.
+  }
+
+  for (const candidate of candidates) {
+    const repaired = repairSingleSlashUrlScheme(candidate);
+    if (isValidEndpointUrlCandidate(repaired)) return repaired;
+  }
+
+  return trimmed;
 };
 
 /** Maps a loaded toolset DTO (snake_case) into editor form state. */
@@ -166,7 +209,7 @@ export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => {
     description: dto.description ?? '',
     topics: dto.descriptionKeywords ?? [],
     intro: dto.intro ?? '',
-    endpoint: dto.endpoint ?? '',
+    endpoint: normalizeReturnedEndpointUrl(dto.endpoint),
     protocol:
       (dto.transport as ToolsetTransportType) ?? ToolsetTransportType.Http,
     allowedTools: dto.allowedTools ?? [],
@@ -177,15 +220,22 @@ export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => {
       isLoggedIn,
       keyHeader: authSettings?.apiKeyHeader ?? '',
       clientId: authSettings?.clientId ?? '',
-      authorizationEndpoint: authSettings?.authorizationEndpoint ?? '',
-      tokenEndpoint: authSettings?.tokenEndpoint ?? '',
+      authorizationEndpoint: normalizeReturnedEndpointUrl(
+        authSettings?.authorizationEndpoint,
+      ),
+      tokenEndpoint: normalizeReturnedEndpointUrl(authSettings?.tokenEndpoint),
       scopes: authSettings?.scopesSupported ?? [],
+      codeChallenge: authSettings?.codeChallenge,
+      codeChallengeMethod: authSettings?.codeChallengeMethod,
     },
   };
 };
 
 /** Maps editor form state into the create/update request body. */
-export const formToToolsetBody = (form: ToolsetFormData): ToolsetBodyDto => {
+export const formToToolsetBody = (
+  form: ToolsetFormData,
+  redirectUri?: string,
+): ToolsetBodyDto => {
   const auth = form.auth;
   const authSettings: ToolsetBodyDto['authSettings'] = {
     authenticationType: auth.authenticationType,
@@ -196,8 +246,10 @@ export const formToToolsetBody = (form: ToolsetFormData): ToolsetBodyDto => {
     authSettings.clientId = auth.clientId?.trim() || undefined;
     authSettings.clientSecret = auth.clientSecret?.trim() || undefined;
     authSettings.authorizationEndpoint =
-      auth.authorizationEndpoint?.trim() || undefined;
-    authSettings.tokenEndpoint = auth.tokenEndpoint?.trim() || undefined;
+      normalizeReturnedEndpointUrl(auth.authorizationEndpoint) || undefined;
+    authSettings.tokenEndpoint =
+      normalizeReturnedEndpointUrl(auth.tokenEndpoint) || undefined;
+    authSettings.redirectUri = redirectUri?.trim() || undefined;
     authSettings.scopesSupported =
       auth.scopes && auth.scopes.length > 0 ? auth.scopes : undefined;
   }
@@ -209,7 +261,7 @@ export const formToToolsetBody = (form: ToolsetFormData): ToolsetBodyDto => {
     iconUrl: form.iconUrl.trim() || undefined,
     topics: form.topics.length > 0 ? form.topics : undefined,
     intro: form.intro.trim() || undefined,
-    endpoint: form.endpoint.trim(),
+    endpoint: normalizeReturnedEndpointUrl(form.endpoint),
     transport: form.protocol,
     allowedTools: form.allowedTools.length > 0 ? form.allowedTools : undefined,
     reference: form.reference,
@@ -217,22 +269,25 @@ export const formToToolsetBody = (form: ToolsetFormData): ToolsetBodyDto => {
   };
 };
 
-/** Validates a toolset endpoint URL (http(s) or sse, parseable, no trailing `.`/`//`). */
-export const isValidEndpointUrl = (value: string): boolean => {
-  const trimmed = value.trim();
-  if (!/^(https?|sse):\/\//.test(trimmed)) return false;
-  if (trimmed.endsWith('.') || trimmed.endsWith('//')) return false;
-  try {
-    return Boolean(new URL(trimmed));
-  } catch {
-    return false;
-  }
-};
+const isOptionalValidEndpointUrl = (value?: string): boolean =>
+  !value?.trim() || isValidEndpointUrl(value);
 
-/** Submits the toolset login form when API key fields require validation. */
-export const isToolsetAuthValid = (auth: ToolsetAuthFormData): boolean => {
+/**
+ * Submits the toolset login form when API key fields require validation.
+ *
+ * `isEditMode` relaxes the OAuth `clientSecret` requirement: the server never
+ * returns a previously saved secret (it's redacted on every GET), and on
+ * update it preserves the stored secret when the form submits none, so an
+ * existing OAuth-with-config toolset must stay saveable without forcing the
+ * user to retype a secret they can't see.
+ */
+export const isToolsetAuthValid = (
+  auth: ToolsetAuthFormData,
+  isEditMode = false,
+): boolean => {
   if (auth.isLoggedIn) return true;
   if (auth.authenticationType === ToolsetAuthTypes.ApiKey) {
+    if (!auth.keyHeader?.trim()) return false;
     if (auth.withLogin === WithLogin.WithoutLogin) return true;
     return Boolean(auth.keyHeader?.trim() && auth.apiKey?.trim());
   }
@@ -240,7 +295,51 @@ export const isToolsetAuthValid = (auth: ToolsetAuthFormData): boolean => {
     auth.authenticationType === ToolsetAuthTypes.OAuth &&
     auth.withLogin === WithLogin.WithConfig
   ) {
-    return Boolean(auth.clientId?.trim()) && Boolean(auth.clientSecret?.trim());
+    return (
+      Boolean(auth.clientId?.trim()) &&
+      (isEditMode || Boolean(auth.clientSecret?.trim())) &&
+      isOptionalValidEndpointUrl(auth.authorizationEndpoint) &&
+      isOptionalValidEndpointUrl(auth.tokenEndpoint)
+    );
   }
   return true;
+};
+
+/** Returns whether the editor form can be saved without surfacing validation errors. */
+export const isToolsetFormValid = (
+  form: ToolsetFormData,
+  isEditMode = false,
+): boolean =>
+  Object.keys(validateDeploymentCreationFields(form)).length === 0 &&
+  isValidEndpointUrl(form.endpoint) &&
+  isToolsetAuthValid(form.auth, isEditMode);
+
+/**
+ * Extracts the reason chat-api forwarded from DIAL Core (e.g. "The specified
+ * endpoint '...' is invalid or unreachable") out of a failed create/update
+ * call, so the editor can show it instead of a generic "failed to save"
+ * message. Returns `undefined` for anything that isn't an API error response
+ * with a readable `message`, so the caller can fall back to a generic one.
+ */
+export const extractToolsetApiErrorMessage = async (
+  error: unknown,
+): Promise<string | undefined> => {
+  if (!(error instanceof ResponseError)) return undefined;
+
+  try {
+    const body: unknown = await error.response.json();
+    if (body == null || typeof body !== 'object') return undefined;
+
+    const { message } = body as { message?: unknown };
+    if (typeof message === 'string') return message;
+    if (Array.isArray(message)) {
+      const strings = message.filter(
+        (item): item is string => typeof item === 'string',
+      );
+      return strings.length > 0 ? strings.join(', ') : undefined;
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
 };

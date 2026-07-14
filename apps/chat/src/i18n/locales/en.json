@@ -572,6 +572,7 @@
       "endpointRequired": "Endpoint is required",
       "endpointInvalid": "Enter a valid http(s) or sse URL",
       "protocolLabel": "Protocol",
+      "protocolSseDeprecatedLabel": "Deprecated",
       "allowedToolsLabel": "Allowed tools",
       "allowedToolsPlaceholder": "Add a tool",
       "copyUrlLabel": "Copy endpoint URL"
@@ -584,7 +585,7 @@
       "withLoginLabel": "With login",
       "withoutLoginLabel": "Without login",
       "withConfigLabel": "With login & config",
-      "keyHeaderLabel": "Key name",
+      "keyHeaderLabel": "API Key parameter name",
       "keyHeaderRequired": "Key name is required",
       "apiKeyLabel": "API key",
       "apiKeyRequired": "API key is required",

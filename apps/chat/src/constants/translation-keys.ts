@@ -483,6 +483,7 @@ export enum ToolsetEditorI18nKeys {
   EndpointRequired = 'toolsetEditor.settings.endpointRequired',
   EndpointInvalid = 'toolsetEditor.settings.endpointInvalid',
   ProtocolLabel = 'toolsetEditor.settings.protocolLabel',
+  ProtocolSseDeprecatedLabel = 'toolsetEditor.settings.protocolSseDeprecatedLabel',
   AllowedToolsLabel = 'toolsetEditor.settings.allowedToolsLabel',
   AllowedToolsPlaceholder = 'toolsetEditor.settings.allowedToolsPlaceholder',
   CopyUrlLabel = 'toolsetEditor.settings.copyUrlLabel',

@@ -42,8 +42,20 @@ const rawSnakeToolset = {
     code_challenge: 'challenge-value',
     code_challenge_method: 'S256',
     authorization_endpoint: 'https://example.com/authorize',
+    token_endpoint: 'https://example.com/token',
+    scopes_supported: ['read', 'write'],
     global_auth_status: 'SIGNED_OUT',
     user_level_auth_status: 'SIGNED_IN',
+  },
+} as unknown as DialToolsetDto;
+
+const rawSnakeApiKeyToolset = {
+  id: 'toolsets/b/api__1.0.0',
+  toolset: 'toolsets/b/api__1.0.0',
+  display_name: 'API toolset',
+  auth_settings: {
+    authentication_type: 'API_KEY',
+    api_key_header: 'X-Api-Key',
   },
 } as unknown as DialToolsetDto;
 
@@ -82,9 +94,22 @@ describe('toolsets API adapter', () => {
         codeChallenge: 'challenge-value',
         codeChallengeMethod: 'S256',
         authorizationEndpoint: 'https://example.com/authorize',
+        tokenEndpoint: 'https://example.com/token',
+        scopesSupported: ['read', 'write'],
         globalAuthStatus: 'SIGNED_OUT',
         userLevelAuthStatus: 'SIGNED_IN',
       },
+    });
+  });
+
+  it('normalizes API key header from snake_case auth settings', async () => {
+    vi.mocked(toolsetsApi.getToolset).mockResolvedValue(rawSnakeApiKeyToolset);
+
+    const result = await getToolset('toolsets/b/api__1.0.0');
+
+    expect(result.authSettings).toMatchObject({
+      authenticationType: 'API_KEY',
+      apiKeyHeader: 'X-Api-Key',
     });
   });
 
@@ -98,5 +123,8 @@ describe('toolsets API adapter', () => {
     expect(result.data[0].displayName).toBe('My toolset');
     expect(result.data[0].authSettings?.authenticationType).toBe('OAUTH');
     expect(result.data[0].authSettings?.codeChallenge).toBe('challenge-value');
+    expect(result.data[0].authSettings?.tokenEndpoint).toBe(
+      'https://example.com/token',
+    );
   });
 });

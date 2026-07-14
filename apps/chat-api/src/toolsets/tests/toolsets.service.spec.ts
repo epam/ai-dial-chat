@@ -42,14 +42,15 @@ const mockEnrichedList: DialToolsetListResponseDto = {
 const okResponse = (data: unknown) =>
   ({ data, response: {} as Response }) as never;
 
-const errResponse = (status: number) =>
-  ({ error: {}, response: { status } as Response }) as never;
+const errResponse = (status: number, error: unknown = {}) =>
+  ({ error, response: { status } as Response }) as never;
 
 function makeDeps() {
   const dialClient = {
     client: {
       getToolSets: vi.fn(),
       getToolset: vi.fn(),
+      getCustomToolSet: vi.fn(),
       getUserBucket: vi.fn(),
       saveToolSet: vi.fn(),
       deleteToolSet: vi.fn(),
@@ -341,15 +342,26 @@ describe('ToolsetsService', () => {
 
     it('sets ownership fields for a single toolset', async () => {
       const { service, userConfigService } = makeService();
+      const id = 'toolsets/bucket/my-toolset';
       userConfigService.getInstalledIds.mockResolvedValue({
-        toolsets: ['toolsets/bucket/my-toolset'],
+        toolsets: [id],
         deployments: [],
       });
       vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
         okResponse({
           ...mockToolset,
-          id: 'toolsets/bucket/my-toolset',
-          toolset: 'toolsets/bucket/my-toolset',
+          id,
+          toolset: id,
+        }),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getCustomToolSet',
+      ).mockResolvedValue(
+        okResponse({
+          displayName: 'My toolset',
+          endpoint: 'https://my-toolset.example.com/mcp',
+          transport: 'HTTP',
         }),
       );
 
@@ -357,12 +369,118 @@ describe('ToolsetsService', () => {
         'user1',
         'token-abc',
         'bucket',
-        'toolsets/bucket/my-toolset',
+        id,
       );
       expect(result).toMatchObject({
-        id: 'toolsets/bucket/my-toolset',
+        id,
         is_installed: true,
         is_my: true,
+      });
+    });
+
+    it('loads a prefixed toolset from the custom resource so saved endpoint is returned', async () => {
+      const { service } = makeService();
+      const id = 'toolsets/bucket/my-toolset';
+      const customSpy = vi
+        .spyOn(service['dialClient'].client, 'getCustomToolSet')
+        .mockResolvedValue(
+          okResponse({
+            displayName: 'My toolset',
+            displayVersion: '1.0.0',
+            endpoint: 'https://my-toolset.example.com/mcp',
+            transport: 'SSE',
+            authSettings: {
+              authentication_type: 'OAUTH',
+              client_id: 'client-from-custom-resource',
+              client_secret: 'secret-value',
+              authorization_endpoint: 'https://auth.example.com/authorize',
+              token_endpoint: 'https://auth.example.com/token',
+              scopes_supported: ['read', 'write'],
+              code_challenge: 'challenge-value',
+              code_challenge_method: 'S256',
+            },
+          }),
+        );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        okResponse({
+          id,
+          toolset: id,
+          object: 'toolset',
+          auth_settings: {
+            authentication_type: 'OAUTH',
+            user_level_auth_status: 'SIGNED_IN',
+          },
+        }),
+      );
+
+      const result = await service.getToolset('user1', 'token', 'bucket', id);
+
+      expect(customSpy).toHaveBeenCalledWith(
+        'bucket',
+        'my-toolset',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+          }),
+        }),
+      );
+      expect(result).toMatchObject({
+        id,
+        toolset: id,
+        endpoint: 'https://my-toolset.example.com/mcp',
+        transport: 'SSE',
+        displayName: 'My toolset',
+      });
+      expect(result.auth_settings).toMatchObject({
+        authentication_type: 'OAUTH',
+        client_id: 'client-from-custom-resource',
+        authorization_endpoint: 'https://auth.example.com/authorize',
+        token_endpoint: 'https://auth.example.com/token',
+        scopes_supported: ['read', 'write'],
+        code_challenge: 'challenge-value',
+        code_challenge_method: 'S256',
+        user_level_auth_status: 'SIGNED_IN',
+      });
+      expect(
+        (result.auth_settings as { client_secret?: string }).client_secret,
+      ).toBeUndefined();
+    });
+
+    it('loads a saved API key header from the custom resource', async () => {
+      const { service } = makeService();
+      const id = 'toolsets/bucket/api-toolset';
+      vi.spyOn(
+        service['dialClient'].client,
+        'getCustomToolSet',
+      ).mockResolvedValue(
+        okResponse({
+          displayName: 'API toolset',
+          endpoint: 'https://api-toolset.example.com/mcp',
+          transport: 'HTTP',
+          authSettings: {
+            authentication_type: 'API_KEY',
+            api_key_header: 'X-Api-Key',
+          },
+        }),
+      );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        okResponse({
+          id,
+          toolset: id,
+          object: 'toolset',
+          auth_settings: {
+            authentication_type: 'API_KEY',
+            user_level_auth_status: 'SIGNED_OUT',
+          },
+        }),
+      );
+
+      const result = await service.getToolset('user1', 'token', 'bucket', id);
+
+      expect(result.auth_settings).toMatchObject({
+        authentication_type: 'API_KEY',
+        api_key_header: 'X-Api-Key',
+        user_level_auth_status: 'SIGNED_OUT',
       });
     });
 
@@ -552,7 +670,7 @@ describe('ToolsetsService — write operations', () => {
       );
     });
 
-    it('maps fields to DIAL Core snake_case in the PUT body', async () => {
+    it('maps fields to the DIAL Core PUT body shape', async () => {
       const { service } = makeWriteService();
       vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
         bucketSdkOk,
@@ -615,6 +733,91 @@ describe('ToolsetsService — write operations', () => {
 
       const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
       expect(sentBody.intro).toBe('A short pitch');
+    });
+
+    it('maps OAuth config fields to the DIAL Core PUT body', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        bucketSdkOk,
+      );
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.createToolset('user1', 'token', {
+        ...baseBody,
+        authSettings: {
+          authenticationType: ToolsetAuthType.OAuth,
+          clientId: 'client-id',
+          clientSecret: 'client-secret',
+          authorizationEndpoint: 'https://auth.example.com/authorize',
+          tokenEndpoint: 'https://auth.example.com/token',
+          redirectUri: 'https://chat.example.com/auth/toolset-signin',
+          scopesSupported: ['read', 'write'],
+        },
+      });
+
+      const sentBody = saveSpy.mock.calls[0][2].body as {
+        authSettings: Record<string, unknown>;
+      };
+      expect(sentBody.authSettings).toEqual({
+        authentication_type: 'OAUTH',
+        client_id: 'client-id',
+        client_secret: 'client-secret',
+        authorization_endpoint: 'https://auth.example.com/authorize',
+        token_endpoint: 'https://auth.example.com/token',
+        scopes_supported: ['read', 'write'],
+        redirect_uri: 'https://chat.example.com/auth/toolset-signin',
+      });
+    });
+
+    it('maps OAuth with-login redirect URI without requiring configured endpoints', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        bucketSdkOk,
+      );
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.createToolset('user1', 'token', {
+        ...baseBody,
+        authSettings: {
+          authenticationType: ToolsetAuthType.OAuth,
+          redirectUri: 'https://chat.example.com/auth/toolset-signin',
+        },
+      });
+
+      const sentBody = saveSpy.mock.calls[0][2].body as {
+        authSettings: Record<string, unknown>;
+      };
+      expect(sentBody.authSettings).toEqual({
+        authentication_type: 'OAUTH',
+        redirect_uri: 'https://chat.example.com/auth/toolset-signin',
+      });
+    });
+
+    it('allows configured OAuth without authorization and token endpoints (DIAL Core decides if that is enough)', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        bucketSdkOk,
+      );
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.createToolset('user1', 'token', {
+        ...baseBody,
+        authSettings: {
+          authenticationType: ToolsetAuthType.OAuth,
+          clientId: 'client-id',
+          clientSecret: 'client-secret',
+          redirectUri: 'https://chat.example.com/auth/toolset-signin',
+          scopesSupported: ['read', 'write'],
+        },
+      });
+
+      expect(saveSpy).toHaveBeenCalledOnce();
     });
 
     it('does not set intro when it is omitted', async () => {
@@ -701,6 +904,106 @@ describe('ToolsetsService — write operations', () => {
       );
     });
 
+    it('preserves hidden OAuth auth settings when update omits a new client secret', async () => {
+      const { service } = makeWriteService();
+      const customSpy = vi
+        .spyOn(service['dialClient'].client, 'getCustomToolSet')
+        .mockResolvedValue(
+          okResponse({
+            authSettings: {
+              authentication_type: 'OAUTH',
+              client_secret: 'existing-secret',
+              code_verifier: 'existing-code-verifier',
+              token_endpoint_auth_method: 'client_secret_post',
+            },
+          }),
+        );
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.updateToolset('user1', 'token', id, {
+        ...baseBody,
+        authSettings: {
+          authenticationType: ToolsetAuthType.OAuth,
+          clientId: 'updated-client',
+          authorizationEndpoint: 'https://auth.example.com/authorize',
+          tokenEndpoint: 'https://auth.example.com/token',
+          scopesSupported: ['read', 'write'],
+        },
+      });
+
+      expect(customSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'My%20toolset__0.0.1',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+          }),
+        }),
+      );
+      const sentBody = saveSpy.mock.calls[0][2].body as {
+        authSettings: Record<string, unknown>;
+      };
+      expect(sentBody.authSettings).toMatchObject({
+        authentication_type: 'OAUTH',
+        client_id: 'updated-client',
+        authorization_endpoint: 'https://auth.example.com/authorize',
+        token_endpoint: 'https://auth.example.com/token',
+        scopes_supported: ['read', 'write'],
+        client_secret: 'existing-secret',
+      });
+      expect(sentBody.authSettings).not.toHaveProperty('code_verifier');
+      expect(sentBody.authSettings).not.toHaveProperty(
+        'token_endpoint_auth_method',
+      );
+    });
+
+    it('preserves the full stored OAuth config when update saves OAuth with-login only', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getCustomToolSet',
+      ).mockResolvedValue(
+        okResponse({
+          authSettings: {
+            authentication_type: 'OAUTH',
+            client_id: 'existing-client',
+            client_secret: 'existing-secret',
+            authorization_endpoint: 'https://auth.example.com/authorize',
+            token_endpoint: 'https://auth.example.com/token',
+            scopes_supported: ['read', 'write'],
+            code_verifier: 'existing-code-verifier',
+            token_endpoint_auth_method: 'client_secret_post',
+          },
+        }),
+      );
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.updateToolset('user1', 'token', id, {
+        ...baseBody,
+        authSettings: {
+          authenticationType: ToolsetAuthType.OAuth,
+          redirectUri: 'https://chat.example.com/auth/toolset-signin',
+        },
+      });
+
+      const sentBody = saveSpy.mock.calls[0][2].body as {
+        authSettings: Record<string, unknown>;
+      };
+      expect(sentBody.authSettings).toEqual({
+        authentication_type: 'OAUTH',
+        client_id: 'existing-client',
+        client_secret: 'existing-secret',
+        authorization_endpoint: 'https://auth.example.com/authorize',
+        token_endpoint: 'https://auth.example.com/token',
+        scopes_supported: ['read', 'write'],
+        redirect_uri: 'https://chat.example.com/auth/toolset-signin',
+      });
+    });
+
     it('throws NotFoundException on upstream 404', async () => {
       const { service } = makeWriteService();
       vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
@@ -709,6 +1012,31 @@ describe('ToolsetsService — write operations', () => {
       await expect(
         service.updateToolset('u', 't', id, baseBody),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('surfaces the DIAL Core error message (plain string body) on a rejected save', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
+        errResponse(
+          400,
+          "Connection failed: The specified endpoint 'https://test.com' is invalid or unreachable.",
+        ),
+      );
+      await expect(
+        service.updateToolset('u', 't', id, baseBody),
+      ).rejects.toThrow(
+        "Connection failed: The specified endpoint 'https://test.com' is invalid or unreachable.",
+      );
+    });
+
+    it('surfaces the DIAL Core error message (object body with a message field) on a rejected save', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(service['dialClient'].client, 'saveToolSet').mockResolvedValue(
+        errResponse(400, { message: 'Display name already in use' }),
+      );
+      await expect(
+        service.updateToolset('u', 't', id, baseBody),
+      ).rejects.toThrow('Display name already in use');
     });
   });
 
