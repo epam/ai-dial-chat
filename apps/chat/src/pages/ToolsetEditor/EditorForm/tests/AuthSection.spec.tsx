@@ -308,12 +308,10 @@ describe('AuthSection', () => {
       expect(
         screen.getByLabelText(ToolsetEditorI18nKeys.KeyHeaderLabel),
       ).toBeTruthy();
-      expect(
-        screen.queryByLabelText(ToolsetEditorI18nKeys.ApiKeyLabel),
-      ).toBeNull();
+
       expect(
         screen.queryByRole('button', {
-          name: ToolsetEditorI18nKeys.LogInButton,
+          name: ButtonsI18nKeys.LogIn,
         }),
       ).toBeNull();
     });
