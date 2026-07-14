@@ -409,7 +409,8 @@
     "renameReservedName": "This name is reserved",
     "renameInvalidChars": "Name contains invalid characters",
     "renameNameTooLong": "Name must be 255 characters or fewer",
-    "moveAction": "Move",
+    "copyAction": "Copy to",
+    "moveAction": "Move to",
     "copyingLabel": "Copying...",
     "movingLabel": "Moving...",
     "copyError": "Failed to copy the selected items",
@@ -427,8 +428,8 @@
     "folderPickerEmptyStateTitle": "No folders here",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "tab": {
-      "myFiles": "My files",
-      "shared": "Shared with me"
+      "myFiles": "My Files",
+      "shared": "Shared with Me"
     },
     "myFiles": {
       "treeHeader": "Folder tree",

@@ -43,8 +43,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       activeTab: mockActiveTab.value ?? Tabs.MyFiles,
       handleTabChange: mockHandleTabChange,
       tabs: [
-        { id: Tabs.MyFiles, label: 'My files' },
-        { id: Tabs.Shared, label: 'Shared with me' },
+        { id: Tabs.MyFiles, label: 'My Files' },
+        { id: Tabs.Shared, label: 'Shared with Me' },
         { id: Tabs.Organization, label: 'Organization' },
       ],
     })),
@@ -201,7 +201,7 @@ describe('DialFileManagerPage', () => {
     );
   });
 
-  it('renders the tab navigation for My files, Shared, and Organization', () => {
+  it('renders the tab navigation for My Files, Shared, and Organization', () => {
     mockActiveTab.value = DialFileManagerTabs.MyFiles;
     render(<DialFileManagerPage />);
     expect(screen.getByRole('region', { name: 'file manager' })).toBeTruthy();

@@ -18,6 +18,15 @@ const capturedDialFileManagerProps: {
     gridOptions?: {
       actionLabels?: Partial<Record<DialFileManagerActions, string>>;
     };
+    bulkActionsToolbarOptions?: {
+      actionLabels?: Partial<Record<DialFileManagerActions, string>>;
+    };
+    destinationFolderPopupOptions?: {
+      copyLabel?: string;
+      moveLabel?: string;
+      hiddenFilesSwitcherLabel?: string;
+      sourceFolder?: string;
+    };
   } | null;
 } = { current: null };
 
@@ -27,10 +36,18 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     ...actual,
     DialFileManager: (props: {
       emptyStateTitle?: string;
-      destinationFolderPopupOptions?: { sourceFolder?: string };
+      destinationFolderPopupOptions?: {
+        copyLabel?: string;
+        moveLabel?: string;
+        hiddenFilesSwitcherLabel?: string;
+        sourceFolder?: string;
+      };
       onCreateFolder?: unknown;
       autoSelectUploadedItems?: boolean;
       gridOptions?: {
+        actionLabels?: Partial<Record<DialFileManagerActions, string>>;
+      };
+      bulkActionsToolbarOptions?: {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
       };
     }) => {
@@ -107,11 +124,11 @@ const baseLabels: DialFileManagerShellLabels = {
   deletingLabel: 'Deleting…',
   renameLabel: 'Rename',
   renamingLabel: 'Renaming…',
-  copyLabel: 'Copy',
-  moveLabel: 'Move',
+  copyLabel: 'Copy to',
+  moveLabel: 'Move to',
   duplicateLabel: 'Duplicate',
   addFolderLabel: 'Add folder',
-  hiddenFilesSwitcherLabel: 'Show hidden files',
+  hiddenFilesSwitcherLabel: 'Hidden files',
   getCopyHeader: (count, name) =>
     count === 1 ? `Copy "${name}"` : `Copy ${count} items`,
   getMoveHeader: (count, name) =>
@@ -140,8 +157,8 @@ const baseLabels: DialFileManagerShellLabels = {
     [DialFileManagerTabs.Review]: emptyStateCopy,
   },
   treeHeaderByTab: {
-    [DialFileManagerTabs.MyFiles]: 'My files',
-    [DialFileManagerTabs.Shared]: 'Shared with me',
+    [DialFileManagerTabs.MyFiles]: 'My Files',
+    [DialFileManagerTabs.Shared]: 'Shared with Me',
     [DialFileManagerTabs.Organization]: 'Organization',
     [DialFileManagerTabs.Review]: '',
   },
@@ -173,7 +190,7 @@ const renderShell = (
       hookResult={{ ...baseHookResult, ...hookResultOverrides }}
       labels={baseLabels}
       activeTab={DialFileManagerTabs.MyFiles}
-      tabs={[{ id: DialFileManagerTabs.MyFiles, label: 'My files' }]}
+      tabs={[{ id: DialFileManagerTabs.MyFiles, label: 'My Files' }]}
       onTabChange={vi.fn()}
       selectedPaths={selectedPaths}
       onSelectedPathsChange={vi.fn()}
@@ -262,6 +279,43 @@ describe('DialFileManagerShell', () => {
         DialFileManagerActions.Duplicate
       ],
     ).toBe(baseLabels.duplicateLabel);
+  });
+
+  it('passes File manager copy, move, and hidden-files labels to action surfaces', () => {
+    renderShell({
+      actionLabels: {
+        [DialFileManagerActions.Download]: 'Download',
+        [DialFileManagerActions.Copy]: 'Copy',
+        [DialFileManagerActions.Move]: 'Move',
+      },
+    });
+
+    const props = capturedDialFileManagerProps.current;
+    expect(
+      props?.gridOptions?.actionLabels?.[DialFileManagerActions.Copy],
+    ).toBe(baseLabels.copyLabel);
+    expect(
+      props?.gridOptions?.actionLabels?.[DialFileManagerActions.Move],
+    ).toBe(baseLabels.moveLabel);
+    expect(
+      props?.bulkActionsToolbarOptions?.actionLabels?.[
+        DialFileManagerActions.Copy
+      ],
+    ).toBe(baseLabels.copyLabel);
+    expect(
+      props?.bulkActionsToolbarOptions?.actionLabels?.[
+        DialFileManagerActions.Move
+      ],
+    ).toBe(baseLabels.moveLabel);
+    expect(props?.destinationFolderPopupOptions?.copyLabel).toBe(
+      baseLabels.copyLabel,
+    );
+    expect(props?.destinationFolderPopupOptions?.moveLabel).toBe(
+      baseLabels.moveLabel,
+    );
+    expect(
+      props?.destinationFolderPopupOptions?.hiddenFilesSwitcherLabel,
+    ).toBe(baseLabels.hiddenFilesSwitcherLabel);
   });
 
   it('omits Duplicate from DialFileManager action labels when the hook result excludes it', () => {
