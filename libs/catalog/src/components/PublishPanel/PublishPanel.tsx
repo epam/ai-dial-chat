@@ -65,7 +65,7 @@ export interface PublishPanelProps {
   /** Called when the user selects a destination folder or the root; `undefined` when deselected. */
   onSelectedFolderPathChange: (path: string[] | undefined) => void;
   /** Called when the user confirms a new folder name. */
-  onCreateFolder: (parentPath: string[], name: string) => void;
+  onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
   /**
    * Externally-controlled set of expanded folder path keys. Pass this
    * together with `onExpandedPathsChange` when the host lazily fetches a

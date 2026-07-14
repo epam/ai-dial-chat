@@ -51,7 +51,7 @@ export interface UseCatalogPublishFoldersResult {
   /** Called by the folder tree when the set of expanded folders changes. */
   onExpandedPathsChange: (paths: Set<string>) => void;
   /** Creates a folder under `parentPath` in the Organization/public bucket. */
-  onCreatePublishFolder: (parentPath: string[], name: string) => void;
+  onCreatePublishFolder: (parentPath: string[], name: string) => Promise<void>;
   /** Heuristic write-access check for a folder path (see the TODO above). */
   hasPublishWriteAccess: (folderPath: string[]) => boolean;
 }
@@ -118,34 +118,33 @@ export const useCatalogPublishFolders = (): UseCatalogPublishFoldersResult => {
   );
 
   const onCreatePublishFolder = useCallback(
-    (parentPath: string[], name: string) => {
+    async (parentPath: string[], name: string) => {
       const parentApiPath = toApiPath(parentPath) ?? '';
       const parentItems = cache.get(parentApiPath) ?? [];
       const parentBucket = parentItems[0]?.bucket ?? cache.get('')?.[0]?.bucket;
       if (parentBucket == null) {
-        return;
+        throw new Error('Cannot create folder: parent bucket is unknown');
       }
-      void createFolder({
+      const created = await createFolder({
         bucket: parentBucket,
         parentPath: toApiPath(parentPath),
         name,
-      }).then((created) => {
-        setCache((prev) => {
-          const next = new Map(prev);
-          const folderItem: ListFilesItemDto = {
-            name: created.name,
-            path: created.path,
-            folderId: created.folderId,
-            nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
-            bucket: created.bucket,
-            parentPath: created.parentPath || undefined,
-          };
-          next.set(parentApiPath, [
-            ...(next.get(parentApiPath) ?? []),
-            folderItem,
-          ]);
-          return next;
-        });
+      });
+      setCache((prev) => {
+        const next = new Map(prev);
+        const folderItem: ListFilesItemDto = {
+          name: created.name,
+          path: created.path,
+          folderId: created.folderId,
+          nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+          bucket: created.bucket,
+          parentPath: created.parentPath || undefined,
+        };
+        next.set(parentApiPath, [
+          ...(next.get(parentApiPath) ?? []),
+          folderItem,
+        ]);
+        return next;
       });
     },
     [cache],

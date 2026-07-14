@@ -147,11 +147,6 @@ export class PublishService {
       displayAuthor: author,
       rules: [],
     };
-    // TODO(debug): remove once the DIAL Core 400 investigation is done.
-    this.logger.debug(
-      `createPublication request body: ${JSON.stringify(requestBody)}`,
-    );
-
     let result;
     try {
       result = await this.dialClient.client.createPublication({
@@ -167,10 +162,6 @@ export class PublishService {
     }
 
     if (result.error) {
-      // TODO(debug): remove once the DIAL Core 400 investigation is done.
-      this.logger.debug(
-        `createPublication error body: ${JSON.stringify(result.error)}`,
-      );
       return mapDialHttpStatus(
         result.response.status,
         `publish ${entityType} "${entityId}"`,
@@ -223,10 +214,6 @@ export class PublishService {
           body: { url: entityId },
         });
         if (result.error) {
-          // TODO(debug): remove once the DIAL Core 400 investigation is done.
-          this.logger.debug(
-            `getPublications error body: ${JSON.stringify(result.error)}`,
-          );
           return mapDialHttpStatus(
             result.response.status,
             `get publish history for ${entityType} "${entityId}"`,

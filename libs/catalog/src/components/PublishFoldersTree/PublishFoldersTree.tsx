@@ -34,7 +34,7 @@ export interface PublishFoldersTreeProps {
    * Called when the user confirms a new folder name. The caller owns
    * persisting the new node into `items`; the tree only reports intent.
    */
-  onCreateFolder: (parentPath: string[], name: string) => void;
+  onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
   /**
    * Search query used to filter the tree; owned by the host so it can render
    * the search input in its own layout (e.g. above other controls).
@@ -188,7 +188,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
       (name) => name.toLowerCase() === trimmed.toLowerCase(),
     );
     if (trimmed && !isDuplicate) {
-      onCreateFolder(creatingParentPath, trimmed);
+      void onCreateFolder(creatingParentPath, trimmed);
       onSelectedPathChange([...creatingParentPath, trimmed]);
     }
     setCreatingParentPath(null);

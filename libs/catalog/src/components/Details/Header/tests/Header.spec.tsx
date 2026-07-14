@@ -156,19 +156,19 @@ describe('Header', () => {
     expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
   });
 
-  it('does not render Publish for a Toolset item by default', () => {
+  it('renders Publish for a Toolset item by default', () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
-    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
   });
 
   it('uses the publish visibility predicate', () => {
     render(
       <Header
         item={makeItem(CatalogEntityType.Toolset)}
-        isPublishVisible={() => true}
+        isPublishVisible={() => false}
       />,
     );
-    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
   });
 
   it('calls onOpenPublish when Publish is clicked', async () => {

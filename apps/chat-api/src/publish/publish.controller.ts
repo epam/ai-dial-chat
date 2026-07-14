@@ -81,6 +81,7 @@ export class PublishController {
 
   @Get(':entityType/:entityId/publish-history')
   @HttpCode(200)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({
     operationId: 'getCatalogPublishHistory',
     summary: 'Get publish history for a catalog entity',
@@ -102,6 +103,7 @@ export class PublishController {
     status: 401,
     description: 'Not authenticated — valid session cookie required',
   })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({
     status: 502,
     description: 'DIAL Core returned an error response',

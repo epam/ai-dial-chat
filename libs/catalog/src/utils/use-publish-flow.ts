@@ -30,6 +30,35 @@ const insertFolder = (
   });
 };
 
+/** Reverses {@link insertFolder}, used to roll back an optimistic folder add when `onCreateFolder` rejects. */
+const removeFolder = (
+  items: PublishFolderNode[],
+  parentPath: string[],
+  name: string,
+): PublishFolderNode[] => {
+  const targetKey = [...parentPath, name].join('/');
+  if (parentPath.length === 0) {
+    return items.filter((node) => node.path.join('/') !== targetKey);
+  }
+
+  return items.map((node) => {
+    if (node.path.join('/') !== parentPath.join('/')) {
+      return {
+        ...node,
+        children: node.children
+          ? removeFolder(node.children, parentPath, name)
+          : node.children,
+      };
+    }
+    return {
+      ...node,
+      children: (node.children ?? []).filter(
+        (child) => child.path.join('/') !== targetKey,
+      ),
+    };
+  });
+};
+
 /** Options for {@link usePublishFlow}. */
 export interface UsePublishFlowOptions {
   /** The catalog entity being published. */
@@ -46,9 +75,11 @@ export interface UsePublishFlowOptions {
   /**
    * Called when the user confirms a new folder name. The host owns
    * persisting the folder; the hook also adds it locally so it is
-   * immediately selectable within this session.
+   * immediately selectable within this session. If the returned promise
+   * rejects, the optimistically added folder is rolled back and the submit-
+   * error callout is surfaced.
    */
-  onCreateFolder?: (parentPath: string[], name: string) => void;
+  onCreateFolder?: (parentPath: string[], name: string) => void | Promise<void>;
   /** Called with the destination folder path when the user confirms publish/update. */
   onPublish: (item: CatalogItem, folderPath: string[]) => Promise<void>;
   /** Called after a successful publish; the host surfaces its own success notification. */
@@ -67,8 +98,8 @@ export interface UsePublishFlowResult {
   selectedFolderPath?: string[];
   /** Selects a destination folder or the root (`[]`); pass `undefined` to deselect. */
   setSelectedFolderPath: (path: string[] | undefined) => void;
-  /** Confirms a new folder name: adds it locally and reports it to the host. */
-  handleCreateFolder: (parentPath: string[], name: string) => void;
+  /** Confirms a new folder name: adds it locally and reports it to the host, rolling back and surfacing an error if the host rejects. */
+  handleCreateFolder: (parentPath: string[], name: string) => Promise<void>;
   /** Whether `item.version` is already published at `selectedFolderPath`. */
   hasExistingVersionInFolder: boolean;
   /** Whether the current user can publish to `selectedFolderPath`. */
@@ -121,9 +152,14 @@ export const usePublishFlow = ({
   }, [history, item.version, selectedFolderPath]);
 
   const handleCreateFolder = useCallback(
-    (parentPath: string[], name: string) => {
+    async (parentPath: string[], name: string) => {
       setFolderItems((prev) => insertFolder(prev, parentPath, name));
-      onCreateFolder?.(parentPath, name);
+      try {
+        await onCreateFolder?.(parentPath, name);
+      } catch {
+        setFolderItems((prev) => removeFolder(prev, parentPath, name));
+        setHasSubmitError(true);
+      }
     },
     [onCreateFolder],
   );

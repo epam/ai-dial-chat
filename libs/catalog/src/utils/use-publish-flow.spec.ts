@@ -155,6 +155,32 @@ describe('usePublishFlow', () => {
     ).toBe(true);
   });
 
+  it('rolls back the optimistic folder and sets hasSubmitError when onCreateFolder rejects', async () => {
+    const onCreateFolder = vi
+      .fn()
+      .mockRejectedValue(new Error('create failed'));
+    const { result } = renderHook(() =>
+      usePublishFlow({
+        item,
+        history,
+        folderItems,
+        onCreateFolder,
+        onPublish: vi.fn().mockResolvedValue(undefined),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleCreateFolder(['Shared'], 'Releases');
+    });
+
+    expect(
+      result.current.folderItems[0].children?.some(
+        (child) => child.name === 'Releases',
+      ),
+    ).toBe(false);
+    expect(result.current.hasSubmitError).toBe(true);
+  });
+
   it('calls onPublish and onPublishSuccess with the item and selected folder path', async () => {
     const onPublish = vi.fn().mockResolvedValue(undefined);
     const onPublishSuccess = vi.fn();
