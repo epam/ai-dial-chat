@@ -1,4 +1,8 @@
-import { MenuSelectors, PdfPreviewModalSelectors } from '@/src/ui/selectors';
+import {
+  ChatSelectors,
+  MenuSelectors,
+  PdfPreviewModalSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Popup } from '@/src/ui/webElements/common/popup';
 import { RegexUtil } from '@/src/utils';
@@ -37,6 +41,9 @@ export class PdfPreviewModal extends Popup {
       PdfPreviewModalSelectors.pdfPage(pageNumber),
     );
   }
+  public pdfViewerSpinner = this.getChildElementBySelector(
+    ChatSelectors.entitySpinner,
+  );
 
   public async selectZoomOption(option: string) {
     const zoomOptions = new BaseElement(this.page, MenuSelectors.menuOption);

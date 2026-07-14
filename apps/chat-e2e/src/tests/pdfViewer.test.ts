@@ -63,6 +63,9 @@ dialTest(
           Attachment.pdfName,
         );
         await pdfPreviewModalAssertion.assertPdfPreviewModalState('visible');
+        await pdfPreviewModal.pdfViewerSpinner.waitForState({
+          state: 'hidden',
+        });
         await pdfPreviewModalAssertion.assertPdfPreviewModalTitle(
           Attachment.pdfName,
         );
@@ -164,6 +167,9 @@ dialTest(
         );
         await chatMessages.referenceButton.click();
         await pdfPreviewModalAssertion.assertPdfPreviewModalState('visible');
+        await pdfPreviewModal.pdfViewerSpinner.waitForState({
+          state: 'hidden',
+        });
       },
     );
 
@@ -243,6 +249,9 @@ dialTest(
           Attachment.pdfName,
         );
         await pdfPreviewModalAssertion.assertPdfPreviewModalState('visible');
+        await pdfPreviewModal.pdfViewerSpinner.waitForState({
+          state: 'hidden',
+        });
         await pdfPreviewModalAssertion.assertZoomSelectValue(
           PdfViewerZoom.auto,
         );
