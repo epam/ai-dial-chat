@@ -439,6 +439,8 @@ export enum AttachmentCanvasI18nKeys {
   CloseLabel = 'attachmentCanvas.closeLabel',
   DownloadLabel = 'attachmentCanvas.downloadLabel',
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
+  LoadErrorLabel = 'attachmentCanvas.loadErrorLabel',
+  ForbiddenErrorLabel = 'attachmentCanvas.forbiddenErrorLabel',
 }
 
 export enum AppsEditorI18nKeys {

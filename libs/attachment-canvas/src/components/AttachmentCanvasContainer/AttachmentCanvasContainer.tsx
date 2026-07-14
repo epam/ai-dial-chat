@@ -23,6 +23,10 @@ export interface AttachmentCanvasContainerProps {
   downloadLabel?: string;
   /** Message shown when the content type is `Unsupported`. Defaults to `'Preview is not supported for this file'`. */
   unsupportedLabel?: string;
+  /** Message shown when content type is `Error` with `errorType: LoadFailed`. Defaults to `'Failed to load file'`. */
+  loadErrorLabel?: string;
+  /** Message shown when content type is `Error` with `errorType: Forbidden`. Defaults to `"You don't have permission to access this file"`. */
+  forbiddenErrorLabel?: string;
   /** Tooltip and aria-label for the copy-text button in its default state. Defaults to `'Copy text'`. */
   copyTextLabel?: string;
   /** Tooltip and aria-label for the copy-text button after a successful copy. Defaults to `'Copied!'`. */
@@ -51,6 +55,8 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       closeLabel = 'Close',
       downloadLabel = 'Download',
       unsupportedLabel = 'Preview is not supported for this file',
+      loadErrorLabel = 'Failed to load file',
+      forbiddenErrorLabel = "You don't have permission to access this file",
       copyTextLabel,
       copiedTextLabel,
       copyMarkdownLabel,
@@ -119,6 +125,8 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           copyJsonLabel={copyJsonLabel}
           copiedJsonLabel={copiedJsonLabel}
           unsupportedLabel={unsupportedLabel}
+          loadErrorLabel={loadErrorLabel}
+          forbiddenErrorLabel={forbiddenErrorLabel}
           isMobile={isMobile}
           defaultWidth={defaultWidth}
           codeBlockTheme={codeBlockTheme}

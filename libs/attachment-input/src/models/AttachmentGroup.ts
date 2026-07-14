@@ -9,6 +9,12 @@ export interface AttachmentGroupProps {
   attachments: DisplayAttachment[];
   /** Called when the user clicks/activates a previewable image tile or a file row (downloads it). */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /**
+   * Called with every currently downloadable attachment when the user
+   * activates the "download all" header action. Falls back to invoking
+   * `onAttachmentClick` once per downloadable attachment when omitted.
+   */
+  onDownloadAll?: (attachments: DisplayAttachment[]) => void;
   /** Called when the user retries a failed upload. */
   onRetry?: (id: string) => void;
   /** Resolves the human-readable size label for an attachment, when derivable. Omitted from display when absent. */
