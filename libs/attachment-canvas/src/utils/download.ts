@@ -71,7 +71,7 @@ export const downloadAttachmentContent = (
       break;
     case AttachmentContentType.Error:
       if (!isDownloadable(content)) return;
-      href = content.url as string;
+      href = content.url!;
       break;
   }
   const anchor = document.createElement('a');

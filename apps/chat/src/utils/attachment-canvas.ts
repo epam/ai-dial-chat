@@ -210,7 +210,9 @@ export const resolvePdfCanvasContent = async (
 ): Promise<PdfCanvasContent | ErrorCanvasContent | null> => {
   const result = await resolveAttachmentBlobUrl(attachment);
   if (result == null) return null;
-  if (typeof result !== 'string') return result;
+  if (typeof result !== 'string') {
+    return result;
+  }
   return { type: AttachmentContentType.Pdf, url: result };
 };
 

@@ -234,7 +234,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         );
       case AttachmentContentType.Unsupported:
         return (
-          <p className={mergeClasses('text-center', styles.unsupportedLabel)}>
+          <p className={mergeClasses('text-center', styles.statusLabel)}>
             {unsupportedLabel}
           </p>
         );
@@ -251,7 +251,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
                 className={styles.errorIcon}
               />
             )}
-            <p className={mergeClasses('text-center', styles.unsupportedLabel)}>
+            <p className={mergeClasses('text-center', styles.statusLabel)}>
               {isForbidden ? forbiddenErrorLabel : loadErrorLabel}
             </p>
           </div>
