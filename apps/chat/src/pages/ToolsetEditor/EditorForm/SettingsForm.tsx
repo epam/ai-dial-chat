@@ -47,9 +47,13 @@ const SettingsForm: FC<Props> = ({
   const protocolOptions = useMemo(
     () => [
       { value: ToolsetTransportType.Http, label: 'HTTP' },
-      { value: ToolsetTransportType.Sse, label: 'SSE' },
+      {
+        value: ToolsetTransportType.Sse,
+        label: 'SSE',
+        description: t(ToolsetEditorI18nKeys.ProtocolSseDeprecatedLabel),
+      },
     ],
-    [],
+    [t],
   );
 
   const handleCopyEndpoint = async () => {

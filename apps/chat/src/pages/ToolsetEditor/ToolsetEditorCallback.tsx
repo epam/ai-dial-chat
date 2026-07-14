@@ -5,7 +5,6 @@ import { useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { TOOLSET_REDIRECT_STATE_KEY } from '../../constants/toolsets';
 import { loginToolset } from '../../server-api/toolsets';
-import { ROUTES } from '../../types/routes';
 import type { ToolsetRedirectState } from '../../types/toolsets';
 import {
   ToolsetAuthTypes,
@@ -61,7 +60,9 @@ const ToolsetEditorCallback: FC = () => {
           authenticationType:
             ToolsetAuthTypes.OAuth as ToolsetLoginBodyDto['authenticationType'],
           code,
-          redirectUri: `${window.location.origin}${ROUTES.ToolsetEditorCallback}`,
+          redirectUri:
+            redirectState.redirectUri ??
+            `${window.location.origin}${window.location.pathname}`,
         };
         await loginToolset(redirectState.toolsetId, body);
       } catch {

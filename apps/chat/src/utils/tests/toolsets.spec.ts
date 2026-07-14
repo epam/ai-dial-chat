@@ -1,4 +1,5 @@
 import type { DialToolsetDto } from '@epam/chat-api-client';
+import { ResponseError } from '@epam/chat-api-client';
 import { describe, expect, it } from 'vitest';
 import {
   ToolsetAuthTypes,
@@ -8,9 +9,11 @@ import {
 import type { ToolsetFormData } from '../../types/toolsets';
 import {
   buildToolsetAuthorizeUrl,
+  extractToolsetApiErrorMessage,
   formToToolsetBody,
   getStorageSafeUniqueToolsetName,
   isToolsetAuthValid,
+  isToolsetFormValid,
   isValidEndpointUrl,
   toolsetDtoToForm,
 } from '../toolsets';
@@ -73,6 +76,114 @@ describe('isValidEndpointUrl', () => {
   });
 });
 
+describe('isToolsetFormValid', () => {
+  it('accepts a complete form with no auth requirements', () => {
+    expect(isToolsetFormValid(baseForm())).toBe(true);
+  });
+
+  it('requires a name and a valid endpoint URL', () => {
+    const form = baseForm();
+    form.name = '';
+    expect(isToolsetFormValid(form)).toBe(false);
+
+    form.name = 'My toolset';
+    form.endpoint = '';
+    expect(isToolsetFormValid(form)).toBe(false);
+
+    form.endpoint = 'not a url';
+    expect(isToolsetFormValid(form)).toBe(false);
+  });
+
+  it('requires API key fields when API-key login is selected', () => {
+    const form = baseForm();
+    form.auth = {
+      authenticationType: ToolsetAuthTypes.ApiKey,
+      withLogin: WithLogin.WithLogin,
+      isLoggedIn: false,
+      keyHeader: 'X-API-Key',
+      apiKey: '',
+    };
+
+    expect(isToolsetFormValid(form)).toBe(false);
+
+    form.auth.apiKey = 'secret';
+    expect(isToolsetFormValid(form)).toBe(true);
+  });
+
+  it('requires the API key header when API-key without login is selected', () => {
+    const form = baseForm();
+    form.auth = {
+      authenticationType: ToolsetAuthTypes.ApiKey,
+      withLogin: WithLogin.WithoutLogin,
+      isLoggedIn: false,
+      keyHeader: '',
+    };
+
+    expect(isToolsetFormValid(form)).toBe(false);
+
+    form.auth.keyHeader = 'X-API-Key';
+    expect(isToolsetFormValid(form)).toBe(true);
+  });
+
+  it('requires a client id and secret when configured OAuth is selected, but not the endpoints', () => {
+    const form = baseForm();
+    form.auth = {
+      authenticationType: ToolsetAuthTypes.OAuth,
+      withLogin: WithLogin.WithConfig,
+      isLoggedIn: false,
+      clientId: 'client-id',
+      clientSecret: '',
+    };
+
+    expect(isToolsetFormValid(form)).toBe(false);
+
+    form.auth.clientSecret = 'client-secret';
+    expect(isToolsetFormValid(form)).toBe(true);
+
+    form.auth.authorizationEndpoint = 'https://auth.example.com/authorize';
+    form.auth.tokenEndpoint = 'https://auth.example.com/token';
+    expect(isToolsetFormValid(form)).toBe(true);
+  });
+
+  it('does not require a client secret for configured OAuth when editing an existing toolset', () => {
+    const form = baseForm();
+    form.auth = {
+      authenticationType: ToolsetAuthTypes.OAuth,
+      withLogin: WithLogin.WithConfig,
+      isLoggedIn: false,
+      clientId: 'client-id',
+      clientSecret: '',
+      authorizationEndpoint: 'https://auth.example.com/authorize',
+      tokenEndpoint: 'https://auth.example.com/token',
+    };
+
+    expect(isToolsetFormValid(form)).toBe(false);
+    expect(isToolsetFormValid(form, true)).toBe(true);
+  });
+
+  it('requires valid OAuth endpoint URLs when they are provided', () => {
+    const form = baseForm();
+    form.auth = {
+      authenticationType: ToolsetAuthTypes.OAuth,
+      withLogin: WithLogin.WithConfig,
+      isLoggedIn: false,
+      clientId: 'client-id',
+      clientSecret: 'client-secret',
+      authorizationEndpoint: 'not a url',
+      tokenEndpoint: 'https://auth.example.com/token',
+    };
+
+    expect(isToolsetFormValid(form)).toBe(false);
+
+    form.auth.authorizationEndpoint = 'https://auth.example.com/authorize';
+    form.auth.tokenEndpoint = 'not a url';
+    expect(isToolsetFormValid(form)).toBe(false);
+
+    form.auth.tokenEndpoint = 'https://auth.example.com/token';
+    expect(isToolsetFormValid(form)).toBe(true);
+  });
+});
+
 describe('formToToolsetBody', () => {
   it('maps form fields and omits empty optionals', () => {
     const body = formToToolsetBody(baseForm());
@@ -108,6 +219,21 @@ describe('formToToolsetBody', () => {
     expect(body.authSettings.apiKeyHeader).toBe('X-Api-Key');
   });
 
+  it('includes the API key header when API_KEY without login is selected', () => {
+    const form = baseForm();
+    form.auth = {
+      authenticationType: ToolsetAuthTypes.ApiKey,
+      withLogin: WithLogin.WithoutLogin,
+      isLoggedIn: false,
+      keyHeader: 'X-Api-Key',
+    };
+    const body = formToToolsetBody(form);
+    expect(body.authSettings).toMatchObject({
+      authenticationType: ToolsetAuthTypes.ApiKey,
+      apiKeyHeader: 'X-Api-Key',
+    });
+  });
+
   it('includes OAuth config fields when OAuth auth is selected', () => {
     const form = baseForm();
     form.auth = {
@@ -117,16 +243,65 @@ describe('formToToolsetBody', () => {
       clientId: 'client',
       clientSecret: 'secret',
       authorizationEndpoint: 'https://auth.example.com/authorize',
+      tokenEndpoint: 'https://auth.example.com/token',
       scopes: ['read'],
     };
-    const body = formToToolsetBody(form);
+    const body = formToToolsetBody(
+      form,
+      'https://chat.example.com/auth/toolset-signin',
+    );
     expect(body.authSettings).toMatchObject({
       authenticationType: ToolsetAuthTypes.OAuth,
       clientId: 'client',
       clientSecret: 'secret',
       authorizationEndpoint: 'https://auth.example.com/authorize',
+      tokenEndpoint: 'https://auth.example.com/token',
+      redirectUri: 'https://chat.example.com/auth/toolset-signin',
       scopesSupported: ['read'],
     });
+  });
+
+  it('includes the OAuth redirect URI when OAuth with login is selected', () => {
+    const form = baseForm();
+    form.auth = {
+      authenticationType: ToolsetAuthTypes.OAuth,
+      withLogin: WithLogin.WithLogin,
+      isLoggedIn: false,
+    };
+
+    const body = formToToolsetBody(
+      form,
+      'https://chat.example.com/auth/toolset-signin',
+    );
+
+    expect(body.authSettings).toMatchObject({
+      authenticationType: ToolsetAuthTypes.OAuth,
+      redirectUri: 'https://chat.example.com/auth/toolset-signin',
+    });
+  });
+
+  it('repairs encoded endpoint URLs before building the request body', () => {
+    const form = baseForm();
+    form.endpoint = 'https%3A/my-toolset.example.com/mcp';
+    form.auth = {
+      authenticationType: ToolsetAuthTypes.OAuth,
+      withLogin: WithLogin.WithConfig,
+      isLoggedIn: false,
+      clientId: 'client',
+      clientSecret: 'secret',
+      authorizationEndpoint: 'https%3A/auth.example.com/authorize',
+      tokenEndpoint: 'https%3A%2F%2Fauth.example.com%2Ftoken',
+    };
+
+    const body = formToToolsetBody(form);
+
+    expect(body.endpoint).toBe('https://my-toolset.example.com/mcp');
+    expect(body.authSettings.authorizationEndpoint).toBe(
+      'https://auth.example.com/authorize',
+    );
+    expect(body.authSettings.tokenEndpoint).toBe(
+      'https://auth.example.com/token',
+    );
   });
 });
 
@@ -141,7 +316,7 @@ describe('buildToolsetAuthorizeUrl', () => {
         authorizationEndpoint: 'https://auth.example.com/authorize',
         scopes: ['read', 'write'],
       },
-      'http://localhost/toolset-editor/callback',
+      'http://localhost/auth/toolset-signin',
     );
 
     expect(result).not.toBeNull();
@@ -174,6 +349,91 @@ describe('isToolsetAuthValid', () => {
       }),
     ).toBe(true);
   });
+
+  it('requires only the API key header for API-key without login', () => {
+    expect(
+      isToolsetAuthValid({
+        authenticationType: ToolsetAuthTypes.ApiKey,
+        withLogin: WithLogin.WithoutLogin,
+        isLoggedIn: false,
+        keyHeader: '',
+      }),
+    ).toBe(false);
+    expect(
+      isToolsetAuthValid({
+        authenticationType: ToolsetAuthTypes.ApiKey,
+        withLogin: WithLogin.WithoutLogin,
+        isLoggedIn: false,
+        keyHeader: 'X-API-Key',
+        apiKey: '',
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects invalid OAuth endpoint URLs when configured OAuth is selected, but allows them to be omitted', () => {
+    expect(
+      isToolsetAuthValid({
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+        clientId: 'client-id',
+        clientSecret: 'client-secret',
+      }),
+    ).toBe(true);
+    expect(
+      isToolsetAuthValid({
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+        clientId: 'client-id',
+        clientSecret: 'client-secret',
+        authorizationEndpoint: 'not a url',
+        tokenEndpoint: 'https://auth.example.com/token',
+      }),
+    ).toBe(false);
+    expect(
+      isToolsetAuthValid({
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+        clientId: 'client-id',
+        clientSecret: 'client-secret',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+        tokenEndpoint: 'https://auth.example.com/token',
+      }),
+    ).toBe(true);
+  });
+
+  it('requires a client secret for configured OAuth when creating a toolset', () => {
+    expect(
+      isToolsetAuthValid({
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+        clientId: 'client-id',
+        clientSecret: '',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+        tokenEndpoint: 'https://auth.example.com/token',
+      }),
+    ).toBe(false);
+  });
+
+  it('does not require a client secret for configured OAuth when editing an existing toolset (the server redacts and preserves it)', () => {
+    expect(
+      isToolsetAuthValid(
+        {
+          authenticationType: ToolsetAuthTypes.OAuth,
+          withLogin: WithLogin.WithConfig,
+          isLoggedIn: false,
+          clientId: 'client-id',
+          clientSecret: '',
+          authorizationEndpoint: 'https://auth.example.com/authorize',
+          tokenEndpoint: 'https://auth.example.com/token',
+        },
+        true,
+      ),
+    ).toBe(true);
+  });
 });
 
 describe('toolsetDtoToForm', () => {
@@ -193,6 +453,10 @@ describe('toolsetDtoToForm', () => {
         authenticationType: 'OAUTH',
         clientId: 'client',
         authorizationEndpoint: 'https://auth.example.com/authorize',
+        tokenEndpoint: 'https://auth.example.com/token',
+        scopesSupported: ['read', 'write'],
+        codeChallenge: 'challenge-value',
+        codeChallengeMethod: 'S256',
         userLevelAuthStatus: 'SIGNED_IN',
       },
     };
@@ -207,6 +471,58 @@ describe('toolsetDtoToForm', () => {
     expect(form.auth.authenticationType).toBe(ToolsetAuthTypes.OAuth);
     expect(form.auth.withLogin).toBe(WithLogin.WithConfig);
     expect(form.auth.isLoggedIn).toBe(true);
+    expect(form.auth).toMatchObject({
+      clientId: 'client',
+      authorizationEndpoint: 'https://auth.example.com/authorize',
+      tokenEndpoint: 'https://auth.example.com/token',
+      scopes: ['read', 'write'],
+      codeChallenge: 'challenge-value',
+      codeChallengeMethod: 'S256',
+    });
+    expect(form.auth.clientSecret).toBeUndefined();
+  });
+
+  it('repairs encoded endpoint URLs returned from the API before showing them in the editor', () => {
+    const dto: DialToolsetDto = {
+      id: 'toolsets/b/My%20toolset__0.0.1',
+      toolset: 'toolsets/b/My%20toolset__0.0.1',
+      displayName: 'My toolset',
+      endpoint: 'https%3A/my-toolset.example.com/mcp',
+      authSettings: {
+        authenticationType: 'OAUTH',
+        clientId: 'client',
+        authorizationEndpoint: 'https%3A/auth.example.com/authorize',
+        tokenEndpoint: 'https%3A%2F%2Fauth.example.com%2Ftoken',
+      },
+    };
+
+    const form = toolsetDtoToForm(dto);
+
+    expect(form.endpoint).toBe('https://my-toolset.example.com/mcp');
+    expect(form.auth.authorizationEndpoint).toBe(
+      'https://auth.example.com/authorize',
+    );
+    expect(form.auth.tokenEndpoint).toBe('https://auth.example.com/token');
+  });
+
+  it('maps the API key header into editor form state without exposing the key value', () => {
+    const dto: DialToolsetDto = {
+      id: 'toolsets/b/My%20toolset__0.0.1',
+      toolset: 'toolsets/b/My%20toolset__0.0.1',
+      displayName: 'My toolset',
+      endpoint: 'https://my-toolset.example.com/mcp',
+      authSettings: {
+        authenticationType: 'API_KEY',
+        apiKeyHeader: 'X-Api-Key',
+      },
+    };
+
+    const form = toolsetDtoToForm(dto);
+
+    expect(form.auth.authenticationType).toBe(ToolsetAuthTypes.ApiKey);
+    expect(form.auth.withLogin).toBe(WithLogin.WithLogin);
+    expect(form.auth.keyHeader).toBe('X-Api-Key');
+    expect(form.auth.apiKey).toBeUndefined();
   });
 
   it('defaults to NONE auth and HTTP transport when fields are absent', () => {
@@ -218,5 +534,58 @@ describe('toolsetDtoToForm', () => {
     expect(form.protocol).toBe(ToolsetTransportType.Http);
     expect(form.auth.authenticationType).toBe(ToolsetAuthTypes.None);
     expect(form.auth.isLoggedIn).toBe(false);
+  });
+});
+
+describe('extractToolsetApiErrorMessage', () => {
+  it('returns the message from a ResponseError JSON body', async () => {
+    const response = new Response(
+      JSON.stringify({
+        statusCode: 400,
+        message:
+          "The specified endpoint 'https://test.com' is invalid or unreachable.",
+        error: 'Bad Request',
+      }),
+      { status: 400 },
+    );
+    const error = new ResponseError(response);
+
+    await expect(extractToolsetApiErrorMessage(error)).resolves.toBe(
+      "The specified endpoint 'https://test.com' is invalid or unreachable.",
+    );
+  });
+
+  it('joins an array message body into a single string', async () => {
+    const response = new Response(
+      JSON.stringify({ message: ['name is required', 'endpoint is required'] }),
+      { status: 400 },
+    );
+    const error = new ResponseError(response);
+
+    await expect(extractToolsetApiErrorMessage(error)).resolves.toBe(
+      'name is required, endpoint is required',
+    );
+  });
+
+  it('returns undefined for non-ResponseError errors', async () => {
+    await expect(
+      extractToolsetApiErrorMessage(new Error('boom')),
+    ).resolves.toBeUndefined();
+  });
+
+  it('returns undefined when the response body has no readable message', async () => {
+    const response = new Response(JSON.stringify({ statusCode: 400 }), {
+      status: 400,
+    });
+    const error = new ResponseError(response);
+
+    await expect(extractToolsetApiErrorMessage(error)).resolves.toBeUndefined();
+  });
+
+  it('returns undefined when the response body is not valid JSON', async () => {
+    const response = new Response('not json', { status: 400 });
+    const error = new ResponseError(response);
+
+    await expect(extractToolsetApiErrorMessage(error)).resolves.toBeUndefined();
   });
 });

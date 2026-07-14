@@ -7,7 +7,10 @@ import { TOOLSET_REDIRECT_STATE_KEY } from '../../../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../../../constants/translation-keys';
 import { useNotification } from '../../../../context/NotificationContext';
 import * as toolsetsApi from '../../../../server-api/toolsets';
-import type { ToolsetAuthFormData } from '../../../../types/toolsets';
+import type {
+  ToolsetAuthFormData,
+  ToolsetFormErrors,
+} from '../../../../types/toolsets';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
@@ -187,11 +190,12 @@ const renderSection = (
   toolsetId = 'toolsets/b/my__1.0.0',
   onAuthChange = vi.fn(),
   endpoint = VALID_ENDPOINT,
+  errors: ToolsetFormErrors = {},
 ) =>
   render(
     <AuthSection
       auth={auth}
-      errors={{}}
+      errors={errors}
       isSaving={false}
       toolsetId={toolsetId}
       endpoint={endpoint}
@@ -208,6 +212,10 @@ describe('AuthSection', () => {
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: { origin: 'http://localhost', href: 'http://localhost/' },
+    });
+    Object.defineProperty(window, 'open', {
+      configurable: true,
+      value: vi.fn(),
     });
     vi.mocked(useNotification).mockReturnValue({
       notifications: [],
@@ -246,6 +254,36 @@ describe('AuthSection', () => {
         }),
       );
     });
+
+    it('defaults a fresh OAuth selection to WithConfig so config fields are visible immediately', async () => {
+      const onAuthChange = vi.fn();
+      renderSection(noneAuth(), 'toolsets/b/my__1.0.0', onAuthChange);
+      await user.click(
+        screen.getByRole('button', {
+          name: new RegExp(ToolsetEditorI18nKeys.AuthTypeOAuth, 'i'),
+        }),
+      );
+      expect(onAuthChange).toHaveBeenCalledWith(
+        expect.objectContaining({ withLogin: WithLogin.WithConfig }),
+      );
+    });
+
+    it('defaults an OAuth selection to WithLogin when a client is already configured', async () => {
+      const onAuthChange = vi.fn();
+      renderSection(
+        { ...apiKeyAuth(), clientId: 'existing-client' },
+        'toolsets/b/my__1.0.0',
+        onAuthChange,
+      );
+      await user.click(
+        screen.getByRole('button', {
+          name: new RegExp(ToolsetEditorI18nKeys.AuthTypeOAuth, 'i'),
+        }),
+      );
+      expect(onAuthChange).toHaveBeenCalledWith(
+        expect.objectContaining({ withLogin: WithLogin.WithLogin }),
+      );
+    });
   });
 
   describe('API Key conditional fields', () => {
@@ -257,6 +295,25 @@ describe('AuthSection', () => {
       expect(
         screen.getByLabelText(ToolsetEditorI18nKeys.ApiKeyLabel),
       ).toBeTruthy();
+    });
+
+    it('renders only the key header input when ApiKey + WithoutLogin is active', () => {
+      renderSection({
+        ...apiKeyAuth(),
+        withLogin: WithLogin.WithoutLogin,
+        apiKey: '',
+      });
+      expect(
+        screen.getByLabelText(ToolsetEditorI18nKeys.KeyHeaderLabel),
+      ).toBeTruthy();
+      expect(
+        screen.queryByLabelText(ToolsetEditorI18nKeys.ApiKeyLabel),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', {
+          name: ToolsetEditorI18nKeys.LogInButton,
+        }),
+      ).toBeNull();
     });
 
     it('renders WithLogin and WithoutLogin radio buttons for ApiKey', () => {
@@ -298,6 +355,28 @@ describe('AuthSection', () => {
       expect(
         screen.getByLabelText(ToolsetEditorI18nKeys.WithConfigLabel),
       ).toBeTruthy();
+    });
+
+    it('renders OAuth endpoint URL validation errors', () => {
+      renderSection(
+        oauthWithConfigAuth(),
+        'toolsets/b/my__1.0.0',
+        vi.fn(),
+        VALID_ENDPOINT,
+        {
+          authorizationEndpoint: ToolsetEditorI18nKeys.EndpointInvalid,
+          tokenEndpoint: ToolsetEditorI18nKeys.EndpointInvalid,
+        },
+      );
+
+      const errors = screen.getAllByRole('alert');
+      expect(errors).toHaveLength(2);
+      expect(errors[0]?.textContent).toContain(
+        ToolsetEditorI18nKeys.EndpointInvalid,
+      );
+      expect(errors[1]?.textContent).toContain(
+        ToolsetEditorI18nKeys.EndpointInvalid,
+      );
     });
   });
 

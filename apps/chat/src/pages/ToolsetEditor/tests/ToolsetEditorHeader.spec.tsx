@@ -17,6 +17,7 @@ interface MockStep {
 
 interface MockEditorHeaderProps {
   steps: MockStep[];
+  isSaveDisabled?: boolean;
   onChangeStep: (stepId: string) => void;
 }
 
@@ -50,6 +51,7 @@ describe('ToolsetEditorHeader', () => {
       <ToolsetEditorHeader
         step={ToolsetEditorSteps.General}
         isSaving={false}
+        isSaveDisabled={false}
         canOpenSettings={false}
         onChangeStep={vi.fn()}
         onCancel={vi.fn()}
@@ -80,6 +82,7 @@ describe('ToolsetEditorHeader', () => {
       <ToolsetEditorHeader
         step={ToolsetEditorSteps.General}
         isSaving={false}
+        isSaveDisabled={false}
         canOpenSettings
         onChangeStep={vi.fn()}
         onCancel={vi.fn()}
@@ -111,6 +114,7 @@ describe('ToolsetEditorHeader', () => {
       <ToolsetEditorHeader
         step={ToolsetEditorSteps.General}
         isSaving={false}
+        isSaveDisabled={false}
         canOpenSettings
         onChangeStep={onChangeStep}
         onCancel={vi.fn()}
@@ -125,5 +129,25 @@ describe('ToolsetEditorHeader', () => {
     );
 
     expect(onChangeStep).toHaveBeenCalledWith(ToolsetEditorSteps.Settings);
+  });
+
+  it('forwards the Save disabled state to the shared header', () => {
+    render(
+      <ToolsetEditorHeader
+        step={ToolsetEditorSteps.Settings}
+        isSaving={false}
+        isSaveDisabled
+        canOpenSettings
+        onChangeStep={vi.fn()}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+
+    const props = mockEditorHeader.mock.calls[0]?.[0] as
+      | MockEditorHeaderProps
+      | undefined;
+
+    expect(props?.isSaveDisabled).toBe(true);
   });
 });

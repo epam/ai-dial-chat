@@ -48,7 +48,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onChange,
     elementId,
   }: {
-    options: { value: string; label: string }[];
+    options: { value: string; label: string; description?: string }[];
     value?: string;
     onChange?: (v: string) => void;
     elementId?: string;
@@ -60,7 +60,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>
-          {o.label}
+          {o.description ? `${o.label} ${o.description}` : o.label}
         </option>
       ))}
     </select>
@@ -189,5 +189,13 @@ describe('SettingsForm — copy endpoint', () => {
     expect(screen.getByRole('alert').textContent).toContain(
       ToolsetEditorI18nKeys.EndpointRequired,
     );
+  });
+
+  it('marks the SSE protocol option as deprecated', () => {
+    renderSettings();
+    const sseOption = screen.getByRole('option', {
+      name: `SSE ${ToolsetEditorI18nKeys.ProtocolSseDeprecatedLabel}`,
+    });
+    expect(sseOption).toBeTruthy();
   });
 });
