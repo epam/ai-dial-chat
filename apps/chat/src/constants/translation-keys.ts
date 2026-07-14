@@ -54,10 +54,13 @@ export enum BasicI18nKeys {
   Settings = 'basic.settings',
   AttachFiles = 'basic.attachFiles',
   DeleteConfirmDescription = 'basic.deleteConfirmDescription',
+  CanView = 'basic.canView',
+  CanEdit = 'basic.canEdit',
 }
 
 export enum ApiI18nKeys {
   EndpointLabel = 'api.endpointLabel',
+  ApiKey = 'api.apiKey',
 }
 
 export enum ButtonsI18nKeys {
@@ -96,6 +99,8 @@ export enum ButtonsI18nKeys {
   NewChat = 'buttons.newChat',
   Download = 'buttons.download',
   LogOut = 'buttons.logOut',
+  CopyLink = 'buttons.copyLink',
+  LogIn = 'buttons.logIn',
 }
 
 export enum NavigationI18nKeys {
@@ -152,11 +157,8 @@ export enum CatalogI18nKeys {
   TabToolsets = 'catalog.tab.toolsets',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
-  CredentialsLoginLabel = 'catalog.details.credentials.loginLabel',
   CredentialsSignedInLabel = 'catalog.details.credentials.signedInLabel',
   CredentialsSignedOutLabel = 'catalog.details.credentials.signedOutLabel',
-  CredentialsLogoutConfirmMessage = 'catalog.details.credentials.logoutConfirmMessage',
-  CredentialsApiKeyFieldLabel = 'catalog.details.credentials.apiKeyFieldLabel',
   CredentialsApiKeyFieldHint = 'catalog.details.credentials.apiKeyFieldHint',
   CredentialsLoginWithMyCredsLabel = 'catalog.details.credentials.loginWithMyCredsLabel',
   CredentialsManageLabel = 'catalog.details.credentials.manageLabel',
@@ -293,14 +295,11 @@ export enum DialFileManagerI18nKeys {
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
   UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
   PageNavLabel = 'dialFileManager.page.navLabel',
-  ShareAction = 'dialFileManager.shareAction',
+  ShareAction = 'share.title',
   UnshareAction = 'dialFileManager.unshareAction',
   RemoveAccessAction = 'dialFileManager.removeAccessAction',
   ShareModalTitle = 'dialFileManager.shareModalTitle',
-  ShareModalReadPermission = 'dialFileManager.shareModalReadPermission',
-  ShareModalReadWritePermission = 'dialFileManager.shareModalReadWritePermission',
   ShareModalCreateLinkButton = 'dialFileManager.shareModalCreateLinkButton',
-  ShareModalCopyLinkButton = 'dialFileManager.shareModalCopyLinkButton',
   ShareModalLinkCopiedConfirmation = 'dialFileManager.shareModalLinkCopiedConfirmation',
   ShareError = 'dialFileManager.shareError',
   UnshareError = 'dialFileManager.unshareError',
@@ -380,7 +379,6 @@ export enum SidebarI18nKeys {
   SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
   SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
   SectionSources = 'sidebar.sources.sections.sources',
-  CopySource = 'sidebar.sources.copySource',
 }
 
 export enum AttachmentsI18nKeys {
@@ -492,7 +490,6 @@ export enum ToolsetEditorI18nKeys {
   WithConfigLabel = 'toolsetEditor.auth.withConfigLabel',
   KeyHeaderLabel = 'toolsetEditor.auth.keyHeaderLabel',
   KeyHeaderRequired = 'toolsetEditor.auth.keyHeaderRequired',
-  ApiKeyLabel = 'toolsetEditor.auth.apiKeyLabel',
   ApiKeyRequired = 'toolsetEditor.auth.apiKeyRequired',
   ClientIdLabel = 'toolsetEditor.auth.clientIdLabel',
   ClientIdRequired = 'toolsetEditor.auth.clientIdRequired',
@@ -502,7 +499,6 @@ export enum ToolsetEditorI18nKeys {
   TokenEndpointLabel = 'toolsetEditor.auth.tokenEndpointLabel',
   ScopesLabel = 'toolsetEditor.auth.scopesLabel',
   ScopesPlaceholder = 'toolsetEditor.auth.scopesPlaceholder',
-  LogInButton = 'toolsetEditor.auth.logInButton',
   LoggedInLabel = 'toolsetEditor.auth.loggedInLabel',
   LogoutConfirmDescription = 'toolsetEditor.auth.logoutConfirmDescription',
   // Errors
@@ -524,8 +520,6 @@ export enum ShareI18nKeys {
   QrButtonLabel = 'share.qrButtonLabel',
   AnyoneWithLinkTitle = 'share.anyoneWithLinkTitle',
   AnyoneWithLinkSubtitle = 'share.anyoneWithLinkSubtitle',
-  AccessViewLabel = 'share.accessViewLabel',
-  AccessEditLabel = 'share.accessEditLabel',
   AccessAriaLabel = 'share.accessAriaLabel',
   VisibilityNote = 'share.visibilityNote',
   VisibilityNoteEdit = 'share.visibilityNoteEdit',

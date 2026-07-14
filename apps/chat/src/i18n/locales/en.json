@@ -9,10 +9,13 @@
     "preview": "Preview",
     "settings": "Settings",
     "attachFiles": "Attach files",
-    "deleteConfirmDescription": "Are you sure you want to delete"
+    "deleteConfirmDescription": "Are you sure you want to delete",
+    "canView": "Can view",
+    "canEdit": "Can edit"
   },
   "api": {
-    "endpointLabel": "Endpoint"
+    "endpointLabel": "Endpoint",
+    "apiKey": "API key"
   },
   "chat": {
     "greetingMorning": "Good morning, {{name}}",
@@ -104,11 +107,8 @@
         "limitsSection": "Usage limits"
       },
       "credentials": {
-        "loginLabel": "Log in",
         "signedInLabel": "Signed in",
         "signedOutLabel": "Signed out",
-        "logoutConfirmMessage": "Are you sure you want to log out?",
-        "apiKeyFieldLabel": "API key",
         "apiKeyFieldHint": "Enter your API key value for \"{{header}}\" header",
         "loginWithMyCredsLabel": "Login with my creds",
         "manageLabel": "Manage credentials",
@@ -207,16 +207,17 @@
     "useInChat": "Use in chat",
     "newChat": "New chat",
     "download": "Download",
-    "logOut": "Log out"
+    "logOut": "Log out",
+    "copyLink": "Copy link",
+    "logIn": "Log in"
   },
   "sidebar": {
     "base": {
-      "toggleOpen": "Open sidebar"
+      "toggleOpen": "Open panel"
     },
     "sources": {
       "ariaLabel": "Conversation sources",
       "downloadAll": "Download all",
-      "copySource": "Copy link",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",
@@ -459,14 +460,10 @@
     "page": {
       "navLabel": "File Manager"
     },
-    "shareAction": "Share",
     "unshareAction": "Unshare",
     "removeAccessAction": "Remove access",
     "shareModalTitle": "Share \"{{name}}\"",
-    "shareModalReadPermission": "Can view",
-    "shareModalReadWritePermission": "Can edit",
     "shareModalCreateLinkButton": "Create link",
-    "shareModalCopyLinkButton": "Copy link",
     "shareModalLinkCopiedConfirmation": "Link copied",
     "shareError": "Failed to create the share link",
     "unshareError": "Failed to remove the shared item",
@@ -506,8 +503,6 @@
     "qrButtonLabel": "QR",
     "anyoneWithLinkTitle": "Anyone with the link",
     "anyoneWithLinkSubtitle": "in your organization",
-    "accessViewLabel": "Can view",
-    "accessEditLabel": "Can edit",
     "accessAriaLabel": "Link access level",
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
@@ -581,7 +576,6 @@
       "withConfigLabel": "With login & config",
       "keyHeaderLabel": "Key name",
       "keyHeaderRequired": "Key name is required",
-      "apiKeyLabel": "API key",
       "apiKeyRequired": "API key is required",
       "clientIdLabel": "Client ID",
       "clientIdRequired": "Client ID is required",
@@ -591,7 +585,6 @@
       "tokenEndpointLabel": "Token endpoint",
       "scopesLabel": "Scopes",
       "scopesPlaceholder": "Add a scope",
-      "logInButton": "Log in",
       "loggedInLabel": "Logged in",
       "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."
     },

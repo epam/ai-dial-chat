@@ -19,6 +19,7 @@ import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AUTH_TYPE_OPTIONS } from '../../../constants/toolsets';
 import {
+  ApiI18nKeys,
   AuthI18nKeys,
   ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
@@ -173,7 +174,7 @@ const AuthSection: FC<Props> = ({
         <PrimaryButton
           type="button"
           size={ElementSize.Small}
-          label={t(ToolsetEditorI18nKeys.LogInButton)}
+          label={t(ButtonsI18nKeys.LogIn)}
           onClick={handleLogIn}
           disabled={!canLogIn}
         />
@@ -305,7 +306,7 @@ const AuthSection: FC<Props> = ({
             value={auth.apiKey ?? ''}
             onChange={(value) => onAuthChange({ apiKey: value ?? '' })}
             labelProps={{
-              label: t(ToolsetEditorI18nKeys.ApiKeyLabel),
+              label: t(ApiI18nKeys.ApiKey),
               required: true,
             }}
             error={errors.apiKey || undefined}
