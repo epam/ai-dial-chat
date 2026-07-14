@@ -511,6 +511,48 @@ describe('DeploymentsContext', () => {
       ]);
     });
 
+    it('ignores a stale initial-load response that resolves after refetchToolsets', async () => {
+      let resolveInitialLoad: (
+        value: Awaited<ReturnType<typeof toolsetsApi.listToolsets>>,
+      ) => void;
+      const initialLoadPromise = new Promise<
+        Awaited<ReturnType<typeof toolsetsApi.listToolsets>>
+      >((resolve) => {
+        resolveInitialLoad = resolve;
+      });
+      mockListToolsets.mockReturnValueOnce(initialLoadPromise);
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      const created = {
+        id: 'toolsets/b/new-tool__0.0.1',
+        toolset: 'toolsets/b/new-tool__0.0.1',
+        displayName: 'New Tool',
+      };
+      // The initial load is still in flight when refetch is triggered.
+      mockListToolsets.mockResolvedValueOnce({ data: [created] });
+      await act(async () => {
+        await result.current.refetchToolsets();
+      });
+
+      expect(result.current.toolsets.map((item) => item.id)).toEqual([
+        created.id,
+      ]);
+
+      // The slower initial-load response arrives afterwards and must not
+      // clobber the fresher refetch result.
+      await act(async () => {
+        resolveInitialLoad({ data: [] });
+        await initialLoadPromise;
+      });
+
+      expect(result.current.toolsets.map((item) => item.id)).toEqual([
+        created.id,
+      ]);
+    });
+
     it('refetchToolsets leaves toolsets unchanged when the re-fetch fails', async () => {
       const existing = {
         id: 'toolsets/b/alpha__0.0.1',
@@ -556,6 +598,39 @@ describe('DeploymentsContext', () => {
 
       await act(async () => {
         await result.current.refetchDeployments();
+      });
+
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        mockItem1.id,
+      ]);
+    });
+
+    it('ignores a stale initial-load response that resolves after refetchDeployments', async () => {
+      let resolveInitialLoad: (value: typeof mockResponse) => void;
+      const initialLoadPromise = new Promise<typeof mockResponse>((resolve) => {
+        resolveInitialLoad = resolve;
+      });
+      mockGetDeployments.mockReturnValueOnce(initialLoadPromise);
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      // The initial load is still in flight when refetch is triggered.
+      mockGetDeployments.mockResolvedValueOnce({ deployments: [mockItem1] });
+      await act(async () => {
+        await result.current.refetchDeployments();
+      });
+
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        mockItem1.id,
+      ]);
+
+      // The slower initial-load response arrives afterwards and must not
+      // clobber the fresher refetch result.
+      await act(async () => {
+        resolveInitialLoad(mockResponse);
+        await initialLoadPromise;
       });
 
       expect(result.current.items.map((item) => item.id)).toEqual([

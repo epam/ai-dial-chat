@@ -6,7 +6,9 @@ import {
 import type { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DeploymentsService } from '../../deployments/deployments.service';
 import type { DialClientService } from '../../dial/dial-client.service';
+import type { ToolsetsService } from '../../toolsets/toolsets.service';
 import { ShareAccess } from '../dto/create-share-link.dto';
 import { ShareService } from '../share.service';
 
@@ -29,8 +31,21 @@ function makeService(callbackBaseUrl = 'https://example.com/callback') {
     ),
   } as unknown as ConfigService<EnvironmentVariables>;
 
-  const service = new ShareService(dialClient, configService);
-  return { service, dialClient };
+  const deploymentsService = {
+    invalidateListCache: vi.fn().mockResolvedValue(undefined),
+  } as unknown as DeploymentsService;
+
+  const toolsetsService = {
+    invalidateListCache: vi.fn().mockResolvedValue(undefined),
+  } as unknown as ToolsetsService;
+
+  const service = new ShareService(
+    dialClient,
+    configService,
+    deploymentsService,
+    toolsetsService,
+  );
+  return { service, dialClient, deploymentsService, toolsetsService };
 }
 
 describe('ShareService', () => {
@@ -151,21 +166,34 @@ describe('ShareService', () => {
   });
 
   describe('acceptInvitation', () => {
-    it('accepts the invitation via DIAL Core and returns the shared itemId', async () => {
-      const { service } = makeService();
+    it('peeks the invitation for its itemId, then accepts it via DIAL Core', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
       const spy = vi
         .spyOn(service['dialClient'].client, 'getInvitation')
         .mockResolvedValue(
           okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
         );
 
-      const result = await service.acceptInvitation('token-abc', 'abc123');
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+      );
 
-      expect(spy).toHaveBeenCalledWith('abc123', {
+      expect(spy).toHaveBeenNthCalledWith(1, 'abc123', {
+        headers: { Authorization: 'Bearer token-abc' },
+      });
+      expect(spy).toHaveBeenNthCalledWith(2, 'abc123', {
         headers: { Authorization: 'Bearer token-abc' },
         params: { query: { accept: true } },
       });
       expect(result).toEqual({ itemId: 'gpt-4o' });
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+      expect(toolsetsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
     });
 
     it('throws BadGatewayException when DIAL Core returns no shared resource', async () => {
@@ -174,9 +202,9 @@ describe('ShareService', () => {
         okResponse({ id: 'abc123', resources: [] }),
       );
 
-      await expect(service.acceptInvitation('token', 'abc123')).rejects.toThrow(
-        BadGatewayException,
-      );
+      await expect(
+        service.acceptInvitation('token', 'abc123', 'user-sub-1'),
+      ).rejects.toThrow(BadGatewayException);
     });
 
     it('throws NotFoundException on upstream 404', async () => {
@@ -186,7 +214,7 @@ describe('ShareService', () => {
       );
 
       await expect(
-        service.acceptInvitation('token', 'missing'),
+        service.acceptInvitation('token', 'missing', 'user-sub-1'),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -196,9 +224,9 @@ describe('ShareService', () => {
         new TypeError('fetch failed'),
       );
 
-      await expect(service.acceptInvitation('token', 'abc123')).rejects.toThrow(
-        ServiceUnavailableException,
-      );
+      await expect(
+        service.acceptInvitation('token', 'abc123', 'user-sub-1'),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
   });
 });

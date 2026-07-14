@@ -13,6 +13,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -127,12 +128,26 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  /*
+   * The initial fetch (below) and an explicit `refetchDeployments`/
+   * `refetchToolsets` call (e.g. right after accepting a share invitation)
+   * can be in flight at the same time. Without sequencing, whichever
+   * response happens to land last wins — including the stale initial one —
+   * so a share-invitation refetch can be silently clobbered by the slower
+   * pre-share snapshot. These ids let each setter ignore a response that is
+   * no longer the most recently issued request for that resource.
+   */
+  const deploymentsRequestIdRef = useRef(0);
+  const toolsetsRequestIdRef = useRef(0);
+
   const loadDeployments = useCallback(
     async (signal: { isCancelled: boolean }) => {
       setIsLoading(true);
       setError(null);
       setSchemas([]);
       setToolsets([]);
+      const deploymentsRequestId = ++deploymentsRequestIdRef.current;
+      const toolsetsRequestId = ++toolsetsRequestIdRef.current;
 
       const [deploymentsResult, schemasResult, toolsetsResult] =
         await Promise.allSettled([
@@ -152,7 +167,10 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         setSchemas(schemasResult.value.schemas ?? []);
       }
 
-      if (toolsetsResult.status !== 'rejected') {
+      if (
+        toolsetsResult.status !== 'rejected' &&
+        toolsetsRequestIdRef.current === toolsetsRequestId
+      ) {
         setToolsets(sortToolsets(toolsetsResult.value.data ?? []));
       }
 
@@ -163,18 +181,20 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const deployments = sortDeployments(
-        deploymentsResult.value.deployments ?? [],
-      );
-      setRawDeployments(deployments);
-      setSelectedItemIdState((prev) =>
-        resolveInitialSelection(
-          deployments,
-          prev,
-          userConfigSelectedId,
-          appConfig.defaultDeploymentId,
-        ),
-      );
+      if (deploymentsRequestIdRef.current === deploymentsRequestId) {
+        const deployments = sortDeployments(
+          deploymentsResult.value.deployments ?? [],
+        );
+        setRawDeployments(deployments);
+        setSelectedItemIdState((prev) =>
+          resolveInitialSelection(
+            deployments,
+            prev,
+            userConfigSelectedId,
+            appConfig.defaultDeploymentId,
+          ),
+        );
+      }
       setIsLoading(false);
     },
     [userConfigSelectedId, appConfig.defaultDeploymentId],
@@ -189,10 +209,13 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   }, [loadDeployments]);
 
   const refetchToolsets = useCallback(async () => {
+    const requestId = ++toolsetsRequestIdRef.current;
     try {
       const { data } = await listToolsets();
+      if (toolsetsRequestIdRef.current !== requestId) return;
       setToolsets(sortToolsets(data ?? []));
     } catch {
+      if (toolsetsRequestIdRef.current !== requestId) return;
       showNotification({
         variant: NotificationVariant.Error,
         message: t(DeploymentSelectorI18nKeys.RefetchToolsetsFailed),
@@ -201,12 +224,15 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   }, [showNotification, t]);
 
   const refetchDeployments = useCallback(async () => {
+    const requestId = ++deploymentsRequestIdRef.current;
     try {
       const { deployments } = await getDeployments([
         ListDeploymentsInterfaceTypeEnum.Chat,
       ]);
+      if (deploymentsRequestIdRef.current !== requestId) return;
       setRawDeployments(sortDeployments(deployments ?? []));
     } catch {
+      if (deploymentsRequestIdRef.current !== requestId) return;
       showNotification({
         variant: NotificationVariant.Error,
         message: t(DeploymentSelectorI18nKeys.RefetchDeploymentsFailed),

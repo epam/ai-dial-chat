@@ -3608,6 +3608,10 @@
             "type": "boolean",
             "description": "True when the deployment owner matches the current session user (computed post-cache)"
           },
+          "canEdit": {
+            "type": "boolean",
+            "description": "True when the current user may edit this deployment — owns it, or was granted WRITE access via a share invitation"
+          },
           "applicationFolder": {
             "type": "string",
             "description": "Parent folder path for application-type deployments (absent for root-level or non-application items)"
@@ -4635,6 +4639,10 @@
           "is_my": {
             "type": "boolean",
             "description": "True when the toolset id/path belongs to the current session user bucket"
+          },
+          "can_edit": {
+            "type": "boolean",
+            "description": "True when the current user may edit this toolset — owns it, or was granted WRITE access via a share invitation"
           }
         },
         "required": ["id", "toolset"]

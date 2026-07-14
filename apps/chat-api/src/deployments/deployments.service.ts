@@ -272,6 +272,60 @@ export class DeploymentsService {
     );
   }
 
+  /**
+   * Evicts the cached deployments list for a user so the next
+   * `listDeployments` call re-fetches from DIAL Core instead of serving a
+   * stale snapshot — e.g. right after the user accepted a share invitation
+   * granting access to a new application.
+   */
+  async invalidateListCache(userSub: string): Promise<void> {
+    const baseCacheKey = `deployments:list:${userSub}`;
+    await this.cacheManager.del(baseCacheKey);
+    await Promise.all(
+      Object.values(DeploymentInterfaceType)
+        .filter((type) => type !== DeploymentInterfaceType.All)
+        .map((type) =>
+          this.cacheManager.del(`${baseCacheKey}:interface:${type}`),
+        ),
+    );
+  }
+
+  /**
+   * Resolves which application URLs the current user was granted WRITE
+   * access to via a share invitation, so shared-with-me applications become
+   * editable alongside ones the user owns. Best-effort: a DIAL Core error
+   * here degrades to "no shared write access" rather than failing the whole
+   * deployments list.
+   */
+  private async getWritableApplicationUrls(
+    accessToken: string,
+  ): Promise<Set<string>> {
+    try {
+      const { data, error } = await this.dialClient.client.getSharedResources({
+        headers: getBearerAuthHeaders(accessToken),
+        body: { resourceTypes: ['APPLICATION'], with: 'me' },
+      });
+      if (error) return new Set();
+
+      const resources = (data?.resources ?? []) as {
+        url?: string;
+        permissions?: string[];
+      }[];
+      return new Set(
+        resources
+          .filter((resource) => resource.permissions?.includes('WRITE'))
+          .map((resource) => resource.url)
+          .filter((url): url is string => url != null),
+      );
+    } catch (err) {
+      this.logger.warn(
+        'Failed to resolve shared application write access',
+        err,
+      );
+      return new Set();
+    }
+  }
+
   async listDeployments(
     userSub: string,
     accessToken: string,
@@ -338,15 +392,21 @@ export class DeploymentsService {
       await this.userConfigService.getInstalledIds(accessToken, bucket);
     const toolsetsSet = new Set(toolsetIds);
     const deploymentsSet = new Set(deploymentIds);
+    const writableApplicationUrls =
+      await this.getWritableApplicationUrls(accessToken);
 
-    const withInstalled = allItems.map((item) => ({
-      ...item,
-      isInstalled:
-        item.type === 'toolset'
-          ? toolsetsSet.has(item.id)
-          : deploymentsSet.has(item.id),
-      isMy: item.id.split('/').includes(bucket),
-    }));
+    const withInstalled = allItems.map((item) => {
+      const isMy = item.id.split('/').includes(bucket);
+      return {
+        ...item,
+        isInstalled:
+          item.type === 'toolset'
+            ? toolsetsSet.has(item.id)
+            : deploymentsSet.has(item.id),
+        isMy,
+        canEdit: isMy || writableApplicationUrls.has(item.id),
+      };
+    });
 
     if (!interfaceFilter) {
       return { deployments: withInstalled };
