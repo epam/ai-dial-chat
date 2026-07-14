@@ -1,6 +1,3 @@
-// Layout, spacing, and border-radius live in Tailwind classes in SidebarPanel.tsx.
-// This module contains only CSS custom-property references and their hex fallbacks.
-
 .wrapper {
   background: var(--sb-bg, var(--bg-layer-3, #fcfcfc));
   border-color: var(--sb-border, var(--stroke-tertiary, #e0e6f0));
@@ -37,6 +34,6 @@
 
 .resizeHandler {
   width: 4px !important;
-  color: var(--sb-resize-handler, var(--text-success, #007274)) !important;
-  background: var(--sb-bg-resize-handler, var(--text-success, #007274));
+  color: var(--sb-resize-handler, var(--text-info, #7da4ff)) !important;
+  background: var(--sb-bg-resize-handler, var(--text-info, #7da4ff));
 }

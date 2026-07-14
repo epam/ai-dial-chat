@@ -18,7 +18,6 @@ vi.mock('../Filter.module.scss', () => ({
     sectionLabel: 'sectionLabel',
     topicsList: 'topicsList',
     footer: 'footer',
-    clearBtn: 'clearBtn',
     applyBtn: 'applyBtn',
     filterBtnFunnel: 'filterBtnFunnel',
     filterBtnLabel: 'filterBtnLabel',
@@ -107,17 +106,15 @@ describe('Filter', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the My Apps checkbox', () => {
+  it('renders the My checkbox', () => {
     renderFilter();
-    expect(
-      screen.getByRole('menuitemcheckbox', { name: 'My Apps' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('menuitemcheckbox', { name: 'My' })).toBeTruthy();
   });
 
   it('renders topic checkboxes alphabetically when values are provided', () => {
     renderFilter({ values: new Set(['Vision', 'Code']) });
     const checkboxes = screen.getAllByRole('menuitemcheckbox');
-    // index 0: My Apps; 1: Code (alpha first); 2: Vision
+    // index 0: My; 1: Code (alpha first); 2: Vision
     expect(checkboxes[1].textContent).toContain('Code');
     expect(checkboxes[2].textContent).toContain('Vision');
   });

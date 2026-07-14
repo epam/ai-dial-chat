@@ -73,6 +73,12 @@ const APPLICATIONS_PREFIX = 'applications/';
 const TOOLSETS_PREFIX = 'toolsets/';
 const PUBLIC_SEGMENT = 'public';
 
+const stripPrefixSegments = (raw: string, prefix: string): string[] =>
+  (raw.startsWith(prefix) ? raw.slice(prefix.length) : raw)
+    .split('/')
+    .filter(Boolean)
+    .map(safeDecodeURIComponent);
+
 export const resolveDeploymentFolder = (
   deployment: Pick<DeploymentItemDto, 'isMy' | 'applicationFolder'>,
   t: TFunction,
@@ -81,12 +87,10 @@ export const resolveDeploymentFolder = (
     return [t(CatalogI18nKeys.FolderPersonal)];
   }
 
-  const raw = deployment.applicationFolder ?? '';
-  const path = raw.startsWith(APPLICATIONS_PREFIX)
-    ? raw.slice(APPLICATIONS_PREFIX.length)
-    : raw;
-
-  const segments = path.split('/').filter(Boolean).map(safeDecodeURIComponent);
+  const segments = stripPrefixSegments(
+    deployment.applicationFolder ?? '',
+    APPLICATIONS_PREFIX,
+  );
 
   if (segments[0]?.toLowerCase() === PUBLIC_SEGMENT) {
     return [t(CatalogI18nKeys.FolderPublic), ...segments.slice(1)];
@@ -108,13 +112,13 @@ const resolveToolsetFolder = (
     return [];
   }
 
-  const [, ...segments] = raw
-    .slice(TOOLSETS_PREFIX.length)
-    .split('/')
-    .filter(Boolean)
-    .map(safeDecodeURIComponent);
+  const segments = stripPrefixSegments(raw, TOOLSETS_PREFIX).slice(0, -1);
 
-  return segments.slice(0, -1);
+  if (segments[0]?.toLowerCase() === PUBLIC_SEGMENT && t != null) {
+    return [t(CatalogI18nKeys.FolderPublic), ...segments.slice(1)];
+  }
+
+  return segments.slice(1);
 };
 
 export const mapDeploymentToCatalogItem = (
