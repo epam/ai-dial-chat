@@ -30,7 +30,10 @@ const getBottomIcon = (attachment: DisplayAttachment): Icon => {
   return getAttachmentIcon(contentType ?? '');
 };
 
-const getExtFromContentType = (contentType: string): string | undefined => {
+/** Derives a bare file extension (no leading dot) from a MIME type, e.g. `'application/pdf'` -> `'pdf'`. */
+export const getExtFromContentType = (
+  contentType: string,
+): string | undefined => {
   const mime = contentType.toLowerCase().split(';')[0].trim();
   const override = MIME_TYPE_EXT_MAP[mime];
   if (override) return override;
