@@ -187,18 +187,18 @@ export const Header: FC<HeaderProps> = ({
           shareOverlay={shareOverlay}
           label={texts?.shareLabel}
         />
-        {shouldShowPublish && (
-          <GhostButton
-            label={texts?.publishLabel ?? 'Publish'}
-            onClick={onOpenPublish}
-          />
-        )}
         <DeleteButton
           item={item}
           onDelete={onDelete}
           onDeleted={onCloseDetails}
           texts={texts}
         />
+        {shouldShowPublish && (
+          <GhostButton
+            label={texts?.publishLabel ?? 'Publish'}
+            onClick={onOpenPublish}
+          />
+        )}
         {shouldShowCredentialsAction && (
           <NeutralButton
             label={credentialsLabel}

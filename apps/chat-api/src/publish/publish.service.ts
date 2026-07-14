@@ -181,10 +181,6 @@ export class PublishService {
     await this.cacheManager.del(historyCacheKey(entityType, entityId));
 
     const publication = result.data;
-    // TODO(debug): remove once the DIAL Core admin-visibility investigation is done.
-    this.logger.debug(
-      `createPublication response body: ${JSON.stringify(publication)}`,
-    );
     this.logger.debug(
       `Published ${entityType} "${entityId}" to "${folderPath}"`,
     );
@@ -222,10 +218,6 @@ export class PublishService {
          * spans every folder the entity has ever been published to; the
          * client filters by the currently selected folder itself.
          */
-        // TODO(debug): remove once the DIAL Core admin-visibility investigation is done.
-        this.logger.debug(
-          `getPublications request body: ${JSON.stringify({ url: entityId })}`,
-        );
         const result = await this.dialClient.client.getPublications({
           headers: getBearerAuthHeaders(accessToken),
           body: { url: entityId },
@@ -241,11 +233,6 @@ export class PublishService {
             this.logger,
           );
         }
-        // TODO(debug): remove once the DIAL Core admin-visibility investigation is done.
-        this.logger.debug(
-          `getPublications response body: ${JSON.stringify(result.data)}`,
-        );
-
         const { version } = splitEntityNameAndVersion(entityId);
 
         return (result.data ?? [])
