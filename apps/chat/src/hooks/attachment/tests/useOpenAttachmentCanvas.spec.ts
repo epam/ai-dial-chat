@@ -20,6 +20,7 @@ const mockResolveMarkdown = vi.fn();
 const mockResolveJson = vi.fn();
 const mockResolveText = vi.fn();
 const mockResolvePdf = vi.fn();
+const mockReferenceToPdf = vi.fn();
 
 vi.mock('../../../utils/attachment-canvas', () => ({
   resolveImageCanvasContent: vi.fn(),
@@ -28,6 +29,8 @@ vi.mock('../../../utils/attachment-canvas', () => ({
   resolveJsonCanvasContent: (...args: unknown[]) => mockResolveJson(...args),
   resolveTextCanvasContent: (...args: unknown[]) => mockResolveText(...args),
   resolvePdfCanvasContent: (...args: unknown[]) => mockResolvePdf(...args),
+  referenceAttachmentToPdfCanvasContent: (...args: unknown[]) =>
+    mockReferenceToPdf(...args),
 }));
 
 const makeAttachment = (
@@ -40,6 +43,19 @@ const makeAttachment = (
     contentType,
     type: AttachmentType.File,
     url: `files/bucket/path/${name}`,
+  }) as DisplayAttachment;
+
+const makeReferenceAttachment = (
+  name: string,
+  referenceUrl: string,
+  contentType = 'text/markdown',
+): DisplayAttachment =>
+  ({
+    id: name,
+    name,
+    contentType,
+    type: AttachmentType.File,
+    referenceUrl,
   }) as DisplayAttachment;
 
 describe('useOpenAttachmentCanvas routing', () => {
@@ -224,6 +240,87 @@ describe('useOpenAttachmentCanvas routing', () => {
 
     expect(opened).toBe(false);
     expect(mockOpenCanvas).not.toHaveBeenCalled();
+  });
+
+  it('routes a reference-only PDF-page attachment to the canvas ahead of MIME-type routing', async () => {
+    const pdfContent = {
+      type: 'pdf' as const,
+      url: 'https://example.com/report.pdf',
+      highlights: [],
+      selectedHighlightId: 'reference-page-5',
+    };
+    mockReferenceToPdf.mockReturnValue(pdfContent);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeReferenceAttachment('report.pdf', 'files/bucket/report.pdf#page=5'),
+    );
+
+    expect(opened).toBe(true);
+    expect(mockOpenCanvas).toHaveBeenCalledWith(pdfContent, 'report.pdf');
+    expect(mockResolveMarkdown).not.toHaveBeenCalled();
+  });
+
+  it('falls through to MIME-type routing when the referenceUrl is not a PDF', async () => {
+    mockReferenceToPdf.mockReturnValue(null);
+    mockResolveMarkdown.mockResolvedValue({ type: 'markdown', text: 'x' });
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    await result.current.openAttachmentCanvas(
+      makeReferenceAttachment('notes.md', 'files/bucket/notes.md'),
+    );
+
+    expect(mockResolveMarkdown).toHaveBeenCalledOnce();
+  });
+
+  it('routes attachments with no contentType and inline data to the plain-text resolver', async () => {
+    mockResolveText.mockResolvedValue({
+      type: 'plain_text',
+      text: 'A serene sunrise over a tranquil landscape.',
+    });
+
+    const attachment = {
+      id: 'Revised prompt',
+      name: 'Revised prompt',
+      contentType: '',
+      type: AttachmentType.File,
+      data: 'A serene sunrise over a tranquil landscape.',
+    } as DisplayAttachment;
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(attachment);
+
+    expect(opened).toBe(true);
+    expect(mockResolveText).toHaveBeenCalledOnce();
+    expect(mockResolveMarkdown).not.toHaveBeenCalled();
+    expect(mockResolveJson).not.toHaveBeenCalled();
+    expect(mockResolvePdf).not.toHaveBeenCalled();
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      {
+        type: 'plain_text',
+        text: 'A serene sunrise over a tranquil landscape.',
+      },
+      'Revised prompt',
+    );
+  });
+
+  it('falls through to extension/unsupported routing when contentType is empty and no data is present', async () => {
+    mockResolvePdf.mockReturnValue(null);
+
+    const attachment = {
+      id: 'mystery.pdf',
+      name: 'mystery.pdf',
+      contentType: '',
+      type: AttachmentType.File,
+      url: 'files/bucket/path/mystery.pdf',
+    } as DisplayAttachment;
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(attachment);
+
+    expect(opened).toBe(false);
+    expect(mockResolveText).not.toHaveBeenCalled();
+    expect(mockResolvePdf).toHaveBeenCalledOnce();
   });
 });
 

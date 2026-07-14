@@ -106,7 +106,7 @@ export class ShareController {
     @Req() req: Request,
     @Param() { invitationId }: GetInvitationDto,
   ): Promise<AcceptInvitationResponseDto> {
-    const { at } = req.user as SessionUser;
-    return this.shareService.acceptInvitation(at, invitationId);
+    const { at, sub } = req.user as SessionUser;
+    return this.shareService.acceptInvitation(at, invitationId, sub);
   }
 }

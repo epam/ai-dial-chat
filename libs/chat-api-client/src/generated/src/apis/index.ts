@@ -9,6 +9,7 @@ export * from './DeploymentsApi';
 export * from './FilesApi';
 export * from './HealthApi';
 export * from './ModelsApi';
+export * from './PublishApi';
 export * from './RateApi';
 export * from './ShareApi';
 export * from './ThemesApi';

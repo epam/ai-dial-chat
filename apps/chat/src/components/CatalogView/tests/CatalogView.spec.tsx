@@ -1,4 +1,5 @@
 import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -7,11 +8,16 @@ import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import { useCatalogPublishFolders } from '../../../hooks/catalog/useCatalogPublishFolders';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentDetails } from '../../../server-api/deployments';
+import {
+  getCatalogPublishHistory,
+  publishCatalogEntity,
+} from '../../../server-api/publish.api';
 import {
   deleteToolset,
   loginToolset,
@@ -24,32 +30,30 @@ import CatalogView from '../CatalogView';
 const mockNavigate = vi.fn();
 let mockSearchParams = new URLSearchParams();
 
+const capturedPublishProps: {
+  current: {
+    onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+    getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
+    isPublishVisible?: (item: CatalogItem) => boolean;
+    publishExpandedPaths?: Set<string>;
+    onPublishExpandedPathsChange?: (paths: Set<string>) => void;
+    publishLoadingPaths?: Set<string>;
+  } | null;
+} = { current: null };
+
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
   useSearchParams: () => [mockSearchParams],
 }));
 
-vi.mock('@epam/ai-dial-catalog', () => ({
-  CatalogEntityType: {
-    Model: 'MODEL',
-    Application: 'APPLICATION',
-    Agent: 'AGENT',
-    Toolset: 'TOOLSET',
-  },
-  ToolsetAuthenticationType: {
-    None: 'NONE',
-    ApiKey: 'API_KEY',
-    OAuth: 'OAUTH',
-  },
-  CredentialStatus: {
-    SignedIn: 'SIGNED_IN',
-    SignedOut: 'SIGNED_OUT',
-    Failed: 'FAILED',
-  },
-  CredentialsLevel: {
-    User: 'USER',
-    Global: 'GLOBAL',
-  },
+vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  publishCatalogEntity: vi.fn(),
+  getCatalogPublishHistory: vi.fn(),
+}));
+
+vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   Catalog: ({
     createOptions,
     items,
@@ -61,6 +65,14 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     onLogin,
     onLogout,
     initialDetailsItemId,
+    publishFolderItems,
+    publishExpandedPaths,
+    onPublishExpandedPathsChange,
+    publishLoadingPaths,
+    onCreatePublishFolder,
+    onPublish,
+    getPublishHistory,
+    isPublishVisible,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
@@ -76,8 +88,24 @@ vi.mock('@epam/ai-dial-catalog', () => ({
     ) => Promise<void>;
     onLogout?: (item: CatalogItem, params: { level: string }) => Promise<void>;
     initialDetailsItemId?: string;
+    publishFolderItems?: { path: string[]; name: string }[];
+    publishExpandedPaths?: Set<string>;
+    onPublishExpandedPathsChange?: (paths: Set<string>) => void;
+    publishLoadingPaths?: Set<string>;
+    onCreatePublishFolder?: (parentPath: string[], name: string) => void;
+    onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+    getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
+    isPublishVisible?: (item: CatalogItem) => boolean;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
+    capturedPublishProps.current = {
+      onPublish,
+      getPublishHistory,
+      isPublishVisible,
+      publishExpandedPaths,
+      onPublishExpandedPathsChange,
+      publishLoadingPaths,
+    };
 
     return (
       <div>
@@ -184,6 +212,15 @@ vi.mock('@epam/ai-dial-catalog', () => ({
             {option.label}
           </button>
         ))}
+        <output aria-label="Publish folder names">
+          {(publishFolderItems ?? []).map((folder) => folder.name).join(',')}
+        </output>
+        <button
+          type="button"
+          onClick={() => onCreatePublishFolder?.(['Organization'], 'New')}
+        >
+          create publish folder
+        </button>
       </div>
     );
   },
@@ -226,6 +263,10 @@ vi.mock(
   }),
 );
 
+vi.mock('../../../hooks/catalog/useCatalogPublishFolders', () => ({
+  useCatalogPublishFolders: vi.fn(),
+}));
+
 describe('CatalogView', () => {
   const user = userEvent.setup({ delay: null });
 
@@ -266,6 +307,15 @@ describe('CatalogView', () => {
       isLoading: false,
       toggleFavorite: vi.fn(),
     });
+    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+      folderItems: [],
+      expandedPaths: new Set(),
+      loadedPaths: new Set(),
+      loadingPaths: new Set(),
+      onExpandedPathsChange: vi.fn(),
+      onCreatePublishFolder: vi.fn(),
+      hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
   });
 
   it('renders Create Toolset action even when application schemas are absent', async () => {
@@ -280,6 +330,199 @@ describe('CatalogView', () => {
     expect(mockNavigate).toHaveBeenCalledWith(
       `${ROUTES.ToolsetEditor}?returnUrl=%2Fcatalog`,
     );
+  });
+
+  it('passes publish folder items from useCatalogPublishFolders through to Catalog', () => {
+    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+      folderItems: [{ path: ['Organization'], name: 'Organization' }],
+      expandedPaths: new Set(),
+      loadedPaths: new Set(),
+      loadingPaths: new Set(),
+      onExpandedPathsChange: vi.fn(),
+      onCreatePublishFolder: vi.fn(),
+      hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
+
+    render(<CatalogView />);
+
+    expect(screen.getByLabelText('Publish folder names').textContent).toBe(
+      'Organization',
+    );
+  });
+
+  it('forwards onCreatePublishFolder from useCatalogPublishFolders to Catalog', async () => {
+    const onCreatePublishFolder = vi.fn();
+    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+      folderItems: [],
+      expandedPaths: new Set(),
+      loadedPaths: new Set(),
+      loadingPaths: new Set(),
+      onExpandedPathsChange: vi.fn(),
+      onCreatePublishFolder,
+      hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
+
+    render(<CatalogView />);
+    await user.click(
+      screen.getByRole('button', { name: 'create publish folder' }),
+    );
+
+    expect(onCreatePublishFolder).toHaveBeenCalledWith(['Organization'], 'New');
+  });
+
+  it('forwards expandedPaths/onExpandedPathsChange/loadingPaths from useCatalogPublishFolders to Catalog so expanding a folder triggers a fetch', () => {
+    const onExpandedPathsChange = vi.fn();
+    const expandedPaths = new Set(['Organization']);
+    const loadingPaths = new Set(['Organization/Data Science']);
+    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+      folderItems: [],
+      expandedPaths,
+      loadedPaths: new Set(),
+      loadingPaths,
+      onExpandedPathsChange,
+      onCreatePublishFolder: vi.fn(),
+      hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
+
+    render(<CatalogView />);
+
+    expect(capturedPublishProps.current?.publishExpandedPaths).toBe(
+      expandedPaths,
+    );
+    expect(capturedPublishProps.current?.publishLoadingPaths).toBe(
+      loadingPaths,
+    );
+
+    capturedPublishProps.current?.onPublishExpandedPathsChange?.(
+      new Set(['Organization', 'Organization/Data Science']),
+    );
+    expect(onExpandedPathsChange).toHaveBeenCalledWith(
+      new Set(['Organization', 'Organization/Data Science']),
+    );
+  });
+
+  const makeCatalogItem = (overrides?: Partial<CatalogItem>): CatalogItem => ({
+    id: 'tool-abc123',
+    type: CatalogEntityType.Toolset,
+    name: 'My toolset',
+    version: '1.2.0',
+    lastUsed: 'now',
+    description: '',
+    folder: [],
+    topics: [],
+    isMyApp: true,
+    ...overrides,
+  });
+
+  describe('publish wiring', () => {
+    it('calls publishCatalogEntity with the mapped entityType and folderPath', async () => {
+      vi.mocked(publishCatalogEntity).mockResolvedValue({
+        entityId: 'tool-abc123',
+        entityType: 'toolset',
+        folderPath: 'Organization/Data Science',
+        version: '1.2.0',
+        publishedAt: '2026-07-13T10:00:00.000Z',
+        publishedBy: 'user@example.com',
+      });
+
+      render(<CatalogView />);
+      await capturedPublishProps.current?.onPublish?.(makeCatalogItem(), [
+        'Organization',
+        'Data Science',
+      ]);
+
+      expect(publishCatalogEntity).toHaveBeenCalledWith(
+        'toolset',
+        'tool-abc123',
+        { folderPath: 'Organization/Data Science', version: '1.2.0' },
+      );
+    });
+
+    it('rejects when the entity type is not publishable', async () => {
+      render(<CatalogView />);
+
+      await expect(
+        capturedPublishProps.current?.onPublish?.(
+          makeCatalogItem({ type: CatalogEntityType.Agent }),
+          ['Organization'],
+        ),
+      ).rejects.toThrow();
+      expect(publishCatalogEntity).not.toHaveBeenCalled();
+    });
+
+    it('propagates a publish API failure (e.g. 403) to the caller', async () => {
+      vi.mocked(publishCatalogEntity).mockRejectedValue(new Error('Forbidden'));
+
+      render(<CatalogView />);
+
+      await expect(
+        capturedPublishProps.current?.onPublish?.(makeCatalogItem(), [
+          'Organization',
+        ]),
+      ).rejects.toThrow('Forbidden');
+    });
+
+    it('resolves getPublishHistory to the mapped history entries', async () => {
+      vi.mocked(getCatalogPublishHistory).mockResolvedValue([
+        {
+          entityId: 'tool-abc123',
+          entityType: 'toolset',
+          folderPath: 'Organization/Data Science',
+          version: '1.2.0',
+          publishedAt: '2026-07-13T10:00:00.000Z',
+          publishedBy: 'user@example.com',
+        },
+      ]);
+
+      render(<CatalogView />);
+      const history =
+        await capturedPublishProps.current?.getPublishHistory?.(
+          makeCatalogItem(),
+        );
+
+      expect(getCatalogPublishHistory).toHaveBeenCalledWith(
+        'toolset',
+        'tool-abc123',
+      );
+      expect(history).toEqual([
+        {
+          version: '1.2.0',
+          publishedAt: Date.parse('2026-07-13T10:00:00.000Z'),
+          publishedBy: 'user@example.com',
+          folderPath: ['Organization', 'Data Science'],
+        },
+      ]);
+    });
+
+    it('propagates a publish-history API failure (e.g. 502) to the caller', async () => {
+      vi.mocked(getCatalogPublishHistory).mockRejectedValue(
+        new Error('Bad Gateway'),
+      );
+
+      render(<CatalogView />);
+
+      await expect(
+        capturedPublishProps.current?.getPublishHistory?.(makeCatalogItem()),
+      ).rejects.toThrow('Bad Gateway');
+    });
+
+    it('shows Publish only for isMyApp items of a publishable type', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.(makeCatalogItem()),
+      ).toBe(true);
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.(
+          makeCatalogItem({ isMyApp: false }),
+        ),
+      ).toBe(false);
+      expect(
+        capturedPublishProps.current?.isPublishVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Agent }),
+        ),
+      ).toBe(false);
+    });
   });
 
   it('passes the itemId search param through as initialDetailsItemId', () => {

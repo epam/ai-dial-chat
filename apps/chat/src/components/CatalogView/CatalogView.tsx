@@ -30,11 +30,16 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useCatalogPublishFolders } from '../../hooks/catalog/useCatalogPublishFolders';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentDetails } from '../../server-api/deployments';
+import {
+  getCatalogPublishHistory,
+  publishCatalogEntity,
+} from '../../server-api/publish.api';
 import {
   deleteToolset,
   loginToolset,
@@ -58,6 +63,10 @@ import {
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
+import {
+  mapPublishHistoryEntryDto,
+  toPublishEntityType,
+} from '../../utils/publish';
 import { initiateOAuthLogin } from '../../utils/toolsets';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
@@ -137,6 +146,15 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         : catalogItems,
     [catalogItems, isSelectorMode],
   );
+
+  const {
+    folderItems: publishFolderItems,
+    expandedPaths: publishExpandedPaths,
+    loadingPaths: publishLoadingPaths,
+    onExpandedPathsChange: onPublishExpandedPathsChange,
+    onCreatePublishFolder,
+    hasPublishWriteAccess,
+  } = useCatalogPublishFolders();
 
   const favorites = useMemo(
     () => visibleCatalogItems.filter((item) => item.isUserFavorite),
@@ -364,7 +382,37 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const isPrimaryActionVisible = useCallback(
     (item: CatalogItem) =>
       item.type === CatalogEntityType.Model ||
+      item.type === CatalogEntityType.Toolset ||
       item.type === CatalogEntityType.Application,
+    [],
+  );
+
+  const isPublishVisible = useCallback(
+    (item: CatalogItem) =>
+      Boolean(item.isMyApp) && toPublishEntityType(item.type) != null,
+    [],
+  );
+
+  const getPublishHistory = useCallback(async (item: CatalogItem) => {
+    const entityType = toPublishEntityType(item.type);
+    if (!entityType) {
+      return [];
+    }
+    const entries = await getCatalogPublishHistory(entityType, item.id);
+    return entries.map(mapPublishHistoryEntryDto);
+  }, []);
+
+  const handlePublish = useCallback(
+    async (item: CatalogItem, folderPath: string[]) => {
+      const entityType = toPublishEntityType(item.type);
+      if (!entityType) {
+        throw new Error(`Entity type "${item.type}" is not publishable`);
+      }
+      await publishCatalogEntity(entityType, item.id, {
+        folderPath: folderPath.join('/'),
+        version: item.version,
+      });
+    },
     [],
   );
 
@@ -390,6 +438,20 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       return `${ROUTES.AppsEditor}?${params.toString()}`;
     },
     [],
+  );
+
+  const handlePublishSuccess = useCallback(
+    (item: CatalogItem, folderPath: string[]) => {
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.PublishSuccessTitle),
+        message: t(CatalogI18nKeys.PublishSuccess, {
+          name: item.name,
+          folder: folderPath[folderPath.length - 1],
+        }),
+      });
+    },
+    [showNotification, t],
   );
 
   const handleEdit = useCallback(
@@ -493,6 +555,24 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onEdit={handleEdit}
       onDelete={handleDelete}
       isPrimaryActionVisible={isPrimaryActionVisible}
+      isPublishVisible={isPublishVisible}
+      getPublishHistory={getPublishHistory}
+      publishFolderItems={publishFolderItems}
+      publishExpandedPaths={publishExpandedPaths}
+      onPublishExpandedPathsChange={onPublishExpandedPathsChange}
+      publishLoadingPaths={publishLoadingPaths}
+      onCreatePublishFolder={onCreatePublishFolder}
+      hasPublishWriteAccess={hasPublishWriteAccess}
+      onPublish={handlePublish}
+      onPublishSuccess={handlePublishSuccess}
+      publishTexts={{
+        searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
+        folderEmptyStateText: t(CatalogI18nKeys.PublishFolderEmptyState, {
+          query: '{query}',
+        }),
+        historyLoadingText: t(CatalogI18nKeys.PublishHistoryLoading),
+        historyErrorText: t(CatalogI18nKeys.PublishHistoryError),
+      }}
       shareOverlay={(item, onClose) => (
         <SharePopoverContainer item={item} onClose={onClose} />
       )}

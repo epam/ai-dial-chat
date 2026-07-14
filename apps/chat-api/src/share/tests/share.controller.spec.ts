@@ -170,6 +170,7 @@ describe('ShareController (integration)', () => {
       expect(service.acceptInvitation).toHaveBeenCalledWith(
         TEST_USER.at,
         'abc123',
+        TEST_USER.sub,
       );
     });
 

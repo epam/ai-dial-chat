@@ -1,9 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialTag } from '@epam/ai-dial-ui-kit';
+import { PillTabs } from '@epam/ai-dial-kit';
 import { type FC, memo } from 'react';
 import { type FilterLabels } from '../../models/panel-props';
 import { FilterTab } from '../../types/filter-tab';
-import styles from './FilterTabs.module.scss';
 
 /** Props for `FilterTabs`. */
 export interface FilterTabsProps {
@@ -13,7 +11,10 @@ export interface FilterTabsProps {
   labels: FilterLabels;
   /** Called when the user selects a different tab. */
   onChange: (tab: FilterTab) => void;
-  /** Typography class applied to each tab label. Defaults to `'dial-tiny-semi-text'`. */
+  /**
+   * Class applied to each tab. Defaults to `'flex-1 dial-tiny-semi-text'` so
+   * the tabs fill the row equally, overriding `PillTabs`'s own `shrink-0` default.
+   */
   tabClassName?: string;
 }
 
@@ -26,27 +27,22 @@ const TABS: { value: FilterTab; labelKey: keyof FilterLabels }[] = [
 
 /** Segmented pill-tab control for filtering conversations by source. */
 export const FilterTabs: FC<FilterTabsProps> = memo(
-  ({ activeTab, labels, onChange, tabClassName = 'dial-tiny-semi-text' }) => (
-    <div
-      className={mergeClasses(
-        'mx-3 my-2 flex flex-nowrap gap-1',
-        styles.filterTabs,
-      )}
-    >
-      {TABS.map(({ value, labelKey }) => (
-        <DialTag
-          key={value}
-          label={labels[labelKey]}
-          selected={activeTab === value}
-          onClick={() => onChange(value)}
-          className={mergeClasses(
-            'box-border h-auto flex-1 justify-center rounded-full p-2 text-center',
-            tabClassName,
-            styles.tab,
-            activeTab === value && styles.tabActive,
-          )}
-        />
-      ))}
+  ({
+    activeTab,
+    labels,
+    onChange,
+    tabClassName = 'flex-1 dial-tiny-semi-text',
+  }) => (
+    <div className="mx-3 my-2">
+      <PillTabs
+        tabs={TABS.map(({ value, labelKey }) => ({
+          id: value,
+          label: labels[labelKey],
+        }))}
+        activeTabId={activeTab}
+        onTabChange={(id: string) => onChange(id as FilterTab)}
+        tabClassName={tabClassName}
+      />
     </div>
   ),
 );

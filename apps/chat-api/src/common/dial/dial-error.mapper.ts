@@ -22,8 +22,14 @@ export const mapDialHttpStatus = (
   status: number,
   context: string,
   logger?: Logger,
+  errorBody?: unknown,
 ): never => {
   logger?.warn(`DIAL Core returned ${status} for ${context}`);
+  if (errorBody !== undefined) {
+    logger?.debug(
+      `DIAL Core error body for ${context}: ${JSON.stringify(errorBody)}`,
+    );
+  }
 
   if (status === 400)
     throw new BadRequestException('Invalid request to DIAL Core');

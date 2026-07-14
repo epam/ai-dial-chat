@@ -37,6 +37,17 @@ export const Catalog: FC<CatalogProps> = ({
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
+  isPublishVisible,
+  getPublishHistory,
+  publishFolderItems,
+  publishExpandedPaths,
+  onPublishExpandedPathsChange,
+  publishLoadingPaths,
+  hasPublishWriteAccess,
+  onPublish,
+  onPublishSuccess,
+  onCreatePublishFolder,
+  publishTexts,
   shareOverlay,
   onFetchDetails,
   onEdit,
@@ -336,7 +347,7 @@ export const Catalog: FC<CatalogProps> = ({
 
         <div className="w-full px-4 pt-6">
           <Toolbar
-            totalCount={filteredItems.length}
+            totalCount={myAppsFiltered.length}
             viewMode={viewMode}
             onViewModeChange={handleViewModeChange}
             sortKey={sortKey}
@@ -379,7 +390,7 @@ export const Catalog: FC<CatalogProps> = ({
           </div>
         )}
 
-        <div className="mx-auto w-full max-w-[1180px] px-8 pt-6">
+        <div className="mx-auto min-h-full w-full max-w-[1180px] px-8 pt-6">
           {viewMode === CatalogViewMode.Grid && (
             <div className="pb-8">
               <CardGrid
@@ -424,6 +435,17 @@ export const Catalog: FC<CatalogProps> = ({
           onUseInChat={onUseInChat}
           isPrimaryActionVisible={isPrimaryActionVisible}
           onShare={onShare}
+          isPublishVisible={isPublishVisible}
+          getPublishHistory={getPublishHistory}
+          publishFolderItems={publishFolderItems}
+          publishExpandedPaths={publishExpandedPaths}
+          onPublishExpandedPathsChange={onPublishExpandedPathsChange}
+          publishLoadingPaths={publishLoadingPaths}
+          hasPublishWriteAccess={hasPublishWriteAccess}
+          onPublish={onPublish}
+          onPublishSuccess={onPublishSuccess}
+          onCreatePublishFolder={onCreatePublishFolder}
+          publishTexts={publishTexts}
           shareOverlay={shareOverlay}
           onEdit={onEdit}
           onDelete={onDelete}

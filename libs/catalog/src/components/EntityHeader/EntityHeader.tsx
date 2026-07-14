@@ -18,6 +18,8 @@ export interface EntityHeaderProps {
   iconBadgeClassName?: string;
   /** CSS class for the version text. Default: 'dial-tiny-text text-secondary'. */
   versionClassName?: string;
+  /** Whether to show `item.version` next to the title. Default: true. */
+  showVersion?: boolean;
   /** Label for the featured tag shown when item.isFeatured is true. Default: 'Featured'. */
   featuredLabel?: string;
   /** Whether to render the featured tag. Default: true. */
@@ -37,6 +39,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   item,
   nameClassName,
   versionClassName,
+  showVersion = true,
   typeClassName = 'dial-caption-text font-semibold',
   iconBadgeClassName = 'rounded-[14px]',
   featuredChipClassName,
@@ -84,7 +87,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
         </div>
         <ItemHeader
           title={item.name}
-          postfix={item.version}
+          postfix={showVersion ? item.version : undefined}
           postfixClassName={versionClassName}
           titleClassName={nameClassName}
           query={query}

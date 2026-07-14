@@ -11,6 +11,7 @@ src/apis/DeploymentsApi.ts
 src/apis/FilesApi.ts
 src/apis/HealthApi.ts
 src/apis/ModelsApi.ts
+src/apis/PublishApi.ts
 src/apis/RateApi.ts
 src/apis/ShareApi.ts
 src/apis/ThemesApi.ts

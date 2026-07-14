@@ -38,4 +38,16 @@ describe('CitationMarker', () => {
     await userEvent.click(screen.getByRole('button'));
     expect(onOpen).toHaveBeenCalledOnce();
   });
+
+  it('renders without an icon by default', () => {
+    renderMarker();
+    expect(screen.queryByRole('img', { name: 'link icon' })).toBeFalsy();
+  });
+
+  it('renders the provided icon before the label', () => {
+    renderMarker({
+      icon: <svg role="img" aria-label="link icon" />,
+    });
+    expect(screen.getByRole('img', { name: 'link icon' })).toBeTruthy();
+  });
 });

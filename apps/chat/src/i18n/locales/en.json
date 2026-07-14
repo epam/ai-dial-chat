@@ -135,6 +135,16 @@
       "quickApp": "QuickApp",
       "toolset": "Toolset"
     },
+    "favoriteAddedTitle": "Added to Favorites",
+    "favoriteRemovedTitle": "Removed from Favorites",
+    "favoriteAdded": "\"{{name}}\" added to Favorites",
+    "favoriteRemoved": "\"{{name}}\" removed from Favorites",
+    "publishSuccessTitle": "Published",
+    "publishSuccess": "\"{{name}}\" published to {{folder}}",
+    "publishFolderSearchPlaceholder": "Search folders",
+    "publishFolderEmptyState": "No folders match \"{{query}}\".",
+    "publishHistoryLoading": "Loading history…",
+    "publishHistoryError": "Failed to load publish history.",
     "tab": {
       "models": "Models",
       "applications": "Agents",
@@ -486,7 +496,9 @@
     "ariaLabel": "Attachment preview",
     "closeLabel": "Close attachment preview",
     "downloadLabel": "Download attachment",
-    "unsupportedLabel": "Preview is not supported for this file"
+    "unsupportedLabel": "Preview is not supported for this file",
+    "loadErrorLabel": "Failed to load file",
+    "forbiddenErrorLabel": "You don't have permission to access this file"
   },
   "errorBoundary": {
     "heading": "Something went wrong",

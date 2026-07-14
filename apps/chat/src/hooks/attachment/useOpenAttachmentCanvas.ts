@@ -11,6 +11,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import {
+  referenceAttachmentToPdfCanvasContent,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
@@ -25,11 +26,31 @@ async function openFileCanvas(
   attachment: DisplayAttachment,
   openCanvas: OpenCanvas,
 ): Promise<boolean> {
+  if (attachment.url == null && attachment.referenceUrl != null) {
+    const pdfContent = referenceAttachmentToPdfCanvasContent({
+      type: attachment.contentType,
+      url: attachment.referenceUrl,
+      title: attachment.name,
+    });
+    if (pdfContent != null) {
+      openCanvas(pdfContent, attachment.name);
+      return true;
+    }
+  }
+
   const contentType = attachment.contentType.toLowerCase();
+
+  if (!contentType && attachment.data != null) {
+    const content = await resolveTextCanvasContent(attachment);
+    if (content != null) {
+      openCanvas(content, attachment.name);
+      return true;
+    }
+  }
 
   switch (contentType) {
     case MIMEType.PDF: {
-      const content = resolvePdfCanvasContent(attachment);
+      const content = await resolvePdfCanvasContent(attachment);
       openCanvas(
         content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
         attachment.name,
@@ -73,7 +94,7 @@ async function openFileCanvas(
       return true;
     }
     case FileExtension.PDF: {
-      const content = resolvePdfCanvasContent(attachment);
+      const content = await resolvePdfCanvasContent(attachment);
       if (content == null) return false;
       openCanvas(content, attachment.name);
       return true;

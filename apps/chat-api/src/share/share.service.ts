@@ -7,7 +7,9 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { EnvironmentVariables } from '../config/environment.config';
+import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
+import { ToolsetsService } from '../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
 import { CreateShareLinkDto, ShareAccess } from './dto/create-share-link.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
@@ -63,6 +65,8 @@ export class ShareService {
   constructor(
     private readonly dialClient: DialClientService,
     private readonly configService: ConfigService<EnvironmentVariables>,
+    private readonly deploymentsService: DeploymentsService,
+    private readonly toolsetsService: ToolsetsService,
   ) {
     const callbackBaseUrl = this.configService.get('AUTH_CALLBACK_BASE_URL', {
       infer: true,
@@ -98,17 +102,22 @@ export class ShareService {
     accessToken: string,
     { itemId, access }: CreateShareLinkDto,
   ): Promise<ShareLinkResponseDto> {
+    const permissions = Array.from(
+      new Set(access.flatMap((level) => ACCESS_PERMISSIONS[level])),
+    );
+    const requestBody = {
+      invitationType: 'LINK' as const,
+      resources: [{ url: itemId, permissions }],
+    };
+    this.logger.debug(
+      `Requesting share link from DIAL Core: ${JSON.stringify(requestBody)}`,
+    );
+
     let result;
     try {
-      const permissions = Array.from(
-        new Set(access.flatMap((level) => ACCESS_PERMISSIONS[level])),
-      );
       result = await this.dialClient.client.shareResource({
         headers: getBearerAuthHeaders(accessToken),
-        body: {
-          invitationType: 'LINK',
-          resources: [{ url: itemId, permissions }],
-        },
+        body: requestBody,
       });
     } catch (err) {
       return handleDialFetchError(err, 'create share link', this.logger, 0);
@@ -119,8 +128,13 @@ export class ShareService {
         result.response.status,
         'create share link',
         this.logger,
+        result.error,
       );
     }
+
+    this.logger.debug(
+      `DIAL Core share link response for itemId=${itemId}: ${JSON.stringify(result.data)}`,
+    );
 
     const invitationLink = result.data?.invitationLink;
     if (invitationLink == null) {
@@ -151,26 +165,38 @@ export class ShareService {
   async acceptInvitation(
     accessToken: string,
     invitationId: string,
+    userSub: string,
   ): Promise<AcceptInvitationResponseDto> {
-    let result;
+    this.logger.debug(
+      `Peeking invitation from DIAL Core for invitationId=${invitationId}`,
+    );
+
+    /*
+     * DIAL Core's `?accept=true` performs the accept side effect but returns
+     * an empty 200 body rather than the `Invitation` payload its OpenAPI
+     * schema declares — confirmed by logging the raw response body, which
+     * came back empty. So the shared resource's itemId has to be read from a
+     * separate, non-accepting peek call before the accepting call runs.
+     */
+    let peekResult;
     try {
-      result = await this.dialClient.client.getInvitation(invitationId, {
+      peekResult = await this.dialClient.client.getInvitation(invitationId, {
         headers: getBearerAuthHeaders(accessToken),
-        params: { query: { accept: true } },
       });
     } catch (err) {
-      return handleDialFetchError(err, 'accept invitation', this.logger, 0);
+      return handleDialFetchError(err, 'peek invitation', this.logger, 0);
     }
 
-    if (result.error) {
+    if (peekResult.error) {
       return mapDialHttpStatus(
-        result.response.status,
-        'accept invitation',
+        peekResult.response.status,
+        'peek invitation',
         this.logger,
+        peekResult.error,
       );
     }
 
-    const itemId = result.data?.resources?.[0]?.url;
+    const itemId = peekResult.data?.resources?.[0]?.url;
     if (itemId == null) {
       this.logger.error(
         `DIAL Core returned an invitation with no shared resource for invitationId=${invitationId}`,
@@ -180,7 +206,42 @@ export class ShareService {
       );
     }
 
+    this.logger.debug(
+      `Accepting invitation from DIAL Core for invitationId=${invitationId}, itemId=${itemId}`,
+    );
+
+    let acceptResult;
+    try {
+      acceptResult = await this.dialClient.client.getInvitation(invitationId, {
+        headers: getBearerAuthHeaders(accessToken),
+        params: { query: { accept: true } },
+      });
+    } catch (err) {
+      return handleDialFetchError(err, 'accept invitation', this.logger, 0);
+    }
+
+    if (acceptResult.error) {
+      return mapDialHttpStatus(
+        acceptResult.response.status,
+        'accept invitation',
+        this.logger,
+        acceptResult.error,
+      );
+    }
+
     this.logger.debug(`Accepted invitation for invitationId=${invitationId}`);
+
+    /*
+     * The deployments/toolsets lists are cached per user for 30s
+     * (`DeploymentsService`/`ToolsetsService`). Without invalidating them
+     * here, the frontend's post-accept refetch can still serve the
+     * pre-share snapshot, so the catalog's details panel silently fails to
+     * find the newly shared item.
+     */
+    await Promise.all([
+      this.deploymentsService.invalidateListCache(userSub),
+      this.toolsetsService.invalidateListCache(userSub),
+    ]);
 
     return { itemId };
   }

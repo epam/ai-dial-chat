@@ -77,6 +77,12 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
   showLessAriaLabel?: string;
   /** Called when the user clicks an attachment tile/row. Passed through to `AttachmentGroup`. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /**
+   * Called with every currently downloadable attachment when the user
+   * activates the group's "download all" action. Passed through to
+   * `AttachmentGroup`.
+   */
+  onDownloadAll?: (attachments: DisplayAttachment[]) => void;
   /** Accessible label forwarded to each attachment tile/row when it is interactive. */
   attachmentClickLabel?: string;
   /** Called when the user retries a failed attachment upload. */
@@ -99,6 +105,12 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
 export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   /** Called when the user clicks an attachment tile/row in the assistant bubble's group. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /**
+   * Called with every currently downloadable attachment when the user
+   * activates the group's "download all" action. Passed through to
+   * `AttachmentGroup`.
+   */
+  onDownloadAll?: (attachments: DisplayAttachment[]) => void;
   /** Accessible label forwarded to each attachment tile/row when it is interactive. */
   attachmentClickLabel?: string;
   /** Called when the user retries a failed attachment upload. */
@@ -215,6 +227,12 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Called when the user clicks an attachment tile/row. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /**
+   * Called with every currently downloadable attachment when the user
+   * activates the group's "download all" action. Forwarded to both
+   * `UserMessageBubble` and `AssistantMessageBubble`.
+   */
+  onDownloadAll?: (attachments: DisplayAttachment[]) => void;
   /** Accessible label forwarded to each attachment tile/row when it is interactive. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
   attachmentClickLabel?: string;
   /** Called when the user retries a failed attachment upload. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */

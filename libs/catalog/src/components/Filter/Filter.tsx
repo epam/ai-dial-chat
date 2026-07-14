@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { PrimaryButton } from '@epam/ai-dial-kit';
-import { DialDropdown } from '@epam/ai-dial-ui-kit';
+import { GhostButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconFilter } from '@tabler/icons-react';
 import {
   FC,
@@ -26,7 +26,7 @@ export interface FilterProps {
   isMyAppsActive?: boolean;
   /** Called when the "My Apps" toggle changes. */
   onMyAppsChange?: (isActive: boolean) => void;
-  /** Label for the "My Apps" checkbox. Default: 'My Apps'. */
+  /** Label for the "My Apps" checkbox. Default: 'My'. */
   myAppsLabel?: string;
   /** Label for the Topics section heading. Default: 'Topics'. */
   topicsLabel?: string;
@@ -74,7 +74,7 @@ export const Filter: FC<FilterProps> = ({
   values,
   isMyAppsActive,
   onMyAppsChange,
-  myAppsLabel = 'My Apps',
+  myAppsLabel = 'My',
   topicsLabel = 'Topics',
   defaultLabel = 'From',
   clearLabel = 'Clear',
@@ -248,7 +248,7 @@ export const Filter: FC<FilterProps> = ({
               >
                 {topicsLabel}
               </div>
-              <div className="max-h-[220px] overflow-y-auto">
+              <div className="flex max-h-[220px] flex-col gap-1 overflow-y-auto">
                 {topics.map((topic, i) => {
                   const isChecked = pendingChecked.has(topic);
                   const idx = i + 1;
@@ -298,16 +298,8 @@ export const Filter: FC<FilterProps> = ({
               }
             }}
           >
-            <button
-              type="button"
-              className={mergeClasses(
-                'cursor-pointer rounded-lg border-none bg-transparent px-3 py-[7px]',
-                styles.clearBtn,
-              )}
-              onClick={handleClear}
-            >
-              {clearLabel}
-            </button>
+            <GhostButton label={clearLabel} onClick={handleClear} />
+
             <PrimaryButton
               label={applyLabel}
               className="ms-auto"
@@ -331,7 +323,7 @@ export const Filter: FC<FilterProps> = ({
         )}
       >
         <IconFilter
-          size={16}
+          size={DIAL_ICON_SIZE.SM}
           strokeWidth={1.8}
           className={mergeClasses('shrink-0', styles.filterBtnFunnel)}
           aria-hidden

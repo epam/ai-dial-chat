@@ -12,16 +12,26 @@ export interface FolderPathProps {
   labelClassName?: string;
   /** CSS class for the last (leaf) segment. Default: 'dial-small-semi-text'. */
   leafClassName?: string;
+  /**
+   * CSS class for the breadcrumb's `<nav>` container. `DialBreadcrumb`
+   * scrolls horizontally on overflow, so its `<nav>` must keep a definite,
+   * non-shrunk width (its default full width, or a parent-resolved size) —
+   * do not size it to content (e.g. via `w-auto`), since a scroll container
+   * reports a collapsed intrinsic size to auto-sizing algorithms and will
+   * truncate.
+   */
+  className?: string;
 }
 
 /**
- * Renders folder segments as a DialBreadcrumb.
- * DialBreadcrumb auto-truncates long paths to [first, …dropdown, last-2, last].
+ * Renders folder segments as a read-only (non-clickable) DialBreadcrumb.
+ * DialBreadcrumb scrolls horizontally on overflow rather than truncating.
  */
 export const FolderPath: FC<FolderPathProps> = ({
   segments,
   labelClassName = 'dial-small-text',
   leafClassName = 'dial-small-semi-text',
+  className,
 }) => {
   const folderIcon = (
     <DialIcon
@@ -36,11 +46,13 @@ export const FolderPath: FC<FolderPathProps> = ({
       ) : (
         seg
       ),
+    disabled: true,
     ...(i === 0 ? { iconBefore: folderIcon } : {}),
   }));
 
   return (
     <DialBreadcrumb
+      className={className}
       separator={
         <DialIcon
           icon={<IconChevronRight size={14} className="rtl:scale-x-[-1]" />}
@@ -48,7 +60,11 @@ export const FolderPath: FC<FolderPathProps> = ({
         />
       }
       pathItems={pathItems}
-      labelClassName={mergeClasses(labelClassName, styles.label)}
+      labelClassName={mergeClasses(
+        labelClassName,
+        styles.label,
+        '!cursor-default',
+      )}
     />
   );
 };

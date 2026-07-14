@@ -22,7 +22,7 @@
     "react": "^19.0.0",
     "@tabler/icons-react": "^3.0.0",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "0.12.0-dev.25",
+    "@epam/ai-dial-ui-kit": "0.12.0-dev.28",
     "@epam/ai-dial-conversation-input": "*"
   },
   "nx": {

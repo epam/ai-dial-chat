@@ -6,12 +6,17 @@ export {
   useAttachmentCanvas,
 } from './context/AttachmentCanvasContext';
 export type { AttachmentCanvasContextValue } from './context/AttachmentCanvasContext';
-export { downloadAttachmentContent } from './utils/download';
+export { downloadAttachmentContent, isDownloadable } from './utils/download';
 export {
   isTextPreviewable,
   createUnsupportedCanvasContent,
+  createLoadErrorCanvasContent,
+  createForbiddenCanvasContent,
 } from './utils/content';
-export { AttachmentContentType } from './types/attachment-canvas';
+export {
+  AttachmentContentType,
+  AttachmentErrorType,
+} from './types/attachment-canvas';
 export type {
   AttachmentCanvasContent,
   PlainTextCanvasContent,
@@ -20,6 +25,7 @@ export type {
   JsonCanvasContent,
   PdfCanvasContent,
   UnsupportedCanvasContent,
+  ErrorCanvasContent,
   AttachmentCanvasColors,
   AttachmentCanvasTypography,
   AttachmentCanvasStyles,

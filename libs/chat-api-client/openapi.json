@@ -3166,6 +3166,135 @@
         "summary": "Accept a share invitation",
         "tags": ["share"]
       }
+    },
+    "/api/v1/catalog/{entityType}/{entityId}/publish": {
+      "post": {
+        "description": "Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
+        "operationId": "publishCatalogEntity",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": ["model", "toolset", "application"]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishCatalogEntityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Entity published successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType, entityId, or folderPath"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks write access to the target folder"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Publish a catalog entity to an Organization folder",
+        "tags": ["publish"]
+      }
+    },
+    "/api/v1/catalog/{entityType}/{entityId}/publish-history": {
+      "get": {
+        "description": "Returns every folder this catalog entity has been published to, most recent first, derived from DIAL Core's Publication API (`getPublications`) — never from chat-api-side storage.",
+        "operationId": "getCatalogPublishHistory",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": ["model", "toolset", "application"]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Publish history for the entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublishHistoryEntryDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType or entityId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get publish history for a catalog entity",
+        "tags": ["publish"]
+      }
     }
   },
   "info": {
@@ -3607,6 +3736,10 @@
           "isMy": {
             "type": "boolean",
             "description": "True when the deployment owner matches the current session user (computed post-cache)"
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "True when the current user may edit this deployment — owns it, or was granted WRITE access via a share invitation"
           },
           "applicationFolder": {
             "type": "string",
@@ -4635,6 +4768,10 @@
           "is_my": {
             "type": "boolean",
             "description": "True when the toolset id/path belongs to the current session user bucket"
+          },
+          "can_edit": {
+            "type": "boolean",
+            "description": "True when the current user may edit this toolset — owns it, or was granted WRITE access via a share invitation"
           }
         },
         "required": ["id", "toolset"]
@@ -6393,6 +6530,98 @@
           }
         },
         "required": ["itemId"]
+      },
+      "PublishCatalogEntityDto": {
+        "type": "object",
+        "properties": {
+          "folderPath": {
+            "type": "string",
+            "description": "Destination folder under the Organization/public bucket, forwarded to DIAL Core as `targetFolder`.",
+            "example": "Organization/Data Science/Published models"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version label for this publish.",
+            "example": "1.2.0"
+          }
+        },
+        "required": ["folderPath", "version"]
+      },
+      "PublishResultDto": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "example": "tool-abc123"
+          },
+          "entityType": {
+            "type": "string",
+            "enum": ["model", "toolset", "application"],
+            "example": "toolset"
+          },
+          "folderPath": {
+            "type": "string",
+            "example": "Organization/Data Science/Published models"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.2.0"
+          },
+          "publishedAt": {
+            "type": "string",
+            "example": "2026-07-13T10:00:00.000Z"
+          },
+          "publishedBy": {
+            "type": "string",
+            "example": "user@example.com"
+          }
+        },
+        "required": [
+          "entityId",
+          "entityType",
+          "folderPath",
+          "version",
+          "publishedAt",
+          "publishedBy"
+        ]
+      },
+      "PublishHistoryEntryDto": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "example": "tool-abc123"
+          },
+          "entityType": {
+            "type": "string",
+            "enum": ["model", "toolset", "application"],
+            "example": "toolset"
+          },
+          "folderPath": {
+            "type": "string",
+            "example": "Organization/Data Science/Published models"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.2.0"
+          },
+          "publishedAt": {
+            "type": "string",
+            "example": "2026-07-13T10:00:00.000Z"
+          },
+          "publishedBy": {
+            "type": "string",
+            "example": "user@example.com"
+          }
+        },
+        "required": [
+          "entityId",
+          "entityType",
+          "folderPath",
+          "version",
+          "publishedAt",
+          "publishedBy"
+        ]
       }
     }
   }
