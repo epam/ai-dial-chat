@@ -165,6 +165,9 @@ export enum CatalogI18nKeys {
   CredentialsLogoutSuccessOrg = 'catalog.details.credentials.logoutSuccessOrg',
   CredentialsLogoutSuccessGlobal = 'catalog.details.credentials.logoutSuccessGlobal',
   CredentialsLogoutSuccessUser = 'catalog.details.credentials.logoutSuccessUser',
+  DetailsDeleteError = 'catalog.details.delete.error',
+  DetailsDeleteSuccessTitle = 'catalog.details.delete.successTitle',
+  DetailsDeleteSuccess = 'catalog.details.delete.success',
 }
 
 export enum DeploymentSelectorI18nKeys {
@@ -178,6 +181,7 @@ export enum DeploymentSelectorI18nKeys {
   Empty = 'deploymentSelector.empty',
   CloseLabel = 'deploymentSelector.closeLabel',
   RefetchToolsetsFailed = 'deploymentSelector.refetchToolsetsFailed',
+  RefetchDeploymentsFailed = 'deploymentSelector.refetchDeploymentsFailed',
 }
 
 export enum NotFoundI18nKeys {

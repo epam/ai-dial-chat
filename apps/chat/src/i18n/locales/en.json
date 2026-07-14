@@ -123,6 +123,11 @@
         "logoutSuccessOrg": "You have successfully logged out of the \"{{name}}\" version {{version}} with credentials to entire organization.",
         "logoutSuccessGlobal": "You have successfully logged out of the \"{{name}}\" version {{version}}.",
         "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials."
+      },
+      "delete": {
+        "error": "Failed to delete. Please try again.",
+        "successTitle": "Deleted successfully",
+        "success": "\"{{name}}\" was deleted."
       }
     },
     "create": {
@@ -150,7 +155,8 @@
     "error": "Failed to load models",
     "empty": "No models available",
     "closeLabel": "Close model selector",
-    "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date."
+    "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date.",
+    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date."
   },
   "notFound": {
     "eyebrow": "404",

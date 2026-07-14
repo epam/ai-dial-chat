@@ -26,6 +26,7 @@ function makeDeps() {
       getApplications: vi.fn(),
       getUserBucket: vi.fn(),
       saveCustomApplication: vi.fn(),
+      deleteCustomApplication: vi.fn(),
     },
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
@@ -405,6 +406,78 @@ describe('ApplicationsService', () => {
       mockCreateApplicationSdk(service, undefined, errResponse(409));
       await expect(
         service.createApplication('user1', 't', body),
+      ).rejects.toThrow();
+      expect(cacheManager.del).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteApplication', () => {
+    const id = 'applications/test-bucket/My%20App__0.0.1';
+
+    it('DELETEs the application id path and invalidates cache', async () => {
+      const { service, cacheManager } = makeService();
+      const deleteSpy = vi
+        .spyOn(service['dialClient'].client, 'deleteCustomApplication')
+        .mockResolvedValue(okResponse({}));
+
+      await service.deleteApplication('user1', 'token', id);
+      expect(deleteSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'My%20App__0.0.1',
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+        }),
+      );
+      expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+    });
+
+    it('resolves bucket via getUserBucket when applicationName has no bucket prefix', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        okResponse({ bucket: 'my-bucket' }),
+      );
+      const deleteSpy = vi
+        .spyOn(service['dialClient'].client, 'deleteCustomApplication')
+        .mockResolvedValue(okResponse({}));
+
+      await service.deleteApplication('user1', 'token', 'my-app__1.0');
+      expect(deleteSpy).toHaveBeenCalledWith(
+        'my-bucket',
+        'my-app__1.0',
+        expect.anything(),
+      );
+    });
+
+    it('throws ForbiddenException when delete returns 403', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'deleteCustomApplication',
+      ).mockResolvedValue(errResponse(403));
+      await expect(service.deleteApplication('u', 't', id)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'deleteCustomApplication',
+      ).mockRejectedValue(new TypeError('fetch failed'));
+      await expect(service.deleteApplication('u', 't', id)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+    });
+
+    it('does not invalidate cache when delete returns error', async () => {
+      const { service, cacheManager } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'deleteCustomApplication',
+      ).mockResolvedValue(errResponse(409));
+      await expect(
+        service.deleteApplication('user1', 't', id),
       ).rejects.toThrow();
       expect(cacheManager.del).not.toHaveBeenCalled();
     });

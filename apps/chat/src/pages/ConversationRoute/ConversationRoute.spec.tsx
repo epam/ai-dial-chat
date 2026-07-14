@@ -187,6 +187,7 @@ describe('ConversationRoute', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     mockUseUser.mockReturnValue({
       user: {
@@ -303,6 +304,7 @@ describe('ConversationRoute', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
 
     renderRoute();
@@ -329,6 +331,7 @@ describe('ConversationRoute', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     renderRoute();
     await waitFor(() => {
@@ -355,6 +358,7 @@ describe('ConversationRoute', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     renderRoute();
     await waitFor(() => {
@@ -392,6 +396,7 @@ describe('ConversationRoute', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
 
     renderRoute();
@@ -441,6 +446,7 @@ describe('ConversationRoute', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
 
     renderRoute();
@@ -489,6 +495,7 @@ describe('ConversationRoute', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     mockCreateConversation.mockRejectedValueOnce({
       response: {

@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Header,
   HttpCode,
+  Param,
   Post,
   Req,
 } from '@nestjs/common';
@@ -17,6 +19,7 @@ import {
   CreateApplicationBodyDto,
   CreatedApplicationDto,
 } from './dto/create-application.dto';
+import { GetApplicationDto } from './dto/get-application.dto';
 
 @ApiTags('applications')
 @Controller({ path: 'applications', version: '1' })
@@ -97,5 +100,44 @@ export class ApplicationsController {
   ): Promise<CreatedApplicationDto> {
     const { sub, at } = req.user as SessionUser;
     return this.applicationsService.createApplication(sub, at, body);
+  }
+
+  @Delete(':applicationName')
+  @HttpCode(204)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'deleteApplication',
+    summary: 'Delete an application',
+    description:
+      'Deletes an application for the authenticated session user by proxying DIAL Core. ' +
+      'Invalidates the applications list cache on success.',
+  })
+  @ApiResponse({ status: 204, description: 'Application deleted successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid application name' })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 403, description: 'Caller lacks permission' })
+  @ApiResponse({ status: 404, description: 'Application not found' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  deleteApplication(
+    @Req() req: Request,
+    @Param() params: GetApplicationDto,
+  ): Promise<void> {
+    const { sub, at } = req.user as SessionUser;
+    return this.applicationsService.deleteApplication(
+      sub,
+      at,
+      params.applicationName,
+    );
   }
 }
