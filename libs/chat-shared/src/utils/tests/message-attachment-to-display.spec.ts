@@ -184,4 +184,44 @@ describe('messageAttachmentToDisplayAttachment', () => {
 
     expect(attachment.referenceUrl).toBe('https://example.com/report.pdf');
   });
+
+  it('infers contentType as PDF from a reference_url page anchor when the chunk type is generic', () => {
+    const dto: MessageAttachment = {
+      type: 'text/markdown',
+      title: '[0.2818] uploads/report.pdf',
+      data: 'ejKc :',
+      reference_url: 'files/bucket/uploads/report.pdf#page=81',
+    };
+
+    const attachment = messageAttachmentToDisplayAttachment(dto);
+
+    expect(attachment.contentType).toBe('application/pdf');
+  });
+
+  it('prefers reference_type over the inferred extension for reference-only attachments', () => {
+    const dto: MessageAttachment = {
+      type: 'text/markdown',
+      title: 'livescience.com',
+      data: 'Dinosaurs first appeared in the Triassic',
+      reference_url: 'https://example.com/redirect/report.pdf',
+      reference_type: 'text/html',
+    };
+
+    const attachment = messageAttachmentToDisplayAttachment(dto);
+
+    expect(attachment.contentType).toBe('text/html');
+  });
+
+  it('keeps the original type when a url is present even if reference_url looks like a PDF', () => {
+    const dto: MessageAttachment = {
+      type: 'text/markdown',
+      title: 'report.pdf',
+      url: 'files/bucket/report.md',
+      reference_url: 'files/bucket/report.pdf#page=1',
+    };
+
+    const attachment = messageAttachmentToDisplayAttachment(dto);
+
+    expect(attachment.contentType).toBe('text/markdown');
+  });
 });

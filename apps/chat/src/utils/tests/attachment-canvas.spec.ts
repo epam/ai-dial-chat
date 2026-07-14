@@ -6,6 +6,7 @@ import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  referenceAttachmentToPdfCanvasContent,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
@@ -18,6 +19,7 @@ vi.mock('../dial-file', () => {
       ? `/download?path=${url.slice('files/bucket/'.length)}`
       : undefined;
   return {
+    isDialFileId: (url: string) => url.startsWith('files/'),
     resolveDialFileDownloadUrl,
     resolveDialUrl: (attachment: { url?: string; referenceUrl?: string }) => {
       if (attachment.url != null)
@@ -307,6 +309,62 @@ describe('resolveJsonCanvasContent', () => {
       type: AttachmentContentType.Json,
       value: { via: 'reference' },
     });
+  });
+});
+
+describe('referenceAttachmentToPdfCanvasContent', () => {
+  it('returns null when the url does not target a PDF', () => {
+    expect(
+      referenceAttachmentToPdfCanvasContent({
+        type: 'text/markdown',
+        url: 'https://example.com/redirect/abc',
+      }),
+    ).toBeNull();
+  });
+
+  it('builds a PDF canvas payload with a page-scoped invisible highlight', () => {
+    const result = referenceAttachmentToPdfCanvasContent({
+      type: 'text/markdown',
+      url: 'files/bucket/uploads/report%20(3).pdf#page=81',
+    });
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: '/download?path=uploads/report%20(3).pdf',
+      highlights: [
+        {
+          id: 'reference-page-81',
+          bboxes: [{ page: 81, x1: 0, y1: 0, x2: 0, y2: 0 }],
+          style: { backgroundColor: 'transparent', opacity: 0 },
+        },
+      ],
+      selectedHighlightId: 'reference-page-81',
+    });
+  });
+
+  it('builds a PDF canvas payload with no highlights when there is no page anchor', () => {
+    const result = referenceAttachmentToPdfCanvasContent({
+      type: 'text/markdown',
+      url: 'files/bucket/report.pdf',
+    });
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Pdf,
+      url: '/download?path=report.pdf',
+    });
+  });
+
+  it('produces a distinct highlight id per page, so re-opening at a different page re-triggers scroll', () => {
+    const page5 = referenceAttachmentToPdfCanvasContent({
+      type: 'text/markdown',
+      url: 'files/bucket/report.pdf#page=5',
+    });
+    const page19 = referenceAttachmentToPdfCanvasContent({
+      type: 'text/markdown',
+      url: 'files/bucket/report.pdf#page=19',
+    });
+
+    expect(page5?.selectedHighlightId).not.toBe(page19?.selectedHighlightId);
   });
 });
 

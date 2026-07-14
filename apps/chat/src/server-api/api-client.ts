@@ -8,6 +8,7 @@ import {
   FilesApi,
   Middleware,
   ModelsApi,
+  PublishApi,
   RateApi,
   ShareApi,
   ToolsetsApi,
@@ -175,3 +176,4 @@ export const authApi = new AuthApi(config);
 export const rateApi = new RateApi(config);
 export const toolsetsApi = new ToolsetsApi(config);
 export const shareApi = new ShareApi(config);
+export const publishApi = new PublishApi(config);
