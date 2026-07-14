@@ -6,7 +6,10 @@ import { DeploymentCreationForm } from '@epam/ai-dial-deployment-creation-form';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
+import {
+  BasicI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../../../constants/translation-keys';
 import type {
   ToolsetFormData,
   ToolsetFormErrors,
@@ -33,7 +36,7 @@ const GeneralForm: FC<Props> = ({ form, errors, onChange }) => {
       },
       iconUrl: {
         label: t(ToolsetEditorI18nKeys.IconUrlLabel),
-        placeholder: t(ToolsetEditorI18nKeys.IconUrlPlaceholder),
+        placeholder: t(BasicI18nKeys.UrlPlaceholder),
       },
       version: {
         label: t(ToolsetEditorI18nKeys.VersionLabel),

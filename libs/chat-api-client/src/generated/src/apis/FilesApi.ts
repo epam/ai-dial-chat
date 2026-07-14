@@ -20,6 +20,8 @@ import type {
   CreateFolderResponseDto,
   DeleteFilesDto,
   DeleteFilesResponseDto,
+  DiscardSharedDto,
+  DiscardSharedResponseDto,
   DownloadArchiveDto,
   FileMetadataResponseDto,
   FileUploadResponseDto,
@@ -28,6 +30,11 @@ import type {
   MoveFilesResponseDto,
   RenameFilesDto,
   RenameFilesResponseDto,
+  RevokeAccessDto,
+  RevokeAccessResponseDto,
+  ShareFilesDto,
+  ShareFilesResponseDto,
+  UploadArchiveResponseDto,
 } from '../models/index';
 
 export interface CopyFilesRequest {
@@ -40,6 +47,10 @@ export interface CreateFolderRequest {
 
 export interface DeleteFilesRequest {
   deleteFilesDto: DeleteFilesDto;
+}
+
+export interface DiscardSharedRequest {
+  discardSharedDto: DiscardSharedDto;
 }
 
 export interface DownloadArchiveRequest {
@@ -72,6 +83,10 @@ export interface ListPublicFilesRequest {
   recursive?: boolean;
 }
 
+export interface ListSharedByMeRequest {
+  bucket: string;
+}
+
 export interface ListSharedFilesRequest {
   path?: string;
   token?: string;
@@ -84,6 +99,20 @@ export interface MoveFilesRequest {
 
 export interface RenameFilesRequest {
   renameFilesDto: RenameFilesDto;
+}
+
+export interface RevokeAccessRequest {
+  revokeAccessDto: RevokeAccessDto;
+}
+
+export interface ShareFilesRequest {
+  shareFilesDto: ShareFilesDto;
+}
+
+export interface UploadArchiveRequest {
+  file: Blob;
+  bucket: string;
+  destinationPath: string;
 }
 
 export interface UploadFileRequest {
@@ -238,6 +267,56 @@ export class FilesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DeleteFilesResponseDto> {
     const response = await this.deleteFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Discard resources shared with the caller
+   */
+  async discardSharedRaw(
+    requestParameters: DiscardSharedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<DiscardSharedResponseDto>> {
+    if (requestParameters['discardSharedDto'] == null) {
+      throw new runtime.RequiredError(
+        'discardSharedDto',
+        'Required parameter "discardSharedDto" was null or undefined when calling discardShared().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/discard-shared`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['discardSharedDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<DiscardSharedResponseDto>(response);
+  }
+
+  /**
+   * Discard resources shared with the caller
+   */
+  async discardShared(
+    requestParameters: DiscardSharedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<DiscardSharedResponseDto> {
+    const response = await this.discardSharedRaw(
       requestParameters,
       initOverrides,
     );
@@ -547,6 +626,57 @@ export class FilesApi extends runtime.BaseAPI {
   }
 
   /**
+   * List files and folders shared by the caller with others
+   */
+  async listSharedByMeRaw(
+    requestParameters: ListSharedByMeRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListFilesResponseDto>> {
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling listSharedByMe().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/shared-by-me`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListFilesResponseDto>(response);
+  }
+
+  /**
+   * List files and folders shared by the caller with others
+   */
+  async listSharedByMe(
+    requestParameters: ListSharedByMeRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListFilesResponseDto> {
+    const response = await this.listSharedByMeRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Proxies the DIAL Core sharing API to return files shared with the authenticated user.
    * List files shared with the current user
    */
@@ -691,6 +821,196 @@ export class FilesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<RenameFilesResponseDto> {
     const response = await this.renameFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Revoke all shared access to files and folders
+   */
+  async revokeAccessRaw(
+    requestParameters: RevokeAccessRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<RevokeAccessResponseDto>> {
+    if (requestParameters['revokeAccessDto'] == null) {
+      throw new runtime.RequiredError(
+        'revokeAccessDto',
+        'Required parameter "revokeAccessDto" was null or undefined when calling revokeAccess().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/revoke-access`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['revokeAccessDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<RevokeAccessResponseDto>(response);
+  }
+
+  /**
+   * Revoke all shared access to files and folders
+   */
+  async revokeAccess(
+    requestParameters: RevokeAccessRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<RevokeAccessResponseDto> {
+    const response = await this.revokeAccessRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Create a share invitation link for files and folders
+   */
+  async shareFilesRaw(
+    requestParameters: ShareFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ShareFilesResponseDto>> {
+    if (requestParameters['shareFilesDto'] == null) {
+      throw new runtime.RequiredError(
+        'shareFilesDto',
+        'Required parameter "shareFilesDto" was null or undefined when calling shareFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/share`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['shareFilesDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ShareFilesResponseDto>(response);
+  }
+
+  /**
+   * Create a share invitation link for files and folders
+   */
+  async shareFiles(
+    requestParameters: ShareFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ShareFilesResponseDto> {
+    const response = await this.shareFilesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Upload a ZIP archive and extract its contents to a destination folder
+   */
+  async uploadArchiveRaw(
+    requestParameters: UploadArchiveRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<UploadArchiveResponseDto>> {
+    if (requestParameters['file'] == null) {
+      throw new runtime.RequiredError(
+        'file',
+        'Required parameter "file" was null or undefined when calling uploadArchive().',
+      );
+    }
+
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling uploadArchive().',
+      );
+    }
+
+    if (requestParameters['destinationPath'] == null) {
+      throw new runtime.RequiredError(
+        'destinationPath',
+        'Required parameter "destinationPath" was null or undefined when calling uploadArchive().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const consumes: runtime.Consume[] = [
+      { contentType: 'multipart/form-data' },
+    ];
+    // @ts-ignore: canConsumeForm may be unused
+    const canConsumeForm = runtime.canConsumeForm(consumes);
+
+    let formParams: { append(name: string, value: string | Blob): void };
+    let useForm = false;
+    // use FormData to transmit files using content-type "multipart/form-data"
+    useForm = canConsumeForm;
+    if (useForm) {
+      formParams = new FormData();
+    } else {
+      formParams = new URLSearchParams();
+    }
+
+    if (requestParameters['file'] != null) {
+      formParams.append('file', requestParameters['file']);
+    }
+
+    if (requestParameters['bucket'] != null) {
+      formParams.append('bucket', requestParameters['bucket']);
+    }
+
+    if (requestParameters['destinationPath'] != null) {
+      formParams.append(
+        'destinationPath',
+        requestParameters['destinationPath'],
+      );
+    }
+
+    let urlPath = `/api/v1/files/upload-archive`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: formParams,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<UploadArchiveResponseDto>(response);
+  }
+
+  /**
+   * Upload a ZIP archive and extract its contents to a destination folder
+   */
+  async uploadArchive(
+    requestParameters: UploadArchiveRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<UploadArchiveResponseDto> {
+    const response = await this.uploadArchiveRaw(
       requestParameters,
       initOverrides,
     );

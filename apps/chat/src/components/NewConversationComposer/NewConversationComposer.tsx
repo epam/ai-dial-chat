@@ -14,6 +14,7 @@ import { lazy, memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
@@ -216,7 +217,7 @@ const NewConversationComposer: FC<Props> = ({
         isAttachmentsAllowed={isAttachmentsAllowed}
         title={t(
           isAttachmentsAllowed
-            ? FileDndI18nKeys.OverlayTitle
+            ? BasicI18nKeys.AttachFiles
             : FileDndI18nKeys.OverlayDeniedTitle,
         )}
         subtitle={t(
@@ -301,7 +302,7 @@ const NewConversationComposer: FC<Props> = ({
           maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
           maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
           canAttachFolders={selectedDeployment?.features?.folderAttachments}
-          title={t(DialFileManagerI18nKeys.Title)}
+          title={t(BasicI18nKeys.AttachFiles)}
           attachLabel={t(DialFileManagerI18nKeys.Attach)}
           emptyTitle={t(DialFileManagerI18nKeys.Empty)}
           emptyDescription=""
@@ -315,9 +316,9 @@ const NewConversationComposer: FC<Props> = ({
           }
           uploadFilesLabel={t(DialFileManagerI18nKeys.Upload)}
           newFolderLabel={t(DialFileManagerI18nKeys.NewFolder)}
-          downloadLabel={t(DialFileManagerI18nKeys.Download)}
+          downloadLabel={t(ButtonsI18nKeys.Download)}
           downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
-          deleteLabel={t(DialFileManagerI18nKeys.DeleteAction)}
+          deleteLabel={t(ButtonsI18nKeys.Delete)}
           deletingLabel={t(DialFileManagerI18nKeys.DeletingLabel)}
           deleteConfirmTitle={(names) =>
             names.length === 1
@@ -329,7 +330,7 @@ const NewConversationComposer: FC<Props> = ({
               <p className="mb-3 text-secondary">
                 {names.length === 1 ? (
                   <>
-                    {t(DialFileManagerI18nKeys.DeleteConfirmBodySingle)}{' '}
+                    {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
                     <span className="break-all text-primary">
                       &quot;{names[0].split('/').pop()}&quot;?
                     </span>
@@ -346,7 +347,7 @@ const NewConversationComposer: FC<Props> = ({
               </p>
             </div>
           )}
-          deleteConfirmLabel={t(DialFileManagerI18nKeys.DeleteConfirmButton)}
+          deleteConfirmLabel={t(ButtonsI18nKeys.Delete)}
           deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}
           uploadProgressTitle={t(DialFileManagerI18nKeys.UploadProgressTitle)}
           cancelLabel={t(ButtonsI18nKeys.Cancel)}

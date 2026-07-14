@@ -8,7 +8,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ChatI18nKeys,
+  BasicI18nKeys,
   ChatSettingsI18nKeys,
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
@@ -98,8 +98,8 @@ export const useChatSettingsFormConfig = (params: Params) => {
       systemPrompt,
       temperature,
       onSave: handleSave,
-      menuItemLabel: t(ChatI18nKeys.ChatSettings),
-      title: t(ChatSettingsI18nKeys.Title),
+      menuItemLabel: t(BasicI18nKeys.Settings),
+      title: t(BasicI18nKeys.Settings),
       responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
       responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
       responseFormatMarkdownLabel: t(

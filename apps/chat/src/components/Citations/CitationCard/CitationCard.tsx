@@ -9,7 +9,11 @@ import {
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CitationsI18nKeys } from '../../../constants/translation-keys';
+import {
+  BasicI18nKeys,
+  ButtonsI18nKeys,
+  CitationsI18nKeys,
+} from '../../../constants/translation-keys';
 import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
 import FileTypeIcon from '../../FileTypeIcon/FileTypeIcon';
 
@@ -46,7 +50,7 @@ const CitationCard: FC<Props> = ({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={t(CitationsI18nKeys.PopupAriaLabel, {
+      aria-label={t(CitationsI18nKeys.MarkerAriaLabel, {
         source: group.sourceName,
       })}
       className="flex w-[400px] flex-col gap-3 rounded-lg border border-primary bg-layer-0 p-4 shadow-lg"
@@ -109,7 +113,7 @@ const CitationCard: FC<Props> = ({
       {/* Footer */}
       <div className="flex justify-start gap-2">
         <PrimaryButton
-          label={t(CitationsI18nKeys.PopupPreview)}
+          label={t(BasicI18nKeys.Preview)}
           size={ElementSize.Small}
           onClick={() => onPreview(annotation)}
         />
@@ -117,7 +121,7 @@ const CitationCard: FC<Props> = ({
           label={t(
             isWebLink
               ? CitationsI18nKeys.PopupOpenInBrowser
-              : CitationsI18nKeys.PopupDownload,
+              : ButtonsI18nKeys.Download,
           )}
           size={ElementSize.Small}
           onClick={() => onOpenInBrowser(annotation)}

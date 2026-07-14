@@ -7,16 +7,45 @@ import {
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileManager';
+import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+} from '../../../types/file-manager-variant';
 import { FileUploadStatus } from '../../DialFileManagerModal/types/upload';
 import DialFileManagerShell from '../DialFileManagerShell';
 import type { DialFileManagerShellLabels } from '../types/labels';
+
+interface CapturedActionLabels {
+  actionLabels?: Partial<Record<DialFileManagerActions, string>>;
+}
 
 const capturedDialFileManagerProps: {
   current: {
     onCreateFolder?: unknown;
     autoSelectUploadedItems?: boolean;
-    gridOptions?: {
-      actionLabels?: Partial<Record<DialFileManagerActions, string>>;
+    onGetInfo?: unknown;
+    gridOptions?: CapturedActionLabels;
+    treeOptions?: CapturedActionLabels;
+    bulkActionsToolbarOptions?: CapturedActionLabels;
+    toolbarOptions?: {
+      newActions?: { uploadArchive?: { label?: string } };
+    };
+    fileMetadataPopupOptions?: {
+      fileMetadata?: unknown;
+      loading?: boolean;
+      clearMetadata?: unknown;
+      header?: string;
+      nameLabel?: string;
+      pathLabel?: string;
+      modifiedDateLabel?: string;
+      sizeLabel?: string;
+      authorLabel?: string;
+    };
+    destinationFolderPopupOptions?: {
+      copyLabel?: string;
+      moveLabel?: string;
+      hiddenFilesSwitcherLabel?: string;
+      sourceFolder?: string;
     };
   } | null;
 } = { current: null };
@@ -27,11 +56,31 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     ...actual,
     DialFileManager: (props: {
       emptyStateTitle?: string;
-      destinationFolderPopupOptions?: { sourceFolder?: string };
+      destinationFolderPopupOptions?: {
+        copyLabel?: string;
+        moveLabel?: string;
+        hiddenFilesSwitcherLabel?: string;
+        sourceFolder?: string;
+      };
       onCreateFolder?: unknown;
+      onGetInfo?: unknown;
       autoSelectUploadedItems?: boolean;
-      gridOptions?: {
-        actionLabels?: Partial<Record<DialFileManagerActions, string>>;
+      gridOptions?: CapturedActionLabels;
+      treeOptions?: CapturedActionLabels;
+      bulkActionsToolbarOptions?: CapturedActionLabels;
+      toolbarOptions?: {
+        newActions?: { uploadArchive?: { label?: string } };
+      };
+      fileMetadataPopupOptions?: {
+        fileMetadata?: unknown;
+        loading?: boolean;
+        clearMetadata?: unknown;
+        header?: string;
+        nameLabel?: string;
+        pathLabel?: string;
+        modifiedDateLabel?: string;
+        sizeLabel?: string;
+        authorLabel?: string;
       };
     }) => {
       capturedDialFileManagerProps.current = props;
@@ -62,6 +111,7 @@ const baseHookResult: UseDialFileManagerResult = {
   loadedPaths: new Set(),
   onExpandedPathsChange: vi.fn(),
   onUploadFiles: vi.fn(),
+  onUploadArchive: vi.fn(),
   onValidateUpload: vi.fn(),
   uploadBatchState: null,
   cancelUpload: vi.fn(),
@@ -88,6 +138,20 @@ const baseHookResult: UseDialFileManagerResult = {
   dateOptions: {},
   actionLabels: { [DialFileManagerActions.Download]: 'Download' },
   sharedWithMeIds: undefined,
+  sharedByMePaths: new Set(),
+  shareTarget: null,
+  onManagePermissions: vi.fn(),
+  onCloseShareModal: vi.fn(),
+  onCreateShareLink: vi.fn(),
+  isSharing: false,
+  onUnshareFiles: vi.fn(),
+  isUnsharing: false,
+  onRemoveFilesAccess: vi.fn(),
+  isRemovingAccess: false,
+  fileMetadata: undefined,
+  isFileMetadataLoading: false,
+  onGetInfo: vi.fn(),
+  clearMetadata: vi.fn(),
 };
 
 const emptyStateCopy = { title: 'No files', description: 'Nothing here yet' };
@@ -100,6 +164,7 @@ const baseLabels: DialFileManagerShellLabels = {
   hideHiddenFilesLabel: 'Hide hidden',
   getSelectionLabel: (count) => `${count} selected`,
   uploadFilesLabel: 'Upload files',
+  uploadArchiveAction: 'Upload archive',
   newFolderLabel: 'New folder',
   downloadLabel: 'Download',
   downloadingLabel: 'Downloading…',
@@ -107,11 +172,11 @@ const baseLabels: DialFileManagerShellLabels = {
   deletingLabel: 'Deleting…',
   renameLabel: 'Rename',
   renamingLabel: 'Renaming…',
-  copyLabel: 'Copy',
-  moveLabel: 'Move',
+  copyLabel: 'Copy to',
+  moveLabel: 'Move to',
   duplicateLabel: 'Duplicate',
   addFolderLabel: 'Add folder',
-  hiddenFilesSwitcherLabel: 'Show hidden files',
+  hiddenFilesSwitcherLabel: 'Hidden files',
   getCopyHeader: (count, name) =>
     count === 1 ? `Copy "${name}"` : `Copy ${count} items`,
   getMoveHeader: (count, name) =>
@@ -140,8 +205,8 @@ const baseLabels: DialFileManagerShellLabels = {
     [DialFileManagerTabs.Review]: emptyStateCopy,
   },
   treeHeaderByTab: {
-    [DialFileManagerTabs.MyFiles]: 'My files',
-    [DialFileManagerTabs.Shared]: 'Shared with me',
+    [DialFileManagerTabs.MyFiles]: 'My Files',
+    [DialFileManagerTabs.Shared]: 'Shared with Me',
     [DialFileManagerTabs.Organization]: 'Organization',
     [DialFileManagerTabs.Review]: '',
   },
@@ -162,21 +227,46 @@ const baseLabels: DialFileManagerShellLabels = {
     confirmLabel: 'Confirm',
     cancelLabel: 'Cancel',
   },
+  shareLabel: 'Share',
+  unshareLabel: 'Unshare',
+  removeAccessLabel: 'Remove access',
+  getShareModalTitle: (name) => `Share "${name}"`,
+  shareModalReadPermissionLabel: 'Can view',
+  shareModalReadWritePermissionLabel: 'Can edit',
+  shareModalCreateLinkButtonLabel: 'Create link',
+  shareModalCopyLinkButtonLabel: 'Copy link',
+  shareModalLinkCopiedConfirmation: 'Link copied',
+  shareModalCancelLabel: 'Cancel',
+  shareErrorMessage: 'Failed to create the share link',
+  infoLabel: 'Info',
+  metadataHeader: 'Information',
+  metadataNameLabel: 'Name:',
+  metadataPathLabel: 'Path:',
+  metadataModifiedDateLabel: 'Modified Date:',
+  metadataSizeLabel: 'Size:',
+  metadataAuthorLabel: 'Author:',
 };
 
 const renderShell = (
   hookResultOverrides?: Partial<UseDialFileManagerResult>,
   selectedPaths: Set<string> = new Set(),
+  options: {
+    activeTab?: DialFileManagerTabs;
+    variant?: DialFileManagerVariant;
+    actionProfile?: DialFileManagerActionProfile;
+  } = {},
 ) =>
   render(
     <DialFileManagerShell
       hookResult={{ ...baseHookResult, ...hookResultOverrides }}
       labels={baseLabels}
-      activeTab={DialFileManagerTabs.MyFiles}
-      tabs={[{ id: DialFileManagerTabs.MyFiles, label: 'My files' }]}
+      activeTab={options.activeTab ?? DialFileManagerTabs.MyFiles}
+      tabs={[{ id: DialFileManagerTabs.MyFiles, label: 'My Files' }]}
       onTabChange={vi.fn()}
       selectedPaths={selectedPaths}
       onSelectedPathsChange={vi.fn()}
+      variant={options.variant ?? DialFileManagerVariant.Standalone}
+      actionProfile={options.actionProfile ?? DialFileManagerActionProfile.Full}
     />,
   );
 
@@ -264,6 +354,43 @@ describe('DialFileManagerShell', () => {
     ).toBe(baseLabels.duplicateLabel);
   });
 
+  it('passes File manager copy, move, and hidden-files labels to action surfaces', () => {
+    renderShell({
+      actionLabels: {
+        [DialFileManagerActions.Download]: 'Download',
+        [DialFileManagerActions.Copy]: 'Copy',
+        [DialFileManagerActions.Move]: 'Move',
+      },
+    });
+
+    const props = capturedDialFileManagerProps.current;
+    expect(
+      props?.gridOptions?.actionLabels?.[DialFileManagerActions.Copy],
+    ).toBe(baseLabels.copyLabel);
+    expect(
+      props?.gridOptions?.actionLabels?.[DialFileManagerActions.Move],
+    ).toBe(baseLabels.moveLabel);
+    expect(
+      props?.bulkActionsToolbarOptions?.actionLabels?.[
+        DialFileManagerActions.Copy
+      ],
+    ).toBe(baseLabels.copyLabel);
+    expect(
+      props?.bulkActionsToolbarOptions?.actionLabels?.[
+        DialFileManagerActions.Move
+      ],
+    ).toBe(baseLabels.moveLabel);
+    expect(props?.destinationFolderPopupOptions?.copyLabel).toBe(
+      baseLabels.copyLabel,
+    );
+    expect(props?.destinationFolderPopupOptions?.moveLabel).toBe(
+      baseLabels.moveLabel,
+    );
+    expect(props?.destinationFolderPopupOptions?.hiddenFilesSwitcherLabel).toBe(
+      baseLabels.hiddenFilesSwitcherLabel,
+    );
+  });
+
   it('omits Duplicate from DialFileManager action labels when the hook result excludes it', () => {
     renderShell({
       actionLabels: { [DialFileManagerActions.Download]: 'Download' },
@@ -275,11 +402,156 @@ describe('DialFileManagerShell', () => {
     ).toBeUndefined();
   });
 
+  it('includes Info in gridOptions action labels when the hook result includes it', () => {
+    renderShell({
+      actionLabels: {
+        [DialFileManagerActions.Download]: 'Download',
+        [DialFileManagerActions.Info]: 'Info',
+      },
+    });
+    expect(
+      capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
+        DialFileManagerActions.Info
+      ],
+    ).toBe(baseLabels.infoLabel);
+  });
+
+  it('omits Info from gridOptions action labels when the hook result excludes it', () => {
+    renderShell({
+      actionLabels: { [DialFileManagerActions.Download]: 'Download' },
+    });
+    expect(
+      capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
+        DialFileManagerActions.Info
+      ],
+    ).toBeUndefined();
+  });
+
+  it('never includes Info in treeOptions or bulkActionsToolbarOptions action labels, even when the hook result includes it', () => {
+    renderShell({
+      actionLabels: {
+        [DialFileManagerActions.Download]: 'Download',
+        [DialFileManagerActions.Info]: 'Info',
+      },
+    });
+    expect(
+      capturedDialFileManagerProps.current?.treeOptions?.actionLabels?.[
+        DialFileManagerActions.Info
+      ],
+    ).toBeUndefined();
+    expect(
+      capturedDialFileManagerProps.current?.bulkActionsToolbarOptions
+        ?.actionLabels?.[DialFileManagerActions.Info],
+    ).toBeUndefined();
+  });
+
+  it('passes onGetInfo straight through to DialFileManager', () => {
+    const onGetInfo = vi.fn();
+    renderShell({ onGetInfo });
+    expect(capturedDialFileManagerProps.current?.onGetInfo).toBe(onGetInfo);
+  });
+
+  it('builds fileMetadataPopupOptions from hook state and translated labels', () => {
+    const fileMetadata = {
+      name: 'report.pdf',
+    } as UseDialFileManagerResult['fileMetadata'];
+    const clearMetadata = vi.fn();
+    renderShell({ fileMetadata, isFileMetadataLoading: true, clearMetadata });
+
+    expect(
+      capturedDialFileManagerProps.current?.fileMetadataPopupOptions,
+    ).toEqual({
+      fileMetadata,
+      loading: true,
+      clearMetadata,
+      header: baseLabels.metadataHeader,
+      nameLabel: baseLabels.metadataNameLabel,
+      pathLabel: baseLabels.metadataPathLabel,
+      modifiedDateLabel: baseLabels.metadataModifiedDateLabel,
+      sizeLabel: baseLabels.metadataSizeLabel,
+      authorLabel: baseLabels.metadataAuthorLabel,
+    });
+  });
+
   it('never imports useTranslation from react-i18next', () => {
     const source = readFileSync(
       join(__dirname, '../DialFileManagerShell.tsx'),
       'utf-8',
     );
     expect(source).not.toContain('react-i18next');
+  });
+
+  describe('uploadArchive toolbar entry', () => {
+    it('is present for standalone my_files with WRITE and Full profile', () => {
+      renderShell({ uploadEnabled: true }, new Set(), {
+        activeTab: DialFileManagerTabs.MyFiles,
+        variant: DialFileManagerVariant.Standalone,
+        actionProfile: DialFileManagerActionProfile.Full,
+      });
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toEqual({ label: baseLabels.uploadArchiveAction });
+    });
+
+    it('is absent on the shared tab', () => {
+      renderShell({ uploadEnabled: true }, new Set(), {
+        activeTab: DialFileManagerTabs.Shared,
+        variant: DialFileManagerVariant.Standalone,
+        actionProfile: DialFileManagerActionProfile.Full,
+      });
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toBeUndefined();
+    });
+
+    it('is absent on the organization tab', () => {
+      renderShell({ uploadEnabled: true }, new Set(), {
+        activeTab: DialFileManagerTabs.Organization,
+        variant: DialFileManagerVariant.Standalone,
+        actionProfile: DialFileManagerActionProfile.Full,
+      });
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toBeUndefined();
+    });
+
+    it('is absent in the attach modal (variant Attach)', () => {
+      renderShell({ uploadEnabled: true }, new Set(), {
+        activeTab: DialFileManagerTabs.MyFiles,
+        variant: DialFileManagerVariant.Attach,
+        actionProfile: DialFileManagerActionProfile.Attach,
+      });
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toBeUndefined();
+    });
+
+    it('is absent without WRITE permission (uploadEnabled false)', () => {
+      renderShell({ uploadEnabled: false }, new Set(), {
+        activeTab: DialFileManagerTabs.MyFiles,
+        variant: DialFileManagerVariant.Standalone,
+        actionProfile: DialFileManagerActionProfile.Full,
+      });
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toBeUndefined();
+    });
+
+    it('is absent when actionProfile is Browse (not Full)', () => {
+      renderShell({ uploadEnabled: true }, new Set(), {
+        activeTab: DialFileManagerTabs.MyFiles,
+        variant: DialFileManagerVariant.Standalone,
+        actionProfile: DialFileManagerActionProfile.Browse,
+      });
+      expect(
+        capturedDialFileManagerProps.current?.toolbarOptions?.newActions
+          ?.uploadArchive,
+      ).toBeUndefined();
+    });
   });
 });

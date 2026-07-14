@@ -34,6 +34,7 @@ export interface DialFileManagerShellLabels {
   hideHiddenFilesLabel: string;
   getSelectionLabel: (count: number) => string;
   uploadFilesLabel: string;
+  uploadArchiveAction: string;
   newFolderLabel: string;
   downloadLabel: string;
   downloadingLabel: string;
@@ -69,4 +70,22 @@ export interface DialFileManagerShellLabels {
   treeHeaderByTab: Record<DialFileManagerTabs, string>;
   renameValidationMessages: RenameValidationMessages;
   conflictResolutionPopupOptions: ConflictResolutionPopupOptions;
+  shareLabel: string;
+  unshareLabel: string;
+  removeAccessLabel: string;
+  getShareModalTitle: (name: string) => string;
+  shareModalReadPermissionLabel: string;
+  shareModalReadWritePermissionLabel: string;
+  shareModalCreateLinkButtonLabel: string;
+  shareModalCopyLinkButtonLabel: string;
+  shareModalLinkCopiedConfirmation: string;
+  shareModalCancelLabel: string;
+  shareErrorMessage: string;
+  infoLabel: string;
+  metadataHeader: string;
+  metadataNameLabel: string;
+  metadataPathLabel: string;
+  metadataModifiedDateLabel: string;
+  metadataSizeLabel: string;
+  metadataAuthorLabel: string;
 }

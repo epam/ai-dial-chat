@@ -476,7 +476,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         showNotification({
           variant: NotificationVariant.Success,
           title: t(RateI18nKeys.DislikeToastTitle),
-          message: t(RateI18nKeys.DislikeToastDescription),
+          message: t(RateI18nKeys.LikeToastDescription),
         });
       }
     },

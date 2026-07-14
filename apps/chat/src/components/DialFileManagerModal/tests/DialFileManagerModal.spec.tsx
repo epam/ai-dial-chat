@@ -54,8 +54,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       activeTab: mockActiveTab.value ?? Tabs.MyFiles,
       handleTabChange: mockHandleTabChange,
       tabs: [
-        { id: Tabs.MyFiles, name: 'My files' },
-        { id: Tabs.Shared, name: 'Shared with me' },
+        { id: Tabs.MyFiles, name: 'My Files' },
+        { id: Tabs.Shared, name: 'Shared with Me' },
         { id: Tabs.Organization, name: 'Organization' },
       ],
     })),
@@ -299,6 +299,7 @@ const defaultHookResult: UseDialFileManagerResult = {
   onPathChange: vi.fn(),
   retry: vi.fn(),
   onUploadFiles: vi.fn(),
+  onUploadArchive: vi.fn(),
   onValidateUpload: vi.fn(),
   uploadBatchState: null,
   cancelUpload: vi.fn(),
@@ -340,6 +341,20 @@ const defaultHookResult: UseDialFileManagerResult = {
     [DialFileManagerActions.Delete]: 'Delete',
   },
   sharedWithMeIds: undefined,
+  sharedByMePaths: new Set<string>(),
+  shareTarget: null,
+  onManagePermissions: vi.fn(),
+  onCloseShareModal: vi.fn(),
+  onCreateShareLink: vi.fn(),
+  isSharing: false,
+  onUnshareFiles: vi.fn(),
+  isUnsharing: false,
+  onRemoveFilesAccess: vi.fn(),
+  isRemovingAccess: false,
+  fileMetadata: undefined,
+  isFileMetadataLoading: false,
+  onGetInfo: vi.fn(),
+  clearMetadata: vi.fn(),
 };
 
 const defaultProps = {
@@ -460,7 +475,7 @@ describe('DialFileManagerModal', () => {
       'dialFileManager.conflictReplace',
     );
     expect(manager.getAttribute('data-conflict-duplicate')).toBe(
-      'dialFileManager.conflictDuplicate',
+      'buttons.duplicate',
     );
     expect(manager.getAttribute('data-conflict-replace-all')).toBe(
       'dialFileManager.conflictReplaceAll',
@@ -673,8 +688,8 @@ describe('DialFileManagerModal — tab navigation', () => {
     render(<DialFileManagerModal {...defaultProps} />);
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-tab-count')).toBe('3');
-    expect(screen.getByRole('button', { name: 'My files' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Shared with me' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'My Files' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Shared with Me' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Organization' })).toBeTruthy();
   });
 
@@ -687,7 +702,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     );
   });
 
-  it('passes My files as rootLabel for the My files tab', () => {
+  it('passes My Files as rootLabel for the My Files tab', () => {
     mockActiveTab.value = DialFileManagerTabs.MyFiles;
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
 
@@ -701,7 +716,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     );
   });
 
-  it('passes Shared with me as rootLabel for the Shared tab', () => {
+  it('passes Shared with Me as rootLabel for the Shared tab', () => {
     mockActiveTab.value = DialFileManagerTabs.Shared;
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
 
@@ -724,7 +739,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(mockUseDialFileManager).toHaveBeenCalledWith(
       expect.objectContaining({
         activeTab: DialFileManagerTabs.Organization,
-        rootLabel: 'dialFileManager.tab.organization',
+        rootLabel: 'basic.organization',
       }),
     );
   });
@@ -738,7 +753,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(screen.getByText('1 item selected')).toBeTruthy();
 
     // Switch tab — this should clear selectedPaths and call handleTabChange
-    fireEvent.click(screen.getByRole('button', { name: 'Shared with me' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Shared with Me' }));
 
     expect(mockHandleTabChange).toHaveBeenCalledWith(
       DialFileManagerTabs.Shared,
@@ -869,7 +884,7 @@ describe('DialFileManagerModal — sharedWithMeIds', () => {
     );
   });
 
-  it('passes undefined sharedWithMeIds on My files tab', () => {
+  it('passes undefined sharedWithMeIds on My Files tab', () => {
     mockUseDialFileManager.mockReturnValue({
       ...defaultHookResult,
       sharedWithMeIds: undefined,

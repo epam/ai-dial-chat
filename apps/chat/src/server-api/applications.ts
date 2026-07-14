@@ -12,3 +12,6 @@ export const createApplication = (
   body: CreateApplicationBodyDto,
 ): Promise<CreatedApplicationDto> =>
   applicationsApi.createApplication({ createApplicationBodyDto: body });
+
+export const deleteApplication = (applicationName: string): Promise<void> =>
+  applicationsApi.deleteApplication({ applicationName });

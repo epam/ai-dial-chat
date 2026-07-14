@@ -6,6 +6,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatch } from 'react-router-dom';
 import {
+  ButtonsI18nKeys,
   ConversationPanelI18nKeys,
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
@@ -67,7 +68,7 @@ const Header: FC<Props> = ({
               type="button"
               className="flex size-8 cursor-pointer items-center justify-center rounded-lg"
               onClick={onNewChat}
-              aria-label={t(ConversationPanelI18nKeys.NewChat)}
+              aria-label={t(ButtonsI18nKeys.NewChat)}
               tabIndex={isConversationPanelOpen ? -1 : 0}
             >
               {/* Self-contained SVG so gradient url() reference stays within the same SVG fragment */}
