@@ -1,21 +1,13 @@
 .tile {
-  /*
-   * bg-layer-2, not bg-layer-6 — the live theme API has no dark-theme value
-   * for --bg-layer-6 (see AttachmentGroup.module.scss), so bg-layer-2 is used
-   * instead to stay reactive in dark mode.
-   */
   background: var(--ci-more-tile-bg, var(--bg-layer-2, #161b2d));
   border-color: var(--ci-more-tile-border, var(--stroke-secondary, #d1dbea));
   color: var(--ci-more-tile-color, var(--text-secondary, #575f73));
 
-  /*
-   * Border-color matches the composer's own focus treatment exactly
-   * (Input.module.scss's `--ci-border-focus`: stroke-accent-primary at 50%
-   * opacity) — the same light blue, reused verbatim rather than the
-   * fully-opaque stroke-accent-primary this used before.
-   */
   &:hover {
-    background: var(--ci-more-tile-bg-hover, var(--bg-accent-primary-alpha, #7da4ff2e));
+    background: var(
+      --ci-more-tile-bg-hover,
+      var(--bg-accent-primary-alpha, #7da4ff2e)
+    );
     color: var(--ci-more-tile-color-hover, var(--bg-accent-primary, #2764d9));
     border-color: var(
       --ci-more-tile-border-hover,
@@ -24,6 +16,9 @@
   }
 
   &:focus-visible {
-    outline-color: var(--ci-more-tile-focus-outline, var(--controls-stroke-focus, #eef1f7));
+    outline-color: var(
+      --ci-more-tile-focus-outline,
+      var(--controls-stroke-focus, #eef1f7)
+    );
   }
 }

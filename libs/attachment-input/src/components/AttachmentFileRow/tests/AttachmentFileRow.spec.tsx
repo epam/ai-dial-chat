@@ -165,7 +165,7 @@ describe('AttachmentFileRow', () => {
   });
 
   describe('label parity with the composer', () => {
-    // The composer (AttachmentTray -> AttachmentCard) and a sent message
+    // The composer (Input -> AttachmentCard) and a sent message
     // (AttachmentGroup -> AttachmentFileRow) must show the exact same
     // extension label for the same attachment, since both are just
     // different presentations of the same file.

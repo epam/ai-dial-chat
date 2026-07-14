@@ -81,16 +81,6 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
       aria-label={ariaLabel}
       className={mergeClasses(
         'rounded-2xl border p-3',
-        // `w-full max-w-[492px]`, not a hard `w-[492px]`: on a viewport/
-        // parent narrower than 492px (mobile), a fixed width would force
-        // the whole group to overflow its container instead of shrinking to
-        // fit. `min-w-0` is required too — the message bubble's own
-        // shrink-to-fit (`w-fit`) ancestor otherwise treats this group's
-        // un-scrolled grid content as its intrinsic minimum width and never
-        // actually shrinks, since flex/grid items default to
-        // `min-width: auto`. The smaller (non-collapsible) case keeps
-        // hugging its content instead, since a lone small tile shouldn't
-        // stretch to fill 420px.
         isCollapsible ? 'w-full min-w-0 max-w-[492px]' : 'max-w-[420px]',
         styles.container,
         className,
@@ -99,16 +89,21 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
       <div className="mb-3 flex min-h-6 items-center gap-2">
         <HeaderIcon
           size={DIAL_ICON_SIZE.SM}
-          className="shrink-0 text-secondary"
+          className={mergeClasses('shrink-0', styles.headerIcon)}
           aria-hidden
         />
-        <span className="dial-tiny-semi-text text-secondary">
+        <span
+          className={mergeClasses('dial-tiny-semi-text', styles.headerLabel)}
+        >
           {headerLabel}
         </span>
         {attachments.length >= 2 && onAttachmentClick && (
           <DialGhostIconButton
             icon={<IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />}
-            className="ms-auto h-6 w-6 rounded-lg text-secondary"
+            className={mergeClasses(
+              'ms-auto h-6 w-6 rounded-lg',
+              styles.downloadAllButton,
+            )}
             aria-label={downloadAllLabel}
             onClick={handleDownloadAll}
           />
@@ -120,13 +115,6 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
         aria-label={headerLabel}
         className={mergeClasses(
           'gap-3',
-          // Fixed-size (not `fr`) column tracks (ATTACHMENT_COLLAPSED_
-          // VISIBLE_COUNT + 1 "+N" tile = 5) so the row width never changes
-          // between collapsed and expanded — expanding only adds rows,
-          // never widens the group. `overflow-x-auto` is the fallback for a
-          // parent narrower than the grid's own content width (mobile):
-          // tiles scroll horizontally at their real 84px size instead of
-          // shrinking/distorting or overflowing the page.
           isCollapsible
             ? 'grid grid-cols-[repeat(5,84px)] overflow-x-auto'
             : 'flex flex-wrap',
@@ -147,8 +135,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
                 retryLabel={retryLabel}
                 roundedClassName="rounded-xl"
                 showHoverDownloadIcon
-                colors={{ background: 'var(--bg-layer-3, #1d2439)' }}
-                className="h-[84px] w-[84px]"
+                className={mergeClasses('size-[84px]', styles.imageTile)}
               />
             ) : (
               <AttachmentFileRow

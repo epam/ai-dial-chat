@@ -18,7 +18,10 @@
   }
 
   &:focus-visible {
-    outline-color: var(--ci-tile-focus-outline, var(--controls-stroke-focus, #eef1f7));
+    outline-color: var(
+      --ci-tile-focus-outline,
+      var(--controls-stroke-focus, #eef1f7)
+    );
   }
 }
 
@@ -41,6 +44,23 @@
   &:hover {
     border-color: var(--ci-tile-border-error, var(--stroke-error, #f76464));
   }
+
+  .nameText,
+  .typeText {
+    color: var(--ci-tile-error-text, var(--text-error, #ae2f2f));
+  }
+}
+
+.nameText {
+  color: var(--ci-tile-name-text, var(--text-primary, #161b2d));
+}
+
+.typeText {
+  color: var(--ci-tile-type-text, var(--text-secondary, #575f73));
+}
+
+.retryIcon {
+  color: var(--ci-tile-error-text, var(--text-error, #ae2f2f));
 }
 
 .hoverIcon {

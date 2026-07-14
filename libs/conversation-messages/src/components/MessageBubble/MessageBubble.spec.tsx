@@ -179,7 +179,7 @@ describe('UserMessageBubble — attachments', () => {
 
   it('renders an attachment tray when attachments are provided', () => {
     render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
-    // AttachmentTray renders a list role
+    // AttachmentGroup renders a list role
     expect(screen.getByRole('list')).toBeTruthy();
   });
 

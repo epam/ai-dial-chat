@@ -88,7 +88,7 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
       title={name}
       className={mergeClasses(
         'dial-caption-text line-clamp-2 min-w-0 break-words',
-        isError ? 'text-error' : 'text-primary',
+        styles.nameText,
         !isError && cornerIconSpacing,
       )}
     >
@@ -103,16 +103,9 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
         isError && cornerIconSpacing,
       )}
     >
-      <Glyph
-        size={16}
-        className={isError ? 'text-error' : 'text-secondary'}
-        aria-hidden
-      />
+      <Glyph size={16} className={styles.typeText} aria-hidden />
       <span
-        className={mergeClasses(
-          'dial-caption-text truncate',
-          isError ? 'text-error' : 'text-secondary',
-        )}
+        className={mergeClasses('dial-caption-text truncate', styles.typeText)}
       >
         {typeLabel}
       </span>
@@ -166,7 +159,10 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
         <DialGhostIconButton
           icon={<IconReload size={DIAL_ICON_SIZE.SM} aria-hidden />}
           size={ElementSize.Small}
-          className="absolute end-1 top-1 h-6 w-6 rounded-lg text-error"
+          className={mergeClasses(
+            'absolute end-1 top-1 h-6 w-6 rounded-lg',
+            styles.retryIcon,
+          )}
           aria-label={retryLabel}
           onClick={(e: MouseEvent) => {
             e.stopPropagation();

@@ -352,12 +352,6 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             />
           )}
           {showHoverDownloadIcon && !onRemove && !isError && (
-            /*
-             * Decorative only — the whole card is already the click target
-             * (see `isInteractive`/`handleCardClick` below), so this icon
-             * carries no separate click handler or accessible name to avoid
-             * a duplicate-named nested interactive element.
-             */
             <IconDownload
               size={DIAL_ICON_SIZE.SM}
               aria-hidden

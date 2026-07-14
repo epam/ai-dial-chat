@@ -1,5 +1,7 @@
-import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
-import { triggerAnchorDownload } from '@epam/ai-dial-chat-shared';
+import {
+  type DisplayAttachment,
+  triggerAnchorDownload,
+} from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import {
   isDialFileId,

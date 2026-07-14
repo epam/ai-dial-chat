@@ -25,12 +25,6 @@ export const AttachmentMoreTile: FC<AttachmentMoreTileProps> = ({
       className,
     )}
   >
-    {/*
-     * `<bdi dir="ltr">`, not a bare string: in RTL, the bidi algorithm
-     * otherwise reorders "+3" to visually read "3+" (the "+" is a weak
-     * character that follows the surrounding paragraph direction unless
-     * isolated). This keeps the badge "+3" regardless of page direction.
-     */}
     {children ?? <bdi dir="ltr">{`+${count}`}</bdi>}
   </button>
 );
