@@ -7,6 +7,7 @@ import {
 import { IconCopy } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import type { QuotationSource } from '../../models/quotation-source';
+import styles from './SourcesSection.module.scss';
 
 interface SourcesSectionProps {
   /** Heading text for the sources section. */
@@ -19,9 +20,9 @@ interface SourcesSectionProps {
   searchQuery?: string;
   /** CSS class applied to the section heading. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
-  /** CSS class applied to each source link. Defaults to `'dial-small-text !text-accent-primary'`. */
+  /** CSS class applied to each source link. Defaults to `'dial-small-text'`. */
   linkClassName?: string;
-  /** CSS class applied to the quote text. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** CSS class applied to the quote text. Defaults to `'dial-tiny-text'`. */
   quoteClassName?: string;
   /** When provided, called on source link click instead of following the href. */
   onSourceClick?: (source: QuotationSource) => void;
@@ -33,8 +34,8 @@ const SourcesSection: FC<SourcesSectionProps> = ({
   copyLabel,
   searchQuery = '',
   titleClassName = 'dial-body-semi-text',
-  linkClassName = 'dial-small-text !text-accent-primary',
-  quoteClassName = 'dial-tiny-text text-secondary',
+  linkClassName = 'dial-small-text',
+  quoteClassName = 'dial-tiny-text',
   onSourceClick,
 }) => {
   if (sources.length === 0) {
@@ -54,6 +55,7 @@ const SourcesSection: FC<SourcesSectionProps> = ({
                 rel="noopener noreferrer"
                 className={mergeClasses(
                   linkClassName,
+                  styles.link,
                   'min-w-0 flex-1 truncate',
                 )}
                 onClick={
@@ -86,6 +88,7 @@ const SourcesSection: FC<SourcesSectionProps> = ({
               <p
                 className={mergeClasses(
                   quoteClassName,
+                  styles.quote,
                   'line-clamp-5 max-h-[80px] overflow-hidden',
                 )}
               >

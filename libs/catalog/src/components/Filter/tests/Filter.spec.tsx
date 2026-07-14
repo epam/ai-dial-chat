@@ -18,7 +18,6 @@ vi.mock('../Filter.module.scss', () => ({
     sectionLabel: 'sectionLabel',
     topicsList: 'topicsList',
     footer: 'footer',
-    clearBtn: 'clearBtn',
     applyBtn: 'applyBtn',
     filterBtnFunnel: 'filterBtnFunnel',
     filterBtnLabel: 'filterBtnLabel',

@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { PrimaryButton } from '@epam/ai-dial-kit';
+import { GhostButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DialDropdown } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconFilter } from '@tabler/icons-react';
 import {
@@ -248,7 +248,7 @@ export const Filter: FC<FilterProps> = ({
               >
                 {topicsLabel}
               </div>
-              <div className="max-h-[220px] overflow-y-auto">
+              <div className="flex max-h-[220px] flex-col gap-1 overflow-y-auto">
                 {topics.map((topic, i) => {
                   const isChecked = pendingChecked.has(topic);
                   const idx = i + 1;
@@ -298,16 +298,8 @@ export const Filter: FC<FilterProps> = ({
               }
             }}
           >
-            <button
-              type="button"
-              className={mergeClasses(
-                'cursor-pointer rounded-lg border-none bg-transparent px-3 py-[7px]',
-                styles.clearBtn,
-              )}
-              onClick={handleClear}
-            >
-              {clearLabel}
-            </button>
+            <GhostButton label={clearLabel} onClick={handleClear} />
+
             <PrimaryButton
               label={applyLabel}
               className="ms-auto"
