@@ -1190,6 +1190,7 @@ describe('FilesController — copyFiles', () => {
             bucket: 'user-files',
             sourcePath: 'reports/q1.pdf',
             destinationPath: 'archive/q1.pdf',
+            overwrite: true,
             nodeType: 'item',
             name: 'q1.pdf',
           },
@@ -1203,6 +1204,7 @@ describe('FilesController — copyFiles', () => {
         expect.objectContaining({
           sourcePath: 'reports/q1.pdf',
           destinationPath: 'archive/q1.pdf',
+          overwrite: true,
           nodeType: 'item',
         }),
       ]),
@@ -1317,6 +1319,7 @@ describe('FilesController — moveFiles', () => {
             bucket: 'user-files',
             sourcePath: 'inbox/draft.pdf',
             destinationPath: 'reports/draft.pdf',
+            overwrite: true,
             nodeType: 'item',
             name: 'draft.pdf',
           },
@@ -1330,6 +1333,7 @@ describe('FilesController — moveFiles', () => {
         expect.objectContaining({
           sourcePath: 'inbox/draft.pdf',
           destinationPath: 'reports/draft.pdf',
+          overwrite: true,
           nodeType: 'item',
         }),
       ]),

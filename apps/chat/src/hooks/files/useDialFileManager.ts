@@ -1447,6 +1447,7 @@ export const useDialFileManager = ({
                 ? destinationPath
                 : `${destinationPath}/`
               : destinationPath.replace(/\/$/, ''),
+            overwrite: item.overwrite === true,
             nodeType: isFolder
               ? CopyItemDtoNodeTypeEnum.Folder
               : CopyItemDtoNodeTypeEnum.Item,
@@ -1538,6 +1539,7 @@ export const useDialFileManager = ({
         return {
           isFolder,
           name,
+          overwrite: item.overwrite === true,
           sourcePath: normalizedSourcePath,
           destinationPath: normalizedDestinationPath,
           sourceParent: getParentFolderPath(normalizedSourcePath),
@@ -1563,6 +1565,7 @@ export const useDialFileManager = ({
           bucket,
           sourcePath: b.sourcePath,
           destinationPath: b.destinationPath,
+          overwrite: b.overwrite,
           nodeType: b.isFolder
             ? MoveItemDtoNodeTypeEnum.Folder
             : MoveItemDtoNodeTypeEnum.Item,

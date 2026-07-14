@@ -1822,6 +1822,46 @@ describe('useDialFileManager', () => {
       expect(mockRenameFiles).not.toHaveBeenCalled();
     });
 
+    it('passes overwrite=true from conflict resolution to moveFiles', async () => {
+      mockMoveFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'inbox/draft.pdf',
+            destinationPath: 'reports/draft.pdf',
+            success: true,
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onMoveToFiles(
+          [
+            {
+              sourceUrl: '/My files/inbox/draft.pdf',
+              destinationUrl: '/My files/reports/draft.pdf',
+              overwrite: true,
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files/inbox',
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() => expect(mockMoveFiles).toHaveBeenCalledOnce());
+      expect(mockMoveFiles).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            destinationPath: 'reports/draft.pdf',
+            overwrite: true,
+          }),
+        ],
+        expect.anything(),
+      );
+    });
+
     it('calls both renameFiles and moveFiles for a mixed batch and merges the failure toast', async () => {
       mockRenameFiles.mockResolvedValue({
         results: [
@@ -1950,6 +1990,45 @@ describe('useDialFileManager', () => {
         [
           expect.objectContaining({
             destinationPath: 'folder_for_test_copy_1/img.png',
+          }),
+        ],
+        expect.anything(),
+      );
+    });
+
+    it('passes overwrite=true from conflict resolution to copyFiles', async () => {
+      mockCopyFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'requirements.txt',
+            destinationPath: 'Folder1/requirements.txt',
+            success: true,
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onCopyFiles(
+          [
+            {
+              sourceUrl: '/My files/requirements.txt',
+              destinationUrl: '/My files/Folder1/requirements.txt',
+              overwrite: true,
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files/Folder1',
+        );
+      });
+
+      await waitFor(() => expect(mockCopyFiles).toHaveBeenCalledOnce());
+      expect(mockCopyFiles).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            destinationPath: 'Folder1/requirements.txt',
+            overwrite: true,
           }),
         ],
         expect.anything(),

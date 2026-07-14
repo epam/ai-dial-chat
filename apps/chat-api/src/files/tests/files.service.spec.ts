@@ -1866,6 +1866,19 @@ describe('FilesService', () => {
       );
     });
 
+    it('passes overwrite=true to DIAL Core copyResource when requested', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.copyResource.mockResolvedValue(okCopy());
+
+      await service.copyFiles([singleFileItem({ overwrite: true })], 'token');
+
+      expect(sdkClient.copyResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({ overwrite: true }),
+        }),
+      );
+    });
+
     it('returns success=false with "Conflict" for DIAL Core 409', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.copyResource.mockResolvedValue(errCopy(409));
@@ -2117,6 +2130,19 @@ describe('FilesService', () => {
             destinationUrl: 'files/user-files/reports/draft.pdf',
             overwrite: false,
           }),
+        }),
+      );
+    });
+
+    it('passes overwrite=true to DIAL Core moveResource when requested', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.moveResource.mockResolvedValue(okMove());
+
+      await service.moveFiles([singleFileItem({ overwrite: true })], 'token');
+
+      expect(sdkClient.moveResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({ overwrite: true }),
         }),
       );
     });

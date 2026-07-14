@@ -1,9 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -50,6 +51,15 @@ export class MoveItemDto {
     example: 'reports/draft.pdf',
   })
   destinationPath!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @ApiPropertyOptional({
+    description: 'Whether to overwrite an existing destination resource',
+    default: false,
+    example: true,
+  })
+  overwrite?: boolean;
 
   @IsEnum(MoveItemNodeType)
   @ApiProperty({ enum: MoveItemNodeType })

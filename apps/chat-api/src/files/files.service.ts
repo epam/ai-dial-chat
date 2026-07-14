@@ -1267,6 +1267,7 @@ export class FilesService {
         item.bucket,
         item.sourcePath,
         item.destinationPath,
+        item.overwrite === true,
         at,
       );
     }
@@ -1274,6 +1275,7 @@ export class FilesService {
       item.bucket,
       item.sourcePath,
       item.destinationPath,
+      item.overwrite === true,
       at,
     );
   }
@@ -1282,6 +1284,7 @@ export class FilesService {
     bucket: string,
     sourcePath: string,
     destPath: string,
+    overwrite: boolean,
     at: string,
   ): Promise<CopyItemResultDto> {
     const sourceUrl = buildDialFileResourceUrl(bucket, sourcePath);
@@ -1290,7 +1293,7 @@ export class FilesService {
     try {
       const { error, response } = (await this.dialClient.client.copyResource({
         headers: getBearerAuthHeaders(at),
-        body: { sourceUrl, destinationUrl, overwrite: false },
+        body: { sourceUrl, destinationUrl, overwrite },
         signal: AbortSignal.timeout(this.getTimeoutMs()),
       })) as { error?: unknown; response: { status: number } };
 
@@ -1326,6 +1329,7 @@ export class FilesService {
     bucket: string,
     sourceFolderPath: string,
     destFolderPath: string,
+    overwrite: boolean,
     at: string,
   ): Promise<CopyItemResultDto> {
     const srcPrefix = sourceFolderPath.endsWith('/')
@@ -1358,6 +1362,7 @@ export class FilesService {
         bucket,
         child.path,
         destChildPath,
+        overwrite,
         at,
       );
       if (!result.success) {
@@ -1407,6 +1412,7 @@ export class FilesService {
         item.bucket,
         item.sourcePath,
         item.destinationPath,
+        item.overwrite === true,
         at,
       );
     }
@@ -1414,6 +1420,7 @@ export class FilesService {
       item.bucket,
       item.sourcePath,
       item.destinationPath,
+      item.overwrite === true,
       at,
     );
   }
@@ -1422,6 +1429,7 @@ export class FilesService {
     bucket: string,
     sourcePath: string,
     destPath: string,
+    overwrite: boolean,
     at: string,
   ): Promise<MoveItemResultDto> {
     const sourceUrl = buildDialFileResourceUrl(bucket, sourcePath);
@@ -1430,7 +1438,7 @@ export class FilesService {
     try {
       const { error, response } = (await this.dialClient.client.moveResource({
         headers: getBearerAuthHeaders(at),
-        body: { sourceUrl, destinationUrl, overwrite: false },
+        body: { sourceUrl, destinationUrl, overwrite },
         signal: AbortSignal.timeout(this.getTimeoutMs()),
       })) as { error?: unknown; response: { status: number } };
 
@@ -1466,6 +1474,7 @@ export class FilesService {
     bucket: string,
     sourceFolderPath: string,
     destFolderPath: string,
+    overwrite: boolean,
     at: string,
   ): Promise<MoveItemResultDto> {
     const srcPrefix = sourceFolderPath.endsWith('/')
@@ -1498,6 +1507,7 @@ export class FilesService {
         bucket,
         child.path,
         destChildPath,
+        overwrite,
         at,
       );
       if (!result.success) {
