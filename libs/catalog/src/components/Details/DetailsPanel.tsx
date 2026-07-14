@@ -33,6 +33,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onShare,
   shareOverlay,
   onEdit,
+  onDelete,
   onLogin,
   onLogout,
   texts,
@@ -194,6 +195,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             onShare={onShare}
             shareOverlay={shareOverlay}
             onEdit={onEdit}
+            onDelete={onDelete}
+            onCloseDetails={onClose}
             onLogin={onLogin}
             onLogout={onLogout}
             onToggleCredentials={handleToggleCredentials}

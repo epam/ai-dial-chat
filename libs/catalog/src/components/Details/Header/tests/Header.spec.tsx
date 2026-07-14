@@ -46,6 +46,19 @@ vi.mock('../ShareButton/ShareButton', () => ({
     <button>{label ?? 'Share'}</button>
   ),
 }));
+vi.mock('../DeleteButton/DeleteButton', () => ({
+  DeleteButton: ({
+    onDelete,
+    texts,
+  }: {
+    onDelete?: (item: CatalogItem) => void;
+    texts?: { deleteActionLabel?: string };
+  }) => (
+    <button onClick={() => onDelete?.({} as CatalogItem)}>
+      {texts?.deleteActionLabel ?? 'Delete'}
+    </button>
+  ),
+}));
 
 const makeItem = (type: CatalogEntityType): CatalogItem => ({
   id: '1',
@@ -184,6 +197,39 @@ describe('Header', () => {
     render(<Header item={item} onEdit={onEdit} />);
     await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
     expect(onEdit).toHaveBeenCalledWith(item);
+  });
+
+  it('renders the Delete button', () => {
+    render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
+  });
+
+  it('passes texts.deleteActionLabel through to the Delete button label', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        texts={{ deleteActionLabel: 'Remove' }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeTruthy();
+  });
+
+  it('calls onDelete with the item when Delete is clicked', async () => {
+    const onDelete = vi.fn();
+    const item = makeItem(CatalogEntityType.Toolset);
+    render(<Header item={item} onDelete={onDelete} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(onDelete).toHaveBeenCalled();
+  });
+
+  it('positions Delete immediately after Share in the action row', () => {
+    render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
+    const labels = screen
+      .getAllByRole('button')
+      .map((button) => button.textContent);
+    const shareIndex = labels.indexOf('Share');
+    const deleteIndex = labels.indexOf('Delete');
+    expect(deleteIndex).toBe(shareIndex + 1);
   });
 
   it('does not render a credentials button when the item has no credentials', () => {
