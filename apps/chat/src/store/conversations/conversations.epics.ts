@@ -1138,31 +1138,51 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 ? ConversationService.deleteConversation(
                     getConversationInfoFromId(id),
                   ).pipe(
-                    map(() => null),
+                    map(() => ({ name: null, alreadyDeletedName: null })),
                     catchError((err) => {
                       const { name } = getConversationInfoFromId(id);
+                      if ((err as { status?: number })?.status === 404) {
+                        return of({ name: null, alreadyDeletedName: name });
+                      }
                       !suppressErrorMessage &&
                         console.error(`Error during deleting "${name}"`, err);
-                      return of(name);
+                      return of({ name, alreadyDeletedName: null });
                     }),
                   )
-                : of(null),
+                : of({ name: null, alreadyDeletedName: null }),
             ),
           ).pipe(
-            switchMap((failedNames) =>
-              concat(
+            switchMap((results) => {
+              const failedNames = results
+                .map((result) => result.name)
+                .filter(Boolean) as string[];
+              const hasAlreadyDeleted = results.some(
+                (result) => result.alreadyDeletedName,
+              );
+
+              return concat(
                 iif(
-                  () =>
-                    failedNames.filter(Boolean).length > 0 &&
-                    !suppressErrorMessage,
+                  () => failedNames.length > 0 && !suppressErrorMessage,
                   of(
                     UIActions.showErrorToast({
                       message: translate(
                         ChatI18nKeys.ErrorDeletingConversations,
                         {
                           ns: Translation.Chat,
-                          failedNames: failedNames.filter(Boolean).join('", "'),
+                          failedNames: failedNames.join('", "'),
                         },
+                      ),
+                    }),
+                  ),
+                  EMPTY,
+                ),
+                iif(
+                  () => hasAlreadyDeleted && !suppressErrorMessage,
+                  of(
+                    UIActions.showErrorToast({
+                      message: translate(
+                        ChatI18nKeys.ConversationHasBeenDeleted,
+                        { ns: Translation.Chat },
                       ),
                     }),
                   ),
@@ -1173,8 +1193,8 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                     conversationIds,
                   }),
                 ),
-              ),
-            ),
+              );
+            }),
           ),
           ...actions,
         );
@@ -2889,7 +2909,10 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
           getOrUploadConversation({ id }, state$.value).pipe(
             map((result) => result.conversation),
             catchError((err) => {
-              console.error('The selected conversation was not found:', err);
+              console.warn(
+                'The selected conversation was not found:',
+                err instanceof Error ? err.message : err,
+              );
               return of(null);
             }),
           ),
@@ -3915,7 +3938,10 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
         lastConversation: !wasAlreadyUploaded
           ? ConversationService.getConversation(lastConversation!).pipe(
               catchError((err) => {
-                console.error('The last used conversation was not found:', err);
+                console.warn(
+                  'The last used conversation was not found:',
+                  err instanceof Error ? err.message : err,
+                );
                 return of(null);
               }),
             )
