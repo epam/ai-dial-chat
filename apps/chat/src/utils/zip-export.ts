@@ -57,7 +57,7 @@ export const buildDialArchive = (
 
   const zipped = zipSync(files);
   return {
-    blob: new Blob([zipped], { type: 'application/zip' }),
+    blob: new Blob([new Uint8Array(zipped)], { type: 'application/zip' }),
     skippedPaths,
   };
 };
