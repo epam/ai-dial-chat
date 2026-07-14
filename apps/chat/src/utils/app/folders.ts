@@ -789,7 +789,11 @@ export const getPartialAndFullyChosenFolders = (
     )
     .filter(
       (folderId) =>
-        (directContainerSet.size === 0 || directContainerSet.has(folderId)) &&
+        (directContainerSet.size === 0 ||
+          directContainerSet.has(folderId) ||
+          [...directContainerSet].some((directContainerFolderId) =>
+            directContainerFolderId.startsWith(folderId),
+          )) &&
         items
           .filter((item) => item.id.startsWith(folderId))
           .every((item) => selectedItems.includes(item.id)) &&
