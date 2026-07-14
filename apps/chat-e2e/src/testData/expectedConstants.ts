@@ -661,6 +661,12 @@ export const Import = {
   importAttachmentExtension: '.dial',
 };
 
+export const PdfViewerZoom = {
+  auto: 'Auto',
+  pageFit: 'Page Fit',
+  percent: (value: number) => `${value}%`,
+};
+
 export const Attachment = {
   attachmentPath: path.resolve(__dirname, 'attachments'),
   sunImageName: 'sun.jpg',

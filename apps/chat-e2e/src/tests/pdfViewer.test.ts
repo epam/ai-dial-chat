@@ -1,7 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
-import { Attachment } from '@/src/testData';
+import { Attachment, PdfViewerZoom } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
@@ -185,6 +185,111 @@ dialTest(
       async () => {
         await pdfPreviewModal.titleContainer.hoverOver();
         await toastAssertion.assertToastIsHidden();
+      },
+    );
+  },
+);
+
+dialTest(
+  'PDF viewer: default Auto and change to another percentage and then to Page Fit',
+  async ({
+    dialHomePage,
+    conversationData,
+    dataInjector,
+    fileApiHelper,
+    localStorageManager,
+    conversations,
+    chatMessages,
+    pdfPreviewModal,
+    pdfPreviewModalAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-8983');
+    const requestMessageIndex = 1;
+    const firstPage = 1;
+    let conversationWithPdfAttachment: Conversation;
+    let widthAtHundredPercent: number;
+
+    await dialTest.step(
+      'Create conversation with a pdf attachment in the request via API',
+      async () => {
+        const pdfUrl = await fileApiHelper.putFile(Attachment.pdfName);
+        conversationWithPdfAttachment =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            defaultModel,
+            'analyze the attached document',
+            undefined,
+            pdfUrl,
+          );
+        await dataInjector.createConversations([conversationWithPdfAttachment]);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open conversation with the pdf attachment',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversationWithPdfAttachment.name);
+      },
+    );
+
+    await dialTest.step(
+      'Click on the pdf document in the chat history and verify Auto zoom is set by default with no horizontal scroll',
+      async () => {
+        await chatMessages.expandChatMessageAttachment(
+          requestMessageIndex,
+          Attachment.pdfName,
+        );
+        await pdfPreviewModalAssertion.assertPdfPreviewModalState('visible');
+        await pdfPreviewModalAssertion.assertZoomSelectValue(
+          PdfViewerZoom.auto,
+        );
+        await pdfPreviewModalAssertion.assertViewerHorizontalScrollState(
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select a zoom level from the dropdown (50%-200%) and verify the doc is zoomed accordingly',
+      async () => {
+        const initScaleValue = 100;
+        const initScale = PdfViewerZoom.percent(initScaleValue);
+        await pdfPreviewModal.zoomSelect.click();
+        await pdfPreviewModal.selectZoomOption(initScale);
+        await pdfPreviewModalAssertion.assertZoomSelectValue(initScale);
+        const pageBoxAtHundredPercent = await pdfPreviewModal
+          .getPdfPage(firstPage)
+          .getElementBoundingBox();
+        widthAtHundredPercent = pageBoxAtHundredPercent!.width;
+
+        const updatedScaleValue = 50;
+        const updatedScale = PdfViewerZoom.percent(updatedScaleValue);
+        await pdfPreviewModal.zoomSelect.click();
+        await pdfPreviewModal.selectZoomOption(updatedScale);
+        await pdfPreviewModalAssertion.assertZoomSelectValue(updatedScale);
+        await pdfPreviewModalAssertion.assertPageZoomedProportionally(
+          firstPage,
+          widthAtHundredPercent,
+          initScaleValue / 100,
+          updatedScaleValue / 100,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select Page Fit zoom level and verify the doc fits the entire page into the viewport',
+      async () => {
+        await pdfPreviewModal.zoomSelect.click();
+        await pdfPreviewModal.selectZoomOption(PdfViewerZoom.pageFit);
+        await pdfPreviewModalAssertion.assertZoomSelectValue(
+          PdfViewerZoom.pageFit,
+        );
+        await pdfPreviewModalAssertion.assertViewerHorizontalScrollState(
+          'hidden',
+        );
       },
     );
   },

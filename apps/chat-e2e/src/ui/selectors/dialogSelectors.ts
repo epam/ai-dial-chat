@@ -440,6 +440,9 @@ export const PdfPreviewModalSelectors = {
   titleValue: '#name-value',
   pagesSidebar: '[data-qa="pages-sidebar"]',
   pageThumbnail: (pageNumber: number) => `button[data-page="${pageNumber}"]`,
+  viewerContainer: '[data-qa="pdf-viewer-container"]',
+  zoomSelect: '[aria-controls="list-zoom-select"]',
+  pdfPage: (pageNumber: number) => `[data-page-number="${pageNumber}"]`,
 };
 
 export const ReplaceConfirmationModalSelectors = {

@@ -310,6 +310,8 @@ export const ExpectedMessages = {
   pdfViewerTitleIsValid: 'PDF viewer title is valid',
   pdfViewerPagesSidebarTitleIsValid: 'PDF viewer Pages sidebar title is valid',
   pdfViewerPagesSidebarIsScrollable: 'PDF viewer Pages sidebar is scrollable',
+  pdfViewerZoomLevelIsValid: 'PDF viewer zoom level is valid',
+  pdfViewerPageZoomSizeIsValid: 'PDF viewer page zoom size is valid',
   supportedTypesLabelIsCorrect: 'Supported types label is valid',
   fileIsUploaded: 'File is uploaded',
   fileIsNotUploaded: 'File is not uploaded',

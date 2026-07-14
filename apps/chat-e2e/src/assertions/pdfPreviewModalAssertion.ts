@@ -3,6 +3,7 @@ import { ElementState, ExpectedMessages } from '@/src/testData';
 import { AttributeValues, ThemeColorAttributes } from '@/src/ui/domData';
 import { PdfPreviewModal } from '@/src/ui/webElements';
 import { ThemesUtil } from '@/src/utils/themesUtil';
+import { expect } from '@playwright/test';
 
 export class PdfPreviewModalAssertion extends BaseAssertion {
   private readonly pdfPreviewModal: PdfPreviewModal;
@@ -82,5 +83,47 @@ export class PdfPreviewModalAssertion extends BaseAssertion {
       this.pdfPreviewModal.getPageThumbnail(pageNumber),
       ThemesUtil.getRgbColorByKey(ThemeColorAttributes.strokePrimary),
     );
+  }
+
+  public async assertZoomSelectValue(expectedValue: string) {
+    await this.assertElementContainsText(
+      this.pdfPreviewModal.zoomSelect,
+      expectedValue,
+      ExpectedMessages.pdfViewerZoomLevelIsValid,
+    );
+  }
+
+  public async assertViewerHorizontalScrollState(expectedState: ElementState) {
+    const hasHorizontalScroll =
+      await this.pdfPreviewModal.viewerContainer.isElementWidthTruncated();
+    expectedState === 'visible'
+      ? expect
+          .soft(hasHorizontalScroll, ExpectedMessages.horizontalScrollIsVisible)
+          .toBeTruthy()
+      : expect
+          .soft(
+            hasHorizontalScroll,
+            ExpectedMessages.horizontalScrollIsNotVisible,
+          )
+          .toBeFalsy();
+  }
+
+  public async assertPageZoomedProportionally(
+    pageNumber: number,
+    baseWidth: number,
+    baseZoomRatio: number,
+    targetZoomRatio: number,
+  ) {
+    const pageBox = await this.pdfPreviewModal
+      .getPdfPage(pageNumber)
+      .getElementBoundingBox();
+    const expectedWidth = (baseWidth / baseZoomRatio) * targetZoomRatio;
+    const tolerance = expectedWidth * 0.05;
+    expect
+      .soft(pageBox!.width, ExpectedMessages.pdfViewerPageZoomSizeIsValid)
+      .toBeGreaterThanOrEqual(expectedWidth - tolerance);
+    expect
+      .soft(pageBox!.width, ExpectedMessages.pdfViewerPageZoomSizeIsValid)
+      .toBeLessThanOrEqual(expectedWidth + tolerance);
   }
 }
