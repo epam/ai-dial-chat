@@ -12,6 +12,8 @@ export interface SendButtonProps {
   ariaLabel?: string;
   /** Tooltip shown on hover. */
   title?: string;
+  /** Whether the button is in the process of exiting (e.g., during an animation). */
+  isExiting?: boolean;
 }
 
 export const SendButton: FC<SendButtonProps> = ({
@@ -19,18 +21,21 @@ export const SendButton: FC<SendButtonProps> = ({
   isDisabled = false,
   ariaLabel = 'Send message',
   title,
+  isExiting = false,
 }) => {
   return (
     <DialTooltip tooltip={title} hideTooltip={!title}>
       <button
         className={mergeClasses(
-          styles.sendButton,
           'flex size-[32px] cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed',
+          styles.sendButton,
+          isExiting && styles.sendButtonExiting,
         )}
         aria-label={ariaLabel}
         onClick={() => onSend?.()}
         type="button"
         disabled={isDisabled}
+        aria-hidden={isExiting}
       >
         <IconArrowNarrowRight size={DIAL_ICON_SIZE.LG} />
       </button>

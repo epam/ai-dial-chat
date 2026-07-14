@@ -5,7 +5,7 @@ import type {
   MessageAttachment,
   PdfBBoxSelector,
 } from '@epam/ai-dial-chat-shared';
-import { MIMEType } from '@epam/ai-dial-chat-shared';
+import { MIMEType, triggerAnchorDownload } from '@epam/ai-dial-chat-shared';
 import type {
   HighlightStyle,
   InputHighlightData,
@@ -176,10 +176,10 @@ export const openAnnotationAttachment = (
   if (isDialFileId(fileId)) {
     const downloadUrl = resolveDialFileDownloadUrl(fileId);
     if (downloadUrl == null) return;
-    const anchor = document.createElement('a');
-    anchor.href = downloadUrl;
-    anchor.download = attachment.title ?? fileId.split('/').pop() ?? '';
-    anchor.click();
+    triggerAnchorDownload(
+      downloadUrl,
+      attachment.title ?? fileId.split('/').pop() ?? '',
+    );
   } else {
     window.open(url, '_blank', 'noopener,noreferrer');
   }

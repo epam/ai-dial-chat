@@ -1,5 +1,8 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
-import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import {
+  type DisplayAttachment,
+  triggerAnchorDownload,
+} from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import { openAnnotationAttachment } from '../../utils/annotation';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
@@ -26,10 +29,7 @@ export const useAttachmentAction = () => {
         if (!isDialFileId(url)) return;
         const downloadUrl = resolveDialFileDownloadUrl(url);
         if (downloadUrl == null) return;
-        const anchor = document.createElement('a');
-        anchor.href = downloadUrl;
-        anchor.download = name;
-        anchor.click();
+        triggerAnchorDownload(downloadUrl, name);
         return;
       }
 
