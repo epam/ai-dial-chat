@@ -7,7 +7,7 @@ import type {
 import type { ReactNode } from 'react';
 import type { Components } from 'react-markdown';
 import type { BubblePosition } from '../types/bubble-position';
-import type { MessageActionsProps } from './MessageActions';
+import type { MessageActionsProps } from './message-actions';
 
 /** CSS custom-property overrides for message bubble components. */
 export interface MessageBubbleColors {

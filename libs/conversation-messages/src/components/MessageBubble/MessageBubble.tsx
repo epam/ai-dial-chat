@@ -1,6 +1,6 @@
 import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { MessageBubbleProps } from '../../models/MessageBubble';
+import type { MessageBubbleProps } from '../../models/message-bubble';
 import { AssistantMessageBubble } from './AssistantMessageBubble';
 import { StatusMessageBubble } from './StatusMessageBubble';
 import { UserMessageBubble } from './UserMessageBubble';

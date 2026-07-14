@@ -1,16 +1,15 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { MessageSourceProps } from '../../models/MessageSource';
+import type { MessageSourceProps } from '../../models/message-source';
 import styles from './MessageSource.module.scss';
 
 /** Styled pill button for a message source reference. */
 export const MessageSource: FC<MessageSourceProps> = ({
   label,
-  className,
   onClick,
   styles: sourceStyles,
 }) => {
-  const { colors, typography } = sourceStyles ?? {};
+  const { colors, typography, className } = sourceStyles ?? {};
   const cssVars = buildCssVars({
     '--cm-source-bg': colors?.background,
     '--cm-source-border': colors?.border,

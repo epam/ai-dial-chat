@@ -13,11 +13,11 @@ import {
   waitFor,
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BubblePosition } from '../../types/bubble-position';
-import { AssistantMessageBubble } from './AssistantMessageBubble';
-import { MessageBubble } from './MessageBubble';
-import { StatusMessageBubble } from './StatusMessageBubble';
-import { UserMessageBubble } from './UserMessageBubble';
+import { BubblePosition } from '../../../types/bubble-position';
+import { AssistantMessageBubble } from '../AssistantMessageBubble';
+import { MessageBubble } from '../MessageBubble';
+import { StatusMessageBubble } from '../StatusMessageBubble';
+import { UserMessageBubble } from '../UserMessageBubble';
 
 const ATTACHMENT: DisplayAttachment = {
   id: 'report.pdf',

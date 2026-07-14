@@ -9,8 +9,8 @@ import {
 import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
-import type { AssistantMessageBubbleProps } from '../../models/MessageBubble';
-import { MessageActions } from '../Message/MessageActions';
+import type { AssistantMessageBubbleProps } from '../../models/message-bubble';
+import { MessageActions } from '../MessageActions/MessageActions';
 import styles from './MessageBubble.module.scss';
 
 /** Assistant-authored message bubble, left-aligned with markdown content and optional quick-reply starters. */

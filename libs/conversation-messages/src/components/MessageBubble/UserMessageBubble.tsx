@@ -12,9 +12,9 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { FC } from 'react';
-import type { UserMessageBubbleProps } from '../../models/MessageBubble';
+import type { UserMessageBubbleProps } from '../../models/message-bubble';
 import { BubblePosition } from '../../types/bubble-position';
-import { MessageActions } from '../Message/MessageActions';
+import { MessageActions } from '../MessageActions/MessageActions';
 import styles from './MessageBubble.module.scss';
 
 const DEFAULT_COLLAPSED_LINE_COUNT = 10;
