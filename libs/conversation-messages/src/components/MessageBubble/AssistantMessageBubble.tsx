@@ -32,6 +32,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   thinkingLabel,
   markdownComponents,
   onAttachmentClick,
+  onDownloadAll,
   attachmentClickLabel,
   onAttachmentRetry,
   attachmentRetryLabel,
@@ -95,6 +96,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           <AttachmentGroup
             attachments={visibleAttachments}
             onAttachmentClick={onAttachmentClick}
+            onDownloadAll={onDownloadAll}
             onRetry={onAttachmentRetry}
             clickLabel={attachmentClickLabel}
             retryLabel={attachmentRetryLabel}

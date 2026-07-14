@@ -163,6 +163,12 @@ const ConversationMessageItem: FC<Props> = ({
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
   const { handleAttachmentClick: handleDownload } = useAttachmentAction();
   const handleAttachmentClick = onAttachmentClickProp ?? handleDownload;
+  const handleDownloadAll = useCallback(
+    (attachmentsToDownload: DisplayAttachment[]) => {
+      attachmentsToDownload.forEach(handleDownload);
+    },
+    [handleDownload],
+  );
   const isStreaming = isStreamingMessage(
     msg.role,
     index,
@@ -220,6 +226,7 @@ const ConversationMessageItem: FC<Props> = ({
               showMoreAriaLabel={showMoreUserMessageAriaLabel}
               showLessAriaLabel={showLessUserMessageAriaLabel}
               onAttachmentClick={handleAttachmentClick}
+              onDownloadAll={handleDownloadAll}
               attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
               className="justify-end"
             />
@@ -393,6 +400,7 @@ const ConversationMessageItem: FC<Props> = ({
         codeBlockTheme={codeBlockTheme}
         attachmentTheme={codeBlockTheme}
         onAttachmentClick={handleAttachmentClick}
+        onDownloadAll={handleDownloadAll}
         attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
         {...statusProps}
       />
