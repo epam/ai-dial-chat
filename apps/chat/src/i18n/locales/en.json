@@ -452,7 +452,31 @@
     },
     "page": {
       "navLabel": "File Manager"
-    }
+    },
+    "shareAction": "Share",
+    "unshareAction": "Unshare",
+    "removeAccessAction": "Remove access",
+    "shareModalTitle": "Share \"{{name}}\"",
+    "shareModalReadPermission": "Can view",
+    "shareModalReadWritePermission": "Can edit",
+    "shareModalCreateLinkButton": "Create link",
+    "shareModalCopyLinkButton": "Copy link",
+    "shareModalLinkCopiedConfirmation": "Link copied",
+    "shareError": "Failed to create the share link",
+    "unshareError": "Failed to remove the shared item",
+    "removeAccessError": "Failed to remove access",
+    "infoAction": "Info",
+    "getInfoError": "Failed to load file details",
+    "metadataHeader": "Information",
+    "metadataNameLabel": "Name:",
+    "metadataPathLabel": "Path:",
+    "metadataModifiedDateLabel": "Modified Date:",
+    "metadataSizeLabel": "Size:",
+    "metadataAuthorLabel": "Author:",
+    "uploadArchiveAction": "Upload archive",
+    "uploadArchiveError": "Failed to upload the archive",
+    "uploadArchivePartialError_one": "{{count}} item in the archive could not be uploaded",
+    "uploadArchivePartialError_other": "{{count}} items in the archive could not be uploaded"
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."

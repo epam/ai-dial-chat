@@ -1973,6 +1973,70 @@
         "tags": ["files"]
       }
     },
+    "/api/v1/files/upload-archive": {
+      "post": {
+        "operationId": "uploadArchive",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "bucket", "destinationPath"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "bucket": {
+                    "type": "string"
+                  },
+                  "destinationPath": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadArchiveResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, non-ZIP file, or empty archive"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "413": {
+            "description": "Archive exceeds ARCHIVE_UPLOAD_MAX_BYTES"
+          },
+          "422": {
+            "description": "Archive exceeds ARCHIVE_UPLOAD_MAX_FILES or ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable, timed out, or ARCHIVE_UPLOAD_TIMEOUT_MS exceeded"
+          }
+        },
+        "summary": "Upload a ZIP archive and extract its contents to a destination folder",
+        "tags": ["files"]
+      }
+    },
     "/api/v1/files/list": {
       "get": {
         "description": "Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility.",
@@ -2217,6 +2281,52 @@
           }
         },
         "summary": "List files shared with the current user",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/shared-by-me": {
+      "get": {
+        "operationId": "listSharedByMe",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "List files and folders shared by the caller with others",
         "tags": ["files"]
       }
     },
@@ -2569,6 +2679,159 @@
           }
         },
         "summary": "Move files and folders across folders",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/share": {
+      "post": {
+        "operationId": "shareFiles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareFilesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Caller lacks SHARE permission on one or more resources"
+          },
+          "404": {
+            "description": "A resource does not exist"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Create a share invitation link for files and folders",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/revoke-access": {
+      "post": {
+        "operationId": "revokeAccess",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeAccessDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeAccessResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Caller does not own one or more resources"
+          },
+          "404": {
+            "description": "A resource does not exist"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Revoke all shared access to files and folders",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/discard-shared": {
+      "post": {
+        "operationId": "discardShared",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscardSharedDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscardSharedResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Resource is not shared with the caller"
+          },
+          "404": {
+            "description": "A resource does not exist"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Discard resources shared with the caller",
         "tags": ["files"]
       }
     },
@@ -5257,6 +5520,36 @@
         },
         "required": ["url"]
       },
+      "UploadArchiveEntryResultDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Destination path of the extracted entry (relative to bucket)"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "true when the entry was extracted and uploaded successfully"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error reason when success is false"
+          }
+        },
+        "required": ["path", "success"]
+      },
+      "UploadArchiveResponseDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UploadArchiveEntryResultDto"
+            }
+          }
+        },
+        "required": ["results"]
+      },
       "ListFilesItemDto": {
         "type": "object",
         "properties": {
@@ -5797,6 +6090,124 @@
           }
         },
         "required": ["results"]
+      },
+      "ShareItemDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative path within bucket",
+            "example": "reports/q1.pdf"
+          }
+        },
+        "required": ["bucket", "path"]
+      },
+      "ShareFilesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShareItemDto"
+            }
+          },
+          "permission": {
+            "type": "string",
+            "enum": ["read", "readWrite"]
+          }
+        },
+        "required": ["items", "permission"]
+      },
+      "ShareFilesResponseDto": {
+        "type": "object",
+        "properties": {
+          "invitationLink": {
+            "type": "string",
+            "description": "Invitation link covering all shared resources"
+          }
+        },
+        "required": ["invitationLink"]
+      },
+      "RevokeAccessItemDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative path within bucket",
+            "example": "reports/q1.pdf"
+          }
+        },
+        "required": ["bucket", "path"]
+      },
+      "RevokeAccessDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RevokeAccessItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "RevokeAccessResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "true when the Core revoke call succeeded"
+          }
+        },
+        "required": ["success"]
+      },
+      "DiscardSharedItemDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative path within bucket",
+            "example": "reports/q1.pdf"
+          }
+        },
+        "required": ["bucket", "path"]
+      },
+      "DiscardSharedDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiscardSharedItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "DiscardSharedResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "true when the Core discard call succeeded"
+          }
+        },
+        "required": ["success"]
       },
       "RateMessageDto": {
         "type": "object",

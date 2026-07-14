@@ -299,6 +299,7 @@ const defaultHookResult: UseDialFileManagerResult = {
   onPathChange: vi.fn(),
   retry: vi.fn(),
   onUploadFiles: vi.fn(),
+  onUploadArchive: vi.fn(),
   onValidateUpload: vi.fn(),
   uploadBatchState: null,
   cancelUpload: vi.fn(),
@@ -340,6 +341,20 @@ const defaultHookResult: UseDialFileManagerResult = {
     [DialFileManagerActions.Delete]: 'Delete',
   },
   sharedWithMeIds: undefined,
+  sharedByMePaths: new Set<string>(),
+  shareTarget: null,
+  onManagePermissions: vi.fn(),
+  onCloseShareModal: vi.fn(),
+  onCreateShareLink: vi.fn(),
+  isSharing: false,
+  onUnshareFiles: vi.fn(),
+  isUnsharing: false,
+  onRemoveFilesAccess: vi.fn(),
+  isRemovingAccess: false,
+  fileMetadata: undefined,
+  isFileMetadataLoading: false,
+  onGetInfo: vi.fn(),
+  clearMetadata: vi.fn(),
 };
 
 const defaultProps = {

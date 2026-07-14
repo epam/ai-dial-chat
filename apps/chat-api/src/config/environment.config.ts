@@ -136,6 +136,30 @@ export class EnvironmentVariables {
   ARCHIVE_DOWNLOAD_CONCURRENCY?: number = 32;
 
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_UPLOAD_MAX_BYTES?: number = 536_870_912;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_UPLOAD_MAX_FILES?: number = 1000;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES?: number = 2_147_483_648;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_UPLOAD_TIMEOUT_MS?: number = 300_000;
+
+  @IsOptional()
   @IsString()
   DEFAULT_DEPLOYMENT?: string;
 
