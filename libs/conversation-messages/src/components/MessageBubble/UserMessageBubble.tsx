@@ -77,12 +77,6 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   const ToggleIcon = isCollapsed ? IconChevronDown : IconChevronUp;
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
-      {/*
-       * `min-w-0` is required alongside `w-fit`: without it, this flex item
-       * defaults to `min-width: auto` and never actually shrinks below the
-       * attachment group's own content width on a narrow viewport — it just
-       * overflows this row instead of respecting the available space.
-       */}
       <div className="ms-auto flex w-fit min-w-0 max-w-full flex-col items-end gap-4">
         <AttachmentGroup
           attachments={attachments ?? []}
