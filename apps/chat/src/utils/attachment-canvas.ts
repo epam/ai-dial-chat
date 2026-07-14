@@ -13,6 +13,7 @@ import {
 import type {
   Annotation,
   Attachment,
+  AttachmentResource,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import { MIMEType } from '@epam/ai-dial-chat-shared';
@@ -26,6 +27,7 @@ import {
   resolveDialUrl,
 } from './dial-file';
 import type { AnnotationGroup } from './group-annotations-by-source';
+import { parsePdfPageReference } from './reference-attachment';
 
 /**
  * Decodes a base64 string into raw bytes, or `undefined` if the string is not
@@ -201,6 +203,43 @@ export const annotationToPdfCanvasContent = (
     url,
     highlights: annotationsToPdfHighlights(allAnnotations),
     selectedHighlightId: annotationHighlightId(annotation, selectedIndex),
+  };
+};
+
+/**
+ * Builds a `PdfCanvasContent` for a reference-only attachment whose
+ * `reference_url` points at a PDF file (optionally with a `#page=N`
+ * fragment), so it can be opened in the canvas and scrolled to the
+ * referenced page the same way a regular PDF citation is. Returns `null`
+ * when the attachment's `url` does not target a PDF.
+ */
+export const referenceAttachmentToPdfCanvasContent = (
+  attachment: AttachmentResource,
+): PdfCanvasContent | null => {
+  const parsed = parsePdfPageReference(attachment.url);
+  if (parsed == null) return null;
+
+  const url = isDialFileId(parsed.baseUrl)
+    ? resolveDialFileDownloadUrl(parsed.baseUrl)
+    : parsed.baseUrl;
+  if (url == null) return null;
+
+  if (parsed.page == null) {
+    return { type: AttachmentContentType.Pdf, url };
+  }
+
+  const selectedHighlightId = `reference-page-${parsed.page}`;
+  return {
+    type: AttachmentContentType.Pdf,
+    url,
+    highlights: [
+      {
+        id: selectedHighlightId,
+        bboxes: [{ page: parsed.page, x1: 0, y1: 0, x2: 0, y2: 0 }],
+        style: { backgroundColor: 'transparent', opacity: 0 },
+      },
+    ],
+    selectedHighlightId,
   };
 };
 

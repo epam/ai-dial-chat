@@ -1,6 +1,7 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Single pure MessageAttachment-to-DisplayAttachment mapper in chat-shared
+
 The system SHALL expose one pure mapper, `message-attachment-to-display.ts` in `libs/chat-shared`, that converts a `MessageAttachment` DTO into a `DisplayAttachment` and accepts optional `resolvePreviewUrl` and `resolvePlayUrl` callbacks for app-specific URL resolution. The mapper SHALL NOT import `resolveCatalogIconUrl`, `resolveDialFileDownloadUrl`, i18n, `/api` paths, or any other host-owned integration detail.
 
 For a reference-only DTO (`dto.url == null && dto.reference_url != null`), the mapper SHALL compute `DisplayAttachment.contentType` as `dto.reference_type ?? inferContentTypeFromReferenceUrl(dto.reference_url) ?? dto.type ?? ''`, where `inferContentTypeFromReferenceUrl` maps the `reference_url`'s file extension (ignoring any query string or `#` fragment) to a `MIMEType` via a small extension→MIME table (`pdf`→`application/pdf`, `md`/`markdown`→`text/markdown`, `json`→`application/json`), returning `undefined` for unrecognized extensions. For any DTO where `dto.url` is present, `contentType` SHALL remain `dto.type ?? ''` as before, unaffected by `reference_url`.

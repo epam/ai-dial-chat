@@ -4,6 +4,7 @@ import {
   type MessageAttachment,
 } from '../models/chat';
 import { AttachmentType } from '../types/attachment';
+import { FileExtension, MIMEType } from '../types/mime-type';
 
 /**
  * Optional app-owned callbacks used to resolve display URLs for an attachment.
@@ -16,6 +17,28 @@ export interface AttachmentDisplayResolvers {
   /** Resolves the audio playback URL for an attachment that has a remote `url`. */
   resolvePlayUrl?(dto: MessageAttachment): string | undefined;
 }
+
+const EXTENSION_MIME_TYPES: Partial<Record<FileExtension, MIMEType>> = {
+  [FileExtension.PDF]: MIMEType.PDF,
+  [FileExtension.Markdown]: MIMEType.Markdown,
+  [FileExtension.MarkdownAlt]: MIMEType.Markdown,
+  [FileExtension.JSON]: MIMEType.JSON,
+};
+
+/**
+ * Infers a MIME type from a reference-only attachment's `reference_url` file
+ * extension (ignoring any query string or `#` fragment such as a PDF
+ * `#page=N` anchor). Returns `undefined` when the extension is unrecognized.
+ */
+const inferContentTypeFromReferenceUrl = (
+  referenceUrl: string,
+): MIMEType | undefined => {
+  const path = referenceUrl.split(/[?#]/)[0];
+  const dotIdx = path.lastIndexOf('.');
+  if (dotIdx === -1) return undefined;
+  const ext = path.slice(dotIdx + 1).toLowerCase() as FileExtension;
+  return EXTENSION_MIME_TYPES[ext];
+};
 
 const getAttachmentType = (mimeType: string | undefined): AttachmentType => {
   if (mimeType?.startsWith('image/')) return AttachmentType.Image;
@@ -48,6 +71,14 @@ export const messageAttachmentToDisplayAttachment = (
   const isAudio = type === AttachmentType.Audio;
   const id = dto.url ?? dto.data ?? dto.title;
 
+  const contentType =
+    (dto.url == null && dto.reference_url != null
+      ? (dto.reference_type ??
+        inferContentTypeFromReferenceUrl(dto.reference_url))
+      : undefined) ??
+    dto.type ??
+    '';
+
   let previewUrl: string | undefined;
   if (isImage) {
     if (dto.url) {
@@ -69,7 +100,7 @@ export const messageAttachmentToDisplayAttachment = (
   return {
     id,
     name: dto.title,
-    contentType: dto.type ?? '',
+    contentType,
     type,
     status: RequestStatus.Idle,
     ...(dto.url ? { url: dto.url } : {}),
