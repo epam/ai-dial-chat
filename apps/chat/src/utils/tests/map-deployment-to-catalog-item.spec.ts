@@ -4,7 +4,9 @@ import {
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 import type { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
+import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
+import { CatalogI18nKeys } from '../../constants/translation-keys';
 import {
   mapDeploymentToCatalogItem,
   mapToolsetCredentials,
@@ -138,6 +140,23 @@ describe('mapToolsetToCatalogItem', () => {
 
     expect(result.folder).toEqual([]);
     expect(result.name).toBe('salesforce');
+  });
+
+  it('places a toolset owned by the current user under the translated Personal folder', () => {
+    const t = ((key: string) => key) as TFunction;
+
+    const result = mapToolsetToCatalogItem(
+      {
+        id: 'toolsets/bucket/folder/salesforce',
+        toolset: 'toolsets/bucket/folder/salesforce',
+        isMy: true,
+      },
+      undefined,
+      false,
+      t,
+    );
+
+    expect(result.folder).toEqual([CatalogI18nKeys.FolderPersonal]);
   });
 
   it('maps the intro field onto the catalog item', () => {

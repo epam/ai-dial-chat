@@ -30,7 +30,10 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
-import { DialFileManagerVariant } from '../../types/file-manager-variant';
+import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+} from '../../types/file-manager-variant';
 import {
   mimeTypesToAttachmentExtensionLabels,
   mimeTypesToDialFileAcceptTypes,
@@ -520,6 +523,7 @@ const DialFileManagerModal: FC<Props> = ({
       hideHiddenFilesLabel,
       getSelectionLabel,
       uploadFilesLabel,
+      uploadArchiveAction: t(DialFileManagerI18nKeys.UploadArchiveAction),
       newFolderLabel,
       downloadLabel,
       downloadingLabel,
@@ -527,11 +531,11 @@ const DialFileManagerModal: FC<Props> = ({
       deletingLabel,
       renameLabel: t(ButtonsI18nKeys.Rename),
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
-      copyLabel: t(ButtonsI18nKeys.Copy),
+      copyLabel: t(DialFileManagerI18nKeys.CopyAction),
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
       duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
-      hiddenFilesSwitcherLabel: t(DialFileManagerI18nKeys.ShowHiddenFiles),
+      hiddenFilesSwitcherLabel: t(DialFileManagerI18nKeys.HiddenFiles),
       getCopyHeader: (count, name) =>
         count === 1
           ? t(DialFileManagerI18nKeys.CopyHeaderSingle, { name })
@@ -573,6 +577,37 @@ const DialFileManagerModal: FC<Props> = ({
       treeHeaderByTab,
       renameValidationMessages,
       conflictResolutionPopupOptions,
+      shareLabel: t(DialFileManagerI18nKeys.ShareAction),
+      unshareLabel: t(DialFileManagerI18nKeys.UnshareAction),
+      removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
+      getShareModalTitle: (name: string) =>
+        t(DialFileManagerI18nKeys.ShareModalTitle, { name }),
+      shareModalReadPermissionLabel: t(
+        DialFileManagerI18nKeys.ShareModalReadPermission,
+      ),
+      shareModalReadWritePermissionLabel: t(
+        DialFileManagerI18nKeys.ShareModalReadWritePermission,
+      ),
+      shareModalCreateLinkButtonLabel: t(
+        DialFileManagerI18nKeys.ShareModalCreateLinkButton,
+      ),
+      shareModalCopyLinkButtonLabel: t(
+        DialFileManagerI18nKeys.ShareModalCopyLinkButton,
+      ),
+      shareModalLinkCopiedConfirmation: t(
+        DialFileManagerI18nKeys.ShareModalLinkCopiedConfirmation,
+      ),
+      shareModalCancelLabel: cancelLabel,
+      shareErrorMessage: t(DialFileManagerI18nKeys.ShareError),
+      infoLabel: t(DialFileManagerI18nKeys.InfoAction),
+      metadataHeader: t(DialFileManagerI18nKeys.MetadataHeader),
+      metadataNameLabel: t(DialFileManagerI18nKeys.MetadataNameLabel),
+      metadataPathLabel: t(DialFileManagerI18nKeys.MetadataPathLabel),
+      metadataModifiedDateLabel: t(
+        DialFileManagerI18nKeys.MetadataModifiedDateLabel,
+      ),
+      metadataSizeLabel: t(DialFileManagerI18nKeys.MetadataSizeLabel),
+      metadataAuthorLabel: t(DialFileManagerI18nKeys.MetadataAuthorLabel),
     }),
     [
       errorMessage,
@@ -638,6 +673,8 @@ const DialFileManagerModal: FC<Props> = ({
         onTabChange={handleTabChangeWithReset}
         selectedPaths={selectedPaths}
         onSelectedPathsChange={setSelectedPaths}
+        variant={DialFileManagerVariant.Attach}
+        actionProfile={DialFileManagerActionProfile.Attach}
         autoSelectUploadedItems={autoSelectUploadedItems}
         allowedFileTypes={allowedFileTypes}
         maxSelectableFileSize={maxSelectableFileSize}

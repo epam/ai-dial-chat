@@ -123,6 +123,11 @@
         "logoutSuccessOrg": "You have successfully logged out of the \"{{name}}\" version {{version}} with credentials to entire organization.",
         "logoutSuccessGlobal": "You have successfully logged out of the \"{{name}}\" version {{version}}.",
         "logoutSuccessUser": "You have successfully logged out of the \"{{name}}\" version {{version}} using your personal credentials."
+      },
+      "delete": {
+        "error": "Failed to delete. Please try again.",
+        "successTitle": "Deleted successfully",
+        "success": "\"{{name}}\" was deleted."
       }
     },
     "create": {
@@ -150,7 +155,8 @@
     "error": "Failed to load models",
     "empty": "No models available",
     "closeLabel": "Close model selector",
-    "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date."
+    "refetchToolsetsFailed": "Failed to refresh toolsets. The Catalog list may be out of date.",
+    "refetchDeploymentsFailed": "Failed to refresh applications. The Catalog list may be out of date."
   },
   "notFound": {
     "eyebrow": "404",
@@ -409,7 +415,8 @@
     "renameReservedName": "This name is reserved",
     "renameInvalidChars": "Name contains invalid characters",
     "renameNameTooLong": "Name must be 255 characters or fewer",
-    "moveAction": "Move",
+    "copyAction": "Copy to",
+    "moveAction": "Move to",
     "copyingLabel": "Copying...",
     "movingLabel": "Moving...",
     "copyError": "Failed to copy the selected items",
@@ -427,8 +434,8 @@
     "folderPickerEmptyStateTitle": "No folders here",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "tab": {
-      "myFiles": "My files",
-      "shared": "Shared with me"
+      "myFiles": "My Files",
+      "shared": "Shared with Me"
     },
     "myFiles": {
       "treeHeader": "Folder tree",
@@ -445,7 +452,31 @@
     },
     "page": {
       "navLabel": "File Manager"
-    }
+    },
+    "shareAction": "Share",
+    "unshareAction": "Unshare",
+    "removeAccessAction": "Remove access",
+    "shareModalTitle": "Share \"{{name}}\"",
+    "shareModalReadPermission": "Can view",
+    "shareModalReadWritePermission": "Can edit",
+    "shareModalCreateLinkButton": "Create link",
+    "shareModalCopyLinkButton": "Copy link",
+    "shareModalLinkCopiedConfirmation": "Link copied",
+    "shareError": "Failed to create the share link",
+    "unshareError": "Failed to remove the shared item",
+    "removeAccessError": "Failed to remove access",
+    "infoAction": "Info",
+    "getInfoError": "Failed to load file details",
+    "metadataHeader": "Information",
+    "metadataNameLabel": "Name:",
+    "metadataPathLabel": "Path:",
+    "metadataModifiedDateLabel": "Modified Date:",
+    "metadataSizeLabel": "Size:",
+    "metadataAuthorLabel": "Author:",
+    "uploadArchiveAction": "Upload archive",
+    "uploadArchiveError": "Failed to upload the archive",
+    "uploadArchivePartialError_one": "{{count}} item in the archive could not be uploaded",
+    "uploadArchivePartialError_other": "{{count}} items in the archive could not be uploaded"
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."

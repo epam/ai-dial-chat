@@ -165,6 +165,9 @@ export enum CatalogI18nKeys {
   CredentialsLogoutSuccessOrg = 'catalog.details.credentials.logoutSuccessOrg',
   CredentialsLogoutSuccessGlobal = 'catalog.details.credentials.logoutSuccessGlobal',
   CredentialsLogoutSuccessUser = 'catalog.details.credentials.logoutSuccessUser',
+  DetailsDeleteError = 'catalog.details.delete.error',
+  DetailsDeleteSuccessTitle = 'catalog.details.delete.successTitle',
+  DetailsDeleteSuccess = 'catalog.details.delete.success',
 }
 
 export enum DeploymentSelectorI18nKeys {
@@ -178,6 +181,7 @@ export enum DeploymentSelectorI18nKeys {
   Empty = 'deploymentSelector.empty',
   CloseLabel = 'deploymentSelector.closeLabel',
   RefetchToolsetsFailed = 'deploymentSelector.refetchToolsetsFailed',
+  RefetchDeploymentsFailed = 'deploymentSelector.refetchDeploymentsFailed',
 }
 
 export enum NotFoundI18nKeys {
@@ -256,6 +260,7 @@ export enum DialFileManagerI18nKeys {
   RenameReservedName = 'dialFileManager.renameReservedName',
   RenameInvalidChars = 'dialFileManager.renameInvalidChars',
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
+  CopyAction = 'dialFileManager.copyAction',
   MoveAction = 'dialFileManager.moveAction',
   CopyingLabel = 'dialFileManager.copyingLabel',
   MovingLabel = 'dialFileManager.movingLabel',
@@ -281,6 +286,30 @@ export enum DialFileManagerI18nKeys {
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
   UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
+  PageNavLabel = 'dialFileManager.page.navLabel',
+  ShareAction = 'dialFileManager.shareAction',
+  UnshareAction = 'dialFileManager.unshareAction',
+  RemoveAccessAction = 'dialFileManager.removeAccessAction',
+  ShareModalTitle = 'dialFileManager.shareModalTitle',
+  ShareModalReadPermission = 'dialFileManager.shareModalReadPermission',
+  ShareModalReadWritePermission = 'dialFileManager.shareModalReadWritePermission',
+  ShareModalCreateLinkButton = 'dialFileManager.shareModalCreateLinkButton',
+  ShareModalCopyLinkButton = 'dialFileManager.shareModalCopyLinkButton',
+  ShareModalLinkCopiedConfirmation = 'dialFileManager.shareModalLinkCopiedConfirmation',
+  ShareError = 'dialFileManager.shareError',
+  UnshareError = 'dialFileManager.unshareError',
+  RemoveAccessError = 'dialFileManager.removeAccessError',
+  InfoAction = 'dialFileManager.infoAction',
+  GetInfoError = 'dialFileManager.getInfoError',
+  MetadataHeader = 'dialFileManager.metadataHeader',
+  MetadataNameLabel = 'dialFileManager.metadataNameLabel',
+  MetadataPathLabel = 'dialFileManager.metadataPathLabel',
+  MetadataModifiedDateLabel = 'dialFileManager.metadataModifiedDateLabel',
+  MetadataSizeLabel = 'dialFileManager.metadataSizeLabel',
+  MetadataAuthorLabel = 'dialFileManager.metadataAuthorLabel',
+  UploadArchiveAction = 'dialFileManager.uploadArchiveAction',
+  UploadArchiveError = 'dialFileManager.uploadArchiveError',
+  UploadArchivePartialError = 'dialFileManager.uploadArchivePartialError',
 }
 
 export enum AuthI18nKeys {
