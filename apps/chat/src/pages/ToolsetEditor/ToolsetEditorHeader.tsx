@@ -7,7 +7,6 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   EditorI18nKeys,
-  ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { ToolsetEditorSteps } from '../../types/toolsets';
 
