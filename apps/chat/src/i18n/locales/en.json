@@ -441,6 +441,7 @@
     "moveHeaderSingle": "Move \"{{name}}\"",
     "moveHeaderMultiple": "Move {{count}} items",
     "moveSourceDisabledTooltip": "Unavailable for the original location. Please select another folder",
+    "folderPickerLoadingTooltip": "Loading folder contents. Please wait",
     "folderPickerEmptyStateTitle": "No folders here",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "tab": {

@@ -205,6 +205,229 @@ describe('useDialFileManager', () => {
     expect(q1Node?.parentPath).toBe(reportsNode?.path);
   });
 
+  it('preloads a destination-popup folder without navigating the outer grid', async () => {
+    const targetFolder: ListFilesItemDto = {
+      name: 'Folder1',
+      path: 'Folder1/',
+      folderId: `${BUCKET}:Folder1/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      bucket: BUCKET,
+    };
+    const existingFile: ListFilesItemDto = {
+      name: 'requirements.txt',
+      path: 'Folder1/requirements.txt',
+      folderId: `${BUCKET}:Folder1/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+      bucket: BUCKET,
+    };
+    mockListFiles.mockImplementation(async ({ path }) => ({
+      bucket: BUCKET,
+      path: path ?? '',
+      items: path === 'Folder1/' ? [existingFile] : [targetFolder],
+      nextToken: undefined,
+    }));
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onFolderPopupPathChange('/My files/Folder1/');
+    });
+
+    await waitFor(() =>
+      expect(mockListFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'Folder1/' }),
+      ),
+    );
+    expect(result.current.path).toBe('/My files');
+
+    await waitFor(() =>
+      expect(
+        result.current.items[0]?.items
+          ?.find((item) => item.name === 'Folder1')
+          ?.items?.some((item) => item.name === 'requirements.txt'),
+      ).toBe(true),
+    );
+  });
+
+  it('marks a destination-popup folder as loading while its listing is pending', async () => {
+    const targetFolder: ListFilesItemDto = {
+      name: 'Folder1',
+      path: 'Folder1/',
+      folderId: `${BUCKET}:Folder1/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      bucket: BUCKET,
+    };
+    let resolveFolderListing: (
+      value: Awaited<ReturnType<typeof filesApi.listFiles>>,
+    ) => void = () => undefined;
+    const folderListingPromise = new Promise<
+      Awaited<ReturnType<typeof filesApi.listFiles>>
+    >((resolve) => {
+      resolveFolderListing = resolve;
+    });
+
+    mockListFiles.mockImplementation(({ path }) => {
+      if (path === 'Folder1/') {
+        return folderListingPromise;
+      }
+
+      return Promise.resolve({
+        bucket: BUCKET,
+        path: path ?? '',
+        items: [targetFolder],
+        nextToken: undefined,
+      });
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onFolderPopupPathChange('/My files/Folder1/');
+    });
+
+    await waitFor(() =>
+      expect(
+        result.current.folderPopupLoadingPaths.has('/My files/Folder1'),
+      ).toBe(true),
+    );
+
+    await act(async () => {
+      resolveFolderListing({
+        bucket: BUCKET,
+        path: 'Folder1/',
+        items: [],
+        nextToken: undefined,
+      });
+      await folderListingPromise;
+    });
+
+    await waitFor(() =>
+      expect(
+        result.current.folderPopupLoadingPaths.has('/My files/Folder1'),
+      ).toBe(false),
+    );
+  });
+
+  it('marks a destination-popup folder as loading when the same folder is already expanding in the tree', async () => {
+    const targetFolder: ListFilesItemDto = {
+      name: 'Folder1',
+      path: 'Folder1/',
+      folderId: `${BUCKET}:Folder1/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      bucket: BUCKET,
+    };
+    let resolveFolderListing: (
+      value: Awaited<ReturnType<typeof filesApi.listFiles>>,
+    ) => void = () => undefined;
+    const folderListingPromise = new Promise<
+      Awaited<ReturnType<typeof filesApi.listFiles>>
+    >((resolve) => {
+      resolveFolderListing = resolve;
+    });
+
+    mockListFiles.mockImplementation(({ path }) => {
+      if (path === 'Folder1/') {
+        return folderListingPromise;
+      }
+
+      return Promise.resolve({
+        bucket: BUCKET,
+        path: path ?? '',
+        items: [targetFolder],
+        nextToken: undefined,
+      });
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onExpandedPathsChange(new Set(['/My files/Folder1/']));
+    });
+    await waitFor(() =>
+      expect(mockListFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'Folder1/' }),
+      ),
+    );
+
+    act(() => {
+      result.current.onFolderPopupPathChange('/My files/Folder1/');
+    });
+
+    await waitFor(() =>
+      expect(
+        result.current.folderPopupLoadingPaths.has('/My files/Folder1'),
+      ).toBe(true),
+    );
+
+    await act(async () => {
+      resolveFolderListing({
+        bucket: BUCKET,
+        path: 'Folder1/',
+        items: [],
+        nextToken: undefined,
+      });
+      await folderListingPromise;
+    });
+
+    await waitFor(() =>
+      expect(
+        result.current.folderPopupLoadingPaths.has('/My files/Folder1'),
+      ).toBe(false),
+    );
+  });
+
+  it('does not refetch an already cached destination-popup folder', async () => {
+    const targetFolder: ListFilesItemDto = {
+      name: 'Folder1',
+      path: 'Folder1/',
+      folderId: `${BUCKET}:Folder1/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      bucket: BUCKET,
+    };
+    const existingFile: ListFilesItemDto = {
+      name: 'requirements.txt',
+      path: 'Folder1/requirements.txt',
+      folderId: `${BUCKET}:Folder1/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+      bucket: BUCKET,
+    };
+    mockListFiles.mockImplementation(async ({ path }) => ({
+      bucket: BUCKET,
+      path: path ?? '',
+      items: path === 'Folder1/' ? [existingFile] : [targetFolder],
+      nextToken: undefined,
+    }));
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onFolderPopupPathChange('/My files/Folder1/');
+    });
+
+    await waitFor(() =>
+      expect(mockListFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ path: 'Folder1/' }),
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        result.current.items[0]?.items?.find((item) => item.name === 'Folder1')
+          ?.items?.[0]?.name,
+      ).toBe('requirements.txt'),
+    );
+    const callCount = mockListFiles.mock.calls.length;
+
+    act(() => {
+      result.current.onFolderPopupPathChange('/My files/Folder1/');
+    });
+
+    expect(mockListFiles).toHaveBeenCalledTimes(callCount);
+  });
+
   it('navigates via onPathChange without leading slash (DialFileManager breadcrumb format)', async () => {
     const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -1964,6 +2187,46 @@ describe('useDialFileManager', () => {
       expect(mockRenameFiles).not.toHaveBeenCalled();
     });
 
+    it('passes overwrite=true from conflict resolution to moveFiles', async () => {
+      mockMoveFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'inbox/draft.pdf',
+            destinationPath: 'reports/draft.pdf',
+            success: true,
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onMoveToFiles(
+          [
+            {
+              sourceUrl: '/My files/inbox/draft.pdf',
+              destinationUrl: '/My files/reports/draft.pdf',
+              overwrite: true,
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files/inbox',
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() => expect(mockMoveFiles).toHaveBeenCalledOnce());
+      expect(mockMoveFiles).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            destinationPath: 'reports/draft.pdf',
+            overwrite: true,
+          }),
+        ],
+        expect.anything(),
+      );
+    });
+
     it('calls both renameFiles and moveFiles for a mixed batch and merges the failure toast', async () => {
       mockRenameFiles.mockResolvedValue({
         results: [
@@ -2092,6 +2355,45 @@ describe('useDialFileManager', () => {
         [
           expect.objectContaining({
             destinationPath: 'folder_for_test_copy_1/img.png',
+          }),
+        ],
+        expect.anything(),
+      );
+    });
+
+    it('passes overwrite=true from conflict resolution to copyFiles', async () => {
+      mockCopyFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'requirements.txt',
+            destinationPath: 'Folder1/requirements.txt',
+            success: true,
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onCopyFiles(
+          [
+            {
+              sourceUrl: '/My files/requirements.txt',
+              destinationUrl: '/My files/Folder1/requirements.txt',
+              overwrite: true,
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files/Folder1',
+        );
+      });
+
+      await waitFor(() => expect(mockCopyFiles).toHaveBeenCalledOnce());
+      expect(mockCopyFiles).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            destinationPath: 'Folder1/requirements.txt',
+            overwrite: true,
           }),
         ],
         expect.anything(),

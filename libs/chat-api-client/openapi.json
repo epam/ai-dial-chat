@@ -6082,6 +6082,12 @@
             "description": "Relative destination path within bucket",
             "example": "archive/q1.pdf"
           },
+          "overwrite": {
+            "type": "boolean",
+            "description": "Whether to overwrite an existing destination resource",
+            "default": false,
+            "example": true
+          },
           "nodeType": {
             "type": "string",
             "enum": ["item", "folder"]
@@ -6163,6 +6169,12 @@
             "type": "string",
             "description": "Relative destination path within bucket",
             "example": "reports/draft.pdf"
+          },
+          "overwrite": {
+            "type": "boolean",
+            "description": "Whether to overwrite an existing destination resource",
+            "default": false,
+            "example": true
           },
           "nodeType": {
             "type": "string",

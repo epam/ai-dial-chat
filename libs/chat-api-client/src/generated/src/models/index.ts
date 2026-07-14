@@ -968,6 +968,12 @@ export interface CopyItemDto {
    */
   destinationPath: string;
   /**
+   * Whether to overwrite an existing destination resource
+   * @type {boolean}
+   * @memberof CopyItemDto
+   */
+  overwrite?: boolean;
+  /**
    *
    * @type {string}
    * @memberof CopyItemDto
@@ -3139,6 +3145,12 @@ export interface MoveItemDto {
    * @memberof MoveItemDto
    */
   destinationPath: string;
+  /**
+   * Whether to overwrite an existing destination resource
+   * @type {boolean}
+   * @memberof MoveItemDto
+   */
+  overwrite?: boolean;
   /**
    *
    * @type {string}

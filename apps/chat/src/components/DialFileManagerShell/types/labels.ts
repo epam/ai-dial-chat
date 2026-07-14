@@ -50,6 +50,7 @@ export interface DialFileManagerShellLabels {
   getCopyHeader: (count: number, name?: string) => string;
   getMoveHeader: (count: number, name?: string) => string;
   moveSourceDisabledTooltip: string;
+  folderPickerLoadingTooltip: string;
   folderPickerEmptyStateTitle: string;
   folderPickerEmptyStateDescription: string;
   copyingLabel: string;
