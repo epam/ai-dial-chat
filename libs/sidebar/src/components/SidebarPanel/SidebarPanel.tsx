@@ -26,26 +26,34 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   leftActions,
   rightActions,
   onClose,
-  ariaLabel,
-  closeLabel,
+  labels,
   children,
-  className,
   styles: panelStyles,
   resizable,
   defaultWidth = 360,
   minWidth = 280,
   maxWidth = 600,
-  headerClassName,
   onResizeStop,
 }) => {
-  const { colors, typography, bodyClassName, cssVars, titleClassName } =
-    panelStyles ?? {};
+  const {
+    colors,
+    typography,
+    bodyClassName,
+    cssVars,
+    titleClassName,
+    className,
+    headerClassName,
+  } = panelStyles ?? {};
 
   const panelCssVars = useMemo(
     () =>
       buildCssVars({
         '--sb-bg': colors?.background,
         '--sb-border': colors?.border,
+        '--sb-border-inline-end': colors?.borderInlineEnd,
+        '--sb-text': colors?.text,
+        '--sb-resize-handler': colors?.resizeHandler,
+        '--sb-bg-resize-handler': colors?.resizeHandler,
       }),
     [colors],
   );
@@ -108,9 +116,9 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
 
   const closeButton = onClose ? (
     <DialGhostIconButton
-      icon={<IconX size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-      aria-label={closeLabel}
-      tooltipProps={{ tooltip: closeLabel }}
+      icon={<IconX size={DIAL_ICON_SIZE.LG} stroke={1.5} aria-hidden />}
+      aria-label={labels.closeLabel}
+      tooltipProps={{ tooltip: labels.closeLabel }}
       onClick={onClose}
     />
   ) : null;
@@ -140,8 +148,8 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
       >
         <aside
           role="complementary"
-          aria-label={ariaLabel}
-          aria-hidden={!isOpen}
+          aria-label={labels.ariaLabel}
+          inert={!isOpen}
           style={{ ...cssVars, ...panelCssVars }}
           className={mergeClasses(
             styles.wrapper,

@@ -85,12 +85,11 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
     <SidebarPanel
       isOpen={isOpen}
       orientation={SidebarOrientation.Right}
-      className={isOpen ? 'mobile:w-full' : 'w-0'}
       styles={{
+        className: isOpen ? 'mobile:w-full' : 'w-0',
         bodyClassName: 'flex flex-col overflow-hidden p-0',
       }}
-      ariaLabel={labels.ariaLabel}
-      closeLabel={labels.closeLabel}
+      labels={labels}
       onClose={onClose}
       resizable={!isMobile}
       defaultWidth={defaultWidth}
@@ -100,7 +99,9 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       rightActions={
         !isEmpty && (
           <DialGhostIconButton
-            icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+            icon={
+              <IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} aria-hidden />
+            }
             aria-label={labels.downloadAllLabel}
             disabled
           />
