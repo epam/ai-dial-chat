@@ -135,7 +135,7 @@ function ModalView({
                   <DialEllipsisTooltip
                     text={heading}
                     hideTooltip={!showHeadingTooltip}
-                    id='name-value'
+                    id="name-value"
                   />
                 </h4>
               ) : (
