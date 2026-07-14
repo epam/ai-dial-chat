@@ -39,9 +39,6 @@ interface JobRowProps {
 
 const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
   const { t } = useTranslation();
-  const closeLabel = t(ConversationExportI18nKeys.CloseJobAriaLabel, {
-    title: job.label,
-  });
 
   return (
     <div className="flex items-center gap-2 px-3 py-2">
@@ -72,7 +69,9 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
       {job.status === ExportJobStatus.InProgress && (
         <button
           type="button"
-          aria-label={closeLabel}
+          aria-label={t(ConversationExportI18nKeys.CloseJobAriaLabel, {
+            title: job.label,
+          })}
           onClick={() => onDismiss(job.id)}
           className="shrink-0"
         >

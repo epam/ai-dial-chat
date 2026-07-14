@@ -364,6 +364,73 @@ describe('useConversationExport', () => {
       );
       expect(result.current.jobs[0].status).toBe(ExportJobStatus.Success);
     });
+
+    it('shows a single consolidated warning when a failed download and an invalid archive path both occur', async () => {
+      const conversation = makeConversation({
+        messages: [
+          makeAttachmentMessage('files/bucket/broken.png', 'broken'),
+          makeAttachmentMessage('files/bucket/bad%20name.png', 'bad name'),
+        ],
+      });
+      mockGetConversation.mockResolvedValue(conversation);
+      vi.mocked(downloadFile).mockImplementation(async (_bucket, path) => {
+        if (path === 'broken.png') throw new Error('network error');
+        return new Response(new Blob(['bytes']));
+      });
+
+      const { result } = renderHook(() => useConversationExport());
+
+      await act(async () => {
+        await result.current.exportSingle(
+          'conv-1',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        );
+      });
+
+      const warningCalls = mockShowNotification.mock.calls.filter(
+        ([arg]) => arg.variant === 'warning',
+      );
+      expect(warningCalls).toHaveLength(1);
+      expect(result.current.jobs[0].status).toBe(ExportJobStatus.Success);
+    });
+
+    it('marks the job failed and shows an error toast when archive building throws', async () => {
+      const conversation = makeConversation({
+        messages: [makeAttachmentMessage('files/bucket/ok.png', 'ok')],
+      });
+      mockGetConversation.mockResolvedValue(conversation);
+      vi.mocked(downloadFile).mockResolvedValue(
+        new Response(new Blob(['ok-bytes'])),
+      );
+      const zipExport = await import('../../utils/zip-export');
+      const buildSpy = vi
+        .spyOn(zipExport, 'buildDialArchive')
+        .mockImplementation(() => {
+          throw new RangeError('Invalid array length');
+        });
+
+      const { result } = renderHook(() => useConversationExport());
+
+      await act(async () => {
+        await result.current.exportSingle(
+          'conv-1',
+          'My Chat',
+          ConversationExportMode.WithAttachments,
+        );
+      });
+
+      expect(triggerBlobDownload).not.toHaveBeenCalled();
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: 'error',
+          title: 'conversationExport.failedTitle',
+        }),
+      );
+      expect(result.current.jobs[0].status).toBe(ExportJobStatus.Failed);
+
+      buildSpy.mockRestore();
+    });
   });
 
   describe('exportAll', () => {
@@ -509,6 +576,42 @@ describe('useConversationExport', () => {
       );
       expect(result.current.jobs[0].status).toBe(ExportJobStatus.Failed);
     });
+
+    it('shows no toast for a 401 while listing conversations but still marks the job failed', async () => {
+      mockListConversations.mockRejectedValue(
+        new UnauthorizedError('/api/v1/conversations'),
+      );
+
+      const { result } = renderHook(() => useConversationExport());
+
+      await act(async () => {
+        await result.current.exportAll();
+      });
+
+      expect(triggerBlobDownload).not.toHaveBeenCalled();
+      expect(mockShowNotification).not.toHaveBeenCalled();
+      expect(result.current.jobs[0].status).toBe(ExportJobStatus.Failed);
+    });
+
+    it('shows no toast for a 401 while fetching a conversation but still marks the job failed', async () => {
+      mockListConversations.mockResolvedValueOnce({
+        items: [{ id: 'conv-1', title: 'Chat One' }],
+        nextToken: undefined,
+      });
+      mockGetConversation.mockRejectedValue(
+        new UnauthorizedError('/api/v1/conversations/conv-1'),
+      );
+
+      const { result } = renderHook(() => useConversationExport());
+
+      await act(async () => {
+        await result.current.exportAll();
+      });
+
+      expect(triggerBlobDownload).not.toHaveBeenCalled();
+      expect(mockShowNotification).not.toHaveBeenCalled();
+      expect(result.current.jobs[0].status).toBe(ExportJobStatus.Failed);
+    });
   });
 
   describe('error mapping', () => {
@@ -538,7 +641,7 @@ describe('useConversationExport', () => {
       expect(result.current.jobs[0].status).toBe(ExportJobStatus.Failed);
     });
 
-    it('shows no toast for a 401 and removes/does not add a failed job', async () => {
+    it('shows no toast for a 401 but still marks the job failed (terminal state)', async () => {
       mockGetConversation.mockRejectedValue(
         new UnauthorizedError('/api/v1/conversations/conv-1'),
       );
@@ -555,6 +658,7 @@ describe('useConversationExport', () => {
 
       expect(triggerBlobDownload).not.toHaveBeenCalled();
       expect(mockShowNotification).not.toHaveBeenCalled();
+      expect(result.current.jobs[0].status).toBe(ExportJobStatus.Failed);
     });
 
     it('logs errors via console.error without sensitive data', async () => {
@@ -659,6 +763,32 @@ describe('useConversationExport', () => {
       expect(result.current.jobs).toHaveLength(1);
       expect(result.current.jobs[0].id).toBe(jobId);
       expect(mockGetConversation).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('unmount', () => {
+    it('aborts every in-flight request when the host component unmounts', () => {
+      let capturedSignal: AbortSignal | undefined;
+      mockGetConversation.mockImplementation(
+        (_path: string, signal?: AbortSignal) => {
+          capturedSignal = signal;
+          return new Promise(() => undefined);
+        },
+      );
+
+      const { result, unmount } = renderHook(() => useConversationExport());
+
+      act(() => {
+        void result.current.exportSingle(
+          'conv-1',
+          'My Chat',
+          ConversationExportMode.WithoutAttachments,
+        );
+      });
+
+      unmount();
+
+      expect(capturedSignal?.aborted).toBe(true);
     });
   });
 });

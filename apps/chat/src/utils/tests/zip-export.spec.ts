@@ -1,14 +1,28 @@
+import type { Conversation, ExportFormatV5 } from '@epam/ai-dial-chat-shared';
 import { strFromU8, unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { buildDialArchive, isValidArchivePath } from '../zip-export';
+
+const makeConversation = (): Conversation => ({
+  id: 'conv-1',
+  folderId: 'root',
+  name: 'My Chat',
+  model: { id: 'gpt-4o' },
+  prompt: '',
+  temperature: 0.5,
+  messages: [],
+  lastActivityDate: 1000,
+  updatedAt: 2000,
+  selectedAddons: [],
+  assistantModelId: 'gpt-4o',
+});
 
 const encode = (text: string): Uint8Array => new TextEncoder().encode(text);
 
 const readBlobAsBytes = (blob: Blob): Promise<Uint8Array> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () =>
-      resolve(new Uint8Array(reader.result as ArrayBuffer));
+    reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer));
     reader.onerror = () => reject(reader.error);
     reader.readAsArrayBuffer(blob);
   });
@@ -40,7 +54,11 @@ describe('isValidArchivePath', () => {
 });
 
 describe('buildDialArchive', () => {
-  const envelope = { version: 5 as const, history: [{ id: 'conv-1' }], folders: [] };
+  const envelope: ExportFormatV5 = {
+    version: 5,
+    history: [makeConversation()],
+    folders: [],
+  };
 
   it('reports no skipped paths when all attachments are valid', () => {
     const result = buildDialArchive(envelope, [

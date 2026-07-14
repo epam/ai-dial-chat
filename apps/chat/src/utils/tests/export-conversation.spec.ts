@@ -1,5 +1,11 @@
-import type { Conversation } from '@epam/ai-dial-chat-shared';
+import { ResponseFormat, type Conversation } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
+import { ExportFileNameKind } from '../../types/conversation-export';
+import {
+  buildExportEnvelope,
+  buildExportFileName,
+  serializeExportEnvelope,
+} from '../export-conversation';
 
 const readBlobAsText = (blob: Blob): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -8,14 +14,10 @@ const readBlobAsText = (blob: Blob): Promise<string> =>
     reader.onerror = () => reject(reader.error);
     reader.readAsText(blob);
   });
-import { ExportFileNameKind } from '../../types/conversation-export';
-import {
-  buildExportEnvelope,
-  buildExportFileName,
-  serializeExportEnvelope,
-} from '../export-conversation';
 
-const makeConversation = (overrides: Partial<Conversation> = {}): Conversation => ({
+const makeConversation = (
+  overrides: Partial<Conversation> = {},
+): Conversation => ({
   id: 'conv-1',
   folderId: 'root',
   name: 'My Chat',
@@ -57,7 +59,7 @@ describe('buildExportEnvelope', () => {
   it('preserves every field of each conversation verbatim', () => {
     const conversation = makeConversation({
       selectedAddons: ['addon-1'],
-      responseFormat: { type: 'text' } as Conversation['responseFormat'],
+      responseFormat: ResponseFormat.PlainText,
     });
     const envelope = buildExportEnvelope([conversation], []);
 
@@ -82,7 +84,11 @@ describe('buildExportFileName', () => {
 
   it('builds the single-conversation-without-attachments file name', () => {
     expect(
-      buildExportFileName(ExportFileNameKind.SingleConversation, 'ai_dial', date),
+      buildExportFileName(
+        ExportFileNameKind.SingleConversation,
+        'ai_dial',
+        date,
+      ),
     ).toBe('2026-07-10_ai_dial_chat_conversation.json');
   });
 

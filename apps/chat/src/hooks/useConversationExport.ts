@@ -4,7 +4,7 @@ import {
   ResponseError,
   type ConversationListItemDto,
 } from '@epam/chat-api-client';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { normalizeConversationId } from '../constants/routes';
 import { ConversationExportI18nKeys } from '../constants/translation-keys';
@@ -183,7 +183,7 @@ export const useConversationExport = (): UseConversationExportResult => {
     async (
       refs: AttachmentRef[],
       signal: AbortSignal,
-    ): Promise<ZipAttachmentEntry[]> => {
+    ): Promise<{ entries: ZipAttachmentEntry[]; anySkipped: boolean }> => {
       let anySkipped = false;
 
       const entries = await runWithConcurrency(
@@ -213,16 +213,9 @@ export const useConversationExport = (): UseConversationExportResult => {
         },
       );
 
-      if (!signal.aborted && anySkipped) {
-        showNotification({
-          variant: NotificationVariant.Warning,
-          message: t(ConversationExportI18nKeys.WarningAttachmentSkipped),
-        });
-      }
-
-      return entries;
+      return { entries, anySkipped: !signal.aborted && anySkipped };
     },
-    [showNotification, t],
+    [],
   );
 
   const runExportSingle = useCallback(
@@ -248,18 +241,50 @@ export const useConversationExport = (): UseConversationExportResult => {
             title: t(ConversationExportI18nKeys.FailedTitle),
             message: t(ConversationExportI18nKeys.FailedSingle, { title }),
           });
-          updateJob(jobId, { status: ExportJobStatus.Failed });
         }
+        updateJob(jobId, { status: ExportJobStatus.Failed });
         console.error('Failed to fetch conversation for export', error);
         return;
       }
       if (signal.aborted) return;
 
-      if (mode === ConversationExportMode.WithoutAttachments) {
+      try {
+        if (mode === ConversationExportMode.WithoutAttachments) {
+          const envelope = buildExportEnvelope([conversation], []);
+          const blob = serializeExportEnvelope(envelope);
+          const fileName = buildExportFileName(
+            ExportFileNameKind.SingleConversation,
+            EXPORT_APP_NAME,
+          );
+          triggerBlobDownload(blob, fileName);
+          showNotification({
+            variant: NotificationVariant.Success,
+            title: t(ConversationExportI18nKeys.SuccessTitle),
+            message: t(ConversationExportI18nKeys.SuccessSingle, { title }),
+          });
+          updateJob(jobId, { status: ExportJobStatus.Success });
+          return;
+        }
+
+        const attachmentRefs = collectAttachmentRefs(conversation);
+        const { entries: zipAttachments, anySkipped } = await fetchAttachments(
+          attachmentRefs,
+          signal,
+        );
+        if (signal.aborted) return;
         const envelope = buildExportEnvelope([conversation], []);
-        const blob = serializeExportEnvelope(envelope);
+        const { blob, skippedPaths } = buildDialArchive(
+          envelope,
+          zipAttachments,
+        );
+        if (anySkipped || skippedPaths.length > 0) {
+          showNotification({
+            variant: NotificationVariant.Warning,
+            message: t(ConversationExportI18nKeys.WarningAttachmentSkipped),
+          });
+        }
         const fileName = buildExportFileName(
-          ExportFileNameKind.SingleConversation,
+          ExportFileNameKind.SingleConversationWithAttachments,
           EXPORT_APP_NAME,
         );
         triggerBlobDownload(blob, fileName);
@@ -269,31 +294,16 @@ export const useConversationExport = (): UseConversationExportResult => {
           message: t(ConversationExportI18nKeys.SuccessSingle, { title }),
         });
         updateJob(jobId, { status: ExportJobStatus.Success });
-        return;
-      }
-
-      const attachmentRefs = collectAttachmentRefs(conversation);
-      const zipAttachments = await fetchAttachments(attachmentRefs, signal);
-      if (signal.aborted) return;
-      const envelope = buildExportEnvelope([conversation], []);
-      const { blob, skippedPaths } = buildDialArchive(envelope, zipAttachments);
-      if (skippedPaths.length > 0) {
+      } catch (error) {
+        if (signal.aborted) return;
         showNotification({
-          variant: NotificationVariant.Warning,
-          message: t(ConversationExportI18nKeys.WarningAttachmentSkipped),
+          variant: NotificationVariant.Error,
+          title: t(ConversationExportI18nKeys.FailedTitle),
+          message: t(ConversationExportI18nKeys.FailedSingle, { title }),
         });
+        updateJob(jobId, { status: ExportJobStatus.Failed });
+        console.error('Failed to build conversation export archive', error);
       }
-      const fileName = buildExportFileName(
-        ExportFileNameKind.SingleConversationWithAttachments,
-        EXPORT_APP_NAME,
-      );
-      triggerBlobDownload(blob, fileName);
-      showNotification({
-        variant: NotificationVariant.Success,
-        title: t(ConversationExportI18nKeys.SuccessTitle),
-        message: t(ConversationExportI18nKeys.SuccessSingle, { title }),
-      });
-      updateJob(jobId, { status: ExportJobStatus.Success });
     },
     [fetchAttachments, showNotification, t, updateJob],
   );
@@ -346,8 +356,8 @@ export const useConversationExport = (): UseConversationExportResult => {
               title: t(ConversationExportI18nKeys.FailedTitle),
               message: t(ConversationExportI18nKeys.FailedAll),
             });
-            updateJob(jobId, { status: ExportJobStatus.Failed });
           }
+          updateJob(jobId, { status: ExportJobStatus.Failed });
           console.error('Failed to list conversations for export', error);
           return;
         }
@@ -371,7 +381,10 @@ export const useConversationExport = (): UseConversationExportResult => {
         } catch (error) {
           if (signal.aborted) return;
           const classification = classifyExportError(error);
-          if (classification.isUnauthorized) return;
+          if (classification.isUnauthorized) {
+            updateJob(jobId, { status: ExportJobStatus.Failed });
+            return;
+          }
           if (classification.isNotFound) {
             showNotification({
               variant: NotificationVariant.Error,
@@ -401,19 +414,29 @@ export const useConversationExport = (): UseConversationExportResult => {
       }
       if (signal.aborted) return;
 
-      const envelope = buildExportEnvelope(conversations, []);
-      const blob = serializeExportEnvelope(envelope);
-      const fileName = buildExportFileName(
-        ExportFileNameKind.AllConversationsHistory,
-        EXPORT_APP_NAME,
-      );
-      triggerBlobDownload(blob, fileName);
-      showNotification({
-        variant: NotificationVariant.Success,
-        title: t(ConversationExportI18nKeys.SuccessTitle),
-        message: t(ConversationExportI18nKeys.SuccessAll),
-      });
-      updateJob(jobId, { status: ExportJobStatus.Success });
+      try {
+        const envelope = buildExportEnvelope(conversations, []);
+        const blob = serializeExportEnvelope(envelope);
+        const fileName = buildExportFileName(
+          ExportFileNameKind.AllConversationsHistory,
+          EXPORT_APP_NAME,
+        );
+        triggerBlobDownload(blob, fileName);
+        showNotification({
+          variant: NotificationVariant.Success,
+          title: t(ConversationExportI18nKeys.SuccessTitle),
+          message: t(ConversationExportI18nKeys.SuccessAll),
+        });
+        updateJob(jobId, { status: ExportJobStatus.Success });
+      } catch (error) {
+        showNotification({
+          variant: NotificationVariant.Error,
+          title: t(ConversationExportI18nKeys.FailedTitle),
+          message: t(ConversationExportI18nKeys.FailedAll),
+        });
+        updateJob(jobId, { status: ExportJobStatus.Failed });
+        console.error('Failed to build export-all archive', error);
+      }
     },
     [showNotification, t, updateJob],
   );
@@ -444,6 +467,15 @@ export const useConversationExport = (): UseConversationExportResult => {
     controllersRef.current.clear();
     retryFnsRef.current.clear();
     setJobs([]);
+  }, []);
+
+  useEffect(() => {
+    const controllers = controllersRef.current;
+    return () => {
+      for (const controller of controllers.values()) {
+        controller.abort();
+      }
+    };
   }, []);
 
   return { jobs, exportSingle, exportAll, dismissJob, retryJob, dismissAll };
