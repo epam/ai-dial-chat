@@ -7,6 +7,7 @@ import { Readable, Transform } from 'node:stream';
 import { finished, pipeline } from 'node:stream/promises';
 import type { components } from '@epam/ai-dial-typescript-sdk';
 import {
+  BadGatewayException,
   BadRequestException,
   ConflictException,
   HttpException,
@@ -255,6 +256,13 @@ export class FilesService {
     };
   }
 
+  /*
+   * Parallels uploadFileStream() below: both independently implement the
+   * DIAL Core create-only upload contract (`If-None-Match: '*'`, 412 -> 409
+   * Conflict). uploadFileStream() can't reuse this SDK/FormData path without
+   * re-buffering the staged archive entry into memory (design D2). If the
+   * upload contract changes, update both.
+   */
   async uploadFile(
     bucket: string,
     path: string,
@@ -387,7 +395,10 @@ export class FilesService {
     maxUncompressedBytes: number,
     signal: AbortSignal,
   ): Promise<UploadArchiveEntryResultDto[]> {
-    const normalizedDestination = destinationPath.replace(/\/+$/, '');
+    let normalizedDestination = destinationPath;
+    while (normalizedDestination.endsWith('/')) {
+      normalizedDestination = normalizedDestination.slice(0, -1);
+    }
     const results: UploadArchiveEntryResultDto[] = [];
     let entryCount = 0;
     let cumulativeBytes = 0;
@@ -550,6 +561,13 @@ export class FilesService {
     await this.uploadFileStream(bucket, path, stream, token, signal);
   }
 
+  /*
+   * Parallels uploadFile() above: both independently implement the DIAL Core
+   * create-only upload contract (`If-None-Match: '*'`, 412 -> 409 Conflict).
+   * This raw-fetch path exists only so archive extraction can stream from
+   * disk instead of re-buffering into a FormData/Blob (design D2). If the
+   * upload contract changes, update both.
+   */
   private async uploadFileStream(
     bucket: string,
     path: string,
@@ -878,12 +896,24 @@ export class FilesService {
         );
       }
 
+      if (!data?.invitationLink) {
+        this.logger.warn(
+          `DIAL Core returned success with no invitation link: itemCount=${items.length}`,
+        );
+        throw new BadGatewayException(
+          'DIAL Core did not return an invitation link',
+        );
+      }
+
       this.logger.log(
         `Share files completed: itemCount=${items.length}, success=true`,
       );
 
-      return { invitationLink: data?.invitationLink ?? '' };
+      return { invitationLink: data.invitationLink };
     } catch (err) {
+      if (err instanceof HttpException) {
+        throw err;
+      }
       this.logger.error(
         `Share files exception: itemCount=${items.length}`,
         err,
@@ -1314,6 +1344,7 @@ export class FilesService {
     }
 
     const isUnsafe =
+      entryFileName === '' ||
       entryFileName.startsWith('/') ||
       /^[a-zA-Z]:/.test(entryFileName) ||
       entryFileName.includes('\\') ||

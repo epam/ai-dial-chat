@@ -305,12 +305,12 @@ Bulk toolbar `Remove access` visibility additionally requires every path in the 
 
 ### Requirement: sharedWithMeIds wired on Shared tab
 
-When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWithMeIds` prop to `DialFileManager` containing the API paths of root-level shared items returned by `GET /api/v1/files/shared`. On all other tabs, `sharedWithMeIds` SHALL be `undefined`.
+When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWithMeIds` prop to `DialFileManager` containing the root-level shared items returned by `GET /api/v1/files/shared`, converted to ui-kit's virtual `DialFile.path` format (e.g. `/Shared with me/reports/q1.pdf`) via `buildSharedItemVirtualPath` — not the DIAL Core resource path the BFF returns (see `file-manager-sharing` design D9). On all other tabs, `sharedWithMeIds` SHALL be `undefined`.
 
 #### Scenario: sharedWithMeIds populated on Shared tab
 
 - **WHEN** the active tab is `shared` and the listing returns items
-- **THEN** `sharedWithMeIds` is an array of the root shared item paths
+- **THEN** `sharedWithMeIds` is an array of the root shared items' virtual UI paths
 
 #### Scenario: sharedWithMeIds absent on My files tab
 

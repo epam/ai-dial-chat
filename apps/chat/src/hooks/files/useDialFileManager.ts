@@ -752,6 +752,7 @@ export const useDialFileManager = ({
   );
   const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
   const [isSharing, setIsSharing] = useState(false);
+  const shareAbortControllerRef = useRef<AbortController | null>(null);
   const [isUnsharing, setIsUnsharing] = useState(false);
   const [isRemovingAccess, setIsRemovingAccess] = useState(false);
   const [fileMetadata, setFileMetadata] = useState<DialFile | undefined>(
@@ -1627,6 +1628,9 @@ export const useDialFileManager = ({
   );
 
   const onCloseShareModal = useCallback(() => {
+    shareAbortControllerRef.current?.abort();
+    shareAbortControllerRef.current = null;
+    setIsSharing(false);
     setShareTarget(null);
   }, []);
 
@@ -1635,16 +1639,22 @@ export const useDialFileManager = ({
       if (shareTarget == null) {
         throw new Error('No share target selected');
       }
+      const controller = new AbortController();
+      shareAbortControllerRef.current = controller;
       setIsSharing(true);
       try {
         const { invitationLink } = await shareFiles(
           [{ bucket: shareTarget.bucket, path: shareTarget.path }],
           permission,
+          controller.signal,
         );
         setRetryCounter((c) => c + 1);
         return invitationLink;
       } finally {
-        setIsSharing(false);
+        if (shareAbortControllerRef.current === controller) {
+          shareAbortControllerRef.current = null;
+          setIsSharing(false);
+        }
       }
     },
     [shareTarget],

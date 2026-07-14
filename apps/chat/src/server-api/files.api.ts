@@ -151,8 +151,12 @@ export const downloadArchive = async (
 export const shareFiles = (
   items: ShareItemDto[],
   permission: ShareFilesDtoPermissionEnum,
+  signal?: AbortSignal,
 ): Promise<ShareFilesResponseDto> =>
-  filesApi.shareFiles({ shareFilesDto: { items, permission } });
+  filesApi.shareFiles(
+    { shareFilesDto: { items, permission } },
+    signal ? { signal } : undefined,
+  );
 
 export const revokeAccess = (
   items: RevokeAccessItemDto[],

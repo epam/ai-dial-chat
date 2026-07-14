@@ -319,7 +319,7 @@ async listSharedByMe(
 
 ### Requirement: sharedByMePaths wired on useDialFileManager
 
-`useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) SHALL fetch `listSharedByMe` alongside the existing `my_files` tab load and expose the result as `sharedByMePaths: Set<string>` (API paths), passed to ui-kit's `DialFileManager.sharedByMePaths` prop. On all other tabs, `sharedByMePaths` SHALL be an empty `Set`.
+`useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) SHALL fetch `listSharedByMe` alongside the existing `my_files` tab load and expose the result as `sharedByMePaths: Set<string>`, passed to ui-kit's `DialFileManager.sharedByMePaths` prop. Each entry SHALL use ui-kit's virtual `DialFile.path` format (e.g. `/My files/reports/q1.pdf`), not the DIAL Core resource path (`files/{bucket}/reports/q1.pdf`) returned by the BFF — built via `buildSharedItemVirtualPath` (see design D9), since ui-kit's row/tree/bulk gating compares against the virtual path. On all other tabs, `sharedByMePaths` SHALL be an empty `Set`.
 
 **State ownership**: `useDialFileManager` owns `sharedByMePaths`; no new context is introduced.
 
@@ -328,7 +328,7 @@ async listSharedByMe(
 #### Scenario: sharedByMePaths populated on my_files tab
 
 - **WHEN** the active tab is `my_files` and `listSharedByMe` returns 2 resources
-- **THEN** `sharedByMePaths` is a `Set` containing both resources' API paths
+- **THEN** `sharedByMePaths` is a `Set` containing both resources' virtual UI paths
 
 #### Scenario: sharedByMePaths empty on other tabs
 

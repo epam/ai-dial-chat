@@ -1437,6 +1437,22 @@ describe('FilesService', () => {
         safeRelativePath: null,
       });
     });
+
+    it('rejects a blank (non-directory) entry name', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('')).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
+
+    it('rejects a bare parent-directory entry name', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('..')).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
   });
 
   describe('uploadArchive', () => {

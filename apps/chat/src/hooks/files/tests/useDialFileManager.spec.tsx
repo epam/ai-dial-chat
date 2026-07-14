@@ -2581,8 +2581,60 @@ describe('useDialFileManager', () => {
       expect(mockShareFiles).toHaveBeenCalledWith(
         [{ bucket: BUCKET, path: 'report.pdf' }],
         'read',
+        expect.any(AbortSignal),
       );
       expect(link).toBe('https://chat.example.com/share/abc');
+    });
+
+    it('clears isSharing immediately when the modal is closed on a pending request', async () => {
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [
+          {
+            name: 'report.pdf',
+            path: `files/${BUCKET}/report.pdf`,
+            folderId: `${BUCKET}:`,
+            nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+            bucket: BUCKET,
+          },
+        ],
+        nextToken: undefined,
+      });
+      mockShareFiles.mockImplementation(
+        (_items, _permission, signal) =>
+          new Promise((_resolve, reject) => {
+            signal?.addEventListener('abort', () => {
+              reject(new DOMException('Aborted', 'AbortError'));
+            });
+          }),
+      );
+
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          actionProfile: DialFileManagerActionProfile.Full,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() =>
+        result.current.onManagePermissions(`files/${BUCKET}/report.pdf`),
+      );
+
+      let pendingRejection: Promise<string> | undefined;
+      act(() => {
+        pendingRejection = result.current.onCreateShareLink('read');
+        pendingRejection.catch(() => undefined);
+      });
+
+      await waitFor(() => expect(result.current.isSharing).toBe(true));
+
+      act(() => result.current.onCloseShareModal());
+
+      expect(result.current.isSharing).toBe(false);
+      expect(result.current.shareTarget).toBeNull();
+      await expect(pendingRejection).rejects.toThrow('Aborted');
     });
   });
 
