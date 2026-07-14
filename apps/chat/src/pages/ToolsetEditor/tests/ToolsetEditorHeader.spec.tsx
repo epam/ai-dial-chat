@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   BasicI18nKeys,
   EditorI18nKeys,
-  ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { ToolsetEditorSteps } from '../../../types/toolsets';
 import ToolsetEditorHeader from '../ToolsetEditorHeader';
