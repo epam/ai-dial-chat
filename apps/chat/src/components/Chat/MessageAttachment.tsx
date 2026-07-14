@@ -662,6 +662,7 @@ export const MessageAttachment = ({
                   setOpenPdfUrl(mappedAttachmentReferenceUrl);
                 }}
                 className="mt-3 block text-start text-accent-primary"
+                aria-label="reference"
               >
                 {t(ChatI18nKeys.Reference)}
               </button>

@@ -126,6 +126,7 @@ export const ChatSelectors = {
   messageIcon: '[data-qa="message-icon"]',
   messageContent: '[data-qa="message-content"]',
   messageStage: '[data-qa="message-stage"]',
+  messageReference: 'reference',
   openedStage: '[data-qa="stage-opened"]',
   closedStage: '[data-qa="stage-closed"]',
   stageLoader: '.animate-spin',

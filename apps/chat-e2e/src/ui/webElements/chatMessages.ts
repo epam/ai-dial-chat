@@ -23,6 +23,12 @@ export class ChatMessages extends BaseElement {
     super(page, ChatSelectors.chatMessages, parentLocator);
   }
 
+  public referenceButton = new Button(
+    this.page,
+    ChatSelectors.messageReference,
+    this.getElementLocator(),
+  );
+
   public loadingCursor = this.getChildElementBySelector(
     ChatSelectors.loadingCursor,
   );

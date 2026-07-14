@@ -684,6 +684,7 @@ export const Attachment = {
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
+  multipagePdfName: 'multipage_pdf.pdf',
   appIconSvg: 'appIcon.svg',
   sttAudioName: 'stt_audio.mp3',
 };
