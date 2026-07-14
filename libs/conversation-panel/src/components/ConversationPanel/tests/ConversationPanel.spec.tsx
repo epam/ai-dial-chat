@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { ConversationHistoryItem } from '../../../models/panel-props';
-import { ConversationSource } from '../../../types/conversation-source';
+import { ConversationItem } from '../../../models/panel-props';
+import { FilterTab } from '../../../types/conversation-classification';
 import { ConversationPanel } from '../ConversationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -225,41 +225,43 @@ const BASE_PROPS = {
   isOpen: true,
   onSelectConversation: vi.fn(),
   onNewChat: vi.fn(),
-  title: 'Chats',
-  emptyLabel: 'No conversations yet',
-  noResultsLabel: 'No results found',
-  newChatLabel: 'New chat',
-  searchPlaceholder: 'Search chat…',
-  searchClearLabel: 'Clear search',
-  filterLabels: FILTER_LABELS,
+  labels: {
+    title: 'Chats',
+    emptyLabel: 'No conversations yet',
+    noResultsLabel: 'No results found',
+    newChatLabel: 'New chat',
+    searchPlaceholder: 'Search chat…',
+    searchClearLabel: 'Clear search',
+    filterLabels: FILTER_LABELS,
+  },
 };
 
-const items: ConversationHistoryItem[] = [
+const items: ConversationItem[] = [
   {
     id: 'c1',
     title: 'First chat',
-    source: ConversationSource.MyChats,
+    source: FilterTab.MyChats,
   },
   {
     id: 'c2',
     title: 'Second chat',
-    source: ConversationSource.MyChats,
+    source: FilterTab.MyChats,
   },
   {
     id: 'c3',
     title: 'Third chat',
-    source: ConversationSource.Shared,
+    source: FilterTab.Shared,
   },
   {
     id: 'c4',
     title: 'Pinned chat',
     isPinned: true,
-    source: ConversationSource.MyChats,
+    source: FilterTab.MyChats,
   },
   {
     id: 'c5',
     title: 'Shared chat',
-    source: ConversationSource.Shared,
+    source: FilterTab.Shared,
   },
 ];
 

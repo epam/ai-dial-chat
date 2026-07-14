@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { FilterTab } from '../../../types/filter-tab';
+import { FilterTab } from '../../../types/conversation-classification';
 import { FilterTabs } from '../FilterTabs';
 
 const labels = {

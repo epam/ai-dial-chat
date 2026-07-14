@@ -1,6 +1,6 @@
 import type { RowComponentProps } from 'react-window';
 import { type RowRendererData, VirtualRowKind } from '../../models/virtual-row';
-import { ConversationGroupKey } from '../../types/conversation-group-key';
+import { FilterTab } from '../../types/conversation-classification';
 import { ConversationRow } from '../ConversationGroup/ConversationRow';
 import { ConversationGroupHeader } from '../ConversationGroupHeader/ConversationGroupHeader';
 
@@ -16,9 +16,7 @@ export const RowRenderer = ({
   onSelectConversation,
   getActions,
   actionsLabel,
-  groupHeaderClassName,
-  itemTitleClassName,
-  itemIconBadgeClassName,
+  styles,
   draggingId,
   dragOverId,
   allowedDropGroups,
@@ -31,20 +29,20 @@ export const RowRenderer = ({
   const row = rows[index];
 
   if (row.kind === VirtualRowKind.Header) {
-    const isPinnedHeader = row.groupKey === ConversationGroupKey.Pinned;
+    const isPinnedHeader = row.groupKey === FilterTab.Pinned;
     return (
-      <div style={style} className={index === 0 ? 'pt-0' : 'pt-8'}>
+      <div
+        role="presentation"
+        style={style}
+        className={index === 0 ? 'pt-0' : 'pt-8'}
+      >
         <ConversationGroupHeader
           label={row.label}
           isExpanded={expandedGroups.has(row.groupKey)}
           onToggle={() => onToggleGroup(row.groupKey)}
-          className={groupHeaderClassName}
-          dropZoneGroupKey={
-            isPinnedHeader ? ConversationGroupKey.Pinned : undefined
-          }
-          isDragOver={
-            isPinnedHeader && dragOverId === ConversationGroupKey.Pinned
-          }
+          className={styles?.groupHeaderClassName}
+          dropZoneGroupKey={isPinnedHeader ? FilterTab.Pinned : undefined}
+          isDragOver={isPinnedHeader && dragOverId === FilterTab.Pinned}
           onDragOver={isPinnedHeader ? onDragOver : undefined}
           onDragLeave={isPinnedHeader ? onDragLeave : undefined}
           onDrop={isPinnedHeader ? onDrop : undefined}
@@ -54,7 +52,7 @@ export const RowRenderer = ({
   }
 
   return (
-    <div style={style} className="pt-1">
+    <div role="presentation" style={style} className="pt-1">
       <ConversationRow
         item={row.item}
         isActive={row.item.id === activeConversationId}
@@ -62,8 +60,8 @@ export const RowRenderer = ({
         onSelectConversation={onSelectConversation}
         getActions={getActions}
         actionsLabel={actionsLabel}
-        itemTitleClassName={itemTitleClassName}
-        itemIconBadgeClassName={itemIconBadgeClassName}
+        itemTitleClassName={styles?.itemTitleClassName}
+        itemIconBadgeClassName={styles?.itemIconBadgeClassName}
         rowGroupKey={row.groupKey}
         rows={rows}
         draggingId={draggingId}

@@ -1,9 +1,8 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  ConversationGroupKey,
   ConversationPanel,
   FilterTab,
-  type ConversationHistoryItem,
+  type ConversationItem,
   type ConversationMove,
   type ConversationPanelStyles,
 } from '@epam/ai-dial-conversation-panel';
@@ -163,7 +162,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [items],
   );
 
-  const conversations: ConversationHistoryItem[] = useMemo(
+  const conversations: ConversationItem[] = useMemo(
     () =>
       items.map((item) => {
         const id = toPanelConversationId(item.id);
@@ -221,7 +220,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const draggedItem = conversations.find((c) => c.id === draggedId);
       if (!draggedItem) return;
 
-      if (targetGroupKey === ConversationGroupKey.Pinned) {
+      if (targetGroupKey === FilterTab.Pinned) {
         void pinConversation(contextId, true);
       } else if (draggedItem.isPinned) {
         void pinConversation(contextId, false);
@@ -232,7 +231,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   );
 
   const getActions = useCallback(
-    (panelItem: ConversationHistoryItem): DropdownItem[] => {
+    (panelItem: ConversationItem): DropdownItem[] => {
       const contextId = panelToContextId.get(panelItem.id);
       if (!contextId) return [];
 

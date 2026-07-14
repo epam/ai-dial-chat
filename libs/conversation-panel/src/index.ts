@@ -3,12 +3,11 @@ export type {
   ConversationMove,
   ConversationPanelProps,
   ConversationPanelStyles,
-  ConversationHistoryColors,
-  ConversationHistoryTypography,
-  ConversationHistoryItem,
+  ConversationColors,
+  ConversationPanelTypography,
+  ConversationPanelLabels,
+  ConversationItem,
   FilterLabels,
 } from './models/panel-props';
 export type { ConversationGroupProps } from './components/ConversationGroup/ConversationGroup';
-export { ConversationGroupKey } from './types/conversation-group-key';
-export { ConversationSource } from './types/conversation-source';
-export { FilterTab } from './types/filter-tab';
+export { FilterTab } from './types/conversation-classification';
