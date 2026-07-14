@@ -103,7 +103,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       variant={DialSkeletonVariant.Circular}
       width={DIAL_ICON_SIZE.LG}
       height={DIAL_ICON_SIZE.LG}
-      color="var(--bg-layer-4)"
+      color={styles.skeletonColor}
       aria-hidden
     />
   ) : (
@@ -152,9 +152,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       className={mergeClasses(
         'group/conversation relative',
         isDragging && 'cursor-grabbing opacity-50',
-        isDropTarget &&
-          isDropAllowed &&
-          'ring-accent-secondary rounded ring-1 ring-inset',
+        isDropTarget && isDropAllowed && 'rounded',
+        isDropTarget && isDropAllowed && styles.dropZoneActive,
         isDragActive && !isDragging && !isDropAllowed && 'cursor-not-allowed',
       )}
       draggable={isDragEnabled || undefined}

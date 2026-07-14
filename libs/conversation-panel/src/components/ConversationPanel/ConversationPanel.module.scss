@@ -6,11 +6,11 @@
   color: var(--cp-text, var(--text-primary, #161b2d));
 
   &:hover {
-    background: var(--cp-item-hover, var(--bg-layer-2, #eeeef0));
+    background: var(--cp-item-hover, var(--bg-layer-2, #eef1f7));
   }
 
   &.itemActive {
-    background: var(--cp-item-active, var(--bg-layer-2, #eeeef0));
+    background: var(--cp-item-active, var(--bg-layer-2, #eef1f7));
     color: var(--cp-text, var(--text-primary, #161b2d));
   }
 }
@@ -23,7 +23,7 @@
   @apply ring-1 ring-inset;
   --tw-ring-color: var(
     --cp-drop-zone-ring,
-    var(--stroke-accent-secondary, #007274)
+    var(--stroke-accent-primary, #124ace)
   );
 }
 
@@ -41,4 +41,8 @@
 
 .triggerIcon {
   color: var(--cp-trigger-icon-idle, var(--text-secondary, #575f73));
+}
+
+:export {
+  skeletonColor: var(--cp-skeleton-color, var(--bg-layer-4, #d1dbea));
 }

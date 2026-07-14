@@ -86,6 +86,16 @@ export interface ConversationColors {
   newChatShadowPurpleHover?: string;
   /** Purple shadow color of the New chat button while active/pressed. */
   newChatShadowPurpleActive?: string;
+  /** Ring color shown around a group header acting as a drag-and-drop target. */
+  dropZoneRing?: string;
+  /** Background color of the active row actions trigger button. */
+  triggerBackground?: string;
+  /** Icon color of the row actions trigger button while active. */
+  triggerIcon?: string;
+  /** Icon color of the row actions trigger button in its idle state. */
+  triggerIconIdle?: string;
+  /** Shimmer color of the loading skeleton avatar. */
+  skeletonColor?: string;
 }
 
 /** Combined style overrides (colors and typography) for `ConversationPanel`. */

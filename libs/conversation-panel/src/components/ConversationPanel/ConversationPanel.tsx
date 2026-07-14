@@ -190,6 +190,11 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-new-chat-shadow-purple': colors?.newChatShadowPurple,
       '--cp-new-chat-shadow-purple-hover': colors?.newChatShadowPurpleHover,
       '--cp-new-chat-shadow-purple-active': colors?.newChatShadowPurpleActive,
+      '--cp-drop-zone-ring': colors?.dropZoneRing,
+      '--cp-trigger-bg': colors?.triggerBackground,
+      '--cp-trigger-icon': colors?.triggerIcon,
+      '--cp-trigger-icon-idle': colors?.triggerIconIdle,
+      '--cp-skeleton-color': colors?.skeletonColor,
     });
 
     const filteredItems = useMemo(
