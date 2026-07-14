@@ -135,6 +135,16 @@
       "quickApp": "QuickApp",
       "toolset": "Toolset"
     },
+    "favoriteAddedTitle": "Added to Favorites",
+    "favoriteRemovedTitle": "Removed from Favorites",
+    "favoriteAdded": "\"{{name}}\" added to Favorites",
+    "favoriteRemoved": "\"{{name}}\" removed from Favorites",
+    "publishSuccessTitle": "Published",
+    "publishSuccess": "\"{{name}}\" published to {{folder}}",
+    "publishFolderSearchPlaceholder": "Search folders",
+    "publishFolderEmptyState": "No folders match \"{{query}}\".",
+    "publishHistoryLoading": "Loading history…",
+    "publishHistoryError": "Failed to load publish history.",
     "tab": {
       "models": "Models",
       "applications": "Agents",

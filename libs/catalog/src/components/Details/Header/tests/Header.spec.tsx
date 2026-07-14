@@ -24,6 +24,9 @@ vi.mock('@epam/ai-dial-kit', () => ({
     label: string;
     onClick: () => void;
   }) => <button onClick={onClick}>{label}</button>,
+  GhostButton: ({ label, onClick }: { label: string; onClick: () => void }) => (
+    <button onClick={onClick}>{label}</button>
+  ),
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
@@ -146,6 +149,38 @@ describe('Header', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'Share this' })).toBeTruthy();
+  });
+
+  it('renders Publish for a Model item', () => {
+    render(<Header item={makeItem(CatalogEntityType.Model)} />);
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+  });
+
+  it('renders Publish for a Toolset item by default', () => {
+    render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
+  });
+
+  it('uses the publish visibility predicate', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        isPublishVisible={() => false}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
+  });
+
+  it('calls onOpenPublish when Publish is clicked', async () => {
+    const onOpenPublish = vi.fn();
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Model)}
+        onOpenPublish={onOpenPublish}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(onOpenPublish).toHaveBeenCalledOnce();
   });
 
   it('does not render Edit when onEdit is not supplied', () => {
