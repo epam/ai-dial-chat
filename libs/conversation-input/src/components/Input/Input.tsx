@@ -23,6 +23,7 @@ import {
   useState,
 } from 'react';
 import { useAttachments } from '../../hooks/useAttachments';
+import { useDelayedUnmount } from '../../hooks/useDelayedUnmount';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useMessageState } from '../../hooks/useMessageState';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
@@ -34,6 +35,8 @@ import { SendButton } from './Buttons/SendButton';
 import { StopButton } from './Buttons/StopButton';
 import styles from './Input.module.scss';
 import { ModelSelectorControl } from './ModelSelectorControl';
+
+const SEND_BUTTON_EXIT_MS = 160;
 
 export const Input: FC<InputProps> = ({
   message: messageProp = '',
@@ -187,6 +190,19 @@ export const Input: FC<InputProps> = ({
   const hasSendableContent =
     message.trim().length > 0 || attachments.length > 0;
   const canSend = hasSendableContent && !hasBlockedAttachments;
+  /*
+   * Keeps the send button mounted just long enough to play its exit
+   * animation (`.sendButtonExiting` in Input.module.scss) after content is
+   * cleared, instead of vanishing instantly.
+   */
+  const {
+    shouldRender: shouldRenderSendButton,
+    isExiting: isSendButtonExiting,
+    instanceKey: sendButtonKey,
+  } = useDelayedUnmount(
+    !isStreaming && hasSendableContent,
+    SEND_BUTTON_EXIT_MS,
+  );
   /*
    * Stacked layout: textarea on its own row above the action bar. Used when the
    * caller opts in (edit mode), whenever attachments are present, or when the
@@ -416,8 +432,9 @@ export const Input: FC<InputProps> = ({
                   <StopButton onStop={onStop} ariaLabel={stopLabel} />
                 ) : (
                   !isStreaming &&
-                  hasSendableContent && (
+                  shouldRenderSendButton && (
                     <SendButton
+                      key={sendButtonKey}
                       onSend={handleSend}
                       isDisabled={
                         isInputDisabled ||
@@ -425,20 +442,23 @@ export const Input: FC<InputProps> = ({
                         hasBlockedAttachments
                       }
                       ariaLabel={sendLabel}
+                      isExiting={isSendButtonExiting}
                     />
                   )
                 )}
               </>
             )}
-            {isTranscriptionSupported && !message.trim() && (
-              <DialGhostIconButton
-                icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
-                aria-label={micLabel}
-                className="size-10 flex-shrink-0"
-                onClick={startRecording}
-                disabled={isInputDisabled || isStreaming}
-              />
-            )}
+            {isTranscriptionSupported &&
+              !message.trim() &&
+              !isSendButtonExiting && (
+                <DialGhostIconButton
+                  icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
+                  aria-label={micLabel}
+                  className="size-8 flex-shrink-0"
+                  onClick={startRecording}
+                  disabled={isInputDisabled || isStreaming}
+                />
+              )}
           </div>
         </div>
       )}

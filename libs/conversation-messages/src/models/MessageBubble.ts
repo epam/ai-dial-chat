@@ -75,18 +75,46 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
   showMoreAriaLabel?: string;
   /** Accessible label for the collapse button. Defaults to the `showLessLabel` value. */
   showLessAriaLabel?: string;
-  /** Called when the user clicks an attachment card. Passed through to `AttachmentTray`. */
+  /** Called when the user clicks an attachment tile/row. Passed through to `AttachmentGroup`. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
-  /** Accessible label forwarded to each attachment card's root when it is interactive. */
+  /** Accessible label forwarded to each attachment tile/row when it is interactive. */
   attachmentClickLabel?: string;
+  /** Called when the user retries a failed attachment upload. */
+  onAttachmentRetry?: (id: string) => void;
+  /** Accessible label for each attachment row's retry action. */
+  attachmentRetryLabel?: string;
+  /** Resolves a human-readable size label for an attachment, when derivable. Omitted from display when absent. */
+  getAttachmentSizeLabel?: (
+    attachment: DisplayAttachment,
+  ) => string | undefined;
+  /**
+   * Surface color theme for non-previewable attachment tiles, matching the
+   * markdown code block's own light/dark surface (never plain white).
+   * Forwarded to `AttachmentGroup`. Defaults to `'dark'`.
+   */
+  attachmentTheme?: CodeBlockTheme;
 }
 
 /** Props accepted by the `AssistantMessageBubble` component. */
 export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
-  /** Called when the user clicks an attachment card in the assistant bubble's tray. */
+  /** Called when the user clicks an attachment tile/row in the assistant bubble's group. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
-  /** Accessible label forwarded to each attachment card's root when it is interactive. */
+  /** Accessible label forwarded to each attachment tile/row when it is interactive. */
   attachmentClickLabel?: string;
+  /** Called when the user retries a failed attachment upload. */
+  onAttachmentRetry?: (id: string) => void;
+  /** Accessible label for each attachment row's retry action. */
+  attachmentRetryLabel?: string;
+  /** Resolves a human-readable size label for an attachment, when derivable. Omitted from display when absent. */
+  getAttachmentSizeLabel?: (
+    attachment: DisplayAttachment,
+  ) => string | undefined;
+  /**
+   * Surface color theme for non-previewable attachment tiles, matching the
+   * markdown code block's own light/dark surface (never plain white).
+   * Forwarded to `AttachmentGroup`. Defaults to `'dark'`.
+   */
+  attachmentTheme?: CodeBlockTheme;
   /**
    * react-markdown component overrides merged on top of the built-in map.
    * Pass a custom `p` (or other element) renderer here to inject React nodes
@@ -185,8 +213,23 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
   codeBlockCopiedLabel?: string;
   /** Syntax highlight color theme for code blocks. Forwarded to `AssistantMessageBubble`. Defaults to `'dark'`. */
   codeBlockTheme?: CodeBlockTheme;
-  /** Called when the user clicks an attachment card. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
+  /** Called when the user clicks an attachment tile/row. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
-  /** Accessible label forwarded to each attachment card's root when it is interactive. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
+  /** Accessible label forwarded to each attachment tile/row when it is interactive. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
   attachmentClickLabel?: string;
+  /** Called when the user retries a failed attachment upload. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
+  onAttachmentRetry?: (id: string) => void;
+  /** Accessible label for each attachment row's retry action. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
+  attachmentRetryLabel?: string;
+  /** Resolves a human-readable size label for an attachment, when derivable. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
+  getAttachmentSizeLabel?: (
+    attachment: DisplayAttachment,
+  ) => string | undefined;
+  /**
+   * Surface color theme for non-previewable attachment tiles, matching the
+   * markdown code block's own light/dark surface (never plain white).
+   * Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`.
+   * Defaults to `'dark'`.
+   */
+  attachmentTheme?: CodeBlockTheme;
 }

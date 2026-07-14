@@ -1,3 +1,5 @@
+import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
+
 const extractFilename = (contentDisposition: string | null): string | null => {
   if (!contentDisposition) return null;
   const match = /filename[^;=\n]*=(?:(\\?['"])(.*?)\1|([^;\n]*))/i.exec(
@@ -33,15 +35,6 @@ export type DownloadDestination =
       writable: WritableStream<Uint8Array>;
     }
   | { type: DownloadDestinationType.Cancelled };
-
-export const triggerBlobDownload = (blob: Blob, filename: string): void => {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-};
 
 export const prepareDownloadDestination = async (
   filename: string,

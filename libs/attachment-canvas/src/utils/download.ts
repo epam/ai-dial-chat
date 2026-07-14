@@ -1,4 +1,8 @@
-import { MIMEType } from '@epam/ai-dial-chat-shared';
+import {
+  MIMEType,
+  triggerAnchorDownload,
+  triggerBlobDownload,
+} from '@epam/ai-dial-chat-shared';
 import type { AttachmentCanvasContent } from '../models/attachment-canvas';
 import {
   AttachmentContentType,
@@ -36,47 +40,41 @@ export const downloadAttachmentContent = (
   content: AttachmentCanvasContent,
   fileName?: string,
 ): void => {
-  let href: string;
-  let revokeAfter = false;
+  const name = fileName ?? 'attachment';
   switch (content.type) {
     case AttachmentContentType.PlainText:
       if (content.text === '') return;
-      href = URL.createObjectURL(
+      triggerBlobDownload(
         new Blob([content.text], { type: MIMEType.Plain }),
+        name,
       );
-      revokeAfter = true;
-      break;
+      return;
     case AttachmentContentType.Markdown:
       if (content.text === '') return;
-      href = URL.createObjectURL(
+      triggerBlobDownload(
         new Blob([content.text], { type: MIMEType.Markdown }),
+        name,
       );
-      revokeAfter = true;
-      break;
+      return;
     case AttachmentContentType.Json:
-      href = URL.createObjectURL(
+      triggerBlobDownload(
         new Blob([JSON.stringify(content.value, null, 2)], {
           type: MIMEType.JSON,
         }),
+        name,
       );
-      revokeAfter = true;
-      break;
+      return;
     case AttachmentContentType.Image:
     case AttachmentContentType.Pdf:
-      href = content.url;
-      break;
+      triggerAnchorDownload(content.url, name);
+      return;
     case AttachmentContentType.Unsupported:
       if (content.url == null) return;
-      href = content.url;
-      break;
+      triggerAnchorDownload(content.url, name);
+      return;
     case AttachmentContentType.Error:
       if (!isDownloadable(content)) return;
-      href = content.url!;
-      break;
+      triggerAnchorDownload(content.url!, name);
+      return;
   }
-  const anchor = document.createElement('a');
-  anchor.href = href;
-  anchor.download = fileName ?? 'attachment';
-  anchor.click();
-  if (revokeAfter) URL.revokeObjectURL(href);
 };

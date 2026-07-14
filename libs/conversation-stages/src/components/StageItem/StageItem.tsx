@@ -3,7 +3,7 @@ import {
   mergeClasses,
   messageAttachmentToDisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
-import { AttachmentTray } from '@epam/ai-dial-conversation-input';
+import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
@@ -104,7 +104,7 @@ export const StageItem: FC<Props> = ({
             )}
 
             {displayAttachments.length > 0 && (
-              <AttachmentTray
+              <AttachmentGroup
                 attachments={displayAttachments}
                 ariaLabel={attachmentsAriaLabel}
                 onAttachmentClick={onAttachmentClick}
