@@ -1,7 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { AttachmentCanvasContent } from '../../../models/attachment-canvas';
-import { AttachmentContentType } from '../../../types/attachment-canvas';
+import {
+  AttachmentContentType,
+  AttachmentErrorType,
+} from '../../../types/attachment-canvas';
 import { AttachmentCanvas } from '../AttachmentCanvas';
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
@@ -132,5 +135,76 @@ describe('AttachmentCanvas', () => {
       <AttachmentCanvas {...defaultProps} content={jsonContent} />,
     );
     expect(container.querySelector('[dir="ltr"]')).toBeTruthy();
+  });
+
+  describe('Error content', () => {
+    it('renders the default load-error message for a LoadFailed error', () => {
+      const errorContent: AttachmentCanvasContent = {
+        type: AttachmentContentType.Error,
+        errorType: AttachmentErrorType.LoadFailed,
+        url: 'https://example.com/doc.pdf',
+      };
+      render(<AttachmentCanvas {...defaultProps} content={errorContent} />);
+      expect(screen.getByText('Failed to load file')).toBeDefined();
+    });
+
+    it('renders the default forbidden message for a Forbidden error', () => {
+      const errorContent: AttachmentCanvasContent = {
+        type: AttachmentContentType.Error,
+        errorType: AttachmentErrorType.Forbidden,
+        url: 'https://example.com/doc.pdf',
+      };
+      render(<AttachmentCanvas {...defaultProps} content={errorContent} />);
+      expect(
+        screen.getByText("You don't have permission to access this file"),
+      ).toBeDefined();
+    });
+
+    it('renders custom loadErrorLabel and forbiddenErrorLabel', () => {
+      const errorContent: AttachmentCanvasContent = {
+        type: AttachmentContentType.Error,
+        errorType: AttachmentErrorType.Forbidden,
+      };
+      render(
+        <AttachmentCanvas
+          {...defaultProps}
+          content={errorContent}
+          forbiddenErrorLabel="No access"
+        />,
+      );
+      expect(screen.getByText('No access')).toBeDefined();
+    });
+
+    it('shows the download button for a LoadFailed error with a url', () => {
+      const errorContent: AttachmentCanvasContent = {
+        type: AttachmentContentType.Error,
+        errorType: AttachmentErrorType.LoadFailed,
+        url: 'https://example.com/doc.pdf',
+      };
+      render(
+        <AttachmentCanvas
+          {...defaultProps}
+          content={errorContent}
+          onDownload={vi.fn()}
+        />,
+      );
+      expect(screen.getByRole('button', { name: /download/i })).toBeDefined();
+    });
+
+    it('hides the download button for a Forbidden error even when a url is present', () => {
+      const errorContent: AttachmentCanvasContent = {
+        type: AttachmentContentType.Error,
+        errorType: AttachmentErrorType.Forbidden,
+        url: 'https://example.com/doc.pdf',
+      };
+      render(
+        <AttachmentCanvas
+          {...defaultProps}
+          content={errorContent}
+          onDownload={vi.fn()}
+        />,
+      );
+      expect(screen.queryByRole('button', { name: /download/i })).toBeNull();
+    });
   });
 });

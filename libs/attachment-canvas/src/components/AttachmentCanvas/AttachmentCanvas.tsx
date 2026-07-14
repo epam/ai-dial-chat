@@ -7,16 +7,21 @@ import {
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import {
+  IconAlertTriangle,
   IconCheck,
   IconCopy,
   IconDownload,
+  IconLock,
   IconMarkdown,
 } from '@tabler/icons-react';
 import { type FC, memo, useCallback, useMemo, useRef, useState } from 'react';
 import { defaultStyles, JsonView } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
-import { AttachmentContentType } from '../../types/attachment-canvas';
+import {
+  AttachmentContentType,
+  AttachmentErrorType,
+} from '../../types/attachment-canvas';
 import { isDownloadable } from '../../utils/download';
 import { PdfContent } from '../PdfContent/PdfContent';
 import styles from './AttachmentCanvas.module.scss';
@@ -42,6 +47,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   copyJsonLabel = 'Copy as JSON',
   copiedJsonLabel = 'Copied!',
   unsupportedLabel = 'Preview is not supported for this file',
+  loadErrorLabel = 'Failed to load file',
+  forbiddenErrorLabel = "You don't have permission to access this file",
   isMobile = false,
   defaultWidth,
   minWidth = 320,
@@ -125,6 +132,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     switch (content.type) {
       case AttachmentContentType.Image:
       case AttachmentContentType.Unsupported:
+      case AttachmentContentType.Error:
         return 'h-full overflow-auto p-4 flex items-center justify-center';
       case AttachmentContentType.Json:
         return 'h-full overflow-auto';
@@ -226,10 +234,29 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         );
       case AttachmentContentType.Unsupported:
         return (
-          <p className={mergeClasses('text-center', styles.unsupportedLabel)}>
+          <p className={mergeClasses('text-center', styles.statusLabel)}>
             {unsupportedLabel}
           </p>
         );
+      case AttachmentContentType.Error: {
+        const isForbidden = content.errorType === AttachmentErrorType.Forbidden;
+        return (
+          <div className="flex flex-col items-center gap-2">
+            {isForbidden ? (
+              <IconLock size={60} stroke={1.5} className={styles.errorIcon} />
+            ) : (
+              <IconAlertTriangle
+                size={60}
+                stroke={1.5}
+                className={styles.errorIcon}
+              />
+            )}
+            <p className={mergeClasses('text-center', styles.statusLabel)}>
+              {isForbidden ? forbiddenErrorLabel : loadErrorLabel}
+            </p>
+          </div>
+        );
+      }
     }
   }, [
     content,
@@ -237,6 +264,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     fileName,
     codeBlockTheme,
     unsupportedLabel,
+    loadErrorLabel,
+    forbiddenErrorLabel,
     loadPdf,
   ]);
 

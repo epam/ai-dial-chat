@@ -35,6 +35,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   showMoreAriaLabel,
   showLessAriaLabel,
   onAttachmentClick,
+  onDownloadAll,
   attachmentClickLabel,
   onAttachmentRetry,
   attachmentRetryLabel,
@@ -81,6 +82,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
         <AttachmentGroup
           attachments={attachments ?? []}
           onAttachmentClick={onAttachmentClick}
+          onDownloadAll={onDownloadAll}
           onRetry={onAttachmentRetry}
           clickLabel={attachmentClickLabel}
           retryLabel={attachmentRetryLabel}
