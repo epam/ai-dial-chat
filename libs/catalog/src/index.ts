@@ -118,8 +118,8 @@ export type { TopicTagProps } from './components/TopicTag/TopicTag';
 export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';
 export type { PublishHistoryListProps } from './components/PublishHistoryList/PublishHistoryList';
 
-export { PublishFolderPicker } from './components/PublishFolderPicker/PublishFolderPicker';
-export type { PublishFolderPickerProps } from './components/PublishFolderPicker/PublishFolderPicker';
+export { PublishFoldersTree } from './components/PublishFoldersTree/PublishFoldersTree';
+export type { PublishFoldersTreeProps } from './components/PublishFoldersTree/PublishFoldersTree';
 
 export { PublishPanel } from './components/PublishPanel/PublishPanel';
 export type {

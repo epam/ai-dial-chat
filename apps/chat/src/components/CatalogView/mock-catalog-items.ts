@@ -1,8 +1,4 @@
-import type {
-  CatalogItem,
-  PublishFolderNode,
-  PublishHistoryEntry,
-} from '@epam/ai-dial-catalog';
+import type { CatalogItem } from '@epam/ai-dial-catalog';
 import {
   CatalogEntityType,
   CodeLanguage,
@@ -1287,57 +1283,3 @@ print(response.choices[0].message.content)`,
     },
   },
 ];
-
-// ── Publish flow mock data ──────────────────────────────────────────────────
-
-/** Destination folders offered by the mock "Publish to folder" flow. */
-export const MOCK_PUBLISH_FOLDERS: PublishFolderNode[] = [
-  {
-    path: ['Organization'],
-    name: 'Organization',
-    children: [
-      {
-        path: ['Organization', 'Data Science'],
-        name: 'Data Science',
-        children: [
-          {
-            path: ['Organization', 'Data Science', 'Published models'],
-            name: 'Published models',
-          },
-          {
-            path: ['Organization', 'Data Science', 'Experiments'],
-            name: 'Experiments',
-          },
-        ],
-      },
-      { path: ['Organization', 'Production'], name: 'Production' },
-      { path: ['Organization', 'Marketing'], name: 'Marketing' },
-    ],
-  },
-];
-
-/** Mock publish history keyed by catalog item id; items absent here have no history yet. */
-export const MOCK_PUBLISH_HISTORY: Record<string, PublishHistoryEntry[]> = {
-  'gpt-4o': [
-    {
-      version: '2024-11',
-      publishedAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
-      publishedBy: 'you',
-      folderPath: ['Organization', 'Data Science', 'Published models'],
-    },
-    {
-      version: '2024-08',
-      publishedAt: Date.now() - 21 * 24 * 60 * 60 * 1000,
-      publishedBy: 'A. Ivanov',
-      folderPath: ['Organization', 'Production'],
-    },
-  ],
-  'claude-3-5-sonnet': [
-    {
-      version: '20240620',
-      publishedAt: Date.now() - 60 * 24 * 60 * 60 * 1000,
-      publishedBy: 'you',
-      folderPath: ['Organization', 'Production'],
-    },
-  ],
-};

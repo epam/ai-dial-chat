@@ -194,4 +194,41 @@ describe('PublishPanel', () => {
     renderPanel({ selectedFolderPath: ['Shared', 'Data Science'] });
     expect(screen.queryByText('Version 4.0.0')).toBeNull();
   });
+
+  describe('root selection', () => {
+    it('shows the history section when the root ([]) is selected', () => {
+      renderPanel({ selectedFolderPath: [] });
+      expect(screen.getByText('Versions history')).toBeTruthy();
+    });
+
+    it('shows the empty-history message for the root when there is no root history', () => {
+      renderPanel({ selectedFolderPath: [] });
+      expect(
+        screen.getByText(
+          'Not published to this folder yet — this will be the first version here.',
+        ),
+      ).toBeTruthy();
+    });
+
+    it('uses the root folder label in the no-access callout when the root is selected', () => {
+      const { container } = renderPanel({
+        selectedFolderPath: [],
+        hasWriteAccess: false,
+      });
+      expect(container.textContent).toContain(
+        "You don't have permission to publish to Organization. Pick another, or ask an owner for access.",
+      );
+    });
+
+    it('uses a custom rootFolderLabel text override', () => {
+      const { container } = renderPanel({
+        selectedFolderPath: [],
+        hasWriteAccess: false,
+        texts: { rootFolderLabel: 'Public bucket' },
+      });
+      expect(container.textContent).toContain(
+        "You don't have permission to publish to Public bucket.",
+      );
+    });
+  });
 });

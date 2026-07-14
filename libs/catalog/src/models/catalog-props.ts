@@ -94,9 +94,19 @@ export interface CatalogProps {
   /** Controls whether the "Publish" action is shown for an item. */
   isPublishVisible?: (item: CatalogItem) => boolean;
   /** Resolves previously published versions for an item, most recent first. */
-  getPublishHistory?: (item: CatalogItem) => PublishHistoryEntry[];
+  getPublishHistory?: (item: CatalogItem) => Promise<PublishHistoryEntry[]>;
   /** Root-level destination folder nodes offered by the publish flow. */
   publishFolderItems?: PublishFolderNode[];
+  /**
+   * Externally-controlled set of expanded publish-folder path keys
+   * (`path.join('/')`). Pass this together with `onPublishExpandedPathsChange`
+   * when the host lazily fetches a folder's children on expand.
+   */
+  publishExpandedPaths?: Set<string>;
+  /** Called when the set of expanded publish folders changes; required to control `publishExpandedPaths`. */
+  onPublishExpandedPathsChange?: (paths: Set<string>) => void;
+  /** Publish-folder path keys currently being fetched by the host. */
+  publishLoadingPaths?: Set<string>;
   /** Resolves whether the current user can publish to a given folder path. */
   hasPublishWriteAccess?: (folderPath: string[]) => boolean;
   /** Called with the destination folder path when the user confirms publish/update. */

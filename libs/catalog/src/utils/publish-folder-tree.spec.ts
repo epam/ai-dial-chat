@@ -1,6 +1,15 @@
+import { DialFile, DialFileNodeType } from '@epam/ai-dial-ui-kit';
 import { describe, expect, it } from 'vitest';
 import { PublishFolderNode } from '../models/publish';
-import { collectFolderKeys, filterFolderTree } from './publish-folder-tree';
+import {
+  collectFolderKeys,
+  filterFolderTree,
+  fromFolderPathKey,
+  getSiblingFolderNames,
+  insertPlaceholderDialFile,
+  toDialFileTree,
+  toFolderPathKey,
+} from './publish-folder-tree';
 
 const tree: PublishFolderNode[] = [
   {
@@ -70,5 +79,83 @@ describe('collectFolderKeys', () => {
       'My workspace',
       'My workspace/Drafts',
     ]);
+  });
+});
+
+describe('toFolderPathKey / fromFolderPathKey', () => {
+  it('joins and splits path segments symmetrically', () => {
+    const segments = ['Shared', 'Data Science'];
+    expect(fromFolderPathKey(toFolderPathKey(segments))).toEqual(segments);
+  });
+
+  it('round-trips an empty path to an empty array', () => {
+    expect(fromFolderPathKey(toFolderPathKey([]))).toEqual([]);
+  });
+});
+
+describe('toDialFileTree', () => {
+  it('converts nodes to DialFile with folder node type and joined path', () => {
+    const result = toDialFileTree(tree);
+    expect(result[0]).toMatchObject({
+      path: 'Shared',
+      name: 'Shared',
+      folderId: 'Shared',
+      nodeType: DialFileNodeType.FOLDER,
+    });
+    expect(result[0].items?.[0]).toMatchObject({
+      path: 'Shared/Data Science',
+      name: 'Data Science',
+    });
+  });
+
+  it('leaves items undefined for leaf nodes', () => {
+    const result = toDialFileTree(tree);
+    const leaf = result[0].items?.[0].items?.[0];
+    expect(leaf?.items).toBeUndefined();
+  });
+});
+
+describe('insertPlaceholderDialFile', () => {
+  const files: DialFile[] = toDialFileTree(tree);
+
+  it('inserts a root-level placeholder', () => {
+    const result = insertPlaceholderDialFile(files, [], 'New folder');
+    expect(result.at(-1)).toMatchObject({
+      path: 'New folder',
+      name: 'New folder',
+    });
+  });
+
+  it('inserts a placeholder under a nested parent', () => {
+    const result = insertPlaceholderDialFile(
+      files,
+      ['Shared', 'Data Science'],
+      'New folder',
+    );
+    const parent = result[0].items?.[0];
+    expect(parent?.items?.at(-1)).toMatchObject({
+      path: 'Shared/Data Science/New folder',
+      name: 'New folder',
+    });
+  });
+});
+
+describe('getSiblingFolderNames', () => {
+  it('returns root-level names when parentPath is empty', () => {
+    expect(getSiblingFolderNames(tree, [])).toEqual(['Shared', 'My workspace']);
+  });
+
+  it('returns child names for a nested parent', () => {
+    expect(getSiblingFolderNames(tree, ['Shared'])).toEqual(['Data Science']);
+  });
+
+  it('returns an empty array for a parent with no children', () => {
+    expect(
+      getSiblingFolderNames(tree, [
+        'Shared',
+        'Data Science',
+        'Published models',
+      ]),
+    ).toEqual([]);
   });
 });

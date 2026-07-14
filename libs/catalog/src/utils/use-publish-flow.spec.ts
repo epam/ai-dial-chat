@@ -101,6 +101,36 @@ describe('usePublishFlow', () => {
     expect(result.current.hasWriteAccess).toBe(false);
   });
 
+  it('treats [] (bucket root) as a valid selection, distinct from undefined', () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() =>
+      usePublishFlow({ item, history, folderItems, onPublish }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath([]);
+    });
+
+    expect(result.current.selectedFolderPath).toEqual([]);
+    expect(result.current.hasWriteAccess).toBe(true);
+  });
+
+  it('submits to the root when [] is selected', async () => {
+    const onPublish = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() =>
+      usePublishFlow({ item, history, folderItems, onPublish }),
+    );
+
+    act(() => {
+      result.current.setSelectedFolderPath([]);
+    });
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(onPublish).toHaveBeenCalledWith(item, []);
+  });
+
   it('adds a locally created folder and reports it to the host', () => {
     const onCreateFolder = vi.fn();
     const { result } = renderHook(() =>
@@ -242,6 +272,43 @@ describe('usePublishFlow', () => {
     });
 
     expect(result.current.hasSubmitError).toBe(false);
+  });
+
+  it('re-syncs folderItems when the host-supplied folderItems prop changes (e.g. after a lazy fetch)', () => {
+    const { result, rerender } = renderHook(
+      ({ folderItems: items }) =>
+        usePublishFlow({
+          item,
+          history,
+          folderItems: items,
+          onPublish: vi.fn().mockResolvedValue(undefined),
+        }),
+      { initialProps: { folderItems } },
+    );
+
+    expect(
+      result.current.folderItems[0].children?.some(
+        (child) => child.name === 'Data Science',
+      ),
+    ).toBe(true);
+
+    const updatedFolderItems: PublishFolderNode[] = [
+      {
+        path: ['Shared'],
+        name: 'Shared',
+        children: [
+          { path: ['Shared', 'Data Science'], name: 'Data Science' },
+          { path: ['Shared', 'Newly Fetched'], name: 'Newly Fetched' },
+        ],
+      },
+    ];
+    rerender({ folderItems: updatedFolderItems });
+
+    expect(
+      result.current.folderItems[0].children?.some(
+        (child) => child.name === 'Newly Fetched',
+      ),
+    ).toBe(true);
   });
 
   it('resets folder selection and locally created folders', () => {

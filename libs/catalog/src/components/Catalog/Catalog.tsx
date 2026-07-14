@@ -40,6 +40,9 @@ export const Catalog: FC<CatalogProps> = ({
   isPublishVisible,
   getPublishHistory,
   publishFolderItems,
+  publishExpandedPaths,
+  onPublishExpandedPathsChange,
+  publishLoadingPaths,
   hasPublishWriteAccess,
   onPublish,
   onPublishSuccess,
@@ -434,6 +437,9 @@ export const Catalog: FC<CatalogProps> = ({
           isPublishVisible={isPublishVisible}
           getPublishHistory={getPublishHistory}
           publishFolderItems={publishFolderItems}
+          publishExpandedPaths={publishExpandedPaths}
+          onPublishExpandedPathsChange={onPublishExpandedPathsChange}
+          publishLoadingPaths={publishLoadingPaths}
           hasPublishWriteAccess={hasPublishWriteAccess}
           onPublish={onPublish}
           onPublishSuccess={onPublishSuccess}

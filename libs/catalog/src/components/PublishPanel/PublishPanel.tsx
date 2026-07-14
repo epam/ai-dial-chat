@@ -13,7 +13,7 @@ import {
 } from '../../models/publish';
 import { derivePublishState } from '../../utils/publish-state';
 import { EntityHeader } from '../EntityHeader/EntityHeader';
-import { PublishFolderPicker } from '../PublishFolderPicker/PublishFolderPicker';
+import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
 
 /** Text overrides for all user-visible strings in {@link PublishPanel}. */
@@ -34,6 +34,14 @@ export interface PublishPanelTexts {
   noAccessError?: string;
   /** Error callout body shown when the most recent submit attempt failed. */
   submitError?: string;
+  /** Message shown when a folder search query matches no folders; `{query}` is replaced. */
+  folderEmptyStateText?: string;
+  /** Message shown while publish history is loading. */
+  historyLoadingText?: string;
+  /** Message shown when publish history failed to load. */
+  historyErrorText?: string;
+  /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
+  rootFolderLabel?: string;
 }
 
 /** Props for {@link PublishPanel}. */
@@ -42,14 +50,32 @@ export interface PublishPanelProps {
   item: CatalogItem;
   /** Previously published versions for this entity. */
   history: PublishHistoryEntry[];
+  /** Whether `history` is currently being fetched. Default: `false`. */
+  isHistoryLoading?: boolean;
+  /** Whether the most recent history fetch failed. Default: `false`. */
+  hasHistoryError?: boolean;
   /** Destination folders available for selection. */
   folderItems: PublishFolderNode[];
-  /** Currently selected destination folder path. */
+  /**
+   * Currently selected destination folder path. `undefined` means nothing
+   * is selected; `[]` means the bucket root itself is selected (a distinct,
+   * valid destination).
+   */
   selectedFolderPath?: string[];
-  /** Called when the user selects a destination folder. */
-  onSelectedFolderPathChange: (path: string[]) => void;
+  /** Called when the user selects a destination folder or the root; `undefined` when deselected. */
+  onSelectedFolderPathChange: (path: string[] | undefined) => void;
   /** Called when the user confirms a new folder name. */
   onCreateFolder: (parentPath: string[], name: string) => void;
+  /**
+   * Externally-controlled set of expanded folder path keys. Pass this
+   * together with `onExpandedPathsChange` when the host lazily fetches a
+   * folder's children on expand.
+   */
+  expandedPaths?: Set<string>;
+  /** Called when the set of expanded folders changes; required to control `expandedPaths`. */
+  onExpandedPathsChange?: (paths: Set<string>) => void;
+  /** Folder path keys currently being fetched by the host. */
+  loadingPaths?: Set<string>;
   /** Whether `item.version` is already published at `selectedFolderPath`. */
   hasExistingVersionInFolder: boolean;
   /** Whether the current user can publish to `selectedFolderPath`. */
@@ -71,10 +97,15 @@ export interface PublishPanelProps {
 export const PublishPanel: FC<PublishPanelProps> = ({
   item,
   history,
+  isHistoryLoading = false,
+  hasHistoryError = false,
   folderItems,
   selectedFolderPath,
   onSelectedFolderPathChange,
   onCreateFolder,
+  expandedPaths,
+  onExpandedPathsChange,
+  loadingPaths,
   hasExistingVersionInFolder,
   hasWriteAccess,
   isSubmitting,
@@ -90,21 +121,27 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
+    folderEmptyStateText,
+    historyLoadingText,
+    historyErrorText,
+    rootFolderLabel = 'Organization',
   } = texts;
 
   const [searchQuery, setSearchQuery] = useState('');
 
+  const isFolderSelected = selectedFolderPath != null;
+
   const derived = useMemo(
     () =>
       derivePublishState({
-        hasSelectedFolder: Boolean(selectedFolderPath?.length),
+        hasSelectedFolder: isFolderSelected,
         hasExistingVersionInFolder,
         hasWriteAccess,
         isSubmitting,
         hasSubmitError,
       }),
     [
-      selectedFolderPath,
+      isFolderSelected,
       hasExistingVersionInFolder,
       hasWriteAccess,
       isSubmitting,
@@ -112,15 +149,17 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     ],
   );
 
-  const folderName = selectedFolderPath?.[selectedFolderPath.length - 1] ?? '';
+  const folderName = isFolderSelected
+    ? (selectedFolderPath[selectedFolderPath.length - 1] ?? rootFolderLabel)
+    : '';
 
   const folderHistory = useMemo(() => {
-    if (!selectedFolderPath?.length) {
+    if (!isFolderSelected) {
       return [];
     }
     const key = selectedFolderPath.join('/');
     return history.filter((entry) => entry.folderPath.join('/') === key);
-  }, [history, selectedFolderPath]);
+  }, [history, selectedFolderPath, isFolderSelected]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -151,13 +190,18 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             rowClassName="!rounded-lg"
           />
         </div>
-        <PublishFolderPicker
+        <PublishFoldersTree
           items={folderItems}
           selectedPath={selectedFolderPath}
           onSelectedPathChange={onSelectedFolderPathChange}
           onCreateFolder={onCreateFolder}
+          expandedPaths={expandedPaths}
+          onExpandedPathsChange={onExpandedPathsChange}
+          loadingPaths={loadingPaths}
           searchQuery={searchQuery}
           disabled={isSubmitting}
+          noResultsText={folderEmptyStateText}
+          rootLabel={rootFolderLabel}
         />
         {derived.calloutKind !== PublishCalloutKind.None &&
           derived.calloutKind !== PublishCalloutKind.Info && (
@@ -176,14 +220,18 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           )}
       </div>
 
-      {Boolean(selectedFolderPath?.length) && (
+      {isFolderSelected && (
         <div>
           <div className="dial-body-semi-text mb-2 text-primary">
             {historyLabel}
           </div>
           <PublishHistoryList
             entries={folderHistory}
+            isLoading={isHistoryLoading}
+            hasError={hasHistoryError}
             currentVersion={item.version}
+            loadingText={historyLoadingText}
+            errorText={historyErrorText}
           />
         </div>
       )}

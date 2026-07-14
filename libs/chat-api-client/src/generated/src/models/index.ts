@@ -3172,6 +3172,135 @@ export interface ProviderInfoDto {
 /**
  *
  * @export
+ * @interface PublishCatalogEntityDto
+ */
+export interface PublishCatalogEntityDto {
+  /**
+   * Destination folder under the Organization/public bucket, forwarded to DIAL Core as `targetFolder`.
+   * @type {string}
+   * @memberof PublishCatalogEntityDto
+   */
+  folderPath: string;
+  /**
+   * Version label for this publish.
+   * @type {string}
+   * @memberof PublishCatalogEntityDto
+   */
+  version: string;
+}
+/**
+ *
+ * @export
+ * @interface PublishHistoryEntryDto
+ */
+export interface PublishHistoryEntryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  entityId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  entityType: PublishHistoryEntryDtoEntityTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  folderPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  version: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  publishedAt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  publishedBy: string;
+}
+
+/**
+ * @export
+ */
+export const PublishHistoryEntryDtoEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+} as const;
+export type PublishHistoryEntryDtoEntityTypeEnum =
+  (typeof PublishHistoryEntryDtoEntityTypeEnum)[keyof typeof PublishHistoryEntryDtoEntityTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface PublishResultDto
+ */
+export interface PublishResultDto {
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  entityId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  entityType: PublishResultDtoEntityTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  folderPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  version: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  publishedAt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  publishedBy: string;
+}
+
+/**
+ * @export
+ */
+export const PublishResultDtoEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+} as const;
+export type PublishResultDtoEntityTypeEnum =
+  (typeof PublishResultDtoEntityTypeEnum)[keyof typeof PublishResultDtoEntityTypeEnum];
+
+/**
+ *
+ * @export
  * @interface RateMessageDto
  */
 export interface RateMessageDto {

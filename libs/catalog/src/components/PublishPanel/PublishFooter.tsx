@@ -7,10 +7,8 @@ import styles from './PublishFooter.module.scss';
 export interface PublishFooterTexts {
   /** Cancel button label. Default: `'Cancel'`. */
   cancelLabel?: string;
-  /** Submit button label before a destination folder is selected. Default: `'Publish'`. */
+  /** Submit button label when publishing a new version. Default: `'Publish'`. */
   publishDefaultLabel?: string;
-  /** Submit button label once a destination folder is selected; `{folder}` is replaced. Default: `'Publish to {folder}'`. */
-  publishLabel?: string;
   /** Submit button label when replacing an existing version; `{version}` is replaced. */
   updateLabel?: string;
   /** Submit button label while the request is in flight. Default: `'Publishing…'`. */
@@ -21,8 +19,6 @@ export interface PublishFooterTexts {
 export interface PublishFooterProps {
   /** The version being published, substituted into the submit label. */
   version: string;
-  /** Name of the currently selected destination folder, if any, substituted into the submit label. */
-  folderName?: string;
   /** Whether `version` is already published at the selected destination folder. */
   hasExistingVersionInFolder: boolean;
   /** Whether the submit button should be disabled. */
@@ -45,7 +41,6 @@ export interface PublishFooterProps {
  */
 export const PublishFooter: FC<PublishFooterProps> = ({
   version,
-  folderName,
   hasExistingVersionInFolder,
   isSubmitDisabled,
   isSubmitLoading,
@@ -56,7 +51,6 @@ export const PublishFooter: FC<PublishFooterProps> = ({
   const {
     cancelLabel = 'Cancel',
     publishDefaultLabel = 'Publish',
-    publishLabel = 'Publish to {folder}',
     updateLabel = 'Update version {version}',
     publishingInProgressLabel = 'Publishing…',
   } = texts;
@@ -67,9 +61,6 @@ export const PublishFooter: FC<PublishFooterProps> = ({
     }
     if (hasExistingVersionInFolder) {
       return updateLabel.replace('{version}', version);
-    }
-    if (folderName) {
-      return publishLabel.replace('{folder}', folderName);
     }
     return publishDefaultLabel;
   })();

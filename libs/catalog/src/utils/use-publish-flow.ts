@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CatalogItem } from '../models/catalog-item';
 import { PublishFolderNode, PublishHistoryEntry } from '../models/publish';
 
@@ -59,10 +59,14 @@ export interface UsePublishFlowOptions {
 export interface UsePublishFlowResult {
   /** Folder tree, including any folders created (but not yet persisted) during this session. */
   folderItems: PublishFolderNode[];
-  /** Currently selected destination folder path. */
+  /**
+   * Currently selected destination folder path. `undefined` means nothing
+   * is selected; `[]` means the bucket root itself is selected (a distinct,
+   * valid destination).
+   */
   selectedFolderPath?: string[];
-  /** Selects a destination folder. */
-  setSelectedFolderPath: (path: string[]) => void;
+  /** Selects a destination folder or the root (`[]`); pass `undefined` to deselect. */
+  setSelectedFolderPath: (path: string[] | undefined) => void;
   /** Confirms a new folder name: adds it locally and reports it to the host. */
   handleCreateFolder: (parentPath: string[], name: string) => void;
   /** Whether `item.version` is already published at `selectedFolderPath`. */
@@ -98,6 +102,9 @@ export const usePublishFlow = ({
   onPublishSuccess,
 }: UsePublishFlowOptions): UsePublishFlowResult => {
   const [folderItems, setFolderItems] = useState(initialFolderItems);
+  useEffect(() => {
+    setFolderItems(initialFolderItems);
+  }, [initialFolderItems]);
   const [selectedFolderPath, setSelectedFolderPath] = useState<string[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitError, setHasSubmitError] = useState(false);

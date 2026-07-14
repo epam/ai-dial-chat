@@ -8,7 +8,10 @@ import {
 import { IconChevronLeft } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import type { DetailsPanelProps } from '../../models/item-details-props';
-import type { PublishFolderNode } from '../../models/publish';
+import type {
+  PublishFolderNode,
+  PublishHistoryEntry,
+} from '../../models/publish';
 import { CatalogDetailsTab } from '../../types/detail-tab';
 import { derivePublishState } from '../../utils/publish-state';
 import { getSignedInLevel } from '../../utils/toolset-credentials';
@@ -43,6 +46,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   isPublishVisible,
   getPublishHistory,
   publishFolderItems = EMPTY_PUBLISH_FOLDERS,
+  publishExpandedPaths,
+  onPublishExpandedPathsChange,
+  publishLoadingPaths,
   hasPublishWriteAccess,
   onPublish,
   onPublishSuccess,
@@ -66,11 +72,33 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [activeTab, setActiveTab] = useState<string>('');
   const [isPublishOpen, setIsPublishOpen] = useState(false);
-
-  const publishHistory = useMemo(
-    () => getPublishHistory?.(item) ?? [],
-    [getPublishHistory, item],
+  const [publishHistory, setPublishHistory] = useState<PublishHistoryEntry[]>(
+    [],
   );
+  const [isPublishHistoryLoading, setIsPublishHistoryLoading] = useState(false);
+  const [hasPublishHistoryError, setHasPublishHistoryError] = useState(false);
+
+  useEffect(() => {
+    if (!isPublishOpen || !getPublishHistory) {
+      return;
+    }
+    let isCancelled = false;
+    setIsPublishHistoryLoading(true);
+    setHasPublishHistoryError(false);
+    getPublishHistory(item)
+      .then((entries) => {
+        if (!isCancelled) setPublishHistory(entries);
+      })
+      .catch(() => {
+        if (!isCancelled) setHasPublishHistoryError(true);
+      })
+      .finally(() => {
+        if (!isCancelled) setIsPublishHistoryLoading(false);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [isPublishOpen, getPublishHistory, item]);
 
   const publishFlow = usePublishFlow({
     item,
@@ -85,7 +113,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   const publishDerived = useMemo(
     () =>
       derivePublishState({
-        hasSelectedFolder: Boolean(publishFlow.selectedFolderPath?.length),
+        hasSelectedFolder: publishFlow.selectedFolderPath != null,
         hasExistingVersionInFolder: publishFlow.hasExistingVersionInFolder,
         hasWriteAccess: publishFlow.hasWriteAccess,
         isSubmitting: publishFlow.isSubmitting,
@@ -111,6 +139,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setActiveTab(CatalogDetailsTab.About);
     setIsPublishOpen(false);
     publishFlow.reset();
+    setPublishHistory([]);
+    setHasPublishHistoryError(false);
     setIsCredentialsOpen(false);
     setIsDirectLogoutConfirmOpen(false);
     // Reset publish-flow-local state only when the displayed item changes.
@@ -281,10 +311,15 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
               <PublishPanel
                 item={item}
                 history={publishHistory}
+                isHistoryLoading={isPublishHistoryLoading}
+                hasHistoryError={hasPublishHistoryError}
                 folderItems={publishFlow.folderItems}
                 selectedFolderPath={publishFlow.selectedFolderPath}
                 onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}
                 onCreateFolder={publishFlow.handleCreateFolder}
+                expandedPaths={publishExpandedPaths}
+                onExpandedPathsChange={onPublishExpandedPathsChange}
+                loadingPaths={publishLoadingPaths}
                 hasExistingVersionInFolder={
                   publishFlow.hasExistingVersionInFolder
                 }
@@ -423,11 +458,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         {isPublishOpen && (
           <PublishFooter
             version={item.version}
-            folderName={
-              publishFlow.selectedFolderPath?.[
-                publishFlow.selectedFolderPath.length - 1
-              ]
-            }
             hasExistingVersionInFolder={publishFlow.hasExistingVersionInFolder}
             isSubmitDisabled={publishDerived.isSubmitDisabled}
             isSubmitLoading={publishDerived.isSubmitLoading}

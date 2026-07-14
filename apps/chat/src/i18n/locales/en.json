@@ -126,6 +126,10 @@
     "favoriteRemoved": "\"{{name}}\" removed from Favorites",
     "publishSuccessTitle": "Published",
     "publishSuccess": "\"{{name}}\" published to {{folder}}",
+    "publishFolderSearchPlaceholder": "Search folders",
+    "publishFolderEmptyState": "No folders match \"{{query}}\".",
+    "publishHistoryLoading": "Loading history…",
+    "publishHistoryError": "Failed to load publish history.",
     "tab": {
       "models": "Models",
       "applications": "Agents",

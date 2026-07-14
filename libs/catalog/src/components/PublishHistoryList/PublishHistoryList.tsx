@@ -13,12 +13,20 @@ export interface PublishHistoryListProps {
    * "Current" badge instead of the row being highlighted.
    */
   currentVersion?: string;
+  /** When `true`, shows a loading message instead of `entries`/empty state. Default: `false`. */
+  isLoading?: boolean;
+  /** When `true` (and not `isLoading`), shows an error message instead of `entries`/empty state. Default: `false`. */
+  hasError?: boolean;
   /** Prefix before each entry's version number. Default: `'Version'`. */
   versionPrefix?: string;
   /** Label for the badge on the entry matching `currentVersion`. Default: `'Current'`. */
   currentBadgeLabel?: string;
   /** Message shown when `entries` is empty. Default: see implementation. */
   emptyStateText?: string;
+  /** Message shown while history is loading. Default: `'Loading history…'`. */
+  loadingText?: string;
+  /** Message shown when history failed to load. Default: `'Failed to load publish history.'`. */
+  errorText?: string;
   /** Typography class for each entry's version line. Default: `'dial-small-text text-primary'`. */
   versionClassName?: string;
   /** Typography class for each entry's publish date. Default: `'dial-small-text text-secondary'`. */
@@ -40,13 +48,29 @@ export interface PublishHistoryListProps {
 export const PublishHistoryList: FC<PublishHistoryListProps> = ({
   entries,
   currentVersion,
+  isLoading = false,
+  hasError = false,
   versionPrefix = 'Version',
   currentBadgeLabel = 'Current',
   emptyStateText = 'Not published to this folder yet — this will be the first version here.',
+  loadingText = 'Loading history…',
+  errorText = 'Failed to load publish history.',
   versionClassName = 'dial-small-text text-primary',
   dateClassName = 'dial-small-text text-secondary',
   emptyStateClassName = 'dial-small-text text-secondary',
 }) => {
+  if (isLoading) {
+    return <p className={emptyStateClassName}>{loadingText}</p>;
+  }
+
+  if (hasError) {
+    return (
+      <p className={emptyStateClassName} role="alert">
+        {errorText}
+      </p>
+    );
+  }
+
   if (entries.length === 0) {
     return <p className={emptyStateClassName}>{emptyStateText}</p>;
   }

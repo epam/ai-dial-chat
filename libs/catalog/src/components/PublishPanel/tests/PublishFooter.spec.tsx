@@ -24,15 +24,13 @@ describe('PublishFooter', () => {
     expect(button.hasAttribute('disabled')).toBe(true);
   });
 
-  it('renders "Publish to {folder}" once a folder is selected', () => {
-    renderFooter({ folderName: 'Marketing' });
-    expect(
-      screen.getByRole('button', { name: 'Publish to Marketing' }),
-    ).toBeTruthy();
+  it('renders the "Publish" label once a folder is selected, without the folder name', () => {
+    renderFooter({ isSubmitDisabled: false });
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeTruthy();
   });
 
   it('renders an "Update version" label when the version already exists in the folder', () => {
-    renderFooter({ hasExistingVersionInFolder: true, folderName: 'Marketing' });
+    renderFooter({ hasExistingVersionInFolder: true });
     expect(
       screen.getByRole('button', { name: 'Update version 4.0.1' }),
     ).toBeTruthy();
@@ -60,18 +58,14 @@ describe('PublishFooter', () => {
 
   it('calls onSubmit when the submit button is clicked', async () => {
     const onSubmit = vi.fn();
-    renderFooter({ onSubmit, folderName: 'Marketing' });
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Publish to Marketing' }),
-    );
+    renderFooter({ onSubmit });
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     expect(onSubmit).toHaveBeenCalledOnce();
   });
 
   it('gives Publish the same secondary (neutral) style as Cancel, both non-primary', () => {
-    renderFooter({ folderName: 'Marketing' });
-    const publishBtn = screen.getByRole('button', {
-      name: 'Publish to Marketing',
-    });
+    renderFooter();
+    const publishBtn = screen.getByRole('button', { name: 'Publish' });
     expect(publishBtn.className).toContain('dial-neutral-outlined-button');
     expect(publishBtn.className).not.toContain('dial-primary-solid-button');
   });
