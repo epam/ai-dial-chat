@@ -274,16 +274,21 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       isOpen={isOpen}
       orientation={SidebarOrientation.Right}
       title={fileName}
-      ariaLabel={ariaLabel}
-      closeLabel={closeLabel}
+      labels={{ ariaLabel, closeLabel }}
       onClose={onClose}
       resizable={!isMobile}
       defaultWidth={defaultWidth}
       minWidth={minWidth}
       maxWidth={maxWidth}
       onResizeStop={onResizeStop}
-      className={mergeClasses(isOpen ? 'mobile:w-full' : 'w-0', className)}
-      styles={panelStyles}
+      styles={{
+        ...panelStyles,
+        className: mergeClasses(
+          isOpen ? 'mobile:w-full' : 'w-0',
+          className,
+          panelStyles?.className,
+        ),
+      }}
       rightActions={
         showCopyText || showCopyMarkdown || showCopyJson || showDownload ? (
           <>

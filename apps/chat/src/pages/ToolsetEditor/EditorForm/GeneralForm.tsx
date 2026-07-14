@@ -8,6 +8,7 @@ import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
+  EditorI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import type {
@@ -27,28 +28,28 @@ const GeneralForm: FC<Props> = ({ form, errors, onChange }) => {
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
       name: {
-        label: t(ToolsetEditorI18nKeys.NameLabel),
+        label: t(EditorI18nKeys.NameLabel),
         placeholder: t(ToolsetEditorI18nKeys.NamePlaceholder),
       },
       description: {
-        label: t(ToolsetEditorI18nKeys.DescriptionLabel),
+        label: t(EditorI18nKeys.DescriptionLabel),
         placeholder: t(ToolsetEditorI18nKeys.DescriptionPlaceholder),
       },
       iconUrl: {
-        label: t(ToolsetEditorI18nKeys.IconUrlLabel),
+        label: t(EditorI18nKeys.IconUrlLabel),
         placeholder: t(BasicI18nKeys.UrlPlaceholder),
       },
       version: {
-        label: t(ToolsetEditorI18nKeys.VersionLabel),
-        placeholder: t(ToolsetEditorI18nKeys.VersionPlaceholder),
+        label: t(EditorI18nKeys.VersionLabel),
+        placeholder: t(EditorI18nKeys.VersionPlaceholder),
       },
       topics: {
-        label: t(ToolsetEditorI18nKeys.TopicsLabel),
-        placeholder: t(ToolsetEditorI18nKeys.TopicsPlaceholder),
+        label: t(EditorI18nKeys.TopicsLabel),
+        placeholder: t(EditorI18nKeys.TopicsPlaceholder),
       },
       intro: {
-        label: t(ToolsetEditorI18nKeys.IntroLabel),
-        placeholder: t(ToolsetEditorI18nKeys.IntroPlaceholder),
+        label: t(EditorI18nKeys.IntroLabel),
+        placeholder: t(EditorI18nKeys.IntroPlaceholder),
       },
     }),
     [t],
@@ -69,6 +70,7 @@ const GeneralForm: FC<Props> = ({ form, errors, onChange }) => {
       errors={errors}
       onChange={onChange}
       labels={labels}
+      ariaLabel={t(EditorI18nKeys.StepGeneral)}
     />
   );
 };

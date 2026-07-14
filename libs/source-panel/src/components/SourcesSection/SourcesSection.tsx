@@ -1,13 +1,25 @@
-import { Highlight, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  Highlight,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialGhostIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
-import { memo, type FC } from 'react';
+import { memo, useMemo, useState, type FC } from 'react';
 import type { QuotationSource } from '../../models/quotation-source';
 import styles from './SourcesSection.module.scss';
+
+/** CSS custom-property overrides for the `SourcesSection` component. */
+interface SourcesSectionColors {
+  /** Source link color. */
+  link?: string;
+  /** Source quote text color. */
+  quote?: string;
+}
 
 interface SourcesSectionProps {
   /** Heading text for the sources section. */
@@ -16,6 +28,8 @@ interface SourcesSectionProps {
   sources: QuotationSource[];
   /** Accessible label for each source's copy-URL button. */
   copyLabel: string;
+  /** Status message announced to assistive tech after a source URL is copied. Defaults to `'Link copied to clipboard'`. */
+  copiedLabel?: string;
   /** Current search query — used to highlight matches in source titles and quotes. */
   searchQuery?: string;
   /** CSS class applied to the section heading. Defaults to `'dial-body-semi-text'`. */
@@ -24,6 +38,8 @@ interface SourcesSectionProps {
   linkClassName?: string;
   /** CSS class applied to the quote text. Defaults to `'dial-tiny-text'`. */
   quoteClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: SourcesSectionColors;
   /** When provided, called on source link click instead of following the href. */
   onSourceClick?: (source: QuotationSource) => void;
 }
@@ -32,18 +48,36 @@ const SourcesSection: FC<SourcesSectionProps> = ({
   title,
   sources,
   copyLabel,
+  copiedLabel = 'Link copied to clipboard',
   searchQuery = '',
   titleClassName = 'dial-body-semi-text',
   linkClassName = 'dial-small-text',
   quoteClassName = 'dial-tiny-text',
+  colors,
   onSourceClick,
 }) => {
+  const [copyStatus, setCopyStatus] = useState('');
+
+  const sectionCssVars = useMemo(
+    () =>
+      buildCssVars({
+        '--sp-source-link': colors?.link,
+        '--sp-source-quote': colors?.quote,
+      }),
+    [colors],
+  );
+
   if (sources.length === 0) {
     return null;
   }
 
+  const handleCopy = async (url: string) => {
+    await navigator.clipboard.writeText(url);
+    setCopyStatus(copiedLabel);
+  };
+
   return (
-    <section className="mb-6">
+    <section className="mb-6" style={sectionCssVars}>
       <h2 className={mergeClasses(titleClassName, 'mb-3')}>{title}</h2>
       <ul className="flex flex-col gap-3">
         {sources.map((source) => (
@@ -79,9 +113,11 @@ const SourcesSection: FC<SourcesSectionProps> = ({
               </a>
               <DialGhostIconButton
                 size={ElementSize.Small}
-                icon={<IconCopy size={DIAL_ICON_SIZE.SM} stroke={1.5} />}
+                icon={
+                  <IconCopy size={DIAL_ICON_SIZE.SM} stroke={1.5} aria-hidden />
+                }
                 aria-label={copyLabel}
-                onClick={() => navigator.clipboard.writeText(source.url)}
+                onClick={() => void handleCopy(source.url)}
               />
             </div>
             {source.quote && (
@@ -98,6 +134,9 @@ const SourcesSection: FC<SourcesSectionProps> = ({
           </li>
         ))}
       </ul>
+      <span role="status" aria-live="polite" className="sr-only">
+        {copyStatus}
+      </span>
     </section>
   );
 };

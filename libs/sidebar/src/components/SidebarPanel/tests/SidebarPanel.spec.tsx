@@ -32,8 +32,7 @@ const defaultProps = {
   isOpen: true,
   orientation: SidebarOrientation.Right,
   onClose: vi.fn(),
-  ariaLabel: 'Test panel',
-  closeLabel: 'Close',
+  labels: { ariaLabel: 'Test panel', closeLabel: 'Close' },
 };
 
 describe('SidebarPanel', () => {

@@ -38,6 +38,20 @@ export interface MessageActionAriaLabels {
   likeResponse?: string;
   /** aria-label for the Dislike button. */
   dislikeResponse?: string;
+  /** Accessible name for the action bar as a whole, exposed via `role="toolbar"`. */
+  actionsGroup?: string;
+  /** Status message announced to assistive tech after copying the response text. */
+  copiedStatus?: string;
+  /** Status message announced to assistive tech after copying the response as Markdown. */
+  copiedMarkdownStatus?: string;
+}
+
+/** Tooltip and accessible label overrides for the `MessageActions` component. */
+export interface MessageActionLabels {
+  /** Override tooltip labels for individual action buttons. */
+  tooltips?: MessageActionTooltips;
+  /** Override accessible labels (aria-label) for individual action buttons. */
+  ariaLabels?: MessageActionAriaLabels;
 }
 
 /** Props accepted by the `MessageActions` component. */
@@ -48,10 +62,8 @@ export interface MessageActionsProps {
   className?: string;
   /** When `true`, actions are always visible instead of appearing only on group hover. */
   isAlwaysVisible?: boolean;
-  /** Override tooltip labels for individual action buttons. */
-  tooltips?: MessageActionTooltips;
-  /** Override accessible labels (aria-label) for individual action buttons. */
-  ariaLabels?: MessageActionAriaLabels;
+  /** Override tooltip and accessible labels for individual action buttons. */
+  labels?: MessageActionLabels;
   /** Called when the user clicks the Edit button (User source only). */
   onEdit?: () => void;
   /** Called when the user hovers over the Edit button (User source only). Useful for preloading the edit UI. */

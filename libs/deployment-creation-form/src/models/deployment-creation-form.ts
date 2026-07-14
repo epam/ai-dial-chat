@@ -70,4 +70,9 @@ export interface DeploymentCreationFormProps {
   introMaxLength?: number;
   /** Optional per-slot class name overrides. */
   classNames?: DeploymentCreationFormClassNames;
+  /**
+   * Accessible name for the field set as a whole, exposed via `role="group"`.
+   * Supply the host app's translated section title (e.g. `'General'`).
+   */
+  ariaLabel?: string;
 }

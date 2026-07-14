@@ -14,14 +14,10 @@
 
 .collapsedText::after {
   content: '';
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 48px;
-  pointer-events: none;
+  @apply absolute inset-x-0 bottom-0 h-12 pointer-events-none;
   background: linear-gradient(
     to bottom,
-    rgb(0 0 0 / 0),
+    var(--cm-bubble-fade-start, var(--bg-transparent-black, rgb(0 0 0 / 0))),
     var(--cm-bubble-user-bg, var(--bg-layer-2, #eef1f7))
   );
 }

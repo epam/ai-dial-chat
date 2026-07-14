@@ -1,6 +1,6 @@
 import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { MessageBubbleProps } from '../../models/MessageBubble';
+import type { MessageBubbleProps } from '../../models/message-bubble';
 import { AssistantMessageBubble } from './AssistantMessageBubble';
 import { StatusMessageBubble } from './StatusMessageBubble';
 import { UserMessageBubble } from './UserMessageBubble';
@@ -9,26 +9,21 @@ import { UserMessageBubble } from './UserMessageBubble';
 export const MessageBubble: FC<MessageBubbleProps> = ({
   role,
   onAttachmentClick,
-  attachmentClickLabel,
   markdownComponents,
   ...props
 }) => {
   if (role === MessageRole.Status) {
     return (
       <StatusMessageBubble
-        titleText={props.statusTitleText}
-        bodyText={props.statusBodyText ?? ''}
+        titleText={props.labels?.statusTitleText}
+        bodyText={props.labels?.statusBodyText ?? ''}
       />
     );
   }
 
   if (role === MessageRole.User) {
     return (
-      <UserMessageBubble
-        {...props}
-        onAttachmentClick={onAttachmentClick}
-        attachmentClickLabel={attachmentClickLabel}
-      />
+      <UserMessageBubble {...props} onAttachmentClick={onAttachmentClick} />
     );
   }
 
@@ -37,7 +32,6 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
       {...props}
       markdownComponents={markdownComponents}
       onAttachmentClick={onAttachmentClick}
-      attachmentClickLabel={attachmentClickLabel}
     />
   );
 };

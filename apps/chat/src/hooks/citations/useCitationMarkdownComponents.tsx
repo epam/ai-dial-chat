@@ -82,7 +82,7 @@ export const useCitationMarkdownComponents = (
       p: ({ children, ...rest }) => (
         <p
           {...rest}
-          className="dial-body-paragraph-text mb-3 break-words [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0"
+          className="dial-body-paragraph-text mb-3 [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0"
         >
           {replaceSentinelsInChildren(children, renderMarker)}
         </p>

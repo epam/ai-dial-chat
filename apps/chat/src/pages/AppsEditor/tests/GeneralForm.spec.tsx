@@ -2,7 +2,10 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppsEditorI18nKeys } from '../../../constants/translation-keys';
+import {
+  AppsEditorI18nKeys,
+  EditorI18nKeys,
+} from '../../../constants/translation-keys';
 import { createApplication } from '../../../server-api/applications';
 import type { GeneralFormHandle } from '../GeneralForm';
 import GeneralForm from '../GeneralForm';
@@ -82,9 +85,7 @@ const renderForm = (
 ) => render(<GeneralForm {...DEFAULT_PROPS} {...props} ref={ref} />);
 
 const getNameInput = () =>
-  screen.getByLabelText(
-    AppsEditorI18nKeys.GeneralFormNameLabel,
-  ) as HTMLInputElement;
+  screen.getByLabelText(EditorI18nKeys.NameLabel) as HTMLInputElement;
 
 describe('GeneralForm', () => {
   const user = userEvent.setup({ delay: null });
@@ -95,18 +96,10 @@ describe('GeneralForm', () => {
 
   it('renders name, description, icon URL, and intro fields', () => {
     renderForm();
-    expect(
-      screen.getByLabelText(AppsEditorI18nKeys.GeneralFormNameLabel),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText(AppsEditorI18nKeys.GeneralFormDescriptionLabel),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText(AppsEditorI18nKeys.GeneralFormIconUrlLabel),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText(AppsEditorI18nKeys.GeneralFormIntroLabel),
-    ).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.NameLabel)).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.DescriptionLabel)).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.IconUrlLabel)).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.IntroLabel)).toBeTruthy();
   });
 
   it('shows required error and does not call API when name is empty', async () => {
@@ -116,7 +109,7 @@ describe('GeneralForm', () => {
       await ref.current?.submit();
     });
     expect(screen.getByRole('alert').textContent).toContain(
-      AppsEditorI18nKeys.GeneralFormNameRequired,
+      EditorI18nKeys.NameRequired,
     );
     expect(createApplication).not.toHaveBeenCalled();
   });
@@ -139,9 +132,7 @@ describe('GeneralForm', () => {
     renderForm({}, ref);
     await user.type(getNameInput(), 'My App');
     await user.type(
-      screen.getByLabelText(
-        AppsEditorI18nKeys.GeneralFormVersionLabel,
-      ) as HTMLInputElement,
+      screen.getByLabelText(EditorI18nKeys.VersionLabel) as HTMLInputElement,
       '1.0/bad',
     );
     await act(async () => {
@@ -158,16 +149,14 @@ describe('GeneralForm', () => {
     renderForm({}, ref);
     await user.type(getNameInput(), 'My App');
     await user.type(
-      screen.getByLabelText(
-        AppsEditorI18nKeys.GeneralFormIntroLabel,
-      ) as HTMLInputElement,
+      screen.getByLabelText(EditorI18nKeys.IntroLabel) as HTMLInputElement,
       'a'.repeat(91),
     );
     await act(async () => {
       await ref.current?.submit();
     });
     expect(screen.getByRole('alert').textContent).toContain(
-      AppsEditorI18nKeys.GeneralFormIntroTooLong,
+      EditorI18nKeys.IntroTooLong,
     );
     expect(createApplication).not.toHaveBeenCalled();
   });
@@ -211,9 +200,7 @@ describe('GeneralForm', () => {
     renderForm({ onCreated }, ref);
     await user.type(getNameInput(), 'My App');
     await user.type(
-      screen.getByLabelText(
-        AppsEditorI18nKeys.GeneralFormIntroLabel,
-      ) as HTMLInputElement,
+      screen.getByLabelText(EditorI18nKeys.IntroLabel) as HTMLInputElement,
       'A short pitch',
     );
     await act(async () => {

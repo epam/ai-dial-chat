@@ -217,7 +217,7 @@ describe('ConversationSourcesPanel — search', () => {
 
     await user.type(screen.getByRole('searchbox'), 'zzznomatch');
 
-    expect(screen.getByText('No results')).toBeTruthy();
+    expect(screen.getAllByText('No results')).toBeTruthy();
     expect(screen.queryByRole('heading')).toBeNull();
   });
 
@@ -230,7 +230,7 @@ describe('ConversationSourcesPanel — search', () => {
 
     const input = screen.getByRole('searchbox');
     await user.type(input, 'zzznomatch');
-    expect(screen.getByText('No results')).toBeTruthy();
+    expect(screen.getAllByText('No results')).toBeTruthy();
 
     await user.clear(input);
     expect(screen.getByText('upload.pdf')).toBeTruthy();

@@ -121,6 +121,10 @@ Libs (`libs/*`) must NOT import i18n or read the current language to determine d
 3. Add the locale to the language selector UI.
 4. If the locale is RTL, add its language code to the RTL language list in the dir-switching logic.
 
+## Accessibility (a11y)
+
+All apps and libs target WCAG 2.1 **AAA**. Apply this by default on any interactive UI work, not only when explicitly asked for an accessibility pass — decorative icons inside already-labeled controls need `aria-hidden`; toggle buttons (like/dislike, expand/collapse) need `aria-pressed`/`aria-expanded`; closed/hidden panels with focusable descendants use `inert`, not `aria-hidden`, to avoid a keyboard focus trap; dynamic feedback (copy confirmation, no-results, streaming text) needs an `aria-live` status region; text-color fallbacks in `var(--token, #hex)` chains must resolve to at least 7:1 contrast. See `.claude/rules/a11y.md` for the full pattern list and code examples.
+
 ## Search result highlighting
 
 Whenever implementing or modifying a search feature (search bars, filterable dropdowns, model/deployment pickers, conversation search, file/attachment search, sources panels, catalog/app search, etc.), render each result's matched text with the shared `Highlight` component (`libs/chat-shared/src/components/Highlight/Highlight.tsx`, exported as `Highlight` from `@epam/ai-dial-chat-shared`) instead of plain text or a bespoke highlighter. Thread the search query down through intermediate props (e.g. `searchQuery`) to whichever component renders the result label. See `.claude/rules/search-results-highlight.md` for details.
