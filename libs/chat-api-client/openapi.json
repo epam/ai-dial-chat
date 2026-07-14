@@ -370,6 +370,53 @@
         "tags": ["applications"]
       }
     },
+    "/api/v1/applications/{applicationName}": {
+      "delete": {
+        "description": "Deletes an application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.",
+        "operationId": "deleteApplication",
+        "parameters": [
+          {
+            "name": "applicationName",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-app__1.0",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Application deleted successfully"
+          },
+          "400": {
+            "description": "Invalid application name"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Delete an application",
+        "tags": ["applications"]
+      }
+    },
     "/api/v1/deployments": {
       "get": {
         "operationId": "listDeployments",

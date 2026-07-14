@@ -24,6 +24,10 @@ export interface CreateApplicationRequest {
   createApplicationBodyDto: CreateApplicationBodyDto;
 }
 
+export interface DeleteApplicationRequest {
+  applicationName: string;
+}
+
 export interface GetApplicationSchemaRequest {
   id: string;
 }
@@ -82,6 +86,55 @@ export class ApplicationsApi extends runtime.BaseAPI {
       initOverrides,
     );
     return await response.value();
+  }
+
+  /**
+   * Deletes an application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.
+   * Delete an application
+   */
+  async deleteApplicationRaw(
+    requestParameters: DeleteApplicationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['applicationName'] == null) {
+      throw new runtime.RequiredError(
+        'applicationName',
+        'Required parameter "applicationName" was null or undefined when calling deleteApplication().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/applications/{applicationName}`;
+    urlPath = urlPath.replace(
+      `{${'applicationName'}}`,
+      encodeURIComponent(String(requestParameters['applicationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Deletes an application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.
+   * Delete an application
+   */
+  async deleteApplication(
+    requestParameters: DeleteApplicationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.deleteApplicationRaw(requestParameters, initOverrides);
   }
 
   /**

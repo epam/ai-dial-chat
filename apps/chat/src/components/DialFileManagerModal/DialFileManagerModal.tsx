@@ -531,11 +531,11 @@ const DialFileManagerModal: FC<Props> = ({
       deletingLabel,
       renameLabel: t(ButtonsI18nKeys.Rename),
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
-      copyLabel: t(ButtonsI18nKeys.Copy),
+      copyLabel: t(DialFileManagerI18nKeys.CopyAction),
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
       duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
-      hiddenFilesSwitcherLabel: t(DialFileManagerI18nKeys.ShowHiddenFiles),
+      hiddenFilesSwitcherLabel: t(DialFileManagerI18nKeys.HiddenFiles),
       getCopyHeader: (count, name) =>
         count === 1
           ? t(DialFileManagerI18nKeys.CopyHeaderSingle, { name })

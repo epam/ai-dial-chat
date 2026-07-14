@@ -50,6 +50,8 @@ export interface DeploymentsContextType {
   toolsets: DialToolsetDto[];
   /** Re-fetches toolsets from the API and updates the catalog list. Call after creating/updating a toolset. */
   refetchToolsets: () => Promise<void>;
+  /** Re-fetches deployments from the API and updates the catalog list. Call after creating/deleting an application. */
+  refetchDeployments: () => Promise<void>;
 }
 
 export const DeploymentsContext = createContext<
@@ -198,6 +200,20 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [showNotification, t]);
 
+  const refetchDeployments = useCallback(async () => {
+    try {
+      const { deployments } = await getDeployments([
+        ListDeploymentsInterfaceTypeEnum.Chat,
+      ]);
+      setRawDeployments(sortDeployments(deployments ?? []));
+    } catch {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(DeploymentSelectorI18nKeys.RefetchDeploymentsFailed),
+      });
+    }
+  }, [showNotification, t]);
+
   const items = useMemo<DeploymentItemDto[]>(() => {
     if (schemas.length === 0) return rawDeployments;
     const schemaById = new Map(schemas.map((s) => [s.id, s]));
@@ -273,6 +289,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       schemas,
       toolsets,
       refetchToolsets,
+      refetchDeployments,
     }),
     [
       items,
@@ -285,6 +302,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       schemas,
       toolsets,
       refetchToolsets,
+      refetchDeployments,
     ],
   );
 
