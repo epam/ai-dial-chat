@@ -1,8 +1,11 @@
-import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  type DeploymentItem,
+  Highlight,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { GradientCheckIcon } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
-  DialEllipsisTooltip,
   DialSearch,
   DropdownItem,
   ElementSize,
@@ -119,7 +122,11 @@ export const useModelSelector = ({
         key: item.id,
         label: (
           <span className="flex w-full items-center justify-between gap-2">
-            <DialEllipsisTooltip text={getDeploymentLabel(item)} />
+            <Highlight
+              text={getDeploymentLabel(item)}
+              query={searchQuery}
+              maxLines={1}
+            />
             {isSelected && <GradientCheckIcon gradientId="ms-check-grad" />}
           </span>
         ),

@@ -39,6 +39,7 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
+  ShareI18nKeys,
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -195,9 +196,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const filterLabels = useMemo(
     () => ({
       all: t(ConversationPanelI18nKeys.FilterAll),
-      myChats: t(ConversationPanelI18nKeys.FilterMyChats),
+      myChats: t(ConversationPanelI18nKeys.MyChatsSection),
       shared: t(ConversationPanelI18nKeys.FilterShared),
-      organization: t(ConversationPanelI18nKeys.FilterOrganization),
+      organization: t(BasicI18nKeys.Organization),
     }),
     [t],
   );
@@ -207,7 +208,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       pinned: t(ConversationPanelI18nKeys.PinnedSection),
       myChats: t(ConversationPanelI18nKeys.MyChatsSection),
       shared: t(ConversationPanelI18nKeys.FilterShared),
-      organization: t(ConversationPanelI18nKeys.FilterOrganization),
+      organization: t(BasicI18nKeys.Organization),
     }),
     [t],
   );
@@ -302,7 +303,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         duplicateAction,
         {
           key: 'share',
-          label: t(ConversationPanelI18nKeys.ShareLabel),
+          label: t(ShareI18nKeys.Title),
           icon: (
             <IconShare size={DIAL_ICON_SIZE.SM} className="text-secondary" />
           ),
@@ -445,7 +446,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         emptyLabel={t(ConversationPanelI18nKeys.Empty)}
         noResultsLabel={t(BasicI18nKeys.NoResults)}
         onNewChat={onNewChat}
-        newChatLabel={t(ConversationPanelI18nKeys.NewChat)}
+        newChatLabel={t(ButtonsI18nKeys.NewChat)}
         searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
         searchClearLabel={t(BasicI18nKeys.ClearSearch)}
         filterLabels={filterLabels}
@@ -478,7 +479,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         description={
           <>
             <span className="break-all">
-              {t(ConversationPanelI18nKeys.DeleteConfirmDescription)}{' '}
+              {t(BasicI18nKeys.DeleteConfirmDescription)}{' '}
               <span className="dial-small-text text-primary">
                 &ldquo;{pendingDeleteTitle}&rdquo;
               </span>

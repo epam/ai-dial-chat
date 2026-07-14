@@ -20,8 +20,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
+  ApiI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
+  FavoritesI18nKeys,
+  NavigationI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -322,13 +325,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           : NotificationVariant.Info,
         title: t(
           isFavorite
-            ? CatalogI18nKeys.FavoriteAddedTitle
-            : CatalogI18nKeys.FavoriteRemovedTitle,
+            ? FavoritesI18nKeys.AddedTitle
+            : FavoritesI18nKeys.RemovedTitle,
         ),
         message: t(
-          isFavorite
-            ? CatalogI18nKeys.FavoriteAdded
-            : CatalogI18nKeys.FavoriteRemoved,
+          isFavorite ? FavoritesI18nKeys.Added : FavoritesI18nKeys.Removed,
           { name },
         ),
       });
@@ -465,9 +466,9 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },
       }}
       titles={{
-        pageTitle: t(CatalogI18nKeys.PageTitle),
+        pageTitle: t(NavigationI18nKeys.Catalog),
         createLabel: t(ButtonsI18nKeys.Create),
-        favoritesTitle: t(CatalogI18nKeys.FavoritesTitle),
+        favoritesTitle: t(FavoritesI18nKeys.Title),
         browseTitle: t(ButtonsI18nKeys.Browse),
         searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
         noResultsTitle: (query) => t(CatalogI18nKeys.NoResultsTitle, { query }),
@@ -477,7 +478,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
         gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
         listViewLabel: t(CatalogI18nKeys.ListViewLabel),
-        ariaLabel: t(CatalogI18nKeys.AriaLabel),
+        ariaLabel: t(NavigationI18nKeys.Catalog),
         tabLabels: {
           [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
           [CatalogEntityType.Application]: t(CatalogI18nKeys.TabApplications),
@@ -492,10 +493,10 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
         apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
-        apiEndpointLabel: t(CatalogI18nKeys.DetailsApiEndpoint),
+        apiEndpointLabel: t(ApiI18nKeys.EndpointLabel),
         apiRequestExampleLabel: t(CatalogI18nKeys.DetailsApiRequestExample),
         apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
-        copyCodeAriaLabel: t(CatalogI18nKeys.DetailsApiCopy),
+        copyCodeAriaLabel: t(ButtonsI18nKeys.Copy),
         pricingPricesSectionLabel: t(
           CatalogI18nKeys.DetailsPricingPricesSection,
         ),
@@ -503,7 +504,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           CatalogI18nKeys.DetailsPricingLimitsSection,
         ),
         loginActionLabel: t(CatalogI18nKeys.CredentialsLoginLabel),
-        logoutActionLabel: t(CatalogI18nKeys.CredentialsLogoutLabel),
+        logoutActionLabel: t(ButtonsI18nKeys.LogOut),
         loginWithMyCredsActionLabel: t(
           CatalogI18nKeys.CredentialsLoginWithMyCredsLabel,
         ),

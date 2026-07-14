@@ -125,6 +125,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
             <FilesSection
               attachments={filteredUploaded}
               title={labels.uploadedSectionTitle}
+              searchQuery={searchQuery}
               titleClassName={styles?.sectionTitleClassName}
               onAttachmentClick={onAttachmentClick}
               attachmentClickLabel={labels.attachmentClickLabel}
@@ -132,6 +133,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
             <FilesSection
               attachments={filteredGenerated}
               title={labels.generatedSectionTitle}
+              searchQuery={searchQuery}
               titleClassName={styles?.sectionTitleClassName}
               onAttachmentClick={onAttachmentClick}
               attachmentClickLabel={labels.attachmentClickLabel}
@@ -139,6 +141,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
             <SourcesSection
               sources={filteredSources}
               title={labels.sourcesSectionTitle}
+              searchQuery={searchQuery}
               titleClassName={styles?.sectionTitleClassName}
               linkClassName={styles?.sourceLinkClassName}
               quoteClassName={styles?.sourceQuoteClassName}

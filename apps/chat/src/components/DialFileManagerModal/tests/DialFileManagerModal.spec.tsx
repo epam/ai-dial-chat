@@ -475,7 +475,7 @@ describe('DialFileManagerModal', () => {
       'dialFileManager.conflictReplace',
     );
     expect(manager.getAttribute('data-conflict-duplicate')).toBe(
-      'dialFileManager.conflictDuplicate',
+      'buttons.duplicate',
     );
     expect(manager.getAttribute('data-conflict-replace-all')).toBe(
       'dialFileManager.conflictReplaceAll',
@@ -739,7 +739,7 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(mockUseDialFileManager).toHaveBeenCalledWith(
       expect.objectContaining({
         activeTab: DialFileManagerTabs.Organization,
-        rootLabel: 'dialFileManager.tab.organization',
+        rootLabel: 'basic.organization',
       }),
     );
   });

@@ -96,12 +96,12 @@ The destination name for a duplicated file or folder SHALL be computed by `@epam
 
 ### Requirement: i18n key for the Duplicate action label
 
-The key `dialFileManager.duplicateAction` SHALL be added to `apps/chat/src/i18n/locales/en.json`, with a matching `DialFileManagerI18nKeys.DuplicateAction` member in `apps/chat/src/constants/translation-keys.ts`. This capability SHALL NOT reuse the existing `ButtonsI18nKeys.Duplicate` key (owned by the unrelated conversation-duplicate feature).
+The Duplicate action label SHALL reuse the shared `ButtonsI18nKeys.Duplicate` (`buttons.duplicate`) key in `apps/chat/src/constants/translation-keys.ts` and `apps/chat/src/i18n/locales/en.json`. This capability SHALL NOT introduce a separate `dialFileManager.duplicateAction` key — the conversation-duplicate and file-manager-duplicate features already use the identical English word "Duplicate" for this action, so a single shared key keeps them consistent instead of drifting into two copies of the same translation.
 
 #### Scenario: Duplicate action label is translated
 
 - **WHEN** the Duplicate action is rendered in the grid, tree, or bulk toolbar
-- **THEN** its label is produced via `t(DialFileManagerI18nKeys.DuplicateAction)`, never a raw string literal or `ButtonsI18nKeys.Duplicate`
+- **THEN** its label is produced via `t(ButtonsI18nKeys.Duplicate)`, never a raw string literal or a dedicated `dialFileManager.duplicateAction` key
 
 ---
 

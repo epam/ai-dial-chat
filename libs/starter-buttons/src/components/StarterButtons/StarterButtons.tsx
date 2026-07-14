@@ -16,7 +16,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
   starters,
   onSelect,
   isMobile,
-  ariaLabels,
+  labels,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const pillRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -105,7 +105,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
     <div ref={containerRef} className="mt-4 w-full">
       <div
         role="list"
-        aria-label={ariaLabels.list}
+        aria-label={labels.list}
         className="flex flex-wrap justify-center gap-2"
       >
         {visibleStarters.map((starter, index) => (
@@ -139,7 +139,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
                     <IconDotsVertical stroke={1.5} size={DIAL_ICON_SIZE.MD} />
                   )
                 }
-                aria-label={ariaLabels.overflow}
+                aria-label={labels.overflow}
               />
             </DialDropdown>
           </div>

@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { CitationsI18nKeys } from '../../../../constants/translation-keys';
+import {
+  BasicI18nKeys,
+  CitationsI18nKeys,
+} from '../../../../constants/translation-keys';
 import type { AnnotationGroup } from '../../../../utils/group-annotations-by-source';
 import CitationCard from '../CitationCard';
 
@@ -105,7 +108,7 @@ describe('CitationCard', () => {
     const group = makeGroup(1);
     render(<CitationCard {...defaultProps({ group, onPreview })} />);
     await userEvent.click(
-      screen.getByRole('button', { name: CitationsI18nKeys.PopupPreview }),
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
     expect(onPreview).toHaveBeenCalledWith(group.annotations[0]);
   });

@@ -218,6 +218,44 @@ export const useAttachments = ({
     onPendingAttachmentsConsumed?.();
   }, [addAttachments, onPendingAttachmentsConsumed, pendingAttachments]);
 
+  useEffect(() => {
+    if (!validateAttachment) return;
+
+    let changed = false;
+    const toUpload: Attachment[] = [];
+    const next = attachmentsRef.current.map((attachment) => {
+      if (attachment.status === RequestStatus.Loading) return attachment;
+
+      const errorReason = validateAttachment(attachment);
+      if (errorReason != null) {
+        if (
+          attachment.status === RequestStatus.Error &&
+          attachment.errorReason === errorReason
+        ) {
+          return attachment;
+        }
+        changed = true;
+        return { ...attachment, status: RequestStatus.Error, errorReason };
+      }
+
+      if (attachment.errorReason === AttachmentErrorReason.UnsupportedType) {
+        changed = true;
+        const restored: Attachment = {
+          ...attachment,
+          status: RequestStatus.Idle,
+          errorReason: undefined,
+        };
+        if (restored.url == null) toUpload.push(restored);
+        return restored;
+      }
+
+      return attachment;
+    });
+
+    if (changed) updateAttachments(() => next);
+    toUpload.forEach((attachment) => void uploadAttachment(attachment));
+  }, [validateAttachment, updateAttachments, uploadAttachment]);
+
   const handleRemove = useCallback(
     (id: string) => {
       updateAttachments((prev) => {

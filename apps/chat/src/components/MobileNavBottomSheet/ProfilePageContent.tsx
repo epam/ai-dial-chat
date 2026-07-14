@@ -9,7 +9,7 @@ import {
 import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  AuthI18nKeys,
+  ButtonsI18nKeys,
   SettingsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
@@ -157,7 +157,7 @@ const ProfilePageContent: FC<Props> = ({ onLogoutRequest }) => {
               aria-hidden
               className={styles.itemIcon}
             />
-            <span className="dial-small-text">{t(AuthI18nKeys.LogOut)}</span>
+            <span className="dial-small-text">{t(ButtonsI18nKeys.LogOut)}</span>
           </button>
         </li>
       </ul>
