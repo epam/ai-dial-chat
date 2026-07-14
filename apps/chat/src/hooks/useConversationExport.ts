@@ -1,4 +1,7 @@
-import type { Conversation } from '@epam/ai-dial-chat-shared';
+import {
+  triggerBlobDownload,
+  type Conversation,
+} from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   ResponseError,
@@ -27,7 +30,6 @@ import {
   buildExportFileName,
   serializeExportEnvelope,
 } from '../utils/export-conversation';
-import { triggerBlobDownload } from '../utils/file-download';
 import { buildDialArchive, type ZipAttachmentEntry } from '../utils/zip-export';
 
 /** Placeholder app name used in export file names — this branch has no app display-name config yet. */

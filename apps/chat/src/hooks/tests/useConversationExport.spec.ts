@@ -1,3 +1,4 @@
+import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
 import { ResponseError } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import {
@@ -16,7 +17,6 @@ import {
   ConversationExportMode,
   ExportJobStatus,
 } from '../../types/conversation-export';
-import { triggerBlobDownload } from '../../utils/file-download';
 import { useConversationExport } from '../useConversationExport';
 
 vi.mock('react-i18next', () => ({
@@ -28,9 +28,11 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('../../context/NotificationContext');
 
-vi.mock('../../utils/file-download', () => ({
-  triggerBlobDownload: vi.fn(),
-}));
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
+  return { ...actual, triggerBlobDownload: vi.fn() };
+});
 
 const mockGetConversation = vi.fn();
 const mockListConversations = vi.fn();
