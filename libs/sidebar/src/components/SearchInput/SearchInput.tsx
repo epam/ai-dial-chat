@@ -20,6 +20,8 @@ export interface SearchInputProps {
   onChange: (value: string) => void;
   /** Accessible label for the clear-search button. */
   clearLabel: string;
+  /** Accessible label for the search input. Defaults to `placeholder` when omitted. */
+  ariaLabel?: string;
   /** CSS class applied to the search icon. Defaults to the module's `.icon` class (`--text-secondary`). */
   iconClassName?: string;
   /** CSS class applied to the outer wrapper, merged over the default `'px-2 py-1'`. Override to change the pill's horizontal inset. */
@@ -41,6 +43,7 @@ export const SearchInput: FC<SearchInputProps> = memo(
     value,
     onChange,
     clearLabel,
+    ariaLabel,
     iconClassName = styles.icon,
     wrapperClassName,
     rowClassName,
@@ -64,6 +67,7 @@ export const SearchInput: FC<SearchInputProps> = memo(
           onChange={onChange}
           placeholder={placeholder}
           clearLabel={clearLabel}
+          ariaLabel={ariaLabel}
           iconClassName={iconClassName}
           iconSize={DIAL_ICON_SIZE.SM}
           iconStrokeWidth={1.5}

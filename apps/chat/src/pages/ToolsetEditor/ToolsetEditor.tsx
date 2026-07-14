@@ -10,7 +10,10 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
-import { ToolsetEditorI18nKeys } from '../../constants/translation-keys';
+import {
+  ToolsetEditorI18nKeys,
+  EditorI18nKeys,
+} from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import {
@@ -135,7 +138,7 @@ const ToolsetEditor: FC = () => {
   const handleNext = useCallback(() => {
     if (!form) return;
     if (!form.name.trim()) {
-      setErrors({ name: t(ToolsetEditorI18nKeys.NameRequired) });
+      setErrors({ name: t(EditorI18nKeys.NameRequired) });
       return;
     }
     setErrors({});
@@ -162,10 +165,10 @@ const ToolsetEditor: FC = () => {
       const nextErrors: ToolsetFormErrors = {};
       const generalCodes = validateDeploymentCreationFields(data);
       if (generalCodes.name === DeploymentCreationFieldErrorCode.Required) {
-        nextErrors.name = t(ToolsetEditorI18nKeys.NameRequired);
+        nextErrors.name = t(EditorI18nKeys.NameRequired);
       }
       if (generalCodes.intro === DeploymentCreationFieldErrorCode.TooLong) {
-        nextErrors.intro = t(ToolsetEditorI18nKeys.IntroTooLong);
+        nextErrors.intro = t(EditorI18nKeys.IntroTooLong);
       }
       if (!data.endpoint.trim()) {
         nextErrors.endpoint = t(ToolsetEditorI18nKeys.EndpointRequired);

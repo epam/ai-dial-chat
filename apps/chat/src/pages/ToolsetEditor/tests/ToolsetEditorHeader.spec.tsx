@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   BasicI18nKeys,
+  EditorI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { ToolsetEditorSteps } from '../../../types/toolsets';
@@ -64,7 +65,7 @@ describe('ToolsetEditorHeader', () => {
     expect(props?.steps).toEqual([
       {
         id: ToolsetEditorSteps.General,
-        name: ToolsetEditorI18nKeys.StepGeneral,
+        name: EditorI18nKeys.StepGeneral,
         status: undefined,
       },
       {
@@ -94,7 +95,7 @@ describe('ToolsetEditorHeader', () => {
     expect(props?.steps).toEqual([
       {
         id: ToolsetEditorSteps.General,
-        name: ToolsetEditorI18nKeys.StepGeneral,
+        name: EditorI18nKeys.StepGeneral,
         status: StepStatus.VALID,
       },
       {

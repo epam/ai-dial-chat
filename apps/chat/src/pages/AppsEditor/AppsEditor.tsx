@@ -13,6 +13,7 @@ import {
   AppsEditorI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
+  EditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
@@ -167,8 +168,8 @@ const AppsEditor: FC = () => {
   );
 
   const saveButtonLabel = isGeneralStep
-    ? t(AppsEditorI18nKeys.GeneralFormNextButton)
-    : t(AppsEditorI18nKeys.SaveButton);
+    ? t(EditorI18nKeys.NextButton)
+    : t(EditorI18nKeys.SaveButton);
 
   const appIdForSettings =
     createdAppId ?? searchParams.get(AppsEditorQuery.AppId) ?? '';
@@ -184,7 +185,7 @@ const AppsEditor: FC = () => {
     () => [
       {
         id: AppsEditorStep.General,
-        name: t(AppsEditorI18nKeys.StepGeneral),
+        name: t(EditorI18nKeys.StepGeneral),
         status: appIdForSettings ? StepStatus.VALID : undefined,
       },
       {
@@ -205,7 +206,7 @@ const AppsEditor: FC = () => {
         title={schema?.displayName}
         steps={steps}
         currentStep={step}
-        navAriaLabel={t(AppsEditorI18nKeys.StepsNavAriaLabel)}
+        navAriaLabel={t(EditorI18nKeys.StepsNavAriaLabel)}
         isSaving={isSaving}
         cancelButtonLabel={t(ButtonsI18nKeys.Cancel)}
         saveButtonLabel={saveButtonLabel}

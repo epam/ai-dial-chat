@@ -116,6 +116,9 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
           clearLabel={labels.searchClearLabel}
         />
       )}
+      <span role="status" aria-live="polite" className="sr-only">
+        {isNoResults ? labels.noResultsLabel : ''}
+      </span>
       <div className="flex-1 overflow-y-auto p-4">
         {isEmpty ? (
           <PanelEmpty label={labels.emptyLabel} />

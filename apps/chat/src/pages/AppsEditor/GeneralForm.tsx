@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import {
   AppsEditorI18nKeys,
   BasicI18nKeys,
+  EditorI18nKeys,
 } from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
 import { isQuickAppSchema } from '../../utils/application-schema';
@@ -79,28 +80,28 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
       name: {
-        label: t(AppsEditorI18nKeys.GeneralFormNameLabel),
+        label: t(EditorI18nKeys.NameLabel),
         placeholder: t(AppsEditorI18nKeys.GeneralFormNamePlaceholder),
       },
       description: {
-        label: t(AppsEditorI18nKeys.GeneralFormDescriptionLabel),
+        label: t(EditorI18nKeys.DescriptionLabel),
         placeholder: t(AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder),
       },
       iconUrl: {
-        label: t(AppsEditorI18nKeys.GeneralFormIconUrlLabel),
+        label: t(EditorI18nKeys.IconUrlLabel),
         placeholder: t(BasicI18nKeys.UrlPlaceholder),
       },
       version: {
-        label: t(AppsEditorI18nKeys.GeneralFormVersionLabel),
-        placeholder: t(AppsEditorI18nKeys.GeneralFormVersionPlaceholder),
+        label: t(EditorI18nKeys.VersionLabel),
+        placeholder: t(EditorI18nKeys.VersionPlaceholder),
       },
       topics: {
-        label: t(AppsEditorI18nKeys.GeneralFormTopicsLabel),
-        placeholder: t(AppsEditorI18nKeys.GeneralFormTopicsPlaceholder),
+        label: t(EditorI18nKeys.TopicsLabel),
+        placeholder: t(EditorI18nKeys.TopicsPlaceholder),
       },
       intro: {
-        label: t(AppsEditorI18nKeys.GeneralFormIntroLabel),
-        placeholder: t(AppsEditorI18nKeys.GeneralFormIntroPlaceholder),
+        label: t(EditorI18nKeys.IntroLabel),
+        placeholder: t(EditorI18nKeys.IntroPlaceholder),
       },
     }),
     [t],
@@ -127,7 +128,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     if (codes.name || codes.version || codes.intro) {
       let nameError: string | undefined;
       if (codes.name === DeploymentCreationFieldErrorCode.Required) {
-        nameError = t(AppsEditorI18nKeys.GeneralFormNameRequired);
+        nameError = t(EditorI18nKeys.NameRequired);
       } else if (
         codes.name === DeploymentCreationFieldErrorCode.InvalidFormat
       ) {
@@ -139,9 +140,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         version: codes.version
           ? t(AppsEditorI18nKeys.GeneralFormVersionInvalid)
           : undefined,
-        intro: codes.intro
-          ? t(AppsEditorI18nKeys.GeneralFormIntroTooLong)
-          : undefined,
+        intro: codes.intro ? t(EditorI18nKeys.IntroTooLong) : undefined,
       });
       return;
     }
@@ -218,6 +217,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
             errors={errors}
             onChange={handleChange}
             labels={labels}
+            ariaLabel={t(EditorI18nKeys.StepGeneral)}
           />
 
           {submitError && (

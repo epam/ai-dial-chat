@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToolsetEditorI18nKeys } from '../../../../constants/translation-keys';
+import { EditorI18nKeys } from '../../../../constants/translation-keys';
 import type { ToolsetFormData } from '../../../../types/toolsets';
 import {
   ToolsetAuthTypes,
@@ -118,28 +118,18 @@ describe('GeneralForm', () => {
 
   it('renders name, description, icon URL, version, topics, and intro fields', () => {
     renderForm();
-    expect(screen.getByLabelText(ToolsetEditorI18nKeys.NameLabel)).toBeTruthy();
-    expect(
-      screen.getByLabelText(ToolsetEditorI18nKeys.DescriptionLabel),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText(ToolsetEditorI18nKeys.IconUrlLabel),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText(ToolsetEditorI18nKeys.VersionLabel),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText(ToolsetEditorI18nKeys.TopicsLabel),
-    ).toBeTruthy();
-    expect(
-      screen.getByLabelText(ToolsetEditorI18nKeys.IntroLabel),
-    ).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.NameLabel)).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.DescriptionLabel)).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.IconUrlLabel)).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.VersionLabel)).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.TopicsLabel)).toBeTruthy();
+    expect(screen.getByLabelText(EditorI18nKeys.IntroLabel)).toBeTruthy();
   });
 
   it('displays the name error message when errors.name is provided', () => {
-    renderForm(undefined, { name: 'toolsetEditor.general.nameRequired' });
+    renderForm(undefined, { name: EditorI18nKeys.NameRequired });
     const alert = screen.getByRole('alert');
-    expect(alert.textContent).toContain(ToolsetEditorI18nKeys.NameRequired);
+    expect(alert.textContent).toContain(EditorI18nKeys.NameRequired);
   });
 
   it('does not display an error when errors.name is absent', () => {
@@ -151,7 +141,7 @@ describe('GeneralForm', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const nameInput = screen.getByLabelText(
-      ToolsetEditorI18nKeys.NameLabel,
+      EditorI18nKeys.NameLabel,
     ) as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: 'Updated' } });
     expect(onChange).toHaveBeenCalledWith(
@@ -163,7 +153,7 @@ describe('GeneralForm', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const textarea = screen.getByLabelText(
-      ToolsetEditorI18nKeys.DescriptionLabel,
+      EditorI18nKeys.DescriptionLabel,
     ) as HTMLTextAreaElement;
     await user.type(textarea, 'A description');
     expect(onChange).toHaveBeenCalledWith(
@@ -172,15 +162,15 @@ describe('GeneralForm', () => {
   });
 
   it('displays the intro error message when errors.intro is provided', () => {
-    renderForm(undefined, { intro: 'toolsetEditor.general.introTooLong' });
-    expect(screen.getByText('toolsetEditor.general.introTooLong')).toBeTruthy();
+    renderForm(undefined, { intro: EditorI18nKeys.IntroTooLong });
+    expect(screen.getByText(EditorI18nKeys.IntroTooLong)).toBeTruthy();
   });
 
   it('calls onChange with updated intro when the intro input changes', () => {
     const onChange = vi.fn();
     renderForm({}, {}, onChange);
     const introInput = screen.getByLabelText(
-      ToolsetEditorI18nKeys.IntroLabel,
+      EditorI18nKeys.IntroLabel,
     ) as HTMLInputElement;
     fireEvent.change(introInput, { target: { value: 'A short pitch' } });
     expect(onChange).toHaveBeenCalledWith(

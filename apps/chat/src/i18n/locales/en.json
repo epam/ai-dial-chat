@@ -135,10 +135,6 @@
       "quickApp": "QuickApp",
       "toolset": "Toolset"
     },
-    "favoriteAddedTitle": "Added to Favorites",
-    "favoriteRemovedTitle": "Removed from Favorites",
-    "favoriteAdded": "\"{{name}}\" added to Favorites",
-    "favoriteRemoved": "\"{{name}}\" removed from Favorites",
     "publishSuccessTitle": "Published",
     "publishSuccess": "\"{{name}}\" published to {{folder}}",
     "publishFolderSearchPlaceholder": "Search folders",
@@ -524,32 +520,34 @@
     "errorTitle": "Couldn't create the share link. Please try again.",
     "invitationAcceptError": "This share link is invalid or has expired."
   },
-  "appsEditor": {
+  "editor": {
     "stepGeneral": "General",
     "stepsNavAriaLabel": "Editor steps",
     "saveButton": "Save & Exit",
+    "nextButton": "Next",
+    "nameLabel": "Name",
+    "nameRequired": "Name is required",
+    "descriptionLabel": "Description",
+    "iconUrlLabel": "Icon URL",
+    "versionLabel": "Version",
+    "versionPlaceholder": "e.g. 1.0.0",
+    "topicsLabel": "Topics",
+    "topicsPlaceholder": "Add a topic",
+    "introLabel": "Intro",
+    "introPlaceholder": "A short one-line pitch",
+    "introTooLong": "Intro must be 90 characters or fewer"
+  },
+  "appsEditor": {
     "exitPreviewButton": "Exit preview",
     "previewChat": {
       "placeholder": "Send a message to preview this application…",
       "ariaLabel": "Application preview chat"
     },
     "generalForm": {
-      "nameLabel": "Name",
       "namePlaceholder": "Enter application name",
-      "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe your application",
-      "iconUrlLabel": "Icon URL",
-      "nextButton": "Next",
-      "nameRequired": "Name is required",
       "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
-      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes",
-      "versionLabel": "Version",
-      "versionPlaceholder": "e.g. 1.0.0",
-      "topicsLabel": "Topics",
-      "topicsPlaceholder": "Add a topic",
-      "introLabel": "Intro",
-      "introPlaceholder": "A short one-line pitch",
-      "introTooLong": "Intro must be 90 characters or fewer"
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -561,24 +559,9 @@
     }
   },
   "toolsetEditor": {
-    "stepGeneral": "General",
-    "stepsNavAriaLabel": "Editor steps",
-    "nextButton": "Next",
-    "saveButton": "Save & Exit",
     "general": {
-      "nameLabel": "Name",
       "namePlaceholder": "Enter toolset name",
-      "nameRequired": "Name is required",
-      "versionLabel": "Version",
-      "versionPlaceholder": "e.g. 1.0.0",
-      "iconUrlLabel": "Icon URL",
-      "descriptionLabel": "Description",
-      "descriptionPlaceholder": "Describe your toolset",
-      "topicsLabel": "Topics",
-      "topicsPlaceholder": "Add a topic",
-      "introLabel": "Intro",
-      "introPlaceholder": "A short one-line pitch",
-      "introTooLong": "Intro must be 90 characters or fewer"
+      "descriptionPlaceholder": "Describe your toolset"
     },
     "settings": {
       "endpointRequired": "Endpoint is required",
