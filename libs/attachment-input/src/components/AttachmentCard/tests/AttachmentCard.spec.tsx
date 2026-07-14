@@ -406,4 +406,91 @@ describe('AttachmentCard — onClick', () => {
     expect(onExpand).toHaveBeenCalledWith('a1');
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  describe('click gating by upload status', () => {
+    // A loading or failed attachment isn't actually downloadable yet, so
+    // the whole card must not look or behave clickable — matches
+    // AttachmentFileRow's `canDownload` gating.
+    it('is not clickable while the attachment is still uploading', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <AttachmentCard
+          attachment={makeAttachment({ status: RequestStatus.Loading })}
+          onClick={onClick}
+        />,
+      );
+      const card = getRenderedCard(container);
+      expect(card.getAttribute('role')).toBeNull();
+      expect(card.getAttribute('tabindex')).toBeNull();
+      fireEvent.click(card);
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('is not clickable after a failed upload', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <AttachmentCard
+          attachment={makeAttachment({ status: RequestStatus.Error })}
+          onClick={onClick}
+        />,
+      );
+      const card = getRenderedCard(container);
+      expect(card.getAttribute('role')).toBeNull();
+      expect(card.getAttribute('tabindex')).toBeNull();
+      fireEvent.click(card);
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('is clickable again once the attachment is idle', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <AttachmentCard
+          attachment={makeAttachment({ status: RequestStatus.Idle })}
+          onClick={onClick}
+        />,
+      );
+      fireEvent.click(getRenderedCard(container));
+      expect(onClick).toHaveBeenCalledWith('a1');
+    });
+  });
+
+  describe('showHoverDownloadIcon', () => {
+    const image = makeAttachment({
+      type: AttachmentType.Image,
+      contentType: 'image/png',
+      previewUrl: 'https://example.com/a.png',
+    });
+
+    it('is hidden by default even when onClick is provided', () => {
+      const { container } = render(
+        <AttachmentCard attachment={image} onClick={vi.fn()} />,
+      );
+      expect(container.querySelector('svg.tabler-icon-download')).toBeNull();
+    });
+
+    it('renders a decorative download icon with no accessible name when enabled', () => {
+      const { container } = render(
+        <AttachmentCard
+          attachment={image}
+          onClick={vi.fn()}
+          showHoverDownloadIcon
+        />,
+      );
+      const icon = container.querySelector('svg.tabler-icon-download');
+      expect(icon).toBeTruthy();
+      expect(icon?.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('does not render the decorative icon alongside the remove button', () => {
+      const { container } = render(
+        <AttachmentCard
+          attachment={image}
+          onClick={vi.fn()}
+          onRemove={vi.fn()}
+          showHoverDownloadIcon
+        />,
+      );
+      expect(container.querySelector('svg.tabler-icon-download')).toBeNull();
+    });
+  });
 });

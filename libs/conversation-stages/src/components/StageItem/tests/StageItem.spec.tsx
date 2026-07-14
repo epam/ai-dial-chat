@@ -10,7 +10,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
-  AttachmentTray: ({ attachments }: { attachments: DisplayAttachment[] }) => (
+  AttachmentGroup: ({ attachments }: { attachments: DisplayAttachment[] }) => (
     <ul aria-label="attachments">
       {attachments.map((attachment) => (
         <li key={attachment.id}>

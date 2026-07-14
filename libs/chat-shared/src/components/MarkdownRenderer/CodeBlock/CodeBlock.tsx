@@ -1,19 +1,21 @@
 import {
+  ButtonVariant,
   DIAL_ICON_SIZE,
   DialGhostIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { IconCheck, IconCopy, IconDownload } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import {
-  oneDark,
-  oneLight,
-} from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useCodeCopy } from '../../../hooks/useCodeCopy';
 import { CodeBlockTheme } from '../../../types/code-editor';
+import {
+  downloadTextFile,
+  getFileExtensionForLanguage,
+} from '../../../utils/file-download';
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './CodeBlock.module.scss';
+import { restrainedSyntaxTheme } from './syntax-theme';
 
 /** Props for {@link MarkdownCodeBlock}. */
 export interface MarkdownCodeBlockProps {
@@ -29,6 +31,8 @@ export interface MarkdownCodeBlockProps {
   copyLabel?: string;
   /** Accessible label for the copy button after copy completes. Defaults to `'Copied!'`. */
   copiedLabel?: string;
+  /** Accessible label for the download button. Defaults to `'Download code'`. */
+  downloadLabel?: string;
   /** Extra classes applied to the outer container element. */
   containerClassName?: string;
   /** Extra classes applied to the sticky header bar. */
@@ -38,8 +42,8 @@ export interface MarkdownCodeBlockProps {
 }
 
 const syntaxTheme = {
-  dark: oneDark,
-  light: oneLight,
+  dark: restrainedSyntaxTheme,
+  light: restrainedSyntaxTheme,
 };
 
 /**
@@ -54,17 +58,23 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     theme = CodeBlockTheme.Dark,
     copyLabel = 'Copy code',
     copiedLabel = 'Copied!',
+    downloadLabel = 'Download code',
     containerClassName,
     headerClassName,
     codeClassName = 'dial-code-text',
   }) => {
     const { isCopied, copy } = useCodeCopy(value);
+    const isLightTheme = theme === CodeBlockTheme.Light;
+    const handleDownload = () => {
+      downloadTextFile(value, `code.${getFileExtensionForLanguage(language)}`);
+    };
 
     return (
       <div
         className={mergeClasses(
-          'my-4 max-w-full overflow-hidden rounded border',
+          'my-4 max-w-full overflow-hidden rounded-xl border',
           styles.container,
+          isLightTheme && styles.containerLight,
           containerClassName,
         )}
       >
@@ -75,20 +85,33 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
             headerClassName,
           )}
         >
-          <span className="text-start text-xs opacity-60">{language}</span>
+          <span className="dial-tiny-semi-text uppercase tracking-wider text-secondary">
+            {language}
+          </span>
           {!isStreaming && (
-            <DialGhostIconButton
-              icon={
-                isCopied ? (
-                  <IconCheck size={DIAL_ICON_SIZE.SM} />
-                ) : (
-                  <IconCopy size={DIAL_ICON_SIZE.SM} />
-                )
-              }
-              size={ElementSize.Small}
-              aria-label={isCopied ? copiedLabel : copyLabel}
-              onClick={copy}
-            />
+            <div className="flex items-center gap-1">
+              <DialGhostIconButton
+                icon={<IconDownload size={DIAL_ICON_SIZE.SM} />}
+                aria-label={downloadLabel}
+                variant={ButtonVariant.Primary}
+                size={ElementSize.Small}
+                onClick={handleDownload}
+              />
+              <DialGhostIconButton
+                icon={
+                  isCopied ? (
+                    <IconCheck size={DIAL_ICON_SIZE.SM} />
+                  ) : (
+                    <IconCopy size={DIAL_ICON_SIZE.SM} />
+                  )
+                }
+                aria-label={isCopied ? copiedLabel : copyLabel}
+                variant={ButtonVariant.Primary}
+                size={ElementSize.Small}
+                className={isCopied ? '!text-success' : undefined}
+                onClick={copy}
+              />
+            </div>
           )}
         </div>
         <div
@@ -101,14 +124,14 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
           {language ? (
             <SyntaxHighlighter
               language={language}
-              style={syntaxTheme[theme] ?? oneDark}
+              style={syntaxTheme[theme] ?? restrainedSyntaxTheme}
               customStyle={{
                 margin: 0,
                 borderRadius: 0,
                 background: 'transparent',
                 fontSize: 14,
                 lineHeight: 1.5,
-                padding: 12,
+                padding: '14px 16px',
                 letterSpacing: 0,
               }}
               codeTagProps={{ className: codeClassName }}
@@ -116,7 +139,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
               {value}
             </SyntaxHighlighter>
           ) : (
-            <pre className="p-3">
+            <pre className="p-4">
               <code className={mergeClasses('whitespace-pre', codeClassName)}>
                 {value}
               </code>

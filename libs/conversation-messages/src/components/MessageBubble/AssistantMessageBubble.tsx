@@ -6,7 +6,7 @@ import {
   mergeClasses,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
-import { AttachmentTray } from '@epam/ai-dial-conversation-input';
+import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble';
@@ -33,6 +33,10 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   markdownComponents,
   onAttachmentClick,
   attachmentClickLabel,
+  onAttachmentRetry,
+  attachmentRetryLabel,
+  getAttachmentSizeLabel,
+  attachmentTheme,
   codeBlockCopyLabel,
   codeBlockCopiedLabel,
   codeBlockTheme,
@@ -88,11 +92,14 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               />
             </div>
           )}
-          <AttachmentTray
+          <AttachmentGroup
             attachments={visibleAttachments}
             onAttachmentClick={onAttachmentClick}
+            onRetry={onAttachmentRetry}
             clickLabel={attachmentClickLabel}
-            className="flex-wrap"
+            retryLabel={attachmentRetryLabel}
+            getSizeLabel={getAttachmentSizeLabel}
+            theme={attachmentTheme}
           />
           {afterContent}
           <MessageActions

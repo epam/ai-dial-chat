@@ -1,6 +1,7 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
+  CodeBlockTheme,
   MessageRole,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
@@ -178,7 +179,7 @@ describe('UserMessageBubble — attachments', () => {
 
   it('renders an attachment tray when attachments are provided', () => {
     render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
-    // AttachmentTray renders a list role
+    // AttachmentGroup renders a list role
     expect(screen.getByRole('list')).toBeTruthy();
   });
 
@@ -201,10 +202,13 @@ describe('UserMessageBubble — attachments', () => {
     ) as HTMLElement;
     const children = Array.from(inner?.children ?? []);
     const trayIndex = children.findIndex(
-      (el) => el.getAttribute('role') === 'list',
+      (el) => el.getAttribute('role') === 'group',
     );
     const textIndex = children.findIndex(
-      (el) => el.tagName === 'DIV' && el.className.includes('rounded'),
+      (el) =>
+        el.tagName === 'DIV' &&
+        el.getAttribute('role') !== 'group' &&
+        el.className.includes('rounded'),
     );
     // tray should come before the bubble
     expect(trayIndex).toBeLessThan(textIndex);
@@ -246,6 +250,17 @@ describe('UserMessageBubble — attachments', () => {
       />,
     );
     expect(screen.getByLabelText('Download file')).toBeTruthy();
+  });
+
+  it('forwards attachmentTheme so file tiles use the markdown surface, not white, in light mode', () => {
+    const { container } = render(
+      <UserMessageBubble
+        text="Hello"
+        attachments={[ATTACHMENT]}
+        attachmentTheme={CodeBlockTheme.Light}
+      />,
+    );
+    expect(container.querySelector('[class*="tileLight"]')).toBeTruthy();
   });
 });
 
@@ -451,7 +466,7 @@ describe('AssistantMessageBubble — attachments', () => {
       el.className.includes('min-w-0'),
     );
     const trayIndex = children.findIndex(
-      (el) => el.getAttribute('role') === 'list',
+      (el) => el.getAttribute('role') === 'group',
     );
     // text comes before the tray
     expect(textIndex).toBeLessThan(trayIndex);
@@ -465,6 +480,17 @@ describe('AssistantMessageBubble — attachments', () => {
       />,
     );
     expect(screen.queryByRole('button', { name: /remove/i })).toBeNull();
+  });
+
+  it('forwards attachmentTheme so file tiles use the markdown surface, not white, in light mode', () => {
+    const { container } = render(
+      <AssistantMessageBubble
+        text="Here is your file"
+        attachments={[ATTACHMENT]}
+        attachmentTheme={CodeBlockTheme.Light}
+      />,
+    );
+    expect(container.querySelector('[class*="tileLight"]')).toBeTruthy();
   });
 });
 

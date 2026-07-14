@@ -1,5 +1,9 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
-import type { Annotation, DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import {
+  type Annotation,
+  type DisplayAttachment,
+  triggerAnchorDownload,
+} from '@epam/ai-dial-chat-shared';
 import { useCallback, useMemo } from 'react';
 import type { Components } from 'react-markdown';
 import CitationDropdown from '../../components/Citations/CitationDropdown/CitationDropdown';
@@ -45,10 +49,10 @@ export const useCitationMarkdownComponents = (
     if (isDialFileId(url)) {
       const downloadUrl = resolveDialFileDownloadUrl(url);
       if (downloadUrl == null) return;
-      const anchor = document.createElement('a');
-      anchor.href = downloadUrl;
-      anchor.download = attachment?.title ?? url.split('/').pop() ?? '';
-      anchor.click();
+      triggerAnchorDownload(
+        downloadUrl,
+        attachment?.title ?? url.split('/').pop() ?? '',
+      );
     } else {
       window.open(url, '_blank', 'noopener,noreferrer');
     }
