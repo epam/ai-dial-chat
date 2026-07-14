@@ -117,6 +117,12 @@ export class DeploymentItemDto {
 
   @ApiPropertyOptional({
     description:
+      'True when the current user may edit this deployment — owns it, or was granted WRITE access via a share invitation',
+  })
+  canEdit?: boolean;
+
+  @ApiPropertyOptional({
+    description:
       'Parent folder path for application-type deployments (absent for root-level or non-application items)',
   })
   applicationFolder?: string;

@@ -131,8 +131,8 @@
   /* Checkmark drawn from two border sides of a rotated element.
      border-left is physical here — the ✓ glyph must not flip in RTL. */
   &::after {
+    @apply mr-[1px] mt-[1px] block;
     content: '';
-    display: block;
     width: 5px;
     height: 10px;
     border: 2px solid #ffffff;
@@ -156,26 +156,6 @@
   line-height: 16px;
   font-weight: 600;
   color: var(--text-tertiary, #98a2b3);
-}
-
-/* Clear — ghost style. Matches dial-small-text (14px / 20px, normal). */
-.clearBtn {
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 400;
-  color: var(--text-secondary, #64748b);
-  transition: background-color 150ms ease;
-
-  @media (hover: hover) {
-    &:hover {
-      background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
-    }
-  }
-
-  &:focus-visible {
-    outline: 2px solid rgba(125, 164, 255, 0.5);
-    outline-offset: 2px;
-  }
 }
 
 /* Footer ---------------------------------------------------- */

@@ -1,0 +1,23 @@
+.tab {
+  border-color: transparent !important;
+  background-color: transparent;
+
+  color: var(--text-tertiary, #808898);
+
+  &:hover {
+    color: var(--text-secondary, #64748b);
+    background-color: rgba(92, 141, 234, 0.06);
+  }
+
+  > span {
+    text-align: center;
+  }
+
+  &.tabActive {
+    background-color: rgba(39, 100, 217, 0.07);
+    color: var(--text-secondary, #64748b);
+    &:hover {
+      background-color: rgba(92, 141, 234, 0.06);
+    }
+  }
+}

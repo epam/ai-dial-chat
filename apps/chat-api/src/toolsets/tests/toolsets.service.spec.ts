@@ -34,6 +34,7 @@ const mockEnrichedToolset: DialToolsetDto = {
   ...mockToolset,
   is_installed: false,
   is_my: false,
+  can_edit: false,
 };
 const mockEnrichedList: DialToolsetListResponseDto = {
   data: [mockEnrichedToolset],
@@ -56,6 +57,9 @@ function makeDeps() {
       deleteToolSet: vi.fn(),
       toolsetSignin: vi.fn(),
       toolSetSignout: vi.fn(),
+      getSharedResources: vi
+        .fn()
+        .mockResolvedValue(okResponse({ resources: [] })),
     },
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
@@ -178,6 +182,50 @@ describe('ToolsetsService', () => {
         id: 'toolsets/bucket/my-toolset',
         is_installed: false,
         is_my: true,
+      });
+    });
+
+    it('sets can_edit=true for a shared toolset with WRITE permission', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse(mockList),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(
+        okResponse({
+          resources: [{ url: 'my-toolset', permissions: ['READ', 'WRITE'] }],
+        }),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data[0]).toMatchObject({
+        id: 'my-toolset',
+        is_my: false,
+        can_edit: true,
+      });
+    });
+
+    it('sets can_edit=false for a shared toolset with READ-only permission', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse(mockList),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(
+        okResponse({
+          resources: [{ url: 'my-toolset', permissions: ['READ'] }],
+        }),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data[0]).toMatchObject({
+        id: 'my-toolset',
+        is_my: false,
+        can_edit: false,
       });
     });
 

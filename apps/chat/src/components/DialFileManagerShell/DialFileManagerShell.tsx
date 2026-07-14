@@ -3,6 +3,7 @@ import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
+  DialFileNodeType,
   DialSpinner,
   GridSelectionMode,
   NOT_ALLOWED_SYMBOLS_REGEXP,
@@ -10,7 +11,8 @@ import {
   type FileManagerGridRow,
   type ToolbarOptions,
 } from '@epam/ai-dial-ui-kit';
-import { memo, useMemo, type FC } from 'react';
+import type { GridApi } from 'ag-grid-community';
+import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
 import ShareFileModal from '../../components/DialFileManagerModal/ShareFileModal';
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
@@ -25,6 +27,25 @@ import type {
   DialFileManagerDestinationFolderPopupOptions,
   DialFileManagerShellLabels,
 } from './types/labels';
+
+type DestinationFolderPopupOptions =
+  DialFileManagerDestinationFolderPopupOptions & {
+    sourceFolder?: string;
+    destinationFolderPath?: string;
+    setDestinationFolderPath?: (path?: string) => void;
+    filesLoading?: boolean;
+    /*
+     * Current ui-kit forwards extra destination popup options into the popup's
+     * inner DialFileManager. Keep full `items` for conflict detection, but make
+     * that inner grid folder-only.
+     */
+    onGridApiChange?: (api: GridApi<FileManagerGridRow>) => void;
+  };
+
+const normalizeVirtualFolderPath = (value: string): string => {
+  const trimmed = value.replace(/\/+$/, '');
+  return trimmed || '/';
+};
 
 interface Props {
   hookResult: UseDialFileManagerResult;
@@ -84,6 +105,8 @@ const DialFileManagerShell: FC<Props> = ({
     expandedPaths,
     loadedPaths,
     onExpandedPathsChange,
+    onFolderPopupPathChange,
+    folderPopupLoadingPaths,
     onUploadFiles,
     onUploadArchive,
     onValidateUpload,
@@ -124,6 +147,10 @@ const DialFileManagerShell: FC<Props> = ({
     onGetInfo,
     clearMetadata,
   } = hookResult;
+
+  const [destinationFolderPath, setDestinationFolderPath] = useState<
+    string | undefined
+  >(undefined);
 
   const actionLabels = useMemo(() => {
     const result: Partial<Record<DialFileManagerActions, string>> = {};
@@ -318,6 +345,20 @@ const DialFileManagerShell: FC<Props> = ({
     ],
   );
 
+  const handleDestinationFolderPopupGridApiChange = useCallback(
+    (api: GridApi<FileManagerGridRow>): void => {
+      api.setGridOption('isExternalFilterPresent', () => true);
+      api.setGridOption('doesExternalFilterPass', ({ data }) => {
+        return (
+          data?.isTemporary === true ||
+          data?.nodeType === DialFileNodeType.FOLDER
+        );
+      });
+      api.onFilterChanged();
+    },
+    [],
+  );
+
   const commonSelectedParentFolder = useMemo(() => {
     let commonParent: string | undefined;
     for (const selectedPath of selectedPaths) {
@@ -331,20 +372,34 @@ const DialFileManagerShell: FC<Props> = ({
     return commonParent;
   }, [selectedPaths]);
 
+  const isDestinationFolderLoading =
+    destinationFolderPath != null &&
+    folderPopupLoadingPaths.has(
+      normalizeVirtualFolderPath(destinationFolderPath),
+    );
+
+  const disabledDestinationPath = isDestinationFolderLoading
+    ? destinationFolderPath
+    : commonSelectedParentFolder;
+
   const destinationFolderPopupOptions = useMemo(
-    (): DialFileManagerDestinationFolderPopupOptions & {
-      sourceFolder?: string;
-    } => ({
+    (): DestinationFolderPopupOptions => ({
       copyLabel: labels.copyLabel,
       moveLabel: labels.moveLabel,
       addFolderLabel: labels.addFolderLabel,
       hiddenFilesSwitcherLabel: labels.hiddenFilesSwitcherLabel,
       getCopyHeader: labels.getCopyHeader,
       getMoveHeader: labels.getMoveHeader,
-      disabledPathTooltip: labels.moveSourceDisabledTooltip,
+      disabledPathTooltip: isDestinationFolderLoading
+        ? labels.folderPickerLoadingTooltip
+        : labels.moveSourceDisabledTooltip,
       emptyStateTitle: labels.folderPickerEmptyStateTitle,
       emptyStateDescription: labels.folderPickerEmptyStateDescription,
-      sourceFolder: commonSelectedParentFolder,
+      sourceFolder: disabledDestinationPath,
+      destinationFolderPath,
+      setDestinationFolderPath,
+      filesLoading: isDestinationFolderLoading,
+      onGridApiChange: handleDestinationFolderPopupGridApiChange,
     }),
     [
       labels.copyLabel,
@@ -353,10 +408,14 @@ const DialFileManagerShell: FC<Props> = ({
       labels.hiddenFilesSwitcherLabel,
       labels.getCopyHeader,
       labels.getMoveHeader,
+      labels.folderPickerLoadingTooltip,
       labels.moveSourceDisabledTooltip,
       labels.folderPickerEmptyStateTitle,
       labels.folderPickerEmptyStateDescription,
-      commonSelectedParentFolder,
+      isDestinationFolderLoading,
+      disabledDestinationPath,
+      destinationFolderPath,
+      handleDestinationFolderPopupGridApiChange,
     ],
   );
 
@@ -430,6 +489,7 @@ const DialFileManagerShell: FC<Props> = ({
             clearSearchResults={clearSearchResults}
             gridOptions={gridOptions}
             treeOptions={treeOptions}
+            onFolderPopupPathChange={onFolderPopupPathChange}
             toolbarOptions={toolbarOptions}
             bulkActionsToolbarOptions={bulkActionsToolbarOptions}
             autoSelectUploadedItems={autoSelectUploadedItems}

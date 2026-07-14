@@ -968,6 +968,12 @@ export interface CopyItemDto {
    */
   destinationPath: string;
   /**
+   * Whether to overwrite an existing destination resource
+   * @type {boolean}
+   * @memberof CopyItemDto
+   */
+  overwrite?: boolean;
+  /**
    *
    * @type {string}
    * @memberof CopyItemDto
@@ -1726,6 +1732,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   isMy?: boolean;
+  /**
+   * True when the current user may edit this deployment — owns it, or was granted WRITE access via a share invitation
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  canEdit?: boolean;
   /**
    * Parent folder path for application-type deployments (absent for root-level or non-application items)
    * @type {string}
@@ -2495,6 +2507,12 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   isMy?: boolean;
+  /**
+   * True when the current user may edit this toolset — owns it, or was granted WRITE access via a share invitation
+   * @type {boolean}
+   * @memberof DialToolsetDto
+   */
+  canEdit?: boolean;
 }
 /**
  *
@@ -3128,6 +3146,12 @@ export interface MoveItemDto {
    */
   destinationPath: string;
   /**
+   * Whether to overwrite an existing destination resource
+   * @type {boolean}
+   * @memberof MoveItemDto
+   */
+  overwrite?: boolean;
+  /**
    *
    * @type {string}
    * @memberof MoveItemDto
@@ -3214,6 +3238,135 @@ export interface ProviderInfoDto {
    */
   label: string;
 }
+/**
+ *
+ * @export
+ * @interface PublishCatalogEntityDto
+ */
+export interface PublishCatalogEntityDto {
+  /**
+   * Destination folder under the Organization/public bucket, forwarded to DIAL Core as `targetFolder`.
+   * @type {string}
+   * @memberof PublishCatalogEntityDto
+   */
+  folderPath: string;
+  /**
+   * Version label for this publish.
+   * @type {string}
+   * @memberof PublishCatalogEntityDto
+   */
+  version: string;
+}
+/**
+ *
+ * @export
+ * @interface PublishHistoryEntryDto
+ */
+export interface PublishHistoryEntryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  entityId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  entityType: PublishHistoryEntryDtoEntityTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  folderPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  version: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  publishedAt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishHistoryEntryDto
+   */
+  publishedBy: string;
+}
+
+/**
+ * @export
+ */
+export const PublishHistoryEntryDtoEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+} as const;
+export type PublishHistoryEntryDtoEntityTypeEnum =
+  (typeof PublishHistoryEntryDtoEntityTypeEnum)[keyof typeof PublishHistoryEntryDtoEntityTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface PublishResultDto
+ */
+export interface PublishResultDto {
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  entityId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  entityType: PublishResultDtoEntityTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  folderPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  version: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  publishedAt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishResultDto
+   */
+  publishedBy: string;
+}
+
+/**
+ * @export
+ */
+export const PublishResultDtoEntityTypeEnum = {
+  Model: 'model',
+  Toolset: 'toolset',
+  Application: 'application',
+} as const;
+export type PublishResultDtoEntityTypeEnum =
+  (typeof PublishResultDtoEntityTypeEnum)[keyof typeof PublishResultDtoEntityTypeEnum];
+
 /**
  *
  * @export
@@ -3516,42 +3669,6 @@ export type SendCompletionDtoModeEnum =
 /**
  *
  * @export
- * @interface ShareLinkResponseDto
- */
-export interface ShareLinkResponseDto {
-  /**
-   * Absolute shareable URL for the entity.
-   * @type {string}
-   * @memberof ShareLinkResponseDto
-   */
-  url: string;
-  /**
-   * Number of days the link stays active before expiring.
-   * @type {number}
-   * @memberof ShareLinkResponseDto
-   */
-  expiresInDays: number;
-  /**
-   * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
-   * @type {Array<string>}
-   * @memberof ShareLinkResponseDto
-   */
-  access: Array<ShareLinkResponseDtoAccessEnum>;
-}
-
-/**
- * @export
- */
-export const ShareLinkResponseDtoAccessEnum = {
-  View: 'view',
-  Edit: 'edit',
-} as const;
-export type ShareLinkResponseDtoAccessEnum =
-  (typeof ShareLinkResponseDtoAccessEnum)[keyof typeof ShareLinkResponseDtoAccessEnum];
-
-/**
- *
- * @export
  * @interface ShareFilesDto
  */
 export interface ShareFilesDto {
@@ -3611,6 +3728,42 @@ export interface ShareItemDto {
    */
   path: string;
 }
+/**
+ *
+ * @export
+ * @interface ShareLinkResponseDto
+ */
+export interface ShareLinkResponseDto {
+  /**
+   * Absolute shareable URL for the entity.
+   * @type {string}
+   * @memberof ShareLinkResponseDto
+   */
+  url: string;
+  /**
+   * Number of days the link stays active before expiring.
+   * @type {number}
+   * @memberof ShareLinkResponseDto
+   */
+  expiresInDays: number;
+  /**
+   * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
+   * @type {Array<string>}
+   * @memberof ShareLinkResponseDto
+   */
+  access: Array<ShareLinkResponseDtoAccessEnum>;
+}
+
+/**
+ * @export
+ */
+export const ShareLinkResponseDtoAccessEnum = {
+  View: 'view',
+  Edit: 'edit',
+} as const;
+export type ShareLinkResponseDtoAccessEnum =
+  (typeof ShareLinkResponseDtoAccessEnum)[keyof typeof ShareLinkResponseDtoAccessEnum];
+
 /**
  *
  * @export

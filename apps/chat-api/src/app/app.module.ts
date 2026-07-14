@@ -17,6 +17,7 @@ import { DialCoreModule } from '../dial/dial-core.module';
 import { FilesModule } from '../files/files.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
+import { PublishModule } from '../publish/publish.module';
 import { RateModule } from '../rate/rate.module';
 import { ShareModule } from '../share/share.module';
 import { ThemesModule } from '../themes/themes.module';
@@ -61,6 +62,7 @@ import { createServeStaticOptions } from './static-assets';
     TranscriptionModule,
     ThemesModule,
     ShareModule,
+    PublishModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

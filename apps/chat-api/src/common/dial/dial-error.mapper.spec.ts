@@ -82,6 +82,7 @@ describe('mapDialHttpStatus', () => {
         400,
         'ctx',
         undefined,
+        undefined,
         "The specified endpoint 'https://x' is invalid or unreachable.",
       );
       expect.fail('should have thrown');
@@ -106,11 +107,21 @@ describe('mapDialHttpStatus', () => {
 
   it('does not use the upstream message for 401/403/404', () => {
     try {
-      mapDialHttpStatus(404, 'ctx', undefined, 'internal detail');
+      mapDialHttpStatus(404, 'ctx', undefined, undefined, 'internal detail');
       expect.fail('should have thrown');
     } catch (err) {
       expect((err as NotFoundException).message).toBe('Resource not found');
     }
+  });
+
+  it('logs the raw error body at debug level when provided', () => {
+    const logger = { warn: vi.fn(), debug: vi.fn() } as unknown as Logger;
+    expect(() =>
+      mapDialHttpStatus(400, 'ctx', logger, { code: 'bad' }),
+    ).toThrow(BadRequestException);
+    expect(logger.debug).toHaveBeenCalledWith(
+      'DIAL Core error body for ctx: {"code":"bad"}',
+    );
   });
 });
 

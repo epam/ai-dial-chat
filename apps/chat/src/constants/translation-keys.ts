@@ -141,6 +141,16 @@ export enum CatalogI18nKeys {
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
   CreateQuickApp = 'catalog.create.quickApp',
   CreateToolset = 'catalog.create.toolset',
+  FavoriteAddedTitle = 'catalog.favoriteAddedTitle',
+  FavoriteAdded = 'catalog.favoriteAdded',
+  FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
+  FavoriteRemoved = 'catalog.favoriteRemoved',
+  PublishSuccessTitle = 'catalog.publishSuccessTitle',
+  PublishSuccess = 'catalog.publishSuccess',
+  PublishFolderSearchPlaceholder = 'catalog.publishFolderSearchPlaceholder',
+  PublishFolderEmptyState = 'catalog.publishFolderEmptyState',
+  PublishHistoryLoading = 'catalog.publishHistoryLoading',
+  PublishHistoryError = 'catalog.publishHistoryError',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
   TabToolsets = 'catalog.tab.toolsets',
@@ -276,6 +286,7 @@ export enum DialFileManagerI18nKeys {
   MoveHeaderSingle = 'dialFileManager.moveHeaderSingle',
   MoveHeaderMultiple = 'dialFileManager.moveHeaderMultiple',
   MoveSourceDisabledTooltip = 'dialFileManager.moveSourceDisabledTooltip',
+  FolderPickerLoadingTooltip = 'dialFileManager.folderPickerLoadingTooltip',
   FolderPickerEmptyStateTitle = 'dialFileManager.folderPickerEmptyStateTitle',
   FolderPickerEmptyStateDescription = 'dialFileManager.folderPickerEmptyStateDescription',
   MyFilesTreeHeader = 'dialFileManager.myFiles.treeHeader',
@@ -429,6 +440,8 @@ export enum AttachmentCanvasI18nKeys {
   CloseLabel = 'attachmentCanvas.closeLabel',
   DownloadLabel = 'attachmentCanvas.downloadLabel',
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
+  LoadErrorLabel = 'attachmentCanvas.loadErrorLabel',
+  ForbiddenErrorLabel = 'attachmentCanvas.forbiddenErrorLabel',
 }
 
 export enum AppsEditorI18nKeys {

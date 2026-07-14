@@ -320,6 +320,8 @@ const App: FC = () => {
           closeLabel={t(AttachmentCanvasI18nKeys.CloseLabel)}
           downloadLabel={t(AttachmentCanvasI18nKeys.DownloadLabel)}
           unsupportedLabel={t(AttachmentCanvasI18nKeys.UnsupportedLabel)}
+          loadErrorLabel={t(AttachmentCanvasI18nKeys.LoadErrorLabel)}
+          forbiddenErrorLabel={t(AttachmentCanvasI18nKeys.ForbiddenErrorLabel)}
           copyTextLabel={t(ButtonsI18nKeys.CopyText)}
           copiedTextLabel={t(ButtonsI18nKeys.Copied)}
           copyMarkdownLabel={t(ButtonsI18nKeys.CopyAsMarkdown)}

@@ -17,10 +17,21 @@ export interface HighlightProps {
   maxLines?: number;
 }
 
+/* Tailwind's JIT scanner only compiles class names that appear as complete
+ * literal tokens in source, so the line count can't be interpolated into a
+ * dynamic string here — each supported value is listed literally. */
+const LINE_CLAMP_CLASS_NAMES: Record<number, string> = {
+  2: 'line-clamp-2',
+  3: 'line-clamp-3',
+  4: 'line-clamp-4',
+  5: 'line-clamp-5',
+  6: 'line-clamp-6',
+};
+
 const getClampClassName = (maxLines: number): string =>
   maxLines === 1
     ? '!truncate !whitespace-nowrap'
-    : `![-webkit-box-orient:vertical] ![-webkit-line-clamp:${maxLines}] ![display:-webkit-box] ![white-space:normal]`;
+    : `${LINE_CLAMP_CLASS_NAMES[maxLines] ?? LINE_CLAMP_CLASS_NAMES[2]} !whitespace-normal`;
 
 /** Renders text with the first occurrence of `query` wrapped in a highlight mark, with ellipsis truncation and a tooltip when overflowing. */
 export const Highlight: FC<HighlightProps> = ({
