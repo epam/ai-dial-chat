@@ -1,6 +1,6 @@
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { resolve, sep } from 'node:path';
+import { basename, resolve, sep } from 'node:path';
 import {
   BadRequestException,
   CallHandler,
@@ -75,13 +75,16 @@ export class ArchiveUploadInterceptor implements NestInterceptor {
 
   /**
    * multer's diskStorage generates `file.path` from a random filename under
-   * `tmpdir()` — never from the original upload's name — but this bounds
-   * check keeps the deletion confined to the temp directory regardless.
+   * `tmpdir()` — never from the original upload's name — but `basename()`
+   * strips any directory component before the path is rejoined with the
+   * trusted temp dir, so the deletion provably cannot escape it regardless.
    */
   private removeUploadedFile(file: Express.Multer.File | undefined): void {
     if (file?.path == null) return;
-    const resolvedPath = resolve(file.path);
     const resolvedTempDir = resolve(tmpdir());
+    const fileName = basename(file.path);
+    if (fileName.length === 0) return;
+    const resolvedPath = resolve(resolvedTempDir, fileName);
     const isWithinTempDir =
       resolvedPath === resolvedTempDir ||
       resolvedPath.startsWith(`${resolvedTempDir}${sep}`);
