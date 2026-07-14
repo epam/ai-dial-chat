@@ -24,6 +24,22 @@ vi.mock('../../../context/NotificationContext', () => ({
   }),
 }));
 
+vi.mock('../../../context/DeploymentsContext', () => ({
+  useDeployments: () => ({
+    items: [],
+    selectedItemId: null,
+    setSelectedItemId: vi.fn(),
+    restoreSelectedItemId: vi.fn(),
+    selectedDeploymentConfiguration: null,
+    isLoading: false,
+    error: null,
+    schemas: [],
+    toolsets: [],
+    refetchToolsets: vi.fn().mockResolvedValue(undefined),
+    refetchDeployments: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 vi.mock('../../../server-api/share.api', () => ({
   acceptInvitation: vi.fn(),
 }));

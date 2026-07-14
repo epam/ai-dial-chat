@@ -1727,6 +1727,12 @@ export interface DeploymentItemDto {
    */
   isMy?: boolean;
   /**
+   * True when the current user may edit this deployment — owns it, or was granted WRITE access via a share invitation
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  canEdit?: boolean;
+  /**
    * Parent folder path for application-type deployments (absent for root-level or non-application items)
    * @type {string}
    * @memberof DeploymentItemDto
@@ -2495,6 +2501,12 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   isMy?: boolean;
+  /**
+   * True when the current user may edit this toolset — owns it, or was granted WRITE access via a share invitation
+   * @type {boolean}
+   * @memberof DialToolsetDto
+   */
+  canEdit?: boolean;
 }
 /**
  *
@@ -3645,42 +3657,6 @@ export type SendCompletionDtoModeEnum =
 /**
  *
  * @export
- * @interface ShareLinkResponseDto
- */
-export interface ShareLinkResponseDto {
-  /**
-   * Absolute shareable URL for the entity.
-   * @type {string}
-   * @memberof ShareLinkResponseDto
-   */
-  url: string;
-  /**
-   * Number of days the link stays active before expiring.
-   * @type {number}
-   * @memberof ShareLinkResponseDto
-   */
-  expiresInDays: number;
-  /**
-   * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
-   * @type {Array<string>}
-   * @memberof ShareLinkResponseDto
-   */
-  access: Array<ShareLinkResponseDtoAccessEnum>;
-}
-
-/**
- * @export
- */
-export const ShareLinkResponseDtoAccessEnum = {
-  View: 'view',
-  Edit: 'edit',
-} as const;
-export type ShareLinkResponseDtoAccessEnum =
-  (typeof ShareLinkResponseDtoAccessEnum)[keyof typeof ShareLinkResponseDtoAccessEnum];
-
-/**
- *
- * @export
  * @interface ShareFilesDto
  */
 export interface ShareFilesDto {
@@ -3740,6 +3716,42 @@ export interface ShareItemDto {
    */
   path: string;
 }
+/**
+ *
+ * @export
+ * @interface ShareLinkResponseDto
+ */
+export interface ShareLinkResponseDto {
+  /**
+   * Absolute shareable URL for the entity.
+   * @type {string}
+   * @memberof ShareLinkResponseDto
+   */
+  url: string;
+  /**
+   * Number of days the link stays active before expiring.
+   * @type {number}
+   * @memberof ShareLinkResponseDto
+   */
+  expiresInDays: number;
+  /**
+   * Access levels granted to holders of the share link. Edit access implies view access, so this is `[View, Edit]` rather than `[Edit]` alone.
+   * @type {Array<string>}
+   * @memberof ShareLinkResponseDto
+   */
+  access: Array<ShareLinkResponseDtoAccessEnum>;
+}
+
+/**
+ * @export
+ */
+export const ShareLinkResponseDtoAccessEnum = {
+  View: 'view',
+  Edit: 'edit',
+} as const;
+export type ShareLinkResponseDtoAccessEnum =
+  (typeof ShareLinkResponseDtoAccessEnum)[keyof typeof ShareLinkResponseDtoAccessEnum];
+
 /**
  *
  * @export
