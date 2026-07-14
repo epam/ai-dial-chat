@@ -393,8 +393,20 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const isNamesOrVersionsInvalid = Object.entries(entitiesEditState).some(
-    ([key, { version, name }]) => {
+  const getPublicKey = (reviewUrl: string) => {
+    const parts = reviewUrl.split('/');
+    parts[1] = PUBLIC_URL_PREFIX;
+    return parts.join('/');
+  };
+
+  const hasDuplicateVersion = Object.entries(entitiesEditState).some(
+    ([key, { version, name }]) =>
+      isVersionExists(version, getPublicKey(key), publicVersionGroups, name),
+  );
+
+  const isNamesOrVersionsInvalid =
+    hasDuplicateVersion ||
+    Object.entries(entitiesEditState).some(([key, { version, name }]) => {
       const isInvalidName = !isEntityNameValid(name);
 
       const resource = publication.resources.find(
@@ -408,16 +420,14 @@ export const PublicationHandlerFooter = ({
         (isVersionValid(version.trim()) &&
           !isVersionExists(
             version,
-            key,
+            getPublicKey(key),
             publicVersionGroups,
             name,
-            publication.targetFolder,
           ) &&
           (!isApplicationId(key) || isVersionPartSizeValid(version)));
 
       return isInvalidName || !isValidVersion;
-    },
-  );
+    });
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
 
   const isEditInvalid =
@@ -470,6 +480,9 @@ export const PublicationHandlerFooter = ({
       if (areNoChanges) {
         return ChatI18nKeys.NothingIsSelectedAndRulesHaveNotChanged;
       }
+      if (hasDuplicateVersion) {
+        return ChatI18nKeys.DuplicateVersionFound;
+      }
 
       return ChatI18nKeys.RequestCantBePublishedAsSomeItemsAreInvalid;
     }
@@ -492,6 +505,7 @@ export const PublicationHandlerFooter = ({
     isValid,
     formError,
     isDraftRuleFilterOpen,
+    hasDuplicateVersion,
   ]);
 
   const isApproveOrSendDisabled =
