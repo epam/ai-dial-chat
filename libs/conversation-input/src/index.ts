@@ -22,9 +22,11 @@ export type {
 export {
   AttachmentCard,
   AttachmentTray,
+  AttachmentGroup,
   FileDndOverlay,
   getAttachmentIcon,
 } from '@epam/ai-dial-attachment-input';
+export type { AttachmentGroupProps } from '@epam/ai-dial-attachment-input';
 export type { BottomSheetItem } from './components/BottomSheet/BottomSheet';
 export {
   ChatSettingsModal,

@@ -60,7 +60,7 @@ const SharePopoverContainer: FC<Props> = ({ item, onClose }) => {
         accessEditLabel: t(ShareI18nKeys.AccessEditLabel),
         visibilityNote: t(ShareI18nKeys.VisibilityNote),
         visibilityNoteEdit: t(ShareI18nKeys.VisibilityNoteEdit),
-        copyButtonLabel: t(ShareI18nKeys.CopyButtonLabel),
+        copyButtonLabel: t(ButtonsI18nKeys.Copy),
         copiedButtonLabel: t(ShareI18nKeys.CopiedButtonLabel),
         linkAriaLabel: t(ShareI18nKeys.LinkAriaLabel),
         expiryNote:

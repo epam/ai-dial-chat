@@ -64,6 +64,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-label': string;
     disabled?: boolean;
   }) => <button type="button" aria-label={ariaLabel} disabled={disabled} />,
+  DialEllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
@@ -248,7 +249,7 @@ describe('ConversationSourcesPanel — search', () => {
 
     await user.type(screen.getByRole('searchbox'), 'keep');
 
-    expect(screen.getByText('Keep me')).toBeTruthy();
-    expect(screen.queryByText('Hide me')).toBeNull();
+    expect(screen.getByRole('link', { name: /keep me/i })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /hide me/i })).toBeNull();
   });
 });

@@ -22,6 +22,7 @@ import {
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import { FolderPath } from '../../FolderPath/FolderPath';
+import { DeleteButton } from './DeleteButton/DeleteButton';
 import { ShareButton } from './ShareButton/ShareButton';
 
 interface HeaderProps {
@@ -35,6 +36,9 @@ interface HeaderProps {
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   onEdit?: (item: CatalogItem) => void;
+  onDelete?: (item: CatalogItem) => Promise<void> | void;
+  /** Called after a delete confirmed via the Delete button succeeds, to close the whole details panel. */
+  onCloseDetails?: () => void;
   onLogin?: (
     item: CatalogItem,
     params: { level: CredentialsLevel; apiKey?: string },
@@ -70,6 +74,8 @@ export const Header: FC<HeaderProps> = ({
   onShare,
   shareOverlay,
   onEdit,
+  onDelete,
+  onCloseDetails,
   onLogin,
   onLogout,
   onToggleCredentials,
@@ -187,6 +193,12 @@ export const Header: FC<HeaderProps> = ({
             onClick={onOpenPublish}
           />
         )}
+        <DeleteButton
+          item={item}
+          onDelete={onDelete}
+          onDeleted={onCloseDetails}
+          texts={texts}
+        />
         {shouldShowCredentialsAction && (
           <NeutralButton
             label={credentialsLabel}

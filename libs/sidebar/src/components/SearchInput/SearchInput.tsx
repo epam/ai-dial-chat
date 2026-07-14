@@ -1,8 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { SearchBar } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import { IconSearch, IconX } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
-import styles from './SearchInput.module.scss';
 
 /** Props for `SearchInput`. */
 export interface SearchInputProps {
@@ -22,7 +21,11 @@ export interface SearchInputProps {
   rowClassName?: string;
 }
 
-/** Minimal search input with icon positioned to align with sibling action buttons. */
+/**
+ * Minimal search input with icon positioned to align with sibling action buttons.
+ * Reuses the shared {@link SearchBar} default colors (border, hover/focus, icon
+ * and text colors) and only adjusts shape (pill) and background for the sidebar.
+ */
 export const SearchInput: FC<SearchInputProps> = memo(
   ({
     placeholder,
@@ -34,42 +37,20 @@ export const SearchInput: FC<SearchInputProps> = memo(
     rowClassName,
   }) => (
     <div className={mergeClasses('px-3 py-2', wrapperClassName)}>
-      <div
-        className={mergeClasses(
-          'flex min-h-11 w-full items-center gap-2 rounded-full border pe-3 ps-3 desktop:min-h-9',
-          styles.row,
+      <SearchBar
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        clearLabel={clearLabel}
+        iconClassName={iconClassName}
+        iconSize={DIAL_ICON_SIZE.SM}
+        iconStrokeWidth={1.5}
+        containerClassName={mergeClasses(
+          'min-h-11 w-full gap-2 rounded-full border pe-3 ps-3 desktop:min-h-9',
           rowClassName,
         )}
-      >
-        <IconSearch
-          size={DIAL_ICON_SIZE.SM}
-          stroke={1.5}
-          className={mergeClasses('shrink-0', iconClassName)}
-        />
-        <input
-          type="text"
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value)}
-          className={mergeClasses(
-            'flex-1 bg-transparent outline-none',
-            styles.input,
-          )}
-        />
-        {value && (
-          <button
-            type="button"
-            onClick={() => onChange('')}
-            className={mergeClasses(
-              'flex size-11 shrink-0 items-center justify-center desktop:size-6',
-              iconClassName,
-            )}
-            aria-label={clearLabel}
-          >
-            <IconX size={14} stroke={1.5} />
-          </button>
-        )}
-      </div>
+        clearButtonClassName="size-11 desktop:size-6"
+      />
     </div>
   ),
 );

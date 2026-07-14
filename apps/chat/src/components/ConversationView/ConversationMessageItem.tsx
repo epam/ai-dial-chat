@@ -149,6 +149,8 @@ const ConversationMessageItem: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
+  const codeBlockTheme =
+    currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
   const { handleAttachmentClick: handleDownload } = useAttachmentAction();
   const handleAttachmentClick = onAttachmentClickProp ?? handleDownload;
   const isStreaming = isStreamingMessage(
@@ -333,11 +335,8 @@ const ConversationMessageItem: FC<Props> = ({
         thinkingLabel={thinkingLabel}
         codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
         codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
-        codeBlockTheme={
-          currentTheme === ThemeId.Light
-            ? CodeBlockTheme.Light
-            : CodeBlockTheme.Dark
-        }
+        codeBlockTheme={codeBlockTheme}
+        attachmentTheme={codeBlockTheme}
         onAttachmentClick={handleAttachmentClick}
         attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
         {...statusProps}

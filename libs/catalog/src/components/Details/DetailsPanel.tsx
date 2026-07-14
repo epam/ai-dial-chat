@@ -56,6 +56,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   publishTexts,
   shareOverlay,
   onEdit,
+  onDelete,
   onLogin,
   onLogout,
   texts,
@@ -340,6 +341,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isPublishVisible={isPublishVisible}
                 onOpenPublish={handleOpenPublish}
                 onEdit={onEdit}
+                onDelete={onDelete}
+                onCloseDetails={onClose}
                 onLogin={onLogin}
                 onLogout={onLogout}
                 onToggleCredentials={handleToggleCredentials}

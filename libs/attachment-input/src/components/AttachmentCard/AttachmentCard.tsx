@@ -2,6 +2,7 @@ import {
   AttachmentErrorReason,
   AttachmentType,
   buildCssVars,
+  Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -30,6 +31,7 @@ import styles from './AttachmentCard.module.scss';
 
 export const AttachmentCard: FC<AttachmentCardProps> = ({
   attachment,
+  searchQuery = '',
   onRemove,
   onRetry,
   onExpand,
@@ -41,15 +43,14 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   clickLabel = 'Open attachment',
   colors,
   typography,
-  roundedClassName = 'rounded',
+  roundedClassName = 'rounded-xl',
+  showHoverDownloadIcon = false,
   className,
 }) => {
   const { id, name } = attachment;
   const imageSrc = attachment.previewUrl ?? attachment.url;
   const isPasted = attachment.type === AttachmentType.Pasted;
   const isExpandable = isPasted && onExpand !== undefined;
-  const isClickable = onClick !== undefined && !isExpandable;
-  const isInteractive = isExpandable || isClickable;
 
   const displayName = useMemo(() => {
     return isPasted ? name : getNameWithoutExtension(name);
@@ -81,6 +82,13 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
       ),
     [attachment, isSelected, shouldAlwaysShowActions],
   );
+
+  // Not downloadable while still uploading or after a failed upload —
+  // matches AttachmentFileRow's `canDownload` gating so a broken/incomplete
+  // attachment never looks or behaves clickable (no false download attempt).
+  const isClickable =
+    onClick !== undefined && !isExpandable && !isLoading && !isError;
+  const isInteractive = isExpandable || isClickable;
 
   const { imageRef, imageLoadStatus } = useLazyImageLoad({
     enabled: isImage,
@@ -122,7 +130,15 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               styles.name,
             )}
           >
-            {attachment.name}
+            {searchQuery ? (
+              <Highlight
+                text={attachment.name}
+                query={searchQuery}
+                maxLines={1}
+              />
+            ) : (
+              attachment.name
+            )}
           </span>
           {onClick && (
             <DialGhostIconButton
@@ -227,7 +243,15 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
                 styles.name,
               )}
             >
-              {displayName}
+              {searchQuery ? (
+                <Highlight
+                  text={displayName}
+                  query={searchQuery}
+                  maxLines={3}
+                />
+              ) : (
+                displayName
+              )}
             </div>
           </div>
         </>
@@ -243,7 +267,15 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
                 styles.name,
               )}
             >
-              {displayName}
+              {searchQuery ? (
+                <Highlight
+                  text={displayName}
+                  query={searchQuery}
+                  maxLines={3}
+                />
+              ) : (
+                displayName
+              )}
             </div>
           </div>
 
@@ -317,6 +349,16 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
                 e.stopPropagation();
                 onRemove?.(id);
               }}
+            />
+          )}
+          {showHoverDownloadIcon && !onRemove && !isError && (
+            <IconDownload
+              size={DIAL_ICON_SIZE.SM}
+              aria-hidden
+              className={mergeClasses(
+                'h-6 w-6 rounded-lg p-1',
+                styles.hoverDownloadIcon,
+              )}
             />
           )}
         </div>

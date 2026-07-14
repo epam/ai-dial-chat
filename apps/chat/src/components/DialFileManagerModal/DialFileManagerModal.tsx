@@ -24,12 +24,16 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   DialFileManagerI18nKeys,
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
-import { DialFileManagerVariant } from '../../types/file-manager-variant';
+import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+} from '../../types/file-manager-variant';
 import {
   mimeTypesToAttachmentExtensionLabels,
   mimeTypesToDialFileAcceptTypes,
@@ -116,9 +120,7 @@ const DialFileManagerModal: FC<Props> = ({
     () => ({
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
-      [DialFileManagerTabs.Organization]: t(
-        DialFileManagerI18nKeys.TabOrganization,
-      ),
+      [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -462,7 +464,7 @@ const DialFileManagerModal: FC<Props> = ({
       multipleFilesTitle: t(DialFileManagerI18nKeys.ConflictMultipleTitle),
       actionLabels: {
         replace: t(DialFileManagerI18nKeys.ConflictReplace),
-        duplicate: t(DialFileManagerI18nKeys.ConflictDuplicate),
+        duplicate: t(ButtonsI18nKeys.Duplicate),
         cancel: t(ButtonsI18nKeys.Cancel),
       },
       strategyLabels: {
@@ -505,10 +507,8 @@ const DialFileManagerModal: FC<Props> = ({
       [DialFileManagerTabs.MyFiles]: t(
         DialFileManagerI18nKeys.MyFilesTreeHeader,
       ),
-      [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.SharedTreeHeader),
-      [DialFileManagerTabs.Organization]: t(
-        DialFileManagerI18nKeys.OrganizationTreeHeader,
-      ),
+      [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
+      [DialFileManagerTabs.Organization]: t(BasicI18nKeys.Organization),
       [DialFileManagerTabs.Review]: '',
     }),
     [t],
@@ -523,20 +523,19 @@ const DialFileManagerModal: FC<Props> = ({
       hideHiddenFilesLabel,
       getSelectionLabel,
       uploadFilesLabel,
+      uploadArchiveAction: t(DialFileManagerI18nKeys.UploadArchiveAction),
       newFolderLabel,
       downloadLabel,
       downloadingLabel,
       deleteLabel,
       deletingLabel,
-      renameLabel: t(DialFileManagerI18nKeys.RenameAction),
+      renameLabel: t(ButtonsI18nKeys.Rename),
       renamingLabel: t(DialFileManagerI18nKeys.RenamingLabel),
       copyLabel: t(DialFileManagerI18nKeys.CopyAction),
       moveLabel: t(DialFileManagerI18nKeys.MoveAction),
-      duplicateLabel: t(DialFileManagerI18nKeys.DuplicateAction),
+      duplicateLabel: t(ButtonsI18nKeys.Duplicate),
       addFolderLabel: t(DialFileManagerI18nKeys.FolderPickerAddFolderLabel),
-      hiddenFilesSwitcherLabel: t(
-        DialFileManagerI18nKeys.FolderPickerHiddenFilesLabel,
-      ),
+      hiddenFilesSwitcherLabel: t(DialFileManagerI18nKeys.HiddenFiles),
       getCopyHeader: (count, name) =>
         count === 1
           ? t(DialFileManagerI18nKeys.CopyHeaderSingle, { name })
@@ -562,9 +561,7 @@ const DialFileManagerModal: FC<Props> = ({
       operationLoaderMoveTitle: t(
         DialFileManagerI18nKeys.OperationLoaderMoveTitle,
       ),
-      operationLoaderCancelLabel: t(
-        DialFileManagerI18nKeys.OperationLoaderCancelLabel,
-      ),
+      operationLoaderCancelLabel: t(ButtonsI18nKeys.Cancel),
       deleteConfirmTitle,
       deleteConfirmBody,
       deleteConfirmLabel,
@@ -572,7 +569,7 @@ const DialFileManagerModal: FC<Props> = ({
       uploadProgressTitle,
       cancelLabel,
       getUploadProgressText,
-      searchEmptyStateTitle: t(DialFileManagerI18nKeys.SearchEmptyStateTitle),
+      searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       forbiddenSymbolsTooltip: t(
         DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
       ),
@@ -580,6 +577,37 @@ const DialFileManagerModal: FC<Props> = ({
       treeHeaderByTab,
       renameValidationMessages,
       conflictResolutionPopupOptions,
+      shareLabel: t(DialFileManagerI18nKeys.ShareAction),
+      unshareLabel: t(DialFileManagerI18nKeys.UnshareAction),
+      removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
+      getShareModalTitle: (name: string) =>
+        t(DialFileManagerI18nKeys.ShareModalTitle, { name }),
+      shareModalReadPermissionLabel: t(
+        DialFileManagerI18nKeys.ShareModalReadPermission,
+      ),
+      shareModalReadWritePermissionLabel: t(
+        DialFileManagerI18nKeys.ShareModalReadWritePermission,
+      ),
+      shareModalCreateLinkButtonLabel: t(
+        DialFileManagerI18nKeys.ShareModalCreateLinkButton,
+      ),
+      shareModalCopyLinkButtonLabel: t(
+        DialFileManagerI18nKeys.ShareModalCopyLinkButton,
+      ),
+      shareModalLinkCopiedConfirmation: t(
+        DialFileManagerI18nKeys.ShareModalLinkCopiedConfirmation,
+      ),
+      shareModalCancelLabel: cancelLabel,
+      shareErrorMessage: t(DialFileManagerI18nKeys.ShareError),
+      infoLabel: t(DialFileManagerI18nKeys.InfoAction),
+      metadataHeader: t(DialFileManagerI18nKeys.MetadataHeader),
+      metadataNameLabel: t(DialFileManagerI18nKeys.MetadataNameLabel),
+      metadataPathLabel: t(DialFileManagerI18nKeys.MetadataPathLabel),
+      metadataModifiedDateLabel: t(
+        DialFileManagerI18nKeys.MetadataModifiedDateLabel,
+      ),
+      metadataSizeLabel: t(DialFileManagerI18nKeys.MetadataSizeLabel),
+      metadataAuthorLabel: t(DialFileManagerI18nKeys.MetadataAuthorLabel),
     }),
     [
       errorMessage,
@@ -645,6 +673,8 @@ const DialFileManagerModal: FC<Props> = ({
         onTabChange={handleTabChangeWithReset}
         selectedPaths={selectedPaths}
         onSelectedPathsChange={setSelectedPaths}
+        variant={DialFileManagerVariant.Attach}
+        actionProfile={DialFileManagerActionProfile.Attach}
         autoSelectUploadedItems={autoSelectUploadedItems}
         allowedFileTypes={allowedFileTypes}
         maxSelectableFileSize={maxSelectableFileSize}

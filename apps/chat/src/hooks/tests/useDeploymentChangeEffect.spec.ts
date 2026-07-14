@@ -21,6 +21,7 @@ const makeDeploymentsContext = (selectedItemId: string | null) => ({
   schemas: [],
   toolsets: [],
   refetchToolsets: vi.fn(),
+  refetchDeployments: vi.fn(),
 });
 
 describe('useDeploymentChangeEffect', () => {

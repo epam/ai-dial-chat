@@ -1,10 +1,14 @@
 .container {
-  background: var(--cm-code-block-bg, var(--bg-layer-2, #eef1f7));
+  background: var(--cm-code-block-bg, var(--bg-layer-3, #1d2439));
   border-color: var(--cm-code-block-border, var(--stroke-secondary, #d1dbea));
 }
 
+.containerLight {
+  background: var(--cm-code-block-bg, var(--bg-layer-6, #f8fafc));
+}
+
 .header {
-  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #fcfcfc));
+  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #1d2439));
   border-color: var(--cm-code-block-border, var(--stroke-secondary, #d1dbea));
 }
 

@@ -1,6 +1,7 @@
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -24,12 +25,17 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import { ArchiveUploadInterceptor } from './archive-upload.interceptor';
 import { CopyFilesDto, CopyFilesResponseDto } from './dto/copy-files.dto';
 import {
   CreateFolderDto,
   CreateFolderResponseDto,
 } from './dto/create-folder.dto';
 import { DeleteFilesDto, DeleteFilesResponseDto } from './dto/delete-files.dto';
+import {
+  DiscardSharedDto,
+  DiscardSharedResponseDto,
+} from './dto/discard-shared.dto';
 import { DownloadArchiveDto } from './dto/download-archive.dto';
 import { DownloadFileDto } from './dto/download-file.dto';
 import { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
@@ -40,8 +46,18 @@ import {
   ListPublicFilesQueryDto,
   ListSharedFilesQueryDto,
 } from './dto/list-files.dto';
+import { ListSharedByMeQueryDto } from './dto/list-shared-by-me.dto';
 import { MoveFilesDto, MoveFilesResponseDto } from './dto/move-files.dto';
 import { RenameFilesDto, RenameFilesResponseDto } from './dto/rename-files.dto';
+import {
+  RevokeAccessDto,
+  RevokeAccessResponseDto,
+} from './dto/revoke-access.dto';
+import { ShareFilesDto, ShareFilesResponseDto } from './dto/share-files.dto';
+import {
+  UploadArchiveDto,
+  UploadArchiveResponseDto,
+} from './dto/upload-archive.dto';
 import { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { FilesService } from './files.service';
@@ -100,6 +116,65 @@ export class FilesController {
       file,
       at,
       body.uploadMode,
+    );
+  }
+
+  @Post('upload-archive')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @UseInterceptors(ArchiveUploadInterceptor)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'bucket', 'destinationPath'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        bucket: { type: 'string' },
+        destinationPath: { type: 'string' },
+      },
+    },
+  })
+  @ApiOperation({
+    summary:
+      'Upload a ZIP archive and extract its contents to a destination folder',
+  })
+  @ApiResponse({ status: 200, type: UploadArchiveResponseDto })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid request, non-ZIP file, or empty archive',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 413,
+    description: 'Archive exceeds ARCHIVE_UPLOAD_MAX_BYTES',
+  })
+  @ApiResponse({
+    status: 422,
+    description:
+      'Archive exceeds ARCHIVE_UPLOAD_MAX_FILES or ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description:
+      'DIAL Core unreachable, timed out, or ARCHIVE_UPLOAD_TIMEOUT_MS exceeded',
+  })
+  uploadArchive(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() body: UploadArchiveDto,
+    @Req() req: Request,
+  ): Promise<UploadArchiveResponseDto> {
+    if (file == null) {
+      throw new BadRequestException('file is required');
+    }
+    const { at } = req.user as SessionUser;
+    return this.filesService.uploadArchive(
+      body.bucket,
+      body.destinationPath,
+      file,
+      at,
     );
   }
 
@@ -221,6 +296,29 @@ export class FilesController {
       },
       at,
     );
+  }
+
+  @Get('shared-by-me')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'List files and folders shared by the caller with others',
+    operationId: 'listSharedByMe',
+  })
+  @ApiResponse({ status: 200, type: ListFilesResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid query parameters' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async listSharedByMe(
+    @Query() query: ListSharedByMeQueryDto,
+    @Req() req: Request,
+  ): Promise<ListFilesResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.listSharedByMe(query.bucket, at);
   }
 
   @Get('metadata')
@@ -403,6 +501,89 @@ export class FilesController {
   ): Promise<MoveFilesResponseDto> {
     const { at } = req.user as SessionUser;
     return this.filesService.moveFiles(body.items, at);
+  }
+
+  @Post('share')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Create a share invitation link for files and folders',
+  })
+  @ApiBody({ type: ShareFilesDto })
+  @ApiResponse({ status: 200, type: ShareFilesResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description: 'Caller lacks SHARE permission on one or more resources',
+  })
+  @ApiResponse({ status: 404, description: 'A resource does not exist' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async shareFiles(
+    @Body() body: ShareFilesDto,
+    @Req() req: Request,
+  ): Promise<ShareFilesResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.shareFiles(body.items, body.permission, at);
+  }
+
+  @Post('revoke-access')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Revoke all shared access to files and folders' })
+  @ApiBody({ type: RevokeAccessDto })
+  @ApiResponse({ status: 200, type: RevokeAccessResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description: 'Caller does not own one or more resources',
+  })
+  @ApiResponse({ status: 404, description: 'A resource does not exist' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async revokeAccess(
+    @Body() body: RevokeAccessDto,
+    @Req() req: Request,
+  ): Promise<RevokeAccessResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.revokeAccess(body.items, at);
+  }
+
+  @Post('discard-shared')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Discard resources shared with the caller' })
+  @ApiBody({ type: DiscardSharedDto })
+  @ApiResponse({ status: 200, type: DiscardSharedResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description: 'Resource is not shared with the caller',
+  })
+  @ApiResponse({ status: 404, description: 'A resource does not exist' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async discardShared(
+    @Body() body: DiscardSharedDto,
+    @Req() req: Request,
+  ): Promise<DiscardSharedResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.discardShared(body.items, at);
   }
 
   @Get('download')

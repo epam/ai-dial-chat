@@ -97,6 +97,7 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
   mergeClasses: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(' '),
   buildCssVars: () => ({}),
+  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
 vi.mock('@epam/ai-dial-kit', async (importOriginal) => {

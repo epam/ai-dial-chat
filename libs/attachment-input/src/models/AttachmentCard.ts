@@ -26,6 +26,8 @@ export interface AttachmentCardTypography {
 export interface AttachmentCardProps {
   /** The attachment data to display. */
   attachment: DisplayAttachment;
+  /** Current search query — when set, matches in the file name are highlighted. */
+  searchQuery?: string;
   /** Called when the user activates the remove button. */
   onRemove?: (id: string) => void;
   /** Called when the user activates the retry button (error state only). */
@@ -50,6 +52,12 @@ export interface AttachmentCardProps {
   typography?: AttachmentCardTypography;
   /** Tailwind border-radius utility class applied to the card and its inner layers (e.g. `'rounded'`, `'rounded-lg'`). */
   roundedClassName?: string;
+  /**
+   * Shows a small decorative download-icon overlay on hover/focus, on top of
+   * the existing whole-card click-to-download interaction. Opt-in so the
+   * composer (which uses remove/retry actions, not download) is unaffected.
+   */
+  showHoverDownloadIcon?: boolean;
   /** Extra class name(s) merged onto the root element. */
   className?: string;
 }

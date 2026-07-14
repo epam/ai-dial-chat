@@ -12,12 +12,17 @@ import { useCatalogPublishFolders } from '../../../hooks/catalog/useCatalogPubli
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentDetails } from '../../../server-api/deployments';
 import {
   getCatalogPublishHistory,
   publishCatalogEntity,
 } from '../../../server-api/publish.api';
-import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
+import {
+  deleteToolset,
+  loginToolset,
+  logoutToolset,
+} from '../../../server-api/toolsets';
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
 import CatalogView from '../CatalogView';
@@ -55,6 +60,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onToggleFavorite,
     onUseInChat,
     onEdit,
+    onDelete,
     onFetchDetails,
     onLogin,
     onLogout,
@@ -74,6 +80,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
     onEdit?: (item: CatalogItem) => void;
+    onDelete?: (item: CatalogItem) => Promise<void>;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
     onLogin?: (
       item: CatalogItem,
@@ -133,6 +140,22 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             onClick={() => onEdit?.(item)}
           >
             edit {item.id}
+          </button>
+        ))}
+        {(items ?? []).map((item) => (
+          <button
+            key={`delete-${item.id}`}
+            type="button"
+            onClick={async () => {
+              try {
+                await onDelete?.(item);
+              } catch {
+                // Swallowed here the same way the real DeleteButton's
+                // confirmation popup catches a rejected onDelete.
+              }
+            }}
+          >
+            delete {item.id}
           </button>
         ))}
         {(items ?? []).map((item) => (
@@ -218,6 +241,11 @@ vi.mock('../../../server-api/deployments', () => ({
 vi.mock('../../../server-api/toolsets', () => ({
   loginToolset: vi.fn(),
   logoutToolset: vi.fn(),
+  deleteToolset: vi.fn(),
+}));
+
+vi.mock('../../../server-api/applications', () => ({
+  deleteApplication: vi.fn(),
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
@@ -267,6 +295,7 @@ describe('CatalogView', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     vi.mocked(useNotification).mockReturnValue({
       notifications: [],
@@ -530,6 +559,7 @@ describe('CatalogView', () => {
         },
       ],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -558,6 +588,7 @@ describe('CatalogView', () => {
         },
       ],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     vi.mocked(useFavoriteApplications).mockReturnValue({
       favoriteIds: new Set(),
@@ -599,6 +630,7 @@ describe('CatalogView', () => {
         },
       ],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -633,6 +665,7 @@ describe('CatalogView', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -664,6 +697,7 @@ describe('CatalogView', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -692,6 +726,7 @@ describe('CatalogView', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -715,6 +750,7 @@ describe('CatalogView', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'gpt-4o',
@@ -802,6 +838,7 @@ describe('CatalogView', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'my-app',
@@ -860,6 +897,7 @@ describe('CatalogView', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'search-tool',
@@ -933,6 +971,7 @@ describe('CatalogView', () => {
       schemas: [],
       toolsets: [],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('502'));
 
@@ -968,6 +1007,7 @@ describe('CatalogView', () => {
         },
       ],
       refetchToolsets,
+      refetchDeployments: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
 
@@ -1009,6 +1049,7 @@ describe('CatalogView', () => {
         },
       ],
       refetchToolsets,
+      refetchDeployments: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
 
@@ -1049,6 +1090,7 @@ describe('CatalogView', () => {
         },
       ],
       refetchToolsets,
+      refetchDeployments: vi.fn(),
     });
     vi.mocked(logoutToolset).mockResolvedValue({ success: true });
 
@@ -1092,6 +1134,7 @@ describe('CatalogView', () => {
         },
       ],
       refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
     });
     vi.mocked(loginToolset).mockRejectedValue(new Error('network error'));
 
@@ -1105,6 +1148,140 @@ describe('CatalogView', () => {
 
     expect(showNotification).toHaveBeenCalledWith(
       expect.objectContaining({ variant: 'error' }),
+    );
+  });
+
+  it('deletes a toolset, refetches toolsets, and shows a success notification', async () => {
+    const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue({
+      notifications: [],
+      showNotification,
+      dismissNotification: vi.fn(),
+    });
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/b/search__0.0.1',
+          toolset: 'toolsets/b/search__0.0.1',
+          displayName: 'Search',
+          isMy: true,
+        },
+      ],
+      refetchToolsets,
+      refetchDeployments: vi.fn(),
+    });
+    vi.mocked(deleteToolset).mockResolvedValue(undefined);
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'delete toolsets/b/search__0.0.1' }),
+    );
+
+    expect(deleteToolset).toHaveBeenCalledWith('toolsets/b/search__0.0.1');
+    expect(refetchToolsets).toHaveBeenCalledOnce();
+    expect(deleteApplication).not.toHaveBeenCalled();
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'success' }),
+    );
+  });
+
+  it('deletes an application, refetches deployments, and shows a success notification', async () => {
+    const refetchDeployments = vi.fn().mockResolvedValue(undefined);
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue({
+      notifications: [],
+      showNotification,
+      dismissNotification: vi.fn(),
+    });
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [
+        {
+          id: 'applications/b/My App__1.0',
+          displayName: 'My App',
+          type: 'application',
+          isMy: true,
+        },
+      ],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments,
+    });
+    vi.mocked(deleteApplication).mockResolvedValue(undefined);
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'delete applications/b/My App__1.0',
+      }),
+    );
+
+    expect(deleteApplication).toHaveBeenCalledWith(
+      'applications/b/My App__1.0',
+    );
+    expect(refetchDeployments).toHaveBeenCalledOnce();
+    expect(deleteToolset).not.toHaveBeenCalled();
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'success' }),
+    );
+  });
+
+  it('shows an error notification when deleteToolset rejects', async () => {
+    const showNotification = vi.fn();
+    vi.mocked(useNotification).mockReturnValue({
+      notifications: [],
+      showNotification,
+      dismissNotification: vi.fn(),
+    });
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/b/search__0.0.1',
+          toolset: 'toolsets/b/search__0.0.1',
+          displayName: 'Search',
+          isMy: true,
+        },
+      ],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+    });
+    vi.mocked(deleteToolset).mockRejectedValue(new Error('network error'));
+
+    render(<CatalogView />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'delete toolsets/b/search__0.0.1',
+      }),
+    );
+
+    expect(showNotification).not.toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'success' }),
     );
   });
 });
