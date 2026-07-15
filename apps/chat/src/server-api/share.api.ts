@@ -1,6 +1,7 @@
 import type {
   AcceptInvitationResponseDto,
   CreateShareLinkDto,
+  DiscardSharedCatalogItemResponseDto,
   ShareLinkResponseDto,
 } from '@epam/chat-api-client';
 import { shareApi } from './api-client';
@@ -14,3 +15,10 @@ export const acceptInvitation = (
   invitationId: string,
 ): Promise<AcceptInvitationResponseDto> =>
   shareApi.acceptInvitation({ invitationId });
+
+export const discardSharedCatalogItem = (
+  itemId: string,
+): Promise<DiscardSharedCatalogItemResponseDto> =>
+  shareApi.discardSharedCatalogItem({
+    discardSharedCatalogItemDto: { itemId },
+  });

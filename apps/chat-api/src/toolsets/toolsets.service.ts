@@ -213,6 +213,7 @@ export class ToolsetsService {
     installedIdSet: Set<string>,
     bucket: string,
     writableUrls: Set<string>,
+    sharedUrls: Set<string>,
   ): DialToolsetDto {
     const isMy = isMyToolset(toolset, bucket);
     return {
@@ -220,40 +221,59 @@ export class ToolsetsService {
       is_installed: installedIdSet.has(toolset.id),
       is_my: isMy,
       can_edit: isMy || writableUrls.has(toolset.id),
+      shared_with_me: !isMy && sharedUrls.has(toolset.id),
     };
   }
 
   /**
-   * Resolves which toolset URLs the current user was granted WRITE access to
-   * via a share invitation, so shared-with-me toolsets become editable
-   * alongside ones the user owns. Best-effort: a DIAL Core error here
-   * degrades to "no shared write access" rather than failing the whole
-   * toolsets list.
+   * Resolves every toolset resource shared with the current user (READ or
+   * WRITE), in a single upstream call reused to derive both the WRITE-only
+   * "can edit" set and the unfiltered "shared with me" set — avoids issuing
+   * `getSharedResources` twice per list/get request. Best-effort: a DIAL
+   * Core error here degrades to "no shared toolsets" rather than failing the
+   * whole request.
    */
-  private async getWritableToolsetUrls(
+  private async getSharedToolsetResources(
     accessToken: string,
-  ): Promise<Set<string>> {
+  ): Promise<{ url?: string; permissions?: string[] }[]> {
     try {
-      const { data, error } = await this.dialClient.client.getSharedResources({
-        headers: getBearerAuthHeaders(accessToken),
-        body: { resourceTypes: ['TOOL_SET'], with: 'me' },
-      });
-      if (error) return new Set();
+      const { data, error, response } =
+        await this.dialClient.client.getSharedResources({
+          headers: getBearerAuthHeaders(accessToken),
+          body: { resourceTypes: ['TOOL_SET'], with: 'me' },
+        });
+      if (error) {
+        this.logger.warn(
+          `Failed to resolve shared toolset resources: status=${response.status}`,
+        );
+        return [];
+      }
 
-      const resources = (data?.resources ?? []) as {
+      return (data?.resources ?? []) as {
         url?: string;
         permissions?: string[];
       }[];
-      return new Set(
-        resources
-          .filter((resource) => resource.permissions?.includes('WRITE'))
-          .map((resource) => resource.url)
-          .filter((url): url is string => url != null),
-      );
     } catch (err) {
-      this.logger.warn('Failed to resolve shared toolset write access', err);
-      return new Set();
+      this.logger.warn('Failed to resolve shared toolset resources', err);
+      return [];
     }
+  }
+
+  private toWritableAndSharedUrls(
+    resources: { url?: string; permissions?: string[] }[],
+  ): { writableUrls: Set<string>; sharedUrls: Set<string> } {
+    const writableUrls = new Set(
+      resources
+        .filter((resource) => resource.permissions?.includes('WRITE'))
+        .map((resource) => resource.url)
+        .filter((url): url is string => url != null),
+    );
+    const sharedUrls = new Set(
+      resources
+        .map((resource) => resource.url)
+        .filter((url): url is string => url != null),
+    );
+    return { writableUrls, sharedUrls };
   }
 
   private async enrichToolsetsOwnership(
@@ -261,17 +281,20 @@ export class ToolsetsService {
     accessToken: string,
     bucket: string,
   ): Promise<DialToolsetDto[]> {
-    const [{ toolsets: installedIds }, writableUrls] = await Promise.all([
+    const [{ toolsets: installedIds }, sharedResources] = await Promise.all([
       this.userConfigService.getInstalledIds(accessToken, bucket),
-      this.getWritableToolsetUrls(accessToken),
+      this.getSharedToolsetResources(accessToken),
     ]);
     const installedSet = new Set(installedIds);
+    const { writableUrls, sharedUrls } =
+      this.toWritableAndSharedUrls(sharedResources);
     return toolsets.map((toolset) =>
       this.enrichToolsetWithOwnership(
         toolset,
         installedSet,
         bucket,
         writableUrls,
+        sharedUrls,
       ),
     );
   }
@@ -335,15 +358,18 @@ export class ToolsetsService {
     const cacheKey = `toolsets:single:${userSub}:${toolsetName}`;
 
     const enrich = async (toolset: DialToolsetDto): Promise<DialToolsetDto> => {
-      const [{ toolsets: installedIds }, writableUrls] = await Promise.all([
+      const [{ toolsets: installedIds }, sharedResources] = await Promise.all([
         this.userConfigService.getInstalledIds(accessToken, bucket),
-        this.getWritableToolsetUrls(accessToken),
+        this.getSharedToolsetResources(accessToken),
       ]);
+      const { writableUrls, sharedUrls } =
+        this.toWritableAndSharedUrls(sharedResources);
       return this.enrichToolsetWithOwnership(
         toolset,
         new Set(installedIds),
         bucket,
         writableUrls,
+        sharedUrls,
       );
     };
 

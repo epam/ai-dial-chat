@@ -1733,6 +1733,12 @@ export interface DeploymentItemDto {
    */
   canEdit?: boolean;
   /**
+   * True when this deployment is shared with the current user (READ or WRITE) and not owned by them
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  sharedWithMe?: boolean;
+  /**
    * Parent folder path for application-type deployments (absent for root-level or non-application items)
    * @type {string}
    * @memberof DeploymentItemDto
@@ -2507,6 +2513,12 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   canEdit?: boolean;
+  /**
+   * True when this toolset is shared with the current user (READ or WRITE) and not owned by them
+   * @type {boolean}
+   * @memberof DialToolsetDto
+   */
+  sharedWithMe?: boolean;
 }
 /**
  *
@@ -2520,6 +2532,32 @@ export interface DialToolsetListResponseDto {
    * @memberof DialToolsetListResponseDto
    */
   data: Array<DialToolsetDto>;
+}
+/**
+ *
+ * @export
+ * @interface DiscardSharedCatalogItemDto
+ */
+export interface DiscardSharedCatalogItemDto {
+  /**
+   * Identifier (DIAL Core resource path) of the catalog item to discard access to.
+   * @type {string}
+   * @memberof DiscardSharedCatalogItemDto
+   */
+  itemId: string;
+}
+/**
+ *
+ * @export
+ * @interface DiscardSharedCatalogItemResponseDto
+ */
+export interface DiscardSharedCatalogItemResponseDto {
+  /**
+   * true when the discard call succeeded
+   * @type {boolean}
+   * @memberof DiscardSharedCatalogItemResponseDto
+   */
+  success: boolean;
 }
 /**
  *

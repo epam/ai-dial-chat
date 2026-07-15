@@ -370,6 +370,12 @@ export class DialToolsetDto {
       'True when the current user may edit this toolset — owns it, or was granted WRITE access via a share invitation',
   })
   can_edit?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'True when this toolset is shared with the current user (READ or WRITE) and not owned by them',
+  })
+  shared_with_me?: boolean;
 }
 
 export class DialToolsetListResponseDto {

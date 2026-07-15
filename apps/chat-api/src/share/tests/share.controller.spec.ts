@@ -1,5 +1,7 @@
 import {
   BadGatewayException,
+  ForbiddenException,
+  HttpException,
   INestApplication,
   NotFoundException,
   ServiceUnavailableException,
@@ -12,6 +14,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AcceptInvitationResponseDto } from '../dto/accept-invitation-response.dto';
 import { ShareAccess } from '../dto/create-share-link.dto';
+import type { DiscardSharedCatalogItemResponseDto } from '../dto/discard-shared-catalog-item.dto';
 import { ShareLinkResponseDto } from '../dto/share-link-response.dto';
 import { ShareController } from '../share.controller';
 import { ShareService } from '../share.service';
@@ -60,18 +63,23 @@ async function buildApp(
 }
 
 const acceptedInvitation: AcceptInvitationResponseDto = { itemId: 'gpt-4o' };
+const discardedSuccess: DiscardSharedCatalogItemResponseDto = {
+  success: true,
+};
 
 describe('ShareController (integration)', () => {
   let app: INestApplication;
   let service: {
     createShareLink: ReturnType<typeof vi.fn>;
     acceptInvitation: ReturnType<typeof vi.fn>;
+    discardShared: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     service = {
       createShareLink: vi.fn().mockResolvedValue(createdLink),
       acceptInvitation: vi.fn().mockResolvedValue(acceptedInvitation),
+      discardShared: vi.fn().mockResolvedValue(discardedSuccess),
     };
     app = await buildApp(service);
   });
@@ -209,6 +217,126 @@ describe('ShareController (integration)', () => {
       );
       await request(app.getHttpServer())
         .get('/api/v1/share/invitations/abc123')
+        .expect(503);
+    });
+  });
+
+  describe('POST /api/v1/share/discard', () => {
+    const validBody = { itemId: 'applications/owner-bucket/my-app' };
+
+    it('delegates to the service and returns 200 on success', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send(validBody)
+        .expect(200);
+
+      expect(res.body).toEqual(discardedSuccess);
+      expect(service.discardShared).toHaveBeenCalledWith(
+        validBody.itemId,
+        TEST_USER.at,
+        TEST_USER.sub,
+      );
+    });
+
+    it('returns 400 when itemId is missing', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send({})
+        .expect(400);
+
+      expect(service.discardShared).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      'conversations/owner-bucket/my-chat',
+      'files/owner-bucket/report.pdf',
+      'gpt-4o',
+      'applications/owner-bucket',
+    ])(
+      'returns 400 when itemId is not a catalog resource: %s',
+      async (itemId) => {
+        await request(app.getHttpServer())
+          .post('/api/v1/share/discard')
+          .send({ itemId })
+          .expect(400);
+
+        expect(service.discardShared).not.toHaveBeenCalled();
+      },
+    );
+
+    it('accepts a nested toolset resource path', async () => {
+      const itemId = 'toolsets/owner-bucket/folder/my-toolset';
+
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send({ itemId })
+        .expect(200);
+
+      expect(service.discardShared).toHaveBeenCalledWith(
+        itemId,
+        TEST_USER.at,
+        TEST_USER.sub,
+      );
+    });
+
+    it('returns 400 when itemId contains a path traversal attempt', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send({ itemId: '../etc/passwd' })
+        .expect(400);
+
+      expect(service.discardShared).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when the service throws UnauthorizedException', async () => {
+      service.discardShared.mockRejectedValue(new UnauthorizedException());
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send(validBody)
+        .expect(401);
+    });
+
+    it('returns 403 when the service throws ForbiddenException', async () => {
+      service.discardShared.mockRejectedValue(new ForbiddenException());
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send(validBody)
+        .expect(403);
+    });
+
+    it('returns 404 when the service throws NotFoundException', async () => {
+      service.discardShared.mockRejectedValue(new NotFoundException());
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send(validBody)
+        .expect(404);
+    });
+
+    it('returns 429 when the service throws a 429 HttpException', async () => {
+      service.discardShared.mockRejectedValue(
+        new HttpException('Too Many Requests', 429),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send(validBody)
+        .expect(429);
+    });
+
+    it('returns 502 when the service throws BadGatewayException', async () => {
+      service.discardShared.mockRejectedValue(new BadGatewayException());
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send(validBody)
+        .expect(502);
+    });
+
+    it('returns 503 when the service throws ServiceUnavailableException', async () => {
+      service.discardShared.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send(validBody)
         .expect(503);
     });
   });
