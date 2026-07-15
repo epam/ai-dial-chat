@@ -22,7 +22,9 @@ FROM deps AS builder
 COPY . .
 
 # Build the React SPA → apps/chat/dist/
-RUN npm exec nx build chat
+# Keep Docker builds deterministic: parallel Nx build/typecheck tasks can race
+# while reading and regenerating declaration outputs in a clean image layer.
+RUN npm exec -- nx run-many --target=build --projects=@epam/chat --parallel=1
 
 # Build NestJS, generate a pruned package.json/lockfile, and copy
 # workspace packages → apps/chat-api/dist/{main.js,package.json,...,workspace_modules/}
