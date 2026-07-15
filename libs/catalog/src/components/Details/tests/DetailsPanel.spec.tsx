@@ -47,8 +47,35 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   }) => <button onClick={onClose}>{ariaLabel}</button>,
   DialSkeleton: () => <div>skeleton</div>,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialConfirmationPopup: ({ open }: { open: boolean }) =>
-    open ? <div role="dialog" /> : null,
+  DialConfirmationPopup: ({
+    open,
+    header,
+    description,
+    confirmLabel,
+    cancelLabel,
+    isLoading,
+    onConfirm,
+    onCancel,
+  }: {
+    open: boolean;
+    header?: string;
+    description?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    isLoading?: boolean;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  }) =>
+    open ? (
+      <div role="dialog">
+        <span>{header}</span>
+        <span>{description}</span>
+        <button disabled={isLoading} onClick={onConfirm}>
+          {confirmLabel}
+        </button>
+        <button onClick={onCancel}>{cancelLabel}</button>
+      </div>
+    ) : null,
   DialAccordion: ({
     title,
     children,
@@ -82,8 +109,17 @@ vi.mock('../../StarToggleButton/StarToggleButton', () => ({
   StarToggleButton: () => <div>Star</div>,
 }));
 vi.mock('../Header/Header', () => ({
-  Header: ({ onOpenPublish }: { onOpenPublish?: () => void }) => (
-    <button onClick={onOpenPublish}>Publish</button>
+  Header: ({
+    onOpenPublish,
+    onUnshare,
+  }: {
+    onOpenPublish?: () => void;
+    onUnshare?: () => void;
+  }) => (
+    <>
+      <button onClick={onOpenPublish}>Publish</button>
+      {onUnshare && <button onClick={onUnshare}>Delete</button>}
+    </>
   ),
 }));
 vi.mock('../Summary/Summary', () => ({ Summary: () => <div>Summary</div> }));
@@ -357,5 +393,98 @@ describe('DetailsPanel', () => {
 
     const tablist = screen.getByRole('tablist');
     expect(tablist.textContent).toBe('About');
+  });
+
+  describe('Unshare confirmation', () => {
+    it('opens the confirmation popup without calling onUnshare when Delete is clicked', async () => {
+      const onUnshare = vi.fn();
+      renderPanel({ onUnshare });
+      await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      expect(screen.getByText('Delete item?')).toBeTruthy();
+      expect(onUnshare).not.toHaveBeenCalled();
+    });
+
+    it('calls onUnshare exactly once when confirmed', async () => {
+      const onUnshare = vi.fn().mockResolvedValue(undefined);
+      renderPanel({ onUnshare });
+      await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      await userEvent.click(
+        screen.getAllByRole('button', { name: 'Delete' })[1],
+      );
+      expect(onUnshare).toHaveBeenCalledOnce();
+      expect(onUnshare).toHaveBeenCalledWith(item);
+    });
+
+    it('closes the whole details panel after a successful unshare', async () => {
+      const onUnshare = vi.fn().mockResolvedValue(undefined);
+      const onClose = vi.fn();
+      renderPanel({ onUnshare, onClose });
+      await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      await userEvent.click(
+        screen.getAllByRole('button', { name: 'Delete' })[1],
+      );
+      expect(onClose).toHaveBeenCalledOnce();
+    });
+
+    it('keeps the details panel open when unshare fails', async () => {
+      const onUnshare = vi.fn().mockRejectedValue(new Error('network error'));
+      const onClose = vi.fn();
+      renderPanel({ onUnshare, onClose });
+      await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      await userEvent.click(
+        screen.getAllByRole('button', { name: 'Delete' })[1],
+      );
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.queryByText('Delete item?')).toBeNull();
+    });
+
+    it('prevents a second confirm call while the first is still pending', async () => {
+      let resolveUnshare: () => void = () => undefined;
+      const onUnshare = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveUnshare = resolve;
+          }),
+      );
+      renderPanel({ onUnshare });
+      await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      const confirmButton = screen.getAllByRole('button', {
+        name: 'Delete',
+      })[1];
+      await userEvent.click(confirmButton);
+      expect(confirmButton.hasAttribute('disabled')).toBe(true);
+
+      await act(async () => {
+        resolveUnshare();
+        await Promise.resolve();
+      });
+      expect(onUnshare).toHaveBeenCalledOnce();
+    });
+
+    it('closes the popup without calling onUnshare when Cancel is clicked', async () => {
+      const onUnshare = vi.fn();
+      renderPanel({ onUnshare });
+      await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.queryByText('Delete item?')).toBeNull();
+      expect(onUnshare).not.toHaveBeenCalled();
+    });
+
+    it('closes the popup when the item changes', async () => {
+      const onUnshare = vi.fn();
+      const { rerender } = renderPanel({ onUnshare });
+      await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      expect(screen.getByText('Delete item?')).toBeTruthy();
+
+      rerender(
+        <DetailsPanel
+          item={{ ...item, id: '2' }}
+          isOpen
+          onClose={vi.fn()}
+          onUnshare={onUnshare}
+        />,
+      );
+      expect(screen.queryByText('Delete item?')).toBeNull();
+    });
   });
 });

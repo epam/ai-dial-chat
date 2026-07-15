@@ -41,6 +41,7 @@ import {
   getCatalogPublishHistory,
   publishCatalogEntity,
 } from '../../server-api/publish.api';
+import { discardSharedCatalogItem } from '../../server-api/share.api';
 import {
   deleteToolset,
   loginToolset,
@@ -530,6 +531,55 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [refetchToolsets, refetchDeployments, showNotification, t],
   );
 
+  const handleUnshare = useCallback(
+    async (item: CatalogItem) => {
+      try {
+        await discardSharedCatalogItem(item.id);
+      } catch (err) {
+        showNotification({
+          variant: NotificationVariant.Error,
+          title: t(CatalogI18nKeys.DetailsUnshareErrorTitle),
+          message: t(CatalogI18nKeys.DetailsUnshareError, { name: item.name }),
+        });
+        throw err;
+      }
+
+      try {
+        if (item.type === CatalogEntityType.Toolset) {
+          await refetchToolsets();
+        } else {
+          await refetchDeployments();
+        }
+      } catch {
+        /*
+         * The discard mutation has already succeeded. A refresh failure must
+         * not turn that irreversible success into an actionable retry error;
+         * the deployments context retains its own fetch error state.
+         */
+      }
+
+      if (item.id === selectedItemId) {
+        setSelectedItemId(null);
+      }
+
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.DetailsUnshareSuccessTitle),
+        message: t(CatalogI18nKeys.DetailsUnshareSuccess, {
+          name: item.name,
+        }),
+      });
+    },
+    [
+      refetchToolsets,
+      refetchDeployments,
+      selectedItemId,
+      setSelectedItemId,
+      showNotification,
+      t,
+    ],
+  );
+
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
 
@@ -580,6 +630,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onLogout={handleLogout}
       onEdit={handleEdit}
       onDelete={handleDelete}
+      onUnshare={handleUnshare}
       isPrimaryActionVisible={isPrimaryActionVisible}
       isPublishVisible={isPublishVisible}
       getPublishHistory={getPublishHistory}
@@ -663,6 +714,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         credentialsBadgeLoggedOutLabel: t(
           CatalogI18nKeys.CredentialsBadgeLoggedOut,
         ),
+        unshareLabel: t(CatalogI18nKeys.DetailsUnshareLabel),
+        unshareConfirmTitle: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
+        unshareConfirmMessage: (name) =>
+          t(CatalogI18nKeys.DetailsUnshareConfirmMessage, { name }),
+        cancelLabel: t(ButtonsI18nKeys.Cancel),
       }}
     />
   );

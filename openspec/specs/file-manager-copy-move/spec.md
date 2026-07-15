@@ -307,7 +307,7 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 
 **Cache invalidation**: on completion (success or partial failure), the hook SHALL invalidate its per-folder listing cache entries for both the source and destination parent folders of every copied item, and increment `retryCounter` to force a re-fetch of the currently visible folder — identical invalidation shape to `onDeleteFiles`/`onMoveToFiles`.
 
-**Notifications**: full failure and partial failure surface via `onNotification` (`NotificationVariant.Error`), matching the `RenameError`/`RenamePartialError` pattern; full success shows no toast (matches `onMoveToFiles`'s current silent-success behavior for rename, not `onDeleteFiles`'s success toast — copy is a background-ish action the user directly observes via the pasted item appearing).
+**Notifications**: full failure and partial failure surface via `onNotification` (`NotificationVariant.Error`), matching the `RenameError`/`RenamePartialError` pattern. Any successful copied items surface a success notification via `onNotification` (`NotificationVariant.Success`) using the same title/message shape as delete: single item reports the copied destination name and destination folder; multiple items report the successful item count and destination folder.
 
 **Memoisation**: `onCopyFiles` SHALL be a `useCallback` with dependencies `[bucket, rootLabel, onNotification, t]`, matching `onMoveToFiles`'s dependency shape.
 
@@ -315,10 +315,20 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 
 **Overwrite propagation**: when ui-kit's conflict resolver sets `DialCopiedItem.overwrite === true`, `onCopyFiles` SHALL pass `overwrite: true` on the corresponding `CopyItemDto`; otherwise it SHALL pass `overwrite: false`.
 
-#### Scenario: Copy succeeds and cache is invalidated
+#### Scenario: Copy succeeds, cache is invalidated, and success toast is shown
 
 - **WHEN** `onCopyFiles` is called with items that all succeed
-- **THEN** the source and destination folder cache entries are cleared and `retryCounter` increments, with no error toast
+- **THEN** the source and destination folder cache entries are cleared, `retryCounter` increments, and `onNotification` is called with `NotificationVariant.Success`
+
+#### Scenario: Single copy success toast names the copied destination
+
+- **WHEN** `onCopyFiles` is called with one item and `copyFiles` returns one successful result
+- **THEN** the success notification title is `dialFileManager.itemCopiedSuccessfully`, and the message is produced from `dialFileManager.itemCopiedToFolder` with the destination item name and destination folder
+
+#### Scenario: Multiple copy success toast reports count
+
+- **WHEN** `onCopyFiles` is called with multiple items and more than one item succeeds
+- **THEN** the success notification title is `dialFileManager.itemsCopiedSuccessfully`, and the message is produced from `dialFileManager.itemsCopiedToFolder` with the successful item count and destination folder
 
 #### Scenario: Partial copy failure shows toast
 
@@ -346,6 +356,8 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 
 Both groups run when both are non-empty; a single call to `onMoveToFiles` MAY produce both a `renameFiles` and a `moveFiles` request. Failure notifications from both groups SHALL be merged into a single toast reporting the total failed count across both operations, mirroring the existing partial-failure toast copy.
 
+Successful cross-folder moves SHALL surface a success notification via `onNotification` (`NotificationVariant.Success`). Single-item success reports the moved destination name and destination folder; multi-item success reports the successful moved item count and destination folder. Same-folder rename remains silent on success and keeps the existing rename behavior.
+
 **State ownership**: `useDialFileManager` owns a new `isMoving` state distinct from the existing `isRenaming`; the modal/shell shows the copy/move operation loader (see below) whenever `isCopying || isMoving` is true, and continues to show the existing inline-rename spinner overlay whenever `isRenaming` is true and `isMoving` is false (same-folder rename does not open the new operation-loader modal — it keeps today's lightweight overlay).
 
 **Cache invalidation**: for the cross-folder-move group, invalidate cache entries for both source and destination parent folders of every moved item (same shape as `onDeleteFiles`). For the rename group, invalidation is unchanged from current behavior.
@@ -365,6 +377,16 @@ Both groups run when both are non-empty; a single call to `onMoveToFiles` MAY pr
 
 - **WHEN** `onMoveToFiles` is called with items whose source and destination parent folders differ
 - **THEN** `moveFiles` is called and `renameFiles` is not called for those items
+
+#### Scenario: Single cross-folder move success toast names the moved destination
+
+- **WHEN** `onMoveToFiles` is called with one cross-folder item and `moveFiles` returns one successful result
+- **THEN** the success notification title is `dialFileManager.itemMovedSuccessfully`, and the message is produced from `dialFileManager.itemMovedToFolder` with the destination item name and destination folder
+
+#### Scenario: Multiple cross-folder move success toast reports count
+
+- **WHEN** `onMoveToFiles` is called with multiple cross-folder items and more than one move succeeds
+- **THEN** the success notification title is `dialFileManager.itemsMovedSuccessfully`, and the message is produced from `dialFileManager.itemsMovedToFolder` with the successful moved item count and destination folder
 
 #### Scenario: Mixed batch calls both endpoints
 
@@ -420,6 +442,14 @@ The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with m
 | `dialFileManager.moveAction` | `Move` |
 | `dialFileManager.copyingLabel` | `Copying...` |
 | `dialFileManager.movingLabel` | `Moving...` |
+| `dialFileManager.itemCopiedSuccessfully` | `Item copied successfully` |
+| `dialFileManager.itemsCopiedSuccessfully` | `Items copied successfully` |
+| `dialFileManager.itemMovedSuccessfully` | `Item moved successfully` |
+| `dialFileManager.itemsMovedSuccessfully` | `Items moved successfully` |
+| `dialFileManager.itemCopiedToFolder` | `“{{fileName}}” copied to {{folder}}` |
+| `dialFileManager.itemsCopiedToFolder` | `{{count}} items copied to {{folder}}` |
+| `dialFileManager.itemMovedToFolder` | `“{{fileName}}” moved to {{folder}}` |
+| `dialFileManager.itemsMovedToFolder` | `{{count}} items moved to {{folder}}` |
 | `dialFileManager.copyError` | `Failed to copy the selected items` |
 | `dialFileManager.copyPartialError` | `{{count}} item(s) could not be copied` |
 | `dialFileManager.moveError` | `Failed to move the selected items` |

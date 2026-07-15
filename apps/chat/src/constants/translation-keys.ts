@@ -176,6 +176,13 @@ export enum CatalogI18nKeys {
   DetailsDeleteError = 'catalog.details.delete.error',
   DetailsDeleteSuccessTitle = 'catalog.details.delete.successTitle',
   DetailsDeleteSuccess = 'catalog.details.delete.success',
+  DetailsUnshareLabel = 'catalog.details.unshare.label',
+  DetailsUnshareConfirmTitle = 'catalog.details.unshare.confirmTitle',
+  DetailsUnshareConfirmMessage = 'catalog.details.unshare.confirmMessage',
+  DetailsUnshareErrorTitle = 'catalog.details.unshare.errorTitle',
+  DetailsUnshareError = 'catalog.details.unshare.error',
+  DetailsUnshareSuccessTitle = 'catalog.details.unshare.successTitle',
+  DetailsUnshareSuccess = 'catalog.details.unshare.success',
 }
 
 export enum DeploymentSelectorI18nKeys {
@@ -272,6 +279,14 @@ export enum DialFileManagerI18nKeys {
   MoveAction = 'dialFileManager.moveAction',
   CopyingLabel = 'dialFileManager.copyingLabel',
   MovingLabel = 'dialFileManager.movingLabel',
+  ItemCopiedSuccessfully = 'dialFileManager.itemCopiedSuccessfully',
+  ItemsCopiedSuccessfully = 'dialFileManager.itemsCopiedSuccessfully',
+  ItemMovedSuccessfully = 'dialFileManager.itemMovedSuccessfully',
+  ItemsMovedSuccessfully = 'dialFileManager.itemsMovedSuccessfully',
+  ItemCopiedToFolder = 'dialFileManager.itemCopiedToFolder',
+  ItemsCopiedToFolder = 'dialFileManager.itemsCopiedToFolder',
+  ItemMovedToFolder = 'dialFileManager.itemMovedToFolder',
+  ItemsMovedToFolder = 'dialFileManager.itemsMovedToFolder',
   CopyError = 'dialFileManager.copyError',
   CopyPartialError = 'dialFileManager.copyPartialError',
   MoveError = 'dialFileManager.moveError',
@@ -371,6 +386,31 @@ export enum ConversationPanelI18nKeys {
   DeleteAllPartialError = 'conversationPanel.deleteAll.deleteAllPartialError',
   DeleteAllSuccessTitle = 'conversationPanel.deleteAll.deleteAllSuccessTitle',
   DeleteAllSuccess = 'conversationPanel.deleteAll.deleteAllSuccess',
+}
+
+export enum ConversationExportI18nKeys {
+  ExportLabel = 'conversationExport.exportLabel',
+  ExportAllLabel = 'conversationExport.exportAllLabel',
+  WithAttachmentsOption = 'conversationExport.withAttachmentsOption',
+  WithoutAttachmentsOption = 'conversationExport.withoutAttachmentsOption',
+  QueueTitle = 'conversationExport.queueTitle',
+  AllConversationsJobLabel = 'conversationExport.allConversationsJobLabel',
+  SuccessTitle = 'conversationExport.successTitle',
+  SuccessSingle = 'conversationExport.successSingle',
+  SuccessAll = 'conversationExport.successAll',
+  FailedTitle = 'conversationExport.failedTitle',
+  FailedSingle = 'conversationExport.failedSingle',
+  FailedAll = 'conversationExport.failedAll',
+  WarningAttachmentSkipped = 'conversationExport.warningAttachmentSkipped',
+  CloseJobAriaLabel = 'conversationExport.closeJobAriaLabel',
+  RetryJobAriaLabel = 'conversationExport.retryJobAriaLabel',
+  CollapseQueueAriaLabel = 'conversationExport.collapseQueueAriaLabel',
+  ExpandQueueAriaLabel = 'conversationExport.expandQueueAriaLabel',
+  CloseQueueAriaLabel = 'conversationExport.closeQueueAriaLabel',
+  CloseQueueConfirmHeader = 'conversationExport.closeQueueConfirmHeader',
+  CloseQueueConfirmDescriptionInProgress = 'conversationExport.closeQueueConfirmDescriptionInProgress',
+  CloseQueueConfirmDescriptionFailed = 'conversationExport.closeQueueConfirmDescriptionFailed',
+  CloseQueueConfirmDescriptionMixed = 'conversationExport.closeQueueConfirmDescriptionMixed',
 }
 
 export enum SidebarI18nKeys {

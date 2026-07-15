@@ -35,6 +35,7 @@ const mockEnrichedToolset: DialToolsetDto = {
   is_installed: false,
   is_my: false,
   can_edit: false,
+  shared_with_me: false,
 };
 const mockEnrichedList: DialToolsetListResponseDto = {
   data: [mockEnrichedToolset],
@@ -227,6 +228,149 @@ describe('ToolsetsService', () => {
         is_my: false,
         can_edit: false,
       });
+    });
+
+    it('sets shared_with_me=false for an owned toolset, even if a share grant is also returned', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse({
+          data: [
+            {
+              ...mockToolset,
+              id: 'toolsets/bucket/my-toolset',
+              toolset: 'toolsets/bucket/my-toolset',
+            },
+          ],
+        }),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(
+        okResponse({
+          resources: [
+            {
+              url: 'toolsets/bucket/my-toolset',
+              permissions: ['READ', 'WRITE'],
+            },
+          ],
+        }),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data[0]).toMatchObject({
+        is_my: true,
+        shared_with_me: false,
+      });
+    });
+
+    it('sets shared_with_me=true for a READ-only shared toolset', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse(mockList),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(
+        okResponse({
+          resources: [{ url: 'my-toolset', permissions: ['READ'] }],
+        }),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data[0]).toMatchObject({
+        is_my: false,
+        shared_with_me: true,
+      });
+    });
+
+    it('sets shared_with_me=true for a WRITE-shared toolset', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse(mockList),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(
+        okResponse({
+          resources: [{ url: 'my-toolset', permissions: ['WRITE'] }],
+        }),
+      );
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data[0]).toMatchObject({
+        shared_with_me: true,
+        can_edit: true,
+      });
+    });
+
+    it('sets shared_with_me=false for a public/organization toolset not returned by getSharedResources', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse(mockList),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(okResponse({ resources: [] }));
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data[0].shared_with_me).toBe(false);
+    });
+
+    it('degrades shared_with_me to false when getSharedResources fails', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse(mockList),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockRejectedValue(new Error('boom'));
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(result.data[0].shared_with_me).toBe(false);
+    });
+
+    it('logs and degrades to false when getSharedResources returns an error response', async () => {
+      const { service } = makeService();
+      const warnSpy = vi.spyOn(service['logger'], 'warn');
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse(mockList),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue({
+        error: {},
+        response: { status: 503 },
+      } as never);
+
+      const result = await service.listToolsets('user1', 'token-abc', 'bucket');
+
+      expect(result.data[0].shared_with_me).toBe(false);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Failed to resolve shared toolset resources: status=503',
+      );
+    });
+
+    it('resolves can_edit and shared_with_me from exactly one getSharedResources call', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
+        okResponse(mockList),
+      );
+      const sharedResourcesSpy = vi
+        .spyOn(service['dialClient'].client, 'getSharedResources')
+        .mockResolvedValue(
+          okResponse({
+            resources: [{ url: 'my-toolset', permissions: ['WRITE'] }],
+          }),
+        );
+
+      await service.listToolsets('user1', 'token-abc', 'bucket');
+      expect(sharedResourcesSpy).toHaveBeenCalledOnce();
     });
 
     it('uses per-user cache keys — different users get different cache entries', async () => {
@@ -424,6 +568,29 @@ describe('ToolsetsService', () => {
         is_installed: true,
         is_my: true,
       });
+    });
+
+    it('sets shared_with_me=true for a single READ-only shared toolset', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        okResponse(mockToolset),
+      );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(
+        okResponse({
+          resources: [{ url: 'my-toolset', permissions: ['READ'] }],
+        }),
+      );
+
+      const result = await service.getToolset(
+        'user1',
+        'token-abc',
+        'bucket',
+        'my-toolset',
+      );
+      expect(result).toMatchObject({ is_my: false, shared_with_me: true });
     });
 
     it('loads a prefixed toolset from the custom resource so saved endpoint is returned', async () => {
