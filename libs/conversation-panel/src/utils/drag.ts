@@ -1,30 +1,27 @@
 import type { DragEvent } from 'react';
-import type { ConversationHistoryItem } from '../models/panel-props';
+import type { ConversationItem } from '../models/panel-props';
 import type { VirtualRow } from '../models/virtual-row';
-import { ConversationGroupKey } from '../types/conversation-group-key';
-import { ConversationSource } from '../types/conversation-source';
+import { FilterTab } from '../types/conversation-classification';
 import { VirtualRowKind } from '../types/virtual-row';
 
-/** Maps a `ConversationSource` to its corresponding `ConversationGroupKey`. */
-export const sourceToGroupKey = (
-  source?: ConversationSource,
-): ConversationGroupKey => {
+/** Resolves a conversation's `source` to its group, defaulting to `MyChats` when unset. */
+export const sourceToGroupKey = (source?: FilterTab): FilterTab => {
   switch (source) {
-    case ConversationSource.Shared:
-      return ConversationGroupKey.Shared;
-    case ConversationSource.Organization:
-      return ConversationGroupKey.Organization;
+    case FilterTab.Shared:
+      return FilterTab.Shared;
+    case FilterTab.Organization:
+      return FilterTab.Organization;
     default:
-      return ConversationGroupKey.MyChats;
+      return FilterTab.MyChats;
   }
 };
 
-/** Returns the `ConversationGroupKey` of the virtual row containing the given item id. */
+/** Returns the `FilterTab` of the virtual row containing the given item id. */
 export const findGroupKeyForItem = (
   rows: VirtualRow[],
   id: string,
-): ConversationGroupKey | null => {
-  let currentGroupKey: ConversationGroupKey | null = null;
+): FilterTab | null => {
+  let currentGroupKey: FilterTab | null = null;
   for (const row of rows) {
     if (row.kind === VirtualRowKind.Header) {
       currentGroupKey = row.groupKey;
@@ -45,22 +42,22 @@ export const findGroupKeyForItem = (
  */
 export const computeAllowedDropGroups = (
   draggedId: string,
-  draggingGroupKey: ConversationGroupKey | null,
-  conversations: ConversationHistoryItem[],
-): Set<ConversationGroupKey> => {
-  const allowed = new Set<ConversationGroupKey>();
+  draggingGroupKey: FilterTab | null,
+  conversations: ConversationItem[],
+): Set<FilterTab> => {
+  const allowed = new Set<FilterTab>();
 
   if (draggingGroupKey != null) {
     allowed.add(draggingGroupKey);
   }
 
-  if (draggingGroupKey === ConversationGroupKey.Pinned) {
+  if (draggingGroupKey === FilterTab.Pinned) {
     const item = conversations.find((c) => c.id === draggedId);
     if (item) {
       allowed.add(sourceToGroupKey(item.source));
     }
   } else {
-    allowed.add(ConversationGroupKey.Pinned);
+    allowed.add(FilterTab.Pinned);
   }
 
   return allowed;
@@ -76,7 +73,7 @@ export const getDropAfterId = (
   e: Pick<DragEvent, 'currentTarget' | 'clientY'>,
   itemId: string,
   rows: VirtualRow[],
-  targetGroupKey: ConversationGroupKey,
+  targetGroupKey: FilterTab,
 ): string | null => {
   const target = e.currentTarget as HTMLElement;
   const rect = target.getBoundingClientRect();

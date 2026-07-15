@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { ConversationSource } from '../../../types/conversation-source';
+import { FilterTab } from '../../../types/conversation-classification';
 import { ConversationRow } from '../ConversationRow';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -84,7 +84,7 @@ vi.mock('@tabler/icons-react', () => ({
 const baseItem = {
   id: 'c1',
   title: 'My chat',
-  source: ConversationSource.MyChats,
+  source: FilterTab.MyChats,
 };
 
 describe('ConversationRow', () => {

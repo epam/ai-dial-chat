@@ -16,16 +16,16 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
 import { useCallback, useRef, useState, type DragEvent, type FC } from 'react';
-import { ConversationHistoryItem } from '../../models/panel-props';
+import { ConversationItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
-import { ConversationGroupKey } from '../../types/conversation-group-key';
+import { FilterTab } from '../../types/conversation-classification';
 import { getButtonPaddingEnd } from '../../utils/conversation-row';
 import { getDropAfterId } from '../../utils/drag';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
 export interface ConversationRowProps {
   /** The conversation item to display. */
-  item: ConversationHistoryItem;
+  item: ConversationItem;
   /** Whether this row is currently active/selected. */
   isActive: boolean;
   /** Called when the user clicks the row to select the conversation. */
@@ -37,12 +37,9 @@ export interface ConversationRowProps {
    * Receives the item so actions can reflect per-item state (e.g. pin toggle).
    * When omitted or returns an empty array, the actions trigger is not rendered.
    */
-  getActions?: (item: ConversationHistoryItem) => DropdownItem[];
+  getActions?: (item: ConversationItem) => DropdownItem[];
   /** Called when this row's action menu opens. */
-  onActionMenuOpen?: (
-    item: ConversationHistoryItem,
-    trigger: HTMLButtonElement,
-  ) => void;
+  onActionMenuOpen?: (item: ConversationItem, trigger: HTMLButtonElement) => void;
   /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
   /** Typography class for the conversation title text. Defaults to `'dial-small-text'`. */
@@ -53,7 +50,7 @@ export interface ConversationRowProps {
    * The group this row belongs to — required to enable drag-and-drop.
    * When absent the row is not draggable (used by `ConversationGroup`).
    */
-  rowGroupKey?: ConversationGroupKey;
+  rowGroupKey?: FilterTab;
   /** The full virtual rows array — used to compute drop position. */
   rows?: VirtualRow[];
   /** Id of the conversation currently being dragged. `null` when no drag is active. */
@@ -61,7 +58,7 @@ export interface ConversationRowProps {
   /** Id of the row currently under the drag cursor. */
   dragOverId?: string | null;
   /** Groups that are valid drop targets for the current drag. `null` when no drag is active. */
-  allowedDropGroups?: Set<ConversationGroupKey> | null;
+  allowedDropGroups?: Set<FilterTab> | null;
   /** Called when the user starts dragging this row. */
   onDragStart?: (id: string) => void;
   /** Called when the drag ends (drop or cancel). */
@@ -73,7 +70,7 @@ export interface ConversationRowProps {
   /** Called when the user drops onto this row. */
   onDrop?: (
     targetId: string,
-    targetGroupKey: ConversationGroupKey,
+    targetGroupKey: FilterTab,
     afterId: string | null,
   ) => void;
 }
@@ -120,7 +117,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       variant={DialSkeletonVariant.Circular}
       width={DIAL_ICON_SIZE.LG}
       height={DIAL_ICON_SIZE.LG}
-      color="var(--bg-layer-4)"
+      color={styles.skeletonColor}
       aria-hidden
     />
   ) : (
@@ -133,7 +130,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     />
   );
 
-  const buttonPaddingRight = getButtonPaddingEnd(hasActions, isMenuOpen);
+  const buttonPaddingEnd = getButtonPaddingEnd(hasActions, isMenuOpen);
 
   const isDragEnabled = rowGroupKey != null;
 
@@ -169,9 +166,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       className={mergeClasses(
         'group/conversation relative',
         isDragging && 'cursor-grabbing opacity-50',
-        isDropTarget &&
-          isDropAllowed &&
-          'ring-accent-secondary rounded ring-1 ring-inset',
+        isDropTarget && isDropAllowed && 'rounded',
+        isDropTarget && isDropAllowed && styles.dropZoneActive,
         isDragActive && !isDragging && !isDropAllowed && 'cursor-not-allowed',
       )}
       draggable={isDragEnabled || undefined}
@@ -191,7 +187,11 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       <a
         href={item.href}
         className="contents"
-        onClick={(e) => e.preventDefault()}
+        onClick={(e) => {
+          if (!item.href) return;
+          e.preventDefault();
+          onSelectConversation(item.id);
+        }}
       >
         <DialButton
           iconBefore={avatar}
@@ -205,11 +205,11 @@ export const ConversationRow: FC<ConversationRowProps> = ({
           }
           textClassName="min-w-0"
           aria-current={isActive ? 'page' : undefined}
-          onClick={() => onSelectConversation(item.id)}
+          onClick={item.href ? undefined : () => onSelectConversation(item.id)}
           tabIndex={item.href ? -1 : undefined}
           className={mergeClasses(
             'flex h-8 w-full items-center justify-start gap-2 rounded-xl py-2 ps-3',
-            buttonPaddingRight,
+            buttonPaddingEnd,
             styles.item,
             isActive && styles.itemActive,
             isMenuOpen && styles.itemActive,
@@ -223,7 +223,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
             'absolute inset-y-0 end-1 flex items-center',
             isMenuOpen
               ? 'opacity-100'
-              : 'opacity-0 group-hover/conversation:opacity-100',
+              : 'opacity-0 group-focus-within/conversation:opacity-100 group-hover/conversation:opacity-100',
           )}
         >
           <DialDropdown
@@ -238,6 +238,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
                 <IconDotsVertical
                   size={DIAL_ICON_SIZE.SM}
                   className={styles.triggerIcon}
+                  aria-hidden
                 />
               }
               appearance={ButtonAppearance.Ghost}

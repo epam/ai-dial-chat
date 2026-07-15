@@ -1,8 +1,8 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialEllipsisTooltip, type DropdownItem } from '@epam/ai-dial-ui-kit';
 import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
-import { type FC, memo, useState } from 'react';
-import type { ConversationHistoryItem } from '../../models/panel-props';
+import { type FC, memo, useId, useState } from 'react';
+import type { ConversationItem } from '../../models/panel-props';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 import { ConversationRow } from './ConversationRow';
 
@@ -11,7 +11,7 @@ export interface ConversationGroupProps {
   /** Section heading label. */
   label: string;
   /** Conversation items belonging to this group. */
-  items: ConversationHistoryItem[];
+  items: ConversationItem[];
   /** `id` of the currently active conversation. */
   activeConversationId?: string;
   /** Called when the user selects a conversation row. */
@@ -21,12 +21,9 @@ export interface ConversationGroupProps {
    * Receives the item so actions can reflect per-item state (e.g. pin toggle).
    * When omitted or returns an empty array, no action trigger is rendered.
    */
-  getActions?: (item: ConversationHistoryItem) => DropdownItem[];
+  getActions?: (item: ConversationItem) => DropdownItem[];
   /** Called when a row action menu opens. */
-  onActionMenuOpen?: (
-    item: ConversationHistoryItem,
-    trigger: HTMLButtonElement,
-  ) => void;
+  onActionMenuOpen?: (item: ConversationItem, trigger: HTMLButtonElement) => void;
   /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
   /** Typography class applied to the group header button. Defaults to `'dial-tiny-semi-text uppercase'`. */
@@ -49,14 +46,16 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
     itemTitleClassName,
   }) => {
     const [isExpanded, setIsExpanded] = useState(true);
+    const listId = useId();
 
     if (items.length === 0) return null;
 
     return (
-      <section className="flex flex-col gap-1">
+      <section className="flex flex-col gap-1" aria-label={label}>
         <button
           type="button"
           aria-expanded={isExpanded}
+          aria-controls={listId}
           onClick={() => setIsExpanded((prev) => !prev)}
           className={mergeClasses(
             'flex h-6 w-full items-center gap-1 rounded py-1 pe-3 text-start',
@@ -65,15 +64,25 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
           )}
         >
           {isExpanded ? (
-            <IconCaretDownFilled stroke={0.5} size={12} className="shrink-0" />
+            <IconCaretDownFilled
+              stroke={0.5}
+              size={12}
+              className="shrink-0"
+              aria-hidden
+            />
           ) : (
-            <IconCaretRightFilled stroke={0.5} size={12} className="shrink-0" />
+            <IconCaretRightFilled
+              stroke={0.5}
+              size={12}
+              className="shrink-0 rtl:scale-x-[-1]"
+              aria-hidden
+            />
           )}
           <DialEllipsisTooltip text={label} />
         </button>
 
         {isExpanded && (
-          <ul role="list" className="flex flex-col gap-1">
+          <ul id={listId} role="list" className="flex flex-col gap-1">
             {items.map((item) => (
               <ConversationRow
                 key={item.id}

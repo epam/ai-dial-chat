@@ -2,6 +2,10 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogEntityType } from '../../../types/entity-type';
+import {
+  CredentialStatus,
+  ToolsetAuthenticationType,
+} from '../../../types/toolset-auth';
 import { FavoriteCard } from '../FavoriteCard';
 
 const makeItem = (overrides: Partial<CatalogItem> = {}): CatalogItem => ({
@@ -33,5 +37,73 @@ describe('FavoriteCard — selected state', () => {
     expect(card.className).toContain('border-accent-primary');
     expect(card.className).toContain('bg-accent-primary-alpha');
     expect(card.querySelector('svg[aria-hidden]')).toBeTruthy();
+  });
+});
+
+describe('FavoriteCard — credentials badge', () => {
+  it('shows the LOGGED OUT badge for a signed-out API_KEY toolset', () => {
+    render(
+      <FavoriteCard
+        item={makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.ApiKey,
+            userStatus: CredentialStatus.SignedOut,
+            globalStatus: CredentialStatus.SignedOut,
+          },
+        })}
+        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+      />,
+    );
+
+    expect(screen.getByText('LOGGED OUT')).toBeTruthy();
+  });
+
+  it('shows the LOGGED OUT badge for a signed-out OAUTH toolset', () => {
+    render(
+      <FavoriteCard
+        item={makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            userStatus: CredentialStatus.SignedOut,
+            globalStatus: CredentialStatus.SignedOut,
+          },
+        })}
+        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+      />,
+    );
+
+    expect(screen.getByText('LOGGED OUT')).toBeTruthy();
+  });
+
+  it('shows no badge when signed in', () => {
+    render(
+      <FavoriteCard
+        item={makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.OAuth,
+            userStatus: CredentialStatus.SignedIn,
+            globalStatus: CredentialStatus.SignedOut,
+          },
+        })}
+        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+      />,
+    );
+
+    expect(screen.queryByText('LOGGED OUT')).toBeNull();
+  });
+
+  it('shows no badge for authenticationType NONE', () => {
+    render(
+      <FavoriteCard
+        item={makeItem({
+          credentials: {
+            authenticationType: ToolsetAuthenticationType.None,
+          },
+        })}
+        credentialsBadgeLoggedOutLabel="LOGGED OUT"
+      />,
+    );
+
+    expect(screen.queryByText('LOGGED OUT')).toBeNull();
   });
 });

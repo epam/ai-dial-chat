@@ -1,8 +1,12 @@
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { ResponseError } from '@epam/chat-api-client';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
+  ToolsetOAuthFailureReason,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
   ToolsetTransportType,
   WithLogin,
 } from '../../types/toolsets';
@@ -12,11 +16,39 @@ import {
   extractToolsetApiErrorMessage,
   formToToolsetBody,
   getStorageSafeUniqueToolsetName,
+  getToolsetOAuthChannelName,
+  initiateOAuthLogin,
   isToolsetAuthValid,
   isToolsetFormValid,
   isValidEndpointUrl,
   toolsetDtoToForm,
+  waitForToolsetOAuthResult,
 } from '../toolsets';
+
+/** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
+const makeFakePopup = () => ({
+  sessionStorage: {
+    store: new Map<string, string>(),
+    setItem(key: string, value: string) {
+      this.store.set(key, value);
+    },
+    getItem(key: string) {
+      return this.store.get(key) ?? null;
+    },
+  },
+  location: { href: '' },
+  opener: window,
+  closed: false,
+  close: vi.fn(),
+});
+
+const validOAuthConfig = {
+  authenticationType: ToolsetAuthTypes.OAuth,
+  withLogin: WithLogin.WithConfig,
+  isLoggedIn: false,
+  clientId: 'client',
+  authorizationEndpoint: 'https://auth.example.com/authorize',
+};
 
 const baseForm = (): ToolsetFormData => ({
   name: 'My toolset',
@@ -587,5 +619,183 @@ describe('extractToolsetApiErrorMessage', () => {
     const error = new ResponseError(response);
 
     await expect(extractToolsetApiErrorMessage(error)).resolves.toBeUndefined();
+  });
+});
+
+describe('initiateOAuthLogin', () => {
+  let openSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    openSpy = vi.spyOn(window, 'open');
+  });
+
+  afterEach(() => {
+    openSpy.mockRestore();
+  });
+
+  it('returns InvalidConfig without opening a popup when the auth config is invalid', () => {
+    const result = initiateOAuthLogin(
+      {
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+      },
+      'toolsets/b/my-toolset__1',
+    );
+
+    expect(result.type).toBe(ToolsetOAuthInitiationResultType.InvalidConfig);
+    expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  it.each([`${'java'}script:alert(1)`, 'data:text/html,unsafe'])(
+    'rejects the non-HTTP(S) authorization endpoint %s',
+    (authorizationEndpoint) => {
+      const result = initiateOAuthLogin(
+        { ...validOAuthConfig, authorizationEndpoint },
+        'toolsets/b/my-toolset__1',
+      );
+
+      expect(result.type).toBe(ToolsetOAuthInitiationResultType.InvalidConfig);
+      expect(openSpy).not.toHaveBeenCalled();
+    },
+  );
+
+  it('returns Blocked when the browser blocks the popup', () => {
+    openSpy.mockReturnValue(null);
+
+    const result = initiateOAuthLogin(
+      validOAuthConfig,
+      'toolsets/b/my-toolset__1',
+    );
+
+    expect(result.type).toBe(ToolsetOAuthInitiationResultType.Blocked);
+  });
+
+  it('opens a same-origin popup synchronously, writes redirect state into it, and navigates it to the authorize URL', () => {
+    const popup = makeFakePopup();
+    openSpy.mockReturnValue(popup as unknown as Window);
+
+    const result = initiateOAuthLogin(
+      validOAuthConfig,
+      'toolsets/b/my-toolset__1',
+      ToolsetCredentialsLevel.Global,
+    );
+
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    expect(result.type).toBe(ToolsetOAuthInitiationResultType.Started);
+    if (result.type !== ToolsetOAuthInitiationResultType.Started) return;
+
+    expect(result.popup).toBe(popup);
+    expect(typeof result.flowId).toBe('string');
+
+    const stored = JSON.parse(
+      popup.sessionStorage.getItem('toolset-redirect-state') ?? '{}',
+    );
+    expect(stored).toMatchObject({
+      toolsetId: 'toolsets/b/my-toolset__1',
+      credentialsLevel: ToolsetCredentialsLevel.Global,
+      state: result.flowId,
+    });
+    expect(popup.opener).toBeNull();
+    expect(popup.location.href).toContain('https://auth.example.com/authorize');
+    expect(popup.location.href).toContain(`state=${result.flowId}`);
+  });
+});
+
+describe('waitForToolsetOAuthResult', () => {
+  const flowId = 'flow-123';
+
+  const postMessage = (message: unknown) => {
+    const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+    channel.postMessage(message);
+    channel.close();
+  };
+
+  it('resolves with the success message posted on the flow channel', async () => {
+    const popup = { closed: false } as unknown as Window;
+    const resultPromise = waitForToolsetOAuthResult(popup, flowId);
+
+    postMessage({
+      type: ToolsetOAuthResultType.Success,
+      toolsetId: 'toolsets/b/my-toolset__1',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+    });
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Success,
+      toolsetId: 'toolsets/b/my-toolset__1',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+    });
+  });
+
+  it('resolves with the failure message posted on the flow channel', async () => {
+    const popup = { closed: false } as unknown as Window;
+    const resultPromise = waitForToolsetOAuthResult(popup, flowId);
+
+    postMessage({
+      type: ToolsetOAuthResultType.Failure,
+      reason: ToolsetOAuthFailureReason.StateMismatch,
+    });
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Failure,
+      reason: ToolsetOAuthFailureReason.StateMismatch,
+    });
+  });
+
+  it('resolves as Cancelled when the popup is closed manually', async () => {
+    const popup = { closed: false } as { closed: boolean };
+    const resultPromise = waitForToolsetOAuthResult(
+      popup as unknown as Window,
+      flowId,
+      {
+        pollIntervalMs: 5,
+        timeoutMs: 10_000,
+      },
+    );
+
+    popup.closed = true;
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Cancelled,
+    });
+  });
+
+  it('resolves as Cancelled when the pending timeout elapses with no result', async () => {
+    const close = vi.fn();
+    const popup = { closed: false, close } as unknown as Window;
+
+    await expect(
+      waitForToolsetOAuthResult(popup, flowId, {
+        pollIntervalMs: 5,
+        timeoutMs: 20,
+      }),
+    ).resolves.toEqual({ type: ToolsetOAuthResultType.Cancelled });
+    expect(close).toHaveBeenCalledOnce();
+  });
+
+  it('ignores messages posted on a different flow id', async () => {
+    const popup = { closed: false, close: vi.fn() } as {
+      closed: boolean;
+      close: ReturnType<typeof vi.fn>;
+    };
+    const resultPromise = waitForToolsetOAuthResult(
+      popup as unknown as Window,
+      flowId,
+      {
+        pollIntervalMs: 5,
+        timeoutMs: 50,
+      },
+    );
+
+    const otherChannel = new BroadcastChannel(
+      getToolsetOAuthChannelName('other-flow'),
+    );
+    otherChannel.postMessage({ type: ToolsetOAuthResultType.Success });
+    otherChannel.close();
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Cancelled,
+    });
   });
 });

@@ -14,7 +14,7 @@
 
 .collapsedText::after {
   content: '';
-  @apply absolute inset-x-0 bottom-0 h-12 pointer-events-none;
+  @apply pointer-events-none absolute inset-x-0 bottom-0 h-12;
   background: linear-gradient(
     to bottom,
     var(--cm-bubble-fade-start, var(--bg-transparent-black, rgb(0 0 0 / 0))),
