@@ -1,13 +1,27 @@
+/** CSS custom-property overrides for the `FileDndOverlay` component. */
+export interface FileDndOverlayColors {
+  /** Overlay background color. */
+  background?: string;
+  /** Icon color in the allowed state. */
+  icon?: string;
+  /** Icon color in the denied state (`isAttachmentsAllowed={false}`). */
+  deniedIcon?: string;
+}
+
+/** Typography overrides for the `FileDndOverlay` component. */
+export interface FileDndOverlayTypography {
+  /** CSS class applied to the title. Defaults to `'heading-3 font-semibold'`. */
+  titleClassName?: string;
+  /** CSS class applied to the subtitle. Defaults to `'dial-small-text'`. */
+  subtitleClassName?: string;
+}
+
 /** Style overrides for the `FileDndOverlay` component. */
 export interface FileDndOverlayStyles {
-  /** Tailwind class(es) applied to the icon in the allowed state. Defaults to `'text-accent-primary'`. */
-  iconClassName?: string;
-  /** Tailwind class(es) applied to the icon in the denied state (`isAttachmentsAllowed={false}`). Defaults to `'text-error'`. */
-  deniedIconClassName?: string;
-  /** Tailwind class(es) applied to the title. Defaults to `'heading-3 font-semibold'`. */
-  titleClassName?: string;
-  /** Tailwind class(es) applied to the subtitle. Defaults to `'dial-small-text'`. */
-  subtitleClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: FileDndOverlayColors;
+  /** Typography overrides applied to the title and subtitle. */
+  typography?: FileDndOverlayTypography;
 }
 
 /** Props accepted by the `FileDndOverlay` component. */
