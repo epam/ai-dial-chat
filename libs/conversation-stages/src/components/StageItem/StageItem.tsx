@@ -106,7 +106,7 @@ export const StageItem: FC<Props> = ({
             {displayAttachments.length > 0 && (
               <AttachmentGroup
                 attachments={displayAttachments}
-                ariaLabel={attachmentsAriaLabel}
+                labels={{ ariaLabel: attachmentsAriaLabel }}
                 onAttachmentClick={onAttachmentClick}
               />
             )}

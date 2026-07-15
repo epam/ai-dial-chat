@@ -339,8 +339,7 @@ export const Input: FC<InputProps> = ({
           }}
           onRetry={handleRetry}
           onExpand={handleExpand}
-          removeLabel={removeLabel}
-          retryLabel={retryLabel}
+          labels={{ removeLabel, retryLabel }}
           onAttachmentClick={
             onAttachmentClick != null
               ? (att) => {

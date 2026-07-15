@@ -4,7 +4,7 @@ import { derivePublishState } from './publish-state';
 
 const baseInput: PublishDerivationInput = {
   hasSelectedFolder: true,
-  hasExistingVersionInFolder: false,
+  hasExistingPublicationInFolder: false,
   hasWriteAccess: true,
   isSubmitting: false,
   hasSubmitError: false,
@@ -41,7 +41,10 @@ describe('derivePublishState', () => {
 
   it('shows the replace-warning callout but keeps submit enabled when the version already exists', () => {
     expect(
-      derivePublishState({ ...baseInput, hasExistingVersionInFolder: true }),
+      derivePublishState({
+        ...baseInput,
+        hasExistingPublicationInFolder: true,
+      }),
     ).toEqual({
       calloutKind: PublishCalloutKind.ReplaceWarning,
       isSubmitDisabled: false,
@@ -76,7 +79,7 @@ describe('derivePublishState', () => {
       derivePublishState({
         ...baseInput,
         hasWriteAccess: false,
-        hasExistingVersionInFolder: true,
+        hasExistingPublicationInFolder: true,
       }),
     ).toEqual({
       calloutKind: PublishCalloutKind.NoAccess,
@@ -98,7 +101,7 @@ describe('derivePublishState', () => {
       derivePublishState({
         ...baseInput,
         hasSubmitError: true,
-        hasExistingVersionInFolder: true,
+        hasExistingPublicationInFolder: true,
       }),
     ).toEqual({
       calloutKind: PublishCalloutKind.SubmitError,
@@ -117,6 +120,33 @@ describe('derivePublishState', () => {
     ).toEqual({
       calloutKind: PublishCalloutKind.NoAccess,
       isSubmitDisabled: true,
+      isSubmitLoading: false,
+    });
+  });
+
+  it('disables submit for an existing publication when allowReplace is false (conversations)', () => {
+    expect(
+      derivePublishState({
+        ...baseInput,
+        hasExistingPublicationInFolder: true,
+        allowReplace: false,
+      }),
+    ).toEqual({
+      calloutKind: PublishCalloutKind.ReplaceWarning,
+      isSubmitDisabled: true,
+      isSubmitLoading: false,
+    });
+  });
+
+  it('keeps submit enabled for an existing publication when allowReplace is omitted (catalog default)', () => {
+    expect(
+      derivePublishState({
+        ...baseInput,
+        hasExistingPublicationInFolder: true,
+      }),
+    ).toEqual({
+      calloutKind: PublishCalloutKind.ReplaceWarning,
+      isSubmitDisabled: false,
       isSubmitLoading: false,
     });
   });

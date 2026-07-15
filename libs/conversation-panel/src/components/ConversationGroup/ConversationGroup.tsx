@@ -16,8 +16,17 @@ export interface ConversationGroupProps {
   activeConversationId?: string;
   /** Called when the user selects a conversation row. */
   onSelectConversation: (id: string) => void;
-  /** Optional function to provide a list of actions for each conversation row. */
+  /**
+   * Builds the dropdown menu items for a row.
+   * Receives the item so actions can reflect per-item state (e.g. pin toggle).
+   * When omitted or returns an empty array, no action trigger is rendered.
+   */
   getActions?: (item: ConversationItem) => DropdownItem[];
+  /** Called when a row action menu opens. */
+  onActionMenuOpen?: (
+    item: ConversationItem,
+    trigger: HTMLButtonElement,
+  ) => void;
   /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
   /** Typography class applied to the group header button. Defaults to `'dial-tiny-semi-text uppercase'`. */
@@ -34,6 +43,7 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
     activeConversationId,
     onSelectConversation,
     getActions,
+    onActionMenuOpen,
     actionsLabel,
     groupHeaderClassName = 'dial-tiny-semi-text uppercase',
     itemTitleClassName,
@@ -83,6 +93,7 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
                 isActive={item.id === activeConversationId}
                 onSelectConversation={onSelectConversation}
                 getActions={getActions}
+                onActionMenuOpen={onActionMenuOpen}
                 actionsLabel={actionsLabel}
                 itemTitleClassName={itemTitleClassName}
               />

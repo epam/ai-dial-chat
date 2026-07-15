@@ -49,6 +49,8 @@ export const Catalog: FC<CatalogProps> = ({
   onCreatePublishFolder,
   publishTexts,
   shareOverlay,
+  connectOverlay,
+  isConnectVisible,
   onFetchDetails,
   onEdit,
   onDelete,
@@ -303,7 +305,10 @@ export const Catalog: FC<CatalogProps> = ({
   return (
     <section
       aria-label={resolvedAriaLabel}
-      className={mergeClasses('flex min-h-0 flex-1 flex-col', styles.root)}
+      className={mergeClasses(
+        'flex size-full min-h-0 flex-1 flex-col',
+        styles.root,
+      )}
       style={cssVars}
     >
       {(!hidePageTitle || !hideCreateButton) && (
@@ -393,23 +398,30 @@ export const Catalog: FC<CatalogProps> = ({
             />
           </div>
         )}
-
         <div className="mx-auto min-h-full w-full max-w-[1180px] px-8 pt-6">
-          {viewMode === CatalogViewMode.Grid && (
-            <div className="pb-8">
-              <CardGrid
-                items={tabFiltered}
-                query={query}
-                onToggleFavorite={onToggleFavorite}
-                onItemClick={onCardClick ?? handleOpenDetails}
-                titles={cardGridTitles}
-                selectedItemId={selectedItemId}
-              />
-            </div>
-          )}
+          <div
+            className={mergeClasses(
+              'pb-8',
+              viewMode !== CatalogViewMode.Grid && 'hidden',
+            )}
+          >
+            <CardGrid
+              items={tabFiltered}
+              query={query}
+              onToggleFavorite={onToggleFavorite}
+              onItemClick={onCardClick ?? handleOpenDetails}
+              titles={cardGridTitles}
+              selectedItemId={selectedItemId}
+            />
+          </div>
 
-          {listEverShown && viewMode === CatalogViewMode.List && (
-            <div className="pb-8">
+          {listEverShown && (
+            <div
+              className={mergeClasses(
+                'pb-8',
+                viewMode !== CatalogViewMode.List && 'hidden',
+              )}
+            >
               <ListView
                 items={tabFiltered}
                 query={query}
@@ -451,6 +463,8 @@ export const Catalog: FC<CatalogProps> = ({
           onCreatePublishFolder={onCreatePublishFolder}
           publishTexts={publishTexts}
           shareOverlay={shareOverlay}
+          connectOverlay={connectOverlay}
+          isConnectVisible={isConnectVisible}
           onEdit={onEdit}
           onDelete={onDelete}
           onLogin={handleLogin}

@@ -4,12 +4,14 @@ import { UserConfigModule } from '../user-config/user-config.module';
 import { ConversationGenerationService } from './conversation-generation.service';
 import { ConversationNamingService } from './conversation-naming.service';
 import { CONVERSATION_PERSISTENCE } from './conversation-persistence.port';
+import { ConversationPublishController } from './conversation-publish.controller';
+import { ConversationPublishService } from './conversation-publish.service';
 import { ConversationController } from './conversation.controller';
 import { ConversationService } from './conversation.service';
 
 @Module({
   imports: [UserConfigModule, AppConfigModule],
-  controllers: [ConversationController],
+  controllers: [ConversationController, ConversationPublishController],
   providers: [
     ConversationService,
     ConversationNamingService,
@@ -18,6 +20,7 @@ import { ConversationService } from './conversation.service';
       useExisting: ConversationService,
     },
     ConversationGenerationService,
+    ConversationPublishService,
   ],
 })
 export class ConversationModule {}

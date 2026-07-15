@@ -1,20 +1,25 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
-import type { AttachmentTrayProps } from '../../models/AttachmentTray';
+import type { AttachmentTrayProps } from '../../models/attachment-tray';
 import { AttachmentCard } from '../AttachmentCard/AttachmentCard';
 
+/** Horizontal scrollable row of attachment cards for the message composer, with remove/retry/expand actions. */
 export const AttachmentTray: FC<AttachmentTrayProps> = ({
   attachments,
   onRemove,
   onRetry,
   onExpand,
-  ariaLabel = 'Attached files',
-  removeLabel,
-  retryLabel,
   onAttachmentClick,
-  clickLabel,
+  labels,
   className,
 }) => {
+  const {
+    ariaLabel = 'Attached files',
+    removeLabel,
+    retryLabel,
+    clickLabel,
+  } = labels ?? {};
+
   if (attachments.length === 0) return null;
 
   return (
@@ -33,14 +38,12 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
             onRemove={onRemove}
             onRetry={onRetry}
             onExpand={onExpand}
-            removeLabel={removeLabel}
-            retryLabel={retryLabel}
+            labels={{ removeLabel, retryLabel, clickLabel }}
             onClick={
               onAttachmentClick
                 ? () => onAttachmentClick(attachment)
                 : undefined
             }
-            clickLabel={clickLabel}
           />
         </div>
       ))}

@@ -342,7 +342,7 @@ describe('AttachmentCard — onClick', () => {
       <AttachmentCard
         attachment={makeAttachment()}
         onClick={vi.fn()}
-        clickLabel="Download file"
+        labels={{ clickLabel: 'Download file' }}
       />,
     );
     const card = container.firstElementChild as HTMLElement;

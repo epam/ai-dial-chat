@@ -84,8 +84,14 @@ const borderColors = {
   info: 'var(--stroke-info, #124ACE)',
   success: 'var(--stroke-success, #007274)',
   'accent-primary': 'var(--stroke-accent-primary, #124ACE)',
+  'accent-primary-hover': 'var(--stroke-accent-primary-hover, #7DA4FF)',
   'accent-secondary': 'var(--stroke-accent-secondary, #007274)',
   'accent-tertiary': 'var(--stroke-accent-tertiary, #7E39EC)',
+  'hover-tint': 'var(--stroke-hover-tint, rgba(0, 0, 0, 0.12))',
+};
+
+const controlsBorderColors = {
+  'controls-focus': 'var(--controls-stroke-focus, #EEF1F7)',
 };
 
 const textColors = {
@@ -105,6 +111,7 @@ const textColors = {
   info: 'var(--text-info, #124ACE)',
   success: 'var(--text-success, #007274)',
   'accent-primary': 'var(--text-accent-primary, #124ACE)',
+  'accent-primary-hover': 'var(--text-accent-primary-hover, #2764D9)',
   'accent-secondary': 'var(--text-accent-secondary, #007274)',
   'accent-tertiary': 'var(--text-accent-tertiary, #7E39EC)',
   white: 'var(--text-white, #FFFFFF)',
@@ -139,9 +146,9 @@ module.exports = {
   ],
   theme: {
     backgroundColor: { ...backgroundsColors, ...controlsBgColors },
-    borderColor: borderColors,
-    stroke: borderColors,
-    divideColor: borderColors,
+    borderColor: { ...borderColors, ...controlsBorderColors },
+    stroke: { ...borderColors, ...controlsBorderColors },
+    divideColor: { ...borderColors, ...controlsBorderColors },
     placeholderColor: placeholderColor,
     textColor: { ...textColors, ...controlsTextColors },
     gradientColorStops: backgroundsColors,

@@ -16,6 +16,7 @@ export const RowRenderer = ({
   searchQuery,
   onSelectConversation,
   getActions,
+  onActionMenuOpen,
   actionsLabel,
   styles,
   draggingId,
@@ -61,6 +62,7 @@ export const RowRenderer = ({
         searchQuery={searchQuery}
         onSelectConversation={onSelectConversation}
         getActions={getActions}
+        onActionMenuOpen={onActionMenuOpen}
         actionsLabel={actionsLabel}
         itemTitleClassName={styles?.itemTitleClassName}
         itemIconBadgeClassName={styles?.itemIconBadgeClassName}

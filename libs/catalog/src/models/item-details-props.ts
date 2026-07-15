@@ -9,6 +9,8 @@ import type { PublishFolderNode, PublishHistoryEntry } from './publish';
 export interface ItemDetailsTexts {
   /** "Share" action button label. Default: `'Share'`. */
   shareLabel?: string;
+  /** "Connect" action button label, used for every entity type. Default: `'Connect'`. */
+  connectLabel?: string;
   /** Caption above the intro/description text. Default: `'Intro'`. */
   introLabel?: string;
   /** "About" tab label. Default: `'About'`. */
@@ -211,6 +213,17 @@ export interface DetailsPanelProps {
    * provided, clicking Share opens this popover instead of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /**
+   * Renders the Connect popover content anchored to the Connect button. When
+   * absent, the Connect button is never shown — there is no non-overlay
+   * fallback action.
+   */
+  connectOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /**
+   * Controls whether the "Connect" action is shown for the item. When
+   * absent, the Connect button is never shown.
+   */
+  isConnectVisible?: (item: CatalogItem) => boolean;
   /** Called when the "Edit" button is clicked. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**

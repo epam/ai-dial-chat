@@ -172,6 +172,24 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('dialCore.externalUrl', () => {
+    it('returns the external URL when DIAL_CORE_EXTERNAL_URL is set', async () => {
+      const { provider } = makeProvider({
+        DIAL_CORE_EXTERNAL_URL: 'https://dial.example.com',
+      });
+      expect(await provider.resolve('dialCore.externalUrl', ctx)).toBe(
+        'https://dial.example.com',
+      );
+    });
+
+    it('returns undefined when DIAL_CORE_EXTERNAL_URL is not set', async () => {
+      const { provider } = makeProvider({ DIAL_CORE_EXTERNAL_URL: undefined });
+      expect(
+        await provider.resolve('dialCore.externalUrl', ctx),
+      ).toBeUndefined();
+    });
+  });
+
   describe('unknown key', () => {
     it('returns undefined for an unknown key', async () => {
       const { provider } = makeProvider();

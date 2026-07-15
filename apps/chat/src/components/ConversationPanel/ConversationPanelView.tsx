@@ -23,18 +23,23 @@ import {
   IconPinnedFilled,
   IconShare,
   IconTrashX,
+  IconWorldShare,
 } from '@tabler/icons-react';
 import {
   memo,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { getConversationRoute } from '../../constants/routes';
+import {
+  getConversationRoute,
+  normalizeConversationId,
+} from '../../constants/routes';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -53,9 +58,11 @@ import {
   conversationIdsMatch,
   toPanelConversationId,
 } from '../../utils/conversation-id-match';
+import { getConversationPath } from '../../utils/conversation-path';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import ImportExportQueue from '../ImportExportQueue/ImportExportQueue';
+import PublishConversationPanelContainer from '../PublishConversationPanelContainer/PublishConversationPanelContainer';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 import ConversationPanelMenu from './ConversationPanelMenu';
@@ -152,6 +159,19 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const [pendingShareConversationPath, setPendingShareConversationPath] =
     useState<string | null>(null);
+
+  const [pendingPublishConversation, setPendingPublishConversation] = useState<{
+    path: string;
+    title: string;
+  } | null>(null);
+  const publishReturnFocusRef = useRef<HTMLButtonElement | null>(null);
+
+  const handleActionMenuOpen = useCallback(
+    (_item: ConversationItem, trigger: HTMLButtonElement) => {
+      publishReturnFocusRef.current = trigger;
+    },
+    [],
+  );
 
   const handleExportAll = useCallback(() => {
     void exportAll();
@@ -337,6 +357,25 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           onClick: () => setPendingShareConversationPath(contextId),
         },
         {
+          key: 'publish',
+          label: t(ButtonsI18nKeys.Publish),
+          icon: (
+            <IconWorldShare
+              size={DIAL_ICON_SIZE.SM}
+              className="text-secondary"
+            />
+          ),
+          // Unlike Share's itemId (which wants the full `conversations/{bucket}/{name}`
+          // resource path), the publish endpoint's `path` query param follows the
+          // rename/delete/duplicate convention — bucket-relative, no `conversations/`
+          // prefix — so it must be stripped here (see conversation-publish.service.ts).
+          onClick: () =>
+            setPendingPublishConversation({
+              path: getConversationPath(normalizeConversationId(contextId)),
+              title: panelItem.title,
+            }),
+        },
+        {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
           icon: (
@@ -362,6 +401,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const handleCloseSharePopover = useCallback(() => {
     setPendingShareConversationPath(null);
+  }, []);
+
+  const handleClosePublishPanel = useCallback(() => {
+    setPendingPublishConversation(null);
   }, []);
 
   const pendingDeleteTitle = useMemo(() => {
@@ -484,6 +527,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         }}
         onNewChat={onNewChat}
         getActions={getActions}
+        onActionMenuOpen={handleActionMenuOpen}
         onToggle={isMobile ? onClose : undefined}
         className={panelClassName}
         styles={PANEL_STYLES}
@@ -553,6 +597,16 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           onClose={handleCloseSharePopover}
         />
       </DialPopup>
+
+      {pendingPublishConversation !== null && (
+        <PublishConversationPanelContainer
+          isOpen
+          conversationPath={pendingPublishConversation.path}
+          conversationTitle={pendingPublishConversation.title}
+          onClose={handleClosePublishPanel}
+          returnFocusRef={publishReturnFocusRef}
+        />
+      )}
     </>
   );
 };
