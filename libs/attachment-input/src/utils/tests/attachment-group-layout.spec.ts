@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  AttachmentTilesLayout,
-  getAttachmentTilesPlan,
-} from '../getAttachmentGroupLayout';
+import { AttachmentTilesLayout } from '../../models/attachment-group';
+import { getAttachmentTilesPlan } from '../attachment';
 
 describe('getAttachmentTilesPlan', () => {
   it('returns None for zero attachments', () => {

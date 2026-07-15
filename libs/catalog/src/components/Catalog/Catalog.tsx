@@ -303,7 +303,10 @@ export const Catalog: FC<CatalogProps> = ({
   return (
     <section
       aria-label={resolvedAriaLabel}
-      className={mergeClasses('flex min-h-0 flex-1 flex-col', styles.root)}
+      className={mergeClasses(
+        'flex size-full min-h-0 flex-1 flex-col',
+        styles.root,
+      )}
       style={cssVars}
     >
       {(!hidePageTitle || !hideCreateButton) && (

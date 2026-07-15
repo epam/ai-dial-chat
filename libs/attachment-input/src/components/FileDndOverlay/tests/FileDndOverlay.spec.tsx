@@ -30,7 +30,10 @@ describe('FileDndOverlay', () => {
 
   it('applies custom iconClassName', () => {
     const { container } = render(
-      <FileDndOverlay isVisible={true} iconClassName="text-red-500" />,
+      <FileDndOverlay
+        isVisible={true}
+        styles={{ iconClassName: 'text-red-500' }}
+      />,
     );
     const icon = container.querySelector('svg');
     expect(icon?.getAttribute('class')).toContain('text-red-500');
@@ -57,7 +60,7 @@ describe('FileDndOverlay', () => {
       <FileDndOverlay
         isVisible={true}
         isAttachmentsAllowed={false}
-        deniedIconClassName="text-warning"
+        styles={{ deniedIconClassName: 'text-warning' }}
       />,
     );
     const icon = container.querySelector('svg');

@@ -1,18 +1,23 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { IconFileDescription, IconFileX } from '@tabler/icons-react';
 import type { DragEvent, FC } from 'react';
-import type { FileDndOverlayProps } from '../../models/FileDndOverlay';
+import type { FileDndOverlayProps } from '../../models/file-dnd-overlay';
 
+/** Full-screen drag-and-drop overlay shown while files are dragged over the app, allowed or denied. */
 export const FileDndOverlay: FC<FileDndOverlayProps> = ({
   isVisible,
   isAttachmentsAllowed = true,
   title,
   subtitle,
-  iconClassName = 'text-accent-primary',
-  deniedIconClassName = 'text-error',
-  titleClassName = 'heading-3 font-semibold',
-  subtitleClassName = 'dial-small-text',
+  styles,
 }) => {
+  const {
+    iconClassName = 'text-accent-primary',
+    deniedIconClassName = 'text-error',
+    titleClassName = 'heading-3 font-semibold',
+    subtitleClassName = 'dial-small-text',
+  } = styles ?? {};
+
   if (!isVisible) return null;
 
   const resolvedTitle =

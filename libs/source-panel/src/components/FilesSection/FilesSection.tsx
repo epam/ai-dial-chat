@@ -53,7 +53,7 @@ const FilesSection: FC<FilesSectionProps> = ({
               onClick={
                 onAttachmentClick ? () => onAttachmentClick(att) : undefined
               }
-              clickLabel={attachmentClickLabel}
+              labels={{ clickLabel: attachmentClickLabel }}
             />
           </div>
         ))}
