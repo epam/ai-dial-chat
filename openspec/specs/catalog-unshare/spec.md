@@ -5,22 +5,22 @@ TBD - created by archiving change add-catalog-unshare. Update Purpose after arch
 ## Requirements
 ### Requirement: BFF discard-shared-catalog-item endpoint
 
-The system SHALL expose `POST /api/v1/share/discard` on the existing `ShareController` (`apps/chat-api/src/share/`), allowing an authenticated session user to discard their own access to a catalog resource (application or toolset) that is currently shared with them via DIAL Core `discardSharedResources`.
+The system SHALL expose `POST /api/v1/share/discard` on the existing `ShareController` (`apps/chat-api/src/share/`), allowing an authenticated session user to discard their own access to a catalog resource (application or toolset) **or a conversation** that is currently shared with them via DIAL Core `discardSharedResources`.
 
 The endpoint SHALL:
 - Require a valid session; respond `401 Unauthorized` when no session is present.
-- Accept `DiscardSharedCatalogItemDto { itemId: string }` validated via NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted, transform); `itemId` SHALL be a non-empty string, max length 2048, validated with the existing `IsValidFilePath` validator and an `@Matches` allowlist restricted to `applications/{bucket}/{path}` or `toolsets/{bucket}/{path}`. Other DIAL resource types and incomplete paths SHALL be rejected before calling DIAL Core.
+- Accept `DiscardSharedCatalogItemDto { itemId: string }` validated via NestJS `ValidationPipe` (whitelist, forbidNonWhitelisted, transform); `itemId` SHALL be a non-empty string, max length 2048, validated with the existing `IsValidFilePath` validator and an `@Matches` allowlist restricted to `applications/{bucket}/{path}`, `toolsets/{bucket}/{path}`, **or `conversations/{bucket}/{path}`**. Other DIAL resource types and incomplete paths SHALL be rejected before calling DIAL Core.
 - Use the session `accessToken` as the Bearer credential when calling DIAL Core.
 - Call SDK `discardSharedResources({ headers, body: { resources: [{ url: itemId }] } })` with no bucket/path reconstruction — `itemId` is passed through unmodified as the resource `url`, matching the existing `createShareLink` pattern (`share.service.ts`) rather than the file-manager `bucket`+`path` reconstruction pattern.
 - Rely on DIAL Core to enforce that the resource is currently shared with the caller; a resource not shared with the caller SHALL surface as `403 Forbidden` via `mapDialHttpStatus`, not a silent 200.
-- On success, invalidate both `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` before responding, mirroring the existing invalidation call in `ShareService.acceptInvitation`.
+- On success, invalidate both `DeploymentsService.invalidateListCache(userSub)` and `ToolsetsService.invalidateListCache(userSub)` before responding, mirroring the existing invalidation call in `ShareService.acceptInvitation`. **This invalidation runs unconditionally regardless of `itemId` type; conversations have no equivalent server-side list cache today, so for a conversation `itemId` this invalidation is a harmless no-op — see the `conversation-unshare-api` capability for the conversation-side consistency model (client-driven `refreshConversations()`).**
 - Respond `200 OK` with `DiscardSharedCatalogItemResponseDto { success: true }` on success.
 - Apply `@Throttle({ default: { limit: 10, ttl: 60000 } })`, matching the file-manager `discard-shared` endpoint's stricter-than-share-creation posture.
 - Map upstream failures via the fetch-shaped `mapDialHttpStatus`/`handleDialFetchError` pair (consistent with `ShareService`'s other methods): DIAL Core 400 → 400, 401 → 401, 403 → 403, 404 → 404, 429 → 429, 5xx → 502, network/timeout → 503.
 - Not cache the mutation response itself.
 - Log structured success/failure messages (e.g. `Discard shared resource started`, `Discard shared resource completed: success=true`, `DIAL Core returned <status> for share.discardShared`) without the access token, invitation links, full resource path, or any other user data beyond a safe operation identifier.
 
-Controller handler name / OpenAPI operationId: **`discardSharedCatalogItem`** → generated client method `discardSharedCatalogItem()`.
+Controller handler name / OpenAPI operationId: **`discardSharedCatalogItem`** → generated client method `discardSharedCatalogItem()`. The `@ApiOperation.description` SHALL read "Discards the caller's own access to a shared catalog entity (application or toolset) or conversation", replacing the catalog-only wording.
 
 **Example request:**
 ```http
@@ -83,6 +83,11 @@ Note: the backend/generated DTOs are named `DiscardSharedCatalogItemDto`/`Discar
 
 - **WHEN** a discard succeeds for a user whose `deployments:list:<userSub>` and `toolsets:list:<userSub>` cache entries are currently populated
 - **THEN** both cache entries are invalidated before the response is sent, so the next list request for that user re-fetches from DIAL Core rather than serving the stale (still-including-the-discarded-item) cached list
+
+#### Scenario: Conversation itemId is now accepted by the same endpoint
+
+- **WHEN** an authenticated user calls `POST /api/v1/share/discard` with `{ itemId: "conversations/owner-bucket/my-chat" }` for a conversation actually shared with them
+- **THEN** the endpoint accepts the request (no longer rejecting the `conversations/` prefix as invalid), calls DIAL Core `discardSharedResources` with that itemId, and responds `200 { success: true }` — see the `conversation-unshare-api` capability for the full conversation-specific behavior
 
 ### Requirement: `libs/catalog` exposes a mutually-exclusive Share/recipient Delete header action
 

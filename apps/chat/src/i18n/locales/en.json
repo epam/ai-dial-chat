@@ -225,7 +225,8 @@
     "download": "Download",
     "logOut": "Log out",
     "copyLink": "Copy link",
-    "logIn": "Log in"
+    "logIn": "Log in",
+    "publish": "Publish"
   },
   "sidebar": {
     "base": {
@@ -294,7 +295,19 @@
       "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed.",
       "deleteAllSuccessTitle": "All conversations deleted",
       "deleteAllSuccess": "All conversations have been deleted successfully."
+    },
+    "unshare": {
+      "unshareConfirmTitle": "Delete conversation?",
+      "unshareConfirmMessage": "Delete \"{{name}}\" from your conversations? You'll need a new invitation to access it again.",
+      "unshareSuccessTitle": "Deleted",
+      "unshareSuccess": "\"{{name}}\" was deleted from your conversations.",
+      "unshareError": "Failed to delete \"{{name}}\". Please try again."
     }
+  },
+  "conversationPublish": {
+    "panelAriaLabel": "Publish conversation",
+    "alreadyPublishedWarning": "This conversation is already published in {folder}.",
+    "successMessage": "Conversation published successfully."
   },
   "conversationExport": {
     "exportLabel": "Export",
@@ -487,7 +500,7 @@
     "moveHeaderMultiple": "Move {{count}} items",
     "moveSourceDisabledTooltip": "Unavailable for the original location. Please select another folder",
     "folderPickerLoadingTooltip": "Loading folder contents. Please wait",
-    "folderPickerEmptyStateTitle": "No folders here",
+    "folderPickerEmptyStateTitle": "This folder is empty",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "tab": {
       "myFiles": "My Files",

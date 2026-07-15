@@ -102,6 +102,7 @@ export enum ButtonsI18nKeys {
   LogOut = 'buttons.logOut',
   CopyLink = 'buttons.copyLink',
   LogIn = 'buttons.logIn',
+  Publish = 'buttons.publish',
 }
 
 export enum NavigationI18nKeys {
@@ -391,6 +392,17 @@ export enum ConversationPanelI18nKeys {
   DeleteAllPartialError = 'conversationPanel.deleteAll.deleteAllPartialError',
   DeleteAllSuccessTitle = 'conversationPanel.deleteAll.deleteAllSuccessTitle',
   DeleteAllSuccess = 'conversationPanel.deleteAll.deleteAllSuccess',
+  UnshareConfirmTitle = 'conversationPanel.unshare.unshareConfirmTitle',
+  UnshareConfirmMessage = 'conversationPanel.unshare.unshareConfirmMessage',
+  UnshareSuccessTitle = 'conversationPanel.unshare.unshareSuccessTitle',
+  UnshareSuccess = 'conversationPanel.unshare.unshareSuccess',
+  UnshareError = 'conversationPanel.unshare.unshareError',
+}
+
+export enum ConversationPublishI18nKeys {
+  PanelAriaLabel = 'conversationPublish.panelAriaLabel',
+  AlreadyPublishedWarning = 'conversationPublish.alreadyPublishedWarning',
+  SuccessMessage = 'conversationPublish.successMessage',
 }
 
 export enum ConversationExportI18nKeys {

@@ -15,7 +15,7 @@ import {
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
-import { useCallback, useState, type DragEvent, type FC } from 'react';
+import { useCallback, useRef, useState, type DragEvent, type FC } from 'react';
 import { ConversationItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
 import { FilterTab } from '../../types/conversation-classification';
@@ -38,6 +38,11 @@ export interface ConversationRowProps {
    * When omitted or returns an empty array, the actions trigger is not rendered.
    */
   getActions?: (item: ConversationItem) => DropdownItem[];
+  /** Called when this row's action menu opens. */
+  onActionMenuOpen?: (
+    item: ConversationItem,
+    trigger: HTMLButtonElement,
+  ) => void;
   /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
   /** Typography class for the conversation title text. Defaults to `'dial-small-text'`. */
@@ -79,6 +84,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   onSelectConversation,
   searchQuery = '',
   getActions,
+  onActionMenuOpen,
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
   itemIconBadgeClassName,
@@ -94,6 +100,17 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   onDrop,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const actionTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const handleMenuOpenChange = useCallback(
+    (isOpen: boolean) => {
+      setIsMenuOpen(isOpen);
+      if (isOpen && actionTriggerRef.current) {
+        onActionMenuOpen?.(item, actionTriggerRef.current);
+      }
+    },
+    [item, onActionMenuOpen],
+  );
 
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
@@ -214,11 +231,12 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         >
           <DialDropdown
             items={menuItems}
-            onOpenChange={setIsMenuOpen}
+            onOpenChange={handleMenuOpenChange}
             matchReferenceWidth={false}
             listClassName="w-[140px] cp-dropdown-overlay"
           >
             <DialIconButton
+              ref={actionTriggerRef}
               icon={
                 <IconDotsVertical
                   size={DIAL_ICON_SIZE.SM}

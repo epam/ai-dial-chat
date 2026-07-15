@@ -2558,7 +2558,7 @@ export interface DialToolsetListResponseDto {
  */
 export interface DiscardSharedCatalogItemDto {
   /**
-   * Identifier (DIAL Core resource path) of the catalog item to discard access to.
+   * Identifier (DIAL Core resource path) of the catalog item or conversation to discard access to.
    * @type {string}
    * @memberof DiscardSharedCatalogItemDto
    */
@@ -3306,6 +3306,50 @@ export interface PublishCatalogEntityDto {
    * @memberof PublishCatalogEntityDto
    */
   version: string;
+}
+/**
+ *
+ * @export
+ * @interface PublishConversationDto
+ */
+export interface PublishConversationDto {
+  /**
+   * Destination folder under the Organization/public bucket, forwarded to DIAL Core as `targetFolder`.
+   * @type {string}
+   * @memberof PublishConversationDto
+   */
+  folderPath: string;
+}
+/**
+ *
+ * @export
+ * @interface PublishConversationResultDto
+ */
+export interface PublishConversationResultDto {
+  /**
+   *
+   * @type {string}
+   * @memberof PublishConversationResultDto
+   */
+  path: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishConversationResultDto
+   */
+  folderPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishConversationResultDto
+   */
+  publishedAt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishConversationResultDto
+   */
+  publishedBy: string;
 }
 /**
  *

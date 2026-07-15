@@ -1,5 +1,3 @@
-// Color-only rules. Layout, spacing, and border-radius live in Tailwind classes in the TSX file.
-
 .card {
   border-color: var(--ci-card-border, var(--stroke-secondary, #d1dbea));
   background: var(--ci-card-bg, var(--bg-layer-0, #fcfcfc));
@@ -67,6 +65,6 @@
 }
 
 .hoverDownloadIcon {
-  background: var(--ci-card-hover-icon-bg, var(--bg-layer-2, #161b2d));
-  color: var(--ci-card-hover-icon-color, var(--text-primary, #eef1f7));
+  background: var(--ci-card-hover-icon-bg, var(--bg-layer-2, #eef1f7));
+  color: var(--ci-card-hover-icon-color, var(--text-primary, #161b2d));
 }

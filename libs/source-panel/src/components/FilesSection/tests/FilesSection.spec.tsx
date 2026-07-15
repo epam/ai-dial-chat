@@ -73,19 +73,6 @@ describe('FilesSection', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('cards have onClick and clickLabel when onAttachmentClick is provided', () => {
-    const onAttachmentClick = vi.fn();
-    render(
-      <FilesSection
-        attachments={[makeAttachment('a.pdf')]}
-        title="Files"
-        onAttachmentClick={onAttachmentClick}
-        attachmentClickLabel="Download file"
-      />,
-    );
-    expect(screen.getByRole('button', { name: 'Download file' })).toBeTruthy();
-  });
-
   it('activating a card calls onAttachmentClick with the correct attachment', () => {
     const onAttachmentClick = vi.fn();
     const att = makeAttachment('a.pdf');

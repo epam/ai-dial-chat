@@ -105,8 +105,10 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             onAttachmentClick={onAttachmentClick}
             onDownloadAll={onDownloadAll}
             onRetry={onAttachmentRetry}
-            clickLabel={attachmentClickLabel}
-            retryLabel={attachmentRetryLabel}
+            labels={{
+              clickLabel: attachmentClickLabel,
+              retryLabel: attachmentRetryLabel,
+            }}
             getSizeLabel={getAttachmentSizeLabel}
             theme={attachmentTheme}
           />
