@@ -274,20 +274,22 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
           </div>
         )}
 
-        <Controller
-          name="instructions"
-          control={control}
-          render={({ field }) => (
-            <DialMarkdownEditorContainer
-              label={t(MarketplaceI18nKeys.InstructionsMarketplace)}
-              placeholder={t(MarketplaceI18nKeys.InstructionsPlaceholder)}
-              value={field.value}
-              onChangeValue={field.onChange}
-              height={200}
-              theme={theme as EditorTheme}
-            />
-          )}
-        />
+        <div data-qa="instructions-field">
+          <Controller
+            name="instructions"
+            control={control}
+            render={({ field }) => (
+              <DialMarkdownEditorContainer
+                label={t(MarketplaceI18nKeys.InstructionsMarketplace)}
+                placeholder={t(MarketplaceI18nKeys.InstructionsPlaceholder)}
+                value={field.value}
+                onChangeValue={field.onChange}
+                height={200}
+                theme={theme as EditorTheme}
+              />
+            )}
+          />
+        </div>
 
         {showProcessLargeFiles && (
           <Controller

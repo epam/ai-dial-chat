@@ -7,7 +7,12 @@ import {
   isCodeInterpreterToolset,
 } from '@/chat/types/quick-apps';
 import dialTest from '@/src/core/dialFixtures';
-import { API, EntityEditorAppTypes, ExpectedConstants } from '@/src/testData';
+import {
+  API,
+  EntityEditorAppTypes,
+  ExpectedConstants,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
 
 dialTest(
@@ -177,21 +182,28 @@ dialTest(
 
 dialTest(
   'Code Interpreter text and hint\n' + // EPMRTC-7283
-    '[Quick app 2.0] Support of Code Interpreter tool_set in Quick App 2 editor', // EPMRTC-7018
+    '[Quick app 2.0] Support of Code Interpreter tool_set in Quick App 2 editor\n' + // EPMRTC-7018
+    '[Quick app 2.0] Instruction is auto-saved if there is some response in Preview', // EPMRTC-8152
   async ({
     marketplacePage,
     entityEditorPage,
     entityEditorHeader,
     quickApp2EditorViewForm,
     tooltipPortal,
+    dialHomePage,
+    sendMessage,
+    chatMessages,
+    chatMessagesAssertion,
     quickApp2Builder,
     applicationApiHelper,
     modelApiHelper,
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7283', 'EPMRTC-7018');
+    setTestIds('EPMRTC-7283', 'EPMRTC-7018', 'EPMRTC-8152');
     const quickAppName = GeneratorUtil.randomApplicationName();
+    const instructions = GeneratorUtil.randomString(15);
+    const updatedInstructions = GeneratorUtil.randomString(20);
 
     await dialTest.step(
       'Precondition: create a Quick app 2.0 via API with a tool-supporting orchestrator model',
@@ -263,6 +275,64 @@ dialTest(
           type: ToolsetTypes.CodeInterpreter,
           template_name: 'py_interpreter',
         });
+      },
+    );
+
+    await dialTest.step(
+      'Send a message in the preview so a response exists (mocked)',
+      async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await sendMessage.messageInput.fillInInput(
+          GeneratorUtil.randomString(10),
+        );
+        await sendMessage.sendMessageButton.click();
+        await chatMessages.getChatMessage(2).waitFor();
+        await chatMessagesAssertion.assertMessageContent(2, 'Response');
+      },
+    );
+
+    await dialTest.step(
+      'Type instructions: they are autosaved once the mouse leaves the form',
+      async () => {
+        // Autosave fires on the form's mouse-leave
+        await entityEditorPage.waitForExpectedResponses(async () => {
+          await quickApp2EditorViewForm.instructionsInput.fillInInput(
+            instructions,
+          );
+          await quickApp2EditorViewForm.instructionsInput.hoverOver();
+          await entityEditorHeader.focusOn();
+        }, [{ apiMethod: 'PUT', urlPattern: API.applicationCreateHost }]);
+      },
+    );
+
+    await dialTest.step(
+      'Update the instructions again and verify the autosave',
+      async () => {
+        await entityEditorPage.waitForExpectedResponses(async () => {
+          await quickApp2EditorViewForm.instructionsInput.fillInInput(
+            updatedInstructions,
+          );
+          await quickApp2EditorViewForm.instructionsInput.hoverOver();
+          await entityEditorHeader.focusOn();
+        }, [{ apiMethod: 'PUT', urlPattern: API.applicationCreateHost }]);
+      },
+    );
+
+    await dialTest.step(
+      'Switch to General info and back to App settings: the instructions persist',
+      async () => {
+        await entityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
+          isHttpMethodTriggered: false,
+        });
+        await entityEditorHeader.goToEntitySettingsStepWithHeaderStepper({
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertInputValue(
+          quickApp2EditorViewForm.instructionsInput,
+          updatedInstructions,
+        );
       },
     );
   },

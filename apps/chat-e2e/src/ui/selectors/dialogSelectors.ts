@@ -346,6 +346,8 @@ export const AddQuickApp2SettingsFormSelector = {
   changeModelButtonLabel: 'Change', // aria-label of the model "Change" button
   temperatureSlider: '[data-qa="temp-slider"]', // shown only for temperature-capable models
   orchestratorModelError: '[data-qa="error-message"]', // validation error under the model field
+  instructionsField: '[data-qa="instructions-field"]',
+  instructionsInput: 'textarea', // the markdown editor's edit textarea (single one in the field)
 
   // Context & Tools subsections
   agentsAndToolsetsField: '[data-qa="agents-and-toolsets-field"]',

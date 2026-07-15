@@ -34,6 +34,13 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
     this.orchestratorSection.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.orchestratorModelError,
     );
+  // Instructions markdown editor + its edit textarea
+  public instructionsField = this.orchestratorSection.getChildElementBySelector(
+    AddQuickApp2SettingsFormSelector.instructionsField,
+  );
+  public instructionsInput = this.instructionsField.getChildElementBySelector(
+    AddQuickApp2SettingsFormSelector.instructionsInput,
+  );
   public contextToolsSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.contextToolsSection,
   );
