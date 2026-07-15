@@ -7,6 +7,12 @@ export interface SidebarPanelColors {
   background?: string;
   /** Divider border color on the inner edge. */
   border?: string;
+  /** Border color on the outer (inline-end) edge. Defaults to `border`. */
+  borderInlineEnd?: string;
+  /** Header text color. */
+  text?: string;
+  /** Resize handle color (icon and background). */
+  resizeHandler?: string;
 }
 
 /** Typography overrides for the `SidebarPanel` component. */
@@ -18,6 +24,17 @@ export interface SidebarPanelTypography {
   fontClassName?: string;
   /** Font family applied to the panel root via CSS custom property. */
   fontFamily?: string;
+}
+
+/** Localised accessible labels for the `SidebarPanel` component. */
+export interface SidebarPanelLabels {
+  /** Accessible label for the panel region. Caller supplies the localised string. */
+  ariaLabel: string;
+  /**
+   * Accessible label and tooltip for the built-in close button.
+   * Required when `onClose` is provided.
+   */
+  closeLabel?: string;
 }
 
 /** Combined style overrides (colors and typography) for the `SidebarPanel` component. */
@@ -33,6 +50,10 @@ export interface SidebarPanelStyles {
   titleClassName?: string;
   /** Extra class name(s) merged onto the scrollable body `<div>`. */
   bodyClassName?: string;
+  /** Extra class name(s) merged onto the panel width wrapper `<div>`. */
+  className?: string;
+  /** CSS class applied to the header element. */
+  headerClassName?: string;
   /** CSS custom properties applied to the panel `<aside>` element. */
   cssVars?: CSSProperties;
 }
@@ -47,7 +68,7 @@ export interface SidebarPanelProps {
   isOpen: boolean;
   /**
    * Which edge the panel anchors to.
-   * Controls the divider side (`border-l` vs `border-r`) and
+   * Controls the divider side (`border-s` vs `border-e`) and
    * the close-button placement (outer edge of the panel).
    * `leftActions` / `rightActions` are header-bar positions and are
    * independent of this prop.
@@ -71,19 +92,10 @@ export interface SidebarPanelProps {
    * When omitted the close button is not rendered.
    */
   onClose?: () => void;
-  /** Accessible label for the panel region. Caller supplies the localised string. */
-  ariaLabel: string;
-  /**
-   * Accessible label and tooltip for the built-in close button.
-   * Required when `onClose` is provided.
-   */
-  closeLabel?: string;
+  /** Localised accessible labels for the panel region and close button. */
+  labels: SidebarPanelLabels;
   /** Body content rendered below the header bar in the scrollable region. */
   children: ReactNode;
-  /** Extra class name(s) merged onto the panel width wrapper `<div>`. */
-  className?: string;
-  /** CSS class applied to the header element. */
-  headerClassName?: string;
   /** Style overrides for colors, typography, and element class names. */
   styles?: SidebarPanelStyles;
   /**

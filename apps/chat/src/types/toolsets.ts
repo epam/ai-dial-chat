@@ -72,6 +72,8 @@ export interface ToolsetFormErrors {
   apiKey?: string;
   clientId?: string;
   clientSecret?: string;
+  authorizationEndpoint?: string;
+  tokenEndpoint?: string;
 }
 
 /**

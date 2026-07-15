@@ -3,10 +3,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToolsetEditorI18nKeys } from '../../../../constants/translation-keys';
+import {
+  ApiI18nKeys,
+  ButtonsI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../../../../constants/translation-keys';
 import { useNotification } from '../../../../context/NotificationContext';
 import * as toolsetsApi from '../../../../server-api/toolsets';
-import type { ToolsetAuthFormData } from '../../../../types/toolsets';
+import type {
+  ToolsetAuthFormData,
+  ToolsetFormErrors,
+} from '../../../../types/toolsets';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
@@ -187,11 +194,12 @@ const renderSection = (
   toolsetId = 'toolsets/b/my__1.0.0',
   onAuthChange = vi.fn(),
   endpoint = VALID_ENDPOINT,
+  errors: ToolsetFormErrors = {},
 ) =>
   render(
     <AuthSection
       auth={auth}
-      errors={{}}
+      errors={errors}
       isSaving={false}
       toolsetId={toolsetId}
       endpoint={endpoint}
@@ -207,6 +215,10 @@ describe('AuthSection', () => {
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: { origin: 'http://localhost', href: 'http://localhost/' },
+    });
+    Object.defineProperty(window, 'open', {
+      configurable: true,
+      value: vi.fn(),
     });
     vi.mocked(useNotification).mockReturnValue({
       notifications: [],
@@ -245,6 +257,36 @@ describe('AuthSection', () => {
         }),
       );
     });
+
+    it('defaults a fresh OAuth selection to WithConfig so config fields are visible immediately', async () => {
+      const onAuthChange = vi.fn();
+      renderSection(noneAuth(), 'toolsets/b/my__1.0.0', onAuthChange);
+      await user.click(
+        screen.getByRole('button', {
+          name: new RegExp(ToolsetEditorI18nKeys.AuthTypeOAuth, 'i'),
+        }),
+      );
+      expect(onAuthChange).toHaveBeenCalledWith(
+        expect.objectContaining({ withLogin: WithLogin.WithConfig }),
+      );
+    });
+
+    it('defaults an OAuth selection to WithLogin when a client is already configured', async () => {
+      const onAuthChange = vi.fn();
+      renderSection(
+        { ...apiKeyAuth(), clientId: 'existing-client' },
+        'toolsets/b/my__1.0.0',
+        onAuthChange,
+      );
+      await user.click(
+        screen.getByRole('button', {
+          name: new RegExp(ToolsetEditorI18nKeys.AuthTypeOAuth, 'i'),
+        }),
+      );
+      expect(onAuthChange).toHaveBeenCalledWith(
+        expect.objectContaining({ withLogin: WithLogin.WithLogin }),
+      );
+    });
   });
 
   describe('API Key conditional fields', () => {
@@ -253,9 +295,24 @@ describe('AuthSection', () => {
       expect(
         screen.getByLabelText(ToolsetEditorI18nKeys.KeyHeaderLabel),
       ).toBeTruthy();
+      expect(screen.getByLabelText(ApiI18nKeys.ApiKey)).toBeTruthy();
+    });
+
+    it('renders only the key header input when ApiKey + WithoutLogin is active', () => {
+      renderSection({
+        ...apiKeyAuth(),
+        withLogin: WithLogin.WithoutLogin,
+        apiKey: '',
+      });
       expect(
-        screen.getByLabelText(ToolsetEditorI18nKeys.ApiKeyLabel),
+        screen.getByLabelText(ToolsetEditorI18nKeys.KeyHeaderLabel),
       ).toBeTruthy();
+
+      expect(
+        screen.queryByRole('button', {
+          name: ButtonsI18nKeys.LogIn,
+        }),
+      ).toBeNull();
     });
 
     it('renders WithLogin and WithoutLogin radio buttons for ApiKey', () => {
@@ -298,6 +355,28 @@ describe('AuthSection', () => {
         screen.getByLabelText(ToolsetEditorI18nKeys.WithConfigLabel),
       ).toBeTruthy();
     });
+
+    it('renders OAuth endpoint URL validation errors', () => {
+      renderSection(
+        oauthWithConfigAuth(),
+        'toolsets/b/my__1.0.0',
+        vi.fn(),
+        VALID_ENDPOINT,
+        {
+          authorizationEndpoint: ToolsetEditorI18nKeys.EndpointInvalid,
+          tokenEndpoint: ToolsetEditorI18nKeys.EndpointInvalid,
+        },
+      );
+
+      const errors = screen.getAllByRole('alert');
+      expect(errors).toHaveLength(2);
+      expect(errors[0]?.textContent).toContain(
+        ToolsetEditorI18nKeys.EndpointInvalid,
+      );
+      expect(errors[1]?.textContent).toContain(
+        ToolsetEditorI18nKeys.EndpointInvalid,
+      );
+    });
   });
 
   describe('OAuth login redirect', () => {
@@ -306,7 +385,7 @@ describe('AuthSection', () => {
       renderSection(oauthWithConfigAuth());
       await user.click(
         screen.getByRole('button', {
-          name: ToolsetEditorI18nKeys.LogInButton,
+          name: ButtonsI18nKeys.LogIn,
         }),
       );
       expect(openSpy).toHaveBeenCalledOnce();
@@ -326,7 +405,7 @@ describe('AuthSection', () => {
       });
       await user.click(
         screen.getByRole('button', {
-          name: ToolsetEditorI18nKeys.LogInButton,
+          name: ButtonsI18nKeys.LogIn,
         }),
       );
       expect(openSpy).not.toHaveBeenCalled();
@@ -335,7 +414,7 @@ describe('AuthSection', () => {
     it('enables the Log In button before the toolset is saved when the form is valid', () => {
       renderSection(oauthWithConfigAuth(), '', vi.fn());
       const btn = screen.getByRole('button', {
-        name: ToolsetEditorI18nKeys.LogInButton,
+        name: ButtonsI18nKeys.LogIn,
       }) as HTMLButtonElement;
       expect(btn.disabled).toBe(false);
     });
@@ -348,7 +427,7 @@ describe('AuthSection', () => {
       renderSection(apiKeyAuth(), 'toolsets/b/my__1.0.0', onAuthChange);
       await user.click(
         screen.getByRole('button', {
-          name: ToolsetEditorI18nKeys.LogInButton,
+          name: ButtonsI18nKeys.LogIn,
         }),
       );
       await waitFor(() =>
@@ -367,7 +446,7 @@ describe('AuthSection', () => {
       renderSection(apiKeyAuth());
       await user.click(
         screen.getByRole('button', {
-          name: ToolsetEditorI18nKeys.LogInButton,
+          name: ButtonsI18nKeys.LogIn,
         }),
       );
       await waitFor(() =>
@@ -381,7 +460,7 @@ describe('AuthSection', () => {
     it('disables the Log In button when endpoint is empty', () => {
       renderSection(apiKeyAuth(), 'toolsets/b/my__1.0.0', vi.fn(), '');
       const btn = screen.getByRole('button', {
-        name: ToolsetEditorI18nKeys.LogInButton,
+        name: ButtonsI18nKeys.LogIn,
       }) as HTMLButtonElement;
       expect(btn.disabled).toBe(true);
     });
@@ -389,7 +468,7 @@ describe('AuthSection', () => {
     it('disables the Log In button when endpoint is invalid', () => {
       renderSection(apiKeyAuth(), 'toolsets/b/my__1.0.0', vi.fn(), 'not-url');
       const btn = screen.getByRole('button', {
-        name: ToolsetEditorI18nKeys.LogInButton,
+        name: ButtonsI18nKeys.LogIn,
       }) as HTMLButtonElement;
       expect(btn.disabled).toBe(true);
     });
@@ -397,7 +476,7 @@ describe('AuthSection', () => {
     it('enables the Log In button before the toolset is saved when the form is valid', () => {
       renderSection(apiKeyAuth(), '', vi.fn(), VALID_ENDPOINT);
       const btn = screen.getByRole('button', {
-        name: ToolsetEditorI18nKeys.LogInButton,
+        name: ButtonsI18nKeys.LogIn,
       }) as HTMLButtonElement;
       expect(btn.disabled).toBe(false);
     });
@@ -410,7 +489,7 @@ describe('AuthSection', () => {
         VALID_ENDPOINT,
       );
       const btn = screen.getByRole('button', {
-        name: ToolsetEditorI18nKeys.LogInButton,
+        name: ButtonsI18nKeys.LogIn,
       }) as HTMLButtonElement;
       expect(btn.disabled).toBe(true);
     });
@@ -423,7 +502,7 @@ describe('AuthSection', () => {
         VALID_ENDPOINT,
       );
       const btn = screen.getByRole('button', {
-        name: ToolsetEditorI18nKeys.LogInButton,
+        name: ButtonsI18nKeys.LogIn,
       }) as HTMLButtonElement;
       expect(btn.disabled).toBe(true);
     });

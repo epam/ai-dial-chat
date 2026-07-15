@@ -168,6 +168,9 @@ const DialFileManagerPage: FC = () => {
       moveSourceDisabledTooltip: t(
         DialFileManagerI18nKeys.MoveSourceDisabledTooltip,
       ),
+      folderPickerLoadingTooltip: t(
+        DialFileManagerI18nKeys.FolderPickerLoadingTooltip,
+      ),
       folderPickerEmptyStateTitle: t(
         DialFileManagerI18nKeys.FolderPickerEmptyStateTitle,
       ),
@@ -228,18 +231,12 @@ const DialFileManagerPage: FC = () => {
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
       getShareModalTitle: (name: string) =>
         t(DialFileManagerI18nKeys.ShareModalTitle, { name }),
-      shareModalReadPermissionLabel: t(
-        DialFileManagerI18nKeys.ShareModalReadPermission,
-      ),
-      shareModalReadWritePermissionLabel: t(
-        DialFileManagerI18nKeys.ShareModalReadWritePermission,
-      ),
+      shareModalReadPermissionLabel: t(BasicI18nKeys.CanView),
+      shareModalReadWritePermissionLabel: t(BasicI18nKeys.CanEdit),
       shareModalCreateLinkButtonLabel: t(
         DialFileManagerI18nKeys.ShareModalCreateLinkButton,
       ),
-      shareModalCopyLinkButtonLabel: t(
-        DialFileManagerI18nKeys.ShareModalCopyLinkButton,
-      ),
+      shareModalCopyLinkButtonLabel: t(ButtonsI18nKeys.CopyLink),
       shareModalLinkCopiedConfirmation: t(
         DialFileManagerI18nKeys.ShareModalLinkCopiedConfirmation,
       ),

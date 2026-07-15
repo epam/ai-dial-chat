@@ -132,6 +132,10 @@ export interface UseDialFileManagerResult {
   loadedPaths: Set<string>;
   /** Tree: called by DialFileManager when a folder is expanded/collapsed. */
   onExpandedPathsChange: (paths: Set<string>) => void;
+  /** Destination folder popup: preloads the browsed folder without changing the outer grid path. */
+  onFolderPopupPathChange: (nextPath?: string) => void;
+  /** Destination folder popup: normalized virtual paths currently being preloaded. */
+  folderPopupLoadingPaths: Set<string>;
 
   /** Upload: start a new batch. */
   onUploadFiles: (
@@ -270,6 +274,17 @@ interface FileManagerNotification {
   message: string;
 }
 
+interface PreparedCopyMoveItem<TDto> {
+  dto: TDto;
+  destinationName: string;
+}
+
+interface CopyMoveResult {
+  success?: boolean;
+  sourcePath?: string;
+  destinationPath?: string;
+}
+
 const UPLOAD_CONCURRENCY = 3;
 const RESERVED_MARKER_NAME = HIDDEN_FILE;
 
@@ -315,6 +330,41 @@ const mapCorePermissions = (
 const normalizeVirtualPath = (value: string): string => {
   const trimmed = value.replace(/\/+$/, '');
   return trimmed || '/';
+};
+
+const getVirtualPathName = (virtualPath: string, fallback: string): string => {
+  const segments = virtualPath.split('/').filter(Boolean);
+  return safeDecodeURI(segments[segments.length - 1] ?? fallback);
+};
+
+const formatOperationFolderName = (
+  destinationFolder: string,
+  rootLabel: string,
+): string =>
+  normalizeVirtualPath(destinationFolder || `/${rootLabel}`).replace(
+    /^\/+/,
+    '',
+  ) || rootLabel;
+
+const findFirstSuccessfulCopyMoveItem = <TDto extends CopyMoveResult>(
+  items: PreparedCopyMoveItem<TDto>[],
+  results: CopyMoveResult[],
+): PreparedCopyMoveItem<TDto> | undefined => {
+  const firstSuccessfulResult = results.find((result) => result.success);
+  if (firstSuccessfulResult == null) return undefined;
+
+  return (
+    items.find(
+      ({ dto }) =>
+        dto.sourcePath === firstSuccessfulResult.sourcePath &&
+        dto.destinationPath === firstSuccessfulResult.destinationPath,
+    ) ??
+    items.find(
+      ({ dto }) =>
+        dto.destinationPath === firstSuccessfulResult.destinationPath,
+    ) ??
+    items[0]
+  );
 };
 
 const findFolderByVirtualPath = (
@@ -792,6 +842,9 @@ export const useDialFileManager = ({
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
     () => new Set(),
   );
+  const [folderPopupLoadingPaths, setFolderPopupLoadingPaths] = useState<
+    Set<string>
+  >(() => new Set());
 
   // Clear cache and reset path on tab switch
   const prevTabRef = useRef(activeTab);
@@ -805,6 +858,7 @@ export const useDialFileManager = ({
     sharedRootMetaRef.current = new Map();
     expandingApiPathsRef.current = new Set();
     erroredApiPathsRef.current = new Set();
+    setFolderPopupLoadingPaths(new Set());
     if (searchDebounceRef.current != null) {
       clearTimeout(searchDebounceRef.current);
       searchDebounceRef.current = null;
@@ -979,6 +1033,68 @@ export const useDialFileManager = ({
     setRetryCounter((c) => c + 1);
   }, []);
 
+  const onFolderPopupPathChange = useCallback(
+    (nextPath?: string) => {
+      const apiPath =
+        nextPath == null ? '' : virtualPathToApiPath(nextPath, rootLabel);
+      const virtualPath =
+        nextPath == null ? `/${rootLabel}` : normalizeVirtualPath(nextPath);
+
+      if (cacheRef.current.has(apiPath)) {
+        return;
+      }
+
+      if (expandingApiPathsRef.current.has(apiPath)) {
+        setFolderPopupLoadingPaths((prev) => {
+          const next = new Set(prev);
+          next.add(virtualPath);
+          return next;
+        });
+        return;
+      }
+
+      expandingApiPathsRef.current.add(apiPath);
+      setFolderPopupLoadingPaths((prev) => {
+        const next = new Set(prev);
+        next.add(virtualPath);
+        return next;
+      });
+
+      const loadFolder = async (): Promise<void> => {
+        try {
+          const { items: flat, permissions } = await fetchByTab(
+            activeTab,
+            bucket,
+            apiPath,
+            sharedRootMetaRef.current,
+          );
+          setCache((prev) => new Map(prev).set(apiPath, flat));
+          if (permissions != null) {
+            setListingPermissionsCache((prev) =>
+              new Map(prev).set(apiPath, permissions),
+            );
+          }
+          erroredApiPathsRef.current.delete(apiPath);
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.FolderLoadError),
+          });
+        } finally {
+          expandingApiPathsRef.current.delete(apiPath);
+          setFolderPopupLoadingPaths((prev) => {
+            const next = new Set(prev);
+            next.delete(virtualPath);
+            return next;
+          });
+        }
+      };
+
+      void loadFolder();
+    },
+    [activeTab, bucket, onNotification, rootLabel, t],
+  );
+
   const loadedPaths = useMemo(() => {
     const result = new Set<string>();
     for (const virtualPath of expandedPaths) {
@@ -1036,6 +1152,11 @@ export const useDialFileManager = ({
             });
           } finally {
             expandingApiPathsRef.current.delete(apiPath);
+            setFolderPopupLoadingPaths((prev) => {
+              const next = new Set(prev);
+              next.delete(normalizeVirtualPath(virtualPath));
+              return next;
+            });
           }
         };
         void loadFolder();
@@ -1497,8 +1618,7 @@ export const useDialFileManager = ({
           const isFolder = item.nodeType === DialFileNodeType.FOLDER;
           const apiPath = virtualPathToApiPath(item.sourceUrl, rootLabel);
           const relPath = isFolder ? apiPath : apiPath.replace(/\/$/, '');
-          const segments = item.sourceUrl.split('/').filter(Boolean);
-          const name = segments[segments.length - 1] ?? relPath;
+          const name = getVirtualPathName(item.sourceUrl, relPath);
           const { bucket: itemBucket, path: itemPath } =
             activeTab === DialFileManagerTabs.Shared
               ? resolveOwnerCoords(relPath, sharedRootMetaRef.current, bucket)
@@ -1802,7 +1922,7 @@ export const useDialFileManager = ({
   );
 
   const onCopyFiles = useCallback(
-    (copiedItems: DialCopiedItem[], _destinationFolder: string) => {
+    (copiedItems: DialCopiedItem[], destinationFolder: string) => {
       if (copiedItems.length === 0 || isCopying || isMoving) return;
 
       const controller = new AbortController();
@@ -1811,37 +1931,76 @@ export const useDialFileManager = ({
       const run = async () => {
         setIsCopying(true);
 
-        const dtos: CopyItemDto[] = copiedItems.map((item) => {
-          const isFolder = item.nodeType === DialFileNodeType.FOLDER;
-          const sourcePath = virtualPathToApiPath(item.sourceUrl, rootLabel);
-          const destinationPath = virtualPathToApiPath(
-            item.destinationUrl,
-            rootLabel,
-          );
-          const segments = item.sourceUrl.split('/').filter(Boolean);
-          const name = segments[segments.length - 1] ?? sourcePath;
-          return {
-            bucket,
-            sourcePath: isFolder
-              ? sourcePath.endsWith('/')
-                ? sourcePath
-                : `${sourcePath}/`
-              : sourcePath.replace(/\/$/, ''),
-            destinationPath: isFolder
-              ? destinationPath.endsWith('/')
-                ? destinationPath
-                : `${destinationPath}/`
-              : destinationPath.replace(/\/$/, ''),
-            nodeType: isFolder
-              ? CopyItemDtoNodeTypeEnum.Folder
-              : CopyItemDtoNodeTypeEnum.Item,
-            name,
-          };
-        });
+        const preparedItems: PreparedCopyMoveItem<CopyItemDto>[] =
+          copiedItems.map((item) => {
+            const isFolder = item.nodeType === DialFileNodeType.FOLDER;
+            const sourcePath = virtualPathToApiPath(item.sourceUrl, rootLabel);
+            const destinationPath = virtualPathToApiPath(
+              item.destinationUrl,
+              rootLabel,
+            );
+            const name = getVirtualPathName(item.sourceUrl, sourcePath);
+            const destinationName = getVirtualPathName(
+              item.destinationUrl,
+              destinationPath,
+            );
+            return {
+              destinationName,
+              dto: {
+                bucket,
+                sourcePath: isFolder
+                  ? sourcePath.endsWith('/')
+                    ? sourcePath
+                    : `${sourcePath}/`
+                  : sourcePath.replace(/\/$/, ''),
+                destinationPath: isFolder
+                  ? destinationPath.endsWith('/')
+                    ? destinationPath
+                    : `${destinationPath}/`
+                  : destinationPath.replace(/\/$/, ''),
+                overwrite: item.overwrite === true,
+                nodeType: isFolder
+                  ? CopyItemDtoNodeTypeEnum.Folder
+                  : CopyItemDtoNodeTypeEnum.Item,
+                name,
+              },
+            };
+          });
+        const dtos = preparedItems.map(({ dto }) => dto);
 
         try {
           const { results } = await copyFiles(dtos, controller.signal);
           const failedCount = results.filter((r) => !r.success).length;
+          const successCount = results.length - failedCount;
+
+          if (successCount > 0) {
+            const firstSuccessfulItem = findFirstSuccessfulCopyMoveItem(
+              preparedItems,
+              results,
+            );
+
+            onNotification?.({
+              variant: NotificationVariant.Success,
+              title: t(
+                successCount === 1
+                  ? DialFileManagerI18nKeys.ItemCopiedSuccessfully
+                  : DialFileManagerI18nKeys.ItemsCopiedSuccessfully,
+              ),
+              message: t(
+                successCount === 1
+                  ? DialFileManagerI18nKeys.ItemCopiedToFolder
+                  : DialFileManagerI18nKeys.ItemsCopiedToFolder,
+                {
+                  count: successCount,
+                  fileName: firstSuccessfulItem?.destinationName,
+                  folder: formatOperationFolderName(
+                    destinationFolder,
+                    rootLabel,
+                  ),
+                },
+              ),
+            });
+          }
 
           if (failedCount > 0 && failedCount < results.length) {
             onNotification?.({
@@ -1895,7 +2054,7 @@ export const useDialFileManager = ({
     (
       copiedItems: DialCopiedItem[],
       _sourceFolder: string,
-      _destinationFolder: string,
+      destinationFolder: string,
     ) => {
       if (copiedItems.length === 0 || isCopying || isMoving || isRenaming) {
         return;
@@ -1908,8 +2067,11 @@ export const useDialFileManager = ({
           item.destinationUrl,
           rootLabel,
         );
-        const segments = item.sourceUrl.split('/').filter(Boolean);
-        const name = segments[segments.length - 1] ?? sourcePath;
+        const name = getVirtualPathName(item.sourceUrl, sourcePath);
+        const destinationName = getVirtualPathName(
+          item.destinationUrl,
+          destinationPath,
+        );
         const normalizedSourcePath = isFolder
           ? sourcePath.endsWith('/')
             ? sourcePath
@@ -1923,6 +2085,8 @@ export const useDialFileManager = ({
         return {
           isFolder,
           name,
+          destinationName,
+          overwrite: item.overwrite === true,
           sourcePath: normalizedSourcePath,
           destinationPath: normalizedDestinationPath,
           sourceParent: getParentFolderPath(normalizedSourcePath),
@@ -1942,17 +2106,22 @@ export const useDialFileManager = ({
           name: b.name,
         }));
 
-      const moveDtos: MoveItemDto[] = built
+      const preparedMoveItems: PreparedCopyMoveItem<MoveItemDto>[] = built
         .filter((b) => b.sourceParent !== b.destinationParent)
         .map((b) => ({
-          bucket,
-          sourcePath: b.sourcePath,
-          destinationPath: b.destinationPath,
-          nodeType: b.isFolder
-            ? MoveItemDtoNodeTypeEnum.Folder
-            : MoveItemDtoNodeTypeEnum.Item,
-          name: b.name,
+          destinationName: b.destinationName,
+          dto: {
+            bucket,
+            sourcePath: b.sourcePath,
+            destinationPath: b.destinationPath,
+            overwrite: b.overwrite,
+            nodeType: b.isFolder
+              ? MoveItemDtoNodeTypeEnum.Folder
+              : MoveItemDtoNodeTypeEnum.Item,
+            name: b.name,
+          },
         }));
+      const moveDtos = preparedMoveItems.map(({ dto }) => dto);
 
       const controller = new AbortController();
       if (moveDtos.length > 0) {
@@ -2011,10 +2180,39 @@ export const useDialFileManager = ({
           : moveOutcome.threw
             ? moveDtos.length
             : moveOutcome.results.filter((r) => !r.success).length;
+        const moveSuccessCount = moveOutcome.threw
+          ? 0
+          : moveOutcome.results.filter((r) => r.success).length;
 
         const totalCount = renameDtos.length + moveTotal;
         const totalFailed = renameFailedCount + moveFailedCount;
         const useMoveCopy = moveFailedCount > 0;
+
+        if (moveSuccessCount > 0) {
+          const firstSuccessfulItem = findFirstSuccessfulCopyMoveItem(
+            preparedMoveItems,
+            moveOutcome.results,
+          );
+
+          onNotification?.({
+            variant: NotificationVariant.Success,
+            title: t(
+              moveSuccessCount === 1
+                ? DialFileManagerI18nKeys.ItemMovedSuccessfully
+                : DialFileManagerI18nKeys.ItemsMovedSuccessfully,
+            ),
+            message: t(
+              moveSuccessCount === 1
+                ? DialFileManagerI18nKeys.ItemMovedToFolder
+                : DialFileManagerI18nKeys.ItemsMovedToFolder,
+              {
+                count: moveSuccessCount,
+                fileName: firstSuccessfulItem?.destinationName,
+                folder: formatOperationFolderName(destinationFolder, rootLabel),
+              },
+            ),
+          });
+        }
 
         if (totalFailed > 0) {
           if (totalFailed === totalCount) {
@@ -2181,6 +2379,8 @@ export const useDialFileManager = ({
     expandedPaths,
     loadedPaths,
     onExpandedPathsChange,
+    onFolderPopupPathChange,
+    folderPopupLoadingPaths,
     onUploadFiles,
     onUploadArchive,
     onValidateUpload,

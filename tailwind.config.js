@@ -25,6 +25,7 @@ const backgroundsColors = {
   'catalog-badge-inactive': 'var(--cat-badge-inactive-bg, #F3F4F6)',
   'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC2E)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
+  'transparent-black': 'var(--bg-transparent-black, rgb(0 0 0 / 0))',
 };
 
 const controlsBgColors = {

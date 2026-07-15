@@ -17,5 +17,6 @@ export enum ROUTES {
    * toolset's registered redirect_uri first.
    */
   ToolsetEditorCallback = '/toolset-editor/callback',
+  ToolsetSignIn = '/auth/toolset-signin',
   FileManager = '/files',
 }

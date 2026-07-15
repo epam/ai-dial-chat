@@ -12,7 +12,6 @@ export interface HeaderProps {
   title?: ReactNode;
   /**
    * CSS class applied to the title element.
-   * Defaults to `'dial-body-semi-bold-text'`.
    */
   titleClassName?: string;
   /** CSS class applied to the root element. */

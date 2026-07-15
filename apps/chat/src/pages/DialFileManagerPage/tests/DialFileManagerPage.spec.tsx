@@ -149,6 +149,8 @@ const defaultHookResult: UseDialFileManagerResult = {
   expandedPaths: new Set(),
   loadedPaths: new Set(),
   onExpandedPathsChange: vi.fn(),
+  onFolderPopupPathChange: vi.fn(),
+  folderPopupLoadingPaths: new Set(),
   onUploadFiles: vi.fn(),
   onUploadArchive: vi.fn(),
   onValidateUpload: vi.fn(),

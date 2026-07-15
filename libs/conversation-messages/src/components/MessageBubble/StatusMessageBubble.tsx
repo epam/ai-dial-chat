@@ -22,10 +22,12 @@ export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
   bodyText,
 }) => {
   return (
-    <DialNotification
-      title={titleText}
-      message={bodyText}
-      textClassName="flex-row flex-wrap gap-1"
-    />
+    <div role="status" aria-live="polite">
+      <DialNotification
+        title={titleText}
+        message={bodyText}
+        textClassName="flex-row flex-wrap gap-1"
+      />
+    </div>
   );
 };

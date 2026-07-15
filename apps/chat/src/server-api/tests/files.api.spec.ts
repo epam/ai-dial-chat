@@ -4,7 +4,7 @@ import type {
 } from '@epam/chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { filesApi } from '../api-client';
-import { getFileMetadata, listFiles } from '../files.api';
+import { downloadFile, getFileMetadata, listFiles } from '../files.api';
 
 const MOCK_RESPONSE: ListFilesResponseDto = {
   bucket: 'my-bucket',
@@ -108,5 +108,41 @@ describe('getFileMetadata', () => {
     await expect(
       getFileMetadata({ bucket: 'my-bucket', path: 'missing.pdf' }),
     ).rejects.toBe(error);
+  });
+});
+
+describe('downloadFile', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('delegates to downloadFileRaw and returns the raw Response', async () => {
+    const rawResponse = new Response(new Blob(['bytes']));
+    vi.spyOn(filesApi, 'downloadFileRaw').mockResolvedValue({
+      raw: rawResponse,
+    } as never);
+
+    const result = await downloadFile('my-bucket', 'reports/file.pdf');
+
+    expect(filesApi.downloadFileRaw).toHaveBeenCalledWith({
+      bucket: 'my-bucket',
+      path: 'reports/file.pdf',
+    });
+    expect(result).toBe(rawResponse);
+  });
+
+  it('passes an AbortSignal through to the generated client when provided', async () => {
+    const rawResponse = new Response(new Blob(['bytes']));
+    vi.spyOn(filesApi, 'downloadFileRaw').mockResolvedValue({
+      raw: rawResponse,
+    } as never);
+    const controller = new AbortController();
+
+    await downloadFile('my-bucket', 'reports/file.pdf', controller.signal);
+
+    expect(filesApi.downloadFileRaw).toHaveBeenCalledWith(
+      { bucket: 'my-bucket', path: 'reports/file.pdf' },
+      { signal: controller.signal },
+    );
   });
 });
