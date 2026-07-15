@@ -12,28 +12,29 @@ import { GeneratorUtil } from '@/src/utils';
 
 dialTest(
   "[Quick app 2.0] Only Model with the feature 'tools: true' can be set as Orchestrator\n" + // EPMRTC-7271
-    "[Quick app 2.0] Temperature is not shown on App setting if 'temperature: false' and vice versa", // EPMRTC-7092
+    "[Quick app 2.0] Temperature is not shown on App setting if 'temperature: false' and vice versa\n" + // EPMRTC-7092
+    "[Quick app 2.0] 'Selected model does not support tools' error when the preselected model has no tools support", // EPMRTC-8558
   async ({
     marketplacePage,
     entityEditorPage,
-    entityEditorGeneralForm,
     quickApp2EditorViewForm,
     talkToAgentDialog,
     customApplicationBuilder,
+    quickApp2Builder,
     applicationApiHelper,
     modelApiHelper,
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7271', 'EPMRTC-7092');
-    const appName = GeneratorUtil.randomApplicationName();
+    setTestIds('EPMRTC-7271', 'EPMRTC-7092', 'EPMRTC-8558');
     const excludedAppName = GeneratorUtil.randomApplicationName();
+    const quickAppName = GeneratorUtil.randomApplicationName();
     let modelNoTemperature: DialAIEntityModel;
     let modelWithTemperature: DialAIEntityModel;
     let toolsUnsupportedModel: DialAIEntityModel;
 
     await dialTest.step(
-      'Precondition: create a custom application and pick models by their feature flags',
+      'Precondition: create a custom app, pick models by feature flags and a Quick app 2.0 with a non-tools orchestrator',
       async () => {
         await applicationApiHelper.createApplication(
           customApplicationBuilder.withDisplayName(excludedAppName).build(),
@@ -53,22 +54,28 @@ dialTest(
           (entity) =>
             entity.type === EntityType.Model && !entity.features?.tools,
         )!;
+        await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(quickAppName)
+            .withOrchestratorModel(toolsUnsupportedModel.id)
+            .build(),
+        );
       },
     );
 
     await dialTest.step(
-      'Open Quick app 2.0 creation page and proceed to App settings step',
+      'Open the Quick app 2.0 in edit mode: the non-tools orchestrator shows the error',
       async () => {
-        await marketplacePage.openCreateQuickApp2Page({
-          updateInstalledEntities: false,
+        const quickApp = await modelApiHelper.getAgentByNameAndVersion({
+          name: quickAppName,
         });
-        await entityEditorPage.waitForPageLoaded(
-          EntityEditorAppTypes.QuickApp2,
-        );
-        await entityEditorGeneralForm.fillInEntityFields({ name: appName });
-        await entityEditorGeneralForm.goNext();
+        await marketplacePage.openEditQuickApp2Page(quickApp.reference);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorAppTypes.QuickApp2,
+        );
+        await baseAssertion.assertElementText(
+          quickApp2EditorViewForm.orchestratorModelError,
+          ExpectedConstants.selectedModelDoesNotSupportToolsError,
         );
       },
     );
@@ -118,7 +125,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select the tool-supporting model without temperature and verify the temperature slider is hidden',
+      'Select the tool-supporting model without temperature: the error clears and the temperature slider is hidden',
       async () => {
         await talkToAgentDialog
           .getSearch()
@@ -130,6 +137,10 @@ dialTest(
         await baseAssertion.assertElementInnerText(
           quickApp2EditorViewForm.orchestratorModelName,
           [modelNoTemperature.name],
+        );
+        await baseAssertion.assertElementState(
+          quickApp2EditorViewForm.orchestratorModelError,
+          'hidden',
         );
         await baseAssertion.assertElementState(
           quickApp2EditorViewForm.temperatureSlider,
@@ -257,7 +268,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   "[Quick app 2.0] 'Selected model does not support tools' error when the preselected model has no tools support", // EPMRTC-8558
   async ({
     marketplacePage,
