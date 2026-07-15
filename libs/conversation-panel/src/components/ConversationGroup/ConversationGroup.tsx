@@ -23,7 +23,10 @@ export interface ConversationGroupProps {
    */
   getActions?: (item: ConversationItem) => DropdownItem[];
   /** Called when a row action menu opens. */
-  onActionMenuOpen?: (item: ConversationItem, trigger: HTMLButtonElement) => void;
+  onActionMenuOpen?: (
+    item: ConversationItem,
+    trigger: HTMLButtonElement,
+  ) => void;
   /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
   /** Typography class applied to the group header button. Defaults to `'dial-tiny-semi-text uppercase'`. */
