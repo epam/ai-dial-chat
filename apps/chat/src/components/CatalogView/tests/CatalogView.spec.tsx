@@ -16,7 +16,7 @@ import { useAppConfig } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
-import { useCatalogPublishFolders } from '../../../hooks/catalog/useCatalogPublishFolders';
+import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
@@ -348,8 +348,8 @@ vi.mock(
   }),
 );
 
-vi.mock('../../../hooks/catalog/useCatalogPublishFolders', () => ({
-  useCatalogPublishFolders: vi.fn(),
+vi.mock('../../../hooks/publish/usePublishFolders', () => ({
+  usePublishFolders: vi.fn(),
 }));
 
 describe('CatalogView', () => {
@@ -405,7 +405,7 @@ describe('CatalogView', () => {
       isLoading: false,
       toggleFavorite: vi.fn(),
     });
-    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+    vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
       expandedPaths: new Set(),
       loadedPaths: new Set(),
@@ -440,8 +440,8 @@ describe('CatalogView', () => {
     );
   });
 
-  it('passes publish folder items from useCatalogPublishFolders through to Catalog', () => {
-    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+  it('passes publish folder items from usePublishFolders through to Catalog', () => {
+    vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [{ path: ['Organization'], name: 'Organization' }],
       expandedPaths: new Set(),
       loadedPaths: new Set(),
@@ -458,9 +458,9 @@ describe('CatalogView', () => {
     );
   });
 
-  it('forwards onCreatePublishFolder from useCatalogPublishFolders to Catalog', async () => {
+  it('forwards onCreatePublishFolder from usePublishFolders to Catalog', async () => {
     const onCreatePublishFolder = vi.fn();
-    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+    vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
       expandedPaths: new Set(),
       loadedPaths: new Set(),
@@ -478,11 +478,11 @@ describe('CatalogView', () => {
     expect(onCreatePublishFolder).toHaveBeenCalledWith(['Organization'], 'New');
   });
 
-  it('forwards expandedPaths/onExpandedPathsChange/loadingPaths from useCatalogPublishFolders to Catalog so expanding a folder triggers a fetch', () => {
+  it('forwards expandedPaths/onExpandedPathsChange/loadingPaths from usePublishFolders to Catalog so expanding a folder triggers a fetch', () => {
     const onExpandedPathsChange = vi.fn();
     const expandedPaths = new Set(['Organization']);
     const loadingPaths = new Set(['Organization/Data Science']);
-    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+    vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
       expandedPaths,
       loadedPaths: new Set(),

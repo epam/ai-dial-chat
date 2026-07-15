@@ -8,72 +8,23 @@ import {
 import type { Cache } from 'cache-manager';
 import { mapDialHttpStatus } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
+import {
+  getPublicationsListScope,
+  getPublicTargetFolder,
+  getResourceBucket,
+  getResourceName,
+  getResourceTypePrefix,
+  stripPublicTargetFolder,
+} from './publish-target.util';
 
 const historyCacheKey = (entityType: CatalogEntityType, entityId: string) =>
   `publish-history:${entityType}:${entityId}`;
-
-/*
- * Confirmed against DIAL Core's own OpenAPI spec (`/v1/ops/publication/create`
- * documented example, https://dialx.ai/dial_api#tag/Publications/operation/createPublication):
- *
- *   targetFolder: public/folder/
- *   resources:
- *     - sourceUrl: conversations/{bucket}/my/folder/conversation
- *       targetUrl: conversations/public/folder/conversation
- *
- * `targetFolder` is `public/{folderPath}/` — REQUIRES a trailing slash (a
- * prior fix omitted it, which is what Core's `must start with: public and
- * ends with: /` 400 was actually complaining about). `targetUrl` IS a full
- * destination file path — `{resourceTypePrefix}/{targetFolder}{resourceName}`
- * — contrary to an earlier (incorrect) live-debugging conclusion that it
- * had to be folder-shaped; that conclusion was based on misreading which
- * field the error referred to. There is no opaque per-org bucket-id hash —
- * the shared Organization/public area is addressed by the literal segment
- * `public` (also matches the legacy pre-BFF frontend's `PUBLIC_URL_PREFIX`
- * in `apps/chat/src/constants/publication.ts` on `origin/development`).
- */
-const PUBLIC_URL_PREFIX = 'public';
-
-/** `entityId`'s first path segment, e.g. `applications` in `applications/{bucket}/{name}`. */
-const getResourceTypePrefix = (entityId: string): string =>
-  entityId.split('/')[0];
-
-/** `entityId`'s last path segment, e.g. `{name}` in `applications/{bucket}/{name}`. */
-const getResourceName = (entityId: string): string =>
-  entityId.split('/').pop() ?? entityId;
-
-/**
- * `public/{folderPath}/`, always trailing-slashed (bare `public/` at the
- * root). `folderPath` arrives as plain, unencoded text (e.g. `"test 14.04"`)
- * from the request body, but DIAL Core rejects resource urls containing raw
- * spaces/special characters (`Bad resource url: public/test 14.04/`) — each
- * segment is percent-encoded via `encodeDialResourcePath`, the same helper
- * `toolsets.service.ts`/`conversation.service.ts` use for every other
- * DIAL resource path built from user-supplied text.
- */
-const getPublicTargetFolder = (folderPath: string): string =>
-  folderPath
-    ? `${PUBLIC_URL_PREFIX}/${encodeDialResourcePath(folderPath)}/`
-    : `${PUBLIC_URL_PREFIX}/`;
-
-/** Strips the leading `public/` segment and trailing slash DIAL Core returns in `Publication.targetFolder`, decoding each segment back to the plain folder path the frontend works with. */
-const stripPublicTargetFolder = (targetFolder: string): string => {
-  const prefix = `${PUBLIC_URL_PREFIX}/`;
-  const withoutPrefix = targetFolder.startsWith(prefix)
-    ? targetFolder.slice(prefix.length)
-    : targetFolder;
-  const withoutTrailingSlash = withoutPrefix.endsWith('/')
-    ? withoutPrefix.slice(0, -1)
-    : withoutPrefix;
-  return withoutTrailingSlash.split('/').map(safeDecodeURIComponent).join('/');
-};
 
 /**
  * Catalog entity names are always `{name}__{version}` (see
@@ -205,13 +156,15 @@ export class PublishService {
       logger: this.logger,
       fetch: async () => {
         /*
-         * Scoped by the entity's own resource url (not a folder) — history
-         * spans every folder the entity has ever been published to; the
-         * client filters by the currently selected folder itself.
+         * `url` is the caller's own-bucket list scope, not `entityId` itself
+         * (see `getPublicationsListScope`'s doc comment) — Core has no
+         * per-resource filter, so every publication in this bucket is
+         * fetched and narrowed to this entity via `resources[].sourceUrl`
+         * below.
          */
         const result = await this.dialClient.client.getPublications({
           headers: getBearerAuthHeaders(accessToken),
-          body: { url: entityId },
+          body: { url: getPublicationsListScope(getResourceBucket(entityId)) },
         });
         if (result.error) {
           return mapDialHttpStatus(

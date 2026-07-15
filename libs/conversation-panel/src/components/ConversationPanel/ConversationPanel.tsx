@@ -60,6 +60,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     styles: panelStyles,
     className,
     getActions,
+    onActionMenuOpen,
     onToggle,
     headerActions,
     onMoveConversation,
@@ -323,6 +324,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         searchQuery,
         onSelectConversation,
         getActions,
+        onActionMenuOpen,
         actionsLabel,
         styles: {
           groupHeaderClassName: typography?.groupHeaderClassName,
@@ -347,6 +349,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         searchQuery,
         onSelectConversation,
         getActions,
+        onActionMenuOpen,
         actionsLabel,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,

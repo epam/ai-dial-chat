@@ -10,6 +10,7 @@ import {
   PublishCalloutKind,
   PublishFolderNode,
   PublishHistoryEntry,
+  PublishResourceSummary,
 } from '../../models/publish';
 import { derivePublishState } from '../../utils/publish-state';
 import { EntityHeader } from '../EntityHeader/EntityHeader';
@@ -46,9 +47,17 @@ export interface PublishPanelTexts {
 
 /** Props for {@link PublishPanel}. */
 export interface PublishPanelProps {
-  /** The catalog entity being published. */
-  item: CatalogItem;
-  /** Previously published versions for this entity. */
+  /**
+   * The catalog entity being published. Mutually exclusive with `resource`
+   * — pass this for versioned catalog entities (renders the full
+   * `EntityHeader` + version pill); pass `resource` instead for an
+   * unversioned resource (e.g. a conversation), which renders a simpler
+   * title-only summary row.
+   */
+  item?: CatalogItem;
+  /** Title-only summary for an unversioned resource (e.g. a conversation). Mutually exclusive with `item`. */
+  resource?: PublishResourceSummary;
+  /** Previously published entries for this item. */
   history: PublishHistoryEntry[];
   /** Whether `history` is currently being fetched. Default: `false`. */
   isHistoryLoading?: boolean;
@@ -76,14 +85,24 @@ export interface PublishPanelProps {
   onExpandedPathsChange?: (paths: Set<string>) => void;
   /** Folder path keys currently being fetched by the host. */
   loadingPaths?: Set<string>;
-  /** Whether `item.version` is already published at `selectedFolderPath`. */
-  hasExistingVersionInFolder: boolean;
+  /**
+   * Whether `selectedFolderPath` already has this publication — this exact
+   * version, for `item`, or any prior entry at all, for `resource` (which
+   * has no version dimension).
+   */
+  hasExistingPublicationInFolder: boolean;
   /** Whether the current user can publish to `selectedFolderPath`. */
   hasWriteAccess: boolean;
   /** Whether a publish request is currently in flight. */
   isSubmitting: boolean;
   /** Whether the most recent submit attempt failed. */
   hasSubmitError?: boolean;
+  /**
+   * Whether resubmitting when `hasExistingPublicationInFolder` is true is
+   * allowed (catalog default) or blocked (conversations — see
+   * `PublishDerivationInput.allowReplace`). Default `true`.
+   */
+  allowReplace?: boolean;
   /** Text overrides for all user-visible strings. */
   texts?: PublishPanelTexts;
 }
@@ -96,6 +115,7 @@ export interface PublishPanelProps {
  */
 export const PublishPanel: FC<PublishPanelProps> = ({
   item,
+  resource,
   history,
   isHistoryLoading = false,
   hasHistoryError = false,
@@ -106,10 +126,11 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   expandedPaths,
   onExpandedPathsChange,
   loadingPaths,
-  hasExistingVersionInFolder,
+  hasExistingPublicationInFolder,
   hasWriteAccess,
   isSubmitting,
   hasSubmitError = false,
+  allowReplace = true,
   texts = {},
 }) => {
   const {
@@ -135,17 +156,19 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     () =>
       derivePublishState({
         hasSelectedFolder: isFolderSelected,
-        hasExistingVersionInFolder,
+        hasExistingPublicationInFolder,
         hasWriteAccess,
         isSubmitting,
         hasSubmitError,
+        allowReplace,
       }),
     [
       isFolderSelected,
-      hasExistingVersionInFolder,
+      hasExistingPublicationInFolder,
       hasWriteAccess,
       isSubmitting,
       hasSubmitError,
+      allowReplace,
     ],
   );
 
@@ -164,16 +187,24 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3 rounded-xl border border-tertiary bg-layer-2 px-3.5 py-3">
-        <EntityHeader
-          item={item}
-          iconSize={40}
-          hasFeaturedTag={false}
-          showVersion={false}
-        />
-        <DialTag
-          label={`Version ${item.version} · ${currentVersionSuffix}`}
-          className="shrink-0 whitespace-nowrap !border-tertiary !bg-accent-primary-alpha !text-accent-primary"
-        />
+        {item ? (
+          <>
+            <EntityHeader
+              item={item}
+              iconSize={40}
+              hasFeaturedTag={false}
+              showVersion={false}
+            />
+            <DialTag
+              label={`Version ${item.version} · ${currentVersionSuffix}`}
+              className="shrink-0 whitespace-nowrap !border-tertiary !bg-accent-primary-alpha !text-accent-primary"
+            />
+          </>
+        ) : (
+          <span className="dial-body-semi-text truncate text-primary">
+            {resource?.title}
+          </span>
+        )}
       </div>
 
       <div>
@@ -213,14 +244,14 @@ export const PublishPanel: FC<PublishPanelProps> = ({
                   noAccessError,
                   submitError,
                   folderName,
-                  version: item.version,
+                  version: item?.version ?? resource?.version,
                 })}
               />
             </div>
           )}
       </div>
 
-      {isFolderSelected && (
+      {isFolderSelected && item && (
         <div>
           <div className="dial-body-semi-text mb-2 text-primary">
             {historyLabel}
@@ -276,12 +307,12 @@ const calloutMessage = (
     noAccessError: string;
     submitError: string;
     folderName: string;
-    version: string;
+    version?: string;
   },
 ): ReactNode => {
   if (kind === PublishCalloutKind.ReplaceWarning) {
     return withBoldFolderName(
-      strings.replaceWarning.replace('{version}', strings.version),
+      strings.replaceWarning.replace('{version}', strings.version ?? ''),
       strings.folderName,
     );
   }

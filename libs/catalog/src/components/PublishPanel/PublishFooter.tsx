@@ -17,10 +17,10 @@ export interface PublishFooterTexts {
 
 /** Props for {@link PublishFooter}. */
 export interface PublishFooterProps {
-  /** The version being published, substituted into the submit label. */
-  version: string;
-  /** Whether `version` is already published at the selected destination folder. */
-  hasExistingVersionInFolder: boolean;
+  /** The version being published, substituted into the submit label. `undefined` for unversioned resources (e.g. a conversation) — the submit label then always reads `publishDefaultLabel`. */
+  version?: string;
+  /** Whether this publication already exists at the selected destination folder. */
+  hasExistingPublicationInFolder: boolean;
   /** Whether the submit button should be disabled. */
   isSubmitDisabled: boolean;
   /** Whether the submit button should show its loading/spinner state. */
@@ -41,7 +41,7 @@ export interface PublishFooterProps {
  */
 export const PublishFooter: FC<PublishFooterProps> = ({
   version,
-  hasExistingVersionInFolder,
+  hasExistingPublicationInFolder,
   isSubmitDisabled,
   isSubmitLoading,
   onCancel,
@@ -59,7 +59,7 @@ export const PublishFooter: FC<PublishFooterProps> = ({
     if (isSubmitLoading) {
       return publishingInProgressLabel;
     }
-    if (hasExistingVersionInFolder) {
+    if (hasExistingPublicationInFolder && version != null) {
       return updateLabel.replace('{version}', version);
     }
     return publishDefaultLabel;

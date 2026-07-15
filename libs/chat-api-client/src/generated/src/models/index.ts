@@ -3310,6 +3310,50 @@ export interface PublishCatalogEntityDto {
 /**
  *
  * @export
+ * @interface PublishConversationDto
+ */
+export interface PublishConversationDto {
+  /**
+   * Destination folder under the Organization/public bucket, forwarded to DIAL Core as `targetFolder`.
+   * @type {string}
+   * @memberof PublishConversationDto
+   */
+  folderPath: string;
+}
+/**
+ *
+ * @export
+ * @interface PublishConversationResultDto
+ */
+export interface PublishConversationResultDto {
+  /**
+   *
+   * @type {string}
+   * @memberof PublishConversationResultDto
+   */
+  path: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishConversationResultDto
+   */
+  folderPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishConversationResultDto
+   */
+  publishedAt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublishConversationResultDto
+   */
+  publishedBy: string;
+}
+/**
+ *
+ * @export
  * @interface PublishHistoryEntryDto
  */
 export interface PublishHistoryEntryDto {

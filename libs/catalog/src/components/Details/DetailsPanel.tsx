@@ -118,14 +118,15 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     () =>
       derivePublishState({
         hasSelectedFolder: publishFlow.selectedFolderPath != null,
-        hasExistingVersionInFolder: publishFlow.hasExistingVersionInFolder,
+        hasExistingPublicationInFolder:
+          publishFlow.hasExistingPublicationInFolder,
         hasWriteAccess: publishFlow.hasWriteAccess,
         isSubmitting: publishFlow.isSubmitting,
         hasSubmitError: publishFlow.hasSubmitError,
       }),
     [
       publishFlow.selectedFolderPath,
-      publishFlow.hasExistingVersionInFolder,
+      publishFlow.hasExistingPublicationInFolder,
       publishFlow.hasWriteAccess,
       publishFlow.isSubmitting,
       publishFlow.hasSubmitError,
@@ -352,8 +353,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 expandedPaths={publishExpandedPaths}
                 onExpandedPathsChange={onPublishExpandedPathsChange}
                 loadingPaths={publishLoadingPaths}
-                hasExistingVersionInFolder={
-                  publishFlow.hasExistingVersionInFolder
+                hasExistingPublicationInFolder={
+                  publishFlow.hasExistingPublicationInFolder
                 }
                 hasWriteAccess={publishFlow.hasWriteAccess}
                 isSubmitting={publishFlow.isSubmitting}
@@ -510,7 +511,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         {isPublishOpen && (
           <PublishFooter
             version={item.version}
-            hasExistingVersionInFolder={publishFlow.hasExistingVersionInFolder}
+            hasExistingPublicationInFolder={
+              publishFlow.hasExistingPublicationInFolder
+            }
             isSubmitDisabled={publishDerived.isSubmitDisabled}
             isSubmitLoading={publishDerived.isSubmitLoading}
             onCancel={handleClosePublish}
