@@ -3636,6 +3636,12 @@
             "description": "Operator-configured default deployment ID. Null when not configured.",
             "example": "gpt-4o",
             "nullable": true
+          },
+          "dialCoreExternalUrl": {
+            "type": "string",
+            "description": "Public-facing DIAL Core base URL reachable from the browser. Null when DIAL_CORE_EXTERNAL_URL is not configured.",
+            "example": "https://dial.example.com",
+            "nullable": true
           }
         },
         "required": [
@@ -3898,6 +3904,10 @@
           "folderAttachments": {
             "type": "boolean",
             "description": "Whether the deployment supports attaching folders from the file manager"
+          },
+          "mcp": {
+            "type": "boolean",
+            "description": "Whether the deployment supports the MCP protocol"
           }
         },
         "required": [
