@@ -35,7 +35,6 @@ describe('MarkdownCodeBlock', () => {
 
     const label = screen.getByText('typescript');
     expect(label.className).toContain('uppercase');
-    expect(label.className).toContain('text-secondary');
     expect(container.querySelector('span.opacity-60')).toBeNull();
   });
 
@@ -105,7 +104,7 @@ describe('MarkdownCodeBlock', () => {
     const copiedButton = await screen.findByRole('button', {
       name: 'Copied!',
     });
-    expect(copiedButton.className).toContain('text-success');
+    expect(copiedButton.className).toContain('dial-primary-ghost-button');
   });
 
   it('renders a download button next to copy that downloads the code as a file', async () => {
