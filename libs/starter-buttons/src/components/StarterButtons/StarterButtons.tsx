@@ -12,6 +12,7 @@ const MAX_VISIBLE = 4;
 const OVERFLOW_BUTTON_WIDTH = 56;
 const GAP = 8;
 
+/** Row of starter-prompt buttons that collapses overflowing items into a dropdown menu, sized to fit the available container width. */
 export const StarterButtons: FC<StarterButtonsProps> = ({
   starters,
   onSelect,
