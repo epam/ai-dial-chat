@@ -345,6 +345,7 @@ export const AddQuickApp2SettingsFormSelector = {
   orchestratorModelName: '[data-qa="orchestrator-model-name"]',
   changeModelButtonLabel: 'Change', // aria-label of the model "Change" button
   temperatureSlider: '[data-qa="temp-slider"]', // shown only for temperature-capable models
+  orchestratorModelError: '[data-qa="error-message"]', // validation error under the model field
 
   // Context & Tools subsections
   agentsAndToolsetsField: '[data-qa="agents-and-toolsets-field"]',
@@ -372,6 +373,8 @@ export const AddQuickApp2SettingsFormSelector = {
 
   // Code Interpreter toggle
   codeInterpreterToggle: '[data-qa="toggle-switch"]',
+  codeInterpreterLabel: '[data-qa="code-interpreter-label"]',
+  codeInterpreterInfoIcon: '[data-qa="code-interpreter-info"]',
 };
 
 // Shared by both agents browser modals (Talk to / Select agents and toolsets).

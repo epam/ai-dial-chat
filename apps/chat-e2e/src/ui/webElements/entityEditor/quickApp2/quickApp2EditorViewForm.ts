@@ -55,6 +55,14 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
     this.codeInterpreterField.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.codeInterpreterToggle,
     );
+  public codeInterpreterLabel =
+    this.codeInterpreterField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.codeInterpreterLabel,
+    );
+  public codeInterpreterInfoIcon =
+    this.codeInterpreterField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.codeInterpreterInfoIcon,
+    );
 
   // Agents & Toolsets — view modes
   public agentsAndToolsetsMarketplaceView =

@@ -421,6 +421,11 @@ export const ExpectedConstants = {
   // Shown in an editable (non-readonly) editor when the chip's entity is deleted.
   notAvailableEditableChipTooltip: (entityType: string) =>
     `Not available ${entityType}. Please, change or remove ${entityType} to proceed.`,
+  // Code Interpreter field in the Quick app 2.0 App settings step.
+  codeInterpreterFieldLabel: 'Code Interpreter',
+  codeInterpreterAdditionalText: 'Use to execute custom Python code',
+  codeInterpreterInfoTooltip:
+    'Allows to build multi-agent applications where agents can generate and safely execute Python code in real-time to perform specific tasks, such as data visualization or analytics.',
   // Confirmation dialog shown on Save & Exit when the config has invalid items.
   saveOnlyValidDataTitle: 'Only valid data will be saved',
   saveOnlyValidDataMessage:
@@ -484,6 +489,7 @@ export enum MenuOptions {
   removeAccess = 'Remove access',
   loginWithMyCreds = 'Login with my creds',
   login = 'Log in',
+  manageCreds = 'Manage creds',
   connect = 'Connect',
 }
 
