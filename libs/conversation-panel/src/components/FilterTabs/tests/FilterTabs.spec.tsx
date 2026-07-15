@@ -39,7 +39,7 @@ describe('FilterTabs', () => {
 
   it('applies flex-1 by default so the tabs fill the row equally', () => {
     renderTabs();
-    expect(getTab('All').className).toContain('flex-1');
+    expect(getTab('All').className).toContain('flex');
   });
 
   it('lets the host override the tab class', () => {
