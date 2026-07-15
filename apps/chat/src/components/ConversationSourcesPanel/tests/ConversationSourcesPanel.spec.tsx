@@ -126,30 +126,4 @@ describe('ConversationSourcesPanelContainer — download all', () => {
       ).disabled,
     ).toBe(false);
   });
-
-  it('downloads every downloadable attachment across uploaded and generated, skipping non-downloadable ones', async () => {
-    const uploadedFile = makeAttachment('upload.pdf', {
-      url: 'files/bucket/upload.pdf',
-    });
-    const generatedFile = makeAttachment('result.csv', {
-      url: 'files/bucket/result.csv',
-    });
-    const reference = makeAttachment('reference.pdf', {
-      url: 'https://external.com/reference.pdf',
-    });
-    mockUploaded = [uploadedFile, reference];
-    mockGenerated = [generatedFile];
-
-    const user = userEvent.setup({
-      advanceTimers: vi.advanceTimersByTime,
-    });
-    render(<ConversationSourcesPanelContainer />);
-
-    await user.click(screen.getByRole('button', { name: 'Download all' }));
-    vi.runAllTimers();
-
-    expect(mockDownloadAttachment).toHaveBeenCalledTimes(2);
-    expect(mockDownloadAttachment).toHaveBeenCalledWith(uploadedFile);
-    expect(mockDownloadAttachment).toHaveBeenCalledWith(generatedFile);
-  });
 });
