@@ -47,6 +47,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationExport } from '../../hooks/useConversationExport';
+import { discardSharedCatalogItem } from '../../server-api/share.api';
 import { ConversationExportMode } from '../../types/conversation-export';
 import { ROUTES } from '../../types/routes';
 import {
@@ -142,6 +143,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [pendingUnshareId, setPendingUnshareId] = useState<string | null>(null);
+  const [isUnsharing, setIsUnsharing] = useState(false);
+  const [unshareError, setUnshareError] = useState<string | null>(null);
 
   const [pendingRenameItem, setPendingRenameItem] = useState<{
     id: string;
@@ -309,7 +314,18 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       };
 
       if (isReadonlyItem) {
-        return [pinAction, duplicateAction, exportAction];
+        const readonlyActions = [pinAction, duplicateAction, exportAction];
+        if (rawItem?.sharedWithMe) {
+          readonlyActions.push({
+            key: 'unshare',
+            label: t(ButtonsI18nKeys.Delete),
+            icon: (
+              <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+            ),
+            onClick: () => setPendingUnshareId(contextId),
+          });
+        }
+        return readonlyActions;
       }
 
       return [
@@ -410,6 +426,68 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setPendingDeleteId(null);
     setDeleteError(null);
   }, [isDeleting]);
+
+  const pendingUnshareTitle = useMemo(() => {
+    if (!pendingUnshareId) return '';
+    return items.find((c) => c.id === pendingUnshareId)?.title ?? '';
+  }, [items, pendingUnshareId]);
+
+  const handleConfirmUnshare = useCallback(async () => {
+    if (!pendingUnshareId) return;
+    const idToUnshare = pendingUnshareId;
+
+    setIsUnsharing(true);
+    setUnshareError(null);
+    try {
+      await discardSharedCatalogItem(idToUnshare);
+    } catch {
+      setUnshareError(
+        t(ConversationPanelI18nKeys.UnshareError, {
+          name: pendingUnshareTitle,
+        }),
+      );
+      setIsUnsharing(false);
+      return;
+    }
+
+    try {
+      await refreshConversations();
+    } catch {
+      /* The discard already succeeded; a refresh failure must not undo that success. */
+    }
+
+    showNotification({
+      variant: NotificationVariant.Success,
+      title: t(ConversationPanelI18nKeys.UnshareSuccessTitle),
+      message: t(ConversationPanelI18nKeys.UnshareSuccess, {
+        name: pendingUnshareTitle,
+      }),
+    });
+
+    setIsUnsharing(false);
+    setPendingUnshareId(null);
+
+    const isActiveUnshare =
+      panelActiveConversationId != null &&
+      conversationIdsMatch(idToUnshare, panelActiveConversationId);
+    if (isActiveUnshare) {
+      navigate(ROUTES.Root);
+    }
+  }, [
+    pendingUnshareId,
+    pendingUnshareTitle,
+    refreshConversations,
+    showNotification,
+    panelActiveConversationId,
+    navigate,
+    t,
+  ]);
+
+  const handleCloseUnshareDialog = useCallback(() => {
+    if (isUnsharing) return;
+    setPendingUnshareId(null);
+    setUnshareError(null);
+  }, [isUnsharing]);
 
   const handleConfirmRename = useCallback(
     async (newTitle: string) => {
@@ -528,6 +606,32 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onConfirm={handleConfirmDelete}
         onCancel={handleCloseDeleteDialog}
         onClose={handleCloseDeleteDialog}
+      />
+
+      <DialConfirmationPopup
+        open={!!pendingUnshareId}
+        header={t(ConversationPanelI18nKeys.UnshareConfirmTitle)}
+        confirmLabel={t(ButtonsI18nKeys.Delete)}
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
+        variant={ConfirmationPopupVariant.Danger}
+        isLoading={isUnsharing}
+        description={
+          <>
+            <span className="break-all">
+              {t(ConversationPanelI18nKeys.UnshareConfirmMessage, {
+                name: pendingUnshareTitle,
+              })}
+            </span>
+            {unshareError && (
+              <span role="alert" className="mt-1 block text-error">
+                {unshareError}
+              </span>
+            )}
+          </>
+        }
+        onConfirm={handleConfirmUnshare}
+        onCancel={handleCloseUnshareDialog}
+        onClose={handleCloseUnshareDialog}
       />
 
       <RenameConversationPopup

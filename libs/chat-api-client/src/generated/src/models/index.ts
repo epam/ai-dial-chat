@@ -2546,7 +2546,7 @@ export interface DialToolsetListResponseDto {
  */
 export interface DiscardSharedCatalogItemDto {
   /**
-   * Identifier (DIAL Core resource path) of the catalog item to discard access to.
+   * Identifier (DIAL Core resource path) of the catalog item or conversation to discard access to.
    * @type {string}
    * @memberof DiscardSharedCatalogItemDto
    */

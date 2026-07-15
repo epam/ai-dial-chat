@@ -143,8 +143,8 @@ export class ShareApi extends runtime.BaseAPI {
   }
 
   /**
-   * Discards the authenticated user\'s own access to a catalog resource (application or toolset) shared with them, via DIAL Core\'s discardSharedResources operation. Only affects the caller\'s own access — removing access for everyone else is a separate operation.
-   * Discard a catalog resource shared with the caller
+   * Discards the authenticated user\'s own access to a shared catalog entity (application or toolset) or conversation, via DIAL Core\'s discardSharedResources operation. Only affects the caller\'s own access — removing access for everyone else is a separate operation.
+   * Discard a shared catalog resource or conversation
    */
   async discardSharedCatalogItemRaw(
     requestParameters: DiscardSharedCatalogItemRequest,
@@ -182,8 +182,8 @@ export class ShareApi extends runtime.BaseAPI {
   }
 
   /**
-   * Discards the authenticated user\'s own access to a catalog resource (application or toolset) shared with them, via DIAL Core\'s discardSharedResources operation. Only affects the caller\'s own access — removing access for everyone else is a separate operation.
-   * Discard a catalog resource shared with the caller
+   * Discards the authenticated user\'s own access to a shared catalog entity (application or toolset) or conversation, via DIAL Core\'s discardSharedResources operation. Only affects the caller\'s own access — removing access for everyone else is a separate operation.
+   * Discard a shared catalog resource or conversation
    */
   async discardSharedCatalogItem(
     requestParameters: DiscardSharedCatalogItemRequest,
