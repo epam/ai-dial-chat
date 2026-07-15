@@ -12,6 +12,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
+import { useAppConfig } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
@@ -34,6 +35,7 @@ import {
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
 import { ToolsetOAuthResultType } from '../../../types/toolsets';
+import { UserConfigStatus } from '../../../types/user-config-status';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
 
@@ -69,6 +71,7 @@ const capturedPublishProps: {
     publishExpandedPaths?: Set<string>;
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
+    isConnectVisible?: (item: CatalogItem) => boolean;
   } | null;
 } = { current: null };
 
@@ -105,6 +108,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublish,
     getPublishHistory,
     isPublishVisible,
+    isConnectVisible,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
@@ -129,6 +133,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
+    isConnectVisible?: (item: CatalogItem) => boolean;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
     capturedPublishProps.current = {
@@ -138,6 +143,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       publishExpandedPaths,
       onPublishExpandedPathsChange,
       publishLoadingPaths,
+      isConnectVisible,
     };
 
     return (
@@ -301,6 +307,10 @@ vi.mock('../../../context/auth/UserContext', () => ({
   useUser: vi.fn(),
 }));
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: vi.fn(),
+}));
+
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
 }));
@@ -403,6 +413,16 @@ describe('CatalogView', () => {
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
+    vi.mocked(useAppConfig).mockReturnValue({
+      status: UserConfigStatus.Ready,
+      features: {},
+      config: {
+        asrModelId: null,
+        transcribeSizeLimitBytes: 5 * 1024 * 1024,
+        defaultDeploymentId: null,
+        dialCoreExternalUrl: 'https://dial.example.com',
+      },
     });
   });
 
@@ -608,6 +628,83 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isPublishVisible?.(
           makeCatalogItem({ type: CatalogEntityType.Agent }),
+        ),
+      ).toBe(false);
+    });
+  });
+
+  describe('connect wiring', () => {
+    it('shows Connect for a toolset item when the external URL is configured', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Toolset }),
+        ),
+      ).toBe(true);
+    });
+
+    it('shows Connect for an MCP-capable application when the external URL is configured', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({
+            type: CatalogEntityType.Application,
+            supportsMcp: true,
+          }),
+        ),
+      ).toBe(true);
+    });
+
+    it('hides Connect for a non-MCP application', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({
+            type: CatalogEntityType.Application,
+            supportsMcp: false,
+          }),
+        ),
+      ).toBe(false);
+    });
+
+    it('hides Connect for a Model item', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Model }),
+        ),
+      ).toBe(false);
+    });
+
+    it('hides Connect for every item when the DIAL Core external URL is not configured', () => {
+      vi.mocked(useAppConfig).mockReturnValue({
+        status: UserConfigStatus.Ready,
+        features: {},
+        config: {
+          asrModelId: null,
+          transcribeSizeLimitBytes: 5 * 1024 * 1024,
+          defaultDeploymentId: null,
+          dialCoreExternalUrl: null,
+        },
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Toolset }),
+        ),
+      ).toBe(false);
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({
+            type: CatalogEntityType.Application,
+            supportsMcp: true,
+          }),
         ),
       ).toBe(false);
     });

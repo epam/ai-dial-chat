@@ -16,6 +16,11 @@ export class DeploymentFeaturesDto {
       'Whether the deployment supports attaching folders from the file manager',
   })
   folderAttachments?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether the deployment supports the MCP protocol',
+  })
+  mcp?: boolean;
 }
 
 export class DeploymentItemDto {

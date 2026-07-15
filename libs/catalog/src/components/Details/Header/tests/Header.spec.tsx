@@ -79,6 +79,22 @@ vi.mock('../DeleteButton/DeleteButton', () => ({
     </button>
   ),
 }));
+vi.mock('../ConnectButton/ConnectButton', () => ({
+  ConnectButton: ({
+    label,
+    isConnectVisible,
+    connectOverlay,
+    item,
+  }: {
+    label?: string;
+    isConnectVisible?: (item: CatalogItem) => boolean;
+    connectOverlay?: (item: CatalogItem) => unknown;
+    item: CatalogItem;
+  }) =>
+    isConnectVisible?.(item) && connectOverlay ? (
+      <button>{label ?? 'Connect'}</button>
+    ) : null,
+}));
 
 const makeItem = (type: CatalogEntityType): CatalogItem => ({
   id: '1',
@@ -296,6 +312,37 @@ describe('Header', () => {
     const shareIndex = labels.indexOf('Share');
     const deleteIndex = labels.indexOf('Delete');
     expect(deleteIndex).toBe(shareIndex + 1);
+  });
+
+  it('renders Connect last among visible header actions when visible', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        isConnectVisible={() => true}
+        connectOverlay={() => <div>overlay</div>}
+      />,
+    );
+    const labels = screen
+      .getAllByRole('button')
+      .map((button) => button.textContent);
+    expect(labels[labels.length - 1]).toBe('Connect');
+  });
+
+  it('does not render Connect when isConnectVisible is absent', () => {
+    render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
+    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
+  });
+
+  it('passes texts.connectLabel through to the Connect button label', () => {
+    render(
+      <Header
+        item={makeItem(CatalogEntityType.Toolset)}
+        isConnectVisible={() => true}
+        connectOverlay={() => <div>overlay</div>}
+        texts={{ connectLabel: 'Connect this' }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Connect this' })).toBeTruthy();
   });
 
   it('does not render a credentials button when the item has no credentials', () => {

@@ -28,6 +28,17 @@ export class ClientConfigDto {
   @IsOptional()
   @IsString()
   defaultDeploymentId!: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Public-facing DIAL Core base URL reachable from the browser. Null when DIAL_CORE_EXTERNAL_URL is not configured.',
+    example: 'https://dial.example.com',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  dialCoreExternalUrl!: string | null;
 }
 
 export class ClientConfigMetadataDto {

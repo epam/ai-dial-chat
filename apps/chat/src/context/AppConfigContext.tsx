@@ -23,6 +23,7 @@ interface AppConfigState {
     asrModelId: string | null;
     transcribeSizeLimitBytes: number;
     defaultDeploymentId: string | null;
+    dialCoreExternalUrl: string | null;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -34,6 +35,7 @@ const INITIAL_STATE: AppConfigState = {
     asrModelId: null,
     transcribeSizeLimitBytes: DEFAULT_TRANSCRIBE_SIZE_LIMIT,
     defaultDeploymentId: null,
+    dialCoreExternalUrl: null,
   },
 };
 
@@ -61,6 +63,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               response.config?.transcribeSizeLimitBytes ??
               DEFAULT_TRANSCRIBE_SIZE_LIMIT,
             defaultDeploymentId: response.config?.defaultDeploymentId ?? null,
+            dialCoreExternalUrl: response.config?.dialCoreExternalUrl ?? null,
           },
           metadata: response.metadata,
         });

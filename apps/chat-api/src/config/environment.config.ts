@@ -32,6 +32,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  DIAL_CORE_EXTERNAL_URL?: string;
+
+  @IsOptional()
+  @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}(-preview)?$/, {
     message:
       'DIAL_API_VERSION must follow the YYYY-MM-DD or YYYY-MM-DD-preview format',

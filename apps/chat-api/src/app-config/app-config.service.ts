@@ -49,6 +49,7 @@ export class AppConfigService {
     let asrModelId: string | null = null;
     let transcribeSizeLimitBytes = 5 * 1024 * 1024;
     let defaultDeploymentId: string | null = null;
+    let dialCoreExternalUrl: string | null = null;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -67,6 +68,8 @@ export class AppConfigService {
           typeof resolved === 'number' ? resolved : 5 * 1024 * 1024;
       } else if (def.key === 'deployments.defaultDeploymentId') {
         defaultDeploymentId = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'dialCore.externalUrl') {
+        dialCoreExternalUrl = typeof resolved === 'string' ? resolved : null;
       }
     }
 
@@ -77,6 +80,7 @@ export class AppConfigService {
         asrModelId,
         transcribeSizeLimitBytes,
         defaultDeploymentId,
+        dialCoreExternalUrl,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

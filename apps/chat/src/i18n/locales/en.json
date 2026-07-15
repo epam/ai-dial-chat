@@ -137,6 +137,12 @@
         "error": "Failed to delete \"{{name}}\". Please try again.",
         "successTitle": "Deleted",
         "success": "\"{{name}}\" was deleted from your catalog."
+      },
+      "connect": {
+        "toolsetTitle": "Connect toolset",
+        "applicationTitle": "Connect Application",
+        "toolsetDescription": "Copy endpoint URL to easily integrate toolset into your workflows",
+        "applicationDescription": "Copy endpoint URL to easily integrate application into your workflows"
       }
     },
     "create": {
@@ -194,6 +200,7 @@
     "close": "Close",
     "apply": "Apply",
     "edit": "Edit",
+    "connect": "Connect",
     "link": "Link",
     "regenerate": "Regenerate",
     "copy": "Copy",
