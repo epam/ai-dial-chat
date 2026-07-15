@@ -23,6 +23,7 @@ export * from './conversationToCompare';
 export * from './appContainer';
 export * from './sideBar';
 export * from './dropdownCheckboxMenu';
+export * from './publishVersionChecklistDropdown';
 export * from './filter';
 export * from './menu';
 export * from './sidebarSearch';

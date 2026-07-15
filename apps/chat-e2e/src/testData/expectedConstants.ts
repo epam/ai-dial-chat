@@ -438,6 +438,7 @@ export const ExpectedConstants = {
   toolsetNotFoundToast: 'Toolset by this link not found',
   enterKeyboardShortcut: 'Enter - send messages, Shift + Enter - new line',
   ctrlEnterKeyboardShortcut: 'Ctrl + Enter - send messages, Enter - new line',
+  fewVersionsLabel: 'Few',
 };
 
 export const withTraceId = (message: string): RegExp => {
