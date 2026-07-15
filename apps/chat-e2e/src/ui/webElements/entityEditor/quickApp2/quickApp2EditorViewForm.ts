@@ -29,6 +29,11 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public temperatureSlider = this.orchestratorSection.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.temperatureSlider,
   );
+  // Validation error under the model field (e.g. model without tools support)
+  public orchestratorModelError =
+    this.orchestratorSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.orchestratorModelError,
+    );
   public contextToolsSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.contextToolsSection,
   );

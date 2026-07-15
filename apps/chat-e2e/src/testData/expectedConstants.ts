@@ -426,6 +426,9 @@ export const ExpectedConstants = {
   codeInterpreterAdditionalText: 'Use to execute custom Python code',
   codeInterpreterInfoTooltip:
     'Allows to build multi-agent applications where agents can generate and safely execute Python code in real-time to perform specific tasks, such as data visualization or analytics.',
+  // Error under the Model field when the orchestrator model has no tools support.
+  selectedModelDoesNotSupportToolsError:
+    'Selected model does not support tools',
   // Confirmation dialog shown on Save & Exit when the config has invalid items.
   saveOnlyValidDataTitle: 'Only valid data will be saved',
   saveOnlyValidDataMessage:

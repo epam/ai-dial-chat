@@ -256,3 +256,81 @@ dialTest(
     );
   },
 );
+
+dialTest.only(
+  "[Quick app 2.0] 'Selected model does not support tools' error when the preselected model has no tools support", // EPMRTC-8558
+  async ({
+    marketplacePage,
+    entityEditorPage,
+    quickApp2EditorViewForm,
+    talkToAgentDialog,
+    quickApp2Builder,
+    applicationApiHelper,
+    modelApiHelper,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-8558');
+    const quickAppName = GeneratorUtil.randomApplicationName();
+    let toolsModel: DialAIEntityModel;
+
+    await dialTest.step(
+      'Precondition: create a Quick app 2.0 whose orchestrator model does not support tools',
+      async () => {
+        const allEntities = await modelApiHelper.getModels();
+        const noToolsModel = allEntities.find(
+          (entity) =>
+            entity.type === EntityType.Model && !entity.features?.tools,
+        )!;
+        toolsModel = allEntities.find(
+          (entity) =>
+            entity.type === EntityType.Model && entity.features?.tools,
+        )!;
+        await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(quickAppName)
+            .withOrchestratorModel(noToolsModel.id)
+            .build(),
+        );
+      },
+    );
+
+    await dialTest.step('Open the Quick app 2.0 in edit mode', async () => {
+      const quickApp = await modelApiHelper.getAgentByNameAndVersion({
+        name: quickAppName,
+      });
+      await marketplacePage.openEditQuickApp2Page(quickApp.reference);
+      await entityEditorPage.waitForPageLoadedForEdit(
+        EntityEditorAppTypes.QuickApp2,
+      );
+    });
+
+    await dialTest.step(
+      'Verify the "model does not support tools" error is shown under the Model field',
+      async () => {
+        await baseAssertion.assertElementText(
+          quickApp2EditorViewForm.orchestratorModelError,
+          ExpectedConstants.selectedModelDoesNotSupportToolsError,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Select a tool-supporting model and verify the error disappears',
+      async () => {
+        await quickApp2EditorViewForm.changeModelButton.click();
+        await baseAssertion.assertElementState(talkToAgentDialog, 'visible');
+        await talkToAgentDialog.marketplaceTab.click();
+        await talkToAgentDialog
+          .getSearch()
+          .inputField.fillInInput(toolsModel.name);
+        await talkToAgentDialog.getEntityByName(toolsModel.name).click();
+        await baseAssertion.assertElementState(talkToAgentDialog, 'hidden');
+        await baseAssertion.assertElementState(
+          quickApp2EditorViewForm.orchestratorModelError,
+          'hidden',
+        );
+      },
+    );
+  },
+);
