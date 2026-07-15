@@ -393,23 +393,30 @@ export const Catalog: FC<CatalogProps> = ({
             />
           </div>
         )}
-
         <div className="mx-auto min-h-full w-full max-w-[1180px] px-8 pt-6">
-          {viewMode === CatalogViewMode.Grid && (
-            <div className="pb-8">
-              <CardGrid
-                items={tabFiltered}
-                query={query}
-                onToggleFavorite={onToggleFavorite}
-                onItemClick={onCardClick ?? handleOpenDetails}
-                titles={cardGridTitles}
-                selectedItemId={selectedItemId}
-              />
-            </div>
-          )}
+          <div
+            className={mergeClasses(
+              'pb-8',
+              viewMode !== CatalogViewMode.Grid && 'hidden',
+            )}
+          >
+            <CardGrid
+              items={tabFiltered}
+              query={query}
+              onToggleFavorite={onToggleFavorite}
+              onItemClick={onCardClick ?? handleOpenDetails}
+              titles={cardGridTitles}
+              selectedItemId={selectedItemId}
+            />
+          </div>
 
-          {listEverShown && viewMode === CatalogViewMode.List && (
-            <div className="pb-8">
+          {listEverShown && (
+            <div
+              className={mergeClasses(
+                'pb-8',
+                viewMode !== CatalogViewMode.List && 'hidden',
+              )}
+            >
               <ListView
                 items={tabFiltered}
                 query={query}

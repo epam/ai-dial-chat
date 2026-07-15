@@ -28,7 +28,8 @@ const backgroundsColors = {
   'transparent-black': 'var(--bg-transparent-black, rgb(0 0 0 / 0))',
   // New Chat button shadow — blue/purple pair at default, hover, and active alpha levels
   'new-chat-shadow-blue': 'var(--bg-new-chat-shadow-blue, #5C8DEA33)',
-  'new-chat-shadow-blue-hover': 'var(--bg-new-chat-shadow-blue-hover, #5C8DEA47)',
+  'new-chat-shadow-blue-hover':
+    'var(--bg-new-chat-shadow-blue-hover, #5C8DEA47)',
   'new-chat-shadow-blue-active':
     'var(--bg-new-chat-shadow-blue-active, #5C8DEA26)',
   'new-chat-shadow-purple': 'var(--bg-new-chat-shadow-purple, #A972FF24)',

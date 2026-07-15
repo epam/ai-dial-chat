@@ -129,7 +129,7 @@ export const ListView: FC<ListViewProps> = ({
       className={mergeClasses('w-full px-4', styles.listContainer)}
     >
       <DialGrid<CatalogItem>
-        columnDefs={CATALOG_COLUMNS()}
+        columnDefs={CATALOG_COLUMNS}
         rowData={windowedItems}
         getRowId={(r) => r.id}
         alternateOddRowColors
