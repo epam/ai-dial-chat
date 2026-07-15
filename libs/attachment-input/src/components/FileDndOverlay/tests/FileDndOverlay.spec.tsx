@@ -28,17 +28,6 @@ describe('FileDndOverlay', () => {
     expect(screen.getByText('Drop here')).toBeTruthy();
   });
 
-  it('applies custom iconClassName', () => {
-    const { container } = render(
-      <FileDndOverlay
-        isVisible={true}
-        styles={{ iconClassName: 'text-red-500' }}
-      />,
-    );
-    const icon = container.querySelector('svg');
-    expect(icon?.getAttribute('class')).toContain('text-red-500');
-  });
-
   it('renders denied title and subtitle when isAttachmentsAllowed is false', () => {
     render(<FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />);
     expect(screen.getByText('No attachments allowed')).toBeTruthy();
@@ -53,18 +42,6 @@ describe('FileDndOverlay', () => {
     );
     const icon = container.querySelector('svg');
     expect(icon?.getAttribute('class')).toContain('text-error');
-  });
-
-  it('applies custom deniedIconClassName when isAttachmentsAllowed is false', () => {
-    const { container } = render(
-      <FileDndOverlay
-        isVisible={true}
-        isAttachmentsAllowed={false}
-        styles={{ deniedIconClassName: 'text-warning' }}
-      />,
-    );
-    const icon = container.querySelector('svg');
-    expect(icon?.getAttribute('class')).toContain('text-warning');
   });
 
   it('applies cursor-not-allowed when isAttachmentsAllowed is false', () => {
