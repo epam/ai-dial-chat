@@ -373,6 +373,31 @@ export enum ConversationPanelI18nKeys {
   DeleteAllSuccess = 'conversationPanel.deleteAll.deleteAllSuccess',
 }
 
+export enum ConversationExportI18nKeys {
+  ExportLabel = 'conversationExport.exportLabel',
+  ExportAllLabel = 'conversationExport.exportAllLabel',
+  WithAttachmentsOption = 'conversationExport.withAttachmentsOption',
+  WithoutAttachmentsOption = 'conversationExport.withoutAttachmentsOption',
+  QueueTitle = 'conversationExport.queueTitle',
+  AllConversationsJobLabel = 'conversationExport.allConversationsJobLabel',
+  SuccessTitle = 'conversationExport.successTitle',
+  SuccessSingle = 'conversationExport.successSingle',
+  SuccessAll = 'conversationExport.successAll',
+  FailedTitle = 'conversationExport.failedTitle',
+  FailedSingle = 'conversationExport.failedSingle',
+  FailedAll = 'conversationExport.failedAll',
+  WarningAttachmentSkipped = 'conversationExport.warningAttachmentSkipped',
+  CloseJobAriaLabel = 'conversationExport.closeJobAriaLabel',
+  RetryJobAriaLabel = 'conversationExport.retryJobAriaLabel',
+  CollapseQueueAriaLabel = 'conversationExport.collapseQueueAriaLabel',
+  ExpandQueueAriaLabel = 'conversationExport.expandQueueAriaLabel',
+  CloseQueueAriaLabel = 'conversationExport.closeQueueAriaLabel',
+  CloseQueueConfirmHeader = 'conversationExport.closeQueueConfirmHeader',
+  CloseQueueConfirmDescriptionInProgress = 'conversationExport.closeQueueConfirmDescriptionInProgress',
+  CloseQueueConfirmDescriptionFailed = 'conversationExport.closeQueueConfirmDescriptionFailed',
+  CloseQueueConfirmDescriptionMixed = 'conversationExport.closeQueueConfirmDescriptionMixed',
+}
+
 export enum SidebarI18nKeys {
   ToggleOpen = 'sidebar.base.toggleOpen',
   AriaLabel = 'sidebar.sources.ariaLabel',

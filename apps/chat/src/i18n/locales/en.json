@@ -280,6 +280,30 @@
       "deleteAllSuccess": "All conversations have been deleted successfully."
     }
   },
+  "conversationExport": {
+    "exportLabel": "Export",
+    "exportAllLabel": "Export all conversations",
+    "withAttachmentsOption": "With attachments",
+    "withoutAttachmentsOption": "Without attachments",
+    "queueTitle": "Exporting",
+    "allConversationsJobLabel": "All conversations",
+    "successTitle": "Export successful",
+    "successSingle": "\"{{title}}\" exported.",
+    "successAll": "All conversations exported.",
+    "failedTitle": "Export failed",
+    "failedSingle": "\"{{title}}\" was not exported. Please try again.",
+    "failedAll": "Conversations were not exported. Please try again.",
+    "warningAttachmentSkipped": "One or more attachments could not be exported and were skipped.",
+    "closeJobAriaLabel": "Close \"{{title}}\" export",
+    "retryJobAriaLabel": "Retry \"{{title}}\" export",
+    "collapseQueueAriaLabel": "Collapse export queue",
+    "expandQueueAriaLabel": "Expand export queue",
+    "closeQueueAriaLabel": "Close export queue",
+    "closeQueueConfirmHeader": "Close queue?",
+    "closeQueueConfirmDescriptionInProgress": "Some exports are still in progress.",
+    "closeQueueConfirmDescriptionFailed": "Some exports have failed.",
+    "closeQueueConfirmDescriptionMixed": "Some exports are still in progress, and some have failed."
+  },
   "auth": {
     "signedInAs": "Signed in as {{email}}",
     "loading": "Checking your session…",
