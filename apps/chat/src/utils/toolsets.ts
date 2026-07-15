@@ -10,12 +10,17 @@ import { ROUTES } from '../types/routes';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
+  ToolsetOAuthChannelMessage,
+  ToolsetOAuthInitiationResult,
+  ToolsetOAuthResult,
   ToolsetRedirectState,
 } from '../types/toolsets';
 import {
   ToolsetAuthStatus,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
   ToolsetTransportType,
   WithLogin,
 } from '../types/toolsets';
@@ -72,6 +77,9 @@ export const buildToolsetAuthorizeUrl = (
   }
   try {
     const url = new URL(auth.authorizationEndpoint.trim());
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+      return null;
+    }
     const state = crypto.randomUUID();
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('client_id', auth.clientId.trim());
@@ -96,22 +104,28 @@ export const getToolsetRedirectUri = (): string =>
   `${window.location.origin}${ROUTES.ToolsetSignIn}`;
 
 /**
- * Builds the OAuth authorize URL, persists the redirect state to
- * `sessionStorage`, and opens the provider in a new browser window/tab
- * (rather than navigating the current page away), so the current page stays
- * put. Shared by the post-save auto-login flow (Editor, always `USER`) and
- * the manual Log In action (Editor or Catalog, `USER` or `GLOBAL`) so all
- * trigger points stay in sync. Returns `false` (without opening a window)
- * when the auth config is invalid or the popup was blocked.
+ * Builds the OAuth authorize URL, opens a same-origin popup synchronously (so
+ * a blocked popup can be reliably detected), writes the redirect state into
+ * *that popup's own* `sessionStorage` while it is still same-origin
+ * `about:blank`, then navigates it to the provider's authorization page.
+ * Writing into the popup's own storage (rather than the opener's) is what
+ * makes the redirect state reliably readable by the callback route once the
+ * provider redirects back into that same popup — the two browsing contexts
+ * do not share a `sessionStorage` partition. Shared by the post-save
+ * auto-login flow (Editor, always `USER`) and the manual Log In action
+ * (Editor or Catalog, `USER` or `GLOBAL`) so all trigger points stay in sync.
  */
 export const initiateOAuthLogin = (
   auth: ToolsetAuthFormData,
   toolsetId: string,
   credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
-): boolean => {
+): ToolsetOAuthInitiationResult => {
   const redirectUri = getToolsetRedirectUri();
   const result = buildToolsetAuthorizeUrl(auth, redirectUri);
-  if (!result) return false;
+  if (!result) return { type: ToolsetOAuthInitiationResultType.InvalidConfig };
+
+  const popup = window.open('', '_blank');
+  if (!popup) return { type: ToolsetOAuthInitiationResultType.Blocked };
 
   const redirectState: ToolsetRedirectState = {
     toolsetId,
@@ -119,21 +133,74 @@ export const initiateOAuthLogin = (
     redirectUri,
     state: result.state,
   };
-  sessionStorage.setItem(
+  popup.sessionStorage.setItem(
     TOOLSET_REDIRECT_STATE_KEY,
     JSON.stringify(redirectState),
   );
 
   /*
-   * `noopener` (not a post-hoc `authWindow.opener = null`) is required to
-   * actually sever the opener reference for a cross-origin popup — setting
-   * `.opener` after `window.open` is a no-op once navigation has started.
-   * With `noopener`, some browsers return `null` even though the tab opened,
-   * so a `null` result here is treated as success rather than popup-blocked.
+   * The provider URL is external input. Sever the relationship while the
+   * placeholder is still same-origin so the provider cannot navigate the
+   * Chat tab through `window.opener` after the cross-origin navigation.
    */
-  window.open(result.url, '_blank', 'noopener,noreferrer');
-  return true;
+  popup.opener = null;
+  popup.location.href = result.url;
+
+  return {
+    type: ToolsetOAuthInitiationResultType.Started,
+    popup,
+    flowId: result.state,
+  };
 };
+
+const TOOLSET_OAUTH_CHANNEL_PREFIX = 'toolset-oauth-';
+
+/** Name of the same-origin `BroadcastChannel` shared by an OAuth flow's opener and its callback popup. */
+export const getToolsetOAuthChannelName = (flowId: string): string =>
+  `${TOOLSET_OAUTH_CHANNEL_PREFIX}${flowId}`;
+
+const DEFAULT_OAUTH_RESULT_TIMEOUT_MS = 5 * 60 * 1000;
+const DEFAULT_OAUTH_POPUP_POLL_INTERVAL_MS = 500;
+
+/**
+ * Waits for the OAuth callback popup to report a result over the flow's
+ * `BroadcastChannel`, resolving with `Cancelled` if the popup is closed
+ * manually or no result arrives before the timeout elapses.
+ */
+export const waitForToolsetOAuthResult = (
+  popup: Window,
+  flowId: string,
+  {
+    timeoutMs = DEFAULT_OAUTH_RESULT_TIMEOUT_MS,
+    pollIntervalMs = DEFAULT_OAUTH_POPUP_POLL_INTERVAL_MS,
+  }: { timeoutMs?: number; pollIntervalMs?: number } = {},
+): Promise<ToolsetOAuthResult> =>
+  new Promise((resolve) => {
+    const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+    let settled = false;
+
+    const finish = (outcome: ToolsetOAuthResult) => {
+      if (settled) return;
+      settled = true;
+      clearInterval(pollId);
+      clearTimeout(timeoutId);
+      channel.close();
+      resolve(outcome);
+    };
+
+    channel.onmessage = (event: MessageEvent<ToolsetOAuthChannelMessage>) => {
+      finish(event.data);
+    };
+
+    const pollId = setInterval(() => {
+      if (popup.closed) finish({ type: ToolsetOAuthResultType.Cancelled });
+    }, pollIntervalMs);
+
+    const timeoutId = setTimeout(() => {
+      popup.close();
+      finish({ type: ToolsetOAuthResultType.Cancelled });
+    }, timeoutMs);
+  });
 
 const TOOLSETS_ID_PREFIX = 'toolsets/';
 const PUBLIC_BUCKET_SEGMENT = 'public';

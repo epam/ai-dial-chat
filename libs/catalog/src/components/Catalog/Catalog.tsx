@@ -342,6 +342,9 @@ export const Catalog: FC<CatalogProps> = ({
               isLeaving={isFavoritesLeaving}
               onExitComplete={handleFavoritesExitComplete}
               selectedItemId={selectedItemId}
+              credentialsBadgeLoggedOutLabel={
+                detailsTexts?.credentialsBadgeLoggedOutLabel
+              }
             />
           </div>
         )}

@@ -3,12 +3,28 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TOOLSET_REDIRECT_STATE_KEY } from '../../../constants/toolsets';
 import * as toolsetsApi from '../../../server-api/toolsets';
-import type { ToolsetRedirectState } from '../../../types/toolsets';
+import type {
+  ToolsetOAuthChannelMessage,
+  ToolsetRedirectState,
+} from '../../../types/toolsets';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
+  ToolsetOAuthFailureReason,
+  ToolsetOAuthResultType,
 } from '../../../types/toolsets';
+import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import ToolsetEditorCallback from '../ToolsetEditorCallback';
+
+/** Listens on the flow's channel and resolves with the first message posted to it. */
+const listenForResult = (flowId: string): Promise<ToolsetOAuthChannelMessage> =>
+  new Promise((resolve) => {
+    const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+    channel.onmessage = (event) => {
+      resolve(event.data as ToolsetOAuthChannelMessage);
+      channel.close();
+    };
+  });
 
 vi.mock('../../../server-api/toolsets', () => ({
   loginToolset: vi.fn(),
@@ -113,5 +129,81 @@ describe('ToolsetEditorCallback', () => {
     await waitFor(() =>
       expect(sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY)).toBeNull(),
     );
+  });
+
+  it('posts a success message on the flow channel after a successful login', async () => {
+    setRedirectState({
+      toolsetId: 'toolsets/b/my__1.0.0',
+      credentialsLevel: ToolsetCredentialsLevel.Global,
+      state: 'flow-1',
+    });
+    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+
+    const resultPromise = listenForResult('flow-1');
+    renderCallback('?code=auth-code-xyz&state=flow-1');
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Success,
+      toolsetId: 'toolsets/b/my__1.0.0',
+      credentialsLevel: ToolsetCredentialsLevel.Global,
+    });
+  });
+
+  it('posts a failure message on the flow channel when the OAuth state mismatches', async () => {
+    setRedirectState({
+      toolsetId: 'toolsets/b/my__1.0.0',
+      state: 'flow-1',
+    });
+
+    const resultPromise = listenForResult('flow-1');
+    renderCallback('?code=auth-code-xyz&state=different-flow');
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Failure,
+      reason: ToolsetOAuthFailureReason.StateMismatch,
+    });
+  });
+
+  it('posts a failure message on the flow channel when the code query param is missing', async () => {
+    setRedirectState({
+      toolsetId: 'toolsets/b/my__1.0.0',
+      state: 'flow-1',
+    });
+
+    const resultPromise = listenForResult('flow-1');
+    renderCallback('?state=flow-1');
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Failure,
+      reason: ToolsetOAuthFailureReason.MissingCode,
+    });
+  });
+
+  it('posts a failure message on the flow channel when redirect state is missing', async () => {
+    const resultPromise = listenForResult('flow-1');
+    renderCallback('?code=auth-code-xyz&state=flow-1');
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Failure,
+      reason: ToolsetOAuthFailureReason.MissingRedirectState,
+    });
+  });
+
+  it('posts a failure message on the flow channel when loginToolset rejects', async () => {
+    setRedirectState({
+      toolsetId: 'toolsets/b/my__1.0.0',
+      state: 'flow-1',
+    });
+    vi.mocked(toolsetsApi.loginToolset).mockRejectedValue(
+      new Error('network error'),
+    );
+
+    const resultPromise = listenForResult('flow-1');
+    renderCallback('?code=auth-code-xyz&state=flow-1');
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Failure,
+      reason: ToolsetOAuthFailureReason.LoginRequestFailed,
+    });
   });
 });
