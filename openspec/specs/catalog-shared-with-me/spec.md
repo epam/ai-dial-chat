@@ -45,7 +45,7 @@ A failure resolving shared resources SHALL degrade to `sharedWithMe: false` for 
 
 ### Requirement: Toolsets expose an unfiltered `sharedWithMe` flag
 
-`DialToolsetDto` (`apps/chat-api/src/toolsets/`) SHALL include an optional `sharedWithMe?: boolean` (wire field `shared_with_me`, camelCased by the generated TypeScript client), computed with the same rules as the deployments requirement above, scoped to `resourceTypes: ['TOOL_SET']` (exact DIAL Core `ResourceTypes` enum literal to be confirmed against the installed `@epam/ai-dial-typescript-sdk` version at implementation time — see design.md Open Questions).
+`DialToolsetDto` (`apps/chat-api/src/toolsets/`) SHALL include an optional `sharedWithMe?: boolean` represented as `shared_with_me` on the wire, computed with the same rules as the deployments requirement above, scoped to `resourceTypes: ['TOOL_SET']`. Because the generated fetch client returns runtime JSON without transforming property names, `apps/chat/src/server-api/toolsets.ts` SHALL normalize `shared_with_me` to `sharedWithMe` (and the related `can_edit` to `canEdit`) before returning toolsets to application consumers.
 
 `ToolsetsService` SHALL resolve `sharedWithMe` from the same single unfiltered `getSharedResources` call already used (or newly factored, per the deployments requirement) to compute the existing `canEdit`/`is_my` fields, for both `listToolsets` and `getToolset`.
 
@@ -63,6 +63,11 @@ A failure resolving shared resources SHALL degrade to `sharedWithMe: false` for 
 
 - **WHEN** the requesting user is not the owner and the unfiltered shared-resources lookup returns this toolset's url with `permissions` including `WRITE`
 - **THEN** `shared_with_me` is `true`
+
+#### Scenario: Frontend adapter normalizes toolset sharing fields
+
+- **WHEN** the BFF toolsets response contains `shared_with_me: true` and `can_edit: true`
+- **THEN** `listToolsets` and `getToolset` expose `sharedWithMe: true` and `canEdit: true`, allowing the catalog mapper to render the recipient-side Delete action
 
 #### Scenario: Public or organization toolset is neither owned nor shared
 

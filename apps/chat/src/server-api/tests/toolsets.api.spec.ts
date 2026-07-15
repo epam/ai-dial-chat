@@ -45,6 +45,9 @@ const rawSnakeToolset = {
     global_auth_status: 'SIGNED_OUT',
     user_level_auth_status: 'SIGNED_IN',
   },
+  is_my: false,
+  can_edit: true,
+  shared_with_me: true,
 } as unknown as DialToolsetDto;
 
 describe('toolsets API adapter', () => {
@@ -85,6 +88,9 @@ describe('toolsets API adapter', () => {
         globalAuthStatus: 'SIGNED_OUT',
         userLevelAuthStatus: 'SIGNED_IN',
       },
+      isMy: false,
+      canEdit: true,
+      sharedWithMe: true,
     });
   });
 
@@ -98,5 +104,10 @@ describe('toolsets API adapter', () => {
     expect(result.data[0].displayName).toBe('My toolset');
     expect(result.data[0].authSettings?.authenticationType).toBe('OAUTH');
     expect(result.data[0].authSettings?.codeChallenge).toBe('challenge-value');
+    expect(result.data[0]).toMatchObject({
+      isMy: false,
+      canEdit: true,
+      sharedWithMe: true,
+    });
   });
 });
