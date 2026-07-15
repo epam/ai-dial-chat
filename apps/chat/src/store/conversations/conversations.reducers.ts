@@ -288,6 +288,17 @@ export const conversationsSlice = createSlice({
         })),
         state.conversations,
       );
+
+      const uploadedIds = new Set(payload.conversations.map((conv) => conv.id));
+      const failedIds = Array.from(payload.setIds).filter(
+        (id) => !uploadedIds.has(id),
+      );
+      state.conversations = state.conversations.map((conv) =>
+        failedIds.includes(conv.id)
+          ? { ...conv, status: UploadStatus.FAILED }
+          : conv,
+      );
+
       if (payload.showLoader) {
         state.areSelectedConversationsLoaded = true;
       }
