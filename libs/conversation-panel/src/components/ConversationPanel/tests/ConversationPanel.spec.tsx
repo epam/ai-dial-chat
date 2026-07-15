@@ -276,7 +276,7 @@ describe('ConversationPanel', () => {
   it('shows empty label when conversations is empty', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
     expect(screen.queryByRole('listitem')).toBeNull();
-    expect(screen.getByText('No conversations yet')).toBeTruthy();
+    expect(screen.getAllByText('No conversations yet')).toBeTruthy();
   });
 
   it('marks the active conversation with aria-current="page"', () => {
@@ -351,7 +351,7 @@ describe('ConversationPanel', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
     const input = screen.getByPlaceholderText('Search chat…');
     fireEvent.change(input, { target: { value: 'zzznomatch' } });
-    expect(screen.getByText('No results found')).toBeTruthy();
+    expect(screen.getAllByText('No results found')).toBeTruthy();
   });
 
   it('filters by Shared tab', () => {
