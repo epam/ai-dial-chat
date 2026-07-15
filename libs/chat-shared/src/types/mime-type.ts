@@ -53,8 +53,12 @@ export enum MIMEType {
  * unavailable or unreliable.
  */
 export enum FileExtension {
+  /** PDF document. */
   PDF = 'pdf',
+  /** Markdown document (`.md`). */
   Markdown = 'md',
+  /** Markdown document, alternate extension (`.markdown`). */
   MarkdownAlt = 'markdown',
+  /** JSON document. */
   JSON = 'json',
 }

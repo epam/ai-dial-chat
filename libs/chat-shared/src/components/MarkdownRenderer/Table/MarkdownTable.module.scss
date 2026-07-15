@@ -21,8 +21,8 @@
 .tableScrollFadeEnd {
   mask-image: linear-gradient(
     to right,
-    #000 0,
-    #000 calc(100% - 1rem),
+    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 0,
+    var(--cm-table-fade, var(--bg-mask-opaque, #000)) calc(100% - 1rem),
     transparent 100%
   );
 }
@@ -30,26 +30,36 @@
 :global([dir='rtl']) .tableScrollFadeEnd {
   mask-image: linear-gradient(
     to left,
-    #000 0,
-    #000 calc(100% - 1rem),
+    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 0,
+    var(--cm-table-fade, var(--bg-mask-opaque, #000)) calc(100% - 1rem),
     transparent 100%
   );
 }
 
 .tableScrollFadeStart {
-  mask-image: linear-gradient(to right, transparent 0, #000 1rem, #000 100%);
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 1rem,
+    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 100%
+  );
 }
 
 :global([dir='rtl']) .tableScrollFadeStart {
-  mask-image: linear-gradient(to left, transparent 0, #000 1rem, #000 100%);
+  mask-image: linear-gradient(
+    to left,
+    transparent 0,
+    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 1rem,
+    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 100%
+  );
 }
 
 .tableScrollFadeBoth {
   mask-image: linear-gradient(
     to right,
     transparent 0,
-    #000 1rem,
-    #000 calc(100% - 1rem),
+    var(--cm-table-fade, var(--bg-mask-opaque, #000)) 1rem,
+    var(--cm-table-fade, var(--bg-mask-opaque, #000)) calc(100% - 1rem),
     transparent 100%
   );
 }

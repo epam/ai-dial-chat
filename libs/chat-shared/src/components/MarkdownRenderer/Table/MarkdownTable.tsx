@@ -3,6 +3,7 @@ import { useTableScroll } from '../../../hooks/useTableScroll';
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './MarkdownTable.module.scss';
 
+/** Per-element className overrides for {@link MarkdownTable}. */
 export interface MarkdownTableClassNames {
   /** Extra classes on the outer table wrapper. */
   tableWrapper?: string;
@@ -10,8 +11,11 @@ export interface MarkdownTableClassNames {
   tableFont?: string;
 }
 
+/** Props for {@link MarkdownTable}. */
 export interface MarkdownTableProps {
+  /** Table body/children rendered inside the scrollable wrapper (typically `<thead>`/`<tbody>` from react-markdown). */
   children: ReactNode;
+  /** Per-element className overrides. */
   classNames: MarkdownTableClassNames;
 }
 

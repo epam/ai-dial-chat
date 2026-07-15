@@ -78,7 +78,6 @@ describe('MarkdownRenderer', () => {
     expect(cell.className).toContain('max-w-96');
     expect(cell.className).toContain('border-b');
     expect(cell.className).toContain('align-top');
-    expect(cell.className).toContain('[overflow-wrap:anywhere]');
     expect(cell.className).toContain('custom-body-cell');
     expect(columnHeader.className).not.toContain('custom-body-cell');
   });

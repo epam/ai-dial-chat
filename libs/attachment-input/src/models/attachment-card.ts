@@ -1,6 +1,16 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import type { Icon } from '@tabler/icons-react';
 
+/** Localised labels for the non-extension attachment type names derived by `getAttachmentCardState`. */
+export interface AttachmentTypeLabels {
+  /** Label shown for a prompt-type attachment. Defaults to `'Prompt'`. */
+  promptLabel?: string;
+  /** Label shown for a pasted-text attachment. Defaults to `'Pasted'`. */
+  pastedLabel?: string;
+  /** Label shown for an image attachment. Defaults to `'Image'`. */
+  imageLabel?: string;
+}
+
 /** Derived display state an AttachmentCard/AttachmentFileRow needs to render a given attachment. */
 export interface AttachmentCardState {
   /** Whether the attachment is currently uploading. */
@@ -63,6 +73,12 @@ export interface AttachmentCardLabels {
   retryLabel?: string;
   /** Accessible label applied to the card root when it is interactive via `onClick`. Defaults to `'Open attachment'`. */
   clickLabel?: string;
+  /** Accessible label applied to the card root when it is interactive via `onExpand` (pasted-text cards). Defaults to `'Expand pasted text'`. */
+  expandLabel?: string;
+  /** Accessible label for the loading spinner shown while the attachment is uploading. Defaults to `'Loading attachment'`. */
+  loadingLabel?: string;
+  /** Status message announced to assistive tech when the upload fails. Defaults to `'Upload failed'`. */
+  uploadFailedStatusLabel?: string;
 }
 
 /** Props accepted by the `AttachmentCard` component. */
@@ -85,6 +101,8 @@ export interface AttachmentCardProps {
   onClick?: (id: string) => void;
   /** Localised accessible labels for the remove/retry actions and the interactive card root. */
   labels?: AttachmentCardLabels;
+  /** Localised labels for the non-extension attachment type names (prompt/pasted/image). */
+  typeLabels?: AttachmentTypeLabels;
   /** Color, typography, and shape overrides for the card. */
   styles?: AttachmentCardStyles;
   /**

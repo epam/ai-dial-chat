@@ -42,7 +42,10 @@ import {
   ATTACHMENT_COLLAPSE_THRESHOLD,
   ATTACHMENT_COLLAPSED_VISIBLE_COUNT,
 } from '../constants/attachment-group';
-import type { AttachmentCardState } from '../models/attachment-card';
+import type {
+  AttachmentCardState,
+  AttachmentTypeLabels,
+} from '../models/attachment-card';
 import {
   AttachmentTilesLayout,
   type AttachmentTilesPlan,
@@ -77,12 +80,19 @@ const WILDCARD_TYPE_LABELS: Record<string, string> = {
  * Examples:
  *   `['application/pdf', 'image/jpeg']` → `'PDF, JPEG'`
  *   `['image/*', 'text/csv']` → `'Image files, CSV'`
+ *
+ * @param wildcardLabels - Optional overrides for the wildcard category labels
+ *   (`image`, `audio`, `video`, `text`), keyed by MIME major type. Defaults
+ *   to the built-in English labels.
  */
-export const mimeTypesToExtensionLabels = (types: string[]): string => {
+export const mimeTypesToExtensionLabels = (
+  types: string[],
+  wildcardLabels: Record<string, string> = WILDCARD_TYPE_LABELS,
+): string => {
   const labels = types.map((type) => {
     if (type.endsWith('/*')) {
       const major = type.slice(0, -2);
-      return WILDCARD_TYPE_LABELS[major] ?? `${major} files`;
+      return wildcardLabels[major] ?? `${major} files`;
     }
     const subtype = type.split('/')[1];
     return subtype != null ? subtype.toUpperCase() : type.toUpperCase();
@@ -234,11 +244,14 @@ export const getExtFromContentType = (
   return undefined;
 };
 
-const getBottomLabel = (attachment: DisplayAttachment): string => {
+const getBottomLabel = (
+  attachment: DisplayAttachment,
+  typeLabels: AttachmentTypeLabels,
+): string => {
   const { type, name, contentType } = attachment;
-  if (type === AttachmentType.Prompt) return 'Prompt';
-  if (type === AttachmentType.Pasted) return 'Pasted';
-  if (type === AttachmentType.Image) return 'Image';
+  if (type === AttachmentType.Prompt) return typeLabels.promptLabel ?? 'Prompt';
+  if (type === AttachmentType.Pasted) return typeLabels.pastedLabel ?? 'Pasted';
+  if (type === AttachmentType.Image) return typeLabels.imageLabel ?? 'Image';
 
   // Prioritize contentType over name-derived extension
   if (contentType) {
@@ -260,6 +273,7 @@ export const getAttachmentCardState = (
   attachment: DisplayAttachment,
   isSelected: boolean,
   shouldAlwaysShowActions: boolean,
+  typeLabels: AttachmentTypeLabels = {},
 ): AttachmentCardState => {
   const { type, status, previewUrl, url } = attachment;
 
@@ -290,7 +304,7 @@ export const getAttachmentCardState = (
     isAudio,
     areActionsVisible: isError || shouldAlwaysShowActions,
     BottomIcon: getBottomIcon(attachment),
-    typeLabel: getBottomLabel(attachment),
+    typeLabel: getBottomLabel(attachment, typeLabels),
     cardColorClass,
     removeBtnClass: isImage ? styles.removeBtnImage : styles.actionBtn,
   };

@@ -3,10 +3,7 @@ import { FC } from 'react';
 
 /** Props for the model-change status message banner. */
 export interface StatusMessageBubbleProps {
-  /**
-   * Bold prefix text displayed before the description.
-   * @default "Model switched."
-   */
+  /** Bold prefix text displayed before the description. Defaults to `'Model switched.'`. */
   titleText?: string;
   /** Full description text, e.g. "The model has been switched from GPT to Imagen." */
   bodyText: string;

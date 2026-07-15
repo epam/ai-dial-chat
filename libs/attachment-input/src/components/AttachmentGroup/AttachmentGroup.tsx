@@ -41,6 +41,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   onRetry,
   getSizeLabel,
   labels,
+  typeLabels,
   styles: groupStyles,
   theme,
   className,
@@ -51,6 +52,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
     retryLabel = 'Retry upload',
     showLessLabel = 'Show less',
     downloadAllLabel = 'Download all',
+    getHeaderLabel = (count: number) => pluralize(count, 'attachment'),
   } = labels ?? {};
   const { headerLabelClassName = 'dial-tiny-semi-text' } = groupStyles ?? {};
 
@@ -69,7 +71,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   const isCollapsible = attachments.length >= ATTACHMENT_COLLAPSE_THRESHOLD;
 
   const HeaderIcon = isMixed ? IconPaperclip : hasImages ? IconPhoto : IconFile;
-  const headerLabel = pluralize(attachments.length, 'attachment');
+  const headerLabel = getHeaderLabel(attachments.length);
 
   const visibleAttachments = attachments.slice(0, plan.visibleCount);
 
@@ -149,6 +151,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
                 }
                 onRetry={onRetry}
                 labels={{ clickLabel, retryLabel }}
+                typeLabels={typeLabels}
                 styles={{ roundedClassName: 'rounded-xl' }}
                 showHoverDownloadIcon
                 className={mergeClasses('size-[84px]', styles.imageTile)}
@@ -163,6 +166,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
                   retryLabel,
                   sizeLabel: getSizeLabel?.(attachment),
                 }}
+                typeLabels={typeLabels}
                 theme={theme}
               />
             )}

@@ -42,6 +42,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   isSelected,
   shouldAlwaysShowActions,
   labels,
+  typeLabels,
   styles: cardStyles,
   showHoverDownloadIcon = false,
   className,
@@ -50,6 +51,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     removeLabel = 'Remove attachment',
     retryLabel = 'Retry upload',
     clickLabel = 'Open attachment',
+    expandLabel = 'Expand pasted text',
+    loadingLabel = 'Loading attachment',
+    uploadFailedStatusLabel = 'Upload failed',
   } = labels ?? {};
   const {
     colors,
@@ -88,8 +92,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         attachment,
         isSelected ?? false,
         shouldAlwaysShowActions ?? false,
+        typeLabels,
       ),
-    [attachment, isSelected, shouldAlwaysShowActions],
+    [attachment, isSelected, shouldAlwaysShowActions, typeLabels],
   );
 
   /*
@@ -171,6 +176,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
           <audio
             controls
             src={attachment.playUrl}
+            aria-label={attachment.name}
             className="w-full"
             preload="metadata"
           />
@@ -318,13 +324,13 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             styles.loadingOverlay,
           )}
         >
-          <DialSpinner
-            size={40}
-            ariaLabel="Loading attachment"
-            className="z-50"
-          />
+          <DialSpinner size={40} ariaLabel={loadingLabel} className="z-50" />
         </span>
       )}
+
+      <span role="status" aria-live="polite" className="sr-only">
+        {isError ? uploadFailedStatusLabel : ''}
+      </span>
 
       {!isLoading && (
         <div
@@ -386,7 +392,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="button"
-        aria-label={isClickable ? clickLabel : undefined}
+        aria-label={
+          isClickable ? clickLabel : isExpandable ? expandLabel : undefined
+        }
       >
         {cardContent}
       </div>

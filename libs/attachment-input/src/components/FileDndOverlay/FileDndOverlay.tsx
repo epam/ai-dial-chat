@@ -45,6 +45,8 @@ export const FileDndOverlay: FC<FileDndOverlayProps> = ({
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={mergeClasses(
         'fixed inset-0 z-[9999] flex items-center justify-center backdrop-blur-sm',
         styles.overlay,
@@ -57,7 +59,7 @@ export const FileDndOverlay: FC<FileDndOverlayProps> = ({
       style={cssVars}
     >
       <div className="flex flex-col items-center text-center">
-        <Icon size={100} className={resolvedIconClassName} />
+        <Icon size={100} className={resolvedIconClassName} aria-hidden />
         <span className={mergeClasses('mt-5', titleClassName)}>
           {resolvedTitle}
         </span>

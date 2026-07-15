@@ -43,6 +43,7 @@ const shouldSyncInstantly = (
   !content.startsWith(displayed) ||
   hasStructuralMarkdown(content.slice(displayed.length));
 
+/** Gradually reveals appended markdown content while streaming, syncing instantly on completion or when a code block/table is mid-stream. */
 export const useStreamedMarkdownContent = (
   content: string,
   isStreaming = false,

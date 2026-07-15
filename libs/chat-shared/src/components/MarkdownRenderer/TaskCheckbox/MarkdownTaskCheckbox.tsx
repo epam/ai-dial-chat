@@ -3,7 +3,7 @@ import { type FC, useId } from 'react';
 
 /** Props for {@link MarkdownTaskCheckbox}. */
 export interface MarkdownTaskCheckboxProps {
-  /** Whether the GFM task-list item is checked. */
+  /** Whether the GFM task-list item is checked. Defaults to `false`. */
   checked?: boolean;
 }
 

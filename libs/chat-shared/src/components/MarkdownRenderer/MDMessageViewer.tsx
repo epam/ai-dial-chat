@@ -5,7 +5,7 @@ import { DEFAULT_MARKDOWN_CLASS_NAMES } from './markdown-class-names';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 /** Props for the {@link MDMessageViewer} markdown renderer. */
-interface Props {
+interface MDMessageViewerProps {
   /** Raw markdown string to render. */
   content: string;
   /** Enables gradual reveal for appended streaming content. */
@@ -30,7 +30,7 @@ interface Props {
 }
 
 /** Renders assistant message content as formatted markdown. */
-export const MDMessageViewer: FC<Props> = memo(
+export const MDMessageViewer: FC<MDMessageViewerProps> = memo(
   ({
     content,
     isStreaming,

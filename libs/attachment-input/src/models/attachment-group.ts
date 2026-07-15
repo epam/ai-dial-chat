@@ -2,6 +2,7 @@ import type {
   CodeBlockTheme,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
+import type { AttachmentTypeLabels } from './attachment-card';
 
 /** How the unified attachment tile grid should render for a given total attachment count. */
 export enum AttachmentTilesLayout {
@@ -35,6 +36,12 @@ export interface AttachmentGroupLabels {
   showLessLabel?: string;
   /** Label for the "download all" header action, shown whenever the group has 2+ attachments. Defaults to `'Download all'`. */
   downloadAllLabel?: string;
+  /**
+   * Resolves the header count label (e.g. `'3 attachments'`) for a given
+   * attachment count. Defaults to English `'{count} attachment'` /
+   * `'{count} attachments'` pluralization.
+   */
+  getHeaderLabel?: (count: number) => string;
 }
 
 /** Style overrides for the `AttachmentGroup` component. */
@@ -61,6 +68,8 @@ export interface AttachmentGroupProps {
   getSizeLabel?: (attachment: DisplayAttachment) => string | undefined;
   /** Localised accessible labels for the group region and its actions. */
   labels?: AttachmentGroupLabels;
+  /** Localised labels for the non-extension attachment type names (prompt/pasted/image), forwarded to each tile. */
+  typeLabels?: AttachmentTypeLabels;
   /** Style overrides for the header label. */
   styles?: AttachmentGroupStyles;
   /**
