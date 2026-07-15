@@ -94,8 +94,10 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           onAttachmentClick={onAttachmentClick}
           onDownloadAll={onDownloadAll}
           onRetry={onAttachmentRetry}
-          clickLabel={attachmentClickLabel}
-          retryLabel={attachmentRetryLabel}
+          labels={{
+            clickLabel: attachmentClickLabel,
+            retryLabel: attachmentRetryLabel,
+          }}
           getSizeLabel={getAttachmentSizeLabel}
           theme={attachmentTheme}
           className="max-w-[640px]"

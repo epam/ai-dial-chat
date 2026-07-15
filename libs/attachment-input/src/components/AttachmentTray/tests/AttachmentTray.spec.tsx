@@ -62,7 +62,7 @@ describe('AttachmentTray', () => {
       <AttachmentTray
         attachments={[makeAttachment('1', 'a.pdf')]}
         onAttachmentClick={onAttachmentClick}
-        clickLabel="Download file"
+        labels={{ clickLabel: 'Download file' }}
       />,
     );
     expect(screen.getByLabelText('Download file')).toBeTruthy();
@@ -75,7 +75,7 @@ describe('AttachmentTray', () => {
       <AttachmentTray
         attachments={[attachment]}
         onAttachmentClick={onAttachmentClick}
-        clickLabel="Download file"
+        labels={{ clickLabel: 'Download file' }}
       />,
     );
     fireEvent.click(screen.getByLabelText('Download file'));
@@ -90,7 +90,7 @@ describe('AttachmentTray', () => {
         attachments={[makeAttachment('1', 'a.pdf')]}
         onRemove={onRemove}
         onAttachmentClick={onAttachmentClick}
-        clickLabel="Download file"
+        labels={{ clickLabel: 'Download file' }}
       />,
     );
     fireEvent.click(screen.getByLabelText('Remove attachment'));

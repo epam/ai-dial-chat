@@ -6,7 +6,8 @@ import { NameCellRenderer } from './Renders/NameCellRenderer';
 import { StarCellRenderer } from './Renders/StarCellRenderer';
 import { TagsCellRenderer } from './Renders/TagsCellRenderer';
 
-export const CATALOG_COLUMNS = (): ColDef<CatalogItem>[] => [
+/** Column definitions for the catalog ag-grid list view. A stable module-level constant so ag-grid never sees a new array/closures on each render. */
+export const CATALOG_COLUMNS: ColDef<CatalogItem>[] = [
   {
     headerName: 'Name',
     flex: 4,

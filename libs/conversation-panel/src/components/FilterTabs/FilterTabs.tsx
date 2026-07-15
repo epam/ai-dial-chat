@@ -1,4 +1,5 @@
 import { PillTabs } from '@epam/ai-dial-kit';
+import { mergeClasses } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
 import { type FilterLabels } from '../../models/panel-props';
 import { FilterTab } from '../../types/conversation-classification';
@@ -33,7 +34,7 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
         }))}
         activeTabId={activeTab}
         onTabChange={(id: string) => onChange(id as FilterTab)}
-        tabClassName={tabClassName}
+        tabClassName={mergeClasses(tabClassName, 'flex-1')}
       />
     </div>
   ),
