@@ -60,10 +60,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialGhostIconButton: ({
     'aria-label': ariaLabel,
     disabled,
+    onClick,
   }: {
     'aria-label': string;
     disabled?: boolean;
-  }) => <button type="button" aria-label={ariaLabel} disabled={disabled} />,
+    onClick?: () => void;
+  }) => (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={onClick}
+    />
+  ),
   DialEllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
 }));
 
@@ -125,6 +134,7 @@ const renderPanel = ({
   sources = [] as QuotationSource[],
   onAttachmentClick = vi.fn(),
   onClose = vi.fn(),
+  onDownloadAll = undefined as (() => void) | undefined,
 } = {}) =>
   render(
     <ConversationSourcesPanel
@@ -134,6 +144,7 @@ const renderPanel = ({
       generated={generated}
       sources={sources}
       onAttachmentClick={onAttachmentClick}
+      onDownloadAll={onDownloadAll}
       isMobile={false}
       labels={LABELS}
     />,
@@ -183,6 +194,34 @@ describe('ConversationSourcesPanel', () => {
   it('renders sources section', () => {
     renderPanel({ sources: [makeSource('https://example.com', 'Example')] });
     expect(screen.getByText('Example')).toBeTruthy();
+  });
+
+  it('renders the download-all button disabled when onDownloadAll is omitted', () => {
+    renderPanel({ uploaded: [makeAttachment('upload.pdf')] });
+    expect(
+      (
+        screen.getByRole('button', {
+          name: 'Download all',
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+  });
+
+  it('renders the download-all button enabled and wired to onDownloadAll', async () => {
+    const user = userEvent.setup();
+    const onDownloadAll = vi.fn();
+    renderPanel({
+      uploaded: [makeAttachment('upload.pdf')],
+      onDownloadAll,
+    });
+
+    const button = screen.getByRole('button', {
+      name: 'Download all',
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+
+    await user.click(button);
+    expect(onDownloadAll).toHaveBeenCalledOnce();
   });
 });
 

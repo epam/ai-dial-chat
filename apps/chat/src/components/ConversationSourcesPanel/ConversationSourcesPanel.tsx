@@ -11,7 +11,10 @@ import {
   SidebarI18nKeys,
 } from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
-import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
+import {
+  downloadAttachment as triggerAttachmentDownload,
+  useAttachmentAction,
+} from '../../hooks/attachment/useAttachmentAction';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
@@ -22,6 +25,11 @@ import { isDialFileId } from '../../utils/dial-file';
 
 const MIN_PANEL_WIDTH = 312;
 const DEFAULT_PANEL_WIDTH = 360;
+/** Delay between successive triggered downloads so browsers don't block a burst of anchor clicks. */
+const DOWNLOAD_ALL_STAGGER_MS = 150;
+
+const isDownloadableAttachment = (attachment: DisplayAttachment): boolean =>
+  attachment.url != null && isDialFileId(attachment.url);
 
 const ConversationSourcesPanelContainer: FC = () => {
   const { t } = useTranslation();
@@ -70,6 +78,20 @@ const ConversationSourcesPanelContainer: FC = () => {
     [openAttachmentCanvas, downloadAttachment, handleClose],
   );
 
+  const downloadableAttachments = useMemo(
+    () => [...uploaded, ...generated].filter(isDownloadableAttachment),
+    [uploaded, generated],
+  );
+
+  const handleDownloadAll = useCallback(() => {
+    downloadableAttachments.forEach((attachment, index) => {
+      setTimeout(
+        () => triggerAttachmentDownload(attachment),
+        index * DOWNLOAD_ALL_STAGGER_MS,
+      );
+    });
+  }, [downloadableAttachments]);
+
   const isMobile = useIsMobile();
   const viewportWidth = useViewportWidth();
   const maxPanelWidth = Math.floor(viewportWidth * 0.5);
@@ -109,6 +131,9 @@ const ConversationSourcesPanelContainer: FC = () => {
       sources={sources}
       onAttachmentClick={handleAttachmentClick}
       onSourceClick={handleSourceClick}
+      onDownloadAll={
+        downloadableAttachments.length > 0 ? handleDownloadAll : undefined
+      }
       isMobile={isMobile}
       defaultWidth={defaultPanelWidth}
       minWidth={MIN_PANEL_WIDTH}

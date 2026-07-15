@@ -12,6 +12,23 @@ import {
 } from '../../utils/dial-file';
 
 /**
+ * Downloads a DIAL-hosted attachment (`url` resolves to a DIAL file id).
+ * Returns whether a download was actually triggered, so callers can skip
+ * non-downloadable (reference-only) attachments without duplicating the
+ * DIAL-file-id / URL-resolution checks.
+ */
+export const downloadAttachment = (attachment: DisplayAttachment): boolean => {
+  const { url, name } = attachment;
+  if (url == null || !isDialFileId(url)) return false;
+
+  const downloadUrl = resolveDialFileDownloadUrl(url);
+  if (downloadUrl == null) return false;
+
+  triggerAnchorDownload(downloadUrl, name);
+  return true;
+};
+
+/**
  * Default click behavior for a plain attachment tile: downloads DIAL-hosted
  * files, and for reference-only attachments (no `url`, only `referenceUrl` —
  * e.g. RAG/search-grounding chunks), opens a PDF `referenceUrl` in the canvas
@@ -26,10 +43,7 @@ export const useAttachmentAction = () => {
       const { url, referenceUrl, name } = attachment;
 
       if (url != null) {
-        if (!isDialFileId(url)) return;
-        const downloadUrl = resolveDialFileDownloadUrl(url);
-        if (downloadUrl == null) return;
-        triggerAnchorDownload(downloadUrl, name);
+        downloadAttachment(attachment);
         return;
       }
 
