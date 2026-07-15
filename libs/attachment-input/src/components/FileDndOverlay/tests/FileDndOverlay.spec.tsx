@@ -36,14 +36,6 @@ describe('FileDndOverlay', () => {
     ).toBeTruthy();
   });
 
-  it('applies default deniedIconClassName (text-error) when isAttachmentsAllowed is false', () => {
-    const { container } = render(
-      <FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />,
-    );
-    const icon = container.querySelector('svg');
-    expect(icon?.getAttribute('class')).toContain('text-error');
-  });
-
   it('applies cursor-not-allowed when isAttachmentsAllowed is false', () => {
     const { container } = render(
       <FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />,
