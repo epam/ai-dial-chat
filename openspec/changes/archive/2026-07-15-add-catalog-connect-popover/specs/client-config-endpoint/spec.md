@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: GET /api/v1/client-config returns client-safe configuration
 
@@ -115,21 +115,3 @@ The system SHALL expose `GET /api/v1/client-config` as a versioned business endp
 
 - **WHEN** `npm run openapi` is run after the endpoint is added
 - **THEN** the generated `ClientConfigResponse` type's `config` property includes `dialCoreExternalUrl: string | null`
-
----
-
-### Requirement: GET /api/v1/config is removed
-
-The old `GET /api/v1/config` endpoint SHALL be removed in the same PR that introduces `GET /api/v1/client-config`. The `AppConfigDto` (two-field DTO) SHALL be deleted. `apps/chat/src/server-api/config.api.ts` SHALL be deleted and replaced by `apps/chat/src/server-api/app-config.api.ts`.
-
-**RTL impact:** None. **i18n impact:** None.
-
-#### Scenario: Old endpoint no longer exists
-
-- **WHEN** `GET /api/v1/config` is called after the migration
-- **THEN** the response is `404 Not Found`
-
-#### Scenario: New server-api wrapper uses generated client
-
-- **WHEN** `getClientConfig()` is called from the frontend server-api layer
-- **THEN** it uses `AppConfigApi` from `@epam/chat-api-client`, not the hand-rolled `base.ts` `get()` helper

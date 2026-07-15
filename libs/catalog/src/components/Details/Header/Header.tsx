@@ -22,6 +22,7 @@ import {
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import { FolderPath } from '../../FolderPath/FolderPath';
+import { ConnectButton } from './ConnectButton/ConnectButton';
 import { DeleteButton } from './DeleteButton/DeleteButton';
 import { ShareButton } from './ShareButton/ShareButton';
 
@@ -35,6 +36,13 @@ interface HeaderProps {
    * provided, clicking Share opens this popover instead of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /**
+   * Renders the Connect popover content anchored to the Connect button. When
+   * absent, the Connect button is never shown.
+   */
+  connectOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /** Controls whether the "Connect" action is shown for the item. When absent, the Connect button is never shown. */
+  isConnectVisible?: (item: CatalogItem) => boolean;
   /** Called when recipient-side Delete is clicked for an item shared with the current user. */
   onUnshare?: (item: CatalogItem) => void;
   onEdit?: (item: CatalogItem) => void;
@@ -75,6 +83,8 @@ export const Header: FC<HeaderProps> = ({
   isPrimaryActionVisible,
   onShare,
   shareOverlay,
+  connectOverlay,
+  isConnectVisible,
   onUnshare,
   onEdit,
   onDelete,
@@ -211,6 +221,12 @@ export const Header: FC<HeaderProps> = ({
             onClick={handleCredentialsClick}
           />
         )}
+        <ConnectButton
+          item={item}
+          connectOverlay={connectOverlay}
+          isConnectVisible={isConnectVisible}
+          label={texts?.connectLabel}
+        />
       </div>
     </div>
   );

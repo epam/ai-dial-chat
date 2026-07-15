@@ -533,6 +533,103 @@ describe('DeploymentsService', () => {
       expect(result.deployments[0].applicationFolder).toBeUndefined();
     });
 
+    it('maps features.mcp true for an MCP-capable application', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, features: { mcp: true } }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].features?.mcp).toBe(true);
+    });
+
+    it('omits features.mcp for an application without MCP support', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, features: { system_prompt: true } }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].features?.mcp).toBeUndefined();
+    });
+
+    it('maps features.mcp true when only a root-level mcp descriptor is present (no features.mcp)', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          {
+            ...mockApplication,
+            mcp: { endpoint: 'https://example.com/mcp', transport: 'sse' },
+          },
+        ],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].features?.mcp).toBe(true);
+    });
+
+    it('maps features.mcp true from a root-level mcp descriptor even when features is otherwise absent', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          {
+            id: 'my-mcp-app',
+            object: 'application',
+            display_name: 'My MCP App',
+            mcp: { endpoint: 'https://example.com/mcp' },
+          },
+        ],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].features?.mcp).toBe(true);
+      expect(result.deployments[0].features?.systemPrompt).toBe(false);
+    });
+
+    it('maps features.mcp true when "mcp" is listed in interfaces with neither features.mcp nor a root mcp descriptor present', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          {
+            id: 'simple-mcp-app',
+            object: 'application',
+            display_name: 'Simple MCP app',
+            interfaces: ['mcp', 'chat', 'openaiChatCompletions'],
+            features: { system_prompt: true, temperature: true },
+          },
+        ],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].features?.mcp).toBe(true);
+      expect(result.deployments[0].features?.systemPrompt).toBe(true);
+    });
+
     it('sets isMy=true when bucket appears as a path segment in id', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.listDeployments.mockResolvedValue({

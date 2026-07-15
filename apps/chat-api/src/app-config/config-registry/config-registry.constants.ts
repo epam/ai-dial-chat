@@ -38,6 +38,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DEFAULT_DEPLOYMENT',
   },
   {
+    key: 'dialCore.externalUrl',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Public-facing DIAL Core base URL that browsers can reach directly, used to build client-side MCP endpoint links. Null when DIAL_CORE_EXTERNAL_URL is not configured. Distinct from the internal DIAL_CORE_URL, which is never exposed to clients.',
+    owner: 'chat-team',
+    envVar: 'DIAL_CORE_EXTERNAL_URL',
+  },
+  {
     key: 'features.asrEnabled',
     type: 'feature',
     valueType: 'boolean',
