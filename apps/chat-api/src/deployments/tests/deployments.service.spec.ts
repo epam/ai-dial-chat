@@ -718,6 +718,188 @@ describe('DeploymentsService', () => {
     });
   });
 
+  describe('sharedWithMe', () => {
+    it('is false for an owned application, even if a share grant is also returned', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, id: 'applications/BUCKET_HASH/my-app' }],
+      });
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'applications/BUCKET_HASH/my-app',
+              permissions: ['READ', 'WRITE'],
+            },
+          ],
+        },
+        error: undefined,
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].sharedWithMe).toBe(false);
+    });
+
+    it('is true for a READ-only shared application', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockApplication, id: 'applications/OTHER_BUCKET/their-app' },
+        ],
+      });
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'applications/OTHER_BUCKET/their-app',
+              permissions: ['READ'],
+            },
+          ],
+        },
+        error: undefined,
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].sharedWithMe).toBe(true);
+    });
+
+    it('is true for a WRITE-shared application', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockApplication, id: 'applications/OTHER_BUCKET/their-app' },
+        ],
+      });
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'applications/OTHER_BUCKET/their-app',
+              permissions: ['WRITE'],
+            },
+          ],
+        },
+        error: undefined,
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].sharedWithMe).toBe(true);
+      expect(result.deployments[0].canEdit).toBe(true);
+    });
+
+    it('is false for a public/organization application not returned by getSharedResources', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockApplication, id: 'applications/OTHER_BUCKET/their-app' },
+        ],
+      });
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: { resources: [] },
+        error: undefined,
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].sharedWithMe).toBe(false);
+    });
+
+    it('degrades to false when getSharedResources fails', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockApplication, id: 'applications/OTHER_BUCKET/their-app' },
+        ],
+      });
+      sdkClient.getSharedResources.mockRejectedValue(new Error('boom'));
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].sharedWithMe).toBe(false);
+    });
+
+    it('logs and degrades to false when getSharedResources returns an error response', async () => {
+      const { service, sdkClient } = makeService();
+      const warnSpy = vi.spyOn(service['logger'], 'warn');
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockApplication, id: 'applications/OTHER_BUCKET/their-app' },
+        ],
+      });
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: undefined,
+        error: {},
+        response: { status: 503 },
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+
+      expect(result.deployments[0].sharedWithMe).toBe(false);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Failed to resolve shared application resources: status=503',
+      );
+    });
+
+    it('resolves canEdit and sharedWithMe from exactly one getSharedResources call', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockApplication, id: 'applications/OTHER_BUCKET/their-app' },
+        ],
+      });
+      sdkClient.getSharedResources.mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'applications/OTHER_BUCKET/their-app',
+              permissions: ['WRITE'],
+            },
+          ],
+        },
+        error: undefined,
+      });
+
+      await service.listDeployments('user1', 'token', 'BUCKET_HASH');
+      expect(sdkClient.getSharedResources).toHaveBeenCalledOnce();
+    });
+  });
+
   describe('getDeploymentConfiguration', () => {
     const schema = { type: 'object', title: 'StatGPT Config', properties: {} };
 

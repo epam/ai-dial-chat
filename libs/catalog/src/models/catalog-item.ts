@@ -33,6 +33,8 @@ export interface CatalogItem {
   isUserFavorite?: boolean;
   /** Whether the item belongs to the current user (e.g. created by them or in their personal space). */
   isMyApp?: boolean;
+  /** Whether this item is shared with the current user (not owned by them) via a share invitation. */
+  sharedWithMe?: boolean;
   /** Whether the item can be edited by the current user. When true and `onEdit` is supplied, an "Edit" action is shown in the details panel. */
   isEditable?: boolean;
   /** Provider name shown below the entity name in the details header, e.g. `'OpenAI'` or `'Anthropic'`. */

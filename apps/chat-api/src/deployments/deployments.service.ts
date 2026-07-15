@@ -291,38 +291,36 @@ export class DeploymentsService {
   }
 
   /**
-   * Resolves which application URLs the current user was granted WRITE
-   * access to via a share invitation, so shared-with-me applications become
-   * editable alongside ones the user owns. Best-effort: a DIAL Core error
-   * here degrades to "no shared write access" rather than failing the whole
-   * deployments list.
+   * Resolves every application resource shared with the current user
+   * (READ or WRITE), in a single upstream call reused to derive both the
+   * WRITE-only "can edit" set and the unfiltered "shared with me" set —
+   * avoids issuing `getSharedResources` twice per list request. Best-effort:
+   * a DIAL Core error here degrades to "no shared applications" rather than
+   * failing the whole deployments list.
    */
-  private async getWritableApplicationUrls(
+  private async getSharedApplicationResources(
     accessToken: string,
-  ): Promise<Set<string>> {
+  ): Promise<{ url?: string; permissions?: string[] }[]> {
     try {
-      const { data, error } = await this.dialClient.client.getSharedResources({
-        headers: getBearerAuthHeaders(accessToken),
-        body: { resourceTypes: ['APPLICATION'], with: 'me' },
-      });
-      if (error) return new Set();
+      const { data, error, response } =
+        await this.dialClient.client.getSharedResources({
+          headers: getBearerAuthHeaders(accessToken),
+          body: { resourceTypes: ['APPLICATION'], with: 'me' },
+        });
+      if (error) {
+        this.logger.warn(
+          `Failed to resolve shared application resources: status=${response.status}`,
+        );
+        return [];
+      }
 
-      const resources = (data?.resources ?? []) as {
+      return (data?.resources ?? []) as {
         url?: string;
         permissions?: string[];
       }[];
-      return new Set(
-        resources
-          .filter((resource) => resource.permissions?.includes('WRITE'))
-          .map((resource) => resource.url)
-          .filter((url): url is string => url != null),
-      );
     } catch (err) {
-      this.logger.warn(
-        'Failed to resolve shared application write access',
-        err,
-      );
-      return new Set();
+      this.logger.warn('Failed to resolve shared application resources', err);
+      return [];
     }
   }
 
@@ -392,8 +390,19 @@ export class DeploymentsService {
       await this.userConfigService.getInstalledIds(accessToken, bucket);
     const toolsetsSet = new Set(toolsetIds);
     const deploymentsSet = new Set(deploymentIds);
-    const writableApplicationUrls =
-      await this.getWritableApplicationUrls(accessToken);
+    const sharedApplicationResources =
+      await this.getSharedApplicationResources(accessToken);
+    const writableApplicationUrls = new Set(
+      sharedApplicationResources
+        .filter((resource) => resource.permissions?.includes('WRITE'))
+        .map((resource) => resource.url)
+        .filter((url): url is string => url != null),
+    );
+    const sharedApplicationUrls = new Set(
+      sharedApplicationResources
+        .map((resource) => resource.url)
+        .filter((url): url is string => url != null),
+    );
 
     const withInstalled = allItems.map((item) => {
       const isMy = item.id.split('/').includes(bucket);
@@ -405,6 +414,7 @@ export class DeploymentsService {
             : deploymentsSet.has(item.id),
         isMy,
         canEdit: isMy || writableApplicationUrls.has(item.id),
+        sharedWithMe: !isMy && sharedApplicationUrls.has(item.id),
       };
     });
 

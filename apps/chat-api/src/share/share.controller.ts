@@ -13,6 +13,10 @@ import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
 import { CreateShareLinkDto } from './dto/create-share-link.dto';
+import {
+  DiscardSharedCatalogItemDto,
+  DiscardSharedCatalogItemResponseDto,
+} from './dto/discard-shared-catalog-item.dto';
 import { GetInvitationDto } from './dto/get-invitation.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
 import { ShareService } from './share.service';
@@ -108,5 +112,53 @@ export class ShareController {
   ): Promise<AcceptInvitationResponseDto> {
     const { at, sub } = req.user as SessionUser;
     return this.shareService.acceptInvitation(at, invitationId, sub);
+  }
+
+  @Post('discard')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'discardSharedCatalogItem',
+    summary: 'Discard a catalog resource shared with the caller',
+    description:
+      "Discards the authenticated user's own access to a catalog resource " +
+      "(application or toolset) shared with them, via DIAL Core's " +
+      "discardSharedResources operation. Only affects the caller's own " +
+      'access — removing access for everyone else is a separate operation.',
+  })
+  @ApiBody({ type: DiscardSharedCatalogItemDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Resource discarded successfully',
+    type: DiscardSharedCatalogItemResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error — invalid itemId',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Resource is not shared with the caller',
+  })
+  @ApiResponse({ status: 404, description: 'Resource does not exist' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  discardSharedCatalogItem(
+    @Req() req: Request,
+    @Body() body: DiscardSharedCatalogItemDto,
+  ): Promise<DiscardSharedCatalogItemResponseDto> {
+    const { at, sub } = req.user as SessionUser;
+    return this.shareService.discardShared(body.itemId, at, sub);
   }
 }

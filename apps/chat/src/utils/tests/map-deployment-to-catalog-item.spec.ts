@@ -102,6 +102,22 @@ describe('mapDeploymentToCatalogItem', () => {
 
     expect(result.isEditable).toBe(false);
   });
+
+  it('carries sharedWithMe through from the deployment DTO', () => {
+    const result = mapDeploymentToCatalogItem({
+      ...baseDeployment,
+      isMy: false,
+      sharedWithMe: true,
+    });
+
+    expect(result.sharedWithMe).toBe(true);
+  });
+
+  it('defaults sharedWithMe to false when the field is absent from the DTO', () => {
+    const result = mapDeploymentToCatalogItem(baseDeployment);
+
+    expect(result.sharedWithMe).toBe(false);
+  });
 });
 
 describe('mapToolsetToCatalogItem', () => {
@@ -165,6 +181,26 @@ describe('mapToolsetToCatalogItem', () => {
     });
 
     expect(result.isEditable).toBe(true);
+  });
+
+  it('carries sharedWithMe through from the toolset DTO', () => {
+    const result = mapToolsetToCatalogItem({
+      id: 'salesforce',
+      toolset: 'salesforce',
+      isMy: false,
+      sharedWithMe: true,
+    });
+
+    expect(result.sharedWithMe).toBe(true);
+  });
+
+  it('defaults sharedWithMe to false when the field is absent from the toolset DTO', () => {
+    const result = mapToolsetToCatalogItem({
+      id: 'salesforce',
+      toolset: 'salesforce',
+    });
+
+    expect(result.sharedWithMe).toBe(false);
   });
 
   it('keeps root-level toolsets without a folder', () => {
