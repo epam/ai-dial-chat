@@ -17,6 +17,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import {
   IconCopy,
+  IconDownload,
   IconPencilMinus,
   IconPin,
   IconPinnedFilled,
@@ -37,6 +38,7 @@ import { getConversationRoute } from '../../constants/routes';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
+  ConversationExportI18nKeys,
   ConversationPanelI18nKeys,
   ShareI18nKeys,
 } from '../../constants/translation-keys';
@@ -44,6 +46,8 @@ import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useConversationExport } from '../../hooks/useConversationExport';
+import { ConversationExportMode } from '../../types/conversation-export';
 import { ROUTES } from '../../types/routes';
 import {
   conversationIdsMatch,
@@ -51,9 +55,10 @@ import {
 } from '../../utils/conversation-id-match';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import ImportExportQueue from '../ImportExportQueue/ImportExportQueue';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
-import DeleteAllConversationsAction from './DeleteAllConversationsAction';
+import ConversationPanelMenu from './ConversationPanelMenu';
 import { getConversationSource } from './get-conversation-source';
 
 const PANEL_STYLES: ConversationPanelStyles = {
@@ -87,6 +92,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const {
+    jobs: exportJobs,
+    exportSingle,
+    exportAll,
+    dismissJob,
+    retryJob,
+    dismissAll,
+  } = useConversationExport();
   const {
     conversations: items,
     isLoading,
@@ -139,6 +152,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const [pendingShareConversationPath, setPendingShareConversationPath] =
     useState<string | null>(null);
+
+  const handleExportAll = useCallback(() => {
+    void exportAll();
+  }, [exportAll]);
 
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
@@ -266,8 +283,33 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         },
       };
 
+      const startExport = (mode: ConversationExportMode) => {
+        void exportSingle(contextId, panelItem.title, mode);
+      };
+
+      const exportAction: DropdownItem = {
+        key: 'export',
+        label: t(ConversationExportI18nKeys.ExportLabel),
+        icon: (
+          <IconDownload size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+        ),
+        children: [
+          {
+            key: 'export-with-attachments',
+            label: t(ConversationExportI18nKeys.WithAttachmentsOption),
+            onClick: () => startExport(ConversationExportMode.WithAttachments),
+          },
+          {
+            key: 'export-without-attachments',
+            label: t(ConversationExportI18nKeys.WithoutAttachmentsOption),
+            onClick: () =>
+              startExport(ConversationExportMode.WithoutAttachments),
+          },
+        ],
+      };
+
       if (isReadonlyItem) {
-        return [pinAction, duplicateAction];
+        return [pinAction, duplicateAction, exportAction];
       }
 
       return [
@@ -285,6 +327,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
             setPendingRenameItem({ id: contextId, title: panelItem.title }),
         },
         duplicateAction,
+        exportAction,
         {
           key: 'share',
           label: t(ShareI18nKeys.Title),
@@ -313,6 +356,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       navigate,
       onDuplicateReadonly,
       showNotification,
+      exportSingle,
     ],
   );
 
@@ -445,10 +489,19 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         styles={PANEL_STYLES}
         onMoveConversation={handleMoveConversation}
         headerActions={
-          <DeleteAllConversationsAction
+          <ConversationPanelMenu
             activeConversationId={activeConversationId}
+            onExportAll={handleExportAll}
           />
         }
+      />
+
+      <ImportExportQueue
+        title={t(ConversationExportI18nKeys.QueueTitle)}
+        jobs={exportJobs}
+        onClose={dismissAll}
+        onDismiss={dismissJob}
+        onRetry={retryJob}
       />
 
       <DialConfirmationPopup

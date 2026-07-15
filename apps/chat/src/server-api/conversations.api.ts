@@ -29,8 +29,14 @@ export const createConversation = (
     },
   });
 
-export const getConversation = (conversationPath: string) =>
-  conversationsApi.getConversation({ path: conversationPath });
+export const getConversation = (
+  conversationPath: string,
+  signal?: AbortSignal,
+) =>
+  conversationsApi.getConversation(
+    { path: conversationPath },
+    ...(signal ? [{ signal }] : []),
+  );
 
 export const saveConversation = (
   conversationPath: string,
@@ -53,16 +59,22 @@ export const getConversationMetadata = (
     permissions: options?.permissions,
   });
 
-export const listConversations = (params?: {
-  limit?: number;
-  nextToken?: string;
-  path?: string;
-}) =>
-  conversationsApi.listConversations({
-    limit: params?.limit ?? 1000,
-    nextToken: params?.nextToken,
-    path: params?.path,
-  });
+export const listConversations = (
+  params?: {
+    limit?: number;
+    nextToken?: string;
+    path?: string;
+  },
+  signal?: AbortSignal,
+) =>
+  conversationsApi.listConversations(
+    {
+      limit: params?.limit ?? 1000,
+      nextToken: params?.nextToken,
+      path: params?.path,
+    },
+    ...(signal ? [{ signal }] : []),
+  );
 
 export const renameConversation = (path: string, newTitle: string) =>
   conversationsApi.renameConversation({

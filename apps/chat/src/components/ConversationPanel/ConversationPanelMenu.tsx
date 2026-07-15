@@ -10,12 +10,17 @@ import {
   NotificationVariant,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import { IconDotsVertical, IconTrashX } from '@tabler/icons-react';
+import {
+  IconDotsVertical,
+  IconDownload,
+  IconTrashX,
+} from '@tabler/icons-react';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   ButtonsI18nKeys,
+  ConversationExportI18nKeys,
   ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
@@ -56,12 +61,14 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
   );
 };
 
-interface DeleteAllConversationsActionProps {
+interface Props {
   activeConversationId?: string;
+  onExportAll: () => void;
 }
 
-const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
+const ConversationPanelMenu: FC<Props> = ({
   activeConversationId,
+  onExportAll,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -79,6 +86,14 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
   const menuItems: DropdownItem[] = useMemo(
     () => [
       {
+        key: 'export-all',
+        label: t(ConversationExportI18nKeys.ExportAllLabel),
+        icon: (
+          <IconDownload size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+        ),
+        onClick: onExportAll,
+      },
+      {
         key: 'delete-all',
         label: t(ConversationPanelI18nKeys.DeleteAllChatsLabel),
         icon: (
@@ -87,7 +102,7 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
         onClick: handleOpen,
       },
     ],
-    [handleOpen, t],
+    [handleOpen, onExportAll, t],
   );
 
   const handleConfirm = useCallback(async () => {
@@ -175,4 +190,4 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
   );
 };
 
-export default memo(DeleteAllConversationsAction);
+export default memo(ConversationPanelMenu);

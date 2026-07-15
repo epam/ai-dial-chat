@@ -87,6 +87,11 @@ The destination name for a duplicated file or folder SHALL be computed by `@epam
 - **WHEN** `onCopyFiles` is called with items whose source and destination folder are identical
 - **THEN** the folder's cache entry is invalidated and `retryCounter` increments, exactly once for that folder key
 
+#### Scenario: Same-folder copy success shows copy notification
+
+- **WHEN** a duplicate (same-folder copy) succeeds
+- **THEN** the same success notification behavior specified in `file-manager-copy-move` for `onCopyFiles` applies unchanged, using the duplicated destination name in the single-item toast
+
 #### Scenario: Same-folder copy failure surfaces the existing error toast
 
 - **WHEN** a duplicate (same-folder copy) fails
