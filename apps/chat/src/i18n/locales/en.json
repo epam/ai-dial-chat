@@ -128,6 +128,15 @@
         "error": "Failed to delete. Please try again.",
         "successTitle": "Deleted successfully",
         "success": "\"{{name}}\" was deleted."
+      },
+      "unshare": {
+        "label": "Delete",
+        "confirmTitle": "Delete item?",
+        "confirmMessage": "Delete \"{{name}}\" from your catalog? You'll need a new invitation to access it again.",
+        "errorTitle": "Delete failed",
+        "error": "Failed to delete \"{{name}}\". Please try again.",
+        "successTitle": "Deleted",
+        "success": "\"{{name}}\" was deleted from your catalog."
       }
     },
     "create": {

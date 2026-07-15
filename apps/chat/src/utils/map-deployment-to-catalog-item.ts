@@ -147,6 +147,7 @@ export const mapDeploymentToCatalogItem = (
     isUserFavorite: favoriteIds.has(deployment.id),
     isStarred: favoriteIds.has(deployment.id),
     isMyApp: deployment.isMy ?? false,
+    sharedWithMe: deployment.sharedWithMe ?? false,
     isEditable:
       (!!deployment.isMy || !!deployment.canEdit) &&
       !!editableSchemaId &&
@@ -189,6 +190,7 @@ export const mapToolsetToCatalogItem = (
     isUserFavorite: favoriteIds.has(toolset.id),
     isStarred: favoriteIds.has(toolset.id),
     isMyApp: toolset.isMy ?? false,
+    sharedWithMe: toolset.sharedWithMe ?? false,
     isEditable: !!(toolset.isMy || toolset.canEdit),
     folder: resolveToolsetFolder(toolset, t),
     summary: undefined,

@@ -125,6 +125,27 @@ describe('DeploymentsController (integration)', () => {
       expect(res.body.deployments[0].isMy).toBe(true);
     });
 
+    it('includes sharedWithMe field when service returns it', async () => {
+      const enrichedResponse: DeploymentsResponseDto = {
+        deployments: [
+          {
+            id: 'applications/other-bucket/their-app',
+            displayName: 'Their App',
+            type: 'application',
+            isMy: false,
+            sharedWithMe: true,
+          },
+        ],
+      };
+      service.listDeployments.mockResolvedValue(enrichedResponse);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/deployments')
+        .expect(200);
+
+      expect(res.body.deployments[0].sharedWithMe).toBe(true);
+    });
+
     it('includes applicationFolder when service returns it for a nested application', async () => {
       const enrichedResponse: DeploymentsResponseDto = {
         deployments: [

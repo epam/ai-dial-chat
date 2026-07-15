@@ -54,6 +54,7 @@ export const Catalog: FC<CatalogProps> = ({
   onDelete,
   onLogin,
   onLogout,
+  onUnshare,
   onCreateClick,
   createOptions,
   hideCreateButton = false,
@@ -451,6 +452,7 @@ export const Catalog: FC<CatalogProps> = ({
           onDelete={onDelete}
           onLogin={handleLogin}
           onLogout={handleLogout}
+          onUnshare={onUnshare}
           texts={detailsTexts}
         />
       )}
