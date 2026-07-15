@@ -2,6 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CatalogItem } from '../models/catalog-item';
 import { PublishFolderNode, PublishHistoryEntry } from '../models/publish';
 
+/** An item publishable through {@link usePublishFlow} — versioned (`CatalogItem`) or not (e.g. a conversation). */
+export interface PublishFlowItem {
+  /** Version, when the item is versioned. `undefined` for unversioned resources. */
+  version?: string;
+}
+
 const insertFolder = (
   items: PublishFolderNode[],
   parentPath: string[],
@@ -60,10 +66,10 @@ const removeFolder = (
 };
 
 /** Options for {@link usePublishFlow}. */
-export interface UsePublishFlowOptions {
-  /** The catalog entity being published. */
-  item: CatalogItem;
-  /** Previously published versions for this entity. */
+export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
+  /** The item being published — a `CatalogItem` (versioned) or an unversioned resource (e.g. a conversation). */
+  item: TItem;
+  /** Previously published entries for this item. */
   history: PublishHistoryEntry[];
   /** Root-level destination folder nodes, as currently known to the host. */
   folderItems: PublishFolderNode[];
@@ -81,9 +87,9 @@ export interface UsePublishFlowOptions {
    */
   onCreateFolder?: (parentPath: string[], name: string) => void | Promise<void>;
   /** Called with the destination folder path when the user confirms publish/update. */
-  onPublish: (item: CatalogItem, folderPath: string[]) => Promise<void>;
+  onPublish: (item: TItem, folderPath: string[]) => Promise<void>;
   /** Called after a successful publish; the host surfaces its own success notification. */
-  onPublishSuccess?: (item: CatalogItem, folderPath: string[]) => void;
+  onPublishSuccess?: (item: TItem, folderPath: string[]) => void;
 }
 
 /** State and handlers returned by {@link usePublishFlow}. */
@@ -100,8 +106,12 @@ export interface UsePublishFlowResult {
   setSelectedFolderPath: (path: string[] | undefined) => void;
   /** Confirms a new folder name: adds it locally and reports it to the host, rolling back and surfacing an error if the host rejects. */
   handleCreateFolder: (parentPath: string[], name: string) => Promise<void>;
-  /** Whether `item.version` is already published at `selectedFolderPath`. */
-  hasExistingVersionInFolder: boolean;
+  /**
+   * Whether `selectedFolderPath` already has this publication — this exact
+   * version, for a versioned item, or any prior entry at all, for an
+   * unversioned item (whose `version` is `undefined`).
+   */
+  hasExistingPublicationInFolder: boolean;
   /** Whether the current user can publish to `selectedFolderPath`. */
   hasWriteAccess: boolean;
   /** Whether a publish request is currently in flight. */
@@ -120,10 +130,12 @@ export interface UsePublishFlowResult {
 
 /**
  * Drives the Publish flow's state: destination-folder selection, optimistic
- * local folder creation, existing-version detection, and submit handling.
- * Framework for both in-place (DetailsPanel) and popup presentations.
+ * local folder creation, existing-publication detection, and submit
+ * handling. Framework for both in-place (DetailsPanel) and popup/standalone
+ * presentations, and for both versioned (`CatalogItem`) and unversioned
+ * (e.g. conversation) items.
  */
-export const usePublishFlow = ({
+export const usePublishFlow = <TItem extends PublishFlowItem = CatalogItem>({
   item,
   history,
   folderItems: initialFolderItems,
@@ -131,7 +143,7 @@ export const usePublishFlow = ({
   onCreateFolder,
   onPublish,
   onPublishSuccess,
-}: UsePublishFlowOptions): UsePublishFlowResult => {
+}: UsePublishFlowOptions<TItem>): UsePublishFlowResult => {
   const [folderItems, setFolderItems] = useState(initialFolderItems);
   useEffect(() => {
     setFolderItems(initialFolderItems);
@@ -140,15 +152,17 @@ export const usePublishFlow = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitError, setHasSubmitError] = useState(false);
 
-  const hasExistingVersionInFolder = useMemo(() => {
+  const hasExistingPublicationInFolder = useMemo(() => {
     if (!selectedFolderPath) {
       return false;
     }
     const key = selectedFolderPath.join('/');
-    return history.some(
-      (entry) =>
-        entry.version === item.version && entry.folderPath.join('/') === key,
-    );
+    return history.some((entry) => {
+      if (entry.folderPath.join('/') !== key) {
+        return false;
+      }
+      return item.version == null ? true : entry.version === item.version;
+    });
   }, [history, item.version, selectedFolderPath]);
 
   const handleCreateFolder = useCallback(
@@ -193,7 +207,7 @@ export const usePublishFlow = ({
     selectedFolderPath,
     setSelectedFolderPath,
     handleCreateFolder,
-    hasExistingVersionInFolder,
+    hasExistingPublicationInFolder,
     hasWriteAccess: selectedFolderPath
       ? resolveWriteAccess(selectedFolderPath)
       : true,

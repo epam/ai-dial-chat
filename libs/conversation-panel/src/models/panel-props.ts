@@ -148,6 +148,11 @@ export interface ConversationPanelProps {
    * When omitted or returns an empty array, no actions trigger is rendered on rows.
    */
   getActions?: (item: ConversationHistoryItem) => DropdownItem[];
+  /** Called when a row action menu opens, exposing its trigger for host-owned focus restoration. */
+  onActionMenuOpen?: (
+    item: ConversationHistoryItem,
+    trigger: HTMLButtonElement,
+  ) => void;
   /** Accessible label for the row actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
   /**

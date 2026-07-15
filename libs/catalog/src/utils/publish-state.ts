@@ -45,10 +45,10 @@ export const derivePublishState = (
     };
   }
 
-  if (input.hasExistingVersionInFolder) {
+  if (input.hasExistingPublicationInFolder) {
     return {
       calloutKind: PublishCalloutKind.ReplaceWarning,
-      isSubmitDisabled: false,
+      isSubmitDisabled: input.allowReplace === false,
       isSubmitLoading: false,
     };
   }

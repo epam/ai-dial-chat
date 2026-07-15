@@ -31,7 +31,7 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useCatalogPublishFolders } from '../../hooks/catalog/useCatalogPublishFolders';
+import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
@@ -156,7 +156,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     onExpandedPathsChange: onPublishExpandedPathsChange,
     onCreatePublishFolder,
     hasPublishWriteAccess,
-  } = useCatalogPublishFolders();
+  } = usePublishFolders();
 
   const favorites = useMemo(
     () => visibleCatalogItems.filter((item) => item.isUserFavorite),

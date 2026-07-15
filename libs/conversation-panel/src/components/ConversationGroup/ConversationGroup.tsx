@@ -22,6 +22,11 @@ export interface ConversationGroupProps {
    * When omitted or returns an empty array, no action trigger is rendered.
    */
   getActions?: (item: ConversationHistoryItem) => DropdownItem[];
+  /** Called when a row action menu opens. */
+  onActionMenuOpen?: (
+    item: ConversationHistoryItem,
+    trigger: HTMLButtonElement,
+  ) => void;
   /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
   /** Typography class applied to the group header button. Defaults to `'dial-tiny-semi-text uppercase'`. */
@@ -38,6 +43,7 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
     activeConversationId,
     onSelectConversation,
     getActions,
+    onActionMenuOpen,
     actionsLabel,
     groupHeaderClassName = 'dial-tiny-semi-text uppercase',
     itemTitleClassName,
@@ -75,6 +81,7 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
                 isActive={item.id === activeConversationId}
                 onSelectConversation={onSelectConversation}
                 getActions={getActions}
+                onActionMenuOpen={onActionMenuOpen}
                 actionsLabel={actionsLabel}
                 itemTitleClassName={itemTitleClassName}
               />

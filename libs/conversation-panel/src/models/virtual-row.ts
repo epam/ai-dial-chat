@@ -44,6 +44,11 @@ export interface RowRendererData {
   onSelectConversation: (id: string) => void;
   /** Builds dropdown actions for a conversation item. */
   getActions?: (item: ConversationHistoryItem) => DropdownItem[];
+  /** Called when a row action menu opens. */
+  onActionMenuOpen?: (
+    item: ConversationHistoryItem,
+    trigger: HTMLButtonElement,
+  ) => void;
   /** Accessible label for the actions trigger button. */
   actionsLabel?: string;
   /** Typography class applied to group header buttons. */

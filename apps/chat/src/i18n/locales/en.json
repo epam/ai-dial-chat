@@ -218,7 +218,8 @@
     "download": "Download",
     "logOut": "Log out",
     "copyLink": "Copy link",
-    "logIn": "Log in"
+    "logIn": "Log in",
+    "publish": "Publish"
   },
   "sidebar": {
     "base": {
@@ -288,6 +289,11 @@
       "deleteAllSuccessTitle": "All conversations deleted",
       "deleteAllSuccess": "All conversations have been deleted successfully."
     }
+  },
+  "conversationPublish": {
+    "panelAriaLabel": "Publish conversation",
+    "alreadyPublishedWarning": "This conversation is already published in {folder}.",
+    "successMessage": "Conversation published successfully."
   },
   "conversationExport": {
     "exportLabel": "Export",

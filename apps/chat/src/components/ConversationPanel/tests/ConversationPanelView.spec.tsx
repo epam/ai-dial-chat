@@ -30,6 +30,7 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
       headerActions,
       conversations: panelConversations,
       getActions,
+      onActionMenuOpen,
     }: {
       headerActions?: ReactNode;
       conversations?: Array<{ id: string }>;
@@ -43,11 +44,19 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
           onClick?: () => void;
         }>;
       }>;
+      onActionMenuOpen?: (
+        item: { id: string },
+        trigger: HTMLButtonElement,
+      ) => void;
     }) => (
       <div role="region" aria-label="conversation panel">
         {headerActions}
         {panelConversations?.map((item) => (
           <div key={item.id}>
+            <button
+              id={`action-trigger-${item.id}`}
+              aria-label={`action trigger ${item.id}`}
+            />
             {(getActions?.(item) ?? []).map((action) =>
               action.children ? (
                 // Simulates the hover-revealed submenu: children render as sibling buttons.
@@ -60,7 +69,16 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
                   ))}
                 </div>
               ) : (
-                <button key={action.key} onClick={action.onClick}>
+                <button
+                  key={action.key}
+                  onClick={() => {
+                    const trigger = document.getElementById(
+                      `action-trigger-${item.id}`,
+                    ) as HTMLButtonElement | null;
+                    if (trigger) onActionMenuOpen?.(item, trigger);
+                    action.onClick?.();
+                  }}
+                >
                   {action.label}
                 </button>
               ),
@@ -187,6 +205,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconPinnedFilled: () => null,
   IconShare: () => null,
   IconTrashX: () => null,
+  IconWorldShare: () => null,
 }));
 
 vi.mock('react-i18next', () => ({
@@ -250,6 +269,29 @@ vi.mock('../../RenameConversationPopup/RenameConversationPopup', () => ({
     );
   },
 }));
+vi.mock(
+  '../../PublishConversationPanelContainer/PublishConversationPanelContainer',
+  () => ({
+    default: ({
+      conversationPath,
+      conversationTitle,
+      onClose,
+      returnFocusRef,
+    }: {
+      conversationPath: string;
+      conversationTitle: string;
+      onClose: () => void;
+      returnFocusRef?: { current: HTMLElement | null };
+    }) => (
+      <div role="dialog" aria-label="publish conversation">
+        <span>{conversationPath}</span>
+        <span>{conversationTitle}</span>
+        <span>{returnFocusRef?.current?.getAttribute('aria-label')}</span>
+        <button onClick={onClose}>Close</button>
+      </div>
+    ),
+  }),
+);
 vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
   default: ({
     jobs,
@@ -312,6 +354,7 @@ const PARTIAL_ERROR = 'conversationPanel.deleteAll.deleteAllPartialError';
 
 const DELETE_CONFIRM_BUTTON = 'buttons.delete';
 const SHARE_LABEL = 'share.title';
+const PUBLISH_LABEL = 'buttons.publish';
 
 const mockDeleteAllConversations =
   vi.fn<() => Promise<ConversationDeletionResultDto>>();
@@ -856,6 +899,85 @@ describe('ConversationPanelView — share', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+});
+
+describe('ConversationPanelView — publish', () => {
+  it('owned conversation menu includes Publish', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
+  });
+
+  it('readonly (shared-with-me) conversation menu excludes Publish', () => {
+    const sharedConversation = {
+      id: 'conv2',
+      title: 'Shared chat',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: true,
+      publishedWithMe: false,
+    };
+
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="conv2" />,
+    );
+
+    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+  });
+
+  it('published-with-me conversation menu excludes Publish', () => {
+    const publishedConversation = {
+      id: 'conv3',
+      title: 'Published chat',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: false,
+      publishedWithMe: true,
+    };
+
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [publishedConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="conv3" />,
+    );
+
+    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+  });
+
+  it('clicking Publish opens the panel for the conversation path and title', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: PUBLISH_LABEL }));
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'publish conversation',
+    });
+    expect(within(dialog).getByText('conv1')).toBeTruthy();
+    expect(within(dialog).getByText('action trigger conv1')).toBeTruthy();
+  });
+
+  it('closing the panel clears the pending publish state', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: PUBLISH_LABEL }));
+    const dialog = screen.getByRole('dialog', {
+      name: 'publish conversation',
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: 'publish conversation' }),
+      ).toBeNull();
     });
   });
 });

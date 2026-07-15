@@ -8,16 +8,39 @@ export interface PublishFolderNode {
   children?: PublishFolderNode[];
 }
 
-/** A previously published version of a catalog entity. */
+/**
+ * A previously published version of a catalog entity, or a previous
+ * publication of an unversioned resource (e.g. a conversation).
+ */
 export interface PublishHistoryEntry {
-  /** Semantic version string, e.g. "4.0.0". */
-  version: string;
+  /**
+   * Semantic version string, e.g. "4.0.0". `undefined` for unversioned
+   * resources (e.g. a conversation), where a folder having any entry at all
+   * already means "already published here" — see `usePublishFlow`.
+   */
+  version?: string;
   /** Unix timestamp (ms) when this version was published. */
   publishedAt: number;
   /** Display name of the user who published this version. */
   publishedBy: string;
   /** Folder path segments this version was published to, outermost first. */
   folderPath: string[];
+}
+
+/**
+ * Minimal display data for the Publish flow's entity-summary row, covering
+ * both versioned catalog entities and unversioned resources (e.g. a
+ * conversation). `PublishPanel` renders the full `EntityHeader`+version-pill
+ * summary only when a `CatalogItem` is supplied; a title-only resource
+ * (`version` and `iconUrl` both absent) renders a simpler row instead.
+ */
+export interface PublishResourceSummary {
+  /** Display title/name shown in the summary row. */
+  title: string;
+  /** Icon URL, if any. */
+  iconUrl?: string;
+  /** Version, when the resource is versioned. `undefined` for conversations. */
+  version?: string;
 }
 
 /** Which callout (if any) the publish panel should show below the folder picker. */
@@ -38,14 +61,25 @@ export enum PublishCalloutKind {
 export interface PublishDerivationInput {
   /** Whether a destination folder is currently selected. */
   hasSelectedFolder: boolean;
-  /** Whether the selected folder already has this exact version published. */
-  hasExistingVersionInFolder: boolean;
+  /**
+   * Whether the selected folder already has this publication — this exact
+   * version, for a versioned catalog entity, or any prior publication at
+   * all, for an unversioned resource (e.g. a conversation).
+   */
+  hasExistingPublicationInFolder: boolean;
   /** Whether the current user can publish to the selected folder. */
   hasWriteAccess: boolean;
   /** Whether a publish request is currently in flight. */
   isSubmitting: boolean;
   /** Whether the most recent submit attempt failed. */
   hasSubmitError: boolean;
+  /**
+   * Whether resubmitting when `hasExistingPublicationInFolder` is true is
+   * allowed (catalog: republishing replaces the existing version) or
+   * blocked entirely (conversations have no update/replace semantics —
+   * publishing again to the same folder is not supported). Default `true`.
+   */
+  allowReplace?: boolean;
 }
 
 /** Derived, render-ready state for the publish panel. */
