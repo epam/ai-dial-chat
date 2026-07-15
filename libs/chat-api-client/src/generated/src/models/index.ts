@@ -438,6 +438,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   defaultDeploymentId?: string | null;
+  /**
+   * Public-facing DIAL Core base URL reachable from the browser. Null when DIAL_CORE_EXTERNAL_URL is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  dialCoreExternalUrl?: string | null;
 }
 /**
  *
@@ -1611,6 +1617,12 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   folderAttachments?: boolean;
+  /**
+   * Whether the deployment supports the MCP protocol
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  mcp?: boolean;
 }
 /**
  *

@@ -49,4 +49,6 @@ export interface CatalogItem {
   details?: CatalogItemTabData;
   /** Credential status for the item's own authentication. Absent when the item requires no authentication. */
   credentials?: CatalogItemCredentials;
+  /** Whether this application supports the MCP protocol; only meaningful for `Application` items. */
+  supportsMcp?: boolean;
 }

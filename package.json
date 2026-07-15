@@ -11,7 +11,7 @@
     "build": "nx build chat",
     "build:api": "nx build chat-api",
     "build:all": "nx run-many --target=build --all",
-    "test": "nx run-many -t test --all",
+    "test": "nx run-many -t test --all --parallel=1",
     "lint": "nx run-many --target=lint --all --fix && npm run format",
     "lint:check": "nx run-many --target=lint --all && npm run format:check",
     "lint:fix": "nx run-many --target=lint --all --fix",

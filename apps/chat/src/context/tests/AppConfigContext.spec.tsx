@@ -28,7 +28,11 @@ const mockGetClientConfig = vi.mocked(appConfigApi.getClientConfig);
 const READY_RESPONSE = {
   appId: 'chat-ui',
   features: { asrEnabled: true },
-  config: { asrModelId: 'whisper-1', transcribeSizeLimitBytes: 10_485_760 },
+  config: {
+    asrModelId: 'whisper-1',
+    transcribeSizeLimitBytes: 10_485_760,
+    dialCoreExternalUrl: 'https://dial.example.com',
+  },
   metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
 } as unknown as ClientConfigResponseDto;
 
@@ -48,6 +52,7 @@ describe('AppConfigContext', () => {
     mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
     const { result } = renderHook(() => useAppConfig(), { wrapper });
     expect(result.current.status).toBe(UserConfigStatus.Loading);
+    expect(result.current.config.dialCoreExternalUrl).toBeNull();
   });
 
   it('transitions to ready after successful API call', async () => {
@@ -60,6 +65,9 @@ describe('AppConfigContext', () => {
 
     expect(result.current.features['asrEnabled']).toBe(true);
     expect(result.current.config.asrModelId).toBe('whisper-1');
+    expect(result.current.config.dialCoreExternalUrl).toBe(
+      'https://dial.example.com',
+    );
   });
 
   it('transitions to error after API call failure', async () => {
@@ -74,6 +82,27 @@ describe('AppConfigContext', () => {
     expect(result.current.config.transcribeSizeLimitBytes).toBe(
       5 * 1024 * 1024,
     );
+    expect(result.current.config.dialCoreExternalUrl).toBeNull();
+  });
+
+  it('keeps dialCoreExternalUrl null when the backend omits it', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: { asrEnabled: false },
+      config: {
+        asrModelId: null,
+        transcribeSizeLimitBytes: 5_242_880,
+        dialCoreExternalUrl: null,
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.dialCoreExternalUrl).toBeNull();
   });
 
   describe('useFeatureFlag', () => {

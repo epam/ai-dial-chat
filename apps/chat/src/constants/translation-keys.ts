@@ -73,6 +73,7 @@ export enum ButtonsI18nKeys {
   Cancel = 'buttons.cancel',
   Confirm = 'buttons.confirm',
   Edit = 'buttons.edit',
+  Connect = 'buttons.connect',
   Link = 'buttons.link',
   SaveAndSubmit = 'buttons.saveAndSubmit',
   Regenerate = 'buttons.regenerate',
@@ -184,6 +185,10 @@ export enum CatalogI18nKeys {
   DetailsUnshareError = 'catalog.details.unshare.error',
   DetailsUnshareSuccessTitle = 'catalog.details.unshare.successTitle',
   DetailsUnshareSuccess = 'catalog.details.unshare.success',
+  ConnectToolsetTitle = 'catalog.details.connect.toolsetTitle',
+  ConnectApplicationTitle = 'catalog.details.connect.applicationTitle',
+  ConnectToolsetDescription = 'catalog.details.connect.toolsetDescription',
+  ConnectApplicationDescription = 'catalog.details.connect.applicationDescription',
 }
 
 export enum DeploymentSelectorI18nKeys {

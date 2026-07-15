@@ -104,11 +104,11 @@ export interface SidebarPanelProps {
    * Automatically disabled when `isOpen` is false.
    */
   resizable?: boolean;
-  /** Initial panel width in px used when `resizable` is true. */
+  /** Initial panel width in px used when `resizable` is true. Defaults to `360`. */
   defaultWidth?: number;
-  /** Minimum panel width in px used when `resizable` is true. */
+  /** Minimum panel width in px used when `resizable` is true. Defaults to `280`. */
   minWidth?: number;
-  /** Maximum panel width in px used when `resizable` is true. */
+  /** Maximum panel width in px used when `resizable` is true. Defaults to `600`. */
   maxWidth?: number;
   /** Called with the new width in px when the user finishes a resize drag. */
   onResizeStop?: (width: number) => void;

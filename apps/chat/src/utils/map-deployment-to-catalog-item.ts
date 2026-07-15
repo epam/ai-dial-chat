@@ -161,6 +161,7 @@ export const mapDeploymentToCatalogItem = (
       entityDetails != null
         ? mapEntityDetailsToCatalogDetails(entityDetails)
         : undefined,
+    supportsMcp: deployment.features?.mcp === true,
   };
 };
 
