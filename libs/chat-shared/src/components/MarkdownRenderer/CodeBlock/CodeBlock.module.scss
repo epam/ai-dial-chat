@@ -1,5 +1,5 @@
 .container {
-  background: var(--cm-code-block-bg, var(--bg-layer-3, #1d2439));
+  background: var(--cm-code-block-bg, var(--bg-layer-3, #fcfcfc));
   border-color: var(--cm-code-block-border, var(--stroke-secondary, #d1dbea));
 }
 
@@ -8,13 +8,25 @@
 }
 
 .header {
-  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #1d2439));
+  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #fcfcfc));
   border-color: var(--cm-code-block-border, var(--stroke-secondary, #d1dbea));
+}
+
+.languageLabel {
+  color: var(--cm-code-block-language, var(--text-secondary, #575f73));
+}
+
+.copiedIcon {
+  color: var(--cm-code-block-copied, var(--text-success, #007274));
 }
 
 .scrollContainer {
   scrollbar-width: thin;
-  scrollbar-color: var(--stroke-primary, #7c8293) transparent;
+  scrollbar-color: var(
+      --cm-code-block-scrollbar,
+      var(--stroke-primary, #7c8293)
+    )
+    transparent;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -26,7 +38,10 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: var(--stroke-primary, #7c8293);
+    background-color: var(
+      --cm-code-block-scrollbar,
+      var(--stroke-primary, #7c8293)
+    );
     border-radius: 4px;
   }
 }

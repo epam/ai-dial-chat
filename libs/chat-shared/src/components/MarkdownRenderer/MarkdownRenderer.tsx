@@ -28,9 +28,9 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   h6?: string;
   /** Classes on `<p>` elements. */
   p?: string;
-  /** Extra classes on `<ul>` (base: `list-disc pl-5`). */
+  /** Extra classes on `<ul>` (base: `list-disc ps-5`). */
   ul?: string;
-  /** Extra classes on `<ol>` (base: `list-decimal pl-5`). */
+  /** Extra classes on `<ol>` (base: `list-decimal ps-5`). */
   ol?: string;
   /** Typography class for `<strong>`. Defaults to `'font-semibold'`. */
   strong?: string;
@@ -82,7 +82,7 @@ export interface MarkdownRendererProps {
   isStreaming?: boolean;
   /** Reveal speed used while `isStreaming` is true. Defaults to 120 characters per second. */
   streamCharactersPerSecond?: number;
-  /** Per-element styling classes. Merged with structural base classes inside the component. */
+  /** Per-element styling classes. Merged with structural base classes inside the component. Defaults to no overrides (`{}`). */
   classNames?: MarkdownRendererClassNames;
   /**
    * Full component overrides merged on top of the built-in map.
@@ -216,7 +216,7 @@ const buildMarkdownComponents = (
   th: ({ children }) => (
     <th
       className={mergeClasses(
-        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start text-secondary [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start text-secondary',
         styles.secondaryBorder,
         cn.tableHeaderFont ?? 'font-semibold',
         cn.tableCell,
@@ -229,7 +229,7 @@ const buildMarkdownComponents = (
   td: ({ children }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 align-top',
         styles.secondaryBorder,
         cn.tableBodyCell,
         cn.tableCell,

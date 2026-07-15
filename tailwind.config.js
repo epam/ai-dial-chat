@@ -37,6 +37,7 @@ const backgroundsColors = {
     'var(--bg-new-chat-shadow-purple-hover, #A972FF33)',
   'new-chat-shadow-purple-active':
     'var(--bg-new-chat-shadow-purple-active, #A972FF1A)',
+  'mask-opaque': 'var(--bg-mask-opaque, #000)',
 };
 
 const controlsBgColors = {
