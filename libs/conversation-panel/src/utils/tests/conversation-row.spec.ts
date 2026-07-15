@@ -5,7 +5,7 @@ import {
   ITEM_ROW_HEIGHT,
 } from '../../constants/virtual-list';
 import { type RowRendererData, VirtualRowKind } from '../../models/virtual-row';
-import { ConversationGroupKey } from '../../types/conversation-group-key';
+import { FilterTab } from '../../types/conversation-classification';
 import {
   getButtonPaddingEnd,
   getRowHeight,
@@ -62,10 +62,10 @@ describe('getRowHeight', () => {
   const makeItemRow = (id: string) => ({
     kind: VirtualRowKind.Item as const,
     item: { id, title: id },
-    groupKey: ConversationGroupKey.MyChats,
+    groupKey: FilterTab.MyChats,
   });
 
-  const makeHeaderRow = (key: ConversationGroupKey) => ({
+  const makeHeaderRow = (key: FilterTab) => ({
     kind: VirtualRowKind.Header as const,
     groupKey: key,
     label: key,
@@ -76,7 +76,7 @@ describe('getRowHeight', () => {
 
   it('returns ITEM_ROW_HEIGHT for an item row at any index', () => {
     const rows = [
-      makeHeaderRow(ConversationGroupKey.Pinned),
+      makeHeaderRow(FilterTab.Pinned),
       makeItemRow('a'),
       makeItemRow('b'),
     ];
@@ -86,19 +86,16 @@ describe('getRowHeight', () => {
   });
 
   it('returns FIRST_GROUP_HEADER_ROW_HEIGHT for a header at index 0', () => {
-    const rows = [
-      makeHeaderRow(ConversationGroupKey.MyChats),
-      makeItemRow('a'),
-    ];
+    const rows = [makeHeaderRow(FilterTab.MyChats), makeItemRow('a')];
     const rowProps = makeRowProps(rows);
     expect(getRowHeight(0, rowProps)).toBe(FIRST_GROUP_HEADER_ROW_HEIGHT);
   });
 
   it('returns GROUP_HEADER_ROW_HEIGHT for a header at index > 0', () => {
     const rows = [
-      makeHeaderRow(ConversationGroupKey.Pinned),
+      makeHeaderRow(FilterTab.Pinned),
       makeItemRow('a'),
-      makeHeaderRow(ConversationGroupKey.MyChats),
+      makeHeaderRow(FilterTab.MyChats),
       makeItemRow('b'),
     ];
     const rowProps = makeRowProps(rows);

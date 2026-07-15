@@ -21,7 +21,7 @@ export const NewChatButton: FC<NewChatButtonProps> = memo(
         onClick={onClick}
         type="button"
         className={mergeClasses(
-          'flex h-[36px] w-full cursor-pointer items-center justify-center gap-2 px-3 py-1',
+          'flex h-[36px] w-full cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-1',
           styles.button,
         )}
       >
