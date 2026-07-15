@@ -13,6 +13,8 @@ export interface ConversationGroupHeaderProps {
   isExpanded: boolean;
   /** Called when the user clicks the header to toggle expansion. */
   onToggle: () => void;
+  /** `id` of the virtualized list container this header's rows belong to, referenced via `aria-controls`. */
+  listId: string;
   /** Typography class applied to the header button. Defaults to `'dial-tiny-text'`. */
   className?: string;
   /**
@@ -39,6 +41,7 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
   label,
   isExpanded,
   onToggle,
+  listId,
   className = 'dial-tiny-semi-text uppercase',
   dropZoneGroupKey,
   isDragOver,
@@ -72,6 +75,7 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
     <button
       type="button"
       aria-expanded={isExpanded}
+      aria-controls={listId}
       onClick={onToggle}
       onDragOver={isDropZone ? handleDragOver : undefined}
       onDragLeave={isDropZone ? handleDragLeave : undefined}

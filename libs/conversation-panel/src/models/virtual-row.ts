@@ -46,6 +46,8 @@ export interface RowRendererData {
   expandedGroups: Set<string>;
   /** Toggles the expanded state of the given group. */
   onToggleGroup: (key: string) => void;
+  /** `id` of the virtualized list container, referenced by each group header's `aria-controls`. */
+  listId: string;
   /** `id` of the currently active conversation. */
   activeConversationId?: string;
   /** Current search query — used to highlight matches in conversation titles. */

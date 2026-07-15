@@ -12,6 +12,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -70,6 +71,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       title,
       emptyLabel,
       noResultsLabel,
+      loadingLabel = 'Loading conversations',
       newChatLabel,
       searchPlaceholder,
       searchClearLabel,
@@ -90,6 +92,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       () => ALL_GROUP_KEYS,
     );
     const [overscanCount, setOverscanCount] = useState(5);
+    const listId = useId();
     const listRef = useRef<ListImperativeAPI>(null);
     const lastScrolledIdRef = useRef<string | null>(null);
 
@@ -315,6 +318,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         rows: virtualRows,
         expandedGroups,
         onToggleGroup: handleToggleGroup,
+        listId,
         activeConversationId,
         searchQuery,
         onSelectConversation,
@@ -338,6 +342,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         virtualRows,
         expandedGroups,
         handleToggleGroup,
+        listId,
         activeConversationId,
         searchQuery,
         onSelectConversation,
@@ -410,7 +415,13 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         />
 
         <span role="status" aria-live="polite" className="sr-only">
-          {isNoConversations ? emptyLabel : isNoResults ? noResultsLabel : ''}
+          {isLoading
+            ? loadingLabel
+            : isNoConversations
+              ? emptyLabel
+              : isNoResults
+                ? noResultsLabel
+                : ''}
         </span>
 
         <div className="flex-1 overflow-hidden px-2 py-1">
@@ -434,6 +445,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           ) : (
             <List<RowRendererData>
               listRef={listRef}
+              id={listId}
               role="list"
               style={{ height: '100%' }}
               rowComponent={RowRenderer}

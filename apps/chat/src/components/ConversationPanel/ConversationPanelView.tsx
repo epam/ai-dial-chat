@@ -44,10 +44,7 @@ import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
-import useViewportWidth from '../../hooks/use-viewport-width';
-import useLocalStorage from '../../hooks/useLocalStorage';
 import { ROUTES } from '../../types/routes';
-import { StorageKey } from '../../types/storage-key';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -60,9 +57,7 @@ import DeleteAllConversationsAction from './DeleteAllConversationsAction';
 import { getConversationSource } from './get-conversation-source';
 
 const PANEL_STYLES: ConversationPanelStyles = {
-  typography: {
-    itemIconBadgeClassName: 'rounded-lg',
-  },
+  itemIconBadgeClassName: 'rounded-lg',
 };
 
 interface ConversationPanelViewProps {
@@ -90,16 +85,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  const viewportWidth = useViewportWidth();
-  const maxPanelWidth = Math.floor(viewportWidth * 0.5);
-  const [storedPanelWidth, setStoredPanelWidth] = useLocalStorage(
-    StorageKey.ConversationPanelWidth,
-    325,
-  );
-  const defaultPanelWidth = Math.min(
-    Math.max(storedPanelWidth, 312),
-    maxPanelWidth,
-  );
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const {
@@ -441,25 +426,23 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         activeConversationId={panelActiveConversationId}
         activeFilter={requestedFilter}
         onActiveFilterChange={handleActiveFilterChange}
-        title={t(ConversationPanelI18nKeys.Title)}
-        emptyLabel={t(ConversationPanelI18nKeys.Empty)}
-        noResultsLabel={t(BasicI18nKeys.NoResults)}
+        labels={{
+          title: t(ConversationPanelI18nKeys.Title),
+          emptyLabel: t(ConversationPanelI18nKeys.Empty),
+          noResultsLabel: t(BasicI18nKeys.NoResults),
+          newChatLabel: t(ButtonsI18nKeys.NewChat),
+          searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+          searchClearLabel: t(BasicI18nKeys.ClearSearch),
+          filterLabels,
+          groupLabels,
+          actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
+          closeAriaLabel: t(ConversationPanelI18nKeys.ToggleAriaLabel),
+        }}
         onNewChat={onNewChat}
-        newChatLabel={t(ButtonsI18nKeys.NewChat)}
-        searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
-        searchClearLabel={t(BasicI18nKeys.ClearSearch)}
-        filterLabels={filterLabels}
-        groupLabels={groupLabels}
         getActions={getActions}
-        actionsLabel={t(ConversationPanelI18nKeys.ActionsLabel)}
         onToggle={isMobile ? onClose : undefined}
-        closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
         className={panelClassName}
         styles={PANEL_STYLES}
-        resizable={!isMobile}
-        defaultPanelWidth={defaultPanelWidth}
-        maxPanelWidth={maxPanelWidth}
-        onPanelResizeStop={setStoredPanelWidth}
         onMoveConversation={handleMoveConversation}
         headerActions={
           <DeleteAllConversationsAction

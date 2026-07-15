@@ -182,18 +182,9 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
   useIsMobile: () => false,
 }));
-vi.mock('../../../hooks/use-viewport-width', () => ({
-  default: () => 1440,
-}));
-vi.mock('../../../hooks/useLocalStorage', () => ({
-  default: () => [325, vi.fn()],
-}));
 vi.mock('../../../constants/routes', () => ({
   getConversationRoute: (id: string) => `/conversations/${id}`,
   normalizeConversationId: (id: string) => id,
-}));
-vi.mock('../../../constants/storage', () => ({
-  StorageKey: { ConversationPanelWidth: 'dial:cpw' },
 }));
 vi.mock('../../../utils/get-model-id-from-conversation-id', () => ({
   getModelIdFromConversationId: () => undefined,

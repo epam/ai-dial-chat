@@ -11,6 +11,7 @@ export const RowRenderer = ({
   rows,
   expandedGroups,
   onToggleGroup,
+  listId,
   activeConversationId,
   searchQuery,
   onSelectConversation,
@@ -40,6 +41,7 @@ export const RowRenderer = ({
           label={row.label}
           isExpanded={expandedGroups.has(row.groupKey)}
           onToggle={() => onToggleGroup(row.groupKey)}
+          listId={listId}
           className={styles?.groupHeaderClassName}
           dropZoneGroupKey={isPinnedHeader ? FilterTab.Pinned : undefined}
           isDragOver={isPinnedHeader && dragOverId === FilterTab.Pinned}

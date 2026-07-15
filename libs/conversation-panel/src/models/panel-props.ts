@@ -118,6 +118,8 @@ export interface ConversationPanelLabels {
   emptyLabel: string;
   /** Message shown when conversations exist but none match the active filter. */
   noResultsLabel: string;
+  /** Status message announced to assistive tech while conversations are loading. Defaults to `'Loading conversations'`. */
+  loadingLabel?: string;
   /** Label for the New chat button (e.g. `"New chat"`). */
   newChatLabel: string;
   /** Placeholder text for the search input (e.g. `"Search chat…"`). */
