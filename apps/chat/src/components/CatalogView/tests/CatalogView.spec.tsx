@@ -1,6 +1,13 @@
 import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
-import { render, screen } from '@testing-library/react';
+import {
+  CatalogEntityType,
+  CredentialsBadgeState,
+  CredentialsUiState,
+  getCredentialsBadgeState,
+  getCredentialsUiState,
+} from '@epam/ai-dial-catalog';
+import type { DialToolsetDto, DeploymentItemDto } from '@epam/chat-api-client';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -18,6 +25,7 @@ import {
   getCatalogPublishHistory,
   publishCatalogEntity,
 } from '../../../server-api/publish.api';
+import { discardSharedCatalogItem } from '../../../server-api/share.api';
 import {
   deleteToolset,
   loginToolset,
@@ -25,7 +33,30 @@ import {
 } from '../../../server-api/toolsets';
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
+import { ToolsetOAuthResultType } from '../../../types/toolsets';
+import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
+
+/** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
+const makeFakePopup = () => {
+  const store = new Map<string, string>();
+  return {
+    sessionStorage: {
+      setItem: (key: string, value: string) => store.set(key, value),
+      getItem: (key: string) => store.get(key) ?? null,
+    },
+    location: { href: '' },
+    opener: window,
+    closed: false,
+    close: vi.fn(),
+  };
+};
+
+const postOAuthResult = (flowId: string, message: Record<string, unknown>) => {
+  const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+  channel.postMessage(message);
+  channel.close();
+};
 
 const mockNavigate = vi.fn();
 let mockSearchParams = new URLSearchParams();
@@ -61,6 +92,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUseInChat,
     onEdit,
     onDelete,
+    onUnshare,
     onFetchDetails,
     onLogin,
     onLogout,
@@ -81,6 +113,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUseInChat?: (item: CatalogItem) => void;
     onEdit?: (item: CatalogItem) => void;
     onDelete?: (item: CatalogItem) => Promise<void>;
+    onUnshare?: (item: CatalogItem) => Promise<void>;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
     onLogin?: (
       item: CatalogItem,
@@ -112,6 +145,28 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         <output aria-label="Catalog item ids">
           {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
         </output>
+        {(items ?? []).map((item) => (
+          <output
+            key={`credentials-badge-${item.id}`}
+            aria-label={`credentials badge ${item.id}`}
+          >
+            {item.credentials != null &&
+            getCredentialsBadgeState(item.credentials) ===
+              CredentialsBadgeState.LoggedOut
+              ? 'LOGGED OUT'
+              : ''}
+          </output>
+        ))}
+        {(items ?? []).map((item) => (
+          <output
+            key={`credentials-action-${item.id}`}
+            aria-label={`credentials action ${item.id}`}
+          >
+            {item.credentials != null
+              ? getCredentialsUiState(item.credentials)
+              : ''}
+          </output>
+        ))}
         <output aria-label="Initial details item id">
           {initialDetailsItemId ?? ''}
         </output>
@@ -156,6 +211,22 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             }}
           >
             delete {item.id}
+          </button>
+        ))}
+        {(items ?? []).map((item) => (
+          <button
+            key={`unshare-${item.id}`}
+            type="button"
+            onClick={async () => {
+              try {
+                await onUnshare?.(item);
+              } catch {
+                // Swallowed here the same way the real DetailsPanel's
+                // confirmation popup catches a rejected onUnshare.
+              }
+            }}
+          >
+            unshare {item.id}
           </button>
         ))}
         {(items ?? []).map((item) => (
@@ -248,6 +319,10 @@ vi.mock('../../../server-api/applications', () => ({
   deleteApplication: vi.fn(),
 }));
 
+vi.mock('../../../server-api/share.api', () => ({
+  discardSharedCatalogItem: vi.fn(),
+}));
+
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
@@ -269,10 +344,23 @@ vi.mock('../../../hooks/catalog/useCatalogPublishFolders', () => ({
 
 describe('CatalogView', () => {
   const user = userEvent.setup({ delay: null });
+  let capturedPopup: ReturnType<typeof makeFakePopup> | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockSearchParams = new URLSearchParams();
+    capturedPopup = undefined;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { origin: 'http://localhost', href: 'http://localhost/' },
+    });
+    Object.defineProperty(window, 'open', {
+      configurable: true,
+      value: vi.fn(() => {
+        capturedPopup = makeFakePopup();
+        return capturedPopup;
+      }),
+    });
     vi.mocked(useUser).mockReturnValue({
       status: AuthStatus.Authenticated,
       user: {
@@ -1151,6 +1239,165 @@ describe('CatalogView', () => {
     );
   });
 
+  describe('OAuth login', () => {
+    const oauthToolset = {
+      id: 'toolsets/public/oauth-tool__0.0.1',
+      toolset: 'toolsets/public/oauth-tool__0.0.1',
+      displayName: 'OAuth Tool',
+      authSettings: {
+        authenticationType: 'OAUTH' as const,
+        clientId: 'client-id',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+      },
+    };
+
+    const renderWithOAuthToolset = (
+      refetchToolsets = vi.fn(),
+      getToolsets: () => DialToolsetDto[] = () => [oauthToolset],
+    ) => {
+      vi.mocked(useDeployments).mockImplementation(() => ({
+        items: [],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: getToolsets(),
+        refetchToolsets,
+        refetchDeployments: vi.fn(),
+      }));
+      return render(<CatalogView />);
+    };
+
+    it('opens a popup and, on a success result, refetches toolsets and shows a success notification', async () => {
+      let currentToolsets: DialToolsetDto[] = [
+        {
+          ...oauthToolset,
+          authSettings: {
+            ...oauthToolset.authSettings,
+            userLevelAuthStatus: 'SIGNED_OUT' as const,
+          },
+        },
+      ];
+      const refetchToolsets = vi.fn(async () => {
+        currentToolsets = [
+          {
+            ...oauthToolset,
+            authSettings: {
+              ...oauthToolset.authSettings,
+              userLevelAuthStatus: 'SIGNED_IN' as const,
+            },
+          },
+        ];
+      });
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      const { unmount } = renderWithOAuthToolset(
+        refetchToolsets,
+        () => currentToolsets,
+      );
+
+      expect(
+        screen.getByLabelText(`credentials badge ${oauthToolset.id}`),
+      ).toHaveProperty('textContent', 'LOGGED OUT');
+      expect(
+        screen.getByLabelText(`credentials action ${oauthToolset.id}`),
+      ).toHaveProperty('textContent', CredentialsUiState.LoginWithMyCreds);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `login user ${oauthToolset.id}`,
+        }),
+      );
+
+      expect(capturedPopup).toBeDefined();
+      const flowId = JSON.parse(
+        capturedPopup?.sessionStorage.getItem('toolset-redirect-state') ?? '{}',
+      ).state;
+
+      postOAuthResult(flowId, {
+        type: ToolsetOAuthResultType.Success,
+        toolsetId: oauthToolset.id,
+        credentialsLevel: 'USER',
+      });
+
+      await waitFor(() => expect(refetchToolsets).toHaveBeenCalledOnce());
+      unmount();
+      render(<CatalogView />);
+      expect(
+        screen.getByLabelText(`credentials badge ${oauthToolset.id}`),
+      ).toHaveProperty('textContent', '');
+      expect(
+        screen.getByLabelText(`credentials action ${oauthToolset.id}`),
+      ).toHaveProperty('textContent', CredentialsUiState.LogOut);
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('shows an error notification and does not refetch when the OAuth result is a failure', async () => {
+      const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      renderWithOAuthToolset(refetchToolsets);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `login global ${oauthToolset.id}`,
+        }),
+      );
+
+      const flowId = JSON.parse(
+        capturedPopup?.sessionStorage.getItem('toolset-redirect-state') ?? '{}',
+      ).state;
+
+      postOAuthResult(flowId, {
+        type: 'failure',
+        reason: 'login-request-failed',
+      });
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: 'error' }),
+        ),
+      );
+      expect(refetchToolsets).not.toHaveBeenCalled();
+    });
+
+    it('shows a popup-blocked error notification without waiting for a result', async () => {
+      vi.mocked(window.open).mockReturnValueOnce(null);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      renderWithOAuthToolset();
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `login user ${oauthToolset.id}`,
+        }),
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: 'error' }),
+        ),
+      );
+    });
+  });
+
   it('deletes a toolset, refetches toolsets, and shows a success notification', async () => {
     const refetchToolsets = vi.fn().mockResolvedValue(undefined);
     const showNotification = vi.fn();
@@ -1283,5 +1530,248 @@ describe('CatalogView', () => {
     expect(showNotification).not.toHaveBeenCalledWith(
       expect.objectContaining({ variant: 'success' }),
     );
+  });
+
+  describe('unshare', () => {
+    const sharedToolset = {
+      id: 'toolsets/other-bucket/search__0.0.1',
+      toolset: 'toolsets/other-bucket/search__0.0.1',
+      displayName: 'Search',
+      isMy: false,
+      sharedWithMe: true,
+    };
+    const sharedApplication: DeploymentItemDto = {
+      id: 'applications/other-bucket/Their App__1.0',
+      displayName: 'Their App',
+      type: 'application',
+      isMy: false,
+      sharedWithMe: true,
+    };
+
+    it('unshares a toolset, refetches toolsets (not deployments), and shows a success notification', async () => {
+      const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+      const refetchDeployments = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [sharedToolset],
+        refetchToolsets,
+        refetchDeployments,
+      });
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `unshare ${sharedToolset.id}`,
+        }),
+      );
+
+      expect(discardSharedCatalogItem).toHaveBeenCalledWith(sharedToolset.id);
+      expect(refetchToolsets).toHaveBeenCalledOnce();
+      expect(refetchDeployments).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('unshares an application, refetches deployments (not toolsets), and shows a success notification', async () => {
+      const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+      const refetchDeployments = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [sharedApplication],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets,
+        refetchDeployments,
+      });
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `unshare ${sharedApplication.id}`,
+        }),
+      );
+
+      expect(discardSharedCatalogItem).toHaveBeenCalledWith(
+        sharedApplication.id,
+      );
+      expect(refetchDeployments).toHaveBeenCalledOnce();
+      expect(refetchToolsets).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('clears the selection when unsharing the currently selected deployment', async () => {
+      const setSelectedItemId = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [sharedApplication],
+        selectedItemId: sharedApplication.id,
+        setSelectedItemId,
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn().mockResolvedValue(undefined),
+      });
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `unshare ${sharedApplication.id}`,
+        }),
+      );
+
+      expect(setSelectedItemId).toHaveBeenCalledWith(null);
+    });
+
+    it('leaves the selection untouched when unsharing a non-selected item', async () => {
+      const setSelectedItemId = vi.fn();
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [
+          sharedApplication,
+          { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
+        ],
+        selectedItemId: 'gpt-4o',
+        setSelectedItemId,
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn().mockResolvedValue(undefined),
+      });
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `unshare ${sharedApplication.id}`,
+        }),
+      );
+
+      expect(setSelectedItemId).not.toHaveBeenCalled();
+    });
+
+    it('shows an error notification and skips refetch/selection-clear when discardSharedCatalogItem rejects', async () => {
+      const refetchDeployments = vi.fn().mockResolvedValue(undefined);
+      const setSelectedItemId = vi.fn();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [sharedApplication],
+        selectedItemId: sharedApplication.id,
+        setSelectedItemId,
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments,
+      });
+      vi.mocked(discardSharedCatalogItem).mockRejectedValue(
+        new Error('network error'),
+      );
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `unshare ${sharedApplication.id}`,
+        }),
+      );
+
+      expect(refetchDeployments).not.toHaveBeenCalled();
+      expect(setSelectedItemId).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+    });
+
+    it('preserves mutation success when the subsequent refetch rejects', async () => {
+      const refetchDeployments = vi
+        .fn()
+        .mockRejectedValue(new Error('refresh failed'));
+      const setSelectedItemId = vi.fn();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [sharedApplication],
+        selectedItemId: sharedApplication.id,
+        setSelectedItemId,
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments,
+      });
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+
+      render(<CatalogView />);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `unshare ${sharedApplication.id}`,
+        }),
+      );
+
+      expect(refetchDeployments).toHaveBeenCalledOnce();
+      expect(setSelectedItemId).toHaveBeenCalledWith(null);
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+      expect(showNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'error' }),
+      );
+    });
   });
 });

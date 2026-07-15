@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  ForbiddenException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -20,7 +21,11 @@ const errResponse = (status: number) =>
 
 function makeService(callbackBaseUrl = 'https://example.com/callback') {
   const dialClient = {
-    client: { shareResource: vi.fn(), getInvitation: vi.fn() },
+    client: {
+      shareResource: vi.fn(),
+      getInvitation: vi.fn(),
+      discardSharedResources: vi.fn(),
+    },
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
   } as unknown as DialClientService;
@@ -226,6 +231,83 @@ describe('ShareService', () => {
 
       await expect(
         service.acceptInvitation('token', 'abc123', 'user-sub-1'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
+  describe('discardShared', () => {
+    it('calls DIAL Core discardSharedResources with the resource url and invalidates both caches on success', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'discardSharedResources')
+        .mockResolvedValue(okResponse(undefined));
+
+      const result = await service.discardShared(
+        'applications/owner-bucket/my-app',
+        'token-abc',
+        'user-sub-1',
+      );
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: { resources: [{ url: 'applications/owner-bucket/my-app' }] },
+      });
+      expect(result).toEqual({ success: true });
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+      expect(toolsetsService.invalidateListCache).toHaveBeenCalledWith(
+        'user-sub-1',
+      );
+    });
+
+    it('throws ForbiddenException and does not invalidate caches when the resource is not shared with the caller', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue(errResponse(403));
+
+      await expect(
+        service.discardShared('applications/x/y', 'token', 'user-sub-1'),
+      ).rejects.toThrow(ForbiddenException);
+      expect(deploymentsService.invalidateListCache).not.toHaveBeenCalled();
+      expect(toolsetsService.invalidateListCache).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException on upstream 404', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue(errResponse(404));
+
+      await expect(
+        service.discardShared('applications/x/y', 'token', 'user-sub-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadGatewayException on upstream 5xx', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue(errResponse(502));
+
+      await expect(
+        service.discardShared('applications/x/y', 'token', 'user-sub-1'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockRejectedValue(new TypeError('fetch failed'));
+
+      await expect(
+        service.discardShared('applications/x/y', 'token', 'user-sub-1'),
       ).rejects.toThrow(ServiceUnavailableException);
     });
   });

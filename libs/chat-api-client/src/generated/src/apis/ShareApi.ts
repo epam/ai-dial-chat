@@ -16,6 +16,8 @@ import * as runtime from '../runtime';
 import type {
   AcceptInvitationResponseDto,
   CreateShareLinkDto,
+  DiscardSharedCatalogItemDto,
+  DiscardSharedCatalogItemResponseDto,
   ShareLinkResponseDto,
 } from '../models/index';
 
@@ -25,6 +27,10 @@ export interface AcceptInvitationRequest {
 
 export interface CreateShareLinkRequest {
   createShareLinkDto: CreateShareLinkDto;
+}
+
+export interface DiscardSharedCatalogItemRequest {
+  discardSharedCatalogItemDto: DiscardSharedCatalogItemDto;
 }
 
 /**
@@ -130,6 +136,60 @@ export class ShareApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ShareLinkResponseDto> {
     const response = await this.createShareLinkRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Discards the authenticated user\'s own access to a catalog resource (application or toolset) shared with them, via DIAL Core\'s discardSharedResources operation. Only affects the caller\'s own access — removing access for everyone else is a separate operation.
+   * Discard a catalog resource shared with the caller
+   */
+  async discardSharedCatalogItemRaw(
+    requestParameters: DiscardSharedCatalogItemRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<DiscardSharedCatalogItemResponseDto>> {
+    if (requestParameters['discardSharedCatalogItemDto'] == null) {
+      throw new runtime.RequiredError(
+        'discardSharedCatalogItemDto',
+        'Required parameter "discardSharedCatalogItemDto" was null or undefined when calling discardSharedCatalogItem().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/share/discard`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['discardSharedCatalogItemDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<DiscardSharedCatalogItemResponseDto>(
+      response,
+    );
+  }
+
+  /**
+   * Discards the authenticated user\'s own access to a catalog resource (application or toolset) shared with them, via DIAL Core\'s discardSharedResources operation. Only affects the caller\'s own access — removing access for everyone else is a separate operation.
+   * Discard a catalog resource shared with the caller
+   */
+  async discardSharedCatalogItem(
+    requestParameters: DiscardSharedCatalogItemRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<DiscardSharedCatalogItemResponseDto> {
+    const response = await this.discardSharedCatalogItemRaw(
       requestParameters,
       initOverrides,
     );

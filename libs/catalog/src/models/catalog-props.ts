@@ -151,6 +151,13 @@ export interface CatalogProps {
     params: { level: CredentialsLevel },
   ) => Promise<void> | void;
   /**
+   * Called when unsharing is confirmed via the details panel's confirmation
+   * popup, for an item shared with the current user (`sharedWithMe: true`).
+   * May return a promise; the popup shows a loading state and prevents
+   * duplicate submission while pending.
+   */
+  onUnshare?: (item: CatalogItem) => Promise<void> | void;
+  /**
    * Called when the details panel opens for an item. Use this to fetch
    * structured tab data (Overview/Pricing/API/Tools) from an API and pass it
    * back. The resolved data takes precedence over the item's static `details`

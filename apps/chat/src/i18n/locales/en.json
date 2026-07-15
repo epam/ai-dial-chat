@@ -128,6 +128,15 @@
         "error": "Failed to delete. Please try again.",
         "successTitle": "Deleted successfully",
         "success": "\"{{name}}\" was deleted."
+      },
+      "unshare": {
+        "label": "Delete",
+        "confirmTitle": "Delete item?",
+        "confirmMessage": "Delete \"{{name}}\" from your catalog? You'll need a new invitation to access it again.",
+        "errorTitle": "Delete failed",
+        "error": "Failed to delete \"{{name}}\". Please try again.",
+        "successTitle": "Deleted",
+        "success": "\"{{name}}\" was deleted from your catalog."
       }
     },
     "create": {
@@ -626,7 +635,11 @@
       "createFailed": "Failed to create toolset. Please try again.",
       "updateFailed": "Failed to update toolset. Please try again.",
       "loginFailed": "Failed to log in. Please check your credentials and try again.",
-      "logoutFailed": "Failed to log out. Please try again."
+      "logoutFailed": "Failed to log out. Please try again.",
+      "popupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again."
+    },
+    "success": {
+      "login": "Successfully logged in."
     }
   }
 }
