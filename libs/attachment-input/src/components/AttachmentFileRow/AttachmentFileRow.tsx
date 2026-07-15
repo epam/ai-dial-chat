@@ -10,7 +10,7 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconDownload, IconReload } from '@tabler/icons-react';
-import { type FC, type KeyboardEvent, type MouseEvent } from 'react';
+import { type FC, type KeyboardEvent, type MouseEvent, useId } from 'react';
 import type { AttachmentFileRowProps } from '../../models/attachment-file-row';
 import { getAttachmentCardState } from '../../utils/attachment';
 import styles from './AttachmentFileRow.module.scss';
@@ -54,6 +54,7 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
   const { id, name, status, errorReason } = attachment;
   const isLoading = status === RequestStatus.Loading;
   const isError = status === RequestStatus.Error;
+  const errorDescId = useId();
   const errorTitle =
     isError &&
     ((errorReason &&
@@ -188,11 +189,23 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
             styles.retryIcon,
           )}
           aria-label={retryLabel}
+          aria-describedby={errorTitle ? errorDescId : undefined}
           onClick={(e: MouseEvent) => {
             e.stopPropagation();
             onRetry(id);
           }}
         />
+      )}
+
+      {isError && (
+        <span
+          id={errorDescId}
+          role="status"
+          aria-live="polite"
+          className="sr-only"
+        >
+          {errorTitle}
+        </span>
       )}
     </>
   );
@@ -214,7 +227,13 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
           {tileContent}
         </div>
       ) : (
-        <div className={tileClassName} title={errorTitle || undefined}>
+        <div
+          className={tileClassName}
+          title={errorTitle || undefined}
+          role={isError ? 'group' : undefined}
+          aria-describedby={isError ? errorDescId : undefined}
+          tabIndex={isError ? 0 : undefined}
+        >
           {tileContent}
         </div>
       )}

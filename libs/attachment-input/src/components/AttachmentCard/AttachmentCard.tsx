@@ -51,7 +51,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     removeLabel = 'Remove attachment',
     retryLabel = 'Retry upload',
     clickLabel = 'Open attachment',
+    expandLabel = 'Expand pasted text',
     loadingLabel = 'Loading attachment',
+    uploadFailedStatusLabel = 'Upload failed',
   } = labels ?? {};
   const {
     colors,
@@ -174,6 +176,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
           <audio
             controls
             src={attachment.playUrl}
+            aria-label={attachment.name}
             className="w-full"
             preload="metadata"
           />
@@ -325,6 +328,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         </span>
       )}
 
+      <span role="status" aria-live="polite" className="sr-only">
+        {isError ? uploadFailedStatusLabel : ''}
+      </span>
+
       {!isLoading && (
         <div
           className={mergeClasses(
@@ -385,7 +392,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="button"
-        aria-label={isClickable ? clickLabel : undefined}
+        aria-label={
+          isClickable ? clickLabel : isExpandable ? expandLabel : undefined
+        }
       >
         {cardContent}
       </div>
