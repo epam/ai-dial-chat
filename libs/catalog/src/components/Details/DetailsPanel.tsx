@@ -43,6 +43,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onUseInChat,
   isPrimaryActionVisible,
   onShare,
+  onUnshare,
   isPublishVisible,
   getPublishHistory,
   publishFolderItems = EMPTY_PUBLISH_FOLDERS,
@@ -131,6 +132,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
   const [isDirectLogoutConfirmOpen, setIsDirectLogoutConfirmOpen] =
     useState(false);
+  const [isUnshareConfirmOpen, setIsUnshareConfirmOpen] = useState(false);
+  const [isUnsharing, setIsUnsharing] = useState(false);
 
   useEffect(() => {
     setIsStarred(initialIsStarred);
@@ -144,6 +147,8 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     setHasPublishHistoryError(false);
     setIsCredentialsOpen(false);
     setIsDirectLogoutConfirmOpen(false);
+    setIsUnshareConfirmOpen(false);
+    setIsUnsharing(false);
     // Reset publish-flow-local state only when the displayed item changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
@@ -165,6 +170,30 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     if (item.credentials == null) return;
     onLogout?.(item, { level: getSignedInLevel(item.credentials) });
   }, [item, onLogout]);
+
+  const handleRequestUnshare = useCallback(() => {
+    setIsUnshareConfirmOpen(true);
+  }, []);
+
+  const handleCancelUnshare = useCallback(() => {
+    setIsUnshareConfirmOpen(false);
+  }, []);
+
+  const handleConfirmUnshare = useCallback(async () => {
+    if (isUnsharing) return;
+    setIsUnsharing(true);
+    try {
+      await onUnshare?.(item);
+      setIsUnshareConfirmOpen(false);
+      onClose();
+    } catch {
+      // Failure feedback (e.g. a notification) is the caller's
+      // responsibility; the item stays visible and the panel stays open.
+      setIsUnshareConfirmOpen(false);
+    } finally {
+      setIsUnsharing(false);
+    }
+  }, [isUnsharing, item, onUnshare, onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -338,6 +367,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isPrimaryActionVisible={isPrimaryActionVisible}
                 onShare={onShare}
                 shareOverlay={shareOverlay}
+                onUnshare={handleRequestUnshare}
                 isPublishVisible={isPublishVisible}
                 onOpenPublish={handleOpenPublish}
                 onEdit={onEdit}
@@ -372,6 +402,21 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 onConfirm={handleConfirmDirectLogout}
                 onCancel={handleCancelDirectLogout}
                 onClose={handleCancelDirectLogout}
+              />
+
+              <DialConfirmationPopup
+                open={isUnshareConfirmOpen}
+                header={texts?.unshareConfirmTitle ?? 'Delete item?'}
+                description={
+                  texts?.unshareConfirmMessage?.(item.name) ??
+                  `Delete "${item.name}" from your catalog? You'll need a new invitation to access it again.`
+                }
+                confirmLabel={texts?.unshareLabel ?? 'Delete'}
+                cancelLabel={texts?.cancelLabel ?? 'Cancel'}
+                isLoading={isUnsharing}
+                onConfirm={handleConfirmUnshare}
+                onCancel={handleCancelUnshare}
+                onClose={handleCancelUnshare}
               />
 
               <div className={styles.divider} />

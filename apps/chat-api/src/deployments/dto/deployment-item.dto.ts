@@ -123,6 +123,12 @@ export class DeploymentItemDto {
 
   @ApiPropertyOptional({
     description:
+      'True when this deployment is shared with the current user (READ or WRITE) and not owned by them',
+  })
+  sharedWithMe?: boolean;
+
+  @ApiPropertyOptional({
+    description:
       'Parent folder path for application-type deployments (absent for root-level or non-application items)',
   })
   applicationFolder?: string;

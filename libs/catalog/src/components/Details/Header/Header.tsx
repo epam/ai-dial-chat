@@ -35,6 +35,8 @@ interface HeaderProps {
    * provided, clicking Share opens this popover instead of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /** Called when recipient-side Delete is clicked for an item shared with the current user. */
+  onUnshare?: (item: CatalogItem) => void;
   onEdit?: (item: CatalogItem) => void;
   onDelete?: (item: CatalogItem) => Promise<void> | void;
   /** Called after a delete confirmed via the Delete button succeeds, to close the whole details panel. */
@@ -73,6 +75,7 @@ export const Header: FC<HeaderProps> = ({
   isPrimaryActionVisible,
   onShare,
   shareOverlay,
+  onUnshare,
   onEdit,
   onDelete,
   onCloseDetails,
@@ -185,7 +188,9 @@ export const Header: FC<HeaderProps> = ({
           item={item}
           onShare={onShare}
           shareOverlay={shareOverlay}
+          onUnshare={onUnshare}
           label={texts?.shareLabel}
+          unshareLabel={texts?.unshareLabel}
         />
         <DeleteButton
           item={item}
