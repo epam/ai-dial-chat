@@ -122,7 +122,7 @@ dialTest(
     let responseAttachmentConversation: Conversation;
 
     await dialTest.step(
-      'Create conversation with a pdf attachment in the request via API',
+      'Create conversation with a pdf attachment in the response via API',
       async () => {
         const pdfUrl = await fileApiHelper.putFile(Attachment.multipagePdfName);
         responseAttachmentConversation =
@@ -214,7 +214,7 @@ dialTest(
     const requestMessageIndex = 1;
     const firstPage = 1;
     let conversationWithPdfAttachment: Conversation;
-    let widthAtHundredPercent: number;
+    let initWidth: number;
 
     await dialTest.step(
       'Create conversation with a pdf attachment in the request via API',
@@ -272,7 +272,7 @@ dialTest(
         const pageBoxAtHundredPercent = await pdfPreviewModal
           .getPdfPage(firstPage)
           .getElementBoundingBox();
-        widthAtHundredPercent = pageBoxAtHundredPercent!.width;
+        initWidth = pageBoxAtHundredPercent!.width;
 
         const updatedScaleValue = 50;
         const updatedScale = PdfViewerZoom.percent(updatedScaleValue);
@@ -281,7 +281,7 @@ dialTest(
         await pdfPreviewModalAssertion.assertZoomSelectValue(updatedScale);
         await pdfPreviewModalAssertion.assertPageZoomedProportionally(
           firstPage,
-          widthAtHundredPercent,
+          initWidth,
           initScaleValue / 100,
           updatedScaleValue / 100,
         );

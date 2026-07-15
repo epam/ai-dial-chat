@@ -25,7 +25,7 @@ export class ChatMessages extends BaseElement {
 
   public referenceButton = new Button(
     this.page,
-    ChatSelectors.messageReference,
+    ChatSelectors.referenceButton,
     this.getElementLocator(),
   );
 
