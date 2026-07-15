@@ -6,6 +6,8 @@ import { FilterTab } from '../../../types/conversation-classification';
 import { ConversationPanel } from '../ConversationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  mergeClasses: (...args: (string | undefined | false | null)[]) =>
+    args.filter(Boolean).join(' '),
   DIAL_ICON_SIZE: { SM: 16, LG: 24 },
   GhostButton: ({
     onClick,

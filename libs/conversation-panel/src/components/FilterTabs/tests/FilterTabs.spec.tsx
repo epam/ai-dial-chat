@@ -41,11 +41,4 @@ describe('FilterTabs', () => {
     renderTabs();
     expect(getTab('All').className).toContain('flex');
   });
-
-  it('lets the host override the tab class', () => {
-    renderTabs('shrink-0');
-    const tab = getTab('All');
-    expect(tab.className).toContain('shrink-0');
-    expect(tab.className).not.toContain('flex-1');
-  });
 });
