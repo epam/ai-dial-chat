@@ -73,6 +73,7 @@ export enum ButtonsI18nKeys {
   Cancel = 'buttons.cancel',
   Confirm = 'buttons.confirm',
   Edit = 'buttons.edit',
+  Connect = 'buttons.connect',
   Link = 'buttons.link',
   SaveAndSubmit = 'buttons.saveAndSubmit',
   Regenerate = 'buttons.regenerate',
@@ -101,6 +102,7 @@ export enum ButtonsI18nKeys {
   LogOut = 'buttons.logOut',
   CopyLink = 'buttons.copyLink',
   LogIn = 'buttons.logIn',
+  Publish = 'buttons.publish',
 }
 
 export enum NavigationI18nKeys {
@@ -183,6 +185,10 @@ export enum CatalogI18nKeys {
   DetailsUnshareError = 'catalog.details.unshare.error',
   DetailsUnshareSuccessTitle = 'catalog.details.unshare.successTitle',
   DetailsUnshareSuccess = 'catalog.details.unshare.success',
+  ConnectToolsetTitle = 'catalog.details.connect.toolsetTitle',
+  ConnectApplicationTitle = 'catalog.details.connect.applicationTitle',
+  ConnectToolsetDescription = 'catalog.details.connect.toolsetDescription',
+  ConnectApplicationDescription = 'catalog.details.connect.applicationDescription',
 }
 
 export enum DeploymentSelectorI18nKeys {
@@ -391,6 +397,12 @@ export enum ConversationPanelI18nKeys {
   UnshareSuccessTitle = 'conversationPanel.unshare.unshareSuccessTitle',
   UnshareSuccess = 'conversationPanel.unshare.unshareSuccess',
   UnshareError = 'conversationPanel.unshare.unshareError',
+}
+
+export enum ConversationPublishI18nKeys {
+  PanelAriaLabel = 'conversationPublish.panelAriaLabel',
+  AlreadyPublishedWarning = 'conversationPublish.alreadyPublishedWarning',
+  SuccessMessage = 'conversationPublish.successMessage',
 }
 
 export enum ConversationExportI18nKeys {

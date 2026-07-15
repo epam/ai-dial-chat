@@ -3,7 +3,6 @@ import { join } from 'path';
 import {
   DialFileManagerActions,
   DialFileManagerTabs,
-  DialFileNodeType,
 } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -52,7 +51,6 @@ const capturedDialFileManagerProps: {
       setDestinationFolderPath?: (path?: string) => void;
       disabledPathTooltip?: string;
       filesLoading?: boolean;
-      onGridApiChange?: unknown;
     };
   } | null;
 } = { current: null };
@@ -72,7 +70,6 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         setDestinationFolderPath?: (path?: string) => void;
         disabledPathTooltip?: string;
         filesLoading?: boolean;
-        onGridApiChange?: unknown;
       };
       onCreateFolder?: unknown;
       onFolderPopupPathChange?: unknown;
@@ -385,54 +382,11 @@ describe('DialFileManagerShell', () => {
     );
   });
 
-  it('filters the destination-folder popup grid to folders while keeping temporary folder rows', () => {
+  it('does not set onGridApiChange on destinationFolderPopupOptions', () => {
     renderShell();
-
-    const setGridOption = vi.fn();
-    const onFilterChanged = vi.fn();
-    const onGridApiChange = capturedDialFileManagerProps.current
-      ?.destinationFolderPopupOptions?.onGridApiChange as
-      | ((api: {
-          setGridOption: typeof setGridOption;
-          onFilterChanged: typeof onFilterChanged;
-        }) => void)
-      | undefined;
-
-    onGridApiChange?.({ setGridOption, onFilterChanged });
-
-    expect(setGridOption).toHaveBeenCalledWith(
-      'isExternalFilterPresent',
-      expect.any(Function),
-    );
-    expect(setGridOption).toHaveBeenCalledWith(
-      'doesExternalFilterPass',
-      expect.any(Function),
-    );
-
-    const doesExternalFilterPass = setGridOption.mock.calls.find(
-      ([key]) => key === 'doesExternalFilterPass',
-    )?.[1] as
-      | ((node: {
-          data?: { nodeType: DialFileNodeType; isTemporary?: boolean };
-        }) => boolean)
-      | undefined;
-
     expect(
-      doesExternalFilterPass?.({
-        data: { nodeType: DialFileNodeType.FOLDER },
-      }),
-    ).toBe(true);
-    expect(
-      doesExternalFilterPass?.({
-        data: { nodeType: DialFileNodeType.ITEM },
-      }),
-    ).toBe(false);
-    expect(
-      doesExternalFilterPass?.({
-        data: { nodeType: DialFileNodeType.ITEM, isTemporary: true },
-      }),
-    ).toBe(true);
-    expect(onFilterChanged).toHaveBeenCalledOnce();
+      capturedDialFileManagerProps.current?.destinationFolderPopupOptions,
+    ).not.toHaveProperty('onGridApiChange');
   });
 
   it('passes Duplicate through to DialFileManager action labels when the hook result includes it', () => {

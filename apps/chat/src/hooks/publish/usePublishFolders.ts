@@ -38,8 +38,8 @@ const buildFolderNodes = (
     });
 };
 
-/** Result of {@link useCatalogPublishFolders}. */
-export interface UseCatalogPublishFoldersResult {
+/** Result of {@link usePublishFolders}. */
+export interface UsePublishFoldersResult {
   /** Folder tree loaded so far from the Organization/public bucket. */
   folderItems: PublishFolderNode[];
   /** Folder path keys (`path.join('/')`) currently expanded in the tree. */
@@ -58,11 +58,13 @@ export interface UseCatalogPublishFoldersResult {
 
 /**
  * Loads the Organization/public bucket's folder tree lazily (one API call
- * per expanded folder, cached by API path) for the catalog Publish flow's
- * folder picker. Scoped to folders only — unlike `useDialFileManager`, it
- * does not list files, rename, copy/move, or upload (see design.md D2).
+ * per expanded folder, cached by API path) for the Publish flow's folder
+ * picker — shared by catalog entity publish and conversation publish (see
+ * design.md D5). Scoped to folders only — unlike `useDialFileManager`, it
+ * does not list files, rename, copy/move, or upload (see design.md D2 of
+ * `add-catalog-publish-to-folder`).
  */
-export const useCatalogPublishFolders = (): UseCatalogPublishFoldersResult => {
+export const usePublishFolders = (): UsePublishFoldersResult => {
   const [cache, setCache] = useState<Map<string, ListFilesItemDto[]>>(
     () => new Map(),
   );

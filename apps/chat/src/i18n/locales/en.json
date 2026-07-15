@@ -137,6 +137,12 @@
         "error": "Failed to delete \"{{name}}\". Please try again.",
         "successTitle": "Deleted",
         "success": "\"{{name}}\" was deleted from your catalog."
+      },
+      "connect": {
+        "toolsetTitle": "Connect toolset",
+        "applicationTitle": "Connect Application",
+        "toolsetDescription": "Copy endpoint URL to easily integrate toolset into your workflows",
+        "applicationDescription": "Copy endpoint URL to easily integrate application into your workflows"
       }
     },
     "create": {
@@ -194,6 +200,7 @@
     "close": "Close",
     "apply": "Apply",
     "edit": "Edit",
+    "connect": "Connect",
     "link": "Link",
     "regenerate": "Regenerate",
     "copy": "Copy",
@@ -218,7 +225,8 @@
     "download": "Download",
     "logOut": "Log out",
     "copyLink": "Copy link",
-    "logIn": "Log in"
+    "logIn": "Log in",
+    "publish": "Publish"
   },
   "sidebar": {
     "base": {
@@ -295,6 +303,11 @@
       "unshareSuccess": "\"{{name}}\" was deleted from your conversations.",
       "unshareError": "Failed to delete \"{{name}}\". Please try again."
     }
+  },
+  "conversationPublish": {
+    "panelAriaLabel": "Publish conversation",
+    "alreadyPublishedWarning": "This conversation is already published in {folder}.",
+    "successMessage": "Conversation published successfully."
   },
   "conversationExport": {
     "exportLabel": "Export",
@@ -487,7 +500,7 @@
     "moveHeaderMultiple": "Move {{count}} items",
     "moveSourceDisabledTooltip": "Unavailable for the original location. Please select another folder",
     "folderPickerLoadingTooltip": "Loading folder contents. Please wait",
-    "folderPickerEmptyStateTitle": "No folders here",
+    "folderPickerEmptyStateTitle": "This folder is empty",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "tab": {
       "myFiles": "My Files",

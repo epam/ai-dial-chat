@@ -55,6 +55,7 @@ export type {
   PublishDerivedState,
   PublishFolderNode,
   PublishHistoryEntry,
+  PublishResourceSummary,
 } from './models/publish';
 // Utils
 export { filterCatalogItems } from './utils/catalog-filter';
@@ -62,6 +63,12 @@ export { sortCatalogItems } from './utils/catalog-sort';
 export { useFavColumns } from './utils/use-fav-columns';
 export { derivePublishState } from './utils/publish-state';
 export { formatPublishedDate } from './utils/format-published-date';
+export { usePublishFlow } from './utils/use-publish-flow';
+export type {
+  PublishFlowItem,
+  UsePublishFlowOptions,
+  UsePublishFlowResult,
+} from './utils/use-publish-flow';
 export {
   collectFolderKeys,
   filterFolderTree,
@@ -132,6 +139,12 @@ export type {
   PublishFooterProps,
   PublishFooterTexts,
 } from './components/PublishPanel/PublishFooter';
+
+export { StandalonePublishPanel } from './components/PublishPanel/StandalonePublishPanel';
+export type {
+  StandalonePublishPanelProps,
+  StandalonePublishPanelTexts,
+} from './components/PublishPanel/StandalonePublishPanel';
 
 export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
 export type { CredentialsBadgeProps } from './components/CredentialsBadge/CredentialsBadge';

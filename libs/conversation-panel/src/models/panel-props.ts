@@ -171,6 +171,11 @@ export interface ConversationPanelProps {
    * When omitted or returns an empty array, no actions trigger is rendered on rows.
    */
   getActions?: (item: ConversationItem) => DropdownItem[];
+  /** Called when a row action menu opens, exposing its trigger for host-owned focus restoration. */
+  onActionMenuOpen?: (
+    item: ConversationItem,
+    trigger: HTMLButtonElement,
+  ) => void;
   /**
    * Called when the mobile sidebar toggle icon in the panel header is clicked.
    * When provided, the toggle button becomes visible on mobile screens.

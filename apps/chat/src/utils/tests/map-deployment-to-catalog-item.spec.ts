@@ -118,6 +118,21 @@ describe('mapDeploymentToCatalogItem', () => {
 
     expect(result.sharedWithMe).toBe(false);
   });
+
+  it('sets supportsMcp to true when the deployment reports features.mcp true', () => {
+    const result = mapDeploymentToCatalogItem({
+      ...baseDeployment,
+      features: { systemPrompt: false, temperature: false, mcp: true },
+    });
+
+    expect(result.supportsMcp).toBe(true);
+  });
+
+  it('sets supportsMcp to false when features.mcp is absent', () => {
+    const result = mapDeploymentToCatalogItem(baseDeployment);
+
+    expect(result.supportsMcp).toBe(false);
+  });
 });
 
 describe('mapToolsetToCatalogItem', () => {

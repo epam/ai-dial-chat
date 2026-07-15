@@ -2,14 +2,14 @@ import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFolder, listPublicFiles } from '../../../server-api/files.api';
-import { useCatalogPublishFolders } from '../useCatalogPublishFolders';
+import { usePublishFolders } from '../usePublishFolders';
 
 vi.mock('../../../server-api/files.api', () => ({
   listPublicFiles: vi.fn(),
   createFolder: vi.fn(),
 }));
 
-describe('useCatalogPublishFolders', () => {
+describe('usePublishFolders', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(listPublicFiles).mockResolvedValue({
@@ -34,7 +34,7 @@ describe('useCatalogPublishFolders', () => {
       ],
     });
 
-    const { result } = renderHook(() => useCatalogPublishFolders());
+    const { result } = renderHook(() => usePublishFolders());
 
     await waitFor(() =>
       expect(result.current.folderItems).toEqual([
@@ -75,7 +75,7 @@ describe('useCatalogPublishFolders', () => {
       });
     });
 
-    const { result } = renderHook(() => useCatalogPublishFolders());
+    const { result } = renderHook(() => usePublishFolders());
     await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
 
     act(() => {
@@ -117,7 +117,7 @@ describe('useCatalogPublishFolders', () => {
       folderId: 'public-bucket:New folder/',
     });
 
-    const { result } = renderHook(() => useCatalogPublishFolders());
+    const { result } = renderHook(() => usePublishFolders());
     await waitFor(() => expect(result.current.folderItems).toHaveLength(1));
 
     act(() => {
@@ -134,7 +134,7 @@ describe('useCatalogPublishFolders', () => {
   });
 
   it('denies write access under a restricted folder segment', async () => {
-    const { result } = renderHook(() => useCatalogPublishFolders());
+    const { result } = renderHook(() => usePublishFolders());
     await waitFor(() => expect(listPublicFiles).toHaveBeenCalled());
     expect(
       result.current.hasPublishWriteAccess(['Organization', 'Production']),

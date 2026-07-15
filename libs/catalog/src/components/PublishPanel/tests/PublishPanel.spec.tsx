@@ -101,7 +101,7 @@ const renderPanel = (props?: Partial<ComponentProps<typeof PublishPanel>>) =>
       folderItems={folderItems}
       onSelectedFolderPathChange={vi.fn()}
       onCreateFolder={vi.fn()}
-      hasExistingVersionInFolder={false}
+      hasExistingPublicationInFolder={false}
       hasWriteAccess={true}
       isSubmitting={false}
       {...props}
@@ -133,7 +133,7 @@ describe('PublishPanel', () => {
   it('shows the replace-warning callout when the version already exists in the folder, with the folder name bold', () => {
     const { container } = renderPanel({
       selectedFolderPath: ['Shared', 'Data Science', 'Published models'],
-      hasExistingVersionInFolder: true,
+      hasExistingPublicationInFolder: true,
     });
     expect(container.textContent).toContain(
       'Version 4.0.1 is already published in Published models. Publishing will replace it.',

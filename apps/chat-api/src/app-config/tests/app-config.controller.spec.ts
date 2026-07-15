@@ -14,14 +14,33 @@ import { AppConfigService } from '../app-config.service';
 const ASR_RESPONSE = {
   appId: 'chat-ui',
   features: { asrEnabled: true },
-  config: { asrModelId: 'whisper-1', transcribeSizeLimitBytes: 10_485_760 },
+  config: {
+    asrModelId: 'whisper-1',
+    transcribeSizeLimitBytes: 10_485_760,
+    dialCoreExternalUrl: null,
+  },
   metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
 };
 
 const DEFAULT_RESPONSE = {
   appId: 'chat-ui',
   features: { asrEnabled: false },
-  config: { asrModelId: null, transcribeSizeLimitBytes: 5_242_880 },
+  config: {
+    asrModelId: null,
+    transcribeSizeLimitBytes: 5_242_880,
+    dialCoreExternalUrl: null,
+  },
+  metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+};
+
+const EXTERNAL_URL_RESPONSE = {
+  appId: 'chat-ui',
+  features: { asrEnabled: false },
+  config: {
+    asrModelId: null,
+    transcribeSizeLimitBytes: 5_242_880,
+    dialCoreExternalUrl: 'https://dial.example.com',
+  },
   metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
 };
 
@@ -117,6 +136,38 @@ describe('AppConfigController (integration)', () => {
       expect(body).not.toHaveProperty('userId');
       expect(body).not.toHaveProperty('roles');
       expect(body).not.toHaveProperty('environment');
+    });
+
+    it('returns 200 with dialCoreExternalUrl when configured', async () => {
+      mockService.getClientConfig.mockResolvedValue(EXTERNAL_URL_RESPONSE);
+
+      const result = await request(app.getHttpServer())
+        .get('/v1/client-config?appId=chat-ui')
+        .expect(200);
+
+      expect(result.body.config.dialCoreExternalUrl).toBe(
+        'https://dial.example.com',
+      );
+    });
+
+    it('returns null dialCoreExternalUrl when not configured', async () => {
+      mockService.getClientConfig.mockResolvedValue(DEFAULT_RESPONSE);
+
+      const result = await request(app.getHttpServer())
+        .get('/v1/client-config?appId=chat-ui')
+        .expect(200);
+
+      expect(result.body.config.dialCoreExternalUrl).toBeNull();
+    });
+
+    it('never leaks the internal DIAL_CORE_URL value', async () => {
+      mockService.getClientConfig.mockResolvedValue(EXTERNAL_URL_RESPONSE);
+
+      const result = await request(app.getHttpServer())
+        .get('/v1/client-config?appId=chat-ui')
+        .expect(200);
+
+      expect(JSON.stringify(result.body)).not.toContain('DIAL_CORE_URL');
     });
   });
 });

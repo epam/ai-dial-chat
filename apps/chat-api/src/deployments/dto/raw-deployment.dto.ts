@@ -2,6 +2,7 @@ export interface RawDeploymentFeaturesDto {
   system_prompt?: boolean;
   temperature?: boolean;
   folder_attachments?: boolean;
+  mcp?: boolean;
 }
 
 export interface RawDeploymentDto {
@@ -22,4 +23,11 @@ export interface RawDeploymentDto {
   description_keywords?: string[];
   owner?: string;
   features?: RawDeploymentFeaturesDto;
+  /**
+   * Root-level MCP descriptor DIAL Core attaches to MCP-capable applications
+   * (endpoint/transport/allowedTools/...). Its presence, not its shape, is
+   * what matters here — only used as a fallback truthy check when
+   * `features.mcp` is absent.
+   */
+  mcp?: unknown;
 }
