@@ -248,12 +248,12 @@ describe('ShareController (integration)', () => {
     });
 
     it.each([
-      'conversations/owner-bucket/my-chat',
       'files/owner-bucket/report.pdf',
       'gpt-4o',
       'applications/owner-bucket',
+      'conversations/owner-bucket',
     ])(
-      'returns 400 when itemId is not a catalog resource: %s',
+      'returns 400 when itemId is not a catalog or conversation resource: %s',
       async (itemId) => {
         await request(app.getHttpServer())
           .post('/api/v1/share/discard')
@@ -277,6 +277,30 @@ describe('ShareController (integration)', () => {
         TEST_USER.at,
         TEST_USER.sub,
       );
+    });
+
+    it('accepts a conversation resource path', async () => {
+      const itemId = 'conversations/owner-bucket/my-chat';
+
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send({ itemId })
+        .expect(200);
+
+      expect(service.discardShared).toHaveBeenCalledWith(
+        itemId,
+        TEST_USER.at,
+        TEST_USER.sub,
+      );
+    });
+
+    it('returns 400 when a conversation itemId contains a path traversal attempt', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/share/discard')
+        .send({ itemId: 'conversations/owner-bucket/../../etc/passwd' })
+        .expect(400);
+
+      expect(service.discardShared).not.toHaveBeenCalled();
     });
 
     it('returns 400 when itemId contains a path traversal attempt', async () => {
