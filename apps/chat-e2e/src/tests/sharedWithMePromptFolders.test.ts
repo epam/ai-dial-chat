@@ -9,7 +9,9 @@ import {
   FolderPrompt,
   MenuOptions,
 } from '@/src/testData';
-import { DateUtil, GeneratorUtil, ItemUtil } from '@/src/utils';
+import { ThemeColorAttributes } from '@/src/ui/domData';
+import { DateUtil, GeneratorUtil, ItemUtil, SortingUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Entity } from '@epam/ai-dial-shared';
 
 const nestedLevels = 4;
@@ -587,6 +589,134 @@ dialSharedWithMeTest(
           sharedPrompts,
           folder,
           'visible',
+        );
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'The prompt from shared folder is shown when owner clicks on the link',
+  async ({
+    promptData,
+    dataInjector,
+    localStorageManager,
+    additionalShareUserLocalStorageManager,
+    mainUserShareApiHelper,
+    additionalShareUserDialHomePage,
+    dialHomePage,
+    additionalShareUserPromptPreviewModalAssertion,
+    promptPreviewModalAssertion,
+    additionalShareUserSharedFolderPromptsAssertions,
+    promptBarFolderAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-8858');
+    let folderPrompts: FolderPrompt;
+    let folder: FolderInterface;
+    let openedPromptName: string;
+    let shareFolderByLinkResponse: ShareByLinkResponseModel;
+    const expectedFolderColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textAccentTertiary,
+    );
+
+    await dialSharedWithMeTest.step(
+      'Prepare folder with two prompts inside and share it',
+      async () => {
+        folderPrompts = promptData.preparePromptsInFolder(2);
+        await dataInjector.createPrompts(
+          folderPrompts.prompts,
+          folderPrompts.folders,
+        );
+        shareFolderByLinkResponse =
+          await mainUserShareApiHelper.shareEntityByLink(
+            folderPrompts.prompts,
+            true,
+          );
+        folder = folderPrompts.folders;
+        const sortedPromptNames = SortingUtil.sortStringsArray(
+          folderPrompts.prompts.map((p) => p.name),
+          (i) => i.toLowerCase(),
+          'asc',
+        );
+        openedPromptName = sortedPromptNames[0];
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Open share folder link by the owner and verify prompt is opened according to the alphabetical order',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.navigateToUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
+            shareFolderByLinkResponse.invitationLink,
+          ),
+        );
+        await dialHomePage.waitForPageLoaded({
+          isPromptShared: true,
+        });
+        await promptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+        await promptPreviewModalAssertion.assertPromptName(openedPromptName);
+        await promptBarFolderAssertion.assertFolderEntityState(
+          { name: folder.name },
+          { name: openedPromptName },
+          'visible',
+        );
+        await promptBarFolderAssertion.assertFolderEntityArrowIconState(
+          { name: folder.name },
+          { name: openedPromptName },
+          'hidden',
+        );
+        await promptBarFolderAssertion.assertFolderEntitySelectedState(
+          { name: folder.name },
+          { name: openedPromptName },
+          true,
+        );
+        await promptBarFolderAssertion.assertFolderNameColor(
+          { name: folder.name },
+          expectedFolderColor,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify the same behaviour when open share folder link by another user',
+      async () => {
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
+        await additionalShareUserDialHomePage.navigateToUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
+            shareFolderByLinkResponse.invitationLink,
+          ),
+        );
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          isPromptShared: true,
+        });
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+        await additionalShareUserPromptPreviewModalAssertion.assertPromptName(
+          openedPromptName,
+        );
+        await additionalShareUserSharedFolderPromptsAssertions.assertFolderEntityState(
+          { name: folder.name },
+          { name: openedPromptName },
+          'visible',
+        );
+        await additionalShareUserSharedFolderPromptsAssertions.assertFolderEntityArrowIconState(
+          { name: folder.name },
+          { name: openedPromptName },
+          'hidden',
+        );
+        await additionalShareUserSharedFolderPromptsAssertions.assertFolderEntitySelectedState(
+          { name: folder.name },
+          { name: openedPromptName },
+          true,
+        );
+        await additionalShareUserSharedFolderPromptsAssertions.assertFolderNameColor(
+          { name: folder.name },
+          expectedFolderColor,
         );
       },
     );
