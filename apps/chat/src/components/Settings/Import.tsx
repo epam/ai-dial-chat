@@ -57,7 +57,7 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
               } catch {
                 toast.error(
                   translateErrorMessage(
-                    errorsMessages.unsupportedConversationsDataFormat,
+                    errorsMessages.invalidConversationsDataFormat,
                   ),
                 );
               }
