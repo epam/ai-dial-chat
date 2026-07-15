@@ -77,9 +77,10 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
-  const canvasDefaultWidth = isMobile
-    ? undefined
-    : Math.min(1500, Math.round(window.innerWidth * 0.5));
+  const [desktopCanvasWidth] = useState(() =>
+    Math.min(1500, Math.round(window.innerWidth * 0.5)),
+  );
+  const canvasDefaultWidth = isMobile ? window.innerWidth : desktopCanvasWidth;
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;

@@ -284,7 +284,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       styles={{
         ...panelStyles,
         className: mergeClasses(
-          isOpen ? 'mobile:w-full' : 'w-0',
+          isOpen ? 'mobile:w-full mobile:max-w-full' : 'w-0',
           className,
           panelStyles?.className,
         ),
