@@ -21,10 +21,17 @@ vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
 const setRedirectState = (state: ToolsetRedirectState) =>
   sessionStorage.setItem(TOOLSET_REDIRECT_STATE_KEY, JSON.stringify(state));
 
-const renderCallback = (search = '?code=test-code') =>
+const renderCallback = (
+  search = '?code=test-code',
+  route = '/auth/toolset-signin',
+) =>
   render(
-    <MemoryRouter initialEntries={[`/toolset-editor/callback${search}`]}>
+    <MemoryRouter initialEntries={[`${route}${search}`]}>
       <Routes>
+        <Route
+          path="/auth/toolset-signin"
+          element={<ToolsetEditorCallback />}
+        />
         <Route
           path="/toolset-editor/callback"
           element={<ToolsetEditorCallback />}
@@ -63,6 +70,7 @@ describe('ToolsetEditorCallback', () => {
     setRedirectState({
       toolsetId: 'toolsets/b/my__1.0.0',
       credentialsLevel: ToolsetCredentialsLevel.User,
+      redirectUri: 'http://localhost/auth/toolset-signin',
     });
     vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
 
@@ -74,7 +82,7 @@ describe('ToolsetEditorCallback', () => {
         expect.objectContaining({
           authenticationType: ToolsetAuthTypes.OAuth,
           code: 'auth-code-xyz',
-          redirectUri: expect.stringContaining('/toolset-editor/callback'),
+          redirectUri: 'http://localhost/auth/toolset-signin',
         }),
       ),
     );

@@ -355,10 +355,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         isOpen={isOpen}
         orientation={SidebarOrientation.Left}
         title={title}
-        ariaLabel={title}
+        labels={{ ariaLabel: title, closeLabel: closeAriaLabel }}
         onClose={onToggle}
-        closeLabel={closeAriaLabel}
-        headerClassName="h-[64px]"
         styles={{
           colors: {
             background: colors?.background,
@@ -370,15 +368,16 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           bodyClassName: 'flex flex-col overflow-hidden p-0 gap-3',
           cssVars,
           titleClassName: typography?.fontClassName,
+          headerClassName: 'h-[64px]',
+          className: mergeClasses(
+            isOpen
+              ? resizable
+                ? 'border-l border-r mobile:w-full'
+                : 'w-[325px] border-l border-r mobile:w-full'
+              : 'w-0',
+            className,
+          ),
         }}
-        className={mergeClasses(
-          isOpen
-            ? resizable
-              ? 'border-l border-r mobile:w-full'
-              : 'w-[325px] border-l border-r mobile:w-full'
-            : 'w-0',
-          className,
-        )}
         resizable={resizable}
         defaultWidth={defaultPanelWidth}
         minWidth={minPanelWidth}

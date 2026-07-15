@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ShareI18nKeys,
 } from '../../constants/translation-keys';
@@ -41,8 +42,8 @@ const ShareConversationPopoverContainer: FC<Props> = ({
     anyoneWithLinkTitle: t(ShareI18nKeys.AnyoneWithLinkTitle),
     anyoneWithLinkSubtitle: t(ShareI18nKeys.AnyoneWithLinkSubtitle),
     accessAriaLabel: t(ShareI18nKeys.AccessAriaLabel),
-    accessViewLabel: t(ShareI18nKeys.AccessViewLabel),
-    accessEditLabel: t(ShareI18nKeys.AccessEditLabel),
+    accessViewLabel: t(BasicI18nKeys.CanView),
+    accessEditLabel: t(BasicI18nKeys.CanEdit),
     visibilityNote: t(ShareI18nKeys.VisibilityNoteConversation),
     copyButtonLabel: t(ButtonsI18nKeys.Copy),
     copiedButtonLabel: t(ShareI18nKeys.CopiedButtonLabel),

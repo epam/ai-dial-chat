@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   BasicI18nKeys,
-  ToolsetEditorI18nKeys,
+  EditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { ToolsetEditorSteps } from '../../../types/toolsets';
 import ToolsetEditorHeader from '../ToolsetEditorHeader';
@@ -17,6 +17,7 @@ interface MockStep {
 
 interface MockEditorHeaderProps {
   steps: MockStep[];
+  isSaveDisabled?: boolean;
   onChangeStep: (stepId: string) => void;
 }
 
@@ -50,6 +51,7 @@ describe('ToolsetEditorHeader', () => {
       <ToolsetEditorHeader
         step={ToolsetEditorSteps.General}
         isSaving={false}
+        isSaveDisabled={false}
         canOpenSettings={false}
         onChangeStep={vi.fn()}
         onCancel={vi.fn()}
@@ -64,7 +66,7 @@ describe('ToolsetEditorHeader', () => {
     expect(props?.steps).toEqual([
       {
         id: ToolsetEditorSteps.General,
-        name: ToolsetEditorI18nKeys.StepGeneral,
+        name: EditorI18nKeys.StepGeneral,
         status: undefined,
       },
       {
@@ -80,6 +82,7 @@ describe('ToolsetEditorHeader', () => {
       <ToolsetEditorHeader
         step={ToolsetEditorSteps.General}
         isSaving={false}
+        isSaveDisabled={false}
         canOpenSettings
         onChangeStep={vi.fn()}
         onCancel={vi.fn()}
@@ -94,7 +97,7 @@ describe('ToolsetEditorHeader', () => {
     expect(props?.steps).toEqual([
       {
         id: ToolsetEditorSteps.General,
-        name: ToolsetEditorI18nKeys.StepGeneral,
+        name: EditorI18nKeys.StepGeneral,
         status: StepStatus.VALID,
       },
       {
@@ -111,6 +114,7 @@ describe('ToolsetEditorHeader', () => {
       <ToolsetEditorHeader
         step={ToolsetEditorSteps.General}
         isSaving={false}
+        isSaveDisabled={false}
         canOpenSettings
         onChangeStep={onChangeStep}
         onCancel={vi.fn()}
@@ -125,5 +129,25 @@ describe('ToolsetEditorHeader', () => {
     );
 
     expect(onChangeStep).toHaveBeenCalledWith(ToolsetEditorSteps.Settings);
+  });
+
+  it('forwards the Save disabled state to the shared header', () => {
+    render(
+      <ToolsetEditorHeader
+        step={ToolsetEditorSteps.Settings}
+        isSaving={false}
+        isSaveDisabled
+        canOpenSettings
+        onChangeStep={vi.fn()}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+
+    const props = mockEditorHeader.mock.calls[0]?.[0] as
+      | MockEditorHeaderProps
+      | undefined;
+
+    expect(props?.isSaveDisabled).toBe(true);
   });
 });

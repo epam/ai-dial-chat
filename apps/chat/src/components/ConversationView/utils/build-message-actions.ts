@@ -35,8 +35,7 @@ export const buildMessageActions = (
       onEdit: handlers.onEdit ? () => handlers.onEdit?.(index) : void 0,
       onEditHover: handlers.onHoverEdit,
       onDelete: handlers.onDelete ? () => handlers.onDelete?.(index) : void 0,
-      tooltips,
-      ariaLabels,
+      labels: { tooltips, ariaLabels },
     };
   }
 
@@ -45,7 +44,7 @@ export const buildMessageActions = (
     : void 0;
 
   if (msg.wasStoppedByUser || msg.hasStreamError) {
-    return { onRegenerate, tooltips, ariaLabels };
+    return { onRegenerate, labels: { tooltips, ariaLabels } };
   }
 
   const handleCopy = () => void copyToClipboard(msg.content);
@@ -72,7 +71,6 @@ export const buildMessageActions = (
           }
         : void 0,
     activeRating: msg.rating,
-    tooltips,
-    ariaLabels,
+    labels: { tooltips, ariaLabels },
   };
 };

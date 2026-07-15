@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
-  ToolsetEditorI18nKeys,
+  EditorI18nKeys,
 } from '../../constants/translation-keys';
 import type {
   ToolsetAuthFormData,
@@ -68,7 +68,7 @@ const ToolsetEditorView: FC<Props> = ({
             />
             <PrimaryButton
               type="button"
-              label={t(ToolsetEditorI18nKeys.NextButton)}
+              label={t(EditorI18nKeys.NextButton)}
               onClick={onNext}
             />
           </div>

@@ -7,6 +7,7 @@ import {
   AppsEditorI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
+  EditorI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import AppsEditor from '../AppsEditor';
@@ -122,7 +123,7 @@ describe('AppsEditor', () => {
     renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
     await userEvent.click(
-      screen.getByRole('button', { name: AppsEditorI18nKeys.SaveButton }),
+      screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
     );
     act(() => {
       latestSettingsStepProps.onSaveSuccess?.();

@@ -9,10 +9,13 @@
     "preview": "Preview",
     "settings": "Settings",
     "attachFiles": "Attach files",
-    "deleteConfirmDescription": "Are you sure you want to delete"
+    "deleteConfirmDescription": "Are you sure you want to delete",
+    "canView": "Can view",
+    "canEdit": "Can edit"
   },
   "api": {
-    "endpointLabel": "Endpoint"
+    "endpointLabel": "Endpoint",
+    "apiKey": "API key"
   },
   "chat": {
     "greetingMorning": "Good morning, {{name}}",
@@ -104,11 +107,8 @@
         "limitsSection": "Usage limits"
       },
       "credentials": {
-        "loginLabel": "Log in",
         "signedInLabel": "Signed in",
         "signedOutLabel": "Signed out",
-        "logoutConfirmMessage": "Are you sure you want to log out?",
-        "apiKeyFieldLabel": "API key",
         "apiKeyFieldHint": "Enter your API key value for \"{{header}}\" header",
         "loginWithMyCredsLabel": "Login with my creds",
         "manageLabel": "Manage credentials",
@@ -144,10 +144,6 @@
       "quickApp": "QuickApp",
       "toolset": "Toolset"
     },
-    "favoriteAddedTitle": "Added to Favorites",
-    "favoriteRemovedTitle": "Removed from Favorites",
-    "favoriteAdded": "\"{{name}}\" added to Favorites",
-    "favoriteRemoved": "\"{{name}}\" removed from Favorites",
     "publishSuccessTitle": "Published",
     "publishSuccess": "\"{{name}}\" published to {{folder}}",
     "publishFolderSearchPlaceholder": "Search folders",
@@ -220,16 +216,17 @@
     "useInChat": "Use in chat",
     "newChat": "New chat",
     "download": "Download",
-    "logOut": "Log out"
+    "logOut": "Log out",
+    "copyLink": "Copy link",
+    "logIn": "Log in"
   },
   "sidebar": {
     "base": {
-      "toggleOpen": "Open sidebar"
+      "toggleOpen": "Open panel"
     },
     "sources": {
       "ariaLabel": "Conversation sources",
       "downloadAll": "Download all",
-      "copySource": "Copy link",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",
@@ -450,6 +447,7 @@
     "moveHeaderSingle": "Move \"{{name}}\"",
     "moveHeaderMultiple": "Move {{count}} items",
     "moveSourceDisabledTooltip": "Unavailable for the original location. Please select another folder",
+    "folderPickerLoadingTooltip": "Loading folder contents. Please wait",
     "folderPickerEmptyStateTitle": "No folders here",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
     "tab": {
@@ -472,14 +470,10 @@
     "page": {
       "navLabel": "File Manager"
     },
-    "shareAction": "Share",
     "unshareAction": "Unshare",
     "removeAccessAction": "Remove access",
     "shareModalTitle": "Share \"{{name}}\"",
-    "shareModalReadPermission": "Can view",
-    "shareModalReadWritePermission": "Can edit",
     "shareModalCreateLinkButton": "Create link",
-    "shareModalCopyLinkButton": "Copy link",
     "shareModalLinkCopiedConfirmation": "Link copied",
     "shareError": "Failed to create the share link",
     "unshareError": "Failed to remove the shared item",
@@ -519,8 +513,6 @@
     "qrButtonLabel": "QR",
     "anyoneWithLinkTitle": "Anyone with the link",
     "anyoneWithLinkSubtitle": "in your organization",
-    "accessViewLabel": "Can view",
-    "accessEditLabel": "Can edit",
     "accessAriaLabel": "Link access level",
     "visibilityNote": "This deployment and its updates will be visible to users with the link.",
     "visibilityNoteEdit": "Anyone with the link will be able to view and edit this deployment.",
@@ -533,32 +525,34 @@
     "errorTitle": "Couldn't create the share link. Please try again.",
     "invitationAcceptError": "This share link is invalid or has expired."
   },
-  "appsEditor": {
+  "editor": {
     "stepGeneral": "General",
     "stepsNavAriaLabel": "Editor steps",
     "saveButton": "Save & Exit",
+    "nextButton": "Next",
+    "nameLabel": "Name",
+    "nameRequired": "Name is required",
+    "descriptionLabel": "Description",
+    "iconUrlLabel": "Icon URL",
+    "versionLabel": "Version",
+    "versionPlaceholder": "e.g. 1.0.0",
+    "topicsLabel": "Topics",
+    "topicsPlaceholder": "Add a topic",
+    "introLabel": "Intro",
+    "introPlaceholder": "A short one-line pitch",
+    "introTooLong": "Intro must be 90 characters or fewer"
+  },
+  "appsEditor": {
     "exitPreviewButton": "Exit preview",
     "previewChat": {
       "placeholder": "Send a message to preview this application…",
       "ariaLabel": "Application preview chat"
     },
     "generalForm": {
-      "nameLabel": "Name",
       "namePlaceholder": "Enter application name",
-      "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe your application",
-      "iconUrlLabel": "Icon URL",
-      "nextButton": "Next",
-      "nameRequired": "Name is required",
       "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
-      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes",
-      "versionLabel": "Version",
-      "versionPlaceholder": "e.g. 1.0.0",
-      "topicsLabel": "Topics",
-      "topicsPlaceholder": "Add a topic",
-      "introLabel": "Intro",
-      "introPlaceholder": "A short one-line pitch",
-      "introTooLong": "Intro must be 90 characters or fewer"
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -570,29 +564,15 @@
     }
   },
   "toolsetEditor": {
-    "stepGeneral": "General",
-    "stepsNavAriaLabel": "Editor steps",
-    "nextButton": "Next",
-    "saveButton": "Save & Exit",
     "general": {
-      "nameLabel": "Name",
       "namePlaceholder": "Enter toolset name",
-      "nameRequired": "Name is required",
-      "versionLabel": "Version",
-      "versionPlaceholder": "e.g. 1.0.0",
-      "iconUrlLabel": "Icon URL",
-      "descriptionLabel": "Description",
-      "descriptionPlaceholder": "Describe your toolset",
-      "topicsLabel": "Topics",
-      "topicsPlaceholder": "Add a topic",
-      "introLabel": "Intro",
-      "introPlaceholder": "A short one-line pitch",
-      "introTooLong": "Intro must be 90 characters or fewer"
+      "descriptionPlaceholder": "Describe your toolset"
     },
     "settings": {
       "endpointRequired": "Endpoint is required",
       "endpointInvalid": "Enter a valid http(s) or sse URL",
       "protocolLabel": "Protocol",
+      "protocolSseDeprecatedLabel": "Deprecated",
       "allowedToolsLabel": "Allowed tools",
       "allowedToolsPlaceholder": "Add a tool",
       "copyUrlLabel": "Copy endpoint URL"
@@ -605,9 +585,8 @@
       "withLoginLabel": "With login",
       "withoutLoginLabel": "Without login",
       "withConfigLabel": "With login & config",
-      "keyHeaderLabel": "Key name",
+      "keyHeaderLabel": "API Key parameter name",
       "keyHeaderRequired": "Key name is required",
-      "apiKeyLabel": "API key",
       "apiKeyRequired": "API key is required",
       "clientIdLabel": "Client ID",
       "clientIdRequired": "Client ID is required",
@@ -617,7 +596,6 @@
       "tokenEndpointLabel": "Token endpoint",
       "scopesLabel": "Scopes",
       "scopesPlaceholder": "Add a scope",
-      "logInButton": "Log in",
       "loggedInLabel": "Logged in",
       "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."
     },

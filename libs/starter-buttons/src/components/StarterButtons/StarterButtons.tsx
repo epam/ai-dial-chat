@@ -134,9 +134,17 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
               <DialRoundedButton
                 iconAfter={
                   isMobile ? (
-                    <IconDots stroke={1.5} size={DIAL_ICON_SIZE.MD} />
+                    <IconDots
+                      stroke={1.5}
+                      size={DIAL_ICON_SIZE.MD}
+                      aria-hidden
+                    />
                   ) : (
-                    <IconDotsVertical stroke={1.5} size={DIAL_ICON_SIZE.MD} />
+                    <IconDotsVertical
+                      stroke={1.5}
+                      size={DIAL_ICON_SIZE.MD}
+                      aria-hidden
+                    />
                   )
                 }
                 aria-label={labels.overflow}

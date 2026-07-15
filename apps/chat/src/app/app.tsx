@@ -282,6 +282,16 @@ const App: FC = () => {
             }
           />
           <Route
+            path={ROUTES.ToolsetSignIn}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ToolsetEditorCallbackPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
             path={ROUTES.ToolsetEditor}
             element={
               <RouteErrorBoundary>

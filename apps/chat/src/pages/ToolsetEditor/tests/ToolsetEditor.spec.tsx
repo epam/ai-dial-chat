@@ -1,4 +1,5 @@
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { ResponseError } from '@epam/chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -9,11 +10,7 @@ import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
-import {
-  ToolsetAuthTypes,
-  ToolsetEditorSteps,
-  WithLogin,
-} from '../../../types/toolsets';
+import { ToolsetAuthTypes, WithLogin } from '../../../types/toolsets';
 import ToolsetEditor from '../ToolsetEditor';
 
 vi.mock('../../../server-api/toolsets', () => ({
@@ -35,8 +32,14 @@ vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
 }));
 
 vi.mock('../ToolsetEditorHeader', () => ({
-  default: ({ onSave }: { onSave: () => void }) => (
-    <button type="button" onClick={onSave}>
+  default: ({
+    isSaveDisabled,
+    onSave,
+  }: {
+    isSaveDisabled: boolean;
+    onSave: () => void;
+  }) => (
+    <button type="button" disabled={isSaveDisabled} onClick={onSave}>
       save-toolset
     </button>
   ),
@@ -50,13 +53,29 @@ vi.mock('../ToolsetEditorView', () => ({
     onAuthChange,
   }: {
     step: string;
-    errors: { endpoint?: string };
+    errors: {
+      endpoint?: string;
+      authorizationEndpoint?: string;
+      tokenEndpoint?: string;
+    };
     onChange: (patch: Record<string, unknown>) => void;
     onAuthChange: (patch: Record<string, unknown>) => void;
   }) => (
     <div>
       <span>{`current-step-${step}`}</span>
       {errors.endpoint && <p role="alert">{errors.endpoint}</p>}
+      {errors.authorizationEndpoint && (
+        <p role="alert">{errors.authorizationEndpoint}</p>
+      )}
+      {errors.tokenEndpoint && <p role="alert">{errors.tokenEndpoint}</p>}
+      <button
+        type="button"
+        onClick={() => {
+          onChange({ endpoint: '' });
+        }}
+      >
+        touch-empty-endpoint
+      </button>
       <button
         type="button"
         onClick={() => {
@@ -76,6 +95,20 @@ vi.mock('../ToolsetEditorView', () => ({
         onClick={() => {
           onChange({ endpoint: 'https://example.com/mcp' });
           onAuthChange({
+            authenticationType: ToolsetAuthTypes.ApiKey,
+            withLogin: WithLogin.WithoutLogin,
+            keyHeader: 'X-API-Key',
+            apiKey: '',
+          });
+        }}
+      >
+        fill-api-key-without-login-toolset
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          onChange({ endpoint: 'https://example.com/mcp' });
+          onAuthChange({
             authenticationType: ToolsetAuthTypes.OAuth,
             withLogin: WithLogin.WithConfig,
             clientId: 'client-id',
@@ -86,6 +119,48 @@ vi.mock('../ToolsetEditorView', () => ({
         }}
       >
         fill-oauth-toolset
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          onChange({ endpoint: 'https://example.com/mcp' });
+          onAuthChange({
+            authenticationType: ToolsetAuthTypes.OAuth,
+            withLogin: WithLogin.WithLogin,
+          });
+        }}
+      >
+        fill-oauth-with-login-toolset
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          onChange({ endpoint: 'https://example.com/mcp' });
+          onAuthChange({
+            authenticationType: ToolsetAuthTypes.OAuth,
+            withLogin: WithLogin.WithConfig,
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+          });
+        }}
+      >
+        fill-oauth-toolset-without-endpoints
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          onChange({ endpoint: 'https://example.com/mcp' });
+          onAuthChange({
+            authenticationType: ToolsetAuthTypes.OAuth,
+            withLogin: WithLogin.WithConfig,
+            clientId: 'client-id',
+            clientSecret: 'client-secret',
+            authorizationEndpoint: 'not a url',
+            tokenEndpoint: 'https://auth.example.com/oauth/token',
+          });
+        }}
+      >
+        fill-invalid-oauth-toolset
       </button>
     </div>
   ),
@@ -124,22 +199,94 @@ describe('ToolsetEditor', () => {
     } as unknown as ReturnType<typeof useDeployments>);
   });
 
-  it('keeps validation errors visible after Save & Exit switches to Settings', async () => {
+  it('disables Save & Exit until required Settings fields are valid', async () => {
     renderEditor();
 
+    const saveButton = await screen.findByRole('button', {
+      name: 'save-toolset',
+    });
+
+    expect((saveButton as HTMLButtonElement).disabled).toBe(true);
+    await user.click(saveButton);
+    expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
+
     await user.click(
-      await screen.findByRole('button', {
-        name: 'save-toolset',
+      screen.getByRole('button', {
+        name: 'fill-api-key-toolset',
       }),
     );
 
-    expect(
-      await screen.findByText(`current-step-${ToolsetEditorSteps.Settings}`),
-    ).toBeTruthy();
+    await waitFor(() =>
+      expect((saveButton as HTMLButtonElement).disabled).toBe(false),
+    );
+    expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
+  });
+
+  it('shows validation errors after an invalid field becomes dirty', async () => {
+    renderEditor();
+
+    await screen.findByRole('button', {
+      name: 'save-toolset',
+    });
+
+    expect(screen.queryByRole('alert')).toBeNull();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'touch-empty-endpoint',
+      }),
+    );
+
     expect(screen.getByRole('alert').textContent).toContain(
       ToolsetEditorI18nKeys.EndpointRequired,
     );
-    expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
+  });
+
+  it('keeps Save & Exit disabled when OAuth endpoint URLs are invalid', async () => {
+    renderEditor();
+
+    const saveButton = await screen.findByRole('button', {
+      name: 'save-toolset',
+    });
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'fill-invalid-oauth-toolset',
+      }),
+    );
+
+    expect((saveButton as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole('alert').textContent).toContain(
+      ToolsetEditorI18nKeys.EndpointInvalid,
+    );
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'fill-oauth-toolset',
+      }),
+    );
+
+    await waitFor(() =>
+      expect((saveButton as HTMLButtonElement).disabled).toBe(false),
+    );
+  });
+
+  it('enables Save & Exit for configured OAuth without authorization/token endpoints', async () => {
+    renderEditor();
+
+    const saveButton = await screen.findByRole('button', {
+      name: 'save-toolset',
+    });
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'fill-oauth-toolset-without-endpoints',
+      }),
+    );
+
+    await waitFor(() =>
+      expect((saveButton as HTMLButtonElement).disabled).toBe(false),
+    );
   });
 
   it('logs in a newly created API-key toolset using the returned id', async () => {
@@ -168,6 +315,33 @@ describe('ToolsetEditor', () => {
     );
   });
 
+  it('saves a newly created API-key toolset without login using only the key header', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'fill-api-key-without-login-toolset',
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: 'save-toolset',
+      }),
+    );
+
+    await waitFor(() =>
+      expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
+        expect.objectContaining({
+          authSettings: expect.objectContaining({
+            authenticationType: ToolsetAuthTypes.ApiKey,
+            apiKeyHeader: 'X-API-Key',
+          }),
+        }),
+      ),
+    );
+    expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
+  });
+
   it('returns to the requested screen after saving a new OAuth toolset without starting login', async () => {
     renderEditor(`${ROUTES.ToolsetEditor}?returnUrl=%2Fprevious`);
 
@@ -183,8 +357,41 @@ describe('ToolsetEditor', () => {
     );
 
     expect(await screen.findByText('Previous screen')).toBeTruthy();
+    expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authSettings: expect.objectContaining({
+          redirectUri: expect.stringContaining('/auth/toolset-signin'),
+        }),
+      }),
+    );
     expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
     expect(sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY)).toBeNull();
+  });
+
+  it('saves a new OAuth with-login toolset with a redirect URI', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'fill-oauth-with-login-toolset',
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: 'save-toolset',
+      }),
+    );
+
+    await waitFor(() =>
+      expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
+        expect.objectContaining({
+          authSettings: {
+            authenticationType: ToolsetAuthTypes.OAuth,
+            redirectUri: expect.stringContaining('/auth/toolset-signin'),
+          },
+        }),
+      ),
+    );
   });
 
   it('refetches toolsets after a successful create so the catalog list stays in sync', async () => {
@@ -223,6 +430,39 @@ describe('ToolsetEditor', () => {
       expect(mockShowNotification).toHaveBeenCalledWith({
         variant: NotificationVariant.Error,
         message: ToolsetEditorI18nKeys.ErrorCreateFailed,
+      }),
+    );
+  });
+
+  it('shows the DIAL Core error reason instead of a generic message when create fails', async () => {
+    const response = new Response(
+      JSON.stringify({
+        message:
+          "The specified endpoint 'https://test.com' is invalid or unreachable.",
+      }),
+      { status: 400 },
+    );
+    vi.mocked(toolsetsApi.createToolset).mockRejectedValue(
+      new ResponseError(response),
+    );
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'fill-api-key-toolset',
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: 'save-toolset',
+      }),
+    );
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message:
+          "The specified endpoint 'https://test.com' is invalid or unreachable.",
       }),
     );
   });

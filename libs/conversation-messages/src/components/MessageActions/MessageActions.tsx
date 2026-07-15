@@ -19,7 +19,7 @@ import {
   IconTrashX,
 } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
-import type { MessageActionsProps } from '../../models/MessageActions';
+import type { MessageActionsProps } from '../../models/message-actions';
 
 const COPIED_RESET_MS = 2000;
 
@@ -37,46 +37,57 @@ export const MessageActions: FC<MessageActionsProps> = ({
   activeRating,
   isAlwaysVisible,
   className,
-  tooltips,
-  ariaLabels,
+  labels,
 }) => {
+  const { tooltips, ariaLabels } = labels ?? {};
   const [copied, setCopied] = useState<'copy' | 'markdown' | null>(null);
+  const [copyStatus, setCopyStatus] = useState('');
 
   const handleCopy = useCallback(() => {
     onCopy?.();
     setCopied('copy');
+    setCopyStatus(ariaLabels?.copiedStatus ?? 'Copied to clipboard');
     setTimeout(() => setCopied(null), COPIED_RESET_MS);
-  }, [onCopy]);
+  }, [onCopy, ariaLabels?.copiedStatus]);
 
   const handleCopyMarkdown = useCallback(() => {
     onCopyMarkdown?.();
     setCopied('markdown');
+    setCopyStatus(
+      ariaLabels?.copiedMarkdownStatus ?? 'Copied as Markdown to clipboard',
+    );
     setTimeout(() => setCopied(null), COPIED_RESET_MS);
-  }, [onCopyMarkdown]);
+  }, [onCopyMarkdown, ariaLabels?.copiedMarkdownStatus]);
 
   return (
     <div
+      role="toolbar"
+      aria-label={ariaLabels?.actionsGroup ?? 'Message actions'}
       className={mergeClasses(
         'flex gap-1',
         !isAlwaysVisible && 'opacity-0 group-hover:opacity-100',
         className,
       )}
     >
+      <span role="status" aria-live="polite" className="sr-only">
+        {copyStatus}
+      </span>
       {role === MessageRole.User ? (
         <>
           {onEdit && (
             <DialGhostIconButton
-              icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} />}
+              icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               aria-label={ariaLabels?.editMessage ?? 'Edit message'}
               tooltipProps={{ tooltip: tooltips?.edit ?? 'Edit' }}
               onClick={onEdit}
               onMouseEnter={onEditHover}
+              onFocus={onEditHover}
             />
           )}
           {onDelete && (
             <DialGhostIconButton
-              icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}
+              icon={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               aria-label={ariaLabels?.deleteMessage ?? 'Delete message'}
               tooltipProps={{ tooltip: tooltips?.delete ?? 'Delete' }}
@@ -88,7 +99,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
         <>
           {onRegenerate && (
             <DialGhostIconButton
-              icon={<IconRefresh size={DIAL_ICON_SIZE.SM} />}
+              icon={<IconRefresh size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               aria-label={
                 ariaLabels?.regenerateResponse ?? 'Regenerate response'
@@ -101,9 +112,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
             <DialGhostIconButton
               icon={
                 copied === 'copy' ? (
-                  <IconCheck size={DIAL_ICON_SIZE.SM} />
+                  <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
                 ) : (
-                  <IconCopy size={DIAL_ICON_SIZE.SM} />
+                  <IconCopy size={DIAL_ICON_SIZE.SM} aria-hidden />
                 )
               }
               size={ElementSize.Small}
@@ -121,9 +132,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
             <DialGhostIconButton
               icon={
                 copied === 'markdown' ? (
-                  <IconCheck size={DIAL_ICON_SIZE.SM} />
+                  <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
                 ) : (
-                  <IconMarkdown size={DIAL_ICON_SIZE.SM} />
+                  <IconMarkdown size={DIAL_ICON_SIZE.SM} aria-hidden />
                 )
               }
               size={ElementSize.Small}
@@ -139,9 +150,10 @@ export const MessageActions: FC<MessageActionsProps> = ({
           )}
           {onLike && (
             <DialGhostIconButton
-              icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} />}
+              icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               aria-label={ariaLabels?.likeResponse ?? 'Like response'}
+              aria-pressed={activeRating === MessageRating.Like}
               className={
                 activeRating === MessageRating.Like
                   ? '!text-accent-primary'
@@ -153,9 +165,10 @@ export const MessageActions: FC<MessageActionsProps> = ({
           )}
           {onDislike && (
             <DialGhostIconButton
-              icon={<IconThumbDown size={DIAL_ICON_SIZE.SM} />}
+              icon={<IconThumbDown size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               aria-label={ariaLabels?.dislikeResponse ?? 'Dislike response'}
+              aria-pressed={activeRating === MessageRating.Dislike}
               className={
                 activeRating === MessageRating.Dislike
                   ? '!text-accent-primary'

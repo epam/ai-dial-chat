@@ -21,6 +21,7 @@ import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ApiI18nKeys,
+  AuthI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
   FavoritesI18nKeys,
@@ -669,7 +670,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         pricingLimitsSectionLabel: t(
           CatalogI18nKeys.DetailsPricingLimitsSection,
         ),
-        loginActionLabel: t(CatalogI18nKeys.CredentialsLoginLabel),
+        loginActionLabel: t(ButtonsI18nKeys.LogIn),
         logoutActionLabel: t(ButtonsI18nKeys.LogOut),
         loginWithMyCredsActionLabel: t(
           CatalogI18nKeys.CredentialsLoginWithMyCredsLabel,
@@ -681,10 +682,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         ),
         credentialsSignedInLabel: t(CatalogI18nKeys.CredentialsSignedInLabel),
         credentialsSignedOutLabel: t(CatalogI18nKeys.CredentialsSignedOutLabel),
-        logoutConfirmMessage: t(
-          CatalogI18nKeys.CredentialsLogoutConfirmMessage,
-        ),
-        apiKeyFieldLabel: t(CatalogI18nKeys.CredentialsApiKeyFieldLabel),
+        logoutConfirmMessage: t(AuthI18nKeys.LogOutConfirmDescription),
+        apiKeyFieldLabel: t(ApiI18nKeys.ApiKey),
         apiKeyFieldHint: (header) =>
           t(CatalogI18nKeys.CredentialsApiKeyFieldHint, { header }),
         credentialsBadgeLoggedOutLabel: t(

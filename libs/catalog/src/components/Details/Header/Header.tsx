@@ -1,4 +1,4 @@
-import { GhostButton, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import {
   IconKey,
@@ -7,7 +7,7 @@ import {
   IconPencil,
   IconPlayerPlayFilled,
 } from '@tabler/icons-react';
-import { FC, type ReactNode, useCallback } from 'react';
+import { FC, useCallback, type ReactNode } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import type {
   ItemDetailsStyles,
@@ -199,7 +199,7 @@ export const Header: FC<HeaderProps> = ({
           texts={texts}
         />
         {shouldShowPublish && (
-          <GhostButton
+          <NeutralButton
             label={texts?.publishLabel ?? 'Publish'}
             onClick={onOpenPublish}
           />
