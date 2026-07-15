@@ -51,8 +51,16 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
           if (file.type === 'application/json') {
             const reader = new FileReader();
             reader.onload = (readerEvent) => {
-              const json = JSON.parse(readerEvent.target?.result as string);
-              typedImportHandler?.({ content: json });
+              try {
+                const json = JSON.parse(readerEvent.target?.result as string);
+                typedImportHandler?.({ content: json });
+              } catch {
+                toast.error(
+                  translateErrorMessage(
+                    errorsMessages.unsupportedConversationsDataFormat,
+                  ),
+                );
+              }
             };
             reader.readAsText(file);
             return;
