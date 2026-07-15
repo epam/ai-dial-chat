@@ -392,6 +392,11 @@ export enum ConversationPanelI18nKeys {
   DeleteAllPartialError = 'conversationPanel.deleteAll.deleteAllPartialError',
   DeleteAllSuccessTitle = 'conversationPanel.deleteAll.deleteAllSuccessTitle',
   DeleteAllSuccess = 'conversationPanel.deleteAll.deleteAllSuccess',
+  UnshareConfirmTitle = 'conversationPanel.unshare.unshareConfirmTitle',
+  UnshareConfirmMessage = 'conversationPanel.unshare.unshareConfirmMessage',
+  UnshareSuccessTitle = 'conversationPanel.unshare.unshareSuccessTitle',
+  UnshareSuccess = 'conversationPanel.unshare.unshareSuccess',
+  UnshareError = 'conversationPanel.unshare.unshareError',
 }
 
 export enum ConversationPublishI18nKeys {

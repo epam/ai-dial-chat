@@ -261,6 +261,25 @@ describe('ShareService', () => {
       );
     });
 
+    it('calls DIAL Core discardSharedResources with a conversation resource url unchanged', async () => {
+      const { service } = makeService();
+      const spy = vi
+        .spyOn(service['dialClient'].client, 'discardSharedResources')
+        .mockResolvedValue(okResponse(undefined));
+
+      const result = await service.discardShared(
+        'conversations/owner-bucket/my-chat',
+        'token-abc',
+        'user-sub-1',
+      );
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: { resources: [{ url: 'conversations/owner-bucket/my-chat' }] },
+      });
+      expect(result).toEqual({ success: true });
+    });
+
     it('throws ForbiddenException and does not invalidate caches when the resource is not shared with the caller', async () => {
       const { service, deploymentsService, toolsetsService } = makeService();
       vi.spyOn(
