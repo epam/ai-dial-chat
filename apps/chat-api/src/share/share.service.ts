@@ -12,6 +12,7 @@ import { DialClientService } from '../dial/dial-client.service';
 import { ToolsetsService } from '../toolsets/toolsets.service';
 import { AcceptInvitationResponseDto } from './dto/accept-invitation-response.dto';
 import { CreateShareLinkDto, ShareAccess } from './dto/create-share-link.dto';
+import { DiscardSharedCatalogItemResponseDto } from './dto/discard-shared-catalog-item.dto';
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
 
 type ResourceAccessType = components['schemas']['ResourceAccessType'];
@@ -244,5 +245,50 @@ export class ShareService {
     ]);
 
     return { itemId };
+  }
+
+  /**
+   * Discards the calling user's own access to a catalog resource shared with
+   * them, via DIAL Core `discardSharedResources`. This only affects the
+   * caller — removing access for everyone else is the separate, out-of-scope
+   * `revokeSharedResources` operation.
+   *
+   * @throws {ForbiddenException} When the resource is not shared with the caller
+   * @throws {BadGatewayException} When DIAL Core returns an error response
+   * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
+   */
+  async discardShared(
+    itemId: string,
+    accessToken: string,
+    userSub: string,
+  ): Promise<DiscardSharedCatalogItemResponseDto> {
+    this.logger.log('Discard shared resource started');
+
+    let result;
+    try {
+      result = await this.dialClient.client.discardSharedResources({
+        headers: getBearerAuthHeaders(accessToken),
+        body: { resources: [{ url: itemId }] },
+      });
+    } catch (err) {
+      return handleDialFetchError(err, 'share.discardShared', this.logger, 0);
+    }
+
+    if (result.error) {
+      return mapDialHttpStatus(
+        result.response.status,
+        'share.discardShared',
+        this.logger,
+        result.error,
+      );
+    }
+
+    await Promise.all([
+      this.deploymentsService.invalidateListCache(userSub),
+      this.toolsetsService.invalidateListCache(userSub),
+    ]);
+
+    this.logger.log('Discard shared resource completed: success=true');
+    return { success: true };
   }
 }

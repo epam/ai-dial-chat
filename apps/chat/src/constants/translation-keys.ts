@@ -176,6 +176,13 @@ export enum CatalogI18nKeys {
   DetailsDeleteError = 'catalog.details.delete.error',
   DetailsDeleteSuccessTitle = 'catalog.details.delete.successTitle',
   DetailsDeleteSuccess = 'catalog.details.delete.success',
+  DetailsUnshareLabel = 'catalog.details.unshare.label',
+  DetailsUnshareConfirmTitle = 'catalog.details.unshare.confirmTitle',
+  DetailsUnshareConfirmMessage = 'catalog.details.unshare.confirmMessage',
+  DetailsUnshareErrorTitle = 'catalog.details.unshare.errorTitle',
+  DetailsUnshareError = 'catalog.details.unshare.error',
+  DetailsUnshareSuccessTitle = 'catalog.details.unshare.successTitle',
+  DetailsUnshareSuccess = 'catalog.details.unshare.success',
 }
 
 export enum DeploymentSelectorI18nKeys {
@@ -542,6 +549,8 @@ export enum ToolsetEditorI18nKeys {
   ErrorUpdateFailed = 'toolsetEditor.error.updateFailed',
   ErrorLoginFailed = 'toolsetEditor.error.loginFailed',
   ErrorLogoutFailed = 'toolsetEditor.error.logoutFailed',
+  ErrorPopupBlocked = 'toolsetEditor.error.popupBlocked',
+  LoginSuccess = 'toolsetEditor.success.login',
 }
 
 export enum ErrorBoundaryI18nKeys {

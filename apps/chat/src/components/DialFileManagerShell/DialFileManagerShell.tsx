@@ -12,12 +12,20 @@ import {
   type ToolbarOptions,
 } from '@epam/ai-dial-ui-kit';
 import type { GridApi } from 'ag-grid-community';
-import { memo, useCallback, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
 import ShareFileModal from '../../components/DialFileManagerModal/ShareFileModal';
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
 import type { UseDialFileManagerResult } from '../../hooks/files/useDialFileManager';
+import { useGridEditingScroll } from '../../hooks/files/useGridEditingScroll';
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
@@ -151,6 +159,13 @@ const DialFileManagerShell: FC<Props> = ({
   const [destinationFolderPath, setDestinationFolderPath] = useState<
     string | undefined
   >(undefined);
+
+  const { handleGridApiChange, reset: resetGridEditingScroll } =
+    useGridEditingScroll();
+
+  useEffect(() => {
+    resetGridEditingScroll();
+  }, [activeTab, resetGridEditingScroll]);
 
   const actionLabels = useMemo(() => {
     const result: Partial<Record<DialFileManagerActions, string>> = {};
@@ -474,6 +489,7 @@ const DialFileManagerShell: FC<Props> = ({
             items={items}
             path={path}
             onPathChange={onPathChange}
+            onGridApiChange={handleGridApiChange}
             filesLoading={isLoading}
             allowedFileTypes={allowedFileTypes}
             maxSelectableFileSize={maxSelectableFileSize}

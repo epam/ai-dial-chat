@@ -86,4 +86,17 @@ describe('getCredentialsBadgeState', () => {
       ),
     ).toBeUndefined();
   });
+
+  it('applies the identical LoggedOut rule to API_KEY and OAUTH authentication types', () => {
+    expect(
+      getCredentialsBadgeState(
+        base({ authenticationType: ToolsetAuthenticationType.ApiKey }),
+      ),
+    ).toBe(CredentialsBadgeState.LoggedOut);
+    expect(
+      getCredentialsBadgeState(
+        base({ authenticationType: ToolsetAuthenticationType.OAuth }),
+      ),
+    ).toBe(CredentialsBadgeState.LoggedOut);
+  });
 });

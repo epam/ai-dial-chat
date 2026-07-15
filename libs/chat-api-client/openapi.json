@@ -3167,6 +3167,58 @@
         "tags": ["share"]
       }
     },
+    "/api/v1/share/discard": {
+      "post": {
+        "description": "Discards the authenticated user's own access to a catalog resource (application or toolset) shared with them, via DIAL Core's discardSharedResources operation. Only affects the caller's own access — removing access for everyone else is a separate operation.",
+        "operationId": "discardSharedCatalogItem",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscardSharedCatalogItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resource discarded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscardSharedCatalogItemResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid itemId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Resource is not shared with the caller"
+          },
+          "404": {
+            "description": "Resource does not exist"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Discard a catalog resource shared with the caller",
+        "tags": ["share"]
+      }
+    },
     "/api/v1/catalog/{entityType}/{entityId}/publish": {
       "post": {
         "description": "Publishes a catalog entity (Toolset or Application) to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth.",
@@ -3284,6 +3336,9 @@
           },
           "401": {
             "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
           },
           "502": {
             "description": "DIAL Core returned an error response"
@@ -3740,6 +3795,10 @@
           "canEdit": {
             "type": "boolean",
             "description": "True when the current user may edit this deployment — owns it, or was granted WRITE access via a share invitation"
+          },
+          "sharedWithMe": {
+            "type": "boolean",
+            "description": "True when this deployment is shared with the current user (READ or WRITE) and not owned by them"
           },
           "applicationFolder": {
             "type": "string",
@@ -4772,6 +4831,10 @@
           "can_edit": {
             "type": "boolean",
             "description": "True when the current user may edit this toolset — owns it, or was granted WRITE access via a share invitation"
+          },
+          "shared_with_me": {
+            "type": "boolean",
+            "description": "True when this toolset is shared with the current user (READ or WRITE) and not owned by them"
           }
         },
         "required": ["id", "toolset"]
@@ -6530,6 +6593,27 @@
           }
         },
         "required": ["itemId"]
+      },
+      "DiscardSharedCatalogItemDto": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "description": "Identifier (DIAL Core resource path) of the catalog item to discard access to.",
+            "example": "applications/owner-bucket/my-app"
+          }
+        },
+        "required": ["itemId"]
+      },
+      "DiscardSharedCatalogItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "true when the discard call succeeded"
+          }
+        },
+        "required": ["success"]
       },
       "PublishCatalogEntityDto": {
         "type": "object",

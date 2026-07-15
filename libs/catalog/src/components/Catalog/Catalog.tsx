@@ -54,6 +54,7 @@ export const Catalog: FC<CatalogProps> = ({
   onDelete,
   onLogin,
   onLogout,
+  onUnshare,
   onCreateClick,
   createOptions,
   hideCreateButton = false,
@@ -341,6 +342,9 @@ export const Catalog: FC<CatalogProps> = ({
               isLeaving={isFavoritesLeaving}
               onExitComplete={handleFavoritesExitComplete}
               selectedItemId={selectedItemId}
+              credentialsBadgeLoggedOutLabel={
+                detailsTexts?.credentialsBadgeLoggedOutLabel
+              }
             />
           </div>
         )}
@@ -451,6 +455,7 @@ export const Catalog: FC<CatalogProps> = ({
           onDelete={onDelete}
           onLogin={handleLogin}
           onLogout={handleLogout}
+          onUnshare={onUnshare}
           texts={detailsTexts}
         />
       )}

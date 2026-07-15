@@ -1,7 +1,7 @@
 import { PillTabs } from '@epam/ai-dial-kit';
 import { type FC, memo } from 'react';
 import { type FilterLabels } from '../../models/panel-props';
-import { FilterTab } from '../../types/filter-tab';
+import { FilterTab } from '../../types/conversation-classification';
 
 /** Props for `FilterTabs`. */
 export interface FilterTabsProps {
@@ -11,10 +11,7 @@ export interface FilterTabsProps {
   labels: FilterLabels;
   /** Called when the user selects a different tab. */
   onChange: (tab: FilterTab) => void;
-  /**
-   * Class applied to each tab. Defaults to `'flex-1 dial-tiny-semi-text'` so
-   * the tabs fill the row equally, overriding `PillTabs`'s own `shrink-0` default.
-   */
+  /** Class applied to each tab. Defaults to `'dial-tiny-semi-text'`. */
   tabClassName?: string;
 }
 
@@ -27,12 +24,7 @@ const TABS: { value: FilterTab; labelKey: keyof FilterLabels }[] = [
 
 /** Segmented pill-tab control for filtering conversations by source. */
 export const FilterTabs: FC<FilterTabsProps> = memo(
-  ({
-    activeTab,
-    labels,
-    onChange,
-    tabClassName = 'flex-1 dial-tiny-semi-text',
-  }) => (
+  ({ activeTab, labels, onChange, tabClassName = 'dial-tiny-semi-text' }) => (
     <div className="mx-3 my-2">
       <PillTabs
         tabs={TABS.map(({ value, labelKey }) => ({

@@ -19,6 +19,7 @@ import { SidebarOrientation } from '../../types/orientation';
 import { Header } from '../Header/Header';
 import styles from './SidebarPanel.module.scss';
 
+/** Collapsible, optionally resizable side panel with a header bar, used as the shell for sidebar content. */
 export const SidebarPanel: FC<SidebarPanelProps> = ({
   isOpen,
   orientation,

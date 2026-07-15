@@ -41,6 +41,7 @@ import {
   getCatalogPublishHistory,
   publishCatalogEntity,
 } from '../../server-api/publish.api';
+import { discardSharedCatalogItem } from '../../server-api/share.api';
 import {
   deleteToolset,
   loginToolset,
@@ -52,6 +53,8 @@ import { ROUTES } from '../../types/routes';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
   WithLogin,
 } from '../../types/toolsets';
 import { isQuickAppSchema } from '../../utils/application-schema';
@@ -68,7 +71,10 @@ import {
   mapPublishHistoryEntryDto,
   toPublishEntityType,
 } from '../../utils/publish';
-import { initiateOAuthLogin } from '../../utils/toolsets';
+import {
+  initiateOAuthLogin,
+  waitForToolsetOAuthResult,
+} from '../../utils/toolsets';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
@@ -243,7 +249,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
       if (authenticationType === ToolsetAuthenticationType.OAuth) {
         const toolset = toolsets.find((t) => t.id === item.id);
-        const started = initiateOAuthLogin(
+        const initiation = initiateOAuthLogin(
           {
             authenticationType: ToolsetAuthTypes.OAuth,
             withLogin: WithLogin.WithConfig,
@@ -257,7 +263,27 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           item.id,
           credentialsLevel,
         );
-        if (!started) {
+        if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(
+              initiation.type === ToolsetOAuthInitiationResultType.Blocked
+                ? ToolsetEditorI18nKeys.ErrorPopupBlocked
+                : ToolsetEditorI18nKeys.ErrorLoginFailed,
+            ),
+          });
+          return;
+        }
+
+        const result = await waitForToolsetOAuthResult(
+          initiation.popup,
+          initiation.flowId,
+        );
+
+        if (result.type === ToolsetOAuthResultType.Success) {
+          showLoginSuccess(item, params.level);
+          await refetchToolsets();
+        } else if (result.type === ToolsetOAuthResultType.Failure) {
           showNotification({
             variant: NotificationVariant.Error,
             message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
@@ -505,6 +531,55 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [refetchToolsets, refetchDeployments, showNotification, t],
   );
 
+  const handleUnshare = useCallback(
+    async (item: CatalogItem) => {
+      try {
+        await discardSharedCatalogItem(item.id);
+      } catch (err) {
+        showNotification({
+          variant: NotificationVariant.Error,
+          title: t(CatalogI18nKeys.DetailsUnshareErrorTitle),
+          message: t(CatalogI18nKeys.DetailsUnshareError, { name: item.name }),
+        });
+        throw err;
+      }
+
+      try {
+        if (item.type === CatalogEntityType.Toolset) {
+          await refetchToolsets();
+        } else {
+          await refetchDeployments();
+        }
+      } catch {
+        /*
+         * The discard mutation has already succeeded. A refresh failure must
+         * not turn that irreversible success into an actionable retry error;
+         * the deployments context retains its own fetch error state.
+         */
+      }
+
+      if (item.id === selectedItemId) {
+        setSelectedItemId(null);
+      }
+
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(CatalogI18nKeys.DetailsUnshareSuccessTitle),
+        message: t(CatalogI18nKeys.DetailsUnshareSuccess, {
+          name: item.name,
+        }),
+      });
+    },
+    [
+      refetchToolsets,
+      refetchDeployments,
+      selectedItemId,
+      setSelectedItemId,
+      showNotification,
+      t,
+    ],
+  );
+
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
 
@@ -555,6 +630,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onLogout={handleLogout}
       onEdit={handleEdit}
       onDelete={handleDelete}
+      onUnshare={handleUnshare}
       isPrimaryActionVisible={isPrimaryActionVisible}
       isPublishVisible={isPublishVisible}
       getPublishHistory={getPublishHistory}
@@ -638,6 +714,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         credentialsBadgeLoggedOutLabel: t(
           CatalogI18nKeys.CredentialsBadgeLoggedOut,
         ),
+        unshareLabel: t(CatalogI18nKeys.DetailsUnshareLabel),
+        unshareConfirmTitle: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
+        unshareConfirmMessage: (name) =>
+          t(CatalogI18nKeys.DetailsUnshareConfirmMessage, { name }),
+        cancelLabel: t(ButtonsI18nKeys.Cancel),
       }}
     />
   );
