@@ -20,6 +20,7 @@ export type {
 const includesIgnoreCase = (text: string, query: string): boolean =>
   text.toLowerCase().includes(query.toLowerCase());
 
+/** Resizable sidebar panel listing a conversation's uploaded/generated attachments and cited sources, with search and filtering. */
 const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   isOpen,
   onClose,

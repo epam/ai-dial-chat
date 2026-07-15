@@ -49,6 +49,8 @@ export const Catalog: FC<CatalogProps> = ({
   onCreatePublishFolder,
   publishTexts,
   shareOverlay,
+  connectOverlay,
+  isConnectVisible,
   onFetchDetails,
   onEdit,
   onDelete,
@@ -458,6 +460,8 @@ export const Catalog: FC<CatalogProps> = ({
           onCreatePublishFolder={onCreatePublishFolder}
           publishTexts={publishTexts}
           shareOverlay={shareOverlay}
+          connectOverlay={connectOverlay}
+          isConnectVisible={isConnectVisible}
           onEdit={onEdit}
           onDelete={onDelete}
           onLogin={handleLogin}
