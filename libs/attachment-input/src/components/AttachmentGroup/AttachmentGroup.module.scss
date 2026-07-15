@@ -1,14 +1,14 @@
 .container {
-  background: var(--ci-group-bg, var(--bg-layer-2, #161b2d));
+  background: var(--ci-group-bg, var(--bg-layer-2, #eef1f7));
   border-color: var(--ci-group-border, var(--stroke-secondary, #d1dbea));
 }
 
 .headerIcon,
 .headerLabel,
 .downloadAllButton {
-  color: var(--text-secondary, #575f73);
+  color: var(--ci-group-text, var(--text-secondary, #575f73));
 }
 
 .imageTile {
-  --ci-card-bg: var(--bg-layer-3, #1d2439);
+  --ci-card-bg: var(--bg-layer-3, #fcfcfc);
 }

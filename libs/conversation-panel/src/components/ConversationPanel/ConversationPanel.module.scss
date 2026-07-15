@@ -16,7 +16,8 @@
 }
 
 .groupHeader {
-  color: var(--cp-text-secondary, var(--text-primary, #161b2d));
+  color: var(--cp-text-secondary, var(--text-tertiary, #808898));
+  opacity: 0.55;
 }
 
 .dropZoneActive {

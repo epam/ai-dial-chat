@@ -55,7 +55,7 @@ describe('AttachmentFileRow', () => {
       <AttachmentFileRow
         attachment={attachment}
         onClick={handleClick}
-        clickLabel="Download attachment"
+        labels={{ clickLabel: 'Download attachment' }}
       />,
     );
 
@@ -71,7 +71,7 @@ describe('AttachmentFileRow', () => {
       <AttachmentFileRow
         attachment={makeAttachment({ status: RequestStatus.Loading })}
         onClick={vi.fn()}
-        clickLabel="Download attachment"
+        labels={{ clickLabel: 'Download attachment' }}
       />,
     );
 
@@ -92,7 +92,7 @@ describe('AttachmentFileRow', () => {
           errorReason: AttachmentErrorReason.Network,
         })}
         onRetry={handleRetry}
-        retryLabel="Retry"
+        labels={{ retryLabel: 'Retry' }}
       />,
     );
 
@@ -108,7 +108,7 @@ describe('AttachmentFileRow', () => {
           errorReason: AttachmentErrorReason.UnsupportedType,
         })}
         onRetry={vi.fn()}
-        retryLabel="Retry"
+        labels={{ retryLabel: 'Retry' }}
       />,
     );
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();

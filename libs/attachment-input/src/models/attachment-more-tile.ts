@@ -13,6 +13,8 @@ export interface AttachmentMoreTileProps {
   ariaLabel?: string;
   /** Overrides the default `"+N"` content, e.g. a collapse icon for the "show less" placeholder tile. */
   children?: ReactNode;
+  /** Typography class applied to the tile's text/icon content. Defaults to `'dial-small-semi-text'`. */
+  fontClassName?: string;
   /** Extra class name(s) merged onto the root element. */
   className?: string;
 }

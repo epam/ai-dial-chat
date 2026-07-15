@@ -1,7 +1,7 @@
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { getAttachmentCardState } from '../getAttachmentCardState';
+import { getAttachmentCardState } from '../attachment';
 
 const makeAttachment = (
   overrides: Partial<DisplayAttachment>,

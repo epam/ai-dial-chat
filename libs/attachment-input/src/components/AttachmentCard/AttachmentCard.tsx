@@ -24,11 +24,14 @@ import {
   LazyImageLoadStatus,
   useLazyImageLoad,
 } from '../../hooks/useLazyImageLoad';
-import type { AttachmentCardProps } from '../../models/AttachmentCard';
-import { getAttachmentCardState } from '../../utils/getAttachmentCardState';
-import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension';
+import type { AttachmentCardProps } from '../../models/attachment-card';
+import {
+  getAttachmentCardState,
+  getNameWithoutExtension,
+} from '../../utils/attachment';
 import styles from './AttachmentCard.module.scss';
 
+/** Square tile for a single attachment (image, audio, file, or pasted-text card) inside the composer tray. */
 export const AttachmentCard: FC<AttachmentCardProps> = ({
   attachment,
   searchQuery = '',
@@ -38,15 +41,21 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   onClick,
   isSelected,
   shouldAlwaysShowActions,
-  removeLabel = 'Remove attachment',
-  retryLabel = 'Retry upload',
-  clickLabel = 'Open attachment',
-  colors,
-  typography,
-  roundedClassName = 'rounded-xl',
+  labels,
+  styles: cardStyles,
   showHoverDownloadIcon = false,
   className,
 }) => {
+  const {
+    removeLabel = 'Remove attachment',
+    retryLabel = 'Retry upload',
+    clickLabel = 'Open attachment',
+  } = labels ?? {};
+  const {
+    colors,
+    typography,
+    roundedClassName = 'rounded-xl',
+  } = cardStyles ?? {};
   const { id, name } = attachment;
   const imageSrc = attachment.previewUrl ?? attachment.url;
   const isPasted = attachment.type === AttachmentType.Pasted;
@@ -83,9 +92,11 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     [attachment, isSelected, shouldAlwaysShowActions],
   );
 
-  // Not downloadable while still uploading or after a failed upload —
-  // matches AttachmentFileRow's `canDownload` gating so a broken/incomplete
-  // attachment never looks or behaves clickable (no false download attempt).
+  /*
+   * Not downloadable while still uploading or after a failed upload —
+   * matches AttachmentFileRow's `canDownload` gating so a broken/incomplete
+   * attachment never looks or behaves clickable (no false download attempt).
+   */
   const isClickable =
     onClick !== undefined && !isExpandable && !isLoading && !isError;
   const isInteractive = isExpandable || isClickable;

@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
-import type { AttachmentMoreTileProps } from '../../models/AttachmentMoreTile';
+import type { AttachmentMoreTileProps } from '../../models/attachment-more-tile';
 import styles from './AttachmentMoreTile.module.scss';
 
 /**
@@ -13,6 +13,7 @@ export const AttachmentMoreTile: FC<AttachmentMoreTileProps> = ({
   onClick,
   ariaLabel,
   children,
+  fontClassName = 'dial-small-semi-text',
   className,
 }) => (
   <button
@@ -20,7 +21,8 @@ export const AttachmentMoreTile: FC<AttachmentMoreTileProps> = ({
     onClick={onClick}
     aria-label={ariaLabel ?? `Show ${count} more attachments`}
     className={mergeClasses(
-      'dial-small-semi-text flex size-[84px] items-center justify-center rounded-xl border',
+      'flex size-[84px] items-center justify-center rounded-xl border',
+      fontClassName,
       styles.tile,
       className,
     )}
