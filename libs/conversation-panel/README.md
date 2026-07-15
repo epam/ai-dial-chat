@@ -4,7 +4,7 @@ Panel component for browsing conversation history with virtual scrolling, groupe
 
 ## Overview
 
-`@epam/ai-dial-conversation-panel` renders the conversation history sidebar that lets users navigate between past chats. It addresses the performance and UX challenges that come with displaying large conversation histories: items are rendered with `react-window` for virtualised scrolling so the DOM stays small even with thousands of entries; conversations are grouped by recency (Today, This Week, This Month, Older) or by source (local vs. remote) so users can quickly locate recent work; and a tab bar with a search field narrows the list without a full page reload. Use this library whenever an application needs a left-rail or slide-in drawer that shows the user's chat history with standard navigation affordances. The library is intentionally data-agnostic — it accepts a flat list of `ConversationHistoryItem` objects and emits callbacks for selection, deletion, and moves, leaving storage and routing entirely to the consuming app.
+`@epam/ai-dial-conversation-panel` renders the conversation history sidebar that lets users navigate between past chats. It addresses the performance and UX challenges that come with displaying large conversation histories: items are rendered with `react-window` for virtualised scrolling so the DOM stays small even with thousands of entries; conversations are grouped by recency (Today, This Week, This Month, Older) or by source (local vs. remote) so users can quickly locate recent work; and a tab bar with a search field narrows the list without a full page reload. Use this library whenever an application needs a left-rail or slide-in drawer that shows the user's chat history with standard navigation affordances. The library is intentionally data-agnostic — it accepts a flat list of `ConversationItem` objects and emits callbacks for selection, deletion, and moves, leaving storage and routing entirely to the consuming app.
 
 ## Installation
 
@@ -46,22 +46,13 @@ import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
 ## Enums
 
 ```tsx
-import {
-  ConversationGroupKey,
-  ConversationSource,
-  FilterTab,
-} from '@epam/ai-dial-conversation-panel';
-
-ConversationGroupKey.Today; // 'today'
-ConversationGroupKey.Week; // 'week'
-ConversationGroupKey.Month; // 'month'
-ConversationGroupKey.Older; // 'older'
-
-ConversationSource.Local; // locally stored conversations
-ConversationSource.Remote; // server-synced conversations
+import { FilterTab } from '@epam/ai-dial-conversation-panel';
 
 FilterTab.All; // 'all'
-FilterTab.Pinned; // 'pinned'
+FilterTab.Pinned; // 'pinned' — also identifies the Pinned collapsible group
+FilterTab.MyChats; // 'my-chats' — also used as a conversation's source/ownership
+FilterTab.Shared; // 'shared'
+FilterTab.Organization; // 'organization'
 ```
 
 ## Types
@@ -69,23 +60,23 @@ FilterTab.Pinned; // 'pinned'
 ```tsx
 import type {
   ConversationPanelProps,
-  ConversationHistoryItem,
+  ConversationItem,
   ConversationMove,
   FilterLabels,
   ConversationGroupProps,
 } from '@epam/ai-dial-conversation-panel';
 ```
 
-### ConversationHistoryItem
+### ConversationItem
 
 Minimal data shape required for each conversation entry in the list.
 
 ```tsx
-interface ConversationHistoryItem {
+interface ConversationItem {
   id: string;
   name: string;
   updatedAt: number;
-  source: ConversationSource;
+  source: FilterTab;
   isPinned?: boolean;
 }
 ```

@@ -26,6 +26,16 @@ const backgroundsColors = {
   'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC2E)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
   'transparent-black': 'var(--bg-transparent-black, rgb(0 0 0 / 0))',
+  // New Chat button shadow — blue/purple pair at default, hover, and active alpha levels
+  'new-chat-shadow-blue': 'var(--bg-new-chat-shadow-blue, #5C8DEA33)',
+  'new-chat-shadow-blue-hover': 'var(--bg-new-chat-shadow-blue-hover, #5C8DEA47)',
+  'new-chat-shadow-blue-active':
+    'var(--bg-new-chat-shadow-blue-active, #5C8DEA26)',
+  'new-chat-shadow-purple': 'var(--bg-new-chat-shadow-purple, #A972FF24)',
+  'new-chat-shadow-purple-hover':
+    'var(--bg-new-chat-shadow-purple-hover, #A972FF33)',
+  'new-chat-shadow-purple-active':
+    'var(--bg-new-chat-shadow-purple-active, #A972FF1A)',
 };
 
 const controlsBgColors = {
