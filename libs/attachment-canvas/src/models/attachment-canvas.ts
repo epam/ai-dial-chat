@@ -45,27 +45,10 @@ export interface PdfCanvasContent {
   type: AttachmentContentType.Pdf;
   /** Resolved download URL or object URL for the PDF file. */
   url: string;
-  /**
-   * The file bytes, when already fetched while resolving `url` (e.g. a DIAL
-   * download, a local file, or inline data). When present, it is used
-   * directly instead of re-fetching `url`. Absent for URLs that were never
-   * fetched by the resolver (e.g. a citation/reference PDF's remote URL).
-   */
-  blob?: Blob;
   /** Highlight regions to render over the PDF pages. */
   highlights?: InputHighlightData[];
   /** ID of the highlight to scroll to and select on initial load. */
   selectedHighlightId?: string;
-}
-
-/**
- * Placeholder content shown while the real content of a binary attachment
- * (image or PDF) is still being fetched/resolved, so the canvas opens
- * immediately on click instead of appearing only once the fetch completes.
- */
-export interface LoadingCanvasContent {
-  /** Discriminates the content type to select the correct renderer. */
-  type: AttachmentContentType.Loading;
 }
 
 /** Content payload for attachments whose format cannot be previewed. */
@@ -94,8 +77,7 @@ export type AttachmentCanvasContent =
   | JsonCanvasContent
   | PdfCanvasContent
   | UnsupportedCanvasContent
-  | ErrorCanvasContent
-  | LoadingCanvasContent;
+  | ErrorCanvasContent;
 
 /** Themeable color overrides for the AttachmentCanvas content body. */
 export interface AttachmentCanvasColors {
@@ -168,8 +150,6 @@ export interface AttachmentCanvasProps {
   loadErrorLabel?: string;
   /** Message shown in the canvas body when content type is `Error` with `errorType: Forbidden`. Defaults to `"You don't have permission to access this file"`. */
   forbiddenErrorLabel?: string;
-  /** Accessible label for the loading spinner shown while content type is `Loading`. Defaults to `'Loading file'`. */
-  loadingLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download'`. */
   downloadLabel?: string;
   /** Tooltip and accessible label for the copy-text button in its default state. Defaults to `'Copy text'`. */

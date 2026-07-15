@@ -464,7 +464,7 @@ describe('resolvePdfCanvasContent', () => {
     URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-pdf-url');
   });
 
-  it('returns PdfCanvasContent with its Blob from inline base64 data', async () => {
+  it('returns PdfCanvasContent from inline base64 data via a Blob URL', async () => {
     const result = await resolvePdfCanvasContent({
       id: 'stage-att',
       name: 'doc.pdf',
@@ -476,11 +476,10 @@ describe('resolvePdfCanvasContent', () => {
     expect(result).toEqual({
       type: AttachmentContentType.Pdf,
       url: 'blob:mock-pdf-url',
-      blob: expect.any(Blob),
     });
   });
 
-  it('returns PdfCanvasContent with its Blob for a successful DIAL fetch, so the PDF viewer does not need to re-fetch it', async () => {
+  it('returns PdfCanvasContent via a Blob URL for a successful DIAL fetch', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -494,7 +493,6 @@ describe('resolvePdfCanvasContent', () => {
     expect(result).toEqual({
       type: AttachmentContentType.Pdf,
       url: 'blob:mock-pdf-url',
-      blob: expect.any(Blob),
     });
   });
 

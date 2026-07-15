@@ -195,29 +195,7 @@ describe('useOpenAttachmentCanvas routing', () => {
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
     expect(mockResolveJson).not.toHaveBeenCalled();
     expect(mockResolveText).not.toHaveBeenCalled();
-    expect(mockOpenCanvas).toHaveBeenLastCalledWith(pdfContent, 'doc.pdf');
-  });
-
-  it('opens the canvas with a loading placeholder before the PDF resolver settles', async () => {
-    let resolveContent!: (value: unknown) => void;
-    mockResolvePdf.mockReturnValue(
-      new Promise((resolve) => {
-        resolveContent = resolve;
-      }),
-    );
-
-    const { result } = renderHook(() => useOpenAttachmentCanvas());
-    const openPromise = result.current.openAttachmentCanvas(
-      makeAttachment('doc.pdf', 'application/pdf'),
-    );
-
-    expect(mockOpenCanvas).toHaveBeenCalledOnce();
-    expect(mockOpenCanvas).toHaveBeenCalledWith({ type: 'loading' }, 'doc.pdf');
-
-    resolveContent({ type: 'pdf', url: 'https://example.com/doc.pdf' });
-    await openPromise;
-
-    expect(mockOpenCanvas).toHaveBeenCalledTimes(2);
+    expect(mockOpenCanvas).toHaveBeenCalledWith(pdfContent, 'doc.pdf');
   });
 
   it('routes .pdf extension to the PDF resolver', async () => {
@@ -249,8 +227,7 @@ describe('useOpenAttachmentCanvas routing', () => {
 
     expect(opened).toBe(true);
     expect(mockResolvePdf).toHaveBeenCalledOnce();
-    // Called once with the loading placeholder, once with the final content.
-    expect(mockOpenCanvas).toHaveBeenCalledTimes(2);
+    expect(mockOpenCanvas).toHaveBeenCalledOnce();
   });
 
   it('returns false when .pdf extension resolver returns null', async () => {
@@ -262,28 +239,7 @@ describe('useOpenAttachmentCanvas routing', () => {
     );
 
     expect(opened).toBe(false);
-  });
-
-  it('does not show a loading placeholder when there is no DIAL url to fetch', async () => {
-    const pdfContent = { type: 'pdf' as const, url: 'blob:inline' };
-    mockResolvePdf.mockReturnValue(pdfContent);
-
-    const attachment = {
-      id: 'inline.pdf',
-      name: 'inline.pdf',
-      contentType: 'application/pdf',
-      type: AttachmentType.File,
-      data: 'JVBERi0xLjQ=',
-    } as DisplayAttachment;
-
-    const { result } = renderHook(() => useOpenAttachmentCanvas());
-    const opened = await result.current.openAttachmentCanvas(attachment);
-
-    expect(opened).toBe(true);
-    // No dialUrl to fetch (inline `data` resolves synchronously), so the
-    // resolver's result is the only openCanvas call — no loading flash.
-    expect(mockOpenCanvas).toHaveBeenCalledOnce();
-    expect(mockOpenCanvas).toHaveBeenCalledWith(pdfContent, 'inline.pdf');
+    expect(mockOpenCanvas).not.toHaveBeenCalled();
   });
 
   it('routes a reference-only PDF-page attachment to the canvas ahead of MIME-type routing', async () => {

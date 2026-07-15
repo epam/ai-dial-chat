@@ -532,8 +532,7 @@
     "downloadLabel": "Download attachment",
     "unsupportedLabel": "Preview is not supported for this file",
     "loadErrorLabel": "Failed to load file",
-    "forbiddenErrorLabel": "You don't have permission to access this file",
-    "loadingLabel": "Loading file"
+    "forbiddenErrorLabel": "You don't have permission to access this file"
   },
   "errorBoundary": {
     "heading": "Something went wrong",

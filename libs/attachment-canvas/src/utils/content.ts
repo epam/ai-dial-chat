@@ -1,7 +1,6 @@
 import { TEXT_EXTENSIONS } from '../constants/file';
 import type {
   ErrorCanvasContent,
-  LoadingCanvasContent,
   UnsupportedCanvasContent,
 } from '../models/attachment-canvas';
 import {
@@ -15,11 +14,6 @@ export const isTextPreviewable = (name: string): boolean => {
   if (dot === -1) return false;
   return TEXT_EXTENSIONS.has(name.slice(dot + 1).toLowerCase());
 };
-
-/** Creates a placeholder content payload shown while the real content is being fetched. */
-export const createLoadingCanvasContent = (): LoadingCanvasContent => ({
-  type: AttachmentContentType.Loading,
-});
 
 /** Creates an unsupported-format content payload. */
 export const createUnsupportedCanvasContent = (

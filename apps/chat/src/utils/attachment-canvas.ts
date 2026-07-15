@@ -48,17 +48,15 @@ const tryBase64ToBytes = (base64: string): Uint8Array | undefined => {
 };
 
 /**
- * Decodes an inline `data` payload into a Blob (and its object URL) of the
- * given MIME type. Falls back to treating `data` as raw (already-decoded)
- * text when it is not valid base64.
+ * Decodes an inline `data` payload into a Blob object URL of the given MIME
+ * type. Falls back to treating `data` as raw (already-decoded) text when it
+ * is not valid base64.
  */
-const base64ToBlobUrl = (
-  data: string,
-  mimeType: string,
-): { url: string; blob: Blob } => {
+const base64ToBlobUrl = (data: string, mimeType: string): string => {
   const bytes = tryBase64ToBytes(data) ?? new TextEncoder().encode(data);
-  const blob = new Blob([bytes.buffer as ArrayBuffer], { type: mimeType });
-  return { url: URL.createObjectURL(blob), blob };
+  return URL.createObjectURL(
+    new Blob([bytes.buffer as ArrayBuffer], { type: mimeType }),
+  );
 };
 
 /**
@@ -94,32 +92,27 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
 /**
  * Resolves a displayable Blob/object URL for an attachment's binary content: a
  * locally-picked `File`, an already-uploaded DIAL file, an existing preview
- * URL, or inline base64 `data` decoded into a Blob URL. Returns the `Blob`
- * alongside the URL whenever one was already materialized in this call (every
- * case except an existing `previewUrl`), so callers that need the bytes (e.g.
- * the PDF viewer) can skip re-fetching the object URL. Returns `undefined`
+ * URL, or inline base64 `data` decoded into a Blob URL. Returns `undefined`
  * when none of these sources are available, or an `ErrorCanvasContent` when a
  * DIAL file fetch fails.
  */
 const resolveAttachmentBlobUrl = async (
   attachment: DisplayAttachment,
-): Promise<{ url: string; blob?: Blob } | ErrorCanvasContent | undefined> => {
+): Promise<string | ErrorCanvasContent | undefined> => {
   if ('file' in attachment && (attachment as Attachment).file.size > 0) {
-    const file = (attachment as Attachment).file;
-    return { url: URL.createObjectURL(file), blob: file };
+    return URL.createObjectURL((attachment as Attachment).file);
   }
   const dialUrl = resolveDialUrl(attachment);
   if (dialUrl != null) {
     try {
       const response = await fetch(dialUrl);
       if (!response.ok) return classifyFetchFailure(response.status, dialUrl);
-      const blob = await response.blob();
-      return { url: URL.createObjectURL(blob), blob };
+      return URL.createObjectURL(await response.blob());
     } catch {
       return networkFailureContent(dialUrl);
     }
   }
-  if (attachment.previewUrl != null) return { url: attachment.previewUrl };
+  if (attachment.previewUrl != null) return attachment.previewUrl;
   if (attachment.data != null) {
     return base64ToBlobUrl(attachment.data, attachment.contentType);
   }
@@ -160,8 +153,8 @@ export const resolveImageCanvasContent = async (
 ): Promise<ImageCanvasContent | ErrorCanvasContent | null> => {
   const result = await resolveAttachmentBlobUrl(attachment);
   if (result == null) return null;
-  if ('type' in result) return result;
-  return { type: AttachmentContentType.Image, url: result.url };
+  if (typeof result !== 'string') return result;
+  return { type: AttachmentContentType.Image, url: result };
 };
 
 /** Resolves a plain-text canvas content payload from a DisplayAttachment, or `null` if unavailable. */
@@ -256,12 +249,10 @@ export const resolvePdfCanvasContent = async (
 ): Promise<PdfCanvasContent | ErrorCanvasContent | null> => {
   const result = await resolveAttachmentBlobUrl(attachment);
   if (result == null) return null;
-  if ('type' in result) return result;
-  return {
-    type: AttachmentContentType.Pdf,
-    url: result.url,
-    blob: result.blob,
-  };
+  if (typeof result !== 'string') {
+    return result;
+  }
+  return { type: AttachmentContentType.Pdf, url: result };
 };
 
 /**

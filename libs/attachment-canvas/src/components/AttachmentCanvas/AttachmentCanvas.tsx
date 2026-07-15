@@ -5,11 +5,7 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
-import {
-  DIAL_ICON_SIZE,
-  DialGhostIconButton,
-  DialSpinner,
-} from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertTriangle,
   IconCheck,
@@ -53,7 +49,6 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   unsupportedLabel = 'Preview is not supported for this file',
   loadErrorLabel = 'Failed to load file',
   forbiddenErrorLabel = "You don't have permission to access this file",
-  loadingLabel = 'Loading file',
   isMobile = false,
   defaultWidth,
   minWidth = 320,
@@ -138,7 +133,6 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       case AttachmentContentType.Image:
       case AttachmentContentType.Unsupported:
       case AttachmentContentType.Error:
-      case AttachmentContentType.Loading:
         return 'h-full overflow-auto p-4 flex items-center justify-center';
       case AttachmentContentType.Json:
         return 'h-full overflow-auto';
@@ -233,7 +227,6 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
             key={content.url}
             fileName={fileName}
             url={content.url}
-            blob={content.blob}
             highlights={content.highlights ?? []}
             selectedHighlightId={content.selectedHighlightId}
             loadPdf={loadPdf}
@@ -264,8 +257,6 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           </div>
         );
       }
-      case AttachmentContentType.Loading:
-        return <DialSpinner size={40} ariaLabel={loadingLabel} />;
     }
   }, [
     content,
@@ -275,7 +266,6 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     unsupportedLabel,
     loadErrorLabel,
     forbiddenErrorLabel,
-    loadingLabel,
     loadPdf,
   ]);
 

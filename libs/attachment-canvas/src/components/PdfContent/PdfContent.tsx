@@ -17,12 +17,6 @@ import { fetchBlobFromUrl } from '../../utils/download';
 
 export interface PdfContentProps {
   url: string;
-  /**
-   * The file bytes, when already available (e.g. fetched while resolving
-   * `url`). When present, it is used directly instead of re-fetching `url`
-   * via `loadPdf`/`fetchBlobFromUrl`.
-   */
-  blob?: Blob;
   highlights: InputHighlightData[];
   selectedHighlightId?: string;
   loadPdf?: (url: string) => Promise<Blob>;
@@ -31,7 +25,6 @@ export interface PdfContentProps {
 
 export const PdfContent: FC<PdfContentProps> = ({
   url,
-  blob,
   highlights,
   selectedHighlightId,
   loadPdf,
@@ -79,14 +72,6 @@ export const PdfContent: FC<PdfContentProps> = ({
     viewerApiRef.current?.navigateToPage(pageNum);
   }, []);
 
-  const loadFileCb = useCallback(
-    (fileUrl: string) =>
-      blob != null
-        ? Promise.resolve(blob)
-        : (loadPdf ?? fetchBlobFromUrl)(fileUrl),
-    [blob, loadPdf],
-  );
-
   return (
     <div className="flex h-full overflow-hidden">
       {totalPages > 0 && (
@@ -113,7 +98,7 @@ export const PdfContent: FC<PdfContentProps> = ({
       <div className="min-w-0 flex-1 overflow-hidden">
         <DocumentPreview
           fileUrl={url}
-          loadFileCb={loadFileCb}
+          loadFileCb={loadPdf ?? fetchBlobFromUrl}
           highlights={highlights}
           selectedHighlightId={selectedHighlightId}
           showOccurrences={false}
