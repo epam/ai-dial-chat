@@ -2185,6 +2185,57 @@ describe('useDialFileManager', () => {
 
       await waitFor(() => expect(mockMoveFiles).toHaveBeenCalledOnce());
       expect(mockRenameFiles).not.toHaveBeenCalled();
+      expect(mockNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Success,
+        title: 'dialFileManager.itemMovedSuccessfully',
+        message: 'dialFileManager.itemMovedToFolder',
+      });
+    });
+
+    it('shows a success toast with the moved item count for multiple files', async () => {
+      mockMoveFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'inbox/a.pdf',
+            destinationPath: 'reports/a.pdf',
+            success: true,
+          },
+          {
+            sourcePath: 'inbox/b.pdf',
+            destinationPath: 'reports/b.pdf',
+            success: true,
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onMoveToFiles(
+          [
+            {
+              sourceUrl: '/My files/inbox/a.pdf',
+              destinationUrl: '/My files/reports/a.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+            {
+              sourceUrl: '/My files/inbox/b.pdf',
+              destinationUrl: '/My files/reports/b.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files/inbox',
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() =>
+        expect(mockNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Success,
+          title: 'dialFileManager.itemsMovedSuccessfully',
+          message: 'dialFileManager.itemsMovedToFolder',
+        }),
+      );
     });
 
     it('passes overwrite=true from conflict resolution to moveFiles', async () => {
@@ -2293,7 +2344,7 @@ describe('useDialFileManager', () => {
       return result;
     };
 
-    it('invalidates cache and shows no toast on full success', async () => {
+    it('invalidates cache and shows a success toast on full copy success', async () => {
       mockCopyFiles.mockResolvedValue({
         results: [
           {
@@ -2321,7 +2372,56 @@ describe('useDialFileManager', () => {
 
       await waitFor(() => expect(mockCopyFiles).toHaveBeenCalledOnce());
       expect(mockListFiles).toHaveBeenCalledTimes(2);
-      expect(mockNotification).not.toHaveBeenCalled();
+      expect(mockNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Success,
+        title: 'dialFileManager.itemCopiedSuccessfully',
+        message: 'dialFileManager.itemCopiedToFolder',
+      });
+    });
+
+    it('shows a success toast with the copied item count for multiple files', async () => {
+      mockCopyFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'a.pdf',
+            destinationPath: 'archive/a.pdf',
+            success: true,
+          },
+          {
+            sourcePath: 'b.pdf',
+            destinationPath: 'archive/b.pdf',
+            success: true,
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onCopyFiles(
+          [
+            {
+              sourceUrl: '/My files/a.pdf',
+              destinationUrl: '/My files/archive/a.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+            {
+              sourceUrl: '/My files/b.pdf',
+              destinationUrl: '/My files/archive/b.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files/archive',
+        );
+      });
+
+      await waitFor(() =>
+        expect(mockNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Success,
+          title: 'dialFileManager.itemsCopiedSuccessfully',
+          message: 'dialFileManager.itemsCopiedToFolder',
+        }),
+      );
     });
 
     it('collapses a double-slash destinationUrl (folder prefix + leading slash) before sending', async () => {
@@ -2513,7 +2613,11 @@ describe('useDialFileManager', () => {
       );
       // Source and destination share the same parent folder — invalidated once.
       expect(mockListFiles).toHaveBeenCalledTimes(2);
-      expect(mockNotification).not.toHaveBeenCalled();
+      expect(mockNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Success,
+        title: 'dialFileManager.itemCopiedSuccessfully',
+        message: 'dialFileManager.itemCopiedToFolder',
+      });
     });
 
     it('shows the existing partial-failure toast for a same-folder destination (duplicate)', async () => {
