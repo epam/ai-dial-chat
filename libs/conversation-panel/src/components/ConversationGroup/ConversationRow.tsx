@@ -23,6 +23,7 @@ import { getButtonPaddingEnd } from '../../utils/conversation-row';
 import { getDropAfterId } from '../../utils/drag';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
+/** Props for `ConversationRow`. */
 export interface ConversationRowProps {
   /** The conversation item to display. */
   item: ConversationItem;
@@ -78,6 +79,7 @@ export interface ConversationRowProps {
   ) => void;
 }
 
+/** Single draggable conversation row rendered inside the virtualised list or a static `ConversationGroup`. */
 export const ConversationRow: FC<ConversationRowProps> = ({
   item,
   isActive,

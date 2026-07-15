@@ -42,13 +42,13 @@ export interface ConversationItem {
 export interface ConversationPanelTypography {
   /** A single utility class (e.g. `'dial-body-semi-text'`) applied to the title span. */
   fontClassName?: string;
-  /** Typography class applied to collapsible group header buttons. Defaults to `'text-xs font-semibold'`. */
+  /** Typography class applied to collapsible group header buttons. Defaults to `'dial-tiny-semi-text uppercase'`. */
   groupHeaderClassName?: string;
-  /** Typography class applied to conversation title text in each row. Defaults to `'text-sm'`. */
+  /** Typography class applied to conversation title text in each row. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
-  /** Typography class applied to the New chat button label. Defaults to `'dial-small-text'`. */
+  /** Typography class applied to the New chat button label. Defaults to `'dial-small-semi-text'`. */
   newChatLabelClassName?: string;
-  /** Class applied to each filter tab. Defaults to `'flex-1 dial-tiny-semi-text'`. */
+  /** Class applied to each filter tab. Defaults to `'dial-tiny-semi-text'` (an additional `'flex-1'` class is always applied). */
   tabClassName?: string;
 }
 
@@ -104,8 +104,6 @@ export interface ConversationPanelStyles {
   colors?: ConversationColors;
   /** Typography overrides for the panel and its children. */
   typography?: ConversationPanelTypography;
-  /** Text color class applied to each filter tab label. Defaults to `'text-primary'`. */
-  tabColorClassName?: string;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
 }

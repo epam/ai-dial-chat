@@ -12,6 +12,7 @@ export type {
   AttachmentCardStyles,
   AttachmentCardLabels,
   AttachmentCardState,
+  AttachmentTypeLabels,
 } from './models/attachment-card';
 export type {
   AttachmentTrayProps,
@@ -35,7 +36,10 @@ export type {
   FileDndOverlayStyles,
 } from './models/file-dnd-overlay';
 
-export { useClipboardPaste } from './hooks/useClipboardPaste';
+export {
+  useClipboardPaste,
+  type UseClipboardPasteLabels,
+} from './hooks/useClipboardPaste';
 export {
   useLazyImageLoad,
   LazyImageLoadStatus,

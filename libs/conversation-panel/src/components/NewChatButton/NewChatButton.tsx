@@ -9,7 +9,7 @@ export interface NewChatButtonProps {
   label: string;
   /** Called when the button is clicked or activated via keyboard. */
   onClick: () => void;
-  /** Typography class applied to the label. Defaults to `'dial-small-text'`. */
+  /** Typography class applied to the label. Defaults to `'dial-small-semi-text'`. */
   labelClassName?: string;
 }
 

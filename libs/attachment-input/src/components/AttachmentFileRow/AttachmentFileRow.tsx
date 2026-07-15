@@ -15,7 +15,7 @@ import type { AttachmentFileRowProps } from '../../models/attachment-file-row';
 import { getAttachmentCardState } from '../../utils/attachment';
 import styles from './AttachmentFileRow.module.scss';
 
-const ERROR_REASON_TEXT: Record<AttachmentErrorReason, string> = {
+const DEFAULT_ERROR_REASON_TEXT: Record<AttachmentErrorReason, string> = {
   [AttachmentErrorReason.Network]: 'Upload failed · network error',
   [AttachmentErrorReason.UnsupportedType]:
     'Upload failed · unsupported file type',
@@ -34,6 +34,7 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
   onClick,
   onRetry,
   labels,
+  typeLabels,
   styles: rowStyles,
   theme = CodeBlockTheme.Dark,
   className,
@@ -42,6 +43,9 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
     clickLabel = 'Download attachment',
     retryLabel = 'Retry upload',
     sizeLabel,
+    uploadingLabel = 'Uploading',
+    errorReasonLabels,
+    genericErrorLabel = 'Upload failed',
   } = labels ?? {};
   const {
     nameClassName = 'dial-caption-text',
@@ -52,7 +56,10 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
   const isError = status === RequestStatus.Error;
   const errorTitle =
     isError &&
-    ((errorReason && ERROR_REASON_TEXT[errorReason]) || 'Upload failed');
+    ((errorReason &&
+      (errorReasonLabels?.[errorReason] ??
+        DEFAULT_ERROR_REASON_TEXT[errorReason])) ||
+      genericErrorLabel);
 
   /*
    * Same computation the composer's AttachmentCard uses, so the glyph and
@@ -62,6 +69,7 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
     attachment,
     false,
     false,
+    typeLabels,
   );
 
   const canDownload = !isError && !isLoading && onClick !== undefined;
@@ -145,7 +153,7 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
       {isLoading && (
         <div
           role="progressbar"
-          aria-label="Uploading"
+          aria-label={uploadingLabel}
           className={mergeClasses(
             'absolute inset-x-2 bottom-2 h-[3px] overflow-hidden rounded-full',
             styles.track,

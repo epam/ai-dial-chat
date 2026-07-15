@@ -3,6 +3,14 @@ import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { ClipboardEventHandler, useCallback } from 'react';
 import { generateAttachmentId } from '../utils/attachment';
 
+/** Localised default file names used by `useClipboardPaste` for pasted content. */
+export interface UseClipboardPasteLabels {
+  /** Default file name given to a pasted image. Defaults to `'Screenshot.png'`. */
+  screenshotName?: string;
+  /** Default file name given to pasted plain text when it has no usable preview. Defaults to `'Pasted text'`. */
+  pastedTextName?: string;
+}
+
 /**
  * Returns a `handlePaste` handler for a textarea that intercepts clipboard
  * events and converts image items or long plain-text strings into
@@ -12,11 +20,16 @@ import { generateAttachmentId } from '../utils/attachment';
  *   intercepted.
  * @param threshold - Plain-text pastes longer than this many characters are
  *   converted to a file attachment instead of being inserted inline.
+ * @param labels - Localised default file names for pasted content.
  */
 export const useClipboardPaste = (
   onAttachments: (attachments: Attachment[]) => void,
   threshold: number,
+  labels: UseClipboardPasteLabels = {},
 ): { handlePaste: ClipboardEventHandler<HTMLTextAreaElement> } => {
+  const { screenshotName = 'Screenshot.png', pastedTextName = 'Pasted text' } =
+    labels;
+
   const handlePaste: ClipboardEventHandler<HTMLTextAreaElement> = useCallback(
     (event) => {
       if (!event.clipboardData) return;
@@ -32,12 +45,12 @@ export const useClipboardPaste = (
         for (const item of imageItems) {
           const blob = item.getAsFile();
           if (!blob) continue;
-          const file = new File([blob], 'Screenshot.png', {
+          const file = new File([blob], screenshotName, {
             type: blob.type,
           });
           const attachment: Attachment = {
             id: generateAttachmentId(),
-            name: 'Screenshot.png',
+            name: screenshotName,
             contentType: blob.type,
             file,
             type: AttachmentType.Image,
@@ -59,7 +72,7 @@ export const useClipboardPaste = (
           trimmed.length > MAX_PREVIEW
             ? `${trimmed.slice(0, MAX_PREVIEW).trimEnd()}…`
             : trimmed;
-        const fileName = preview || 'Pasted text';
+        const fileName = preview || pastedTextName;
         const file = new File([text], fileName, {
           type: 'text/plain',
         });
@@ -75,7 +88,7 @@ export const useClipboardPaste = (
         onAttachments([pastedAttachment]);
       }
     },
-    [onAttachments, threshold],
+    [onAttachments, threshold, screenshotName, pastedTextName],
   );
 
   return { handlePaste };

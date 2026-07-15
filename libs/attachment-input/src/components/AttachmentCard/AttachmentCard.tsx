@@ -42,6 +42,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   isSelected,
   shouldAlwaysShowActions,
   labels,
+  typeLabels,
   styles: cardStyles,
   showHoverDownloadIcon = false,
   className,
@@ -50,6 +51,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     removeLabel = 'Remove attachment',
     retryLabel = 'Retry upload',
     clickLabel = 'Open attachment',
+    loadingLabel = 'Loading attachment',
   } = labels ?? {};
   const {
     colors,
@@ -88,8 +90,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         attachment,
         isSelected ?? false,
         shouldAlwaysShowActions ?? false,
+        typeLabels,
       ),
-    [attachment, isSelected, shouldAlwaysShowActions],
+    [attachment, isSelected, shouldAlwaysShowActions, typeLabels],
   );
 
   /*
@@ -318,11 +321,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             styles.loadingOverlay,
           )}
         >
-          <DialSpinner
-            size={40}
-            ariaLabel="Loading attachment"
-            className="z-50"
-          />
+          <DialSpinner size={40} ariaLabel={loadingLabel} className="z-50" />
         </span>
       )}
 
