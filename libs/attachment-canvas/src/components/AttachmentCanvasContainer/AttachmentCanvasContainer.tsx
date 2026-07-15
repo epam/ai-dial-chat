@@ -27,6 +27,8 @@ export interface AttachmentCanvasContainerProps {
   loadErrorLabel?: string;
   /** Message shown when content type is `Error` with `errorType: Forbidden`. Defaults to `"You don't have permission to access this file"`. */
   forbiddenErrorLabel?: string;
+  /** Accessible label for the loading spinner shown while content type is `Loading`. Defaults to `'Loading file'`. */
+  loadingLabel?: string;
   /** Tooltip and aria-label for the copy-text button in its default state. Defaults to `'Copy text'`. */
   copyTextLabel?: string;
   /** Tooltip and aria-label for the copy-text button after a successful copy. Defaults to `'Copied!'`. */
@@ -57,6 +59,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       unsupportedLabel = 'Preview is not supported for this file',
       loadErrorLabel = 'Failed to load file',
       forbiddenErrorLabel = "You don't have permission to access this file",
+      loadingLabel = 'Loading file',
       copyTextLabel,
       copiedTextLabel,
       copyMarkdownLabel,
@@ -127,6 +130,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           unsupportedLabel={unsupportedLabel}
           loadErrorLabel={loadErrorLabel}
           forbiddenErrorLabel={forbiddenErrorLabel}
+          loadingLabel={loadingLabel}
           isMobile={isMobile}
           defaultWidth={defaultWidth}
           codeBlockTheme={codeBlockTheme}

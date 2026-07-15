@@ -469,6 +469,7 @@ export enum AttachmentCanvasI18nKeys {
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
   LoadErrorLabel = 'attachmentCanvas.loadErrorLabel',
   ForbiddenErrorLabel = 'attachmentCanvas.forbiddenErrorLabel',
+  LoadingLabel = 'attachmentCanvas.loadingLabel',
 }
 
 export enum EditorI18nKeys {

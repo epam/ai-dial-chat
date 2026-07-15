@@ -25,6 +25,8 @@ export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
         content.errorType !== AttachmentErrorType.Forbidden &&
         content.url != null
       );
+    case AttachmentContentType.Loading:
+      return false;
   }
 };
 
@@ -75,6 +77,8 @@ export const downloadAttachmentContent = (
     case AttachmentContentType.Error:
       if (!isDownloadable(content)) return;
       triggerAnchorDownload(content.url!, name);
+      return;
+    case AttachmentContentType.Loading:
       return;
   }
 };

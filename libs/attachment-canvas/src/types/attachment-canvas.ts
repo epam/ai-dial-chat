@@ -7,6 +7,8 @@ export enum AttachmentContentType {
   Pdf = 'pdf',
   Unsupported = 'unsupported',
   Error = 'error',
+  /** Placeholder shown while the real content is still being resolved/fetched. */
+  Loading = 'loading',
 }
 
 /** The kind of failure that produced an `ErrorCanvasContent`. */

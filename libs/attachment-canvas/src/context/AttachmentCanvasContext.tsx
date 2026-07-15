@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -12,6 +13,24 @@ import { AttachmentContentType } from '../types/attachment-canvas';
 const EMPTY_CONTENT: AttachmentCanvasContent = {
   type: AttachmentContentType.PlainText,
   text: '',
+};
+
+/**
+ * Returns `content.url` when it is an object URL created by
+ * `URL.createObjectURL` (i.e. it should be revoked once no longer displayed),
+ * or `undefined` otherwise (a remote/data URL, or a content type with no
+ * `url` at all).
+ */
+const getRevocableObjectUrl = (
+  content: AttachmentCanvasContent,
+): string | undefined => {
+  if (
+    content.type !== AttachmentContentType.Image &&
+    content.type !== AttachmentContentType.Pdf
+  ) {
+    return undefined;
+  }
+  return content.url.startsWith('blob:') ? content.url : undefined;
 };
 
 /** Value exposed by the attachment canvas context. */
@@ -54,6 +73,16 @@ export const AttachmentCanvasProvider = ({
   );
 
   const closeCanvas = useCallback(() => setIsOpen(false), []);
+
+  /* Revokes the outgoing content's object URL whenever it is replaced by new
+   * content, and on unmount — otherwise every opened image/PDF blob URL leaks
+   * for the lifetime of the page. */
+  useEffect(() => {
+    return () => {
+      const url = getRevocableObjectUrl(content);
+      if (url != null) URL.revokeObjectURL(url);
+    };
+  }, [content]);
 
   return (
     <AttachmentCanvasContext.Provider

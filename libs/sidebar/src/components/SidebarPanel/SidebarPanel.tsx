@@ -72,40 +72,47 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
    * transition is still applied for the open/close animation. */
   const [isResizing, setIsResizing] = useState(false);
 
-  /* Reset to defaultWidth when the panel closes so the next open always starts
-   * at the expected proportional size, not at a previously resized value.
-   * Also clears isResizing so a close that interrupts an in-progress drag
-   * (e.g. programmatic close) doesn't leave the panel stuck at width: 'auto'. */
+  /* Stores the user's manually chosen width together with the defaultWidth it
+   * was set for. On breakpoint crossing the stored width is restored only when
+   * defaultWidth returns to the same value (e.g. desktop→mobile→desktop
+   * brings back the desktop custom size). Cleared on panel close. */
+  const userChosenWidthRef = useRef<{
+    forDefault: number;
+    width: number;
+  } | null>(null);
+
   useEffect(() => {
     if (!isOpen) {
       setAnimationMaxWidth(defaultWidth);
       currentWidthRef.current = defaultWidth;
       setIsResizing(false);
+      userChosenWidthRef.current = null;
+    } else {
+      const stored = userChosenWidthRef.current;
+      const targetWidth =
+        stored?.forDefault === defaultWidth ? stored.width : defaultWidth;
+      setAnimationMaxWidth(targetWidth);
+      currentWidthRef.current = targetWidth;
     }
   }, [isOpen, defaultWidth]);
 
-  const handleResize = useCallback(() => {
+  const handleResize = useCallback((width: number) => {
     setIsResizing(true);
+    setAnimationMaxWidth(width);
   }, []);
 
   const handleResizeStop = useCallback(
     (width: number) => {
+      userChosenWidthRef.current = { forDefault: defaultWidth, width };
       currentWidthRef.current = width;
       setAnimationMaxWidth(width);
       setIsResizing(false);
       onResizeStop?.(width);
     },
-    [onResizeStop],
+    [defaultWidth, onResizeStop],
   );
 
-  let panelWidth: number | 'auto';
-  if (isResizing) {
-    panelWidth = 'auto';
-  } else if (isOpen) {
-    panelWidth = animationMaxWidth || currentWidthRef.current;
-  } else {
-    panelWidth = 0;
-  }
+  const panelWidth = isOpen ? animationMaxWidth || currentWidthRef.current : 0;
 
   const dividerClass =
     orientation === SidebarOrientation.Right ? 'border-s' : 'border-e';
@@ -139,6 +146,9 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
       <DialConditionalResizableContainer
         enabled={(resizable ?? false) && isOpen}
         side={resizableSide}
+        width={
+          isOpen ? animationMaxWidth || currentWidthRef.current : undefined
+        }
         defaultWidth={defaultWidth}
         minWidth={minWidth}
         maxWidth={maxWidth}

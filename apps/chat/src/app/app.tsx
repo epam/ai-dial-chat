@@ -77,9 +77,10 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
-  const canvasDefaultWidth = isMobile
-    ? undefined
-    : Math.min(1500, Math.round(window.innerWidth * 0.5));
+  const [desktopCanvasWidth] = useState(() =>
+    Math.min(1500, Math.round(window.innerWidth * 0.5)),
+  );
+  const canvasDefaultWidth = isMobile ? window.innerWidth : desktopCanvasWidth;
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
@@ -322,6 +323,7 @@ const App: FC = () => {
           unsupportedLabel={t(AttachmentCanvasI18nKeys.UnsupportedLabel)}
           loadErrorLabel={t(AttachmentCanvasI18nKeys.LoadErrorLabel)}
           forbiddenErrorLabel={t(AttachmentCanvasI18nKeys.ForbiddenErrorLabel)}
+          loadingLabel={t(AttachmentCanvasI18nKeys.LoadingLabel)}
           copyTextLabel={t(ButtonsI18nKeys.CopyText)}
           copiedTextLabel={t(ButtonsI18nKeys.Copied)}
           copyMarkdownLabel={t(ButtonsI18nKeys.CopyAsMarkdown)}

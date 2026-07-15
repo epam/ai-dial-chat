@@ -1,4 +1,5 @@
 import {
+  createLoadingCanvasContent,
   createUnsupportedCanvasContent,
   isTextPreviewable,
   useAttachmentCanvas,
@@ -21,6 +22,23 @@ import {
 import { resolveDialUrl } from '../../utils/dial-file';
 
 type OpenCanvas = ReturnType<typeof useAttachmentCanvas>['openCanvas'];
+
+/**
+ * Shows the loading placeholder only when a DIAL file actually needs to be
+ * fetched — the resolvers never return `null` once a DIAL URL exists (a
+ * fetch failure becomes an `ErrorCanvasContent`, never `null`), and every
+ * other source (local file, inline data, previewUrl) resolves synchronously
+ * with no perceptible delay. So a placeholder is never left stranded: by the
+ * time `content` can be `null`, one was never shown.
+ */
+function openLoadingPlaceholderIfFetching(
+  attachment: DisplayAttachment,
+  openCanvas: OpenCanvas,
+): void {
+  if (resolveDialUrl(attachment) != null) {
+    openCanvas(createLoadingCanvasContent(), attachment.name);
+  }
+}
 
 async function openFileCanvas(
   attachment: DisplayAttachment,
@@ -50,6 +68,7 @@ async function openFileCanvas(
 
   switch (contentType) {
     case MIMEType.PDF: {
+      openLoadingPlaceholderIfFetching(attachment, openCanvas);
       const content = await resolvePdfCanvasContent(attachment);
       openCanvas(
         content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
@@ -94,6 +113,7 @@ async function openFileCanvas(
       return true;
     }
     case FileExtension.PDF: {
+      openLoadingPlaceholderIfFetching(attachment, openCanvas);
       const content = await resolvePdfCanvasContent(attachment);
       if (content == null) return false;
       openCanvas(content, attachment.name);
@@ -128,6 +148,7 @@ export const useOpenAttachmentCanvas = () => {
     async (attachment: DisplayAttachment): Promise<boolean> => {
       switch (attachment.type) {
         case AttachmentType.Image: {
+          openLoadingPlaceholderIfFetching(attachment, openCanvas);
           const content = await resolveImageCanvasContent(attachment);
           if (content == null) return false;
           openCanvas(content, attachment.name);

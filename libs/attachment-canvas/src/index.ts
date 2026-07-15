@@ -9,6 +9,7 @@ export type { AttachmentCanvasContextValue } from './context/AttachmentCanvasCon
 export { downloadAttachmentContent, isDownloadable } from './utils/download';
 export {
   isTextPreviewable,
+  createLoadingCanvasContent,
   createUnsupportedCanvasContent,
   createLoadErrorCanvasContent,
   createForbiddenCanvasContent,
@@ -26,6 +27,7 @@ export type {
   PdfCanvasContent,
   UnsupportedCanvasContent,
   ErrorCanvasContent,
+  LoadingCanvasContent,
   AttachmentCanvasColors,
   AttachmentCanvasTypography,
   AttachmentCanvasStyles,

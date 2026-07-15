@@ -45,6 +45,7 @@ async function bootstrap() {
           scriptSrc: ["'self'"],
           workerSrc: ["'self'", 'blob:'],
           imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+          connectSrc: ["'self'", 'blob:'],
           frameSrc: buildFrameSrcDirective(allowedIframeOrigins),
         },
       },
