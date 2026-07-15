@@ -5,11 +5,17 @@ import { useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { TOOLSET_REDIRECT_STATE_KEY } from '../../constants/toolsets';
 import { loginToolset } from '../../server-api/toolsets';
-import type { ToolsetRedirectState } from '../../types/toolsets';
+import type {
+  ToolsetOAuthChannelMessage,
+  ToolsetRedirectState,
+} from '../../types/toolsets';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
+  ToolsetOAuthFailureReason,
+  ToolsetOAuthResultType,
 } from '../../types/toolsets';
+import { getToolsetOAuthChannelName } from '../../utils/toolsets';
 
 const readRedirectState = (): ToolsetRedirectState | null => {
   const raw = sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY);
@@ -21,11 +27,24 @@ const readRedirectState = (): ToolsetRedirectState | null => {
   }
 };
 
+/** Posts the OAuth result to the flow-scoped `BroadcastChannel` the opener is waiting on. */
+const reportResult = (
+  flowId: string | undefined,
+  message: ToolsetOAuthChannelMessage,
+) => {
+  if (!flowId) return;
+  const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+  channel.postMessage(message);
+  channel.close();
+};
+
 /**
  * This route only ever runs inside the popup window opened by
  * `initiateOAuthLogin` — it always closes the window on completion rather
  * than navigating, since the editor/Catalog tab that opened it never
- * navigated away.
+ * navigated away. Before closing, it reports success/failure over a
+ * `BroadcastChannel` keyed by the OAuth `state` so that tab can refresh
+ * immediately instead of requiring a manual reload.
  */
 const ToolsetEditorCallback: FC = () => {
   const [searchParams] = useSearchParams();
@@ -41,13 +60,24 @@ const ToolsetEditorCallback: FC = () => {
       const state = searchParams.get('state');
       const redirectState = readRedirectState();
       sessionStorage.removeItem(TOOLSET_REDIRECT_STATE_KEY);
+      const flowId = redirectState?.state ?? state ?? undefined;
 
       if (!code || !redirectState?.toolsetId) {
+        reportResult(flowId, {
+          type: ToolsetOAuthResultType.Failure,
+          reason: !redirectState?.toolsetId
+            ? ToolsetOAuthFailureReason.MissingRedirectState
+            : ToolsetOAuthFailureReason.MissingCode,
+        });
         window.close();
         return;
       }
 
       if (redirectState.state != null && redirectState.state !== state) {
+        reportResult(flowId, {
+          type: ToolsetOAuthResultType.Failure,
+          reason: ToolsetOAuthFailureReason.StateMismatch,
+        });
         window.close();
         return;
       }
@@ -65,8 +95,17 @@ const ToolsetEditorCallback: FC = () => {
             `${window.location.origin}${window.location.pathname}`,
         };
         await loginToolset(redirectState.toolsetId, body);
+        reportResult(flowId, {
+          type: ToolsetOAuthResultType.Success,
+          toolsetId: redirectState.toolsetId,
+          credentialsLevel:
+            redirectState.credentialsLevel ?? ToolsetCredentialsLevel.User,
+        });
       } catch {
-        // Swallow — the opener will reflect the not-logged-in state once reopened.
+        reportResult(flowId, {
+          type: ToolsetOAuthResultType.Failure,
+          reason: ToolsetOAuthFailureReason.LoginRequestFailed,
+        });
       } finally {
         window.close();
       }

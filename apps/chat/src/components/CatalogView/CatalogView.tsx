@@ -52,6 +52,8 @@ import { ROUTES } from '../../types/routes';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
   WithLogin,
 } from '../../types/toolsets';
 import { isQuickAppSchema } from '../../utils/application-schema';
@@ -68,7 +70,10 @@ import {
   mapPublishHistoryEntryDto,
   toPublishEntityType,
 } from '../../utils/publish';
-import { initiateOAuthLogin } from '../../utils/toolsets';
+import {
+  initiateOAuthLogin,
+  waitForToolsetOAuthResult,
+} from '../../utils/toolsets';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
@@ -243,7 +248,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
       if (authenticationType === ToolsetAuthenticationType.OAuth) {
         const toolset = toolsets.find((t) => t.id === item.id);
-        const started = initiateOAuthLogin(
+        const initiation = initiateOAuthLogin(
           {
             authenticationType: ToolsetAuthTypes.OAuth,
             withLogin: WithLogin.WithConfig,
@@ -257,7 +262,27 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           item.id,
           credentialsLevel,
         );
-        if (!started) {
+        if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(
+              initiation.type === ToolsetOAuthInitiationResultType.Blocked
+                ? ToolsetEditorI18nKeys.ErrorPopupBlocked
+                : ToolsetEditorI18nKeys.ErrorLoginFailed,
+            ),
+          });
+          return;
+        }
+
+        const result = await waitForToolsetOAuthResult(
+          initiation.popup,
+          initiation.flowId,
+        );
+
+        if (result.type === ToolsetOAuthResultType.Success) {
+          showLoginSuccess(item, params.level);
+          await refetchToolsets();
+        } else if (result.type === ToolsetOAuthResultType.Failure) {
           showNotification({
             variant: NotificationVariant.Error,
             message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),

@@ -33,12 +33,15 @@ import type {
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
   WithLogin,
 } from '../../../types/toolsets';
 import {
   initiateOAuthLogin,
   isToolsetAuthValid,
   isValidEndpointUrl,
+  waitForToolsetOAuthResult,
 } from '../../../utils/toolsets';
 
 interface Props {
@@ -111,8 +114,33 @@ const AuthSection: FC<Props> = ({
     if (!canLogIn) return;
 
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
-      const started = initiateOAuthLogin(auth, toolsetId);
-      if (!started) {
+      const initiation = initiateOAuthLogin(auth, toolsetId);
+      if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: t(
+            initiation.type === ToolsetOAuthInitiationResultType.Blocked
+              ? ToolsetEditorI18nKeys.ErrorPopupBlocked
+              : ToolsetEditorI18nKeys.ErrorLoginFailed,
+          ),
+        });
+        return;
+      }
+
+      setIsAuthBusy(true);
+      const result = await waitForToolsetOAuthResult(
+        initiation.popup,
+        initiation.flowId,
+      );
+      setIsAuthBusy(false);
+
+      if (result.type === ToolsetOAuthResultType.Success) {
+        onAuthChange({ isLoggedIn: true });
+        showNotification({
+          variant: NotificationVariant.Success,
+          message: t(ToolsetEditorI18nKeys.LoginSuccess),
+        });
+      } else if (result.type === ToolsetOAuthResultType.Failure) {
         showNotification({
           variant: NotificationVariant.Error,
           message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),

@@ -5,6 +5,7 @@ import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import { CatalogItem } from '../../models/catalog-item';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
+import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import styles from './Favorites.module.scss';
 
@@ -32,6 +33,8 @@ export interface FavoriteCardProps {
   removeFromFavoritesAriaLabel?: string;
   /** Whether this card represents the currently selected item — shows an accent border, tinted background, and a checkmark. Default: false. */
   isSelected?: boolean;
+  /** Credentials-status badge label shown when signed out. Default: `'LOGGED OUT'`. */
+  credentialsBadgeLoggedOutLabel?: string;
 }
 
 /** Compact favorite card: logo + type + name + version + last-used, star aligned right. */
@@ -47,6 +50,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   addToFavoritesAriaLabel = 'Add to favorites',
   removeFromFavoritesAriaLabel = 'Remove from favorites',
   isSelected = false,
+  credentialsBadgeLoggedOutLabel,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -108,20 +112,26 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         />
       )}
 
-      <AppIdentity
-        icon={item.iconUrl}
-        type={item.type}
-        name={item.name}
-        version={item.version}
-        lastUsed={item.lastUsed}
-        size="lg"
-        query={query}
-        className="min-w-0 flex-1"
-        typeColor={ENTITY_TYPE_COLOR[item.type]}
-        nameClassName={nameClassName}
-        versionClassName={versionClassName}
-        lastUsedClassName={lastUsedClassName}
-      />
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+        <AppIdentity
+          icon={item.iconUrl}
+          type={item.type}
+          name={item.name}
+          version={item.version}
+          lastUsed={item.lastUsed}
+          size="lg"
+          query={query}
+          className="min-w-0 self-stretch"
+          typeColor={ENTITY_TYPE_COLOR[item.type]}
+          nameClassName={nameClassName}
+          versionClassName={versionClassName}
+          lastUsedClassName={lastUsedClassName}
+        />
+        <CredentialsBadge
+          credentials={item.credentials}
+          loggedOutLabel={credentialsBadgeLoggedOutLabel}
+        />
+      </div>
       <StarToggleButton
         isStarred={isStarred}
         size={ElementSize.Small}

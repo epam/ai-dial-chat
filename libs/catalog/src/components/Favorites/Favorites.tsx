@@ -64,6 +64,7 @@ export const Favorites: FC<FavoritesProps> = ({
   addToFavoritesAriaLabel,
   removeFromFavoritesAriaLabel,
   selectedItemId,
+  credentialsBadgeLoggedOutLabel,
 }) => {
   const titleClassName =
     favoritesStyles?.typography?.titleClassName ??
@@ -450,6 +451,7 @@ export const Favorites: FC<FavoritesProps> = ({
               addToFavoritesAriaLabel={addToFavoritesAriaLabel}
               removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
               isSelected={item.id === selectedItemId}
+              credentialsBadgeLoggedOutLabel={credentialsBadgeLoggedOutLabel}
             />
           ))}
         </div>
