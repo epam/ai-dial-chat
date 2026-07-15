@@ -2,7 +2,10 @@ import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useAttachmentAction } from '../useAttachmentAction';
+import {
+  downloadAttachment,
+  useAttachmentAction,
+} from '../useAttachmentAction';
 
 const mockOpenCanvas = vi.fn();
 
@@ -137,5 +140,40 @@ describe('useAttachmentAction', () => {
     const first = result.current.handleAttachmentClick;
     rerender();
     expect(result.current.handleAttachmentClick).toBe(first);
+  });
+
+  describe('downloadAttachment', () => {
+    it('triggers an anchor download and returns true for a DIAL file attachment', () => {
+      const attachment = makeAttachment({
+        url: 'files/my-bucket/folder/file.pdf',
+      });
+
+      const result = downloadAttachment(attachment);
+
+      expect(result).toBe(true);
+      expect(anchorClickSpy).toHaveBeenCalledOnce();
+      expect(anchorMock.href).toContain('/api/v1/files/download');
+      expect(anchorMock.download).toBe('file.pdf');
+    });
+
+    it('returns false and does not download for a non-DIAL file URL', () => {
+      const attachment = makeAttachment({
+        url: 'https://external.com/file.pdf',
+      });
+
+      const result = downloadAttachment(attachment);
+
+      expect(result).toBe(false);
+      expect(anchorClickSpy).not.toHaveBeenCalled();
+    });
+
+    it('returns false and does not download for an attachment with no URL', () => {
+      const attachment = makeAttachment({ url: undefined });
+
+      const result = downloadAttachment(attachment);
+
+      expect(result).toBe(false);
+      expect(anchorClickSpy).not.toHaveBeenCalled();
+    });
   });
 });
