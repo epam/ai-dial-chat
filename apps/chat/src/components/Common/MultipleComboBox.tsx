@@ -213,26 +213,24 @@ export function MultipleComboBox<T>({
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
-        case useCombobox.stateChangeTypes.InputBlur:
+        case useCombobox.stateChangeTypes.InputBlur: {
           if (!newSelectedItem) {
             return;
           }
 
-          if (typeof newSelectedItem === 'string') {
-            newSelectedItem = newSelectedItem.trim() as T;
-          }
+          const itemToAdd: T =
+            typeof newSelectedItem === 'string'
+              ? (newSelectedItem.trim() as T)
+              : newSelectedItem;
 
-          if (
-            getItemLabel(newSelectedItem) &&
-            !getItemLabel(newSelectedItem).trim()
-          ) {
+          if (getItemLabel(itemToAdd) && !getItemLabel(itemToAdd).trim()) {
             return;
           }
 
           if (
             validationRegExp &&
-            typeof newSelectedItem === 'string' &&
-            !validationRegExp.test(newSelectedItem)
+            typeof itemToAdd === 'string' &&
+            !validationRegExp.test(itemToAdd)
           ) {
             handleError?.();
             return;
@@ -240,18 +238,19 @@ export function MultipleComboBox<T>({
 
           if (
             selectedItems?.some(
-              (item) => getItemLabel(item) === getItemLabel(newSelectedItem),
+              (item) => getItemLabel(item) === getItemLabel(itemToAdd),
             )
           ) {
             setInputValue('');
             return;
           }
 
-          addSelectedItem(newSelectedItem);
-          onChangeSelectedItems([...(selectedItems ?? []), newSelectedItem]);
+          addSelectedItem(itemToAdd);
+          onChangeSelectedItems([...(selectedItems ?? []), itemToAdd]);
           setInputValue('');
 
           break;
+        }
 
         case useCombobox.stateChangeTypes.InputChange:
           handleClearError?.();
