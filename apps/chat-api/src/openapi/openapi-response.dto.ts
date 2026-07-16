@@ -292,7 +292,11 @@ export class DialToolsetDto {
   })
   toolset!: string;
 
-  @ApiPropertyOptional({ example: 'Toolset display name' })
+  @ApiPropertyOptional({
+    description:
+      'Human-readable name. In `listToolsets` results this is always populated: `display_name` when set, otherwise the last path segment of `id`.',
+    example: 'Toolset display name',
+  })
   display_name?: string;
 
   @ApiPropertyOptional({ example: '0.0.1' })

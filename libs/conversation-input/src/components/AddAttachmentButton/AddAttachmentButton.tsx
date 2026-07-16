@@ -102,7 +102,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                 <IconChevronRight
                   size={BASE_ICON_SIZE}
                   stroke={1.5}
-                  className="text-secondary"
+                  className="text-secondary rtl:scale-x-[-1]"
                   aria-hidden
                 />
               ) : null,
