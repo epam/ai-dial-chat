@@ -58,6 +58,28 @@ export interface UsageLimitRow {
   value: string;
 }
 
+/** A single progress row in the Limits tab. */
+export interface UsageLimitProgressRow {
+  /** Row label, e.g. "Tokens per day". */
+  label: string;
+  /** Consumed amount for the limit period. */
+  used: number;
+  /** Total allowed amount for the limit period. Ignored when `isUnlimited` is true. */
+  total: number;
+  /** Whether the backend reports this row as effectively unlimited. */
+  isUnlimited?: boolean;
+  /** Preformatted visible value, e.g. "1,200 / 5,000". */
+  valueLabel?: string;
+  /** Accessible label for the progress bar. */
+  ariaLabel?: string;
+}
+
+/** Complete data for the Limits tab. */
+export interface CatalogItemLimits {
+  /** Ordered progress rows to render. */
+  rows: UsageLimitProgressRow[];
+}
+
 /** Complete data for the Pricing tab. */
 export interface CatalogItemPricing {
   /** Token price rows (input, output, cached, batch). */
@@ -111,6 +133,8 @@ export interface CatalogItemTabData {
   overview?: CatalogItemOverview;
   /** Pricing tab data. When absent the Pricing tab is hidden. */
   pricing?: CatalogItemPricing;
+  /** Usage limits tab data. When absent the Limits tab is hidden. */
+  limits?: CatalogItemLimits;
   /** API tab data. When absent the API tab is hidden. */
   api?: CatalogItemApiDetails;
   /** Tools tab data (Toolset only). When absent the Tools tab is hidden. */

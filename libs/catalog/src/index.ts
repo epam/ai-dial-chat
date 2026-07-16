@@ -28,6 +28,7 @@ export type {
   ApiResource,
   CatalogItemApiDetails,
   CatalogItemDetailsFetchResult,
+  CatalogItemLimits,
   CatalogItemPricing,
   CatalogItemTabData,
   CatalogItemTools,
@@ -36,6 +37,7 @@ export type {
   ToolAnnotation,
   ToolDefinition,
   ToolInputParam,
+  UsageLimitProgressRow,
   UsageLimitRow,
 } from './models/item-details-data';
 export type {
