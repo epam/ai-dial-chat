@@ -8,6 +8,7 @@ import {
   DialFileNodeType,
   DialPopup,
   NotificationVariant,
+  NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   PopupSize,
   useDialFileManagerTabs,
@@ -583,6 +584,7 @@ const DialFileManagerModal: FC<Props> = ({
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       forbiddenSymbolsTooltip: t(
         DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
+        { notAllowedSymbols: NOT_ALLOWED_SYMBOLS },
       ),
       emptyStateByTab,
       treeHeaderByTab,

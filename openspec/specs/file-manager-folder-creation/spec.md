@@ -162,11 +162,13 @@ onCreateFolderValidate: (name: string, parentFolder: DialFile): string | null
 
 Rules (synchronous — no BFF call):
 - Empty name → error key `dialFileManager.folderNameEmpty`
-- Contains `/` or `\` → error key `dialFileManager.folderNameInvalidChars`
+- Contains `/`, `\`, or a forbidden symbol from `forbiddenSymbolsRegExp` → error key `dialFileManager.folderNameInvalidChars`
 - Starts with `.` → error key `dialFileManager.folderNameHidden`
 - Equals `.dial_folder` → error key `dialFileManager.folderNameReserved`
 - Exceeds 255 characters → error key `dialFileManager.folderNameTooLong`
 - Duplicate sibling name (case-insensitive check against `parentFolder.items`) → error key `dialFileManager.folderConflict`
+
+Forbidden-symbol validation SHALL use the same effective symbol set as rename validation: path separators (`/` and `\`) are always rejected, and all other forbidden characters come from the `forbiddenSymbolsRegExp` option passed to `useDialFileManager`. Production File Manager hosts pass `NOT_ALLOWED_SYMBOLS_REGEXP` from `@epam/ai-dial-ui-kit`, so names such as `reports:2026` are rejected before `onCreateFolder` is called.
 
 Conflict check in `onCreateFolderValidate` is against the **cached** `items` — it is a best-effort pre-check. The authoritative `409` check is server-side (`markerMetadataMatches` on the marker probe in `FilesService.createFolder`).
 
@@ -196,7 +198,7 @@ setRetryCounter((c) => c + 1);
 | `dialFileManager.folderCreateError` | `"Failed to create folder"` — shown as an error toast through `useNotification` |
 | `dialFileManager.folderConflict` | `"A folder with this name already exists"` |
 | `dialFileManager.folderNameEmpty` | `"Folder name cannot be empty"` |
-| `dialFileManager.folderNameInvalidChars` | `"Folder name cannot contain / or \\"` |
+| `dialFileManager.folderNameInvalidChars` | `"Folder name should not contain special symbols {{notAllowedSymbols}}"` |
 | `dialFileManager.folderNameHidden` | `"Folder name cannot start with a dot"` |
 | `dialFileManager.folderNameReserved` | `"This folder name is reserved"` |
 | `dialFileManager.folderNameTooLong` | `"Folder name is too long"` |
@@ -220,7 +222,7 @@ setRetryCounter((c) => c + 1);
 ## Memoisation
 
 - `onCreateFolder` wrapped in `useCallback` in `useDialFileManager`.
-- `onCreateFolderValidate` wrapped in `useCallback` (stable — depends only on `items` via closure via cache).
+- `onCreateFolderValidate` wrapped in `useCallback` (depends on `t` and `forbiddenSymbolsRegExp`; sibling conflict input is supplied by the `parentFolder` argument).
 
 ---
 
@@ -299,6 +301,14 @@ No new metrics or analytics events beyond `MetricsInterceptor` (request duration
 - **THEN** the slash in the name triggers the `folderNameInvalidChars` error inline
 - **AND** if a crafted request bypasses the frontend and hits the BFF directly
 - **THEN** `CreateFolderDto` `@Matches` validation rejects the name with `400 Bad Request`
+
+---
+
+### Scenario: Invalid folder name — forbidden symbol
+
+- **GIVEN** the user types `reports:2026`
+- **WHEN** `onCreateFolderValidate` runs
+- **THEN** the colon in the name triggers the `folderNameInvalidChars` error inline
 
 ---
 
