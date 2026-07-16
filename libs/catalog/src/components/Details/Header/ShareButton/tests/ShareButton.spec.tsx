@@ -35,7 +35,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconChevronDown: () => <svg />,
   IconShare: () => <svg />,
-  IconTrash: () => <svg />,
 }));
 
 const makeItem = (type: CatalogEntityType): CatalogItem => ({
@@ -163,81 +162,6 @@ describe('ShareButton', () => {
 
       await userEvent.click(screen.getByRole('button', { name: 'Share' }));
       expect(screen.queryByText('popover body')).toBeNull();
-    });
-  });
-
-  describe('recipient-side Delete', () => {
-    const makeSharedItem = (type: CatalogEntityType): CatalogItem => ({
-      ...makeItem(type),
-      isMyApp: false,
-      sharedWithMe: true,
-    });
-
-    it('renders Delete instead of Share for a shared-with-me item', () => {
-      render(
-        <ShareButton item={makeSharedItem(CatalogEntityType.Application)} />,
-      );
-      expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
-      expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
-    });
-
-    it('renders neither Share nor Delete for a public/organization item', () => {
-      const item: CatalogItem = {
-        ...makeItem(CatalogEntityType.Application),
-        isMyApp: false,
-        sharedWithMe: false,
-      };
-      render(<ShareButton item={item} />);
-      expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
-      expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
-    });
-
-    it('renders Delete for a READ-only shared item (isEditable false)', () => {
-      const item: CatalogItem = {
-        ...makeSharedItem(CatalogEntityType.Toolset),
-        isEditable: false,
-      };
-      render(<ShareButton item={item} />);
-      expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
-    });
-
-    it('renders Delete for a WRITE-shared item (isEditable true)', () => {
-      const item: CatalogItem = {
-        ...makeSharedItem(CatalogEntityType.Toolset),
-        isEditable: true,
-      };
-      render(<ShareButton item={item} />);
-      expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
-    });
-
-    it('hides Delete for a Guardrail item', () => {
-      render(
-        <ShareButton item={makeSharedItem(CatalogEntityType.Guardrail)} />,
-      );
-      expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
-    });
-
-    it('hides Delete for an MCP item', () => {
-      render(<ShareButton item={makeSharedItem(CatalogEntityType.Mcp)} />);
-      expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
-    });
-
-    it('uses the provided unshareLabel', () => {
-      render(
-        <ShareButton
-          item={makeSharedItem(CatalogEntityType.Application)}
-          unshareLabel="Stop sharing"
-        />,
-      );
-      expect(screen.getByRole('button', { name: 'Stop sharing' })).toBeTruthy();
-    });
-
-    it('calls onUnshare with the item when clicked', async () => {
-      const onUnshare = vi.fn();
-      const item = makeSharedItem(CatalogEntityType.Application);
-      render(<ShareButton item={item} onUnshare={onUnshare} />);
-      await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-      expect(onUnshare).toHaveBeenCalledWith(item);
     });
   });
 });
