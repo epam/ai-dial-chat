@@ -6,7 +6,7 @@ import {
   getCredentialsBadgeState,
   getCredentialsUiState,
 } from '@epam/ai-dial-catalog';
-import type { DialToolsetDto, DeploymentItemDto } from '@epam/chat-api-client';
+import type { DialToolsetDto } from '@epam/chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -21,12 +21,12 @@ import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { deleteApplication } from '../../../server-api/applications';
+import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
 import {
   getCatalogPublishHistory,
   publishCatalogEntity,
 } from '../../../server-api/publish.api';
-import { discardSharedCatalogItem } from '../../../server-api/share.api';
 import {
   deleteToolset,
   loginToolset,
@@ -95,7 +95,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUseInChat,
     onEdit,
     onDelete,
-    onUnshare,
     onFetchDetails,
     onLogin,
     onLogout,
@@ -117,7 +116,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUseInChat?: (item: CatalogItem) => void;
     onEdit?: (item: CatalogItem) => void;
     onDelete?: (item: CatalogItem) => Promise<void>;
-    onUnshare?: (item: CatalogItem) => Promise<void>;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
     onLogin?: (
       item: CatalogItem,
@@ -221,22 +219,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         ))}
         {(items ?? []).map((item) => (
           <button
-            key={`unshare-${item.id}`}
-            type="button"
-            onClick={async () => {
-              try {
-                await onUnshare?.(item);
-              } catch {
-                // Swallowed here the same way the real DetailsPanel's
-                // confirmation popup catches a rejected onUnshare.
-              }
-            }}
-          >
-            unshare {item.id}
-          </button>
-        ))}
-        {(items ?? []).map((item) => (
-          <button
             key={`fetch-details-${item.id}`}
             type="button"
             onClick={async () => {
@@ -319,6 +301,10 @@ vi.mock('../../../server-api/deployments', () => ({
   getDeploymentDetails: vi.fn(),
 }));
 
+vi.mock('../../../server-api/deployment-limits', () => ({
+  getDeploymentLimits: vi.fn(),
+}));
+
 vi.mock('../../../server-api/toolsets', () => ({
   loginToolset: vi.fn(),
   logoutToolset: vi.fn(),
@@ -327,10 +313,6 @@ vi.mock('../../../server-api/toolsets', () => ({
 
 vi.mock('../../../server-api/applications', () => ({
   deleteApplication: vi.fn(),
-}));
-
-vi.mock('../../../server-api/share.api', () => ({
-  discardSharedCatalogItem: vi.fn(),
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
@@ -395,6 +377,7 @@ describe('CatalogView', () => {
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
     });
+    vi.mocked(getDeploymentLimits).mockResolvedValue({});
     vi.mocked(useNotification).mockReturnValue({
       notifications: [],
       showNotification: vi.fn(),
@@ -960,6 +943,10 @@ describe('CatalogView', () => {
         createdAt: 1780387921823,
       },
     });
+    vi.mocked(getDeploymentLimits).mockResolvedValue({
+      hourRequestStats: { used: 2, total: 10 },
+      dayTokenStats: { used: 2500, total: 10000 },
+    });
 
     render(<CatalogView />);
 
@@ -980,6 +967,25 @@ describe('CatalogView', () => {
       ],
       limits: [],
     });
+    expect(result.limits).toEqual({
+      rows: [
+        {
+          label: CatalogI18nKeys.DetailsLimitsRequestsPerHour,
+          used: 2,
+          total: 10,
+          valueLabel: CatalogI18nKeys.DetailsLimitsValue,
+          ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
+        },
+        {
+          label: CatalogI18nKeys.DetailsLimitsTokensPerDay,
+          used: 2500,
+          total: 10000,
+          valueLabel: CatalogI18nKeys.DetailsLimitsValue,
+          ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
+        },
+      ],
+    });
+    expect(getDeploymentLimits).toHaveBeenCalledWith('gpt-4o');
     expect(result.overview.sections).toEqual([
       {
         title: 'Capabilities',
@@ -1627,248 +1633,5 @@ describe('CatalogView', () => {
     expect(showNotification).not.toHaveBeenCalledWith(
       expect.objectContaining({ variant: 'success' }),
     );
-  });
-
-  describe('unshare', () => {
-    const sharedToolset = {
-      id: 'toolsets/other-bucket/search__0.0.1',
-      toolset: 'toolsets/other-bucket/search__0.0.1',
-      displayName: 'Search',
-      isMy: false,
-      sharedWithMe: true,
-    };
-    const sharedApplication: DeploymentItemDto = {
-      id: 'applications/other-bucket/Their App__1.0',
-      displayName: 'Their App',
-      type: 'application',
-      isMy: false,
-      sharedWithMe: true,
-    };
-
-    it('unshares a toolset, refetches toolsets (not deployments), and shows a success notification', async () => {
-      const refetchToolsets = vi.fn().mockResolvedValue(undefined);
-      const refetchDeployments = vi.fn().mockResolvedValue(undefined);
-      const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [],
-        selectedItemId: null,
-        setSelectedItemId: vi.fn(),
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [sharedToolset],
-        refetchToolsets,
-        refetchDeployments,
-      });
-      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
-
-      render(<CatalogView />);
-
-      await user.click(
-        screen.getByRole('button', {
-          name: `unshare ${sharedToolset.id}`,
-        }),
-      );
-
-      expect(discardSharedCatalogItem).toHaveBeenCalledWith(sharedToolset.id);
-      expect(refetchToolsets).toHaveBeenCalledOnce();
-      expect(refetchDeployments).not.toHaveBeenCalled();
-      expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'success' }),
-      );
-    });
-
-    it('unshares an application, refetches deployments (not toolsets), and shows a success notification', async () => {
-      const refetchToolsets = vi.fn().mockResolvedValue(undefined);
-      const refetchDeployments = vi.fn().mockResolvedValue(undefined);
-      const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [sharedApplication],
-        selectedItemId: null,
-        setSelectedItemId: vi.fn(),
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [],
-        refetchToolsets,
-        refetchDeployments,
-      });
-      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
-
-      render(<CatalogView />);
-
-      await user.click(
-        screen.getByRole('button', {
-          name: `unshare ${sharedApplication.id}`,
-        }),
-      );
-
-      expect(discardSharedCatalogItem).toHaveBeenCalledWith(
-        sharedApplication.id,
-      );
-      expect(refetchDeployments).toHaveBeenCalledOnce();
-      expect(refetchToolsets).not.toHaveBeenCalled();
-      expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'success' }),
-      );
-    });
-
-    it('clears the selection when unsharing the currently selected deployment', async () => {
-      const setSelectedItemId = vi.fn();
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [sharedApplication],
-        selectedItemId: sharedApplication.id,
-        setSelectedItemId,
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [],
-        refetchToolsets: vi.fn(),
-        refetchDeployments: vi.fn().mockResolvedValue(undefined),
-      });
-      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
-
-      render(<CatalogView />);
-
-      await user.click(
-        screen.getByRole('button', {
-          name: `unshare ${sharedApplication.id}`,
-        }),
-      );
-
-      expect(setSelectedItemId).toHaveBeenCalledWith(null);
-    });
-
-    it('leaves the selection untouched when unsharing a non-selected item', async () => {
-      const setSelectedItemId = vi.fn();
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [
-          sharedApplication,
-          { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
-        ],
-        selectedItemId: 'gpt-4o',
-        setSelectedItemId,
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [],
-        refetchToolsets: vi.fn(),
-        refetchDeployments: vi.fn().mockResolvedValue(undefined),
-      });
-      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
-
-      render(<CatalogView />);
-
-      await user.click(
-        screen.getByRole('button', {
-          name: `unshare ${sharedApplication.id}`,
-        }),
-      );
-
-      expect(setSelectedItemId).not.toHaveBeenCalled();
-    });
-
-    it('shows an error notification and skips refetch/selection-clear when discardSharedCatalogItem rejects', async () => {
-      const refetchDeployments = vi.fn().mockResolvedValue(undefined);
-      const setSelectedItemId = vi.fn();
-      const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [sharedApplication],
-        selectedItemId: sharedApplication.id,
-        setSelectedItemId,
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [],
-        refetchToolsets: vi.fn(),
-        refetchDeployments,
-      });
-      vi.mocked(discardSharedCatalogItem).mockRejectedValue(
-        new Error('network error'),
-      );
-
-      render(<CatalogView />);
-
-      await user.click(
-        screen.getByRole('button', {
-          name: `unshare ${sharedApplication.id}`,
-        }),
-      );
-
-      expect(refetchDeployments).not.toHaveBeenCalled();
-      expect(setSelectedItemId).not.toHaveBeenCalled();
-      expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'error' }),
-      );
-    });
-
-    it('preserves mutation success when the subsequent refetch rejects', async () => {
-      const refetchDeployments = vi
-        .fn()
-        .mockRejectedValue(new Error('refresh failed'));
-      const setSelectedItemId = vi.fn();
-      const showNotification = vi.fn();
-      vi.mocked(useNotification).mockReturnValue({
-        notifications: [],
-        showNotification,
-        dismissNotification: vi.fn(),
-      });
-      vi.mocked(useDeployments).mockReturnValue({
-        items: [sharedApplication],
-        selectedItemId: sharedApplication.id,
-        setSelectedItemId,
-        restoreSelectedItemId: vi.fn(),
-        selectedDeploymentConfiguration: null,
-        isLoading: false,
-        error: null,
-        schemas: [],
-        toolsets: [],
-        refetchToolsets: vi.fn(),
-        refetchDeployments,
-      });
-      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
-
-      render(<CatalogView />);
-
-      await user.click(
-        screen.getByRole('button', {
-          name: `unshare ${sharedApplication.id}`,
-        }),
-      );
-
-      expect(refetchDeployments).toHaveBeenCalledOnce();
-      expect(setSelectedItemId).toHaveBeenCalledWith(null);
-      expect(showNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'success' }),
-      );
-      expect(showNotification).not.toHaveBeenCalledWith(
-        expect.objectContaining({ variant: 'error' }),
-      );
-    });
   });
 });

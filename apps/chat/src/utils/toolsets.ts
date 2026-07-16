@@ -168,11 +168,18 @@ export const getToolsetOAuthChannelName = (flowId: string): string =>
 
 const DEFAULT_OAUTH_RESULT_TIMEOUT_MS = 5 * 60 * 1000;
 const DEFAULT_OAUTH_POPUP_POLL_INTERVAL_MS = 500;
+const DEFAULT_OAUTH_CLOSE_GRACE_MS = 300;
 
 /**
  * Waits for the OAuth callback popup to report a result over the flow's
  * `BroadcastChannel`, resolving with `Cancelled` if the popup is closed
  * manually or no result arrives before the timeout elapses.
+ *
+ * The callback popup posts its result and calls `window.close()` back to
+ * back, so the popup can finish closing before the browser has flushed that
+ * `BroadcastChannel` message to this tab. Detecting `popup.closed` is
+ * therefore not proof a result was never posted — `closeGraceMs` gives an
+ * in-flight message a short window to still arrive before giving up.
  */
 export const waitForToolsetOAuthResult = (
   popup: Window,
@@ -180,17 +187,24 @@ export const waitForToolsetOAuthResult = (
   {
     timeoutMs = DEFAULT_OAUTH_RESULT_TIMEOUT_MS,
     pollIntervalMs = DEFAULT_OAUTH_POPUP_POLL_INTERVAL_MS,
-  }: { timeoutMs?: number; pollIntervalMs?: number } = {},
+    closeGraceMs = DEFAULT_OAUTH_CLOSE_GRACE_MS,
+  }: {
+    timeoutMs?: number;
+    pollIntervalMs?: number;
+    closeGraceMs?: number;
+  } = {},
 ): Promise<ToolsetOAuthResult> =>
   new Promise((resolve) => {
     const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
     let settled = false;
+    let closeGraceTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const finish = (outcome: ToolsetOAuthResult) => {
       if (settled) return;
       settled = true;
       clearInterval(pollId);
       clearTimeout(timeoutId);
+      if (closeGraceTimeoutId != null) clearTimeout(closeGraceTimeoutId);
       channel.close();
       resolve(outcome);
     };
@@ -200,7 +214,12 @@ export const waitForToolsetOAuthResult = (
     };
 
     const pollId = setInterval(() => {
-      if (popup.closed) finish({ type: ToolsetOAuthResultType.Cancelled });
+      if (popup.closed && closeGraceTimeoutId == null) {
+        closeGraceTimeoutId = setTimeout(
+          () => finish({ type: ToolsetOAuthResultType.Cancelled }),
+          closeGraceMs,
+        );
+      }
     }, pollIntervalMs);
 
     const timeoutId = setTimeout(() => {
@@ -319,9 +338,15 @@ export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => {
   const authenticationType =
     (authSettings?.authenticationType as ToolsetAuthTypes) ??
     ToolsetAuthTypes.None;
-  const isLoggedIn =
-    isSignedIn(authSettings?.userLevelAuthStatus) ||
-    isSignedIn(authSettings?.globalAuthStatus);
+  /*
+   * The editor's Log In button always authenticates at the `User` level
+   * (see `AuthSection.handleLogIn` / `runPostSaveAuth`), so `isLoggedIn` must
+   * reflect only `userLevelAuthStatus`. Folding in `globalAuthStatus` would
+   * make the button disappear and skip auth validation/auto-login for a
+   * user who never logged in themselves, just because an admin configured
+   * global auth.
+   */
+  const isLoggedIn = isSignedIn(authSettings?.userLevelAuthStatus);
 
   let withLogin = WithLogin.WithLogin;
   if (authenticationType === ToolsetAuthTypes.None) {

@@ -108,6 +108,7 @@ const NewConversationComposer: FC<Props> = ({
   const bucket = user?.bucket ?? '';
 
   const [isSending, setIsSending] = useState(false);
+  const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const [chatSettingsValues, setChatSettingsValues] =
     useState<NewConversationChatSettings>({
       responseFormat: ResponseFormat.Markdown,
@@ -124,8 +125,12 @@ const NewConversationComposer: FC<Props> = ({
     handleAttach: handleAttachDialFiles,
   } = useDialFileManagerState(bucket);
 
-  const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
-    useAttachmentValidation(selectedDeployment);
+  const {
+    inputAttachmentTypes,
+    isAttachmentsAllowed,
+    validateAttachment,
+    fileAccept,
+  } = useAttachmentValidation(selectedDeployment);
 
   const handleNetworkUploadError = useCallback(
     (filenames: string[]) => {
@@ -184,6 +189,24 @@ const NewConversationComposer: FC<Props> = ({
     [openAttachmentCanvas],
   );
 
+  const handleAttachmentsChange = useCallback((attachments: Attachment[]) => {
+    setAttachmentsAmount(attachments.length);
+  }, []);
+
+  const handleAttachmentsLimitExceeded = useCallback(
+    (count: number, limit: number) => {
+      showNotification({
+        variant: NotificationVariant.Error,
+        title: t(DialFileManagerI18nKeys.TooManyFilesSelected),
+        message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
+          count,
+          limit,
+        }),
+      });
+    },
+    [showNotification, t],
+  );
+
   const handleSend = useCallback(
     async (text: string, attachments: Attachment[]) => {
       if (isSending || !selectedDeploymentId) return;
@@ -234,6 +257,7 @@ const NewConversationComposer: FC<Props> = ({
         <ConversationInput
           onSend={handleSend}
           onUploadAttachment={handleUploadAttachment}
+          onAttachmentsChange={handleAttachmentsChange}
           message={message}
           welcomeText={getTimeOfDayGreeting(
             new Date().getHours(),
@@ -286,7 +310,10 @@ const NewConversationComposer: FC<Props> = ({
           validateAttachment={
             selectedDeployment != null ? validateAttachment : undefined
           }
+          maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
+          onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
           hideAttachFile={!isAttachmentsAllowed}
+          fileAccept={fileAccept}
           onAttachmentClick={handleAttachmentClick}
           modelPickerOverlay={modelPickerOverlay}
         />
@@ -301,6 +328,7 @@ const NewConversationComposer: FC<Props> = ({
           allowedTypes={inputAttachmentTypes}
           maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
           maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
+          existingAttachmentsAmount={attachmentsAmount}
           canAttachFolders={selectedDeployment?.features?.folderAttachments}
           title={t(BasicI18nKeys.AttachFiles)}
           attachLabel={t(DialFileManagerI18nKeys.Attach)}

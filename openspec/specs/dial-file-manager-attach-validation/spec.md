@@ -130,9 +130,13 @@ Memoisation: `handleAttach` in `useCallback`
 
 ### Requirement: Attach handler blocks when count exceeds maximumAttachmentsAmount
 
-When `maximumAttachmentsAmount` is provided and greater than `0`, `DialFileManagerModal` SHALL check the count of the valid (post-filter) selection **after** applying hidden and MIME filters. If the count exceeds `maximumAttachmentsAmount`, the modal SHALL:
+When `maximumAttachmentsAmount` is provided as a finite number greater than `0`, `DialFileManagerModal` SHALL check the count of the valid (post-filter) selection **after** applying hidden and MIME filters. The count SHALL include both the valid current modal selection and `existingAttachmentsAmount` (default `0`) supplied by the host for attachments already present in the conversation input tray.
+
+If the combined count exceeds `maximumAttachmentsAmount`, the modal SHALL:
 1. Show an error notification (title: `DialFileManager.TooManyFilesSelected`, message: `DialFileManager.TooManyFilesDescription` with `{{count}}` and `{{limit}}`).
 2. **Not** call `onAttach` — the modal stays open.
+
+When `maximumAttachmentsAmount` is `undefined`, `0`, negative, or non-finite, no count restriction is applied.
 
 i18n keys: `DialFileManager.TooManyFilesSelected`, `DialFileManager.TooManyFilesDescription` (params: `count`, `limit`)
 RTL: none (toast only)
@@ -144,7 +148,15 @@ Memoisation: `handleAttach` in `useCallback`
 - **WHEN** `maximumAttachmentsAmount` is `3`, user selects 5 valid files, and clicks Attach
 - **THEN** an error toast is shown with count=5, limit=3, and `onAttach` is NOT called
 
-#### Scenario: Count at limit — attach succeeds
+#### Scenario: Previously attached files count toward limit
+
+- **WHEN** `maximumAttachmentsAmount` is `2`
+- **AND** `existingAttachmentsAmount` is `2`
+- **AND** user selects 1 valid file and clicks Attach
+- **THEN** an error toast is shown with count=3, limit=2
+- **AND** `onAttach` is NOT called
+
+#### Scenario: Count at limit
 
 - **WHEN** `maximumAttachmentsAmount` is `3` and user selects exactly 3 valid files
 - **THEN** `onAttach` is called with 3 files and the modal closes

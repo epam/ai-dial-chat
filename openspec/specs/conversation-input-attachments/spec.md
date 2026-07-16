@@ -235,6 +235,60 @@ When `validateAttachment` is not provided, existing behaviour is unchanged.
 
 ---
 
+### Requirement: Input enforces an optional maximum attachment count
+
+`ConversationInputProps`, `InputProps`, and `EditMessageInputProps` SHALL accept optional host-injected count-limit props:
+
+```ts
+maximumAttachmentsAmount?: number
+onAttachmentsLimitExceeded?: (count: number, limit: number) => void
+```
+
+When `maximumAttachmentsAmount` is a finite number greater than `0`, the input SHALL reject an entire newly added batch when the combined attachment count would exceed the limit. The combined count includes:
+- attachments already in the input tray;
+- pending attachments added from a native file picker, drag-and-drop, clipboard paste, or host-supplied `pendingAttachments`;
+- for `EditMessageInput`, pre-existing kept attachments rendered through `prefixAttachments`.
+
+When rejecting a batch, the input SHALL NOT add any attachment from that batch to the tray, SHALL NOT call `onUploadAttachment` for that batch, SHALL call `onAttachmentsLimitExceeded(count, limit)` when provided, and SHALL revoke any `previewUrl` object URLs created for rejected image attachments.
+
+When `maximumAttachmentsAmount` is `undefined`, `0`, negative, or non-finite, the input SHALL treat the count as unlimited.
+
+The lib SHALL remain host-agnostic: it must not know DIAL Core, quick apps, deployments, REST paths, notification UI, or i18n keys. The host app owns deriving the limit from the selected deployment and rendering any user-facing notification.
+
+#### Scenario: Selected file batch exceeds limit
+
+- **WHEN** `maximumAttachmentsAmount` is `2`
+- **AND** the user selects 3 files in one native file-picker batch
+- **THEN** no selected file is added to the tray
+- **AND** `onUploadAttachment` is NOT called for any selected file
+- **AND** `onAttachmentsLimitExceeded` is called with `count=3` and `limit=2`
+
+#### Scenario: Existing tray attachments count toward limit
+
+- **WHEN** the tray already contains 1 attachment
+- **AND** `maximumAttachmentsAmount` is `2`
+- **AND** the user selects 2 more files
+- **THEN** the new batch is rejected
+- **AND** the tray still contains only the original attachment
+- **AND** `onAttachmentsLimitExceeded` is called with `count=3` and `limit=2`
+
+#### Scenario: Edit-mode kept attachments count toward limit
+
+- **WHEN** `EditMessageInput` is rendered with 2 kept attachments
+- **AND** `maximumAttachmentsAmount` is `2`
+- **AND** the user selects 1 additional file
+- **THEN** the selected file is rejected
+- **AND** `onAttachmentsLimitExceeded` is called with `count=3` and `limit=2`
+
+#### Scenario: Empty maximum means unlimited
+
+- **WHEN** `maximumAttachmentsAmount` is `undefined`
+- **AND** the user selects any number of valid files
+- **THEN** all selected files are accepted subject to MIME/type/upload validation
+- **AND** no count-limit callback is called
+
+---
+
 ### Requirement: Attachments already in the tray are re-validated when validateAttachment changes
 
 `useAttachments` (`libs/conversation-input/src/hooks/useAttachments.ts`) SHALL re-run `validateAttachment` against every attachment already in the tray whenever the `validateAttachment` callback identity changes (e.g., because the host recomputed it after the user switched the selected model/deployment).
@@ -332,3 +386,34 @@ For all other error states (no `errorReason`, or `errorReason === AttachmentErro
 - **WHEN** `AttachmentCard` renders with `status: RequestStatus.Error` and `errorReason` is `undefined` and `onRetry` is provided
 - **THEN** the retry button is rendered
 
+---
+
+### Requirement: Native file picker restricts selectable types via an accept hint
+
+`Input`, `ConversationInput`, and `EditMessageInput` in `libs/conversation-input` SHALL accept an optional `fileAccept?: string` prop.
+
+When provided, the component SHALL apply the value verbatim as the `accept` attribute on its native `<input type="file">` element (the device file picker opened by the "Attach file" action). When absent or empty, no `accept` attribute is applied and the native picker offers every file type.
+
+The lib SHALL treat `fileAccept` as an opaque, host-resolved string. It MUST NOT compute the value from deployment data, MIME lists, or DIAL Core semantics — the host app resolves the selected deployment's supported types (via `mimeTypesToFileAccept` over `inputAttachmentTypes`) and passes the finished `accept` string in.
+
+Because the browser `accept` attribute is only a selection hint (the user can still switch the OS dialog to "All files"), this requirement is complementary to and does NOT replace the `validateAttachment` post-pick validation, which continues to gate every added file.
+
+#### Scenario: accept attribute is applied to the native picker
+
+- **WHEN** `ConversationInput` is rendered with `fileAccept="image/*,application/pdf"`
+- **THEN** the hidden `<input type="file">` used by the "Attach file" action has `accept="image/*,application/pdf"`
+
+#### Scenario: no accept attribute when prop is absent
+
+- **WHEN** `ConversationInput` is rendered without `fileAccept`
+- **THEN** the hidden `<input type="file">` has no `accept` attribute and every file type remains selectable
+
+#### Scenario: edit-message picker honours the accept hint
+
+- **WHEN** `EditMessageInput` is rendered with `fileAccept="image/*"`
+- **THEN** its native `<input type="file">` has `accept="image/*"`
+
+#### Scenario: post-pick validation still runs for forced selections
+
+- **WHEN** `fileAccept` is provided and the user overrides the OS dialog to pick an unsupported file
+- **THEN** `validateAttachment` is still invoked for that file and rejects it as before

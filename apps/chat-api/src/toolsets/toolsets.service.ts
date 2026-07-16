@@ -14,8 +14,10 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import { getResourceDisplayNameFallback } from '../common/utils/resource-name';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { HIDDEN_FILE } from '../constants/dial.constants';
+import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
 import type {
   DialToolsetAuthSettingsDto,
@@ -71,6 +73,7 @@ interface DialToolsetResource {
 
 type RawDialToolsetDto = DialToolsetDto & {
   authSettings?: RawAuthSettings;
+  displayName?: string;
 };
 
 type DialToolsetSaveBody = {
@@ -298,6 +301,17 @@ const redactToolsetSecrets = (toolset: DialToolsetDto): DialToolsetDto => {
   };
 };
 
+const withDisplayName = (toolset: DialToolsetDto): RawDialToolsetDto => {
+  const rawToolset = toolset as RawDialToolsetDto;
+  return {
+    ...rawToolset,
+    displayName:
+      rawToolset.displayName ??
+      rawToolset.display_name ??
+      getResourceDisplayNameFallback(rawToolset.id),
+  };
+};
+
 const isVisibleToolset = (toolset: DialToolsetDto): boolean =>
   Boolean(toolset.id) && !toolset.id.includes(HIDDEN_FILE);
 
@@ -349,6 +363,7 @@ export class ToolsetsService {
     private readonly dialClient: DialClientService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly userConfigService: UserConfigService,
+    private readonly deploymentsService: DeploymentsService,
   ) {}
 
   private enrichToolsetWithOwnership(
@@ -563,7 +578,8 @@ export class ToolsetsService {
       const data: DialToolsetListResponseDto = {
         data: (toolsets ?? [])
           .filter(isVisibleToolset)
-          .map(redactToolsetSecrets),
+          .map(redactToolsetSecrets)
+          .map(withDisplayName),
       };
       await this.cacheManager.set(cacheKey, data, 30 * 1000);
       return {
@@ -612,10 +628,12 @@ export class ToolsetsService {
 
     try {
       const resource = parseDialToolsetResource(toolsetName);
-      const data = redactToolsetSecrets(
-        resource == null
-          ? await this.getOpenAiToolset(accessToken, toolsetName)
-          : await this.getCustomToolset(accessToken, toolsetName, resource),
+      const data = withDisplayName(
+        redactToolsetSecrets(
+          resource == null
+            ? await this.getOpenAiToolset(accessToken, toolsetName)
+            : await this.getCustomToolset(accessToken, toolsetName, resource),
+        ),
       );
       await this.cacheManager.set(cacheKey, data, 60 * 1000);
       return enrich(data);
@@ -636,6 +654,16 @@ export class ToolsetsService {
     await this.cacheManager.del(`toolsets:list:${userSub}`);
     if (toolsetName != null) {
       await this.cacheManager.del(`toolsets:single:${userSub}:${toolsetName}`);
+      /*
+       * The details panel reads toolset auth status through
+       * `DeploymentsService.getDeploymentDetails`, which caches independently
+       * of the toolsets caches above — without this, a login/logout leaves
+       * that panel showing the pre-change credential status for up to 60s.
+       */
+      await this.deploymentsService.invalidateDetailsCache(
+        userSub,
+        toolsetName,
+      );
     }
   }
 
@@ -856,7 +884,15 @@ export class ToolsetsService {
         headers: authHeaders,
         body: toDialToolsetSignoutBody(body),
       });
-      if (response.error) {
+      /*
+       * DIAL Core returns 404 from signout when there is no credential left
+       * at the requested level to revoke — the toolset itself already
+       * resolved via `authHeaders`/prior calls, so this only means "already
+       * signed out". Treat it as the idempotent success it represents
+       * instead of surfacing a "failed to log out" error for a state the
+       * user already wanted.
+       */
+      if (response.error && response.response.status !== 404) {
         return mapDialHttpStatus(
           response.response.status,
           `log out toolset "${toolsetName}"`,

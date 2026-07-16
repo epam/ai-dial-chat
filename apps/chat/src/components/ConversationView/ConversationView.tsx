@@ -47,6 +47,7 @@ import {
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -159,6 +160,7 @@ const ConversationView: FC<Props> = ({
 }) => {
   const isModelFixed = !!fixedModel;
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -168,6 +170,7 @@ const ConversationView: FC<Props> = ({
   const [pendingDialAttachments, setPendingDialAttachments] = useState<
     Attachment[]
   >([]);
+  const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
   const isEditActive = !!editingMessageIndexes?.size;
   const {
@@ -179,6 +182,7 @@ const ConversationView: FC<Props> = ({
     error,
   } = useDeployments();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
+  const activeDeploymentId = fixedModel?.id ?? selectedItemId;
 
   const favoriteCatalogItems = useMemo(
     () =>
@@ -189,8 +193,8 @@ const ConversationView: FC<Props> = ({
   );
 
   const selectedDeployment = useMemo(
-    () => items.find((item) => item.id === selectedItemId),
-    [items, selectedItemId],
+    () => items.find((item) => item.id === activeDeploymentId),
+    [items, activeDeploymentId],
   );
 
   const selectedCatalogItem = useMemo(
@@ -201,8 +205,12 @@ const ConversationView: FC<Props> = ({
     [selectedDeployment, favoriteIds],
   );
 
-  const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
-    useAttachmentValidation(selectedDeployment);
+  const {
+    inputAttachmentTypes,
+    isAttachmentsAllowed,
+    validateAttachment,
+    fileAccept,
+  } = useAttachmentValidation(selectedDeployment);
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
@@ -424,6 +432,28 @@ const ConversationView: FC<Props> = ({
     [bucket],
   );
 
+  const handleAttachmentsChange = useCallback(
+    (attachments: Attachment[]) => {
+      setAttachmentsAmount(attachments.length);
+      onAttachmentsChange?.(attachments);
+    },
+    [onAttachmentsChange],
+  );
+
+  const handleAttachmentsLimitExceeded = useCallback(
+    (count: number, limit: number) => {
+      showNotification({
+        variant: NotificationVariant.Error,
+        title: t(DialFileManagerI18nKeys.TooManyFilesSelected),
+        message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
+          count,
+          limit,
+        }),
+      });
+    },
+    [showNotification, t],
+  );
+
   const handleInputAttachmentClick = useCallback(
     (attachment: Attachment) => {
       void openAttachmentCanvas(attachment);
@@ -535,7 +565,12 @@ const ConversationView: FC<Props> = ({
                         ? validateAttachment
                         : undefined
                     }
+                    maximumAttachmentsAmount={
+                      selectedDeployment?.maxInputAttachments
+                    }
+                    onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
                     hideAttachFile={!isAttachmentsAllowed}
+                    fileAccept={fileAccept}
                     onAttachmentClick={handleMessageAttachmentClick}
                   />
                 </div>
@@ -587,7 +622,7 @@ const ConversationView: FC<Props> = ({
                 onUploadAttachment={onUploadAttachment}
                 onStop={canStopAssistant ? onStop : undefined}
                 isStreaming={isAssistantTyping}
-                onAttachmentsChange={onAttachmentsChange}
+                onAttachmentsChange={handleAttachmentsChange}
                 placeholder={placeholder}
                 deployments={
                   fixedModel ? fixedDeploymentItems : deploymentItems
@@ -633,7 +668,12 @@ const ConversationView: FC<Props> = ({
                 validateAttachment={
                   selectedDeployment != null ? validateAttachment : undefined
                 }
+                maximumAttachmentsAmount={
+                  selectedDeployment?.maxInputAttachments
+                }
+                onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
                 hideAttachFile={!isAttachmentsAllowed}
+                fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={
                   isModelFixed
@@ -681,6 +721,7 @@ const ConversationView: FC<Props> = ({
                   maximumAttachmentsAmount={
                     selectedDeployment?.maxInputAttachments
                   }
+                  existingAttachmentsAmount={attachmentsAmount}
                   canAttachFolders={
                     selectedDeployment?.features?.folderAttachments
                   }

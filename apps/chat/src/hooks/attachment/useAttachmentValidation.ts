@@ -12,6 +12,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AttachmentsI18nKeys } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
+import { mimeTypesToFileAccept } from '../../utils/attachment-types';
 
 export const useAttachmentValidation = (
   selectedDeployment: DeploymentItem | undefined,
@@ -27,6 +28,11 @@ export const useAttachmentValidation = (
   const isAttachmentsAllowed =
     selectedDeployment?.inputAttachmentTypes != null &&
     selectedDeployment.inputAttachmentTypes.length > 0;
+
+  const fileAccept = useMemo(
+    () => mimeTypesToFileAccept(inputAttachmentTypes),
+    [inputAttachmentTypes],
+  );
 
   const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -65,5 +71,10 @@ export const useAttachmentValidation = (
     [inputAttachmentTypes, showNotification, t],
   );
 
-  return { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment };
+  return {
+    inputAttachmentTypes,
+    isAttachmentsAllowed,
+    validateAttachment,
+    fileAccept,
+  };
 };

@@ -30,13 +30,22 @@ const mockToolset: DialToolsetDto = {
   },
 };
 const mockList: DialToolsetListResponseDto = { data: [mockToolset] };
-const mockEnrichedToolset: DialToolsetDto = {
+/* Toolset as it is stored in cache (after withDisplayName is applied). */
+const mockCachedToolset = {
   ...mockToolset,
+  displayName: 'my-toolset',
+} as DialToolsetDto;
+const mockCachedList: DialToolsetListResponseDto = {
+  data: [mockCachedToolset],
+};
+const mockEnrichedToolset = {
+  ...mockToolset,
+  displayName: 'my-toolset',
   is_installed: false,
   is_my: false,
   can_edit: false,
   shared_with_me: false,
-};
+} as DialToolsetDto;
 const mockEnrichedList: DialToolsetListResponseDto = {
   data: [mockEnrichedToolset],
 };
@@ -77,17 +86,23 @@ function makeDeps() {
       .mockResolvedValue({ toolsets: [], deployments: [] }),
   };
 
-  return { dialClient, cacheManager, userConfigService };
+  const deploymentsService = {
+    invalidateDetailsCache: vi.fn().mockResolvedValue(undefined),
+  };
+
+  return { dialClient, cacheManager, userConfigService, deploymentsService };
 }
 
 function makeService() {
-  const { dialClient, cacheManager, userConfigService } = makeDeps();
+  const { dialClient, cacheManager, userConfigService, deploymentsService } =
+    makeDeps();
   const service = new ToolsetsService(
     dialClient,
     cacheManager as never,
     userConfigService as never,
+    deploymentsService as never,
   );
-  return { service, cacheManager, userConfigService };
+  return { service, cacheManager, userConfigService, deploymentsService };
 }
 
 describe('ToolsetsService', () => {
@@ -127,15 +142,16 @@ describe('ToolsetsService', () => {
     });
 
     it('returns cached list without calling upstream on cache hit', async () => {
-      const { dialClient, userConfigService } = makeDeps();
+      const { dialClient, userConfigService, deploymentsService } = makeDeps();
       const cacheManager = {
-        get: vi.fn().mockResolvedValue(mockList),
+        get: vi.fn().mockResolvedValue(mockCachedList),
         set: vi.fn(),
       };
       const service = new ToolsetsService(
         dialClient,
         cacheManager as never,
         userConfigService as never,
+        deploymentsService as never,
       );
       const spy = vi
         .spyOn(service['dialClient'].client, 'getToolSets')
@@ -374,7 +390,7 @@ describe('ToolsetsService', () => {
     });
 
     it('uses per-user cache keys — different users get different cache entries', async () => {
-      const { dialClient, userConfigService } = makeDeps();
+      const { dialClient, userConfigService, deploymentsService } = makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -387,6 +403,7 @@ describe('ToolsetsService', () => {
         dialClient,
         cacheManager as never,
         userConfigService as never,
+        deploymentsService as never,
       );
       vi.spyOn(service['dialClient'].client, 'getToolSets').mockResolvedValue(
         okResponse(mockList),
@@ -508,15 +525,16 @@ describe('ToolsetsService', () => {
     });
 
     it('returns cached toolset without calling upstream on cache hit', async () => {
-      const { dialClient, userConfigService } = makeDeps();
+      const { dialClient, userConfigService, deploymentsService } = makeDeps();
       const cacheManager = {
-        get: vi.fn().mockResolvedValue(mockToolset),
+        get: vi.fn().mockResolvedValue(mockCachedToolset),
         set: vi.fn(),
       };
       const service = new ToolsetsService(
         dialClient,
         cacheManager as never,
         userConfigService as never,
+        deploymentsService as never,
       );
       const spy = vi
         .spyOn(service['dialClient'].client, 'getToolset')
@@ -815,7 +833,7 @@ describe('ToolsetsService', () => {
 });
 
 function makeWriteService() {
-  const { dialClient, userConfigService } = makeDeps();
+  const { dialClient, userConfigService, deploymentsService } = makeDeps();
   const cacheManager = {
     get: vi.fn().mockResolvedValue(undefined),
     set: vi.fn().mockResolvedValue(undefined),
@@ -825,8 +843,9 @@ function makeWriteService() {
     dialClient,
     cacheManager as never,
     userConfigService as never,
+    deploymentsService as never,
   );
-  return { service, cacheManager };
+  return { service, cacheManager, deploymentsService };
 }
 
 const bucketSdkOk = okResponse({ bucket: 'test-bucket' });
@@ -1413,6 +1432,40 @@ describe('ToolsetsService — write operations', () => {
           }),
         }),
       );
+    });
+
+    it('treats an upstream 404 as an already-signed-out no-op instead of an error', async () => {
+      const { service, cacheManager } = makeWriteService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'toolSetSignout',
+      ).mockResolvedValue(errResponse(404));
+
+      await service.logoutToolset('user1', 'token', id, {
+        url: id,
+        credentialsLevel: ToolsetCredentialsLevel.Global,
+        authenticationType: ToolsetAuthType.OAuth,
+      });
+
+      expect(cacheManager.del).toHaveBeenCalledWith(
+        `toolsets:single:user1:${id}`,
+      );
+    });
+
+    it('still throws for a non-404 upstream error', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'toolSetSignout',
+      ).mockResolvedValue(errResponse(401));
+
+      await expect(
+        service.logoutToolset('user1', 'token', id, {
+          url: id,
+          credentialsLevel: ToolsetCredentialsLevel.User,
+          authenticationType: ToolsetAuthType.OAuth,
+        }),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 });

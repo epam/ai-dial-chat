@@ -97,6 +97,14 @@ export interface InputProps {
   typography?: InputTypography;
   /** Label for the attach-file menu item. */
   attachLabel?: string;
+  /**
+   * Value applied verbatim as the `accept` attribute on the native device
+   * file picker (`<input type="file">`), hinting the OS dialog to grey out or
+   * hide unsupported file types. The host resolves it from the selected
+   * model's supported attachment types; the lib treats it as an opaque string.
+   * When absent, no `accept` attribute is set and every file type is selectable.
+   */
+  fileAccept?: string;
   /** Tooltip title for the add-menu trigger button. */
   addMenuTitle?: string;
   /** Accessible label for each attachment card's remove button. */
@@ -141,7 +149,7 @@ export interface InputProps {
   initialAttachments?: Attachment[];
   /**
    * When `true`, the textarea always renders on its own row above the action bar
-   * (attach button on the left, footer actions on the right), instead of the
+   * (attach button at the start, footer actions at the end), instead of the
    * compact single-row layout used when no attachments are present. Used by the
    * edit-message UI, which always wants the stacked layout.
    */
@@ -238,6 +246,16 @@ export interface InputProps {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
+  /**
+   * Maximum number of attachments allowed in the tray. Undefined, `0`, or
+   * non-finite values mean there is no count limit.
+   */
+  maximumAttachmentsAmount?: number;
+  /**
+   * Called when adding a file/drop/pending attachment batch would exceed
+   * `maximumAttachmentsAmount`.
+   */
+  onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
   /**
    * Called when the user clicks or keyboard-activates an attachment card.
    * Receives the full `Attachment` object (including the local `File`).

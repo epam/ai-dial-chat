@@ -232,6 +232,22 @@ describe('Input', () => {
     expect(screen.getByLabelText('Add')).toBeTruthy();
   });
 
+  it('should set the accept attribute on the file input when fileAccept is provided', () => {
+    render(<Input fileAccept="image/*,application/pdf" />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    expect(fileInput.getAttribute('accept')).toBe('image/*,application/pdf');
+  });
+
+  it('should not set the accept attribute when fileAccept is absent', () => {
+    render(<Input />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    expect(fileInput.hasAttribute('accept')).toBe(false);
+  });
+
   it('should show an attachment card after a file is picked', () => {
     render(<Input />);
     const fileInput = document.querySelector(
@@ -335,6 +351,69 @@ describe('Input', () => {
     expect(onAttachmentsChange).toHaveBeenCalledWith(
       expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
     );
+  });
+
+  it('does not add a selected batch when it would exceed the attachment limit', () => {
+    const onAttachmentsLimitExceeded = vi.fn();
+    const onAttachmentsChange = vi.fn();
+    render(
+      <Input
+        maximumAttachmentsAmount={2}
+        onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
+        onAttachmentsChange={onAttachmentsChange}
+      />,
+    );
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+
+    fireEvent.change(fileInput, {
+      target: {
+        files: [
+          new File(['content'], 'first.pdf', { type: 'application/pdf' }),
+          new File(['content'], 'second.pdf', { type: 'application/pdf' }),
+          new File(['content'], 'third.pdf', { type: 'application/pdf' }),
+        ],
+      },
+    });
+
+    expect(screen.queryByText('first')).toBeNull();
+    expect(onAttachmentsChange).not.toHaveBeenCalled();
+    expect(onAttachmentsLimitExceeded).toHaveBeenCalledWith(3, 2);
+  });
+
+  it('counts existing attachments when checking a selected batch against the limit', () => {
+    const onAttachmentsLimitExceeded = vi.fn();
+    render(
+      <Input
+        maximumAttachmentsAmount={2}
+        onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
+      />,
+    );
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+
+    fireEvent.change(fileInput, {
+      target: {
+        files: [
+          new File(['content'], 'first.pdf', { type: 'application/pdf' }),
+        ],
+      },
+    });
+    fireEvent.change(fileInput, {
+      target: {
+        files: [
+          new File(['content'], 'second.pdf', { type: 'application/pdf' }),
+          new File(['content'], 'third.pdf', { type: 'application/pdf' }),
+        ],
+      },
+    });
+
+    expect(screen.getByText('first')).toBeTruthy();
+    expect(screen.queryByText('second')).toBeNull();
+    expect(screen.queryByText('third')).toBeNull();
+    expect(onAttachmentsLimitExceeded).toHaveBeenCalledWith(3, 2);
   });
 
   it('should show mic button when isTranscriptionSupported and message is empty', () => {

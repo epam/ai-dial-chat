@@ -8,6 +8,7 @@ import {
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { getResourceDisplayNameFallback } from '../common/utils/resource-name';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import { DialClientService } from '../dial/dial-client.service';
@@ -216,7 +217,7 @@ const mapToDeploymentItem = (
 
   return {
     id: raw.id,
-    displayName: raw.display_name ?? raw.id,
+    displayName: raw.display_name ?? getResourceDisplayNameFallback(raw.id),
     type,
     iconUrl: raw.icon_url,
     description: raw.description,
@@ -303,6 +304,19 @@ export class DeploymentsService {
           this.cacheManager.del(`${baseCacheKey}:interface:${type}`),
         ),
     );
+  }
+
+  /**
+   * Evicts a user's cached details for one deployment — e.g. right after a
+   * toolset login/logout, so the details panel's next `getDeploymentDetails`
+   * call re-reads the updated `userLevelAuthStatus` instead of the snapshot
+   * cached before the credentials changed.
+   */
+  async invalidateDetailsCache(
+    userSub: string,
+    deployment: string,
+  ): Promise<void> {
+    await this.cacheManager.del(`deployments:details:${userSub}:${deployment}`);
   }
 
   /**
@@ -499,10 +513,11 @@ export class DeploymentsService {
   }
 
   async getDeploymentDetails(
+    userSub: string,
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const cacheKey = `deployments:details:${deployment}`;
+    const cacheKey = `deployments:details:${userSub}:${deployment}`;
     const cached = await this.cacheManager.get<DeploymentDetailsDto>(cacheKey);
     if (cached) {
       this.logger.debug(`Cache hit for deployment details "${deployment}"`);

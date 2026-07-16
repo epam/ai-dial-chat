@@ -15,6 +15,7 @@ import {
   BUCKET_NAME_PATTERN,
   BUCKET_NAME_VALIDATION_MESSAGE,
 } from '../../common/validators/bucket-name.pattern';
+import { DialFileNodeType } from './dial-file-node-type';
 import { IsValidFilePath } from './file-path.validator';
 
 export class ListFilesQueryDto {
@@ -70,10 +71,8 @@ export class ListFilesQueryDto {
   permissions?: boolean;
 }
 
-export enum FileNodeType {
-  Item = 'item',
-  Folder = 'folder',
-}
+export const FileNodeType = DialFileNodeType;
+export type FileNodeType = DialFileNodeType;
 
 export class ListFilesItemDto {
   @ApiProperty()

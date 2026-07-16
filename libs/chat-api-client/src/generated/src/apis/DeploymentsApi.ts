@@ -94,7 +94,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core\'s getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds.
+   * Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core\'s getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response carries no client-facing Cache-Control so a browser never serves a stale copy of another user\'s cache window or of credentials that changed since the last fetch.
    * Get full details for a single deployment
    */
   async getDeploymentDetailsRaw(
@@ -132,7 +132,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core\'s getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds.
+   * Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core\'s getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response carries no client-facing Cache-Control so a browser never serves a stale copy of another user\'s cache window or of credentials that changed since the last fetch.
    * Get full details for a single deployment
    */
   async getDeploymentDetails(

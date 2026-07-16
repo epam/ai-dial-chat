@@ -49,6 +49,7 @@ export const Input: FC<InputProps> = ({
   placeholder = 'Type a message...',
   ariaLabel,
   attachLabel = 'Attach file',
+  fileAccept,
   addMenuTitle = 'Add',
   menuTitle = 'Menu',
   menuCloseLabel = 'Close',
@@ -91,6 +92,8 @@ export const Input: FC<InputProps> = ({
   validateAttachment,
   onAttachmentClick,
   modelPickerOverlay,
+  maximumAttachmentsAmount,
+  onAttachmentsLimitExceeded,
 }) => {
   const isMobile = useIsMobile();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -159,6 +162,9 @@ export const Input: FC<InputProps> = ({
     pendingAttachments,
     onPendingAttachmentsConsumed,
     onExpandPastedText: handleExpandPastedText,
+    maximumAttachmentsAmount,
+    baseAttachmentsAmount: prefixAttachments.length,
+    onAttachmentsLimitExceeded,
   });
 
   const handleTranscript = useCallback(
@@ -323,7 +329,7 @@ export const Input: FC<InputProps> = ({
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
         'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border',
-        attachments.length > 6 ? 'py-3 pl-3' : 'p-3',
+        attachments.length > 6 ? 'py-3 ps-3' : 'p-3',
         className,
       )}
     >
@@ -370,6 +376,7 @@ export const Input: FC<InputProps> = ({
                 ref={fileInputRef}
                 type="file"
                 multiple
+                accept={fileAccept}
                 className="sr-only"
                 aria-hidden
                 tabIndex={-1}

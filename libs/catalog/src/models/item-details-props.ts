@@ -19,6 +19,8 @@ export interface ItemDetailsTexts {
   tabOverviewLabel?: string;
   /** "Pricing" tab label. Default: `'Pricing'`. */
   tabPricingLabel?: string;
+  /** "Limits" tab label. Default: `'Limits'`. */
+  tabLimitsLabel?: string;
   /** "API" tab label. Default: `'API'`. */
   tabApiLabel?: string;
   /** Accessible label for the details panel `role="dialog"`. Default: `'Item details'`. */
@@ -109,18 +111,6 @@ export interface ItemDetailsTexts {
   credentialsBadgeLoggedOutLabel?: string;
   /** "Delete" action button label. Default: `'Delete'`. */
   deleteActionLabel?: string;
-  /** Recipient-side "Delete" action and confirmation label. Default: `'Delete'`. */
-  unshareLabel?: string;
-  /** Title shown before removing a shared item. Default: `'Delete item?'`. */
-  unshareConfirmTitle?: string;
-  /**
-   * Returns the confirmation popup's description, interpolating the item's
-   * display name. Default:
-   * `(name) => \`Delete "${name}" from your catalog? You'll need a new invitation to access it again.\``.
-   */
-  unshareConfirmMessage?: (name: string) => string;
-  /** Generic "Cancel" label, used by the unshare confirmation popup. Default: `'Cancel'`. */
-  cancelLabel?: string;
 }
 
 /** Typography class overrides for `DetailsPanel` text elements. */
@@ -257,13 +247,6 @@ export interface DetailsPanelProps {
     item: CatalogItem,
     params: { level: CredentialsLevel },
   ) => Promise<void> | void;
-  /**
-   * Called when unsharing is confirmed via the confirmation popup, for an
-   * item shared with the current user (`sharedWithMe: true`). May return a
-   * promise; the popup shows a loading state and prevents duplicate
-   * submission while pending.
-   */
-  onUnshare?: (item: CatalogItem) => Promise<void> | void;
   /** Text overrides for all user-visible strings. */
   texts?: ItemDetailsTexts;
   /** Grouped style overrides. */

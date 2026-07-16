@@ -45,25 +45,8 @@ vi.mock('../../../FolderPath/FolderPath', () => ({
   FolderPath: () => <div />,
 }));
 vi.mock('../ShareButton/ShareButton', () => ({
-  ShareButton: ({
-    label,
-    onUnshare,
-    unshareLabel,
-    item,
-  }: {
-    label?: string;
-    onUnshare?: (item: CatalogItem) => void;
-    unshareLabel?: string;
-    item: CatalogItem;
-  }) => (
-    <>
-      <button>{label ?? 'Share'}</button>
-      {onUnshare && (
-        <button onClick={() => onUnshare(item)}>
-          {unshareLabel ?? 'Delete'}
-        </button>
-      )}
-    </>
+  ShareButton: ({ label }: { label?: string }) => (
+    <button>{label ?? 'Share'}</button>
   ),
 }));
 vi.mock('../DeleteButton/DeleteButton', () => ({
@@ -288,20 +271,6 @@ describe('Header', () => {
     render(<Header item={item} onDelete={onDelete} />);
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
     expect(onDelete).toHaveBeenCalled();
-  });
-
-  it('threads onUnshare and unshareLabel through to ShareButton', async () => {
-    const onUnshare = vi.fn();
-    const item = { ...makeItem(CatalogEntityType.Application), isMyApp: true };
-    render(
-      <Header
-        item={item}
-        onUnshare={onUnshare}
-        texts={{ unshareLabel: 'Stop sharing' }}
-      />,
-    );
-    await userEvent.click(screen.getByRole('button', { name: 'Stop sharing' }));
-    expect(onUnshare).toHaveBeenCalledWith(item);
   });
 
   it('positions Delete immediately after Share in the action row', () => {

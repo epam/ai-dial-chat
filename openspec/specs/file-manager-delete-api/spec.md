@@ -6,7 +6,7 @@ The BFF SHALL expose `POST /api/v1/files/delete` that accepts a batch of file/fo
 
 ### State ownership
 
-`FilesService` in `apps/chat-api/src/files/` owns all delete logic. `FilesController` delegates to it, following the existing thin-controller pattern.
+`FilesBatchOperationsService` (`apps/chat-api/src/files/batch/files-batch-operations.service.ts`) owns all delete logic, sharing its per-child dispatch/fan-out/aggregate-partial-failure control flow with rename, copy, and move through one internal generic helper. It injects `FilesListingService` for `expandFolderContents`. `FilesController` delegates through the `FilesService` facade, following the existing thin-controller pattern.
 
 ### Request DTO
 
@@ -77,9 +77,9 @@ async deleteFiles(
    - If `nodeType === 'folder'`: call `expandFolderContents` (reuse existing method), then delete each expanded file individually. Finally, attempt to delete `${folderRelPath}.dial_folder` marker (404 is silently ignored). Aggregate: if all children and marker succeed → `{ path, success: true }`; if any child fails → `{ path, success: false, error: 'Partial folder delete' }`.
 2. Return `{ results }` after all items are processed.
 
-**Folder path normalisation**: if `path` does not end with `/`, append `/` before passing to `expandFolderContents` (same as `downloadArchive`).
+**Folder path normalisation**: if `path` does not end with `/`, append `/` before passing to `expandFolderContents` (same as archive download).
 
-**`expandFolderContents` reuse**: The method already exists in `FilesService`. The service calls it with `at` from the session token.
+**`expandFolderContents` reuse**: the method lives on `FilesListingService` (relocated from the original monolithic `FilesService`); `FilesBatchOperationsService` calls it with `at` from the session token.
 
 ### Generated client
 

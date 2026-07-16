@@ -17,12 +17,11 @@ import {
   BUCKET_NAME_PATTERN,
   BUCKET_NAME_VALIDATION_MESSAGE,
 } from '../../common/validators/bucket-name.pattern';
+import { DialFileNodeType } from './dial-file-node-type';
 import { IsValidFilePath } from './file-path.validator';
 
-export enum CopyItemNodeType {
-  Item = 'item',
-  Folder = 'folder',
-}
+export const CopyItemNodeType = DialFileNodeType;
+export type CopyItemNodeType = DialFileNodeType;
 
 export class CopyItemDto {
   @IsString()

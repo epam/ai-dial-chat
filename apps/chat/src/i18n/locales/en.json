@@ -94,6 +94,7 @@
     "listViewLabel": "List view",
     "details": {
       "tabTools": "Tools",
+      "tabLimits": "Limits",
       "dailyLimit": "Daily limit",
       "api": {
         "resourceSection": "Resource",
@@ -105,6 +106,21 @@
       "pricing": {
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
+      },
+      "limits": {
+        "requestsPerHour": "Requests per hour",
+        "requestsPerDay": "Requests per day",
+        "tokensPerMinute": "Tokens per minute",
+        "tokensPerDay": "Tokens per day",
+        "tokensPerWeek": "Tokens per week",
+        "tokensPerMonth": "Tokens per month",
+        "costPerMinute": "Cost per minute",
+        "costPerDay": "Cost per day",
+        "costPerWeek": "Cost per week",
+        "costPerMonth": "Cost per month",
+        "value": "{{used}} / {{total}}",
+        "unlimitedValue": "Unlimited",
+        "progressAriaLabel": "{{label}}: {{used}} of {{total}} used"
       },
       "credentials": {
         "signedInLabel": "Signed in",
@@ -128,15 +144,6 @@
         "error": "Failed to delete. Please try again.",
         "successTitle": "Deleted successfully",
         "success": "\"{{name}}\" was deleted."
-      },
-      "unshare": {
-        "label": "Delete",
-        "confirmTitle": "Delete item?",
-        "confirmMessage": "Delete \"{{name}}\" from your catalog? You'll need a new invitation to access it again.",
-        "errorTitle": "Delete failed",
-        "error": "Failed to delete \"{{name}}\". Please try again.",
-        "successTitle": "Deleted",
-        "success": "\"{{name}}\" was deleted from your catalog."
       },
       "connect": {
         "toolsetTitle": "Connect toolset",
@@ -225,6 +232,7 @@
     "download": "Download",
     "logOut": "Log out",
     "copyLink": "Copy link",
+    "copyUrl": "Copy URL",
     "logIn": "Log in",
     "publish": "Publish"
   },
@@ -450,7 +458,7 @@
     "unsupportedFilesSkipped": "Some files were skipped",
     "unsupportedFilesDescription": "Files with unsupported type were not attached",
     "tooManyFilesSelected": "Too many files selected",
-    "tooManyFilesDescription": "You selected {{count}} files, limit is {{limit}}",
+    "tooManyFilesDescription": "You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.",
     "deletingLabel": "Deleting…",
     "deleteConfirmTitleSingle": "Confirm deleting",
     "deleteConfirmTitleMultiple": "Confirm deleting items",

@@ -2,7 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToolsetEditorI18nKeys } from '../../../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  CatalogI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../../../../constants/translation-keys';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
@@ -15,6 +19,38 @@ import {
 import SettingsForm from '../SettingsForm';
 
 vi.mock('../AuthSection', () => ({ default: () => null }));
+
+vi.mock('../../../../context/AppConfigContext', () => ({
+  useAppConfig: vi.fn(() => ({
+    config: { dialCoreExternalUrl: 'https://dial-core.example.com' },
+  })),
+}));
+
+vi.mock('@epam/ai-dial-chat-shared', () => ({
+  mergeClasses: (...classes: (string | undefined | false)[]) =>
+    classes.filter(Boolean).join(' '),
+  useCodeCopy: vi.fn(() => ({ isCopied: false, copy: vi.fn() })),
+}));
+
+vi.mock('@epam/ai-dial-kit', () => ({
+  NeutralButton: ({
+    label,
+    onClick,
+  }: {
+    label?: string;
+    onClick?: () => void;
+  }) => (
+    <button type="button" onClick={onClick}>
+      {label}
+    </button>
+  ),
+}));
+
+vi.mock('../../../../utils/mcp-endpoint-url', () => ({
+  buildToolsetMcpUrl: vi.fn(
+    (base: string, id: string) => `${base}/v1/toolset/${id}/mcp`,
+  ),
+}));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialInput: ({
@@ -136,12 +172,15 @@ const renderSettings = (endpoint = 'https://example.com/mcp') =>
     />,
   );
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe('SettingsForm — copy endpoint', () => {
   const user = userEvent.setup({ delay: null });
   const mockWriteText = vi.fn().mockResolvedValue(undefined);
 
   beforeEach(() => {
-    vi.clearAllMocks();
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: { writeText: mockWriteText },
@@ -197,5 +236,81 @@ describe('SettingsForm — copy endpoint', () => {
       name: `SSE ${ToolsetEditorI18nKeys.ProtocolSseDeprecatedLabel}`,
     });
     expect(sseOption).toBeTruthy();
+  });
+});
+
+describe('SettingsForm — Connect toolset section', () => {
+  it('renders the connect section when dialCoreExternalUrl and toolsetId are set', () => {
+    renderSettings();
+    expect(screen.getByText(CatalogI18nKeys.ConnectToolsetTitle)).toBeTruthy();
+    expect(
+      screen.getByText(CatalogI18nKeys.ConnectToolsetDescription),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.CopyUrl }),
+    ).toBeTruthy();
+  });
+
+  it('hides the connect section when toolsetId is empty', async () => {
+    const { buildToolsetMcpUrl } =
+      await import('../../../../utils/mcp-endpoint-url');
+    render(
+      <SettingsForm
+        form={makeForm()}
+        errors={{}}
+        isSaving={false}
+        toolsetId=""
+        onChange={vi.fn()}
+        onAuthChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(CatalogI18nKeys.ConnectToolsetTitle)).toBeNull();
+    expect(buildToolsetMcpUrl).not.toHaveBeenCalled();
+  });
+
+  it('hides the connect section when dialCoreExternalUrl is absent', async () => {
+    const { useAppConfig } =
+      await import('../../../../context/AppConfigContext');
+    const { buildToolsetMcpUrl } =
+      await import('../../../../utils/mcp-endpoint-url');
+    vi.mocked(useAppConfig).mockReturnValueOnce({
+      config: { dialCoreExternalUrl: null },
+    } as ReturnType<typeof useAppConfig>);
+    render(
+      <SettingsForm
+        form={makeForm()}
+        errors={{}}
+        isSaving={false}
+        toolsetId="toolsets/b/my__1.0.0"
+        onChange={vi.fn()}
+        onAuthChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(CatalogI18nKeys.ConnectToolsetTitle)).toBeNull();
+    expect(buildToolsetMcpUrl).not.toHaveBeenCalled();
+  });
+
+  it('builds the MCP URL and passes it to the shared copy control', async () => {
+    const user = userEvent.setup({ delay: null });
+    const mockCopy = vi.fn();
+    const { useCodeCopy } = await import('@epam/ai-dial-chat-shared');
+    const { buildToolsetMcpUrl } =
+      await import('../../../../utils/mcp-endpoint-url');
+    vi.mocked(useCodeCopy).mockReturnValueOnce({
+      isCopied: false,
+      copy: mockCopy,
+    });
+    renderSettings();
+    await user.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.CopyUrl }),
+    );
+    expect(buildToolsetMcpUrl).toHaveBeenCalledWith(
+      'https://dial-core.example.com',
+      'toolsets/b/my__1.0.0',
+    );
+    expect(useCodeCopy).toHaveBeenCalledWith(
+      'https://dial-core.example.com/v1/toolset/toolsets/b/my__1.0.0/mcp',
+    );
+    expect(mockCopy).toHaveBeenCalledOnce();
   });
 });

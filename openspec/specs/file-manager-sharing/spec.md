@@ -4,7 +4,7 @@
 
 The BFF SHALL expose `POST /api/v1/files/share` that accepts a batch of file/folder paths and a permission level, creates a single `LINK`-type invitation covering all listed resources via DIAL Core `shareResource`, and returns the invitation link.
 
-**State ownership**: `FilesService` in `apps/chat-api/src/files/` owns all share logic; `FilesController` delegates to it (thin-controller pattern, `apps/chat-api/AGENTS.md`).
+**State ownership**: `FilesSharingService` (`apps/chat-api/src/files/sharing/files-sharing.service.ts`) owns all share/revoke/discard logic; `FilesController` delegates through the `FilesService` facade (thin-controller pattern, `apps/chat-api/AGENTS.md`).
 
 **Authorization**: session cookie → `req.user.at` (bearer token forwarded to DIAL Core), identical to `/copy` and `/move`. No additional role is required beyond an authenticated session; Core enforces that the caller has `SHARE`-capable permission on each resource, surfaced as a `403 Forbidden` exception.
 
@@ -303,7 +303,7 @@ async listSharedByMe(
 
 ### Requirement: Sharing observability
 
-`FilesService` SHALL emit structured log lines for `shareFiles`/`revokeAccess`/`discardShared`, including item count and outcome, matching the existing pattern in `renameFiles`/`copyFiles`. Log lines SHALL NOT include the invitation link, full resource paths, or any user-identifying data beyond counts — only `itemCount` and success/failure.
+`FilesSharingService` SHALL emit structured log lines for `shareFiles`/`revokeAccess`/`discardShared`, including item count and outcome, matching the existing pattern in `FilesBatchOperationsService.renameFiles`/`copyFiles`. Log lines SHALL NOT include the invitation link, full resource paths, or any user-identifying data beyond counts — only `itemCount` and success/failure.
 
 #### Scenario: Share call logged without leaking the invitation link
 

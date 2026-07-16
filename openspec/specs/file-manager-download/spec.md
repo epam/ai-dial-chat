@@ -154,11 +154,11 @@ export const downloadArchive = async (
 
 **ZIP library:** `archiver` npm package. Added to `apps/chat-api/package.json` dependencies. `@types/archiver` added to devDependencies.
 
-**`FilesService.downloadArchive(items, at, res)`:**
+**State ownership**: archive generation is owned by `FilesArchiveDownloadService` (`apps/chat-api/src/files/archive/files-archive-download.service.ts`), which injects `FilesListingService` for folder expansion instead of implementing its own traversal. Unlike the original monolithic `FilesService.downloadArchive(items, at, res)`, the service method does **not** accept an Express `Response`; it returns a stream and header metadata (the same `{ stream, headers }`-shaped contract already used by `FilesDownloadService.downloadFile`). `FilesController` is the only place that constructs the Express `Response` for this route — it calls the `FilesService` facade, receives the stream/headers result, sets response headers, and pipes the stream itself.
 
-1. **Pre-validate** `items` array (checked by DTO, but service applies limits).
+1. **Pre-validate** `items` array (checked by DTO, but the service applies limits).
 2. **Expand folders**:
-   - For each `nodeType === 'folder'` item, call `getFileMetadata(bucket, path, { recursive: true })` and paginate via `nextToken` until exhausted.
+   - For each `nodeType === 'folder'` item, call `FilesListingService.expandFolderContents(bucket, path, at, { recursive: true })`, which paginates via `nextToken` until exhausted.
    - Include all file items (including `.dial_folder` markers); skip folder nodes only.
    - Build flat list of `{ bucket, path, archivePath }`.
 3. **Expand files**: add `nodeType === 'item'` items directly to the flat list.
@@ -167,15 +167,13 @@ export const downloadArchive = async (
 6. **Validate limits**:
    - `expandedFiles.length > ARCHIVE_MAX_FILES` → throw `413 PayloadTooLargeException` (before headers).
    - Total `contentLength` sum > `ARCHIVE_MAX_UNCOMPRESSED_BYTES` (where available in metadata) → throw `413`.
-7. **Commit response headers** (no further HTTP-level error reporting possible after this point).
-8. **Create `archiver` instance** (`format: 'zip'`); pipe to `res`.
-9. **Register client disconnect handler**: `req.on('close', () => { archive.abort(); })`.
-10. For each file in expanded list:
+7. **Build the archive**: create an `archiver` instance (`format: 'zip'`), append each expanded file's DIAL Core download stream, and return the resulting stream plus the computed headers (`Content-Type`, `Content-Disposition`, `Cache-Control`) to the caller — `FilesController` performs the actual `res.setHeader`/pipe/abort-on-disconnect wiring.
+8. For each file in expanded list:
     - Call `client.downloadFile(bucket, path, { parseAs: 'stream' })` to get a `ReadableStream`.
     - Sanitize archive entry path (no `..`, no leading `/`, no backslash traversal).
     - Append to archiver: `archive.append(Readable.fromWeb(stream), { name: archivePath })`.
-11. Call `archive.finalize()`.
-12. Handle `archiver` errors → `logger.error`; destroy response.
+9. Call `archive.finalize()`.
+10. Handle `archiver` errors → `logger.error`; destroy response.
 
 (No special empty-directory entries — folders with only a `.dial_folder` marker produce a zero-byte marker file in the ZIP.)
 
@@ -183,7 +181,7 @@ export const downloadArchive = async (
 
 ## Recursive folder expansion and pagination
 
-`FilesService.expandFolderContents(bucket, path, at, options)`:
+`FilesListingService.expandFolderContents(bucket, path, at, options)` (relocated from the original monolithic `FilesService`, and reused by `FilesBatchOperationsService` for delete/rename/copy/move as well as by `FilesArchiveDownloadService`):
 
 1. Calls `client.getFileMetadata(bucket, path, { recursive: true, token: options.token })`.
 2. If `nextToken` present in response, recursively fetches next pages.
@@ -194,7 +192,7 @@ export const downloadArchive = async (
 
 ## ZIP-slip prevention
 
-Applied in `FilesService.buildArchivePath(baseName, relativePath)`:
+Applied in `FilesListingService.buildArchivePath(baseName, relativePath)` (relocated from the original monolithic `FilesService`):
 
 - Reject any path segment equal to `..`.
 - Reject absolute paths (starting with `/`).
@@ -342,6 +340,14 @@ Not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`.
 
 ---
 
+### Scenario: Archive download route pipes a returned stream, not a passed-in Response
+
+- **WHEN** `POST /api/v1/files/download-archive` is handled
+- **THEN** `FilesController` calls the `FilesService` facade, receives `{ stream, headers }` from `FilesArchiveDownloadService`, and performs `res.setHeader`/piping itself
+- **AND** no `FilesArchiveDownloadService` method receives `@Res()` as a parameter
+
+---
+
 ### Scenario: Overlapping folder/file selection deduplication
 
 - **GIVEN** the user selects `reports/` (folder) AND `reports/2026/q1.pdf` (a child of that folder)
@@ -402,7 +408,7 @@ Not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`.
 
 ### Scenario: Client disconnect during streaming
 
-- **GIVEN** the archive stream has started (headers committed) and the client disconnects mid-download
+- **GIVEN** the archive stream returned by `FilesArchiveDownloadService` has started (headers committed by `FilesController`) and the client disconnects mid-download
 - **WHEN** `req.on('close')` fires on the NestJS controller
 - **THEN** the abort handler calls `archive.abort()` and destroys the response stream
 - **AND** all pending SDK `downloadFile` calls are aborted via `AbortController`

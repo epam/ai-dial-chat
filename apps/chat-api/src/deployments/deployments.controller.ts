@@ -135,7 +135,6 @@ export class DeploymentsController {
 
   @Get(':deployment/details')
   @Throttle({ default: { limit: 60, ttl: 60000 } })
-  @Header('Cache-Control', 'private, max-age=60')
   @ApiOperation({
     operationId: 'getDeploymentDetails',
     summary: 'Get full details for a single deployment',
@@ -143,7 +142,10 @@ export class DeploymentsController {
       'Fetches the full per-entity payload for a model, application, or toolset by id ' +
       "(dispatching to DIAL Core's getModel/getApplication/getToolset based on the " +
       'resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. ' +
-      'Results are cached server-side for 60 seconds.',
+      'Results are cached server-side for 60 seconds per user; the response ' +
+      'carries no client-facing Cache-Control so a browser never serves a ' +
+      "stale copy of another user's cache window or of credentials that " +
+      'changed since the last fetch.',
   })
   @ApiResponse({ status: 200, type: DeploymentDetailsDto })
   @ApiResponse({
@@ -164,7 +166,7 @@ export class DeploymentsController {
     @Req() req: Request,
     @Param('deployment') deployment: string,
   ) {
-    const { at } = req.user as SessionUser;
-    return this.deploymentsService.getDeploymentDetails(deployment, at);
+    const { sub, at } = req.user as SessionUser;
+    return this.deploymentsService.getDeploymentDetails(sub, deployment, at);
   }
 }
