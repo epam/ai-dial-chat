@@ -1,3 +1,4 @@
+import { PDF_CONTENT_TYPE } from '@/chat/constants/chat';
 import { ToolsetTypes } from '@/chat/constants/quick-apps';
 import { ApiTypeSchemaApplication } from '@/chat/types/applications';
 import { EntityType } from '@/chat/types/common';
@@ -12,6 +13,7 @@ import {
   EntityEditorAppTypes,
   ExpectedConstants,
   MockedChatApiResponseBodies,
+  UploadMenuOptions,
 } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
 
@@ -339,38 +341,37 @@ dialTest(
 );
 
 dialTest(
-  "[Quick app 2.0] 'Selected model does not support tools' error when the preselected model has no tools support", // EPMRTC-8558
+  '[Quick app 2.0] Attachments section is collapsed by default\n' + // EPMRTC-8649
+    '[Quick app 2.0] Attachment types and Max attachments number are available', // EPMRTC-7268
   async ({
     marketplacePage,
     entityEditorPage,
     quickApp2EditorViewForm,
-    talkToAgentDialog,
+    sendMessage,
+    attachmentDropdownMenu,
+    fileManagerModal,
     quickApp2Builder,
     applicationApiHelper,
     modelApiHelper,
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8558');
+    setTestIds('EPMRTC-8649', 'EPMRTC-7268');
     const quickAppName = GeneratorUtil.randomApplicationName();
-    let toolsModel: DialAIEntityModel;
+    const maxAttachments = 2;
 
     await dialTest.step(
-      'Precondition: create a Quick app 2.0 whose orchestrator model does not support tools',
+      'Precondition: create a Quick app 2.0 via API with a tool-supporting orchestrator model',
       async () => {
         const allEntities = await modelApiHelper.getModels();
-        const noToolsModel = allEntities.find(
-          (entity) =>
-            entity.type === EntityType.Model && !entity.features?.tools,
-        )!;
-        toolsModel = allEntities.find(
+        const toolSupportingModel = allEntities.find(
           (entity) =>
             entity.type === EntityType.Model && entity.features?.tools,
         )!;
         await applicationApiHelper.createApplication(
           quickApp2Builder
             .withDisplayName(quickAppName)
-            .withOrchestratorModel(noToolsModel.id)
+            .withOrchestratorModel(toolSupportingModel.id)
             .build(),
         );
       },
@@ -387,29 +388,54 @@ dialTest(
     });
 
     await dialTest.step(
-      'Verify the "model does not support tools" error is shown under the Model field',
+      'Verify the Attachments section is collapsed by default',
       async () => {
-        await baseAssertion.assertElementText(
-          quickApp2EditorViewForm.orchestratorModelError,
-          ExpectedConstants.selectedModelDoesNotSupportToolsError,
+        await baseAssertion.assertElementState(
+          quickApp2EditorViewForm.attachmentTypesField,
+          'hidden',
         );
       },
     );
 
     await dialTest.step(
-      'Select a tool-supporting model and verify the error disappears',
+      'Expand the section and set attachment types and max attachments',
       async () => {
-        await quickApp2EditorViewForm.changeModelButton.click();
-        await baseAssertion.assertElementState(talkToAgentDialog, 'visible');
-        await talkToAgentDialog.marketplaceTab.click();
-        await talkToAgentDialog
-          .getSearch()
-          .inputField.fillInInput(toolsModel.name);
-        await talkToAgentDialog.getEntityByName(toolsModel.name).click();
-        await baseAssertion.assertElementState(talkToAgentDialog, 'hidden');
+        await quickApp2EditorViewForm.setAttachments(
+          [PDF_CONTENT_TYPE],
+          `${maxAttachments}`,
+        );
         await baseAssertion.assertElementState(
-          quickApp2EditorViewForm.orchestratorModelError,
-          'hidden',
+          quickApp2EditorViewForm.attachmentTypesField,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'The attachment clip appears in the preview message box',
+      async () => {
+        await baseAssertion.assertElementState(
+          sendMessage.attachmentMenuTrigger,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open the attach files form and verify the supported types and max number',
+      async () => {
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        await baseAssertion.assertElementState(fileManagerModal, 'visible');
+        await baseAssertion.assertElementContainsText(
+          fileManagerModal,
+          ExpectedConstants.attachmentsSupportedTypesLabel,
+        );
+        await baseAssertion.assertElementContainsText(
+          fileManagerModal,
+          ExpectedConstants.attachmentsUpToFiles(maxAttachments),
         );
       },
     );

@@ -1,3 +1,4 @@
+import { keys } from '@/src/ui/keyboard';
 import { AddQuickApp2SettingsFormSelector } from '@/src/ui/selectors';
 import {
   BaseElement,
@@ -6,6 +7,9 @@ import {
 } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator } from '@playwright/test';
+
+// Delay between characters when typing MIME types into the combobox.
+const keyEnteringDelay = 30;
 
 export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public orchestratorSection = this.getChildElementBySelector(
@@ -47,6 +51,45 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public attachmentsSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.attachmentsSection,
   );
+  // Attachments section is collapsed by default — toggle header + its fields
+  public attachmentsSectionToggle =
+    this.attachmentsSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.sectionToggle,
+    );
+  public attachmentTypesField =
+    this.attachmentsSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.attachmentTypesField,
+    );
+  // Free-entry combobox: type a MIME + Enter to commit a pill (suggestions hidden)
+  public attachmentTypesInput =
+    this.attachmentTypesField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.attachmentTypesInput,
+    );
+  public attachmentTypesPills =
+    this.attachmentTypesField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.attachmentTypesPill,
+    );
+  public maxAttachmentsInput =
+    this.attachmentsSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.maxAttachmentsField,
+    );
+
+  // Expand the attachments section and set the attachment types + max number.
+  public async setAttachments(
+    attachmentTypes: string[],
+    maxAttachments: string,
+  ) {
+    await this.attachmentsSectionToggle.click();
+    for (let i = 0; i < attachmentTypes.length; i++) {
+      await this.attachmentTypesInput.typeInInput(attachmentTypes[i], {
+        delay: keyEnteringDelay,
+      });
+      await this.page.keyboard.press(keys.enter);
+      await this.attachmentTypesPills.getNthElement(i + 1).waitFor();
+    }
+    await this.maxAttachmentsInput.typeInInput(maxAttachments);
+  }
+
   public conversationStartersSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.conversationStartersSection,
   );

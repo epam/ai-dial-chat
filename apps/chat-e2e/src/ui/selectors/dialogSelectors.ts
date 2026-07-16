@@ -349,6 +349,13 @@ export const AddQuickApp2SettingsFormSelector = {
   instructionsField: '[data-qa="instructions-field"]',
   instructionsInput: 'textarea', // the markdown editor's edit textarea (single one in the field)
 
+  // Attachments section (collapsed by default)
+  sectionToggle: 'button[aria-expanded]', // FormCollapsibleSection header (scope by section)
+  attachmentTypesField: '[data-qa="attachment-types-field"]',
+  attachmentTypesInput: '[data-qa="filter-value-input"]', // free-entry combobox input
+  attachmentTypesPill: '[data-qa="combobox-pill"]', // committed type pill
+  maxAttachmentsField: '[data-qa="max-attachment-number-field"]',
+
   // Context & Tools subsections
   agentsAndToolsetsField: '[data-qa="agents-and-toolsets-field"]',
   documentUrlsField: '[data-qa="document-urls-field"]',

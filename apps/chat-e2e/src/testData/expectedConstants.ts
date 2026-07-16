@@ -429,6 +429,9 @@ export const ExpectedConstants = {
   // Error under the Model field when the orchestrator model has no tools support.
   selectedModelDoesNotSupportToolsError:
     'Selected model does not support tools',
+  // Attach files form hints reflecting the app's attachment config.
+  attachmentsUpToFiles: (n: number) => `Up to ${n} files.`,
+  attachmentsSupportedTypesLabel: 'Supported types:',
   // Confirmation dialog shown on Save & Exit when the config has invalid items.
   saveOnlyValidDataTitle: 'Only valid data will be saved',
   saveOnlyValidDataMessage:
