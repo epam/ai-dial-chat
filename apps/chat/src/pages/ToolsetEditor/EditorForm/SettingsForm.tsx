@@ -1,3 +1,4 @@
+import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
@@ -11,17 +12,21 @@ import { IconCheck, IconCopy } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import ConnectMcpUrlContent from '../../../components/ConnectMcpUrlContent/ConnectMcpUrlContent';
 import {
   ApiI18nKeys,
   BasicI18nKeys,
+  ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
+import { useAppConfig } from '../../../context/AppConfigContext';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../../types/toolsets';
 import { ToolsetTransportType } from '../../../types/toolsets';
+import { buildToolsetMcpUrl } from '../../../utils/mcp-endpoint-url';
 import AuthSection from './AuthSection';
 
 interface Props {
@@ -42,7 +47,14 @@ const SettingsForm: FC<Props> = ({
   onAuthChange,
 }) => {
   const { t } = useTranslation();
+  const { config } = useAppConfig();
   const [isCopied, setIsCopied] = useState(false);
+
+  const dialCoreExternalUrl = config.dialCoreExternalUrl;
+  const isConnectVisible = Boolean(dialCoreExternalUrl) && Boolean(toolsetId);
+  const mcpUrl = isConnectVisible
+    ? buildToolsetMcpUrl(dialCoreExternalUrl ?? '', toolsetId)
+    : '';
 
   const protocolOptions = useMemo(
     () => [
@@ -133,6 +145,15 @@ const SettingsForm: FC<Props> = ({
         endpoint={form.endpoint}
         onAuthChange={onAuthChange}
       />
+
+      {isConnectVisible && (
+        <ConnectMcpUrlContent
+          entityType={CatalogEntityType.Toolset}
+          url={mcpUrl}
+          copyLabelKey={ButtonsI18nKeys.CopyUrl}
+          className="border-primary/10 border-t pt-4"
+        />
+      )}
     </div>
   );
 };
