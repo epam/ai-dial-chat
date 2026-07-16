@@ -44,10 +44,11 @@ function getFilteredItems<T>({
   selectedItems,
 }: getFilteredItemsArgs<T>) {
   if (!items) {
-    return !inputValue ||
-      selectedItems?.some((item) => getItemLabel(item) === inputValue)
+    const trimmedInputValue = inputValue?.trim();
+    return !trimmedInputValue ||
+      selectedItems?.some((item) => getItemLabel(item) === trimmedInputValue)
       ? []
-      : [inputValue as T];
+      : [trimmedInputValue as T];
   }
   if (!selectedItems) {
     return items;
@@ -217,6 +218,10 @@ export function MultipleComboBox<T>({
             return;
           }
 
+          if (typeof newSelectedItem === 'string') {
+            newSelectedItem = newSelectedItem.trim() as T;
+          }
+
           if (
             getItemLabel(newSelectedItem) &&
             !getItemLabel(newSelectedItem).trim()
@@ -230,6 +235,15 @@ export function MultipleComboBox<T>({
             !validationRegExp.test(newSelectedItem)
           ) {
             handleError?.();
+            return;
+          }
+
+          if (
+            selectedItems?.some(
+              (item) => getItemLabel(item) === getItemLabel(newSelectedItem),
+            )
+          ) {
+            setInputValue('');
             return;
           }
 
