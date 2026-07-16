@@ -43,7 +43,7 @@ export const PillTabs: FC<PillTabsProps> = memo(
             className={mergeClasses(
               'box-border h-auto shrink-0 justify-center rounded-full p-2 text-center',
               tabClassName,
-              styles.tab,
+              styles.tabContainer,
               isActive && styles.tabActive,
             )}
           />

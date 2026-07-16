@@ -1,6 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconLayoutSidebarRight, IconMenu2 } from '@tabler/icons-react';
+import {
+  IconLayoutSidebarRight,
+  IconMenu2,
+  IconPlus,
+} from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +15,7 @@ import {
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
 import { ROUTES } from '../../types/routes';
+import styles from './Header.module.scss';
 import Logo from './Logo';
 import SourcesSidebarToggle from './SourcesSidebarToggle';
 
@@ -21,7 +26,6 @@ interface Props {
   onNewChat?: () => void;
 }
 
-// TODO: remove? need change after full redesign
 const Header: FC<Props> = ({
   onMenuToggle,
   isConversationPanelOpen,
@@ -64,73 +68,26 @@ const Header: FC<Props> = ({
                 : 'max-w-[32px] opacity-100',
             )}
           >
-            <button
-              type="button"
-              className="flex size-8 cursor-pointer items-center justify-center rounded-lg"
+            <DialGhostIconButton
+              icon={
+                <IconPlus
+                  size={DIAL_ICON_SIZE.LG}
+                  stroke={1.5}
+                  className={
+                    !isConversationPanelOpen ? styles.newChatIconPop : undefined
+                  }
+                />
+              }
               onClick={onNewChat}
               aria-label={t(ButtonsI18nKeys.NewChat)}
               tabIndex={isConversationPanelOpen ? -1 : 0}
-            >
-              {/* Self-contained SVG so gradient url() reference stays within the same SVG fragment */}
-              {/* key re-mounts the SVG on each panel-close so the pop animation re-fires */}
-              <svg
-                key={isConversationPanelOpen ? 'h' : 'v'}
-                xmlns="http://www.w3.org/2000/svg"
-                width={DIAL_ICON_SIZE.LG}
-                height={DIAL_ICON_SIZE.LG}
-                viewBox="0 0 24 24"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{
-                  animation: !isConversationPanelOpen
-                    ? 'new-chat-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both'
-                    : undefined,
-                }}
-              >
-                <defs>
-                  <linearGradient
-                    id="new-chat-plus-grad"
-                    x1="0"
-                    y1="0"
-                    x2="24"
-                    y2="24"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop
-                      offset="0%"
-                      style={{ stopColor: 'var(--bg-accent-secondary)' }}
-                    />
-                    <stop
-                      offset="50%"
-                      style={{ stopColor: 'var(--bg-accent-primary)' }}
-                    />
-                    <stop
-                      offset="100%"
-                      style={{ stopColor: 'var(--bg-accent-tertiary)' }}
-                    />
-                  </linearGradient>
-                </defs>
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path
-                  d="M12 5v14"
-                  stroke="url(#new-chat-plus-grad)"
-                  strokeWidth={2}
-                />
-                <path
-                  d="M5 12h14"
-                  stroke="url(#new-chat-plus-grad)"
-                  strokeWidth={2}
-                />
-              </svg>
-            </button>
+            />
           </div>
         )}
         <DialGhostIconButton
           icon={<IconMenu2 size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
           aria-label={t(NavigationI18nKeys.OpenMenu)}
           onClick={onMenuToggle}
-          className="desktop:hidden"
         />
       </div>
       <Logo />

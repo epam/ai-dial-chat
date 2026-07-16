@@ -2,16 +2,6 @@
 @use 'tailwindcss/components';
 @use 'tailwindcss/utilities';
 
-// model selector
-@keyframes new-chat-pop {
-  from {
-    transform: scale(0.3);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-
 @layer base {
   html,
   body,
@@ -38,12 +28,6 @@ div[role='menu']:has(> [role='none']) {
     height: auto !important;
     border-radius: 8px !important;
     padding: 9px 10px !important;
-
-    @media (hover: hover) {
-      &:hover {
-        background-color: var(--bg-layer-3, rgba(0, 0, 0, 0.04)) !important;
-      }
-    }
   }
 }
 
@@ -94,12 +78,6 @@ div[role='menu']:has(> [role='none']) {
     height: auto !important;
     border-radius: 8px !important;
     padding: 9px 10px !important;
-
-    @media (hover: hover) {
-      &:hover {
-        background-color: var(--bg-layer-3, rgba(0, 0, 0, 0.04)) !important;
-      }
-    }
   }
 
   // Separator — thin hairline, no Tailwind border
