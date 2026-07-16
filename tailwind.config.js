@@ -38,6 +38,7 @@ const backgroundsColors = {
   'new-chat-shadow-purple-active':
     'var(--bg-new-chat-shadow-purple-active, #A972FF1A)',
   'mask-opaque': 'var(--bg-mask-opaque, #000)',
+  'accent-primary-fill': 'var(--bg-accent-primary-fill, #5C8DEA)',
 };
 
 const controlsBgColors = {

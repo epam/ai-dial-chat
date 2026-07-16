@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
 import type { AttachmentMoreTileProps } from '../../models/attachment-more-tile';
 import styles from './AttachmentMoreTile.module.scss';
@@ -15,18 +15,32 @@ export const AttachmentMoreTile: FC<AttachmentMoreTileProps> = ({
   children,
   fontClassName = 'dial-small-semi-text',
   className,
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    aria-label={ariaLabel ?? `Show ${count} more attachments`}
-    className={mergeClasses(
-      'flex size-[84px] items-center justify-center rounded-xl border',
-      fontClassName,
-      styles.tile,
-      className,
-    )}
-  >
-    {children ?? <bdi dir="ltr">{`+${count}`}</bdi>}
-  </button>
-);
+  colors,
+}) => {
+  const cssVars = buildCssVars({
+    '--ci-more-tile-bg': colors?.background,
+    '--ci-more-tile-border': colors?.border,
+    '--ci-more-tile-color': colors?.color,
+    '--ci-more-tile-bg-hover': colors?.backgroundHover,
+    '--ci-more-tile-color-hover': colors?.colorHover,
+    '--ci-more-tile-border-hover': colors?.borderHover,
+    '--ci-more-tile-focus-outline': colors?.focusOutline,
+  });
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel ?? `Show ${count} more attachments`}
+      style={cssVars}
+      className={mergeClasses(
+        'flex size-[84px] items-center justify-center rounded-xl border',
+        fontClassName,
+        styles.tile,
+        className,
+      )}
+    >
+      {children ?? <bdi dir="ltr">{`+${count}`}</bdi>}
+    </button>
+  );
+};
