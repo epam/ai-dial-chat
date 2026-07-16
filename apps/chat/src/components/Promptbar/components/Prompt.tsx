@@ -5,6 +5,7 @@ import React, {
   MouseEventHandler,
   memo,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -118,7 +119,15 @@ export const PromptComponent = memo(
       if (hasParentWithFloatingOverlay(e.target as Element)) {
         return;
       }
+      window.getSelection()?.removeAllRanges();
       setIsContextMenu(true);
+    }, []);
+
+    const handleContextMenuOpenChange = useCallback((open: boolean) => {
+      if (open) {
+        window.getSelection()?.removeAllRanges();
+      }
+      setIsContextMenu(open);
     }, []);
 
     useScrollToEntity({
@@ -127,6 +136,19 @@ export const PromptComponent = memo(
     });
 
     useContextMenuTrigger(handleContextMenuOpen, promptRef);
+
+    useEffect(() => {
+      const element = promptRef.current;
+      if (!element) {
+        return;
+      }
+
+      const handleSelectStart = (e: Event) => e.preventDefault();
+      element.addEventListener('selectstart', handleSelectStart);
+
+      return () =>
+        element.removeEventListener('selectstart', handleSelectStart);
+    }, []);
 
     const screenState = useScreenState();
     const isMobileOrTablet =
@@ -155,7 +177,7 @@ export const PromptComponent = memo(
 
     const { refs, context } = useFloating({
       open: isContextMenu,
-      onOpenChange: setIsContextMenu,
+      onOpenChange: handleContextMenuOpenChange,
     });
 
     const dismiss = useDismiss(context);
@@ -178,6 +200,7 @@ export const PromptComponent = memo(
       ) => {
         e.stopPropagation();
         e.preventDefault();
+        window.getSelection()?.removeAllRanges();
 
         dispatch(
           PromptsActions.selectPrompt({
@@ -374,7 +397,7 @@ export const PromptComponent = memo(
                     ? undefined
                     : handleUnpublish
                 }
-                onOpenChange={setIsContextMenu}
+                onOpenChange={handleContextMenuOpenChange}
                 onDuplicate={handleDuplicate}
                 onView={handleOpenViewModal}
                 isOpen={isContextMenu}
