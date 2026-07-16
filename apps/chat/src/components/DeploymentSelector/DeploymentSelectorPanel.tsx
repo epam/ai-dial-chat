@@ -296,7 +296,10 @@ const DeploymentSelectorPanel: FC<Props> = ({
       <div className="sticky top-0 z-10 bg-layer-0 px-1 pb-3 pt-2">
         <SearchBar
           value={query}
-          labels={{ placeholder: searchPlaceholder, ariaLabel: searchPlaceholder }}
+          labels={{
+            placeholder: searchPlaceholder,
+            ariaLabel: searchPlaceholder,
+          }}
           onChange={setQuery}
           styles={{
             containerClassName: mergeClasses(
