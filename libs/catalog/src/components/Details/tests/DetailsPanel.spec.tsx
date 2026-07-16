@@ -404,5 +404,4 @@ describe('DetailsPanel', () => {
     const tablist = screen.getByRole('tablist');
     expect(tablist.textContent).toBe('About');
   });
-
 });
