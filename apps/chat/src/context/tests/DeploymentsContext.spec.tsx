@@ -136,6 +136,35 @@ describe('DeploymentsContext', () => {
     );
   });
 
+  it('does not refetch deployments/schemas/toolsets when the user selects a new deployment', async () => {
+    // Mirrors UserConfigContext.setSelectedDeployment, which optimistically
+    // updates its own selectedDeploymentId before the persist call resolves.
+    contextMocks.setSelectedDeployment.mockImplementation(
+      async (id: string | null) => {
+        contextMocks.selectedDeploymentId = id;
+      },
+    );
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(mockGetDeployments).toHaveBeenCalledOnce();
+    expect(mockListToolsets).toHaveBeenCalledOnce();
+    expect(mockGetApplicationSchemas).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      result.current.setSelectedItemId(mockItem2.id);
+    });
+
+    expect(result.current.selectedItemId).toBe(mockItem2.id);
+    expect(result.current.isLoading).toBe(false);
+    expect(mockGetDeployments).toHaveBeenCalledOnce();
+    expect(mockListToolsets).toHaveBeenCalledOnce();
+    expect(mockGetApplicationSchemas).toHaveBeenCalledOnce();
+  });
+
   it('restoreSelectedItemId updates selectedItemId without persisting user config', async () => {
     const { result } = renderHook(() => useDeployments(), {
       wrapper: DeploymentsProvider,
@@ -251,6 +280,35 @@ describe('DeploymentsContext', () => {
       expect(result.current.error?.message).toBe('Network error');
       expect(result.current.isLoading).toBe(false);
     });
+  });
+
+  it('resolves selection from a later-populated list once user config is known, without a full reload', async () => {
+    mockGetDeployments.mockResolvedValueOnce({ deployments: [] });
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => expect(result.current.selectedItemId).toBeNull());
+    expect(mockGetDeployments).toHaveBeenCalledOnce();
+
+    contextMocks.selectedDeploymentId = mockItem2.id;
+    mockGetDeployments.mockResolvedValueOnce({
+      deployments: [mockItem1, mockItem2],
+    });
+
+    await act(async () => {
+      await result.current.refetchDeployments();
+    });
+
+    await waitFor(() =>
+      expect(result.current.selectedItemId).toBe(mockItem2.id),
+    );
+    // refetchDeployments accounts for the second getDeployments call — the
+    // fix must not additionally re-trigger the full loadDeployments sequence.
+    expect(mockGetDeployments).toHaveBeenCalledTimes(2);
+    expect(mockListToolsets).toHaveBeenCalledOnce();
+    expect(mockGetApplicationSchemas).toHaveBeenCalledOnce();
   });
 
   it('sets null selectedItemId when deployments list is empty', async () => {
