@@ -1,7 +1,7 @@
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import type { ConversationGroupKey } from '../types/conversation-group-key';
+import type { FilterTab } from '../types/conversation-classification';
 import { VirtualRowKind } from '../types/virtual-row';
-import type { ConversationHistoryItem } from './panel-props';
+import type { ConversationItem } from './panel-props';
 
 export { VirtualRowKind };
 
@@ -10,7 +10,7 @@ export interface GroupHeaderRow {
   /** Row discriminant. */
   kind: VirtualRowKind.Header;
   /** Identifies which group this header belongs to. */
-  groupKey: ConversationGroupKey;
+  groupKey: FilterTab;
   /** Visible section heading text. */
   label: string;
 }
@@ -20,13 +20,23 @@ export interface ConversationItemRow {
   /** Row discriminant. */
   kind: VirtualRowKind.Item;
   /** The conversation to render. */
-  item: ConversationHistoryItem;
+  item: ConversationItem;
   /** The group this item belongs to — used for drag-and-drop validation. */
-  groupKey: ConversationGroupKey;
+  groupKey: FilterTab;
 }
 
 /** Union of all possible virtual row shapes. */
 export type VirtualRow = GroupHeaderRow | ConversationItemRow;
+
+/** Typography/class overrides applied to virtual row elements. */
+export interface RowStyles {
+  /** Typography class applied to group header buttons. */
+  groupHeaderClassName?: string;
+  /** Typography class applied to conversation title text. */
+  itemTitleClassName?: string;
+  /** CSS class applied to the icon badge in each conversation row. */
+  itemIconBadgeClassName?: string;
+}
 
 /** Data passed to every virtual row renderer via `react-window`'s `rowProps`. */
 export interface RowRendererData {
@@ -36,6 +46,8 @@ export interface RowRendererData {
   expandedGroups: Set<string>;
   /** Toggles the expanded state of the given group. */
   onToggleGroup: (key: string) => void;
+  /** `id` of the virtualized list container, referenced by each group header's `aria-controls`. */
+  listId: string;
   /** `id` of the currently active conversation. */
   activeConversationId?: string;
   /** Current search query — used to highlight matches in conversation titles. */
@@ -43,21 +55,22 @@ export interface RowRendererData {
   /** Called when the user selects a conversation row. */
   onSelectConversation: (id: string) => void;
   /** Builds dropdown actions for a conversation item. */
-  getActions?: (item: ConversationHistoryItem) => DropdownItem[];
+  getActions?: (item: ConversationItem) => DropdownItem[];
+  /** Called when a row action menu opens. */
+  onActionMenuOpen?: (
+    item: ConversationItem,
+    trigger: HTMLButtonElement,
+  ) => void;
   /** Accessible label for the actions trigger button. */
   actionsLabel?: string;
-  /** Typography class applied to group header buttons. */
-  groupHeaderClassName?: string;
-  /** Typography class applied to conversation title text. */
-  itemTitleClassName?: string;
-  /** CSS class applied to the icon badge in each conversation row. */
-  itemIconBadgeClassName?: string;
+  /** Typography/class overrides applied to virtual row elements. */
+  styles?: RowStyles;
   /** Id of the conversation currently being dragged. `null` when no drag is in progress. */
   draggingId: string | null;
   /** Id of the row (item or group header sentinel) currently under the drag cursor. */
   dragOverId: string | null;
   /** Groups that are valid drop targets for the current drag. `null` when no drag is in progress. */
-  allowedDropGroups: Set<ConversationGroupKey> | null;
+  allowedDropGroups: Set<FilterTab> | null;
   /** Called when the user starts dragging a conversation row. */
   onDragStart: (id: string) => void;
   /** Called when the drag ends (drop or cancel). */
@@ -68,13 +81,13 @@ export interface RowRendererData {
   onDragLeave: () => void;
   /**
    * Called when the user drops onto a target row or group header.
-   * `targetId` is the item id or `ConversationGroupKey` sentinel for header drops.
+   * `targetId` is the item id or `FilterTab` sentinel for header drops.
    * `targetGroupKey` is the group the item was dropped into.
    * `afterId` is the id of the item to insert after, or `null` for top of group.
    */
   onDrop: (
     targetId: string,
-    targetGroupKey: ConversationGroupKey,
+    targetGroupKey: FilterTab,
     afterId: string | null,
   ) => void;
 }

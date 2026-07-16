@@ -260,7 +260,7 @@ describe('PublishService', () => {
   });
 
   describe('getPublishHistory', () => {
-    it('scopes the Core request by entityId, maps matching publications, and recovers the version from entityId (not Publication.name)', async () => {
+    it('scopes the Core request by the caller own-bucket publications list (not entityId), maps matching publications, and recovers the version from entityId (not Publication.name)', async () => {
       const { service, dialClient, cacheManager } = makeService();
       cacheManager.get.mockResolvedValue(undefined);
       vi.spyOn(dialClient.client, 'getPublications').mockResolvedValue(
@@ -272,7 +272,7 @@ describe('PublishService', () => {
             author: 'user@example.com',
             resources: [
               {
-                sourceUrl: 'tool-abc123__1.2.0',
+                sourceUrl: 'toolsets/bucket-123/tool-abc123__1.2.0',
                 targetUrl:
                   'toolsets/public/Organization/Data Science/tool-abc123__1.2.0',
               },
@@ -281,7 +281,9 @@ describe('PublishService', () => {
           {
             name: 'New request by Someone Else',
             targetFolder: 'public/Organization/Other/',
-            resources: [{ sourceUrl: 'some-other-entity__0.9.0' }],
+            resources: [
+              { sourceUrl: 'toolsets/bucket-123/some-other-entity__0.9.0' },
+            ],
           },
         ]),
       );
@@ -289,16 +291,16 @@ describe('PublishService', () => {
       const result = await service.getPublishHistory(
         'token-abc',
         CatalogEntityType.Toolset,
-        'tool-abc123__1.2.0',
+        'toolsets/bucket-123/tool-abc123__1.2.0',
       );
 
       expect(dialClient.client.getPublications).toHaveBeenCalledWith({
         headers: { Authorization: 'Bearer token-abc' },
-        body: { url: 'tool-abc123__1.2.0' },
+        body: { url: 'publications/bucket-123/' },
       });
       expect(result).toEqual([
         {
-          entityId: 'tool-abc123__1.2.0',
+          entityId: 'toolsets/bucket-123/tool-abc123__1.2.0',
           entityType: CatalogEntityType.Toolset,
           folderPath: 'Organization/Data Science',
           version: '1.2.0',
@@ -315,7 +317,11 @@ describe('PublishService', () => {
         okResponse([
           {
             targetFolder: 'public/Organization/Data Science/',
-            resources: [{ sourceUrl: 'legacy-entity-without-version' }],
+            resources: [
+              {
+                sourceUrl: 'toolsets/bucket-123/legacy-entity-without-version',
+              },
+            ],
           },
         ]),
       );
@@ -323,7 +329,7 @@ describe('PublishService', () => {
       const result = await service.getPublishHistory(
         'token-abc',
         CatalogEntityType.Toolset,
-        'legacy-entity-without-version',
+        'toolsets/bucket-123/legacy-entity-without-version',
       );
 
       expect(result[0].version).toBe('');
@@ -336,7 +342,9 @@ describe('PublishService', () => {
         okResponse([
           {
             targetFolder: 'public/',
-            resources: [{ sourceUrl: 'tool-abc123__1.0.0' }],
+            resources: [
+              { sourceUrl: 'toolsets/bucket-123/tool-abc123__1.0.0' },
+            ],
           },
         ]),
       );
@@ -344,7 +352,7 @@ describe('PublishService', () => {
       const result = await service.getPublishHistory(
         'token-abc',
         CatalogEntityType.Toolset,
-        'tool-abc123__1.0.0',
+        'toolsets/bucket-123/tool-abc123__1.0.0',
       );
 
       expect(result[0].folderPath).toBe('');
@@ -357,7 +365,9 @@ describe('PublishService', () => {
         okResponse([
           {
             targetFolder: 'public/test%2014.04/',
-            resources: [{ sourceUrl: 'tool-abc123__1.0.0' }],
+            resources: [
+              { sourceUrl: 'toolsets/bucket-123/tool-abc123__1.0.0' },
+            ],
           },
         ]),
       );
@@ -365,7 +375,7 @@ describe('PublishService', () => {
       const result = await service.getPublishHistory(
         'token-abc',
         CatalogEntityType.Toolset,
-        'tool-abc123__1.0.0',
+        'toolsets/bucket-123/tool-abc123__1.0.0',
       );
 
       expect(result[0].folderPath).toBe('test 14.04');
@@ -381,7 +391,7 @@ describe('PublishService', () => {
       const result = await service.getPublishHistory(
         'token-abc',
         CatalogEntityType.Toolset,
-        'tool-abc123__1.2.0',
+        'toolsets/bucket-123/tool-abc123__1.2.0',
       );
 
       expect(result).toEqual([]);
@@ -394,7 +404,7 @@ describe('PublishService', () => {
       const result = await service.getPublishHistory(
         'token-abc',
         CatalogEntityType.Toolset,
-        'tool-abc123__1.2.0',
+        'toolsets/bucket-123/tool-abc123__1.2.0',
       );
 
       expect(result).toEqual([{ entityId: 'cached' }]);
@@ -412,7 +422,7 @@ describe('PublishService', () => {
         service.getPublishHistory(
           'token-abc',
           CatalogEntityType.Toolset,
-          'tool-abc123__1.2.0',
+          'toolsets/bucket-123/tool-abc123__1.2.0',
         ),
       ).rejects.toBeInstanceOf(BadGatewayException);
     });

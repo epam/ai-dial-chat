@@ -23,6 +23,8 @@ import type {
   DeleteConversationsBodyDto,
   DuplicateConversationResponseDto,
   GenerateTitleResponseDto,
+  PublishConversationDto,
+  PublishConversationResultDto,
   RenameConversationBodyDto,
   RenameConversationResponseDto,
   SaveConversationBodyDto,
@@ -64,10 +66,19 @@ export interface GetConversationMetadataRequest {
   permissions?: boolean;
 }
 
+export interface GetConversationPublishHistoryRequest {
+  path: string;
+}
+
 export interface ListConversationsRequest {
   limit?: number;
   nextToken?: string;
   path?: string;
+}
+
+export interface PublishConversationRequest {
+  path: string;
+  publishConversationDto: PublishConversationDto;
 }
 
 export interface RenameConversationRequest {
@@ -512,6 +523,61 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Returns every folder this conversation has been published to, most recent first, derived from DIAL Core\'s Publication API (`getPublications`) — never from chat-api-side storage.
+   * Get publish history for a conversation
+   */
+  async getConversationPublishHistoryRaw(
+    requestParameters: GetConversationPublishHistoryRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Array<PublishConversationResultDto>>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling getConversationPublishHistory().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/conversations/publish-history`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<Array<PublishConversationResultDto>>(
+      response,
+    );
+  }
+
+  /**
+   * Returns every folder this conversation has been published to, most recent first, derived from DIAL Core\'s Publication API (`getPublications`) — never from chat-api-side storage.
+   * Get publish history for a conversation
+   */
+  async getConversationPublishHistory(
+    requestParameters: GetConversationPublishHistoryRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Array<PublishConversationResultDto>> {
+    const response = await this.getConversationPublishHistoryRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path.
    * List conversations
    */
@@ -559,6 +625,69 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ConversationListResponseDto> {
     const response = await this.listConversationsRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Publishes an owned conversation to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The conversation title is re-fetched server-side and used as the publication name.
+   * Publish a conversation to an Organization folder
+   */
+  async publishConversationRaw(
+    requestParameters: PublishConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<PublishConversationResultDto>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling publishConversation().',
+      );
+    }
+
+    if (requestParameters['publishConversationDto'] == null) {
+      throw new runtime.RequiredError(
+        'publishConversationDto',
+        'Required parameter "publishConversationDto" was null or undefined when calling publishConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/publish`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['publishConversationDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<PublishConversationResultDto>(response);
+  }
+
+  /**
+   * Publishes an owned conversation to a folder under the Organization/public bucket by proxying DIAL Core\'s Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The conversation title is re-fetched server-side and used as the publication name.
+   * Publish a conversation to an Organization folder
+   */
+  async publishConversation(
+    requestParameters: PublishConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<PublishConversationResultDto> {
+    const response = await this.publishConversationRaw(
       requestParameters,
       initOverrides,
     );

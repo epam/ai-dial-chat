@@ -11,6 +11,7 @@ import {
   DialFileNodeType,
   DialFilePermission,
   FileManagerColumnKey,
+  NOT_ALLOWED_SYMBOLS,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import type {
@@ -287,6 +288,7 @@ interface CopyMoveResult {
 
 const UPLOAD_CONCURRENCY = 3;
 const RESERVED_MARKER_NAME = HIDDEN_FILE;
+const PATH_SEPARATOR_REGEXP = /[/\\]/;
 
 const DATE_OPTIONS: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -313,6 +315,19 @@ const CORE_PERMISSION_MAP: Record<string, DialFilePermission> = {
   READ: DialFilePermission.READ,
   WRITE: DialFilePermission.WRITE,
   SHARE: DialFilePermission.SHARE,
+};
+
+const hasForbiddenNameSymbols = (
+  name: string,
+  forbiddenSymbolsRegExp?: RegExp,
+): boolean => {
+  if (PATH_SEPARATOR_REGEXP.test(name)) return true;
+  if (forbiddenSymbolsRegExp == null) return false;
+
+  forbiddenSymbolsRegExp.lastIndex = 0;
+  const hasMatch = forbiddenSymbolsRegExp.test(name);
+  forbiddenSymbolsRegExp.lastIndex = 0;
+  return hasMatch;
 };
 
 const mapCorePermissions = (
@@ -1513,8 +1528,10 @@ export const useDialFileManager = ({
       if (!name || name.trim() === '') {
         return t('dialFileManager.folderNameEmpty');
       }
-      if (/[/\\]/.test(name)) {
-        return t('dialFileManager.folderNameInvalidChars');
+      if (hasForbiddenNameSymbols(name, forbiddenSymbolsRegExp)) {
+        return t(DialFileManagerI18nKeys.FolderNameInvalidChars, {
+          notAllowedSymbols: NOT_ALLOWED_SYMBOLS,
+        });
       }
       if (name.startsWith('.')) {
         return t('dialFileManager.folderNameHidden');
@@ -1532,7 +1549,7 @@ export const useDialFileManager = ({
       }
       return null;
     },
-    [t],
+    [t, forbiddenSymbolsRegExp],
   );
 
   const onDownloadFiles = useCallback(
@@ -1895,14 +1912,13 @@ export const useDialFileManager = ({
       if (value === RESERVED_MARKER_NAME) {
         return t(DialFileManagerI18nKeys.RenameReservedName);
       }
-      if (/[/\\]/.test(value)) {
-        return t(DialFileManagerI18nKeys.RenameInvalidChars);
-      }
-      if (
-        forbiddenSymbolsRegExp != null &&
-        forbiddenSymbolsRegExp.test(value)
-      ) {
-        return t(DialFileManagerI18nKeys.ForbiddenSymbolsTooltip);
+      if (hasForbiddenNameSymbols(value, forbiddenSymbolsRegExp)) {
+        return t(
+          item.nodeType === DialFileNodeType.FOLDER
+            ? DialFileManagerI18nKeys.FolderNameInvalidChars
+            : DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
+          { notAllowedSymbols: NOT_ALLOWED_SYMBOLS },
+        );
       }
       if (value.length > 255) {
         return t(DialFileManagerI18nKeys.RenameNameTooLong);

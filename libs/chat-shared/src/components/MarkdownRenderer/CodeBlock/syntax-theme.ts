@@ -10,6 +10,7 @@ const VIOLET: CSSProperties = {
 };
 const INK: CSSProperties = { color: 'var(--text-primary, #161b2d)' };
 
+/** Prism syntax-highlighting style map used by {@link MarkdownCodeBlock}, restrained to design-system CSS variables. */
 export const restrainedSyntaxTheme: PrismStyleMap = {
   'code[class*="language-"]': {
     color: 'var(--text-primary, #161b2d)',

@@ -1,5 +1,5 @@
 .tile {
-  background: var(--ci-more-tile-bg, var(--bg-layer-2, #161b2d));
+  background: var(--ci-more-tile-bg, var(--bg-layer-2, #eef1f7));
   border-color: var(--ci-more-tile-border, var(--stroke-secondary, #d1dbea));
   color: var(--ci-more-tile-color, var(--text-secondary, #575f73));
 
@@ -8,10 +8,17 @@
       --ci-more-tile-bg-hover,
       var(--bg-accent-primary-alpha, #7da4ff2e)
     );
-    color: var(--ci-more-tile-color-hover, var(--bg-accent-primary, #2764d9));
+    color: var(
+      --ci-more-tile-color-hover,
+      var(--text-accent-primary-hover, #2764d9)
+    );
     border-color: var(
       --ci-more-tile-border-hover,
-      color-mix(in srgb, var(--stroke-accent-primary, #7da4ff) 50%, transparent)
+      color-mix(
+        in srgb,
+        var(--stroke-accent-primary-hover, #7da4ff) 50%,
+        transparent
+      )
     );
   }
 

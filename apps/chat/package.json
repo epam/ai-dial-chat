@@ -15,6 +15,13 @@
         "dependsOn": [
           "typecheck"
         ]
+      },
+      "test-oauth-browser": {
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "apps/chat",
+          "command": "node --test browser-tests/toolset-oauth-popup.browser.spec.mjs"
+        }
       }
     }
   }

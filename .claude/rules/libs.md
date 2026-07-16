@@ -60,6 +60,19 @@ Component folders under `src/components/` must use PascalCase and match the comp
 
 Every exported symbol (interfaces, enums, types, functions) must have a JSDoc comment. Each interface/type property must also have an inline `/** ... */` doc. Keep comments factual — describe what the value represents, not how it is used.
 
+This applies to exported components too: every exported component (`export const MyComponent: FC<MyComponentProps> = ...`) must have a one-line summary JSDoc directly above its declaration, even when its props interface is already fully documented — a documented `Props` interface does not substitute for a doc on the component itself.
+
+```tsx
+// Correct
+/** Row of starter-prompt buttons that collapses overflowing items into a dropdown menu. */
+export const StarterButtons: FC<StarterButtonsProps> = ({ ... }) => { ... };
+
+// Wrong — no doc on the component declaration
+export const StarterButtons: FC<StarterButtonsProps> = ({ ... }) => { ... };
+```
+
+When a prop has a default value (via destructuring default or `defaultProps`), its doc comment must state the default, e.g. `/** CSS class applied to the title. Defaults to \`'dial-h1-text'\`. \*/`. A doc that describes the prop's purpose but omits its default is incomplete.
+
 ## Typography and color utility classes as props
 
 **Never hardcode typography or color utility classes** (e.g. `dial-body-semi-text`, `dial-small-text`, `text-sm`, `font-bold`, `text-primary`, `text-secondary`, `text-accent`) directly in lib component JSX. The consuming app decides which type scale and color tokens to use. Instead, accept an optional prop and use a sensible default:

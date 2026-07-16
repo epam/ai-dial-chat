@@ -73,6 +73,7 @@ export enum ButtonsI18nKeys {
   Cancel = 'buttons.cancel',
   Confirm = 'buttons.confirm',
   Edit = 'buttons.edit',
+  Connect = 'buttons.connect',
   Link = 'buttons.link',
   SaveAndSubmit = 'buttons.saveAndSubmit',
   Regenerate = 'buttons.regenerate',
@@ -101,6 +102,7 @@ export enum ButtonsI18nKeys {
   LogOut = 'buttons.logOut',
   CopyLink = 'buttons.copyLink',
   LogIn = 'buttons.logIn',
+  Publish = 'buttons.publish',
 }
 
 export enum NavigationI18nKeys {
@@ -183,6 +185,10 @@ export enum CatalogI18nKeys {
   DetailsUnshareError = 'catalog.details.unshare.error',
   DetailsUnshareSuccessTitle = 'catalog.details.unshare.successTitle',
   DetailsUnshareSuccess = 'catalog.details.unshare.success',
+  ConnectToolsetTitle = 'catalog.details.connect.toolsetTitle',
+  ConnectApplicationTitle = 'catalog.details.connect.applicationTitle',
+  ConnectToolsetDescription = 'catalog.details.connect.toolsetDescription',
+  ConnectApplicationDescription = 'catalog.details.connect.applicationDescription',
 }
 
 export enum DeploymentSelectorI18nKeys {
@@ -257,6 +263,7 @@ export enum DialFileManagerI18nKeys {
   DownloadFilesError = 'dialFileManager.downloadFilesError',
   FolderCreateError = 'dialFileManager.folderCreateError',
   FolderLoadError = 'dialFileManager.folderLoadError',
+  FolderNameInvalidChars = 'dialFileManager.folderNameInvalidChars',
   DeleteFilesError = 'dialFileManager.deleteFilesError',
   ItemDeletedSuccessfully = 'dialFileManager.itemDeletedSuccessfully',
   ItemsDeletedSuccessfully = 'dialFileManager.itemsDeletedSuccessfully',
@@ -386,6 +393,17 @@ export enum ConversationPanelI18nKeys {
   DeleteAllPartialError = 'conversationPanel.deleteAll.deleteAllPartialError',
   DeleteAllSuccessTitle = 'conversationPanel.deleteAll.deleteAllSuccessTitle',
   DeleteAllSuccess = 'conversationPanel.deleteAll.deleteAllSuccess',
+  UnshareConfirmTitle = 'conversationPanel.unshare.unshareConfirmTitle',
+  UnshareConfirmMessage = 'conversationPanel.unshare.unshareConfirmMessage',
+  UnshareSuccessTitle = 'conversationPanel.unshare.unshareSuccessTitle',
+  UnshareSuccess = 'conversationPanel.unshare.unshareSuccess',
+  UnshareError = 'conversationPanel.unshare.unshareError',
+}
+
+export enum ConversationPublishI18nKeys {
+  PanelAriaLabel = 'conversationPublish.panelAriaLabel',
+  AlreadyPublishedWarning = 'conversationPublish.alreadyPublishedWarning',
+  SuccessMessage = 'conversationPublish.successMessage',
 }
 
 export enum ConversationExportI18nKeys {
@@ -548,6 +566,8 @@ export enum ToolsetEditorI18nKeys {
   ErrorUpdateFailed = 'toolsetEditor.error.updateFailed',
   ErrorLoginFailed = 'toolsetEditor.error.loginFailed',
   ErrorLogoutFailed = 'toolsetEditor.error.logoutFailed',
+  ErrorPopupBlocked = 'toolsetEditor.error.popupBlocked',
+  LoginSuccess = 'toolsetEditor.success.login',
   // Popup login callback
   PopupCloseFallback = 'toolsetEditor.popup.closeFallback',
 }

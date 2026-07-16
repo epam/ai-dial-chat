@@ -24,11 +24,14 @@ import {
   LazyImageLoadStatus,
   useLazyImageLoad,
 } from '../../hooks/useLazyImageLoad';
-import type { AttachmentCardProps } from '../../models/AttachmentCard';
-import { getAttachmentCardState } from '../../utils/getAttachmentCardState';
-import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension';
+import type { AttachmentCardProps } from '../../models/attachment-card';
+import {
+  getAttachmentCardState,
+  getNameWithoutExtension,
+} from '../../utils/attachment';
 import styles from './AttachmentCard.module.scss';
 
+/** Square tile for a single attachment (image, audio, file, or pasted-text card) inside the composer tray. */
 export const AttachmentCard: FC<AttachmentCardProps> = ({
   attachment,
   searchQuery = '',
@@ -38,15 +41,25 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   onClick,
   isSelected,
   shouldAlwaysShowActions,
-  removeLabel = 'Remove attachment',
-  retryLabel = 'Retry upload',
-  clickLabel = 'Open attachment',
-  colors,
-  typography,
-  roundedClassName = 'rounded-xl',
+  labels,
+  typeLabels,
+  styles: cardStyles,
   showHoverDownloadIcon = false,
   className,
 }) => {
+  const {
+    removeLabel = 'Remove attachment',
+    retryLabel = 'Retry upload',
+    clickLabel = 'Open attachment',
+    expandLabel = 'Expand pasted text',
+    loadingLabel = 'Loading attachment',
+    uploadFailedStatusLabel = 'Upload failed',
+  } = labels ?? {};
+  const {
+    colors,
+    typography,
+    roundedClassName = 'rounded-xl',
+  } = cardStyles ?? {};
   const { id, name } = attachment;
   const imageSrc = attachment.previewUrl ?? attachment.url;
   const isPasted = attachment.type === AttachmentType.Pasted;
@@ -79,13 +92,16 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         attachment,
         isSelected ?? false,
         shouldAlwaysShowActions ?? false,
+        typeLabels,
       ),
-    [attachment, isSelected, shouldAlwaysShowActions],
+    [attachment, isSelected, shouldAlwaysShowActions, typeLabels],
   );
 
-  // Not downloadable while still uploading or after a failed upload —
-  // matches AttachmentFileRow's `canDownload` gating so a broken/incomplete
-  // attachment never looks or behaves clickable (no false download attempt).
+  /*
+   * Not downloadable while still uploading or after a failed upload —
+   * matches AttachmentFileRow's `canDownload` gating so a broken/incomplete
+   * attachment never looks or behaves clickable (no false download attempt).
+   */
   const isClickable =
     onClick !== undefined && !isExpandable && !isLoading && !isError;
   const isInteractive = isExpandable || isClickable;
@@ -160,6 +176,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
           <audio
             controls
             src={attachment.playUrl}
+            aria-label={attachment.name}
             className="w-full"
             preload="metadata"
           />
@@ -307,13 +324,13 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             styles.loadingOverlay,
           )}
         >
-          <DialSpinner
-            size={40}
-            ariaLabel="Loading attachment"
-            className="z-50"
-          />
+          <DialSpinner size={40} ariaLabel={loadingLabel} className="z-50" />
         </span>
       )}
+
+      <span role="status" aria-live="polite" className="sr-only">
+        {isError ? uploadFailedStatusLabel : ''}
+      </span>
 
       {!isLoading && (
         <div
@@ -375,7 +392,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="button"
-        aria-label={isClickable ? clickLabel : undefined}
+        aria-label={
+          isClickable ? clickLabel : isExpandable ? expandLabel : undefined
+        }
       >
         {cardContent}
       </div>

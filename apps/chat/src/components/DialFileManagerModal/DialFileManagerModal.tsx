@@ -8,6 +8,7 @@ import {
   DialFileNodeType,
   DialPopup,
   NotificationVariant,
+  NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   PopupSize,
   useDialFileManagerTabs,
@@ -164,6 +165,12 @@ const DialFileManagerModal: FC<Props> = ({
     () => new Set(),
   );
 
+  const handleSelectedPathsChange = useCallback((paths: Set<string>) => {
+    setSelectedPaths(
+      new Set(Array.from(paths).filter((path) => !isHiddenPath(path))),
+    );
+  }, []);
+
   const handleTabChangeWithReset = useCallback(
     (tab: DialFileManagerTabs) => {
       setSelectedPaths(new Set());
@@ -207,6 +214,8 @@ const DialFileManagerModal: FC<Props> = ({
     const selectedFileNodes: DialFile[] = [];
 
     for (const file of selectedFiles) {
+      if (isHiddenPath(file.path)) continue;
+
       if (file.nodeType === DialFileNodeType.FOLDER) {
         selectedFolderPaths.push(file.path);
       } else {
@@ -575,6 +584,7 @@ const DialFileManagerModal: FC<Props> = ({
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       forbiddenSymbolsTooltip: t(
         DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
+        { notAllowedSymbols: NOT_ALLOWED_SYMBOLS },
       ),
       emptyStateByTab,
       treeHeaderByTab,
@@ -669,7 +679,7 @@ const DialFileManagerModal: FC<Props> = ({
         tabs={tabs}
         onTabChange={handleTabChangeWithReset}
         selectedPaths={selectedPaths}
-        onSelectedPathsChange={setSelectedPaths}
+        onSelectedPathsChange={handleSelectedPathsChange}
         variant={DialFileManagerVariant.Attach}
         actionProfile={DialFileManagerActionProfile.Attach}
         autoSelectUploadedItems={autoSelectUploadedItems}

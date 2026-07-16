@@ -200,6 +200,19 @@ const mapToDeploymentItem = (
   }
 
   const topics = raw.description_keywords || [];
+  /*
+   * DIAL Core reports MCP support inconsistently depending on the endpoint
+   * and deployment: the details endpoints set `features.mcp` (boolean), some
+   * list entries attach a root-level `mcp` descriptor object (endpoint,
+   * transport, allowedTools, ...), and others only list `"mcp"` inside
+   * `interfaces` (the same classification Core's own `interface_type=mcp`
+   * list filter relies on) with neither of the above present. Treat any of
+   * the three as MCP-capable.
+   */
+  const hasMcp =
+    raw.features?.mcp === true ||
+    raw.mcp != null ||
+    !!interfaces?.includes('mcp');
 
   return {
     id: raw.id,
@@ -220,15 +233,17 @@ const mapToDeploymentItem = (
     inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
       ? raw.input_attachment_types
       : undefined,
-    features: raw.features
-      ? {
-          systemPrompt: raw.features.system_prompt ?? false,
-          temperature: raw.features.temperature ?? false,
-          ...(raw.features.folder_attachments != null && {
-            folderAttachments: raw.features.folder_attachments,
-          }),
-        }
-      : undefined,
+    features:
+      raw.features || hasMcp
+        ? {
+            systemPrompt: raw.features?.system_prompt ?? false,
+            temperature: raw.features?.temperature ?? false,
+            ...(raw.features?.folder_attachments != null && {
+              folderAttachments: raw.features.folder_attachments,
+            }),
+            ...(hasMcp && { mcp: true }),
+          }
+        : undefined,
     maxInputAttachments:
       typeof raw.max_input_attachments === 'number'
         ? raw.max_input_attachments

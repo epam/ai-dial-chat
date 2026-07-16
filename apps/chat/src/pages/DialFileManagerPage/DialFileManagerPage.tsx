@@ -1,5 +1,6 @@
 import {
   DialFileManagerTabs,
+  NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
@@ -221,6 +222,7 @@ const DialFileManagerPage: FC = () => {
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
       forbiddenSymbolsTooltip: t(
         DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
+        { notAllowedSymbols: NOT_ALLOWED_SYMBOLS },
       ),
       emptyStateByTab,
       treeHeaderByTab,

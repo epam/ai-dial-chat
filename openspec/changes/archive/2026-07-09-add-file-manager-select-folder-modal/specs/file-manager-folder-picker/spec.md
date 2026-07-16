@@ -11,12 +11,12 @@ Clicking a `DialFileManagerActions.Copy` or `.Move` action (grid row menu, tree 
 #### Scenario: Copy action opens the popup in copy mode
 
 - **WHEN** the user triggers the Copy action on one or more items
-- **THEN** the destination-folder popup opens, browsing the same folder tree already loaded for the active tab, showing folders only
+- **THEN** the destination-folder popup opens, browsing the same folder tree already loaded for the active tab, showing both files and folders
 
 #### Scenario: Move action opens the popup in move mode
 
 - **WHEN** the user triggers the Move action on one or more items
-- **THEN** the destination-folder popup opens in move mode, browsing the same folder tree, showing folders only
+- **THEN** the destination-folder popup opens in move mode, browsing the same folder tree, showing both files and folders
 
 ---
 
@@ -98,14 +98,14 @@ Copy mode SHALL NOT set `sourceFolder` — copying an item into its own current 
 
 ---
 
-### Requirement: Folder-only, action-free browsing inside the popup
+### Requirement: Action-free browsing inside the popup
 
-The popup SHALL display only folders (no files) and SHALL NOT render row-level context actions (no Rename/Delete/etc. on folders shown inside the popup). This is the current behavior of the installed `@epam/ai-dial-ui-kit` version and is not configurable by the host application — `DialFileManagerDestinationFolderPopupOptions` exposes no `actionLabels` override for the popup's internal tree.
+The popup SHALL display both files and folders and SHALL NOT render row-level context actions (no Rename/Delete/etc. on rows shown inside the popup). The action-free behavior is the current behavior of the installed `@epam/ai-dial-ui-kit` version and is not configurable by the host application — `DialFileManagerDestinationFolderPopupOptions` exposes no `actionLabels` override for the popup's internal tree.
 
-#### Scenario: Files are not shown in the popup
+#### Scenario: Files and folders are both shown in the popup
 
 - **WHEN** the popup is open and the current folder contains both files and subfolders
-- **THEN** only the subfolders are listed
+- **THEN** both files and subfolders are listed
 
 #### Scenario: No context menu on popup rows
 
@@ -149,7 +149,7 @@ The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with m
 | `dialFileManager.moveHeaderSingle` | `Move "{{name}}"` |
 | `dialFileManager.moveHeaderMultiple` | `Move {{count}} items` |
 | `dialFileManager.moveSourceDisabledTooltip` | `Unavailable for the original location. Please select another folder` |
-| `dialFileManager.folderPickerEmptyStateTitle` | `No folders here` |
+| `dialFileManager.folderPickerEmptyStateTitle` | `This folder is empty` |
 | `dialFileManager.folderPickerEmptyStateDescription` | `Create a folder or choose another location` |
 
 No raw string literal keys are passed to `t()` anywhere in this change.

@@ -56,4 +56,6 @@ export interface FavoritesProps {
   removeFromFavoritesAriaLabel?: string;
   /** ID of an item to visually mark as selected (border, tint, and checkmark). */
   selectedItemId?: string;
+  /** Credentials-status badge label shown when a favorited item is signed out. Default: `'LOGGED OUT'`. */
+  credentialsBadgeLoggedOutLabel?: string;
 }

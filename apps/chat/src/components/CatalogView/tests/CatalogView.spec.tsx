@@ -1,15 +1,22 @@
 import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
-import { CatalogEntityType } from '@epam/ai-dial-catalog';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
-import { render, screen } from '@testing-library/react';
+import {
+  CatalogEntityType,
+  CredentialsBadgeState,
+  CredentialsUiState,
+  getCredentialsBadgeState,
+  getCredentialsUiState,
+} from '@epam/ai-dial-catalog';
+import type { DialToolsetDto, DeploymentItemDto } from '@epam/chat-api-client';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
+import { useAppConfig } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
-import { useCatalogPublishFolders } from '../../../hooks/catalog/useCatalogPublishFolders';
+import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
@@ -27,7 +34,31 @@ import {
 } from '../../../server-api/toolsets';
 import { AuthStatus } from '../../../types/auth-status';
 import { ROUTES } from '../../../types/routes';
+import { ToolsetOAuthResultType } from '../../../types/toolsets';
+import { UserConfigStatus } from '../../../types/user-config-status';
+import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import CatalogView from '../CatalogView';
+
+/** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
+const makeFakePopup = () => {
+  const store = new Map<string, string>();
+  return {
+    sessionStorage: {
+      setItem: (key: string, value: string) => store.set(key, value),
+      getItem: (key: string) => store.get(key) ?? null,
+    },
+    location: { href: '' },
+    opener: window,
+    closed: false,
+    close: vi.fn(),
+  };
+};
+
+const postOAuthResult = (flowId: string, message: Record<string, unknown>) => {
+  const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+  channel.postMessage(message);
+  channel.close();
+};
 
 const mockNavigate = vi.fn();
 let mockSearchParams = new URLSearchParams();
@@ -40,6 +71,7 @@ const capturedPublishProps: {
     publishExpandedPaths?: Set<string>;
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
+    isConnectVisible?: (item: CatalogItem) => boolean;
   } | null;
 } = { current: null };
 
@@ -76,6 +108,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublish,
     getPublishHistory,
     isPublishVisible,
+    isConnectVisible,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
@@ -100,6 +133,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onPublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
+    isConnectVisible?: (item: CatalogItem) => boolean;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
     capturedPublishProps.current = {
@@ -109,6 +143,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       publishExpandedPaths,
       onPublishExpandedPathsChange,
       publishLoadingPaths,
+      isConnectVisible,
     };
 
     return (
@@ -116,6 +151,28 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         <output aria-label="Catalog item ids">
           {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
         </output>
+        {(items ?? []).map((item) => (
+          <output
+            key={`credentials-badge-${item.id}`}
+            aria-label={`credentials badge ${item.id}`}
+          >
+            {item.credentials != null &&
+            getCredentialsBadgeState(item.credentials) ===
+              CredentialsBadgeState.LoggedOut
+              ? 'LOGGED OUT'
+              : ''}
+          </output>
+        ))}
+        {(items ?? []).map((item) => (
+          <output
+            key={`credentials-action-${item.id}`}
+            aria-label={`credentials action ${item.id}`}
+          >
+            {item.credentials != null
+              ? getCredentialsUiState(item.credentials)
+              : ''}
+          </output>
+        ))}
         <output aria-label="Initial details item id">
           {initialDetailsItemId ?? ''}
         </output>
@@ -250,6 +307,10 @@ vi.mock('../../../context/auth/UserContext', () => ({
   useUser: vi.fn(),
 }));
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: vi.fn(),
+}));
+
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
 }));
@@ -287,16 +348,29 @@ vi.mock(
   }),
 );
 
-vi.mock('../../../hooks/catalog/useCatalogPublishFolders', () => ({
-  useCatalogPublishFolders: vi.fn(),
+vi.mock('../../../hooks/publish/usePublishFolders', () => ({
+  usePublishFolders: vi.fn(),
 }));
 
 describe('CatalogView', () => {
   const user = userEvent.setup({ delay: null });
+  let capturedPopup: ReturnType<typeof makeFakePopup> | undefined;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockSearchParams = new URLSearchParams();
+    capturedPopup = undefined;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { origin: 'http://localhost', href: 'http://localhost/' },
+    });
+    Object.defineProperty(window, 'open', {
+      configurable: true,
+      value: vi.fn(() => {
+        capturedPopup = makeFakePopup();
+        return capturedPopup;
+      }),
+    });
     vi.mocked(useUser).mockReturnValue({
       status: AuthStatus.Authenticated,
       user: {
@@ -331,7 +405,7 @@ describe('CatalogView', () => {
       isLoading: false,
       toggleFavorite: vi.fn(),
     });
-    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+    vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
       expandedPaths: new Set(),
       loadedPaths: new Set(),
@@ -339,6 +413,16 @@ describe('CatalogView', () => {
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
+    vi.mocked(useAppConfig).mockReturnValue({
+      status: UserConfigStatus.Ready,
+      features: {},
+      config: {
+        asrModelId: null,
+        transcribeSizeLimitBytes: 5 * 1024 * 1024,
+        defaultDeploymentId: null,
+        dialCoreExternalUrl: 'https://dial.example.com',
+      },
     });
   });
 
@@ -356,8 +440,8 @@ describe('CatalogView', () => {
     );
   });
 
-  it('passes publish folder items from useCatalogPublishFolders through to Catalog', () => {
-    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+  it('passes publish folder items from usePublishFolders through to Catalog', () => {
+    vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [{ path: ['Organization'], name: 'Organization' }],
       expandedPaths: new Set(),
       loadedPaths: new Set(),
@@ -374,9 +458,9 @@ describe('CatalogView', () => {
     );
   });
 
-  it('forwards onCreatePublishFolder from useCatalogPublishFolders to Catalog', async () => {
+  it('forwards onCreatePublishFolder from usePublishFolders to Catalog', async () => {
     const onCreatePublishFolder = vi.fn();
-    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+    vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
       expandedPaths: new Set(),
       loadedPaths: new Set(),
@@ -394,11 +478,11 @@ describe('CatalogView', () => {
     expect(onCreatePublishFolder).toHaveBeenCalledWith(['Organization'], 'New');
   });
 
-  it('forwards expandedPaths/onExpandedPathsChange/loadingPaths from useCatalogPublishFolders to Catalog so expanding a folder triggers a fetch', () => {
+  it('forwards expandedPaths/onExpandedPathsChange/loadingPaths from usePublishFolders to Catalog so expanding a folder triggers a fetch', () => {
     const onExpandedPathsChange = vi.fn();
     const expandedPaths = new Set(['Organization']);
     const loadingPaths = new Set(['Organization/Data Science']);
-    vi.mocked(useCatalogPublishFolders).mockReturnValue({
+    vi.mocked(usePublishFolders).mockReturnValue({
       folderItems: [],
       expandedPaths,
       loadedPaths: new Set(),
@@ -544,6 +628,83 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isPublishVisible?.(
           makeCatalogItem({ type: CatalogEntityType.Agent }),
+        ),
+      ).toBe(false);
+    });
+  });
+
+  describe('connect wiring', () => {
+    it('shows Connect for a toolset item when the external URL is configured', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Toolset }),
+        ),
+      ).toBe(true);
+    });
+
+    it('shows Connect for an MCP-capable application when the external URL is configured', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({
+            type: CatalogEntityType.Application,
+            supportsMcp: true,
+          }),
+        ),
+      ).toBe(true);
+    });
+
+    it('hides Connect for a non-MCP application', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({
+            type: CatalogEntityType.Application,
+            supportsMcp: false,
+          }),
+        ),
+      ).toBe(false);
+    });
+
+    it('hides Connect for a Model item', () => {
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Model }),
+        ),
+      ).toBe(false);
+    });
+
+    it('hides Connect for every item when the DIAL Core external URL is not configured', () => {
+      vi.mocked(useAppConfig).mockReturnValue({
+        status: UserConfigStatus.Ready,
+        features: {},
+        config: {
+          asrModelId: null,
+          transcribeSizeLimitBytes: 5 * 1024 * 1024,
+          defaultDeploymentId: null,
+          dialCoreExternalUrl: null,
+        },
+      });
+
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({ type: CatalogEntityType.Toolset }),
+        ),
+      ).toBe(false);
+      expect(
+        capturedPublishProps.current?.isConnectVisible?.(
+          makeCatalogItem({
+            type: CatalogEntityType.Application,
+            supportsMcp: true,
+          }),
         ),
       ).toBe(false);
     });
@@ -1173,6 +1334,165 @@ describe('CatalogView', () => {
     expect(showNotification).toHaveBeenCalledWith(
       expect.objectContaining({ variant: 'error' }),
     );
+  });
+
+  describe('OAuth login', () => {
+    const oauthToolset = {
+      id: 'toolsets/public/oauth-tool__0.0.1',
+      toolset: 'toolsets/public/oauth-tool__0.0.1',
+      displayName: 'OAuth Tool',
+      authSettings: {
+        authenticationType: 'OAUTH' as const,
+        clientId: 'client-id',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+      },
+    };
+
+    const renderWithOAuthToolset = (
+      refetchToolsets = vi.fn(),
+      getToolsets: () => DialToolsetDto[] = () => [oauthToolset],
+    ) => {
+      vi.mocked(useDeployments).mockImplementation(() => ({
+        items: [],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: getToolsets(),
+        refetchToolsets,
+        refetchDeployments: vi.fn(),
+      }));
+      return render(<CatalogView />);
+    };
+
+    it('opens a popup and, on a success result, refetches toolsets and shows a success notification', async () => {
+      let currentToolsets: DialToolsetDto[] = [
+        {
+          ...oauthToolset,
+          authSettings: {
+            ...oauthToolset.authSettings,
+            userLevelAuthStatus: 'SIGNED_OUT' as const,
+          },
+        },
+      ];
+      const refetchToolsets = vi.fn(async () => {
+        currentToolsets = [
+          {
+            ...oauthToolset,
+            authSettings: {
+              ...oauthToolset.authSettings,
+              userLevelAuthStatus: 'SIGNED_IN' as const,
+            },
+          },
+        ];
+      });
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      const { unmount } = renderWithOAuthToolset(
+        refetchToolsets,
+        () => currentToolsets,
+      );
+
+      expect(
+        screen.getByLabelText(`credentials badge ${oauthToolset.id}`),
+      ).toHaveProperty('textContent', 'LOGGED OUT');
+      expect(
+        screen.getByLabelText(`credentials action ${oauthToolset.id}`),
+      ).toHaveProperty('textContent', CredentialsUiState.LoginWithMyCreds);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `login user ${oauthToolset.id}`,
+        }),
+      );
+
+      expect(capturedPopup).toBeDefined();
+      const flowId = JSON.parse(
+        capturedPopup?.sessionStorage.getItem('toolset-redirect-state') ?? '{}',
+      ).state;
+
+      postOAuthResult(flowId, {
+        type: ToolsetOAuthResultType.Success,
+        toolsetId: oauthToolset.id,
+        credentialsLevel: 'USER',
+      });
+
+      await waitFor(() => expect(refetchToolsets).toHaveBeenCalledOnce());
+      unmount();
+      render(<CatalogView />);
+      expect(
+        screen.getByLabelText(`credentials badge ${oauthToolset.id}`),
+      ).toHaveProperty('textContent', '');
+      expect(
+        screen.getByLabelText(`credentials action ${oauthToolset.id}`),
+      ).toHaveProperty('textContent', CredentialsUiState.LogOut);
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+    });
+
+    it('shows an error notification and does not refetch when the OAuth result is a failure', async () => {
+      const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      renderWithOAuthToolset(refetchToolsets);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `login global ${oauthToolset.id}`,
+        }),
+      );
+
+      const flowId = JSON.parse(
+        capturedPopup?.sessionStorage.getItem('toolset-redirect-state') ?? '{}',
+      ).state;
+
+      postOAuthResult(flowId, {
+        type: 'failure',
+        reason: 'login-request-failed',
+      });
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: 'error' }),
+        ),
+      );
+      expect(refetchToolsets).not.toHaveBeenCalled();
+    });
+
+    it('shows a popup-blocked error notification without waiting for a result', async () => {
+      vi.mocked(window.open).mockReturnValueOnce(null);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      renderWithOAuthToolset();
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `login user ${oauthToolset.id}`,
+        }),
+      );
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: 'error' }),
+        ),
+      );
+    });
   });
 
   it('deletes a toolset, refetches toolsets, and shows a success notification', async () => {

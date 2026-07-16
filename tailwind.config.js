@@ -26,6 +26,18 @@ const backgroundsColors = {
   'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC2E)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
   'transparent-black': 'var(--bg-transparent-black, rgb(0 0 0 / 0))',
+  // New Chat button shadow — blue/purple pair at default, hover, and active alpha levels
+  'new-chat-shadow-blue': 'var(--bg-new-chat-shadow-blue, #5C8DEA33)',
+  'new-chat-shadow-blue-hover':
+    'var(--bg-new-chat-shadow-blue-hover, #5C8DEA47)',
+  'new-chat-shadow-blue-active':
+    'var(--bg-new-chat-shadow-blue-active, #5C8DEA26)',
+  'new-chat-shadow-purple': 'var(--bg-new-chat-shadow-purple, #A972FF24)',
+  'new-chat-shadow-purple-hover':
+    'var(--bg-new-chat-shadow-purple-hover, #A972FF33)',
+  'new-chat-shadow-purple-active':
+    'var(--bg-new-chat-shadow-purple-active, #A972FF1A)',
+  'mask-opaque': 'var(--bg-mask-opaque, #000)',
 };
 
 const controlsBgColors = {
@@ -73,8 +85,14 @@ const borderColors = {
   info: 'var(--stroke-info, #124ACE)',
   success: 'var(--stroke-success, #007274)',
   'accent-primary': 'var(--stroke-accent-primary, #124ACE)',
+  'accent-primary-hover': 'var(--stroke-accent-primary-hover, #7DA4FF)',
   'accent-secondary': 'var(--stroke-accent-secondary, #007274)',
   'accent-tertiary': 'var(--stroke-accent-tertiary, #7E39EC)',
+  'hover-tint': 'var(--stroke-hover-tint, rgba(0, 0, 0, 0.12))',
+};
+
+const controlsBorderColors = {
+  'controls-focus': 'var(--controls-stroke-focus, #EEF1F7)',
 };
 
 const textColors = {
@@ -94,6 +112,7 @@ const textColors = {
   info: 'var(--text-info, #124ACE)',
   success: 'var(--text-success, #007274)',
   'accent-primary': 'var(--text-accent-primary, #124ACE)',
+  'accent-primary-hover': 'var(--text-accent-primary-hover, #2764D9)',
   'accent-secondary': 'var(--text-accent-secondary, #007274)',
   'accent-tertiary': 'var(--text-accent-tertiary, #7E39EC)',
   white: 'var(--text-white, #FFFFFF)',
@@ -128,9 +147,9 @@ module.exports = {
   ],
   theme: {
     backgroundColor: { ...backgroundsColors, ...controlsBgColors },
-    borderColor: borderColors,
-    stroke: borderColors,
-    divideColor: borderColors,
+    borderColor: { ...borderColors, ...controlsBorderColors },
+    stroke: { ...borderColors, ...controlsBorderColors },
+    divideColor: { ...borderColors, ...controlsBorderColors },
     placeholderColor: placeholderColor,
     textColor: { ...textColors, ...controlsTextColors },
     gradientColorStops: backgroundsColors,

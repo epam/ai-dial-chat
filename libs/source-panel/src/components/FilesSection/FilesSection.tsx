@@ -4,7 +4,7 @@ import { AttachmentCard } from '@epam/ai-dial-conversation-input';
 import { memo, type FC } from 'react';
 
 /** Props for the FilesSection component. */
-interface FilesSectionProps {
+export interface FilesSectionProps {
   /** List of attachments to display. Renders nothing when empty. */
   attachments: DisplayAttachment[];
   /** Heading text rendered above the attachment grid. */
@@ -19,6 +19,7 @@ interface FilesSectionProps {
   attachmentClickLabel?: string;
 }
 
+/** Attachment grid section (uploaded or generated files) rendered inside `ConversationSourcesPanel`. Renders nothing when `attachments` is empty. */
 const FilesSection: FC<FilesSectionProps> = ({
   attachments,
   title,
@@ -53,7 +54,7 @@ const FilesSection: FC<FilesSectionProps> = ({
               onClick={
                 onAttachmentClick ? () => onAttachmentClick(att) : undefined
               }
-              clickLabel={attachmentClickLabel}
+              labels={{ clickLabel: attachmentClickLabel }}
             />
           </div>
         ))}

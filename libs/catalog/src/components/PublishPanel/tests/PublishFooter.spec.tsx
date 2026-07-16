@@ -8,7 +8,7 @@ const renderFooter = (props?: Partial<ComponentProps<typeof PublishFooter>>) =>
   render(
     <PublishFooter
       version="4.0.1"
-      hasExistingVersionInFolder={false}
+      hasExistingPublicationInFolder={false}
       isSubmitDisabled={false}
       isSubmitLoading={false}
       onCancel={vi.fn()}
@@ -30,7 +30,7 @@ describe('PublishFooter', () => {
   });
 
   it('renders an "Update version" label when the version already exists in the folder', () => {
-    renderFooter({ hasExistingVersionInFolder: true });
+    renderFooter({ hasExistingPublicationInFolder: true });
     expect(
       screen.getByRole('button', { name: 'Update version 4.0.1' }),
     ).toBeTruthy();

@@ -45,7 +45,7 @@ describe('usePublishFlow', () => {
     );
 
     expect(result.current.selectedFolderPath).toBeUndefined();
-    expect(result.current.hasExistingVersionInFolder).toBe(false);
+    expect(result.current.hasExistingPublicationInFolder).toBe(false);
     expect(result.current.hasWriteAccess).toBe(true);
   });
 
@@ -63,7 +63,7 @@ describe('usePublishFlow', () => {
       result.current.setSelectedFolderPath(['Shared', 'Data Science']);
     });
 
-    expect(result.current.hasExistingVersionInFolder).toBe(true);
+    expect(result.current.hasExistingPublicationInFolder).toBe(true);
   });
 
   it('does not flag an existing version for a different folder', () => {
@@ -80,7 +80,7 @@ describe('usePublishFlow', () => {
       result.current.setSelectedFolderPath(['Shared']);
     });
 
-    expect(result.current.hasExistingVersionInFolder).toBe(false);
+    expect(result.current.hasExistingPublicationInFolder).toBe(false);
   });
 
   it('resolves hasWriteAccess from the provided predicate once a folder is selected', () => {

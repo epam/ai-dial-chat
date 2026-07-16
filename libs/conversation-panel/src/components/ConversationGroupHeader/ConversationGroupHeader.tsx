@@ -2,7 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import type { DragEvent, FC } from 'react';
-import { ConversationGroupKey } from '../../types/conversation-group-key';
+import { FilterTab } from '../../types/conversation-classification';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
 /** Props for `ConversationGroupHeader`. */
@@ -13,13 +13,15 @@ export interface ConversationGroupHeaderProps {
   isExpanded: boolean;
   /** Called when the user clicks the header to toggle expansion. */
   onToggle: () => void;
-  /** Typography class applied to the header button. Defaults to `'dial-tiny-text'`. */
+  /** `id` of the virtualized list container this header's rows belong to, referenced via `aria-controls`. */
+  listId: string;
+  /** Typography class applied to the header button. Defaults to `'dial-tiny-semi-text uppercase'`. */
   className?: string;
   /**
    * When provided the header acts as a drop zone for drag-and-drop.
    * Only the Pinned group header receives this prop.
    */
-  dropZoneGroupKey?: ConversationGroupKey;
+  dropZoneGroupKey?: FilterTab;
   /** Whether the drag cursor is currently over this header. */
   isDragOver?: boolean;
   /** Called when the drag cursor enters this header drop zone. */
@@ -29,7 +31,7 @@ export interface ConversationGroupHeaderProps {
   /** Called when the user drops onto this header drop zone. */
   onDrop?: (
     targetId: string,
-    targetGroupKey: ConversationGroupKey,
+    targetGroupKey: FilterTab,
     afterId: string | null,
   ) => void;
 }
@@ -39,6 +41,7 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
   label,
   isExpanded,
   onToggle,
+  listId,
   className = 'dial-tiny-semi-text uppercase',
   dropZoneGroupKey,
   isDragOver,
@@ -72,6 +75,7 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
     <button
       type="button"
       aria-expanded={isExpanded}
+      aria-controls={listId}
       onClick={onToggle}
       onDragOver={isDropZone ? handleDragOver : undefined}
       onDragLeave={isDropZone ? handleDragLeave : undefined}
@@ -80,13 +84,23 @@ export const ConversationGroupHeader: FC<ConversationGroupHeaderProps> = ({
         'flex h-6 w-full items-center gap-1 rounded py-1 pe-3 text-start',
         className,
         styles.groupHeader,
-        isDragOver && 'ring-accent-secondary ring-1 ring-inset',
+        isDragOver && styles.dropZoneActive,
       )}
     >
       {isExpanded ? (
-        <IconCaretDownFilled stroke={0.5} size={12} className="shrink-0" />
+        <IconCaretDownFilled
+          stroke={0.5}
+          size={12}
+          className="shrink-0"
+          aria-hidden
+        />
       ) : (
-        <IconCaretRightFilled stroke={0.5} size={12} className="shrink-0" />
+        <IconCaretRightFilled
+          stroke={0.5}
+          size={12}
+          className="shrink-0 rtl:scale-x-[-1]"
+          aria-hidden
+        />
       )}
       <DialEllipsisTooltip text={label} />
     </button>

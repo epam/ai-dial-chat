@@ -21,7 +21,7 @@ interface SourcesSectionColors {
   quote?: string;
 }
 
-interface SourcesSectionProps {
+export interface SourcesSectionProps {
   /** Heading text for the sources section. */
   title: string;
   /** List of sources to display. */
@@ -44,6 +44,7 @@ interface SourcesSectionProps {
   onSourceClick?: (source: QuotationSource) => void;
 }
 
+/** Cited-sources list section (with copy-URL action) rendered inside `ConversationSourcesPanel`. Renders nothing when `sources` is empty. */
 const SourcesSection: FC<SourcesSectionProps> = ({
   title,
   sources,

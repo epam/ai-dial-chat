@@ -70,7 +70,10 @@ describe('AttachmentGroup', () => {
       const user = userEvent.setup();
       const images = Array.from({ length: 13 }, (_, i) => makeImage(`img${i}`));
       render(
-        <AttachmentGroup attachments={images} showLessLabel="Show less" />,
+        <AttachmentGroup
+          attachments={images}
+          labels={{ showLessLabel: 'Show less' }}
+        />,
       );
 
       await user.click(
@@ -86,7 +89,10 @@ describe('AttachmentGroup', () => {
       const user = userEvent.setup();
       const images = Array.from({ length: 13 }, (_, i) => makeImage(`img${i}`));
       render(
-        <AttachmentGroup attachments={images} showLessLabel="Show less" />,
+        <AttachmentGroup
+          attachments={images}
+          labels={{ showLessLabel: 'Show less' }}
+        />,
       );
 
       await user.click(
@@ -171,7 +177,7 @@ describe('AttachmentGroup', () => {
         <AttachmentGroup
           attachments={files}
           onAttachmentClick={handleClick}
-          downloadAllLabel="Download all"
+          labels={{ downloadAllLabel: 'Download all' }}
         />,
       );
 
@@ -193,7 +199,7 @@ describe('AttachmentGroup', () => {
         <AttachmentGroup
           attachments={[ready, uploading, failed]}
           onAttachmentClick={handleClick}
-          downloadAllLabel="Download all"
+          labels={{ downloadAllLabel: 'Download all' }}
         />,
       );
 
@@ -241,7 +247,7 @@ describe('AttachmentGroup', () => {
         <AttachmentGroup
           attachments={attachments}
           onAttachmentClick={handleClick}
-          downloadAllLabel="Download all"
+          labels={{ downloadAllLabel: 'Download all' }}
         />,
       );
 
@@ -269,7 +275,7 @@ describe('AttachmentGroup', () => {
         <AttachmentGroup
           attachments={[makeFile('a', { status: RequestStatus.Error })]}
           onRetry={handleRetry}
-          retryLabel="Retry"
+          labels={{ retryLabel: 'Retry' }}
         />,
       );
 
@@ -291,7 +297,10 @@ describe('AttachmentGroup', () => {
 
   it('exposes the group as an accessible, labeled region', () => {
     render(
-      <AttachmentGroup attachments={[makeFile('a')]} ariaLabel="Attachments" />,
+      <AttachmentGroup
+        attachments={[makeFile('a')]}
+        labels={{ ariaLabel: 'Attachments' }}
+      />,
     );
     expect(screen.getByRole('group', { name: 'Attachments' })).toBeTruthy();
   });

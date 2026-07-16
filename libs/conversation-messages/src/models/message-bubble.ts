@@ -124,7 +124,7 @@ interface BaseMessageBubbleProps {
   /**
    * Surface color theme for non-previewable attachment tiles, matching the
    * markdown code block's own light/dark surface (never plain white).
-   * Forwarded to `AttachmentGroup`. Defaults to `'dark'`.
+   * Forwarded to `AttachmentGroup`, which defaults to `'dark'` when omitted.
    */
   attachmentTheme?: CodeBlockTheme;
 }
@@ -161,7 +161,7 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   deploymentIconUrl?: string;
   /** Human-readable deployment name shown as the icon's accessible label. */
   deploymentDisplayName?: string;
-  /** Syntax highlight color theme for code blocks. Forwarded to `MDMessageViewer`. Defaults to `'dark'`. */
+  /** Syntax highlight color theme for code blocks. Forwarded to `MDMessageViewer`, which defaults to `'dark'` when omitted. */
   codeBlockTheme?: CodeBlockTheme;
   /** Localised labels for quick replies, the thinking indicator, and code block copy actions. */
   labels?: AssistantMessageBubbleLabels;

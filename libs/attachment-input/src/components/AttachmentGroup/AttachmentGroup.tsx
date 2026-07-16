@@ -12,12 +12,12 @@ import {
   IconPhoto,
 } from '@tabler/icons-react';
 import { type FC, useMemo, useState } from 'react';
-import type { AttachmentGroupProps } from '../../models/AttachmentGroup';
+import { ATTACHMENT_COLLAPSE_THRESHOLD } from '../../constants/attachment-group';
 import {
-  ATTACHMENT_COLLAPSE_THRESHOLD,
   AttachmentTilesLayout,
-  getAttachmentTilesPlan,
-} from '../../utils/getAttachmentGroupLayout';
+  type AttachmentGroupProps,
+} from '../../models/attachment-group';
+import { getAttachmentTilesPlan } from '../../utils/attachment';
 import { AttachmentCard } from '../AttachmentCard/AttachmentCard';
 import { AttachmentFileRow } from '../AttachmentFileRow/AttachmentFileRow';
 import { AttachmentMoreTile } from '../AttachmentMoreTile/AttachmentMoreTile';
@@ -40,14 +40,22 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   onDownloadAll,
   onRetry,
   getSizeLabel,
-  ariaLabel = 'Attachments',
-  clickLabel = 'Download attachment',
-  retryLabel = 'Retry upload',
-  showLessLabel = 'Show less',
-  downloadAllLabel = 'Download all',
+  labels,
+  typeLabels,
+  styles: groupStyles,
   theme,
   className,
 }) => {
+  const {
+    ariaLabel = 'Attachments',
+    clickLabel = 'Download attachment',
+    retryLabel = 'Retry upload',
+    showLessLabel = 'Show less',
+    downloadAllLabel = 'Download all',
+    getHeaderLabel = (count: number) => pluralize(count, 'attachment'),
+  } = labels ?? {};
+  const { headerLabelClassName = 'dial-tiny-semi-text' } = groupStyles ?? {};
+
   const [isExpanded, setIsExpanded] = useState(false);
 
   const plan = useMemo(
@@ -63,14 +71,16 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   const isCollapsible = attachments.length >= ATTACHMENT_COLLAPSE_THRESHOLD;
 
   const HeaderIcon = isMixed ? IconPaperclip : hasImages ? IconPhoto : IconFile;
-  const headerLabel = pluralize(attachments.length, 'attachment');
+  const headerLabel = getHeaderLabel(attachments.length);
 
   const visibleAttachments = attachments.slice(0, plan.visibleCount);
 
   const handleDownloadAll = () => {
-    // Skip attachments that individual tiles themselves wouldn't allow
-    // downloading (still uploading, or failed) — "download all" must not
-    // fire on a broken/incomplete attachment just because it's in the list.
+    /*
+     * Skip attachments that individual tiles themselves wouldn't allow
+     * downloading (still uploading, or failed) — "download all" must not
+     * fire on a broken/incomplete attachment just because it's in the list.
+     */
     const downloadableAttachments = attachments.filter(
       (attachment) => attachment.status === RequestStatus.Idle,
     );
@@ -102,7 +112,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
           aria-hidden
         />
         <span
-          className={mergeClasses('dial-tiny-semi-text', styles.headerLabel)}
+          className={mergeClasses(headerLabelClassName, styles.headerLabel)}
         >
           {headerLabel}
         </span>
@@ -140,20 +150,23 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
                     : undefined
                 }
                 onRetry={onRetry}
-                clickLabel={clickLabel}
-                retryLabel={retryLabel}
-                roundedClassName="rounded-xl"
+                labels={{ clickLabel, retryLabel }}
+                typeLabels={typeLabels}
+                styles={{ roundedClassName: 'rounded-xl' }}
                 showHoverDownloadIcon
                 className={mergeClasses('size-[84px]', styles.imageTile)}
               />
             ) : (
               <AttachmentFileRow
                 attachment={attachment}
-                sizeLabel={getSizeLabel?.(attachment)}
                 onClick={onAttachmentClick}
                 onRetry={onRetry}
-                clickLabel={clickLabel}
-                retryLabel={retryLabel}
+                labels={{
+                  clickLabel,
+                  retryLabel,
+                  sizeLabel: getSizeLabel?.(attachment),
+                }}
+                typeLabels={typeLabels}
                 theme={theme}
               />
             )}

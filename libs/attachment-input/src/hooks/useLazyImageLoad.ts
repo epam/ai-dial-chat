@@ -1,9 +1,14 @@
 import { type RefObject, useEffect, useRef, useState } from 'react';
 
+/** Lazy-image load lifecycle. */
 export enum LazyImageLoadStatus {
+  /** Not yet requested to load. */
   Idle = 'idle',
+  /** Image request is in flight; skeleton should stay visible. */
   Loading = 'loading',
+  /** Image loaded successfully and can be shown. */
   Loaded = 'loaded',
+  /** The image failed to load. */
   Error = 'error',
 }
 

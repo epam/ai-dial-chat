@@ -3,7 +3,6 @@ import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
-  DialFileNodeType,
   DialSpinner,
   GridSelectionMode,
   NOT_ALLOWED_SYMBOLS_REGEXP,
@@ -11,13 +10,13 @@ import {
   type FileManagerGridRow,
   type ToolbarOptions,
 } from '@epam/ai-dial-ui-kit';
-import type { GridApi } from 'ag-grid-community';
-import { memo, useCallback, useMemo, useState, type FC } from 'react';
+import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
 import ShareFileModal from '../../components/DialFileManagerModal/ShareFileModal';
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
 import type { UseDialFileManagerResult } from '../../hooks/files/useDialFileManager';
+import { useGridEditingScroll } from '../../hooks/files/useGridEditingScroll';
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
@@ -34,12 +33,6 @@ type DestinationFolderPopupOptions =
     destinationFolderPath?: string;
     setDestinationFolderPath?: (path?: string) => void;
     filesLoading?: boolean;
-    /*
-     * Current ui-kit forwards extra destination popup options into the popup's
-     * inner DialFileManager. Keep full `items` for conflict detection, but make
-     * that inner grid folder-only.
-     */
-    onGridApiChange?: (api: GridApi<FileManagerGridRow>) => void;
   };
 
 const normalizeVirtualFolderPath = (value: string): string => {
@@ -151,6 +144,13 @@ const DialFileManagerShell: FC<Props> = ({
   const [destinationFolderPath, setDestinationFolderPath] = useState<
     string | undefined
   >(undefined);
+
+  const { handleGridApiChange, reset: resetGridEditingScroll } =
+    useGridEditingScroll();
+
+  useEffect(() => {
+    resetGridEditingScroll();
+  }, [activeTab, resetGridEditingScroll]);
 
   const actionLabels = useMemo(() => {
     const result: Partial<Record<DialFileManagerActions, string>> = {};
@@ -345,20 +345,6 @@ const DialFileManagerShell: FC<Props> = ({
     ],
   );
 
-  const handleDestinationFolderPopupGridApiChange = useCallback(
-    (api: GridApi<FileManagerGridRow>): void => {
-      api.setGridOption('isExternalFilterPresent', () => true);
-      api.setGridOption('doesExternalFilterPass', ({ data }) => {
-        return (
-          data?.isTemporary === true ||
-          data?.nodeType === DialFileNodeType.FOLDER
-        );
-      });
-      api.onFilterChanged();
-    },
-    [],
-  );
-
   const commonSelectedParentFolder = useMemo(() => {
     let commonParent: string | undefined;
     for (const selectedPath of selectedPaths) {
@@ -399,7 +385,6 @@ const DialFileManagerShell: FC<Props> = ({
       destinationFolderPath,
       setDestinationFolderPath,
       filesLoading: isDestinationFolderLoading,
-      onGridApiChange: handleDestinationFolderPopupGridApiChange,
     }),
     [
       labels.copyLabel,
@@ -415,7 +400,6 @@ const DialFileManagerShell: FC<Props> = ({
       isDestinationFolderLoading,
       disabledDestinationPath,
       destinationFolderPath,
-      handleDestinationFolderPopupGridApiChange,
     ],
   );
 
@@ -474,6 +458,7 @@ const DialFileManagerShell: FC<Props> = ({
             items={items}
             path={path}
             onPathChange={onPathChange}
+            onGridApiChange={handleGridApiChange}
             filesLoading={isLoading}
             allowedFileTypes={allowedFileTypes}
             maxSelectableFileSize={maxSelectableFileSize}

@@ -39,6 +39,8 @@ export interface MarkdownCodeBlockProps {
   headerClassName?: string;
   /** Typography class for the `<code>` element (used when no language is detected). Defaults to `'dial-code-text'`. */
   codeClassName?: string;
+  /** CSS class applied to the language label in the header. Defaults to `'dial-tiny-semi-text uppercase'` plus the module's `.languageLabel` class (`--text-secondary`). */
+  languageLabelClassName?: string;
 }
 
 const syntaxTheme = {
@@ -62,6 +64,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     containerClassName,
     headerClassName,
     codeClassName = 'dial-code-text',
+    languageLabelClassName = 'dial-tiny-semi-text uppercase',
   }) => {
     const { isCopied, copy } = useCodeCopy(value);
     const isLightTheme = theme === CodeBlockTheme.Light;
@@ -85,7 +88,12 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
             headerClassName,
           )}
         >
-          <span className="dial-tiny-semi-text uppercase tracking-wider text-secondary">
+          <span
+            className={mergeClasses(
+              styles.languageLabel,
+              languageLabelClassName,
+            )}
+          >
             {language}
           </span>
           {!isStreaming && (
@@ -108,7 +116,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
                 aria-label={isCopied ? copiedLabel : copyLabel}
                 variant={ButtonVariant.Primary}
                 size={ElementSize.Small}
-                className={isCopied ? '!text-success' : undefined}
+                className={isCopied ? styles.copiedIcon : undefined}
                 onClick={copy}
               />
             </div>

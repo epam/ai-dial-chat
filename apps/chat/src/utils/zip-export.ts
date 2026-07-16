@@ -3,6 +3,14 @@ import { strToU8, zipSync } from 'fflate';
 
 /** Character allowlist for attachment paths written into a `.dial` archive. */
 const ARCHIVE_PATH_CHARSET = /^[a-zA-Z0-9._\-/]+$/;
+/*
+ * fflate identifies file entries with instanceof against its own Uint8Array
+ * constructor, so normalize bytes from other realms before calling zipSync.
+ */
+const FflateUint8Array = strToU8('', true).constructor as Uint8ArrayConstructor;
+
+const toZipUint8Array = (data: Uint8Array): Uint8Array =>
+  data instanceof FflateUint8Array ? data : new FflateUint8Array(data);
 
 /**
  * Validates an attachment path before it is written into a `.dial` archive.
@@ -44,7 +52,9 @@ export const buildDialArchive = (
 ): BuildDialArchiveResult => {
   const skippedPaths: string[] = [];
   const files: Record<string, Uint8Array> = {
-    'conversation.json': strToU8(JSON.stringify(envelope, null, 2)),
+    'conversation.json': toZipUint8Array(
+      strToU8(JSON.stringify(envelope, null, 2)),
+    ),
   };
 
   for (const attachment of attachments) {
@@ -52,7 +62,7 @@ export const buildDialArchive = (
       skippedPaths.push(attachment.path);
       continue;
     }
-    files[`res/${attachment.path}`] = attachment.data;
+    files[`res/${attachment.path}`] = toZipUint8Array(attachment.data);
   }
 
   const zipped = zipSync(files);

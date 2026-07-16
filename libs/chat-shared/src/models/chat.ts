@@ -112,6 +112,7 @@ export interface Message {
   /** ISO-8601 timestamp of when the message was created. */
   timestamp: string;
 
+  /** DIAL Core response identifier used for the rate API. Present on the final chunk. */
   responseId?: string;
   /**
    * Extra DIAL API payload attached to the message.

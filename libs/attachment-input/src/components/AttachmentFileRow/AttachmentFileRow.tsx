@@ -10,12 +10,12 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconDownload, IconReload } from '@tabler/icons-react';
-import { type FC, type KeyboardEvent, type MouseEvent } from 'react';
-import type { AttachmentFileRowProps } from '../../models/AttachmentFileRow';
-import { getAttachmentCardState } from '../../utils/getAttachmentCardState';
+import { type FC, type KeyboardEvent, type MouseEvent, useId } from 'react';
+import type { AttachmentFileRowProps } from '../../models/attachment-file-row';
+import { getAttachmentCardState } from '../../utils/attachment';
 import styles from './AttachmentFileRow.module.scss';
 
-const ERROR_REASON_TEXT: Record<AttachmentErrorReason, string> = {
+const DEFAULT_ERROR_REASON_TEXT: Record<AttachmentErrorReason, string> = {
   [AttachmentErrorReason.Network]: 'Upload failed · network error',
   [AttachmentErrorReason.UnsupportedType]:
     'Upload failed · unsupported file type',
@@ -33,36 +33,60 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
   attachment,
   onClick,
   onRetry,
-  clickLabel = 'Download attachment',
-  retryLabel = 'Retry upload',
+  labels,
+  typeLabels,
+  styles: rowStyles,
   theme = CodeBlockTheme.Dark,
   className,
 }) => {
+  const {
+    clickLabel = 'Download attachment',
+    retryLabel = 'Retry upload',
+    sizeLabel,
+    uploadingLabel = 'Uploading',
+    errorReasonLabels,
+    genericErrorLabel = 'Upload failed',
+  } = labels ?? {};
+  const {
+    nameClassName = 'dial-caption-text',
+    metaClassName = 'dial-caption-text',
+  } = rowStyles ?? {};
   const { id, name, status, errorReason } = attachment;
   const isLoading = status === RequestStatus.Loading;
   const isError = status === RequestStatus.Error;
+  const errorDescId = useId();
   const errorTitle =
     isError &&
-    ((errorReason && ERROR_REASON_TEXT[errorReason]) || 'Upload failed');
+    ((errorReason &&
+      (errorReasonLabels?.[errorReason] ??
+        DEFAULT_ERROR_REASON_TEXT[errorReason])) ||
+      genericErrorLabel);
 
-  // Same computation the composer's AttachmentCard uses, so the glyph and
-  // extension label are guaranteed identical between the two contexts.
+  /*
+   * Same computation the composer's AttachmentCard uses, so the glyph and
+   * extension label are guaranteed identical between the two contexts.
+   */
   const { BottomIcon: Glyph, typeLabel } = getAttachmentCardState(
     attachment,
     false,
     false,
+    typeLabels,
   );
 
   const canDownload = !isError && !isLoading && onClick !== undefined;
-  // Matches AttachmentCard: retrying an unsupported file type would just
-  // fail again, so no retry action is offered for that specific reason.
+  /*
+   * Matches AttachmentCard: retrying an unsupported file type would just
+   * fail again, so no retry action is offered for that specific reason.
+   */
   const canRetry =
     isError &&
     !!onRetry &&
     errorReason !== AttachmentErrorReason.UnsupportedType;
-  // The download/retry icon is pinned to the tile's top-end corner (unlike
-  // images, which have no text to collide with there) — reserve space in
-  // whichever row renders first so wrapped text never runs under it.
+  /*
+   * The download/retry icon is pinned to the tile's top-end corner (unlike
+   * images, which have no text to collide with there) — reserve space in
+   * whichever row renders first so wrapped text never runs under it.
+   */
   const cornerIconSpacing = canDownload || canRetry ? 'pe-5' : undefined;
 
   const handleClick = (): void => {
@@ -87,7 +111,8 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
     <div
       title={name}
       className={mergeClasses(
-        'dial-caption-text line-clamp-2 min-w-0 break-words',
+        nameClassName,
+        'line-clamp-2 min-w-0 break-words',
         styles.nameText,
         !isError && cornerIconSpacing,
       )}
@@ -105,9 +130,9 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
     >
       <Glyph size={16} className={styles.typeText} aria-hidden />
       <span
-        className={mergeClasses('dial-caption-text truncate', styles.typeText)}
+        className={mergeClasses(metaClassName, 'truncate', styles.typeText)}
       >
-        {typeLabel}
+        {sizeLabel ? `${typeLabel} · ${sizeLabel}` : typeLabel}
       </span>
     </div>
   );
@@ -129,7 +154,7 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
       {isLoading && (
         <div
           role="progressbar"
-          aria-label="Uploading"
+          aria-label={uploadingLabel}
           className={mergeClasses(
             'absolute inset-x-2 bottom-2 h-[3px] overflow-hidden rounded-full',
             styles.track,
@@ -164,11 +189,23 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
             styles.retryIcon,
           )}
           aria-label={retryLabel}
+          aria-describedby={errorTitle ? errorDescId : undefined}
           onClick={(e: MouseEvent) => {
             e.stopPropagation();
             onRetry(id);
           }}
         />
+      )}
+
+      {isError && (
+        <span
+          id={errorDescId}
+          role="status"
+          aria-live="polite"
+          className="sr-only"
+        >
+          {errorTitle}
+        </span>
       )}
     </>
   );
@@ -190,7 +227,13 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
           {tileContent}
         </div>
       ) : (
-        <div className={tileClassName} title={errorTitle || undefined}>
+        <div
+          className={tileClassName}
+          title={errorTitle || undefined}
+          role={isError ? 'group' : undefined}
+          aria-describedby={isError ? errorDescId : undefined}
+          tabIndex={isError ? 0 : undefined}
+        >
           {tileContent}
         </div>
       )}

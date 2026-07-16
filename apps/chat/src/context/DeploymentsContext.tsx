@@ -140,6 +140,27 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const deploymentsRequestIdRef = useRef(0);
   const toolsetsRequestIdRef = useRef(0);
 
+  /*
+   * loadDeployments only needs userConfigSelectedId/defaultDeploymentId to
+   * resolve the *initial* selection on first load. Reading them through refs
+   * (instead of as useCallback/useEffect dependencies) keeps loadDeployments
+   * stable so picking a new deployment — which optimistically updates
+   * userConfigSelectedId via setSelectedDeployment — doesn't re-trigger a
+   * full deployments/schemas/toolsets refetch. Without this, isLoading flips
+   * true for the whole refetch and the model icon is stuck on a loading
+   * skeleton until it resolves.
+   */
+  const userConfigSelectedIdRef = useRef(userConfigSelectedId);
+  const defaultDeploymentIdRef = useRef(appConfig.defaultDeploymentId);
+
+  useEffect(() => {
+    userConfigSelectedIdRef.current = userConfigSelectedId;
+  }, [userConfigSelectedId]);
+
+  useEffect(() => {
+    defaultDeploymentIdRef.current = appConfig.defaultDeploymentId;
+  }, [appConfig.defaultDeploymentId]);
+
   const loadDeployments = useCallback(
     async (signal: { isCancelled: boolean }) => {
       setIsLoading(true);
@@ -190,14 +211,14 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
           resolveInitialSelection(
             deployments,
             prev,
-            userConfigSelectedId,
-            appConfig.defaultDeploymentId,
+            userConfigSelectedIdRef.current,
+            defaultDeploymentIdRef.current,
           ),
         );
       }
       setIsLoading(false);
     },
-    [userConfigSelectedId, appConfig.defaultDeploymentId],
+    [],
   );
 
   useEffect(() => {
@@ -207,6 +228,28 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       signal.isCancelled = true;
     };
   }, [loadDeployments]);
+
+  /*
+   * Handles the case where userConfigSelectedId/defaultDeploymentId only
+   * become known *after* the initial load already resolved with no
+   * selection (e.g. user config loads slower than deployments) — recomputes
+   * the selection against the already-loaded list without refetching.
+   */
+  useEffect(() => {
+    if (selectedItemId != null || rawDeployments.length === 0) return;
+    const resolved = resolveInitialSelection(
+      rawDeployments,
+      null,
+      userConfigSelectedId,
+      appConfig.defaultDeploymentId,
+    );
+    if (resolved != null) setSelectedItemIdState(resolved);
+  }, [
+    userConfigSelectedId,
+    appConfig.defaultDeploymentId,
+    rawDeployments,
+    selectedItemId,
+  ]);
 
   const refetchToolsets = useCallback(async () => {
     const requestId = ++toolsetsRequestIdRef.current;

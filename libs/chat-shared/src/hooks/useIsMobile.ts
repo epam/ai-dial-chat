@@ -7,6 +7,7 @@ const resolveIsMobile = (): boolean =>
   typeof window.matchMedia === 'function' &&
   window.matchMedia(MOBILE_QUERY).matches;
 
+/** Returns whether the viewport currently matches the mobile media query, updating on resize. */
 export const useIsMobile = (): boolean => {
   const [isMobile, setIsMobile] = useState(resolveIsMobile);
 

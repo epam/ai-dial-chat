@@ -12,6 +12,7 @@ export interface HeaderProps {
   title?: ReactNode;
   /**
    * CSS class applied to the title element.
+   * Defaults to `'dial-h1-text'`.
    */
   titleClassName?: string;
   /** CSS class applied to the root element. */

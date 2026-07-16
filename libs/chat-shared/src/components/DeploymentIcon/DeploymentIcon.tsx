@@ -26,6 +26,9 @@ export interface DeploymentIconProps {
  * The icon image is inset by ~11 % (matching Figma) to leave a visible backdrop.
  * On image load error, or when `src` is absent, renders `InitialsAvatar` derived from
  * `initialsName` (or the custom `fallback` node when provided).
+ * When `src` changes, the previous image stays visible until the new one has
+ * finished preloading, avoiding the blank frame a browser shows while an
+ * `<img>`'s `src` attribute is swapped in place.
  */
 export const DeploymentIcon: FC<DeploymentIconProps> = ({
   src,
@@ -35,20 +38,47 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
   badgeClassName,
   tooltip,
 }) => {
-  const [hasFailed, setHasFailed] = useState(false);
-  const ref = useRef<HTMLImageElement>(null);
+  const [displayedSrc, setDisplayedSrc] = useState(src);
+  const [failedSrc, setFailedSrc] = useState<string>();
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
-    setHasFailed(false);
-  }, [src]);
+    if (src === displayedSrc) return;
 
+    if (src == null) {
+      setDisplayedSrc(undefined);
+      return;
+    }
+
+    let isCancelled = false;
+    const preloadImg = new Image();
+    preloadImg.onload = () => {
+      if (!isCancelled) setDisplayedSrc(src);
+    };
+    preloadImg.onerror = () => {
+      if (!isCancelled) {
+        setFailedSrc(src);
+        setDisplayedSrc(src);
+      }
+    };
+    preloadImg.src = src;
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [src, displayedSrc]);
+
+  // Safety net for the rare case where the preload above succeeded (e.g. a
+  // stale browser cache entry) but the actually-rendered <img> still fails.
   useEffect(() => {
-    const el = ref.current;
+    const el = imgRef.current;
     if (!el) return;
-    const handler = () => setHasFailed(true);
+    const handler = () => setFailedSrc(displayedSrc);
     el.addEventListener('error', handler);
     return () => el.removeEventListener('error', handler);
-  }, [src]);
+  }, [displayedSrc]);
+
+  const hasFailed = displayedSrc != null && failedSrc === displayedSrc;
 
   const defaultFallback = (
     <InitialsAvatar name={initialsName} size={size} className="shrink-0" />
@@ -63,15 +93,15 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
         badgeClassName,
       )}
     >
-      {!src || hasFailed ? (
+      {!displayedSrc || hasFailed ? (
         <div className="flex size-full items-center justify-center">
           {fallback ?? defaultFallback}
         </div>
       ) : (
         <div className="size-full">
           <img
-            ref={ref}
-            src={src}
+            ref={imgRef}
+            src={displayedSrc}
             alt=""
             className="size-full object-contain"
           />

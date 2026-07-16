@@ -165,7 +165,8 @@ When the panel is empty:
 When the panel is not empty:
 
 - `leftActions` SHALL contain a disabled `DialGhostIconButton` with `IconSearch` and the i18n `aria-label` `sidebar.sources.search`.
-- `rightActions` SHALL contain a disabled `DialGhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`.
+- `rightActions` SHALL contain a `DialGhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`. This button SHALL be enabled whenever at least one attachment in `uploaded` or `generated` is downloadable (i.e. has a DIAL-hosted file URL resolvable by the same mechanism `handleAttachmentClick` uses), and SHALL be disabled only when no attachment currently in `uploaded`/`generated` is downloadable.
+- Activating the enabled download-all button SHALL trigger a download of every downloadable attachment in `uploaded` and `generated`, using the same URL-resolution and download-triggering mechanism as clicking an individual attachment card. Attachments that are not downloadable via that mechanism (e.g. reference-only attachments) SHALL be silently skipped, matching single-click behavior for those attachments.
 - The body SHALL render, in order: the Uploaded Files `FilesSection`, the Generated Files `FilesSection`, and `SourcesSection` (receiving `sources={filteredSources}`, `title`, and `copyLabel`).
 
 For both states:
@@ -185,8 +186,29 @@ For both states:
 
 - **WHEN** at least one attachment is present in `uploaded`, `generated`, or `sources`
 - **THEN** the global empty state is not rendered
-- **AND** the search and download-all buttons are rendered disabled
+- **AND** the search button is rendered disabled
 - **AND** the Uploaded Files, Generated Files, and Sources sections are rendered
+
+#### Scenario: Download-all button is enabled when a downloadable attachment is present
+
+- **WHEN** at least one attachment in `uploaded` or `generated` has a DIAL-hosted file URL
+- **THEN** the download-all button in `rightActions` is rendered without the `disabled` attribute
+
+#### Scenario: Download-all button is disabled when nothing is downloadable
+
+- **WHEN** `uploaded` and `generated` contain only attachments without a resolvable DIAL-hosted file URL (or both lists are empty)
+- **THEN** the download-all button is rendered with the `disabled` attribute
+
+#### Scenario: Activating download-all downloads every downloadable attachment
+
+- **WHEN** the user activates the enabled download-all button while `uploaded` has one downloadable attachment and `generated` has two downloadable attachments
+- **THEN** the same download mechanism used for individual attachment clicks is invoked once per downloadable attachment, for all three attachments
+
+#### Scenario: Non-downloadable attachments are skipped by download-all
+
+- **WHEN** the user activates the enabled download-all button while one attachment in `uploaded` or `generated` is not downloadable (no resolvable DIAL-hosted URL)
+- **THEN** no download is triggered for that attachment
+- **AND** downloads are still triggered for the remaining downloadable attachments
 
 #### Scenario: Search filters sources by title, URL, and quote
 

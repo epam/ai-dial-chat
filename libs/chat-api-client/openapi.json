@@ -1998,6 +1998,123 @@
         ]
       }
     },
+    "/api/v1/conversations/publish": {
+      "post": {
+        "description": "Publishes an owned conversation to a folder under the Organization/public bucket by proxying DIAL Core's Publication API (`createPublication`). This endpoint keeps no publish records of its own — DIAL Core is the sole source of truth. The conversation title is re-fetched server-side and used as the publication name.",
+        "operationId": "publishConversation",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishConversationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Conversation published successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishConversationResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid path or folderPath"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks write access to the target folder"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Publish a conversation to an Organization folder",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
+    "/api/v1/conversations/publish-history": {
+      "get": {
+        "description": "Returns every folder this conversation has been published to, most recent first, derived from DIAL Core's Publication API (`getPublications`) — never from chat-api-side storage.",
+        "operationId": "getConversationPublishHistory",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Publish history for the conversation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublishConversationResultDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid path"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get publish history for a conversation",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
     "/api/v1/files": {
       "post": {
         "operationId": "uploadFile",
@@ -3322,7 +3439,7 @@
     },
     "/api/v1/share/discard": {
       "post": {
-        "description": "Discards the authenticated user's own access to a catalog resource (application or toolset) shared with them, via DIAL Core's discardSharedResources operation. Only affects the caller's own access — removing access for everyone else is a separate operation.",
+        "description": "Discards the authenticated user's own access to a shared catalog entity (application or toolset) or conversation, via DIAL Core's discardSharedResources operation. Only affects the caller's own access — removing access for everyone else is a separate operation.",
         "operationId": "discardSharedCatalogItem",
         "parameters": [],
         "requestBody": {
@@ -3368,7 +3485,7 @@
             "description": "DIAL Core is unavailable or timed out"
           }
         },
-        "summary": "Discard a catalog resource shared with the caller",
+        "summary": "Discard a shared catalog resource or conversation",
         "tags": [
           "share"
         ]
@@ -3636,6 +3753,12 @@
             "description": "Operator-configured default deployment ID. Null when not configured.",
             "example": "gpt-4o",
             "nullable": true
+          },
+          "dialCoreExternalUrl": {
+            "type": "string",
+            "description": "Public-facing DIAL Core base URL reachable from the browser. Null when DIAL_CORE_EXTERNAL_URL is not configured.",
+            "example": "https://dial.example.com",
+            "nullable": true
           }
         },
         "required": [
@@ -3898,6 +4021,10 @@
           "folderAttachments": {
             "type": "boolean",
             "description": "Whether the deployment supports attaching folders from the file manager"
+          },
+          "mcp": {
+            "type": "boolean",
+            "description": "Whether the deployment supports the MCP protocol"
           }
         },
         "required": [
@@ -6146,6 +6273,46 @@
           "confirm"
         ]
       },
+      "PublishConversationDto": {
+        "type": "object",
+        "properties": {
+          "folderPath": {
+            "type": "string",
+            "description": "Destination folder under the Organization/public bucket, forwarded to DIAL Core as `targetFolder`.",
+            "example": "Organization/Data Science/Shared chats"
+          }
+        },
+        "required": [
+          "folderPath"
+        ]
+      },
+      "PublishConversationResultDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "example": "conversations/bucket-123/my-conversation-abc"
+          },
+          "folderPath": {
+            "type": "string",
+            "example": "Organization/Data Science/Shared chats"
+          },
+          "publishedAt": {
+            "type": "string",
+            "example": "2026-07-15T10:00:00.000Z"
+          },
+          "publishedBy": {
+            "type": "string",
+            "example": "Valery Dluski"
+          }
+        },
+        "required": [
+          "path",
+          "folderPath",
+          "publishedAt",
+          "publishedBy"
+        ]
+      },
       "FileUploadResponseDto": {
         "type": "object",
         "properties": {
@@ -7184,7 +7351,7 @@
         "properties": {
           "itemId": {
             "type": "string",
-            "description": "Identifier (DIAL Core resource path) of the catalog item to discard access to.",
+            "description": "Identifier (DIAL Core resource path) of the catalog item or conversation to discard access to.",
             "example": "applications/owner-bucket/my-app"
           }
         },

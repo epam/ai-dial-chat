@@ -20,6 +20,7 @@ export type {
 const includesIgnoreCase = (text: string, query: string): boolean =>
   text.toLowerCase().includes(query.toLowerCase());
 
+/** Resizable sidebar panel listing a conversation's uploaded/generated attachments and cited sources, with search and filtering. */
 const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   isOpen,
   onClose,
@@ -28,6 +29,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   sources,
   onAttachmentClick,
   onSourceClick,
+  onDownloadAll,
   isMobile,
   defaultWidth,
   minWidth,
@@ -103,7 +105,9 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
               <IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} aria-hidden />
             }
             aria-label={labels.downloadAllLabel}
-            disabled
+            tooltipProps={{ tooltip: labels.downloadAllLabel }}
+            onClick={onDownloadAll}
+            disabled={!onDownloadAll}
           />
         )
       }

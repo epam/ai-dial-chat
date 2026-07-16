@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useConversationExport } from '../../../hooks/useConversationExport';
+import { discardSharedCatalogItem } from '../../../server-api/share.api';
 import {
   ConversationExportMode,
   ExportJobStatus,
@@ -30,6 +31,7 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
       headerActions,
       conversations: panelConversations,
       getActions,
+      onActionMenuOpen,
     }: {
       headerActions?: ReactNode;
       conversations?: Array<{ id: string }>;
@@ -43,11 +45,19 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
           onClick?: () => void;
         }>;
       }>;
+      onActionMenuOpen?: (
+        item: { id: string },
+        trigger: HTMLButtonElement,
+      ) => void;
     }) => (
       <div role="region" aria-label="conversation panel">
         {headerActions}
         {panelConversations?.map((item) => (
           <div key={item.id}>
+            <button
+              id={`action-trigger-${item.id}`}
+              aria-label={`action trigger ${item.id}`}
+            />
             {(getActions?.(item) ?? []).map((action) =>
               action.children ? (
                 // Simulates the hover-revealed submenu: children render as sibling buttons.
@@ -60,7 +70,16 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
                   ))}
                 </div>
               ) : (
-                <button key={action.key} onClick={action.onClick}>
+                <button
+                  key={action.key}
+                  onClick={() => {
+                    const trigger = document.getElementById(
+                      `action-trigger-${item.id}`,
+                    ) as HTMLButtonElement | null;
+                    if (trigger) onActionMenuOpen?.(item, trigger);
+                    action.onClick?.();
+                  }}
+                >
                   {action.label}
                 </button>
               ),
@@ -187,6 +206,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconPinnedFilled: () => null,
   IconShare: () => null,
   IconTrashX: () => null,
+  IconWorldShare: () => null,
 }));
 
 vi.mock('react-i18next', () => ({
@@ -199,24 +219,16 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('../../../context/ConversationsContext');
 vi.mock('../../../context/NotificationContext');
+vi.mock('../../../server-api/share.api');
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ items: [] }),
 }));
 vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
   useIsMobile: () => false,
 }));
-vi.mock('../../../hooks/use-viewport-width', () => ({
-  default: () => 1440,
-}));
-vi.mock('../../../hooks/useLocalStorage', () => ({
-  default: () => [325, vi.fn()],
-}));
 vi.mock('../../../constants/routes', () => ({
   getConversationRoute: (id: string) => `/conversations/${id}`,
   normalizeConversationId: (id: string) => id,
-}));
-vi.mock('../../../constants/storage', () => ({
-  StorageKey: { ConversationPanelWidth: 'dial:cpw' },
 }));
 vi.mock('../../../utils/get-model-id-from-conversation-id', () => ({
   getModelIdFromConversationId: () => undefined,
@@ -250,6 +262,29 @@ vi.mock('../../RenameConversationPopup/RenameConversationPopup', () => ({
     );
   },
 }));
+vi.mock(
+  '../../PublishConversationPanelContainer/PublishConversationPanelContainer',
+  () => ({
+    default: ({
+      conversationPath,
+      conversationTitle,
+      onClose,
+      returnFocusRef,
+    }: {
+      conversationPath: string;
+      conversationTitle: string;
+      onClose: () => void;
+      returnFocusRef?: { current: HTMLElement | null };
+    }) => (
+      <div role="dialog" aria-label="publish conversation">
+        <span>{conversationPath}</span>
+        <span>{conversationTitle}</span>
+        <span>{returnFocusRef?.current?.getAttribute('aria-label')}</span>
+        <button onClick={onClose}>Close</button>
+      </div>
+    ),
+  }),
+);
 vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
   default: ({
     jobs,
@@ -312,6 +347,10 @@ const PARTIAL_ERROR = 'conversationPanel.deleteAll.deleteAllPartialError';
 
 const DELETE_CONFIRM_BUTTON = 'buttons.delete';
 const SHARE_LABEL = 'share.title';
+const PUBLISH_LABEL = 'buttons.publish';
+
+const UNSHARE_CONFIRM_TITLE = 'conversationPanel.unshare.unshareConfirmTitle';
+const UNSHARE_ERROR = 'conversationPanel.unshare.unshareError';
 
 const mockDeleteAllConversations =
   vi.fn<() => Promise<ConversationDeletionResultDto>>();
@@ -860,6 +899,85 @@ describe('ConversationPanelView — share', () => {
   });
 });
 
+describe('ConversationPanelView — publish', () => {
+  it('owned conversation menu includes Publish', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
+  });
+
+  it('readonly (shared-with-me) conversation menu excludes Publish', () => {
+    const sharedConversation = {
+      id: 'conv2',
+      title: 'Shared chat',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: true,
+      publishedWithMe: false,
+    };
+
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="conv2" />,
+    );
+
+    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+  });
+
+  it('published-with-me conversation menu excludes Publish', () => {
+    const publishedConversation = {
+      id: 'conv3',
+      title: 'Published chat',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: false,
+      publishedWithMe: true,
+    };
+
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [publishedConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="conv3" />,
+    );
+
+    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+  });
+
+  it('clicking Publish opens the panel for the conversation path and title', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: PUBLISH_LABEL }));
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'publish conversation',
+    });
+    expect(within(dialog).getByText('conv1')).toBeTruthy();
+    expect(within(dialog).getByText('action trigger conv1')).toBeTruthy();
+  });
+
+  it('closing the panel clears the pending publish state', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: PUBLISH_LABEL }));
+    const dialog = screen.getByRole('dialog', {
+      name: 'publish conversation',
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: 'publish conversation' }),
+      ).toBeNull();
+    });
+  });
+});
+
 describe('ConversationPanelView — export', () => {
   it('row action list contains an Export item (submenu trigger, no onClick of its own)', () => {
     render(<ConversationPanelView {...defaultProps} />);
@@ -972,5 +1090,243 @@ describe('ConversationPanelView — export', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(mockRetryJob).toHaveBeenCalledWith('job-3');
+  });
+});
+
+describe('ConversationPanelView — unshare (shared-with-me delete)', () => {
+  const sharedConversation = {
+    id: 'conv1',
+    title: 'Shared chat',
+    isPinned: false,
+    updatedAt: 0,
+    sharedWithMe: true,
+    publishedWithMe: false,
+  };
+
+  beforeEach(() => {
+    vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+  });
+
+  it('shared-with-me row menu includes Delete', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(
+      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    ).toBeTruthy();
+  });
+
+  it('owned row menu renders exactly one Delete action (the owner-delete, not an extra unshare one)', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(
+      screen.getAllByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    ).toHaveLength(1);
+  });
+
+  it('published-with-me (not shared-with-me) row menu does not include Delete', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [
+        { ...sharedConversation, sharedWithMe: false, publishedWithMe: true },
+      ],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    expect(
+      screen.queryByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    ).toBeNull();
+  });
+
+  it('clicking Delete opens confirmation without calling the discard API', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
+
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText(UNSHARE_CONFIRM_TITLE)).toBeTruthy();
+    expect(discardSharedCatalogItem).not.toHaveBeenCalled();
+  });
+
+  it('confirm calls discardSharedCatalogItem exactly once and disables the button while pending', async () => {
+    let resolveDiscard: (value: { success: boolean }) => void = () => undefined;
+    vi.mocked(discardSharedCatalogItem).mockReturnValue(
+      new Promise((resolve) => {
+        resolveDiscard = resolve;
+      }),
+    );
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
+    const dialog = screen.getByRole('dialog');
+    const confirmButton = within(dialog).getByRole('button', {
+      name: DELETE_CONFIRM_BUTTON,
+    });
+
+    fireEvent.click(confirmButton);
+    fireEvent.click(confirmButton);
+
+    expect(discardSharedCatalogItem).toHaveBeenCalledOnce();
+    expect(discardSharedCatalogItem).toHaveBeenCalledWith('conv1');
+    expect(confirmButton.hasAttribute('disabled')).toBe(true);
+
+    await act(async () => {
+      resolveDiscard({ success: true });
+    });
+  });
+
+  it('successful discard of a non-active conversation refreshes and notifies without navigating', async () => {
+    const otherConversation = {
+      id: 'other',
+      title: 'Other chat',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: false,
+      publishedWithMe: false,
+    };
+    const mockRefresh = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation, otherConversation],
+      refreshConversations: mockRefresh,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="other" />,
+    );
+    mockRefresh.mockClear();
+
+    /* sharedConversation is listed first, so its unshare-Delete button is the first match. */
+    fireEvent.click(
+      screen.getAllByRole('button', { name: DELETE_CONFIRM_BUTTON })[0],
+    );
+    const dialog = screen.getByRole('dialog');
+    await act(async () => {
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
+    });
+
+    expect(discardSharedCatalogItem).toHaveBeenCalledWith('conv1');
+    await waitFor(() => {
+      expect(mockRefresh).toHaveBeenCalledOnce();
+    });
+    expect(mockShowNotification).toHaveBeenCalledOnce();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
+  it('successful discard of the active conversation navigates to root', async () => {
+    const mockRefresh = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation],
+      refreshConversations: mockRefresh,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="conv1" />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
+    const dialog = screen.getByRole('dialog');
+    await act(async () => {
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+  });
+
+  it('a refreshConversations rejection after a successful discard still shows success, not an error', async () => {
+    const mockRefresh = vi.fn().mockRejectedValue(new Error('refresh failed'));
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation],
+      refreshConversations: mockRefresh,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
+    const dialog = screen.getByRole('dialog');
+    await act(async () => {
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+    expect(mockShowNotification).toHaveBeenCalledOnce();
+  });
+
+  it('failed discard keeps the popup open with an inline error and does not refresh or navigate', async () => {
+    vi.mocked(discardSharedCatalogItem).mockRejectedValue(new Error('403'));
+    const mockRefresh = vi.fn();
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation],
+      refreshConversations: mockRefresh,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
+    const dialog = screen.getByRole('dialog');
+    await act(async () => {
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
+    });
+
+    expect(within(dialog).getByText(UNSHARE_ERROR)).toBeTruthy();
+    expect(mockRefresh).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('cancel closes the popup without calling the discard API', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [sharedConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: CANCEL_BUTTON }),
+    );
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(discardSharedCatalogItem).not.toHaveBeenCalled();
   });
 });

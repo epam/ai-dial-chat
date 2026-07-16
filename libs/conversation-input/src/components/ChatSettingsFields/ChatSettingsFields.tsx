@@ -8,6 +8,9 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 
+const LABEL_CLASS_NAME =
+  '!text-[14px] !leading-[20px] font-semibold !text-primary gap-1';
+
 /** Props for the shared chat-settings form fields. */
 export interface ChatSettingsFieldsProps {
   /** Feature flags controlling which fields are rendered. */
@@ -67,6 +70,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
     {features.responseFormat && (
       <DialRadioGroup
         fieldTitle={responseFormatLabel}
+        labelClassName={LABEL_CLASS_NAME}
         elementId="response-format"
         orientation={RadioGroupOrientation.Column}
         activeRadioButton={responseFormat ?? ResponseFormat.Markdown}
@@ -89,6 +93,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
         value={systemPrompt}
         placeholder={systemPromptTooltip}
         labelProps={{
+          className: LABEL_CLASS_NAME,
           label: systemPromptLabel,
         }}
         onChange={(value) => onSystemPromptChange(value ?? '')}
@@ -98,6 +103,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
       <DialSlider
         labelProps={{
           label: temperatureLabel,
+          className: LABEL_CLASS_NAME,
           caption: temperatureHint,
         }}
         value={temperature}

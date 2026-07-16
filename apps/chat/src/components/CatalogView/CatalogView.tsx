@@ -28,10 +28,11 @@ import {
   NavigationI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useCatalogPublishFolders } from '../../hooks/catalog/useCatalogPublishFolders';
+import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
@@ -53,6 +54,8 @@ import { ROUTES } from '../../types/routes';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
+  ToolsetOAuthInitiationResultType,
+  ToolsetOAuthResultType,
   WithLogin,
 } from '../../types/toolsets';
 import { isQuickAppSchema } from '../../utils/application-schema';
@@ -69,7 +72,11 @@ import {
   mapPublishHistoryEntryDto,
   toPublishEntityType,
 } from '../../utils/publish';
-import { initiateOAuthLogin } from '../../utils/toolsets';
+import {
+  initiateOAuthLogin,
+  waitForToolsetOAuthResult,
+} from '../../utils/toolsets';
+import ConnectPopoverContainer from '../ConnectPopoverContainer/ConnectPopoverContainer';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
 /** Entity types shown in the catalog picker modal: models and agents only. */
@@ -100,6 +107,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const { showNotification } = useNotification();
   const { user } = useUser();
   const isAdmin = user?.isAdmin ?? false;
+  const { config } = useAppConfig();
+  const dialCoreExternalUrl = config.dialCoreExternalUrl;
   const {
     items: deployments,
     selectedItemId,
@@ -156,7 +165,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     onExpandedPathsChange: onPublishExpandedPathsChange,
     onCreatePublishFolder,
     hasPublishWriteAccess,
-  } = useCatalogPublishFolders();
+  } = usePublishFolders();
 
   const favorites = useMemo(
     () => visibleCatalogItems.filter((item) => item.isUserFavorite),
@@ -244,7 +253,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
 
       if (authenticationType === ToolsetAuthenticationType.OAuth) {
         const toolset = toolsets.find((t) => t.id === item.id);
-        const started = initiateOAuthLogin(
+        const initiation = initiateOAuthLogin(
           {
             authenticationType: ToolsetAuthTypes.OAuth,
             withLogin: WithLogin.WithConfig,
@@ -258,7 +267,27 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           item.id,
           credentialsLevel,
         );
-        if (!started) {
+        if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(
+              initiation.type === ToolsetOAuthInitiationResultType.Blocked
+                ? ToolsetEditorI18nKeys.ErrorPopupBlocked
+                : ToolsetEditorI18nKeys.ErrorLoginFailed,
+            ),
+          });
+          return;
+        }
+
+        const result = await waitForToolsetOAuthResult(
+          initiation.popup,
+          initiation.flowId,
+        );
+
+        if (result.type === ToolsetOAuthResultType.Success) {
+          showLoginSuccess(item, params.level);
+          await refetchToolsets();
+        } else if (result.type === ToolsetOAuthResultType.Failure) {
           showNotification({
             variant: NotificationVariant.Error,
             message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
@@ -393,6 +422,17 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     (item: CatalogItem) =>
       Boolean(item.isMyApp) && toPublishEntityType(item.type) != null,
     [],
+  );
+
+  const isConnectVisible = useCallback(
+    (item: CatalogItem) => {
+      if (!dialCoreExternalUrl) return false;
+      if (item.type === CatalogEntityType.Toolset) return true;
+      return (
+        item.type === CatalogEntityType.Application && item.supportsMcp === true
+      );
+    },
+    [dialCoreExternalUrl],
   );
 
   const getPublishHistory = useCallback(async (item: CatalogItem) => {
@@ -628,6 +668,10 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       shareOverlay={(item, onClose) => (
         <SharePopoverContainer item={item} onClose={onClose} />
       )}
+      isConnectVisible={isConnectVisible}
+      connectOverlay={(item, onClose) => (
+        <ConnectPopoverContainer item={item} onClose={onClose} />
+      )}
       styles={{
         typography: { pageHeadingFontClassName: 'catalog-heading-text' },
       }}
@@ -694,6 +738,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         unshareConfirmMessage: (name) =>
           t(CatalogI18nKeys.DetailsUnshareConfirmMessage, { name }),
         cancelLabel: t(ButtonsI18nKeys.Cancel),
+        connectLabel: t(ButtonsI18nKeys.Connect),
       }}
     />
   );

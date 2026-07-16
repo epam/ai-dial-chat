@@ -70,6 +70,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       allowedFileTypes,
       maxSelectableFileSize,
       unsupportedFileTypeTooltip,
+      getDisabledTooltip,
       selectedPaths,
       onSelectedPathsChange,
       sharedWithMeIds,
@@ -112,6 +113,10 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       allowedFileTypes?: string[];
       maxSelectableFileSize?: number;
       unsupportedFileTypeTooltip?: string;
+      getDisabledTooltip?: (row: {
+        nodeType?: string;
+        path: string;
+      }) => string | undefined;
       selectedPaths?: Set<string>;
       onSelectedPathsChange?: (paths: Set<string>) => void;
       sharedWithMeIds?: string[];
@@ -145,6 +150,10 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         data-allowed-file-types={allowedFileTypes?.join(',')}
         data-max-selectable-file-size={maxSelectableFileSize}
         data-unsupported-file-type-tooltip={unsupportedFileTypeTooltip}
+        data-hidden-file-tooltip={getDisabledTooltip?.({
+          nodeType: DialFileNodeType.ITEM,
+          path: '/My files/.hidden/report.pdf',
+        })}
         data-upload-enabled={uploadEnabled}
         data-new-button-disabled={toolbarOptions?.isNewButtonDisabled}
         data-new-button-tooltip={toolbarOptions?.disabledNewButtonTooltip}
@@ -205,6 +214,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         data-auto-select-uploaded-items={String(
           autoSelectUploadedItems ?? true,
         )}
+        data-hidden-file-selectable={String(
+          gridOptions?.additionalGridOptions?.rowSelection?.isRowSelectable?.({
+            data: {
+              nodeType: DialFileNodeType.ITEM,
+              path: '/My files/.hidden/report.pdf',
+            },
+          }) ?? false,
+        )}
       >
         {toolbarOptions?.tabs?.map((tab) => (
           <button
@@ -237,6 +254,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
           }
         >
           Select report
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onSelectedPathsChange?.(new Set(['/My files/.hidden/report.pdf']))
+          }
+        >
+          Select hidden file
         </button>
         <button
           type="button"
@@ -278,6 +303,15 @@ const defaultHookResult: UseDialFileManagerResult = {
           name: 'report.pdf',
           path: '/My files/report.pdf',
           parentPath: '/My files',
+          nodeType: DialFileNodeType.ITEM,
+          folderId: 'test-bucket',
+          contentType: 'application/pdf',
+        },
+        {
+          id: '.hidden/report.pdf',
+          name: 'report.pdf',
+          path: '/My files/.hidden/report.pdf',
+          parentPath: '/My files/.hidden/',
           nodeType: DialFileNodeType.ITEM,
           folderId: 'test-bucket',
           contentType: 'application/pdf',
@@ -605,6 +639,24 @@ describe('DialFileManagerModal', () => {
     ).toBe(false);
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+
+    expect(screen.queryByText('1 item selected')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(true);
+  });
+
+  it('blocks dot-prefixed hidden files from attach selection', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-hidden-file-selectable')).toBe('false');
+    expect(manager.getAttribute('data-hidden-file-tooltip')).toBe(
+      'dialFileManager.attachingHiddenFilesNotAllowed',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select hidden file' }));
 
     expect(screen.queryByText('1 item selected')).toBeNull();
     expect(
