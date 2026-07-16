@@ -38,6 +38,7 @@ import { ScreenState } from '@/src/types/common';
 import {
   Publication,
   PublicationHandlerState,
+  PublicationResource,
   ResourceToReview,
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -393,31 +394,55 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const isNamesOrVersionsInvalid = Object.entries(entitiesEditState).some(
-    ([key, { version, name }]) => {
-      const isInvalidName = !isEntityNameValid(name);
+  const getPublicKey = (reviewUrl: string) => {
+    const parts = reviewUrl.split('/');
+    parts[1] = PUBLIC_URL_PREFIX;
+    return parts.join('/');
+  };
 
+  const isVersionExemptFromCheck = (
+    key: string,
+    resource: PublicationResource | undefined,
+  ) =>
+    resource?.action === PublishActions.DELETE ||
+    publishModel?.action === PublishActions.DELETE ||
+    isFileId(key);
+
+  const isVersionValidForResource = (
+    key: string,
+    version: string,
+    name: string,
+    resource: PublicationResource | undefined,
+  ) =>
+    isVersionExemptFromCheck(key, resource) ||
+    (isVersionValid(version.trim()) &&
+      !isVersionExists(version, getPublicKey(key), publicVersionGroups, name) &&
+      (!isApplicationId(key) || isVersionPartSizeValid(version)));
+
+  const hasDuplicateVersion = Object.entries(entitiesEditState).some(
+    ([key, { version, name }]) => {
       const resource = publication.resources.find(
         ({ reviewUrl }) => reviewUrl === key,
       );
-
-      const isValidVersion =
-        resource?.action === PublishActions.DELETE ||
-        publishModel?.action === PublishActions.DELETE ||
-        isFileId(key) ||
-        (isVersionValid(version.trim()) &&
-          !isVersionExists(
-            version,
-            key,
-            publicVersionGroups,
-            name,
-            publication.targetFolder,
-          ) &&
-          (!isApplicationId(key) || isVersionPartSizeValid(version)));
-
-      return isInvalidName || !isValidVersion;
+      return (
+        !isVersionExemptFromCheck(key, resource) &&
+        isVersionExists(version, getPublicKey(key), publicVersionGroups, name)
+      );
     },
   );
+
+  const isNamesOrVersionsInvalid = Object.entries(entitiesEditState).some(
+    ([key, { version, name }]) => {
+      const resource = publication.resources.find(
+        ({ reviewUrl }) => reviewUrl === key,
+      );
+      return (
+        !isEntityNameValid(name) ||
+        !isVersionValidForResource(key, version, name, resource)
+      );
+    },
+  );
+
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
 
   const isEditInvalid =
@@ -470,6 +495,9 @@ export const PublicationHandlerFooter = ({
       if (areNoChanges) {
         return ChatI18nKeys.NothingIsSelectedAndRulesHaveNotChanged;
       }
+      if (hasDuplicateVersion) {
+        return ChatI18nKeys.DuplicateVersionFound;
+      }
 
       return ChatI18nKeys.RequestCantBePublishedAsSomeItemsAreInvalid;
     }
@@ -492,6 +520,7 @@ export const PublicationHandlerFooter = ({
     isValid,
     formError,
     isDraftRuleFilterOpen,
+    hasDuplicateVersion,
   ]);
 
   const isApproveOrSendDisabled =
