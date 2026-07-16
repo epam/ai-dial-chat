@@ -2,9 +2,9 @@
 
 ### Requirement: POST /api/v1/files/upload-archive endpoint
 
-The BFF SHALL expose `POST /api/v1/files/upload-archive` (multipart/form-data) that accepts a ZIP archive and a destination, streams-extracts its entries via `yauzl`, and uploads each valid entry to DIAL Core via the existing `FilesService.uploadFile(bucket, path, file, token, 'create-only')`, returning a per-entry result array.
+The BFF SHALL expose `POST /api/v1/files/upload-archive` (multipart/form-data) that accepts a ZIP archive and a destination, streams-extracts its entries via `yauzl`, and uploads each valid entry to DIAL Core via `FilesUploadService.uploadFile(bucket, path, file, token, 'create-only')`, returning a per-entry result array.
 
-**State ownership**: `FilesService` owns all extraction/upload logic; `FilesController` delegates (thin-controller pattern).
+**State ownership**: `FilesUploadService` (`apps/chat-api/src/files/upload/files-upload.service.ts`) owns all extraction/upload logic, including single-file upload (`uploadFile`, `uploadFileStream`) and archive extraction (`extractAndUploadArchive` and its temp-file staging helpers); `FilesController` delegates through the `FilesService` facade (thin-controller pattern).
 
 **Authorization**: session cookie → `req.user.at`, identical to `POST /api/v1/files`. Core enforces WRITE permission on the destination per entry, surfaced as a per-entry `"Forbidden"` result (matching how `/copy`/`/move` surface per-item Core-side authorization failures).
 
@@ -166,7 +166,7 @@ Every archive entry SHALL be rejected (recorded as a failed result, not extracte
 
 ### Requirement: Upload-archive observability
 
-`FilesService` SHALL emit structured log lines at the start and end of `uploadArchive`, including `entryCount`, `successCount`, and `failedCount`. Log lines SHALL NOT include archive entry file names, file contents, or the destination path beyond what is already logged for ordinary uploads.
+`FilesUploadService` SHALL emit structured log lines at the start and end of `uploadArchive`, including `entryCount`, `successCount`, and `failedCount`. Log lines SHALL NOT include archive entry file names, file contents, or the destination path beyond what is already logged for ordinary uploads.
 
 #### Scenario: Upload-archive call logged on start and completion
 

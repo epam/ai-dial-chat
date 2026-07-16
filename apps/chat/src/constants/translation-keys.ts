@@ -101,6 +101,7 @@ export enum ButtonsI18nKeys {
   Download = 'buttons.download',
   LogOut = 'buttons.logOut',
   CopyLink = 'buttons.copyLink',
+  CopyUrl = 'buttons.copyUrl',
   LogIn = 'buttons.logIn',
   Publish = 'buttons.publish',
 }

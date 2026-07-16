@@ -511,6 +511,94 @@ describe('FilesController — download', () => {
   });
 });
 
+describe('FilesController — downloadArchive', () => {
+  let app: INestApplication;
+  let service: {
+    uploadFile: ReturnType<typeof vi.fn>;
+    downloadArchive: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    service = {
+      uploadFile: vi.fn(),
+      downloadArchive: vi.fn(),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('pipes the returned stream and forwards headers, without passing Response into the service', async () => {
+    const { Readable } = await import('node:stream');
+    const stream = Readable.from([Buffer.from('zip-bytes')]);
+    const abortOnDisconnect = vi.fn();
+    service.downloadArchive.mockResolvedValue({
+      stream,
+      headers: {
+        'Content-Type': 'application/zip',
+        'Content-Disposition': 'attachment; filename="files.zip"',
+        'Cache-Control': 'no-store',
+      },
+      abortOnDisconnect,
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/download-archive')
+      .send({
+        items: [
+          {
+            bucket: 'my-bucket',
+            path: 'reports/',
+            name: 'reports',
+            nodeType: 'folder',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.headers['content-type']).toMatch('application/zip');
+    expect(res.headers['content-disposition']).toBe(
+      'attachment; filename="files.zip"',
+    );
+    expect(res.text).toBe('zip-bytes');
+    expect(service.downloadArchive).toHaveBeenCalledWith(
+      [
+        {
+          bucket: 'my-bucket',
+          path: 'reports/',
+          name: 'reports',
+          nodeType: 'folder',
+        },
+      ],
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 413 when service throws for too many items', async () => {
+    const { PayloadTooLargeException } = await import('@nestjs/common');
+    service.downloadArchive.mockRejectedValue(
+      new PayloadTooLargeException('Too many items'),
+    );
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files/download-archive')
+      .send({
+        items: [
+          {
+            bucket: 'my-bucket',
+            path: 'reports/',
+            name: 'reports',
+            nodeType: 'folder',
+          },
+        ],
+      })
+      .expect(413);
+  });
+});
+
 describe('FilesController — createFolder', () => {
   let app: INestApplication;
   let service: {

@@ -4,7 +4,7 @@
 
 The BFF SHALL expose `POST /api/v1/files/rename` that accepts a batch of file/folder items, renames (moves) each via DIAL Core `moveResource`, and returns a per-item result array.
 
-**State ownership**: `FilesService` in `apps/chat-api/src/files/` owns all rename logic. `FilesController` delegates to it following the thin-controller pattern. All backend implementation follows `apps/chat-api/AGENTS.md` (URI versioning, `Logger` + `ConfigService`, validated DTOs, typed HTTP exceptions).
+**State ownership**: `FilesBatchOperationsService` (`apps/chat-api/src/files/batch/files-batch-operations.service.ts`) owns all rename logic, sharing its per-child dispatch/fan-out/aggregate-partial-failure control flow with delete, copy, and move through one internal generic helper. `FilesController` delegates through the `FilesService` facade, following the thin-controller pattern. All backend implementation follows `apps/chat-api/AGENTS.md` (URI versioning, `Logger` + `ConfigService`, validated DTOs, typed HTTP exceptions).
 
 **Authorization**: session cookie → `req.user.at` (bearer token forwarded to DIAL Core). Same as all other files endpoints.
 
@@ -140,7 +140,7 @@ POST /api/v1/files/rename
 
 ### Requirement: Folder rename via paginated expansion
 
-When `nodeType === "folder"`, the BFF SHALL recursively list all files under the source prefix using `expandFolderContents` (paginated with `recursive: true`, `limit: 1000`, following `nextToken` until exhausted), then call `moveResource` once per expanded file with the destination path substituting the source prefix for the destination prefix.
+When `nodeType === "folder"`, the BFF SHALL recursively list all files under the source prefix using `FilesListingService.expandFolderContents` (paginated with `recursive: true`, `limit: 1000`, following `nextToken` until exhausted), then call `moveResource` once per expanded file with the destination path substituting the source prefix for the destination prefix.
 
 **Folder path normalisation**: `sourcePath` and `destinationPath` MUST end with `/`. If not, the service SHALL append `/` before processing.
 
@@ -176,7 +176,7 @@ When `nodeType === "folder"`, the BFF SHALL recursively list all files under the
 
 ### Requirement: Rename observability
 
-`FilesService` SHALL emit structured log lines at the start and end of each `renameFiles` batch call, including `batchSize`, `successCount`, and `failedCount`. Per-item failures SHALL log `warn` with `bucket`, `sourcePath`, `destinationPath`, and DIAL Core `status`.
+`FilesBatchOperationsService` SHALL emit structured log lines at the start and end of each `renameFiles` batch call, including `batchSize`, `successCount`, and `failedCount`. Per-item failures SHALL log `warn` with `bucket`, `sourcePath`, `destinationPath`, and DIAL Core `status`.
 
 #### Scenario: Rename batch logged on start and completion
 

@@ -17,6 +17,7 @@ interface Props {
   appDisplayName?: string;
   appIconUrl?: string;
   isPreviewing?: boolean;
+  onUpdated?: () => void;
   onSaveSuccess?: () => void;
   onSaveError?: (error: string) => void;
 }
@@ -29,6 +30,7 @@ const SettingsStep = forwardRef<SettingsStepHandle, Props>(
       appDisplayName,
       appIconUrl,
       isPreviewing = false,
+      onUpdated,
       onSaveSuccess,
       onSaveError,
     },
@@ -53,6 +55,7 @@ const SettingsStep = forwardRef<SettingsStepHandle, Props>(
               ref={iframeRef}
               schema={schema}
               appId={appId}
+              onUpdated={onUpdated}
               onSaveSuccess={onSaveSuccess}
               onSaveError={onSaveError}
             />
