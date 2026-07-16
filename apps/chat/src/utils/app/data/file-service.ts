@@ -176,9 +176,7 @@ export class FileService {
             (folder) => !!folder.parentPath || folder.name !== CLIENTDATA_PATH,
           )
           .map((folder): FileFolderInterface => {
-            const relativePath = folder.parentPath
-              ? ApiUtils.decodeApiUrl(folder.parentPath)
-              : undefined;
+            const relativePath = folder.parentPath; // parentPath comes from core already decoded
 
             return {
               id: constructPath(
