@@ -47,6 +47,7 @@ import {
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -159,6 +160,7 @@ const ConversationView: FC<Props> = ({
 }) => {
   const isModelFixed = !!fixedModel;
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -168,6 +170,7 @@ const ConversationView: FC<Props> = ({
   const [pendingDialAttachments, setPendingDialAttachments] = useState<
     Attachment[]
   >([]);
+  const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
   const isEditActive = !!editingMessageIndexes?.size;
   const {
@@ -428,6 +431,28 @@ const ConversationView: FC<Props> = ({
     [bucket],
   );
 
+  const handleAttachmentsChange = useCallback(
+    (attachments: Attachment[]) => {
+      setAttachmentsAmount(attachments.length);
+      onAttachmentsChange?.(attachments);
+    },
+    [onAttachmentsChange],
+  );
+
+  const handleAttachmentsLimitExceeded = useCallback(
+    (count: number, limit: number) => {
+      showNotification({
+        variant: NotificationVariant.Error,
+        title: t(DialFileManagerI18nKeys.TooManyFilesSelected),
+        message: t(DialFileManagerI18nKeys.TooManyFilesDescription, {
+          count,
+          limit,
+        }),
+      });
+    },
+    [showNotification, t],
+  );
+
   const handleInputAttachmentClick = useCallback(
     (attachment: Attachment) => {
       void openAttachmentCanvas(attachment);
@@ -539,6 +564,10 @@ const ConversationView: FC<Props> = ({
                         ? validateAttachment
                         : undefined
                     }
+                    maximumAttachmentsAmount={
+                      selectedDeployment?.maxInputAttachments
+                    }
+                    onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
                     hideAttachFile={!isAttachmentsAllowed}
                     fileAccept={fileAccept}
                     onAttachmentClick={handleMessageAttachmentClick}
@@ -592,7 +621,7 @@ const ConversationView: FC<Props> = ({
                 onUploadAttachment={onUploadAttachment}
                 onStop={canStopAssistant ? onStop : undefined}
                 isStreaming={isAssistantTyping}
-                onAttachmentsChange={onAttachmentsChange}
+                onAttachmentsChange={handleAttachmentsChange}
                 placeholder={placeholder}
                 deployments={
                   fixedModel ? fixedDeploymentItems : deploymentItems
@@ -638,6 +667,10 @@ const ConversationView: FC<Props> = ({
                 validateAttachment={
                   selectedDeployment != null ? validateAttachment : undefined
                 }
+                maximumAttachmentsAmount={
+                  selectedDeployment?.maxInputAttachments
+                }
+                onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
                 hideAttachFile={!isAttachmentsAllowed}
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
@@ -687,6 +720,7 @@ const ConversationView: FC<Props> = ({
                   maximumAttachmentsAmount={
                     selectedDeployment?.maxInputAttachments
                   }
+                  existingAttachmentsAmount={attachmentsAmount}
                   canAttachFolders={
                     selectedDeployment?.features?.folderAttachments
                   }
