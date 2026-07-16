@@ -1,8 +1,12 @@
-## ADDED Requirements
+## Purpose
+
+Define folder-selection behavior for the DIAL file manager attach modal when a selected deployment supports folder attachments.
+
+## Requirements
 
 ### Requirement: Folder rows are selectable when canAttachFolders is enabled
 
-When `canAttachFolders` is `true`, `DialFileManagerModal` SHALL allow selection of `DialFileNodeType.FOLDER` rows in the grid. The `isRowSelectable` predicate SHALL return `true` for folder rows, except for hidden-path folders (which remain non-selectable regardless of `canAttachFolders`).
+When `canAttachFolders` is `true`, `DialFileManagerModal` SHALL allow selection of `DialFileNodeType.FOLDER` rows in the grid. The `isRowSelectable` predicate SHALL return `true` for folder rows, except for hidden-path folders (any path segment starts with `.`), which remain non-selectable regardless of `canAttachFolders`.
 
 When `canAttachFolders` is `false` (the default), folder rows SHALL remain non-selectable — this preserves current behavior.
 
@@ -24,7 +28,7 @@ Memoisation: `isRowSelectable` inside `useMemo` grid options; `filesByPath` in `
 
 #### Scenario: Hidden folder is never selectable even with canAttachFolders
 
-- **WHEN** `canAttachFolders` is `true` and a folder row has a hidden path (contains `.dial_folder`)
+- **WHEN** `canAttachFolders` is `true` and a folder row has a hidden path such as `/My files/.hidden/`
 - **THEN** `isRowSelectable` returns `false`
 
 ---
