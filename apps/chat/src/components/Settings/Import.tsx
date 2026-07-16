@@ -56,9 +56,7 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
                 typedImportHandler?.({ content: json });
               } catch {
                 toast.error(
-                  translateErrorMessage(
-                    errorsMessages.invalidConversationsDataFormat,
-                  ),
+                  translateErrorMessage(errorsMessages.invalidDataFormat),
                 );
               }
             };
