@@ -50,7 +50,7 @@ const FilesSection: FC<FilesSectionProps> = ({
             <AttachmentCard
               attachment={att}
               searchQuery={searchQuery}
-              className="w-full"
+              styles={{ className: 'w-full' }}
               onClick={
                 onAttachmentClick ? () => onAttachmentClick(att) : undefined
               }

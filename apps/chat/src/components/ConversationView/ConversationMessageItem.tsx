@@ -380,8 +380,7 @@ const ConversationMessageItem: FC<Props> = ({
                 <CollapsedGroup
                   stages={msg.custom_content?.stages ?? []}
                   isStreaming={isStreaming}
-                  executedLabel={executedLabel}
-                  stepsLabel={stepsLabel}
+                  labels={{ executedLabel, stepsLabel }}
                   onAttachmentClick={handleAttachmentClick}
                 />
               )}

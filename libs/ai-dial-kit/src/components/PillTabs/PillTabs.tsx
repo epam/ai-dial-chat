@@ -11,6 +11,18 @@ export interface PillTab {
   label: string;
 }
 
+/** Typography overrides for the {@link PillTabs} component. */
+export interface PillTabsTypography {
+  /** Typography class applied to each tab label. Defaults to `'dial-tiny-semi-text'`. */
+  tabClassName?: string;
+}
+
+/** Style overrides for the {@link PillTabs} component. */
+export interface PillTabsStyles {
+  /** Typography overrides for the tab label. */
+  typography?: PillTabsTypography;
+}
+
 /** Props for the {@link PillTabs} component. */
 export interface PillTabsProps {
   /** Ordered list of tabs to render. */
@@ -19,18 +31,17 @@ export interface PillTabsProps {
   activeTabId: string;
   /** Called when the user clicks a tab. */
   onTabChange: (tabId: string) => void;
-  /** Typography class applied to each tab label. Defaults to `'dial-tiny-semi-text'`. */
-  tabClassName?: string;
+  /** Style overrides. */
+  styles?: PillTabsStyles;
 }
 
 /** Segmented pill-tab control, e.g. the conversation panel's chat-source filter. */
 export const PillTabs: FC<PillTabsProps> = memo(
-  ({
-    tabs,
-    activeTabId,
-    onTabChange,
-    tabClassName = 'dial-tiny-semi-text',
-  }) => (
+  ({ tabs, activeTabId, onTabChange, styles: pillTabsStyles }) => {
+    const { tabClassName = 'dial-tiny-semi-text' } =
+      pillTabsStyles?.typography ?? {};
+
+    return (
     <div className="flex flex-nowrap gap-1">
       {tabs.map((tab) => {
         const isActive = activeTabId === tab.id;
@@ -50,5 +61,6 @@ export const PillTabs: FC<PillTabsProps> = memo(
         );
       })}
     </div>
-  ),
+    );
+  },
 );

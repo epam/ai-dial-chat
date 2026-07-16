@@ -45,6 +45,12 @@ export interface StagesPanelStyles {
   typography?: StageTypography;
 }
 
+/** User-visible strings for the `StagesPanel` component. */
+export interface StagesPanelLabels {
+  /** Accessible label for the copy button on each stage's content. Defaults to `'Copy'`. */
+  copyAriaLabel?: string;
+}
+
 /** Props accepted by the `StagesPanel` component. */
 export interface StagesPanelProps {
   /** Ordered list of stages to display. */
@@ -55,8 +61,8 @@ export interface StagesPanelProps {
   className?: string;
   /** Color and typography overrides applied as CSS custom properties. */
   styles?: StagesPanelStyles;
-  /** Accessible label for the copy button on each stage's content. Defaults to `'Copy'`. */
-  copyAriaLabel?: string;
+  /** User-visible strings. */
+  labels?: StagesPanelLabels;
   /** Called when the user clicks an attachment card inside a stage. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }

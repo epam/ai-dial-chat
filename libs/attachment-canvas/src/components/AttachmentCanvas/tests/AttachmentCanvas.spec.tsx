@@ -35,7 +35,7 @@ const defaultProps = {
   onClose: vi.fn(),
   content: plainTextContent,
   fileName: 'notes.txt',
-  ariaLabel: 'Attachment canvas',
+  labels: { ariaLabel: 'Attachment canvas' },
 };
 
 describe('AttachmentCanvas', () => {
@@ -95,14 +95,19 @@ describe('AttachmentCanvas', () => {
       <AttachmentCanvas
         {...defaultProps}
         onDownload={vi.fn()}
-        downloadLabel="Save file"
+        labels={{ ...defaultProps.labels, downloadLabel: 'Save file' }}
       />,
     );
     expect(screen.getByRole('button', { name: 'Save file' })).toBeDefined();
   });
 
   it('uses a custom closeLabel for the close button aria-label', () => {
-    render(<AttachmentCanvas {...defaultProps} closeLabel="Dismiss" />);
+    render(
+      <AttachmentCanvas
+        {...defaultProps}
+        labels={{ ...defaultProps.labels, closeLabel: 'Dismiss' }}
+      />,
+    );
     expect(screen.getByRole('button', { name: 'Dismiss' })).toBeDefined();
   });
 
@@ -169,7 +174,7 @@ describe('AttachmentCanvas', () => {
         <AttachmentCanvas
           {...defaultProps}
           content={errorContent}
-          forbiddenErrorLabel="No access"
+          labels={{ ...defaultProps.labels, forbiddenErrorLabel: 'No access' }}
         />,
       );
       expect(screen.getByText('No access')).toBeDefined();

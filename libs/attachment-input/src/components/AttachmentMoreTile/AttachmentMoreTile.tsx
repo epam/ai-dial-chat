@@ -11,12 +11,16 @@ import styles from './AttachmentMoreTile.module.scss';
 export const AttachmentMoreTile: FC<AttachmentMoreTileProps> = ({
   count,
   onClick,
-  ariaLabel,
+  labels,
   children,
-  fontClassName = 'dial-small-semi-text',
-  className,
-  colors,
+  styles: tileStyles,
 }) => {
+  const { ariaLabel } = labels ?? {};
+  const {
+    typography: { fontClassName = 'dial-small-semi-text' } = {},
+    className,
+    colors,
+  } = tileStyles ?? {};
   const cssVars = buildCssVars({
     '--ci-more-tile-bg': colors?.background,
     '--ci-more-tile-border': colors?.border,

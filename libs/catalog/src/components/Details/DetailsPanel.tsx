@@ -399,8 +399,13 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   tabs={tabs}
                   activeTabId={activeTab}
                   onTabChange={setActiveTab}
-                  activeTabClassName="text-catalog-tab-active"
-                  inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
+                  styles={{
+                    colors: {
+                      activeTabClassName: 'text-catalog-tab-active',
+                      inactiveTabClassName:
+                        'text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent',
+                    },
+                  }}
                 />
                 {isDetailsLoading && (
                   <div

@@ -53,7 +53,10 @@ import { SearchInput } from '@epam/ai-dial-sidebar';
 <SearchInput
   value={query}
   onChange={setQuery}
-  placeholder="Search conversations..."
+  labels={{
+    placeholder: 'Search conversations...',
+    clearLabel: 'Clear search',
+  }}
 />;
 ```
 
@@ -97,6 +100,8 @@ import type {
   SidebarPanelStyles,
   SidebarPanelColors,
   SearchInputProps,
+  SearchInputLabels,
+  SearchInputStyles,
   PanelEmptyProps,
   PanelNoResultsProps,
 } from '@epam/ai-dial-sidebar';

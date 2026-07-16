@@ -22,13 +22,14 @@ import styles from './CollapsedGroup.module.scss';
 export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   stages,
   isStreaming,
-  executedLabel = 'Executed',
-  stepsLabel = () => 'steps',
+  labels,
   collapseThreshold = 7,
   className,
   styles: groupStyles,
   onAttachmentClick,
 }) => {
+  const { executedLabel = 'Executed', stepsLabel = () => 'steps' } =
+    labels ?? {};
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (isStreaming) {

@@ -33,7 +33,11 @@ Search input field with a leading search icon.
 ```tsx
 import { SearchBar } from '@epam/ai-dial-kit';
 
-<SearchBar value={query} onChange={setQuery} placeholder="Search..." />;
+<SearchBar
+  value={query}
+  onChange={setQuery}
+  labels={{ placeholder: 'Search...' }}
+/>;
 ```
 
 ### Button variants

@@ -13,11 +13,12 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   isStreaming,
   className,
   styles: panelStyles,
-  copyAriaLabel,
+  labels,
   onAttachmentClick,
 }) => {
   const { colors, typography = { fontClassName: 'dial-small-text' } } =
     panelStyles ?? {};
+  const { copyAriaLabel } = labels ?? {};
   const cssVars = buildCssVars({
     '--cs-bg': colors?.background,
     '--cs-border': colors?.border,

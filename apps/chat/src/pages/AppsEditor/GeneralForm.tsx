@@ -114,6 +114,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
         label: t(EditorI18nKeys.IntroLabel),
         placeholder: t(EditorI18nKeys.IntroPlaceholder),
       },
+      ariaLabel: t(EditorI18nKeys.StepGeneral),
     }),
     [t],
   );
@@ -228,7 +229,6 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
             errors={errors}
             onChange={handleChange}
             labels={labels}
-            ariaLabel={t(EditorI18nKeys.StepGeneral)}
           />
 
           {submitError && (

@@ -473,16 +473,18 @@ const ConversationView: FC<Props> = ({
       <FileDndOverlay
         isVisible={isDragging}
         isAttachmentsAllowed={isAttachmentsAllowed}
-        title={t(
-          isAttachmentsAllowed
-            ? BasicI18nKeys.AttachFiles
-            : FileDndI18nKeys.OverlayDeniedTitle,
-        )}
-        subtitle={t(
-          isAttachmentsAllowed
-            ? FileDndI18nKeys.OverlaySubtitle
-            : FileDndI18nKeys.OverlayDeniedSubtitle,
-        )}
+        labels={{
+          title: t(
+            isAttachmentsAllowed
+              ? BasicI18nKeys.AttachFiles
+              : FileDndI18nKeys.OverlayDeniedTitle,
+          ),
+          subtitle: t(
+            isAttachmentsAllowed
+              ? FileDndI18nKeys.OverlaySubtitle
+              : FileDndI18nKeys.OverlayDeniedSubtitle,
+          ),
+        }}
       />
       <div className="relative flex w-full flex-1 flex-col overflow-hidden">
         <div

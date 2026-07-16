@@ -238,16 +238,18 @@ const NewConversationComposer: FC<Props> = ({
       <FileDndOverlay
         isVisible={isDragging}
         isAttachmentsAllowed={isAttachmentsAllowed}
-        title={t(
-          isAttachmentsAllowed
-            ? BasicI18nKeys.AttachFiles
-            : FileDndI18nKeys.OverlayDeniedTitle,
-        )}
-        subtitle={t(
-          isAttachmentsAllowed
-            ? FileDndI18nKeys.OverlaySubtitle
-            : FileDndI18nKeys.OverlayDeniedSubtitle,
-        )}
+        labels={{
+          title: t(
+            isAttachmentsAllowed
+              ? BasicI18nKeys.AttachFiles
+              : FileDndI18nKeys.OverlayDeniedTitle,
+          ),
+          subtitle: t(
+            isAttachmentsAllowed
+              ? FileDndI18nKeys.OverlaySubtitle
+              : FileDndI18nKeys.OverlayDeniedSubtitle,
+          ),
+        }}
       />
       <div
         className="relative flex flex-1 flex-col items-center justify-center overflow-hidden p-4 [container-type:inline-size] desktop:p-8"
