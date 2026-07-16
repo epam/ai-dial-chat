@@ -388,6 +388,8 @@ export const ExpectedMessages = {
     'Prompt variable placeholder is fully visible',
   horizontalScrollIsVisible: 'Horizontal scroll is visible',
   horizontalScrollIsNotVisible: 'Horizontal scroll is not visible',
+  verticalScrollIsVisible: 'Vertical scroll is visible',
+  verticalScrollIsNotVisible: 'Vertical scroll is not visible',
   elementsOrderIsCorrect: 'Elements order is correct',
   entityIsSelected: 'Entity is selected',
   entityIsNotSelected: 'Entity is not selected',

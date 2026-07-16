@@ -108,6 +108,18 @@ export class PdfPreviewModalAssertion extends BaseAssertion {
           .toBeFalsy();
   }
 
+  public async assertViewerVerticalScrollState(expectedState: ElementState) {
+    const hasVerticalScroll =
+      await this.pdfPreviewModal.viewerContainer.isElementScrollableVertically();
+    expectedState === 'visible'
+      ? expect
+          .soft(hasVerticalScroll, ExpectedMessages.verticalScrollIsVisible)
+          .toBeTruthy()
+      : expect
+          .soft(hasVerticalScroll, ExpectedMessages.verticalScrollIsNotVisible)
+          .toBeFalsy();
+  }
+
   public async assertPageZoomedProportionally(
     pageNumber: number,
     baseWidth: number,

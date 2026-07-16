@@ -23,11 +23,7 @@ export class ChatMessages extends BaseElement {
     super(page, ChatSelectors.chatMessages, parentLocator);
   }
 
-  public referenceButton = new Button(
-    this.page,
-    ChatSelectors.referenceButton,
-    this.getElementLocator(),
-  );
+  public referenceButton = new Button(this.page, ChatSelectors.referenceButton);
 
   public loadingCursor = this.getChildElementBySelector(
     ChatSelectors.loadingCursor,
@@ -297,6 +293,25 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(
       ErrorLabelSelectors.errorContainer,
     );
+  }
+
+  public getChatMessageAttachmentContent(
+    message: string | number,
+    attachmentTitle: string,
+  ) {
+    return this.getChatMessage(message)
+      .filter({ hasText: attachmentTitle })
+      .locator(ChatSelectors.attachmentContent);
+  }
+
+  public getChatMessageAttachmentReference(
+    message: string | number,
+    attachmentTitle: string,
+  ) {
+    return this.getChatMessageAttachmentContent(
+      message,
+      attachmentTitle,
+    ).locator(this.referenceButton.getElementLocator());
   }
 
   public getChatMessageContent(message: string | number) {

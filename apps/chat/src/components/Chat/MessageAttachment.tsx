@@ -516,7 +516,10 @@ export const MessageAttachment = ({
           )}
         </div>
       ) : (
-        <div className="flex items-center gap-3 px-2">
+        <div
+          className="flex items-center gap-3 px-2"
+          data-qa="attachment-title"
+        >
           <div className="flex items-center">
             {mappedAttachmentReferenceUrl ? (
               <Tooltip
@@ -645,6 +648,7 @@ export const MessageAttachment = ({
             !isBorderless && 'mt-2 border-t border-tertiary p-3 pt-4',
           )}
           ref={anchorRef}
+          data-qa="attachment-content"
         >
           <AttachmentRendererComponent
             attachment={attachment}

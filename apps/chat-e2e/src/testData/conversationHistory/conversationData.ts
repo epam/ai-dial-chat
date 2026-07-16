@@ -622,6 +622,12 @@ export class ConversationData extends FolderData {
       .build();
   }
 
+  /**
+   * Create a conversation model with attachment in the assistant message
+   * @param model conversation model
+   * @param attachmentLink attachment url
+   * @param attachmentPage selected attachment page. When undefined, the 1st page is opened by default
+   */
   public prepareConversationWithAttachmentLinkInResponse(
     model: DialAIEntityModel | string,
     attachmentLink: string,
@@ -643,7 +649,7 @@ export class ConversationData extends FolderData {
     const attachmentLinkParts = attachmentLink.split('/');
     const assistantMessage: Message = {
       role: Role.Assistant,
-      content: `The document contains the text`,
+      content: 'The document contains the text',
       custom_content: {
         attachments: [
           {

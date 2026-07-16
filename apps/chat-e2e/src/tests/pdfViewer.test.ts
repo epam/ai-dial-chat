@@ -3,7 +3,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { Attachment, PdfViewerZoom } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil, filenamePrefix } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
 let defaultModel: DialAIEntityModel;
@@ -23,6 +23,8 @@ dialTest(
     conversations,
     chatMessages,
     pdfPreviewModal,
+    tooltip,
+    baseAssertion,
     pdfPreviewModalAssertion,
     setTestIds,
   }) => {
@@ -96,6 +98,14 @@ dialTest(
         await pdfPreviewModalAssertion.assertPageThumbnailState(1, 'visible');
       },
     );
+
+    await dialTest.step(
+      'Hover over pdf title and verify no tooltip is shown',
+      async () => {
+        await pdfPreviewModal.titleContainer.hoverOver();
+        await baseAssertion.assertElementState(tooltip, 'hidden');
+      },
+    );
   },
 );
 
@@ -113,18 +123,23 @@ dialTest(
     pdfPreviewModal,
     chatMessagesAssertion,
     pdfPreviewModalAssertion,
-    toastAssertion,
+    tooltipAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-8986', 'EPMRTC-8988');
+    const pdfName = `${filenamePrefix}${GeneratorUtil.randomString(156 - filenamePrefix.length)}.pdf`;
     const requestMessageIndex = 2;
     const pdfAnswerPageIndex = 2;
     let responseAttachmentConversation: Conversation;
+    let expectedAttachTitle: string;
 
     await dialTest.step(
       'Create conversation with a pdf attachment in the response via API',
       async () => {
-        const pdfUrl = await fileApiHelper.putFile(Attachment.multipagePdfName);
+        const pdfUrl = await fileApiHelper.putFileWithCustomName(
+          pdfName,
+          Attachment.multipagePdfName,
+        );
         responseAttachmentConversation =
           conversationData.prepareConversationWithAttachmentLinkInResponse(
             defaultModel,
@@ -134,6 +149,9 @@ dialTest(
         await dataInjector.createConversations([
           responseAttachmentConversation,
         ]);
+        expectedAttachTitle =
+          responseAttachmentConversation.messages[1].custom_content!
+            .attachments![0].title;
         await localStorageManager.setShowSideBarPanels();
       },
     );
@@ -150,9 +168,6 @@ dialTest(
     await dialTest.step(
       'Expand the pdf document in the chat history, click on Reference btn and verify the PDF viewer is opened',
       async () => {
-        const expectedAttachTitle =
-          responseAttachmentConversation.messages[1].custom_content!
-            .attachments![0].title;
         await chatMessagesAssertion.assertElementState(
           chatMessages.getChatMessageAttachmentTitle(
             requestMessageIndex,
@@ -162,10 +177,15 @@ dialTest(
         );
         await chatMessages.expandChatMessageAttachment(
           requestMessageIndex,
-          Attachment.multipagePdfName,
+          pdfName,
           { isHttpMethodTriggered: false },
         );
-        await chatMessages.referenceButton.click();
+        await chatMessages
+          .getChatMessageAttachmentReference(
+            requestMessageIndex,
+            expectedAttachTitle,
+          )
+          .click();
         await pdfPreviewModalAssertion.assertPdfPreviewModalState('visible');
         await pdfPreviewModal.pdfViewerSpinner.waitForState({
           state: 'hidden',
@@ -187,10 +207,10 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over pdf title and verify no tooltip is shown',
+      'Hover over pdf title and verify tooltip is shown',
       async () => {
         await pdfPreviewModal.titleContainer.hoverOver();
-        await toastAssertion.assertToastIsHidden();
+        await tooltipAssertion.assertTooltipContent(expectedAttachTitle);
       },
     );
   },
@@ -297,6 +317,9 @@ dialTest(
           PdfViewerZoom.pageFit,
         );
         await pdfPreviewModalAssertion.assertViewerHorizontalScrollState(
+          'hidden',
+        );
+        await pdfPreviewModalAssertion.assertViewerVerticalScrollState(
           'hidden',
         );
       },
