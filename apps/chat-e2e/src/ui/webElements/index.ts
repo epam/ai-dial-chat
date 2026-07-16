@@ -60,6 +60,7 @@ export * from './messageTemplateModal';
 export * from './topicsTooltip';
 export * from './notFound';
 export * from './informationModal';
+export * from './pdfPreviewModal';
 export * from './listboxMenu';
 export * from './publishingFilter';
 export * from './combobox';

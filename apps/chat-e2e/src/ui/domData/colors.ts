@@ -67,4 +67,5 @@ export enum ThemeColorAttributes {
   controlsBgAccentPrimaryHover = 'controls-bg-accent-primary-hover',
   controlsBgDisableAccent = 'controls-bg-disable-accent',
   controlsBgNeutralHover = 'controls-bg-neutral-hover',
+  strokePrimary = 'stroke-primary',
 }

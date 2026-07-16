@@ -661,6 +661,12 @@ export const Import = {
   importAttachmentExtension: '.dial',
 };
 
+export const PdfViewerZoom = {
+  auto: 'Auto',
+  pageFit: 'Page Fit',
+  percent: (value: number) => `${value}%`,
+};
+
 export const Attachment = {
   attachmentPath: path.resolve(__dirname, 'attachments'),
   sunImageName: 'sun.jpg',
@@ -684,6 +690,7 @@ export const Attachment = {
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
   pdfName: 'pdf_attachment.pdf',
+  multipagePdfName: 'multipage_pdf.pdf',
   appIconSvg: 'appIcon.svg',
   sttAudioName: 'stt_audio.mp3',
 };
