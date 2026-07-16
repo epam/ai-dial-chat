@@ -299,7 +299,7 @@ export const PdfHighlightViewer = ({ url, highlights }: Props) => {
   return (
     <div className="flex size-full flex-col">
       <div className="flex shrink-0 items-center justify-between gap-3">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" data-qa="viewer-pages">
           {!isSmallScreen && (
             <span className="text-center text-sm font-semibold text-secondary">
               {t(ChatI18nKeys.Pages)}
@@ -312,6 +312,7 @@ export const PdfHighlightViewer = ({ url, highlights }: Props) => {
             value={String(zoomSelectValue)}
             onChange={(val) => handleZoomSelect(val as string)}
             size={SelectSize.Sm}
+            elementId="zoom-select"
           />
           <DialGhostIconButton
             size={ElementSize.Standard}
@@ -336,7 +337,10 @@ export const PdfHighlightViewer = ({ url, highlights }: Props) => {
 
       <div className="mt-4 flex min-h-0 grow">
         {!isSmallScreen && (
-          <div className="flex flex-col gap-2 overflow-y-auto">
+          <div
+            className="flex flex-col gap-2 overflow-y-auto"
+            data-qa="pages-sidebar"
+          >
             {range(1, totalPages + 1).map((pageNumber) => {
               const thumbUrl = thumbnails.get(pageNumber);
               return (
@@ -386,6 +390,7 @@ export const PdfHighlightViewer = ({ url, highlights }: Props) => {
           <div
             ref={containerRef}
             className="size-full overflow-auto !bg-transparent [&_.pdf-container]:w-max [&_.pdf-container]:min-w-full [&_.pdf-container]:!bg-transparent [&_.pdf-container]:!p-2"
+            data-qa="pdf-viewer-container"
           />
           {isLoading && !error && (
             <div className="absolute inset-0 flex items-center justify-center bg-layer-3">

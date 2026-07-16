@@ -445,6 +445,18 @@ export const InformationModalSelectors = {
   authorValue: '[data-qa="author-value"]',
 };
 
+export const PdfPreviewModalSelectors = {
+  container: '[data-qa="pdf-preview-modal"]',
+  pagesLabel: '[data-qa="viewer-pages"]',
+  title: '[data-qa="modal-entity-name"]',
+  titleValue: '#name-value',
+  pagesSidebar: '[data-qa="pages-sidebar"]',
+  pageThumbnail: (pageNumber: number) => `button[data-page="${pageNumber}"]`,
+  viewerContainer: '[data-qa="pdf-viewer-container"]',
+  zoomSelect: '[aria-controls="list-zoom-select"]',
+  pdfPage: (pageNumber: number) => `[data-page-number="${pageNumber}"]`,
+};
+
 export const ReplaceConfirmationModalSelectors = {
   modalContainer: '[data-qa="replace-confirmation-modal"]',
   mainFolderTree: '[data-qa="main-folder-tree"]',
