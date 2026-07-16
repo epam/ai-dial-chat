@@ -153,7 +153,7 @@ export const useModelSelector = ({
       !isLoading && deployments && deployments.length > 0 ? (
         <div
           className={mergeClasses(
-            'sticky top-0 z-10 pb-1 pr-2 pt-2',
+            'sticky top-0 z-10 pb-1 pe-2 pt-2',
             searchHeaderClassName,
           )}
         >

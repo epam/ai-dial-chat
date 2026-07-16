@@ -73,7 +73,7 @@ const ModelRow = ({
               maxLines={1}
               className={mergeClasses(
                 labelClassName,
-                'min-w-0 flex-1 text-left',
+                'min-w-0 flex-1 text-start',
               )}
             />
             {isSelected && (

@@ -78,7 +78,7 @@ export interface StandalonePublishPanelProps {
 }
 
 /**
- * Standalone right-side slide-in panel for the Publish flow, sized and
+ * Standalone end-edge slide-in panel for the Publish flow, sized and
  * animated like `DetailsPanel` but with no details view behind it: the
  * header shows a Close (X) button instead of `DetailsPanel`'s publish
  * sub-view Back (chevron) control, since there is nothing to go "back" to

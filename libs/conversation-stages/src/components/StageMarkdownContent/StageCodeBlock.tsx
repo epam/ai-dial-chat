@@ -24,7 +24,7 @@ interface Props {
   copyAriaLabel: string;
 }
 
-/** Code block with an inline copy button in the top-right corner. */
+/** Code block with an inline copy button in the top-end corner. */
 export const StageCodeBlock: FC<Props> = ({
   children,
   codeClassName,
