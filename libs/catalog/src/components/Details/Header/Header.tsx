@@ -43,8 +43,6 @@ interface HeaderProps {
   connectOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   /** Controls whether the "Connect" action is shown for the item. When absent, the Connect button is never shown. */
   isConnectVisible?: (item: CatalogItem) => boolean;
-  /** Called when recipient-side Delete is clicked for an item shared with the current user. */
-  onUnshare?: (item: CatalogItem) => void;
   onEdit?: (item: CatalogItem) => void;
   onDelete?: (item: CatalogItem) => Promise<void> | void;
   /** Called after a delete confirmed via the Delete button succeeds, to close the whole details panel. */
@@ -85,7 +83,6 @@ export const Header: FC<HeaderProps> = ({
   shareOverlay,
   connectOverlay,
   isConnectVisible,
-  onUnshare,
   onEdit,
   onDelete,
   onCloseDetails,
@@ -198,9 +195,7 @@ export const Header: FC<HeaderProps> = ({
           item={item}
           onShare={onShare}
           shareOverlay={shareOverlay}
-          onUnshare={onUnshare}
           label={texts?.shareLabel}
-          unshareLabel={texts?.unshareLabel}
         />
         <DeleteButton
           item={item}
