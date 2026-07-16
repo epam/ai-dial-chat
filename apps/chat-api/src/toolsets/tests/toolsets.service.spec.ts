@@ -30,13 +30,14 @@ const mockToolset: DialToolsetDto = {
   },
 };
 const mockList: DialToolsetListResponseDto = { data: [mockToolset] };
-const mockEnrichedToolset: DialToolsetDto = {
+const mockEnrichedToolset = {
   ...mockToolset,
+  displayName: 'my-toolset',
   is_installed: false,
   is_my: false,
   can_edit: false,
   shared_with_me: false,
-};
+} as DialToolsetDto;
 const mockEnrichedList: DialToolsetListResponseDto = {
   data: [mockEnrichedToolset],
 };
