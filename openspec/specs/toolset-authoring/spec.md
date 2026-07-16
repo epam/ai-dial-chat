@@ -84,6 +84,58 @@ URL to the clipboard.
 - **WHEN** a user clicks the copy-endpoint control
 - **THEN** the endpoint URL is written to the clipboard
 
+### Requirement: Settings step — Connect toolset section
+
+When the user is editing an existing toolset (edit mode, `toolsetId` is non-empty) and
+`config.dialCoreExternalUrl` is configured, the Settings step SHALL render a "Connect
+toolset" section at the bottom of the form, below the authentication section. The section
+SHALL be visually separated from the authentication content by a subtle horizontal rule.
+It SHALL contain:
+- A title: "Connect toolset"
+- A description: "Copy endpoint URL to easily integrate toolset into your workflows"
+- A `NeutralButton` labelled "Copy URL" from the shared Connect MCP URL content that,
+  when clicked, copies the toolset's MCP endpoint URL — built by
+  `buildToolsetMcpUrl(dialCoreExternalUrl, toolsetId)` from
+  `apps/chat/src/utils/mcp-endpoint-url.ts` — to the clipboard via `useCodeCopy` and shows
+  transient "Copied!" feedback; the feedback is also announced via an `aria-live="polite"`
+  SR-only region.
+
+The section SHALL NOT render in create mode (when `toolsetId` is empty) or when
+`config.dialCoreExternalUrl` is absent.
+
+The title and description strings SHALL reuse the existing
+`CatalogI18nKeys.ConnectToolsetTitle` and `CatalogI18nKeys.ConnectToolsetDescription`
+keys (already present from the catalog Connect action). The button label "Copy URL" uses
+`ButtonsI18nKeys.CopyUrl`; the copied-state label reuses `ButtonsI18nKeys.Copied`.
+
+**Feature flag:** Not gated. **RTL impact:** None (text uses default `text-start`; no
+directional icons). **i18n impact:** `ButtonsI18nKeys.CopyUrl = 'buttons.copyUrl'` and
+its English value `"Copy URL"` are added to `translation-keys.ts` and `en.json`.
+
+#### Scenario: Connect section renders in edit mode with external URL configured
+
+- **WHEN** the user opens the Settings step in edit mode and `config.dialCoreExternalUrl`
+  is set
+- **THEN** the "Connect toolset" section is visible at the bottom of the form, below the
+  authentication section
+
+#### Scenario: Connect section is hidden in create mode
+
+- **WHEN** the user opens the Settings step in create mode (no `toolsetId` yet)
+- **THEN** no "Connect toolset" section renders, regardless of `dialCoreExternalUrl`
+
+#### Scenario: Connect section is hidden when the external URL is absent
+
+- **WHEN** `config.dialCoreExternalUrl` is `null` or empty
+- **THEN** no "Connect toolset" section renders, even in edit mode
+
+#### Scenario: Copy URL copies the MCP endpoint and shows feedback
+
+- **WHEN** the user clicks "Copy URL" in the Connect toolset section
+- **THEN** the clipboard receives the toolset's MCP URL built by `buildToolsetMcpUrl`
+- **AND** the button shows transient copied feedback announced via an `aria-live="polite"`
+  region
+
 ### Requirement: Unique name generation
 When creating a new toolset, the system SHALL generate a storage-safe, conflict-free default
 name by appending a numeric suffix when the default name collides with an existing toolset
