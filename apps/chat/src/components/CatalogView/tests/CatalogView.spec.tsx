@@ -21,6 +21,7 @@ import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { deleteApplication } from '../../../server-api/applications';
+import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
 import {
   getCatalogPublishHistory,
@@ -319,6 +320,10 @@ vi.mock('../../../server-api/deployments', () => ({
   getDeploymentDetails: vi.fn(),
 }));
 
+vi.mock('../../../server-api/deployment-limits', () => ({
+  getDeploymentLimits: vi.fn(),
+}));
+
 vi.mock('../../../server-api/toolsets', () => ({
   loginToolset: vi.fn(),
   logoutToolset: vi.fn(),
@@ -395,6 +400,7 @@ describe('CatalogView', () => {
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
     });
+    vi.mocked(getDeploymentLimits).mockResolvedValue({});
     vi.mocked(useNotification).mockReturnValue({
       notifications: [],
       showNotification: vi.fn(),
@@ -960,6 +966,10 @@ describe('CatalogView', () => {
         createdAt: 1780387921823,
       },
     });
+    vi.mocked(getDeploymentLimits).mockResolvedValue({
+      hourRequestStats: { used: 2, total: 10 },
+      dayTokenStats: { used: 2500, total: 10000 },
+    });
 
     render(<CatalogView />);
 
@@ -980,6 +990,25 @@ describe('CatalogView', () => {
       ],
       limits: [],
     });
+    expect(result.limits).toEqual({
+      rows: [
+        {
+          label: CatalogI18nKeys.DetailsLimitsRequestsPerHour,
+          used: 2,
+          total: 10,
+          valueLabel: CatalogI18nKeys.DetailsLimitsValue,
+          ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
+        },
+        {
+          label: CatalogI18nKeys.DetailsLimitsTokensPerDay,
+          used: 2500,
+          total: 10000,
+          valueLabel: CatalogI18nKeys.DetailsLimitsValue,
+          ariaLabel: CatalogI18nKeys.DetailsLimitsProgressAriaLabel,
+        },
+      ],
+    });
+    expect(getDeploymentLimits).toHaveBeenCalledWith('gpt-4o');
     expect(result.overview.sections).toEqual([
       {
         title: 'Capabilities',
