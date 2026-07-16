@@ -122,6 +122,7 @@ describe('DeploymentsController', () => {
     const result = await controller.getDeploymentDetails(mockReq, 'gpt-4o');
     expect(result).toEqual(details);
     expect(service.getDeploymentDetails).toHaveBeenCalledWith(
+      TEST_USER.sub,
       'gpt-4o',
       TEST_USER.at,
     );
