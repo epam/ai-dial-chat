@@ -257,10 +257,18 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       ) {
         return;
       }
+      window.getSelection()?.removeAllRanges();
       setIsContextMenu(true);
     },
     [featureType],
   );
+
+  const handleContextMenuOpenChange = useCallback((open: boolean) => {
+    if (open) {
+      window.getSelection()?.removeAllRanges();
+    }
+    setIsContextMenu(open);
+  }, []);
 
   useContextMenuTrigger(handleContextMenuOpen, dragDropElement);
 
@@ -424,7 +432,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const { refs, context } = useFloating({
     open: isContextMenu,
-    onOpenChange: setIsContextMenu,
+    onOpenChange: handleContextMenuOpenChange,
   });
 
   const dismiss = useDismiss(context);
@@ -1260,7 +1268,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     }
                     onUnpublish={handleOpenUnpublishing}
                     onPublishUpdate={handleOpenPublishing}
-                    onOpenChange={setIsContextMenu}
+                    onOpenChange={handleContextMenuOpenChange}
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}

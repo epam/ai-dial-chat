@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@4.7.0
+    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@4.7.2
     with:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
       node-version: 24
