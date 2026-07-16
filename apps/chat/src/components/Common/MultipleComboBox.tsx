@@ -188,6 +188,7 @@ export function MultipleComboBox<T>({
     highlightedIndex,
     getItemProps,
     selectedItem,
+    openMenu,
   } = useCombobox({
     items: displayedItems,
     itemToString: (item: T | null) => (item ? getItemLabel(item) : 'null item'),
@@ -204,6 +205,11 @@ export function MultipleComboBox<T>({
             ...changes,
             isOpen: true, // keep the menu open after selection.
             highlightedIndex: 0, // with the first option highlighted.
+          };
+        case useCombobox.stateChangeTypes.InputClick:
+          return {
+            ...changes,
+            isOpen: true, // always open on click (never toggle closed).
           };
         default:
           return changes;
@@ -370,6 +376,11 @@ export function MultipleComboBox<T>({
                 }),
                 onChange: (e: ChangeEvent<HTMLInputElement>) => {
                   cursorPositionRef.current = e.target.selectionStart;
+                },
+                onFocus: () => {
+                  if (!isOpen) {
+                    openMenu();
+                  }
                 },
               })}
               data-qa="filter-value-input"
