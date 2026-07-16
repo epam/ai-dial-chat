@@ -4,7 +4,7 @@
 
 The BFF SHALL expose `POST /api/v1/files/copy` that accepts a batch of file/folder items, copies each via DIAL Core `copyResource`, and returns a per-item result array.
 
-**State ownership**: `FilesService` in `apps/chat-api/src/files/` owns all copy logic. `FilesController` delegates to it following the thin-controller pattern (`apps/chat-api/AGENTS.md`).
+**State ownership**: `FilesBatchOperationsService` (`apps/chat-api/src/files/batch/files-batch-operations.service.ts`) owns all copy logic, sharing its per-child dispatch/fan-out/aggregate-partial-failure control flow with delete, rename, and move through one internal generic helper. It injects `FilesListingService` for `expandFolderContents`. `FilesController` delegates through the `FilesService` facade (`apps/chat-api/AGENTS.md`).
 
 **Authorization**: session cookie → `req.user.at` (bearer token forwarded to DIAL Core), identical to `/rename` and `/delete`. No additional role is required beyond an authenticated session with WRITE permission on the destination (enforced by DIAL Core, surfaced as a per-item `"Forbidden"` result).
 
@@ -140,7 +140,7 @@ POST /api/v1/files/copy
 
 ### Requirement: Folder copy via paginated expansion
 
-When `nodeType === "folder"`, the BFF SHALL recursively list all files under the source prefix using the existing `expandFolderContents` helper (paginated, `recursive: true`, `limit: 1000`, following `nextToken` until exhausted — the same helper used by delete and rename), then call `copyResource` once per expanded file with the destination path substituting the source prefix for the destination prefix.
+When `nodeType === "folder"`, the BFF SHALL recursively list all files under the source prefix using `FilesListingService.expandFolderContents` (paginated, `recursive: true`, `limit: 1000`, following `nextToken` until exhausted — the same method used by delete, rename, and archive download), then call `copyResource` once per expanded file with the destination path substituting the source prefix for the destination prefix.
 
 **Folder path normalisation**: `sourcePath` and `destinationPath` MUST end with `/`; the service appends `/` if missing.
 
@@ -171,7 +171,7 @@ When `nodeType === "folder"`, the BFF SHALL recursively list all files under the
 
 ### Requirement: POST /api/v1/files/move endpoint (cross-folder)
 
-The BFF SHALL expose `POST /api/v1/files/move`, distinct from `POST /api/v1/files/rename`, that accepts a batch of file/folder items and relocates each across folders via DIAL Core `moveResource`, returning a per-item result array. `/move` and `/rename` share the same underlying DIAL Core operation (`moveResource`) but are separate endpoints so the existing `/rename` contract (same-folder inline rename) is not altered by this change.
+The BFF SHALL expose `POST /api/v1/files/move`, distinct from `POST /api/v1/files/rename`, that accepts a batch of file/folder items and relocates each across folders via DIAL Core `moveResource`, returning a per-item result array. `/move` and `/rename` share the same underlying DIAL Core operation (`moveResource`) but are separate endpoints so the existing `/rename` contract (same-folder inline rename) is not altered by this change. `FilesBatchOperationsService` owns this logic (same ownership and shared dispatch helper as copy/delete/rename above).
 
 **Authorization**, **rate limit** (`@Throttle({ default: { limit: 10, ttl: 60000 } })`), and **caching** posture are identical to `/copy` above.
 
@@ -269,7 +269,7 @@ POST /api/v1/files/move
 
 ### Requirement: Folder move via paginated expansion
 
-The BFF SHALL apply the identical folder-expansion algorithm used for folder copy (above) when moving a folder: recursively list all files under the source prefix via `expandFolderContents`, then call `moveResource` once per expanded file, substituting `"Partial move"` for the folder-level failure error string.
+The BFF SHALL apply the identical folder-expansion algorithm used for folder copy (above) when moving a folder: recursively list all files under the source prefix via `FilesListingService.expandFolderContents`, then call `moveResource` once per expanded file, substituting `"Partial move"` for the folder-level failure error string.
 
 #### Scenario: Folder move relocates all nested files
 
@@ -285,7 +285,7 @@ The BFF SHALL apply the identical folder-expansion algorithm used for folder cop
 
 ### Requirement: Copy/move observability
 
-`FilesService` SHALL emit structured log lines at the start and end of each `copyFiles`/`moveFiles` batch call, including `batchSize`, `successCount`, and `failedCount`, matching the existing pattern in `renameFiles`.
+`FilesBatchOperationsService` SHALL emit structured log lines at the start and end of each `copyFiles`/`moveFiles` batch call, including `batchSize`, `successCount`, and `failedCount`, matching the existing pattern in `renameFiles`.
 
 #### Scenario: Copy batch logged on start and completion
 
