@@ -3,6 +3,7 @@ import {
   DialFileManagerTabs,
   DialFileNodeType,
   FileManagerColumnKey,
+  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -28,12 +29,16 @@ const { mockShowNotification } = vi.hoisted(() => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, params?: Record<string, string>) => {
+    t: (key: string, params?: Record<string, string | number>) => {
       if (
         key === 'dialFileManager.unsupportedFileTypeTooltip' &&
         params?.allowedExtensions != null
       ) {
         return `Unsupported file type. Supported types: ${params.allowedExtensions}.`;
+      }
+
+      if (key === 'dialFileManager.tooManyFilesDescription') {
+        return `You selected ${params?.count} files, including previously attached ones. You can attach up to ${params?.limit} files.`;
       }
 
       return key;
@@ -551,6 +556,30 @@ describe('DialFileManagerModal', () => {
     expect(onAttach).toHaveBeenCalledWith({
       files: [expect.objectContaining({ name: 'report.pdf' })],
       folderPaths: [],
+    });
+  });
+
+  it('does not attach when selected files plus existing attachments exceed the maximum amount', () => {
+    const onAttach = vi.fn();
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(
+      <DialFileManagerModal
+        {...defaultProps}
+        onAttach={onAttach}
+        maximumAttachmentsAmount={2}
+        existingAttachmentsAmount={2}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
+
+    expect(onAttach).not.toHaveBeenCalled();
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: NotificationVariant.Error,
+      title: 'dialFileManager.tooManyFilesSelected',
+      message:
+        'You selected 3 files, including previously attached ones. You can attach up to 2 files.',
     });
   });
 

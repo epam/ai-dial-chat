@@ -58,6 +58,17 @@ const EMPTY_VALUES: DeploymentCreationFormValues = {
   intro: '',
 };
 
+const normalizeFormValues = (
+  values: Partial<DeploymentCreationFormValues>,
+): DeploymentCreationFormValues => ({
+  name: values.name ?? '',
+  description: values.description ?? '',
+  iconUrl: values.iconUrl ?? '',
+  version: values.version ?? '',
+  topics: values.topics ?? [],
+  intro: values.intro ?? '',
+});
+
 const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   { schemaId, appId, initialValues, onCreated },
   ref,
@@ -74,7 +85,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   useEffect(() => {
     if (hasSeededInitialValuesRef.current || !initialValues) return;
     hasSeededInitialValuesRef.current = true;
-    setValues({ ...EMPTY_VALUES, ...initialValues });
+    setValues(normalizeFormValues(initialValues));
   }, [initialValues]);
 
   const labels: DeploymentCreationFormLabels = useMemo(

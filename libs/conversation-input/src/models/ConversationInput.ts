@@ -93,6 +93,16 @@ export interface EditMessageInputProps {
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
   /**
+   * Maximum number of kept plus newly added attachments. Undefined, `0`, or
+   * non-finite values mean there is no count limit.
+   */
+  maximumAttachmentsAmount?: number;
+  /**
+   * Called when adding a file/drop batch would exceed
+   * `maximumAttachmentsAmount`.
+   */
+  onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
+  /**
    * When `true`, the "Attach file" button is hidden.
    */
   hideAttachFile?: boolean;
@@ -229,6 +239,16 @@ export interface ConversationInputProps {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
+  /**
+   * Maximum number of attachments allowed in the input tray. Undefined, `0`,
+   * or non-finite values mean there is no count limit.
+   */
+  maximumAttachmentsAmount?: number;
+  /**
+   * Called when adding a file/drop/pending attachment batch would exceed
+   * `maximumAttachmentsAmount`.
+   */
+  onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
   /**
    * When `true`, the "Attach file" item is removed from the attach menu.
    * Other menu items (e.g. DIAL file system) remain visible. When no items

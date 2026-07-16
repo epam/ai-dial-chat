@@ -235,6 +235,60 @@ When `validateAttachment` is not provided, existing behaviour is unchanged.
 
 ---
 
+### Requirement: Input enforces an optional maximum attachment count
+
+`ConversationInputProps`, `InputProps`, and `EditMessageInputProps` SHALL accept optional host-injected count-limit props:
+
+```ts
+maximumAttachmentsAmount?: number
+onAttachmentsLimitExceeded?: (count: number, limit: number) => void
+```
+
+When `maximumAttachmentsAmount` is a finite number greater than `0`, the input SHALL reject an entire newly added batch when the combined attachment count would exceed the limit. The combined count includes:
+- attachments already in the input tray;
+- pending attachments added from a native file picker, drag-and-drop, clipboard paste, or host-supplied `pendingAttachments`;
+- for `EditMessageInput`, pre-existing kept attachments rendered through `prefixAttachments`.
+
+When rejecting a batch, the input SHALL NOT add any attachment from that batch to the tray, SHALL NOT call `onUploadAttachment` for that batch, SHALL call `onAttachmentsLimitExceeded(count, limit)` when provided, and SHALL revoke any `previewUrl` object URLs created for rejected image attachments.
+
+When `maximumAttachmentsAmount` is `undefined`, `0`, negative, or non-finite, the input SHALL treat the count as unlimited.
+
+The lib SHALL remain host-agnostic: it must not know DIAL Core, quick apps, deployments, REST paths, notification UI, or i18n keys. The host app owns deriving the limit from the selected deployment and rendering any user-facing notification.
+
+#### Scenario: Selected file batch exceeds limit
+
+- **WHEN** `maximumAttachmentsAmount` is `2`
+- **AND** the user selects 3 files in one native file-picker batch
+- **THEN** no selected file is added to the tray
+- **AND** `onUploadAttachment` is NOT called for any selected file
+- **AND** `onAttachmentsLimitExceeded` is called with `count=3` and `limit=2`
+
+#### Scenario: Existing tray attachments count toward limit
+
+- **WHEN** the tray already contains 1 attachment
+- **AND** `maximumAttachmentsAmount` is `2`
+- **AND** the user selects 2 more files
+- **THEN** the new batch is rejected
+- **AND** the tray still contains only the original attachment
+- **AND** `onAttachmentsLimitExceeded` is called with `count=3` and `limit=2`
+
+#### Scenario: Edit-mode kept attachments count toward limit
+
+- **WHEN** `EditMessageInput` is rendered with 2 kept attachments
+- **AND** `maximumAttachmentsAmount` is `2`
+- **AND** the user selects 1 additional file
+- **THEN** the selected file is rejected
+- **AND** `onAttachmentsLimitExceeded` is called with `count=3` and `limit=2`
+
+#### Scenario: Empty maximum means unlimited
+
+- **WHEN** `maximumAttachmentsAmount` is `undefined`
+- **AND** the user selects any number of valid files
+- **THEN** all selected files are accepted subject to MIME/type/upload validation
+- **AND** no count-limit callback is called
+
+---
+
 ### Requirement: Attachments already in the tray are re-validated when validateAttachment changes
 
 `useAttachments` (`libs/conversation-input/src/hooks/useAttachments.ts`) SHALL re-run `validateAttachment` against every attachment already in the tray whenever the `validateAttachment` callback identity changes (e.g., because the host recomputed it after the user switched the selected model/deployment).
@@ -363,4 +417,3 @@ Because the browser `accept` attribute is only a selection hint (the user can st
 
 - **WHEN** `fileAccept` is provided and the user overrides the OS dialog to pick an unsupported file
 - **THEN** `validateAttachment` is still invoked for that file and rejects it as before
-

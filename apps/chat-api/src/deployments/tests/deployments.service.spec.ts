@@ -1185,7 +1185,11 @@ describe('DeploymentsService', () => {
         }),
       );
 
-      const result = await service.getDeploymentDetails('gpt-4o', 'token');
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'gpt-4o',
+        'token',
+      );
 
       expect(result).toEqual({
         id: 'gpt-4o',
@@ -1236,6 +1240,7 @@ describe('DeploymentsService', () => {
       );
 
       const result = await service.getDeploymentDetails(
+        'user1',
         'applications/my-app',
         'token',
       );
@@ -1301,6 +1306,7 @@ describe('DeploymentsService', () => {
       );
 
       const result = await service.getDeploymentDetails(
+        'user1',
         'toolsets/search-tool',
         'token',
       );
@@ -1359,7 +1365,11 @@ describe('DeploymentsService', () => {
       );
       sdkClient.getToolSetTools.mockResolvedValue(errResponse(403));
 
-      await service.getDeploymentDetails('toolsets/search-tool', 'token');
+      await service.getDeploymentDetails(
+        'user1',
+        'toolsets/search-tool',
+        'token',
+      );
 
       const logged = debugSpy.mock.calls.map((call) => String(call[0]));
       expect(logged.some((line) => line.includes('DIAL Core toolset'))).toBe(
@@ -1382,6 +1392,7 @@ describe('DeploymentsService', () => {
       sdkClient.getToolSetTools.mockResolvedValue(errResponse(403));
 
       const result = await service.getDeploymentDetails(
+        'user1',
         'toolsets/search-tool',
         'token',
       );
@@ -1395,7 +1406,7 @@ describe('DeploymentsService', () => {
       sdkClient.getApplication.mockResolvedValue(errResponse(404));
       sdkClient.getToolset.mockResolvedValue(errResponse(404));
       await expect(
-        service.getDeploymentDetails('unknown-id', 'token'),
+        service.getDeploymentDetails('user1', 'unknown-id', 'token'),
       ).rejects.toThrow(NotFoundException);
       expect(sdkClient.getModel).toHaveBeenCalledOnce();
       expect(sdkClient.getApplication).toHaveBeenCalledOnce();
@@ -1409,7 +1420,11 @@ describe('DeploymentsService', () => {
         okResponse({ id: 'root-app', owner: 'someone' }),
       );
 
-      const result = await service.getDeploymentDetails('root-app', 'token');
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'root-app',
+        'token',
+      );
 
       expect(result).toEqual({
         id: 'root-app',
@@ -1428,6 +1443,7 @@ describe('DeploymentsService', () => {
       );
 
       const result = await service.getDeploymentDetails(
+        'user1',
         'OauthToolset-copy',
         'token',
       );
@@ -1446,7 +1462,7 @@ describe('DeploymentsService', () => {
       sdkClient.getToolset.mockResolvedValue(errResponse(404));
 
       await expect(
-        service.getDeploymentDetails('OauthToolset-copy', 'token'),
+        service.getDeploymentDetails('user1', 'OauthToolset-copy', 'token'),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1455,11 +1471,17 @@ describe('DeploymentsService', () => {
       const { service, sdkClient, cacheManager } = makeService();
       cacheManager.get.mockImplementation((key: string) =>
         Promise.resolve(
-          key === 'deployments:details:gpt-4o' ? cachedDetails : undefined,
+          key === 'deployments:details:user1:gpt-4o'
+            ? cachedDetails
+            : undefined,
         ),
       );
 
-      const result = await service.getDeploymentDetails('gpt-4o', 'token');
+      const result = await service.getDeploymentDetails(
+        'user1',
+        'gpt-4o',
+        'token',
+      );
 
       expect(result).toEqual(cachedDetails);
       expect(sdkClient.getModel).not.toHaveBeenCalled();
@@ -1469,10 +1491,10 @@ describe('DeploymentsService', () => {
       const { service, sdkClient, cacheManager } = makeService();
       sdkClient.getModel.mockResolvedValue(okResponse({ id: 'gpt-4o' }));
 
-      await service.getDeploymentDetails('gpt-4o', 'token');
+      await service.getDeploymentDetails('user1', 'gpt-4o', 'token');
 
       expect(cacheManager.set).toHaveBeenCalledWith(
-        'deployments:details:gpt-4o',
+        'deployments:details:user1:gpt-4o',
         expect.objectContaining({ id: 'gpt-4o', type: 'model' }),
         60 * 1000,
       );
@@ -1487,8 +1509,8 @@ describe('DeploymentsService', () => {
         }),
       );
 
-      const first = service.getDeploymentDetails('gpt-4o', 'token');
-      const second = service.getDeploymentDetails('gpt-4o', 'token');
+      const first = service.getDeploymentDetails('user1', 'gpt-4o', 'token');
+      const second = service.getDeploymentDetails('user1', 'gpt-4o', 'token');
 
       resolveModel(okResponse({ id: 'gpt-4o' }));
       const [firstResult, secondResult] = await Promise.all([first, second]);
@@ -1501,7 +1523,7 @@ describe('DeploymentsService', () => {
       const { service, sdkClient } = makeService();
       sdkClient.getModel.mockResolvedValue(errResponse(502));
       await expect(
-        service.getDeploymentDetails('gpt-4o', 'token'),
+        service.getDeploymentDetails('user1', 'gpt-4o', 'token'),
       ).rejects.toThrow(BadGatewayException);
     });
 
@@ -1509,7 +1531,7 @@ describe('DeploymentsService', () => {
       const { service, sdkClient } = makeService();
       sdkClient.getModel.mockRejectedValue(new TypeError('fetch failed'));
       await expect(
-        service.getDeploymentDetails('gpt-4o', 'token'),
+        service.getDeploymentDetails('user1', 'gpt-4o', 'token'),
       ).rejects.toThrow(ServiceUnavailableException);
     });
   });

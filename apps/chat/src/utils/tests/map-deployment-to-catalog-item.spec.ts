@@ -363,4 +363,71 @@ describe('mapToolsetCredentials', () => {
       isManageableByAdmin: true,
     });
   });
+
+  it('reports authenticationType None for a non-admin already covered by global auth, hiding the login CTA', () => {
+    const result = mapToolsetCredentials(
+      'toolsets/public/x__1.0',
+      {
+        authenticationType: 'OAUTH',
+        userLevelAuthStatus: 'SIGNED_OUT',
+        globalAuthStatus: 'SIGNED_IN',
+      },
+      false,
+    );
+
+    expect(result).toMatchObject({
+      authenticationType: ToolsetAuthenticationType.None,
+      userStatus: CredentialStatus.SignedOut,
+      globalStatus: CredentialStatus.SignedIn,
+    });
+  });
+
+  it('keeps the real authenticationType for an admin even when global auth is signed in', () => {
+    const result = mapToolsetCredentials(
+      'toolsets/public/x__1.0',
+      {
+        authenticationType: 'OAUTH',
+        userLevelAuthStatus: 'SIGNED_OUT',
+        globalAuthStatus: 'SIGNED_IN',
+      },
+      true,
+    );
+
+    expect(result).toMatchObject({
+      authenticationType: ToolsetAuthenticationType.OAuth,
+    });
+  });
+
+  it('keeps the real authenticationType when the user is already personally signed in, even if global is also signed in', () => {
+    const result = mapToolsetCredentials(
+      'toolsets/public/x__1.0',
+      {
+        authenticationType: 'OAUTH',
+        userLevelAuthStatus: 'SIGNED_IN',
+        globalAuthStatus: 'SIGNED_IN',
+      },
+      false,
+    );
+
+    expect(result).toMatchObject({
+      authenticationType: ToolsetAuthenticationType.OAuth,
+    });
+  });
+
+  it('keeps the real authenticationType for a non-public toolset even when global is signed in', () => {
+    const result = mapToolsetCredentials(
+      'toolsets/personal-bucket/x__1.0',
+      {
+        authenticationType: 'OAUTH',
+        userLevelAuthStatus: 'SIGNED_OUT',
+        globalAuthStatus: 'SIGNED_IN',
+      },
+      false,
+    );
+
+    expect(result).toMatchObject({
+      authenticationType: ToolsetAuthenticationType.OAuth,
+      isPublic: false,
+    });
+  });
 });

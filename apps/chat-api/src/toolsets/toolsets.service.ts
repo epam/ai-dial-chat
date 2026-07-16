@@ -16,6 +16,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { HIDDEN_FILE } from '../constants/dial.constants';
+import { DeploymentsService } from '../deployments/deployments.service';
 import { DialClientService } from '../dial/dial-client.service';
 import type {
   DialToolsetAuthSettingsDto,
@@ -349,6 +350,7 @@ export class ToolsetsService {
     private readonly dialClient: DialClientService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly userConfigService: UserConfigService,
+    private readonly deploymentsService: DeploymentsService,
   ) {}
 
   private enrichToolsetWithOwnership(
@@ -636,6 +638,16 @@ export class ToolsetsService {
     await this.cacheManager.del(`toolsets:list:${userSub}`);
     if (toolsetName != null) {
       await this.cacheManager.del(`toolsets:single:${userSub}:${toolsetName}`);
+      /*
+       * The details panel reads toolset auth status through
+       * `DeploymentsService.getDeploymentDetails`, which caches independently
+       * of the toolsets caches above — without this, a login/logout leaves
+       * that panel showing the pre-change credential status for up to 60s.
+       */
+      await this.deploymentsService.invalidateDetailsCache(
+        userSub,
+        toolsetName,
+      );
     }
   }
 
@@ -856,7 +868,15 @@ export class ToolsetsService {
         headers: authHeaders,
         body: toDialToolsetSignoutBody(body),
       });
-      if (response.error) {
+      /*
+       * DIAL Core returns 404 from signout when there is no credential left
+       * at the requested level to revoke — the toolset itself already
+       * resolved via `authHeaders`/prior calls, so this only means "already
+       * signed out". Treat it as the idempotent success it represents
+       * instead of surfacing a "failed to log out" error for a state the
+       * user already wanted.
+       */
+      if (response.error && response.response.status !== 404) {
         return mapDialHttpStatus(
           response.response.status,
           `log out toolset "${toolsetName}"`,

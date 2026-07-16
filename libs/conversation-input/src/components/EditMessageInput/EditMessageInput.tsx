@@ -34,6 +34,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   validateAttachment,
   hideAttachFile = false,
   fileAccept,
+  maximumAttachmentsAmount,
+  onAttachmentsLimitExceeded,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDropFiles, setPendingDropFiles] = useState<File[]>([]);
@@ -111,6 +113,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         prefixAttachments={keptAttachments}
         onRemovePrefixAttachment={handleRemovePreExisting}
         validateAttachment={validateAttachment}
+        maximumAttachmentsAmount={maximumAttachmentsAmount}
+        onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
       />
 
       {/* Action row — outside the bordered box */}

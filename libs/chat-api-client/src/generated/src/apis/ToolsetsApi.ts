@@ -156,7 +156,7 @@ export class ToolsetsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns a single DIAL Core toolset by name for the authenticated session user. Proxies GET /openai/toolsets/{toolset_name} using the caller\'s session access token. Results are cached server-side for 60 seconds per user per toolset.
+   * Returns a single DIAL Core toolset by name for the authenticated session user. Proxies GET /openai/toolsets/{toolset_name} using the caller\'s session access token. Results are cached server-side for 60 seconds per user per toolset; the response carries no client-facing Cache-Control so a browser never serves a stale copy across a login/logout that already invalidated that cache.
    * Get toolset by name
    */
   async getToolsetRaw(
@@ -194,7 +194,7 @@ export class ToolsetsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns a single DIAL Core toolset by name for the authenticated session user. Proxies GET /openai/toolsets/{toolset_name} using the caller\'s session access token. Results are cached server-side for 60 seconds per user per toolset.
+   * Returns a single DIAL Core toolset by name for the authenticated session user. Proxies GET /openai/toolsets/{toolset_name} using the caller\'s session access token. Results are cached server-side for 60 seconds per user per toolset; the response carries no client-facing Cache-Control so a browser never serves a stale copy across a login/logout that already invalidated that cache.
    * Get toolset by name
    */
   async getToolset(
@@ -206,7 +206,7 @@ export class ToolsetsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns the list of DIAL Core toolsets visible to the authenticated session user. Proxies GET /openai/toolsets using the caller\'s session access token. Results are cached server-side for 30 seconds per user.
+   * Returns the list of DIAL Core toolsets visible to the authenticated session user. Proxies GET /openai/toolsets using the caller\'s session access token. Results are cached server-side for 30 seconds per user; the response carries no client-facing Cache-Control so a browser never serves a stale copy across a login/logout that already invalidated that cache.
    * List available toolsets
    */
   async listToolsetsRaw(
@@ -232,7 +232,7 @@ export class ToolsetsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns the list of DIAL Core toolsets visible to the authenticated session user. Proxies GET /openai/toolsets using the caller\'s session access token. Results are cached server-side for 30 seconds per user.
+   * Returns the list of DIAL Core toolsets visible to the authenticated session user. Proxies GET /openai/toolsets using the caller\'s session access token. Results are cached server-side for 30 seconds per user; the response carries no client-facing Cache-Control so a browser never serves a stale copy across a login/logout that already invalidated that cache.
    * List available toolsets
    */
   async listToolsets(
