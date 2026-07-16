@@ -16,12 +16,11 @@ import {
   BUCKET_NAME_PATTERN,
   BUCKET_NAME_VALIDATION_MESSAGE,
 } from '../../common/validators/bucket-name.pattern';
+import { DialFileNodeType } from './dial-file-node-type';
 import { IsValidFilePath } from './file-path.validator';
 
-export enum RenameItemNodeType {
-  Item = 'item',
-  Folder = 'folder',
-}
+export const RenameItemNodeType = DialFileNodeType;
+export type RenameItemNodeType = DialFileNodeType;
 
 export class RenameItemDto {
   @IsString()

@@ -15,12 +15,11 @@ import {
   BUCKET_NAME_PATTERN,
   BUCKET_NAME_VALIDATION_MESSAGE,
 } from '../../common/validators/bucket-name.pattern';
+import { DialFileNodeType } from './dial-file-node-type';
 import { IsValidFilePath } from './file-path.validator';
 
-export enum ArchiveItemNodeType {
-  Item = 'item',
-  Folder = 'folder',
-}
+export const ArchiveItemNodeType = DialFileNodeType;
+export type ArchiveItemNodeType = DialFileNodeType;
 
 export class ArchiveItemDto {
   @IsString()
