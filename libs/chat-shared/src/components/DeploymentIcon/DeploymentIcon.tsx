@@ -11,6 +11,20 @@ export interface DeploymentIconColors {
   background?: string;
 }
 
+/** User-visible strings for `DeploymentIcon`. */
+export interface DeploymentIconLabels {
+  /** When provided, a tooltip with this text is shown on hover/focus. */
+  tooltip?: string;
+}
+
+/** Style overrides for `DeploymentIcon`. */
+export interface DeploymentIconStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: DeploymentIconColors;
+  /** Extra class applied to the outer badge wrapper, e.g. for a custom background variable. */
+  badgeClassName?: string;
+}
+
 /** Props for `DeploymentIcon`. */
 export interface DeploymentIconProps {
   /** Image URL to display. When absent the fallback is shown directly. */
@@ -21,12 +35,10 @@ export interface DeploymentIconProps {
   initialsName: string;
   /** Custom node rendered when `src` is absent or the image fails to load. Overrides `initialsName`. */
   fallback?: ReactNode;
-  /** Extra class applied to the outer badge wrapper, e.g. for a custom background variable. */
-  badgeClassName?: string;
-  /** When provided, a tooltip with this text is shown on hover/focus. */
-  tooltip?: string;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: DeploymentIconColors;
+  /** User-visible strings. */
+  labels?: DeploymentIconLabels;
+  /** Style overrides. */
+  styles?: DeploymentIconStyles;
 }
 
 /**
@@ -44,10 +56,11 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
   size,
   initialsName,
   fallback,
-  badgeClassName,
-  tooltip,
-  colors,
+  labels,
+  styles: deploymentIconStyles,
 }) => {
+  const { tooltip } = labels ?? {};
+  const { badgeClassName, colors } = deploymentIconStyles ?? {};
   const cssVars = buildCssVars({
     '--di-icon-bg': colors?.background,
   });

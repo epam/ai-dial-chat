@@ -74,45 +74,45 @@ export const TabRow: FC<TabRowProps> = ({
   } = typography ?? {};
 
   return (
-  <div
-    role="tablist"
-    className={mergeClasses(
-      'flex justify-start gap-1 border-b',
-      styles.tabsRow,
-      className,
-    )}
-  >
-    {tabs.map((tab) => {
-      const isActive = activeTabId === tab.id;
-      return (
-        <button
-          key={tab.id}
-          role="tab"
-          aria-selected={isActive}
-          onClick={() => onTabChange(tab.id)}
-          className={mergeClasses(
-            tabLabelClassName,
-            '-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-start transition-colors',
-            isActive
-              ? mergeClasses(styles.activeTab, activeTabClassName)
-              : inactiveTabClassName,
-          )}
-        >
-          <span>{tab.label}</span>
-          {tab.count != null && (
-            <span
-              className={mergeClasses(
-                badgeLabelClassName,
-                'rounded-full px-1.5 py-0.5',
-                isActive ? activeBadgeClassName : inactiveBadgeClassName,
-              )}
-            >
-              {tab.count}
-            </span>
-          )}
-        </button>
-      );
-    })}
-  </div>
+    <div
+      role="tablist"
+      className={mergeClasses(
+        'flex justify-start gap-1 border-b',
+        styles.tabsRow,
+        className,
+      )}
+    >
+      {tabs.map((tab) => {
+        const isActive = activeTabId === tab.id;
+        return (
+          <button
+            key={tab.id}
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onTabChange(tab.id)}
+            className={mergeClasses(
+              tabLabelClassName,
+              '-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-start transition-colors',
+              isActive
+                ? mergeClasses(styles.activeTab, activeTabClassName)
+                : inactiveTabClassName,
+            )}
+          >
+            <span>{tab.label}</span>
+            {tab.count != null && (
+              <span
+                className={mergeClasses(
+                  badgeLabelClassName,
+                  'rounded-full px-1.5 py-0.5',
+                  isActive ? activeBadgeClassName : inactiveBadgeClassName,
+                )}
+              >
+                {tab.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
   );
 };

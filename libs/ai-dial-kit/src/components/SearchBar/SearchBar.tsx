@@ -51,10 +51,17 @@ export const SearchBar: FC<SearchBarProps> = ({
   iconStrokeWidth,
   styles: searchBarStyles,
 }) => {
-  const { placeholder = 'Search', ariaLabel, clearLabel = 'Clear search' } =
-    labels ?? {};
-  const { containerClassName, iconClassName, inputClassName, clearButtonClassName } =
-    searchBarStyles ?? {};
+  const {
+    placeholder = 'Search',
+    ariaLabel,
+    clearLabel = 'Clear search',
+  } = labels ?? {};
+  const {
+    containerClassName,
+    iconClassName,
+    inputClassName,
+    clearButtonClassName,
+  } = searchBarStyles ?? {};
   const resolvedAriaLabel = ariaLabel ?? placeholder;
 
   return (
