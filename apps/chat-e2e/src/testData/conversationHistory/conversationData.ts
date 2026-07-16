@@ -622,6 +622,61 @@ export class ConversationData extends FolderData {
       .build();
   }
 
+  /**
+   * Create a conversation model with attachment in the assistant message
+   * @param model conversation model
+   * @param attachmentLink attachment url
+   * @param attachmentPage selected attachment page. When undefined, the 1st page is opened by default
+   */
+  public prepareConversationWithAttachmentLinkInResponse(
+    model: DialAIEntityModel | string,
+    attachmentLink: string,
+    attachmentPage?: number,
+  ) {
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const conversation = this.conversationBuilder.getConversation();
+    const settings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: [],
+    };
+    const userMessage: Message = {
+      role: Role.User,
+      content: 'analyze the attached document',
+      model: modelToUse,
+      settings: settings,
+    };
+    const attachmentLinkParts = attachmentLink.split('/');
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: 'The document contains the text',
+      custom_content: {
+        attachments: [
+          {
+            index: 0,
+            type: 'text/markdown',
+            title: `[0] '${attachmentLinkParts[attachmentLinkParts.length - 1]}'`,
+            data: 'simple text',
+            reference_url: attachmentPage
+              ? attachmentLink.concat(`#page=${attachmentPage}`)
+              : attachmentLink,
+          },
+        ],
+      },
+      model: modelToUse,
+      settings: settings,
+      responseId: responseIdPrefix.concat(GeneratorUtil.randomString(29)),
+    };
+    const name = GeneratorUtil.randomConversationName();
+    return this.conversationBuilder
+      .withId(`${modelToUse.id}${ItemUtil.entityIdSeparator}${name}`)
+      .withName(name)
+      .withMessage(userMessage)
+      .withMessage(assistantMessage)
+      .withModel(modelToUse)
+      .build();
+  }
+
   public prepareConversationWithStagesInResponse(
     model: DialAIEntityModel | string,
     stagesCount: number,
