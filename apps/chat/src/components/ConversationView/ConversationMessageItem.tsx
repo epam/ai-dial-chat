@@ -381,7 +381,6 @@ const ConversationMessageItem: FC<Props> = ({
                   stages={msg.custom_content?.stages ?? []}
                   isStreaming={isStreaming}
                   labels={{ executedLabel, stepsLabel }}
-                  onAttachmentClick={handleAttachmentClick}
                 />
               )}
               {msg.hasStreamError && (

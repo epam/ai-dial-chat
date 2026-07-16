@@ -1,4 +1,4 @@
-import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
+import type { Stage } from '@epam/ai-dial-chat-shared';
 
 /**
  * Typography configuration for stage content text.
@@ -63,6 +63,4 @@ export interface StagesPanelProps {
   styles?: StagesPanelStyles;
   /** User-visible strings. */
   labels?: StagesPanelLabels;
-  /** Called when the user clicks an attachment card inside a stage. */
-  onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }
