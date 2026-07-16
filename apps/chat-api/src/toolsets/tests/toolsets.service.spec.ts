@@ -30,6 +30,14 @@ const mockToolset: DialToolsetDto = {
   },
 };
 const mockList: DialToolsetListResponseDto = { data: [mockToolset] };
+/* Toolset as it is stored in cache (after withDisplayName is applied). */
+const mockCachedToolset = {
+  ...mockToolset,
+  displayName: 'my-toolset',
+} as DialToolsetDto;
+const mockCachedList: DialToolsetListResponseDto = {
+  data: [mockCachedToolset],
+};
 const mockEnrichedToolset = {
   ...mockToolset,
   displayName: 'my-toolset',
@@ -136,7 +144,7 @@ describe('ToolsetsService', () => {
     it('returns cached list without calling upstream on cache hit', async () => {
       const { dialClient, userConfigService, deploymentsService } = makeDeps();
       const cacheManager = {
-        get: vi.fn().mockResolvedValue(mockList),
+        get: vi.fn().mockResolvedValue(mockCachedList),
         set: vi.fn(),
       };
       const service = new ToolsetsService(
@@ -519,7 +527,7 @@ describe('ToolsetsService', () => {
     it('returns cached toolset without calling upstream on cache hit', async () => {
       const { dialClient, userConfigService, deploymentsService } = makeDeps();
       const cacheManager = {
-        get: vi.fn().mockResolvedValue(mockToolset),
+        get: vi.fn().mockResolvedValue(mockCachedToolset),
         set: vi.fn(),
       };
       const service = new ToolsetsService(

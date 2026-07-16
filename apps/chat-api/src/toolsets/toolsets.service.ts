@@ -628,10 +628,12 @@ export class ToolsetsService {
 
     try {
       const resource = parseDialToolsetResource(toolsetName);
-      const data = redactToolsetSecrets(
-        resource == null
-          ? await this.getOpenAiToolset(accessToken, toolsetName)
-          : await this.getCustomToolset(accessToken, toolsetName, resource),
+      const data = withDisplayName(
+        redactToolsetSecrets(
+          resource == null
+            ? await this.getOpenAiToolset(accessToken, toolsetName)
+            : await this.getCustomToolset(accessToken, toolsetName, resource),
+        ),
       );
       await this.cacheManager.set(cacheKey, data, 60 * 1000);
       return enrich(data);
