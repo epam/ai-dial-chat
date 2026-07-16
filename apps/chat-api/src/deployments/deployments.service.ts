@@ -306,6 +306,19 @@ export class DeploymentsService {
   }
 
   /**
+   * Evicts a user's cached details for one deployment — e.g. right after a
+   * toolset login/logout, so the details panel's next `getDeploymentDetails`
+   * call re-reads the updated `userLevelAuthStatus` instead of the snapshot
+   * cached before the credentials changed.
+   */
+  async invalidateDetailsCache(
+    userSub: string,
+    deployment: string,
+  ): Promise<void> {
+    await this.cacheManager.del(`deployments:details:${userSub}:${deployment}`);
+  }
+
+  /**
    * Resolves every application resource shared with the current user
    * (READ or WRITE), in a single upstream call reused to derive both the
    * WRITE-only "can edit" set and the unfiltered "shared with me" set —
@@ -499,10 +512,11 @@ export class DeploymentsService {
   }
 
   async getDeploymentDetails(
+    userSub: string,
     deployment: string,
     accessToken: string,
   ): Promise<DeploymentDetailsDto> {
-    const cacheKey = `deployments:details:${deployment}`;
+    const cacheKey = `deployments:details:${userSub}:${deployment}`;
     const cached = await this.cacheManager.get<DeploymentDetailsDto>(cacheKey);
     if (cached) {
       this.logger.debug(`Cache hit for deployment details "${deployment}"`);

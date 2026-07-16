@@ -38,6 +38,15 @@ const AUTH_STATUS_MAP: Record<string, CredentialStatus> = {
  * Maps a toolset's auth settings into the lib's credential-status shape,
  * including both `USER` and `GLOBAL` sign-in status, whether the toolset is
  * public, and whether the current user (if an admin) may manage both levels.
+ *
+ * For a non-admin on a public toolset that already has `GLOBAL` credentials
+ * signed in, the lib's own `LoginWithMyCreds` CTA fires unconditionally off
+ * `isPublic` alone, regardless of whether org-wide credentials already cover
+ * everyone (`node_modules/@epam/ai-dial-catalog/dist/index.js`, the `ct`
+ * helper). Global auth is sufficient to use the toolset — a personal login
+ * is optional, not required — so this suppresses that CTA by reporting
+ * `authenticationType: None`, which is the lib's own documented signal to
+ * hide the credentials control entirely.
  */
 export const mapToolsetCredentials = (
   toolsetId: string,
@@ -47,16 +56,25 @@ export const mapToolsetCredentials = (
   if (authSettings == null) return undefined;
 
   const isPublic = isPublicToolsetId(toolsetId);
+  const userStatus = authSettings.userLevelAuthStatus
+    ? AUTH_STATUS_MAP[authSettings.userLevelAuthStatus]
+    : undefined;
+  const globalStatus = authSettings.globalAuthStatus
+    ? AUTH_STATUS_MAP[authSettings.globalAuthStatus]
+    : undefined;
+
+  const isCoveredByGlobalAuth =
+    !isAdmin &&
+    isPublic &&
+    userStatus !== CredentialStatus.SignedIn &&
+    globalStatus === CredentialStatus.SignedIn;
 
   return {
-    authenticationType:
-      AUTHENTICATION_TYPE_MAP[authSettings.authenticationType],
-    userStatus: authSettings.userLevelAuthStatus
-      ? AUTH_STATUS_MAP[authSettings.userLevelAuthStatus]
-      : undefined,
-    globalStatus: authSettings.globalAuthStatus
-      ? AUTH_STATUS_MAP[authSettings.globalAuthStatus]
-      : undefined,
+    authenticationType: isCoveredByGlobalAuth
+      ? ToolsetAuthenticationType.None
+      : AUTHENTICATION_TYPE_MAP[authSettings.authenticationType],
+    userStatus,
+    globalStatus,
     isPublic,
     isManageableByAdmin: isAdmin && isPublic,
     apiKeyHeader: authSettings.apiKeyHeader,

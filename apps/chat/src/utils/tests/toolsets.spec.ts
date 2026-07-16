@@ -557,6 +557,24 @@ describe('toolsetDtoToForm', () => {
     expect(form.auth.apiKey).toBeUndefined();
   });
 
+  it('does not mark the form as logged in when only the global auth status is signed in', () => {
+    const dto: DialToolsetDto = {
+      id: 'toolsets/b/My%20toolset__0.0.1',
+      toolset: 'toolsets/b/My%20toolset__0.0.1',
+      displayName: 'My toolset',
+      endpoint: 'https://my-toolset.example.com/mcp',
+      authSettings: {
+        authenticationType: 'OAUTH',
+        clientId: 'client',
+        globalAuthStatus: 'SIGNED_IN',
+      },
+    };
+
+    const form = toolsetDtoToForm(dto);
+
+    expect(form.auth.isLoggedIn).toBe(false);
+  });
+
   it('defaults to NONE auth and HTTP transport when fields are absent', () => {
     const dto: DialToolsetDto = {
       id: 'toolsets/b/x__0.0.1',
