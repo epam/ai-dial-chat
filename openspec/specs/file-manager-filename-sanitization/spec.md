@@ -19,7 +19,7 @@ The `forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}` prop MUST be passed to
 **i18n keys:**
 | Key | English |
 |---|---|
-| `dialFileManager.forbiddenSymbolsTooltip` | `"File names cannot contain: : ; , = / { } % & \""` |
+| `dialFileManager.forbiddenSymbolsTooltip` | `"File name should not contain special symbols {{notAllowedSymbols}}"` |
 
 **RTL impact:** None — sanitization is text manipulation; no directional UI.
 

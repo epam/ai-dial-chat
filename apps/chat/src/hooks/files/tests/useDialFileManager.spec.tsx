@@ -1833,6 +1833,54 @@ describe('useDialFileManager', () => {
     });
   });
 
+  describe('onCreateFolderValidate', () => {
+    const renderAndWait = async (opts?: object) => {
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET, ...opts }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      return result;
+    };
+
+    const parentFolder = {
+      id: 'root',
+      name: 'My files',
+      path: '/My files',
+      parentPath: '',
+      nodeType: DialFileNodeType.FOLDER,
+      folderId: BUCKET,
+      bucket: BUCKET,
+      items: [],
+    };
+
+    it('returns null for a valid folder name', async () => {
+      const result = await renderAndWait();
+      expect(
+        result.current.onCreateFolderValidate('reports', parentFolder),
+      ).toBeNull();
+    });
+
+    it('returns invalid chars error for a folder name containing colon', async () => {
+      const result = await renderAndWait({
+        forbiddenSymbolsRegExp: /[:]/,
+      });
+      const msg = result.current.onCreateFolderValidate(
+        'reports:2026',
+        parentFolder,
+      );
+      expect(msg).toBe(DialFileManagerI18nKeys.FolderNameInvalidChars);
+    });
+
+    it('returns invalid chars error for a folder name containing a path separator', async () => {
+      const result = await renderAndWait();
+      const msg = result.current.onCreateFolderValidate(
+        'reports/2026',
+        parentFolder,
+      );
+      expect(msg).toBe(DialFileManagerI18nKeys.FolderNameInvalidChars);
+    });
+  });
+
   describe('onRenameValidate', () => {
     const renderAndWait = async (opts?: object) => {
       const { result } = renderHook(() =>
@@ -1874,13 +1922,21 @@ describe('useDialFileManager', () => {
     it('returns invalid chars error for name containing forward slash', async () => {
       const result = await renderAndWait();
       const msg = result.current.onRenameValidate('a/b', dummyItem);
-      expect(msg).toBe(DialFileManagerI18nKeys.RenameInvalidChars);
+      expect(msg).toBe(DialFileManagerI18nKeys.ForbiddenSymbolsTooltip);
     });
 
     it('returns invalid chars error for name containing backslash', async () => {
       const result = await renderAndWait();
       const msg = result.current.onRenameValidate('a\\b', dummyItem);
-      expect(msg).toBe(DialFileManagerI18nKeys.RenameInvalidChars);
+      expect(msg).toBe(DialFileManagerI18nKeys.ForbiddenSymbolsTooltip);
+    });
+
+    it('returns forbidden-symbols error for name containing colon', async () => {
+      const result = await renderAndWait({
+        forbiddenSymbolsRegExp: /[:]/,
+      });
+      const msg = result.current.onRenameValidate('file:name.pdf', dummyItem);
+      expect(msg).toBe(DialFileManagerI18nKeys.ForbiddenSymbolsTooltip);
     });
 
     it('returns too-long error for name longer than 255 chars', async () => {
@@ -1895,6 +1951,20 @@ describe('useDialFileManager', () => {
       });
       const msg = result.current.onRenameValidate('file<name>', dummyItem);
       expect(msg).toBe(DialFileManagerI18nKeys.ForbiddenSymbolsTooltip);
+    });
+
+    it('returns folder invalid chars error when renaming a folder with a forbidden symbol', async () => {
+      const result = await renderAndWait({
+        forbiddenSymbolsRegExp: /[:]/,
+      });
+      const folderItem = {
+        ...dummyItem,
+        name: 'reports',
+        path: '/My files/reports',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+      const msg = result.current.onRenameValidate('reports:2026', folderItem);
+      expect(msg).toBe(DialFileManagerI18nKeys.FolderNameInvalidChars);
     });
 
     it('returns null when name does not match forbiddenSymbolsRegExp', async () => {

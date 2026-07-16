@@ -263,6 +263,7 @@ export enum DialFileManagerI18nKeys {
   DownloadFilesError = 'dialFileManager.downloadFilesError',
   FolderCreateError = 'dialFileManager.folderCreateError',
   FolderLoadError = 'dialFileManager.folderLoadError',
+  FolderNameInvalidChars = 'dialFileManager.folderNameInvalidChars',
   DeleteFilesError = 'dialFileManager.deleteFilesError',
   ItemDeletedSuccessfully = 'dialFileManager.itemDeletedSuccessfully',
   ItemsDeletedSuccessfully = 'dialFileManager.itemsDeletedSuccessfully',
