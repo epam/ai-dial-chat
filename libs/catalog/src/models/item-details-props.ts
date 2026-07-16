@@ -19,6 +19,8 @@ export interface ItemDetailsTexts {
   tabOverviewLabel?: string;
   /** "Pricing" tab label. Default: `'Pricing'`. */
   tabPricingLabel?: string;
+  /** "Limits" tab label. Default: `'Limits'`. */
+  tabLimitsLabel?: string;
   /** "API" tab label. Default: `'API'`. */
   tabApiLabel?: string;
   /** Accessible label for the details panel `role="dialog"`. Default: `'Item details'`. */

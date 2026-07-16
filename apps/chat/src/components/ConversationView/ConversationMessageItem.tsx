@@ -113,6 +113,8 @@ interface Props {
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
   hideAttachFile?: boolean;
+  /** `accept` attribute value forwarded to the edit-message native file picker. */
+  fileAccept?: string;
   /** When provided, called instead of the default download action when an attachment card is activated. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }
@@ -155,6 +157,7 @@ const ConversationMessageItem: FC<Props> = ({
   stepsLabel,
   validateAttachment,
   hideAttachFile,
+  fileAccept,
   onAttachmentClick: onAttachmentClickProp,
 }) => {
   const { t } = useTranslation();
@@ -251,6 +254,7 @@ const ConversationMessageItem: FC<Props> = ({
             onDropFilesConsumed={onDropFilesConsumed}
             validateAttachment={validateAttachment}
             hideAttachFile={hideAttachFile}
+            fileAccept={fileAccept}
           />
         </Suspense>
       </div>

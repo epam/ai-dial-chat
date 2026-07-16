@@ -19,6 +19,18 @@ export const mimeTypesToDialFileAcceptTypes = (
     .filter(isDialFileAcceptType);
 };
 
+export const mimeTypesToFileAccept = (types?: string[]): string | undefined => {
+  if (types == null || types.length === 0) {
+    return undefined;
+  }
+
+  if (types.some((type) => type === '*' || type === '*/*')) {
+    return undefined;
+  }
+
+  return types.join(',');
+};
+
 export const mimeTypesToAttachmentExtensionLabels = (types: string[]): string =>
   types
     .map((type) => {

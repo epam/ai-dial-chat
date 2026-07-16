@@ -119,10 +119,10 @@ export class ShareController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'discardSharedCatalogItem',
-    summary: 'Discard a catalog resource shared with the caller',
+    summary: 'Discard a shared catalog resource or conversation',
     description:
-      "Discards the authenticated user's own access to a catalog resource " +
-      "(application or toolset) shared with them, via DIAL Core's " +
+      "Discards the authenticated user's own access to a shared catalog " +
+      "entity (application or toolset) or conversation, via DIAL Core's " +
       "discardSharedResources operation. Only affects the caller's own " +
       'access — removing access for everyone else is a separate operation.',
   })

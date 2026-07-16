@@ -4,6 +4,8 @@ export enum CatalogDetailsTab {
   About = 'about',
   Overview = 'overview',
   Pricing = 'pricing',
+  /** Runtime usage-limit progress for model deployments. */
+  Limits = 'limits',
   Api = 'api',
   /** Tool definitions tab, shown for Toolset entities. */
   Tools = 'tools',

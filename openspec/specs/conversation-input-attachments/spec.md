@@ -332,3 +332,35 @@ For all other error states (no `errorReason`, or `errorReason === AttachmentErro
 - **WHEN** `AttachmentCard` renders with `status: RequestStatus.Error` and `errorReason` is `undefined` and `onRetry` is provided
 - **THEN** the retry button is rendered
 
+---
+
+### Requirement: Native file picker restricts selectable types via an accept hint
+
+`Input`, `ConversationInput`, and `EditMessageInput` in `libs/conversation-input` SHALL accept an optional `fileAccept?: string` prop.
+
+When provided, the component SHALL apply the value verbatim as the `accept` attribute on its native `<input type="file">` element (the device file picker opened by the "Attach file" action). When absent or empty, no `accept` attribute is applied and the native picker offers every file type.
+
+The lib SHALL treat `fileAccept` as an opaque, host-resolved string. It MUST NOT compute the value from deployment data, MIME lists, or DIAL Core semantics — the host app resolves the selected deployment's supported types (via `mimeTypesToFileAccept` over `inputAttachmentTypes`) and passes the finished `accept` string in.
+
+Because the browser `accept` attribute is only a selection hint (the user can still switch the OS dialog to "All files"), this requirement is complementary to and does NOT replace the `validateAttachment` post-pick validation, which continues to gate every added file.
+
+#### Scenario: accept attribute is applied to the native picker
+
+- **WHEN** `ConversationInput` is rendered with `fileAccept="image/*,application/pdf"`
+- **THEN** the hidden `<input type="file">` used by the "Attach file" action has `accept="image/*,application/pdf"`
+
+#### Scenario: no accept attribute when prop is absent
+
+- **WHEN** `ConversationInput` is rendered without `fileAccept`
+- **THEN** the hidden `<input type="file">` has no `accept` attribute and every file type remains selectable
+
+#### Scenario: edit-message picker honours the accept hint
+
+- **WHEN** `EditMessageInput` is rendered with `fileAccept="image/*"`
+- **THEN** its native `<input type="file">` has `accept="image/*"`
+
+#### Scenario: post-pick validation still runs for forced selections
+
+- **WHEN** `fileAccept` is provided and the user overrides the OS dialog to pick an unsupported file
+- **THEN** `validateAttachment` is still invoked for that file and rejects it as before
+

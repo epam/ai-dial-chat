@@ -25,6 +25,7 @@ import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
 import { Summary } from './Summary/Summary';
 import { AboutTab } from './TabsContent/About';
+import { LimitsTab } from './TabsContent/Limits';
 import { Overview } from './TabsContent/Overview';
 import { Pricing } from './TabsContent/Pricing';
 import { Tools } from './TabsContent/Tools/Tools';
@@ -243,6 +244,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       result.push({
         id: CatalogDetailsTab.Pricing,
         label: texts?.tabPricingLabel ?? 'Pricing',
+      });
+    }
+    if (item.details?.limits != null) {
+      result.push({
+        id: CatalogDetailsTab.Limits,
+        label: texts?.tabLimitsLabel ?? 'Limits',
       });
     }
     if (item.details?.api != null) {
@@ -486,6 +493,9 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                     pricesSectionLabel={texts?.pricingPricesSectionLabel}
                     limitsSectionLabel={texts?.pricingLimitsSectionLabel}
                   />
+                )}
+                {activeTab === CatalogDetailsTab.Limits && (
+                  <LimitsTab limits={item.details?.limits} />
                 )}
                 {activeTab === CatalogDetailsTab.Api &&
                   item.details?.api != null && (

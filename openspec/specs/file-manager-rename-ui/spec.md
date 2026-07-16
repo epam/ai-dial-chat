@@ -12,14 +12,13 @@
 |---|------|-----------|
 | 1 | Empty name | `renameValidationMessages.emptyName` |
 | 2 | Name equals reserved `.dial_folder` | `dialFileManager.renameReservedName` |
-| 3 | Name contains `/` or `\` | `dialFileManager.renameInvalidChars` |
-| 4 | Name contains a forbidden symbol (per `forbiddenSymbolsRegExp`) | `dialFileManager.forbiddenSymbolsTooltip` |
-| 5 | Name length > 255 | `dialFileManager.renameNameTooLong` |
-| 6 | Duplicate sibling name (case-insensitive) | `renameValidationMessages.duplicateName` |
+| 3 | Name contains `/`, `\`, or a forbidden symbol (per `forbiddenSymbolsRegExp`) | File: `dialFileManager.forbiddenSymbolsTooltip`; folder: `dialFileManager.folderNameInvalidChars` |
+| 4 | Name length > 255 | `dialFileManager.renameNameTooLong` |
+| 5 | Duplicate sibling name (case-insensitive) | `renameValidationMessages.duplicateName` |
 
-Forbidden-symbol validation (beyond `/` and `\`) SHALL use the same `forbiddenSymbolsRegExp` already wired in the modal for upload conflicts. If the name matches the regexp, the function SHALL return the same specific message used elsewhere for forbidden symbols — `dialFileManager.forbiddenSymbolsTooltip` ("File names cannot contain: : ; , = / { } % & \"") — not the generic `dialFileManager.renameInvalidChars` message. This keeps the rename tooltip and the upload/create-folder tooltip naming the same prohibited symbols with the same wording.
+Forbidden-symbol validation SHALL use the same effective symbol set as folder creation: path separators (`/` and `\`) are always rejected, and all other forbidden characters come from the `forbiddenSymbolsRegExp` option. If a file name contains a forbidden symbol, the function SHALL return `dialFileManager.forbiddenSymbolsTooltip` ("File name should not contain special symbols {{notAllowedSymbols}}"). If a folder name contains a forbidden symbol, it SHALL return `dialFileManager.folderNameInvalidChars` ("Folder name should not contain special symbols {{notAllowedSymbols}}"). This keeps file rename, folder rename, and create-folder validation aligned while preserving file-vs-folder wording.
 
-**Caller wiring**: every production call site of `useDialFileManager` (`apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx` and `apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx`) MUST pass `forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP` (from `@epam/ai-dial-ui-kit`) to the hook. Without this, rule #4 never runs — the sibling regex check on `DialFileManagerShell` only feeds the ui-kit's static already-invalid-name indicator, not `onRenameValidate`, so a caller that omits this option lets any forbidden symbol through unvalidated.
+**Caller wiring**: every production call site of `useDialFileManager` (`apps/chat/src/pages/DialFileManagerPage/DialFileManagerPage.tsx` and `apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx`) MUST pass `forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP` (from `@epam/ai-dial-ui-kit`) to the hook. Without this, the regex-backed part of rule #3 never runs — the sibling regex check on `DialFileManagerShell` only feeds the ui-kit's static already-invalid-name indicator, not `onRenameValidate`, so a caller that omits this option lets any forbidden symbol beyond `/` and `\` through unvalidated.
 
 **Memoisation**: `onRenameValidate` SHALL be wrapped in `useCallback` (depends on sibling file list and `forbiddenSymbolsRegExp`).
 
@@ -31,7 +30,8 @@ Forbidden-symbol validation (beyond `/` and `\`) SHALL use the same `forbiddenSy
 | `dialFileManager.renameDuplicateName` | `"An item with this name already exists"` |
 | `dialFileManager.renameReservedName` | `"This name is reserved"` |
 | `dialFileManager.renameInvalidChars` | `"Name contains invalid characters"` |
-| `dialFileManager.forbiddenSymbolsTooltip` | `"File names cannot contain: : ; , = / { } % & \""` |
+| `dialFileManager.forbiddenSymbolsTooltip` | `"File name should not contain special symbols {{notAllowedSymbols}}"` |
+| `dialFileManager.folderNameInvalidChars` | `"Folder name should not contain special symbols {{notAllowedSymbols}}"` |
 | `dialFileManager.renameNameTooLong` | `"Name must be 255 characters or fewer"` |
 
 `renameValidationMessages.emptyName` and `renameValidationMessages.duplicateName` are supplied via the ui-kit `renameValidationMessages` prop using the explicit rename i18n keys above.
@@ -52,16 +52,21 @@ Forbidden-symbol validation (beyond `/` and `\`) SHALL use the same `forbiddenSy
 - **WHEN** the user types `.dial_folder` as the new name
 - **THEN** `onRenameValidate` returns `"This name is reserved"` and the save is blocked
 
-#### Scenario: Forward slash rejected
+#### Scenario: File path separator rejected with the file-name forbidden-symbols message
 
 - **WHEN** the user types `folder/name`
-- **THEN** `onRenameValidate` returns `"Name contains invalid characters"`
+- **THEN** `onRenameValidate` returns `"File name should not contain special symbols {{notAllowedSymbols}}"`
 
-#### Scenario: Forbidden symbol rejected with specific message
+#### Scenario: File forbidden symbol rejected with specific message
 
 - **WHEN** the user types a name containing a forbidden symbol (e.g. `report:v2`)
-- **THEN** `onRenameValidate` returns `"File names cannot contain: : ; , = / { } % & \""` (the `forbiddenSymbolsTooltip` message), not the generic `"Name contains invalid characters"` message
+- **THEN** `onRenameValidate` returns `"File name should not contain special symbols {{notAllowedSymbols}}"` (the `forbiddenSymbolsTooltip` message), not the generic `"Name contains invalid characters"` message
 - **AND** the ui-kit renders this message as a live inline tooltip while the user is still typing
+
+#### Scenario: Folder forbidden symbol rejected with folder wording
+
+- **WHEN** the user renames a folder to a name containing a forbidden symbol (e.g. `reports:2026`)
+- **THEN** `onRenameValidate` returns `"Folder name should not contain special symbols {{notAllowedSymbols}}"` (the `folderNameInvalidChars` message)
 
 #### Scenario: Forbidden symbol rejected on the standalone File Manager page
 

@@ -94,6 +94,7 @@
     "listViewLabel": "List view",
     "details": {
       "tabTools": "Tools",
+      "tabLimits": "Limits",
       "dailyLimit": "Daily limit",
       "api": {
         "resourceSection": "Resource",
@@ -105,6 +106,21 @@
       "pricing": {
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
+      },
+      "limits": {
+        "requestsPerHour": "Requests per hour",
+        "requestsPerDay": "Requests per day",
+        "tokensPerMinute": "Tokens per minute",
+        "tokensPerDay": "Tokens per day",
+        "tokensPerWeek": "Tokens per week",
+        "tokensPerMonth": "Tokens per month",
+        "costPerMinute": "Cost per minute",
+        "costPerDay": "Cost per day",
+        "costPerWeek": "Cost per week",
+        "costPerMonth": "Cost per month",
+        "value": "{{used}} / {{total}}",
+        "unlimitedValue": "Unlimited",
+        "progressAriaLabel": "{{label}}: {{used}} of {{total}} used"
       },
       "credentials": {
         "signedInLabel": "Signed in",
@@ -295,6 +311,13 @@
       "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed.",
       "deleteAllSuccessTitle": "All conversations deleted",
       "deleteAllSuccess": "All conversations have been deleted successfully."
+    },
+    "unshare": {
+      "unshareConfirmTitle": "Delete conversation?",
+      "unshareConfirmMessage": "Delete \"{{name}}\" from your conversations? You'll need a new invitation to access it again.",
+      "unshareSuccessTitle": "Deleted",
+      "unshareSuccess": "\"{{name}}\" was deleted from your conversations.",
+      "unshareError": "Failed to delete \"{{name}}\". Please try again."
     }
   },
   "conversationPublish": {
@@ -414,7 +437,7 @@
     "uploadFailed": "Upload failed",
     "uploadSuccess": "The file has been uploaded successfully to “{{parentPath}}”",
     "uploadConflict": "A file with this name already exists",
-    "forbiddenSymbolsTooltip": "File names cannot contain: : ; , = / { } % & \"",
+    "forbiddenSymbolsTooltip": "File name should not contain special symbols {{notAllowedSymbols}}",
     "conflictSingleTitle": "Replace or Duplicate Item",
     "conflictMultipleTitle": "Replace or Duplicate Items",
     "conflictReplace": "Replace",
@@ -428,7 +451,7 @@
     "folderLoadError": "Failed to load folder contents. Please try again.",
     "folderConflict": "A folder with this name already exists",
     "folderNameEmpty": "Folder name cannot be empty",
-    "folderNameInvalidChars": "Folder name cannot contain / or \\",
+    "folderNameInvalidChars": "Folder name should not contain special symbols {{notAllowedSymbols}}",
     "folderNameHidden": "Folder name cannot start with a dot",
     "folderNameReserved": "This folder name is reserved",
     "folderNameTooLong": "Folder name is too long",

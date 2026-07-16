@@ -132,6 +132,9 @@ vi.mock('../TabsContent/Overview', () => ({
 vi.mock('../TabsContent/Pricing', () => ({
   Pricing: () => <div>Pricing</div>,
 }));
+vi.mock('../TabsContent/Limits', () => ({
+  LimitsTab: () => <div>Limits content</div>,
+}));
 vi.mock('../TabsContent/Tools/Tools', () => ({
   Tools: () => <div>Tools</div>,
 }));
@@ -213,6 +216,22 @@ describe('DetailsPanel', () => {
     renderPanel();
     expect(screen.getByText('Star')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+  });
+
+  it('shows the Limits tab when limits data is available', async () => {
+    renderPanel({
+      item: makeItem({
+        details: {
+          limits: {
+            rows: [{ label: 'Tokens per day', used: 12, total: 20 }],
+          },
+        },
+      }),
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Limits' }));
+
+    expect(screen.getByText('Limits content')).toBeTruthy();
   });
 
   it('replaces the details content with the publish panel when Publish is clicked', async () => {

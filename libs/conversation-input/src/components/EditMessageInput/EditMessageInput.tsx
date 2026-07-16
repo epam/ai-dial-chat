@@ -33,6 +33,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   onDropFilesConsumed,
   validateAttachment,
   hideAttachFile = false,
+  fileAccept,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDropFiles, setPendingDropFiles] = useState<File[]>([]);
@@ -121,6 +122,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
                 ref={fileInputRef}
                 type="file"
                 multiple
+                accept={fileAccept}
                 className="sr-only"
                 aria-hidden
                 tabIndex={-1}

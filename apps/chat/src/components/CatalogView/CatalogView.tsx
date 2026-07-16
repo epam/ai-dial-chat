@@ -37,6 +37,7 @@ import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { deleteApplication } from '../../server-api/applications';
+import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
 import {
   getCatalogPublishHistory,
@@ -59,6 +60,7 @@ import {
   WithLogin,
 } from '../../types/toolsets';
 import { isQuickAppSchema } from '../../utils/application-schema';
+import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
@@ -177,10 +179,18 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       item: CatalogItem,
     ): Promise<CatalogItemDetailsFetchResult | undefined> => {
       try {
-        const dto = await getDeploymentDetails(item.id);
+        const limitsPromise =
+          item.type === CatalogEntityType.Model
+            ? getDeploymentLimits(item.id).catch(() => undefined)
+            : Promise.resolve(undefined);
+        const [dto, limitsDto] = await Promise.all([
+          getDeploymentDetails(item.id),
+          limitsPromise,
+        ]);
         const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
         return {
           ...mapEntityDetailsToCatalogDetails(entityDetails),
+          limits: mapDeploymentLimitsDtoToCatalogLimits(limitsDto, t),
           credentials:
             entityDetails.type === 'TOOLSET'
               ? mapToolsetCredentials(item.id, entityDetails.data, isAdmin)
@@ -190,7 +200,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         return undefined;
       }
     },
-    [isAdmin],
+    [isAdmin, t],
   );
 
   const getLevelStatus = useCallback(
@@ -697,6 +707,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       }}
       detailsTexts={{
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
+        tabLimitsLabel: t(CatalogI18nKeys.DetailsTabLimits),
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),
         deleteActionLabel: t(ButtonsI18nKeys.Delete),
