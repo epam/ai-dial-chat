@@ -215,10 +215,6 @@ const mapToDeploymentItem = (
     raw.mcp != null ||
     !!interfaces?.includes('mcp');
 
-  if (type === 'toolset' && !raw.toolset) {
-    console.log(raw.id, 'id');
-    console.log(raw.display_name, 'display_name');
-  }
   return {
     id: raw.id,
     displayName: raw.display_name ?? getResourceDisplayNameFallback(raw.id),
