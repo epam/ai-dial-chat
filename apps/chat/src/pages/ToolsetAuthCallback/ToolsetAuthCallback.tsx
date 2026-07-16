@@ -72,15 +72,27 @@ const readRedirectState = (): ToolsetRedirectState | null => {
   }
 };
 
-/** Posts the OAuth result to the flow-scoped `BroadcastChannel` the opener is waiting on. */
-const reportAdminResult = (
+/** Gives the browser a tick to flush a just-posted `BroadcastChannel` message to the opener before this popup tears down. */
+const CLOSE_DELAY_MS = 50;
+
+/*
+ * Posts the OAuth result to the flow-scoped `BroadcastChannel` the opener is
+ * waiting on, then closes this popup. The delay before `window.close()`
+ * matters: closing immediately after `postMessage` can tear the popup down
+ * before the browser hands the message off to the opener's tab, which the
+ * opener would otherwise misread as a cancelled flow.
+ */
+const reportAdminResultAndClose = async (
   flowId: string | undefined,
   message: ToolsetOAuthChannelMessage,
 ) => {
-  if (!flowId) return;
-  const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
-  channel.postMessage(message);
-  channel.close();
+  if (flowId) {
+    const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+    channel.postMessage(message);
+    channel.close();
+  }
+  await new Promise((resolve) => setTimeout(resolve, CLOSE_DELAY_MS));
+  window.close();
 };
 
 /*
@@ -154,22 +166,20 @@ const ToolsetAuthCallback: FC = () => {
       const flowId = redirectState?.state ?? state ?? undefined;
 
       if (!code || !redirectState?.toolsetId) {
-        reportAdminResult(flowId, {
+        await reportAdminResultAndClose(flowId, {
           type: ToolsetOAuthResultType.Failure,
           reason: !redirectState?.toolsetId
             ? ToolsetOAuthFailureReason.MissingRedirectState
             : ToolsetOAuthFailureReason.MissingCode,
         });
-        window.close();
         return;
       }
 
       if (redirectState.state != null && redirectState.state !== state) {
-        reportAdminResult(flowId, {
+        await reportAdminResultAndClose(flowId, {
           type: ToolsetOAuthResultType.Failure,
           reason: ToolsetOAuthFailureReason.StateMismatch,
         });
-        window.close();
         return;
       }
 
@@ -186,19 +196,17 @@ const ToolsetAuthCallback: FC = () => {
             `${window.location.origin}${ROUTES.ToolsetEditorCallback}`,
         };
         await loginToolset(redirectState.toolsetId, body);
-        reportAdminResult(flowId, {
+        await reportAdminResultAndClose(flowId, {
           type: ToolsetOAuthResultType.Success,
           toolsetId: redirectState.toolsetId,
           credentialsLevel:
             redirectState.credentialsLevel ?? ToolsetCredentialsLevel.User,
         });
       } catch {
-        reportAdminResult(flowId, {
+        await reportAdminResultAndClose(flowId, {
           type: ToolsetOAuthResultType.Failure,
           reason: ToolsetOAuthFailureReason.LoginRequestFailed,
         });
-      } finally {
-        window.close();
       }
     };
 
