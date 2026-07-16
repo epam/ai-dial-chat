@@ -92,6 +92,8 @@ export const Input: FC<InputProps> = ({
   validateAttachment,
   onAttachmentClick,
   modelPickerOverlay,
+  maximumAttachmentsAmount,
+  onAttachmentsLimitExceeded,
 }) => {
   const isMobile = useIsMobile();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -160,6 +162,9 @@ export const Input: FC<InputProps> = ({
     pendingAttachments,
     onPendingAttachmentsConsumed,
     onExpandPastedText: handleExpandPastedText,
+    maximumAttachmentsAmount,
+    baseAttachmentsAmount: prefixAttachments.length,
+    onAttachmentsLimitExceeded,
   });
 
   const handleTranscript = useCallback(
