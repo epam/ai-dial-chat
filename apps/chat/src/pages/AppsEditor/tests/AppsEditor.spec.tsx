@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { forwardRef, useImperativeHandle } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -13,6 +13,7 @@ import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import AppsEditor from '../AppsEditor';
 
 let latestSettingsStepProps: {
+  onUpdated?: () => void;
   onSaveSuccess?: () => void;
   onSaveError?: (error: string) => void;
   isPreviewing?: boolean;
@@ -21,6 +22,7 @@ let latestSettingsStepProps: {
 vi.mock('../SettingsStep', () => ({
   default: forwardRef(function MockSettingsStep(
     props: {
+      onUpdated?: () => void;
       onSaveSuccess?: () => void;
       onSaveError?: (error: string) => void;
       isPreviewing?: boolean;
@@ -40,6 +42,7 @@ vi.mock('../SettingsStep', () => ({
 vi.mock('../../../context/DeploymentsContext');
 
 const mockUseDeployments = vi.mocked(DeploymentsContextModule.useDeployments);
+const refetchDeployments = vi.fn();
 
 const SCHEMA = {
   id: 'quickapps2-schema',
@@ -57,10 +60,13 @@ const renderEditor = (search: string) =>
 describe('AppsEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    refetchDeployments.mockReset();
+    refetchDeployments.mockResolvedValue(undefined);
     latestSettingsStepProps = {};
     mockUseDeployments.mockReturnValue({
       schemas: [SCHEMA],
       items: [],
+      refetchDeployments,
     } as unknown as ReturnType<typeof DeploymentsContextModule.useDeployments>);
   });
 
@@ -90,12 +96,54 @@ describe('AppsEditor', () => {
       latestSettingsStepProps.onSaveSuccess?.();
     });
 
+    expect(refetchDeployments).toHaveBeenCalledOnce();
     expect(
-      screen.getByRole('button', {
+      await screen.findByRole('button', {
         name: AppsEditorI18nKeys.ExitPreviewButton,
       }),
     ).toBeTruthy();
     expect(screen.getByText('settings-step').dataset.previewing).toBe('true');
+  });
+
+  it('waits for deployments refetch before entering preview mode', async () => {
+    let resolveRefetch: () => void = () => undefined;
+    const refetchPromise = new Promise<void>((resolve) => {
+      resolveRefetch = resolve;
+    });
+    refetchDeployments.mockReturnValueOnce(refetchPromise);
+    renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+    act(() => {
+      latestSettingsStepProps.onSaveSuccess?.();
+    });
+
+    expect(refetchDeployments).toHaveBeenCalledOnce();
+    expect(screen.getByText('settings-step').dataset.previewing).toBe('false');
+
+    await act(async () => {
+      resolveRefetch();
+      await refetchPromise;
+    });
+
+    expect(
+      await screen.findByRole('button', {
+        name: AppsEditorI18nKeys.ExitPreviewButton,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText('settings-step').dataset.previewing).toBe('true');
+  });
+
+  it('refetches deployments when settings report an update', () => {
+    renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+    act(() => {
+      latestSettingsStepProps.onUpdated?.();
+    });
+
+    expect(refetchDeployments).toHaveBeenCalledOnce();
   });
 
   it('stays on the iframe and shows an error notification when the preview save fails', async () => {
@@ -129,6 +177,7 @@ describe('AppsEditor', () => {
       latestSettingsStepProps.onSaveSuccess?.();
     });
 
+    await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
     expect(
       screen.queryByRole('button', {
         name: AppsEditorI18nKeys.ExitPreviewButton,
@@ -146,9 +195,13 @@ describe('AppsEditor', () => {
       latestSettingsStepProps.onSaveSuccess?.();
     });
 
+    expect(refetchDeployments).toHaveBeenCalledOnce();
     const cancelButton = screen.getByRole('button', {
       name: ButtonsI18nKeys.Cancel,
     }) as HTMLButtonElement;
+    await screen.findByRole('button', {
+      name: AppsEditorI18nKeys.ExitPreviewButton,
+    });
     expect(cancelButton.disabled).toBe(true);
     expect(
       screen.getByRole('button', {

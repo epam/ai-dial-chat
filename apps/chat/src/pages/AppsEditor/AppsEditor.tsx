@@ -30,7 +30,7 @@ const AppsEditor: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { schemas, items: deployments } = useDeployments();
+  const { schemas, items: deployments, refetchDeployments } = useDeployments();
 
   const [createdAppId, setCreatedAppId] = useState<string | null>(null);
   const [submittedAppInfo, setSubmittedAppInfo] = useState<{
@@ -146,16 +146,32 @@ const AppsEditor: FC = () => {
     settingsStepRef.current?.triggerSave();
   }, [isPreviewing]);
 
+  const handleSettingsUpdated = useCallback(() => {
+    void refetchDeployments();
+  }, [refetchDeployments]);
+
   const handleSaveSuccess = useCallback(() => {
     if (isPreviewing) return;
-    setIsSaving(false);
-    if (pendingSaveAction === 'preview') {
-      setIsPreviewing(true);
-    } else {
-      navigate(returnUrl);
-    }
-    setPendingSaveAction(null);
-  }, [isPreviewing, pendingSaveAction, navigate, returnUrl]);
+
+    const completeSave = async () => {
+      await refetchDeployments().catch(() => undefined);
+      setIsSaving(false);
+      if (pendingSaveAction === 'preview') {
+        setIsPreviewing(true);
+      } else {
+        navigate(returnUrl);
+      }
+      setPendingSaveAction(null);
+    };
+
+    void completeSave();
+  }, [
+    isPreviewing,
+    pendingSaveAction,
+    refetchDeployments,
+    navigate,
+    returnUrl,
+  ]);
 
   const handleSaveError = useCallback(
     (error: string) => {
@@ -250,6 +266,7 @@ const AppsEditor: FC = () => {
             appDisplayName={appDisplayName}
             appIconUrl={appIconUrl}
             isPreviewing={isPreviewing}
+            onUpdated={handleSettingsUpdated}
             onSaveSuccess={handleSaveSuccess}
             onSaveError={handleSaveError}
           />
