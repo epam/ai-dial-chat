@@ -58,6 +58,8 @@ export interface AttachmentGroupColors {
 export interface AttachmentGroupTypography {
   /** Typography class applied to the header's attachment-count label. Defaults to `'dial-tiny-semi-text'`. */
   headerLabelClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AttachmentGroupColors;
 }
 
 /** Style overrides for the `AttachmentGroup` component. */

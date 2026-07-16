@@ -57,6 +57,8 @@ export interface AttachmentFileRowTypography {
   nameClassName?: string;
   /** Typography class applied to the bottom meta label (file type / status). Defaults to `'dial-caption-text'`. */
   metaClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AttachmentFileRowColors;
 }
 
 /** Style overrides for the `AttachmentFileRow` component. */
