@@ -38,6 +38,7 @@ import { ScreenState } from '@/src/types/common';
 import {
   Publication,
   PublicationHandlerState,
+  PublicationResource,
   ResourceToReview,
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -399,35 +400,49 @@ export const PublicationHandlerFooter = ({
     return parts.join('/');
   };
 
+  const isVersionExemptFromCheck = (
+    key: string,
+    resource: PublicationResource | undefined,
+  ) =>
+    resource?.action === PublishActions.DELETE ||
+    publishModel?.action === PublishActions.DELETE ||
+    isFileId(key);
+
+  const isVersionValidForResource = (
+    key: string,
+    version: string,
+    name: string,
+    resource: PublicationResource | undefined,
+  ) =>
+    isVersionExemptFromCheck(key, resource) ||
+    (isVersionValid(version.trim()) &&
+      !isVersionExists(version, getPublicKey(key), publicVersionGroups, name) &&
+      (!isApplicationId(key) || isVersionPartSizeValid(version)));
+
   const hasDuplicateVersion = Object.entries(entitiesEditState).some(
-    ([key, { version, name }]) =>
-      isVersionExists(version, getPublicKey(key), publicVersionGroups, name),
-  );
-
-  const isNamesOrVersionsInvalid =
-    hasDuplicateVersion ||
-    Object.entries(entitiesEditState).some(([key, { version, name }]) => {
-      const isInvalidName = !isEntityNameValid(name);
-
+    ([key, { version, name }]) => {
       const resource = publication.resources.find(
         ({ reviewUrl }) => reviewUrl === key,
       );
+      return (
+        !isVersionExemptFromCheck(key, resource) &&
+        isVersionExists(version, getPublicKey(key), publicVersionGroups, name)
+      );
+    },
+  );
 
-      const isValidVersion =
-        resource?.action === PublishActions.DELETE ||
-        publishModel?.action === PublishActions.DELETE ||
-        isFileId(key) ||
-        (isVersionValid(version.trim()) &&
-          !isVersionExists(
-            version,
-            getPublicKey(key),
-            publicVersionGroups,
-            name,
-          ) &&
-          (!isApplicationId(key) || isVersionPartSizeValid(version)));
+  const isNamesOrVersionsInvalid = Object.entries(entitiesEditState).some(
+    ([key, { version, name }]) => {
+      const resource = publication.resources.find(
+        ({ reviewUrl }) => reviewUrl === key,
+      );
+      return (
+        !isEntityNameValid(name) ||
+        !isVersionValidForResource(key, version, name, resource)
+      );
+    },
+  );
 
-      return isInvalidName || !isValidVersion;
-    });
   const isFoldersInvalid = !allEditedFoldersAreValid(foldersEditState);
 
   const isEditInvalid =
