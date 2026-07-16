@@ -1,5 +1,6 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ComponentProps, Ref } from 'react';
 import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -74,14 +75,16 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   };
 });
 
-const DEFAULT_PROPS = {
+type GeneralFormProps = Omit<ComponentProps<typeof GeneralForm>, 'ref'>;
+
+const DEFAULT_PROPS: Pick<GeneralFormProps, 'schemaId' | 'onCreated'> = {
   schemaId: 'quickapps2-schema',
   onCreated: vi.fn(),
 };
 
 const renderForm = (
-  props?: Partial<typeof DEFAULT_PROPS>,
-  ref?: React.Ref<GeneralFormHandle>,
+  props?: Partial<GeneralFormProps>,
+  ref?: Ref<GeneralFormHandle>,
 ) => render(<GeneralForm {...DEFAULT_PROPS} {...props} ref={ref} />);
 
 const getNameInput = () =>
@@ -237,6 +240,37 @@ describe('GeneralForm', () => {
         },
       }),
     );
+  });
+
+  it('normalizes undefined initial values before preview and submit', async () => {
+    const onCreated = vi.fn();
+    const ref = createRef<GeneralFormHandle>();
+
+    renderForm(
+      {
+        appId: 'users/u/apps/existing',
+        onCreated,
+        initialValues: {
+          name: ' My App ',
+          description: undefined,
+          iconUrl: undefined,
+          version: undefined,
+          topics: undefined,
+        },
+      },
+      ref,
+    );
+
+    await act(async () => {
+      await ref.current?.submit();
+    });
+
+    expect(onCreated).toHaveBeenCalledWith(
+      'users/u/apps/existing',
+      'My App',
+      undefined,
+    );
+    expect(createApplication).not.toHaveBeenCalled();
   });
 
   it('shows error message when API call fails', async () => {
