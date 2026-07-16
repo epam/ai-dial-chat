@@ -39,6 +39,12 @@ interface UseAttachmentsParams {
    * Receives the plain-text content of the attachment.
    */
   onExpandPastedText?: (text: string) => void;
+  /** Maximum number of attachments allowed in the tray. Undefined means unlimited. */
+  maximumAttachmentsAmount?: number;
+  /** Attachments rendered outside this hook but counted against the same limit. */
+  baseAttachmentsAmount?: number;
+  /** Called when adding a batch would exceed `maximumAttachmentsAmount`. */
+  onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
 }
 
 /** Return value of the {@link useAttachments} hook. */
@@ -76,6 +82,9 @@ export const useAttachments = ({
   pendingAttachments,
   onPendingAttachmentsConsumed,
   onExpandPastedText,
+  maximumAttachmentsAmount,
+  baseAttachmentsAmount = 0,
+  onAttachmentsLimitExceeded,
 }: UseAttachmentsParams): UseAttachmentsResult => {
   const [attachments, setAttachments] =
     useState<Attachment[]>(initialAttachments);
@@ -113,7 +122,7 @@ export const useAttachments = ({
     (updater: (current: Attachment[]) => Attachment[]) => {
       setAttachments((prev) => {
         const updated = updater(prev);
-        onAttachmentsChange?.(updated);
+        if (updated !== prev) onAttachmentsChange?.(updated);
         return updated;
       });
     },
@@ -178,11 +187,42 @@ export const useAttachments = ({
   const addAttachments = useCallback(
     (newAttachments: Attachment[], upload = true) => {
       let toAdd: Attachment[] = [];
+      let exceededLimit:
+        | {
+            count: number;
+            limit: number;
+          }
+        | undefined;
       updateAttachments((prev) => {
         const existingIds = new Set(prev.map((a) => a.id));
         toAdd = newAttachments.filter((a) => !existingIds.has(a.id));
+
+        if (
+          maximumAttachmentsAmount != null &&
+          maximumAttachmentsAmount > 0 &&
+          Number.isFinite(maximumAttachmentsAmount)
+        ) {
+          const count = baseAttachmentsAmount + prev.length + toAdd.length;
+          if (count > maximumAttachmentsAmount) {
+            exceededLimit = {
+              count,
+              limit: maximumAttachmentsAmount,
+            };
+            return prev;
+          }
+        }
+
         return [...prev, ...toAdd];
       });
+
+      if (exceededLimit != null) {
+        toAdd.forEach((attachment) => {
+          if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+        });
+        onAttachmentsLimitExceeded?.(exceededLimit.count, exceededLimit.limit);
+        return;
+      }
+
       if (upload) {
         const validToUpload: Attachment[] = [];
         toAdd.forEach((attachment) => {
@@ -202,7 +242,14 @@ export const useAttachments = ({
         void runAtRate(validToUpload, MAX_UPLOADS_PER_MINUTE, uploadAttachment);
       }
     },
-    [updateAttachments, uploadAttachment, validateAttachment],
+    [
+      baseAttachmentsAmount,
+      maximumAttachmentsAmount,
+      onAttachmentsLimitExceeded,
+      updateAttachments,
+      uploadAttachment,
+      validateAttachment,
+    ],
   );
 
   useEffect(() => {

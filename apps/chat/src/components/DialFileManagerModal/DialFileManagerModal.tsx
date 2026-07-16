@@ -75,6 +75,7 @@ interface Props {
   allowedTypes?: string[];
   maxSelectableFileSize?: number;
   maximumAttachmentsAmount?: number;
+  existingAttachmentsAmount?: number;
   canAttachFolders?: boolean;
   allowedTypesLabel?: string;
   autoSelectUploadedItems?: boolean;
@@ -110,6 +111,7 @@ const DialFileManagerModal: FC<Props> = ({
   allowedTypes,
   maxSelectableFileSize,
   maximumAttachmentsAmount,
+  existingAttachmentsAmount = 0,
   canAttachFolders = false,
   allowedTypesLabel,
   autoSelectUploadedItems = false,
@@ -280,7 +282,10 @@ const DialFileManagerModal: FC<Props> = ({
       ];
     });
 
-    const totalCount = dedupedFiles.length + dialCoreFolderPaths.length;
+    const totalCount =
+      existingAttachmentsAmount +
+      dedupedFiles.length +
+      dialCoreFolderPaths.length;
     if (
       maximumAttachmentsAmount != null &&
       maximumAttachmentsAmount > 0 &&
@@ -303,6 +308,7 @@ const DialFileManagerModal: FC<Props> = ({
     selectedFiles,
     allowedTypes,
     maximumAttachmentsAmount,
+    existingAttachmentsAmount,
     showNotification,
     t,
     filesByPath,

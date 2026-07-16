@@ -467,7 +467,7 @@
     "unsupportedFilesSkipped": "Some files were skipped",
     "unsupportedFilesDescription": "Files with unsupported type were not attached",
     "tooManyFilesSelected": "Too many files selected",
-    "tooManyFilesDescription": "You selected {{count}} files, limit is {{limit}}",
+    "tooManyFilesDescription": "You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.",
     "deletingLabel": "Deleting…",
     "deleteConfirmTitleSingle": "Confirm deleting",
     "deleteConfirmTitleMultiple": "Confirm deleting items",

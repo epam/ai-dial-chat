@@ -247,6 +247,16 @@ export interface InputProps {
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
   /**
+   * Maximum number of attachments allowed in the tray. Undefined, `0`, or
+   * non-finite values mean there is no count limit.
+   */
+  maximumAttachmentsAmount?: number;
+  /**
+   * Called when adding a file/drop/pending attachment batch would exceed
+   * `maximumAttachmentsAmount`.
+   */
+  onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
+  /**
    * Called when the user clicks or keyboard-activates an attachment card.
    * Receives the full `Attachment` object (including the local `File`).
    * When absent the card is not rendered as interactive.

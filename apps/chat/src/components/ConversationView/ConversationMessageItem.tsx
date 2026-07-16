@@ -112,6 +112,8 @@ interface Props {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
+  maximumAttachmentsAmount?: number;
+  onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
   hideAttachFile?: boolean;
   /** `accept` attribute value forwarded to the edit-message native file picker. */
   fileAccept?: string;
@@ -156,6 +158,8 @@ const ConversationMessageItem: FC<Props> = ({
   executedLabel,
   stepsLabel,
   validateAttachment,
+  maximumAttachmentsAmount,
+  onAttachmentsLimitExceeded,
   hideAttachFile,
   fileAccept,
   onAttachmentClick: onAttachmentClickProp,
@@ -253,6 +257,8 @@ const ConversationMessageItem: FC<Props> = ({
             pendingDropFiles={pendingDropFiles}
             onDropFilesConsumed={onDropFilesConsumed}
             validateAttachment={validateAttachment}
+            maximumAttachmentsAmount={maximumAttachmentsAmount}
+            onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
             hideAttachFile={hideAttachFile}
             fileAccept={fileAccept}
           />
