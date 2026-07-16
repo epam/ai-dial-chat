@@ -182,6 +182,7 @@ const ConversationView: FC<Props> = ({
     error,
   } = useDeployments();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
+  const activeDeploymentId = fixedModel?.id ?? selectedItemId;
 
   const favoriteCatalogItems = useMemo(
     () =>
@@ -192,8 +193,8 @@ const ConversationView: FC<Props> = ({
   );
 
   const selectedDeployment = useMemo(
-    () => items.find((item) => item.id === selectedItemId),
-    [items, selectedItemId],
+    () => items.find((item) => item.id === activeDeploymentId),
+    [items, activeDeploymentId],
   );
 
   const selectedCatalogItem = useMemo(
