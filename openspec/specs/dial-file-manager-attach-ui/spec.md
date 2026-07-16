@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Define the DIAL file manager attach modal UI contract, including tab chrome, attachment constraints copy, and disabled-row feedback.
+
+## Requirements
 
 ### Requirement: Tab navigation UI in DialFileManagerModal
 
@@ -87,8 +91,6 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 ---
 
-## MODIFIED Requirements
-
 ### Requirement: Modal header shows attachment constraints description
 
 When the modal is in attach mode (i.e., the `onAttach` callback is present), `DialFileManagerModal` SHALL render a description paragraph below the modal title that summarises the active constraints:
@@ -132,6 +134,8 @@ Memoisation: description string computed in `useMemo` from props.
 - Return the string `t(DialFileManagerI18nKeys.AttachingHiddenFilesNotAllowed)` when `isHiddenPath(row.path)` is `true`.
 - Return `undefined` for all other rows.
 
+`isHiddenPath` SHALL treat any path segment starting with `.` as hidden, including `.env`, `.hidden`, and the file-manager placeholder `.dial_folder`.
+
 The callback behavior is unchanged by `activeTab`.
 
 i18n key: `DialFileManager.AttachingHiddenFilesNotAllowed`
@@ -141,10 +145,10 @@ Memoisation: `getDisabledTooltip` in `useCallback`.
 
 #### Scenario: Hidden path row shows tooltip
 
-- **WHEN** a grid row has `path` containing `.dial_folder` and the user hovers or focuses the row
-- **THEN** the tooltip "Attaching hidden files is not allowed" (or its translation) is displayed
+- **WHEN** a grid row has `path` containing a dot-prefixed segment such as `/My files/.hidden/report.pdf` and the user hovers or focuses the row
+- **THEN** the tooltip "Attaching hidden files is not allowed." (or its translation) is displayed
 
 #### Scenario: Normal path row shows no tooltip
 
-- **WHEN** a grid row has a normal (non-hidden) path
+- **WHEN** a grid row has a path with no dot-prefixed segment
 - **THEN** no tooltip is shown from `getDisabledTooltip`
