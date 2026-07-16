@@ -8,6 +8,7 @@ import {
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import { getResourceDisplayNameFallback } from '../common/utils/resource-name';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import { DialClientService } from '../dial/dial-client.service';
@@ -214,9 +215,13 @@ const mapToDeploymentItem = (
     raw.mcp != null ||
     !!interfaces?.includes('mcp');
 
+  if (type === 'toolset' && !raw.toolset) {
+    console.log(raw.id, 'id');
+    console.log(raw.display_name, 'display_name');
+  }
   return {
     id: raw.id,
-    displayName: raw.display_name ?? raw.id,
+    displayName: raw.display_name ?? getResourceDisplayNameFallback(raw.id),
     type,
     iconUrl: raw.icon_url,
     description: raw.description,

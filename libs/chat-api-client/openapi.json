@@ -600,7 +600,7 @@
     },
     "/api/v1/deployments/{deployment}/details": {
       "get": {
-        "description": "Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core's getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds.",
+        "description": "Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core's getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response carries no client-facing Cache-Control so a browser never serves a stale copy of another user's cache window or of credentials that changed since the last fetch.",
         "operationId": "getDeploymentDetails",
         "parameters": [
           {
@@ -5162,6 +5162,7 @@
           },
           "display_name": {
             "type": "string",
+            "description": "Human-readable name. In `listToolsets` results this is always populated: `display_name` when set, otherwise the last path segment of `id`.",
             "example": "Toolset display name"
           },
           "display_version": {

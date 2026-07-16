@@ -14,6 +14,7 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import { getResourceDisplayNameFallback } from '../common/utils/resource-name';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { HIDDEN_FILE } from '../constants/dial.constants';
 import { DeploymentsService } from '../deployments/deployments.service';
@@ -72,6 +73,7 @@ interface DialToolsetResource {
 
 type RawDialToolsetDto = DialToolsetDto & {
   authSettings?: RawAuthSettings;
+  displayName?: string;
 };
 
 type DialToolsetSaveBody = {
@@ -296,6 +298,17 @@ const redactToolsetSecrets = (toolset: DialToolsetDto): DialToolsetDto => {
         }
       : {}),
     ...(camelAuthSettings != null ? { authSettings: camelAuthSettings } : {}),
+  };
+};
+
+const withDisplayName = (toolset: DialToolsetDto): RawDialToolsetDto => {
+  const rawToolset = toolset as RawDialToolsetDto;
+  return {
+    ...rawToolset,
+    displayName:
+      rawToolset.displayName ??
+      rawToolset.display_name ??
+      getResourceDisplayNameFallback(rawToolset.id),
   };
 };
 
@@ -565,7 +578,8 @@ export class ToolsetsService {
       const data: DialToolsetListResponseDto = {
         data: (toolsets ?? [])
           .filter(isVisibleToolset)
-          .map(redactToolsetSecrets),
+          .map(redactToolsetSecrets)
+          .map(withDisplayName),
       };
       await this.cacheManager.set(cacheKey, data, 30 * 1000);
       return {
