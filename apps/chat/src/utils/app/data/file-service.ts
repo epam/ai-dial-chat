@@ -45,9 +45,7 @@ const fixContentType = (file: BackendFile): string => {
 };
 
 const mapFileToDial = (file: BackendFile): DialFile => {
-  const relativePath = file.parentPath
-    ? ApiUtils.decodeApiUrl(file.parentPath)
-    : undefined;
+  const relativePath = file.parentPath; // parentPath comes from core already decoded
   const userBucket = BucketService.getBucket();
 
   return {
