@@ -1,8 +1,15 @@
 import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react';
+import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import { InitialsAvatar } from '../InitialsAvatar/InitialsAvatar';
 import styles from './DeploymentIcon.module.scss';
+
+/** CSS custom-property overrides for the `DeploymentIcon` component. */
+export interface DeploymentIconColors {
+  /** Badge background color. */
+  background?: string;
+}
 
 /** Props for `DeploymentIcon`. */
 export interface DeploymentIconProps {
@@ -18,6 +25,8 @@ export interface DeploymentIconProps {
   badgeClassName?: string;
   /** When provided, a tooltip with this text is shown on hover/focus. */
   tooltip?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: DeploymentIconColors;
 }
 
 /**
@@ -37,7 +46,11 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
   fallback,
   badgeClassName,
   tooltip,
+  colors,
 }) => {
+  const cssVars = buildCssVars({
+    '--di-icon-bg': colors?.background,
+  });
   const [displayedSrc, setDisplayedSrc] = useState(src);
   const [failedSrc, setFailedSrc] = useState<string>();
   const imgRef = useRef<HTMLImageElement>(null);
@@ -86,7 +99,7 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
 
   const badge = (
     <div
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, ...cssVars }}
       className={mergeClasses(
         styles.agentIconBadge,
         'shrink-0 overflow-hidden rounded-md',
