@@ -34,7 +34,7 @@
     "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "0.12.0-dev.25",
+    "@epam/ai-dial-ui-kit": "0.12.0-dev.31",
     "@epam/pdf-highlighter-kit": "^0.0.17",
     "@floating-ui/react": "^0.27.19",
     "@hookform/resolvers": "^5.2.1",
@@ -189,7 +189,7 @@
     "ts-node": "10.9.1",
     "ts-unused-exports": "^11.0.1",
     "typescript": "5.9.3",
-    "vite": "7.3.5",
+    "vite": "7.3.6",
     "vitest": "4.1.8"
   },
   "overrides": {
