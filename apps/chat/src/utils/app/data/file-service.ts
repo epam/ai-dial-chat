@@ -45,14 +45,14 @@ const fixContentType = (file: BackendFile): string => {
 };
 
 const mapFileToDial = (file: BackendFile): DialFile => {
-  const relativePath = file.parentPath; // parentPath comes from core already decoded
+  const relativePath = file.parentPath ?? undefined; // parentPath comes from core already decoded
   const userBucket = BucketService.getBucket();
 
   return {
     id: constructPath(ApiKeys.Files, file.bucket, relativePath, file.name),
     name: file.name,
     absolutePath: constructPath(ApiKeys.Files, file.bucket, relativePath),
-    relativePath: relativePath,
+    relativePath,
     folderId: constructPath(getFileRootId(file.bucket), relativePath),
     contentLength: file.contentLength,
     contentType: fixContentType(file),
@@ -176,7 +176,7 @@ export class FileService {
             (folder) => !!folder.parentPath || folder.name !== CLIENTDATA_PATH,
           )
           .map((folder): FileFolderInterface => {
-            const relativePath = folder.parentPath; // parentPath comes from core already decoded
+            const relativePath = folder.parentPath ?? undefined; // parentPath comes from core already decoded
 
             return {
               id: constructPath(
@@ -192,7 +192,7 @@ export class FileService {
                 folder.bucket,
                 relativePath,
               ),
-              relativePath: relativePath,
+              relativePath,
               folderId: constructPath(
                 getFileRootId(folder.bucket),
                 relativePath,
