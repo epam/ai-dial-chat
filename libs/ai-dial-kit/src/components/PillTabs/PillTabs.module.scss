@@ -1,11 +1,11 @@
-.tab {
+.tabContainer {
   border-color: transparent !important;
   background-color: transparent;
 
-  color: var(--text-tertiary, #808898);
+  color: var(--text-tertiary, #808898) !important;
 
   &:hover {
-    color: var(--text-secondary, #64748b);
+    color: var(--text-secondary, #64748b) !important;
     background-color: rgba(92, 141, 234, 0.06);
   }
 
@@ -15,7 +15,7 @@
 
   &.tabActive {
     background-color: rgba(39, 100, 217, 0.07);
-    color: var(--text-secondary, #64748b);
+    color: var(--text-secondary, #64748b) !important;
     &:hover {
       background-color: rgba(92, 141, 234, 0.06);
     }
