@@ -248,7 +248,15 @@ export const ConversationComponent = memo(
       if (hasParentWithFloatingOverlay(e.target as Element)) {
         return;
       }
+      window.getSelection()?.removeAllRanges();
       setIsContextMenu(true);
+    }, []);
+
+    const handleContextMenuOpenChange = useCallback((open: boolean) => {
+      if (open) {
+        window.getSelection()?.removeAllRanges();
+      }
+      setIsContextMenu(open);
     }, []);
 
     useScrollToEntity({
@@ -319,6 +327,7 @@ export const ConversationComponent = memo(
           }
           onClick={() => {
             if (!isSelectMode || !isExternal) {
+              window.getSelection()?.removeAllRanges();
               dispatch(
                 !isSelectMode
                   ? ConversationsActions.selectConversations({
@@ -369,7 +378,7 @@ export const ConversationComponent = memo(
             <ConversationContextMenu
               conversation={conversation}
               isOpen={isContextMenu}
-              setIsOpen={setIsContextMenu}
+              setIsOpen={handleContextMenuOpenChange}
               publicationUrl={additionalItemData?.publicationUrl}
               className="p-2"
             />

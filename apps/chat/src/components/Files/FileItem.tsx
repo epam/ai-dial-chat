@@ -79,7 +79,15 @@ export const FileItem = ({
   const canAttachFiles = !!additionalItemData?.canAttachFiles;
 
   const handleContextMenuOpen = useCallback(() => {
+    window.getSelection()?.removeAllRanges();
     setIsContextMenu(true);
+  }, []);
+
+  const handleContextMenuOpenChange = useCallback((open: boolean) => {
+    if (open) {
+      window.getSelection()?.removeAllRanges();
+    }
+    setIsContextMenu(open);
   }, []);
 
   useContextMenuTrigger(handleContextMenuOpen, fileRef);
@@ -276,7 +284,7 @@ export const FileItem = ({
             onDelete={handleDelete}
             onUnshare={handleUnshare}
             isOpen={isContextMenu}
-            onOpenChange={setIsContextMenu}
+            onOpenChange={handleContextMenuOpenChange}
             onRemoveAccess={handleRemoveAccess}
             onUnpublish={handleOpenUnpublishing}
             onSelect={canAttachFiles ? handleToggleFile : undefined}
