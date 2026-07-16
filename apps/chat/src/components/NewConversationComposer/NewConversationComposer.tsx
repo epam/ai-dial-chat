@@ -124,8 +124,12 @@ const NewConversationComposer: FC<Props> = ({
     handleAttach: handleAttachDialFiles,
   } = useDialFileManagerState(bucket);
 
-  const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
-    useAttachmentValidation(selectedDeployment);
+  const {
+    inputAttachmentTypes,
+    isAttachmentsAllowed,
+    validateAttachment,
+    fileAccept,
+  } = useAttachmentValidation(selectedDeployment);
 
   const handleNetworkUploadError = useCallback(
     (filenames: string[]) => {
@@ -287,6 +291,7 @@ const NewConversationComposer: FC<Props> = ({
             selectedDeployment != null ? validateAttachment : undefined
           }
           hideAttachFile={!isAttachmentsAllowed}
+          fileAccept={fileAccept}
           onAttachmentClick={handleAttachmentClick}
           modelPickerOverlay={modelPickerOverlay}
         />

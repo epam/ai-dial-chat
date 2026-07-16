@@ -201,8 +201,12 @@ const ConversationView: FC<Props> = ({
     [selectedDeployment, favoriteIds],
   );
 
-  const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
-    useAttachmentValidation(selectedDeployment);
+  const {
+    inputAttachmentTypes,
+    isAttachmentsAllowed,
+    validateAttachment,
+    fileAccept,
+  } = useAttachmentValidation(selectedDeployment);
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
@@ -536,6 +540,7 @@ const ConversationView: FC<Props> = ({
                         : undefined
                     }
                     hideAttachFile={!isAttachmentsAllowed}
+                    fileAccept={fileAccept}
                     onAttachmentClick={handleMessageAttachmentClick}
                   />
                 </div>
@@ -634,6 +639,7 @@ const ConversationView: FC<Props> = ({
                   selectedDeployment != null ? validateAttachment : undefined
                 }
                 hideAttachFile={!isAttachmentsAllowed}
+                fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={
                   isModelFixed

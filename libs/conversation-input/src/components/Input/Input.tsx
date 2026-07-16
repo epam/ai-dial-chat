@@ -49,6 +49,7 @@ export const Input: FC<InputProps> = ({
   placeholder = 'Type a message...',
   ariaLabel,
   attachLabel = 'Attach file',
+  fileAccept,
   addMenuTitle = 'Add',
   menuTitle = 'Menu',
   menuCloseLabel = 'Close',
@@ -370,6 +371,7 @@ export const Input: FC<InputProps> = ({
                 ref={fileInputRef}
                 type="file"
                 multiple
+                accept={fileAccept}
                 className="sr-only"
                 aria-hidden
                 tabIndex={-1}
