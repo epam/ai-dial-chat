@@ -232,6 +232,22 @@ describe('Input', () => {
     expect(screen.getByLabelText('Add')).toBeTruthy();
   });
 
+  it('should set the accept attribute on the file input when fileAccept is provided', () => {
+    render(<Input fileAccept="image/*,application/pdf" />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    expect(fileInput.getAttribute('accept')).toBe('image/*,application/pdf');
+  });
+
+  it('should not set the accept attribute when fileAccept is absent', () => {
+    render(<Input />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    expect(fileInput.hasAttribute('accept')).toBe(false);
+  });
+
   it('should show an attachment card after a file is picked', () => {
     render(<Input />);
     const fileInput = document.querySelector(

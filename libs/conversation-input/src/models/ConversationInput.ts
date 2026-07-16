@@ -96,6 +96,14 @@ export interface EditMessageInputProps {
    * When `true`, the "Attach file" button is hidden.
    */
   hideAttachFile?: boolean;
+  /**
+   * Value applied verbatim as the `accept` attribute on the native device
+   * file picker (`<input type="file">`), hinting the OS dialog to grey out or
+   * hide unsupported file types. Resolved by the host from the selected
+   * model's supported attachment types. When absent, every file type is
+   * selectable.
+   */
+  fileAccept?: string;
 }
 
 /** Props accepted by the `ConversationInput` component. */
@@ -205,6 +213,14 @@ export interface ConversationInputProps {
   dialFileSystemLabel?: string;
   /** Accessible label for the `+` trigger button. Defaults to `'Add'`. */
   addMenuTitle?: string;
+  /**
+   * Value applied verbatim as the `accept` attribute on the native device
+   * file picker (`<input type="file">`), hinting the OS dialog to grey out or
+   * hide unsupported file types. Resolved by the host from the selected
+   * model's supported attachment types. When absent, every file type is
+   * selectable. Forwarded to the inner `Input`.
+   */
+  fileAccept?: string;
   /**
    * Called synchronously for each attachment after it is added, before upload begins.
    * Return an `AttachmentErrorReason` to reject the attachment (it enters error state

@@ -3,6 +3,7 @@ import {
   isDialFileAcceptType,
   mimeTypesToAttachmentExtensionLabels,
   mimeTypesToDialFileAcceptTypes,
+  mimeTypesToFileAccept,
 } from '../attachment-types';
 
 describe('isDialFileAcceptType', () => {
@@ -33,6 +34,24 @@ describe('mimeTypesToDialFileAcceptTypes', () => {
 
   it('returns undefined when no types are provided', () => {
     expect(mimeTypesToDialFileAcceptTypes()).toBeUndefined();
+  });
+});
+
+describe('mimeTypesToFileAccept', () => {
+  it('joins MIME types (including wildcards) into an accept string', () => {
+    expect(mimeTypesToFileAccept(['image/*', 'application/pdf'])).toBe(
+      'image/*,application/pdf',
+    );
+  });
+
+  it('returns undefined when no types are provided or the list is empty', () => {
+    expect(mimeTypesToFileAccept()).toBeUndefined();
+    expect(mimeTypesToFileAccept([])).toBeUndefined();
+  });
+
+  it('returns undefined when every type is allowed', () => {
+    expect(mimeTypesToFileAccept(['*'])).toBeUndefined();
+    expect(mimeTypesToFileAccept(['*/*', 'image/png'])).toBeUndefined();
   });
 });
 
