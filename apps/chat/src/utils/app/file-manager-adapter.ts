@@ -107,7 +107,7 @@ const PermissionMap: Record<SharePermission, DialFilePermission> = {
 
 export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
   const fullPath = file.id;
-  const folderId = file.isRootSharedItem ? '' : file.folderId;
+  const folderId = file.folderId;
 
   const parentPath = file.folderId || null;
 
@@ -217,6 +217,34 @@ const ensureFolderChain = (
   }
 };
 
+const ensureRootSharedParentFolder = (
+  folderMap: Map<string, UIKitDialFile>,
+  canonicalIndex: Map<string, string>,
+  folderId?: string,
+) => {
+  if (
+    !folderId ||
+    isRootId(folderId) ||
+    resolveFolderNode(folderMap, canonicalIndex, folderId)
+  ) {
+    return;
+  }
+
+  const slashIndex = folderId.lastIndexOf('/');
+  if (slashIndex === -1) return;
+
+  registerFolderNode(folderMap, canonicalIndex, {
+    id: folderId,
+    name: folderId.slice(slashIndex + 1),
+    path: folderId,
+    folderId: '',
+    nodeType: DialFileNodeType.FOLDER,
+    items: [],
+    parentPath: null,
+    permissions: [],
+  });
+};
+
 export const buildFileTree = (
   files: DialFile[],
   folders: FileFolderInterface[],
@@ -268,8 +296,11 @@ export const buildFileTree = (
   });
 
   files.forEach((file) => {
-    if (file.isRootSharedItem) return;
-    ensureFolderChain(folderMap, canonicalIndex, file.folderId);
+    if (file.isRootSharedItem) {
+      ensureRootSharedParentFolder(folderMap, canonicalIndex, file.folderId);
+    } else {
+      ensureFolderChain(folderMap, canonicalIndex, file.folderId);
+    }
   });
   folders.forEach((folder) => {
     if (folder.isRootSharedItem) return;

@@ -15,28 +15,22 @@ beforeAll(() => {
   BucketService.setBucket(ownerBucket);
 });
 
-// Regression test for: sharing a single file that lives inside a nested,
-// un-shared folder structure (e.g. Folder1/Folder2/File1) must not resurrect
-// that folder structure in "Shared with me".
-describe('buildFileTree - shared with me root items (Issue #5988 regression)', () => {
-  it('places a root-shared file at the tree root without synthesizing its unshared ancestor folders', () => {
+describe('buildFileTree - shared with me root items (Issue #7836 regression)', () => {
+  it('materializes only the immediate parent folder for a root-shared file, not its deeper unshared ancestors', () => {
     // Arrange
     const fileId = `${ApiKeys.Files}/${ownerBucket}/Folder1/Folder2/File1`;
-    const folderId = `${ApiKeys.Files}/${ownerBucket}/Folder1/Folder2`;
+    const immediateParentId = `${ApiKeys.Files}/${ownerBucket}/Folder1/Folder2`;
 
     const sharedFile: DialFile = {
       id: fileId,
       name: 'File1',
-      folderId,
+      folderId: immediateParentId,
       contentLength: 10,
       contentType: 'text/plain',
       sharedWithMe: true,
       isRootSharedItem: true,
     };
 
-    // Note: Folder1/Folder2 were NOT themselves shared, so the backend
-    // shared-listing response does not return them - `folders` is empty,
-    // matching the real "Shared with me" data flow.
     const folders: FileFolderInterface[] = [];
 
     // Act
@@ -44,13 +38,14 @@ describe('buildFileTree - shared with me root items (Issue #5988 regression)', (
 
     // Assert
     expect(rootFolder.items).toHaveLength(1);
-    expect(rootFolder.items?.[0].id).toBe(fileId);
+    const parentFolder = rootFolder.items?.[0];
+    expect(parentFolder?.nodeType).toBe(DialFileNodeType.FOLDER);
+    expect(parentFolder?.id).toBe(immediateParentId);
+    expect(parentFolder?.items).toHaveLength(1);
+    expect(parentFolder?.items?.[0].id).toBe(fileId);
 
-    const folderNames = (rootFolder.items ?? [])
-      .filter((item) => item.nodeType === DialFileNodeType.FOLDER)
-      .map((item) => item.name);
-    expect(folderNames).not.toContain('Folder1');
-    expect(folderNames).not.toContain('Folder2');
+    const rootFolderNames = (rootFolder.items ?? []).map((item) => item.name);
+    expect(rootFolderNames).not.toContain('Folder1');
   });
 
   it('places a root-shared folder at the tree root without synthesizing its unshared ancestor folders', () => {
