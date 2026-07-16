@@ -124,7 +124,7 @@ The DIAL TypeScript SDK (`0.1.0-dev.24`) provides no dedicated `createFolder` me
 
 **Selected strategy**: upload a zero-byte marker file named `.dial_folder` at the path `{parentPath}{name}/.dial_folder`.
 
-**Backend implementation** (`FilesService.createFolder`):
+**Backend implementation**, owned by `FilesFolderService` (`apps/chat-api/src/files/folder/files-folder.service.ts`), which injects `FilesUploadService` to perform the marker-file write (`FilesFolderService.createFolder`):
 
 1. Build marker path: `${parentPath ?? ''}${name}/.dial_folder`.
 2. Check for existence: call `client.getFileMetadata(bucket, markerPath, ...)`.
@@ -133,7 +133,7 @@ The DIAL TypeScript SDK (`0.1.0-dev.24`) provides no dedicated `createFolder` me
    - If `404` → proceed.
    - If `403` → throw `ForbiddenException`.
    - Any other error → `handleDialError`.
-3. Upload zero-byte marker: call `client.uploadFile(bucket, markerPath, { body: emptyBlob })`.
+3. Upload zero-byte marker via `FilesUploadService.uploadFile(bucket, markerPath, { body: emptyBlob })`.
 4. Return `CreateFolderResponseDto` with full DIAL resource paths (`files/{bucket}/...`).
 
 **MARKER_NAME constant**: `HIDDEN_FILE` (`.dial_folder`) from `@epam/ai-dial-chat-shared`, re-exported from `apps/chat-api/src/files/files.constants.ts`.
@@ -142,12 +142,12 @@ The DIAL TypeScript SDK (`0.1.0-dev.24`) provides no dedicated `createFolder` me
 
 ## Marker visibility rules
 
-`FilesService.listFiles` and `FilesService.expandFolderContents` **do not filter** marker items.
+`FilesListingService.listFiles` and `FilesListingService.expandFolderContents` (the shared folder-traversal primitive relocated from the original monolithic `FilesService`, and reused by `FilesBatchOperationsService` and `FilesArchiveDownloadService`) **do not filter** marker items.
 
 1. Marker items with `name === '.dial_folder'` are included in `ListFilesResponseDto.items`.
 2. `resolveListingPermissions` promotes marker `permissions` to `response.permissions` when listing inside an empty folder.
 3. `DialFileManager` toolbar `showHiddenFilesToggle: true` controls marker visibility in the grid (ui-kit).
-4. Archive downloads include `.dial_folder` entries as zero-byte ZIP files.
+4. Archive downloads (via `FilesArchiveDownloadService`, which calls `FilesListingService.expandFolderContents`) include `.dial_folder` entries as zero-byte ZIP files.
 5. Folder rows remain non-selectable for Attach (`nodeType === folder`).
 
 ---
@@ -170,7 +170,7 @@ Rules (synchronous — no BFF call):
 
 Forbidden-symbol validation SHALL use the same effective symbol set as rename validation: path separators (`/` and `\`) are always rejected, and all other forbidden characters come from the `forbiddenSymbolsRegExp` option passed to `useDialFileManager`. Production File Manager hosts pass `NOT_ALLOWED_SYMBOLS_REGEXP` from `@epam/ai-dial-ui-kit`, so names such as `reports:2026` are rejected before `onCreateFolder` is called.
 
-Conflict check in `onCreateFolderValidate` is against the **cached** `items` — it is a best-effort pre-check. The authoritative `409` check is server-side (`markerMetadataMatches` on the marker probe in `FilesService.createFolder`).
+Conflict check in `onCreateFolderValidate` is against the **cached** `items` — it is a best-effort pre-check. The authoritative `409` check is server-side (`markerMetadataMatches` on the marker probe in `FilesFolderService.createFolder`).
 
 `onCreateFolder` does not catch BFF errors locally — failures (including `409`) propagate to `DialFileManager`, which surfaces them inline in the folder-creation dialog.
 

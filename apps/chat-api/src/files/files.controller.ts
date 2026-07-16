@@ -384,6 +384,7 @@ export class FilesController {
   }
 
   @Post('download-archive')
+  @HttpCode(200)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiProduces('application/zip')
   @ApiOperation({ summary: 'Download files and folders as a ZIP archive' })
@@ -412,7 +413,26 @@ export class FilesController {
     @Res() res: Response,
   ): Promise<void> {
     const { at } = req.user as SessionUser;
-    await this.filesService.downloadArchive(body.items, at, res);
+    const { stream, headers, abortOnDisconnect } =
+      await this.filesService.downloadArchive(body.items, at);
+
+    for (const [key, value] of Object.entries(headers)) {
+      res.setHeader(key, value);
+    }
+    res.flushHeaders();
+
+    res.on('close', () => {
+      if (!res.writableEnded) {
+        abortOnDisconnect();
+      }
+    });
+
+    // pipeline() (not .pipe()) so a stream error also destroys the response,
+    // matching the downloadFile route below instead of leaving the client
+    // connection hanging on an archive-generation failure.
+    await pipeline(stream, res).catch(() => {
+      res.destroy();
+    });
   }
 
   @Post('delete')
