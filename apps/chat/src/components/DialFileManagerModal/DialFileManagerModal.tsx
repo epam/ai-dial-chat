@@ -31,6 +31,7 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
+import { useDialFileManagerTabConfig } from '../../hooks/files/useDialFileManagerTabConfig';
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
@@ -138,9 +139,10 @@ const DialFileManagerModal: FC<Props> = ({
   const rootLabel =
     tabLabels[activeTab] || tabLabels[DialFileManagerTabs.MyFiles];
 
-  const tabs = useMemo(
-    () => allTabs?.filter((tab) => tab.id !== DialFileManagerTabs.Review),
-    [allTabs],
+  const { tabs } = useDialFileManagerTabConfig(
+    activeTab,
+    handleTabChange,
+    allTabs,
   );
 
   const hookResult = useDialFileManager({

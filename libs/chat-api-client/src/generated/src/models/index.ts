@@ -444,6 +444,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   dialCoreExternalUrl?: string | null;
+  /**
+   * Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  fileManagerTabs: Array<string>;
 }
 /**
  *

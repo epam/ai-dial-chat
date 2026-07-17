@@ -3579,9 +3579,21 @@
             "description": "Public-facing DIAL Core base URL reachable from the browser. Null when DIAL_CORE_EXTERNAL_URL is not configured.",
             "example": "https://dial.example.com",
             "nullable": true
+          },
+          "fileManagerTabs": {
+            "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
+            "example": ["my_files", "shared", "organization"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "required": ["asrModelId", "transcribeSizeLimitBytes"]
+        "required": [
+          "asrModelId",
+          "transcribeSizeLimitBytes",
+          "fileManagerTabs"
+        ]
       },
       "ClientConfigMetadataDto": {
         "type": "object",

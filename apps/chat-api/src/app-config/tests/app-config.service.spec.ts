@@ -55,6 +55,11 @@ describe('AppConfigService', () => {
       expect(result.config.transcribeSizeLimitBytes).toBe(5 * 1024 * 1024);
       expect(result.config.defaultDeploymentId).toBeNull();
       expect(result.config.dialCoreExternalUrl).toBeNull();
+      expect(result.config.fileManagerTabs).toEqual([
+        'my_files',
+        'shared',
+        'organization',
+      ]);
     });
 
     it('returns resolved values when providers succeed', async () => {
@@ -64,6 +69,7 @@ describe('AppConfigService', () => {
         if (key === 'asr.transcribeSizeLimitBytes') return 10_485_760;
         if (key === 'deployments.defaultDeploymentId') return 'gpt-4o';
         if (key === 'dialCore.externalUrl') return 'https://dial.example.com';
+        if (key === 'fileManager.availableTabs') return ['my_files'];
         return undefined;
       });
       const result = await service.getClientConfig(ctx);
@@ -75,6 +81,7 @@ describe('AppConfigService', () => {
       expect(result.config.dialCoreExternalUrl).toBe(
         'https://dial.example.com',
       );
+      expect(result.config.fileManagerTabs).toEqual(['my_files']);
     });
 
     it('returns null defaultDeploymentId when DEFAULT_DEPLOYMENT is not set', async () => {
@@ -131,7 +138,7 @@ describe('AppConfigService', () => {
         first,
         60_000,
       );
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(5);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(6);
     });
 
     it('does not share cached config across role sets', async () => {
@@ -148,7 +155,7 @@ describe('AppConfigService', () => {
         roles: ['viewer'],
       });
 
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(10);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(12);
     });
   });
 

@@ -21,6 +21,7 @@ describe('app-config API', () => {
       config: {
         asrModelId: null,
         transcribeSizeLimitBytes: 5 * 1024 * 1024,
+        fileManagerTabs: ['my_files', 'shared', 'organization'],
       },
     });
 
