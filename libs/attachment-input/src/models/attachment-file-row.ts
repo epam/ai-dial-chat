@@ -1,12 +1,12 @@
 import type {
   AttachmentErrorReason,
-  CodeBlockTheme,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
+import { CSSProperties } from 'react';
 import type { AttachmentTypeLabels } from './attachment-card';
 
-/** Localised labels for the `AttachmentFileRow` component. */
-export interface AttachmentFileRowLabels extends AttachmentTypeLabels {
+/** Localised labels for the `FileAttachment` component. */
+export interface FileAttachmentLabels extends AttachmentTypeLabels {
   /** Accessible label for the download action. Defaults to `'Download attachment'`. */
   clickLabel?: string;
   /** Accessible label for the retry action. Defaults to `'Retry upload'`. */
@@ -21,71 +21,44 @@ export interface AttachmentFileRowLabels extends AttachmentTypeLabels {
   genericErrorLabel?: string;
 }
 
-/** CSS custom-property overrides for the `AttachmentFileRow` component. */
-export interface AttachmentFileRowColors {
-  /** Tile background color in the default state. */
-  background?: string;
-  /** Tile border color in the default state. */
-  border?: string;
-  /** Tile border color on hover. */
-  borderHover?: string;
-  /** Tile focus outline color. */
-  focusOutline?: string;
-  /** Tile background color in the error state. */
-  backgroundError?: string;
-  /** Tile border color in the error state. */
-  borderError?: string;
-  /** File name/type text color in the error state. */
-  errorText?: string;
-  /** File name text color. */
-  nameText?: string;
-  /** Type/meta text color. */
-  typeText?: string;
-  /** Hover download icon background color. */
-  hoverIconBackground?: string;
-  /** Hover download icon color. */
-  hoverIconColor?: string;
-  /** Upload progress track background color. */
-  trackBackground?: string;
-  /** Upload progress indeterminate fill color. */
-  fillBackground?: string;
-}
-
-/** Typography overrides for the `AttachmentFileRow` component. */
-export interface AttachmentFileRowTypography {
+/** Typography overrides for the `FileAttachment` component. */
+export interface FileAttachmentTypography {
   /** Typography class applied to the file name text. Defaults to `'dial-caption-text'`. */
   nameClassName?: string;
   /** Typography class applied to the bottom meta label (file type / status). Defaults to `'dial-caption-text'`. */
   metaClassName?: string;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: AttachmentFileRowColors;
 }
 
-/** Style overrides for the `AttachmentFileRow` component. */
-export interface AttachmentFileRowStyles {
-  /** Color overrides applied as CSS custom properties. */
-  colors?: AttachmentFileRowColors;
+/** Style overrides for the `FileAttachment` component. */
+export interface FileAttachmentStyles {
   /** Typography overrides for the file name and meta label text. */
-  typography?: AttachmentFileRowTypography;
+  typography?: FileAttachmentTypography;
   /** Extra class name(s) merged onto the root element. */
   className?: string;
 }
 
-/** Props accepted by the `AttachmentFileRow` component. */
-export interface AttachmentFileRowProps {
+/** Props accepted by the `FileAttachment` component. */
+export interface FileAttachmentProps {
   /** The non-previewable attachment this row represents. */
   attachment: DisplayAttachment;
   /** Called when the user clicks the row or its download button. */
-  onClick?: (attachment: DisplayAttachment) => void;
+  onClick?: (id: string) => void;
   /** Called when the user retries a failed upload. */
   onRetry?: (id: string) => void;
+  /** Called when the user expands a pasted attachment. */
+  onExpand?: (id: string) => void;
+  /** Called when the user clicks the download button. */
+  onDownload?: (id: string) => void;
   /** Localised labels for the download/retry actions, size text, and the non-extension attachment type names (prompt/pasted/image). */
-  labels?: AttachmentFileRowLabels;
+  labels?: FileAttachmentLabels;
   /** Style overrides for the row. */
-  styles?: AttachmentFileRowStyles;
-  /**
-   * Tile surface color theme, matching the markdown code block's own
-   * light/dark surface (never plain white). Defaults to `'dark'`.
-   */
-  theme?: CodeBlockTheme;
+  styles?: FileAttachmentStyles;
+  /** Whether the attachment is pasted (vs. prompt). Defaults to `false`. */
+  isPasted?: boolean;
+  /** Whether the attachment is a link (vs. a file). Defaults to `false`. */
+  isLink?: boolean;
+  /** CSS custom properties applied to the root element. */
+  cssVars?: CSSProperties;
+  /** Whether the attachment is expandable (vs. clickable). Defaults to `false`. */
+  isExpandable?: boolean;
 }

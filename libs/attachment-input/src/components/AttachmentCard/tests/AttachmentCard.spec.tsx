@@ -5,6 +5,7 @@ import {
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { AttachmentCard } from '../AttachmentCard';
 
@@ -410,7 +411,6 @@ describe('AttachmentCard — onClick', () => {
   describe('click gating by upload status', () => {
     // A loading or failed attachment isn't actually downloadable yet, so
     // the whole card must not look or behave clickable — matches
-    // AttachmentFileRow's `canDownload` gating.
     it('is not clickable while the attachment is still uploading', () => {
       const onClick = vi.fn();
       const { container } = render(
@@ -491,6 +491,52 @@ describe('AttachmentCard — onClick', () => {
         />,
       );
       expect(container.querySelector('svg.tabler-icon-download')).toBeNull();
+    });
+
+    it('renders an interactive download button when onDownload is provided', () => {
+      render(
+        <AttachmentCard
+          attachment={image}
+          showHoverDownloadIcon
+          onDownload={vi.fn()}
+        />,
+      );
+      expect(
+        screen.getByRole('button', { name: 'Download attachment' }),
+      ).toBeTruthy();
+    });
+
+    it('calls onDownload with attachment id when the download button is clicked', async () => {
+      const onDownload = vi.fn();
+      render(
+        <AttachmentCard
+          attachment={image}
+          showHoverDownloadIcon
+          onDownload={onDownload}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Download attachment' }),
+      );
+      expect(onDownload).toHaveBeenCalledWith('a1');
+    });
+
+    it('does not propagate the download button click to the card', async () => {
+      const onClick = vi.fn();
+      const onDownload = vi.fn();
+      render(
+        <AttachmentCard
+          attachment={image}
+          onClick={onClick}
+          showHoverDownloadIcon
+          onDownload={onDownload}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Download attachment' }),
+      );
+      expect(onDownload).toHaveBeenCalledWith('a1');
+      expect(onClick).not.toHaveBeenCalled();
     });
   });
 });

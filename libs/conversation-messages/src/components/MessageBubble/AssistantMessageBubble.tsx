@@ -39,6 +39,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   const {
     attachmentClickLabel,
     attachmentRetryLabel,
+    attachmentOpenInNewTabLabel,
     startersAriaLabel = 'Quick reply buttons',
     thinkingLabel,
     codeBlockCopyLabel,
@@ -110,6 +111,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             labels={{
               clickLabel: attachmentClickLabel,
               retryLabel: attachmentRetryLabel,
+              openInNewTabLabel: attachmentOpenInNewTabLabel,
             }}
             getSizeLabel={getAttachmentSizeLabel}
             theme={attachmentTheme}

@@ -1,7 +1,4 @@
-import type {
-  CodeBlockTheme,
-  DisplayAttachment,
-} from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import type { AttachmentTypeLabels } from './attachment-card';
 
 /** How the unified attachment tile grid should render for a given total attachment count. */
@@ -36,6 +33,8 @@ export interface AttachmentGroupLabels extends AttachmentTypeLabels {
   showLessLabel?: string;
   /** Label for the "download all" header action, shown whenever the group has 2+ attachments. Defaults to `'Download all'`. */
   downloadAllLabel?: string;
+  /** Accessible label for each tile's open-in-new-tab button. Defaults to `'Open in new tab'`. */
+  openInNewTabLabel?: string;
   /**
    * Resolves the header count label (e.g. `'3 attachments'`) for a given
    * attachment count. Defaults to English `'{count} attachment'` /
@@ -58,8 +57,6 @@ export interface AttachmentGroupColors {
 export interface AttachmentGroupTypography {
   /** Typography class applied to the header's attachment-count label. Defaults to `'dial-tiny-semi-text'`. */
   headerLabelClassName?: string;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: AttachmentGroupColors;
 }
 
 /** Style overrides for the `AttachmentGroup` component. */
@@ -77,7 +74,7 @@ export interface AttachmentGroupProps {
   /** The message's full attachment list (images and files together). */
   attachments: DisplayAttachment[];
   /** Called when the user clicks/activates a previewable image tile or a file row (downloads it). */
-  onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  onAttachmentClick?: (id: string) => void;
   /**
    * Called with every currently downloadable attachment when the user
    * activates the "download all" header action. Falls back to invoking
@@ -92,10 +89,4 @@ export interface AttachmentGroupProps {
   labels?: AttachmentGroupLabels;
   /** Style overrides for the group. */
   styles?: AttachmentGroupStyles;
-  /**
-   * File tile surface color theme, matching the markdown code block's own
-   * light/dark surface (never plain white). Forwarded to each
-   * non-previewable file tile. Defaults to `'dark'`.
-   */
-  theme?: CodeBlockTheme;
 }

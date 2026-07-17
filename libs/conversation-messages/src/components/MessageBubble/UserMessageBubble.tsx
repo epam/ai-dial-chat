@@ -43,6 +43,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     showLessAriaLabel,
     attachmentClickLabel,
     attachmentRetryLabel,
+    attachmentOpenInNewTabLabel,
     userMessageAriaLabel = 'User message',
   } = labels ?? {};
 
@@ -97,6 +98,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           labels={{
             clickLabel: attachmentClickLabel,
             retryLabel: attachmentRetryLabel,
+            openInNewTabLabel: attachmentOpenInNewTabLabel,
           }}
           getSizeLabel={getAttachmentSizeLabel}
           theme={attachmentTheme}

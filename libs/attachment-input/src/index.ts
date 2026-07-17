@@ -1,7 +1,6 @@
 export { AttachmentCard } from './components/AttachmentCard/AttachmentCard';
 export { AttachmentTray } from './components/AttachmentTray/AttachmentTray';
 export { AttachmentGroup } from './components/AttachmentGroup/AttachmentGroup';
-export { AttachmentFileRow } from './components/AttachmentFileRow/AttachmentFileRow';
 export { AttachmentMoreTile } from './components/AttachmentMoreTile/AttachmentMoreTile';
 export { FileDndOverlay } from './components/FileDndOverlay/FileDndOverlay';
 
@@ -28,13 +27,6 @@ export {
   type AttachmentGroupStyles,
   type AttachmentTilesPlan,
 } from './models/attachment-group';
-export type {
-  AttachmentFileRowProps,
-  AttachmentFileRowLabels,
-  AttachmentFileRowColors,
-  AttachmentFileRowTypography,
-  AttachmentFileRowStyles,
-} from './models/attachment-file-row';
 export type {
   AttachmentMoreTileProps,
   AttachmentMoreTileLabels,

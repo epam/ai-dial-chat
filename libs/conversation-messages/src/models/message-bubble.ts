@@ -59,6 +59,8 @@ export interface MessageBubbleLabels {
   attachmentClickLabel?: string;
   /** Accessible label for each attachment row's retry action. */
   attachmentRetryLabel?: string;
+  /** Accessible label for each attachment tile's open-in-new-tab button. */
+  attachmentOpenInNewTabLabel?: string;
   /**
    * Bold prefix text for the status message banner.
    * Only used when `role === MessageRole.Status`. Defaults to `"Model switched."`.

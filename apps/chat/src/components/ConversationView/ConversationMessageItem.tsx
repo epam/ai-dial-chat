@@ -234,6 +234,9 @@ const ConversationMessageItem: FC<Props> = ({
                 showMoreAriaLabel: showMoreUserMessageAriaLabel,
                 showLessAriaLabel: showLessUserMessageAriaLabel,
                 attachmentClickLabel: t(AttachmentsI18nKeys.Download),
+                attachmentOpenInNewTabLabel: t(
+                  AttachmentsI18nKeys.OpenInNewTab,
+                ),
               }}
               onAttachmentClick={handleAttachmentClick}
               onDownloadAll={handleDownloadAll}
@@ -402,6 +405,7 @@ const ConversationMessageItem: FC<Props> = ({
           showMoreAriaLabel: showMoreUserMessageAriaLabel,
           showLessAriaLabel: showLessUserMessageAriaLabel,
           attachmentClickLabel: t(AttachmentsI18nKeys.Download),
+          attachmentOpenInNewTabLabel: t(AttachmentsI18nKeys.OpenInNewTab),
           startersAriaLabel: quickReplyButtonsAriaLabel,
           thinkingLabel,
           codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),

@@ -1,9 +1,5 @@
-import {
-  AttachmentType,
-  CodeBlockTheme,
-  RequestStatus,
-} from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -303,15 +299,5 @@ describe('AttachmentGroup', () => {
       />,
     );
     expect(screen.getByRole('group', { name: 'Attachments' })).toBeTruthy();
-  });
-
-  it('forwards theme to file tiles so they use the markdown surface, not white, in light mode', () => {
-    const { container } = render(
-      <AttachmentGroup
-        attachments={[makeFile('a')]}
-        theme={CodeBlockTheme.Light}
-      />,
-    );
-    expect(container.querySelector('[class*="tileLight"]')).toBeTruthy();
   });
 });
