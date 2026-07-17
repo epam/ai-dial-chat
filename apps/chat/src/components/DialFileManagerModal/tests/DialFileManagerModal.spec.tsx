@@ -396,6 +396,7 @@ const defaultHookResult: UseDialFileManagerResult = {
   isFileMetadataLoading: false,
   onGetInfo: vi.fn(),
   clearMetadata: vi.fn(),
+  isAnyOperationInProgress: false,
 };
 
 const defaultProps = {
@@ -703,6 +704,7 @@ describe('DialFileManagerModal', () => {
     mockUseDialFileManager.mockReturnValue({
       ...defaultHookResult,
       isDownloading: true,
+      isAnyOperationInProgress: true,
     });
 
     render(<DialFileManagerModal {...defaultProps} />);
@@ -711,6 +713,49 @@ describe('DialFileManagerModal', () => {
       screen.getByRole('img', { name: 'Preparing download…' }),
     ).toBeTruthy();
     expect(screen.queryByText('Preparing download…')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(true);
+  });
+
+  it('disables Attach while any file operation is in progress', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      isAnyOperationInProgress: true,
+    });
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(true);
+  });
+
+  it('enables Attach when no file operation is in progress and a file is selected', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      isAnyOperationInProgress: false,
+    });
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(false);
+  });
+
+  it('keeps Attach disabled while isLoading is true even when isAnyOperationInProgress is false', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      isLoading: true,
+      isAnyOperationInProgress: false,
+    });
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+
     expect(
       screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
     ).toBe(true);

@@ -230,7 +230,9 @@ const DialFileManagerPage: FC = () => {
       conflictResolutionPopupOptions,
       shareLabel: t(DialFileManagerI18nKeys.ShareAction),
       unshareLabel: t(DialFileManagerI18nKeys.UnshareAction),
+      unsharingLabel: t(DialFileManagerI18nKeys.UnsharingLabel),
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
+      removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel),
       getShareModalTitle: (name: string) =>
         t(DialFileManagerI18nKeys.ShareModalTitle, { name }),
       shareModalReadPermissionLabel: t(BasicI18nKeys.CanView),

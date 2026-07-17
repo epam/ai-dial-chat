@@ -73,7 +73,9 @@ export interface DialFileManagerShellLabels {
   conflictResolutionPopupOptions: ConflictResolutionPopupOptions;
   shareLabel: string;
   unshareLabel: string;
+  unsharingLabel: string;
   removeAccessLabel: string;
+  removingAccessLabel: string;
   getShareModalTitle: (name: string) => string;
   shareModalReadPermissionLabel: string;
   shareModalReadWritePermissionLabel: string;
