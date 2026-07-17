@@ -296,13 +296,17 @@ const DeploymentSelectorPanel: FC<Props> = ({
       <div className="sticky top-0 z-10 bg-layer-0 px-1 pb-3 pt-2">
         <SearchBar
           value={query}
-          placeholder={searchPlaceholder}
-          ariaLabel={searchPlaceholder}
+          labels={{
+            placeholder: searchPlaceholder,
+            ariaLabel: searchPlaceholder,
+          }}
           onChange={setQuery}
-          containerClassName={mergeClasses(
-            styles.searchBar,
-            '!bg-transparent !rounded-full !shadow-none',
-          )}
+          styles={{
+            containerClassName: mergeClasses(
+              styles.searchBar,
+              '!bg-transparent !rounded-full !shadow-none',
+            ),
+          }}
         />
       </div>
 

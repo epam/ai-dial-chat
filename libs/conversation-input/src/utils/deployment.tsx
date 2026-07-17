@@ -34,7 +34,7 @@ export const buildDeploymentIcon = (
   <DeploymentIcon
     src={resolvedIconUrl}
     size={size}
-    tooltip={tooltip}
+    labels={{ tooltip }}
     initialsName={displayName}
   />
 );

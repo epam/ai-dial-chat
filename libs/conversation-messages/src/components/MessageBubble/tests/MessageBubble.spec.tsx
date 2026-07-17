@@ -520,7 +520,9 @@ describe('AssistantMessageBubble — deployment icon', () => {
 describe('StatusMessageBubble', () => {
   it('renders bodyText', () => {
     render(
-      <StatusMessageBubble bodyText="The model has been switched from A to B." />,
+      <StatusMessageBubble
+        labels={{ bodyText: 'The model has been switched from A to B.' }}
+      />,
     );
     expect(
       screen.getByText('The model has been switched from A to B.'),
@@ -528,19 +530,23 @@ describe('StatusMessageBubble', () => {
   });
 
   it('renders default titleText when titleText prop is omitted', () => {
-    render(<StatusMessageBubble bodyText="Changed." />);
+    render(<StatusMessageBubble labels={{ bodyText: 'Changed.' }} />);
     expect(screen.getByText('Model switched.')).toBeTruthy();
   });
 
   it('renders custom titleText when provided', () => {
     render(
-      <StatusMessageBubble titleText="Agent updated." bodyText="Changed." />,
+      <StatusMessageBubble
+        labels={{ titleText: 'Agent updated.', bodyText: 'Changed.' }}
+      />,
     );
     expect(screen.getByText('Agent updated.')).toBeTruthy();
   });
 
   it('renders an svg icon (IconInfoCircleFilled)', () => {
-    const { container } = render(<StatusMessageBubble bodyText="Changed." />);
+    const { container } = render(
+      <StatusMessageBubble labels={{ bodyText: 'Changed.' }} />,
+    );
     expect(container.querySelector('svg')).not.toBeNull();
   });
 });

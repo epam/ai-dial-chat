@@ -35,10 +35,8 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
   onClick,
   onRetry,
   labels,
-  typeLabels,
   styles: rowStyles,
   theme = CodeBlockTheme.Dark,
-  className,
 }) => {
   const {
     clickLabel = 'Download attachment',
@@ -49,9 +47,12 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
     genericErrorLabel = 'Upload failed',
   } = labels ?? {};
   const {
-    nameClassName = 'dial-caption-text',
-    metaClassName = 'dial-caption-text',
+    typography: {
+      nameClassName = 'dial-caption-text',
+      metaClassName = 'dial-caption-text',
+    } = {},
     colors,
+    className,
   } = rowStyles ?? {};
   const cssVars = buildCssVars({
     '--ci-tile-bg': colors?.background,
@@ -87,7 +88,7 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
     attachment,
     false,
     false,
-    typeLabels,
+    labels,
   );
 
   const canDownload = !isError && !isLoading && onClick !== undefined;

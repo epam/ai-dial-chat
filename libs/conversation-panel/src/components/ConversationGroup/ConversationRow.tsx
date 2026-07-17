@@ -130,8 +130,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       src={item.iconUrl}
       size={DIAL_ICON_SIZE.LG}
       initialsName={item.iconTooltip ?? ''}
-      tooltip={item.iconTooltip}
-      badgeClassName={itemIconBadgeClassName}
+      labels={{ tooltip: item.iconTooltip }}
+      styles={{ badgeClassName: itemIconBadgeClassName }}
     />
   );
 

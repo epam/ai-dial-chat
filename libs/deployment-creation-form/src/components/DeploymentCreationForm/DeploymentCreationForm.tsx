@@ -15,8 +15,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   onChange,
   labels,
   introMaxLength = DEFAULT_INTRO_MAX_LENGTH,
-  classNames,
-  ariaLabel,
+  styles,
 }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const introInputRef = useRef<HTMLInputElement>(null);
@@ -46,9 +45,9 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
 
   return (
     <div
-      role={ariaLabel ? 'group' : undefined}
-      aria-label={ariaLabel}
-      className={mergeClasses('flex flex-col gap-4', classNames?.root)}
+      role={labels.ariaLabel ? 'group' : undefined}
+      aria-label={labels.ariaLabel}
+      className={mergeClasses('flex flex-col gap-4', styles?.root)}
     >
       <Input
         id="deployment-creation-form-name"
@@ -59,7 +58,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         placeholder={labels.name.placeholder}
         error={errors.name || undefined}
         invalid={!!errors.name}
-        containerClassName={classNames?.field}
+        containerClassName={styles?.field}
       />
 
       <Textarea
@@ -68,7 +67,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         onChange={(value) => onChange({ description: value })}
         labelProps={{ label: labels.description.label }}
         placeholder={labels.description.placeholder}
-        containerClassName={classNames?.field}
+        containerClassName={styles?.field}
       />
 
       <Input
@@ -81,7 +80,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         error={errors.intro || undefined}
         invalid={!!errors.intro}
         maxLength={introMaxLength}
-        containerClassName={classNames?.field}
+        containerClassName={styles?.field}
       />
       <span role="status" aria-live="polite" className="sr-only">
         {values.intro.length >= introMaxLength - 10 &&
@@ -94,7 +93,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         onChange={(value) => onChange({ iconUrl: value ?? '' })}
         labelProps={{ label: labels.iconUrl.label }}
         placeholder={labels.iconUrl.placeholder}
-        containerClassName={classNames?.field}
+        containerClassName={styles?.field}
       />
 
       <Input
@@ -106,10 +105,10 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
         placeholder={labels.version.placeholder}
         error={errors.version || undefined}
         invalid={!!errors.version}
-        containerClassName={classNames?.field}
+        containerClassName={styles?.field}
       />
 
-      <div className={classNames?.field}>
+      <div className={styles?.field}>
         <TagInput
           elementId="deployment-creation-form-topics"
           label={labels.topics.label}

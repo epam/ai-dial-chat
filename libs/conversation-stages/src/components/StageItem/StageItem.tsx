@@ -1,9 +1,8 @@
-import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
+import type { Stage } from '@epam/ai-dial-chat-shared';
 import {
   mergeClasses,
   messageAttachmentToDisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
-import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
@@ -21,10 +20,6 @@ interface Props {
   typography: StageTypography;
   /** Accessible label for the copy button inside stage content. */
   copyAriaLabel?: string;
-  /** Accessible label for the attachments tray. Defaults to `'Stage attachments'`. */
-  attachmentsAriaLabel?: string;
-  /** Called when the user clicks an attachment card. */
-  onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }
 
 /** A single stage row — plain when no content, collapsible when content or attachments are present. */
@@ -33,8 +28,6 @@ export const StageItem: FC<Props> = ({
   isLive,
   typography,
   copyAriaLabel = 'Copy stage content',
-  attachmentsAriaLabel = 'Stage attachments',
-  onAttachmentClick,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -101,14 +94,6 @@ export const StageItem: FC<Props> = ({
                   copyAriaLabel={copyAriaLabel}
                 />
               </div>
-            )}
-
-            {displayAttachments.length > 0 && (
-              <AttachmentGroup
-                attachments={displayAttachments}
-                labels={{ ariaLabel: attachmentsAriaLabel }}
-                onAttachmentClick={onAttachmentClick}
-              />
             )}
           </div>
         </div>

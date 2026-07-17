@@ -5016,7 +5016,7 @@
           },
           "redirectUri": {
             "type": "string",
-            "example": "https://chat.example.com/toolset-editor/callback"
+            "example": "https://chat.example.com/auth/toolset-signin"
           },
           "codeChallengeMethod": {
             "type": "string",

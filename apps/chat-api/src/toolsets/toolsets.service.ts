@@ -846,6 +846,16 @@ export class ToolsetsService {
     const authHeaders = getBearerAuthHeaders(accessToken);
     // NOTE: never log apiKey / code — only the toolset reference and level.
     const dialBody = toDialToolsetSigninBody(body);
+    this.logger.debug(
+      `Signing in toolset "${toolsetName}": ${JSON.stringify({
+        url: dialBody.url,
+        credentialsLevel: dialBody.credentialsLevel,
+        authenticationType: dialBody.authenticationType,
+        redirectUri:
+          'redirectUri' in dialBody ? dialBody.redirectUri : undefined,
+        codeLength: 'code' in dialBody ? dialBody.code?.length : undefined,
+      })}`,
+    );
 
     try {
       const response = await this.dialClient.client.toolsetSignin({
@@ -857,6 +867,8 @@ export class ToolsetsService {
           response.response.status,
           `log in toolset "${toolsetName}"`,
           this.logger,
+          response.error,
+          extractDialErrorMessage(response.error),
         );
       }
       await this.invalidateCaches(userSub, toolsetName);

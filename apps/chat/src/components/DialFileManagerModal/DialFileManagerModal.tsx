@@ -152,16 +152,8 @@ const DialFileManagerModal: FC<Props> = ({
     forbiddenSymbolsRegExp: NOT_ALLOWED_SYMBOLS_REGEXP,
   });
 
-  const {
-    items,
-    isLoading,
-    searchResults,
-    uploadBatchState,
-    isCreatingFolder,
-    isDownloading,
-    isDeleting,
-    isRenaming,
-  } = hookResult;
+  const { items, isLoading, searchResults, isAnyOperationInProgress } =
+    hookResult;
 
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
     () => new Set(),
@@ -415,13 +407,6 @@ const DialFileManagerModal: FC<Props> = ({
     [t],
   );
 
-  const isOperationInProgress =
-    isDownloading ||
-    isDeleting ||
-    isRenaming ||
-    isCreatingFolder ||
-    uploadBatchState != null;
-
   const isRowSelectable = useCallback(
     (node: { data?: FileManagerGridRow | null }) => {
       const row = node.data;
@@ -598,7 +583,9 @@ const DialFileManagerModal: FC<Props> = ({
       conflictResolutionPopupOptions,
       shareLabel: t(DialFileManagerI18nKeys.ShareAction),
       unshareLabel: t(DialFileManagerI18nKeys.UnshareAction),
+      unsharingLabel: t(DialFileManagerI18nKeys.UnsharingLabel),
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
+      removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel),
       getShareModalTitle: (name: string) =>
         t(DialFileManagerI18nKeys.ShareModalTitle, { name }),
       shareModalReadPermissionLabel: t(BasicI18nKeys.CanView),
@@ -671,7 +658,9 @@ const DialFileManagerModal: FC<Props> = ({
           <PrimaryButton
             label={attachLabel}
             disabled={
-              selectedFiles.length === 0 || isLoading || isOperationInProgress
+              selectedFiles.length === 0 ||
+              isLoading ||
+              isAnyOperationInProgress
             }
             onClick={handleAttach}
           />

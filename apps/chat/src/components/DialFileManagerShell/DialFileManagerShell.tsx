@@ -40,6 +40,48 @@ const normalizeVirtualFolderPath = (value: string): string => {
   return trimmed || '/';
 };
 
+interface OverlayFlags {
+  isDownloading: boolean;
+  isDeleting: boolean;
+  isRenaming: boolean;
+  isMoving: boolean;
+  isUnsharing: boolean;
+  isRemovingAccess: boolean;
+}
+
+type OverlayLabels = Pick<
+  DialFileManagerShellLabels,
+  | 'downloadingLabel'
+  | 'deletingLabel'
+  | 'renamingLabel'
+  | 'unsharingLabel'
+  | 'removingAccessLabel'
+>;
+
+/**
+ * Resolves the consolidated overlay's ariaLabel with a fixed precedence
+ * (isDownloading -> isDeleting -> isRenaming && !isMoving -> isUnsharing ->
+ * isRemovingAccess), used only if more than one flag is unexpectedly true
+ * simultaneously.
+ */
+const resolveOverlayAriaLabel = (
+  flags: OverlayFlags,
+  labels: OverlayLabels,
+): string | undefined => {
+  if (flags.isDownloading) {
+    return labels.downloadingLabel;
+  } else if (flags.isDeleting) {
+    return labels.deletingLabel;
+  } else if (flags.isRenaming && !flags.isMoving) {
+    return labels.renamingLabel;
+  } else if (flags.isUnsharing) {
+    return labels.unsharingLabel;
+  } else if (flags.isRemovingAccess) {
+    return labels.removingAccessLabel;
+  }
+  return undefined;
+};
+
 interface Props {
   hookResult: UseDialFileManagerResult;
   labels: DialFileManagerShellLabels;
@@ -134,7 +176,9 @@ const DialFileManagerShell: FC<Props> = ({
     onCreateShareLink,
     isSharing,
     onUnshareFiles,
+    isUnsharing,
     onRemoveFilesAccess,
+    isRemovingAccess,
     fileMetadata,
     isFileMetadataLoading,
     onGetInfo,
@@ -433,6 +477,18 @@ const DialFileManagerShell: FC<Props> = ({
     ],
   );
 
+  const overlayLabel = resolveOverlayAriaLabel(
+    {
+      isDownloading,
+      isDeleting,
+      isRenaming,
+      isMoving,
+      isUnsharing,
+      isRemovingAccess,
+    },
+    labels,
+  );
+
   const uploadProgressText = useMemo(() => {
     if (uploadBatchState == null) {
       return '';
@@ -518,7 +574,7 @@ const DialFileManagerShell: FC<Props> = ({
             getDisabledTooltip={getDisabledTooltip}
             unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
           />
-          {isDownloading && (
+          {overlayLabel != null && (
             <div
               aria-live="polite"
               className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"
@@ -526,31 +582,7 @@ const DialFileManagerShell: FC<Props> = ({
               <DialSpinner
                 size={32}
                 fullWidth={false}
-                ariaLabel={labels.downloadingLabel}
-              />
-            </div>
-          )}
-          {isDeleting && (
-            <div
-              aria-live="polite"
-              className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"
-            >
-              <DialSpinner
-                size={32}
-                fullWidth={false}
-                ariaLabel={labels.deletingLabel}
-              />
-            </div>
-          )}
-          {isRenaming && !isMoving && (
-            <div
-              aria-live="polite"
-              className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout desktop:p-4"
-            >
-              <DialSpinner
-                size={32}
-                fullWidth={false}
-                ariaLabel={labels.renamingLabel}
+                ariaLabel={overlayLabel}
               />
             </div>
           )}

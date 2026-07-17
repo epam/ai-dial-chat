@@ -38,6 +38,64 @@ export interface SharePopoverLabels {
   errorTitle?: string;
 }
 
+/** CSS custom-property overrides for `SharePopover` and its descendants (`AccessControl`, `LinkView`). */
+export interface SharePopoverColors {
+  /** Access-trigger button background color. */
+  accessTriggerBackground?: string;
+  /** Access-trigger button border color. */
+  accessTriggerBorder?: string;
+  /** Access-trigger button border color on hover. */
+  accessTriggerBorderHover?: string;
+  /** Access-trigger button border color on focus/open. */
+  accessTriggerBorderFocus?: string;
+  /** Access-trigger button label text color. */
+  accessTriggerText?: string;
+  /** Popover header title text color. */
+  titleText?: string;
+  /** "Anyone with the link" row icon badge background color. */
+  linkIconBackground?: string;
+  /** "Anyone with the link" row icon badge icon color. */
+  linkIconText?: string;
+  /** "Anyone with the link" row primary text color. */
+  anyoneTitle?: string;
+  /** "Anyone with the link" row secondary text color. */
+  anyoneSubtitle?: string;
+  /** Access-trigger chevron icon color. */
+  accessChevron?: string;
+  /** Access menu item background color on hover. */
+  menuItemHover?: string;
+  /** Access menu item focus-visible ring color. */
+  menuItemFocusShadow?: string;
+  /** Access menu item background color when checked. */
+  menuItemCheckedBackground?: string;
+  /** Access menu item label text color. */
+  menuItemLabel?: string;
+  /** Section heading text color (e.g. above the link input). */
+  sectionLabel?: string;
+  /** Error message text color. */
+  errorText?: string;
+  /** Visibility/expiry note text color. */
+  noteText?: string;
+  /** Divider line color below the header. */
+  divider?: string;
+}
+
+/** Typography overrides for `SharePopover`. */
+export interface SharePopoverTypography {
+  /** CSS class applied to the error message. Defaults to `'dial-tiny-text'`. */
+  errorClassName?: string;
+  /** CSS class applied to the visibility and expiry notes. Defaults to `'dial-tiny-text'`. */
+  noteClassName?: string;
+}
+
+/** Combined color and typography overrides for `SharePopover`. */
+export interface SharePopoverStyles {
+  /** Color overrides applied as CSS custom properties, cascaded to `AccessControl` and `LinkView`. */
+  colors?: SharePopoverColors;
+  /** Typography (font utility class) overrides for the error message and notes. */
+  typography?: SharePopoverTypography;
+}
+
 /** Props for `SharePopover`. */
 export interface SharePopoverProps {
   /** Resolved share URL; `undefined` while loading. */
@@ -59,10 +117,8 @@ export interface SharePopoverProps {
   onClose: () => void;
   /** Overrides for user-visible strings. All fields have English defaults. */
   labels?: SharePopoverLabels;
-  /** CSS class applied to the error message. Defaults to `'dial-tiny-text'`. */
-  errorClassName?: string;
-  /** CSS class applied to the visibility and expiry notes. Defaults to `'dial-tiny-text'`. */
-  noteClassName?: string;
   /** CSS class applied to the popover container. */
   className?: string;
+  /** Color and typography overrides applied as CSS custom properties / utility classes. */
+  styles?: SharePopoverStyles;
 }

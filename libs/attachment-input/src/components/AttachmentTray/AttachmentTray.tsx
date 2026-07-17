@@ -11,7 +11,7 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
   onExpand,
   onAttachmentClick,
   labels,
-  className,
+  styles,
 }) => {
   const {
     ariaLabel = 'Attached files',
@@ -19,6 +19,7 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
     retryLabel,
     clickLabel,
   } = labels ?? {};
+  const { className } = styles ?? {};
 
   if (attachments.length === 0) return null;
 

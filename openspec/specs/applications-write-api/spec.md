@@ -60,9 +60,13 @@ application for the authenticated session user by proxying DIAL Core
 by `GetToolsetDto.toolsetName` (`DEPLOYMENT_ID_PATTERN`/`DEPLOYMENT_ID_VALIDATION_MESSAGE`),
 via a new `GetApplicationDto`. The bucket/path SHALL be resolved by parsing an
 `applications/{bucket}/{path}` id when present, falling back to the caller's own bucket
-plus the encoded name otherwise (mirroring `ToolsetsService.resolveToolsetResource`). The
-per-user applications list cache (`applications:list:${userSub}`) SHALL be invalidated on
-success, and DIAL Core error statuses SHALL be mapped to typed HTTP responses.
+plus the encoded name otherwise (mirroring `ToolsetsService.resolveToolsetResource`). On
+success, the per-user applications list cache (`applications:list:${userSub}`) SHALL be
+invalidated, and the per-user deployments list cache SHALL also be invalidated via
+`DeploymentsService.invalidateListCache(userSub)` (clearing `deployments:list:${userSub}`
+and each `deployments:list:${userSub}:interface:<type>` entry), since the Catalog UI's
+application list is read through `DeploymentsService.listDeployments`, not through the
+applications list cache. DIAL Core error statuses SHALL be mapped to typed HTTP responses.
 
 The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`, rate-limited
 via `@Throttle({ default: { limit: 10, ttl: 60000 } })` (same limit as
@@ -71,21 +75,29 @@ via `@Throttle({ default: { limit: 10, ttl: 60000 } })` (same limit as
 authenticated session (no additional role restriction — any authenticated user may delete
 their own application, matching `deleteToolset`'s authorization model).
 
-**Generated-client impact**: after this endpoint is added, `npm run openapi` regenerates
-`libs/chat-api-client`; the generated `ApplicationsApi` gains a `deleteApplication({
-applicationName })` method returning `Promise<void>` (mirroring the existing
-`ApplicationsApi.createApplication`/`ToolsetsApi.deleteToolset` shapes). `apps/chat`'s
-`server-api/applications.ts` SHALL add a thin wrapper:
-`export const deleteApplication = (applicationName: string): Promise<void> =>
-applicationsApi.deleteApplication({ applicationName });` (same style as
-`server-api/toolsets.ts`'s existing `deleteToolset`).
+**Generated-client impact**: none — this change only alters server-side cache invalidation
+side effects. The endpoint's request/response shape, `operationId`, and generated
+`ApplicationsApi.deleteApplication({ applicationName })` method signature are unchanged; no
+`npm run openapi` regeneration is required.
+
+**Module wiring**: `ApplicationsModule` SHALL import `DeploymentsModule` (mirroring
+`ToolsetsModule`) so `ApplicationsService` can constructor-inject `DeploymentsService`.
 
 #### Scenario: Successful delete
 - **WHEN** an authenticated user sends `DELETE /api/v1/applications/my-app__1.0`
   for an application they own
 - **THEN** the service resolves the caller's bucket/path, proxies the delete to DIAL
-  Core's `deleteCustomApplication`, invalidates `applications:list:${userSub}`, and
-  responds with `204 No Content`
+  Core's `deleteCustomApplication`, invalidates `applications:list:${userSub}` and
+  `deployments:list:${userSub}` (plus its per-interface variants), and responds with
+  `204 No Content`
+
+#### Scenario: Deployments list cache is cleared alongside the applications list cache
+- **WHEN** a delete succeeds and a client subsequently calls `GET /api/v1/deployments`
+  (the endpoint backing the Catalog list) for the same user, within what would have been
+  the prior cache TTL window
+- **THEN** the response no longer includes the deleted application, because
+  `deployments:list:${userSub}` (and its `:interface:<type>` variants) were invalidated by
+  the delete, not served stale
 
 #### Scenario: Invalid application name
 - **WHEN** the `applicationName` path parameter contains characters disallowed by

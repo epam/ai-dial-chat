@@ -13,11 +13,11 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   isStreaming,
   className,
   styles: panelStyles,
-  copyAriaLabel,
-  onAttachmentClick,
+  labels,
 }) => {
   const { colors, typography = { fontClassName: 'dial-small-text' } } =
     panelStyles ?? {};
+  const { copyAriaLabel } = labels ?? {};
   const cssVars = buildCssVars({
     '--cs-bg': colors?.background,
     '--cs-border': colors?.border,
@@ -55,7 +55,6 @@ export const StagesPanel: FC<StagesPanelProps> = ({
               isLive={lastRunningStageIndex === index}
               typography={typography}
               copyAriaLabel={copyAriaLabel}
-              onAttachmentClick={onAttachmentClick}
             />
           </li>
         ))}

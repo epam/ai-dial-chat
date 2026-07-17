@@ -13,6 +13,7 @@ import {
 } from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
+import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { ApplicationsResponseDto } from './dto/application.dto';
@@ -54,6 +55,7 @@ export class ApplicationsService {
   constructor(
     private readonly dialClient: DialClientService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly deploymentsService: DeploymentsService,
   ) {}
 
   private async getUserBucket(
@@ -211,16 +213,29 @@ export class ApplicationsService {
           this.logger,
         );
       }
-      await this.cacheManager.del(`applications:list:${userSub}`);
-      this.logger.debug(
-        `Deleted application ${applicationName} (sub: ${userSub})`,
-      );
     } catch (err) {
       return handleDialFetchError(
         err,
         `delete application "${applicationName}"`,
         this.logger,
         0,
+      );
+    }
+
+    /*
+     * The DIAL Core delete already succeeded above — a cache-layer hiccup
+     * here must not turn a successful delete into an error response, so it's
+     * logged and swallowed rather than propagated.
+     */
+    try {
+      await this.cacheManager.del(`applications:list:${userSub}`);
+      await this.deploymentsService.invalidateListCache(userSub);
+      this.logger.debug(
+        `Deleted application ${applicationName}, invalidated applications and deployments list caches (sub: ${userSub})`,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Deleted application ${applicationName} but failed to invalidate list caches (sub: ${userSub}): ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }

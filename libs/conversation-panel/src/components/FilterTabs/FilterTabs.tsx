@@ -34,7 +34,11 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
         }))}
         activeTabId={activeTab}
         onTabChange={(id: string) => onChange(id as FilterTab)}
-        tabClassName={mergeClasses(tabClassName, 'flex-1')}
+        styles={{
+          typography: {
+            tabClassName: mergeClasses(tabClassName, 'flex-1'),
+          },
+        }}
       />
     </div>
   ),

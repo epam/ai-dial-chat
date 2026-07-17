@@ -8,10 +8,10 @@ import styles from './FileDndOverlay.module.scss';
 export const FileDndOverlay: FC<FileDndOverlayProps> = ({
   isVisible,
   isAttachmentsAllowed = true,
-  title,
-  subtitle,
+  labels,
   styles: overlayStyles,
 }) => {
+  const { title, subtitle } = labels ?? {};
   const { colors, typography } = overlayStyles ?? {};
   const {
     titleClassName = 'heading-3 font-semibold',

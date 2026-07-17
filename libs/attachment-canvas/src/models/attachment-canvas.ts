@@ -113,6 +113,8 @@ export interface AttachmentCanvasStyles {
   typography?: AttachmentCanvasTypography;
   /** Extra class name(s) merged onto the scrollable content body element. */
   bodyClassName?: string;
+  /** Extra class name(s) merged onto the panel width wrapper. */
+  className?: string;
   /**
    * Arbitrary CSS custom properties applied inline to the content body.
    * Merged after the typed color/typography vars, so they can override them.
@@ -122,28 +124,12 @@ export interface AttachmentCanvasStyles {
   panelStyles?: SidebarPanelStyles;
 }
 
-/** Props for the AttachmentCanvas component. */
-export interface AttachmentCanvasProps {
-  /** Controls visibility of the side panel. */
-  isOpen: boolean;
-  /** Called when the user activates the built-in close button. */
-  onClose: () => void;
-  /** The attachment content to render inside the canvas. */
-  content: AttachmentCanvasContent;
-  /** File name displayed as the panel title. */
-  fileName?: string;
+/** User-visible strings for the `AttachmentCanvas` component. */
+export interface AttachmentCanvasLabels {
   /** Accessible label for the panel region. */
   ariaLabel: string;
   /** Accessible label for the close button. Defaults to `'Close'`. */
   closeLabel?: string;
-  /** Called when the user activates the download button. When omitted the download button is hidden. Hidden automatically when content type is `Unsupported`. */
-  onDownload?: () => void;
-  /** Called when the user activates the copy-text button. When omitted the button is hidden. Only relevant when content type is `PlainText`. */
-  onCopyText?: () => void;
-  /** Called when the user activates the copy-as-markdown button. When omitted the button is hidden. Only relevant when content type is `Markdown`. */
-  onCopyMarkdown?: () => void;
-  /** Called when the user activates the copy-JSON button. When omitted the button is hidden. Only relevant when content type is `Json`. */
-  onCopyJson?: () => void;
   /** Message shown in the canvas body when the content type is `Unsupported`. Defaults to `'Preview is not supported for this file'`. */
   unsupportedLabel?: string;
   /** Message shown in the canvas body when content type is `Error` with `errorType: LoadFailed`. Defaults to `'Failed to load file'`. */
@@ -164,6 +150,28 @@ export interface AttachmentCanvasProps {
   copyJsonLabel?: string;
   /** Tooltip and accessible label for the copy-JSON button after a successful copy. Defaults to `'Copied!'`. */
   copiedJsonLabel?: string;
+}
+
+/** Props for the AttachmentCanvas component. */
+export interface AttachmentCanvasProps {
+  /** Controls visibility of the side panel. */
+  isOpen: boolean;
+  /** Called when the user activates the built-in close button. */
+  onClose: () => void;
+  /** The attachment content to render inside the canvas. */
+  content: AttachmentCanvasContent;
+  /** File name displayed as the panel title. */
+  fileName?: string;
+  /** User-visible strings. */
+  labels: AttachmentCanvasLabels;
+  /** Called when the user activates the download button. When omitted the download button is hidden. Hidden automatically when content type is `Unsupported`. */
+  onDownload?: () => void;
+  /** Called when the user activates the copy-text button. When omitted the button is hidden. Only relevant when content type is `PlainText`. */
+  onCopyText?: () => void;
+  /** Called when the user activates the copy-as-markdown button. When omitted the button is hidden. Only relevant when content type is `Markdown`. */
+  onCopyMarkdown?: () => void;
+  /** Called when the user activates the copy-JSON button. When omitted the button is hidden. Only relevant when content type is `Json`. */
+  onCopyJson?: () => void;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. */
   isMobile?: boolean;
   /** Initial panel width in pixels (when resizable). Defaults to `min(maxWidth, 2/3 of viewport width)`. */
@@ -176,8 +184,6 @@ export interface AttachmentCanvasProps {
   onResizeStop?: (width: number) => void;
   /** Style overrides for the content body and the underlying SidebarPanel chrome. */
   styles?: AttachmentCanvasStyles;
-  /** Extra class name(s) merged onto the panel width wrapper. */
-  className?: string;
   /** Syntax highlight color theme forwarded to MarkdownRenderer code blocks. */
   codeBlockTheme?: CodeBlockTheme;
   /**

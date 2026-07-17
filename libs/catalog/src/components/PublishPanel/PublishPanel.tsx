@@ -215,10 +215,11 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder={searchPlaceholder}
-            clearLabel={clearSearchAriaLabel}
-            wrapperClassName="px-0"
-            rowClassName="!rounded-lg"
+            labels={{
+              placeholder: searchPlaceholder,
+              clearLabel: clearSearchAriaLabel,
+            }}
+            styles={{ wrapperClassName: 'px-0', rowClassName: '!rounded-lg' }}
           />
         </div>
         <PublishFoldersTree
