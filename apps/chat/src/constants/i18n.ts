@@ -782,6 +782,7 @@ export enum ChatI18nKeys {
   AcceptOrRejectRulesChanges = 'Accept or reject rules changes',
   NothingIsSelectedAndRulesHaveNotChanged = 'Nothing is selected and rules have not changed',
   RequestCantBePublishedAsSomeItemsAreInvalid = "Request can't be published as some items are invalid",
+  DuplicateVersionFound = 'A duplicate version has been found. Please select a unique version.',
   RequestCantBeApprovedAsSomeItemsAreUnpublished = "Request can't be approved as some items are unpublished",
   RequestCantBeApprovedAsSomeConversationsHaveNoMessages = "Request can't be approved as some conversations have no messages",
   RequestIsUpdating = 'Request is updating',
