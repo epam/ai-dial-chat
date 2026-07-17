@@ -109,6 +109,8 @@ export const convertToUIKitFolder = (
 ): UIKitDialFile => {
   const fullPath = folder.id;
 
+  const folderId = folder.isRootSharedItem ? '' : folder.folderId;
+
   const parentPath = folder.folderId || null;
 
   const permissions = folder.isRootSharedItem
@@ -122,7 +124,7 @@ export const convertToUIKitFolder = (
     name: folder.name,
     author: folder.author,
     path: fullPath,
-    folderId: folder.folderId,
+    folderId,
     nodeType: DialFileNodeType.FOLDER,
     items: childItems,
     parentPath,
@@ -209,8 +211,14 @@ export const buildFileTree = (
     }
   });
 
-  files.forEach((file) => ensureFolderChain(folderMap, file.folderId));
-  folders.forEach((folder) => ensureFolderChain(folderMap, folder.folderId));
+  files.forEach((file) => {
+    if (file.isRootSharedItem) return;
+    ensureFolderChain(folderMap, file.folderId);
+  });
+  folders.forEach((folder) => {
+    if (folder.isRootSharedItem) return;
+    ensureFolderChain(folderMap, folder.folderId);
+  });
 
   const placedFolderIds = new Set<string>();
   const placedFileIds = new Set<string>();
