@@ -9,6 +9,7 @@ import { type FC, memo } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { useCodeCopy } from '../../../hooks/useCodeCopy';
 import { CodeBlockTheme } from '../../../types/code-editor';
+import { buildCssVars } from '../../../utils/build-css-vars';
 import {
   downloadTextFile,
   getFileExtensionForLanguage,
@@ -16,6 +17,22 @@ import {
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './CodeBlock.module.scss';
 import { restrainedSyntaxTheme } from './syntax-theme';
+
+/** CSS custom-property overrides for the `MarkdownCodeBlock` component. */
+export interface MarkdownCodeBlockColors {
+  /** Container background color. */
+  background?: string;
+  /** Container/header border color. */
+  border?: string;
+  /** Header background color. */
+  headerBackground?: string;
+  /** Language label text color. */
+  language?: string;
+  /** Copy button icon color once copied. */
+  copied?: string;
+  /** Scrollbar thumb/track color. */
+  scrollbar?: string;
+}
 
 /** Props for {@link MarkdownCodeBlock}. */
 export interface MarkdownCodeBlockProps {
@@ -41,6 +58,8 @@ export interface MarkdownCodeBlockProps {
   codeClassName?: string;
   /** CSS class applied to the language label in the header. Defaults to `'dial-tiny-semi-text uppercase'` plus the module's `.languageLabel` class (`--text-secondary`). */
   languageLabelClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: MarkdownCodeBlockColors;
 }
 
 const syntaxTheme = {
@@ -65,15 +84,25 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     headerClassName,
     codeClassName = 'dial-code-text',
     languageLabelClassName = 'dial-tiny-semi-text uppercase',
+    colors,
   }) => {
     const { isCopied, copy } = useCodeCopy(value);
     const isLightTheme = theme === CodeBlockTheme.Light;
     const handleDownload = () => {
       downloadTextFile(value, `code.${getFileExtensionForLanguage(language)}`);
     };
+    const cssVars = buildCssVars({
+      '--cm-code-block-bg': colors?.background,
+      '--cm-code-block-border': colors?.border,
+      '--cm-code-block-header-bg': colors?.headerBackground,
+      '--cm-code-block-language': colors?.language,
+      '--cm-code-block-copied': colors?.copied,
+      '--cm-code-block-scrollbar': colors?.scrollbar,
+    });
 
     return (
       <div
+        style={cssVars}
         className={mergeClasses(
           'my-4 max-w-full overflow-hidden rounded-xl border',
           styles.container,

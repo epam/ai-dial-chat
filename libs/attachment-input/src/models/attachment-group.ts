@@ -44,10 +44,22 @@ export interface AttachmentGroupLabels {
   getHeaderLabel?: (count: number) => string;
 }
 
+/** CSS custom-property overrides for the `AttachmentGroup` component. */
+export interface AttachmentGroupColors {
+  /** Group container background color. */
+  background?: string;
+  /** Group container border color. */
+  border?: string;
+  /** Header icon/label/download-all button text color. */
+  text?: string;
+}
+
 /** Style overrides for the `AttachmentGroup` component. */
 export interface AttachmentGroupStyles {
   /** Typography class applied to the header's attachment-count label. Defaults to `'dial-tiny-semi-text'`. */
   headerLabelClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AttachmentGroupColors;
 }
 
 /** Props accepted by the `AttachmentGroup` component. */

@@ -37,7 +37,10 @@ export const SendButton: FC<SendButtonProps> = ({
         disabled={isDisabled}
         aria-hidden={isExiting}
       >
-        <IconArrowNarrowRight size={DIAL_ICON_SIZE.LG} />
+        <IconArrowNarrowRight
+          size={DIAL_ICON_SIZE.LG}
+          className="rtl:scale-x-[-1]"
+        />
       </button>
     </DialTooltip>
   );

@@ -18,7 +18,9 @@ export const sortCatalogItems = (
 
   const sortGroup = (group: CatalogItem[]): CatalogItem[] => {
     if (sortKey === CatalogSortKey.NameAZ) {
-      return [...group].sort((a, b) => a.name.localeCompare(b.name));
+      return [...group].sort((a, b) =>
+        a.name.trim().toLowerCase().localeCompare(b.name.trim().toLowerCase()),
+      );
     }
     if (sortKey === CatalogSortKey.Newest) {
       return [...group].sort((a, b) => {

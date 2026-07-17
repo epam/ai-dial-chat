@@ -43,6 +43,30 @@ export interface AttachmentCardColors {
   nameText?: string;
   /** Meta (type / label) text color. */
   metaText?: string;
+  /** Card border color in the error state. */
+  borderError?: string;
+  /** Card background color in the selected state. */
+  backgroundSelected?: string;
+  /** Card border color in the selected state. */
+  borderSelected?: string;
+  /** Card background color on hover (prompt/pasted cards). */
+  backgroundHover?: string;
+  /** Loading overlay background color. */
+  loadingOverlayBackground?: string;
+  /** Action button (remove/retry/download) icon color. */
+  actionColor?: string;
+  /** Action button background color on hover. */
+  actionBackgroundHover?: string;
+  /** Focus outline color. */
+  focusOutline?: string;
+  /** Remove/retry button background color. */
+  removeBackground?: string;
+  /** Remove/retry button icon color. */
+  removeColor?: string;
+  /** Hover download icon background color. */
+  hoverIconBackground?: string;
+  /** Hover download icon color. */
+  hoverIconColor?: string;
 }
 
 /** Typography overrides for the `AttachmentCard` component. */

@@ -21,12 +21,44 @@ export interface AttachmentFileRowLabels {
   genericErrorLabel?: string;
 }
 
+/** CSS custom-property overrides for the `AttachmentFileRow` component. */
+export interface AttachmentFileRowColors {
+  /** Tile background color in the default state. */
+  background?: string;
+  /** Tile border color in the default state. */
+  border?: string;
+  /** Tile border color on hover. */
+  borderHover?: string;
+  /** Tile focus outline color. */
+  focusOutline?: string;
+  /** Tile background color in the error state. */
+  backgroundError?: string;
+  /** Tile border color in the error state. */
+  borderError?: string;
+  /** File name/type text color in the error state. */
+  errorText?: string;
+  /** File name text color. */
+  nameText?: string;
+  /** Type/meta text color. */
+  typeText?: string;
+  /** Hover download icon background color. */
+  hoverIconBackground?: string;
+  /** Hover download icon color. */
+  hoverIconColor?: string;
+  /** Upload progress track background color. */
+  trackBackground?: string;
+  /** Upload progress indeterminate fill color. */
+  fillBackground?: string;
+}
+
 /** Style overrides for the `AttachmentFileRow` component. */
 export interface AttachmentFileRowStyles {
   /** Typography class applied to the file name text. Defaults to `'dial-caption-text'`. */
   nameClassName?: string;
   /** Typography class applied to the bottom meta label (file type / status). Defaults to `'dial-caption-text'`. */
   metaClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AttachmentFileRowColors;
 }
 
 /** Props accepted by the `AttachmentFileRow` component. */

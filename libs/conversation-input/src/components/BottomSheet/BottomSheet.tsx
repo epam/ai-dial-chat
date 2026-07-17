@@ -82,11 +82,11 @@ export const BottomSheet: FC<BottomSheetProps> = ({
               type="button"
               className={mergeClasses(
                 styles.item,
-                'flex w-full items-center gap-3 px-4 py-[10px] text-left',
+                'flex w-full items-center gap-3 px-4 py-[10px] text-start',
               )}
               iconBefore={<span className={styles.itemIcon}>{icon}</span>}
               iconAfter={
-                iconAfter ? <span className="ml-auto">{iconAfter}</span> : null
+                iconAfter ? <span className="ms-auto">{iconAfter}</span> : null
               }
               textClassName={btnTextClassName}
               label={<span className={itemLabelClassName}>{label}</span>}

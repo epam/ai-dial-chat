@@ -1,5 +1,6 @@
 import {
   AttachmentType,
+  buildCssVars,
   mergeClasses,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
@@ -54,7 +55,13 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
     downloadAllLabel = 'Download all',
     getHeaderLabel = (count: number) => pluralize(count, 'attachment'),
   } = labels ?? {};
-  const { headerLabelClassName = 'dial-tiny-semi-text' } = groupStyles ?? {};
+  const { headerLabelClassName = 'dial-tiny-semi-text', colors } =
+    groupStyles ?? {};
+  const cssVars = buildCssVars({
+    '--ci-group-bg': colors?.background,
+    '--ci-group-border': colors?.border,
+    '--ci-group-text': colors?.text,
+  });
 
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -98,6 +105,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
     <div
       role="group"
       aria-label={ariaLabel}
+      style={cssVars}
       className={mergeClasses(
         'rounded-2xl border p-3',
         isCollapsible ? 'w-full min-w-0 max-w-[492px]' : 'max-w-[420px]',

@@ -2406,7 +2406,7 @@ export interface DialToolsetDto {
    */
   toolset: string;
   /**
-   *
+   * Human-readable name. In `listToolsets` results this is always populated: `display_name` when set, otherwise the last path segment of `id`.
    * @type {string}
    * @memberof DialToolsetDto
    */
