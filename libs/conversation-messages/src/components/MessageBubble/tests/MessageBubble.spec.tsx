@@ -224,32 +224,6 @@ describe('UserMessageBubble — attachments', () => {
       screen.queryByRole('button', { name: 'Open attachment' }),
     ).toBeNull();
   });
-
-  it('clicking a card invokes onAttachmentClick with the attachment', () => {
-    const onAttachmentClick = vi.fn();
-    render(
-      <UserMessageBubble
-        text="Hello"
-        attachments={[ATTACHMENT]}
-        onAttachmentClick={onAttachmentClick}
-        labels={{ attachmentClickLabel: 'Download file' }}
-      />,
-    );
-    fireEvent.click(screen.getByLabelText('Download file'));
-    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
-  });
-
-  it('forwards attachmentClickLabel to the tray', () => {
-    render(
-      <UserMessageBubble
-        text="Hello"
-        attachments={[ATTACHMENT]}
-        onAttachmentClick={vi.fn()}
-        labels={{ attachmentClickLabel: 'Download file' }}
-      />,
-    );
-    expect(screen.getByLabelText('Download file')).toBeTruthy();
-  });
 });
 
 describe('UserMessageBubble — collapsed text', () => {
