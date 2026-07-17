@@ -77,7 +77,7 @@ export const DeleteButton: FC<DeleteButtonProps> = ({
       />
       {isDeleting && (
         <span role="status" aria-live="polite" className="sr-only">
-          Deleting
+          {texts?.deletingStatusLabel ?? 'Deleting'}
         </span>
       )}
     </>

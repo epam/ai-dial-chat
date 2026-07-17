@@ -213,17 +213,29 @@ export class ApplicationsService {
           this.logger,
         );
       }
-      await this.cacheManager.del(`applications:list:${userSub}`);
-      await this.deploymentsService.invalidateListCache(userSub);
-      this.logger.debug(
-        `Deleted application ${applicationName}, invalidated applications and deployments list caches (sub: ${userSub})`,
-      );
     } catch (err) {
       return handleDialFetchError(
         err,
         `delete application "${applicationName}"`,
         this.logger,
         0,
+      );
+    }
+
+    /*
+     * The DIAL Core delete already succeeded above — a cache-layer hiccup
+     * here must not turn a successful delete into an error response, so it's
+     * logged and swallowed rather than propagated.
+     */
+    try {
+      await this.cacheManager.del(`applications:list:${userSub}`);
+      await this.deploymentsService.invalidateListCache(userSub);
+      this.logger.debug(
+        `Deleted application ${applicationName}, invalidated applications and deployments list caches (sub: ${userSub})`,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Deleted application ${applicationName} but failed to invalidate list caches (sub: ${userSub}): ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }
