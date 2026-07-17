@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { transformIdToRootEntityId } from '@/src/utils/app/id';
-import { buildDedupedPublicationFileTargetsFromConversations } from '@/src/utils/app/publications';
+import {
+  buildDedupedPublicationFileTargetsFromConversations,
+  getPublicItemIdForVersionCheck,
+} from '@/src/utils/app/publications';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@epam/ai-dial-shared';
@@ -85,5 +88,33 @@ describe('buildDedupedPublicationFileTargetsFromConversations', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].newUrl).toBe(transformIdToRootEntityId(decoded));
+  });
+});
+
+describe('getPublicItemIdForVersionCheck', () => {
+  const rootLevelId = 'conversations/mybucket/gpt__myChat';
+
+  it('returns the id unchanged when not in publish model', () => {
+    expect(
+      getPublicItemIdForVersionCheck(rootLevelId, 'public/dept', false),
+    ).toBe(rootLevelId);
+  });
+
+  it('rewrites the bucket segment to the root public target folder', () => {
+    expect(getPublicItemIdForVersionCheck(rootLevelId, 'public', true)).toBe(
+      'conversations/public/gpt__myChat',
+    );
+  });
+
+  it('rewrites the bucket segment to a nested public target folder', () => {
+    expect(
+      getPublicItemIdForVersionCheck(rootLevelId, 'public/dept', true),
+    ).toBe('conversations/public/dept/gpt__myChat');
+  });
+
+  it('returns the id unchanged when it has no path separator', () => {
+    expect(getPublicItemIdForVersionCheck('single', 'public/dept', true)).toBe(
+      'single',
+    );
   });
 });
