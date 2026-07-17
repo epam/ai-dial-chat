@@ -18,13 +18,24 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => ({ showNotification: mockShowNotification }),
 }));
 
-const { mockActiveTab, mockHandleTabChange } = vi.hoisted(() => ({
-  mockActiveTab: { value: undefined as string | undefined },
-  mockHandleTabChange: vi.fn(),
-}));
+const { mockActiveTab, mockHandleTabChange, mockFileManagerTabs } = vi.hoisted(
+  () => ({
+    mockActiveTab: { value: undefined as string | undefined },
+    mockHandleTabChange: vi.fn(),
+    mockFileManagerTabs: {
+      value: ['my_files', 'shared', 'organization'] as string[],
+    },
+  }),
+);
 
 const { mockShowNotification } = vi.hoisted(() => ({
   mockShowNotification: vi.fn(),
+}));
+
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({
+    config: { fileManagerTabs: mockFileManagerTabs.value },
+  }),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -433,6 +444,7 @@ const defaultProps = {
 
 beforeEach(() => {
   mockActiveTab.value = undefined;
+  mockFileManagerTabs.value = ['my_files', 'shared', 'organization'];
   mockHandleTabChange.mockClear();
   mockShowNotification.mockClear();
   mockUseDialFileManager.mockClear();
@@ -819,6 +831,17 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(screen.getByRole('button', { name: 'My Files' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Shared with Me' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Organization' })).toBeTruthy();
+  });
+
+  it('renders only the tabs allowed by the deployment-configured fileManagerTabs', () => {
+    mockFileManagerTabs.value = ['my_files', 'organization'];
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-tab-count')).toBe('2');
+    expect(screen.getByRole('button', { name: 'My Files' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Organization' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Shared with Me' })).toBeNull();
   });
 
   it('passes the activeTab from useDialFileManagerTabs to toolbarOptions', () => {

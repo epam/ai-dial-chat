@@ -15,6 +15,7 @@ import { UserConfigStatus } from '../types/user-config-status';
 import { useUser } from './auth/UserContext';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
+const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
 
 interface AppConfigState {
   status: UserConfigStatus;
@@ -24,6 +25,7 @@ interface AppConfigState {
     transcribeSizeLimitBytes: number;
     defaultDeploymentId: string | null;
     dialCoreExternalUrl: string | null;
+    fileManagerTabs: string[];
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -36,6 +38,7 @@ const INITIAL_STATE: AppConfigState = {
     transcribeSizeLimitBytes: DEFAULT_TRANSCRIBE_SIZE_LIMIT,
     defaultDeploymentId: null,
     dialCoreExternalUrl: null,
+    fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
   },
 };
 
@@ -64,6 +67,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               DEFAULT_TRANSCRIBE_SIZE_LIMIT,
             defaultDeploymentId: response.config?.defaultDeploymentId ?? null,
             dialCoreExternalUrl: response.config?.dialCoreExternalUrl ?? null,
+            fileManagerTabs:
+              response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
           },
           metadata: response.metadata,
         });
