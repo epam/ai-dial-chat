@@ -193,6 +193,7 @@ const defaultHookResult: UseDialFileManagerResult = {
   isFileMetadataLoading: false,
   onGetInfo: vi.fn(),
   clearMetadata: vi.fn(),
+  isAnyOperationInProgress: false,
 };
 
 beforeEach(() => {

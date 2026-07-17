@@ -8,17 +8,19 @@ import 'reflect-metadata';
 import { AppModule } from './app/app.module';
 import { buildFrameSrcDirective } from './config/csp';
 import { EnvironmentVariables } from './config/environment.config';
+import { resolveLogLevels } from './config/log-levels';
 import {
   createOpenApiConfig,
   openApiDocumentOptions,
 } from './openapi/openapi.config';
 
 async function bootstrap() {
+  const runtimeEnvironment = process.env;
   const app = await NestFactory.create(AppModule, {
-    logger:
-      process.env['NODE_ENV'] === 'production'
-        ? ['log', 'error', 'warn']
-        : ['log', 'error', 'warn', 'debug'],
+    logger: resolveLogLevels(
+      runtimeEnvironment['NODE_ENV'],
+      runtimeEnvironment['LOG_LEVEL'],
+    ),
   });
 
   app.use(cookieParser());
@@ -80,7 +82,7 @@ async function bootstrap() {
     `Application is running on: http://localhost:${port}/${globalPrefix}`,
   );
 
-  const shouldExposeSwagger = process.env['NODE_ENV'] !== 'production';
+  const shouldExposeSwagger = runtimeEnvironment['NODE_ENV'] !== 'production';
   if (shouldExposeSwagger) {
     const document = SwaggerModule.createDocument(
       app,
