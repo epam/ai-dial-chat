@@ -1,11 +1,16 @@
+import { keys } from '@/src/ui/keyboard';
 import { AddQuickApp2SettingsFormSelector } from '@/src/ui/selectors';
 import {
   BaseElement,
   Button,
+  Combobox,
   EntityEditorViewForm,
 } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator } from '@playwright/test';
+
+// Delay between characters when typing MIME types into the combobox.
+const keyEnteringDelay = 30;
 
 export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public orchestratorSection = this.getChildElementBySelector(
@@ -29,12 +34,60 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public temperatureSlider = this.orchestratorSection.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.temperatureSlider,
   );
+  // Validation error under the model field (e.g. model without tools support)
+  public orchestratorModelError =
+    this.orchestratorSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.orchestratorModelError,
+    );
+  // Instructions markdown editor + its edit textarea
+  public instructionsField = this.orchestratorSection.getChildElementBySelector(
+    AddQuickApp2SettingsFormSelector.instructionsField,
+  );
+  public instructionsInput = this.instructionsField.getChildElementBySelector(
+    AddQuickApp2SettingsFormSelector.instructionsInput,
+  );
   public contextToolsSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.contextToolsSection,
   );
   public attachmentsSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.attachmentsSection,
   );
+  // Attachments section is collapsed by default — toggle header + its fields
+  public attachmentsSectionToggle =
+    this.attachmentsSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.sectionToggle,
+    );
+  public attachmentTypesField =
+    this.attachmentsSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.attachmentTypesField,
+    );
+  // Same widget as the shared Combobox; QA2 just overrides the container data-qa.
+  public attachmentTypes = new Combobox(
+    this.page,
+    this.attachmentsSection.getElementLocator(),
+    AddQuickApp2SettingsFormSelector.attachmentTypesField,
+  );
+  public maxAttachmentsInput =
+    this.attachmentsSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.maxAttachmentsField,
+    );
+
+  // Expand the attachments section and set the attachment types + max number.
+  public async setAttachments(
+    attachmentTypes: string[],
+    maxAttachments: string,
+  ) {
+    await this.attachmentsSectionToggle.click();
+    for (let i = 0; i < attachmentTypes.length; i++) {
+      await this.attachmentTypes.comboboxInput.typeInInput(attachmentTypes[i], {
+        delay: keyEnteringDelay,
+      });
+      await this.page.keyboard.press(keys.enter);
+      await this.attachmentTypes.selectedPills.getNthElement(i + 1).waitFor();
+    }
+    await this.maxAttachmentsInput.typeInInput(maxAttachments);
+  }
+
   public conversationStartersSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.conversationStartersSection,
   );
@@ -54,6 +107,14 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public codeInterpreterToggle =
     this.codeInterpreterField.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.codeInterpreterToggle,
+    );
+  public codeInterpreterLabel =
+    this.codeInterpreterField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.codeInterpreterLabel,
+    );
+  public codeInterpreterInfoIcon =
+    this.codeInterpreterField.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.codeInterpreterInfoIcon,
     );
 
   // Agents & Toolsets — view modes

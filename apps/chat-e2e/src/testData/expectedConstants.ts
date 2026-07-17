@@ -421,6 +421,20 @@ export const ExpectedConstants = {
   // Shown in an editable (non-readonly) editor when the chip's entity is deleted.
   notAvailableEditableChipTooltip: (entityType: string) =>
     `Not available ${entityType}. Please, change or remove ${entityType} to proceed.`,
+  // Code Interpreter field in the Quick app 2.0 App settings step.
+  codeInterpreterFieldLabel: 'Code Interpreter',
+  codeInterpreterAdditionalText: 'Use to execute custom Python code',
+  codeInterpreterInfoTooltip:
+    'Allows to build multi-agent applications where agents can generate and safely execute Python code in real-time to perform specific tasks, such as data visualization or analytics.',
+  // Error under the Model field when the orchestrator model has no tools support.
+  selectedModelDoesNotSupportToolsError:
+    'Selected model does not support tools',
+  // Attach files form hints reflecting the app's attachment config.
+  attachmentsUpToFiles: (n: number) => `Up to ${n} files.`,
+  attachmentsSupportedTypesLabel: 'Supported types:',
+  pdfAttachmentType: 'application/pdf',
+  // template_name of the predefined Code Interpreter toolset.
+  codeInterpreterTemplateName: 'py_interpreter',
   // Confirmation dialog shown on Save & Exit when the config has invalid items.
   saveOnlyValidDataTitle: 'Only valid data will be saved',
   saveOnlyValidDataMessage:
@@ -484,6 +498,7 @@ export enum MenuOptions {
   removeAccess = 'Remove access',
   loginWithMyCreds = 'Login with my creds',
   login = 'Log in',
+  manageCreds = 'Manage creds',
   connect = 'Connect',
 }
 
