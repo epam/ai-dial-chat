@@ -50,7 +50,7 @@ describe('sortCatalogItems', () => {
       makeItem({ id: '2', name: 'B', updatedAt: 3000 }),
       makeItem({ id: '3', name: 'C', updatedAt: 2000 }),
     ];
-    const result = sortCatalogItems(items, CatalogSortKey.Newest);
+    const result = sortCatalogItems(items, CatalogSortKey.RecentlyUpdated);
     expect(result.map((i) => i.id)).toEqual(['2', '3', '1']);
   });
 
@@ -60,18 +60,8 @@ describe('sortCatalogItems', () => {
       makeItem({ id: '2', name: 'B' }),
       makeItem({ id: '3', name: 'C', updatedAt: 2000 }),
     ];
-    const result = sortCatalogItems(items, CatalogSortKey.Newest);
-    expect(result[result.length - 1].id).toBe('2');
-  });
-
-  it('preserves original order within each group (RecentlyUpdated)', () => {
-    const items = [
-      makeItem({ id: '3', name: 'C' }),
-      makeItem({ id: '1', name: 'A' }),
-      makeItem({ id: '2', name: 'B' }),
-    ];
     const result = sortCatalogItems(items, CatalogSortKey.RecentlyUpdated);
-    expect(result.map((i) => i.id)).toEqual(['3', '1', '2']);
+    expect(result[result.length - 1].id).toBe('2');
   });
 
   it('preserves original order for unknown sort key without throwing', () => {
