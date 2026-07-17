@@ -111,6 +111,8 @@ export interface ItemDetailsTexts {
   credentialsBadgeLoggedOutLabel?: string;
   /** "Delete" action button label. Default: `'Delete'`. */
   deleteActionLabel?: string;
+  /** Status text announced to assistive tech while a delete is in progress. Default: `'Deleting'`. */
+  deletingStatusLabel?: string;
 }
 
 /** Typography class overrides for `DetailsPanel` text elements. */
