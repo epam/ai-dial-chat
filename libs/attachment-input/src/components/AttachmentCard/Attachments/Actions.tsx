@@ -8,6 +8,7 @@ import {
   IconDownload,
   IconExternalLink,
   IconReload,
+  IconX,
 } from '@tabler/icons-react';
 import { ReactNode, type FC, type MouseEvent } from 'react';
 import styles from './Attachment.module.scss';
@@ -78,11 +79,21 @@ export const DownloadAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
   );
 };
 
-/** Retry button for failed uploads. */
+/** Open-in-new-tab button for link attachments. */
 export const OpenLinkAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
   return (
     <ActionButton
       icon={<IconExternalLink size={DIAL_ICON_SIZE.SM} aria-hidden />}
+      {...props}
+    />
+  );
+};
+
+/** Remove button for attachments. */
+export const RemoveAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
+  return (
+    <ActionButton
+      icon={<IconX size={DIAL_ICON_SIZE.SM} aria-hidden />}
       {...props}
     />
   );

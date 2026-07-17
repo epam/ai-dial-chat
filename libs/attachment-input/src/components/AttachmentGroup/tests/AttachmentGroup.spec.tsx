@@ -280,17 +280,6 @@ describe('AttachmentGroup', () => {
     });
   });
 
-  it('accepts getSizeLabel without throwing (size is not displayed on the uniform tile)', () => {
-    expect(() =>
-      render(
-        <AttachmentGroup
-          attachments={[makeFile('a')]}
-          getSizeLabel={() => '2.4 MB'}
-        />,
-      ),
-    ).not.toThrow();
-  });
-
   it('exposes the group as an accessible, labeled region', () => {
     render(
       <AttachmentGroup

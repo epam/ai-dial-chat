@@ -415,7 +415,6 @@ const ConversationMessageItem: FC<Props> = ({
         deploymentIconUrl={deploymentEntry?.iconUrl}
         deploymentDisplayName={deploymentEntry?.displayName}
         codeBlockTheme={codeBlockTheme}
-        attachmentTheme={codeBlockTheme}
         onAttachmentClick={handleAttachmentClick}
         onDownloadAll={handleDownloadAll}
       />

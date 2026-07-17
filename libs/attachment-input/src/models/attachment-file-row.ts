@@ -49,6 +49,8 @@ export interface FileAttachmentProps {
   onExpand?: (id: string) => void;
   /** Called when the user clicks the download button. */
   onDownload?: (id: string) => void;
+  /** Called when the user clicks the remove button. */
+  onRemove?: (id: string) => void;
   /** Localised labels for the download/retry actions, size text, and the non-extension attachment type names (prompt/pasted/image). */
   labels?: FileAttachmentLabels;
   /** Style overrides for the row. */

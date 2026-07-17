@@ -1,5 +1,6 @@
 import {
   buildCssVars,
+  DisplayAttachment,
   mergeClasses,
   MessageRole,
   useCollapsedText,
@@ -32,8 +33,6 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   onAttachmentClick,
   onDownloadAll,
   onAttachmentRetry,
-  getAttachmentSizeLabel,
-  attachmentTheme,
 }) => {
   const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
   const {
@@ -92,7 +91,11 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
       <div className="ms-auto flex w-fit min-w-0 max-w-full flex-col items-end gap-4">
         <AttachmentGroup
           attachments={attachments ?? []}
-          onAttachmentClick={onAttachmentClick}
+          onAttachmentClick={(id) =>
+            onAttachmentClick?.(
+              attachments?.find((a) => a.id === id) as DisplayAttachment,
+            )
+          }
           onDownloadAll={onDownloadAll}
           onRetry={onAttachmentRetry}
           labels={{
@@ -100,8 +103,6 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
             retryLabel: attachmentRetryLabel,
             openInNewTabLabel: attachmentOpenInNewTabLabel,
           }}
-          getSizeLabel={getAttachmentSizeLabel}
-          theme={attachmentTheme}
           styles={{ className: 'max-w-[640px]' }}
         />
         {text && (

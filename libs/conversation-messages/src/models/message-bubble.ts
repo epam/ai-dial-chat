@@ -119,16 +119,6 @@ interface BaseMessageBubbleProps {
   onDownloadAll?: (attachments: DisplayAttachment[]) => void;
   /** Called when the user retries a failed attachment upload. */
   onAttachmentRetry?: (id: string) => void;
-  /** Resolves a human-readable size label for an attachment, when derivable. Omitted from display when absent. */
-  getAttachmentSizeLabel?: (
-    attachment: DisplayAttachment,
-  ) => string | undefined;
-  /**
-   * Surface color theme for non-previewable attachment tiles, matching the
-   * markdown code block's own light/dark surface (never plain white).
-   * Forwarded to `AttachmentGroup`, which defaults to `'dark'` when omitted.
-   */
-  attachmentTheme?: CodeBlockTheme;
 }
 
 /** Props accepted by the `UserMessageBubble` component. */

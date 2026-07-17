@@ -83,8 +83,6 @@ export interface AttachmentGroupProps {
   onDownloadAll?: (attachments: DisplayAttachment[]) => void;
   /** Called when the user retries a failed upload. */
   onRetry?: (id: string) => void;
-  /** Resolves the human-readable size label for an attachment, when derivable. Omitted from display when absent. */
-  getSizeLabel?: (attachment: DisplayAttachment) => string | undefined;
   /** Localised accessible labels for the group region, its actions, and the non-extension attachment type names (prompt/pasted/image), forwarded to each tile. */
   labels?: AttachmentGroupLabels;
   /** Style overrides for the group. */

@@ -2,6 +2,7 @@ import {
   AttachmentType,
   buildCssVars,
   DeploymentIcon,
+  DisplayAttachment,
   MDMessageViewer,
   mergeClasses,
   MessageRole,
@@ -30,8 +31,6 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   onAttachmentClick,
   onDownloadAll,
   onAttachmentRetry,
-  getAttachmentSizeLabel,
-  attachmentTheme,
   codeBlockTheme,
   labels,
 }) => {
@@ -105,7 +104,11 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           )}
           <AttachmentGroup
             attachments={visibleAttachments}
-            onAttachmentClick={onAttachmentClick}
+            onAttachmentClick={(id) =>
+              onAttachmentClick?.(
+                attachments?.find((a) => a.id === id) as DisplayAttachment,
+              )
+            }
             onDownloadAll={onDownloadAll}
             onRetry={onAttachmentRetry}
             labels={{
@@ -113,8 +116,6 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               retryLabel: attachmentRetryLabel,
               openInNewTabLabel: attachmentOpenInNewTabLabel,
             }}
-            getSizeLabel={getAttachmentSizeLabel}
-            theme={attachmentTheme}
           />
           {afterContent}
           <MessageActions

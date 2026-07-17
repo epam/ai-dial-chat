@@ -98,7 +98,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
       onDownloadAll(downloadableAttachments);
     } else {
       downloadableAttachments.forEach((attachment) =>
-        onAttachmentClick?.(attachment),
+        onAttachmentClick?.(attachment.id),
       );
     }
   };

@@ -1,7 +1,6 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
-  CodeBlockTheme,
   MessageRole,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
@@ -251,17 +250,6 @@ describe('UserMessageBubble — attachments', () => {
     );
     expect(screen.getByLabelText('Download file')).toBeTruthy();
   });
-
-  it('forwards attachmentTheme so file tiles use the markdown surface, not white, in light mode', () => {
-    const { container } = render(
-      <UserMessageBubble
-        text="Hello"
-        attachments={[ATTACHMENT]}
-        attachmentTheme={CodeBlockTheme.Light}
-      />,
-    );
-    expect(container.querySelector('[class*="tileLight"]')).toBeTruthy();
-  });
 });
 
 describe('UserMessageBubble — collapsed text', () => {
@@ -482,17 +470,6 @@ describe('AssistantMessageBubble — attachments', () => {
       />,
     );
     expect(screen.queryByRole('button', { name: /remove/i })).toBeNull();
-  });
-
-  it('forwards attachmentTheme so file tiles use the markdown surface, not white, in light mode', () => {
-    const { container } = render(
-      <AssistantMessageBubble
-        text="Here is your file"
-        attachments={[ATTACHMENT]}
-        attachmentTheme={CodeBlockTheme.Light}
-      />,
-    );
-    expect(container.querySelector('[class*="tileLight"]')).toBeTruthy();
   });
 });
 

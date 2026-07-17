@@ -16,7 +16,12 @@ import {
   getAttachmentCardState,
   getNameWithoutExtension,
 } from '../../../utils/attachment';
-import { DownloadAction, OpenLinkAction, ReloadAction } from './Actions';
+import {
+  DownloadAction,
+  OpenLinkAction,
+  ReloadAction,
+  RemoveAction,
+} from './Actions';
 import styles from './Attachment.module.scss';
 
 const DEFAULT_ERROR_REASON_TEXT: Record<AttachmentErrorReason, string> = {
@@ -43,6 +48,9 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
   isPasted,
   isLink,
   cssVars,
+  onExpand,
+  isExpandable,
+  onRemove,
 }) => {
   const {
     clickLabel = 'Download attachment',
@@ -83,14 +91,10 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 
   const cornerIconSpacing = canDownload || canRetry ? 'pe-5' : undefined;
 
-  const handleClick = (): void => {
-    if (canDownload) onClick?.(attachment);
-  };
-
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if ((e.key === 'Enter' || e.key === ' ') && canDownload) {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      handleClick();
+      onClick?.(attachment.id);
     }
   };
 
@@ -201,6 +205,15 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         />
       )}
 
+      {onRemove && (
+        <RemoveAction
+          ariaLabel={retryLabel}
+          errorTitle={errorTitle}
+          errorDescId={errorDescId}
+          onClick={onRemove}
+        />
+      )}
+
       {isError && (
         <span
           id={errorDescId}
@@ -216,33 +229,20 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 
   return (
     <div style={cssVars} className={mergeClasses('inline-flex', className)}>
-      {canDownload ? (
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label={clickLabel}
-          onClick={handleClick}
-          onKeyDown={handleKeyDown}
-          style={cssVars}
-          className={mergeClasses(
-            tileClassName,
-            'cursor-pointer focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',
-          )}
-        >
-          {tileContent}
-        </div>
-      ) : (
-        <div
-          className={tileClassName}
-          title={errorTitle || undefined}
-          role={isError ? 'group' : undefined}
-          aria-describedby={isError ? errorDescId : undefined}
-          tabIndex={isError ? 0 : undefined}
-          style={cssVars}
-        >
-          {tileContent}
-        </div>
-      )}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={clickLabel}
+        onClick={onClick ? () => onClick(id) : undefined}
+        onKeyDown={handleKeyDown}
+        style={cssVars}
+        className={mergeClasses(
+          tileClassName,
+          'cursor-pointer focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',
+        )}
+      >
+        {tileContent}
+      </div>
     </div>
   );
 };

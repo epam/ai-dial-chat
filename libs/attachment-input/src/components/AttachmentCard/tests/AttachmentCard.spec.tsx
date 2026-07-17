@@ -470,11 +470,7 @@ describe('AttachmentCard — onClick', () => {
 
     it('renders a decorative download icon with no accessible name when enabled', () => {
       const { container } = render(
-        <AttachmentCard
-          attachment={image}
-          onClick={vi.fn()}
-          showHoverDownloadIcon
-        />,
+        <AttachmentCard attachment={image} onClick={vi.fn()} />,
       );
       const icon = container.querySelector('svg.tabler-icon-download');
       expect(icon).toBeTruthy();
@@ -487,20 +483,13 @@ describe('AttachmentCard — onClick', () => {
           attachment={image}
           onClick={vi.fn()}
           onRemove={vi.fn()}
-          showHoverDownloadIcon
         />,
       );
       expect(container.querySelector('svg.tabler-icon-download')).toBeNull();
     });
 
     it('renders an interactive download button when onDownload is provided', () => {
-      render(
-        <AttachmentCard
-          attachment={image}
-          showHoverDownloadIcon
-          onDownload={vi.fn()}
-        />,
-      );
+      render(<AttachmentCard attachment={image} onDownload={vi.fn()} />);
       expect(
         screen.getByRole('button', { name: 'Download attachment' }),
       ).toBeTruthy();
@@ -508,13 +497,7 @@ describe('AttachmentCard — onClick', () => {
 
     it('calls onDownload with attachment id when the download button is clicked', async () => {
       const onDownload = vi.fn();
-      render(
-        <AttachmentCard
-          attachment={image}
-          showHoverDownloadIcon
-          onDownload={onDownload}
-        />,
-      );
+      render(<AttachmentCard attachment={image} onDownload={onDownload} />);
       await userEvent.click(
         screen.getByRole('button', { name: 'Download attachment' }),
       );
@@ -528,7 +511,6 @@ describe('AttachmentCard — onClick', () => {
         <AttachmentCard
           attachment={image}
           onClick={onClick}
-          showHoverDownloadIcon
           onDownload={onDownload}
         />,
       );
