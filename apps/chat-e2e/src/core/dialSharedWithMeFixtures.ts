@@ -201,6 +201,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFileManagerModal: FileManagerModal;
   additionalShareUserFileManagerModalManager: FileManager;
   additionalShareUserFileManagerModalGrid: FileManagerGrid;
+  additionalShareUserFileManagerModalGridAssertion: FileManagerGridAssertion;
   additionalShareUserFileManagerModalToolbar: FileManagerToolbar;
   additionalShareUserFileManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
   additionalShareUserFileManagerModalFoldersTree: FoldersTree;
@@ -1066,6 +1067,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserFileManagerModalGrid =
       additionalShareUserFileManagerModalManager.getFileManagerGrid();
     await use(additionalShareUserFileManagerModalGrid);
+  },
+  additionalShareUserFileManagerModalGridAssertion: async (
+    { additionalShareUserFileManagerModalGrid },
+    use,
+  ) => {
+    const additionalShareUserFileManagerModalGridAssertion =
+      new FileManagerGridAssertion(additionalShareUserFileManagerModalGrid);
+    await use(additionalShareUserFileManagerModalGridAssertion);
   },
   additionalShareUserFileManagerModalToolbar: async (
     { additionalShareUserFileManagerModalManager },
