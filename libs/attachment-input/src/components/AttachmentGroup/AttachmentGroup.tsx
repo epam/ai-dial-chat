@@ -103,6 +103,15 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
     }
   };
 
+  const handleDownload = (id: string) => {
+    const downloadableAttachment = attachments.find(
+      (attachment) => attachment.id === id,
+    );
+    if (downloadableAttachment) {
+      onDownloadAll?.([downloadableAttachment]);
+    }
+  };
+
   return (
     <div
       role="group"
@@ -154,7 +163,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
             <AttachmentCard
               attachment={attachment}
               onClick={onAttachmentClick}
-              onDownload={onAttachmentClick}
+              onDownload={handleDownload}
               onRetry={onRetry}
               labels={{
                 clickLabel,

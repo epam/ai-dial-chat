@@ -47,20 +47,16 @@
   color: var(--ci-tile-error-text, var(--text-error, #ae2f2f));
 }
 
-.removeAction {
+.hoverIcon {
   background: var(--ci-tile-hover-icon-bg, var(--bg-layer-2, #eef1f7));
   color: var(--ci-tile-hover-icon-color, var(--text-primary, #161b2d));
+
   &:hover {
     background: var(
       --ci-tile-hover-icon-bg,
       var(--bg-layer-2, #eef1f7)
     ) !important;
   }
-}
-
-.hoverIcon {
-  background: var(--ci-tile-hover-icon-bg, var(--bg-layer-2, #eef1f7));
-  color: var(--ci-tile-hover-icon-color, var(--text-primary, #161b2d));
 }
 
 .track {
