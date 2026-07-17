@@ -1271,6 +1271,7 @@ export const filesSlice = createSlice({
       }: PayloadAction<{
         files: DialUploadFileItem[];
         destinationUrl: string;
+        isFromDeviceAttachment?: boolean;
       }>,
     ) => {
       state.isUploadingFiles = true;
@@ -1299,6 +1300,7 @@ export const filesSlice = createSlice({
           fileContent,
           contentLength: file.fileContent.size,
           contentType: fileContent.type,
+          isFromDeviceAttachment: payload.isFromDeviceAttachment ?? false,
         });
 
         if (file.fileContent.size) {
