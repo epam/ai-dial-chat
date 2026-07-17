@@ -2418,7 +2418,7 @@ export interface DialToolsetDto {
    */
   toolset: string;
   /**
-   * Human-readable name. In `listToolsets` results this is always populated: `display_name` when set, otherwise the last path segment of `id`.
+   * Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`.
    * @type {string}
    * @memberof DialToolsetDto
    */
@@ -2497,10 +2497,10 @@ export interface DialToolsetDto {
   updatedAt?: number;
   /**
    *
-   * @type {DialModelFeaturesDto}
+   * @type {DialToolsetFeaturesDto}
    * @memberof DialToolsetDto
    */
-  features?: DialModelFeaturesDto;
+  features?: DialToolsetFeaturesDto;
   /**
    *
    * @type {string}
@@ -2549,6 +2549,157 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   sharedWithMe?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface DialToolsetFeaturesDto
+ */
+export interface DialToolsetFeaturesDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  rate?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  tokenize?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  truncatePrompt?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  _configuration?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  systemPrompt?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  tools?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  seed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  urlAttachments?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  folderAttachments?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  allowResume?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  accessibleByPerRequestKey?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  contentParts?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  temperature?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  cache?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  autoCaching?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  parallelToolCalls?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  assistantAttachmentsInRequest?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  mcp?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  chatCompletion?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  responsesApi?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  maxTokensSupported?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  maxCompletionTokensSupported?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialToolsetFeaturesDto
+   */
+  customTemperatureSupported?: boolean;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialToolsetFeaturesDto
+   */
+  reasoningEfforts?: Array<string>;
 }
 /**
  *
