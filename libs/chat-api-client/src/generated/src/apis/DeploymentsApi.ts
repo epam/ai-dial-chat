@@ -33,6 +33,7 @@ export interface GetDeploymentLimitsRequest {
 }
 
 export interface ListDeploymentsRequest {
+  refresh?: boolean;
   interfaceType?: Array<ListDeploymentsInterfaceTypeEnum>;
 }
 
@@ -207,6 +208,10 @@ export class DeploymentsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<DeploymentsResponseDto>> {
     const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['refresh'] != null) {
+      queryParameters['refresh'] = requestParameters['refresh'];
+    }
 
     if (requestParameters['interfaceType'] != null) {
       queryParameters['interface_type'] = requestParameters['interfaceType'];

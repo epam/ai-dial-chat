@@ -1,5 +1,38 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export class ConversationStarterDto {
+  @ApiProperty({ description: 'Starter button label' })
+  title!: string;
+
+  @ApiProperty({ description: 'Text inserted into the chat input' })
+  text!: string;
+}
+
+export class ConversationStartersDto {
+  @ApiPropertyOptional({
+    description: 'Optional text shown above the conversation starter buttons',
+  })
+  introText?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'When true, starter buttons submit immediately after selection',
+  })
+  autoSubmit?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'When true, the chat input is disabled and users can only use starters',
+  })
+  chatMessageInputDisabled?: boolean;
+
+  @ApiProperty({
+    type: [ConversationStarterDto],
+    description: 'Conversation starter buttons configured by the application',
+  })
+  starters!: ConversationStarterDto[];
+}
+
 export class DeploymentFeaturesDto {
   @ApiProperty({
     description: 'Whether the deployment supports a custom system prompt',
@@ -143,6 +176,13 @@ export class DeploymentItemDto {
       'Parent folder path for application-type deployments (absent for root-level or non-application items)',
   })
   applicationFolder?: string;
+
+  @ApiPropertyOptional({
+    type: ConversationStartersDto,
+    description:
+      'Quick Apps conversation starter settings from application properties',
+  })
+  conversationStarters?: ConversationStartersDto;
 }
 
 export class DeploymentsResponseDto {

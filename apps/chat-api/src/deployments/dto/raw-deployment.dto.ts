@@ -23,6 +23,7 @@ export interface RawDeploymentDto {
   max_input_attachments?: number;
   description_keywords?: string[];
   owner?: string;
+  application_properties?: Record<string, unknown>;
   features?: RawDeploymentFeaturesDto;
   /**
    * Root-level MCP descriptor DIAL Core attaches to MCP-capable applications

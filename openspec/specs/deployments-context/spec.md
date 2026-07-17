@@ -286,6 +286,8 @@ The raw `'dial:chatMessageInputDisabled'` field SHALL be removed — the backend
 
 This prevents a race where the initial mount-time list fetch (unavoidably in flight before any resource could have been shared to the user) resolves *after* a later, deliberate `refetchDeployments()`/`refetchToolsets()` call (e.g. one triggered right after accepting a share invitation) and overwrites its fresher result with the stale pre-share snapshot.
 
+`refetchDeployments()` SHALL call `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat], true)` so app create/delete/share/save flows that need a just-written Quick App deployment bypass the deployments endpoint's 30-second browser/server cache window.
+
 #### Scenario: A later refetch's result is not clobbered by a slower initial load
 
 - **WHEN** the initial mount-time deployments fetch is still in flight and `refetchDeployments()` is called and resolves first with a fresh list
@@ -303,8 +305,12 @@ This prevents a race where the initial mount-time list fetch (unavoidably in fli
 - **WHEN** `refetchDeployments()` (or `refetchToolsets()`) is called with no other in-flight request for that resource
 - **THEN** its result is applied to `items`/`toolsets` as before, unaffected by the request-id guard
 
+#### Scenario: Explicit deployments refetch requests a fresh backend list
+
+- **WHEN** `refetchDeployments()` is called after a Quick App save or other deployment-mutating flow
+- **THEN** it calls `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat], true)` so the backend receives `refresh=true`
+
 #### Scenario: A superseded response does not trigger an error notification
 
 - **WHEN** a stale response for a since-superseded request arrives (successfully, from the network's perspective)
 - **THEN** no `showNotification` error call is made and no state changes — the response is discarded because it is stale, not because it failed
-

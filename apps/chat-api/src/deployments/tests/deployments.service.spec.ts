@@ -181,6 +181,29 @@ describe('DeploymentsService', () => {
       expect(sdkClient.listDeployments).not.toHaveBeenCalled();
     });
 
+    it('bypasses cached deployments when refresh is true', async () => {
+      const cached: DeploymentItemDto[] = [
+        { id: 'cached', displayName: 'Cached', type: 'model' },
+      ];
+      const { service, sdkClient } = makeService({ cached });
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [mockModel],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+        undefined,
+        true,
+      );
+
+      expect(result.deployments[0].id).toBe(mockModel.id);
+      expect(sdkClient.listDeployments).toHaveBeenCalledOnce();
+    });
+
     it('applies interface_type filter in-process after cache hit', async () => {
       const cached: DeploymentItemDto[] = [
         {
@@ -250,6 +273,47 @@ describe('DeploymentsService', () => {
       expect(result.deployments[0].applicationTypeSchemaId).toBe(
         'https://example.com/schemas/quick-app',
       );
+    });
+
+    it('maps Quick Apps conversation starters from application properties', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.listDeployments.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          {
+            ...mockApplication,
+            application_properties: {
+              conversation_starters: {
+                intro_text: 'Choose a starting point',
+                auto_submit: false,
+                chat_message_input_disabled: true,
+                starters: [
+                  { title: 'Summarize', text: 'Summarize this document' },
+                  { title: ' ', text: 'Ignored' },
+                  { title: 'Explain', text: 'Explain the key points' },
+                ],
+              },
+            },
+          },
+        ],
+      });
+
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+
+      expect(result.deployments[0].conversationStarters).toEqual({
+        introText: 'Choose a starting point',
+        autoSubmit: false,
+        chatMessageInputDisabled: true,
+        starters: [
+          { title: 'Summarize', text: 'Summarize this document' },
+          { title: 'Explain', text: 'Explain the key points' },
+        ],
+      });
     });
 
     it('does not set applicationTypeSchemaId for model deployments', async () => {

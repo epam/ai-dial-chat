@@ -269,9 +269,10 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const refetchDeployments = useCallback(async () => {
     const requestId = ++deploymentsRequestIdRef.current;
     try {
-      const { deployments } = await getDeployments([
-        ListDeploymentsInterfaceTypeEnum.Chat,
-      ]);
+      const { deployments } = await getDeployments(
+        [ListDeploymentsInterfaceTypeEnum.Chat],
+        true,
+      );
       if (deploymentsRequestIdRef.current !== requestId) return;
       setRawDeployments(sortDeployments(deployments ?? []));
     } catch {

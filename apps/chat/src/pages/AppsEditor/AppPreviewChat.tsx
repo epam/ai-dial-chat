@@ -1,9 +1,11 @@
 import {
   MessageRating,
   MessageRole,
+  ResponseFormat,
   type Attachment,
   type Conversation,
   type Message,
+  type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
@@ -27,6 +29,7 @@ import ConversationView from '../../components/ConversationView/ConversationView
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
+import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import {
   AppsEditorI18nKeys,
@@ -40,6 +43,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
+import { getApiErrorMessage } from '../../server-api/api-error';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   createConversation as apiCreateConversation,
@@ -52,6 +56,8 @@ import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
 import { encodeDeploymentId } from '../../utils/deployment-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
+import { getStarterPopulateText } from '../../utils/starter-option';
 
 interface Props {
   appId: string;
@@ -89,9 +95,14 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     () => items.find((item) => item.id === deploymentId),
     [items, deploymentId],
   );
+  const quickAppStarters = useMemo(
+    () => getQuickAppConversationStarters(appDeployment?.conversationStarters),
+    [appDeployment?.conversationStarters],
+  );
 
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [inputMessage, setInputMessage] = useState<string | undefined>();
   const conversationRef = useRef<Conversation | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   useEffect(() => {
@@ -199,6 +210,35 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     [deploymentId, startStream],
   );
 
+  const handleStarterSelect = useCallback(
+    (starter: StarterOption) => {
+      const text = getStarterPopulateText(starter);
+      if (!starter['dial:widgetOptions'].submit) {
+        setInputMessage(text);
+        return;
+      }
+
+      const createFromStarter = async () => {
+        try {
+          await handleCreateConversation(text, [], {
+            responseFormat: ResponseFormat.Markdown,
+            systemPrompt: '',
+            temperature: 0.5,
+          });
+        } catch (err) {
+          const errorMessage = await getApiErrorMessage(err);
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
+          });
+        }
+      };
+
+      void createFromStarter();
+    },
+    [handleCreateConversation, showNotification, t],
+  );
+
   /*
    * useConversationHandlers only ever calls `navigate(ROUTES.Root)`, triggered by
    * deleting the last message in the conversation. This stub handles only that
@@ -282,10 +322,18 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             selectedDeploymentId={deploymentId}
             isModelSelectorDisabled
             selectedDeployment={appDeployment}
+            isInputDisabled={quickAppStarters.isChatMessageInputDisabled}
             placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
+            introText={quickAppStarters.introText}
+            message={inputMessage}
             inputStyles={CONVERSATION_ROUTE_INPUT_STYLES}
             onCreateConversation={handleCreateConversation}
-          />
+          >
+            <StarterButtons
+              starters={quickAppStarters.starters}
+              onSelect={handleStarterSelect}
+            />
+          </NewConversationComposer>
         </Suspense>
       </div>
     );

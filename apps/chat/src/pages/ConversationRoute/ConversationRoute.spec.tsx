@@ -92,6 +92,7 @@ vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
       deployments,
       selectedDeploymentId,
       isInputDisabled,
+      message,
       sendOnEnter,
     }: {
       onSend?: (msg: string, att: never[]) => Promise<void> | void;
@@ -102,6 +103,7 @@ vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
       deployments?: unknown[];
       selectedDeploymentId?: string | null;
       isInputDisabled?: boolean;
+      message?: string;
       sendOnEnter?: string;
     }) => (
       <div>
@@ -114,6 +116,7 @@ vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
         <output aria-label="Input disabled">
           {String(isInputDisabled ?? false)}
         </output>
+        <output aria-label="Input message">{message ?? ''}</output>
         <output aria-label="Send on enter">{sendOnEnter ?? 'none'}</output>
         <button
           type="button"
@@ -363,6 +366,85 @@ describe('ConversationRoute', () => {
     renderRoute();
     await waitFor(() => {
       expect(screen.getByLabelText('Input disabled').textContent).toBe('false');
+    });
+  });
+
+  it('renders Quick Apps intro text and populates input from non-submit starter', async () => {
+    mockUseDeployments.mockReturnValue({
+      items: [
+        {
+          ...mockItems[0],
+          conversationStarters: {
+            introText: 'Choose how to start',
+            autoSubmit: false,
+            chatMessageInputDisabled: true,
+            starters: [{ title: 'Draft', text: 'Write a draft' }],
+          },
+        },
+      ],
+      selectedItemId: 'gpt-4o',
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+    });
+
+    renderRoute();
+
+    expect(await screen.findByText('Choose how to start')).toBeTruthy();
+    expect(screen.getByLabelText('Input disabled').textContent).toBe('true');
+
+    await act(async () => {
+      screen.getByText('Draft').click();
+    });
+
+    expect(screen.getByLabelText('Input message').textContent).toBe(
+      'Write a draft',
+    );
+    expect(mockCreateConversation).not.toHaveBeenCalled();
+  });
+
+  it('creates a conversation from auto-submit Quick Apps starter without configuration value', async () => {
+    mockUseDeployments.mockReturnValue({
+      items: [
+        {
+          ...mockItems[0],
+          conversationStarters: {
+            autoSubmit: true,
+            starters: [{ title: 'Summarize', text: 'Summarize this' }],
+          },
+        },
+      ],
+      selectedItemId: 'gpt-4o',
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+    });
+
+    renderRoute();
+
+    await act(async () => {
+      screen.getByText('Summarize').click();
+    });
+
+    await waitFor(() => {
+      expect(mockCreateConversation).toHaveBeenCalledWith(
+        'Summarize this',
+        'gpt-4o',
+        [],
+        undefined,
+      );
     });
   });
 
