@@ -131,36 +131,6 @@ describe('MessageBubble', () => {
     const actionsWrapper = container.querySelector('[class*="gap-1"]');
     expect(actionsWrapper?.className).not.toContain('opacity-0');
   });
-
-  it('forwards onAttachmentClick and attachmentClickLabel to user bubble', () => {
-    const onAttachmentClick = vi.fn();
-    render(
-      <MessageBubble
-        text="Hello"
-        role={MessageRole.User}
-        attachments={[ATTACHMENT]}
-        onAttachmentClick={onAttachmentClick}
-        labels={{ attachmentClickLabel: 'Download file' }}
-      />,
-    );
-    fireEvent.click(screen.getByLabelText('Download file'));
-    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
-  });
-
-  it('forwards onAttachmentClick and attachmentClickLabel to assistant bubble', () => {
-    const onAttachmentClick = vi.fn();
-    render(
-      <MessageBubble
-        text="Hello"
-        role={MessageRole.Assistant}
-        attachments={[ATTACHMENT]}
-        onAttachmentClick={onAttachmentClick}
-        labels={{ attachmentClickLabel: 'Download file' }}
-      />,
-    );
-    fireEvent.click(screen.getByLabelText('Download file'));
-    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
-  });
 });
 
 describe('UserMessageBubble — attachments', () => {
