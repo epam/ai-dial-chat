@@ -94,6 +94,7 @@ export const RemoveAction: FC<Omit<ActionProps, 'icon'>> = ({ ...props }) => {
   return (
     <ActionButton
       icon={<IconX size={DIAL_ICON_SIZE.SM} aria-hidden />}
+      className={styles.removeAction}
       {...props}
     />
   );

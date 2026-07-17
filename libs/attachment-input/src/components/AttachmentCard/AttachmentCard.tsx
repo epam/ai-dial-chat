@@ -64,6 +64,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         onClick={onClick}
         onExpand={onExpand}
         styles={cardStyles}
+        onRemove={onRemove}
         cssVars={cssVars}
       />
     );

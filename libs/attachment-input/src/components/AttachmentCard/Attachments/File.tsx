@@ -144,6 +144,14 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     </div>
   );
 
+  const handleClick = (): void => {
+    if (isExpandable && onExpand) {
+      onExpand(id);
+    } else if (onClick) {
+      onClick(id);
+    }
+  };
+
   const tileContent = (
     <>
       {isError ? (
@@ -211,6 +219,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
           errorTitle={errorTitle}
           errorDescId={errorDescId}
           onClick={onRemove}
+          id={id}
         />
       )}
 
@@ -233,7 +242,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         role="button"
         tabIndex={0}
         aria-label={clickLabel}
-        onClick={onClick ? () => onClick(id) : undefined}
+        onClick={handleClick}
         onKeyDown={handleKeyDown}
         style={cssVars}
         className={mergeClasses(

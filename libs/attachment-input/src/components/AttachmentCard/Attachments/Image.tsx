@@ -20,12 +20,14 @@ import type {
   AttachmentCardStyles,
 } from '../../../models/attachment-card';
 import { getAttachmentCardState } from '../../../utils/attachment';
+import { RemoveAction } from './Actions';
 import styles from './Attachment.module.scss';
 
 interface ImageAttachmentProps {
   attachment: DisplayAttachment;
   onExpand?: (attachmentId: string) => void;
   onClick?: (attachmentId: string) => void;
+  onRemove?: (attachmentId: string) => void;
   labels?: AttachmentCardLabels;
   styles?: AttachmentCardStyles;
   cssVars?: CSSProperties;
@@ -37,6 +39,7 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
   onExpand,
   onClick,
   labels,
+  onRemove,
   cssVars,
   styles: cardStyles,
 }) => {
@@ -96,6 +99,7 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
       }
     >
       <div className="relative h-full w-full overflow-hidden">
+        {onRemove && <RemoveAction onClick={onRemove} id={id} />}
         {imageLoadStatus !== LazyImageLoadStatus.Loaded && (
           <DialSkeleton
             variant={DialSkeletonVariant.Rectangular}
