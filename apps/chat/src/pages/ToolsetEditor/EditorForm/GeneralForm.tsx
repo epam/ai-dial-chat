@@ -51,6 +51,7 @@ const GeneralForm: FC<Props> = ({ form, errors, onChange }) => {
         label: t(EditorI18nKeys.IntroLabel),
         placeholder: t(EditorI18nKeys.IntroPlaceholder),
       },
+      ariaLabel: t(EditorI18nKeys.StepGeneral),
     }),
     [t],
   );
@@ -70,7 +71,6 @@ const GeneralForm: FC<Props> = ({ form, errors, onChange }) => {
       errors={errors}
       onChange={onChange}
       labels={labels}
-      ariaLabel={t(EditorI18nKeys.StepGeneral)}
     />
   );
 };

@@ -42,10 +42,8 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   isSelected,
   shouldAlwaysShowActions,
   labels,
-  typeLabels,
   styles: cardStyles,
   showHoverDownloadIcon = false,
-  className,
 }) => {
   const {
     removeLabel = 'Remove attachment',
@@ -59,6 +57,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     colors,
     typography,
     roundedClassName = 'rounded-xl',
+    className,
   } = cardStyles ?? {};
   const { id, name } = attachment;
   const imageSrc = attachment.previewUrl ?? attachment.url;
@@ -104,9 +103,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         attachment,
         isSelected ?? false,
         shouldAlwaysShowActions ?? false,
-        typeLabels,
+        labels,
       ),
-    [attachment, isSelected, shouldAlwaysShowActions, typeLabels],
+    [attachment, isSelected, shouldAlwaysShowActions, labels],
   );
 
   /*

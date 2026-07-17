@@ -15,7 +15,10 @@ export type {
   MessageBubbleLabels,
   AssistantMessageBubbleLabels,
 } from './models/message-bubble';
-export type { StatusMessageBubbleProps } from './components/MessageBubble/StatusMessageBubble';
+export type {
+  StatusMessageBubbleLabels,
+  StatusMessageBubbleProps,
+} from './components/MessageBubble/StatusMessageBubble';
 export type {
   MessageActionsProps,
   MessageActionLabels,
@@ -24,6 +27,7 @@ export type {
 } from './models/message-actions';
 export type {
   MessageSourceProps,
+  MessageSourceLabels,
   MessageSourceStyles,
   MessageSourceColors,
   MessageSourceTypography,

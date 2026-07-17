@@ -42,10 +42,8 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   onRetry,
   getSizeLabel,
   labels,
-  typeLabels,
   styles: groupStyles,
   theme,
-  className,
 }) => {
   const {
     ariaLabel = 'Attachments',
@@ -54,9 +52,15 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
     showLessLabel = 'Show less',
     downloadAllLabel = 'Download all',
     getHeaderLabel = (count: number) => pluralize(count, 'attachment'),
+    promptLabel,
+    pastedLabel,
+    imageLabel,
   } = labels ?? {};
-  const { headerLabelClassName = 'dial-tiny-semi-text', colors } =
-    groupStyles ?? {};
+  const {
+    typography: { headerLabelClassName = 'dial-tiny-semi-text' } = {},
+    colors,
+    className,
+  } = groupStyles ?? {};
   const cssVars = buildCssVars({
     '--ci-group-bg': colors?.background,
     '--ci-group-border': colors?.border,
@@ -158,11 +162,18 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
                     : undefined
                 }
                 onRetry={onRetry}
-                labels={{ clickLabel, retryLabel }}
-                typeLabels={typeLabels}
-                styles={{ roundedClassName: 'rounded-xl' }}
+                labels={{
+                  clickLabel,
+                  retryLabel,
+                  promptLabel,
+                  pastedLabel,
+                  imageLabel,
+                }}
+                styles={{
+                  roundedClassName: 'rounded-xl',
+                  className: mergeClasses('size-[84px]', styles.imageTile),
+                }}
                 showHoverDownloadIcon
-                className={mergeClasses('size-[84px]', styles.imageTile)}
               />
             ) : (
               <AttachmentFileRow
@@ -173,8 +184,10 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
                   clickLabel,
                   retryLabel,
                   sizeLabel: getSizeLabel?.(attachment),
+                  promptLabel,
+                  pastedLabel,
+                  imageLabel,
                 }}
-                typeLabels={typeLabels}
                 theme={theme}
               />
             )}
@@ -195,7 +208,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
             <AttachmentMoreTile
               count={0}
               onClick={() => setIsExpanded(false)}
-              ariaLabel={showLessLabel}
+              labels={{ ariaLabel: showLessLabel }}
             >
               <IconChevronUp size={DIAL_ICON_SIZE.MD} aria-hidden />
             </AttachmentMoreTile>

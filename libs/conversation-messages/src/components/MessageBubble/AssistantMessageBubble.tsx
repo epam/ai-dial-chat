@@ -70,7 +70,9 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           src={deploymentIconUrl}
           size={28}
           initialsName={deploymentDisplayName || deploymentIconFallbackLabel}
-          tooltip={deploymentDisplayName ?? deploymentIconFallbackLabel}
+          labels={{
+            tooltip: deploymentDisplayName ?? deploymentIconFallbackLabel,
+          }}
         />
       )}
       <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-5">

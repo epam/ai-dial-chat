@@ -12,9 +12,11 @@ import type { ConversationSourcesPanelProps } from '../../models/conversation-so
 import FilesSection from '../FilesSection/FilesSection';
 import SourcesSection from '../SourcesSection/SourcesSection';
 export type {
+  ConversationSourcesPanelColors,
   ConversationSourcesPanelLabels,
   ConversationSourcesPanelProps,
   ConversationSourcesPanelStyles,
+  ConversationSourcesPanelTypography,
 } from '../../models/conversation-sources-panel-props';
 
 const includesIgnoreCase = (text: string, query: string): boolean =>
@@ -114,10 +116,12 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
     >
       {!isEmpty && (
         <SearchInput
-          placeholder={labels.searchPlaceholder}
           value={searchQuery}
           onChange={setSearchQuery}
-          clearLabel={labels.searchClearLabel}
+          labels={{
+            placeholder: labels.searchPlaceholder,
+            clearLabel: labels.searchClearLabel,
+          }}
         />
       )}
       <span role="status" aria-live="polite" className="sr-only">
@@ -134,7 +138,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
               attachments={filteredUploaded}
               title={labels.uploadedSectionTitle}
               searchQuery={searchQuery}
-              titleClassName={styles?.sectionTitleClassName}
+              titleClassName={styles?.typography?.sectionTitleClassName}
               onAttachmentClick={onAttachmentClick}
               attachmentClickLabel={labels.attachmentClickLabel}
             />
@@ -142,7 +146,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
               attachments={filteredGenerated}
               title={labels.generatedSectionTitle}
               searchQuery={searchQuery}
-              titleClassName={styles?.sectionTitleClassName}
+              titleClassName={styles?.typography?.sectionTitleClassName}
               onAttachmentClick={onAttachmentClick}
               attachmentClickLabel={labels.attachmentClickLabel}
             />
@@ -150,9 +154,13 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
               sources={filteredSources}
               title={labels.sourcesSectionTitle}
               searchQuery={searchQuery}
-              titleClassName={styles?.sectionTitleClassName}
-              linkClassName={styles?.sourceLinkClassName}
-              quoteClassName={styles?.sourceQuoteClassName}
+              titleClassName={styles?.typography?.sectionTitleClassName}
+              linkClassName={styles?.typography?.sourceLinkClassName}
+              quoteClassName={styles?.typography?.sourceQuoteClassName}
+              colors={{
+                link: styles?.colors?.sourceLink,
+                quote: styles?.colors?.sourceQuote,
+              }}
               copyLabel={labels.copySourceLabel}
               onSourceClick={onSourceClick}
             />

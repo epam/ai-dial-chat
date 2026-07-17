@@ -20,8 +20,7 @@ describe('FileDndOverlay', () => {
     render(
       <FileDndOverlay
         isVisible={true}
-        title="Add attachments"
-        subtitle="Drop here"
+        labels={{ title: 'Add attachments', subtitle: 'Drop here' }}
       />,
     );
     expect(screen.getByText('Add attachments')).toBeTruthy();

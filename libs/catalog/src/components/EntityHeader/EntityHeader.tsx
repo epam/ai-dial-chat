@@ -57,7 +57,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
         src={item.iconUrl}
         size={iconSize}
         initialsName={item.name}
-        badgeClassName={iconBadgeClassName}
+        styles={{ badgeClassName: iconBadgeClassName }}
       />
 
       <div

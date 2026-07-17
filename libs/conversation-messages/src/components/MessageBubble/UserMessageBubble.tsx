@@ -100,7 +100,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           }}
           getSizeLabel={getAttachmentSizeLabel}
           theme={attachmentTheme}
-          className="max-w-[640px]"
+          styles={{ className: 'max-w-[640px]' }}
         />
         {text && (
           <div

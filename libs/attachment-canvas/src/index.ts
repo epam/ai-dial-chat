@@ -29,5 +29,6 @@ export type {
   AttachmentCanvasColors,
   AttachmentCanvasTypography,
   AttachmentCanvasStyles,
+  AttachmentCanvasLabels,
   AttachmentCanvasProps,
 } from './models/attachment-canvas';

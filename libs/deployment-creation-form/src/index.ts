@@ -1,10 +1,10 @@
 export { DeploymentCreationForm } from './components/DeploymentCreationForm/DeploymentCreationForm';
 export type {
-  DeploymentCreationFormClassNames,
   DeploymentCreationFormFieldErrors,
   DeploymentCreationFormFieldLabels,
   DeploymentCreationFormLabels,
   DeploymentCreationFormProps,
+  DeploymentCreationFormStyles,
   DeploymentCreationFormValues,
 } from './models/deployment-creation-form';
 export type {

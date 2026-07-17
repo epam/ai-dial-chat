@@ -46,10 +46,15 @@ export interface DeploymentCreationFormLabels {
   topics: DeploymentCreationFormFieldLabels;
   /** Labels for the intro field. */
   intro: DeploymentCreationFormFieldLabels;
+  /**
+   * Accessible name for the field set as a whole, exposed via `role="group"`.
+   * Supply the host app's translated section title (e.g. `'General'`).
+   */
+  ariaLabel?: string;
 }
 
 /** Optional per-slot class name overrides for visual composition by the host app. */
-export interface DeploymentCreationFormClassNames {
+export interface DeploymentCreationFormStyles {
   /** Class applied to the root container. Defaults to a vertical flex stack. */
   root?: string;
   /** Class applied to each individual field wrapper. */
@@ -69,10 +74,5 @@ export interface DeploymentCreationFormProps {
   /** Maximum character length enforced on the intro field. Defaults to `90`. */
   introMaxLength?: number;
   /** Optional per-slot class name overrides. */
-  classNames?: DeploymentCreationFormClassNames;
-  /**
-   * Accessible name for the field set as a whole, exposed via `role="group"`.
-   * Supply the host app's translated section title (e.g. `'General'`).
-   */
-  ariaLabel?: string;
+  styles?: DeploymentCreationFormStyles;
 }

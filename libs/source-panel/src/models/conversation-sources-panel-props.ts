@@ -29,14 +29,30 @@ export interface ConversationSourcesPanelLabels {
   attachmentClickLabel: string;
 }
 
-/** Optional typography and color class overrides for inner elements. */
-export interface ConversationSourcesPanelStyles {
+/** CSS custom-property overrides for the sources section. */
+export interface ConversationSourcesPanelColors {
+  /** Source link color. */
+  sourceLink?: string;
+  /** Source quote text color. */
+  sourceQuote?: string;
+}
+
+/** Typography (font utility class) overrides for inner elements. */
+export interface ConversationSourcesPanelTypography {
   /** CSS class applied to each section heading (`<h2>`). Defaults to `'dial-body-semi-text'`. */
   sectionTitleClassName?: string;
   /** CSS class applied to each source link. Defaults to `'dial-small-text !text-accent-primary'`. */
   sourceLinkClassName?: string;
   /** CSS class applied to each source quote paragraph. Defaults to `'dial-tiny-text text-secondary'`. */
   sourceQuoteClassName?: string;
+}
+
+/** Optional color and typography overrides for inner elements. */
+export interface ConversationSourcesPanelStyles {
+  /** Color overrides applied as CSS custom properties to the sources section. */
+  colors?: ConversationSourcesPanelColors;
+  /** Typography (font utility class) overrides for section headings and source text. */
+  typography?: ConversationSourcesPanelTypography;
 }
 
 /** Props for the ConversationSourcesPanel component. */

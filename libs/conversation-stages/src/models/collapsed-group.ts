@@ -1,4 +1,4 @@
-import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
+import type { Stage } from '@epam/ai-dial-chat-shared';
 
 /** Color overrides for the `CollapsedGroup` component applied as CSS custom properties. */
 export interface CollapsedGroupColors {
@@ -28,22 +28,26 @@ export interface CollapsedGroupStyles {
   typography?: CollapsedGroupTypography;
 }
 
+/** User-visible strings for the `CollapsedGroup` component. */
+export interface CollapsedGroupLabels {
+  /** Label shown before the steps count on the toggle button. Defaults to `'Executed'`. */
+  executedLabel?: string;
+  /** Returns the pluralized label for the steps count. Receives the count so callers can handle any plural rule. Defaults to `() => 'steps'`. */
+  stepsLabel?: (count: number) => string;
+}
+
 /** Props accepted by the `CollapsedGroup` component. */
 export interface CollapsedGroupProps {
   /** Ordered list of stages to display. */
   stages: Stage[];
   /** When `true` the component renders all stages directly via `StagesPanel` without collapsing. */
   isStreaming: boolean;
-  /** Label shown before the steps count on the toggle button. Defaults to `'Executed'`. */
-  executedLabel?: string;
-  /** Returns the pluralized label for the steps count. Receives the count so callers can handle any plural rule. Defaults to `() => 'steps'`. */
-  stepsLabel?: (count: number) => string;
+  /** User-visible strings for the toggle button. */
+  labels?: CollapsedGroupLabels;
   /** Extra class name(s) merged onto the outer wrapper. */
   className?: string;
   /** Color and typography overrides applied as CSS custom properties. */
   styles?: CollapsedGroupStyles;
   /** Minimum number of stages required to activate the collapse behaviour. Defaults to `7`. */
   collapseThreshold?: number;
-  /** Called when the user clicks an attachment card inside a stage. */
-  onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }

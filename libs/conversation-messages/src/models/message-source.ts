@@ -28,10 +28,16 @@ export interface MessageSourceStyles {
   className?: string;
 }
 
-/** Props accepted by the `MessageSource` component. */
-export interface MessageSourceProps {
+/** User-visible strings for the `MessageSource` component. */
+export interface MessageSourceLabels {
   /** Text label displayed inside the button. */
   label: string;
+}
+
+/** Props accepted by the `MessageSource` component. */
+export interface MessageSourceProps {
+  /** User-visible strings. */
+  labels: MessageSourceLabels;
   /** Called when the user clicks the source button. */
   onClick?: () => void;
   /** Color and typography overrides applied as CSS custom properties. */
