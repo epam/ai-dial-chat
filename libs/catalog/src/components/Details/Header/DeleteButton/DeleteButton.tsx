@@ -1,5 +1,5 @@
 import { NeutralButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DialSpinner } from '@epam/ai-dial-ui-kit';
 import { IconTrash } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../../models/catalog-item';
@@ -60,11 +60,26 @@ export const DeleteButton: FC<DeleteButtonProps> = ({
   if (!shouldShowDelete(item)) return null;
 
   return (
-    <NeutralButton
-      label={texts?.deleteActionLabel ?? 'Delete'}
-      iconBefore={<IconTrash size={DIAL_ICON_SIZE.MD} />}
-      onClick={handleClick}
-      disabled={isDeleting}
-    />
+    <>
+      <NeutralButton
+        label={texts?.deleteActionLabel ?? 'Delete'}
+        iconBefore={
+          isDeleting ? (
+            <span aria-hidden="true">
+              <DialSpinner size={DIAL_ICON_SIZE.MD} />
+            </span>
+          ) : (
+            <IconTrash size={DIAL_ICON_SIZE.MD} aria-hidden />
+          )
+        }
+        onClick={handleClick}
+        disabled={isDeleting}
+      />
+      {isDeleting && (
+        <span role="status" aria-live="polite" className="sr-only">
+          Deleting
+        </span>
+      )}
+    </>
   );
 };
