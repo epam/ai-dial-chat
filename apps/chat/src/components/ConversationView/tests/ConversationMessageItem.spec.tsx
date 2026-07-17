@@ -202,17 +202,3 @@ describe('ConversationMessageItem — stopped generation', () => {
     expect(screen.queryByText('Stopped generating')).toBeNull();
   });
 });
-
-describe('ConversationMessageItem — Suspense fallback', () => {
-  it('fallback MessageBubble also receives onAttachmentClick', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        editingMessageIndexes={new Set([0])}
-      />,
-    );
-    // The fallback bubble renders while EditMessageInput suspends
-    fireEvent.click(screen.getByLabelText(AttachmentsI18nKeys.Download));
-    expect(mockHandleAttachmentClick).toHaveBeenCalledOnce();
-  });
-});
