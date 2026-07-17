@@ -53,6 +53,11 @@ describe('AppConfigContext', () => {
     const { result } = renderHook(() => useAppConfig(), { wrapper });
     expect(result.current.status).toBe(UserConfigStatus.Loading);
     expect(result.current.config.dialCoreExternalUrl).toBeNull();
+    expect(result.current.config.fileManagerTabs).toEqual([
+      'my_files',
+      'shared',
+      'organization',
+    ]);
   });
 
   it('transitions to ready after successful API call', async () => {
@@ -68,6 +73,30 @@ describe('AppConfigContext', () => {
     expect(result.current.config.dialCoreExternalUrl).toBe(
       'https://dial.example.com',
     );
+  });
+
+  it('reflects a narrowed fileManagerTabs value once the config resolves', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: { asrEnabled: false },
+      config: {
+        asrModelId: null,
+        transcribeSizeLimitBytes: 5_242_880,
+        dialCoreExternalUrl: null,
+        fileManagerTabs: ['my_files', 'organization'],
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.fileManagerTabs).toEqual([
+      'my_files',
+      'organization',
+    ]);
   });
 
   it('transitions to error after API call failure', async () => {
@@ -103,6 +132,11 @@ describe('AppConfigContext', () => {
     );
 
     expect(result.current.config.dialCoreExternalUrl).toBeNull();
+    expect(result.current.config.fileManagerTabs).toEqual([
+      'my_files',
+      'shared',
+      'organization',
+    ]);
   });
 
   describe('useFeatureFlag', () => {

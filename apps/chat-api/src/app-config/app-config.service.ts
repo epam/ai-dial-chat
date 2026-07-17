@@ -14,6 +14,7 @@ import { FeatureKey } from './feature-flags/feature-key.enum';
 
 const CACHE_TTL_SECONDS = 60;
 const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
+const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
 
 @Injectable()
 export class AppConfigService {
@@ -50,6 +51,7 @@ export class AppConfigService {
     let transcribeSizeLimitBytes = 5 * 1024 * 1024;
     let defaultDeploymentId: string | null = null;
     let dialCoreExternalUrl: string | null = null;
+    let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -70,6 +72,10 @@ export class AppConfigService {
         defaultDeploymentId = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'dialCore.externalUrl') {
         dialCoreExternalUrl = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'fileManager.availableTabs') {
+        fileManagerTabs = Array.isArray(resolved)
+          ? resolved
+          : DEFAULT_FILE_MANAGER_TABS;
       }
     }
 
@@ -81,6 +87,7 @@ export class AppConfigService {
         transcribeSizeLimitBytes,
         defaultDeploymentId,
         dialCoreExternalUrl,
+        fileManagerTabs,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

@@ -39,6 +39,14 @@ export class ClientConfigDto {
   @IsOptional()
   @IsString()
   dialCoreExternalUrl!: string | null;
+
+  @ApiProperty({
+    description:
+      'Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.',
+    type: [String],
+    example: ['my_files', 'shared', 'organization'],
+  })
+  fileManagerTabs!: string[];
 }
 
 export class ClientConfigMetadataDto {

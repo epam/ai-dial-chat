@@ -43,6 +43,30 @@ export interface AttachmentCardColors {
   nameText?: string;
   /** Meta (type / label) text color. */
   metaText?: string;
+  /** Card border color in the error state. */
+  borderError?: string;
+  /** Card background color in the selected state. */
+  backgroundSelected?: string;
+  /** Card border color in the selected state. */
+  borderSelected?: string;
+  /** Card background color on hover (prompt/pasted cards). */
+  backgroundHover?: string;
+  /** Loading overlay background color. */
+  loadingOverlayBackground?: string;
+  /** Action button (remove/retry/download) icon color. */
+  actionColor?: string;
+  /** Action button background color on hover. */
+  actionBackgroundHover?: string;
+  /** Focus outline color. */
+  focusOutline?: string;
+  /** Remove/retry button background color. */
+  removeBackground?: string;
+  /** Remove/retry button icon color. */
+  removeColor?: string;
+  /** Hover download icon background color. */
+  hoverIconBackground?: string;
+  /** Hover download icon color. */
+  hoverIconColor?: string;
 }
 
 /** Typography overrides for the `AttachmentCard` component. */
@@ -63,10 +87,12 @@ export interface AttachmentCardStyles {
   typography?: AttachmentCardTypography;
   /** Tailwind border-radius utility class applied to the card and its inner layers (e.g. `'rounded'`, `'rounded-lg'`). Defaults to `'rounded-xl'`. */
   roundedClassName?: string;
+  /** Extra class name(s) merged onto the root element. */
+  className?: string;
 }
 
 /** Localised accessible labels for the `AttachmentCard` component. */
-export interface AttachmentCardLabels {
+export interface AttachmentCardLabels extends AttachmentTypeLabels {
   /** Accessible label for the remove button. Defaults to `'Remove attachment'`. */
   removeLabel?: string;
   /** Accessible label for the retry button (error state only). Defaults to `'Retry upload'`. */
@@ -99,10 +125,8 @@ export interface AttachmentCardProps {
   shouldAlwaysShowActions?: boolean;
   /** Called when the user clicks or keyboard-activates the card. Receives the attachment `id`. */
   onClick?: (id: string) => void;
-  /** Localised accessible labels for the remove/retry actions and the interactive card root. */
+  /** Localised accessible labels for the remove/retry actions, the interactive card root, and the non-extension attachment type names (prompt/pasted/image). */
   labels?: AttachmentCardLabels;
-  /** Localised labels for the non-extension attachment type names (prompt/pasted/image). */
-  typeLabels?: AttachmentTypeLabels;
   /** Color, typography, and shape overrides for the card. */
   styles?: AttachmentCardStyles;
   /**
@@ -112,6 +136,4 @@ export interface AttachmentCardProps {
    * Defaults to `false`.
    */
   showHoverDownloadIcon?: boolean;
-  /** Extra class name(s) merged onto the root element. */
-  className?: string;
 }

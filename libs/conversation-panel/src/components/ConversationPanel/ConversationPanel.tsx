@@ -401,10 +401,12 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         />
 
         <SearchInput
-          placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={setSearchQuery}
-          clearLabel={searchClearLabel}
+          labels={{
+            placeholder: searchPlaceholder,
+            clearLabel: searchClearLabel,
+          }}
         />
 
         <FilterTabs

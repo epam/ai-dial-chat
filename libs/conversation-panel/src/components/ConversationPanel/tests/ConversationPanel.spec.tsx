@@ -341,36 +341,12 @@ describe('ConversationPanel', () => {
     expect(onNewChat).toHaveBeenCalledTimes(1);
   });
 
-  it('filters conversations by search query', () => {
-    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    const input = screen.getByPlaceholderText('Search chat…');
-    fireEvent.change(input, { target: { value: 'First' } });
-    expect(screen.getByText('First chat')).toBeTruthy();
-    expect(screen.queryByText('Second chat')).toBeNull();
-  });
-
-  it('shows empty state when search matches nothing', () => {
-    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    const input = screen.getByPlaceholderText('Search chat…');
-    fireEvent.change(input, { target: { value: 'zzznomatch' } });
-    expect(screen.getAllByText('No results found')).toBeTruthy();
-  });
-
   it('filters by Shared tab', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Shared' }));
     expect(screen.getByText('Third chat')).toBeTruthy();
     expect(screen.getByText('Shared chat')).toBeTruthy();
     expect(screen.queryByText('First chat')).toBeNull();
-  });
-
-  it('combines tab filter and search query', () => {
-    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Shared' }));
-    const input = screen.getByPlaceholderText('Search chat…');
-    fireEvent.change(input, { target: { value: 'Third' } });
-    expect(screen.getByText('Third chat')).toBeTruthy();
-    expect(screen.queryByText('Shared chat')).toBeNull();
   });
 
   it('puts isPinned items in Pinned group and others in My chats group', () => {

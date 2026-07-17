@@ -1,8 +1,29 @@
 import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react';
+import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import { InitialsAvatar } from '../InitialsAvatar/InitialsAvatar';
 import styles from './DeploymentIcon.module.scss';
+
+/** CSS custom-property overrides for the `DeploymentIcon` component. */
+export interface DeploymentIconColors {
+  /** Badge background color. */
+  background?: string;
+}
+
+/** User-visible strings for `DeploymentIcon`. */
+export interface DeploymentIconLabels {
+  /** When provided, a tooltip with this text is shown on hover/focus. */
+  tooltip?: string;
+}
+
+/** Style overrides for `DeploymentIcon`. */
+export interface DeploymentIconStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: DeploymentIconColors;
+  /** Extra class applied to the outer badge wrapper, e.g. for a custom background variable. */
+  badgeClassName?: string;
+}
 
 /** Props for `DeploymentIcon`. */
 export interface DeploymentIconProps {
@@ -14,10 +35,10 @@ export interface DeploymentIconProps {
   initialsName: string;
   /** Custom node rendered when `src` is absent or the image fails to load. Overrides `initialsName`. */
   fallback?: ReactNode;
-  /** Extra class applied to the outer badge wrapper, e.g. for a custom background variable. */
-  badgeClassName?: string;
-  /** When provided, a tooltip with this text is shown on hover/focus. */
-  tooltip?: string;
+  /** User-visible strings. */
+  labels?: DeploymentIconLabels;
+  /** Style overrides. */
+  styles?: DeploymentIconStyles;
 }
 
 /**
@@ -35,9 +56,14 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
   size,
   initialsName,
   fallback,
-  badgeClassName,
-  tooltip,
+  labels,
+  styles: deploymentIconStyles,
 }) => {
+  const { tooltip } = labels ?? {};
+  const { badgeClassName, colors } = deploymentIconStyles ?? {};
+  const cssVars = buildCssVars({
+    '--di-icon-bg': colors?.background,
+  });
   const [displayedSrc, setDisplayedSrc] = useState(src);
   const [failedSrc, setFailedSrc] = useState<string>();
   const imgRef = useRef<HTMLImageElement>(null);
@@ -86,7 +112,7 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
 
   const badge = (
     <div
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, ...cssVars }}
       className={mergeClasses(
         styles.agentIconBadge,
         'shrink-0 overflow-hidden rounded-md',

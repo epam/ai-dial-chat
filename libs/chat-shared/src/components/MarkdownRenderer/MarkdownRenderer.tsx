@@ -3,6 +3,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent';
 import { CodeBlockTheme } from '../../types/code-editor';
+import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import { MarkdownCodeBlock } from './CodeBlock/CodeBlock';
 import styles from './MarkdownRenderer.module.scss';
@@ -100,6 +101,18 @@ export interface MarkdownRendererProps {
   codeBlockCopiedLabel?: string;
   /** Syntax highlight color theme for code blocks. Defaults to `'dark'`. */
   codeBlockTheme?: CodeBlockTheme;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: MarkdownRendererColors;
+}
+
+/** CSS custom-property overrides for the `MarkdownRenderer` component. */
+export interface MarkdownRendererColors {
+  /** Primary color of the "thinking" shimmer gradient. */
+  thinkingPrimary?: string;
+  /** Secondary color of the "thinking" shimmer gradient. */
+  thinkingSecondary?: string;
+  /** Border color for `<hr>` separators and table cell borders. */
+  border?: string;
 }
 
 /** GFM remark plugins list, shared across all markdown instances. */
@@ -252,12 +265,18 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     codeBlockCopyLabel,
     codeBlockCopiedLabel,
     codeBlockTheme,
+    colors,
   }) => {
     const displayedContent = useStreamedMarkdownContent(
       content,
       isStreaming,
       streamCharactersPerSecond,
     );
+    const cssVars = buildCssVars({
+      '--cm-thinking-inverted': colors?.thinkingPrimary,
+      '--cm-thinking-secondary': colors?.thinkingSecondary,
+      '--cm-markdown-border': colors?.border,
+    });
 
     const mergedComponents = useMemo(
       () => ({
@@ -282,16 +301,22 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     );
 
     if (isStreaming && !displayedContent) {
-      return <span className={styles.thinking}>{thinkingLabel}</span>;
+      return (
+        <span className={styles.thinking} style={cssVars}>
+          {thinkingLabel}
+        </span>
+      );
     }
 
     return (
-      <ReactMarkdown
-        remarkPlugins={remarkPlugins}
-        components={mergedComponents}
-      >
-        {displayedContent}
-      </ReactMarkdown>
+      <div style={cssVars}>
+        <ReactMarkdown
+          remarkPlugins={remarkPlugins}
+          components={mergedComponents}
+        >
+          {displayedContent}
+        </ReactMarkdown>
+      </div>
     );
   },
 );

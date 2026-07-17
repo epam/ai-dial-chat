@@ -15,8 +15,10 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
   if (role === MessageRole.Status) {
     return (
       <StatusMessageBubble
-        titleText={props.labels?.statusTitleText}
-        bodyText={props.labels?.statusBodyText ?? ''}
+        labels={{
+          titleText: props.labels?.statusTitleText,
+          bodyText: props.labels?.statusBodyText ?? '',
+        }}
       />
     );
   }

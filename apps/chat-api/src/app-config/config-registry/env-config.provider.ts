@@ -8,6 +8,8 @@ import type {
 } from '../app-config.types';
 import { CONFIG_DEFINITIONS } from './config-registry.constants';
 
+const FILE_MANAGER_ALLOWED_TABS = ['my_files', 'shared', 'organization'];
+
 @Injectable()
 export class EnvConfigProvider implements ConfigProvider {
   private readonly logger = new Logger(EnvConfigProvider.name);
@@ -48,6 +50,20 @@ export class EnvConfigProvider implements ConfigProvider {
         },
       );
       return enabled === true;
+    }
+
+    // fileManager.availableTabs is validated against a fixed allow-list, dropping unknown ids
+    if (key === 'fileManager.availableTabs') {
+      const availableTabs = this.configService.get(
+        'FILE_MANAGER_AVAILABLE_TABS',
+        { infer: true },
+      );
+      if (!availableTabs?.length) return undefined;
+      const filtered = availableTabs.filter((tab) =>
+        FILE_MANAGER_ALLOWED_TABS.includes(tab),
+      );
+      if (!filtered.length) return undefined;
+      return filtered;
     }
 
     if (!definition.envVar) {

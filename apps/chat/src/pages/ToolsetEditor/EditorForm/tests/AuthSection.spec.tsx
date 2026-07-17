@@ -46,6 +46,7 @@ const postOAuthResult = (flowId: string, message: Record<string, unknown>) => {
 };
 
 vi.mock('../../../../server-api/toolsets', () => ({
+  getToolset: vi.fn(),
   loginToolset: vi.fn(),
   logoutToolset: vi.fn(),
 }));
@@ -547,6 +548,33 @@ describe('AuthSection', () => {
       );
       expect(onAuthChange).not.toHaveBeenCalled();
       expect(mockShowNotification).not.toHaveBeenCalled();
+    });
+
+    it('recovers a login that actually succeeded but was reported as Cancelled by a lost broadcast message', async () => {
+      const onAuthChange = vi.fn();
+      vi.mocked(toolsetsApi.getToolset).mockResolvedValue({
+        id: 'toolsets/b/my__1.0.0',
+        toolset: 'toolsets/b/my__1.0.0',
+        authSettings: { userLevelAuthStatus: 'SIGNED_IN' },
+      } as never);
+      renderSection(
+        oauthWithConfigAuth(),
+        'toolsets/b/my__1.0.0',
+        onAuthChange,
+      );
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+      );
+
+      if (capturedPopup) capturedPopup.closed = true;
+
+      await waitFor(() =>
+        expect(onAuthChange).toHaveBeenCalledWith({ isLoggedIn: true }),
+      );
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Success,
+        message: ToolsetEditorI18nKeys.LoginSuccess,
+      });
     });
 
     it('enables the Log In button before the toolset is saved when the form is valid', () => {

@@ -25,7 +25,7 @@ export interface AttachmentTilesPlan {
 }
 
 /** Localised accessible labels for the `AttachmentGroup` component. */
-export interface AttachmentGroupLabels {
+export interface AttachmentGroupLabels extends AttachmentTypeLabels {
   /** Accessible label for the group region. Defaults to `'Attachments'`. */
   ariaLabel?: string;
   /** Accessible label for each tile/row's click action. Defaults to `'Download attachment'`. */
@@ -44,10 +44,32 @@ export interface AttachmentGroupLabels {
   getHeaderLabel?: (count: number) => string;
 }
 
-/** Style overrides for the `AttachmentGroup` component. */
-export interface AttachmentGroupStyles {
+/** CSS custom-property overrides for the `AttachmentGroup` component. */
+export interface AttachmentGroupColors {
+  /** Group container background color. */
+  background?: string;
+  /** Group container border color. */
+  border?: string;
+  /** Header icon/label/download-all button text color. */
+  text?: string;
+}
+
+/** Typography overrides for the `AttachmentGroup` component. */
+export interface AttachmentGroupTypography {
   /** Typography class applied to the header's attachment-count label. Defaults to `'dial-tiny-semi-text'`. */
   headerLabelClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AttachmentGroupColors;
+}
+
+/** Style overrides for the `AttachmentGroup` component. */
+export interface AttachmentGroupStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AttachmentGroupColors;
+  /** Typography overrides for the header label. */
+  typography?: AttachmentGroupTypography;
+  /** Extra class name(s) merged onto the root element. */
+  className?: string;
 }
 
 /** Props accepted by the `AttachmentGroup` component. */
@@ -66,11 +88,9 @@ export interface AttachmentGroupProps {
   onRetry?: (id: string) => void;
   /** Resolves the human-readable size label for an attachment, when derivable. Omitted from display when absent. */
   getSizeLabel?: (attachment: DisplayAttachment) => string | undefined;
-  /** Localised accessible labels for the group region and its actions. */
+  /** Localised accessible labels for the group region, its actions, and the non-extension attachment type names (prompt/pasted/image), forwarded to each tile. */
   labels?: AttachmentGroupLabels;
-  /** Localised labels for the non-extension attachment type names (prompt/pasted/image), forwarded to each tile. */
-  typeLabels?: AttachmentTypeLabels;
-  /** Style overrides for the header label. */
+  /** Style overrides for the group. */
   styles?: AttachmentGroupStyles;
   /**
    * File tile surface color theme, matching the markdown code block's own
@@ -78,6 +98,4 @@ export interface AttachmentGroupProps {
    * non-previewable file tile. Defaults to `'dark'`.
    */
   theme?: CodeBlockTheme;
-  /** Extra class name(s) merged onto the root element. */
-  className?: string;
 }

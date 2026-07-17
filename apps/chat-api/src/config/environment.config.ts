@@ -2,6 +2,7 @@ import { Transform } from 'class-transformer';
 import {
   IsNotEmpty,
   IsBoolean,
+  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
@@ -12,7 +13,18 @@ import {
   Min,
 } from 'class-validator';
 
+export enum ApplicationLogLevel {
+  Debug = 'debug',
+  Log = 'log',
+  Warn = 'warn',
+  Error = 'error',
+}
+
 export class EnvironmentVariables {
+  @IsOptional()
+  @IsEnum(ApplicationLogLevel)
+  LOG_LEVEL?: ApplicationLogLevel;
+
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
@@ -255,4 +267,15 @@ export class EnvironmentVariables {
       'Each allowed iframe origin must be an origin URL with no path or query string',
   })
   ALLOWED_IFRAME_ORIGINS?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  FILE_MANAGER_AVAILABLE_TABS?: string[] = [];
 }

@@ -24,6 +24,7 @@ import {
   AuthI18nKeys,
   ButtonsI18nKeys,
   CatalogI18nKeys,
+  DialFileManagerI18nKeys,
   FavoritesI18nKeys,
   NavigationI18nKeys,
   ToolsetEditorI18nKeys,
@@ -45,6 +46,7 @@ import {
 } from '../../server-api/publish.api';
 import {
   deleteToolset,
+  getToolset,
   loginToolset,
   logoutToolset,
 } from '../../server-api/toolsets';
@@ -301,6 +303,29 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
             variant: NotificationVariant.Error,
             message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
           });
+        } else if (result.type === ToolsetOAuthResultType.Cancelled) {
+          /*
+           * The callback popup posts its result and closes itself
+           * back-to-back — under load the opener can observe `popup.closed`
+           * before the `BroadcastChannel` message arrives, so a login that
+           * actually succeeded server-side can still surface as Cancelled
+           * here. Re-checking the toolset's real status before giving up
+           * silently avoids reporting a false cancel for a login that
+           * already went through.
+           */
+          try {
+            const refreshed = await getToolset(item.id);
+            const statusField =
+              params.level === CredentialsLevel.User
+                ? refreshed.authSettings?.userLevelAuthStatus
+                : refreshed.authSettings?.globalAuthStatus;
+            if (statusField === 'SIGNED_IN') {
+              showLoginSuccess(item, params.level);
+              await refetchToolsets();
+            }
+          } catch {
+            // Best-effort verification only — a genuine cancel stays silent.
+          }
         }
         return;
       }
@@ -660,6 +685,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         editActionLabel: t(ButtonsI18nKeys.Edit),
         deleteActionLabel: t(ButtonsI18nKeys.Delete),
+        deletingStatusLabel: t(DialFileManagerI18nKeys.DeletingLabel),
         dailyLimitLabel: t(CatalogI18nKeys.DetailsDailyLimit),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),

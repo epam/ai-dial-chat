@@ -531,7 +531,9 @@
       "navLabel": "File Manager"
     },
     "unshareAction": "Unshare",
+    "unsharingLabel": "Unsharing…",
     "removeAccessAction": "Remove access",
+    "removingAccessLabel": "Removing access…",
     "shareModalTitle": "Share \"{{name}}\"",
     "shareModalCreateLinkButton": "Create link",
     "shareModalLinkCopiedConfirmation": "Link copied",

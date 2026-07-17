@@ -164,6 +164,7 @@ const baseHookResult: UseDialFileManagerResult = {
   isFileMetadataLoading: false,
   onGetInfo: vi.fn(),
   clearMetadata: vi.fn(),
+  isAnyOperationInProgress: false,
 };
 
 const emptyStateCopy = { title: 'No files', description: 'Nothing here yet' };
@@ -242,7 +243,9 @@ const baseLabels: DialFileManagerShellLabels = {
   },
   shareLabel: 'Share',
   unshareLabel: 'Unshare',
+  unsharingLabel: 'Unsharing…',
   removeAccessLabel: 'Remove access',
+  removingAccessLabel: 'Removing access…',
   getShareModalTitle: (name) => `Share "${name}"`,
   shareModalReadPermissionLabel: 'Can view',
   shareModalReadWritePermissionLabel: 'Can edit',
@@ -519,6 +522,147 @@ describe('DialFileManagerShell', () => {
       modifiedDateLabel: baseLabels.metadataModifiedDateLabel,
       sizeLabel: baseLabels.metadataSizeLabel,
       authorLabel: baseLabels.metadataAuthorLabel,
+    });
+  });
+
+  describe('consolidated operation overlay', () => {
+    const consolidatedOverlayLabels = [
+      baseLabels.downloadingLabel,
+      baseLabels.deletingLabel,
+      baseLabels.renamingLabel,
+      baseLabels.unsharingLabel,
+      baseLabels.removingAccessLabel,
+    ];
+
+    const expectNoConsolidatedOverlay = () => {
+      consolidatedOverlayLabels.forEach((label) => {
+        expect(screen.queryByRole('img', { name: label })).toBeNull();
+      });
+    };
+
+    it('shows the downloading label while isDownloading is true', () => {
+      renderShell({ isDownloading: true });
+      expect(
+        screen.getByRole('img', { name: baseLabels.downloadingLabel }),
+      ).toBeTruthy();
+    });
+
+    it('shows the deleting label while isDeleting is true', () => {
+      renderShell({ isDeleting: true });
+      expect(
+        screen.getByRole('img', { name: baseLabels.deletingLabel }),
+      ).toBeTruthy();
+    });
+
+    it('shows the renaming label while isRenaming is true and isMoving is false', () => {
+      renderShell({ isRenaming: true, isMoving: false });
+      expect(
+        screen.getByRole('img', { name: baseLabels.renamingLabel }),
+      ).toBeTruthy();
+    });
+
+    it('shows the unsharing label while isUnsharing is true', () => {
+      renderShell({ isUnsharing: true });
+      expect(
+        screen.getByRole('img', { name: baseLabels.unsharingLabel }),
+      ).toBeTruthy();
+    });
+
+    it('shows the removing-access label while isRemovingAccess is true', () => {
+      renderShell({ isRemovingAccess: true });
+      expect(
+        screen.getByRole('img', { name: baseLabels.removingAccessLabel }),
+      ).toBeTruthy();
+    });
+
+    it('renders no overlay when none of the five covered flags is true', () => {
+      renderShell();
+      expectNoConsolidatedOverlay();
+    });
+
+    it('does not render the overlay while isCopying is true, showing OperationLoaderModal instead', () => {
+      renderShell({ isCopying: true });
+      expect(
+        screen.getByText(baseLabels.operationLoaderCopyTitle),
+      ).toBeTruthy();
+      expectNoConsolidatedOverlay();
+    });
+
+    it('does not render the overlay while isMoving is true, showing OperationLoaderModal instead', () => {
+      renderShell({ isMoving: true });
+      expect(
+        screen.getByText(baseLabels.operationLoaderMoveTitle),
+      ).toBeTruthy();
+      expectNoConsolidatedOverlay();
+    });
+
+    it('does not render the overlay while an upload batch is active, showing UploadProgressModal instead', () => {
+      renderShell({
+        uploadBatchState: {
+          isOpen: true,
+          files: [
+            { id: '1', name: 'a.pdf', status: FileUploadStatus.Uploading },
+          ],
+        },
+      });
+      expect(screen.getByText(baseLabels.uploadProgressTitle)).toBeTruthy();
+      expectNoConsolidatedOverlay();
+    });
+
+    it('does not render the overlay while isSharing is true, showing ShareFileModal instead', () => {
+      renderShell({
+        isSharing: true,
+        shareTarget: {
+          bucket: 'test-bucket',
+          path: 'report.pdf',
+          name: 'report.pdf',
+        },
+      });
+      expectNoConsolidatedOverlay();
+    });
+
+    it('prioritizes the downloading label over the deleting label when both are unexpectedly true', () => {
+      renderShell({ isDownloading: true, isDeleting: true });
+      expect(
+        screen.getByRole('img', { name: baseLabels.downloadingLabel }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('img', { name: baseLabels.deletingLabel }),
+      ).toBeNull();
+    });
+
+    it('prioritizes the deleting label over the renaming label when both are unexpectedly true', () => {
+      renderShell({ isDeleting: true, isRenaming: true, isMoving: false });
+      expect(
+        screen.getByRole('img', { name: baseLabels.deletingLabel }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('img', { name: baseLabels.renamingLabel }),
+      ).toBeNull();
+    });
+
+    it('prioritizes the renaming label over the unsharing label when both are unexpectedly true', () => {
+      renderShell({
+        isRenaming: true,
+        isMoving: false,
+        isUnsharing: true,
+      });
+      expect(
+        screen.getByRole('img', { name: baseLabels.renamingLabel }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('img', { name: baseLabels.unsharingLabel }),
+      ).toBeNull();
+    });
+
+    it('prioritizes the unsharing label over the removing-access label when both are unexpectedly true', () => {
+      renderShell({ isUnsharing: true, isRemovingAccess: true });
+      expect(
+        screen.getByRole('img', { name: baseLabels.unsharingLabel }),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('img', { name: baseLabels.removingAccessLabel }),
+      ).toBeNull();
     });
   });
 

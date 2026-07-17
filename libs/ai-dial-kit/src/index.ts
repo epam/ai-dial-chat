@@ -1,13 +1,32 @@
 export { GradientCheckIcon } from './components/GradientCheckIcon/GradientCheckIcon';
 export type { GradientCheckIconProps } from './components/GradientCheckIcon/GradientCheckIcon';
 export { SearchBar } from './components/SearchBar/SearchBar';
-export type { SearchBarProps } from './components/SearchBar/SearchBar';
+export type {
+  SearchBarProps,
+  SearchBarLabels,
+  SearchBarStyles,
+} from './components/SearchBar/SearchBar';
 export { GhostIconButton } from './components/GhostIconButton/GhostIconButton';
-export type { GhostIconButtonProps } from './components/GhostIconButton/GhostIconButton';
+export type {
+  GhostIconButtonProps,
+  GhostIconButtonColors,
+  GhostIconButtonStyles,
+} from './components/GhostIconButton/GhostIconButton';
 export { TabRow } from './components/TabRow/TabRow';
-export type { TabRowProps, TabRowTab } from './components/TabRow/TabRow';
+export type {
+  TabRowProps,
+  TabRowTab,
+  TabRowColors,
+  TabRowTypography,
+  TabRowStyles,
+} from './components/TabRow/TabRow';
 export { PillTabs } from './components/PillTabs/PillTabs';
-export type { PillTabsProps, PillTab } from './components/PillTabs/PillTabs';
+export type {
+  PillTabsProps,
+  PillTab,
+  PillTabsTypography,
+  PillTabsStyles,
+} from './components/PillTabs/PillTabs';
 export {
   PrimaryButton,
   NeutralButton,

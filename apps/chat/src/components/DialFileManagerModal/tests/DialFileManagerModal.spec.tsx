@@ -18,13 +18,24 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => ({ showNotification: mockShowNotification }),
 }));
 
-const { mockActiveTab, mockHandleTabChange } = vi.hoisted(() => ({
-  mockActiveTab: { value: undefined as string | undefined },
-  mockHandleTabChange: vi.fn(),
-}));
+const { mockActiveTab, mockHandleTabChange, mockFileManagerTabs } = vi.hoisted(
+  () => ({
+    mockActiveTab: { value: undefined as string | undefined },
+    mockHandleTabChange: vi.fn(),
+    mockFileManagerTabs: {
+      value: ['my_files', 'shared', 'organization'] as string[],
+    },
+  }),
+);
 
 const { mockShowNotification } = vi.hoisted(() => ({
   mockShowNotification: vi.fn(),
+}));
+
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({
+    config: { fileManagerTabs: mockFileManagerTabs.value },
+  }),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -396,6 +407,7 @@ const defaultHookResult: UseDialFileManagerResult = {
   isFileMetadataLoading: false,
   onGetInfo: vi.fn(),
   clearMetadata: vi.fn(),
+  isAnyOperationInProgress: false,
 };
 
 const defaultProps = {
@@ -432,6 +444,7 @@ const defaultProps = {
 
 beforeEach(() => {
   mockActiveTab.value = undefined;
+  mockFileManagerTabs.value = ['my_files', 'shared', 'organization'];
   mockHandleTabChange.mockClear();
   mockShowNotification.mockClear();
   mockUseDialFileManager.mockClear();
@@ -703,6 +716,7 @@ describe('DialFileManagerModal', () => {
     mockUseDialFileManager.mockReturnValue({
       ...defaultHookResult,
       isDownloading: true,
+      isAnyOperationInProgress: true,
     });
 
     render(<DialFileManagerModal {...defaultProps} />);
@@ -711,6 +725,49 @@ describe('DialFileManagerModal', () => {
       screen.getByRole('img', { name: 'Preparing download…' }),
     ).toBeTruthy();
     expect(screen.queryByText('Preparing download…')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(true);
+  });
+
+  it('disables Attach while any file operation is in progress', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      isAnyOperationInProgress: true,
+    });
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(true);
+  });
+
+  it('enables Attach when no file operation is in progress and a file is selected', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      isAnyOperationInProgress: false,
+    });
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(false);
+  });
+
+  it('keeps Attach disabled while isLoading is true even when isAnyOperationInProgress is false', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      isLoading: true,
+      isAnyOperationInProgress: false,
+    });
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+
     expect(
       screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
     ).toBe(true);
@@ -774,6 +831,17 @@ describe('DialFileManagerModal — tab navigation', () => {
     expect(screen.getByRole('button', { name: 'My Files' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Shared with Me' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Organization' })).toBeTruthy();
+  });
+
+  it('renders only the tabs allowed by the deployment-configured fileManagerTabs', () => {
+    mockFileManagerTabs.value = ['my_files', 'organization'];
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-tab-count')).toBe('2');
+    expect(screen.getByRole('button', { name: 'My Files' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Organization' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Shared with Me' })).toBeNull();
   });
 
   it('passes the activeTab from useDialFileManagerTabs to toolbarOptions', () => {

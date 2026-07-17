@@ -3579,9 +3579,21 @@
             "description": "Public-facing DIAL Core base URL reachable from the browser. Null when DIAL_CORE_EXTERNAL_URL is not configured.",
             "example": "https://dial.example.com",
             "nullable": true
+          },
+          "fileManagerTabs": {
+            "description": "Which File Manager tabs are shown to users. Defaults to all three currently-supported tabs.",
+            "example": ["my_files", "shared", "organization"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "required": ["asrModelId", "transcribeSizeLimitBytes"]
+        "required": [
+          "asrModelId",
+          "transcribeSizeLimitBytes",
+          "fileManagerTabs"
+        ]
       },
       "ClientConfigMetadataDto": {
         "type": "object",
@@ -3872,6 +3884,10 @@
           "updatedAt": {
             "type": "number",
             "description": "Timestamp of last update time from DIAL Core (e.g. 1714768496000)"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Timestamp of creation time from DIAL Core (e.g. 1714768496000)"
           },
           "applicationTypeSchemaId": {
             "type": "string",
@@ -4799,61 +4815,165 @@
         },
         "required": ["data"]
       },
+      "DialToolsetFeaturesDto": {
+        "type": "object",
+        "properties": {
+          "rate": {
+            "type": "boolean",
+            "example": false
+          },
+          "tokenize": {
+            "type": "boolean",
+            "example": false
+          },
+          "truncatePrompt": {
+            "type": "boolean",
+            "example": false
+          },
+          "configuration": {
+            "type": "boolean",
+            "example": false
+          },
+          "systemPrompt": {
+            "type": "boolean",
+            "example": true
+          },
+          "tools": {
+            "type": "boolean",
+            "example": true
+          },
+          "seed": {
+            "type": "boolean",
+            "example": false
+          },
+          "urlAttachments": {
+            "type": "boolean",
+            "example": false
+          },
+          "folderAttachments": {
+            "type": "boolean",
+            "example": false
+          },
+          "allowResume": {
+            "type": "boolean",
+            "example": true
+          },
+          "accessibleByPerRequestKey": {
+            "type": "boolean",
+            "example": true
+          },
+          "contentParts": {
+            "type": "boolean",
+            "example": false
+          },
+          "temperature": {
+            "type": "boolean",
+            "example": true
+          },
+          "cache": {
+            "type": "boolean",
+            "example": false
+          },
+          "autoCaching": {
+            "type": "boolean",
+            "example": false
+          },
+          "parallelToolCalls": {
+            "type": "boolean",
+            "example": true
+          },
+          "assistantAttachmentsInRequest": {
+            "type": "boolean",
+            "example": true
+          },
+          "mcp": {
+            "type": "boolean",
+            "example": false
+          },
+          "chatCompletion": {
+            "type": "boolean",
+            "example": false
+          },
+          "responsesApi": {
+            "type": "boolean",
+            "example": false
+          },
+          "maxTokensSupported": {
+            "type": "boolean",
+            "example": false
+          },
+          "maxCompletionTokensSupported": {
+            "type": "boolean",
+            "example": false
+          },
+          "customTemperatureSupported": {
+            "type": "boolean",
+            "example": false
+          },
+          "reasoningEfforts": {
+            "example": ["low", "medium", "high"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "DialToolsetAuthSettingsDto": {
         "type": "object",
         "properties": {
-          "authentication_type": {
+          "authenticationType": {
             "type": "string",
             "example": "OAUTH",
             "enum": ["OAUTH", "API_KEY", "NONE"]
           },
-          "api_key_header": {
+          "apiKeyHeader": {
             "type": "string",
             "example": "X-Api-Key"
           },
-          "client_id": {
+          "clientId": {
             "type": "string",
             "example": "my-client-id"
           },
-          "redirect_uri": {
+          "redirectUri": {
             "type": "string",
             "example": ""
           },
-          "authorization_endpoint": {
+          "authorizationEndpoint": {
             "type": "string",
             "example": ""
           },
-          "token_endpoint": {
+          "tokenEndpoint": {
             "type": "string",
             "example": ""
           },
-          "code_challenge": {
+          "codeChallenge": {
             "type": "string",
             "example": "base64-url-code-challenge"
           },
-          "code_challenge_method": {
+          "codeChallengeMethod": {
             "type": "string",
             "example": "S256"
           },
-          "scopes_supported": {
+          "scopesSupported": {
             "example": ["scope1", "scope2"],
             "type": "array",
             "items": {
               "type": "string"
             }
           },
-          "global_auth_status": {
+          "globalAuthStatus": {
             "type": "string",
             "example": "SIGNED_OUT",
             "enum": ["SIGNED_IN", "SIGNED_OUT"]
           },
-          "user_level_auth_status": {
+          "userLevelAuthStatus": {
             "type": "string",
             "example": "SIGNED_OUT",
             "enum": ["SIGNED_IN", "SIGNED_OUT"]
           }
         },
-        "required": ["authentication_type"]
+        "required": ["authenticationType"]
       },
       "DialToolsetDto": {
         "type": "object",
@@ -4866,12 +4986,12 @@
             "type": "string",
             "example": "toolsets/encrypted-bucket/folder/toolset-name"
           },
-          "display_name": {
+          "displayName": {
             "type": "string",
-            "description": "Human-readable name. In `listToolsets` results this is always populated: `display_name` when set, otherwise the last path segment of `id`.",
+            "description": "Human-readable name. In `listToolsets` results this is always populated: `displayName` when set, otherwise the last path segment of `id`.",
             "example": "Toolset display name"
           },
-          "display_version": {
+          "displayVersion": {
             "type": "string",
             "example": "0.0.1"
           },
@@ -4884,7 +5004,7 @@
             "example": "Runs your toolset in one line.",
             "maxLength": 90
           },
-          "icon_url": {
+          "iconUrl": {
             "type": "string",
             "example": ""
           },
@@ -4900,7 +5020,7 @@
             "type": "string",
             "example": "succeeded"
           },
-          "description_keywords": {
+          "descriptionKeywords": {
             "example": ["keyword1", "keyword2"],
             "type": "array",
             "items": {
@@ -4911,20 +5031,20 @@
             "type": "string",
             "example": "ff5584b7-a82b-4f4f-bf42-5bf74a3893d6"
           },
-          "max_retry_attempts": {
+          "maxRetryAttempts": {
             "type": "number",
             "example": 2
           },
-          "created_at": {
+          "createdAt": {
             "type": "number",
             "example": 1672534800
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "number",
             "example": 1672534900
           },
           "features": {
-            "$ref": "#/components/schemas/DialModelFeaturesDto"
+            "$ref": "#/components/schemas/DialToolsetFeaturesDto"
           },
           "endpoint": {
             "type": "string",
@@ -4934,29 +5054,29 @@
             "type": "string",
             "example": "HTTP"
           },
-          "allowed_tools": {
+          "allowedTools": {
             "example": ["tool1", "tool2"],
             "type": "array",
             "items": {
               "type": "string"
             }
           },
-          "auth_settings": {
+          "authSettings": {
             "$ref": "#/components/schemas/DialToolsetAuthSettingsDto"
           },
-          "is_installed": {
+          "isInstalled": {
             "type": "boolean",
             "description": "Whether this toolset is installed by the current user"
           },
-          "is_my": {
+          "isMy": {
             "type": "boolean",
             "description": "True when the toolset id/path belongs to the current session user bucket"
           },
-          "can_edit": {
+          "canEdit": {
             "type": "boolean",
             "description": "True when the current user may edit this toolset — owns it, or was granted WRITE access via a share invitation"
           },
-          "shared_with_me": {
+          "sharedWithMe": {
             "type": "boolean",
             "description": "True when this toolset is shared with the current user (READ or WRITE) and not owned by them"
           }
@@ -5012,7 +5132,7 @@
           },
           "redirectUri": {
             "type": "string",
-            "example": "https://chat.example.com/toolset-editor/callback"
+            "example": "https://chat.example.com/auth/toolset-signin"
           },
           "codeChallengeMethod": {
             "type": "string",

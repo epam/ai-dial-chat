@@ -17,22 +17,36 @@ export type {
 export type {
   AttachmentTrayProps,
   AttachmentTrayLabels,
+  AttachmentTrayStyles,
 } from './models/attachment-tray';
 export {
   AttachmentTilesLayout,
   type AttachmentGroupProps,
   type AttachmentGroupLabels,
+  type AttachmentGroupColors,
+  type AttachmentGroupTypography,
   type AttachmentGroupStyles,
   type AttachmentTilesPlan,
 } from './models/attachment-group';
 export type {
   AttachmentFileRowProps,
   AttachmentFileRowLabels,
+  AttachmentFileRowColors,
+  AttachmentFileRowTypography,
   AttachmentFileRowStyles,
 } from './models/attachment-file-row';
-export type { AttachmentMoreTileProps } from './models/attachment-more-tile';
+export type {
+  AttachmentMoreTileProps,
+  AttachmentMoreTileLabels,
+  AttachmentMoreTileColors,
+  AttachmentMoreTileTypography,
+  AttachmentMoreTileStyles,
+} from './models/attachment-more-tile';
 export type {
   FileDndOverlayProps,
+  FileDndOverlayLabels,
+  FileDndOverlayColors,
+  FileDndOverlayTypography,
   FileDndOverlayStyles,
 } from './models/file-dnd-overlay';
 

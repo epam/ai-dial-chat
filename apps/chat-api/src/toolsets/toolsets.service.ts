@@ -22,6 +22,7 @@ import { DialClientService } from '../dial/dial-client.service';
 import type {
   DialToolsetAuthSettingsDto,
   DialToolsetDto,
+  DialToolsetFeaturesDto,
   DialToolsetListResponseDto,
 } from '../openapi/openapi-response.dto';
 import { UserConfigService } from '../user-config/user-config.service';
@@ -71,10 +72,49 @@ interface DialToolsetResource {
   path: string;
 }
 
-type RawDialToolsetDto = DialToolsetDto & {
-  authSettings?: RawAuthSettings;
+/*
+ * DIAL Core returns two different wire shapes for a toolset depending on the
+ * endpoint: the OpenAI-compatible toolset (getToolSets/getToolset) is
+ * snake_case top-level, while the custom toolset resource
+ * (getCustomToolSet/saveToolSet) is camelCase top-level except for
+ * `allowed_tools`, which stays snake_case per that schema. Both put
+ * snake_case fields inside their `auth_settings`/`authSettings` object
+ * regardless of which top-level casing they use. This type carries both
+ * possible casings through the merge/redaction pipeline before
+ * `mapDialToolsetToDto` normalizes everything to the outgoing camelCase
+ * `DialToolsetDto` shape exactly once.
+ */
+interface RawDialToolset {
+  id: string;
+  toolset: string;
+  display_name?: string;
   displayName?: string;
-};
+  display_version?: string;
+  displayVersion?: string;
+  description?: string;
+  intro?: string;
+  icon_url?: string;
+  iconUrl?: string;
+  owner?: string;
+  object?: string;
+  status?: string;
+  description_keywords?: string[];
+  descriptionKeywords?: string[];
+  reference?: string;
+  max_retry_attempts?: number;
+  maxRetryAttempts?: number;
+  created_at?: number;
+  createdAt?: number;
+  updated_at?: number;
+  updatedAt?: number;
+  features?: unknown;
+  endpoint?: string;
+  transport?: string;
+  allowed_tools?: string[];
+  allowedTools?: string[];
+  auth_settings?: RawAuthSettings;
+  authSettings?: RawAuthSettings;
+}
 
 type DialToolsetSaveBody = {
   displayName: string;
@@ -266,78 +306,164 @@ const toDialToolsetSignoutBody = (
   };
 };
 
-const redactAuthSettingsSecrets = <
-  TAuthSettings extends Record<string, unknown>,
->(
-  authSettings?: TAuthSettings,
-): TAuthSettings | undefined => {
-  if (authSettings == null) {
-    return undefined;
-  }
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value != null && typeof value === 'object' && !Array.isArray(value);
 
-  const redacted = { ...authSettings };
-  delete redacted.client_secret;
-  delete redacted.clientSecret;
-  delete redacted.code_verifier;
-  delete redacted.codeVerifier;
-  return redacted as TAuthSettings;
+const getString = (
+  record: Record<string, unknown>,
+  key: string,
+): string | undefined => {
+  const value = record[key];
+  return typeof value === 'string' ? value : undefined;
 };
 
-const redactToolsetSecrets = (toolset: DialToolsetDto): DialToolsetDto => {
-  const rawToolset = toolset as RawDialToolsetDto;
-  const authSettings = redactAuthSettingsSecrets(
-    rawToolset.auth_settings as Record<string, unknown> | undefined,
-  );
-  const camelAuthSettings = redactAuthSettingsSecrets(rawToolset.authSettings);
-
-  return {
-    ...rawToolset,
-    ...(authSettings != null
-      ? {
-          auth_settings: authSettings as unknown as DialToolsetAuthSettingsDto,
-        }
-      : {}),
-    ...(camelAuthSettings != null ? { authSettings: camelAuthSettings } : {}),
-  };
+const getBoolean = (
+  record: Record<string, unknown>,
+  key: string,
+): boolean | undefined => {
+  const value = record[key];
+  return typeof value === 'boolean' ? value : undefined;
 };
 
-const withDisplayName = (toolset: DialToolsetDto): RawDialToolsetDto => {
-  const rawToolset = toolset as RawDialToolsetDto;
-  return {
-    ...rawToolset,
-    displayName:
-      rawToolset.displayName ??
-      rawToolset.display_name ??
-      getResourceDisplayNameFallback(rawToolset.id),
-  };
+const getStringArray = (
+  record: Record<string, unknown>,
+  key: string,
+): string[] | undefined => {
+  const value = record[key];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : undefined;
 };
 
-const isVisibleToolset = (toolset: DialToolsetDto): boolean =>
+const isVisibleToolset = (toolset: RawDialToolset): boolean =>
   Boolean(toolset.id) && !toolset.id.includes(HIDDEN_FILE);
 
 const isMyToolset = (toolset: DialToolsetDto, bucket: string): boolean =>
   Boolean(bucket) && toolset.id.split('/').includes(bucket);
 
-const getAuthSettings = (
-  toolset?: DialToolsetDto,
+/*
+ * Resolves whichever raw auth settings container the source endpoint used
+ * (`authSettings` for the custom toolset resource, `auth_settings` for the
+ * OpenAI-compatible toolset) without yet converting its nested fields —
+ * used by the pre-mapping merge step, which needs to combine partial raw
+ * dicts from two sources before the single final camelCase conversion.
+ */
+const getRawAuthSettings = (
+  toolset?: RawDialToolset,
 ): RawAuthSettings | undefined => {
-  const rawToolset = toolset as RawDialToolsetDto | undefined;
-  return (
-    rawToolset?.authSettings ??
-    (rawToolset?.auth_settings as unknown as RawAuthSettings | undefined)
-  );
+  const settings = toolset?.authSettings ?? toolset?.auth_settings;
+  return isRecord(settings) ? settings : undefined;
 };
 
-const mergeCustomToolsetDetails = (
-  customToolset: DialToolsetDto,
-  toolsetName: string,
-  extendedToolset?: DialToolsetDto,
-): DialToolsetDto => {
-  const mergedAuthSettings = {
-    ...(getAuthSettings(extendedToolset) ?? {}),
-    ...(getAuthSettings(customToolset) ?? {}),
+/*
+ * Never reads client_secret/code_verifier — the allowlist of fields copied
+ * here doubles as the secret redaction, so a raw payload carrying those
+ * fields (as sent to DIAL Core) never reaches the response.
+ */
+const mapAuthSettings = (
+  raw?: RawAuthSettings,
+): DialToolsetAuthSettingsDto | undefined => {
+  if (!isRecord(raw)) return undefined;
+  const authenticationType = getString(raw, 'authentication_type');
+  if (authenticationType == null) return undefined;
+
+  return {
+    authenticationType,
+    apiKeyHeader: getString(raw, 'api_key_header'),
+    clientId: getString(raw, 'client_id'),
+    redirectUri: getString(raw, 'redirect_uri'),
+    authorizationEndpoint: getString(raw, 'authorization_endpoint'),
+    tokenEndpoint: getString(raw, 'token_endpoint'),
+    codeChallenge: getString(raw, 'code_challenge'),
+    codeChallengeMethod: getString(raw, 'code_challenge_method'),
+    scopesSupported: getStringArray(raw, 'scopes_supported'),
+    globalAuthStatus: getString(raw, 'global_auth_status'),
+    userLevelAuthStatus: getString(raw, 'user_level_auth_status'),
   };
-  const mergedToolset: RawDialToolsetDto = {
+};
+
+const mapToolsetFeatures = (
+  raw: unknown,
+): DialToolsetFeaturesDto | undefined => {
+  if (!isRecord(raw)) return undefined;
+
+  return {
+    rate: getBoolean(raw, 'rate'),
+    tokenize: getBoolean(raw, 'tokenize'),
+    truncatePrompt: getBoolean(raw, 'truncate_prompt'),
+    configuration: getBoolean(raw, 'configuration'),
+    systemPrompt: getBoolean(raw, 'system_prompt'),
+    tools: getBoolean(raw, 'tools'),
+    seed: getBoolean(raw, 'seed'),
+    urlAttachments: getBoolean(raw, 'url_attachments'),
+    folderAttachments: getBoolean(raw, 'folder_attachments'),
+    allowResume: getBoolean(raw, 'allow_resume'),
+    accessibleByPerRequestKey: getBoolean(raw, 'accessible_by_per_request_key'),
+    contentParts: getBoolean(raw, 'content_parts'),
+    temperature: getBoolean(raw, 'temperature'),
+    cache: getBoolean(raw, 'cache'),
+    autoCaching: getBoolean(raw, 'auto_caching'),
+    parallelToolCalls: getBoolean(raw, 'parallel_tool_calls'),
+    assistantAttachmentsInRequest: getBoolean(
+      raw,
+      'assistant_attachments_in_request',
+    ),
+    mcp: getBoolean(raw, 'mcp'),
+    chatCompletion: getBoolean(raw, 'chat_completion'),
+    responsesApi: getBoolean(raw, 'responses_api'),
+    maxTokensSupported: getBoolean(raw, 'max_tokens_supported'),
+    maxCompletionTokensSupported: getBoolean(
+      raw,
+      'max_completion_tokens_supported',
+    ),
+    customTemperatureSupported: getBoolean(raw, 'custom_temperature_supported'),
+    reasoningEfforts: getStringArray(raw, 'reasoning_efforts'),
+  };
+};
+
+/*
+ * Single point where every raw DIAL Core toolset field (whichever casing
+ * the source endpoint used) is converted into the outgoing camelCase
+ * `DialToolsetDto` shape, mirroring `deployments.service.ts`'s
+ * `mapToDeploymentItem`. Applied exactly once, after any raw-level merging
+ * (`mergeCustomToolsetDetails`) is done.
+ */
+const mapDialToolsetToDto = (raw: RawDialToolset): DialToolsetDto => ({
+  id: raw.id,
+  toolset: raw.toolset,
+  displayName:
+    raw.displayName ??
+    raw.display_name ??
+    getResourceDisplayNameFallback(raw.id),
+  displayVersion: raw.displayVersion ?? raw.display_version,
+  description: raw.description,
+  intro: raw.intro,
+  iconUrl: raw.iconUrl ?? raw.icon_url,
+  owner: raw.owner,
+  object: raw.object,
+  status: raw.status,
+  descriptionKeywords: raw.descriptionKeywords ?? raw.description_keywords,
+  reference: raw.reference,
+  maxRetryAttempts: raw.maxRetryAttempts ?? raw.max_retry_attempts,
+  createdAt: raw.createdAt ?? raw.created_at,
+  updatedAt: raw.updatedAt ?? raw.updated_at,
+  features: mapToolsetFeatures(raw.features),
+  endpoint: raw.endpoint,
+  transport: raw.transport,
+  allowedTools: raw.allowedTools ?? raw.allowed_tools,
+  authSettings: mapAuthSettings(getRawAuthSettings(raw)),
+});
+
+const mergeCustomToolsetDetails = (
+  customToolset: RawDialToolset,
+  toolsetName: string,
+  extendedToolset?: RawDialToolset,
+): RawDialToolset => {
+  const mergedAuthSettings = {
+    ...(getRawAuthSettings(extendedToolset) ?? {}),
+    ...(getRawAuthSettings(customToolset) ?? {}),
+  };
+  const mergedToolset: RawDialToolset = {
     ...(extendedToolset ?? {}),
     ...customToolset,
     id: customToolset.id ?? extendedToolset?.id ?? toolsetName,
@@ -346,10 +472,10 @@ const mergeCustomToolsetDetails = (
   };
 
   delete mergedToolset.authSettings;
+  delete mergedToolset.auth_settings;
 
   if (Object.keys(mergedAuthSettings).length > 0) {
-    mergedToolset.auth_settings =
-      mergedAuthSettings as unknown as DialToolsetAuthSettingsDto;
+    mergedToolset.auth_settings = mergedAuthSettings;
   }
 
   return mergedToolset;
@@ -376,10 +502,10 @@ export class ToolsetsService {
     const isMy = isMyToolset(toolset, bucket);
     return {
       ...toolset,
-      is_installed: installedIdSet.has(toolset.id),
-      is_my: isMy,
-      can_edit: isMy || writableUrls.has(toolset.id),
-      shared_with_me: !isMy && sharedUrls.has(toolset.id),
+      isInstalled: installedIdSet.has(toolset.id),
+      isMy,
+      canEdit: isMy || writableUrls.has(toolset.id),
+      sharedWithMe: !isMy && sharedUrls.has(toolset.id),
     };
   }
 
@@ -460,7 +586,7 @@ export class ToolsetsService {
   private async getOpenAiToolset(
     accessToken: string,
     toolsetName: string,
-  ): Promise<DialToolsetDto> {
+  ): Promise<RawDialToolset> {
     const result = await this.dialClient.client.getToolset(toolsetName, {
       headers: getBearerAuthHeaders(accessToken),
     });
@@ -471,13 +597,13 @@ export class ToolsetsService {
         this.logger,
       );
     }
-    return result.data as unknown as DialToolsetDto;
+    return result.data as unknown as RawDialToolset;
   }
 
   private async tryGetOpenAiToolset(
     accessToken: string,
     toolsetName: string,
-  ): Promise<DialToolsetDto | undefined> {
+  ): Promise<RawDialToolset | undefined> {
     try {
       return await this.getOpenAiToolset(accessToken, toolsetName);
     } catch (err) {
@@ -492,7 +618,7 @@ export class ToolsetsService {
     accessToken: string,
     toolsetName: string,
     resource: DialToolsetResource,
-  ): Promise<DialToolsetDto> {
+  ): Promise<RawDialToolset> {
     const result = await this.dialClient.client.getCustomToolSet(
       resource.bucket,
       resource.path,
@@ -517,7 +643,7 @@ export class ToolsetsService {
     );
 
     return mergeCustomToolsetDetails(
-      result.data as unknown as DialToolsetDto,
+      result.data as unknown as RawDialToolset,
       toolsetName,
       extendedToolset,
     );
@@ -540,7 +666,7 @@ export class ToolsetsService {
       return undefined;
     }
 
-    return getAuthSettings(result.data as unknown as DialToolsetDto);
+    return getRawAuthSettings(result.data as unknown as RawDialToolset);
   }
 
   async listToolsets(
@@ -573,13 +699,13 @@ export class ToolsetsService {
           this.logger,
         );
       }
-      const { data: toolsets } =
-        result.data as unknown as DialToolsetListResponseDto;
+      const { data: toolsets } = result.data as unknown as {
+        data: RawDialToolset[];
+      };
       const data: DialToolsetListResponseDto = {
         data: (toolsets ?? [])
           .filter(isVisibleToolset)
-          .map(redactToolsetSecrets)
-          .map(withDisplayName),
+          .map(mapDialToolsetToDto),
       };
       await this.cacheManager.set(cacheKey, data, 30 * 1000);
       return {
@@ -628,13 +754,11 @@ export class ToolsetsService {
 
     try {
       const resource = parseDialToolsetResource(toolsetName);
-      const data = withDisplayName(
-        redactToolsetSecrets(
-          resource == null
-            ? await this.getOpenAiToolset(accessToken, toolsetName)
-            : await this.getCustomToolset(accessToken, toolsetName, resource),
-        ),
-      );
+      const rawToolset =
+        resource == null
+          ? await this.getOpenAiToolset(accessToken, toolsetName)
+          : await this.getCustomToolset(accessToken, toolsetName, resource);
+      const data = mapDialToolsetToDto(rawToolset);
       await this.cacheManager.set(cacheKey, data, 60 * 1000);
       return enrich(data);
     } catch (err) {
@@ -846,6 +970,16 @@ export class ToolsetsService {
     const authHeaders = getBearerAuthHeaders(accessToken);
     // NOTE: never log apiKey / code — only the toolset reference and level.
     const dialBody = toDialToolsetSigninBody(body);
+    this.logger.debug(
+      `Signing in toolset "${toolsetName}": ${JSON.stringify({
+        url: dialBody.url,
+        credentialsLevel: dialBody.credentialsLevel,
+        authenticationType: dialBody.authenticationType,
+        redirectUri:
+          'redirectUri' in dialBody ? dialBody.redirectUri : undefined,
+        codeLength: 'code' in dialBody ? dialBody.code?.length : undefined,
+      })}`,
+    );
 
     try {
       const response = await this.dialClient.client.toolsetSignin({
@@ -857,6 +991,8 @@ export class ToolsetsService {
           response.response.status,
           `log in toolset "${toolsetName}"`,
           this.logger,
+          response.error,
+          extractDialErrorMessage(response.error),
         );
       }
       await this.invalidateCaches(userSub, toolsetName);

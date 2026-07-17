@@ -38,6 +38,9 @@ const backgroundsColors = {
   'new-chat-shadow-purple-active':
     'var(--bg-new-chat-shadow-purple-active, #A972FF1A)',
   'mask-opaque': 'var(--bg-mask-opaque, #000)',
+  'accent-primary-fill': 'var(--bg-accent-primary-fill, #5C8DEA)',
+  'hover-alpha': 'var(--bg-hover-alpha, rgba(0, 0, 0, 0.04))',
+  'focus-ring-alpha': 'var(--bg-focus-ring-alpha, rgba(125, 164, 255, 0.5))',
 };
 
 const controlsBgColors = {
@@ -89,6 +92,7 @@ const borderColors = {
   'accent-secondary': 'var(--stroke-accent-secondary, #007274)',
   'accent-tertiary': 'var(--stroke-accent-tertiary, #7E39EC)',
   'hover-tint': 'var(--stroke-hover-tint, rgba(0, 0, 0, 0.12))',
+  hairline: 'var(--stroke-hairline, rgba(0, 0, 0, 0.05))',
 };
 
 const controlsBorderColors = {

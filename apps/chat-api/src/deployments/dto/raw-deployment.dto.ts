@@ -12,6 +12,7 @@ export interface RawDeploymentDto {
   toolset?: string;
   icon_url?: string;
   updated_at?: number;
+  created_at?: number;
   reference?: string;
   description?: string;
   intro?: string;

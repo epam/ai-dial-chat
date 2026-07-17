@@ -317,18 +317,22 @@ const App: FC = () => {
       {isConversationRoute && <ConversationSourcesPanel />}
       {isConversationRoute && (
         <AttachmentCanvasContainer
-          ariaLabel={t(AttachmentCanvasI18nKeys.AriaLabel)}
-          closeLabel={t(AttachmentCanvasI18nKeys.CloseLabel)}
-          downloadLabel={t(AttachmentCanvasI18nKeys.DownloadLabel)}
-          unsupportedLabel={t(AttachmentCanvasI18nKeys.UnsupportedLabel)}
-          loadErrorLabel={t(AttachmentCanvasI18nKeys.LoadErrorLabel)}
-          forbiddenErrorLabel={t(AttachmentCanvasI18nKeys.ForbiddenErrorLabel)}
-          copyTextLabel={t(ButtonsI18nKeys.CopyText)}
-          copiedTextLabel={t(ButtonsI18nKeys.Copied)}
-          copyMarkdownLabel={t(ButtonsI18nKeys.CopyAsMarkdown)}
-          copiedMarkdownLabel={t(ButtonsI18nKeys.Copied)}
-          copyJsonLabel={t(ButtonsI18nKeys.CopyAsJson)}
-          copiedJsonLabel={t(ButtonsI18nKeys.Copied)}
+          labels={{
+            ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
+            closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
+            downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
+            unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
+            loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
+            forbiddenErrorLabel: t(
+              AttachmentCanvasI18nKeys.ForbiddenErrorLabel,
+            ),
+            copyTextLabel: t(ButtonsI18nKeys.CopyText),
+            copiedTextLabel: t(ButtonsI18nKeys.Copied),
+            copyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
+            copiedMarkdownLabel: t(ButtonsI18nKeys.Copied),
+            copyJsonLabel: t(ButtonsI18nKeys.CopyAsJson),
+            copiedJsonLabel: t(ButtonsI18nKeys.Copied),
+          }}
           isMobile={isMobile}
           defaultWidth={canvasDefaultWidth}
           codeBlockTheme={codeBlockTheme}

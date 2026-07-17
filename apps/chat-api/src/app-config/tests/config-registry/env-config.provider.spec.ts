@@ -190,6 +190,43 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('fileManager.availableTabs', () => {
+    it('returns undefined when FILE_MANAGER_AVAILABLE_TABS is not set', async () => {
+      const { provider } = makeProvider({ FILE_MANAGER_AVAILABLE_TABS: [] });
+      expect(
+        await provider.resolve('fileManager.availableTabs', ctx),
+      ).toBeUndefined();
+    });
+
+    it('returns the valid subset when a valid subset is configured', async () => {
+      const { provider } = makeProvider({
+        FILE_MANAGER_AVAILABLE_TABS: ['my_files', 'organization'],
+      });
+      expect(await provider.resolve('fileManager.availableTabs', ctx)).toEqual([
+        'my_files',
+        'organization',
+      ]);
+    });
+
+    it('drops unknown ids and keeps only recognized tabs', async () => {
+      const { provider } = makeProvider({
+        FILE_MANAGER_AVAILABLE_TABS: ['my_files', 'review', 'bogus'],
+      });
+      expect(await provider.resolve('fileManager.availableTabs', ctx)).toEqual([
+        'my_files',
+      ]);
+    });
+
+    it('returns undefined when every configured id is invalid', async () => {
+      const { provider } = makeProvider({
+        FILE_MANAGER_AVAILABLE_TABS: ['review', 'bogus'],
+      });
+      expect(
+        await provider.resolve('fileManager.availableTabs', ctx),
+      ).toBeUndefined();
+    });
+  });
+
   describe('unknown key', () => {
     it('returns undefined for an unknown key', async () => {
       const { provider } = makeProvider();

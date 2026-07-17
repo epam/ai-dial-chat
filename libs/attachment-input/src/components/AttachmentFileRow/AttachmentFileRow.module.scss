@@ -57,7 +57,7 @@
 }
 
 .indeterminateFill {
-  background: var(--ci-tile-fill-bg, var(--bg-accent-primary, #5c8dea));
+  background: var(--ci-tile-fill-bg, var(--bg-accent-primary-fill, #5c8dea));
   animation: attachment-tile-indeterminate 1.2s ease-in-out infinite;
 
   @media (prefers-reduced-motion: reduce) {

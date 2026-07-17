@@ -12,6 +12,12 @@ export interface AttachmentTrayLabels {
   clickLabel?: string;
 }
 
+/** Style overrides for the `AttachmentTray` component. */
+export interface AttachmentTrayStyles {
+  /** Extra class name(s) merged onto the root element. */
+  className?: string;
+}
+
 /** Props accepted by the `AttachmentTray` component. */
 export interface AttachmentTrayProps {
   /** The list of attachments to display. */
@@ -26,6 +32,6 @@ export interface AttachmentTrayProps {
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /** Localised accessible labels for the tray region and each card's interactive elements. */
   labels?: AttachmentTrayLabels;
-  /** Extra class name(s) merged onto the root element. */
-  className?: string;
+  /** Style overrides for the tray. */
+  styles?: AttachmentTrayStyles;
 }

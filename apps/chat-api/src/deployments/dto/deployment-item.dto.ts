@@ -73,6 +73,12 @@ export class DeploymentItemDto {
 
   @ApiPropertyOptional({
     description:
+      'Timestamp of creation time from DIAL Core (e.g. 1714768496000)',
+  })
+  createdAt?: number;
+
+  @ApiPropertyOptional({
+    description:
       'Application type schema id from DIAL Core (present only for application deployments)',
   })
   applicationTypeSchemaId?: string;

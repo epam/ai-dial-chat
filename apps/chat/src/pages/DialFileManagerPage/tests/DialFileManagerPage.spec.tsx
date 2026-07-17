@@ -23,9 +23,20 @@ vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { bucket: 'test-bucket' } }),
 }));
 
-const { mockActiveTab, mockHandleTabChange } = vi.hoisted(() => ({
-  mockActiveTab: { value: undefined as string | undefined },
-  mockHandleTabChange: vi.fn(),
+const { mockActiveTab, mockHandleTabChange, mockFileManagerTabs } = vi.hoisted(
+  () => ({
+    mockActiveTab: { value: undefined as string | undefined },
+    mockHandleTabChange: vi.fn(),
+    mockFileManagerTabs: {
+      value: ['my_files', 'shared', 'organization'] as string[],
+    },
+  }),
+);
+
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({
+    config: { fileManagerTabs: mockFileManagerTabs.value },
+  }),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -63,6 +74,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
       };
       toolbarOptions?: {
+        tabs?: Array<{ id: string; label: string }>;
         newActions?: { uploadArchive?: { label?: string } };
       };
       autoSelectUploadedItems?: boolean;
@@ -70,6 +82,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       <div
         role="region"
         aria-label="file manager"
+        data-tab-count={toolbarOptions?.tabs?.length}
         data-has-download={String(
           Actions.Download in (gridOptions?.actionLabels ?? {}),
         )}
@@ -193,10 +206,12 @@ const defaultHookResult: UseDialFileManagerResult = {
   isFileMetadataLoading: false,
   onGetInfo: vi.fn(),
   clearMetadata: vi.fn(),
+  isAnyOperationInProgress: false,
 };
 
 beforeEach(() => {
   mockActiveTab.value = undefined;
+  mockFileManagerTabs.value = ['my_files', 'shared', 'organization'];
   mockUseDialFileManager.mockReturnValue(defaultHookResult);
 });
 
@@ -235,6 +250,19 @@ describe('DialFileManagerPage', () => {
     mockActiveTab.value = DialFileManagerTabs.MyFiles;
     render(<DialFileManagerPage />);
     expect(screen.getByRole('region', { name: 'file manager' })).toBeTruthy();
+    expect(
+      screen
+        .getByRole('region', { name: 'file manager' })
+        .getAttribute('data-tab-count'),
+    ).toBe('3');
+  });
+
+  it('renders only the tabs allowed by the deployment-configured fileManagerTabs', () => {
+    mockFileManagerTabs.value = ['my_files', 'organization'];
+    mockActiveTab.value = DialFileManagerTabs.MyFiles;
+    render(<DialFileManagerPage />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-tab-count')).toBe('2');
   });
 });
 

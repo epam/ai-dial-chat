@@ -1,7 +1,16 @@
 import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
+import { buildCssVars } from '../../utils/build-css-vars';
 import { mergeClasses } from '../../utils/merge-class';
 import styles from './Highlight.module.scss';
+
+/** CSS custom-property overrides for the `Highlight` component. */
+export interface HighlightColors {
+  /** Highlighted match text color. */
+  text?: string;
+  /** Highlighted match background color. */
+  background?: string;
+}
 
 /** Props for `Highlight`. */
 export interface HighlightProps {
@@ -15,6 +24,8 @@ export interface HighlightProps {
   className?: string;
   /** Maximum number of lines to display before truncating. Use `1` for single-line ellipsis truncation (e.g. list rows). Defaults to `2`. */
   maxLines?: number;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: HighlightColors;
 }
 
 /* Tailwind's JIT scanner only compiles class names that appear as complete
@@ -40,8 +51,13 @@ export const Highlight: FC<HighlightProps> = ({
   markClassName,
   className,
   maxLines = 2,
+  colors,
 }) => {
   const clampClassName = getClampClassName(maxLines);
+  const cssVars = buildCssVars({
+    '--hl-text': colors?.text,
+    '--hl-bg': colors?.background,
+  });
 
   if (!query.trim()) {
     return (
@@ -61,6 +77,7 @@ export const Highlight: FC<HighlightProps> = ({
         {text.slice(0, idx)}
         <mark
           className={[styles.mark, markClassName].filter(Boolean).join(' ')}
+          style={cssVars}
         >
           {text.slice(idx, idx + query.length)}
         </mark>

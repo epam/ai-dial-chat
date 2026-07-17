@@ -1,5 +1,6 @@
 import {
   AttachmentErrorReason,
+  buildCssVars,
   CodeBlockTheme,
   mergeClasses,
   RequestStatus,
@@ -34,10 +35,8 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
   onClick,
   onRetry,
   labels,
-  typeLabels,
   styles: rowStyles,
   theme = CodeBlockTheme.Dark,
-  className,
 }) => {
   const {
     clickLabel = 'Download attachment',
@@ -48,9 +47,28 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
     genericErrorLabel = 'Upload failed',
   } = labels ?? {};
   const {
-    nameClassName = 'dial-caption-text',
-    metaClassName = 'dial-caption-text',
+    typography: {
+      nameClassName = 'dial-caption-text',
+      metaClassName = 'dial-caption-text',
+    } = {},
+    colors,
+    className,
   } = rowStyles ?? {};
+  const cssVars = buildCssVars({
+    '--ci-tile-bg': colors?.background,
+    '--ci-tile-border': colors?.border,
+    '--ci-tile-border-hover': colors?.borderHover,
+    '--ci-tile-focus-outline': colors?.focusOutline,
+    '--ci-tile-bg-error': colors?.backgroundError,
+    '--ci-tile-border-error': colors?.borderError,
+    '--ci-tile-error-text': colors?.errorText,
+    '--ci-tile-name-text': colors?.nameText,
+    '--ci-tile-type-text': colors?.typeText,
+    '--ci-tile-hover-icon-bg': colors?.hoverIconBackground,
+    '--ci-tile-hover-icon-color': colors?.hoverIconColor,
+    '--ci-tile-track-bg': colors?.trackBackground,
+    '--ci-tile-fill-bg': colors?.fillBackground,
+  });
   const { id, name, status, errorReason } = attachment;
   const isLoading = status === RequestStatus.Loading;
   const isError = status === RequestStatus.Error;
@@ -70,7 +88,7 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
     attachment,
     false,
     false,
-    typeLabels,
+    labels,
   );
 
   const canDownload = !isError && !isLoading && onClick !== undefined;
@@ -219,6 +237,7 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
           aria-label={clickLabel}
           onClick={handleClick}
           onKeyDown={handleKeyDown}
+          style={cssVars}
           className={mergeClasses(
             tileClassName,
             'cursor-pointer focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',
@@ -233,6 +252,7 @@ export const AttachmentFileRow: FC<AttachmentFileRowProps> = ({
           role={isError ? 'group' : undefined}
           aria-describedby={isError ? errorDescId : undefined}
           tabIndex={isError ? 0 : undefined}
+          style={cssVars}
         >
           {tileContent}
         </div>

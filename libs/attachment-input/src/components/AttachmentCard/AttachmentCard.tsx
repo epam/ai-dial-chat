@@ -42,10 +42,8 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   isSelected,
   shouldAlwaysShowActions,
   labels,
-  typeLabels,
   styles: cardStyles,
   showHoverDownloadIcon = false,
-  className,
 }) => {
   const {
     removeLabel = 'Remove attachment',
@@ -59,6 +57,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     colors,
     typography,
     roundedClassName = 'rounded-xl',
+    className,
   } = cardStyles ?? {};
   const { id, name } = attachment;
   const imageSrc = attachment.previewUrl ?? attachment.url;
@@ -74,6 +73,18 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     '--ci-card-bg': colors?.background,
     '--ci-card-name': colors?.nameText,
     '--ci-card-meta': colors?.metaText,
+    '--ci-card-border-error': colors?.borderError,
+    '--ci-card-bg-selected': colors?.backgroundSelected,
+    '--ci-card-border-selected': colors?.borderSelected,
+    '--ci-card-bg-hover': colors?.backgroundHover,
+    '--ci-loading-overlay-bg': colors?.loadingOverlayBackground,
+    '--ci-card-action-color': colors?.actionColor,
+    '--ci-card-remove-bg-hover': colors?.actionBackgroundHover,
+    '--ci-card-focus-outline': colors?.focusOutline,
+    '--ci-card-remove-bg': colors?.removeBackground,
+    '--ci-card-remove-color': colors?.removeColor,
+    '--ci-card-hover-icon-bg': colors?.hoverIconBackground,
+    '--ci-card-hover-icon-color': colors?.hoverIconColor,
   });
 
   const {
@@ -92,9 +103,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         attachment,
         isSelected ?? false,
         shouldAlwaysShowActions ?? false,
-        typeLabels,
+        labels,
       ),
-    [attachment, isSelected, shouldAlwaysShowActions, typeLabels],
+    [attachment, isSelected, shouldAlwaysShowActions, labels],
   );
 
   /*

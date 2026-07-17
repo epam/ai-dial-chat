@@ -5,7 +5,7 @@ import styles from './MessageSource.module.scss';
 
 /** Styled pill button for a message source reference. */
 export const MessageSource: FC<MessageSourceProps> = ({
-  label,
+  labels: { label },
   onClick,
   styles: sourceStyles,
 }) => {
