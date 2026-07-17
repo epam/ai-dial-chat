@@ -20,7 +20,7 @@ import type {
   AttachmentCardStyles,
 } from '../../../models/attachment-card';
 import { getAttachmentCardState } from '../../../utils/attachment';
-import { RemoveAction } from './Actions';
+import { DownloadAction, RemoveAction } from './Actions';
 import styles from './Attachment.module.scss';
 
 interface ImageAttachmentProps {
@@ -31,6 +31,7 @@ interface ImageAttachmentProps {
   labels?: AttachmentCardLabels;
   styles?: AttachmentCardStyles;
   cssVars?: CSSProperties;
+  onDownload?: (id: string) => void;
 }
 
 /** Square tile for a single image attachment inside the composer tray. */
@@ -41,6 +42,7 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
   labels,
   onRemove,
   cssVars,
+  onDownload,
   styles: cardStyles,
 }) => {
   const { clickLabel = 'Open attachment', expandLabel = 'Expand pasted text' } =
@@ -100,6 +102,7 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
     >
       <div className="relative h-full w-full overflow-hidden">
         {onRemove && <RemoveAction onClick={onRemove} id={id} />}
+        {onDownload && <DownloadAction onClick={onDownload} id={id} />}
         {imageLoadStatus !== LazyImageLoadStatus.Loaded && (
           <DialSkeleton
             variant={DialSkeletonVariant.Rectangular}
