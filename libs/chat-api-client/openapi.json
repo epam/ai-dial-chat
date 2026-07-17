@@ -3885,6 +3885,10 @@
             "type": "number",
             "description": "Timestamp of last update time from DIAL Core (e.g. 1714768496000)"
           },
+          "createdAt": {
+            "type": "number",
+            "description": "Timestamp of creation time from DIAL Core (e.g. 1714768496000)"
+          },
           "applicationTypeSchemaId": {
             "type": "string",
             "description": "Application type schema id from DIAL Core (present only for application deployments)"

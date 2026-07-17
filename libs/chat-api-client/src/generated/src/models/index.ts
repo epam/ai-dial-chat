@@ -1703,6 +1703,12 @@ export interface DeploymentItemDto {
    */
   updatedAt?: number;
   /**
+   * Timestamp of creation time from DIAL Core (e.g. 1714768496000)
+   * @type {number}
+   * @memberof DeploymentItemDto
+   */
+  createdAt?: number;
+  /**
    * Application type schema id from DIAL Core (present only for application deployments)
    * @type {string}
    * @memberof DeploymentItemDto

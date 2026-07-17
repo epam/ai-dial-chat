@@ -17,6 +17,8 @@ export interface CatalogItem {
   lastUsed: string;
   /** Timestamp used for chronological sorting; omit when unknown. */
   updatedAt?: number;
+  /** Timestamp used for chronological sorting; omit when unknown. */
+  createdAt?: number;
   /** URL of the icon displayed inside the logo mark. */
   iconUrl?: string;
   /** Whether this item is currently starred. Default: true in the Favorites Strip. */
