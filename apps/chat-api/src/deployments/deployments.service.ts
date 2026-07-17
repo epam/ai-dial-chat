@@ -226,6 +226,7 @@ const mapToDeploymentItem = (
     isFeatured: featuredIds.has(raw.id || raw.reference || ''),
     isHidden: topics.some((tag) => hiddenTags.has(tag)),
     updatedAt: raw.updated_at,
+    createdAt: raw.created_at,
     interfaces,
     applicationTypeSchemaId:
       type === 'application' && raw.application_type_schema_id
