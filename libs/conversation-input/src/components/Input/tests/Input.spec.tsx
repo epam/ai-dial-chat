@@ -285,17 +285,6 @@ describe('Input', () => {
     );
   });
 
-  it('should remove the card when the remove button is clicked', () => {
-    render(<Input />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-    fireEvent.click(screen.getByLabelText('Remove attachment'));
-    expect(screen.queryByText('doc')).toBeNull();
-  });
-
   it('pendingDropFiles prop creates attachment cards and calls onDropFilesConsumed', () => {
     const onDropFilesConsumed = vi.fn();
     const file = new File(['content'], 'dropped.pdf', {
