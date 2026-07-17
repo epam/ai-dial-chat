@@ -2,6 +2,7 @@ import { Transform } from 'class-transformer';
 import {
   IsNotEmpty,
   IsBoolean,
+  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
@@ -12,7 +13,18 @@ import {
   Min,
 } from 'class-validator';
 
+export enum ApplicationLogLevel {
+  Debug = 'debug',
+  Log = 'log',
+  Warn = 'warn',
+  Error = 'error',
+}
+
 export class EnvironmentVariables {
+  @IsOptional()
+  @IsEnum(ApplicationLogLevel)
+  LOG_LEVEL?: ApplicationLogLevel;
+
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()

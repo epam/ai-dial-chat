@@ -1,5 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../../../models/catalog-item';
 import { CatalogEntityType } from '../../../../../types/entity-type';
@@ -8,20 +9,24 @@ import { DeleteButton } from '../DeleteButton';
 vi.mock('@epam/ai-dial-kit', () => ({
   NeutralButton: ({
     label,
+    iconBefore,
     onClick,
     disabled,
   }: {
     label: string;
+    iconBefore?: ReactNode;
     onClick: () => void;
     disabled?: boolean;
   }) => (
     <button onClick={onClick} disabled={disabled}>
+      {iconBefore}
       {label}
     </button>
   ),
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  DialSpinner: () => <svg />,
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconTrash: () => <svg />,
@@ -130,5 +135,25 @@ describe('DeleteButton', () => {
       name: 'Delete',
     }) as HTMLButtonElement;
     expect(button.disabled).toBe(false);
+  });
+
+  it('shows a loading indicator while onDelete is pending, and keeps a stable accessible name', async () => {
+    let resolveDelete: (() => void) | undefined;
+    const onDelete = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDelete = resolve;
+        }),
+    );
+    render(<DeleteButton item={makeItem()} onDelete={onDelete} />);
+    const button = screen.getByRole('button', { name: 'Delete' });
+
+    await userEvent.click(button);
+    expect(screen.getByText('Deleting')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBe(button);
+
+    await act(async () => {
+      resolveDelete?.();
+    });
   });
 });

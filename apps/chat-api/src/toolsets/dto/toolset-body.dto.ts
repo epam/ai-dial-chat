@@ -83,7 +83,7 @@ export class ToolsetAuthSettingsBodyDto {
   scopesSupported?: string[];
 
   @ApiPropertyOptional({
-    example: 'https://chat.example.com/toolset-editor/callback',
+    example: 'https://chat.example.com/auth/toolset-signin',
   })
   @IsString()
   @IsOptional()

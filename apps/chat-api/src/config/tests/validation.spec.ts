@@ -22,4 +22,14 @@ describe('validate', () => {
       /Environment validation failed/,
     );
   });
+
+  it('accepts a supported log level', () => {
+    expect(() => validate({ ...baseConfig, LOG_LEVEL: 'debug' })).not.toThrow();
+  });
+
+  it('fails fast at boot when LOG_LEVEL is unsupported', () => {
+    expect(() => validate({ ...baseConfig, LOG_LEVEL: 'trace' })).toThrow(
+      /Environment validation failed/,
+    );
+  });
 });

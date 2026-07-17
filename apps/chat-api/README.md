@@ -82,6 +82,7 @@ ALLOWED_IFRAME_ORIGINS=
 | `PORT`                                  | `3005`                  | HTTP server port                                                                                                                                                                                                                                                                                                                                                                                         |
 | `API_PREFIX`                            | `api`                   | Global route prefix for all API endpoints                                                                                                                                                                                                                                                                                                                                                                |
 | `CORS_ORIGIN`                           | `http://localhost:4207` | Allowed CORS origin for frontend                                                                                                                                                                                                                                                                                                                                                                         |
+| `LOG_LEVEL`                             | Environment-dependent   | Minimum NestJS log level: `debug`, `log`, `warn`, or `error`. Defaults to `log` in production and `debug` otherwise.                                                                                                                                                                                                                                                                                     |
 | `AUTH_SESSION_COOKIE_NAME`              | `__Host-chat.sess`      | Session cookie name                                                                                                                                                                                                                                                                                                                                                                                      |
 | `AUTH_TRANSACTION_COOKIE_NAME`          | `__Host-chat.tx`        | Login transaction cookie name                                                                                                                                                                                                                                                                                                                                                                            |
 | `AUTH_COOKIE_SECURE`                    | `true`                  | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names when disabled                                                                                                                                                                                                                                                                                                |
@@ -264,6 +265,10 @@ The application uses NestJS Logger with contextual logging:
 - **Log**: General information
 - **Warn**: Non-critical issues (external service errors)
 - **Error**: Critical errors with stack traces
+
+Set `LOG_LEVEL` to control the minimum emitted level independently from
+`NODE_ENV`. For example, `LOG_LEVEL=debug` enables debug logs in a production
+container without enabling development-only features such as Swagger.
 
 ## Troubleshooting
 

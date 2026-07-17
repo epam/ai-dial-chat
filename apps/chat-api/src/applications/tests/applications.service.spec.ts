@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DeploymentsService } from '../../deployments/deployments.service';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { ApplicationsService } from '../applications.service';
 import type { ApplicationsResponseDto } from '../dto/application.dto';
@@ -38,13 +39,21 @@ function makeDeps() {
     del: vi.fn().mockResolvedValue(undefined),
   };
 
-  return { dialClient, cacheManager };
+  const deploymentsService = {
+    invalidateListCache: vi.fn().mockResolvedValue(undefined),
+  } as unknown as DeploymentsService;
+
+  return { dialClient, cacheManager, deploymentsService };
 }
 
 function makeService() {
-  const { dialClient, cacheManager } = makeDeps();
-  const service = new ApplicationsService(dialClient, cacheManager as never);
-  return { service, cacheManager };
+  const { dialClient, cacheManager, deploymentsService } = makeDeps();
+  const service = new ApplicationsService(
+    dialClient,
+    cacheManager as never,
+    deploymentsService,
+  );
+  return { service, cacheManager, deploymentsService };
 }
 
 describe('ApplicationsService', () => {
@@ -76,7 +85,7 @@ describe('ApplicationsService', () => {
     });
 
     it('returns cached list without calling upstream on cache hit', async () => {
-      const { dialClient } = makeDeps();
+      const { dialClient, deploymentsService } = makeDeps();
       const cacheManager = {
         get: vi.fn().mockResolvedValue(mockList),
         set: vi.fn(),
@@ -84,6 +93,7 @@ describe('ApplicationsService', () => {
       const service = new ApplicationsService(
         dialClient,
         cacheManager as never,
+        deploymentsService,
       );
       const spy = vi
         .spyOn(service['dialClient'].client, 'getApplications')
@@ -95,7 +105,7 @@ describe('ApplicationsService', () => {
     });
 
     it('uses per-user cache keys — different users get different cache entries', async () => {
-      const { dialClient } = makeDeps();
+      const { dialClient, deploymentsService } = makeDeps();
       const store = new Map<string, unknown>();
       const cacheManager = {
         get: vi.fn((key: string) => Promise.resolve(store.get(key))),
@@ -107,6 +117,7 @@ describe('ApplicationsService', () => {
       const service = new ApplicationsService(
         dialClient,
         cacheManager as never,
+        deploymentsService,
       );
       vi.spyOn(
         service['dialClient'].client,
@@ -429,6 +440,32 @@ describe('ApplicationsService', () => {
         }),
       );
       expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+    });
+
+    it('invalidates the deployments list cache on successful delete', async () => {
+      const { service, deploymentsService } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'deleteCustomApplication',
+      ).mockResolvedValue(okResponse({}));
+
+      await service.deleteApplication('user1', 'token', id);
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user1',
+      );
+    });
+
+    it('does not invalidate the deployments list cache when delete returns error', async () => {
+      const { service, deploymentsService } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'deleteCustomApplication',
+      ).mockResolvedValue(errResponse(409));
+
+      await expect(
+        service.deleteApplication('user1', 't', id),
+      ).rejects.toThrow();
+      expect(deploymentsService.invalidateListCache).not.toHaveBeenCalled();
     });
 
     it('resolves bucket via getUserBucket when applicationName has no bucket prefix', async () => {
