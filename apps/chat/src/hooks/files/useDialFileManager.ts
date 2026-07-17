@@ -256,6 +256,20 @@ export interface UseDialFileManagerResult {
   onGetInfo: (file: DialFile) => void;
   /** Metadata: resets fileMetadata/isFileMetadataLoading; passed to fileMetadataPopupOptions.clearMetadata. */
   clearMetadata: () => void;
+
+  /**
+   * True while any mutating file-manager operation is in flight: the OR of
+   * `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`,
+   * `isMoving`, `isUnsharing`, `isRemovingAccess`, and `uploadBatchState != null`.
+   *
+   * Deliberately excludes four flags, each already fully contained by its own
+   * scoped loading UI:
+   * - `isLoading` — a read (listing fetch), not a mutation.
+   * - `isSearching` — scoped to ui-kit's own search-progress UI.
+   * - `isFileMetadataLoading` — has its own `loading` state in `fileMetadataPopupOptions`.
+   * - `isSharing` — already blocked by `ShareFileModal`'s own foreground `DialPopup`.
+   */
+  isAnyOperationInProgress: boolean;
 }
 
 export interface ShareTarget {
@@ -2381,6 +2395,30 @@ export const useDialFileManager = ({
 
   const disabledNewButtonTooltip = t('dialFileManager.noPermissionToCreate');
 
+  const isAnyOperationInProgress = useMemo(
+    (): boolean =>
+      isCreatingFolder ||
+      isDownloading ||
+      isDeleting ||
+      isRenaming ||
+      isCopying ||
+      isMoving ||
+      isUnsharing ||
+      isRemovingAccess ||
+      uploadBatchState != null,
+    [
+      isCreatingFolder,
+      isDownloading,
+      isDeleting,
+      isRenaming,
+      isCopying,
+      isMoving,
+      isUnsharing,
+      isRemovingAccess,
+      uploadBatchState,
+    ],
+  );
+
   return {
     items,
     isLoading,
@@ -2439,5 +2477,6 @@ export const useDialFileManager = ({
     isFileMetadataLoading,
     onGetInfo,
     clearMetadata,
+    isAnyOperationInProgress,
   };
 };

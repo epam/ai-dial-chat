@@ -390,10 +390,17 @@ export const Catalog: FC<CatalogProps> = ({
               }))}
               activeTabId={activeTab}
               onTabChange={setActiveTab}
-              activeTabClassName="text-catalog-tab-active"
-              inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
-              activeBadgeClassName="bg-catalog-badge-active text-catalog-badge-active"
-              inactiveBadgeClassName="bg-catalog-badge-inactive text-catalog-badge-inactive"
+              styles={{
+                colors: {
+                  activeTabClassName: 'text-catalog-tab-active',
+                  inactiveTabClassName:
+                    'text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent',
+                  activeBadgeClassName:
+                    'bg-catalog-badge-active text-catalog-badge-active',
+                  inactiveBadgeClassName:
+                    'bg-catalog-badge-inactive text-catalog-badge-inactive',
+                },
+              }}
             />
           </div>
         )}

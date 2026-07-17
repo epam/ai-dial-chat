@@ -30,22 +30,28 @@ export interface SearchBarProps {
  * height, radius, padding, and icon/text size for the catalog layout.
  */
 export const SearchBar: FC<SearchBarProps> = ({
+  value,
+  onChange,
   placeholder = 'Search',
+  ariaLabel,
   className,
-  ...rest
+  clearLabel,
 }) => (
   <div className="flex-1">
     <BaseSearchBar
-      placeholder={placeholder}
-      {...rest}
+      value={value}
+      onChange={onChange}
+      labels={{ placeholder, ariaLabel, clearLabel }}
       iconSize={18}
       iconStrokeWidth={1.8}
-      containerClassName={mergeClasses(
-        'h-[50px] flex-1 rounded-xl px-[18px]',
-        className,
-      )}
-      inputClassName="text-[15px]"
-      clearButtonClassName="size-11 desktop:size-auto"
+      styles={{
+        containerClassName: mergeClasses(
+          'h-[50px] flex-1 rounded-xl px-[18px]',
+          className,
+        ),
+        inputClassName: 'text-[15px]',
+        clearButtonClassName: 'size-11 desktop:size-auto',
+      }}
     />
   </div>
 );

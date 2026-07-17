@@ -1,4 +1,8 @@
-import { mergeClasses, useCodeCopy } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  useCodeCopy,
+} from '@epam/ai-dial-chat-shared';
 import {
   type FC,
   type KeyboardEvent,
@@ -35,10 +39,35 @@ const SharePopover: FC<SharePopoverProps> = ({
   onAccessChange,
   onClose,
   labels,
-  errorClassName = 'dial-tiny-text',
-  noteClassName = 'dial-tiny-text',
   className,
+  styles: stylesProp,
 }) => {
+  const colors = stylesProp?.colors;
+  const {
+    errorClassName = 'dial-tiny-text',
+    noteClassName = 'dial-tiny-text',
+  } = stylesProp?.typography ?? {};
+  const cssVars = buildCssVars({
+    '--shp-access-trigger-bg': colors?.accessTriggerBackground,
+    '--shp-access-trigger-border': colors?.accessTriggerBorder,
+    '--shp-access-trigger-border-hover': colors?.accessTriggerBorderHover,
+    '--shp-access-trigger-border-focus': colors?.accessTriggerBorderFocus,
+    '--shp-access-trigger-text': colors?.accessTriggerText,
+    '--shp-title-text': colors?.titleText,
+    '--shp-link-icon-bg': colors?.linkIconBackground,
+    '--shp-link-icon-text': colors?.linkIconText,
+    '--shp-anyone-title': colors?.anyoneTitle,
+    '--shp-anyone-subtitle': colors?.anyoneSubtitle,
+    '--shp-access-chevron': colors?.accessChevron,
+    '--shp-menu-item-hover': colors?.menuItemHover,
+    '--shp-menu-item-focus-shadow': colors?.menuItemFocusShadow,
+    '--shp-menu-item-checked-bg': colors?.menuItemCheckedBackground,
+    '--shp-menu-item-label': colors?.menuItemLabel,
+    '--shp-section-label': colors?.sectionLabel,
+    '--shp-error-text': colors?.errorText,
+    '--shp-note-text': colors?.noteText,
+    '--shp-divider': colors?.divider,
+  });
   const {
     title = 'Share',
     qrButtonLabel = 'QR',
@@ -173,6 +202,7 @@ const SharePopover: FC<SharePopoverProps> = ({
       role="dialog"
       aria-label={title}
       tabIndex={-1}
+      style={cssVars}
       className={mergeClasses(
         'flex w-[344px] flex-col outline-none',
         className,
@@ -229,7 +259,7 @@ const SharePopover: FC<SharePopoverProps> = ({
             </p>
 
             {view === SharePopoverView.Qr ? (
-              <QrCode value={url} ariaLabel={qrCodeAriaLabel} />
+              <QrCode value={url} labels={{ ariaLabel: qrCodeAriaLabel }} />
             ) : (
               <LinkView
                 url={url}

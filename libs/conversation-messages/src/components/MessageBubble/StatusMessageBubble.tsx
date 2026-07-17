@@ -1,12 +1,18 @@
 import { DialNotification } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 
-/** Props for the model-change status message banner. */
-export interface StatusMessageBubbleProps {
+/** User-visible strings for {@link StatusMessageBubble}. */
+export interface StatusMessageBubbleLabels {
   /** Bold prefix text displayed before the description. Defaults to `'Model switched.'`. */
   titleText?: string;
   /** Full description text, e.g. "The model has been switched from GPT to Imagen." */
   bodyText: string;
+}
+
+/** Props for the model-change status message banner. */
+export interface StatusMessageBubbleProps {
+  /** User-visible strings. */
+  labels: StatusMessageBubbleLabels;
 }
 
 /**
@@ -15,8 +21,7 @@ export interface StatusMessageBubbleProps {
  * Does not render message actions, ratings, or a copy button.
  */
 export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
-  titleText = 'Model switched.',
-  bodyText,
+  labels: { titleText = 'Model switched.', bodyText },
 }) => {
   return (
     <div role="status" aria-live="polite">

@@ -1,13 +1,20 @@
 .accessTriggerBtn {
-  background-color: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: var(--shp-access-trigger-bg, var(--bg-layer-0, #fcfcfc));
+  border: 1px solid
+    var(
+      --shp-access-trigger-border,
+      var(--stroke-hairline, rgba(0, 0, 0, 0.05))
+    );
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease;
 
   @media (hover: hover) {
     &:hover:not(:focus-visible) {
-      border-color: rgba(0, 0, 0, 0.12);
+      border-color: var(
+        --shp-access-trigger-border-hover,
+        var(--stroke-hover-tint, rgba(0, 0, 0, 0.12))
+      );
     }
   }
 
@@ -15,7 +22,11 @@
     outline: none;
     border-color: color-mix(
       in srgb,
-      var(--stroke-accent-primary, #7da4ff) 50%,
+      var(
+          --shp-access-trigger-border-focus,
+          var(--stroke-accent-primary, #124ace)
+        )
+        50%,
       transparent
     );
     box-shadow: none;
@@ -25,7 +36,11 @@
 .accessTriggerBtnOpen {
   border-color: color-mix(
     in srgb,
-    var(--stroke-accent-primary, #7da4ff) 50%,
+    var(
+        --shp-access-trigger-border-focus,
+        var(--stroke-accent-primary, #124ace)
+      )
+      50%,
     transparent
   );
 }
@@ -36,39 +51,46 @@
  * hover/focus/open states or chevron, since there is nothing to open.
  */
 .accessStaticLabel {
-  background-color: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: var(--shp-access-trigger-bg, var(--bg-layer-0, #fcfcfc));
+  border: 1px solid
+    var(
+      --shp-access-trigger-border,
+      var(--stroke-hairline, rgba(0, 0, 0, 0.05))
+    );
 }
 
 .accessTriggerLabel {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary, #131a29);
+  color: var(--shp-access-trigger-text, var(--text-primary, #161b2d));
 }
 
 /* Popover title in the header bar. */
 .title {
-  color: var(--text-primary, #131a29);
+  color: var(--shp-title-text, var(--text-primary, #161b2d));
 }
 
 /* Icon badge at the start of the "Anyone with the link" row. */
 .linkIconBadge {
-  background: var(--bg-accent-primary-alpha, #7da4ff2e);
-  color: var(--text-accent-primary, #124ace);
+  background: var(
+    --shp-link-icon-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  );
+  color: var(--shp-link-icon-text, var(--text-accent-primary, #124ace));
 }
 
 /* Primary text of the "Anyone with the link" row. */
 .anyoneWithLinkTitle {
-  color: var(--text-primary, #131a29);
+  color: var(--shp-anyone-title, var(--text-primary, #161b2d));
 }
 
 /* Secondary text of the "Anyone with the link" row. */
 .anyoneWithLinkSubtitle {
-  color: var(--text-secondary, #575f73);
+  color: var(--shp-anyone-subtitle, var(--text-secondary, #575f73));
 }
 
 .accessTriggerChevron {
-  color: var(--text-tertiary, #98a2b3);
+  color: var(--shp-access-chevron, var(--text-tertiary, #808898));
   transition: transform 150ms ease;
 
   @media (prefers-reduced-motion: reduce) {
@@ -79,53 +101,61 @@
 .accessMenuItem {
   @media (hover: hover) {
     &:hover {
-      background: rgba(0, 0, 0, 0.04);
+      background: var(
+        --shp-menu-item-hover,
+        var(--bg-hover-alpha, rgba(0, 0, 0, 0.04))
+      );
     }
   }
 
   &:focus-visible {
-    box-shadow: 0 0 0 2px rgba(125, 164, 255, 0.5);
+    box-shadow: 0 0 0 2px
+      var(
+        --shp-menu-item-focus-shadow,
+        var(--bg-focus-ring-alpha, rgba(125, 164, 255, 0.5))
+      );
   }
 }
 
 .accessMenuItemChecked {
-  background: var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.15));
+  background: var(
+    --shp-menu-item-checked-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  );
 
   @media (hover: hover) {
     &:hover {
-      background: var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.15));
+      background: var(
+        --shp-menu-item-checked-bg,
+        var(--bg-accent-primary-alpha, #7da4ff2e)
+      );
     }
   }
 }
 
 .accessMenuItemLabel {
   font-size: 14px;
-  color: var(--text-primary, #131a29);
+  color: var(--shp-menu-item-label, var(--text-primary, #161b2d));
 }
 
 /* Section heading above the link input, e.g. "Link". */
 .sectionLabel {
-  color: var(--text-secondary, #575f73) !important;
+  color: var(--shp-section-label, var(--text-secondary, #575f73)) !important;
   input {
-    color: var(--text-secondary, #575f73) !important;
+    color: var(--shp-section-label, var(--text-secondary, #575f73)) !important;
   }
 }
 
 /* Error message shown when share-link creation fails. */
 .errorText {
-  color: var(--text-error, #ae2f2f);
+  color: var(--shp-error-text, var(--text-error, #ae2f2f));
 }
 
 /* Visibility and expiry notes below the access control. */
 .note {
-  color: var(--text-secondary, #575f73);
+  color: var(--shp-note-text, var(--text-secondary, #575f73));
 }
 
-/*
- * Uses the theme-aware stroke token (not a hardcoded rgba) so the hairline
- * stays visible in dark theme too — a flat `rgba(0, 0, 0, 0.05)` blends into
- * a dark background and reads as "no divider at all".
- */
 .divider {
-  background: var(--stroke-tertiary, #e0e6f0);
+  background: var(--shp-divider, var(--stroke-tertiary, #e0e6f0));
 }

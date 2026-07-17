@@ -6,7 +6,7 @@ import type {
 import type { AttachmentTypeLabels } from './attachment-card';
 
 /** Localised labels for the `AttachmentFileRow` component. */
-export interface AttachmentFileRowLabels {
+export interface AttachmentFileRowLabels extends AttachmentTypeLabels {
   /** Accessible label for the download action. Defaults to `'Download attachment'`. */
   clickLabel?: string;
   /** Accessible label for the retry action. Defaults to `'Retry upload'`. */
@@ -51,14 +51,24 @@ export interface AttachmentFileRowColors {
   fillBackground?: string;
 }
 
-/** Style overrides for the `AttachmentFileRow` component. */
-export interface AttachmentFileRowStyles {
+/** Typography overrides for the `AttachmentFileRow` component. */
+export interface AttachmentFileRowTypography {
   /** Typography class applied to the file name text. Defaults to `'dial-caption-text'`. */
   nameClassName?: string;
   /** Typography class applied to the bottom meta label (file type / status). Defaults to `'dial-caption-text'`. */
   metaClassName?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: AttachmentFileRowColors;
+}
+
+/** Style overrides for the `AttachmentFileRow` component. */
+export interface AttachmentFileRowStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: AttachmentFileRowColors;
+  /** Typography overrides for the file name and meta label text. */
+  typography?: AttachmentFileRowTypography;
+  /** Extra class name(s) merged onto the root element. */
+  className?: string;
 }
 
 /** Props accepted by the `AttachmentFileRow` component. */
@@ -69,17 +79,13 @@ export interface AttachmentFileRowProps {
   onClick?: (attachment: DisplayAttachment) => void;
   /** Called when the user retries a failed upload. */
   onRetry?: (id: string) => void;
-  /** Localised labels for the download/retry actions and size text. */
+  /** Localised labels for the download/retry actions, size text, and the non-extension attachment type names (prompt/pasted/image). */
   labels?: AttachmentFileRowLabels;
-  /** Localised labels for the non-extension attachment type names (prompt/pasted/image). */
-  typeLabels?: AttachmentTypeLabels;
-  /** Style overrides for the file name and meta label text. */
+  /** Style overrides for the row. */
   styles?: AttachmentFileRowStyles;
   /**
    * Tile surface color theme, matching the markdown code block's own
    * light/dark surface (never plain white). Defaults to `'dark'`.
    */
   theme?: CodeBlockTheme;
-  /** Extra class name(s) merged onto the root element. */
-  className?: string;
 }

@@ -87,9 +87,11 @@ export const AppIdentity: FC<AppIdentityProps> = ({
           src={icon ?? undefined}
           size={logoSize}
           initialsName={name}
-          badgeClassName={mergeClasses(
-            isLg ? 'rounded-[14px]' : 'rounded-[12px]',
-          )}
+          styles={{
+            badgeClassName: mergeClasses(
+              isLg ? 'rounded-[14px]' : 'rounded-[12px]',
+            ),
+          }}
         />
       </div>
 

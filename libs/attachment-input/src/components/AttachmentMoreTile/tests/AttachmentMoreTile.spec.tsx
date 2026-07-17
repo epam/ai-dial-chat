@@ -30,14 +30,22 @@ describe('AttachmentMoreTile', () => {
 
   it('accepts a custom aria-label', () => {
     render(
-      <AttachmentMoreTile count={9} onClick={vi.fn()} ariaLabel="9 more" />,
+      <AttachmentMoreTile
+        count={9}
+        onClick={vi.fn()}
+        labels={{ ariaLabel: '9 more' }}
+      />,
     );
     expect(screen.getByRole('button', { name: '9 more' })).toBeTruthy();
   });
 
   it('renders custom children (e.g. a collapse icon) instead of "+N", in the same tile form', () => {
     render(
-      <AttachmentMoreTile count={0} onClick={vi.fn()} ariaLabel="Show less">
+      <AttachmentMoreTile
+        count={0}
+        onClick={vi.fn()}
+        labels={{ ariaLabel: 'Show less' }}
+      >
         <span>collapse-icon</span>
       </AttachmentMoreTile>,
     );
