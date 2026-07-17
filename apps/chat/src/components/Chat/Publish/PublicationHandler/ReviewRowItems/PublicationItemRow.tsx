@@ -25,6 +25,7 @@ import {
   getVersionValidationErrors,
 } from '@/src/utils/app/forms';
 import { isApplicationId, isFileId, isToolsetId } from '@/src/utils/app/id';
+import { getPublicItemIdForVersionCheck } from '@/src/utils/app/publications';
 import { constructPath } from '@/src/utils/app/shared-utils';
 import {
   conversationDisplayNameToStorage,
@@ -94,17 +95,11 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
     name: PublishRequestFieldsNames.PUBLISH_TO_URL,
   });
 
-  const publicItemId = useMemo(() => {
-    let itemId = item.id;
-    if (publicationModel) {
-      const parts = item.id.split('/');
-      if (parts.length > 1) {
-        parts[1] = publishToUrl;
-        itemId = parts.join('/');
-      }
-    }
-    return itemId;
-  }, [item.id, publicationModel, publishToUrl]);
+  const publicItemId = useMemo(
+    () =>
+      getPublicItemIdForVersionCheck(item.id, publishToUrl, !!publicationModel),
+    [item.id, publicationModel, publishToUrl],
+  );
 
   const entity = useMemo(
     () => ({

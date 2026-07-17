@@ -70,6 +70,25 @@ import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 import { nanoid } from 'nanoid';
 
+// Rewrites the bucket segment of an entity id to the chosen public target folder,
+// so a duplicate-version lookup targets the destination (not the source) folder.
+export const getPublicItemIdForVersionCheck = (
+  entityId: string,
+  publishToUrl: string,
+  shouldApplyTargetFolder: boolean,
+) => {
+  if (!shouldApplyTargetFolder) {
+    return entityId;
+  }
+
+  const parts = entityId.split('/');
+  if (parts.length > 1) {
+    parts[1] = publishToUrl;
+  }
+
+  return parts.join('/');
+};
+
 export const isEntityIdPublic = (
   entity: { id: string },
   featureType?: FeatureType,
