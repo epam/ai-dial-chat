@@ -919,6 +919,56 @@ export type ConversationResponseDtoResponseFormatEnum =
 /**
  *
  * @export
+ * @interface ConversationStarterDto
+ */
+export interface ConversationStarterDto {
+  /**
+   * Starter button label
+   * @type {string}
+   * @memberof ConversationStarterDto
+   */
+  title: string;
+  /**
+   * Text inserted into the chat input
+   * @type {string}
+   * @memberof ConversationStarterDto
+   */
+  text: string;
+}
+/**
+ *
+ * @export
+ * @interface ConversationStartersDto
+ */
+export interface ConversationStartersDto {
+  /**
+   * Optional text shown above the conversation starter buttons
+   * @type {string}
+   * @memberof ConversationStartersDto
+   */
+  introText?: string;
+  /**
+   * When true, starter buttons submit immediately after selection
+   * @type {boolean}
+   * @memberof ConversationStartersDto
+   */
+  autoSubmit?: boolean;
+  /**
+   * When true, the chat input is disabled and users can only use starters
+   * @type {boolean}
+   * @memberof ConversationStartersDto
+   */
+  chatMessageInputDisabled?: boolean;
+  /**
+   * Conversation starter buttons configured by the application
+   * @type {Array<ConversationStarterDto>}
+   * @memberof ConversationStartersDto
+   */
+  starters: Array<ConversationStarterDto>;
+}
+/**
+ *
+ * @export
  * @interface ConversationsConfigDto
  */
 export interface ConversationsConfigDto {
@@ -1774,6 +1824,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   applicationFolder?: string;
+  /**
+   * Quick Apps conversation starter settings from application properties
+   * @type {ConversationStartersDto}
+   * @memberof DeploymentItemDto
+   */
+  conversationStarters?: ConversationStartersDto;
 }
 
 /**

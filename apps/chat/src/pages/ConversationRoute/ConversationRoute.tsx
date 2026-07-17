@@ -41,6 +41,7 @@ import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
+import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import {
   getStarterPopulateText,
   getStartersFromSchema,
@@ -113,10 +114,23 @@ const ConversationRoute: FC = () => {
     () => getStartersFromSchema(selectedDeploymentConfiguration),
     [selectedDeploymentConfiguration],
   );
+  const quickAppStarters = useMemo(
+    () =>
+      getQuickAppConversationStarters(selectedDeployment?.conversationStarters),
+    [selectedDeployment?.conversationStarters],
+  );
+  const activeStarters =
+    starters.length > 0 ? starters : quickAppStarters.starters;
+  const starterIntroText = description ?? quickAppStarters.introText;
 
   const isInputDisabled = useMemo(
-    () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
-    [selectedDeploymentConfiguration],
+    () =>
+      !!selectedDeploymentConfiguration?.isChatMessageInputDisabled ||
+      quickAppStarters.isChatMessageInputDisabled,
+    [
+      selectedDeploymentConfiguration,
+      quickAppStarters.isChatMessageInputDisabled,
+    ],
   );
 
   const handleCreateConversation = useCallback(
@@ -198,6 +212,7 @@ const ConversationRoute: FC = () => {
         selectedDeployment={selectedDeployment}
         isInputDisabled={isInputDisabled}
         placeholder={t(ChatI18nKeys.Placeholder)}
+        introText={starterIntroText}
         message={inputMessage}
         inputStyles={CONVERSATION_ROUTE_INPUT_STYLES}
         onCreateConversation={handleCreateConversation}
@@ -230,7 +245,10 @@ const ConversationRoute: FC = () => {
           </Suspense>
         )}
       >
-        <StarterButtons starters={starters} onSelect={handleStarterSelect} />
+        <StarterButtons
+          starters={activeStarters}
+          onSelect={handleStarterSelect}
+        />
       </NewConversationComposer>
       <Suspense fallback={null}>
         <CatalogModal

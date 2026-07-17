@@ -21,6 +21,7 @@ import type {
   ToolsetAuthSettingsDto,
 } from './dto/deployment-details.dto';
 import type {
+  ConversationStartersDto,
   DeploymentItemDto,
   DeploymentsResponseDto,
 } from './dto/deployment-item.dto';
@@ -76,6 +77,39 @@ const getStringArray = (
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string')
     : undefined;
+};
+
+const mapConversationStarters = (
+  raw: unknown,
+): ConversationStartersDto | undefined => {
+  if (!isRecord(raw) || !Array.isArray(raw.starters)) return undefined;
+
+  const starters = raw.starters
+    .filter(isRecord)
+    .map((starter) => {
+      const title = getString(starter, 'title')?.trim();
+      const text = getString(starter, 'text')?.trim();
+      return title && text ? { title, text } : undefined;
+    })
+    .filter((starter): starter is { title: string; text: string } =>
+      Boolean(starter),
+    );
+
+  if (starters.length === 0) return undefined;
+
+  const introText = getString(raw, 'intro_text');
+  const autoSubmit = getBoolean(raw, 'auto_submit');
+  const chatMessageInputDisabled = getBoolean(
+    raw,
+    'chat_message_input_disabled',
+  );
+
+  return {
+    ...(introText != null && { introText }),
+    ...(autoSubmit != null && { autoSubmit }),
+    ...(chatMessageInputDisabled != null && { chatMessageInputDisabled }),
+    starters,
+  };
 };
 
 /**
@@ -214,6 +248,13 @@ const mapToDeploymentItem = (
     raw.features?.mcp === true ||
     raw.mcp != null ||
     !!interfaces?.includes('mcp');
+  const applicationProperties = isRecord(raw.application_properties)
+    ? raw.application_properties
+    : undefined;
+  const conversationStarters =
+    type === 'application'
+      ? mapConversationStarters(applicationProperties?.conversation_starters)
+      : undefined;
 
   return {
     id: raw.id,
@@ -256,6 +297,7 @@ const mapToDeploymentItem = (
       type === 'application' && raw.id.includes('/')
         ? raw.id.substring(0, raw.id.lastIndexOf('/'))
         : undefined,
+    conversationStarters,
   };
 };
 
@@ -359,6 +401,7 @@ export class DeploymentsService {
     accessToken: string,
     bucket: string,
     interfaceType?: DeploymentInterfaceType[],
+    refresh = false,
   ): Promise<DeploymentsResponseDto> {
     const baseCacheKey = `deployments:list:${userSub}`;
     const normalizedTypes = interfaceType?.filter(
@@ -372,11 +415,12 @@ export class DeploymentsService {
     const cacheKey = interfaceFilter
       ? `${baseCacheKey}:interface:${interfaceFilter.join(',')}`
       : baseCacheKey;
-    const cached =
-      (await this.cacheManager.get<DeploymentItemDto[]>(cacheKey)) ??
-      (interfaceFilter
-        ? await this.cacheManager.get<DeploymentItemDto[]>(baseCacheKey)
-        : undefined);
+    const cached = refresh
+      ? undefined
+      : ((await this.cacheManager.get<DeploymentItemDto[]>(cacheKey)) ??
+        (interfaceFilter
+          ? await this.cacheManager.get<DeploymentItemDto[]>(baseCacheKey)
+          : undefined));
 
     let allItems: DeploymentItemDto[];
     if (cached) {
