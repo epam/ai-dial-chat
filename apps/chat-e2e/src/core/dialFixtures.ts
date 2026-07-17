@@ -239,6 +239,8 @@ const dialTest = test.extend<{
   quickApp2EditorContainer: QuickApp2EditorContainer;
   quickApp2EditorViewForm: QuickApp2EditorViewForm;
   agentAndToolsetSelectModal: AgentAndToolsetSelectModal;
+  agentAndToolsetSelectModalEntityMenu: DropdownMenu;
+  agentAndToolsetSelectModalEntityMenuAssertion: MenuAssertion;
   externalAppEditorAppSettingsPreviewBody: EntityEditorEntitySettingsCardPreviewBody;
   externalAppEditorAppSettingsPreviewCard: EntityEditorPreviewCard;
   toolsetEditorContainer: ToolsetEditorContainer;
@@ -707,6 +709,18 @@ const dialTest = test.extend<{
   },
   agentAndToolsetSelectModal: async ({ page }, use) => {
     await use(new AgentAndToolsetSelectModal(page));
+  },
+  agentAndToolsetSelectModalEntityMenu: async (
+    { agentAndToolsetSelectModal },
+    use,
+  ) => {
+    await use(agentAndToolsetSelectModal.getEntities().getEntityDropdownMenu());
+  },
+  agentAndToolsetSelectModalEntityMenuAssertion: async (
+    { agentAndToolsetSelectModalEntityMenu },
+    use,
+  ) => {
+    await use(new MenuAssertion(agentAndToolsetSelectModalEntityMenu));
   },
   toolsetEditorContainer: async ({ entityEditorPage }, use) => {
     const toolsetEditorContainer = entityEditorPage.getToolsetEditorContainer();
