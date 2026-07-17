@@ -1,6 +1,6 @@
 import { IconExclamationCircle, IconPencil } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo } from 'react';
-import { useFormContext, useFormState } from 'react-hook-form';
+import { useFormContext, useFormState, useWatch } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
@@ -30,6 +30,7 @@ import {
 import {
   allEditedFoldersAreValid,
   getFirstReviewUrl,
+  getPublicItemIdForVersionCheck,
   getReviewItems,
   orderByType,
 } from '@/src/utils/app/publications';
@@ -157,6 +158,13 @@ export const PublicationHandlerFooter = ({
 
   const { control } = useFormContext<PublicationRequestFormData>();
   const { errors, isValid } = useFormState({ control });
+  const publishToUrl = useWatch<
+    PublicationRequestFormData,
+    typeof PublishRequestFieldsNames.PUBLISH_TO_URL
+  >({
+    control,
+    name: PublishRequestFieldsNames.PUBLISH_TO_URL,
+  });
 
   const formError =
     formErrors[
@@ -394,11 +402,7 @@ export const PublicationHandlerFooter = ({
     isFileId(resource.reviewUrl),
   );
   const isAllResourcesReviewed = resourcesToReview.every((r) => r.reviewed);
-  const getPublicKey = (reviewUrl: string) => {
-    const parts = reviewUrl.split('/');
-    parts[1] = PUBLIC_URL_PREFIX;
-    return parts.join('/');
-  };
+  const shouldApplyTargetFolder = !!publishModel || isEditMode;
 
   const isVersionExemptFromCheck = (
     key: string,
@@ -416,7 +420,16 @@ export const PublicationHandlerFooter = ({
   ) =>
     isVersionExemptFromCheck(key, resource) ||
     (isVersionValid(version.trim()) &&
-      !isVersionExists(version, getPublicKey(key), publicVersionGroups, name) &&
+      !isVersionExists(
+        version,
+        getPublicItemIdForVersionCheck(
+          key,
+          publishToUrl,
+          shouldApplyTargetFolder,
+        ),
+        publicVersionGroups,
+        name,
+      ) &&
       (!isApplicationId(key) || isVersionPartSizeValid(version)));
 
   const hasDuplicateVersion = Object.entries(entitiesEditState).some(
@@ -426,7 +439,16 @@ export const PublicationHandlerFooter = ({
       );
       return (
         !isVersionExemptFromCheck(key, resource) &&
-        isVersionExists(version, getPublicKey(key), publicVersionGroups, name)
+        isVersionExists(
+          version,
+          getPublicItemIdForVersionCheck(
+            key,
+            publishToUrl,
+            shouldApplyTargetFolder,
+          ),
+          publicVersionGroups,
+          name,
+        )
       );
     },
   );
@@ -522,6 +544,16 @@ export const PublicationHandlerFooter = ({
     isDraftRuleFilterOpen,
     hasDuplicateVersion,
   ]);
+
+  const getDisabledUpdateTooltipText = useCallback(() => {
+    if (hasDuplicateVersion) {
+      return ChatI18nKeys.DuplicateVersionFound;
+    }
+
+    return isEditInvalid
+      ? ChatI18nKeys.RequestCannotBeUpdated
+      : ChatI18nKeys.MakeChangesToUpdate;
+  }, [hasDuplicateVersion, isEditInvalid]);
 
   const isApproveOrSendDisabled =
     (isApproveDisabled && !publishModel) ||
@@ -651,11 +683,7 @@ export const PublicationHandlerFooter = ({
               data-qa="update"
               tooltipProps={{
                 hideTooltip: !isEditDisabled,
-                tooltip: t(
-                  isEditInvalid
-                    ? ChatI18nKeys.RequestCannotBeUpdated
-                    : ChatI18nKeys.MakeChangesToUpdate,
-                ),
+                tooltip: t(getDisabledUpdateTooltipText()),
               }}
             />
           </>
