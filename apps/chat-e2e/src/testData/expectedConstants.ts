@@ -432,6 +432,9 @@ export const ExpectedConstants = {
   // Attach files form hints reflecting the app's attachment config.
   attachmentsUpToFiles: (n: number) => `Up to ${n} files.`,
   attachmentsSupportedTypesLabel: 'Supported types:',
+  pdfAttachmentType: 'application/pdf',
+  // template_name of the predefined Code Interpreter toolset.
+  codeInterpreterTemplateName: 'py_interpreter',
   // Confirmation dialog shown on Save & Exit when the config has invalid items.
   saveOnlyValidDataTitle: 'Only valid data will be saved',
   saveOnlyValidDataMessage:

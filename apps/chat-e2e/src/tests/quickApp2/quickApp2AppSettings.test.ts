@@ -1,4 +1,3 @@
-import { PDF_CONTENT_TYPE } from '@/chat/constants/chat';
 import { ToolsetTypes } from '@/chat/constants/quick-apps';
 import { ApiTypeSchemaApplication } from '@/chat/types/applications';
 import { EntityType } from '@/chat/types/common';
@@ -103,31 +102,23 @@ dialTest(
           'visible',
         );
 
-        // A custom application is not offered as an orchestrator
-        await talkToAgentDialog
-          .getSearch()
-          .inputField.fillInInput(excludedAppName);
-        await baseAssertion.assertElementState(
-          talkToAgentDialog.getEntityByName(excludedAppName),
-          'hidden',
-        );
-        await baseAssertion.assertElementState(
-          talkToAgentDialog.noResultsFound,
-          'visible',
-        );
-
-        // A model without the tools feature is not offered either
-        await talkToAgentDialog
-          .getSearch()
-          .inputField.fillInInput(toolsUnsupportedModel.name);
-        await baseAssertion.assertElementState(
-          talkToAgentDialog.getEntityByName(toolsUnsupportedModel.name),
-          'hidden',
-        );
-        await baseAssertion.assertElementState(
-          talkToAgentDialog.noResultsFound,
-          'visible',
-        );
+        // Neither a custom application nor a model without the tools feature is offered
+        for (const excludedName of [
+          excludedAppName,
+          toolsUnsupportedModel.name,
+        ]) {
+          await talkToAgentDialog
+            .getSearch()
+            .inputField.fillInInput(excludedName);
+          await baseAssertion.assertElementState(
+            talkToAgentDialog.getEntityByName(excludedName),
+            'hidden',
+          );
+          await baseAssertion.assertElementState(
+            talkToAgentDialog.noResultsFound,
+            'visible',
+          );
+        }
       },
     );
 
@@ -275,7 +266,7 @@ dialTest(
         );
         baseAssertion.assertValueMatchObject(codeInterpreterToolset, {
           type: ToolsetTypes.CodeInterpreter,
-          template_name: 'py_interpreter',
+          template_name: ExpectedConstants.codeInterpreterTemplateName,
         });
       },
     );
@@ -346,6 +337,7 @@ dialTest(
   async ({
     marketplacePage,
     entityEditorPage,
+    entityEditorHeader,
     quickApp2EditorViewForm,
     sendMessage,
     attachmentDropdownMenu,
@@ -401,7 +393,7 @@ dialTest(
       'Expand the section and set attachment types and max attachments',
       async () => {
         await quickApp2EditorViewForm.setAttachments(
-          [PDF_CONTENT_TYPE],
+          [ExpectedConstants.pdfAttachmentType],
           `${maxAttachments}`,
         );
         await baseAssertion.assertElementState(
@@ -414,6 +406,12 @@ dialTest(
     await dialTest.step(
       'The attachment clip appears in the preview message box',
       async () => {
+        // Attachment config autosaves on the form's mouse-leave; move the cursor
+        // out to the header so the preview picks up the new config.
+        await entityEditorPage.waitForExpectedResponses(async () => {
+          await quickApp2EditorViewForm.attachmentsSection.hoverOver();
+          await entityEditorHeader.focusOn();
+        }, [{ apiMethod: 'PUT', urlPattern: API.applicationCreateHost }]);
         await baseAssertion.assertElementState(
           sendMessage.attachmentMenuTrigger,
           'visible',

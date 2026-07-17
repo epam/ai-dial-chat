@@ -3,6 +3,7 @@ import { AddQuickApp2SettingsFormSelector } from '@/src/ui/selectors';
 import {
   BaseElement,
   Button,
+  Combobox,
   EntityEditorViewForm,
 } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
@@ -60,15 +61,12 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
     this.attachmentsSection.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.attachmentTypesField,
     );
-  // Free-entry combobox: type a MIME + Enter to commit a pill (suggestions hidden)
-  public attachmentTypesInput =
-    this.attachmentTypesField.getChildElementBySelector(
-      AddQuickApp2SettingsFormSelector.attachmentTypesInput,
-    );
-  public attachmentTypesPills =
-    this.attachmentTypesField.getChildElementBySelector(
-      AddQuickApp2SettingsFormSelector.attachmentTypesPill,
-    );
+  // Same widget as the shared Combobox; QA2 just overrides the container data-qa.
+  public attachmentTypes = new Combobox(
+    this.page,
+    this.attachmentsSection.getElementLocator(),
+    AddQuickApp2SettingsFormSelector.attachmentTypesField,
+  );
   public maxAttachmentsInput =
     this.attachmentsSection.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.maxAttachmentsField,
@@ -81,11 +79,11 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   ) {
     await this.attachmentsSectionToggle.click();
     for (let i = 0; i < attachmentTypes.length; i++) {
-      await this.attachmentTypesInput.typeInInput(attachmentTypes[i], {
+      await this.attachmentTypes.comboboxInput.typeInInput(attachmentTypes[i], {
         delay: keyEnteringDelay,
       });
       await this.page.keyboard.press(keys.enter);
-      await this.attachmentTypesPills.getNthElement(i + 1).waitFor();
+      await this.attachmentTypes.selectedPills.getNthElement(i + 1).waitFor();
     }
     await this.maxAttachmentsInput.typeInInput(maxAttachments);
   }

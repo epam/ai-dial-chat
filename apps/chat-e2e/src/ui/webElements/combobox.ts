@@ -5,8 +5,14 @@ import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class Combobox extends BaseElement {
-  constructor(page: Page, parentLocator: Locator) {
-    super(page, ComboboxSelectors.comboboxContainer, parentLocator);
+  // containerSelector defaults to the standard combobox; pass a custom one for
+  // fields that override the container data-qa (e.g. QA2 attachment types).
+  constructor(
+    page: Page,
+    parentLocator: Locator,
+    containerSelector: string = ComboboxSelectors.comboboxContainer,
+  ) {
+    super(page, containerSelector, parentLocator);
   }
 
   public comboboxInput = this.getChildElementBySelector(Tags.input);

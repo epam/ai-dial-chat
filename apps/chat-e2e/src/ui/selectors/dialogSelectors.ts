@@ -1,3 +1,4 @@
+import { Tags } from '@/src/ui/domData';
 import { ErrorLabelSelectors } from '@/src/ui/selectors/chatSelectors';
 import { InputSelectors } from '@/src/ui/selectors/commonSelectors';
 
@@ -347,13 +348,11 @@ export const AddQuickApp2SettingsFormSelector = {
   temperatureSlider: '[data-qa="temp-slider"]', // shown only for temperature-capable models
   orchestratorModelError: '[data-qa="error-message"]', // validation error under the model field
   instructionsField: '[data-qa="instructions-field"]',
-  instructionsInput: 'textarea', // the markdown editor's edit textarea (single one in the field)
+  instructionsInput: Tags.textarea, // the markdown editor's edit textarea (single one in the field)
 
   // Attachments section (collapsed by default)
   sectionToggle: 'button[aria-expanded]', // FormCollapsibleSection header (scope by section)
-  attachmentTypesField: '[data-qa="attachment-types-field"]',
-  attachmentTypesInput: '[data-qa="filter-value-input"]', // free-entry combobox input
-  attachmentTypesPill: '[data-qa="combobox-pill"]', // committed type pill
+  attachmentTypesField: '[data-qa="attachment-types-field"]', // combobox container (drive via Combobox)
   maxAttachmentsField: '[data-qa="max-attachment-number-field"]',
 
   // Context & Tools subsections
