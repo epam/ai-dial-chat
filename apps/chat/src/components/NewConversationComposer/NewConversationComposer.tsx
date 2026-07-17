@@ -260,7 +260,7 @@ const NewConversationComposer: FC<Props> = ({
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
         {introText && (
-          <p className="mb-4 max-w-3xl text-center text-sm text-secondary">
+          <p className="dial-small-text mb-4 max-w-3xl text-center text-secondary">
             {introText}
           </p>
         )}
