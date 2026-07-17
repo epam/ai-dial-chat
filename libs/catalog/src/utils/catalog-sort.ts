@@ -22,12 +22,20 @@ export const sortCatalogItems = (
         a.name.trim().toLowerCase().localeCompare(b.name.trim().toLowerCase()),
       );
     }
-    if (sortKey === CatalogSortKey.Newest) {
+    if (sortKey === CatalogSortKey.RecentlyUpdated) {
       return [...group].sort((a, b) => {
         if (!a.updatedAt && !b.updatedAt) return 0;
         if (!a.updatedAt) return 1;
         if (!b.updatedAt) return -1;
         return b.updatedAt - a.updatedAt;
+      });
+    }
+    if (sortKey === CatalogSortKey.Newest) {
+      return [...group].sort((a, b) => {
+        if (!a.createdAt && !b.createdAt) return 0;
+        if (!a.createdAt) return 1;
+        if (!b.createdAt) return -1;
+        return b.createdAt - a.createdAt;
       });
     }
     return group;
