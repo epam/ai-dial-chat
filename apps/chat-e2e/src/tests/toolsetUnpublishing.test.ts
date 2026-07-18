@@ -941,20 +941,20 @@ dialAdminTest(
         await adminToolsetsToApprove
           .getEntityVersionElement(toolsetEntity.name)
           .click();
-        const versionChecklistDropdown =
+        const adminVersionChecklistDropdown =
           adminToolsetsToApprove.getVersionChecklistDropdown();
         await adminPublishingApprovalModalAssertion.assertElementState(
-          versionChecklistDropdown,
+          adminVersionChecklistDropdown,
           'visible',
         );
         for (const version of versionsToUnpublish) {
           await adminPublishingApprovalModalAssertion.assertCheckboxState(
-            versionChecklistDropdown.getVersionCheckbox(version),
+            adminVersionChecklistDropdown.getVersionCheckbox(version),
             CheckboxState.checked,
           );
         }
         await adminPublishingApprovalModalAssertion.assertCheckboxState(
-          versionChecklistDropdown.getVersionCheckbox(remainingVersion),
+          adminVersionChecklistDropdown.getVersionCheckbox(remainingVersion),
           CheckboxState.unchecked,
         );
       },

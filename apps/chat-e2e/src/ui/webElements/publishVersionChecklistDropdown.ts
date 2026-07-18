@@ -4,7 +4,7 @@ import { Menu } from '@/src/ui/webElements/menu';
 export class PublishVersionChecklistDropdown extends Menu {
   public menuOptions = () => this.getChildElementBySelector(Tags.li);
   public menuOption = (option: string) =>
-    this.menuOptions().getElementLocatorByText(option);
+    this.menuOptions().getElementLocatorByText(new RegExp(`^${option}$`));
 
   public getVersionCheckbox(version: string) {
     return this.menuOption(version).locator(
