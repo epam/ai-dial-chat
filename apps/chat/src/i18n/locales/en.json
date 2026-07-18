@@ -670,9 +670,6 @@
     },
     "success": {
       "login": "Successfully logged in."
-    },
-    "popup": {
-      "closeFallback": "You can close this window."
     }
   }
 }

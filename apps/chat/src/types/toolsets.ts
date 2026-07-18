@@ -90,18 +90,6 @@ export interface ToolsetRedirectState {
   state?: string;
 }
 
-/**
- * Payload carried in the OAuth `state` query parameter for a popup-based
- * login initiated from an embedded iframe (e.g. `ai-dial-quickapps-frontend`).
- * Encoded by the caller; this app only decodes and validates it.
- */
-export interface ToolsetPopupState {
-  toolsetId: string;
-  credentialsLevel: ToolsetCredentialsLevel;
-  originatingOrigin: string;
-  nonce: string;
-}
-
 /** Outcome of calling `initiateOAuthLogin`. */
 export enum ToolsetOAuthInitiationResultType {
   /** The popup was opened and navigated to the provider's authorize URL. */

@@ -13,7 +13,6 @@ import type {
   ToolsetOAuthChannelMessage,
   ToolsetOAuthInitiationResult,
   ToolsetOAuthResult,
-  ToolsetPopupState,
   ToolsetRedirectState,
 } from '../types/toolsets';
 import {
@@ -70,9 +69,27 @@ const isSignedIn = (status?: string): boolean =>
   status === ToolsetAuthStatus.SignedIn;
 
 /**
+ * Percent-encodes each `/`-separated segment of a toolset id so it satisfies
+ * the backend's `DEPLOYMENT_ID_PATTERN`/`TOOLSET_URL_PATTERN` (spaces and
+ * other reserved characters must already be percent-encoded — e.g. `%20`,
+ * not a real space — before this value is used against the toolsets API;
+ * `/` stays a literal path separator). The `toolsetId` a QuickApps iframe
+ * sends over `postMessage` (`REQUEST_TOOLSET_LOGIN`) is the raw,
+ * human-readable id (e.g. `toolsets/<bucket>/My Toolset__1.0`), unlike the
+ * already-encoded `id`/`toolset` field chat's own `listToolsets()`/
+ * `DialToolsetDto` returns — mirrors `encodeDeploymentId`
+ * (`utils/deployment-id.ts`), which exists for the identical reason on the
+ * applications side.
+ */
+export const encodeToolsetId = (id: string): string =>
+  id
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+
+/**
  * Builds the OAuth authorize URL for a given, already-generated `state`
- * value. The caller owns what `state` carries — see `initiateOAuthLogin` for
- * the admin flow and `design.md` D2 for the QuickApps popup flow.
+ * value. The caller owns what `state` carries — see `initiateOAuthLogin`.
  */
 export const buildToolsetAuthorizeUrl = (
   auth: ToolsetAuthFormData,
@@ -110,30 +127,22 @@ export const getToolsetRedirectUri = (): string =>
   `${window.location.origin}${ROUTES.ToolsetSignIn}`;
 
 /**
- * Builds the OAuth authorize URL, opens a same-origin popup synchronously (so
- * a blocked popup can be reliably detected), writes the redirect state into
- * *that popup's own* `sessionStorage` while it is still same-origin
- * `about:blank`, then navigates it to the provider's authorization page.
- * Writing into the popup's own storage (rather than the opener's) is what
- * makes the redirect state reliably readable by the callback route once the
- * provider redirects back into that same popup — the two browsing contexts
- * do not share a `sessionStorage` partition. Shared by the post-save
- * auto-login flow (Editor, always `USER`) and the manual Log In action
- * (Editor or Catalog, `USER` or `GLOBAL`) so all trigger points stay in sync.
+ * Writes the redirect state into the given popup's own `sessionStorage`
+ * (while it is still same-origin `about:blank`) and navigates it to the
+ * provider's authorization page. Writing into the popup's own storage
+ * (rather than the opener's) is what makes the redirect state reliably
+ * readable by the callback route once the provider redirects back into that
+ * same popup — the two browsing contexts do not share a `sessionStorage`
+ * partition.
  */
-export const initiateOAuthLogin = (
-  auth: ToolsetAuthFormData,
+const writeRedirectStateAndNavigate = (
+  popup: Window,
+  url: string,
+  state: string,
   toolsetId: string,
-  credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
+  credentialsLevel: ToolsetCredentialsLevel,
+  redirectUri: string,
 ): ToolsetOAuthInitiationResult => {
-  const redirectUri = getToolsetRedirectUri();
-  const state = crypto.randomUUID();
-  const url = buildToolsetAuthorizeUrl(auth, redirectUri, state);
-  if (!url) return { type: ToolsetOAuthInitiationResultType.InvalidConfig };
-
-  const popup = window.open('', '_blank');
-  if (!popup) return { type: ToolsetOAuthInitiationResultType.Blocked };
-
   const redirectState: ToolsetRedirectState = {
     toolsetId,
     credentialsLevel,
@@ -158,6 +167,80 @@ export const initiateOAuthLogin = (
     popup,
     flowId: state,
   };
+};
+
+/**
+ * Opens a same-origin, blank popup synchronously — call this as the very
+ * first thing in a click (or click-derived) handler so the browser still
+ * treats it as user-triggered, before doing any `await`. A caller that needs
+ * to fetch the toolset's auth config first (it isn't known synchronously)
+ * opens the popup with this, then calls `navigateToolsetOAuthPopup` once the
+ * config has been fetched.
+ */
+export const openToolsetOAuthPopup = (): Window | null =>
+  window.open('', '_blank');
+
+/**
+ * Builds the OAuth authorize URL for an already-open popup and navigates it,
+ * closing the popup and returning `InvalidConfig` if the auth config can't
+ * produce a valid authorize URL.
+ */
+export const navigateToolsetOAuthPopup = (
+  popup: Window,
+  auth: ToolsetAuthFormData,
+  toolsetId: string,
+  credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
+): ToolsetOAuthInitiationResult => {
+  const redirectUri = getToolsetRedirectUri();
+  const state = crypto.randomUUID();
+  const url = buildToolsetAuthorizeUrl(auth, redirectUri, state);
+  if (!url) {
+    popup.close();
+    return { type: ToolsetOAuthInitiationResultType.InvalidConfig };
+  }
+  return writeRedirectStateAndNavigate(
+    popup,
+    url,
+    state,
+    toolsetId,
+    credentialsLevel,
+    redirectUri,
+  );
+};
+
+/**
+ * Builds the OAuth authorize URL, opens a same-origin popup synchronously (so
+ * a blocked popup can be reliably detected), writes the redirect state into
+ * *that popup's own* `sessionStorage` while it is still same-origin
+ * `about:blank`, then navigates it to the provider's authorization page.
+ * Shared by the post-save auto-login flow (Editor, always `USER`) and the
+ * manual Log In action (Editor or Catalog, `USER` or `GLOBAL`) so all trigger
+ * points stay in sync. `auth` must already be known synchronously here, so
+ * config is validated *before* opening the popup — unlike
+ * `navigateToolsetOAuthPopup`, used when the auth config can only be fetched
+ * asynchronously after the popup is already open.
+ */
+export const initiateOAuthLogin = (
+  auth: ToolsetAuthFormData,
+  toolsetId: string,
+  credentialsLevel: ToolsetCredentialsLevel = ToolsetCredentialsLevel.User,
+): ToolsetOAuthInitiationResult => {
+  const redirectUri = getToolsetRedirectUri();
+  const state = crypto.randomUUID();
+  const url = buildToolsetAuthorizeUrl(auth, redirectUri, state);
+  if (!url) return { type: ToolsetOAuthInitiationResultType.InvalidConfig };
+
+  const popup = window.open('', '_blank');
+  if (!popup) return { type: ToolsetOAuthInitiationResultType.Blocked };
+
+  return writeRedirectStateAndNavigate(
+    popup,
+    url,
+    state,
+    toolsetId,
+    credentialsLevel,
+    redirectUri,
+  );
 };
 
 const TOOLSET_OAUTH_CHANNEL_PREFIX = 'toolset-oauth-';
@@ -238,15 +321,6 @@ export const isPublicToolsetId = (toolsetId: string): boolean => {
   return bucket === PUBLIC_BUCKET_SEGMENT;
 };
 
-/** Returns whether `origin` is a well-formed absolute URL origin (never `'*'`). */
-export const isValidPostMessageOrigin = (origin: string): boolean => {
-  try {
-    return new URL(origin).origin === origin;
-  } catch {
-    return false;
-  }
-};
-
 const isValidEndpointUrlCandidate = (trimmed: string): boolean => {
   if (!/^(https?|sse):\/\//.test(trimmed)) return false;
   if (trimmed.endsWith('.') || trimmed.endsWith('//')) return false;
@@ -254,54 +328,6 @@ const isValidEndpointUrlCandidate = (trimmed: string): boolean => {
     return Boolean(new URL(trimmed));
   } catch {
     return false;
-  }
-};
-
-/** Reverses the sender's base64url encoding (`-`→`+`, `_`→`/`, re-padded). Throws on malformed input — caller catches. */
-const decodeBase64Url = (value: string): string => {
-  const b64 = value
-    .replace(/-/g, '+')
-    .replace(/_/g, '/')
-    .padEnd(Math.ceil(value.length / 4) * 4, '=');
-  return new TextDecoder().decode(
-    Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)),
-  );
-};
-
-const isValidCredentialsLevel = (
-  value: unknown,
-): value is ToolsetCredentialsLevel =>
-  value === ToolsetCredentialsLevel.Global ||
-  value === ToolsetCredentialsLevel.User;
-
-/**
- * Decodes and strictly validates the base64url-encoded JSON `state` payload
- * used by the popup-based toolset login handshake (see design.md D2). Returns
- * `null` on any parse failure or missing/invalid field so the caller never
- * falls back to an unsafe default for `originatingOrigin`.
- */
-export const decodeToolsetPopupState = (
-  state: string,
-): ToolsetPopupState | null => {
-  try {
-    const parsed = JSON.parse(
-      decodeBase64Url(state),
-    ) as Partial<ToolsetPopupState>;
-    if (
-      typeof parsed.toolsetId !== 'string' ||
-      !parsed.toolsetId ||
-      typeof parsed.originatingOrigin !== 'string' ||
-      !parsed.originatingOrigin ||
-      !isValidPostMessageOrigin(parsed.originatingOrigin) ||
-      typeof parsed.nonce !== 'string' ||
-      !parsed.nonce ||
-      !isValidCredentialsLevel(parsed.credentialsLevel)
-    ) {
-      return null;
-    }
-    return parsed as ToolsetPopupState;
-  } catch {
-    return null;
   }
 };
 
