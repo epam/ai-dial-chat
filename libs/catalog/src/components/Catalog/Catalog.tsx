@@ -360,7 +360,7 @@ export const Catalog: FC<CatalogProps> = ({
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="flex min-h-0 flex-1 flex-col overflow-auto">
         {isFavoritesRendered && (
           <div className="w-full px-8">
             <Favorites
@@ -430,10 +430,19 @@ export const Catalog: FC<CatalogProps> = ({
             />
           </div>
         )}
-        <div className="mx-auto min-h-full w-full max-w-[1180px] px-8 pt-6">
+        <div
+          className={mergeClasses(
+            tabFiltered.length > 0
+              ? 'mx-auto min-h-full w-full max-w-[1180px] px-8 pt-6'
+              : 'min-h-0 flex-1',
+            tabFiltered.length === 0 &&
+              viewMode === CatalogViewMode.List &&
+              'px-8 pt-6',
+          )}
+        >
           <div
             className={mergeClasses(
-              'pb-8',
+              tabFiltered.length > 0 ? 'pb-8' : 'size-full flex-1',
               viewMode !== CatalogViewMode.Grid && 'hidden',
             )}
           >
@@ -452,6 +461,7 @@ export const Catalog: FC<CatalogProps> = ({
               className={mergeClasses(
                 'pb-8',
                 viewMode !== CatalogViewMode.List && 'hidden',
+                tabFiltered.length === 0 && 'h-full',
               )}
             >
               <ListView

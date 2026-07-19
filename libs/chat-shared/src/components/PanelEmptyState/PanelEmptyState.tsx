@@ -14,7 +14,7 @@ export interface PanelEmptyStateColors {
 /** Props for `PanelEmptyState`. */
 export interface PanelEmptyStateProps {
   /** Icon element rendered above the label. */
-  icon: ReactNode;
+  icon?: ReactNode;
   /** Primary message shown beneath the icon. */
   label: string;
   /** Color overrides applied as CSS custom properties. */
@@ -33,7 +33,7 @@ export const PanelEmptyState: FC<PanelEmptyStateProps> = memo(
       <div style={cssVars}>
         <DialNoDataContent
           title={label}
-          icon={<span className={styles.icon}>{icon}</span>}
+          icon={icon && <span className={styles.icon}>{icon}</span>}
           titleClassName={styles.label}
         />
       </div>

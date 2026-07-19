@@ -123,10 +123,21 @@ export const ListView: FC<ListViewProps> = ({
     gridApiRef.current?.redrawRows();
   }, [selectedItemId]);
 
+  useEffect(() => {
+    gridApiRef.current?.setGridOption(
+      'domLayout',
+      items.length > 0 ? 'autoHeight' : 'normal',
+    );
+  }, [items]);
+
   return (
     <div
       style={cssVars}
-      className={mergeClasses('w-full px-4', styles.listContainer)}
+      className={mergeClasses(
+        'w-full px-4',
+        styles.listContainer,
+        items.length === 0 && 'h-full',
+      )}
     >
       <DialGrid<CatalogItem>
         columnDefs={CATALOG_COLUMNS}
@@ -139,7 +150,6 @@ export const ListView: FC<ListViewProps> = ({
         emptyStateTitle={emptyStateTitle}
         additionalGridOptions={{
           rowHeight: 90,
-          domLayout: 'autoHeight',
           defaultColDef: { filter: false, floatingFilter: false },
           context: {
             searchQuery: query,
