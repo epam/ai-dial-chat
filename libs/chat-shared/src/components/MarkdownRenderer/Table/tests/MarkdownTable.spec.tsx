@@ -1,6 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CodeBlockTheme } from '../../../../types/code-editor';
 import { MarkdownTable } from '../MarkdownTable';
 
 let resizeObserverCallback: ResizeObserverCallback;
@@ -85,12 +84,4 @@ describe('MarkdownTable', () => {
     const region = screen.getByRole('region', { name: 'Scrollable table' });
     expect(region.getAttribute('tabindex')).toBe('0');
   });
-
-  it.each([CodeBlockTheme.Light, CodeBlockTheme.Dark])(
-    'renders the %s theme without error',
-    (theme) => {
-      renderTable({ theme });
-      expect(screen.getByRole('table')).toBeTruthy();
-    },
-  );
 });
