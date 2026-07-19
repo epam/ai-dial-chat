@@ -1,6 +1,6 @@
 import { type FC, type ReactNode, memo } from 'react';
 import { useTableScroll } from '../../../hooks/useTableScroll';
-import { CodeBlockTheme } from '../../../types/code-editor';
+import { buildCssVars } from '../../../utils/build-css-vars';
 import { mergeClasses } from '../../../utils/merge-class';
 import styles from './MarkdownTable.module.scss';
 
@@ -12,14 +12,24 @@ export interface MarkdownTableClassNames {
   tableFont?: string;
 }
 
+/** CSS custom-property overrides for the `MarkdownTable` component. */
+export interface MarkdownTableColors {
+  /** Scroll container border color. */
+  border?: string;
+  /** Scrollbar thumb/track color. */
+  scrollbar?: string;
+  /** Edge-fade mask color. */
+  fade?: string;
+}
+
 /** Props for {@link MarkdownTable}. */
 export interface MarkdownTableProps {
   /** Table body/children rendered inside the scrollable wrapper (typically `<thead>`/`<tbody>` from react-markdown). */
   children: ReactNode;
   /** Per-element className overrides. */
   classNames: MarkdownTableClassNames;
-  /** Color theme for the table surface. Defaults to `'dark'`. */
-  theme?: CodeBlockTheme;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: MarkdownTableColors;
   /**
    * Accessible label announced for the horizontally scrollable region.
    * Defaults to `'Scrollable table'`.
@@ -32,7 +42,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
   ({
     children,
     classNames,
-    theme = CodeBlockTheme.Dark,
+    colors,
     scrollRegionAriaLabel = 'Scrollable table',
   }) => {
     const {
@@ -42,15 +52,20 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       hasContentBeyondEnd,
       handleScroll,
     } = useTableScroll();
-    const isLightTheme = theme === CodeBlockTheme.Light;
+    const cssVars = buildCssVars({
+      '--cm-markdown-border': colors?.border,
+      '--cm-table-scrollbar': colors?.scrollbar,
+      '--cm-table-fade': colors?.fade,
+    });
     const isScrollable = hasContentBeyondStart || hasContentBeyondEnd;
 
     return (
       <div
+        style={cssVars}
         className={mergeClasses(
           'relative w-full min-w-0 max-w-full overflow-hidden rounded-xl border',
           styles.tableContainer,
-          isLightTheme && styles.tableContainerLight,
+          styles.tableContainerLight,
           classNames.tableWrapper,
         )}
       >

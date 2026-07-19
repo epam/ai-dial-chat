@@ -1,11 +1,5 @@
-/*
- * Same surface family as MarkdownCodeBlock (`--cm-code-block-*`) so a table
- * and a fenced code block sitting next to each other read as one visual
- * language. Light theme gets its own class (see `.tableContainerLight`)
- * because `--bg-layer-6` has no dark-theme value in the live theme system.
- */
 .tableContainer {
-  background: var(--cm-code-block-bg, var(--bg-layer-3, #1d2439));
+  background: var(--cm-code-block-bg, var(--bg-layer-3, #fcfcfc));
   border-color: var(
     --cm-markdown-border,
     var(--cm-code-block-border, var(--stroke-secondary, #d1dbea))
@@ -36,29 +30,17 @@
 }
 
 .tableHeaderCell {
-  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #1d2439));
+  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #fcfcfc));
 }
 
 .sectionRow td {
-  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #1d2439));
+  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #fcfcfc));
 }
 
-/*
- * bg-layer-7's black-based wash reads warm next to this DS's cool blue-grey
- * palette (page bg, container, borders all lean cool) — a neutral grey looks
- * off by contrast. bg-layer-5 is the same cool-toned surface already
- * hardcoded for this purpose elsewhere (Catalog.module.scss's `--cat-bg`,
- * NewChatButton.module.scss), one step lighter than bg-layer-2.
- */
 tbody .row:nth-child(even) td {
   background: var(--cm-table-row-zebra-bg, var(--bg-layer-5, #f5f7fa));
 }
 
-/*
- * stroke-tertiary — a lighter divider than the container's own
- * stroke-secondary border, matching the row-divider token ag-grid's own
- * theme already uses for the entity table (`rowBorder`).
- */
 .rowDivider {
   border-color: var(--cm-table-row-divider, var(--stroke-tertiary, #e0e6f0));
 }

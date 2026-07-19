@@ -7,12 +7,6 @@
   }
 }
 
-/*
- * Gradient matches Figma "Thinking" node:
- *   to-l (270deg), from Text&Icon/Inverted (#161b2d) → Text&Icon/Secondary (#9fa6bd)
- * For the sweep animation the gradient is extended with a symmetric tail so the
- * secondary "beam" visibly travels across the word.
- */
 .thinking {
   background: linear-gradient(
     270deg,
