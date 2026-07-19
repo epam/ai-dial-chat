@@ -95,10 +95,12 @@ describe('DeploymentsController (integration)', () => {
         .expect(200);
 
       expect(res.body).toEqual(mockResponse);
+      expect(res.headers['cache-control']).toBe('private, max-age=30');
       expect(service.listDeployments).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
         TEST_USER.bucket,
+        undefined,
         undefined,
       );
     });
@@ -189,7 +191,29 @@ describe('DeploymentsController (integration)', () => {
         TEST_USER.at,
         TEST_USER.bucket,
         ['chat'],
+        undefined,
       );
+    });
+
+    it('passes refresh=true to service', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/deployments?refresh=true')
+        .expect(200);
+
+      expect(res.headers['cache-control']).toBe('private, no-store');
+      expect(service.listDeployments).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        TEST_USER.bucket,
+        undefined,
+        true,
+      );
+    });
+
+    it('returns 400 for invalid refresh value', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments?refresh=maybe')
+        .expect(400);
     });
 
     it('returns 400 with invalid interface_type', async () => {
@@ -221,6 +245,7 @@ describe('DeploymentsController (integration)', () => {
         TEST_USER.at,
         TEST_USER.bucket,
         ['embedding'],
+        undefined,
       );
     });
 

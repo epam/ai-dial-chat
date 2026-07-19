@@ -1,7 +1,15 @@
-import { Controller, Get, Header, Param, Query, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Header,
+  Param,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { DeploymentLimitsResponseDto } from '../openapi/openapi-response.dto';
 import { DeploymentsService } from './deployments.service';
@@ -17,7 +25,6 @@ export class DeploymentsController {
 
   @Get()
   @Throttle({ default: { limit: 60, ttl: 60000 } })
-  @Header('Cache-Control', 'private, max-age=30')
   @ApiOperation({
     operationId: 'listDeployments',
     summary: 'List deployments by interface type',
@@ -29,6 +36,13 @@ export class DeploymentsController {
     enum: ['chat', 'embedding', 'mcp', 'custom_ui', 'all'],
     description: 'Filter by interface type (repeatable)',
     example: ['chat', 'mcp'],
+  })
+  @ApiQuery({
+    name: 'refresh',
+    required: false,
+    type: Boolean,
+    description:
+      'Bypass the short server-side deployments list cache and refresh from DIAL Core',
   })
   @ApiResponse({ status: 200, type: DeploymentsResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid query parameter' })
@@ -46,13 +60,22 @@ export class DeploymentsController {
     status: 503,
     description: 'DIAL Core is unavailable or timed out',
   })
-  listDeployments(@Query() query: DeploymentsQueryDto, @Req() req: Request) {
+  listDeployments(
+    @Query() query: DeploymentsQueryDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const { sub, at, bucket } = req.user as SessionUser;
+    res.setHeader(
+      'Cache-Control',
+      query.refresh ? 'private, no-store' : 'private, max-age=30',
+    );
     return this.deploymentsService.listDeployments(
       sub,
       at,
       bucket,
       query.interface_type,
+      query.refresh,
     );
   }
 

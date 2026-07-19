@@ -31,6 +31,7 @@ import {
 } from '../../../server-api/publish.api';
 import {
   deleteToolset,
+  getToolset,
   loginToolset,
   logoutToolset,
 } from '../../../server-api/toolsets';
@@ -324,6 +325,7 @@ vi.mock('../../../server-api/deployment-limits', () => ({
 }));
 
 vi.mock('../../../server-api/toolsets', () => ({
+  getToolset: vi.fn(),
   loginToolset: vi.fn(),
   logoutToolset: vi.fn(),
   deleteToolset: vi.fn(),
@@ -1508,6 +1510,39 @@ describe('CatalogView', () => {
         ),
       );
       expect(refetchToolsets).not.toHaveBeenCalled();
+    });
+
+    it('recovers a login that actually succeeded but was reported as Cancelled by a lost broadcast message', async () => {
+      const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      vi.mocked(getToolset).mockResolvedValue({
+        ...oauthToolset,
+        authSettings: {
+          ...oauthToolset.authSettings,
+          userLevelAuthStatus: 'SIGNED_IN',
+        },
+      } as never);
+      renderWithOAuthToolset(refetchToolsets);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `login user ${oauthToolset.id}`,
+        }),
+      );
+
+      if (capturedPopup) capturedPopup.closed = true;
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: 'success' }),
+        ),
+      );
+      expect(refetchToolsets).toHaveBeenCalledOnce();
     });
 
     it('shows a popup-blocked error notification without waiting for a result', async () => {
