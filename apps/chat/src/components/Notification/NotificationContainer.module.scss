@@ -1,0 +1,89 @@
+/*
+ * DialNotification (ui-kit) hardcodes a 3px radius, a tight glow shadow, and
+ * `text-primary` on its message/title — the vendor render has no prop hook
+ * for any of these: `className` only reaches the outer alert div, and
+ * `textClassName` only reaches the title+message wrapper, and only when a
+ * `title` is passed (the common no-title case renders the message with a
+ * bare hardcoded `text-primary` class, no override slot at all). Reaching
+ * into its rendered DOM via a `:global()` selector scoped to this wrapper
+ * (2 compound classes) beats the vendor's own single-class Tailwind
+ * utilities on specificity alone, so no `!important` is needed anywhere
+ * below — same reach-into-vendor-DOM pattern already used for ag-grid in
+ * ListView.module.scss.
+ */
+.entry {
+  // Matches the concept's toast/stack max-width so long messages wrap
+  // instead of stretching to the width of the fixed toast-stack container.
+  max-width: 37.5rem; // 600px
+
+  :global([role='alert']) {
+    border-radius: 0.75rem; // 12px, matching chips/tiles
+    // Same soft-elevation recipe as Tailwind's stock `shadow-lg`, already
+    // used for this kind of floating card elsewhere (CitationCard.tsx) —
+    // applied here directly since the utility class can't reach an element
+    // rendered internally by the vendor component.
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    // Neutral hairline for every severity — the DS has no softer,
+    // desaturated border tone per severity (only the bold --stroke-{severity}
+    // accent, same value as the icon/ink), which read too loud as a border.
+    // The tint background + icon + message ink already carry the severity;
+    // the border is just a quiet edge, same token the loading variant uses.
+    border-color: var(--stroke-secondary, #d1dbea);
+  }
+}
+
+// Each variant is mutually exclusive per toast instance, so there's no
+// specificity contest between these blocks — only one is ever applied.
+
+.error {
+  :global([role='alert']) {
+    background: var(--bg-error, #f3d6d8);
+    color: var(--text-error, #ae2f2f); // icon color, inherited via currentColor
+  }
+  :global(.text-primary) {
+    color: var(--text-error, #ae2f2f); // message ink — same single tone the DS provides for this severity
+  }
+}
+
+.warning {
+  :global([role='alert']) {
+    background: var(--bg-warning, #faf0cf);
+    color: var(--text-warning-icon, #eec840); // bright icon color
+  }
+  :global(.text-primary) {
+    color: var(--text-warning, #7f6300); // deeper ink for the message, distinct from the icon in light theme
+  }
+}
+
+.info {
+  :global([role='alert']) {
+    background: var(--bg-info, #d6e2f9);
+    color: var(--text-info, #124ace);
+  }
+  :global(.text-primary) {
+    color: var(--text-info, #124ace);
+  }
+}
+
+.success {
+  :global([role='alert']) {
+    background: var(--bg-success, #d9f0f1);
+    color: var(--text-success, #007274);
+  }
+  :global(.text-primary) {
+    color: var(--text-success, #007274);
+  }
+}
+
+.loading {
+  :global([role='alert']) {
+    // Neutral card surface — progress isn't a status yet, so no tint.
+    // (Border color now comes from the shared .entry block above.)
+    background: var(--bg-neutral, #fcfcfc);
+  }
+  :global(.text-primary) {
+    color: var(--text-primary, #161b2d);
+  }
+}

@@ -1,12 +1,30 @@
-import { DialNotification } from '@epam/ai-dial-ui-kit';
+import {
+  DialNotification,
+  mergeClasses,
+  NotificationVariant,
+} from '@epam/ai-dial-ui-kit';
 import { memo, useEffect, type FC } from 'react';
 import { createPortal } from 'react-dom';
 import {
   useNotification,
   type NotificationItem,
 } from '../../context/NotificationContext';
+import styles from './NotificationContainer.module.scss';
 
 const DISMISS_DELAY_MS = 5000;
+
+/*
+ * DialNotification's own container/text colors have no per-severity prop
+ * hook (see NotificationContainer.module.scss for why) — this map picks the
+ * CSS module class that overrides them via a scoped selector instead.
+ */
+const VARIANT_CLASS_NAME: Record<NotificationVariant, string> = {
+  [NotificationVariant.Error]: styles.error,
+  [NotificationVariant.Warning]: styles.warning,
+  [NotificationVariant.Info]: styles.info,
+  [NotificationVariant.Success]: styles.success,
+  [NotificationVariant.Loading]: styles.loading,
+};
 
 interface NotificationEntryProps {
   item: NotificationItem;
@@ -21,14 +39,18 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
     }, [item.id, onDismiss]);
 
     return (
-      <DialNotification
-        variant={item.variant}
-        title={item.title}
-        message={item.message}
-        textClassName="flex-col min-w-0"
-        closable
-        onClose={() => onDismiss(item.id)}
-      />
+      <div
+        className={mergeClasses(styles.entry, VARIANT_CLASS_NAME[item.variant])}
+      >
+        <DialNotification
+          variant={item.variant}
+          title={item.title}
+          message={item.message}
+          textClassName="flex-col min-w-0"
+          closable
+          onClose={() => onDismiss(item.id)}
+        />
+      </div>
     );
   },
 );

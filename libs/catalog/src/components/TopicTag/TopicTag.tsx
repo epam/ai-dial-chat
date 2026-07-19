@@ -17,8 +17,6 @@ export const TopicTag: FC<TopicTagProps> = ({
   className = 'dial-tiny-text',
 }) => <DialTag label={label} className={mergeClasses(className, styles.tag)} />;
 
-const MAX_ROWS = 1;
-
 /** Props for TopicsLine. */
 export interface TopicsLineProps {
   /** Topics to display as tags. */
@@ -28,11 +26,21 @@ export interface TopicsLineProps {
    * Receives the overflow count. Defaults to `"and N more topics"`.
    */
   overflowAriaLabel?: (count: number) => string;
+  /** Extra classes on the root element (e.g. to constrain width in a table cell). */
+  className?: string;
 }
 
+/**
+ * Renders topics on a single line, collapsing whatever doesn't fit into a
+ * "+N" overflow badge. The row never wraps — this is measured by horizontal
+ * overflow (each tag's right edge vs. the container width), not by row
+ * position, so it works the same whether the container is loosely sized
+ * (card grid) or a fixed-width table cell (list view).
+ */
 export const TopicsLine: FC<TopicsLineProps> = ({
   topics,
   overflowAriaLabel,
+  className,
 }) => {
   const [visibleCount, setVisibleCount] = useState(topics.length);
   const topicsRef = useRef<HTMLDivElement>(null);
@@ -49,13 +57,11 @@ export const TopicsLine: FC<TopicsLineProps> = ({
     const children = Array.from(container.children) as HTMLElement[];
     if (children.length === 0) return;
 
-    const firstTop = children[0].offsetTop;
-    const rowHeight = children[0].offsetHeight;
-    const limitTop = firstTop + rowHeight * MAX_ROWS;
+    const containerWidth = container.clientWidth;
 
     let cutoff = children.length;
     for (let i = 0; i < children.length; i++) {
-      if (children[i].offsetTop >= limitTop) {
+      if (children[i].offsetLeft + children[i].offsetWidth > containerWidth) {
         cutoff = i;
         break;
       }
@@ -70,7 +76,13 @@ export const TopicsLine: FC<TopicsLineProps> = ({
   const overflow = topics.length - visibleCount;
 
   return (
-    <div ref={topicsRef} className="flex flex-wrap gap-2">
+    <div
+      ref={topicsRef}
+      className={mergeClasses(
+        'flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden',
+        className,
+      )}
+    >
       {topics.slice(0, visibleCount).map((p) => (
         <TopicTag key={p} label={p} />
       ))}

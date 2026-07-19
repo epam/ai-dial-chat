@@ -6,8 +6,6 @@ export interface ListViewTypography {
   nameClassName?: string;
   /** Typography class for item version text. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
-  /** Typography class for item description text. Default: `'dial-small-text'`. */
-  descriptionClassName?: string;
   /** Typography class for folder path text. Default: `'dial-small-text'`. */
   folderClassName?: string;
   /** Typography class for the last (deepest) folder segment. Default: `'dial-small-semi-text'`. */
@@ -18,8 +16,6 @@ export interface ListViewTypography {
 export interface ListViewColors {
   /** Color for item name text. Fallback: `--text-primary`. */
   nameText?: string;
-  /** Color for version/description/folder text. Fallback: `--text-secondary`. */
-  secondaryText?: string;
 }
 
 /** Combined style overrides for `ListView`. */

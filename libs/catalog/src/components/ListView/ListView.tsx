@@ -52,7 +52,6 @@ export const ListView: FC<ListViewProps> = ({
   const colors = listStyles?.colors;
   const cssVars = {
     '--cat-list-name-text': colors?.nameText,
-    '--cat-list-secondary-text': colors?.secondaryText,
     ...(stickyHeaderTop != null
       ? { '--list-header-sticky-top': `${stickyHeaderTop}px` }
       : {}),
@@ -126,44 +125,58 @@ export const ListView: FC<ListViewProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses('w-full px-4', styles.listContainer)}
+      className={mergeClasses('w-full rounded-xl border', styles.listContainer)}
     >
-      <DialGrid<CatalogItem>
-        columnDefs={CATALOG_COLUMNS}
-        rowData={windowedItems}
-        getRowId={(r) => r.id}
-        alternateOddRowColors
-        onGridApiChange={(api) => {
-          gridApiRef.current = api;
-        }}
-        emptyStateTitle={emptyStateTitle}
-        additionalGridOptions={{
-          rowHeight: 90,
-          domLayout: 'autoHeight',
-          defaultColDef: { filter: false, floatingFilter: false },
-          context: {
-            searchQuery: query,
-            typography,
-            onToggleFavorite,
-            selectedItemId,
-            credentialsBadgeLoggedOutLabel,
-          } satisfies GridContext,
-          onCellClicked: onItemClick
-            ? (event) => {
-                const col = event.column.getColDef();
-                if (col.field === 'isStarred') return; // ignore clicks on the star column
-                if (event.data) onItemClick(event.data);
-              }
-            : undefined,
-          rowClass: onItemClick ? 'cursor-pointer' : undefined,
-          getRowClass: (params) =>
-            params.data?.id === selectedItemId ? styles.selectedRow : undefined,
-        }}
-        ariaLabel={ariaLabel}
-      />
-      {visibleCount < items.length && (
-        <div ref={sentinelRef} className="h-2" aria-hidden />
-      )}
+      {/*
+       * The border lives on this outer div and is never itself clipped, so it
+       * renders with a single, uncompounded border-radius curve. `clip-path`
+       * (needed to round the grid content without breaking the sticky
+       * header — see ListView.module.scss) goes on this inner wrapper
+       * instead, which has no border of its own to wash out.
+       */}
+      <div className={mergeClasses('rounded-xl', styles.gridClip)}>
+        <DialGrid<CatalogItem>
+          columnDefs={CATALOG_COLUMNS}
+          rowData={windowedItems}
+          getRowId={(r) => r.id}
+          withoutHeaderBorders
+          onGridApiChange={(api) => {
+            gridApiRef.current = api;
+          }}
+          emptyStateTitle={emptyStateTitle}
+          additionalGridOptions={{
+            // Fixed dense row height — constant across every row regardless
+            // of content; every column (name, folder, tags, type) is a
+            // single line, no description row.
+            rowHeight: 60,
+            domLayout: 'autoHeight',
+            defaultColDef: { filter: false, floatingFilter: false },
+            context: {
+              searchQuery: query,
+              typography,
+              onToggleFavorite,
+              selectedItemId,
+              credentialsBadgeLoggedOutLabel,
+            } satisfies GridContext,
+            onCellClicked: onItemClick
+              ? (event) => {
+                  const col = event.column.getColDef();
+                  if (col.field === 'isStarred') return; // ignore clicks on the star column
+                  if (event.data) onItemClick(event.data);
+                }
+              : undefined,
+            rowClass: onItemClick ? 'cursor-pointer' : undefined,
+            getRowClass: (params) =>
+              params.data?.id === selectedItemId
+                ? styles.selectedRow
+                : undefined,
+          }}
+          ariaLabel={ariaLabel}
+        />
+        {visibleCount < items.length && (
+          <div ref={sentinelRef} className="h-2" aria-hidden />
+        )}
+      </div>
     </div>
   );
 };
