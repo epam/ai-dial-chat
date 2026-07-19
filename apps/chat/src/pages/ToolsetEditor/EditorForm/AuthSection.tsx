@@ -25,7 +25,11 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
-import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
+import {
+  getToolset,
+  loginToolset,
+  logoutToolset,
+} from '../../../server-api/toolsets';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
@@ -145,6 +149,27 @@ const AuthSection: FC<Props> = ({
           variant: NotificationVariant.Error,
           message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
         });
+      } else if (result.type === ToolsetOAuthResultType.Cancelled) {
+        /*
+         * The callback popup posts its result and closes itself back-to-back
+         * — under load the opener can observe `popup.closed` before the
+         * `BroadcastChannel` message arrives, so a login that actually
+         * succeeded server-side can still surface as Cancelled here.
+         * Re-checking the toolset's real status avoids leaving the form
+         * stuck showing "logged out" for a login that already went through.
+         */
+        try {
+          const refreshed = await getToolset(toolsetId);
+          if (refreshed.authSettings?.userLevelAuthStatus === 'SIGNED_IN') {
+            onAuthChange({ isLoggedIn: true });
+            showNotification({
+              variant: NotificationVariant.Success,
+              message: t(ToolsetEditorI18nKeys.LoginSuccess),
+            });
+          }
+        } catch {
+          // Best-effort verification only — a genuine cancel stays silent.
+        }
       }
       return;
     }

@@ -10,11 +10,13 @@
 - `setSelectedItemId: (id: string | null) => void` — persists selection to user config via `setSelectedDeployment` from `useUserConfig()` (user-initiated model change); does NOT write to `localStorage`
 - `restoreSelectedItemId: (id: string) => void` — sets `selectedItemId` in local state **without** calling `setSelectedDeployment`; used when restoring a conversation's last-used model so the user's own new-chat preference is preserved
 - `selectedDeploymentConfiguration: DeploymentConfigurationSchema | null` — JSON Schema config for the currently selected deployment; loaded via `getDeploymentConfiguration(selectedItemId)` whenever `selectedItemId` changes; `null` when no deployment is selected or the fetch fails
+- `refetchDeployments: () => Promise<void>` — explicitly re-fetches chat deployments with `refresh=true` after application-mutating flows so newly saved Quick App settings are visible without waiting for the deployments cache TTL
 - `isLoading: boolean`
 - `error: Error | null`
 
 The provider SHALL:
 - Fetch deployments on mount using `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat])` from `server-api/deployments.api.ts` filtered to `Chat` interface type only.
+- Refetch deployments on explicit `refetchDeployments()` calls using `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat], true)` so the backend receives `refresh=true`.
 - Fetch application schemas on mount using `getApplicationSchemas()` from `server-api/application-schemas.ts` in parallel with `getDeployments()` via `Promise.allSettled`. A schemas fetch failure SHALL be logged as a warning but SHALL NOT set `error` or block deployment loading.
 - **Schema icon fallback**: after both fetches resolve, `items` SHALL be derived via `useMemo` — for each deployment where `type === 'application'`, `iconUrl` is absent, and `applicationTypeSchemaId` matches a schema entry, the schema's `iconUrl` is merged in. Deployments without a matching schema or that already have an icon are returned unchanged.
 - Use a cancellation flag (`{ isCancelled: boolean }`) inside `useEffect` to guard against setState-on-unmount.
@@ -58,6 +60,11 @@ The state management pattern SHALL follow `ThemeContext.tsx` as the reference im
 
 - **WHEN** `getApplicationSchemas()` resolves with `[{ id: "https://...quickapps2", displayName: "Quick App 2.0", editorUrl: "https://editor.example.com" }]`
 - **THEN** `useDeployments().schemas` contains that entry
+
+#### Scenario: refetchDeployments bypasses deployments cache
+
+- **WHEN** `refetchDeployments()` is called after an application save/delete/share flow
+- **THEN** it calls `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat], true)`
 
 #### Scenario: Initial selectedItemId follows user config preference
 
