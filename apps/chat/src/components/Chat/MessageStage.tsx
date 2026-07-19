@@ -184,6 +184,7 @@ export const MessageStage = ({ stage }: MessageStageProps) => {
             'grid max-w-full grid-flow-row overflow-auto',
             isOpened ? 'border-t border-secondary p-2' : 'h-0',
           )}
+          data-qa="stage-content"
         >
           {isOpened && stage.content && <StageView content={stage.content} />}
           <MessageAttachments attachments={stage.attachments} isInner />

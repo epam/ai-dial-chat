@@ -69,6 +69,11 @@ export class ChatMessages extends BaseElement {
       ChatSelectors.stageLoader,
     );
 
+  public messageStageContent = (messagesIndex: number, stageIndex: number) =>
+    this.messageStage(messagesIndex, stageIndex).locator(
+      ChatSelectors.stageContent,
+    );
+
   public showMoreButton = this.getChildElementBySelector(
     ChatSelectors.showMore,
   );
@@ -207,9 +212,15 @@ export class ChatMessages extends BaseElement {
       .locator(Tags.td);
   }
 
-  public getMessageStage(messagesIndex: number, stageIndex: number) {
+  public getExpandedMessageStage(messagesIndex: number, stageIndex: number) {
     return this.messageStage(messagesIndex, stageIndex).locator(
       ChatSelectors.openedStage,
+    );
+  }
+
+  public getCollapsedMessageStage(messagesIndex: number, stageIndex: number) {
+    return this.messageStage(messagesIndex, stageIndex).locator(
+      ChatSelectors.closedStage,
     );
   }
 
@@ -569,7 +580,7 @@ export class ChatMessages extends BaseElement {
   }
 
   public async isMessageStageOpened(messagesIndex: number, stageIndex: number) {
-    return this.getMessageStage(messagesIndex, stageIndex).isVisible();
+    return this.getExpandedMessageStage(messagesIndex, stageIndex).isVisible();
   }
 
   public async openMessageStage(messagesIndex: number, stageIndex: number) {

@@ -129,6 +129,7 @@ export const ChatSelectors = {
   referenceButton: 'reference',
   openedStage: '[data-qa="stage-opened"]',
   closedStage: '[data-qa="stage-closed"]',
+  stageContent: '[data-qa="stage-content"]',
   stageLoader: '.animate-spin',
   loadingCursor: '[data-qa="loading-cursor"]',
   regenerate: '[data-qa="regenerate"]',
