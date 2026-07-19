@@ -3,4 +3,6 @@ export enum StorageKey {
   ConversationSourcesWidth = 'conversationSourcesWidth',
   Theme = 'theme',
   KeyboardShortcut = 'keyboardShortcut',
+  CatalogSortKey = 'catalogSortKey',
+  CatalogFilterTopics = 'catalogFilterTopics',
 }

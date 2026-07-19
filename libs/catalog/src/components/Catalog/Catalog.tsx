@@ -66,6 +66,10 @@ export const Catalog: FC<CatalogProps> = ({
   styles: catalogStyles,
   detailsTexts,
   initialDetailsItemId,
+  sortKey: controlledSortKey,
+  onSortChange,
+  filterTopics: controlledFilterTopics,
+  onFilterTopicsChange,
 }) => {
   const { typography } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
@@ -103,11 +107,33 @@ export const Catalog: FC<CatalogProps> = ({
     CatalogViewMode.Grid,
   );
   const [listEverShown, setListEverShown] = useState(false);
-  const [sortKey, setSortKey] = useState<string>(
+  const [internalSortKey, setInternalSortKey] = useState<CatalogSortKey>(
     CatalogSortKey.RecentlyUpdated,
   );
-  const [filters, setFilters] = useState<Set<string>>(new Set());
+  const [internalFilters, setInternalFilters] = useState<Set<string>>(
+    new Set(),
+  );
   const [isMyAppsActive, setIsMyAppsActive] = useState(false);
+
+  const sortKey = controlledSortKey ?? internalSortKey;
+  const filters = controlledFilterTopics ?? internalFilters;
+
+  const handleSortChange = useCallback(
+    (key: string) => {
+      const nextSortKey = key as CatalogSortKey;
+      setInternalSortKey(nextSortKey);
+      onSortChange?.(nextSortKey);
+    },
+    [onSortChange],
+  );
+
+  const handleFiltersChange = useCallback(
+    (topics: Set<string>) => {
+      setInternalFilters(topics);
+      onFilterTopicsChange?.(topics);
+    },
+    [onFilterTopicsChange],
+  );
 
   const filteredItems = useMemo(
     () => items.filter((item) => !item.isHidden),
@@ -359,7 +385,7 @@ export const Catalog: FC<CatalogProps> = ({
             viewMode={viewMode}
             onViewModeChange={handleViewModeChange}
             sortKey={sortKey}
-            onSortChange={setSortKey}
+            onSortChange={handleSortChange}
             query={query}
             onQueryChange={setQuery}
             title={browseTitle}
@@ -368,7 +394,7 @@ export const Catalog: FC<CatalogProps> = ({
             listViewLabel={listViewLabel}
             sortOptions={sortOptions}
             filters={filters}
-            onFiltersChange={setFilters}
+            onFiltersChange={handleFiltersChange}
             filterValues={allFilterValues}
             isMyAppsActive={isMyAppsActive}
             onMyAppsChange={setIsMyAppsActive}

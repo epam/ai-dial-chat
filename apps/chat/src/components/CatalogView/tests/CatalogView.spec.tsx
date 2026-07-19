@@ -1,6 +1,7 @@
 import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import {
   CatalogEntityType,
+  CatalogSortKey,
   CredentialsBadgeState,
   CredentialsUiState,
   getCredentialsBadgeState,
@@ -17,6 +18,7 @@ import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
+import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
@@ -72,6 +74,10 @@ const capturedPublishProps: {
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
     isConnectVisible?: (item: CatalogItem) => boolean;
+    sortKey?: string;
+    onSortChange?: (key: string) => void;
+    filterTopics?: Set<string>;
+    onFilterTopicsChange?: (topics: Set<string>) => void;
   } | null;
 } = { current: null };
 
@@ -108,6 +114,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     getPublishHistory,
     isPublishVisible,
     isConnectVisible,
+    sortKey,
+    onSortChange,
+    filterTopics,
+    onFilterTopicsChange,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
@@ -132,6 +142,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
     isConnectVisible?: (item: CatalogItem) => boolean;
+    sortKey?: string;
+    onSortChange?: (key: string) => void;
+    filterTopics?: Set<string>;
+    onFilterTopicsChange?: (topics: Set<string>) => void;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
     capturedPublishProps.current = {
@@ -142,6 +156,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onPublishExpandedPathsChange,
       publishLoadingPaths,
       isConnectVisible,
+      sortKey,
+      onSortChange,
+      filterTopics,
+      onFilterTopicsChange,
     };
 
     return (
@@ -334,6 +352,13 @@ vi.mock('../../../hooks/publish/usePublishFolders', () => ({
   usePublishFolders: vi.fn(),
 }));
 
+vi.mock(
+  '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference',
+  () => ({
+    useCatalogSortFilterPreference: vi.fn(),
+  }),
+);
+
 describe('CatalogView', () => {
   const user = userEvent.setup({ delay: null });
   let capturedPopup: ReturnType<typeof makeFakePopup> | undefined;
@@ -396,6 +421,12 @@ describe('CatalogView', () => {
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
+    vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+      sortKey: CatalogSortKey.RecentlyUpdated,
+      setSortKey: vi.fn(),
+      filterTopics: new Set(),
+      setFilterTopics: vi.fn(),
     });
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Ready,
@@ -1635,5 +1666,77 @@ describe('CatalogView', () => {
     expect(showNotification).not.toHaveBeenCalledWith(
       expect.objectContaining({ variant: 'success' }),
     );
+  });
+
+  describe('sort/filter persistence wiring', () => {
+    it('passes the persisted sortKey and filterTopics through to Catalog', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+      });
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.Newest,
+        setSortKey: vi.fn(),
+        filterTopics: new Set(['nlp']),
+        setFilterTopics: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.sortKey).toBe(CatalogSortKey.Newest);
+      expect(capturedPublishProps.current?.filterTopics).toEqual(
+        new Set(['nlp']),
+      );
+    });
+
+    it('drops a persisted topic filter that no longer exists in the current items', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+      });
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.RecentlyUpdated,
+        setSortKey: vi.fn(),
+        filterTopics: new Set(['deprecated-topic']),
+        setFilterTopics: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.filterTopics).toEqual(new Set());
+    });
+
+    it('forwards Catalog sort changes to the persistence hook setter', () => {
+      const setSortKey = vi.fn();
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.RecentlyUpdated,
+        setSortKey,
+        filterTopics: new Set(),
+        setFilterTopics: vi.fn(),
+      });
+
+      render(<CatalogView />);
+      capturedPublishProps.current?.onSortChange?.(CatalogSortKey.NameAZ);
+
+      expect(setSortKey).toHaveBeenCalledWith(CatalogSortKey.NameAZ);
+    });
   });
 });
