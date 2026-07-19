@@ -1,7 +1,18 @@
+/*
+ * Inline, not a card: no background, no border, no panel around the list —
+ * just flat rows in the message flow. `color` stays as the ambient text
+ * color for anything that doesn't set its own.
+ */
 .panel {
-  background: var(--cs-bg, transparent);
-  border-color: var(--cs-border, transparent);
   color: var(--cs-text, var(--text-primary, #161b2d));
+}
+
+.row {
+  border-radius: 8px;
+
+  &:hover {
+    background: var(--cs-row-hover, var(--bg-layer-2, #eef1f7));
+  }
 }
 
 .collapseButton {
@@ -12,12 +23,56 @@
   color: var(--cs-stage-text, var(--text-secondary, #575f73));
 }
 
-.iconSecondary {
-  color: var(--cs-icon-secondary, var(--text-secondary, #575f73));
+/* Failed row — name gets the warning ink (orange, not red), so status reads from text, not only the icon's color. */
+.stageNameFailed {
+  color: var(--cs-failed-text, var(--text-warning, #7f6300));
 }
 
+/* An un-prettifiable raw identifier renders in monospace so it reads as an ID, not broken prose. */
+.monoName {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.tag {
+  color: var(--cs-tag-text, var(--text-tertiary, #808898));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.count {
+  color: var(--cs-count-text, var(--text-tertiary, #808898));
+  font-variant-numeric: tabular-nums;
+}
+
+.duration {
+  color: var(--cs-duration-text, var(--text-tertiary, #808898));
+  font-variant-numeric: tabular-nums;
+}
+
+.iconSecondary {
+  color: var(--cs-icon-secondary, var(--text-secondary, #575f73));
+  opacity: 0.7;
+}
+
+/* Completed-check icon — same glyph and size as the CollapsedGroup summary's "Executed N steps" check, but grey: --text-tertiary still clears the AA non-text 3:1 floor (icons are aria-hidden, not normal text) in both themes. */
+.iconCompleted {
+  color: var(--cs-icon-completed, var(--text-tertiary, #808898));
+}
+
+/* Exception icon (failed) — the one case that keeps a saturated, alarming color; orange (DS "warning" token), not red. */
+.iconError {
+  color: var(--cs-icon-error, var(--text-warning, #7f6300));
+}
+
+/*
+ * !important: `contentClassName` defaults to `dial-tiny-text`, whose own
+ * bundled line-height (133%, 16px/12px) reads tighter than the requested
+ * 150% — this forces 150% regardless of which typography class is paired
+ * with it.
+ */
 .stageContent {
   color: var(--cs-stage-text, var(--text-secondary, #575f73));
+  line-height: 150% !important;
 }
 
 .codeBlock {
@@ -26,9 +81,18 @@
   color: var(--cs-code-text, var(--text-primary, #161b2d));
 }
 
+/*
+ * Inline code stays a fixed light chip (white surface, light stroke, dark
+ * ink) regardless of the app's active theme — unlike the rest of the row,
+ * which tracks dark/light via theme-following tokens. Pairing a white
+ * background with a theme-following text color would silently break
+ * readability in dark theme (--text-primary turns light there), so the
+ * fallback text color is fixed too, not chained through --text-primary.
+ */
 .codeInline {
-  background: var(--cs-code-bg, var(--bg-layer-0, #fcfcfc));
-  color: var(--cs-code-text, var(--text-primary, #161b2d));
+  background: var(--cs-code-bg, #fcfcfc);
+  border: 1px solid var(--cs-code-border, #d1dbea);
+  color: var(--cs-code-text, #161b2d);
 }
 
 .blockquote {
