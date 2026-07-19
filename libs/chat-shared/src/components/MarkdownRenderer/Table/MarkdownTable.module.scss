@@ -1,5 +1,16 @@
+.tableContainer {
+  background: var(--cm-code-block-bg, var(--bg-layer-3, #fcfcfc));
+  border-color: var(
+    --cm-markdown-border,
+    var(--cm-code-block-border, var(--stroke-secondary, #d1dbea))
+  );
+}
+
+.tableContainerLight {
+  background: var(--cm-code-block-bg, var(--bg-layer-6, #f8fafc));
+}
+
 .scrollContainer {
-  border-color: var(--cm-markdown-border, var(--stroke-secondary, #d1dbea));
   scrollbar-width: thin;
   scrollbar-color: var(--cm-table-scrollbar, var(--stroke-primary, #7c8293))
     transparent;
@@ -16,6 +27,29 @@
     background-color: var(--cm-table-scrollbar, var(--stroke-primary, #7c8293));
     border-radius: 4px;
   }
+}
+
+.tableHeaderCell {
+  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #fcfcfc));
+}
+
+.sectionRow td {
+  background: var(--cm-code-block-header-bg, var(--bg-layer-3, #fcfcfc));
+}
+
+tbody .row:nth-child(even) td {
+  background: var(--cm-table-row-zebra-bg, var(--bg-layer-5, #f5f7fa));
+}
+
+.rowDivider {
+  border-color: var(--cm-table-row-divider, var(--stroke-tertiary, #e0e6f0));
+}
+
+tbody .row:hover td {
+  background: var(
+    --cm-table-row-hover-bg,
+    var(--bg-accent-primary-alpha, #7da4ff2e)
+  );
 }
 
 .tableScrollFadeEnd {

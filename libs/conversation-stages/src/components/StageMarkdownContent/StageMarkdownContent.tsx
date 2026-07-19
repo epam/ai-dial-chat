@@ -27,7 +27,6 @@ export const StageMarkdownContent: FC<Props> = memo(
         blockquote: styles.blockquote,
         link: styles.stageContent,
         tableCell: styles.tableCell,
-        tableHeader: styles.tableHeader,
       }}
       components={{
         code: ({
