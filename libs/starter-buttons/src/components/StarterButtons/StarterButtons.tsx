@@ -103,7 +103,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
   );
 
   return (
-    <div ref={containerRef} className="mt-4 w-full">
+    <div ref={containerRef} className="mb-4 w-full">
       <div
         role="list"
         aria-label={labels.list}

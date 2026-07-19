@@ -88,6 +88,40 @@ The preview pane SHALL use the same conversation-creation, streaming, and intera
 - **WHEN** the user attaches a file, uses audio transcription, or opens chat settings in the preview pane
 - **THEN** the feature behaves exactly as it does in a normal chat, since the same underlying hooks and endpoints are used
 
+### Requirement: Preview chat renders Quick Apps conversation starters
+When a Settings-step save succeeds for a preview request, `AppsEditor` SHALL await `refetchDeployments()` before switching to preview mode. `refetchDeployments()` owns bypassing the deployments cache; if the refetch fails, preview entry SHALL NOT be blocked, but the preview pane may use the best-known deployment list already in context.
+
+`AppPreviewChat` SHALL resolve the application deployment from `useDeployments().items` and render Quick Apps `conversationStarters` through the same `getQuickAppConversationStarters` utility used by the main new-conversation screen.
+
+The preview composer SHALL:
+- Render `conversationStarters.introText` above the starter buttons and the input when present.
+- Render `StarterButtons` above the input when valid starters are present.
+- Disable free-form input when `conversationStarters.chatMessageInputDisabled === true`.
+- Treat `autoSubmit` as `true` unless the API value is explicitly `false`.
+
+Selecting a starter with submit enabled SHALL create or append to the preview conversation through the same preview conversation creation/streaming path used for manually typed messages, targeting the fixed app deployment. Selecting a starter with submit disabled SHALL populate the preview input with the starter text and SHALL NOT create a conversation.
+
+**i18n impact:** None; starter labels and intro text are user-configured application data, and the preview placeholder already has an i18n key.
+
+**RTL / UI impact:** Starter layout is delegated to `StarterButtons`; intro text is plain centered text and inherits page direction.
+
+**Memoisation:** Quick Apps starter settings SHALL be memoized from the resolved app deployment's `conversationStarters`; starter selection handlers SHALL be wrapped in `useCallback`.
+
+**Accessibility:** Starter controls SHALL remain real buttons via `StarterButtons`; intro text is static descriptive copy and does not need a live region.
+
+#### Scenario: Preview shows saved Quick Apps starters without page reload
+- **WHEN** the user changes conversation starters in the Settings iframe, clicks Preview, and the iframe posts `AppsEditorEvent.SaveSuccess`
+- **THEN** `AppsEditor` awaits `refetchDeployments()` before entering preview mode
+- **AND** the preview chat shows the saved starter buttons and intro text without a full browser reload
+
+#### Scenario: Preview non-submit starter populates input
+- **WHEN** the user selects a preview starter whose normalized `submit` flag is false
+- **THEN** the preview input is populated with the starter text and no preview conversation is created
+
+#### Scenario: Preview submit starter creates conversation
+- **WHEN** the user selects a preview starter whose normalized `submit` flag is true
+- **THEN** the preview conversation is created or appended using the starter text and the fixed application deployment id
+
 ### Requirement: Preview conversation is deleted when the editor is left
 The preview conversation, if one was created during the session, SHALL be deleted when the Apps editor Settings step (and therefore the component owning the preview conversation) unmounts — including when the user clicks Cancel, when a normal Save succeeds and navigates away, or when the user otherwise navigates away from `/apps-editor`. Deletion failures SHALL be logged and SHALL NOT block or surface an error during navigation.
 
@@ -137,4 +171,3 @@ The preview capability SHALL be available to any user who can already reach the 
 #### Scenario: Available to all Apps-editor users
 - **WHEN** any user who can already open `/apps-editor` for an app reaches the Settings step with a saved app id
 - **THEN** the preview button is shown, with no additional role or feature-flag check beyond existing Apps-editor access
-
