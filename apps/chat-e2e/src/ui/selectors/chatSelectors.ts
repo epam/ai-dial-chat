@@ -130,6 +130,8 @@ export const ChatSelectors = {
   openedStage: '[data-qa="stage-opened"]',
   closedStage: '[data-qa="stage-closed"]',
   stageContent: '[data-qa="stage-content"]',
+  stageContentCopyButton: 'copy',
+  stageContentDownloadButton: 'download',
   stageLoader: '.animate-spin',
   loadingCursor: '[data-qa="loading-cursor"]',
   regenerate: '[data-qa="regenerate"]',

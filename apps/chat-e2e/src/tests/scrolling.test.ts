@@ -404,7 +404,8 @@ dialTest(
 dialTest(
   'Scroll down button appears if to expand stage, disappears if to collapse.\n' +
     'Stages appear in responses.\n' +
-    'Show more/less does not appear if there are 3 stages',
+    'Show more/less does not appear if there are 3 stages.\n' +
+    'Stage with context < set in updated NEXT_PUBLIC_STAGE_CONTENT_LIMIT. No Copy and no Download buttons.',
   async ({
     dialHomePage,
     sendMessage,
@@ -417,14 +418,17 @@ dialTest(
     chatMessagesAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3074', 'EPMRTC-432', 'EPMRTC-1759');
+    setTestIds('EPMRTC-3074', 'EPMRTC-432', 'EPMRTC-1759', 'EPMRTC-8470');
     let stageConversation: Conversation;
+    const stagesCount = 3;
+    const messageIndex = 2;
+    const stageIndex = 1;
 
     await dialTest.step('Prepare conversation with 3 stages', async () => {
       stageConversation =
         conversationData.prepareConversationWithStagesInResponse(
           defaultModel,
-          3,
+          stagesCount,
         );
       await dataInjector.createConversations([stageConversation]);
       await localStorageManager.setShowSideBarPanels();
@@ -436,11 +440,18 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(stageConversation.name);
-        for (let i = 1; i <= 3; i++) {
-          const messageStage = chatMessages.getCollapsedMessageStage(2, i);
+        for (let i = 1; i <= stagesCount; i++) {
+          const messageStage = chatMessages.getCollapsedMessageStage(
+            messageIndex,
+            i,
+          );
           await chatMessagesAssertion.assertElementState(
             messageStage,
             'visible',
+          );
+          await chatMessagesAssertion.assertElementState(
+            chatMessages.messageStageContent(messageIndex, i),
+            'hidden',
           );
           await chatMessagesAssertion.assertElementText(
             messageStage,
@@ -460,13 +471,28 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open response stage and verify "Scroll down" button is displayed',
+      'Open response stage and verify "Scroll down" button is displayed, no Copy and Download buttons are available',
       async () => {
-        await chatMessages.openMessageStage(2, 1);
+        await chatMessages.openMessageStage(messageIndex, stageIndex);
         await sendMessageAssertion.assertElementState(
           sendMessage.scrollDownButton,
           'visible',
           ExpectedMessages.scrollDownButtonIsVisible,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.messageStageContent(messageIndex, stageIndex),
+          'visible',
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.messageStageContentCopyButton(messageIndex, stageIndex),
+          'hidden',
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.messageStageContentDownloadButton(
+            messageIndex,
+            stageIndex,
+          ),
+          'hidden',
         );
       },
     );
@@ -474,7 +500,7 @@ dialTest(
     await dialTest.step(
       'Close response stage and verify "Scroll down" button disappears',
       async () => {
-        await chatMessages.closeMessageStage(2, 1);
+        await chatMessages.closeMessageStage(messageIndex, stageIndex);
         await sendMessageAssertion.assertElementState(
           sendMessage.scrollDownButton,
           'hidden',

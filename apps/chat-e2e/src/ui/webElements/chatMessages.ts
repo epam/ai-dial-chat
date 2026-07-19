@@ -71,7 +71,27 @@ export class ChatMessages extends BaseElement {
 
   public messageStageContent = (messagesIndex: number, stageIndex: number) =>
     this.messageStage(messagesIndex, stageIndex).locator(
-      ChatSelectors.stageContent,
+      `~${ChatSelectors.stageContent}`,
+    );
+
+  public messageStageContentCopyButton = (
+    messagesIndex: number,
+    stageIndex: number,
+  ) =>
+    new Button(
+      this.page,
+      ChatSelectors.stageContentCopyButton,
+      this.messageStageContent(messagesIndex, stageIndex),
+    );
+
+  public messageStageContentDownloadButton = (
+    messagesIndex: number,
+    stageIndex: number,
+  ) =>
+    new Button(
+      this.page,
+      ChatSelectors.stageContentDownloadButton,
+      this.messageStageContent(messagesIndex, stageIndex),
     );
 
   public showMoreButton = this.getChildElementBySelector(
@@ -221,6 +241,12 @@ export class ChatMessages extends BaseElement {
   public getCollapsedMessageStage(messagesIndex: number, stageIndex: number) {
     return this.messageStage(messagesIndex, stageIndex).locator(
       ChatSelectors.closedStage,
+    );
+  }
+
+  public getStageErrorIcon(messagesIndex: number, stageIndex: number) {
+    return this.messageStage(messagesIndex, stageIndex).locator(
+      IconSelectors.exclamationCircleIcon,
     );
   }
 

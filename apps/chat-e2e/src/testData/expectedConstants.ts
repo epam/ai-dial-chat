@@ -452,6 +452,8 @@ export const ExpectedConstants = {
   toolsetNotFoundToast: 'Toolset by this link not found',
   enterKeyboardShortcut: 'Enter - send messages, Shift + Enter - new line',
   ctrlEnterKeyboardShortcut: 'Ctrl + Enter - send messages, Enter - new line',
+  stageContentLimitExceeded: (limit: number) =>
+    `Content is too large to display (exceeds ${limit} KB).`,
 };
 
 export const withTraceId = (message: string): RegExp => {
