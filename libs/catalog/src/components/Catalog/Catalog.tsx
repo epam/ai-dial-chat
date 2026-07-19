@@ -188,7 +188,10 @@ export const Catalog: FC<CatalogProps> = ({
 
   const appliedInitialDetailsItemIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!initialDetailsItemId) return;
+    if (!initialDetailsItemId) {
+      appliedInitialDetailsItemIdRef.current = null;
+      return;
+    }
     if (appliedInitialDetailsItemIdRef.current === initialDetailsItemId) {
       return;
     }

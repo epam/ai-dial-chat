@@ -14,7 +14,7 @@ import type {
   ToolsetLogoutBodyDto,
 } from '@epam/chat-api-client';
 import type { FC } from 'react';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
@@ -104,9 +104,29 @@ interface Props {
 const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const initialDetailsItemId =
-    searchParams.get(CatalogQuery.ItemId) ?? undefined;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const itemIdParam = searchParams.get(CatalogQuery.ItemId) ?? undefined;
+  const initialDetailsItemId = itemIdParam;
+
+  /*
+   * `itemId` is a one-shot signal from a shared-invitation redirect (see
+   * SharedInvitationPage) meant to open the details panel once. Clearing it
+   * here keeps it from lingering in the URL, so a later navigation back to
+   * the same deployment's shared link isn't ignored just because the param
+   * still equals a value Catalog already consumed once before.
+   */
+  useEffect(() => {
+    if (!itemIdParam) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete(CatalogQuery.ItemId);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [itemIdParam, setSearchParams]);
+
   const { showNotification } = useNotification();
   const { user } = useUser();
   const isAdmin = user?.isAdmin ?? false;

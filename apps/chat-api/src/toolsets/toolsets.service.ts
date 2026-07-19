@@ -6,6 +6,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
 import {
@@ -768,6 +769,36 @@ export class ToolsetsService {
         this.logger,
         0,
       );
+    }
+  }
+
+  /**
+   * Resolves a single toolset by id for contexts that don't already have the
+   * caller's bucket at hand — e.g. right after accepting a share invitation,
+   * where waiting for the bulk toolsets list to reflect a just-granted share
+   * is an unbounded race against DIAL Core's own propagation. Reuses
+   * `getToolset`'s existing resource resolution/ownership-enrichment; only
+   * resolves the caller's own bucket first, which `getToolset` needs for the
+   * `isMy`/`canEdit` ownership fields.
+   *
+   * Returns `null` (not a thrown exception) when DIAL Core has no match for
+   * this id — only a genuine upstream error (5xx, network, timeout)
+   * propagates as an exception.
+   */
+  async resolveToolsetItem(
+    userSub: string,
+    accessToken: string,
+    toolsetName: string,
+  ): Promise<DialToolsetDto | null> {
+    try {
+      const bucket = await this.getUserBucket(
+        getBearerAuthHeaders(accessToken),
+        `resolve toolset item "${toolsetName}"`,
+      );
+      return await this.getToolset(userSub, accessToken, bucket, toolsetName);
+    } catch (err) {
+      if (err instanceof NotFoundException) return null;
+      throw err;
     }
   }
 

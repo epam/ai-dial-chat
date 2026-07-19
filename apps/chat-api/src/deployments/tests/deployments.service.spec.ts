@@ -1535,4 +1535,81 @@ describe('DeploymentsService', () => {
       ).rejects.toThrow(ServiceUnavailableException);
     });
   });
+
+  describe('resolveDeploymentItem', () => {
+    it('resolves an unprefixed id via getModel and maps it to DeploymentItemDto', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(okResponse(mockModel));
+
+      const result = await service.resolveDeploymentItem('gpt-4o', 'token');
+
+      expect(result).toMatchObject({
+        id: 'gpt-4o',
+        displayName: 'GPT-4o',
+        type: 'model',
+      });
+      expect(sdkClient.getApplication).not.toHaveBeenCalled();
+    });
+
+    it('resolves an applications/-prefixed id via getApplication directly, skipping getModel', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getApplication.mockResolvedValue(
+        okResponse({ ...mockApplication, id: undefined }),
+      );
+
+      const result = await service.resolveDeploymentItem(
+        'applications/my-app',
+        'token',
+      );
+
+      expect(result).toMatchObject({
+        id: 'applications/my-app',
+        displayName: 'My App',
+        type: 'application',
+      });
+      expect(sdkClient.getModel).not.toHaveBeenCalled();
+    });
+
+    it('falls back to getApplication when an unprefixed id 404s on getModel', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(errResponse(404));
+      sdkClient.getApplication.mockResolvedValue(okResponse(mockApplication));
+
+      const result = await service.resolveDeploymentItem('my-app', 'token');
+
+      expect(result).toMatchObject({ id: 'my-app', type: 'application' });
+    });
+
+    it('returns null immediately for a toolsets/-prefixed id without calling DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+
+      const result = await service.resolveDeploymentItem(
+        'toolsets/b/search__0.0.1',
+        'token',
+      );
+
+      expect(result).toBeNull();
+      expect(sdkClient.getModel).not.toHaveBeenCalled();
+      expect(sdkClient.getApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns null when both getModel and getApplication 404 for an unprefixed id', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(errResponse(404));
+      sdkClient.getApplication.mockResolvedValue(errResponse(404));
+
+      const result = await service.resolveDeploymentItem('unknown-id', 'token');
+
+      expect(result).toBeNull();
+    });
+
+    it('throws BadGatewayException on a genuine upstream 5xx rather than returning null', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getModel.mockResolvedValue(errResponse(502));
+
+      await expect(
+        service.resolveDeploymentItem('gpt-4o', 'token'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -442,5 +442,64 @@ describe('Catalog', () => {
     );
 
     expect(screen.queryByText('Claude', { selector: 'span' })).toBeNull();
+  });
+
+  it('reopens the details panel when initialDetailsItemId reappears after being cleared', async () => {
+    const onFetchDetails = vi.fn().mockResolvedValue(undefined);
+    const items = [makeItem('1', 'Claude')];
+    const { rerender } = render(
+      <Catalog
+        items={items}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        initialDetailsItemId="1"
+      />,
+    );
+
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    rerender(
+      <Catalog
+        items={items}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        initialDetailsItemId={undefined}
+      />,
+    );
+    rerender(
+      <Catalog
+        items={items}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        initialDetailsItemId="1"
+      />,
+    );
+
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+  });
+
+  it('does not reopen the details panel for the same initialDetailsItemId across an items identity change', async () => {
+    const onFetchDetails = vi.fn().mockResolvedValue(undefined);
+    const { rerender } = render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        initialDetailsItemId="1"
+      />,
+    );
+
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    rerender(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        initialDetailsItemId="1"
+      />,
+    );
+
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
   });
 });

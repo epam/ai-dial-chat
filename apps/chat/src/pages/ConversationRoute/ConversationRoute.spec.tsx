@@ -188,6 +188,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     mockUseUser.mockReturnValue({
       user: {
@@ -305,6 +306,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     renderRoute();
@@ -332,6 +334,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     renderRoute();
     await waitFor(() => {
@@ -359,6 +362,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     renderRoute();
     await waitFor(() => {
@@ -397,6 +401,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     renderRoute();
@@ -447,6 +452,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     renderRoute();
@@ -496,6 +502,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     mockCreateConversation.mockRejectedValueOnce({
       response: {

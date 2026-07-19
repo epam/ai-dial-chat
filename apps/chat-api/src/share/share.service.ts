@@ -57,6 +57,20 @@ const getInvitationRoutePath = (itemId: string): string =>
     ? CONVERSATION_SHARE_INVITATION_ROUTE_PATH
     : CATALOG_SHARE_INVITATION_ROUTE_PATH;
 
+/*
+ * DIAL Core rejects `?accept=true` with 400 and a body like
+ * `"Resource <id> already belong to you"` when the invited user already owns
+ * (or previously accepted) the shared resource — e.g. opening your own share
+ * link, or reopening a link you already accepted. That's not a real failure:
+ * the user already has access, so the accept call is a no-op and the UI
+ * should still open the resource's details panel rather than showing an
+ * error. Detected by substring match since DIAL Core doesn't give this case
+ * its own status code or a machine-readable error field.
+ */
+const isAlreadyOwnedError = (errorBody: unknown): boolean =>
+  typeof errorBody === 'string' &&
+  errorBody.toLowerCase().includes('already belong');
+
 /** Creates share links for DIAL Core resources (catalog entities or conversations) by proxying DIAL Core's resource-sharing API. */
 @Injectable()
 export class ShareService {
@@ -221,7 +235,13 @@ export class ShareService {
       return handleDialFetchError(err, 'accept invitation', this.logger, 0);
     }
 
-    if (acceptResult.error) {
+    if (
+      acceptResult.error &&
+      !(
+        acceptResult.response.status === 400 &&
+        isAlreadyOwnedError(acceptResult.error)
+      )
+    ) {
       return mapDialHttpStatus(
         acceptResult.response.status,
         'accept invitation',
@@ -230,7 +250,11 @@ export class ShareService {
       );
     }
 
-    this.logger.debug(`Accepted invitation for invitationId=${invitationId}`);
+    this.logger.debug(
+      acceptResult.error
+        ? `Invitation invitationId=${invitationId} resolves to a resource the user already owns; treating as accepted`
+        : `Accepted invitation for invitationId=${invitationId}`,
+    );
 
     /*
      * The deployments/toolsets lists are cached per user for 30s
@@ -244,7 +268,68 @@ export class ShareService {
       this.toolsetsService.invalidateListCache(userSub),
     ]);
 
-    return { itemId };
+    const summary = await this.resolveSharedItemSummary(
+      itemId,
+      accessToken,
+      userSub,
+    );
+
+    return { itemId, ...summary };
+  }
+
+  /**
+   * Resolves the just-accepted item's list-item summary by id, so the
+   * frontend can show it immediately instead of depending on a subsequent
+   * bulk deployments/toolsets list refresh reflecting the grant — DIAL Core
+   * does not guarantee that a `listDeployments`/`getSharedResources` call
+   * immediately after an accept already includes the newly shared resource.
+   *
+   * Best-effort: any failure here (resolution error, or DIAL Core genuinely
+   * has no match yet) resolves to an empty object rather than throwing — the
+   * invitation was already successfully accepted upstream, so a summary
+   * lookup failure must not fail the whole `acceptInvitation` call.
+   */
+  private async resolveSharedItemSummary(
+    itemId: string,
+    accessToken: string,
+    userSub: string,
+  ): Promise<
+    Pick<AcceptInvitationResponseDto, 'sharedDeployment' | 'sharedToolset'>
+  > {
+    try {
+      if (itemId.startsWith('toolsets/')) {
+        const sharedToolset = await this.toolsetsService.resolveToolsetItem(
+          userSub,
+          accessToken,
+          itemId,
+        );
+        return sharedToolset ? { sharedToolset } : {};
+      }
+
+      const sharedDeployment =
+        await this.deploymentsService.resolveDeploymentItem(
+          itemId,
+          accessToken,
+        );
+      if (sharedDeployment) return { sharedDeployment };
+
+      if (!itemId.startsWith('applications/')) {
+        const sharedToolset = await this.toolsetsService.resolveToolsetItem(
+          userSub,
+          accessToken,
+          itemId,
+        );
+        if (sharedToolset) return { sharedToolset };
+      }
+
+      return {};
+    } catch (err) {
+      this.logger.warn(
+        `Failed to resolve shared item summary for itemId=${itemId}`,
+        err,
+      );
+      return {};
+    }
   }
 
   /**

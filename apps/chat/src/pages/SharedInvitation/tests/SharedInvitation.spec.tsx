@@ -36,6 +36,7 @@ describe('SharedInvitationPage', () => {
   const showNotification = vi.fn();
   const refetchDeployments = vi.fn();
   const refetchToolsets = vi.fn();
+  const mergeSharedItem = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,6 +60,7 @@ describe('SharedInvitationPage', () => {
       toolsets: [],
       refetchToolsets,
       refetchDeployments,
+      mergeSharedItem,
     });
   });
 
@@ -123,5 +125,65 @@ describe('SharedInvitationPage', () => {
     render(<SharedInvitationPage />);
 
     expect(screen.getByRole('status')).toBeTruthy();
+  });
+
+  it('merges the resolved sharedDeployment before refetching and navigating', async () => {
+    const sharedDeployment = {
+      id: 'gpt-4o',
+      displayName: 'GPT-4o',
+      type: 'model' as const,
+    };
+    vi.mocked(acceptInvitation).mockResolvedValue({
+      itemId: 'gpt-4o',
+      sharedDeployment,
+    });
+
+    render(<SharedInvitationPage />);
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith(
+        `${ROUTES.Catalog}?itemId=gpt-4o`,
+        { replace: true },
+      ),
+    );
+    expect(mergeSharedItem).toHaveBeenCalledWith(sharedDeployment);
+    expect(refetchDeployments).toHaveBeenCalled();
+  });
+
+  it('merges the resolved sharedToolset before refetching and navigating', async () => {
+    const sharedToolset = {
+      id: 'toolsets/b/search__0.0.1',
+      toolset: 'toolsets/b/search__0.0.1',
+      displayName: 'Search',
+    };
+    vi.mocked(acceptInvitation).mockResolvedValue({
+      itemId: 'toolsets/b/search__0.0.1',
+      sharedToolset,
+    });
+
+    render(<SharedInvitationPage />);
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith(
+        `${ROUTES.Catalog}?itemId=${encodeURIComponent('toolsets/b/search__0.0.1')}`,
+        { replace: true },
+      ),
+    );
+    expect(mergeSharedItem).toHaveBeenCalledWith(sharedToolset);
+  });
+
+  it('does not call mergeSharedItem when the backend could not resolve the item', async () => {
+    vi.mocked(acceptInvitation).mockResolvedValue({ itemId: 'gpt-4o' });
+
+    render(<SharedInvitationPage />);
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith(
+        `${ROUTES.Catalog}?itemId=gpt-4o`,
+        { replace: true },
+      ),
+    );
+    expect(mergeSharedItem).not.toHaveBeenCalled();
+    expect(refetchDeployments).toHaveBeenCalled();
   });
 });

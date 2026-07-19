@@ -62,6 +62,7 @@ const postOAuthResult = (flowId: string, message: Record<string, unknown>) => {
 };
 
 const mockNavigate = vi.fn();
+const mockSetSearchParams = vi.fn();
 let mockSearchParams = new URLSearchParams();
 
 const capturedPublishProps: {
@@ -78,7 +79,7 @@ const capturedPublishProps: {
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
-  useSearchParams: () => [mockSearchParams],
+  useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }));
 
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
@@ -378,6 +379,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentLimits).mockResolvedValue({});
     vi.mocked(useNotification).mockReturnValue({
@@ -707,6 +709,26 @@ describe('CatalogView', () => {
     );
   });
 
+  it('clears the itemId search param once it has been read, so it acts as a one-shot signal', () => {
+    mockSearchParams = new URLSearchParams({ itemId: 'gpt-4o' });
+
+    render(<CatalogView />);
+
+    expect(mockSetSearchParams).toHaveBeenCalledOnce();
+    const [updater, options] = mockSetSearchParams.mock.calls[0];
+    expect(options).toEqual({ replace: true });
+    const result = updater(mockSearchParams);
+    expect(result.has('itemId')).toBe(false);
+  });
+
+  it('does not touch the URL when there is no itemId search param', () => {
+    mockSearchParams = new URLSearchParams();
+
+    render(<CatalogView />);
+
+    expect(mockSetSearchParams).not.toHaveBeenCalled();
+  });
+
   it('adds toolsets from deployments context to catalog items', () => {
     vi.mocked(useDeployments).mockReturnValue({
       items: [
@@ -732,6 +754,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -761,6 +784,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(useFavoriteApplications).mockReturnValue({
       favoriteIds: new Set(),
@@ -803,6 +827,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -838,6 +863,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -870,6 +896,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -899,6 +926,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -923,6 +951,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'gpt-4o',
@@ -1034,6 +1063,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'my-app',
@@ -1093,6 +1123,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'search-tool',
@@ -1167,6 +1198,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('502'));
 
@@ -1203,6 +1235,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
 
@@ -1245,6 +1278,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
 
@@ -1286,6 +1320,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(logoutToolset).mockResolvedValue({ success: true });
 
@@ -1330,6 +1365,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockRejectedValue(new Error('network error'));
 
@@ -1374,6 +1410,7 @@ describe('CatalogView', () => {
         toolsets: getToolsets(),
         refetchToolsets,
         refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
       }));
       return render(<CatalogView />);
     };
@@ -1565,6 +1602,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockResolvedValue(undefined);
 
@@ -1609,6 +1647,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments,
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteApplication).mockResolvedValue(undefined);
 
@@ -1656,6 +1695,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockRejectedValue(new Error('network error'));
 
