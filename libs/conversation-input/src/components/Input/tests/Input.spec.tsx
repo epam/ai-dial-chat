@@ -1,5 +1,4 @@
 import {
-  AttachmentErrorReason,
   AttachmentType,
   RequestStatus,
   type Attachment,
