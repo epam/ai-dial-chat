@@ -9,7 +9,6 @@ import {
   useNotification,
   type NotificationItem,
 } from '../../context/NotificationContext';
-import styles from './NotificationContainer.module.scss';
 
 const DISMISS_DELAY_MS = 5000;
 
@@ -19,11 +18,11 @@ const DISMISS_DELAY_MS = 5000;
  * CSS module class that overrides them via a scoped selector instead.
  */
 const VARIANT_CLASS_NAME: Record<NotificationVariant, string> = {
-  [NotificationVariant.Error]: styles.error,
-  [NotificationVariant.Warning]: styles.warning,
-  [NotificationVariant.Info]: styles.info,
-  [NotificationVariant.Success]: styles.success,
-  [NotificationVariant.Loading]: styles.loading,
+  [NotificationVariant.Error]: 'dial-error-notification',
+  [NotificationVariant.Warning]: 'dial-warning-notification',
+  [NotificationVariant.Info]: 'dial-info-notification',
+  [NotificationVariant.Success]: 'dial-success-notification',
+  [NotificationVariant.Loading]: 'dial-loading-notification',
 };
 
 interface NotificationEntryProps {
@@ -40,7 +39,11 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
 
     return (
       <div
-        className={mergeClasses(styles.entry, VARIANT_CLASS_NAME[item.variant])}
+        className={mergeClasses(
+          'max-w-[600px]',
+          'dial-notification',
+          VARIANT_CLASS_NAME[item.variant],
+        )}
       >
         <DialNotification
           variant={item.variant}

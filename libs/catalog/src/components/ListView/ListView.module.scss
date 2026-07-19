@@ -1,48 +1,20 @@
 .listContainer {
-  /*
-   * Same border/radius family as the code block and the other two table
-   * uses (rounded-xl border, set in ListView.tsx). The border lives here,
-   * on the outer div, which is never clipped — so it gets one clean
-   * border-radius curve instead of fighting a `clip-path` on the same edge
-   * (that combination visibly washed the border out through the arc, even
-   * at 2px). The actual content-clipping is delegated to `.gridClip` below.
-   */
-  background: var(--cm-code-block-bg, var(--bg-layer-3, #1d2439));
+  background: var(--cat-list-bg, var(--bg-layer-3, #fcfcfc));
   border-color: var(
     --cm-markdown-border,
-    var(--cm-code-block-border, var(--stroke-secondary, #d1dbea))
+    var(--cat-list-border, var(--stroke-secondary, #d1dbea))
   );
 }
 
 .gridClip {
-  /*
-   * `clip-path` (not `overflow: hidden`) is what clips the header/row
-   * rectangles to the curve — `overflow: hidden` here would make this div
-   * the nearest ancestor with restricted overflow, but it isn't the element
-   * that actually scrolls (the outer section is, per the comment below), so
-   * the sticky header stops sticking. `clip-path` only affects painting, not
-   * scroll-container resolution, so it clips the corners without that side
-   * effect. This div has no border of its own, so there's nothing for the
-   * clip to wash out.
-   */
   clip-path: inset(0 round 0.75rem);
 
-  // ag-grid's internal wrappers carry overflow:auto, which makes them the sticky
-  // scroll-context instead of the outer section. Clear them so the section becomes
-  // the containing scroll context for position:sticky on .ag-header.
-  // Horizontal overflow falls through to the section (overflow:auto on both axes).
   :global(.ag-theme-balham-dark),
   :global(.ag-root-wrapper),
   :global(.ag-root) {
     overflow: visible !important;
   }
 
-  /*
-   * ag-grid's own theme draws its own border + radius on this wrapper
-   * (`wrapperBorder`/`wrapperBorderRadius` params), nested inside the outer
-   * border/radius above with the container's padding as a gap — reads as a
-   * duplicate, mismatched-radius border. This is the one true border now.
-   */
   :global(.ag-root-wrapper) {
     border: none !important;
     border-radius: 0 !important;
@@ -52,28 +24,11 @@
     position: sticky;
     top: var(--list-header-sticky-top, 0px);
     z-index: 5;
-    /*
-     * The container's `clip-path` doesn't reliably clip this element at the
-     * exact top edge — `position: sticky` + `z-index` promotes it to its own
-     * compositing layer, which can paint a hairline past the ancestor's
-     * curve right where the two coincide. Rounding the header's own top
-     * corners directly avoids depending on the ancestor clip for that seam.
-     */
     border-top-left-radius: 0.75rem;
     border-top-right-radius: 0.75rem;
-    /*
-     * ag-grid's own theme reads `chromeBackgroundColor` (--bg-layer-1) for the
-     * header, a shade darker than the row backgrounds (--bg-layer-2/3) —
-     * reusing the markdown/code-block header token here instead keeps the
-     * entity table's header on the same surface as the other two table uses.
-     */
-    background: var(--cm-code-block-header-bg, var(--bg-layer-3, #1d2439));
-    /*
-     * ag-grid's own header-bottom border color (--bg-layer-4) is a shade
-     * darker than the row dividers below it — swapped to the same
-     * stroke-tertiary token MarkdownTable uses for its row dividers, so the
-     * header-to-body seam reads the same subtle way as every other divider.
-     */
+
+    background: var(--cat-list-header-bg, var(--bg-layer-3, #fcfcfc));
+
     border-bottom-color: var(
       --cm-table-row-divider,
       var(--stroke-tertiary, #e0e6f0)
@@ -87,12 +42,6 @@
     ) !important;
   }
 
-  /*
-   * ag-grid's own cell padding (--ag-cell-horizontal-padding, ~7-8px) reads
-   * as flush against this container's rounded outer border — only the
-   * outermost edge of the first/last column is widened here so the
-   * between-column spacing (Type/Folder/Tags) is untouched.
-   */
   :global(.ag-header-row) :global(.ag-header-cell):first-child,
   :global(.ag-row) :global(.ag-cell):first-child {
     padding-inline-start: 1rem;
@@ -103,18 +52,6 @@
     padding-inline-end: 1rem;
   }
 
-  /*
-   * Zebra striping is driven entirely by this override, not ag-grid's own
-   * `alternateOddRowColors` — that prop paints `.ag-row-odd` with its own
-   * built-in grey via an internal CSS var, which stacked with this rule
-   * turned every row grey (two close shades, no plain row left). Left off,
-   * `.ag-row-odd` stays the plain container background (white) and only
-   * `.ag-row-even` gets --bg-layer-5, the same cool-toned surface already
-   * hardcoded elsewhere in this lib (Catalog.module.scss's `--cat-bg`) and
-   * the one MarkdownTable uses for zebra rows. Targeting `-even` (not
-   * `-odd`) also makes row 0 — immediately below the header — the dark
-   * stripe, instead of reading flush with the header.
-   */
   :global(.ag-row-even) {
     background: var(--bg-layer-5, #f5f7fa);
   }
@@ -131,12 +68,6 @@
   color: var(--cat-card-star-filled, var(--text-warning-icon, #eec840));
 }
 
-/*
- * Unfilled star: low opacity by default, rises on row hover, full opacity on
- * its own hover/focus. Scoped to the list view via this class (passed from
- * StarCellRenderer only when not starred) rather than baked into the shared
- * StarToggleButton, since cards want the star fully visible at rest.
- */
 .starToggleOff {
   opacity: 0.35;
 }

@@ -88,3 +88,39 @@ div[role='menu']:has(> [role='none']) {
     margin: 4px 0 !important;
   }
 }
+
+// new notification toast styles
+.dial-notification {
+  div[role='alert'] {
+    border-radius: 0.75rem; // 12px, matching chips/tiles
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    border-color: var(--stroke-secondary, #d1dbea);
+  }
+}
+
+.dial-info-notification div[role='alert'] {
+  background: var(--bg-info, #d6e2f9);
+  color: var(--text-info, #124ace);
+}
+
+.dial-success-notification div[role='alert'] {
+  background: var(--bg-success, #d9f0f1);
+  color: var(--text-success, #007274);
+}
+
+.dial-warning-notification div[role='alert'] {
+  background: var(--bg-warning, #faf0cf);
+  color: var(--text-warning-icon, #eec840);
+}
+
+.dial-error-notification div[role='alert'] {
+  background: var(--bg-error, #f3d6d8);
+  color: var(--text-error, #ae2f2f);
+}
+
+.dial-loading-notification div[role='alert'] {
+  background: var(--bg-neutral, #fcfcfc);
+  color: var(--text-primary, #161b2d);
+}

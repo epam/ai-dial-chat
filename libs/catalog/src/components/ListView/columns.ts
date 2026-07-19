@@ -7,14 +7,7 @@ import { NameCellRenderer } from './Renders/NameCellRenderer';
 import { StarCellRenderer } from './Renders/StarCellRenderer';
 import { TagsCellRenderer } from './Renders/TagsCellRenderer';
 
-/**
- * Column definitions for the catalog ag-grid list view. A stable
- * module-level constant so ag-grid never sees a new array/closures on each
- * render. Only Name flexes — every other column is a fixed pixel width so
- * the row stays a predictable, dense height regardless of content (per the
- * list view's density requirement: no column should be able to force
- * wrapping).
- */
+/** Column definitions for the catalog ag-grid list view. A stable module-level constant so ag-grid never sees a new array/closures on each render. */
 export const CATALOG_COLUMNS: ColDef<CatalogItem>[] = [
   {
     headerName: 'Name',
