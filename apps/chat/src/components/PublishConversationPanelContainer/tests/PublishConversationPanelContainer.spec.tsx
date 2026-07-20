@@ -142,7 +142,9 @@ describe('PublishConversationPanelContainer', () => {
     });
 
     await renderContainer();
-    await userEvent.click(screen.getByRole('button', { name: 'Create folder' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create folder' }),
+    );
 
     expect(onCreatePublishFolder).toHaveBeenCalledWith(['Shared'], 'New');
   });
