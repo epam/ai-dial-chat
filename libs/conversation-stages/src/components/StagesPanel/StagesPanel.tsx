@@ -6,12 +6,12 @@ import {
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
+import { GroupedStageRow } from '../../models/stage-grouping';
 import type {
   StagesPanelLabels,
   StagesPanelProps,
   StageTypography,
 } from '../../models/stages-props';
-import type { GroupedStageRow } from '../../utils/stage-grouping';
 import { groupStagesByName } from '../../utils/stage-grouping';
 import {
   cleanStageName,

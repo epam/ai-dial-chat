@@ -1,27 +1,6 @@
 import type { Stage } from '@epam/ai-dial-chat-shared';
+import { StageRow } from '../models/stage-grouping';
 import { cleanStageName } from './stage-name';
-
-/** A single ungrouped stage row. */
-interface SingleStageRow {
-  kind: 'single';
-  /** Stable key for list rendering — the stage's own index. */
-  key: number;
-  stage: Stage;
-}
-
-/** A row formed by collapsing consecutive stages that share the same cleaned name into one `×N` row. */
-interface GroupedStageRow {
-  kind: 'group';
-  /** Stable key for list rendering — the first attempt's index. */
-  key: number;
-  /** Shared cleaned display name for the group. */
-  name: string;
-  /** Individual attempts in original order. */
-  attempts: Stage[];
-}
-
-/** A row rendered inside a `StagesPanel` — either one stage or a collapsed `×N` group of identical attempts. */
-type StageRow = SingleStageRow | GroupedStageRow;
 
 /**
  * Collapses consecutive stages that share the same cleaned name into a
