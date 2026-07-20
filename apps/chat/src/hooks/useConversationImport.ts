@@ -13,6 +13,7 @@ import {
 import { useUser } from '../context/auth/UserContext';
 import { useConversations } from '../context/ConversationsContext';
 import { useNotification } from '../context/NotificationContext';
+import type { QueueJob } from '../models/conversation-queue';
 import { UnauthorizedError } from '../server-api/base';
 import { saveConversation } from '../server-api/conversations.api';
 import { uploadFile } from '../server-api/files.api';
@@ -30,7 +31,6 @@ import {
   UnsupportedImportFormatError,
 } from '../utils/import-conversation';
 import { parseDialArchive } from '../utils/zip-import';
-import type { QueueJob } from '../models/conversation-queue';
 
 /** Maximum number of concurrent attachment upload requests during an archive import. */
 const ATTACHMENT_CONCURRENCY = 5;
