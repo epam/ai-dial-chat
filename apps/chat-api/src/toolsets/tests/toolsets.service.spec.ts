@@ -839,6 +839,58 @@ describe('ToolsetsService', () => {
       ).rejects.toThrow(ServiceUnavailableException);
     });
   });
+
+  describe('resolveToolsetItem', () => {
+    it('resolves the caller bucket then delegates to getToolset', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        okResponse({ bucket: 'test-bucket' }),
+      );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        okResponse(rawMockToolset),
+      );
+
+      const result = await service.resolveToolsetItem(
+        'user1',
+        'token-abc',
+        'my-toolset',
+      );
+
+      expect(result).toEqual(mockEnrichedToolset);
+    });
+
+    it('returns null when getToolset 404s (no such toolset / no access)', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        okResponse({ bucket: 'test-bucket' }),
+      );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        errResponse(404),
+      );
+
+      const result = await service.resolveToolsetItem(
+        'user1',
+        'token-abc',
+        'unknown-toolset',
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it('throws on a genuine upstream 5xx rather than returning null', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        okResponse({ bucket: 'test-bucket' }),
+      );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        errResponse(502),
+      );
+
+      await expect(
+        service.resolveToolsetItem('user1', 'token-abc', 'my-toolset'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+  });
 });
 
 function makeWriteService() {

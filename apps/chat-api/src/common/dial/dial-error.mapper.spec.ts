@@ -114,12 +114,12 @@ describe('mapDialHttpStatus', () => {
     }
   });
 
-  it('logs the raw error body at debug level when provided', () => {
-    const logger = { warn: vi.fn(), debug: vi.fn() } as unknown as Logger;
+  it('logs the raw error body at warning level when provided', () => {
+    const logger = { warn: vi.fn() } as unknown as Logger;
     expect(() =>
       mapDialHttpStatus(400, 'ctx', logger, { code: 'bad' }),
     ).toThrow(BadRequestException);
-    expect(logger.debug).toHaveBeenCalledWith(
+    expect(logger.warn).toHaveBeenCalledWith(
       'DIAL Core error body for ctx: {"code":"bad"}',
     );
   });
