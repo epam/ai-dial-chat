@@ -2,7 +2,6 @@ import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
   formatQuotedNameList,
-  getFolderBreadcrumb,
   parseImportEnvelope,
   rebaseConversationId,
   rewriteAttachmentUrls,
@@ -198,33 +197,6 @@ describe('rebaseConversationId', () => {
     expect(subPath).toMatch(
       /^chathub-claude4__requirements\.txt__[0-9a-f-]{36}$/,
     );
-  });
-});
-
-describe('getFolderBreadcrumb', () => {
-  it('returns undefined for a root conversation', () => {
-    const conversation = makeConversation({ folderId: 'bucket-a' });
-    expect(getFolderBreadcrumb(conversation)).toBeUndefined();
-  });
-
-  it('joins nested folder segments with " / "', () => {
-    const conversation = makeConversation({
-      folderId: 'bucket-a/Folder 1/Folder 2',
-    });
-    expect(getFolderBreadcrumb(conversation)).toBe('Folder 1 / Folder 2');
-  });
-
-  it('returns a single segment unchanged', () => {
-    const conversation = makeConversation({ folderId: 'bucket-a/Folder 1' });
-    expect(getFolderBreadcrumb(conversation)).toBe('Folder 1');
-  });
-
-  it('returns undefined for an old-chat root conversation with the raw "conversations/" prefix', () => {
-    const conversation = makeConversation({
-      folderId:
-        'conversations/59CAnBu6LZrtfagTrHaP2rJhuMLT3rYQS7UkWevuqKXu1dB4gL6cYw6Msobg7Kqs9j',
-    });
-    expect(getFolderBreadcrumb(conversation)).toBeUndefined();
   });
 });
 

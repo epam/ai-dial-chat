@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { normalizeConversationId } from '../constants/routes';
 import { ConversationExportI18nKeys } from '../constants/translation-keys';
 import { useNotification } from '../context/NotificationContext';
-import type { ExportJob } from '../models/conversation-export';
+import type { QueueJob } from '../models/conversation-queue';
 import { UnauthorizedError } from '../server-api/base';
 import {
   getConversation,
@@ -87,7 +87,7 @@ const isOwnConversation = (
 
 interface UseConversationExportResult {
   /** Export jobs, most recently added last. Multiple jobs can be in progress concurrently. */
-  jobs: ExportJob[];
+  jobs: QueueJob[];
   /** Enqueues a single-conversation export job and starts it immediately. */
   exportSingle: (
     conversationId: string,
@@ -114,12 +114,12 @@ interface UseConversationExportResult {
 export const useConversationExport = (): UseConversationExportResult => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
-  const [jobs, setJobs] = useState<ExportJob[]>([]);
+  const [jobs, setJobs] = useState<QueueJob[]>([]);
 
   const controllersRef = useRef(new Map<string, AbortController>());
   const retryFnsRef = useRef(new Map<string, () => Promise<void>>());
 
-  const updateJob = useCallback((jobId: string, patch: Partial<ExportJob>) => {
+  const updateJob = useCallback((jobId: string, patch: Partial<QueueJob>) => {
     setJobs((prev) =>
       prev.map((job) => (job.id === jobId ? { ...job, ...patch } : job)),
     );

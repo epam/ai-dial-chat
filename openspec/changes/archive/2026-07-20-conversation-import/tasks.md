@@ -35,9 +35,9 @@
 
 - [x] 6.1 `npm exec nx test chat`, `npm exec nx lint chat`, `npm exec nx build chat` all green.
 - [x] 6.2 RTL + a11y spot-check of the Import menu item and the queue panel.
-- [ ] 6.3 Manual E2E — new chat round-trip: export a conversation with attachments (`.dial`) → import → new conversation with unique name, attachments under `uploads/<today>/`, renders on open; repeat for export-all `.json`.
-- [ ] 6.4 Manual E2E — old chat: import a real v5 `.json` and a `.dial`/`.zip` from `development`; observe rendering and note any content gaps for the deferred `normalizeImportedConversation` follow-up.
-- [ ] 6.5 Confirm queue shows in-progress → success, cancel aborts, retry works, and a bad file shows the unsupported-format toast.
+- [x] 6.3 Manual E2E — new chat round-trip: export a conversation with attachments (`.dial`) → import → new conversation with unique name, attachments under `uploads/<today>/`, renders on open; repeat for export-all `.json`.
+- [x] 6.4 Manual E2E — old chat: import a real v5 `.json` and a `.dial`/`.zip` from `development`; observe rendering and note any content gaps for the deferred `normalizeImportedConversation` follow-up.
+- [x] 6.5 Confirm queue shows in-progress → success, cancel aborts, retry works, and a bad file shows the unsupported-format toast.
 
 ## 7. Export version bump & legacy-sync signal (tried and reverted — see section 9)
 

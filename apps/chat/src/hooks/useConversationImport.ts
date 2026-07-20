@@ -13,7 +13,6 @@ import {
 import { useUser } from '../context/auth/UserContext';
 import { useConversations } from '../context/ConversationsContext';
 import { useNotification } from '../context/NotificationContext';
-import type { ImportJob } from '../models/conversation-import';
 import { UnauthorizedError } from '../server-api/base';
 import { saveConversation } from '../server-api/conversations.api';
 import { uploadFile } from '../server-api/files.api';
@@ -31,6 +30,7 @@ import {
   UnsupportedImportFormatError,
 } from '../utils/import-conversation';
 import { parseDialArchive } from '../utils/zip-import';
+import type { QueueJob } from '../models/conversation-queue';
 
 /** Maximum number of concurrent attachment upload requests during an archive import. */
 const ATTACHMENT_CONCURRENCY = 5;
@@ -177,7 +177,7 @@ const uploadConversationAttachments = async (
 
 interface UseConversationImportResult {
   /** Import jobs, most recently added last. Multiple jobs can be in progress concurrently. */
-  jobs: ImportJob[];
+  jobs: QueueJob[];
   /** Parses the given file and starts importing it as a new job. */
   importConversations: (file: File) => Promise<void>;
   /** Removes a job from the queue. If still in progress, aborts its underlying requests. */
@@ -202,12 +202,12 @@ export const useConversationImport = (): UseConversationImportResult => {
   const { showNotification } = useNotification();
   const { user } = useUser();
   const { refreshConversations } = useConversations();
-  const [jobs, setJobs] = useState<ImportJob[]>([]);
+  const [jobs, setJobs] = useState<QueueJob[]>([]);
 
   const controllersRef = useRef(new Map<string, AbortController>());
   const retryFnsRef = useRef(new Map<string, () => Promise<void>>());
 
-  const updateJob = useCallback((jobId: string, patch: Partial<ImportJob>) => {
+  const updateJob = useCallback((jobId: string, patch: Partial<QueueJob>) => {
     setJobs((prev) =>
       prev.map((job) => (job.id === jobId ? { ...job, ...patch } : job)),
     );

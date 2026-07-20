@@ -23,12 +23,12 @@ import {
   ButtonsI18nKeys,
   ConversationExportI18nKeys,
 } from '../../constants/translation-keys';
-import type { ExportJob } from '../../models/conversation-export';
+import type { QueueJob } from '../../models/conversation-queue';
 import { ExportJobStatus } from '../../types/conversation-export';
 
 interface Props {
   title: string;
-  jobs: ExportJob[];
+  jobs: QueueJob[];
   onClose: () => void;
   onDismiss: (jobId: string) => void;
   onRetry: (jobId: string) => void;
@@ -48,7 +48,7 @@ const getCloseConfirmDescriptionKey = (
 };
 
 interface JobRowProps {
-  job: ExportJob;
+  job: QueueJob;
   onDismiss: (jobId: string) => void;
   onRetry: (jobId: string) => void;
 }

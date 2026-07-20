@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ExportJob } from '../../../models/conversation-export';
+import type { QueueJob } from '../../../models/conversation-queue';
 import { ExportJobStatus } from '../../../types/conversation-export';
 import ImportExportQueue from '../ImportExportQueue';
 
@@ -82,7 +82,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconChevronUp: () => null,
 }));
 
-const makeJob = (overrides: Partial<ExportJob> = {}): ExportJob => ({
+const makeJob = (overrides: Partial<QueueJob> = {}): QueueJob => ({
   id: 'job-1',
   label: 'My Chat',
   status: ExportJobStatus.InProgress,
@@ -95,7 +95,7 @@ describe('ImportExportQueue', () => {
   const user = userEvent.setup({ delay: null });
 
   const renderQueue = (
-    jobs: ExportJob[],
+    jobs: QueueJob[],
     props: Partial<{
       onDismiss: (id: string) => void;
       onRetry: (id: string) => void;
