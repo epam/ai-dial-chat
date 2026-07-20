@@ -1,4 +1,3 @@
-import type { Stage } from '@epam/ai-dial-chat-shared';
 import { StageStatus } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialSpinner } from '@epam/ai-dial-ui-kit';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
@@ -8,7 +7,7 @@ import styles from '../StagesPanel/StagesPanel.module.scss';
 /** Props for {@link StageIcon}. */
 export interface StageIconProps {
   /** The stage status value; `null` means the stage is pending or running. */
-  status: Stage['status'];
+  status: StageStatus | null;
   /** Whether this stage is the currently executing (live) stage. */
   isLive: boolean;
   /** Accessible label announced for the running spinner. Defaults to `'Running'`. */

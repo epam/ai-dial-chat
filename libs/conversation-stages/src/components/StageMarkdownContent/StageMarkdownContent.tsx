@@ -8,18 +8,8 @@ import { StageCodeBlock } from './StageCodeBlock';
 interface Props {
   /** Raw markdown string to render. */
   content: string;
-  /**
-   * Typography configuration — uses `contentClassName` (smaller than the
-   * row name) for every content text element (`p`, `ul`, `ol`,
-   * `blockquote`, `a`, table cells), `strongClassName` (defaulting to
-   * `contentClassName` itself) for bold markdown so `**emphasis**` in
-   * tool/stage output doesn't render heavier than the quiet, secondary tone
-   * of the rest of the content, and `headingClassName` (defaulting to the
-   * DS's smallest heading style) applied uniformly to every heading level
-   * so headings stay small inside a stage instead of scaling up to `h1`
-   * size.
-   */
-  typography: StageTypography;
+  /** Typography configuration applied to text elements (`p`, `ul`, `ol`). */
+  typography?: StageTypography;
   /** Accessible label for the copy button inside code blocks. Defaults to `'Copy'`. */
   copyAriaLabel?: string;
 }
@@ -27,23 +17,10 @@ interface Props {
 /** Renders stage content as formatted markdown, styled via CSS custom properties. */
 export const StageMarkdownContent: FC<Props> = memo(
   ({ content, typography, copyAriaLabel = 'Copy' }) => {
-    /*
-     * Block-level markdown elements (p, ul, ol, blockquote, headings) get no
-     * vertical margin from the shared renderer's defaults — only `li` does.
-     * Without `mb-1.5` here, consecutive short blocks (e.g. a blockquote
-     * label immediately followed by its value paragraph) render with zero
-     * gap and read as one dense, stacked wall of text.
-     */
     const blockSpacing = 'mb-1.5 last:mb-0';
-    /*
-     * Paragraphs always keep their trailing space, even as the last block —
-     * unlike `blockSpacing`, there's no `last:mb-0` here, so a step whose
-     * content is just a single paragraph still gets padding below it
-     * instead of sitting flush against the container's own edge.
-     */
     const paragraphSpacing = 'mb-1.5';
     const heading = mergeClasses(
-      typography.headingClassName ?? 'dial-small-semi-text',
+      typography?.headingClassName ?? 'dial-small-semi-text',
       styles.stageContent,
       blockSpacing,
     );
@@ -59,33 +36,38 @@ export const StageMarkdownContent: FC<Props> = memo(
           h5: heading,
           h6: heading,
           p: mergeClasses(
-            typography.contentClassName,
+            typography?.contentClassName ?? 'dial-tiny-text',
             styles.stageContent,
             paragraphSpacing,
           ),
           ul: mergeClasses(
-            typography.contentClassName,
+            typography?.contentClassName ?? 'dial-tiny-text',
             styles.stageContent,
             blockSpacing,
           ),
           ol: mergeClasses(
-            typography.contentClassName,
+            typography?.contentClassName ?? 'dial-tiny-text',
             styles.stageContent,
             blockSpacing,
           ),
           strong: mergeClasses(
-            typography.strongClassName ?? typography.contentClassName,
+            typography?.strongClassName ??
+              typography?.contentClassName ??
+              'dial-tiny-text',
             styles.stageContent,
           ),
           codeInline: styles.codeInline,
           blockquote: mergeClasses(
-            typography.contentClassName,
+            typography?.contentClassName ?? 'dial-tiny-text',
             styles.blockquote,
             blockSpacing,
           ),
-          link: mergeClasses(typography.contentClassName, styles.stageContent),
+          link: mergeClasses(
+            typography?.contentClassName ?? 'dial-tiny-text',
+            styles.stageContent,
+          ),
           tableCell: mergeClasses(
-            typography.contentClassName,
+            typography?.contentClassName ?? 'dial-tiny-text',
             styles.tableCell,
           ),
         }}
@@ -102,14 +84,8 @@ export const StageMarkdownContent: FC<Props> = memo(
               return (
                 <code
                   className={mergeClasses(
-                    /*
-                     * inline-block: a plain inline element doesn't reserve
-                     * vertical space for its own padding/border in the line
-                     * box, so the top/bottom border renders but gets
-                     * visually clipped by the surrounding line content.
-                     */
                     'inline-block px-1.5 py-1',
-                    typography.codeClassName ?? 'rounded-md font-mono text-sm',
+                    typography?.codeClassName ?? 'rounded-md font-mono text-sm',
                     styles.codeInline,
                   )}
                 >

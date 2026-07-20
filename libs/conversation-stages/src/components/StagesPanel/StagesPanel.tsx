@@ -7,6 +7,7 @@ import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type {
+  StagesPanelLabels,
   StagesPanelProps,
   StageTypography,
 } from '../../models/stages-props';
@@ -23,13 +24,14 @@ import { StageItem } from '../StageItem/StageItem';
 import styles from './StagesPanel.module.scss';
 
 interface StageGroupRowProps {
+  /** The collapsed `×N` group to render. */
   row: GroupedStageRow;
+  /** Whether this stage group contains the currently executing (live) stage. */
   isLive: boolean;
-  typography: StageTypography;
-  copyAriaLabel?: string;
-  runningAriaLabel?: string;
-  failedAriaLabel?: string;
-  attemptLabel: (attemptNumber: number) => string;
+  /** Typography configuration applied to stage text elements. */
+  typography?: StageTypography;
+  /** User-visible strings. */
+  labels?: StagesPanelLabels;
 }
 
 /**
@@ -41,11 +43,13 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   row,
   isLive,
   typography,
-  copyAriaLabel,
-  runningAriaLabel,
-  failedAriaLabel,
-  attemptLabel,
+  labels,
 }) => {
+  const {
+    runningAriaLabel,
+    failedAriaLabel,
+    attemptLabel = (n: number) => `Attempt ${n}`,
+  } = labels ?? {};
   const [isOpen, setIsOpen] = useState(false);
 
   const hasFailed = row.attempts.some((a) => a.status === StageStatus.Failed);
@@ -78,7 +82,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
         <span
           className={mergeClasses(
             'min-w-0 max-w-[22rem] truncate',
-            typography.fontClassName,
+            typography?.fontClassName ?? 'dial-small-text',
             styles.stageName,
             hasFailed && styles.stageNameFailed,
           )}
@@ -86,14 +90,19 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
           <DialEllipsisTooltip text={row.name} />
         </span>
         <span
-          className={mergeClasses('dial-tiny-text flex-none', styles.count)}
+          className={mergeClasses(
+            'flex-none',
+            typography?.countFontClassName ?? 'dial-tiny-text',
+            styles.count,
+          )}
         >
           ×{row.attempts.length}
         </span>
         {totalDurationLabel && (
           <span
             className={mergeClasses(
-              'dial-tiny-text flex-none',
+              'flex-none',
+              typography?.countFontClassName ?? 'dial-tiny-text',
               styles.duration,
             )}
           >
@@ -131,9 +140,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
                       row.attempts[row.attempts.length - 1].index
                   }
                   typography={typography}
-                  copyAriaLabel={copyAriaLabel}
-                  runningAriaLabel={runningAriaLabel}
-                  failedAriaLabel={failedAriaLabel}
+                  labels={labels}
                 />
               </li>
             ))}
@@ -156,19 +163,8 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   styles: panelStyles,
   labels,
 }) => {
-  const {
-    colors,
-    typography = {
-      fontClassName: 'dial-small-text',
-      contentClassName: 'dial-tiny-text',
-    },
-  } = panelStyles ?? {};
-  const {
-    copyAriaLabel,
-    runningAriaLabel,
-    failedAriaLabel,
-    attemptLabel = (n: number) => `Attempt ${n}`,
-  } = labels ?? {};
+  const { colors, typography } = panelStyles ?? {};
+
   const cssVars = buildCssVars({
     '--cs-text': colors?.text,
     '--cs-row-hover': colors?.rowHoverColor,
@@ -179,12 +175,6 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   const liveStage = isStreaming ? findLiveStage(stages) : undefined;
   const rows = groupStagesByName(stages);
 
-  /*
-   * ps-5 (20px) + the row's own px-2 (8px) puts each row icon's left edge at
-   * 28px — the same x as the CollapsedGroup toggle's "Executed" label text
-   * (its 8px button padding + a 16px check icon + a 4px gap), so a row's
-   * icon lines up under the summary's label, not its icon.
-   */
   return (
     <div
       style={cssVars}
@@ -198,9 +188,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
                 stage={row.stage}
                 isLive={liveStage?.index === row.stage.index}
                 typography={typography}
-                copyAriaLabel={copyAriaLabel}
-                runningAriaLabel={runningAriaLabel}
-                failedAriaLabel={failedAriaLabel}
+                labels={labels}
               />
             </li>
           ) : (
@@ -212,10 +200,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
                   row.attempts[row.attempts.length - 1].index
                 }
                 typography={typography}
-                copyAriaLabel={copyAriaLabel}
-                runningAriaLabel={runningAriaLabel}
-                failedAriaLabel={failedAriaLabel}
-                attemptLabel={attemptLabel}
+                labels={labels}
               />
             </li>
           ),

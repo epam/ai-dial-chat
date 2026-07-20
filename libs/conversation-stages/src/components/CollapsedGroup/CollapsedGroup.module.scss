@@ -1,11 +1,5 @@
 .toggleButton {
   color: var(--cs-cg-label, var(--text-secondary, #575f73));
-  /*
-   * DialLinkButton's own base class sets `justify-content: center` and this
-   * button stretches to the row's full width (its flex-col parent has no
-   * `items-start`, so the row's cross-axis default is stretch) — without
-   * this override the label centers instead of sitting at the row's start.
-   */
   width: 100%;
   justify-content: flex-start !important;
 
@@ -14,14 +8,6 @@
   }
 }
 
-/*
- * DialLinkButton's own base class sets a strong accent-blue `color` on the
- * button element, which any child span without its own explicit color
- * inherits — silently overriding `.toggleButton` above. Every summary-line
- * span therefore needs its OWN explicit color (an element's own declared
- * color always wins over an inherited one, regardless of the ancestor
- * button's specificity), rather than relying on inheriting from the button.
- */
 .executedLabel {
   color: var(--cs-cg-label, var(--text-secondary, #575f73));
 }

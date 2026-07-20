@@ -61,16 +61,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   }, [isStreaming]);
 
   const { colors } = groupStyles ?? {};
-  /*
-   * The summary line ("Executed N steps") is a group header for the rows it
-   * discloses, so it must never render smaller than them — hence matching
-   * the row name's `dial-small-text` size rather than a smaller status-text
-   * class. This is still a separate concern from the row typography passed
-   * to `StagesPanel` below: if the caller didn't override `typography`, pass
-   * it through as `undefined` rather than substituting this summary-only
-   * default, so `StagesPanel` applies its own row typography instead of
-   * silently inheriting this one.
-   */
+
   const summaryTypography = groupStyles?.typography ?? {
     fontClassName: 'dial-small-text',
   };

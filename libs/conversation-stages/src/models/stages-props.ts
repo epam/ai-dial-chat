@@ -19,6 +19,8 @@ export interface StageTypography {
   codeClassName?: string;
   /** Font family applied to the panel root via CSS custom property. */
   fontFamily?: string;
+  /** CSS utility class applied to count badges (e.g. `×N` collapsed group). Defaults to `'dial-tiny-text'`. */
+  countFontClassName?: string;
 }
 
 /**

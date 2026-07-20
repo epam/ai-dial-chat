@@ -8,7 +8,10 @@ import {
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import type { StageTypography } from '../../models/stages-props';
+import type {
+  StagesPanelLabels,
+  StageTypography,
+} from '../../models/stages-props';
 import { cleanStageName, isIdentifierLike } from '../../utils/stage-name';
 import { StageIcon } from '../StageIcon/StageIcon';
 import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent';
@@ -21,13 +24,9 @@ export interface StageItemProps {
   /** Whether this stage is the currently executing (live) stage. */
   isLive: boolean;
   /** Typography configuration applied to stage text elements. */
-  typography: StageTypography;
-  /** Accessible label for the copy button inside stage content. */
-  copyAriaLabel?: string;
-  /** Accessible label announced for a running stage's spinner. Defaults to `'Running'`. */
-  runningAriaLabel?: string;
-  /** Visually-hidden label announced alongside a failed stage's icon. Defaults to `'Failed'`. */
-  failedAriaLabel?: string;
+  typography?: StageTypography;
+  /** User-visible strings. */
+  labels?: StagesPanelLabels;
   /**
    * Overrides the displayed name without affecting duration extraction —
    * used to relabel an individual attempt (e.g. `'Attempt 2'`) inside a
@@ -47,13 +46,15 @@ export const StageItem: FC<StageItemProps> = ({
   stage,
   isLive,
   typography,
-  copyAriaLabel = 'Copy stage content',
-  runningAriaLabel,
-  failedAriaLabel,
+  labels,
   nameOverride,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const {
+    copyAriaLabel = 'Copy stage content',
+    runningAriaLabel,
+    failedAriaLabel,
+  } = labels ?? {};
   const { name: cleanedName, durationLabel } = cleanStageName(stage.name);
   const displayName = nameOverride ?? cleanedName;
   const isMono = !nameOverride && isIdentifierLike(cleanedName);
@@ -78,7 +79,7 @@ export const StageItem: FC<StageItemProps> = ({
       <span
         className={mergeClasses(
           'min-w-0 max-w-[22rem] truncate',
-          typography.fontClassName,
+          typography?.fontClassName ?? 'dial-small-text',
           styles.stageName,
           isFailed && styles.stageNameFailed,
           isMono && styles.monoName,
@@ -87,13 +88,23 @@ export const StageItem: FC<StageItemProps> = ({
         <DialEllipsisTooltip text={displayName || stage.status || ''} />
       </span>
       {stage.tag && (
-        <span className={mergeClasses('dial-tiny-text flex-none', styles.tag)}>
+        <span
+          className={mergeClasses(
+            'flex-none',
+            typography?.countFontClassName ?? 'dial-tiny-text',
+            styles.tag,
+          )}
+        >
           {stage.tag}
         </span>
       )}
       {durationLabel && (
         <span
-          className={mergeClasses('dial-tiny-text flex-none', styles.duration)}
+          className={mergeClasses(
+            'flex-none',
+            typography?.countFontClassName ?? 'dial-tiny-text',
+            styles.duration,
+          )}
         >
           {durationLabel}
         </span>
@@ -140,11 +151,6 @@ export const StageItem: FC<StageItemProps> = ({
         )}
       >
         <div className="overflow-hidden">
-          {/*
-           * ps-8 (32px) = this row's own px-2 (8px) + icon width (16px) +
-           * gap-2 (8px) — the same x as this row's own name text, so the
-           * expanded content lines up under the step label, not the icon.
-           */}
           <div className="mt-2 flex flex-col gap-3 py-1 ps-8">
             {stage.content && (
               <div className="max-h-[300px] overflow-y-auto">
