@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { PublishFooterTexts } from '../components/PublishPanel/PublishFooter';
 import type { PublishPanelTexts } from '../components/PublishPanel/PublishPanel';
 import type { CatalogEntityType } from '../types/entity-type';
+import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
@@ -199,4 +200,19 @@ export interface CatalogProps {
   styles?: CatalogStyles;
   /** Text overrides forwarded to the item details panel. */
   detailsTexts?: ItemDetailsTexts;
+  /**
+   * Externally-controlled active sort key. When omitted, `Catalog` manages
+   * its own sort state internally, defaulting to `CatalogSortKey.RecentlyUpdated`.
+   */
+  sortKey?: CatalogSortKey;
+  /** Called when the user changes the sort option; required to control `sortKey`. */
+  onSortChange?: (key: CatalogSortKey) => void;
+  /**
+   * Externally-controlled set of active "From" topic filter values. When
+   * omitted, `Catalog` manages its own filter state internally, defaulting to
+   * an empty set (no topics filtered).
+   */
+  filterTopics?: Set<string>;
+  /** Called when the user applies a new topic filter selection; required to control `filterTopics`. */
+  onFilterTopicsChange?: (topics: Set<string>) => void;
 }
