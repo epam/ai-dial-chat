@@ -34,7 +34,7 @@ export const mapDialHttpStatus = (
 ): never => {
   logger?.warn(`DIAL Core returned ${status} for ${context}`);
   if (errorBody !== undefined) {
-    logger?.debug(
+    logger?.warn(
       `DIAL Core error body for ${context}: ${JSON.stringify(errorBody)}`,
     );
   }
