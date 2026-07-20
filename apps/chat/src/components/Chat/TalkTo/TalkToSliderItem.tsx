@@ -2,10 +2,12 @@ import React from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isMarketplaceEntityPublic } from '@/src/utils/app/application';
 import {
   isPlaybackConversation,
   isReplayAsIsConversation,
 } from '@/src/utils/app/conversation';
+import { isApplicationId, isMyApplication } from '@/src/utils/app/id';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -53,6 +55,14 @@ export const TalkToSliderItem = ({
 
   const isSelected = isNotPseudoModelSelected || isPseudoModelSelected;
 
+  // Custom applications that are not published should not expose the
+  // Edit/Delete/Publish actions from the Talk to form. These actions remain
+  // available from the DIAL Marketplace and My workspace pages.
+  const isNotPublishedCustomApplication =
+    isApplicationId(groupItem.id) &&
+    isMyApplication(groupItem) &&
+    !isMarketplaceEntityPublic(groupItem as DialAIEntityModel);
+
   const isUnavailableModel =
     !modelsMap[groupItem.reference] &&
     !isPseudoModel(groupItem.id) &&
@@ -90,7 +100,14 @@ export const TalkToSliderItem = ({
       key={groupItem.id}
       entity={groupItem as DialAIEntityModel}
       onClick={onSelectModel}
-      overrideDisabledActions={{ unpublish: !isAdmin }}
+      overrideDisabledActions={{
+        unpublish: !isAdmin,
+        ...(isNotPublishedCustomApplication && {
+          edit: true,
+          delete: true,
+          publish: true,
+        }),
+      }}
     />
   );
 };
