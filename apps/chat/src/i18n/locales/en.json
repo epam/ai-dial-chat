@@ -670,7 +670,8 @@
       "popupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again."
     },
     "success": {
-      "login": "Successfully logged in."
+      "login": "Successfully logged in.",
+      "logout": "Successfully logged out."
     }
   }
 }

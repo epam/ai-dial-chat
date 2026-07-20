@@ -55,6 +55,7 @@ interface Props {
   toolsetId: string;
   endpoint: string;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
+  onEnsureSaved: () => Promise<boolean>;
 }
 
 const ORDERED_AUTH_TYPES = [
@@ -88,6 +89,7 @@ const AuthSection: FC<Props> = ({
   toolsetId,
   endpoint,
   onAuthChange,
+  onEnsureSaved,
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
@@ -116,6 +118,9 @@ const AuthSection: FC<Props> = ({
 
   const handleLogIn = async () => {
     if (!canLogIn) return;
+
+    const saved = await onEnsureSaved();
+    if (!saved) return;
 
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
       const initiation = initiateOAuthLogin(auth, toolsetId);
@@ -209,6 +214,10 @@ const AuthSection: FC<Props> = ({
       await logoutToolset(toolsetId, body);
       onAuthChange({ isLoggedIn: false });
       setShowLogoutConfirm(false);
+      showNotification({
+        variant: NotificationVariant.Success,
+        message: t(ToolsetEditorI18nKeys.LogoutSuccess),
+      });
     } catch {
       showNotification({
         variant: NotificationVariant.Error,

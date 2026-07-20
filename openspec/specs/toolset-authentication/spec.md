@@ -44,6 +44,31 @@ and whether a login is triggered on save.
 - **THEN** the configuration can be saved without submitting credentials and without
   triggering a login
 
+### Requirement: Persist unsaved changes before login
+Clicking "Log in" (API Key or OAuth) SHALL first persist any unsaved editor changes — creating
+the toolset if it has no id yet, or updating it if the form has changed since it was last
+persisted — using the same persist logic as advancing past the General step. If the form has
+not changed since it was last persisted, no create/update request SHALL be sent. If persisting
+fails, the system SHALL show an error notification and SHALL NOT proceed to submit credentials
+or open the OAuth authorization popup, so login never runs against a stale endpoint or
+authentication configuration.
+
+#### Scenario: Log in persists unsaved endpoint/auth changes first
+- **WHEN** a user edits the endpoint or authentication fields on the Settings step without
+  saving, then clicks "Log in"
+- **THEN** the system updates the toolset with the current form values before submitting
+  credentials or opening the OAuth authorization popup
+
+#### Scenario: Log in sends no request when nothing changed
+- **WHEN** a user clicks "Log in" without having changed anything since the toolset was last
+  persisted
+- **THEN** the system sends no create/update request and proceeds directly to login
+
+#### Scenario: Login is blocked when persisting fails
+- **WHEN** persisting unsaved changes before login fails
+- **THEN** the system shows an error notification and does not submit credentials or open the
+  OAuth authorization popup
+
 ### Requirement: OAuth redirect and callback handshake
 For OAuth login with config, the system SHALL save the OAuth configuration (Editor) or use the
 already-configured toolset (Catalog), persist the redirect state (`toolsetId`,
@@ -94,7 +119,8 @@ refresh; the user reopens it to see updated status.
 ### Requirement: Logged-in state and logout
 When a toolset is logged in at a credentials level, the system SHALL disable the
 authentication type selector and credential fields and SHALL offer a Log out action guarded
-by a confirmation dialog that revokes the credentials on confirm.
+by a confirmation dialog that revokes the credentials on confirm and shows a success
+notification.
 
 #### Scenario: Disabled fields when logged in
 - **WHEN** the loaded toolset is already logged in
@@ -102,11 +128,16 @@ by a confirmation dialog that revokes the credentials on confirm.
 
 #### Scenario: Confirm logout
 - **WHEN** a user clicks Log out and confirms the dialog
-- **THEN** the system calls the logout endpoint to revoke the credentials
+- **THEN** the system calls the logout endpoint to revoke the credentials, closes the confirm
+  dialog, and shows a success notification
 
 #### Scenario: Cancel logout
 - **WHEN** a user clicks Log out and cancels the dialog
 - **THEN** no logout request is sent and the logged-in state is unchanged
+
+#### Scenario: Logout failure
+- **WHEN** the logout endpoint call fails
+- **THEN** the system shows an error notification and the logged-in state is unchanged
 
 ### Requirement: Auth section disabled while saving
 The authentication section SHALL be disabled while a save is in progress to prevent a race
