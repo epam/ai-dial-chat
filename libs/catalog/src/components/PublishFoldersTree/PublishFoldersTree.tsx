@@ -4,8 +4,9 @@ import {
   DialFile,
   DialFileNodeType,
   DialFoldersTree,
+  DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import { IconPlus } from '@tabler/icons-react';
+import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
 import { FC, useMemo, useState } from 'react';
 import { PublishFolderNode } from '../../models/publish';
 import {
@@ -13,9 +14,10 @@ import {
   filterFolderTree,
   fromFolderPathKey,
   getSiblingFolderNames,
-  insertPlaceholderDialFile,
+  getUniqueFolderName,
   toDialFileTree,
   toFolderPathKey,
+  validateFolderName,
 } from '../../utils/publish-folder-tree';
 
 /** Props for {@link PublishFoldersTree}. */
@@ -44,10 +46,20 @@ export interface PublishFoldersTreeProps {
   disabled?: boolean;
   /** Label for the trailing "create new folder" trigger. Default: `'Create new folder'`. */
   createFolderLabel?: string;
+  /** Label for the per-row context menu action that creates a folder alongside the clicked folder. Default: `'Add sibling'`. */
+  addSiblingFolderLabel?: string;
+  /** Label for the per-row context menu action that creates a folder inside the clicked folder. Default: `'Add child'`. */
+  addChildFolderLabel?: string;
   /** Default name pre-filled for a new folder before the user edits it. Default: `'New folder'`. */
   newFolderDefaultName?: string;
   /** Message shown when a search query matches no folders; `{query}` is replaced. Default: `'No folders match "{query}".'`. */
   noResultsText?: string;
+  /** Inline error shown while creating a folder with an empty name. Default: `'Folder name cannot be empty.'`. */
+  emptyFolderNameError?: string;
+  /** Inline error shown while creating a folder whose name contains `..` or a forbidden character. Default: `'Folder name contains invalid characters.'`. */
+  invalidFolderNameError?: string;
+  /** Inline error shown while creating a folder whose name duplicates a sibling. Default: `'A folder with this name already exists.'`. */
+  duplicateFolderNameError?: string;
   /**
    * Label for the tree node representing the bucket root itself as a
    * selectable publish destination (`selectedPath: []`); rendered as the
@@ -69,12 +81,13 @@ export interface PublishFoldersTreeProps {
 
 /**
  * Destination folder tree for the Publish flow, built on ui-kit's
- * `DialFoldersTree` (`showFiles={false}`, no context menu). Search filters
- * `items` before conversion to `DialFile[]` since `DialFoldersTree` has no
- * built-in search. Folder creation is triggered by the trailing button,
- * which renders a placeholder node so `DialFoldersTree` shows its inline
- * create-folder row; only the confirmed name is reported via
- * `onCreateFolder`.
+ * `DialFoldersTree` (`showFiles={false}`). Search filters `items` before
+ * conversion to `DialFile[]` since `DialFoldersTree` has no built-in search.
+ * Folder creation can be triggered either by the trailing "Create new
+ * folder" button (creates under the currently selected folder) or by each
+ * row's "Add sibling"/"Add child" context menu actions. Both pass the target
+ * parent path to `DialFoldersTree`, which owns the temporary inline row; only
+ * the confirmed name is reported via `onCreateFolder`.
  */
 export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   items,
@@ -84,8 +97,13 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   searchQuery,
   disabled = false,
   createFolderLabel = 'Create new folder',
+  addSiblingFolderLabel = 'Add sibling',
+  addChildFolderLabel = 'Add child',
   newFolderDefaultName = 'New folder',
   noResultsText = 'No folders match "{query}".',
+  emptyFolderNameError = 'Folder name cannot be empty.',
+  invalidFolderNameError = 'Folder name contains invalid characters.',
+  duplicateFolderNameError = 'A folder with this name already exists.',
   rootLabel = 'Organization',
   expandedPaths: controlledExpandedPaths,
   onExpandedPathsChange,
@@ -117,6 +135,10 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   const [creatingParentPath, setCreatingParentPath] = useState<string[] | null>(
     null,
   );
+  // Resolved once when creation starts so the inline editor never defaults to
+  // an already-existing sibling name such as "New folder".
+  const [creatingFolderName, setCreatingFolderName] =
+    useState(newFolderDefaultName);
 
   const visibleItems = useMemo(
     () => filterFolderTree(items, searchQuery),
@@ -133,16 +155,10 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
     [isSearching, searchExpandedPaths, expandedPaths],
   );
 
-  const childFiles = useMemo<DialFile[]>(() => {
-    const files = toDialFileTree(visibleItems);
-    return creatingParentPath
-      ? insertPlaceholderDialFile(
-          files,
-          creatingParentPath,
-          newFolderDefaultName,
-        )
-      : files;
-  }, [visibleItems, creatingParentPath, newFolderDefaultName]);
+  const childFiles = useMemo<DialFile[]>(
+    () => toDialFileTree(visibleItems),
+    [visibleItems],
+  );
 
   /**
    * The bucket root is a real, always-expanded top-level tree node (matching
@@ -167,16 +183,68 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   }, [childFiles, rootLabel, isSearching]);
 
   const createdFolderPath = creatingParentPath
-    ? toFolderPathKey([...creatingParentPath, newFolderDefaultName])
+    ? toFolderPathKey(creatingParentPath)
     : null;
 
-  const startCreatingFolder = () => {
-    const parentPath = selectedPath ?? [];
+  const beginCreatingFolder = (parentPath: string[]) => {
     setCreatingParentPath(parentPath);
+    setCreatingFolderName(
+      getUniqueFolderName(
+        newFolderDefaultName,
+        getSiblingFolderNames(items, parentPath),
+      ),
+    );
     const parentKey = toFolderPathKey(parentPath);
     if (parentKey) {
       updateExpandedPaths(new Set(expandedPaths).add(parentKey));
     }
+  };
+
+  const startCreatingFolder = () => beginCreatingFolder(selectedPath ?? []);
+
+  /**
+   * Per-row context menu, mirroring the file manager's "Add sibling" /
+   * "Add child" folder-creation actions (see
+   * `useFolderCreation`/`startTreeSiblingFolderCreation`/
+   * `startTreeChildFolderCreation` in `@epam/ai-dial-ui-kit`'s `FileManager`
+   * — not exported from the package, so reimplemented here against the
+   * public `getContextMenuItems` prop instead). "Add sibling" is omitted for
+   * the root node, which has no parent to create a sibling under.
+   */
+  const getFolderContextMenuItems = (file: DialFile): DropdownItem[] => {
+    const childPath = fromFolderPathKey(file.path);
+    const items: DropdownItem[] = [
+      {
+        key: 'add-child',
+        label: addChildFolderLabel,
+        icon: <IconFolderPlus size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        onClick: () => beginCreatingFolder(childPath),
+      },
+    ];
+    if (file.path !== '') {
+      items.push({
+        key: 'add-sibling',
+        label: addSiblingFolderLabel,
+        icon: <IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />,
+        onClick: () => beginCreatingFolder(childPath.slice(0, -1)),
+      });
+    }
+    return items;
+  };
+
+  const validateNewFolderName = (rawValue: string): string | null => {
+    if (!creatingParentPath) {
+      return null;
+    }
+    return validateFolderName(
+      rawValue,
+      getSiblingFolderNames(items, creatingParentPath),
+      {
+        empty: emptyFolderNameError,
+        invalid: invalidFolderNameError,
+        duplicate: duplicateFolderNameError,
+      },
+    );
   };
 
   const confirmCreatingFolder = (rawValue: string) => {
@@ -184,10 +252,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
       return;
     }
     const trimmed = rawValue.trim();
-    const isDuplicate = getSiblingFolderNames(items, creatingParentPath).some(
-      (name) => name.toLowerCase() === trimmed.toLowerCase(),
-    );
-    if (trimmed && !isDuplicate) {
+    if (!validateNewFolderName(rawValue)) {
       void onCreateFolder(creatingParentPath, trimmed);
       onSelectedPathChange([...creatingParentPath, trimmed]);
     }
@@ -212,10 +277,12 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
         onExpandedPathsChange={updateExpandedPaths}
         loadingPaths={loadingPaths}
         onItemClick={handleItemClick}
+        getContextMenuItems={getFolderContextMenuItems}
         createdFolderPath={createdFolderPath}
-        newFolderDefaultName={newFolderDefaultName}
+        newFolderDefaultName={creatingFolderName}
         onCreateFolderSave={confirmCreatingFolder}
         onCreateFolderCancel={() => setCreatingParentPath(null)}
+        onRenameValidate={(value) => validateNewFolderName(value)}
         emptyStateTitle={
           isSearching
             ? noResultsText.replace('{query}', searchQuery.trim())

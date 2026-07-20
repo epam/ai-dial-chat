@@ -85,12 +85,17 @@ export interface StandalonePublishPanelProps {
  * (see design.md D4). Cancel (in the pinned footer) and Escape both invoke
  * the same `onClose` as the header's Close button.
  *
- * Backdrop/panel use `z-[55]`/`z-[60]` rather than `DetailsPanel`'s
+ * Backdrop/panel use `z-[51]`/`z-[52]` rather than `DetailsPanel`'s
  * `z-40`/`z-50` — unlike catalog details (opened from a view where no other
  * panel is open), this panel is opened while the conversation list's
  * `SidebarPanel` (`libs/sidebar`) is still mounted, which applies its own
  * `z-50` while open. Matching `z-40`/`z-50` here left that sidebar
- * un-dimmed and above the backdrop.
+ * un-dimmed and above the backdrop. Capped at `z-[52]` (not higher) so it
+ * stays below `@epam/ai-dial-ui-kit`'s own `z-[53]` dropdown/context-menu
+ * layer — `PublishFoldersTree`'s "Add sibling"/"Add child" context menu
+ * (`getContextMenuItems`) portals to `document.body` as a sibling of this
+ * panel, so a higher panel z-index would visually cover and block clicks on
+ * that menu even though it "opens" correctly in the DOM.
  */
 export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   isOpen,
@@ -177,7 +182,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
     <>
       <div
         className={mergeClasses(
-          'fixed inset-0 z-[55] transition-opacity duration-300',
+          'fixed inset-0 z-[51] transition-opacity duration-300',
           styles.backdrop,
           isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
         )}
@@ -194,7 +199,7 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
         inert={!isOpen}
         tabIndex={-1}
         className={mergeClasses(
-          'fixed inset-y-0 end-0 z-[60] flex w-full flex-col overflow-hidden',
+          'fixed inset-y-0 end-0 z-[52] flex w-full flex-col overflow-hidden',
           'desktop:rounded-ts-xl desktop:rounded-bs-xl desktop:w-[540px] desktop:border-s',
           'transition-transform duration-300',
           styles.panel,
