@@ -18,4 +18,6 @@ export enum AttachmentType {
   Prompt = 'prompt',
   /** Text pasted directly by the user. */
   Pasted = 'pasted',
+  /** A link to a file or webpage. */
+  Link = 'link',
 }

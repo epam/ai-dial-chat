@@ -283,7 +283,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
         onCreateFolderSave={confirmCreatingFolder}
         onCreateFolderCancel={() => setCreatingParentPath(null)}
         onRenameValidate={(value) => validateNewFolderName(value)}
-        emptyStateDescription={
+        emptyStateTitle={
           isSearching
             ? noResultsText.replace('{query}', searchQuery.trim())
             : undefined

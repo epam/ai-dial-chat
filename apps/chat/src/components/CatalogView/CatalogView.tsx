@@ -34,6 +34,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
@@ -127,6 +128,12 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     isLoading: isFavoritesLoading,
     toggleFavorite,
   } = useFavoriteApplications();
+  const {
+    sortKey,
+    setSortKey,
+    filterTopics: persistedFilterTopics,
+    setFilterTopics,
+  } = useCatalogSortFilterPreference();
 
   const isLoading = isDeploymentsLoading || isFavoritesLoading;
 
@@ -160,6 +167,17 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         : catalogItems,
     [catalogItems, isSelectorMode],
   );
+
+  const reconciledFilterTopics = useMemo(() => {
+    const availableTopics = new Set(
+      visibleCatalogItems.flatMap((item) => item.topics),
+    );
+    return new Set(
+      Array.from(persistedFilterTopics).filter((topic) =>
+        availableTopics.has(topic),
+      ),
+    );
+  }, [visibleCatalogItems, persistedFilterTopics]);
 
   const {
     folderItems: publishFolderItems,
@@ -623,6 +641,10 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       }
       initialDetailsItemId={initialDetailsItemId}
       onCardClick={isSelectorMode ? handleCardSelect : undefined}
+      sortKey={isSelectorMode ? undefined : sortKey}
+      onSortChange={isSelectorMode ? undefined : setSortKey}
+      filterTopics={isSelectorMode ? undefined : reconciledFilterTopics}
+      onFilterTopicsChange={isSelectorMode ? undefined : setFilterTopics}
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}

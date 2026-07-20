@@ -1,8 +1,5 @@
 import type { Stage } from '@epam/ai-dial-chat-shared';
-import {
-  mergeClasses,
-  messageAttachmentToDisplayAttachment,
-} from '@epam/ai-dial-chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
@@ -22,7 +19,7 @@ interface Props {
   copyAriaLabel?: string;
 }
 
-/** A single stage row — plain when no content, collapsible when content or attachments are present. */
+/** A single stage row — plain when no content, collapsible when content is present. */
 export const StageItem: FC<Props> = ({
   stage,
   isLive,
@@ -45,11 +42,7 @@ export const StageItem: FC<Props> = ({
     </>
   );
 
-  const displayAttachments =
-    stage.attachments?.map((attachment) =>
-      messageAttachmentToDisplayAttachment(attachment),
-    ) ?? [];
-  const hasExpandableContent = !!(stage.content || displayAttachments.length);
+  const hasExpandableContent = !!stage.content;
 
   if (!hasExpandableContent) {
     return <div className="flex items-center gap-2">{header}</div>;

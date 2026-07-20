@@ -105,7 +105,7 @@ describe('PublishFoldersTree', () => {
 
   it('passes a no-results empty state description when search matches nothing, and omits the root node', () => {
     renderTree({ searchQuery: 'zzz_nonexistent_zzz' });
-    expect(capturedProps.current?.emptyStateDescription).toBe(
+    expect(capturedProps.current?.emptyStateTitle).toBe(
       'No folders match "zzz_nonexistent_zzz".',
     );
     expect(capturedProps.current?.items).toEqual([]);

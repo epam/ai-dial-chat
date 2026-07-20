@@ -366,6 +366,7 @@
   },
   "attachments": {
     "downloadFile": "Download file",
+    "openInNewTab": "Open in new tab",
     "unsupportedType": {
       "title": "File extension not supported",
       "message": "This model can only process {{formats}}. Please upload a file in a supported format."
