@@ -15,6 +15,7 @@ vi.mock('../../../context/auth/UserContext');
 vi.mock('../../../context/ThemeContext');
 vi.mock('../../../server-api/toolsets', () => ({
   getToolset: vi.fn(),
+  logoutToolset: vi.fn(),
 }));
 vi.mock('../../../server-api/deployments', () => ({
   getDeploymentDetails: vi.fn(),
@@ -153,7 +154,10 @@ describe('AppEditorIframe — toolset login request', () => {
     };
   };
 
-  const postOAuthResult = (flowId: string, message: Record<string, unknown>) => {
+  const postOAuthResult = (
+    flowId: string,
+    message: Record<string, unknown>,
+  ) => {
     const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
     channel.postMessage(message);
     channel.close();
@@ -312,8 +316,7 @@ describe('AppEditorIframe — toolset login request', () => {
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
     const flowId = JSON.parse(
-      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
-        '{}',
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
     ).state;
 
     postOAuthResult(flowId, {
@@ -329,6 +332,56 @@ describe('AppEditorIframe — toolset login request', () => {
           toolsetId: 'toolsets/b/my__1.0.0',
           success: true,
           credentialsLevel: 'USER',
+        }),
+        'https://editor.example.com',
+      ),
+    );
+  });
+
+  it('refetches toolset details the same way Catalog does and includes credentials in the success result', async () => {
+    vi.mocked(toolsetsApi.getToolset).mockResolvedValue({
+      id: 't',
+      toolset: 't',
+      authSettings: {
+        authenticationType: 'OAUTH',
+        clientId: 'client',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+      },
+    } as DialToolsetDto);
+    vi.mocked(deploymentsApi.getDeploymentDetails).mockResolvedValue({
+      id: 'toolsets/b/my__1.0.0',
+      type: 'toolset',
+      toolsetDetails: {
+        authSettings: { userLevelAuthStatus: 'SIGNED_IN' },
+      },
+    } as never);
+    const postMessageSpy = renderAndSpyOnIframe();
+
+    sendLoginRequest('toolsets/b/my__1.0.0');
+
+    await waitFor(() => expect(capturedPopup).toBeDefined());
+    const flowId = JSON.parse(
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
+    ).state;
+
+    postOAuthResult(flowId, {
+      type: 'success',
+      toolsetId: 'toolsets/b/my__1.0.0',
+      credentialsLevel: 'USER',
+    });
+
+    await waitFor(() =>
+      expect(deploymentsApi.getDeploymentDetails).toHaveBeenCalledWith(
+        'toolsets/b/my__1.0.0',
+      ),
+    );
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          credentials: expect.objectContaining({
+            userStatus: 'SIGNED_IN',
+          }),
         }),
         'https://editor.example.com',
       ),
@@ -351,8 +404,7 @@ describe('AppEditorIframe — toolset login request', () => {
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
     const flowId = JSON.parse(
-      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
-        '{}',
+      capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ?? '{}',
     ).state;
 
     postOAuthResult(flowId, {
@@ -441,5 +493,132 @@ describe('AppEditorIframe — toolset login request', () => {
         ),
       { timeout: 2000 },
     );
+  });
+});
+
+describe('AppEditorIframe — toolset logout request', () => {
+  const sendLogoutRequest = (toolsetId: string) => {
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type: AppsEditorEvent.RequestToolsetLogout, toolsetId },
+        origin: 'https://editor.example.com',
+      }),
+    );
+  };
+
+  const renderAndSpyOnIframe = () => {
+    renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    return vi.spyOn(iframe.contentWindow as Window, 'postMessage');
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+    vi.mocked(deploymentsApi.getDeploymentDetails).mockRejectedValue(
+      new Error('not mocked'),
+    );
+  });
+
+  it('percent-encodes the raw toolsetId, calls logoutToolset without authenticationType, and posts a success result echoing the raw id', async () => {
+    vi.mocked(toolsetsApi.logoutToolset).mockResolvedValue({ success: true });
+    const postMessageSpy = renderAndSpyOnIframe();
+
+    sendLogoutRequest('toolsets/b/My Toolset__1.0.0');
+
+    await waitFor(() =>
+      expect(toolsetsApi.logoutToolset).toHaveBeenCalledWith(
+        'toolsets/b/My%20Toolset__1.0.0',
+        {
+          url: 'toolsets/b/My%20Toolset__1.0.0',
+          credentialsLevel: 'USER',
+        },
+      ),
+    );
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: AppsEditorEvent.ToolsetLogoutResult,
+          toolsetId: 'toolsets/b/My Toolset__1.0.0',
+          success: true,
+          credentialsLevel: 'USER',
+        }),
+        'https://editor.example.com',
+      ),
+    );
+  });
+
+  it('includes refreshed credentials from getDeploymentDetails in the success result', async () => {
+    vi.mocked(toolsetsApi.logoutToolset).mockResolvedValue({ success: true });
+    vi.mocked(deploymentsApi.getDeploymentDetails).mockResolvedValue({
+      id: 'toolsets/b/my__1.0.0',
+      type: 'toolset',
+      toolsetDetails: {
+        authSettings: { userLevelAuthStatus: 'SIGNED_OUT' },
+      },
+    } as never);
+    const postMessageSpy = renderAndSpyOnIframe();
+
+    sendLogoutRequest('toolsets/b/my__1.0.0');
+
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          credentials: expect.objectContaining({
+            userStatus: 'SIGNED_OUT',
+          }),
+        }),
+        'https://editor.example.com',
+      ),
+    );
+  });
+
+  it('posts a logout-failed result when logoutToolset rejects', async () => {
+    vi.mocked(toolsetsApi.logoutToolset).mockRejectedValue(
+      new Error('network error'),
+    );
+    const postMessageSpy = renderAndSpyOnIframe();
+
+    sendLogoutRequest('toolsets/b/my__1.0.0');
+
+    await waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: AppsEditorEvent.ToolsetLogoutResult,
+          toolsetId: 'toolsets/b/my__1.0.0',
+          success: false,
+          reason: 'logout-failed',
+        }),
+        'https://editor.example.com',
+      ),
+    );
+  });
+
+  it('ignores a logout request from a different origin', async () => {
+    renderIframe();
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: AppsEditorEvent.RequestToolsetLogout,
+          toolsetId: 'toolsets/b/my__1.0.0',
+        },
+        origin: 'https://evil.example.com',
+      }),
+    );
+    expect(toolsetsApi.logoutToolset).not.toHaveBeenCalled();
   });
 });

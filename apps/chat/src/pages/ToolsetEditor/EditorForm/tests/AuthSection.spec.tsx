@@ -3,12 +3,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { TOOLSET_REDIRECT_STATE_KEY } from '../../../../constants/toolsets';
 import {
   ApiI18nKeys,
   ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../../constants/translation-keys';
-import { TOOLSET_REDIRECT_STATE_KEY } from '../../../../constants/toolsets';
 import { useNotification } from '../../../../context/NotificationContext';
 import * as toolsetsApi from '../../../../server-api/toolsets';
 import type {

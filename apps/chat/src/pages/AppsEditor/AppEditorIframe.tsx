@@ -16,8 +16,11 @@ import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getDeploymentDetails } from '../../server-api/deployments';
-import { getToolset } from '../../server-api/toolsets';
-import type { ToolsetLoginResultPayload } from '../../types/apps-editor';
+import { getToolset, logoutToolset } from '../../server-api/toolsets';
+import type {
+  ToolsetLoginResultPayload,
+  ToolsetLogoutResultPayload,
+} from '../../types/apps-editor';
 import { AppsEditorEvent } from '../../types/apps-editor';
 import {
   ToolsetAuthTypes,
@@ -89,6 +92,22 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     };
 
     /**
+     * Posts the outcome of a `RequestToolsetLogout` back into the iframe.
+     * See `postToolsetLoginResult` above for why this stays a plain
+     * function rather than a hook-tracked callback.
+     */
+    const postToolsetLogoutResult = (
+      targetOrigin: string,
+      payload: Omit<ToolsetLogoutResultPayload, 'type'>,
+    ) => {
+      const message: ToolsetLogoutResultPayload = {
+        type: AppsEditorEvent.ToolsetLogoutResult,
+        ...payload,
+      };
+      iframeRef.current?.contentWindow?.postMessage(message, targetOrigin);
+    };
+
+    /**
      * Refreshes a toolset's credentials/status the same way Catalog's
      * Details panel does after login/logout (`CatalogView.handleFetchDetails`
      * → `getDeploymentDetails` → `mapDeploymentDetailsDtoToEntityDetails` →
@@ -96,23 +115,26 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
      * shape Catalog would show. Best-effort only — `undefined` on any
      * failure, since the login `success` flag is already authoritative.
      */
-    const fetchToolsetCredentials = async (
-      encodedToolsetId: string,
-    ): Promise<CatalogItemCredentials | undefined> => {
-      try {
-        const dto = await getDeploymentDetails(encodedToolsetId);
-        const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
-        return entityDetails.type === 'TOOLSET'
-          ? mapToolsetCredentials(
-              encodedToolsetId,
-              entityDetails.data,
-              user?.isAdmin ?? false,
-            )
-          : undefined;
-      } catch {
-        return undefined;
-      }
-    };
+    const fetchToolsetCredentials = useCallback(
+      async (
+        encodedToolsetId: string,
+      ): Promise<CatalogItemCredentials | undefined> => {
+        try {
+          const dto = await getDeploymentDetails(encodedToolsetId);
+          const entityDetails = mapDeploymentDetailsDtoToEntityDetails(dto);
+          return entityDetails.type === 'TOOLSET'
+            ? mapToolsetCredentials(
+                encodedToolsetId,
+                entityDetails.data,
+                user?.isAdmin ?? false,
+              )
+            : undefined;
+        } catch {
+          return undefined;
+        }
+      },
+      [user?.isAdmin],
+    );
 
     /**
      * Handles a toolset login requested from inside the QuickApps iframe.
@@ -245,7 +267,44 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           reason: 'cancelled',
         });
       },
-      [schema.editorUrl, user?.isAdmin],
+      [schema.editorUrl, fetchToolsetCredentials],
+    );
+
+    /**
+     * Handles a toolset logout requested from inside the QuickApps iframe.
+     * Unlike login, logout needs no popup/OAuth round-trip, so this is a
+     * single direct call to the existing `logoutToolset` endpoint — the
+     * backend resolves the toolset's stored authentication type itself when
+     * the request body omits it, so this never needs a prior `getToolset`
+     * call the way login does.
+     */
+    const handleToolsetLogoutRequest = useCallback(
+      async (toolsetId: string) => {
+        if (!schema.editorUrl) return;
+        const targetOrigin = new URL(schema.editorUrl).origin;
+        const encodedToolsetId = encodeToolsetId(toolsetId);
+        const credentialsLevel = ToolsetCredentialsLevel.User;
+
+        try {
+          await logoutToolset(encodedToolsetId, {
+            url: encodedToolsetId,
+            credentialsLevel,
+          });
+          postToolsetLogoutResult(targetOrigin, {
+            toolsetId,
+            success: true,
+            credentialsLevel,
+            credentials: await fetchToolsetCredentials(encodedToolsetId),
+          });
+        } catch {
+          postToolsetLogoutResult(targetOrigin, {
+            toolsetId,
+            success: false,
+            reason: 'logout-failed',
+          });
+        }
+      },
+      [schema.editorUrl, fetchToolsetCredentials],
     );
 
     const handleMessage = useCallback(
@@ -276,6 +335,12 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           event.data.toolsetId
         ) {
           void handleToolsetLoginRequest(event.data.toolsetId);
+        } else if (
+          event.data?.type === AppsEditorEvent.RequestToolsetLogout &&
+          typeof event.data?.toolsetId === 'string' &&
+          event.data.toolsetId
+        ) {
+          void handleToolsetLogoutRequest(event.data.toolsetId);
         }
       },
       [
@@ -285,6 +350,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         onSaveSuccess,
         onSaveError,
         handleToolsetLoginRequest,
+        handleToolsetLogoutRequest,
       ],
     );
 

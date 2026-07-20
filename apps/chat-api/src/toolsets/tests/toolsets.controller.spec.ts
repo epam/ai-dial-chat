@@ -376,6 +376,17 @@ describe('ToolsetsController — write operations (integration)', () => {
         .expect(200);
       expect(res.body).toEqual({ success: true });
     });
+
+    it('accepts a body without authenticationType', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/logout')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+        })
+        .expect(200);
+      expect(res.body).toEqual({ success: true });
+    });
   });
 
   describe('unauthenticated', () => {

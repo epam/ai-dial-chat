@@ -4570,11 +4570,11 @@ export interface ToolsetLogoutBodyDto {
    */
   credentialsLevel: ToolsetLogoutBodyDtoCredentialsLevelEnum;
   /**
-   *
+   * Authentication type used by the toolset. Optional — a caller that doesn't already have this loaded (e.g. logging out by id alone) can omit it; the server looks up the toolset's own stored authentication type instead.
    * @type {string}
    * @memberof ToolsetLogoutBodyDto
    */
-  authenticationType: ToolsetLogoutBodyDtoAuthenticationTypeEnum;
+  authenticationType?: ToolsetLogoutBodyDtoAuthenticationTypeEnum;
 }
 
 /**

@@ -44,10 +44,7 @@ const renderCallback = (
   render(
     <MemoryRouter initialEntries={[`${route}${search}`]}>
       <Routes>
-        <Route
-          path="/auth/toolset-signin"
-          element={<ToolsetAuthCallback />}
-        />
+        <Route path="/auth/toolset-signin" element={<ToolsetAuthCallback />} />
         <Route
           path="/toolset-editor/callback"
           element={<ToolsetAuthCallback />}

@@ -291,10 +291,11 @@ const toDialToolsetSigninBody = (
 
 const toDialToolsetSignoutBody = (
   body: ToolsetLogoutBodyDto,
+  authenticationType: string | undefined,
 ): DialToolsetSignoutBody => {
   if (
-    body.authenticationType !== ToolsetAuthType.ApiKey &&
-    body.authenticationType !== ToolsetAuthType.OAuth
+    authenticationType !== ToolsetAuthType.ApiKey &&
+    authenticationType !== ToolsetAuthType.OAuth
   ) {
     throw new BadRequestException('Unsupported toolset authentication type');
   }
@@ -302,7 +303,7 @@ const toDialToolsetSignoutBody = (
   return {
     url: body.url,
     credentialsLevel: toDialCredentialsLevel(body.credentialsLevel),
-    authenticationType: body.authenticationType,
+    authenticationType,
   };
 };
 
@@ -1010,15 +1011,26 @@ export class ToolsetsService {
   async logoutToolset(
     userSub: string,
     accessToken: string,
+    bucket: string,
     toolsetName: string,
     body: ToolsetLogoutBodyDto,
   ): Promise<void> {
     const authHeaders = getBearerAuthHeaders(accessToken);
+    /*
+     * A caller that only has the toolset id (e.g. a logout requested from a
+     * QuickApps iframe, which never loaded the toolset's own auth config)
+     * can omit `authenticationType` — look up the toolset's own stored value
+     * instead of requiring every caller to already have it loaded.
+     */
+    const authenticationType =
+      body.authenticationType ??
+      (await this.getToolset(userSub, accessToken, bucket, toolsetName))
+        .authSettings?.authenticationType;
 
     try {
       const response = await this.dialClient.client.toolSetSignout({
         headers: authHeaders,
-        body: toDialToolsetSignoutBody(body),
+        body: toDialToolsetSignoutBody(body, authenticationType),
       });
       /*
        * DIAL Core returns 404 from signout when there is no credential left
