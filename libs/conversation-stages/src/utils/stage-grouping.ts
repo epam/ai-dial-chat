@@ -2,7 +2,7 @@ import type { Stage } from '@epam/ai-dial-chat-shared';
 import { cleanStageName } from './stage-name';
 
 /** A single ungrouped stage row. */
-export interface SingleStageRow {
+interface SingleStageRow {
   kind: 'single';
   /** Stable key for list rendering — the stage's own index. */
   key: number;
@@ -10,7 +10,7 @@ export interface SingleStageRow {
 }
 
 /** A row formed by collapsing consecutive stages that share the same cleaned name into one `×N` row. */
-export interface GroupedStageRow {
+interface GroupedStageRow {
   kind: 'group';
   /** Stable key for list rendering — the first attempt's index. */
   key: number;
@@ -21,7 +21,7 @@ export interface GroupedStageRow {
 }
 
 /** A row rendered inside a `StagesPanel` — either one stage or a collapsed `×N` group of identical attempts. */
-export type StageRow = SingleStageRow | GroupedStageRow;
+type StageRow = SingleStageRow | GroupedStageRow;
 
 /**
  * Collapses consecutive stages that share the same cleaned name into a
