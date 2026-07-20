@@ -5,14 +5,16 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
+import { CatalogEntityType } from '../../types/entity-type';
+import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';
 import styles from './AppIdentity.module.scss';
 
 /** Props for the shared AppIdentity block used in browse and favorite cards. */
 export interface AppIdentityProps {
   /** Icon image URL. When absent, the DeploymentIcon renders a tinted fallback. */
   icon?: string | null;
-  /** Entity type label rendered as plain uppercase text — no pill, no background. */
-  type: string;
+  /** Entity type — rendered via the shared EntityTypeLabel (plain uppercase text, no pill). */
+  type: CatalogEntityType;
   /** Display name. Truncates when the available width is exceeded. */
   name: string;
   /** Version string shown flush-right of the name, aligned to the top of the name. */
@@ -31,10 +33,8 @@ export interface AppIdentityProps {
   query?: string;
   /** Additional classes applied to the root element. */
   className?: string;
-  /** CSS class for the type label. Default: 'dial-tiny-semi-text text-accent-primary'. */
+  /** CSS class for the type label. Default: 'dial-caption-text font-semibold'. */
   typeClassName?: string;
-  /** Explicit color applied to the type label as an inline style — overrides typeClassName's color. */
-  typeColor?: string;
   /** CSS class for the entity name. Default: 'dial-body-semi-text text-primary'. */
   nameClassName?: string;
   /** CSS class for the version string. Default: 'dial-tiny-text text-secondary'. */
@@ -57,8 +57,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   size,
   query,
   className,
-  typeClassName = 'dial-caption-text font-semibold text-accent-primary',
-  typeColor,
+  typeClassName,
   nameClassName = 'dial-body-semi-text text-primary',
   versionClassName = 'dial-tiny-text text-secondary',
   lastUsedClassName = 'dial-tiny-text text-tertiary',
@@ -97,13 +96,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
 
       {/* Text stack — type sits above a tightly grouped name+last-used cluster */}
       <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
-        {/* Type label: plain uppercase text, entity colour carried by icon tint */}
-        <span
-          className={mergeClasses('uppercase tracking-[0.06em]', typeClassName)}
-          style={typeColor ? { color: typeColor } : undefined}
-        >
-          {type}
-        </span>
+        <EntityTypeLabel type={type} className={typeClassName} />
 
         {/* Name + last-used grouped tightly together */}
         <div className="flex min-w-0 flex-col">
