@@ -53,7 +53,19 @@ export interface DeploymentsContextType {
   refetchToolsets: () => Promise<void>;
   /** Re-fetches deployments from the API and updates the catalog list. Call after creating/deleting an application. */
   refetchDeployments: () => Promise<void>;
+  /**
+   * Synchronously upserts a single deployment or toolset into local state,
+   * without issuing any request. Use right after accepting a share
+   * invitation so the shared item is immediately visible — waiting on
+   * `refetchDeployments`/`refetchToolsets` to reflect a just-granted share
+   * would race DIAL Core's own propagation of that grant.
+   */
+  mergeSharedItem: (item: DeploymentItemDto | DialToolsetDto) => void;
 }
+
+const isDialToolsetDto = (
+  item: DeploymentItemDto | DialToolsetDto,
+): item is DialToolsetDto => 'toolset' in item;
 
 export const DeploymentsContext = createContext<
   DeploymentsContextType | undefined
@@ -284,6 +296,21 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [showNotification, t]);
 
+  const mergeSharedItem = useCallback(
+    (item: DeploymentItemDto | DialToolsetDto) => {
+      if (isDialToolsetDto(item)) {
+        setToolsets((prev) =>
+          sortToolsets([...prev.filter((t) => t.id !== item.id), item]),
+        );
+        return;
+      }
+      setRawDeployments((prev) =>
+        sortDeployments([...prev.filter((d) => d.id !== item.id), item]),
+      );
+    },
+    [],
+  );
+
   const items = useMemo<DeploymentItemDto[]>(() => {
     if (schemas.length === 0) return rawDeployments;
     const schemaById = new Map(schemas.map((s) => [s.id, s]));
@@ -360,6 +387,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       toolsets,
       refetchToolsets,
       refetchDeployments,
+      mergeSharedItem,
     }),
     [
       items,
@@ -373,6 +401,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       toolsets,
       refetchToolsets,
       refetchDeployments,
+      mergeSharedItem,
     ],
   );
 
