@@ -5,7 +5,7 @@ import {
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -85,8 +85,10 @@ const ToolsetEditor: FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const toolsetId = searchParams.get(ToolsetEditorQuery.Id) ?? '';
-  const isEditMode = Boolean(toolsetId);
+  const routeToolsetId = searchParams.get(ToolsetEditorQuery.Id) ?? '';
+  const isEditMode = Boolean(routeToolsetId);
+  const [draftToolsetId, setDraftToolsetId] = useState('');
+  const persistedToolsetId = routeToolsetId || draftToolsetId;
   const step =
     (searchParams.get(ToolsetEditorQuery.Step) as ToolsetEditorSteps) ??
     ToolsetEditorSteps.General;
@@ -100,6 +102,7 @@ const ToolsetEditor: FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<ToolsetFormErrors>({});
   const [dirtyFields, setDirtyFields] = useState<ToolsetDirtyFields>({});
+  const lastPersistedFormRef = useRef<ToolsetFormData | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,8 +111,12 @@ const ToolsetEditor: FC = () => {
       if (isEditMode) {
         setIsLoading(true);
         try {
-          const dto = await getToolset(toolsetId);
-          if (!cancelled) setForm(toolsetDtoToForm(dto));
+          const dto = await getToolset(routeToolsetId);
+          const loadedForm = toolsetDtoToForm(dto);
+          if (!cancelled) {
+            setForm(loadedForm);
+            lastPersistedFormRef.current = loadedForm;
+          }
         } catch {
           // Edit target missing/unreachable — leave the editor.
           if (!cancelled) navigate(returnUrl, { replace: true });
@@ -137,7 +144,7 @@ const ToolsetEditor: FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [isEditMode, toolsetId, navigate, returnUrl]);
+  }, [isEditMode, routeToolsetId, navigate, returnUrl]);
 
   const handleChange = useCallback((patch: Partial<ToolsetFormData>) => {
     setForm((prev) => (prev ? { ...prev, ...patch } : prev));
@@ -194,25 +201,87 @@ const ToolsetEditor: FC = () => {
     [setSearchParams],
   );
 
-  const handleNext = useCallback(() => {
+  /**
+   * Creates the toolset (if it has no id yet) or updates it (if the form has
+   * changed since it was last persisted), so the backend reflects whatever
+   * the user has typed so far. Returns the toolset id on success — including
+   * when nothing needed to be sent — or `null` if a create/update call
+   * failed. Shared by "Next" (advancing past General) and by Log In (which
+   * must not authenticate against stale endpoint/auth settings).
+   */
+  const persistFormIfChanged = useCallback(async (): Promise<string | null> => {
+    if (!form) return null;
+
+    const isUnchangedSincePersist =
+      persistedToolsetId &&
+      lastPersistedFormRef.current != null &&
+      JSON.stringify(lastPersistedFormRef.current) === JSON.stringify(form);
+    if (isUnchangedSincePersist) return persistedToolsetId;
+
+    setIsSaving(true);
+    try {
+      const body = formToToolsetBody(form, getToolsetRedirectUri());
+      let id: string;
+      if (persistedToolsetId) {
+        const result = await updateToolset(persistedToolsetId, body);
+        id = result.id;
+      } else {
+        const result = await createToolset(body);
+        setDraftToolsetId(result.id);
+        id = result.id;
+      }
+      lastPersistedFormRef.current = form;
+      await refetchToolsets();
+      return id;
+    } catch (err) {
+      const upstreamMessage = await extractToolsetApiErrorMessage(err);
+      showNotification({
+        variant: NotificationVariant.Error,
+        message:
+          upstreamMessage ??
+          t(
+            persistedToolsetId
+              ? ToolsetEditorI18nKeys.ErrorUpdateFailed
+              : ToolsetEditorI18nKeys.ErrorCreateFailed,
+          ),
+      });
+      return null;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [form, persistedToolsetId, t, showNotification, refetchToolsets]);
+
+  const handleNext = useCallback(async () => {
     if (!form) return;
     if (!form.name.trim()) {
       setErrors({ name: t(EditorI18nKeys.NameRequired) });
       return;
     }
     setErrors({});
-    setEditorStep(ToolsetEditorSteps.Settings);
-  }, [form, t, setEditorStep]);
+
+    const id = await persistFormIfChanged();
+    if (id != null) {
+      setEditorStep(ToolsetEditorSteps.Settings);
+    }
+  }, [form, t, persistFormIfChanged, setEditorStep]);
+
+  const handleEnsureSaved = useCallback(
+    async () => (await persistFormIfChanged()) != null,
+    [persistFormIfChanged],
+  );
 
   const handleChangeStep = useCallback(
     (stepId: string) => {
-      if (!isEditMode && stepId === ToolsetEditorSteps.Settings) {
-        handleNext();
+      if (
+        stepId === ToolsetEditorSteps.Settings &&
+        step === ToolsetEditorSteps.General
+      ) {
+        void handleNext();
         return;
       }
       setEditorStep(stepId);
     },
-    [isEditMode, handleNext, setEditorStep],
+    [step, handleNext, setEditorStep],
   );
 
   const handleCancel = useCallback(() => {
@@ -327,8 +396,8 @@ const ToolsetEditor: FC = () => {
     setIsSaving(true);
     try {
       const body = formToToolsetBody(form, getToolsetRedirectUri());
-      const result = isEditMode
-        ? await updateToolset(toolsetId, body)
+      const result = persistedToolsetId
+        ? await updateToolset(persistedToolsetId, body)
         : await createToolset(body);
       await refetchToolsets();
       try {
@@ -347,7 +416,7 @@ const ToolsetEditor: FC = () => {
         message:
           upstreamMessage ??
           t(
-            isEditMode
+            persistedToolsetId
               ? ToolsetEditorI18nKeys.ErrorUpdateFailed
               : ToolsetEditorI18nKeys.ErrorCreateFailed,
           ),
@@ -358,8 +427,7 @@ const ToolsetEditor: FC = () => {
   }, [
     form,
     validate,
-    isEditMode,
-    toolsetId,
+    persistedToolsetId,
     navigate,
     returnUrl,
     t,
@@ -412,9 +480,10 @@ const ToolsetEditor: FC = () => {
         form={form}
         errors={visibleErrors}
         isSaving={isSaving}
-        toolsetId={toolsetId}
+        toolsetId={persistedToolsetId}
         onNext={handleNext}
         onCancel={handleCancel}
+        onEnsureSaved={handleEnsureSaved}
         onChange={handleChange}
         onAuthChange={handleAuthChange}
       />

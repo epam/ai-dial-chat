@@ -23,6 +23,7 @@ interface Props {
   toolsetId: string;
   onNext: () => void;
   onCancel: () => void;
+  onEnsureSaved: () => Promise<boolean>;
   onChange: (patch: Partial<ToolsetFormData>) => void;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
 }
@@ -35,6 +36,7 @@ const ToolsetEditorView: FC<Props> = ({
   toolsetId,
   onNext,
   onCancel,
+  onEnsureSaved,
   onChange,
   onAuthChange,
 }) => {
@@ -55,6 +57,7 @@ const ToolsetEditorView: FC<Props> = ({
               toolsetId={toolsetId}
               onChange={onChange}
               onAuthChange={onAuthChange}
+              onEnsureSaved={onEnsureSaved}
             />
           )}
         </div>
@@ -65,11 +68,13 @@ const ToolsetEditorView: FC<Props> = ({
               type="button"
               label={t(ButtonsI18nKeys.Cancel)}
               onClick={onCancel}
+              disabled={isSaving}
             />
             <PrimaryButton
               type="button"
               label={t(EditorI18nKeys.NextButton)}
               onClick={onNext}
+              disabled={isSaving}
             />
           </div>
         )}
