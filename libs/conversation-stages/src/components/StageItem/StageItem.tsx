@@ -153,9 +153,6 @@ export const StageItem: FC<StageItemProps> = ({
                 />
               </div>
             )}
-            {displayAttachments.map((attachment) => (
-              <AttachmentCard key={attachment.id} attachment={attachment} />
-            ))}
           </div>
         </div>
       </div>

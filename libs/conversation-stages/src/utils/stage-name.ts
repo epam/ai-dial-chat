@@ -1,10 +1,14 @@
 /**
- * Matches a single, non-nested `[...]` or `(...)` group that contains a
- * seconds-style duration (e.g. `[3.99s]`, `(7.18s, Start: 11:21:38, End:
- * 11:21:45)`). Only groups that actually carry a duration are matched, so an
- * unrelated bracket like `[DEBUG]` is left untouched.
+ * Matches a single, non-nested `[...]` or `(...)` group (e.g. `[DEBUG]`,
+ * `(7.18s, Start: 11:21:38, End: 11:21:45)`). Whether the group actually
+ * carries a duration is checked separately via {@link DURATION_INNER_RE}, so
+ * this regex only needs one unambiguous quantifier and can't backtrack
+ * catastrophically on adversarial input.
  */
-const DURATION_GROUP_RE = /[([][^()[\]]*?(\d+(?:\.\d+)?)\s*s\b[^()[\]]*?[)\]]/;
+const BRACKET_GROUP_RE = /[([][^()[\]]*[)\]]/g;
+
+/** Seconds-style duration (e.g. `3.99s`) inside an already-isolated bracket group. */
+const DURATION_INNER_RE = /(\d+(?:\.\d+)?)\s*s\b/;
 
 /** A colon at the very end of the (already duration-stripped) string. */
 const TRAILING_COLON_RE = /:\s*$/;
@@ -24,11 +28,27 @@ export interface CleanedStageName {
  * Never re-cases or rewrites the remaining text.
  */
 export const cleanStageName = (rawName: string): CleanedStageName => {
-  const durationMatch = DURATION_GROUP_RE.exec(rawName);
-  const withoutDuration = durationMatch
-    ? rawName.slice(0, durationMatch.index) +
-      rawName.slice(durationMatch.index + durationMatch[0].length)
-    : rawName;
+  BRACKET_GROUP_RE.lastIndex = 0;
+  let groupMatch: RegExpExecArray | null;
+  let durationMatch: RegExpExecArray | null = null;
+  let groupIndex = -1;
+  let groupLength = 0;
+
+  while ((groupMatch = BRACKET_GROUP_RE.exec(rawName))) {
+    const inner = groupMatch[0].slice(1, -1);
+    const innerMatch = DURATION_INNER_RE.exec(inner);
+    if (innerMatch) {
+      durationMatch = innerMatch;
+      groupIndex = groupMatch.index;
+      groupLength = groupMatch[0].length;
+      break;
+    }
+  }
+
+  const withoutDuration =
+    durationMatch && groupIndex >= 0
+      ? rawName.slice(0, groupIndex) + rawName.slice(groupIndex + groupLength)
+      : rawName;
 
   const name = withoutDuration
     .replace(TRAILING_COLON_RE, '')
