@@ -103,7 +103,7 @@ describe('PublishFoldersTree', () => {
     ).toEqual(['Shared/Data Science']);
   });
 
-  it('passes a no-results empty state description when search matches nothing, and omits the root node', () => {
+  it('passes a no-results empty state title when search matches nothing, and omits the root node', () => {
     renderTree({ searchQuery: 'zzz_nonexistent_zzz' });
     expect(capturedProps.current?.emptyStateTitle).toBe(
       'No folders match "zzz_nonexistent_zzz".',
