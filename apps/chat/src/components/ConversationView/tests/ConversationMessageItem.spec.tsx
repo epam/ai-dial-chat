@@ -1,5 +1,5 @@
 import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   AttachmentsI18nKeys,
