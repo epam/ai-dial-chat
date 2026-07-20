@@ -1,6 +1,7 @@
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -396,6 +397,11 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: function (
+        item: DeploymentItemDto | DialToolsetDto,
+      ): void {
+        throw new Error('Function not implemented.');
+      },
     });
 
     renderRoute();
@@ -434,6 +440,11 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: function (
+        item: DeploymentItemDto | DialToolsetDto,
+      ): void {
+        throw new Error('Function not implemented.');
+      },
     });
 
     renderRoute();
