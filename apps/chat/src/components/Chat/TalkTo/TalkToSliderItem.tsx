@@ -55,9 +55,6 @@ export const TalkToSliderItem = ({
 
   const isSelected = isNotPseudoModelSelected || isPseudoModelSelected;
 
-  // Custom applications that are not published should not expose the
-  // Edit/Delete/Publish actions from the Talk to form. These actions remain
-  // available from the DIAL Marketplace and My workspace pages.
   const isNotPublishedCustomApplication =
     isApplicationId(groupItem.id) &&
     isMyApplication(groupItem) &&
