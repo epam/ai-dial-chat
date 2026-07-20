@@ -11,6 +11,7 @@ import {
   MarkdownTable,
   type MarkdownTableClassNames,
 } from './Table/MarkdownTable';
+import tableStyles from './Table/MarkdownTable.module.scss';
 import { MarkdownTaskCheckbox } from './TaskCheckbox/MarkdownTaskCheckbox';
 
 /** Per-element className overrides passed to {@link MarkdownRenderer}. */
@@ -99,10 +100,15 @@ export interface MarkdownRendererProps {
   codeBlockCopyLabel?: string;
   /** Accessible label for the copy button after copying. Defaults to `'Copied!'`. */
   codeBlockCopiedLabel?: string;
-  /** Syntax highlight color theme for code blocks. Defaults to `'dark'`. */
+  /** Syntax highlight color theme for code blocks and tables. Defaults to `'dark'`. */
   codeBlockTheme?: CodeBlockTheme;
   /** Color overrides applied as CSS custom properties. */
   colors?: MarkdownRendererColors;
+  /**
+   * Accessible label announced for a table's horizontally scrollable region.
+   * Defaults to `'Scrollable table'`.
+   */
+  tableScrollRegionAriaLabel?: string;
 }
 
 /** CSS custom-property overrides for the `MarkdownRenderer` component. */
@@ -130,12 +136,27 @@ export const defaultMarkdownComponents: Components = {
   li: ({ children }) => <li className="mb-1.5 last:mb-0">{children}</li>,
 };
 
+/** Minimal shape shared by hast text and element nodes, enough to read a cell's plain text. */
+interface HastTextLike {
+  type: string;
+  value?: string;
+  children?: HastTextLike[];
+}
+
+/** Recursively concatenates the text content of a hast node. */
+const getNodeText = (node: HastTextLike | undefined): string => {
+  if (!node) return '';
+  if (node.type === 'text') return node.value ?? '';
+  return (node.children ?? []).map(getNodeText).join('');
+};
+
 const buildMarkdownComponents = (
   cn: MarkdownRendererClassNames,
   isStreaming?: boolean,
   codeBlockCopyLabel?: string,
   codeBlockCopiedLabel?: string,
   codeBlockTheme?: CodeBlockTheme,
+  tableScrollRegionAriaLabel?: string,
 ): Components => ({
   h1: ({ children }) => <h1 className={cn.h1}>{children}</h1>,
   h2: ({ children }) => <h2 className={cn.h2}>{children}</h2>,
@@ -224,14 +245,43 @@ const buildMarkdownComponents = (
       <MarkdownTaskCheckbox checked={checked ?? false} />
     ) : null,
   table: ({ children }) => (
-    <MarkdownTable classNames={cn}>{children}</MarkdownTable>
+    <MarkdownTable
+      classNames={cn}
+      scrollRegionAriaLabel={tableScrollRegionAriaLabel}
+    >
+      {children}
+    </MarkdownTable>
   ),
+  tr: ({ children, node }) => {
+    const cells = (node?.children.filter((child) => child.type === 'element') ??
+      []) as (HastTextLike & { tagName?: string })[];
+    const isHeaderRow = cells.some((cell) => cell.tagName === 'th');
+    const nonEmptyCount = cells.filter(
+      (cell) => getNodeText(cell).trim().length > 0,
+    ).length;
+    const isSectionRow =
+      !isHeaderRow && cells.length > 1 && nonEmptyCount === 1;
+
+    return (
+      <tr
+        className={mergeClasses(
+          tableStyles.row,
+          isSectionRow && tableStyles.sectionRow,
+        )}
+      >
+        {children}
+      </tr>
+    );
+  },
   th: ({ children }) => (
     <th
+      scope="col"
       className={mergeClasses(
-        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start text-secondary',
-        styles.secondaryBorder,
-        cn.tableHeaderFont ?? 'font-semibold',
+        'sticky top-0 z-[2] max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start [overflow-wrap:anywhere]',
+        tableStyles.rowDivider,
+        tableStyles.tableHeaderCell,
+        cn.tableHeaderFont ??
+          'dial-tiny-semi-text uppercase tracking-wider text-secondary',
         cn.tableCell,
         cn.tableHeader,
       )}
@@ -242,8 +292,8 @@ const buildMarkdownComponents = (
   td: ({ children }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 align-top',
-        styles.secondaryBorder,
+        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        tableStyles.rowDivider,
         cn.tableBodyCell,
         cn.tableCell,
       )}
@@ -266,12 +316,14 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     codeBlockCopiedLabel,
     codeBlockTheme,
     colors,
+    tableScrollRegionAriaLabel,
   }) => {
     const displayedContent = useStreamedMarkdownContent(
       content,
       isStreaming,
       streamCharactersPerSecond,
     );
+
     const cssVars = buildCssVars({
       '--cm-thinking-inverted': colors?.thinkingPrimary,
       '--cm-thinking-secondary': colors?.thinkingSecondary,
@@ -286,6 +338,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
           codeBlockCopyLabel,
           codeBlockCopiedLabel,
           codeBlockTheme,
+          tableScrollRegionAriaLabel,
         ),
         ...defaultMarkdownComponents,
         ...components,
@@ -296,6 +349,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
         codeBlockCopyLabel,
         codeBlockCopiedLabel,
         codeBlockTheme,
+        tableScrollRegionAriaLabel,
         components,
       ],
     );

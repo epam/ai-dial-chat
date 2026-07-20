@@ -1,7 +1,6 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
-  CodeBlockTheme,
   MessageRole,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
@@ -132,36 +131,6 @@ describe('MessageBubble', () => {
     const actionsWrapper = container.querySelector('[class*="gap-1"]');
     expect(actionsWrapper?.className).not.toContain('opacity-0');
   });
-
-  it('forwards onAttachmentClick and attachmentClickLabel to user bubble', () => {
-    const onAttachmentClick = vi.fn();
-    render(
-      <MessageBubble
-        text="Hello"
-        role={MessageRole.User}
-        attachments={[ATTACHMENT]}
-        onAttachmentClick={onAttachmentClick}
-        labels={{ attachmentClickLabel: 'Download file' }}
-      />,
-    );
-    fireEvent.click(screen.getByLabelText('Download file'));
-    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
-  });
-
-  it('forwards onAttachmentClick and attachmentClickLabel to assistant bubble', () => {
-    const onAttachmentClick = vi.fn();
-    render(
-      <MessageBubble
-        text="Hello"
-        role={MessageRole.Assistant}
-        attachments={[ATTACHMENT]}
-        onAttachmentClick={onAttachmentClick}
-        labels={{ attachmentClickLabel: 'Download file' }}
-      />,
-    );
-    fireEvent.click(screen.getByLabelText('Download file'));
-    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
-  });
 });
 
 describe('UserMessageBubble — attachments', () => {
@@ -224,43 +193,6 @@ describe('UserMessageBubble — attachments', () => {
     expect(
       screen.queryByRole('button', { name: 'Open attachment' }),
     ).toBeNull();
-  });
-
-  it('clicking a card invokes onAttachmentClick with the attachment', () => {
-    const onAttachmentClick = vi.fn();
-    render(
-      <UserMessageBubble
-        text="Hello"
-        attachments={[ATTACHMENT]}
-        onAttachmentClick={onAttachmentClick}
-        labels={{ attachmentClickLabel: 'Download file' }}
-      />,
-    );
-    fireEvent.click(screen.getByLabelText('Download file'));
-    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
-  });
-
-  it('forwards attachmentClickLabel to the tray', () => {
-    render(
-      <UserMessageBubble
-        text="Hello"
-        attachments={[ATTACHMENT]}
-        onAttachmentClick={vi.fn()}
-        labels={{ attachmentClickLabel: 'Download file' }}
-      />,
-    );
-    expect(screen.getByLabelText('Download file')).toBeTruthy();
-  });
-
-  it('forwards attachmentTheme so file tiles use the markdown surface, not white, in light mode', () => {
-    const { container } = render(
-      <UserMessageBubble
-        text="Hello"
-        attachments={[ATTACHMENT]}
-        attachmentTheme={CodeBlockTheme.Light}
-      />,
-    );
-    expect(container.querySelector('[class*="tileLight"]')).toBeTruthy();
   });
 });
 
@@ -482,17 +414,6 @@ describe('AssistantMessageBubble — attachments', () => {
       />,
     );
     expect(screen.queryByRole('button', { name: /remove/i })).toBeNull();
-  });
-
-  it('forwards attachmentTheme so file tiles use the markdown surface, not white, in light mode', () => {
-    const { container } = render(
-      <AssistantMessageBubble
-        text="Here is your file"
-        attachments={[ATTACHMENT]}
-        attachmentTheme={CodeBlockTheme.Light}
-      />,
-    );
-    expect(container.querySelector('[class*="tileLight"]')).toBeTruthy();
   });
 });
 

@@ -2,7 +2,6 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
-import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import { CatalogItem } from '../../models/catalog-item';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
@@ -122,7 +121,6 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
           size="lg"
           query={query}
           className="min-w-0 self-stretch"
-          typeColor={ENTITY_TYPE_COLOR[item.type]}
           nameClassName={nameClassName}
           versionClassName={versionClassName}
           lastUsedClassName={lastUsedClassName}

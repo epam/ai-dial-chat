@@ -446,6 +446,15 @@
         "operationId": "listDeployments",
         "parameters": [
           {
+            "name": "refresh",
+            "required": false,
+            "in": "query",
+            "description": "Bypass the short server-side deployments list cache and refresh from DIAL Core",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "interface_type",
             "required": false,
             "in": "query",
@@ -4048,6 +4057,45 @@
           "temperature"
         ]
       },
+      "ConversationStarterDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Starter button label"
+          },
+          "text": {
+            "type": "string",
+            "description": "Text inserted into the chat input"
+          }
+        },
+        "required": ["title", "text"]
+      },
+      "ConversationStartersDto": {
+        "type": "object",
+        "properties": {
+          "introText": {
+            "type": "string",
+            "description": "Optional text shown above the conversation starter buttons"
+          },
+          "autoSubmit": {
+            "type": "boolean",
+            "description": "When true, starter buttons submit immediately after selection"
+          },
+          "chatMessageInputDisabled": {
+            "type": "boolean",
+            "description": "When true, the chat input is disabled and users can only use starters"
+          },
+          "starters": {
+            "description": "Conversation starter buttons configured by the application",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationStarterDto"
+            }
+          }
+        },
+        "required": ["starters"]
+      },
       "DeploymentItemDto": {
         "type": "object",
         "properties": {
@@ -4160,6 +4208,14 @@
           "applicationFolder": {
             "type": "string",
             "description": "Parent folder path for application-type deployments (absent for root-level or non-application items)"
+          },
+          "conversationStarters": {
+            "description": "Quick Apps conversation starter settings from application properties",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationStartersDto"
+              }
+            ]
           }
         },
         "required": [

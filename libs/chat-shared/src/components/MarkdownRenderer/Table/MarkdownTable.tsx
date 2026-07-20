@@ -30,11 +30,21 @@ export interface MarkdownTableProps {
   classNames: MarkdownTableClassNames;
   /** Color overrides applied as CSS custom properties. */
   colors?: MarkdownTableColors;
+  /**
+   * Accessible label announced for the horizontally scrollable region.
+   * Defaults to `'Scrollable table'`.
+   */
+  scrollRegionAriaLabel?: string;
 }
 
 /** Renders a responsive Markdown table with an end fade while more columns are available. */
 export const MarkdownTable: FC<MarkdownTableProps> = memo(
-  ({ children, classNames, colors }) => {
+  ({
+    children,
+    classNames,
+    colors,
+    scrollRegionAriaLabel = 'Scrollable table',
+  }) => {
     const {
       scrollContainerRef,
       tableRef,
@@ -47,19 +57,22 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       '--cm-table-scrollbar': colors?.scrollbar,
       '--cm-table-fade': colors?.fade,
     });
+    const isScrollable = hasContentBeyondStart || hasContentBeyondEnd;
 
     return (
       <div
         style={cssVars}
         className={mergeClasses(
-          'relative w-full min-w-0 max-w-full overflow-hidden',
+          'relative w-full min-w-0 max-w-full overflow-hidden rounded-xl border',
+          styles.tableContainer,
+          styles.tableContainerLight,
           classNames.tableWrapper,
         )}
       >
         <div
           ref={scrollContainerRef}
           className={mergeClasses(
-            'w-full min-w-0 max-w-full overflow-x-auto rounded border',
+            'w-full min-w-0 max-w-full overflow-x-auto',
             styles.scrollContainer,
             {
               [styles.tableScrollFadeBoth]:
@@ -71,6 +84,9 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
             },
           )}
           onScroll={handleScroll}
+          role={isScrollable ? 'region' : undefined}
+          aria-label={isScrollable ? scrollRegionAriaLabel : undefined}
+          tabIndex={isScrollable ? 0 : undefined}
         >
           <table
             ref={tableRef}

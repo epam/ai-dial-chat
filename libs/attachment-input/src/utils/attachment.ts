@@ -3,7 +3,6 @@ import {
   AttachmentType,
   MIME_TYPE_EXT_MAP,
   RequestStatus,
-  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import type { Icon } from '@tabler/icons-react';
 import {
@@ -37,7 +36,6 @@ import {
   IconTerminal2,
   IconVideo,
 } from '@tabler/icons-react';
-import styles from '../components/AttachmentCard/AttachmentCard.module.scss';
 import {
   ATTACHMENT_COLLAPSE_THRESHOLD,
   ATTACHMENT_COLLAPSED_VISIBLE_COUNT,
@@ -268,11 +266,9 @@ const getBottomLabel = (
   return name;
 };
 
-/** Derives the display state (icons, labels, color classes) an AttachmentCard/AttachmentFileRow needs to render a given attachment. */
+/** Derives the display state (icons, labels, color classes) an AttachmentCard needs to render a given attachment. */
 export const getAttachmentCardState = (
   attachment: DisplayAttachment,
-  isSelected: boolean,
-  shouldAlwaysShowActions: boolean,
   typeLabels: AttachmentTypeLabels = {},
 ): AttachmentCardState => {
   const { type, status, previewUrl, url } = attachment;
@@ -282,31 +278,16 @@ export const getAttachmentCardState = (
   const isImage =
     type === AttachmentType.Image && !!(previewUrl ?? url) && !isError;
   const isAudio = type === AttachmentType.Audio && !isError;
-
-  const cardColorClass = mergeClasses(
-    styles.card,
-    isError && styles.cardError,
-    isSelected && styles.cardSelected,
-    !isError &&
-      !isSelected &&
-      type === AttachmentType.Prompt &&
-      styles.cardPrompt,
-    !isError &&
-      !isSelected &&
-      type === AttachmentType.Pasted &&
-      styles.cardPasted,
-  );
+  const isLink = type === AttachmentType.Link && !isError;
 
   return {
     isLoading,
     isError,
     isImage,
     isAudio,
-    areActionsVisible: isError || shouldAlwaysShowActions,
-    BottomIcon: getBottomIcon(attachment),
-    typeLabel: getBottomLabel(attachment, typeLabels),
-    cardColorClass,
-    removeBtnClass: isImage ? styles.removeBtnImage : styles.actionBtn,
+    isLink,
+    BottomIcon: isLink ? null : getBottomIcon(attachment),
+    typeLabel: isLink ? null : getBottomLabel(attachment, typeLabels),
   };
 };
 

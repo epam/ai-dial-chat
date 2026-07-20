@@ -1,5 +1,5 @@
 import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   AttachmentsI18nKeys,
@@ -83,22 +83,6 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('ConversationMessageItem — main render', () => {
-  it('attachment card is clickable and fires handleAttachmentClick', () => {
-    render(<ConversationMessageItem {...defaultProps} />);
-    fireEvent.click(screen.getByLabelText(AttachmentsI18nKeys.Download));
-    expect(mockHandleAttachmentClick).toHaveBeenCalledOnce();
-  });
-
-  it('passes the correct DisplayAttachment to handleAttachmentClick', () => {
-    render(<ConversationMessageItem {...defaultProps} />);
-    fireEvent.click(screen.getByLabelText(AttachmentsI18nKeys.Download));
-    expect(mockHandleAttachmentClick).toHaveBeenCalledWith(
-      expect.objectContaining({ url: 'files/report.pdf', name: 'report.pdf' }),
-    );
-  });
-});
-
 describe('ConversationMessageItem — reference-only attachments', () => {
   const ASSISTANT_WITH_REFERENCE: Message = {
     role: MessageRole.Assistant,
@@ -112,21 +96,6 @@ describe('ConversationMessageItem — reference-only attachments', () => {
           data: 'Dinosaurs first appeared in the Triassic Period.',
           reference_url: 'https://example.com/redirect/a',
           reference_type: 'text/markdown',
-        },
-      ],
-    },
-  };
-
-  const ASSISTANT_WITH_FILE_ATTACHMENT: Message = {
-    role: MessageRole.Assistant,
-    content: 'See the attached report.',
-    timestamp: '2024-01-01T00:00:03Z',
-    custom_content: {
-      attachments: [
-        {
-          title: 'report.pdf',
-          type: 'application/pdf',
-          url: 'files/report.pdf',
         },
       ],
     },
@@ -154,20 +123,6 @@ describe('ConversationMessageItem — reference-only attachments', () => {
     expect(
       screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
     ).toBeTruthy();
-  });
-
-  it('renders no chip row when there are no reference-only attachments', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={ASSISTANT_WITH_FILE_ATTACHMENT}
-        index={1}
-      />,
-    );
-    expect(
-      screen.queryByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    ).toBeNull();
-    expect(screen.getByLabelText(AttachmentsI18nKeys.Download)).toBeTruthy();
   });
 });
 
@@ -200,19 +155,5 @@ describe('ConversationMessageItem — stopped generation', () => {
     );
     expect(screen.getByText('Partial answer')).toBeTruthy();
     expect(screen.queryByText('Stopped generating')).toBeNull();
-  });
-});
-
-describe('ConversationMessageItem — Suspense fallback', () => {
-  it('fallback MessageBubble also receives onAttachmentClick', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        editingMessageIndexes={new Set([0])}
-      />,
-    );
-    // The fallback bubble renders while EditMessageInput suspends
-    fireEvent.click(screen.getByLabelText(AttachmentsI18nKeys.Download));
-    expect(mockHandleAttachmentClick).toHaveBeenCalledOnce();
   });
 });

@@ -54,3 +54,30 @@ describe('NameCellRenderer — selected state', () => {
     expect(screen.getByText('Claude')).toBeTruthy();
   });
 });
+
+describe('NameCellRenderer — density', () => {
+  it('renders the name at the smaller dense list-view size', () => {
+    render(<NameCellRenderer {...makeParams(makeItem({ name: 'Claude' }))} />);
+    const heading = screen.getByText('Claude').closest('h3');
+    expect(heading?.className).toContain('dial-small-semi-text');
+  });
+
+  it('never renders a description, even when the item has one', () => {
+    const { container } = render(
+      <NameCellRenderer {...makeParams(makeItem({ description: 'desc' }))} />,
+    );
+    expect(container.querySelector('p')).toBeNull();
+    expect(screen.queryByText('desc')).toBeNull();
+  });
+
+  it('renders the entity tile at the dense list-view size (36px)', () => {
+    const { container } = render(
+      <NameCellRenderer {...makeParams(makeItem())} />,
+    );
+    const badge = container.querySelector(
+      '[style*="width"]',
+    ) as HTMLElement | null;
+    expect(badge?.style.width).toBe('36px');
+    expect(badge?.style.height).toBe('36px');
+  });
+});

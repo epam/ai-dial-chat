@@ -452,6 +452,7 @@ export enum SidebarI18nKeys {
 
 export enum AttachmentsI18nKeys {
   Download = 'attachments.downloadFile',
+  OpenInNewTab = 'attachments.openInNewTab',
   UnsupportedTypeTitle = 'attachments.unsupportedType.title',
   UnsupportedTypeMessage = 'attachments.unsupportedType.message',
   NoAttachmentsAllowedTitle = 'attachments.noAttachmentsAllowed.title',

@@ -24,7 +24,11 @@ export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
   labels: { titleText = 'Model switched.', bodyText },
 }) => {
   return (
-    <div role="status" aria-live="polite">
+    <div
+      role="status"
+      aria-live="polite"
+      className="dial-info-notification dial-notification"
+    >
       <DialNotification
         title={titleText}
         message={bodyText}

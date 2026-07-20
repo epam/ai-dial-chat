@@ -50,6 +50,13 @@
 .hoverIcon {
   background: var(--ci-tile-hover-icon-bg, var(--bg-layer-2, #eef1f7));
   color: var(--ci-tile-hover-icon-color, var(--text-primary, #161b2d));
+
+  &:hover {
+    background: var(
+      --ci-tile-hover-icon-bg,
+      var(--bg-layer-2, #eef1f7)
+    ) !important;
+  }
 }
 
 .track {
