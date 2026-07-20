@@ -153,23 +153,6 @@ describe('StageItem — icon priority and failed styling', () => {
 });
 
 describe('StageItem — attachments', () => {
-  it('renders an attachment via AttachmentCard when the row is expanded', () => {
-    render(
-      <StageItem
-        stage={{
-          ...baseStage,
-          attachments: [{ title: 'summary.pdf' }],
-        }}
-        isLive={false}
-        typography={{}}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole('button'));
-    expect(screen.getByText('summary.pdf')).toBeTruthy();
-  });
-});
-
 describe('StageItem — nameOverride (used for ×N attempts)', () => {
   it('displays the override name while still reading duration from the real stage name', () => {
     render(

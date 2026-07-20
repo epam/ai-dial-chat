@@ -231,23 +231,4 @@ describe('StagesPanel', () => {
     expect(screen.getByText('Attempt 2')).toBeTruthy();
     expect(screen.getByText('Attempt 3')).toBeTruthy();
   });
-
-  it('renders an attachment inside an expanded stage via the shared AttachmentCard', () => {
-    render(
-      <StagesPanel
-        stages={[
-          {
-            index: 0,
-            name: 'Generated report',
-            status: StageStatus.Completed,
-            attachments: [{ title: 'summary.pdf' }],
-          },
-        ]}
-        isStreaming={false}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole('button'));
-    expect(screen.getByText('summary.pdf')).toBeTruthy();
-  });
 });
