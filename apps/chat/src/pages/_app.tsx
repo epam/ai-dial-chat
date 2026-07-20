@@ -66,11 +66,7 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
           </>
         )}
       </Head>
-      <SessionProvider
-        session={rest.pageProps.session}
-        basePath={'/api/auth'}
-        refetchOnWindowFocus={false}
-      >
+      <SessionProvider session={rest.pageProps.session} basePath={'/api/auth'}>
         <Provider store={store}>
           <div className={`${inter.variable} font`}>
             <Toasts />
