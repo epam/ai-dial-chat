@@ -18,6 +18,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => {
       resource,
       selectedFolderPath,
       onSelectedFolderPathChange,
+      onCreateFolder,
       hasExistingPublicationInFolder,
       hasWriteAccess,
       isSubmitting,
@@ -28,6 +29,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => {
       resource?: { title: string };
       selectedFolderPath?: string[];
       onSelectedFolderPathChange: (path: string[] | undefined) => void;
+      onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
       hasExistingPublicationInFolder: boolean;
       hasWriteAccess: boolean;
       isSubmitting: boolean;
@@ -44,6 +46,9 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => {
         {hasSubmitError && <span role="alert">submit failed</span>}
         <button onClick={() => onSelectedFolderPathChange(['Shared'])}>
           Select Shared
+        </button>
+        <button onClick={() => void onCreateFolder(['Shared'], 'New')}>
+          Create folder
         </button>
         <button onClick={onSubmit}>Publish</button>
         <button onClick={onClose}>Close</button>
@@ -127,6 +132,21 @@ describe('PublishConversationPanelContainer', () => {
       screen.getByRole('button', { name: 'Select Shared' }),
     );
     expect(screen.getByText('selected:Shared')).toBeTruthy();
+  });
+
+  it('creates publish folders through the shared publish flow', async () => {
+    const onCreatePublishFolder = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(usePublishFolders).mockReturnValue({
+      ...baseFoldersResult,
+      onCreatePublishFolder,
+    });
+
+    await renderContainer();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create folder' }),
+    );
+
+    expect(onCreatePublishFolder).toHaveBeenCalledWith(['Shared'], 'New');
   });
 
   it('publishes successfully: closes the panel, shows a success notification, and refreshes the conversation list', async () => {

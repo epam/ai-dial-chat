@@ -62,45 +62,65 @@ export const toDialFileTree = (items: PublishFolderNode[]): DialFile[] =>
     };
   });
 
+/** Characters forbidden in a publish destination folder name, mirroring the backend's path validation rules. */
+const FORBIDDEN_FOLDER_NAME_CHARS_RE = /[/\\:;,={}&"]/;
+
+/** Error messages returned by {@link validateFolderName} for each rejection reason. */
+export interface FolderNameValidationMessages {
+  /** Shown when the trimmed name is empty. */
+  empty: string;
+  /** Shown when the name contains `..` or a forbidden character. */
+  invalid: string;
+  /** Shown when a sibling folder already has this name (case-insensitive). */
+  duplicate: string;
+}
+
 /**
- * Inserts a placeholder `DialFile` folder node so `DialFoldersTree` can
- * render its inline create-folder row for it (`createdFolderPath`). The
- * placeholder is never reported to `onCreateFolder` — only the name the
- * user confirms is.
+ * Validates a folder name entered in the publish destination tree. Returns an
+ * error message from `messages`, or `null` when `rawValue` is a valid,
+ * non-duplicate folder name.
  */
-export const insertPlaceholderDialFile = (
-  items: DialFile[],
-  parentPath: string[],
-  placeholderName: string,
-): DialFile[] => {
-  const placeholderPath = toFolderPathKey([...parentPath, placeholderName]);
-  const placeholder: DialFile = {
-    path: placeholderPath,
-    name: placeholderName,
-    folderId: placeholderPath,
-    nodeType: DialFileNodeType.FOLDER,
-  };
-
-  if (parentPath.length === 0) {
-    return [...items, placeholder];
+export const validateFolderName = (
+  rawValue: string,
+  siblingNames: string[],
+  messages: FolderNameValidationMessages,
+): string | null => {
+  const trimmed = rawValue.trim();
+  if (!trimmed) {
+    return messages.empty;
   }
+  if (trimmed.includes('..') || FORBIDDEN_FOLDER_NAME_CHARS_RE.test(trimmed)) {
+    return messages.invalid;
+  }
+  if (
+    siblingNames.some((name) => name.toLowerCase() === trimmed.toLowerCase())
+  ) {
+    return messages.duplicate;
+  }
+  return null;
+};
 
-  const parentKey = toFolderPathKey(parentPath);
-  return items.map((file) => {
-    if (file.path !== parentKey) {
-      return file.items
-        ? {
-            ...file,
-            items: insertPlaceholderDialFile(
-              file.items,
-              parentPath,
-              placeholderName,
-            ),
-          }
-        : file;
-    }
-    return { ...file, items: [...(file.items ?? []), placeholder] };
-  });
+/**
+ * Returns `baseName` if no sibling already has that name, otherwise
+ * `"${baseName} 2"`, `"${baseName} 3"`, etc. — the first suffix that is
+ * free. Used so the inline create-folder editor starts with a name that does
+ * not duplicate an existing sibling folder.
+ */
+export const getUniqueFolderName = (
+  baseName: string,
+  siblingNames: string[],
+): string => {
+  const lowerSiblingNames = new Set(
+    siblingNames.map((name) => name.toLowerCase()),
+  );
+  if (!lowerSiblingNames.has(baseName.toLowerCase())) {
+    return baseName;
+  }
+  let suffix = 2;
+  while (lowerSiblingNames.has(`${baseName} ${suffix}`.toLowerCase())) {
+    suffix += 1;
+  }
+  return `${baseName} ${suffix}`;
 };
 
 /** Names of the direct children of the folder at `parentPath` (root siblings when empty). */

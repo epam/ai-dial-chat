@@ -414,6 +414,9 @@ export enum ConversationPublishI18nKeys {
   PanelAriaLabel = 'conversationPublish.panelAriaLabel',
   AlreadyPublishedWarning = 'conversationPublish.alreadyPublishedWarning',
   SuccessMessage = 'conversationPublish.successMessage',
+  EmptyFolderNameError = 'conversationPublish.emptyFolderNameError',
+  InvalidFolderNameError = 'conversationPublish.invalidFolderNameError',
+  DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
 }
 
 export enum ConversationExportI18nKeys {
