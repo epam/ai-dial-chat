@@ -111,13 +111,13 @@ These props are host-injected. The lib MUST NOT compute `isTranscriptionSupporte
 
 ### Requirement: `AttachmentTray` forwards a click callback to each `AttachmentCard`
 
-`libs/conversation-input/src/models/AttachmentTray.ts` (`AttachmentTrayProps`) SHALL gain two optional props:
+`libs/attachment-input/src/models/attachment-tray.ts` (`AttachmentTrayProps`) SHALL declare two optional props:
 
-- `onAttachmentClick?: (attachment: DisplayAttachment) => void` — Called when the user clicks or keyboard-activates a card. Receives the full `DisplayAttachment` object.
+- `onAttachmentClick?: (id: string) => void` — Called when the user clicks or keyboard-activates a card. Receives the attachment `id`; callers that need the full `DisplayAttachment` look it up from their own attachment list by `id`.
 - `clickLabel?: string` — Forwarded to each `AttachmentCard` as `clickLabel`. When omitted, `AttachmentCard`'s own default (`'Open attachment'`) applies.
 
 `AttachmentTray.tsx` SHALL, for each rendered `AttachmentCard`:
-- Pass `(attachment) => onAttachmentClick?.(attachment)` as the `onClick` prop when `onAttachmentClick` is provided.
+- Pass `onAttachmentClick` directly as the `onClick` prop (both share the `(id: string) => void` signature, so no wrapper function is needed).
 - Pass `clickLabel` as the `clickLabel` prop (may be `undefined`; card's own default covers that case).
 - Continue passing `onRemove`, `onRetry`, and `onExpand` as today — the new props are purely additive.
 
@@ -132,7 +132,7 @@ When `onAttachmentClick` is not provided, no `onClick` is passed to cards, and c
 
 - **WHEN** `AttachmentTray` is rendered with `onAttachmentClick` and an attachment list
 - **THEN** each `AttachmentCard` receives an `onClick` prop
-- **AND** activating any card invokes `onAttachmentClick` with the corresponding `DisplayAttachment`
+- **AND** activating any card invokes `onAttachmentClick` with the corresponding attachment `id`
 
 #### Scenario: `clickLabel` is forwarded to each card
 

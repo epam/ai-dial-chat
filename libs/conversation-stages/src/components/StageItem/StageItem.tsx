@@ -1,10 +1,6 @@
 import { AttachmentCard } from '@epam/ai-dial-attachment-input';
 import type { Stage } from '@epam/ai-dial-chat-shared';
-import {
-  mergeClasses,
-  messageAttachmentToDisplayAttachment,
-  StageStatus,
-} from '@epam/ai-dial-chat-shared';
+import { mergeClasses, StageStatus } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
@@ -60,11 +56,7 @@ export const StageItem: FC<StageItemProps> = ({
   const isMono = !nameOverride && isIdentifierLike(cleanedName);
   const isFailed = stage.status === StageStatus.Failed;
 
-  const displayAttachments =
-    stage.attachments?.map((attachment) =>
-      messageAttachmentToDisplayAttachment(attachment),
-    ) ?? [];
-  const hasExpandableContent = !!(stage.content || displayAttachments.length);
+  const hasExpandableContent = !!stage.content;
 
   const header = (
     <>
