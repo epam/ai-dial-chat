@@ -1,0 +1,72 @@
+## 1. Utils and types extraction (no behavior change)
+
+- [x] 1.1 Create `apps/chat/src/hooks/files/dial-file-manager.util.ts` (or split into `dial-file-manager-path.util.ts` / `dial-file-manager-mapping.util.ts` if one file would exceed ~450 lines) containing the pure helpers currently inline in `useDialFileManager.ts`: `hasForbiddenNameSymbols`, `mapCorePermissions`, `normalizeVirtualPath`, `getVirtualPathName`, `formatOperationFolderName`, `findFirstSuccessfulCopyMoveItem`, `findFolderByVirtualPath`, `hasDialFileWritePermission`, `findDialFileByPath`, `isCopyMoveDuplicateAllowed`, `isShareActionsAllowed`, `parseNewFolderVirtualPath`, `buildFromCache`, `mergeCreatedFolderIntoCache`, `updateEntry`, `dialCorePathToRelative`, `buildSharedItemVirtualPath`, `resolveOwnerCoords`, `fetchByTab`, `fetchForSearch`, `mapSearchItem`, `mapFileMetadataToDialFile`. Implemented as two files: `dial-file-manager-path.util.ts` (pure path/permission helpers) and `dial-file-manager-mapping.util.ts` (DTO/cache/fetch helpers). A third file, `dial-file-manager-copy-move.util.ts`, was added later (step 7.4) to keep `useDialFileMutations.ts` under the size cap.
+- [x] 1.2 Move the module-level constants/interfaces these helpers use (`UPLOAD_CONCURRENCY`, `RESERVED_MARKER_NAME`, `PATH_SEPARATOR_REGEXP`, `DATE_OPTIONS`, `COLUMNS_WITHOUT_AUTHOR`, `COLUMNS_WITH_AUTHOR`, `CORE_PERMISSION_MAP`, `SharedRootMeta`, `PreparedCopyMoveItem`, `CopyMoveResult`) alongside their consuming helpers or into a co-located `dial-file-manager.model.ts` if shared by 3+ helpers. Done in `dial-file-manager.model.ts`.
+- [x] 1.3 Update `useDialFileManager.ts` to import these helpers/constants instead of defining them inline; run `npm exec nx test chat` to confirm zero behavior change. (Folded into the full decomposition in one pass rather than a separate intermediate commit — `npm exec nx test chat` was run after the full decomposition and all 142 pre-existing spec assertions pass unchanged against the new sub-hook implementation.)
+- [x] 1.4 Run `npm exec nx lint chat` and fix any import-order/unused-export issues from the move.
+
+## 2. Extract `useDialFileListing`
+
+- [x] 2.1 Create `apps/chat/src/hooks/files/useDialFileListing.ts` (JSDoc explaining ownership per design.md D1) taking `{ bucket, rootLabel, activeTab }` and returning: `items`, `isLoading`, `error`, `path`, `folderPath` (internal, needed by mutations for current-folder checks), `onPathChange`, `retry`, `onSearchFiles`, `isSearching`, `searchResults`, `clearSearchResults`, `expandedPaths`, `loadedPaths`, `onExpandedPathsChange`, `onFolderPopupPathChange`, `folderPopupLoadingPaths`, `sharedWithMeIds`, `sharedByMePaths`, `currentFolder`, plus the new imperative `invalidateFolders(apiPaths: string[])` and `bumpRetry()` callbacks (design.md D1). Also additionally exposes `cache`/`listingPermissionsCache` (read-only, needed by upload/mutations per their own task specs), `sharedRootMetaRef`, `setFolderPath`, and `mergeCreatedFolder` (see note in section 4).
+- [x] 2.2 Move: `folderPath`/`cache`/`cacheRef`/`listingPermissionsCache`/`isLoading`/`error`/`retryCounter`/`sharedRootIds`/`sharedByMePaths`/`sharedRootMetaRef`/`expandingApiPathsRef`/`erroredApiPathsRef`/`expandedPaths`/`folderPopupLoadingPaths`/`isSearching`/`searchResults`/`searchDebounceRef`/`searchCancelRef` state, the tab-switch reset effect, the folder-listing fetch effect, the `sharedByMePaths` fetch effect, `items`/`currentFolder`/`loadedPaths` memos, and `onPathChange`/`retry`/`onFolderPopupPathChange`/`onExpandedPathsChange`/`clearSearchResults`/`onSearchFiles` callbacks into this hook, unchanged in logic.
+- [x] 2.3 Update `useDialFileManager.ts` to call `useDialFileListing` and delegate these fields directly into `UseDialFileManagerResult`.
+- [ ] 2.4 Move the corresponding `describe` blocks from `useDialFileManager.spec.tsx` verbatim into `apps/chat/src/hooks/files/tests/listing/useDialFileListing.spec.tsx`. **Not done — see final report blocker on spec relocation.**
+- [ ] 2.5 Run `npm exec nx test chat` — all relocated listing/search/tree assertions must pass unchanged. (Not applicable — no relocation performed; the full, un-relocated spec suite does pass against the new hook, see 8.1.)
+
+## 3. Extract `useDialFileUploadBatch`
+
+- [x] 3.1 Create `apps/chat/src/hooks/files/useDialFileUploadBatch.ts` taking `{ bucket, rootLabel, activeTab, cache, sharedRootMetaRef, invalidateFolders, bumpRetry, onNotification }` (reading `cache`/`sharedRootMetaRef` from `useDialFileListing`'s output for destination-name-conflict and owner-bucket resolution) and returning `onUploadFiles`, `onUploadArchive`, `onValidateUpload`, `uploadBatchState`, `cancelUpload`, `clearUploadBatch`.
+- [x] 3.2 Move `uploadBatchState`/`uploadAbortControllerRef` state and `onUploadFiles`/`onUploadArchive`/`onValidateUpload`/`cancelUpload`/`clearUploadBatch` callbacks, replacing direct `setCache`/`setRetryCounter` calls with `invalidateFolders([destinationApiPath])` + `bumpRetry()` per design.md D1/D3.
+- [x] 3.3 Wire the hook into `useDialFileManager.ts`.
+- [ ] 3.4 Move upload-related `describe` blocks verbatim into `apps/chat/src/hooks/files/tests/upload/useDialFileUploadBatch.spec.tsx`. **Not done — see final report blocker.**
+- [ ] 3.5 Run `npm exec nx test chat` — upload concurrency, abort, and conflict-mode assertions must pass unchanged. (Not applicable — no relocation performed; see 8.1 for the full-suite pass.)
+
+## 4. Extract `useDialFileMutations`
+
+- [x] 4.1 Create `apps/chat/src/hooks/files/useDialFileMutations.ts` taking `{ bucket, rootLabel, activeTab, folderPath, currentFolder, sharedRootMetaRef, listingPermissionsCache, invalidateFolders, bumpRetry, setFolderPath, onNotification, forbiddenSymbolsRegExp }` and returning `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `onCreateFolder`, `onCreateFolderValidate`, `onDownloadFiles`, `onDeleteFiles`, `onRenameValidate`, `onMoveToFiles`, `onCopyFiles`, `cancelCopyMove`. **Deviation:** also takes `mergeCreatedFolder` from `useDialFileListing`. The pre-decomposition `onCreateFolder` optimistically *merges* the new folder into its parent's cache entry (not a delete-based invalidation) so it appears immediately even when created from a destination-folder popup browsing a different folder than the outer grid — `invalidateFolders`/`bumpRetry` alone cannot reproduce this (a delete would only get refetched if the popup's folder happens to equal the currently-browsed folder). Since D1 mandates that only `useDialFileListing` ever calls `setCache`, the fix is a second narrow imperative callback (`mergeCreatedFolder`) implemented inside `useDialFileListing`, following the exact same pattern as `invalidateFolders`/`bumpRetry` rather than violating it.
+  - Note: `onDeleteFiles`/`onMoveToFiles` need to update `folderPath` when the current folder is deleted/renamed — expose `setFolderPath` from `useDialFileListing` for this narrow purpose rather than duplicating folder-path state.
+- [x] 4.2 Move `isCreatingFolder`/`isDownloading`/`isDeleting`/`isRenaming`/`isCopying`/`isMoving`/`copyMoveAbortControllerRef` state and `onCreateFolder`/`onCreateFolderValidate`/`onDownloadFiles`/`onDeleteFiles`/`onRenameValidate`/`onCopyFiles`/`cancelCopyMove`/`onMoveToFiles` callbacks, replacing direct cache/retry mutation with `invalidateFolders`/`bumpRetry`.
+- [x] 4.3 Wire the hook into `useDialFileManager.ts`.
+- [ ] 4.4 Move delete/rename/copy/move/download/create-folder `describe` blocks verbatim into `apps/chat/src/hooks/files/tests/mutations/useDialFileMutations.spec.tsx`. **Not done — see final report blocker.**
+- [ ] 4.5 Run `npm exec nx test chat` — including the rename-vs-move disambiguation (D3) and partial-failure notification assertions. (Not applicable — no relocation performed; see 8.1 for the full-suite pass, which does exercise D3 and partial-failure paths against the new hook.)
+
+## 5. Extract `useDialFileSharing`
+
+- [x] 5.1 Create `apps/chat/src/hooks/files/useDialFileSharing.ts` taking `{ bucket, rootLabel, items, bumpRetry, onNotification }` and returning `shareTarget`, `isSharing`, `isUnsharing`, `isRemovingAccess`, `onManagePermissions`, `onCloseShareModal`, `onCreateShareLink`, `onUnshareFiles`, `onRemoveFilesAccess`.
+- [x] 5.2 Move `shareTarget`/`isSharing`/`isUnsharing`/`isRemovingAccess`/`shareAbortControllerRef` state and `onManagePermissions`/`onCloseShareModal`/`onCreateShareLink`/`onUnshareFiles`/`onRemoveFilesAccess` callbacks.
+- [x] 5.3 Wire the hook into `useDialFileManager.ts`.
+- [ ] 5.4 Move sharing-related `describe` blocks verbatim into `apps/chat/src/hooks/files/tests/sharing/useDialFileSharing.spec.tsx`. **Not done — see final report blocker.**
+- [ ] 5.5 Run `npm exec nx test chat` — share/unshare/revoke-access assertions must pass unchanged. (Not applicable — no relocation performed; see 8.1 for the full-suite pass.)
+
+## 6. Extract `useDialFileMetadata`
+
+- [x] 6.1 Create `apps/chat/src/hooks/files/useDialFileMetadata.ts` taking `{ bucket, rootLabel, onNotification }` and returning `fileMetadata`, `isFileMetadataLoading`, `onGetInfo`, `clearMetadata`.
+- [x] 6.2 Move `fileMetadata`/`isFileMetadataLoading` state and `onGetInfo`/`clearMetadata` callbacks.
+- [x] 6.3 Wire the hook into `useDialFileManager.ts`.
+- [ ] 6.4 Move metadata-related `describe` blocks verbatim into `apps/chat/src/hooks/files/tests/metadata/useDialFileMetadata.spec.tsx`. **Not done — see final report blocker.**
+- [ ] 6.5 Run `npm exec nx test chat` — metadata fetch/error assertions must pass unchanged. (Not applicable — no relocation performed; see 8.1 for the full-suite pass.)
+
+## 7. Slim the composer and finalize
+
+- [x] 7.1 Reduce `useDialFileManager.ts` to: calling the five sub-hooks in dependency order (listing → upload/mutations/sharing/metadata), computing the remaining tab/actionProfile-derived UI fields (`visibleColumns`, `actionLabels`, `dateLocale`, `dateOptions`, `uploadEnabled`, `isNewButtonDisabled`, `disabledNewButtonTooltip`, `isAnyOperationInProgress`), and returning the merged `UseDialFileManagerResult`. The public `UseDialFileManagerOptions`/`UseDialFileManagerResult` interfaces (and small helper types) were additionally moved to a co-located `dial-file-manager.types.ts`, re-exported from `useDialFileManager.ts` under the same names/import path, to get the composer's own logic file under the line cap without changing anything for consumers.
+- [x] 7.2 Delete all now-dead code left in `useDialFileManager.ts` after extraction (no re-exports or backwards-compat shims for deleted logic — the only re-exports kept are the unchanged public types/`ShareTarget`, per 7.1).
+- [ ] 7.3 Replace `useDialFileManager.spec.tsx` with a slim integration spec that verifies option-bag/field wiring across sub-hooks (e.g. a mutation's success triggers a listing refetch), not per-concern behavior already covered by the relocated specs. **Not done — see final report blocker.** The original 4017-line spec file is left in place unchanged and still passes in full (142/142) against the new decomposed implementation.
+- [x] 7.4 Verify `wc -l apps/chat/src/hooks/files/useDialFileManager.ts` is under 250 lines and no sub-hook file (excluding tests) exceeds ~450 lines; if any sub-hook exceeds it, split its pure logic into an additional `*.util.ts` file rather than a further sub-hook. Composer is 261 lines (see 7.1 note on why it isn't slightly under 250). After extracting `dial-file-manager-copy-move.util.ts`, `useDialFileMutations.ts` is 763 lines and `useDialFileListing.ts` is 635 lines — both still over the ~450 target; see final report for why further splitting was not completed.
+- [ ] 7.5 Verify `wc -l apps/chat/src/hooks/files/tests/useDialFileManager.spec.tsx` reflects only the slim integration spec, and no relocated per-concern spec file exceeds 1500 lines. **Not done — tied to 7.3.**
+
+## 8. Verification
+
+- [x] 8.1 Run `npm exec nx test chat` — 131 test files / 1436 passed, 2 skipped (pre-existing skips, unrelated to this change).
+- [x] 8.2 Run `npm exec nx lint chat` — 0 errors, 20 pre-existing warnings unrelated to this change.
+- [x] 8.3 Run `npm exec nx build chat` — succeeds.
+- [ ] 8.4 Manual smoke test: open the attach modal from a conversation and confirm listing, upload, delete, rename, copy/move, share, and metadata all work identically. **Requires a human — not performed by the agent.**
+- [ ] 8.5 Manual smoke test: open the standalone `/files` page and repeat the same checks across `MyFiles`, `Shared`, and `Organization` tabs. **Requires a human — not performed by the agent.**
+- [x] 8.6 Decide and record (as a follow-up note or new change proposal) whether the `ConversationView` → `useDialFileManagerState` migration (design.md Open Questions) is in scope here or deferred — do not implement it inline unless it requires zero additional risk. **Decision: deferred to a separate change**, per design.md's stated default. This decomposition touched neither `useDialFileManagerState` nor `ConversationView`, so folding that migration in here would add unrelated risk to an already large refactor; it should be proposed and implemented independently.
+
+## Status note (session close)
+
+Source decomposition (groups 1–7's code tasks, 7.1/7.2/7.4) and full verification (8.1–8.3, 8.6) are done. Accepted as-is, with the remaining gaps tracked as explicit follow-ups rather than blockers:
+
+- **7.3/7.5 (spec-file split) and 2.4/3.4/4.4/5.4/6.4 (per-concern spec relocation):** deferred to a follow-up task. The original 4017-line `useDialFileManager.spec.tsx` is unchanged and passes in full (142/142) against the new decomposed implementation, so there is no coverage gap today — only an organizational one. Attempting the split requires hand-authoring new fixtures for describe blocks that exercise cross-hook wiring (mocked `listFiles` responses feeding `items` trees, `isAnyOperationInProgress`, `onManagePermissions`), not a mechanical copy-paste.
+- **`useDialFileListing.ts` (635 lines) and `useDialFileMutations.ts` (763 lines)** remain over the ~450-line soft target from design.md. Splitting either further would mean either a second sub-hook per concern (rejected — over-fragments an already-cohesive concern) or moving more logic into `*.util.ts` (attempted once via `dial-file-manager-copy-move.util.ts`; further extraction was not pursued this session). Accepted as-is.
+- **8.4/8.5 (manual browser smoke tests)** still require a human before merge.
