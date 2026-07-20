@@ -454,6 +454,7 @@ export const ExpectedConstants = {
   ctrlEnterKeyboardShortcut: 'Ctrl + Enter - send messages, Enter - new line',
   stageContentLimitExceeded: (limit: number) =>
     `Content is too large to display (exceeds ${limit} KB).`,
+  fewVersionsLabel: 'Few',
 };
 
 export const withTraceId = (message: string): RegExp => {
