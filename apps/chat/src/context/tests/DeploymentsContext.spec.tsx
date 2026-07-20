@@ -717,4 +717,107 @@ describe('DeploymentsContext', () => {
       });
     });
   });
+
+  describe('mergeSharedItem', () => {
+    it('adds a new deployment item without issuing any request', async () => {
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      mockGetDeployments.mockClear();
+
+      const shared = {
+        id: 'shared-app',
+        displayName: 'Shared App',
+        type: 'application' as const,
+      };
+
+      act(() => {
+        result.current.mergeSharedItem(shared);
+      });
+
+      expect(result.current.items.map((item) => item.id)).toContain(shared.id);
+      expect(mockGetDeployments).not.toHaveBeenCalled();
+    });
+
+    it('adds a new toolset item without issuing any request', async () => {
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      mockListToolsets.mockClear();
+
+      const shared = {
+        id: 'toolsets/b/shared__0.0.1',
+        toolset: 'toolsets/b/shared__0.0.1',
+        displayName: 'Shared Toolset',
+      };
+
+      act(() => {
+        result.current.mergeSharedItem(shared);
+      });
+
+      expect(result.current.toolsets.map((item) => item.id)).toContain(
+        shared.id,
+      );
+      expect(mockListToolsets).not.toHaveBeenCalled();
+    });
+
+    it('replaces an existing deployment entry with the same id rather than duplicating it', async () => {
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+      await waitFor(() => expect(result.current.items.length).toBe(2));
+
+      const updated = { ...mockItem1, displayName: 'GPT-4o Updated' };
+
+      act(() => {
+        result.current.mergeSharedItem(updated);
+      });
+
+      expect(result.current.items.length).toBe(2);
+      expect(
+        result.current.items.find((item) => item.id === mockItem1.id)
+          ?.displayName,
+      ).toBe('GPT-4o Updated');
+    });
+
+    it('does not disturb an in-flight refetchDeployments request-id check', async () => {
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      let resolveRefetch: (value: typeof mockResponse) => void;
+      const refetchPromise = new Promise<typeof mockResponse>((resolve) => {
+        resolveRefetch = resolve;
+      });
+      mockGetDeployments.mockReturnValueOnce(refetchPromise);
+
+      const refetch = result.current.refetchDeployments();
+
+      act(() => {
+        result.current.mergeSharedItem({
+          id: 'shared-app',
+          displayName: 'Shared App',
+          type: 'application' as const,
+        });
+      });
+      expect(result.current.items.map((item) => item.id)).toContain(
+        'shared-app',
+      );
+
+      await act(async () => {
+        resolveRefetch(mockResponse);
+        await refetch;
+      });
+
+      // The in-flight refetch still applies its own (later) result, per the
+      // existing requestId sequencing — unaffected by the merge in between.
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        mockItem1.id,
+        mockItem2.id,
+      ]);
+    });
+  });
 });
