@@ -1,4 +1,3 @@
-import { AttachmentCard } from '@epam/ai-dial-attachment-input';
 import type { Stage } from '@epam/ai-dial-chat-shared';
 import { mergeClasses, StageStatus } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
