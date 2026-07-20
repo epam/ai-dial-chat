@@ -315,32 +315,31 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         )
           return;
         const displayName = schema.displayName ?? '';
-        if (
-          event.data?.type ===
-          `${displayName}/${AppsEditorEvent.ReadyToInteract}`
-        ) {
-          setIsLoading(false);
-        } else if (
-          event.data?.type ===
-          `${displayName}/${AppsEditorEvent.UpdatedSuccess}`
-        ) {
-          onUpdated?.();
-        } else if (event.data?.type === AppsEditorEvent.SaveSuccess) {
-          onSaveSuccess?.();
-        } else if (event.data?.type === AppsEditorEvent.SaveError) {
-          onSaveError?.(event.data?.error ?? '');
-        } else if (
-          event.data?.type === AppsEditorEvent.RequestToolsetLogin &&
-          typeof event.data?.toolsetId === 'string' &&
-          event.data.toolsetId
-        ) {
-          void handleToolsetLoginRequest(event.data.toolsetId);
-        } else if (
-          event.data?.type === AppsEditorEvent.RequestToolsetLogout &&
-          typeof event.data?.toolsetId === 'string' &&
-          event.data.toolsetId
-        ) {
-          void handleToolsetLogoutRequest(event.data.toolsetId);
+        switch (event.data?.type) {
+          case `${displayName}/${AppsEditorEvent.ReadyToInteract}`:
+            setIsLoading(false);
+            break;
+          case `${displayName}/${AppsEditorEvent.UpdatedSuccess}`:
+            onUpdated?.();
+            break;
+          case AppsEditorEvent.SaveSuccess:
+            onSaveSuccess?.();
+            break;
+          case AppsEditorEvent.SaveError:
+            onSaveError?.(event.data?.error ?? '');
+            break;
+          case AppsEditorEvent.RequestToolsetLogin:
+            if (typeof event.data?.toolsetId === 'string' && event.data.toolsetId) {
+              void handleToolsetLoginRequest(event.data.toolsetId);
+            }
+            break;
+          case AppsEditorEvent.RequestToolsetLogout:
+            if (typeof event.data?.toolsetId === 'string' && event.data.toolsetId) {
+              void handleToolsetLogoutRequest(event.data.toolsetId);
+            }
+            break;
+          default:
+            break;
         }
       },
       [
