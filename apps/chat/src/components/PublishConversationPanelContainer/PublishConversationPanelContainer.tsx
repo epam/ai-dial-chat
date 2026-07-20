@@ -166,6 +166,15 @@ const PublishConversationPanelContainer: FC<Props> = ({
       }}
       panelTexts={{
         replaceWarning: t(ConversationPublishI18nKeys.AlreadyPublishedWarning),
+        createFolderEmptyNameError: t(
+          ConversationPublishI18nKeys.EmptyFolderNameError,
+        ),
+        createFolderInvalidNameError: t(
+          ConversationPublishI18nKeys.InvalidFolderNameError,
+        ),
+        createFolderDuplicateNameError: t(
+          ConversationPublishI18nKeys.DuplicateFolderNameError,
+        ),
       }}
       texts={{
         title: t(ButtonsI18nKeys.Publish),

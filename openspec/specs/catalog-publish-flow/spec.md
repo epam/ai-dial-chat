@@ -38,15 +38,44 @@ i18n keys: `CatalogI18nKeys.PublishFolderSearchPlaceholder`, `CatalogI18nKeys.Pu
 - **THEN** the tree renders the `DialFoldersTree` empty state using `CatalogI18nKeys.PublishFolderEmptyState`
 
 ### Requirement: Inline folder creation via the ui-kit tree
-Creating a new folder SHALL use `DialFoldersTree`'s built-in inline create-folder row (`onCreateFolderSave`, `onCreateFolderCancel`, `createdFolderPath`) instead of the bespoke picker's custom create row. On save, the app-level `onCreatePublishFolder` callback SHALL be invoked with the parent path and new folder name; on success the newly created folder SHALL be optimistically merged into the tree and auto-selected, matching current `usePublishFlow` optimistic-create behavior.
+Creating a new folder SHALL use `DialFoldersTree`'s built-in inline create-folder row (`onCreateFolderSave`, `onCreateFolderCancel`, `createdFolderPath`) instead of the bespoke picker's custom create row. `PublishFoldersTree` SHALL pass the target parent folder path through `createdFolderPath` and SHALL NOT insert a synthetic new-folder node into `items`; `DialFoldersTree` owns the temporary editable row beneath that parent. On save, the app-level `onCreatePublishFolder` callback SHALL be invoked with the parent path and new folder name; the new folder SHALL be merged into the in-memory tree and auto-selected immediately.
+
+`onCreatePublishFolder` (`apps/chat/src/hooks/publish/usePublishFolders.ts`) SHALL NOT call the backend folder-creation endpoint. The folder exists only in the client-side tree until the user actually submits Publish, at which point the real publish request writes to the nested `folderPath`; DIAL Core storage creates any missing path segments implicitly, the same way writing a file to a new prefix does. This avoids leaving an orphaned empty folder on the backend when the user picks a new-folder name and then cancels or navigates away without publishing — unlike `useDialFileManager`'s "New folder" action (File Manager), which does create a real, immediately-persisted folder resource, since that flow's whole purpose is managing folders as first-class content.
 
 #### Scenario: User creates a new folder under the selected parent
 - **WHEN** the user confirms a new folder name in the inline create row
-- **THEN** `onCreatePublishFolder(parentPath, name)` is called, the new folder appears in the tree immediately (optimistic), and it becomes the selected folder once creation succeeds
+- **THEN** `onCreatePublishFolder(parentPath, name)` is called, no backend request is sent, the new folder appears in the tree immediately, and it becomes the selected folder
 
-#### Scenario: Folder creation fails
-- **WHEN** `onCreatePublishFolder` rejects
-- **THEN** the optimistically added folder is removed from the tree and the existing submit-error callout mechanism (`derivePublishState`) surfaces the failure
+#### Scenario: User cancels publish after creating a folder locally
+- **GIVEN** the user created a new folder in the destination picker and selected it
+- **WHEN** the user cancels the Publish panel instead of submitting
+- **THEN** no folder was ever created on the backend — nothing to roll back or clean up
+
+### Requirement: Per-row "Add sibling" / "Add child" folder creation
+In addition to the trailing "Create new folder" button, `PublishFoldersTree` SHALL expose a per-row context menu (`DialFoldersTree`'s `getContextMenuItems` prop) with two actions: "Add child" (creates the new folder inside the clicked folder) and "Add sibling" (creates the new folder as a sibling of the clicked folder, one level up). This mirrors the file manager's own "Add sibling"/"Add child" folder-creation actions (`useFolderCreation`'s `startTreeSiblingFolderCreation`/`startTreeChildFolderCreation` internal to `@epam/ai-dial-ui-kit`'s `FileManager`, not exported from the package) — reimplemented against the tree's public context-menu API rather than importing the internal hook. "Add sibling" SHALL be omitted for the root node, which has no parent to create a sibling under. Both actions resolve a unique default name and validate exactly like the trailing button (see the two requirements above) — there is no separate code path.
+
+#### Scenario: User adds a child folder via the context menu
+- **WHEN** the user opens the context menu on a folder row and selects "Add child"
+- **THEN** the inline create-folder row appears nested inside that folder, pre-filled with a unique default name
+
+#### Scenario: User adds a sibling folder via the context menu
+- **WHEN** the user opens the context menu on a non-root folder row and selects "Add sibling"
+- **THEN** the inline create-folder row appears at the same level as that folder (under its parent), pre-filled with a unique default name
+
+#### Scenario: Root node has no "Add sibling" action
+- **WHEN** the user opens the context menu on the bucket root node
+- **THEN** only "Add child" is offered — "Add sibling" is not, since the root has no parent
+
+### Requirement: Inline folder creation validates the name client-side
+Before invoking `onCreatePublishFolder`, `PublishFoldersTree` SHALL validate the confirmed name via `validateFolderName` (`libs/catalog/src/utils/publish-folder-tree.ts`) and reject: an empty (post-trim) name, a name containing `..` or any of the forbidden characters `/ \ : ; , = { } &  "`, and a name duplicating a sibling folder (case-insensitive). This mirrors the backend's `IsValidFilePath` path-traversal rule so an invalid destination is rejected in the UI instead of only failing the network request. The same validator SHALL be wired as `DialFoldersTree`'s `onRenameValidate` prop, which the ui-kit also invokes for the create-folder row, so the input shows an inline error and blocks Save while invalid.
+
+#### Scenario: User enters a path-traversal or forbidden-character folder name
+- **WHEN** the user types `../EscapeFolder` (or any name containing `..` or a forbidden character) into the inline create row and confirms
+- **THEN** an inline validation error is shown, `onCreatePublishFolder` is NOT called, and no folder is added to the tree
+
+#### Scenario: User enters an empty folder name
+- **WHEN** the user confirms an empty or whitespace-only name in the inline create row
+- **THEN** an inline validation error is shown and `onCreatePublishFolder` is NOT called
 
 ### Requirement: Publish visibility is scoped to editable entities
 The catalog Header's Publish action SHALL only be shown (`isPublishVisible`) when the current catalog item is user-owned/editable, in addition to the existing entity-type gate (Model, Toolset, Application). This is a client-side UI gate only; it does not replace server-side write-access enforcement.
