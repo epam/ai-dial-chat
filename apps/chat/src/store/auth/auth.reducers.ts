@@ -2,9 +2,9 @@ import { SessionContextValue } from 'next-auth/react';
 
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import isEqual from 'lodash-es/isEqual';
-
 import { AuthState } from './auth.types';
+
+import isEqual from 'lodash-es/isEqual';
 
 const initialState: AuthState = {
   session: undefined,
