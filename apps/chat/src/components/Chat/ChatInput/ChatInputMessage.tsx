@@ -431,6 +431,13 @@ export const ChatInputMessage = Inversify.register(
         templateMapping,
       });
       setSelectedDialLinks([]);
+      if (selectedFiles.length) {
+        dispatch(
+          FilesActions.resetDeviceAttachmentFlag({
+            ids: selectedFiles.map((file) => file.id),
+          }),
+        );
+      }
       dispatch(FilesActions.resetSelectedFiles());
       dispatch(ChatActions.resetFormValue());
       setContent('');
