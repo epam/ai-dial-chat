@@ -24,7 +24,12 @@ import {
   ExportFileNameKind,
   ExportJobStatus,
 } from '../types/conversation-export';
-import { isDialFileId, resolveDialFileBucketAndPath } from '../utils/dial-file';
+import { runWithConcurrency } from '../utils/async';
+import {
+  collectAttachmentRefs,
+  type AttachmentRef,
+} from '../utils/attachment-refs';
+import { resolveDialFileBucketAndPath } from '../utils/dial-file';
 import {
   buildExportEnvelope,
   buildExportFileName,
@@ -79,51 +84,6 @@ const toApiConversationPath = (conversationId: string): string =>
 const isOwnConversation = (
   item: Pick<ConversationListItemDto, 'sharedWithMe' | 'publishedWithMe'>,
 ): boolean => !item.sharedWithMe && !item.publishedWithMe;
-
-interface AttachmentRef {
-  fileId: string;
-}
-
-/**
- * Collects unique attachment references across all messages. The same file can be
- * attached to more than one message (e.g. re-shared in a later turn) — dedupe by
- * `fileId` so it is fetched and zipped only once instead of once per occurrence.
- */
-const collectAttachmentRefs = (conversation: Conversation): AttachmentRef[] => {
-  const fileIds = new Set<string>();
-  for (const message of conversation.messages) {
-    for (const attachment of message.custom_content?.attachments ?? []) {
-      const fileId = attachment.url ?? attachment.reference_url;
-      if (fileId != null && isDialFileId(fileId)) {
-        fileIds.add(fileId);
-      }
-    }
-  }
-  return Array.from(fileIds, (fileId) => ({ fileId }));
-};
-
-const runWithConcurrency = async <T, R>(
-  items: T[],
-  limit: number,
-  worker: (item: T) => Promise<R | undefined>,
-): Promise<R[]> => {
-  const results: R[] = [];
-  let nextIndex = 0;
-
-  const runNext = async (): Promise<void> => {
-    const currentIndex = nextIndex;
-    nextIndex += 1;
-    if (currentIndex >= items.length) return;
-    const result = await worker(items[currentIndex]);
-    if (result !== undefined) results.push(result);
-    await runNext();
-  };
-
-  await Promise.all(
-    Array.from({ length: Math.min(limit, items.length) }, runNext),
-  );
-  return results;
-};
 
 interface UseConversationExportResult {
   /** Export jobs, most recently added last. Multiple jobs can be in progress concurrently. */

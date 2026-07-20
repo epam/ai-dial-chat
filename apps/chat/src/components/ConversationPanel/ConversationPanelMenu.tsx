@@ -12,7 +12,8 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import {
   IconDotsVertical,
-  IconDownload,
+  IconFileArrowLeft,
+  IconFileArrowRight,
   IconTrashX,
 } from '@tabler/icons-react';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
@@ -21,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ButtonsI18nKeys,
   ConversationExportI18nKeys,
+  ConversationImportI18nKeys,
   ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
@@ -64,11 +66,13 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
 interface Props {
   activeConversationId?: string;
   onExportAll: () => void;
+  onImport: () => void;
 }
 
 const ConversationPanelMenu: FC<Props> = ({
   activeConversationId,
   onExportAll,
+  onImport,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -89,9 +93,23 @@ const ConversationPanelMenu: FC<Props> = ({
         key: 'export-all',
         label: t(ConversationExportI18nKeys.ExportAllLabel),
         icon: (
-          <IconDownload size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+          <IconFileArrowRight
+            size={DIAL_ICON_SIZE.SM}
+            className="text-secondary"
+          />
         ),
         onClick: onExportAll,
+      },
+      {
+        key: 'import',
+        label: t(ConversationImportI18nKeys.ImportLabel),
+        icon: (
+          <IconFileArrowLeft
+            size={DIAL_ICON_SIZE.SM}
+            className="text-secondary"
+          />
+        ),
+        onClick: onImport,
       },
       {
         key: 'delete-all',
@@ -102,7 +120,7 @@ const ConversationPanelMenu: FC<Props> = ({
         onClick: handleOpen,
       },
     ],
-    [handleOpen, onExportAll, t],
+    [handleOpen, onExportAll, onImport, t],
   );
 
   const handleConfirm = useCallback(async () => {

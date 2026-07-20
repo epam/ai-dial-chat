@@ -10,6 +10,11 @@ export interface ExportJob {
   id: string;
   /** Display label — the conversation title, or the export-all label. */
   label: string;
+  /**
+   * Optional secondary line shown above the label (e.g. a source
+   * folder-path breadcrumb like `Folder 1 / Folder 2`).
+   */
+  description?: string;
   /** Current lifecycle status. */
   status: ExportJobStatus;
 }

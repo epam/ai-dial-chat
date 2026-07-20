@@ -1,8 +1,6 @@
-import type { ExportFormatV5 } from '@epam/ai-dial-chat-shared';
+import type { ExportFormat } from '@epam/ai-dial-chat-shared';
 import { strToU8, zipSync } from 'fflate';
 
-/** Character allowlist for attachment paths written into a `.dial` archive. */
-const ARCHIVE_PATH_CHARSET = /^[a-zA-Z0-9._\-/]+$/;
 /*
  * fflate identifies file entries with instanceof against its own Uint8Array
  * constructor, so normalize bytes from other realms before calling zipSync.
@@ -13,18 +11,19 @@ const toZipUint8Array = (data: Uint8Array): Uint8Array =>
   data instanceof FflateUint8Array ? data : new FflateUint8Array(data);
 
 /**
- * Validates an attachment path before it is written into a `.dial` archive.
- * The character allowlist alone does not stop traversal — `.` and `/` are both
- * permitted characters, so `../../etc/passwd` matches it. Path segments are
- * additionally rejected when empty (leading/trailing/double slash) or equal
- * to `.`/`..`, which blocks traversal and absolute paths.
+ * Validates an attachment path before it is written into (or read from) a
+ * `.dial` archive. Blocks path traversal and absolute paths by rejecting
+ * empty, `.`, or `..` path segments (so `../../etc/passwd` and `/etc/passwd`
+ * are both rejected). No character allowlist — real-world filenames
+ * routinely contain spaces, parentheses, and non-ASCII characters, and any
+ * character that would be unsafe in the eventual upload URL is already
+ * percent-encoded downstream by `buildImportUploadPath`/`buildUploadPath`.
  */
-export const isValidArchivePath = (path: string): boolean => {
-  if (!ARCHIVE_PATH_CHARSET.test(path)) return false;
-  return path
+export const isValidArchivePath = (path: string): boolean =>
+  path.length > 0 &&
+  path
     .split('/')
     .every((segment) => segment !== '' && segment !== '.' && segment !== '..');
-};
 
 /** A single attachment already fetched into memory, ready to be written into the archive. */
 export interface ZipAttachmentEntry {
@@ -47,7 +46,7 @@ export interface BuildDialArchiveResult {
  * failing the path allowlist are skipped and reported in `skippedPaths`.
  */
 export const buildDialArchive = (
-  envelope: ExportFormatV5,
+  envelope: ExportFormat,
   attachments: ZipAttachmentEntry[],
 ): BuildDialArchiveResult => {
   const skippedPaths: string[] = [];

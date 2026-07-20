@@ -1,4 +1,4 @@
-import type { Conversation, ExportFormatV5 } from '@epam/ai-dial-chat-shared';
+import type { Conversation, ExportFormat } from '@epam/ai-dial-chat-shared';
 import { strFromU8, unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { buildDialArchive, isValidArchivePath } from '../zip-export';
@@ -36,8 +36,8 @@ describe('isValidArchivePath', () => {
     expect(isValidArchivePath('../../etc/passwd')).toBe(false);
   });
 
-  it('rejects a path containing disallowed characters', () => {
-    expect(isValidArchivePath('reports/q1 (final).pdf')).toBe(false);
+  it('accepts a path with spaces, parentheses, and unicode characters', () => {
+    expect(isValidArchivePath('reports/q1 (final) — Résumé.pdf')).toBe(true);
   });
 
   it('rejects an absolute path', () => {
@@ -54,7 +54,7 @@ describe('isValidArchivePath', () => {
 });
 
 describe('buildDialArchive', () => {
-  const envelope: ExportFormatV5 = {
+  const envelope: ExportFormat = {
     version: 5,
     history: [makeConversation()],
     folders: [],
