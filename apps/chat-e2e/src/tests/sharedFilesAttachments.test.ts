@@ -56,6 +56,7 @@ dialSharedWithMeTest(
     additionalShareUserFileManagerModal,
     additionalShareUserFileManagerModalToolbar,
     additionalShareUserFileManagerModalGrid,
+    additionalShareUserFileManagerModalGridAssertion,
     additionalShareUserFileManagerModalFoldersTree,
     additionalShareUserFileManagerModalFoldersTreeAssertion,
     additionalShareUserDialHomePage,
@@ -332,8 +333,12 @@ dialSharedWithMeTest(
       async () => {
         const newRequest = GeneratorUtil.randomString(10);
         await additionalShareUserFileManagerModalFoldersTreeAssertion.assertFolderState(
-          'visible',
+          'hidden',
           specialCharsFolder,
+        );
+        await additionalShareUserFileManagerModalGridAssertion.assertGridRowByNameState(
+          Attachment.specialSymbolsName,
+          'visible',
         );
         const attachmentCheckbox =
           await additionalShareUserFileManagerModalGrid.gridCheckboxByNameCell(

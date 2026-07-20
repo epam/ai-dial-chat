@@ -806,7 +806,10 @@ export const getPartialAndFullyChosenFolders = (
 
   const partialChosenFolderIds = folderIds.filter(
     (folderId) =>
-      !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+      !selectedItems.some((chosenId) => {
+        const chosenPrefix = addTrailingSlashIfAbsent(chosenId);
+        return folderId.startsWith(chosenPrefix) && folderId !== chosenPrefix;
+      }) &&
       (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
         fullyChosenFolderIds.some((entityId) =>
           entityId.startsWith(folderId),

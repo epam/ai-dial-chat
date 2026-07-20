@@ -5,6 +5,7 @@ import {
   MarketplacePage,
 } from '../ui/pages';
 import {
+  AgentAndToolsetSelectModal,
   Chat,
   ChatBar,
   ChatHeader,
@@ -164,6 +165,9 @@ const dialAdminTest = dialTest.extend<{
   adminToolsetEditorViewForm: ToolsetEditorViewForm;
   adminQuickApp2EditorContainer: QuickApp2EditorContainer;
   adminQuickApp2EditorViewForm: QuickApp2EditorViewForm;
+  adminAgentAndToolsetSelectModal: AgentAndToolsetSelectModal;
+  adminAgentAndToolsetSelectModalEntityMenu: DropdownMenu;
+  adminAgentAndToolsetSelectModalEntityMenuAssertion: MenuAssertion;
   adminEntityEditorGeneralForm: EntityEditorGeneralForm;
   adminEntityEditorHeader: EntityEditorHeader;
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
@@ -894,6 +898,23 @@ const dialAdminTest = dialTest.extend<{
     const adminEntityDetailsModal =
       adminMarketplaceEntities.getEntityDetailsModal();
     await use(adminEntityDetailsModal);
+  },
+  adminAgentAndToolsetSelectModal: async ({ adminPage }, use) => {
+    await use(new AgentAndToolsetSelectModal(adminPage));
+  },
+  adminAgentAndToolsetSelectModalEntityMenu: async (
+    { adminAgentAndToolsetSelectModal },
+    use,
+  ) => {
+    await use(
+      adminAgentAndToolsetSelectModal.getEntities().getEntityDropdownMenu(),
+    );
+  },
+  adminAgentAndToolsetSelectModalEntityMenuAssertion: async (
+    { adminAgentAndToolsetSelectModalEntityMenu },
+    use,
+  ) => {
+    await use(new MenuAssertion(adminAgentAndToolsetSelectModalEntityMenu));
   },
   adminAppsToPublishTree: async ({ adminPublishingRequestDialog }, use) => {
     const adminAppsToPublishTree =
