@@ -262,11 +262,29 @@ const toDialToolsetBody = (
   return dialBody;
 };
 
+/*
+ * Unlike the path-based endpoints (get/update/delete), DIAL Core's signin
+ * body `url` field is never implicitly percent-decoded by an HTTP routing
+ * layer before DIAL Core encodes it internally to match its stored resource
+ * key — so an already percent-encoded value here ends up encoded twice on
+ * DIAL Core's side. Sending the raw (decoded) resource reference instead
+ * lets DIAL Core apply that one encoding step itself, matching the same
+ * single-encoded key path-based lookups arrive at.
+ */
+const resolveToolsetLoginUrl = (toolsetName: string): string => {
+  const resource = parseDialToolsetResource(toolsetName);
+  if (!resource) {
+    throw new BadRequestException('Toolset id must include bucket and path');
+  }
+  return `${TOOLSET_RESOURCE_PREFIX}${resource.bucket}/${safeDecodeURIComponent(resource.path)}`;
+};
+
 const toDialToolsetSigninBody = (
   body: ToolsetLoginBodyDto,
+  toolsetName: string,
 ): DialToolsetSigninBody => {
   const base = {
-    url: body.url,
+    url: resolveToolsetLoginUrl(toolsetName),
     credentialsLevel: toDialCredentialsLevel(body.credentialsLevel),
   };
 
@@ -293,6 +311,7 @@ const toDialToolsetSigninBody = (
 const toDialToolsetSignoutBody = (
   body: ToolsetLogoutBodyDto,
   authenticationType: string | undefined,
+  toolsetName: string,
 ): DialToolsetSignoutBody => {
   if (
     authenticationType !== ToolsetAuthType.ApiKey &&
@@ -302,7 +321,7 @@ const toDialToolsetSignoutBody = (
   }
 
   return {
-    url: body.url,
+    url: resolveToolsetLoginUrl(toolsetName),
     credentialsLevel: toDialCredentialsLevel(body.credentialsLevel),
     authenticationType,
   };
@@ -1000,8 +1019,11 @@ export class ToolsetsService {
     body: ToolsetLoginBodyDto,
   ): Promise<void> {
     const authHeaders = getBearerAuthHeaders(accessToken);
+    this.logger.debug(
+      `loginToolset raw input — path toolsetName: "${toolsetName}", body.url: "${body.url}"`,
+    );
     // NOTE: never log apiKey / code — only the toolset reference and level.
-    const dialBody = toDialToolsetSigninBody(body);
+    const dialBody = toDialToolsetSigninBody(body, toolsetName);
     this.logger.debug(
       `Signing in toolset "${toolsetName}": ${JSON.stringify({
         url: dialBody.url,
@@ -1057,11 +1079,22 @@ export class ToolsetsService {
       body.authenticationType ??
       (await this.getToolset(userSub, accessToken, bucket, toolsetName))
         .authSettings?.authenticationType;
+    this.logger.debug(
+      `logoutToolset raw input — path toolsetName: "${toolsetName}", body.url: "${body.url}"`,
+    );
+    const dialBody = toDialToolsetSignoutBody(
+      body,
+      authenticationType,
+      toolsetName,
+    );
+    this.logger.debug(
+      `Signing out toolset "${toolsetName}": url "${dialBody.url}"`,
+    );
 
     try {
       const response = await this.dialClient.client.toolSetSignout({
         headers: authHeaders,
-        body: toDialToolsetSignoutBody(body, authenticationType),
+        body: dialBody,
       });
       /*
        * DIAL Core returns 404 from signout when there is no credential left

@@ -1440,6 +1440,46 @@ describe('ToolsetsService — write operations', () => {
         }),
       ).rejects.toThrow(UnauthorizedException);
     });
+
+    it('derives url from the toolsetName path param, ignoring a mismatched body.url', async () => {
+      const { service } = makeWriteService();
+      const signinSpy = vi
+        .spyOn(service['dialClient'].client, 'toolsetSignin')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.loginToolset('user1', 'token', id, {
+        url: 'toolsets/test-bucket/My%2520toolset__0.0.1',
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: ToolsetAuthType.ApiKey,
+        apiKey: 'secret-key',
+      });
+
+      const sentBody = signinSpy.mock.calls[0][0].body as Record<
+        string,
+        unknown
+      >;
+      expect(sentBody.url).toBe('toolsets/test-bucket/My toolset__0.0.1');
+    });
+
+    it('sends the raw (percent-decoded) resource reference as url', async () => {
+      const { service } = makeWriteService();
+      const signinSpy = vi
+        .spyOn(service['dialClient'].client, 'toolsetSignin')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.loginToolset('user1', 'token', id, {
+        url: id,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: ToolsetAuthType.ApiKey,
+        apiKey: 'secret-key',
+      });
+
+      const sentBody = signinSpy.mock.calls[0][0].body as Record<
+        string,
+        unknown
+      >;
+      expect(sentBody.url).toBe('toolsets/test-bucket/My toolset__0.0.1');
+    });
   });
 
   describe('logoutToolset', () => {
@@ -1465,7 +1505,7 @@ describe('ToolsetsService — write operations', () => {
           body: expect.objectContaining({
             authenticationType: ToolsetAuthType.OAuth,
             credentialsLevel: ToolsetCredentialsLevel.User,
-            url: id,
+            url: 'toolsets/test-bucket/My toolset__0.0.1',
           }),
         }),
       );
@@ -1579,6 +1619,25 @@ describe('ToolsetsService — write operations', () => {
           credentialsLevel: ToolsetCredentialsLevel.User,
         }),
       ).rejects.toThrow('Unsupported toolset authentication type');
+    });
+
+    it('derives url from the toolsetName path param, ignoring a mismatched body.url', async () => {
+      const { service } = makeWriteService();
+      const signoutSpy = vi
+        .spyOn(service['dialClient'].client, 'toolSetSignout')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.logoutToolset('user1', 'token', 'test-bucket', id, {
+        url: 'toolsets/test-bucket/My%2520toolset__0.0.1',
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: ToolsetAuthType.OAuth,
+      });
+
+      const sentBody = signoutSpy.mock.calls[0][0].body as Record<
+        string,
+        unknown
+      >;
+      expect(sentBody.url).toBe('toolsets/test-bucket/My toolset__0.0.1');
     });
   });
 });
