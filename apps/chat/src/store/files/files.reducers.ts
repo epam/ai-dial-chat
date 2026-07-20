@@ -203,6 +203,16 @@ export const filesSlice = createSlice({
         (id) => !payload.ids.includes(id),
       );
     },
+    resetDeviceAttachmentFlag: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.files = state.files.map((file) =>
+        payload.ids.includes(file.id) && file.isFromDeviceAttachment
+          ? { ...file, isFromDeviceAttachment: false }
+          : file,
+      );
+    },
     uploadFileSuccess: (
       state,
       {
