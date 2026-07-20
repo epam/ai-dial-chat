@@ -1,4 +1,4 @@
-import { DialFile } from '@epam/ai-dial-ui-kit';
+import { DialFile, DialFileNodeType } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
@@ -111,12 +111,107 @@ describe('PublishFoldersTree', () => {
     expect(capturedProps.current?.items).toEqual([]);
   });
 
-  it('starts inline folder creation under the selected folder via the trigger button', async () => {
+  describe('per-row context menu (add sibling / add child)', () => {
+    const clickMenuItem = (
+      menuItems: ReturnType<
+        NonNullable<
+          ComponentProps<
+            typeof import('@epam/ai-dial-ui-kit').DialFoldersTree
+          >['getContextMenuItems']
+        >
+      >,
+      key: string,
+    ) =>
+      act(() =>
+        menuItems
+          .find((item) => item.key === key)
+          ?.onClick?.({ key, domEvent: {} as never }),
+      );
+
+    it('omits "Add sibling" for the root node, since it has no parent', () => {
+      renderTree();
+      const rootFile: DialFile = {
+        path: '',
+        name: 'Organization',
+        folderId: '',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+      const menuItems = capturedProps.current?.getContextMenuItems?.(rootFile);
+      expect(menuItems?.map((item) => item.key)).toEqual(['add-child']);
+    });
+
+    it('includes both actions for a non-root folder', () => {
+      renderTree();
+      const sharedFile: DialFile = {
+        path: 'Shared',
+        name: 'Shared',
+        folderId: 'Shared',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+      const menuItems =
+        capturedProps.current?.getContextMenuItems?.(sharedFile);
+      expect(menuItems?.map((item) => item.key)).toEqual([
+        'add-child',
+        'add-sibling',
+      ]);
+    });
+
+    it('"Add child" creates the new folder inside the clicked folder', () => {
+      renderTree();
+      const sharedFile: DialFile = {
+        path: 'Shared',
+        name: 'Shared',
+        folderId: 'Shared',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+      const menuItems =
+        capturedProps.current?.getContextMenuItems?.(sharedFile);
+      clickMenuItem(menuItems ?? [], 'add-child');
+      expect(capturedProps.current?.createdFolderPath).toBe('Shared');
+    });
+
+    it('"Add sibling" creates the new folder alongside the clicked folder', () => {
+      renderTree();
+      const nestedFile: DialFile = {
+        path: 'Shared/Data Science',
+        name: 'Data Science',
+        folderId: 'Shared/Data Science',
+        nodeType: DialFileNodeType.FOLDER,
+      };
+      const menuItems =
+        capturedProps.current?.getContextMenuItems?.(nestedFile);
+      clickMenuItem(menuItems ?? [], 'add-sibling');
+      expect(capturedProps.current?.createdFolderPath).toBe('Shared');
+    });
+  });
+
+  it('lets DialFoldersTree render its inline row directly under the selected folder', async () => {
     renderTree({ selectedPath: ['Shared'] });
     await userEvent.click(
       screen.getByRole('button', { name: 'Create new folder' }),
     );
-    expect(capturedProps.current?.createdFolderPath).toBe('Shared/New folder');
+    expect(capturedProps.current?.createdFolderPath).toBe('Shared');
+    expect(
+      capturedProps.current?.items[0]?.items?.[0]?.items?.map(
+        (file) => file.name,
+      ),
+    ).toEqual(['Data Science']);
+  });
+
+  it('resolves a unique default name when a sibling already uses the default "New folder" name', async () => {
+    const itemsWithDefaultNameTaken: PublishFolderNode[] = [
+      ...items,
+      { path: ['New folder'], name: 'New folder' },
+    ];
+    renderTree({ items: itemsWithDefaultNameTaken });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+    expect(capturedProps.current?.createdFolderPath).toBe('');
+    expect(capturedProps.current?.newFolderDefaultName).toBe('New folder 2');
+    expect(
+      capturedProps.current?.items[0]?.items?.map((file) => file.name),
+    ).toEqual(['Shared', 'My workspace', 'New folder']);
   });
 
   it('confirms a new folder and selects it', async () => {
@@ -146,6 +241,31 @@ describe('PublishFoldersTree', () => {
     );
     act(() => capturedProps.current?.onCreateFolderSave?.('Shared'));
     expect(onCreateFolder).not.toHaveBeenCalled();
+  });
+
+  it('rejects a new folder name containing a path traversal segment', async () => {
+    const onCreateFolder = vi.fn();
+    const onSelectedPathChange = vi.fn();
+    renderTree({ onCreateFolder, onSelectedPathChange });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+    act(() => capturedProps.current?.onCreateFolderSave?.('../EscapeFolder'));
+    expect(onCreateFolder).not.toHaveBeenCalled();
+    expect(onSelectedPathChange).not.toHaveBeenCalled();
+  });
+
+  it('flags a path-traversal name as invalid via onRenameValidate, which also gates the create-folder row', async () => {
+    renderTree();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Create new folder' }),
+    );
+    expect(
+      capturedProps.current?.onRenameValidate?.('../EscapeFolder', {} as never),
+    ).toBe('Folder name contains invalid characters.');
+    expect(
+      capturedProps.current?.onRenameValidate?.('Model releases', {} as never),
+    ).toBeNull();
   });
 
   it('cancels inline folder creation without calling onCreateFolder', async () => {
@@ -246,13 +366,14 @@ describe('PublishFoldersTree', () => {
     });
 
     it('falls back to internal expand state when uncontrolled', async () => {
-      renderTree();
+      renderTree({ selectedPath: ['Shared'] });
       await userEvent.click(
         screen.getByRole('button', { name: 'Create new folder' }),
       );
-      // Internal state still drives createdFolderPath when no controlled
-      // expandedPaths/onExpandedPathsChange props are supplied.
-      expect(capturedProps.current?.createdFolderPath).toBe('New folder');
+      expect(capturedProps.current?.createdFolderPath).toBe('Shared');
+      expect(capturedProps.current?.expandedPaths).toEqual(
+        new Set(['', 'Shared']),
+      );
     });
   });
 });

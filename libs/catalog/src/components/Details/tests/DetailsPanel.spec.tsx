@@ -133,13 +133,18 @@ vi.mock('../ApiDetails', () => ({ ApiDetails: () => <div>Api</div> }));
 vi.mock('../../PublishPanel/PublishPanel', () => ({
   PublishPanel: ({
     onSelectedFolderPathChange,
+    onCreateFolder,
   }: {
     onSelectedFolderPathChange: (path: string[]) => void;
+    onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
   }) => (
     <div>
       <span>Publish panel</span>
       <button onClick={() => onSelectedFolderPathChange(['Shared'])}>
         Select Shared
+      </button>
+      <button onClick={() => void onCreateFolder(['Shared'], 'New')}>
+        Create folder
       </button>
     </div>
   ),
@@ -263,6 +268,16 @@ describe('DetailsPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.getByText('Summary')).toBeTruthy();
+  });
+
+  it('creates publish folders through the shared publish flow', async () => {
+    const onCreatePublishFolder = vi.fn().mockResolvedValue(undefined);
+    renderPanel({ onCreatePublishFolder });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create folder' }));
+
+    expect(onCreatePublishFolder).toHaveBeenCalledWith(['Shared'], 'New');
   });
 
   it('calls onPublish and onPublishSuccess for the selected folder when the publish panel submits', async () => {
