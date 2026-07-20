@@ -12,7 +12,7 @@ import {
   IconPaperclip,
   IconPhoto,
 } from '@tabler/icons-react';
-import { type FC, useMemo, useState } from 'react';
+import { useMemo, useState, type FC } from 'react';
 import { ATTACHMENT_COLLAPSE_THRESHOLD } from '../../constants/attachment-group';
 import {
   AttachmentTilesLayout,
@@ -20,7 +20,6 @@ import {
 } from '../../models/attachment-group';
 import { getAttachmentTilesPlan } from '../../utils/attachment';
 import { AttachmentCard } from '../AttachmentCard/AttachmentCard';
-import { AttachmentFileRow } from '../AttachmentFileRow/AttachmentFileRow';
 import { AttachmentMoreTile } from '../AttachmentMoreTile/AttachmentMoreTile';
 import styles from './AttachmentGroup.module.scss';
 
@@ -40,10 +39,8 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   onAttachmentClick,
   onDownloadAll,
   onRetry,
-  getSizeLabel,
   labels,
   styles: groupStyles,
-  theme,
 }) => {
   const {
     ariaLabel = 'Attachments',
@@ -51,6 +48,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
     retryLabel = 'Retry upload',
     showLessLabel = 'Show less',
     downloadAllLabel = 'Download all',
+    openInNewTabLabel,
     getHeaderLabel = (count: number) => pluralize(count, 'attachment'),
     promptLabel,
     pastedLabel,
@@ -100,8 +98,17 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
       onDownloadAll(downloadableAttachments);
     } else {
       downloadableAttachments.forEach((attachment) =>
-        onAttachmentClick?.(attachment),
+        onAttachmentClick?.(attachment.id),
       );
+    }
+  };
+
+  const handleDownload = (id: string) => {
+    const downloadableAttachment = attachments.find(
+      (attachment) => attachment.id === id,
+    );
+    if (downloadableAttachment) {
+      onDownloadAll?.([downloadableAttachment]);
     }
   };
 
@@ -147,50 +154,26 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
         className={mergeClasses(
           'gap-3',
           isCollapsible
-            ? 'grid grid-cols-[repeat(5,84px)] overflow-x-auto'
+            ? 'grid grid-cols-[repeat(5,83px)] overflow-x-auto'
             : 'flex flex-wrap',
         )}
       >
         {visibleAttachments.map((attachment) => (
           <div key={attachment.id} role="listitem">
-            {attachment.type === AttachmentType.Image ? (
-              <AttachmentCard
-                attachment={attachment}
-                onClick={
-                  onAttachmentClick
-                    ? () => onAttachmentClick(attachment)
-                    : undefined
-                }
-                onRetry={onRetry}
-                labels={{
-                  clickLabel,
-                  retryLabel,
-                  promptLabel,
-                  pastedLabel,
-                  imageLabel,
-                }}
-                styles={{
-                  roundedClassName: 'rounded-xl',
-                  className: mergeClasses('size-[84px]', styles.imageTile),
-                }}
-                showHoverDownloadIcon
-              />
-            ) : (
-              <AttachmentFileRow
-                attachment={attachment}
-                onClick={onAttachmentClick}
-                onRetry={onRetry}
-                labels={{
-                  clickLabel,
-                  retryLabel,
-                  sizeLabel: getSizeLabel?.(attachment),
-                  promptLabel,
-                  pastedLabel,
-                  imageLabel,
-                }}
-                theme={theme}
-              />
-            )}
+            <AttachmentCard
+              attachment={attachment}
+              onClick={onAttachmentClick}
+              onDownload={handleDownload}
+              onRetry={onRetry}
+              labels={{
+                clickLabel,
+                retryLabel,
+                promptLabel,
+                pastedLabel,
+                imageLabel,
+                openInNewTabLabel,
+              }}
+            />
           </div>
         ))}
 

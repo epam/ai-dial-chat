@@ -69,6 +69,7 @@ export const messageAttachmentToDisplayAttachment = (
   const type = getAttachmentType(dto.type);
   const isImage = type === AttachmentType.Image;
   const isAudio = type === AttachmentType.Audio;
+  const isLink = dto.url && dto.reference_url && !dto.reference_type;
   const id = dto.url ?? dto.data ?? dto.title;
 
   const contentType =
@@ -101,7 +102,7 @@ export const messageAttachmentToDisplayAttachment = (
     id,
     name: dto.title,
     contentType,
-    type,
+    type: isLink ? AttachmentType.Link : type,
     status: RequestStatus.Idle,
     ...(dto.url ? { url: dto.url } : {}),
     ...(dto.reference_url ? { referenceUrl: dto.reference_url } : {}),

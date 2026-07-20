@@ -6,7 +6,7 @@
   html,
   body,
   #root {
-    @apply size-full bg-layer-5 text-primary;
+    @apply size-full overflow-hidden bg-layer-5 text-primary;
     font-family: 'Inter', sans-serif;
     --theme-font: 'Inter', sans-serif;
   }
