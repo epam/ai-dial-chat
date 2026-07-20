@@ -41,3 +41,76 @@ to the create-application endpoint via the generated `@epam/chat-api-client`
 #### Scenario: Save omits intro
 - **WHEN** a user saves a new Quick App with an empty intro
 - **THEN** the create request body does not include a truthy `intro` value
+
+### Requirement: Editing General step fields persists the changes on Save & Exit
+
+Clicking "Next" on the General step of an existing app (an `appId` is already known) SHALL
+only validate the fields and advance to the Settings step — it SHALL NOT call any
+persistence API. The edited General step values SHALL be held in memory across the step
+transition. Persistence of General step edits SHALL happen only when the user performs the
+final "Save & Exit" action from the Settings step. At that point, if the General step
+values differ from the values the form was initially seeded with, the editor SHALL submit
+the current form values — name, description, icon URL, topics, and `intro` — to the
+dedicated update-application endpoint via the generated `@epam/chat-api-client`
+`ApplicationsApi`, through the `apps/chat/src/server-api/applications.ts` wrapper. If the
+General step values are unchanged from their initial values, the update-application
+endpoint SHALL NOT be called. The update SHALL NOT alter that application's settings-step
+configuration (`application_properties`, including orchestrator/tool set state) or its
+`version`. "Save & Exit" SHALL always additionally trigger the Settings step's own save
+(regardless of whether the Settings step step was itself touched), matching prior
+behavior for that step.
+
+#### Scenario: Next does not persist General edits
+- **WHEN** a user edits General step fields for an existing app and clicks "Next"
+- **THEN** no update-application (or create-application) request is sent, and the editor
+  advances to the Settings step with the edited values retained in memory
+
+#### Scenario: Save & Exit persists edited General fields for an existing app
+- **WHEN** a user edits Topic, Description, Intro, Icon, or Name on the General step of an
+  existing Quick App, clicks Next, and then clicks Save & Exit on the Settings step
+- **THEN** the edited field values are submitted to the update-application endpoint for
+  that app as part of the Save & Exit action, and reopening the app shows the edited values
+
+#### Scenario: Save & Exit skips the update call when General is unchanged
+- **WHEN** a user does not edit any General step field for an existing app, clicks Next,
+  and then clicks Save & Exit on the Settings step without changing Settings either
+- **THEN** the update-application endpoint is not called, and the Settings step save is
+  still triggered as it was before this behavior existed
+
+#### Scenario: Save does not affect Settings-step configuration
+- **WHEN** the General step's edits are persisted as part of Save & Exit for an existing app
+  that already has orchestrator or tool set configuration from the Settings step
+- **THEN** that configuration is unchanged after the General-step update completes
+
+### Requirement: Settings step readiness gates Save and Preview
+
+The Settings step's embedded editor runs in an iframe and communicates over
+`postMessage`. The "Save & Exit" and "Preview" actions SHALL be disabled until the
+iframe has signaled it is ready to interact (`AppsEditorEvent.ReadyToInteract`).
+Triggering a save or preview before readiness would post a message the embedded app is
+not yet listening for, and no response (`SaveSuccess`/`SaveError`) would ever arrive,
+leaving the action's loading state — and therefore the action buttons — stuck disabled
+indefinitely with no recovery short of reloading the page. As a defense in depth against
+any other case where no response arrives, a save or preview action that does not
+receive a response within a bounded timeout SHALL time out, reset the loading state, and
+surface an error, rather than leaving the buttons stuck disabled forever.
+
+#### Scenario: Save & Exit is disabled before the Settings step is ready
+- **WHEN** the Settings step's iframe has not yet sent `ReadyToInteract`
+- **THEN** the "Save & Exit" button is disabled and cannot trigger a save
+
+#### Scenario: Preview is disabled before the Settings step is ready
+- **WHEN** the Settings step's iframe has not yet sent `ReadyToInteract`
+- **THEN** the "Preview" button is disabled and cannot trigger a preview
+
+#### Scenario: Buttons re-enable once the Settings step becomes ready
+- **WHEN** the Settings step's iframe sends `ReadyToInteract` after the user has been
+  waiting on the Settings step
+- **THEN** the "Save & Exit" and "Preview" buttons become enabled without requiring a
+  page reload
+
+#### Scenario: A save that never receives a response times out instead of hanging forever
+- **WHEN** a save is triggered and no `SaveSuccess`/`SaveError` response arrives within
+  the bounded timeout
+- **THEN** the saving state is cleared, an error is shown, and the "Save & Exit" button
+  becomes clickable again without a page reload

@@ -20,6 +20,8 @@ interface Props {
   onUpdated?: () => void;
   onSaveSuccess?: () => void;
   onSaveError?: (error: string) => void;
+  /** Notifies the host whenever the embedded editor's readiness to interact changes. */
+  onReadyChange?: (isReady: boolean) => void;
 }
 
 const SettingsStep = forwardRef<SettingsStepHandle, Props>(
@@ -33,6 +35,7 @@ const SettingsStep = forwardRef<SettingsStepHandle, Props>(
       onUpdated,
       onSaveSuccess,
       onSaveError,
+      onReadyChange,
     },
     ref,
   ) {
@@ -58,6 +61,7 @@ const SettingsStep = forwardRef<SettingsStepHandle, Props>(
               onUpdated={onUpdated}
               onSaveSuccess={onSaveSuccess}
               onSaveError={onSaveError}
+              onReadyChange={onReadyChange}
             />
           </div>
           {appId && (

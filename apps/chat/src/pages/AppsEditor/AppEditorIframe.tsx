@@ -50,11 +50,13 @@ interface Props {
   onUpdated?: () => void;
   onSaveSuccess?: () => void;
   onSaveError?: (error: string) => void;
+  /** Notifies the host whenever the iframe's readiness to interact changes. */
+  onReadyChange?: (isReady: boolean) => void;
 }
 
 const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
   function AppEditorIframe(
-    { schema, appId, onUpdated, onSaveSuccess, onSaveError },
+    { schema, appId, onUpdated, onSaveSuccess, onSaveError, onReadyChange },
     ref,
   ) {
     const { t } = useTranslation();
@@ -375,6 +377,10 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         iframe.removeEventListener('load', handleLoad);
       };
     }, [iframeUrl]);
+
+    useEffect(() => {
+      onReadyChange?.(!isLoading);
+    }, [isLoading, onReadyChange]);
 
     useImperativeHandle(
       ref,

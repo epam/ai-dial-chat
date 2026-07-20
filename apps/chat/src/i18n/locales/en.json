@@ -641,7 +641,8 @@
     },
     "error": {
       "createFailed": "Failed to create application. Please try again.",
-      "saveFailed": "Failed to save application settings. Please try again."
+      "saveFailed": "Failed to save application settings. Please try again.",
+      "saveTimeout": "Saving timed out. Please try again."
     }
   },
   "toolsetEditor": {

@@ -555,6 +555,7 @@ export enum AppsEditorI18nKeys {
   PreviewChatAriaLabel = 'appsEditor.previewChat.ariaLabel',
   ErrorCreateFailed = 'appsEditor.error.createFailed',
   ErrorSaveFailed = 'appsEditor.error.saveFailed',
+  ErrorSaveTimeout = 'appsEditor.error.saveTimeout',
 }
 
 export enum ToolsetEditorI18nKeys {

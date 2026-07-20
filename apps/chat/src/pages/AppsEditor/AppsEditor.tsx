@@ -27,6 +27,14 @@ import GeneralForm from './GeneralForm';
 import type { SettingsStepHandle } from './SettingsStep';
 import SettingsStep from './SettingsStep';
 
+/**
+ * Safety-net timeout for a triggered Settings-step save/preview. If neither
+ * `SaveSuccess` nor `SaveError` arrives from the embedded editor within this
+ * window, the action is treated as failed so the Save/Preview buttons never
+ * stay stuck disabled indefinitely.
+ */
+const SETTINGS_SAVE_TIMEOUT_MS = 20000;
+
 const AppsEditor: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -44,9 +52,11 @@ const AppsEditor: FC = () => {
     'save' | 'preview' | null
   >(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isSettingsReady, setIsSettingsReady] = useState(false);
 
   const generalFormRef = useRef<GeneralFormHandle>(null);
   const settingsStepRef = useRef<SettingsStepHandle>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const step = searchParams.get(AppsEditorQuery.Step) ?? AppsEditorStep.General;
   const schemaId = searchParams.get(AppsEditorQuery.Schema) ?? '';
@@ -62,6 +72,17 @@ const AppsEditor: FC = () => {
 
   const existingAppId = searchParams.get(AppsEditorQuery.AppId);
   const isEditingExistingApp = !createdAppId && !!existingAppId;
+  /**
+   * Captures, once, whether this editor session started against an app that
+   * already existed (as opposed to one created fresh in this session).
+   * `isEditingExistingApp` flips to false once `handleCreated` sets
+   * `createdAppId` after advancing past the General step, so it can't be used
+   * to gate Save & Exit's persist step, which runs after that transition.
+   */
+  const hasExistingAppOnMountRef = useRef(!!existingAppId);
+
+  const appIdForSettings =
+    createdAppId ?? searchParams.get(AppsEditorQuery.AppId) ?? '';
 
   const existingDeployment = useMemo(
     () =>
@@ -124,34 +145,36 @@ const AppsEditor: FC = () => {
     if (isGeneralStep) setHasVisitedGeneralStep(true);
   }, [isGeneralStep]);
 
-  const handleSave = useCallback(() => {
-    if (isGeneralStep) {
-      setIsSaving(true);
-      void generalFormRef.current?.submit().finally(() => setIsSaving(false));
-      return;
-    }
-    setSaveError('');
-    setIsSaving(true);
-    setPendingSaveAction('save');
-    settingsStepRef.current?.triggerSave();
-  }, [isGeneralStep]);
+  /* Re-gate readiness whenever the embedded editor is (re)loaded for a
+   * different app or schema, so switching apps or re-entering the Settings
+   * step doesn't inherit a stale ready state. The key is seeded from the
+   * current values so this only resets on an actual later change — on
+   * mount, child effects (which may report readiness synchronously) always
+   * run before this one, and a reset here on mount would otherwise wipe out
+   * that just-reported readiness. */
+  const settingsReadyKeyRef = useRef(`${schema?.id ?? ''}|${appIdForSettings}`);
+  useEffect(() => {
+    const key = `${schema?.id ?? ''}|${appIdForSettings}`;
+    if (settingsReadyKeyRef.current === key) return;
+    settingsReadyKeyRef.current = key;
+    setIsSettingsReady(false);
+  }, [schema, appIdForSettings]);
 
-  const handlePreview = useCallback(() => {
-    if (isPreviewing) {
-      setIsPreviewing(false);
-      return;
+  const clearSaveTimeout = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
     }
-    setSaveError('');
-    setIsSaving(true);
-    setPendingSaveAction('preview');
-    settingsStepRef.current?.triggerSave();
-  }, [isPreviewing]);
+  }, []);
+
+  useEffect(() => clearSaveTimeout, [clearSaveTimeout]);
 
   const handleSettingsUpdated = useCallback(() => {
     void refetchDeployments();
   }, [refetchDeployments]);
 
   const handleSaveSuccess = useCallback(() => {
+    clearSaveTimeout();
     if (isPreviewing) return;
 
     const completeSave = async () => {
@@ -167,6 +190,7 @@ const AppsEditor: FC = () => {
 
     void completeSave();
   }, [
+    clearSaveTimeout,
     isPreviewing,
     pendingSaveAction,
     refetchDeployments,
@@ -176,20 +200,70 @@ const AppsEditor: FC = () => {
 
   const handleSaveError = useCallback(
     (error: string) => {
+      clearSaveTimeout();
       if (isPreviewing) return;
       setIsSaving(false);
       setSaveError(error || t(AppsEditorI18nKeys.ErrorSaveFailed));
       setPendingSaveAction(null);
     },
-    [isPreviewing, t],
+    [clearSaveTimeout, isPreviewing, t],
   );
+
+  const startSaveTimeout = useCallback(() => {
+    clearSaveTimeout();
+    saveTimeoutRef.current = setTimeout(() => {
+      saveTimeoutRef.current = null;
+      handleSaveError(t(AppsEditorI18nKeys.ErrorSaveTimeout));
+    }, SETTINGS_SAVE_TIMEOUT_MS);
+  }, [clearSaveTimeout, handleSaveError, t]);
+
+  const handleSave = useCallback(() => {
+    if (isGeneralStep) {
+      setIsSaving(true);
+      void generalFormRef.current?.submit().finally(() => setIsSaving(false));
+      return;
+    }
+
+    setSaveError('');
+    setIsSaving(true);
+    setPendingSaveAction('save');
+
+    const triggerSettingsSave = () => {
+      startSaveTimeout();
+      settingsStepRef.current?.triggerSave();
+    };
+
+    const persistThenSave = async () => {
+      try {
+        if (hasExistingAppOnMountRef.current) {
+          await generalFormRef.current?.persist();
+        }
+        triggerSettingsSave();
+      } catch {
+        setSaveError(t(AppsEditorI18nKeys.ErrorSaveFailed));
+        setIsSaving(false);
+        setPendingSaveAction(null);
+      }
+    };
+
+    void persistThenSave();
+  }, [isGeneralStep, startSaveTimeout, t]);
+
+  const handlePreview = useCallback(() => {
+    if (isPreviewing) {
+      setIsPreviewing(false);
+      return;
+    }
+    setSaveError('');
+    setIsSaving(true);
+    setPendingSaveAction('preview');
+    startSaveTimeout();
+    settingsStepRef.current?.triggerSave();
+  }, [isPreviewing, startSaveTimeout]);
 
   const saveButtonLabel = isGeneralStep
     ? t(EditorI18nKeys.NextButton)
     : t(EditorI18nKeys.SaveButton);
-
-  const appIdForSettings =
-    createdAppId ?? searchParams.get(AppsEditorQuery.AppId) ?? '';
 
   const appDisplayName =
     submittedAppInfo?.displayName ??
@@ -215,7 +289,12 @@ const AppsEditor: FC = () => {
   );
 
   const canPreview =
-    !isGeneralStep && !!appIdForSettings && !!schema?.editorUrl;
+    !isGeneralStep &&
+    !!appIdForSettings &&
+    !!schema?.editorUrl &&
+    isSettingsReady;
+
+  const isSaveDisabled = !isGeneralStep && !isSettingsReady;
 
   return (
     <div className="flex size-full flex-col">
@@ -225,6 +304,7 @@ const AppsEditor: FC = () => {
         currentStep={step}
         navAriaLabel={t(EditorI18nKeys.StepsNavAriaLabel)}
         isSaving={isSaving}
+        isSaveDisabled={isSaveDisabled}
         cancelButtonLabel={t(ButtonsI18nKeys.Cancel)}
         saveButtonLabel={saveButtonLabel}
         onChangeStep={handleChangeStep}
@@ -273,6 +353,7 @@ const AppsEditor: FC = () => {
               onUpdated={handleSettingsUpdated}
               onSaveSuccess={handleSaveSuccess}
               onSaveError={handleSaveError}
+              onReadyChange={setIsSettingsReady}
             />
           )}
         </div>

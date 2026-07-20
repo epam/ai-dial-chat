@@ -1,6 +1,7 @@
 import {
   ConflictException,
   INestApplication,
+  NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
   ValidationPipe,
@@ -18,6 +19,9 @@ const mockList: ApplicationsResponseDto = { data: [mockApp] };
 const createdApp = {
   id: 'users/u/applications/new-app',
   displayName: 'New App',
+};
+const updatedApp = {
+  id: 'applications/test-bucket/My%20App__0.0.1',
 };
 
 const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
@@ -62,6 +66,7 @@ describe('ApplicationsController (integration)', () => {
   let service: {
     listApplications: ReturnType<typeof vi.fn>;
     createApplication: ReturnType<typeof vi.fn>;
+    updateApplication: ReturnType<typeof vi.fn>;
     deleteApplication: ReturnType<typeof vi.fn>;
   };
 
@@ -69,6 +74,7 @@ describe('ApplicationsController (integration)', () => {
     service = {
       listApplications: vi.fn().mockResolvedValue(mockList),
       createApplication: vi.fn().mockResolvedValue(createdApp),
+      updateApplication: vi.fn().mockResolvedValue(updatedApp),
       deleteApplication: vi.fn().mockResolvedValue(undefined),
     };
     app = await buildApp(service);
@@ -178,6 +184,87 @@ describe('ApplicationsController (integration)', () => {
       );
       await request(app.getHttpServer())
         .post('/api/v1/applications')
+        .send(validBody)
+        .expect(503);
+    });
+  });
+
+  describe('PATCH /api/v1/applications/:applicationName', () => {
+    const validBody = { name: 'Updated App' };
+
+    it('returns 200 with the updated application on success', async () => {
+      const res = await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send(validBody)
+        .expect(200);
+
+      expect(res.body).toEqual(updatedApp);
+      expect(service.updateApplication).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'my-app',
+        validBody,
+      );
+    });
+
+    it('returns 400 when name is missing', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send({ description: 'no name' })
+        .expect(400);
+
+      expect(service.updateApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when intro exceeds 90 characters', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send({ ...validBody, intro: 'a'.repeat(91) })
+        .expect(400);
+
+      expect(service.updateApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for an application name with invalid characters', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/bad;name')
+        .send(validBody)
+        .expect(400);
+
+      expect(service.updateApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when unknown fields are sent (forbidNonWhitelisted)', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send({ ...validBody, type: 'https://mydial.epam.com/schema' })
+        .expect(400);
+
+      expect(service.updateApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when service throws UnauthorizedException', async () => {
+      service.updateApplication.mockRejectedValue(new UnauthorizedException());
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send(validBody)
+        .expect(401);
+    });
+
+    it('returns 404 when service throws NotFoundException', async () => {
+      service.updateApplication.mockRejectedValue(new NotFoundException());
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
+        .send(validBody)
+        .expect(404);
+    });
+
+    it('returns 503 when service throws ServiceUnavailableException', async () => {
+      service.updateApplication.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+      await request(app.getHttpServer())
+        .patch('/api/v1/applications/my-app')
         .send(validBody)
         .expect(503);
     });

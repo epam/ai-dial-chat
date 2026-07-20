@@ -4715,6 +4715,43 @@ export interface TranscribeAudioDto {
 /**
  *
  * @export
+ * @interface UpdateApplicationBodyDto
+ */
+export interface UpdateApplicationBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof UpdateApplicationBodyDto
+   */
+  topics?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  intro?: string;
+}
+/**
+ *
+ * @export
  * @interface UpdateInstalledDto
  */
 export interface UpdateInstalledDto {
@@ -4762,6 +4799,31 @@ export interface UpdateSelectedDeploymentDto {
    * @memberof UpdateSelectedDeploymentDto
    */
   id?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface UpdatedApplicationDto
+ */
+export interface UpdatedApplicationDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedApplicationDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedApplicationDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedApplicationDto
+   */
+  object?: string;
 }
 /**
  *
