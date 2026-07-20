@@ -152,7 +152,6 @@ describe('StageItem — icon priority and failed styling', () => {
   });
 });
 
-describe('StageItem — attachments', () => {
 describe('StageItem — nameOverride (used for ×N attempts)', () => {
   it('displays the override name while still reading duration from the real stage name', () => {
     render(
