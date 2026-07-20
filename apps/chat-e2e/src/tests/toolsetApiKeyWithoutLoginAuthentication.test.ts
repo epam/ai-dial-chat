@@ -1,3 +1,4 @@
+import { MarketplaceI18nKeys } from '@/chat/constants/i18n';
 import { ToolsetCredentialsLevel } from '@/chat/types/toolsets';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -7,9 +8,11 @@ import {
   ExpectedConnectToolsetModalData,
   ExpectedConstants,
   ExpectedMessages,
+  MenuOptions,
   OAuthOptions,
 } from '@/src/testData';
 import { ApiKeyMockHelper } from '@/src/testData/toolsets/apiKeyMockHelper';
+import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { Toolset, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
@@ -332,5 +335,146 @@ dialTest(
         credentialsLevel: ToolsetCredentialsLevel.GLOBAL,
       });
     });
+  },
+);
+
+dialTest(
+  '[Toolsets] Login from context menu to toolset with API key from Marketplace',
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceEntitiesSection,
+    marketplaceEntities,
+    toolsetBuilder,
+    toolsetApiHelper,
+    toolsetLoginModal,
+    toolsetLoginModalAssertion,
+    tooltipAssertion,
+    baseAssertion,
+    setTestIds,
+    page,
+  }) => {
+    setTestIds('EPMRTC-7933');
+    const toolsetEntity = {
+      name: GeneratorUtil.randomToolsetName(),
+      version: GeneratorUtil.randomEntityVersion(),
+      endpoint: GeneratorUtil.randomUrl(),
+      apiKeyHeader: GeneratorUtil.randomString(5),
+      apiKey: GeneratorUtil.randomString(7),
+    };
+    let initialToolset: Toolset;
+    let toolsetElement: BaseElement;
+    let apiKeyMockHelper: ApiKeyMockHelper;
+
+    await dialTest.step(
+      'Precondition: Create a toolset with API key auth type, without login, via API',
+      async () => {
+        const toolsetModel = toolsetBuilder
+          .withDisplayName(toolsetEntity.name)
+          .withDisplayVersion(toolsetEntity.version)
+          .withEndpoint(toolsetEntity.endpoint)
+          .withAuthSettings({
+            authentication_type: ToolsetAuthTypes.API_KEY,
+            api_key_header: toolsetEntity.apiKeyHeader,
+          })
+          .build();
+        await toolsetApiHelper.createToolset(toolsetModel);
+        initialToolset = (await toolsetApiHelper.getToolset(
+          toolsetEntity.name,
+          toolsetEntity.version,
+        ))!;
+      },
+    );
+
+    await dialTest.step('Setup ApiKey mocks', async () => {
+      apiKeyMockHelper = new ApiKeyMockHelper(
+        page,
+        initialToolset,
+        toolsetEntity.endpoint,
+      );
+      await apiKeyMockHelper.setupMocks();
+      apiKeyMockHelper.enableMocking();
+    });
+
+    await dialTest.step(
+      'Open Marketplace Toolsets tab and find the toolset in "Logged out" state',
+      async () => {
+        await marketplacePage.openToolsetsPage();
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(toolsetEntity.name);
+        toolsetElement = await marketplaceEntitiesSection.findEntityElement(
+          toolsetEntity.name,
+        );
+        await baseAssertion.assertElementText(
+          marketplaceEntities.getEntityElementCredentials(toolsetElement),
+          Creds.loggedOut,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Hover over the toolset card, click 3-dots context menu and select "Log in" option',
+      async () => {
+        await toolsetElement.hoverOver();
+        await marketplaceEntities
+          .getEntityElementDotsMenu(toolsetElement)
+          .click();
+        await marketplaceEntities
+          .getEntityDropdownMenu()
+          .selectMenuOption(MenuOptions.login);
+      },
+    );
+
+    await dialTest.step(
+      'Verify the Login modal is displayed with the expected title, version, API key field, tooltip and disabled "Log in" button',
+      async () => {
+        await toolsetLoginModalAssertion.assertElementState(
+          toolsetLoginModal,
+          'visible',
+        );
+        await toolsetLoginModalAssertion.assertModalAttributes({
+          expectedName: toolsetEntity.name,
+          expectedVersion: toolsetEntity.version,
+          expectedDefaultIconState: 'visible',
+          expectedLogInBtnState: 'disabled',
+        });
+
+        await toolsetLoginModal.apiKeyFieldHelpIcon.hoverOver();
+        await tooltipAssertion.assertTooltipContent(
+          MarketplaceI18nKeys.EnterApiKeyForHeader.replace(
+            '{{header}}',
+            toolsetEntity.apiKeyHeader,
+          ),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Input API key value and verify the "Log in" button becomes enabled',
+      async () => {
+        await toolsetLoginModal.apiKeyMaskedFieldInput.fillInInput(
+          toolsetEntity.apiKey,
+        );
+        await toolsetLoginModalAssertion.assertModalAttributes({
+          expectedLogInBtnState: 'enabled',
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Click "Log in" button and verify the modal is closed and the toolset state changed to "My Creds"',
+      async () => {
+        await toolsetLoginModal.loginButton.click();
+        await toolsetLoginModalAssertion.assertElementState(
+          toolsetLoginModal,
+          'hidden',
+        );
+        await baseAssertion.assertElementText(
+          marketplaceEntities.getEntityElementCredentials(toolsetElement),
+          Creds.myCreds,
+        );
+      },
+    );
   },
 );

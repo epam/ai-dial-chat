@@ -18,4 +18,5 @@ export enum Tags {
   p = 'p',
   section = 'section',
   code = 'code',
+  li = 'li',
 }
