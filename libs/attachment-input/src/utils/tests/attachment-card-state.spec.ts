@@ -20,7 +20,7 @@ describe('getAttachmentCardState – typeLabel', () => {
       name: '[1] RAG search: List the three main topics covered in the PDF document.',
       contentType: 'text/markdown',
     });
-    const { typeLabel } = getAttachmentCardState(attachment, false, false);
+    const { typeLabel } = getAttachmentCardState(attachment);
     expect(typeLabel).toBe('.md');
   });
 
@@ -29,7 +29,7 @@ describe('getAttachmentCardState – typeLabel', () => {
       name: '[1] uploads/2026-03/test_FinancialReport.pdf',
       contentType: 'text/markdown',
     });
-    const { typeLabel } = getAttachmentCardState(attachment, false, false);
+    const { typeLabel } = getAttachmentCardState(attachment);
     expect(typeLabel).toBe('.md');
   });
 
@@ -38,7 +38,7 @@ describe('getAttachmentCardState – typeLabel', () => {
       name: 'notes',
       contentType: 'text/plain',
     });
-    const { typeLabel } = getAttachmentCardState(attachment, false, false);
+    const { typeLabel } = getAttachmentCardState(attachment);
     expect(typeLabel).toBe('.txt');
   });
 
@@ -47,7 +47,7 @@ describe('getAttachmentCardState – typeLabel', () => {
       name: 'report.pdf',
       contentType: 'application/pdf',
     });
-    const { typeLabel } = getAttachmentCardState(attachment, false, false);
+    const { typeLabel } = getAttachmentCardState(attachment);
     expect(typeLabel).toBe('.pdf');
   });
 
@@ -57,7 +57,7 @@ describe('getAttachmentCardState – typeLabel', () => {
       contentType:
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     });
-    const { typeLabel } = getAttachmentCardState(attachment, false, false);
+    const { typeLabel } = getAttachmentCardState(attachment);
     expect(typeLabel).toBe('.docx');
   });
 
@@ -66,19 +66,19 @@ describe('getAttachmentCardState – typeLabel', () => {
       name: 'Some sentence ending.',
       contentType: '',
     });
-    const { typeLabel } = getAttachmentCardState(attachment, false, false);
+    const { typeLabel } = getAttachmentCardState(attachment);
     expect(typeLabel).not.toBe('.');
   });
 
   it('returns Prompt for Prompt type', () => {
     const attachment = makeAttachment({ type: AttachmentType.Prompt });
-    const { typeLabel } = getAttachmentCardState(attachment, false, false);
+    const { typeLabel } = getAttachmentCardState(attachment);
     expect(typeLabel).toBe('Prompt');
   });
 
   it('returns Pasted for Pasted type', () => {
     const attachment = makeAttachment({ type: AttachmentType.Pasted });
-    const { typeLabel } = getAttachmentCardState(attachment, false, false);
+    const { typeLabel } = getAttachmentCardState(attachment);
     expect(typeLabel).toBe('Pasted');
   });
 });

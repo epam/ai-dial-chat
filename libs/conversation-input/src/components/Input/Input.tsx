@@ -348,8 +348,8 @@ export const Input: FC<InputProps> = ({
           labels={{ removeLabel, retryLabel }}
           onAttachmentClick={
             onAttachmentClick != null
-              ? (att) => {
-                  const found = attachments.find((a) => a.id === att.id);
+              ? (id) => {
+                  const found = attachments.find((a) => a.id === id);
                   if (found != null) onAttachmentClick(found);
                 }
               : undefined

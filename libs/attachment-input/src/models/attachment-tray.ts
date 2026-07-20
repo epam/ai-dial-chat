@@ -29,7 +29,7 @@ export interface AttachmentTrayProps {
   /** Called when the user clicks a pasted-text card to expand its content back into the input. */
   onExpand?: (id: string) => void;
   /** Called when the user clicks or keyboard-activates an attachment card. Receives the full `DisplayAttachment` object. */
-  onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  onAttachmentClick?: (id: string) => void;
   /** Localised accessible labels for the tray region and each card's interactive elements. */
   labels?: AttachmentTrayLabels;
   /** Style overrides for the tray. */

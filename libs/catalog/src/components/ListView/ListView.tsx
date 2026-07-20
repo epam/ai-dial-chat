@@ -122,6 +122,13 @@ export const ListView: FC<ListViewProps> = ({
     gridApiRef.current?.redrawRows();
   }, [selectedItemId]);
 
+  useEffect(() => {
+    gridApiRef.current?.setGridOption(
+      'domLayout',
+      items.length > 0 ? 'autoHeight' : 'normal',
+    );
+  }, [items]);
+
   return (
     <div
       style={cssVars}
@@ -139,7 +146,6 @@ export const ListView: FC<ListViewProps> = ({
           emptyStateTitle={emptyStateTitle}
           additionalGridOptions={{
             rowHeight: 60,
-            domLayout: 'autoHeight',
             defaultColDef: { filter: false, floatingFilter: false },
             context: {
               searchQuery: query,

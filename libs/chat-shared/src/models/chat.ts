@@ -164,6 +164,11 @@ export interface Stage {
   content?: string;
   /** File or content attachments associated with this stage. */
   attachments?: MessageAttachment[];
+  /**
+   * Short source/category label shown beside the step name (e.g. `"MCP"`).
+   * Rendered only when present — never inferred from `name`.
+   */
+  tag?: string;
 }
 
 /** Incremental content delta inside a streaming SSE chunk. */

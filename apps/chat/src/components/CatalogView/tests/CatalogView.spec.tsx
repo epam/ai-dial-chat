@@ -1,6 +1,7 @@
 import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import {
   CatalogEntityType,
+  CatalogSortKey,
   CredentialsBadgeState,
   CredentialsUiState,
   getCredentialsBadgeState,
@@ -17,6 +18,7 @@ import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
+import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
@@ -62,6 +64,7 @@ const postOAuthResult = (flowId: string, message: Record<string, unknown>) => {
 };
 
 const mockNavigate = vi.fn();
+const mockSetSearchParams = vi.fn();
 let mockSearchParams = new URLSearchParams();
 
 const capturedPublishProps: {
@@ -73,12 +76,16 @@ const capturedPublishProps: {
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
     isConnectVisible?: (item: CatalogItem) => boolean;
+    sortKey?: string;
+    onSortChange?: (key: string) => void;
+    filterTopics?: Set<string>;
+    onFilterTopicsChange?: (topics: Set<string>) => void;
   } | null;
 } = { current: null };
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
-  useSearchParams: () => [mockSearchParams],
+  useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }));
 
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
@@ -109,6 +116,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     getPublishHistory,
     isPublishVisible,
     isConnectVisible,
+    sortKey,
+    onSortChange,
+    filterTopics,
+    onFilterTopicsChange,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
@@ -133,6 +144,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
     isConnectVisible?: (item: CatalogItem) => boolean;
+    sortKey?: string;
+    onSortChange?: (key: string) => void;
+    filterTopics?: Set<string>;
+    onFilterTopicsChange?: (topics: Set<string>) => void;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
     capturedPublishProps.current = {
@@ -143,6 +158,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onPublishExpandedPathsChange,
       publishLoadingPaths,
       isConnectVisible,
+      sortKey,
+      onSortChange,
+      filterTopics,
+      onFilterTopicsChange,
     };
 
     return (
@@ -336,6 +355,13 @@ vi.mock('../../../hooks/publish/usePublishFolders', () => ({
   usePublishFolders: vi.fn(),
 }));
 
+vi.mock(
+  '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference',
+  () => ({
+    useCatalogSortFilterPreference: vi.fn(),
+  }),
+);
+
 describe('CatalogView', () => {
   const user = userEvent.setup({ delay: null });
   let capturedPopup: ReturnType<typeof makeFakePopup> | undefined;
@@ -378,6 +404,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentLimits).mockResolvedValue({});
     vi.mocked(useNotification).mockReturnValue({
@@ -398,6 +425,12 @@ describe('CatalogView', () => {
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
+    vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+      sortKey: CatalogSortKey.RecentlyUpdated,
+      setSortKey: vi.fn(),
+      filterTopics: new Set(),
+      setFilterTopics: vi.fn(),
     });
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Ready,
@@ -707,6 +740,26 @@ describe('CatalogView', () => {
     );
   });
 
+  it('clears the itemId search param once it has been read, so it acts as a one-shot signal', () => {
+    mockSearchParams = new URLSearchParams({ itemId: 'gpt-4o' });
+
+    render(<CatalogView />);
+
+    expect(mockSetSearchParams).toHaveBeenCalledOnce();
+    const [updater, options] = mockSetSearchParams.mock.calls[0];
+    expect(options).toEqual({ replace: true });
+    const result = updater(mockSearchParams);
+    expect(result.has('itemId')).toBe(false);
+  });
+
+  it('does not touch the URL when there is no itemId search param', () => {
+    mockSearchParams = new URLSearchParams();
+
+    render(<CatalogView />);
+
+    expect(mockSetSearchParams).not.toHaveBeenCalled();
+  });
+
   it('adds toolsets from deployments context to catalog items', () => {
     vi.mocked(useDeployments).mockReturnValue({
       items: [
@@ -732,6 +785,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -761,6 +815,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(useFavoriteApplications).mockReturnValue({
       favoriteIds: new Set(),
@@ -803,6 +858,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -838,6 +894,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -870,6 +927,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -899,6 +957,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -923,6 +982,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'gpt-4o',
@@ -1034,6 +1094,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'my-app',
@@ -1093,6 +1154,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'search-tool',
@@ -1167,6 +1229,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('502'));
 
@@ -1203,6 +1266,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
 
@@ -1245,6 +1309,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
 
@@ -1286,6 +1351,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(logoutToolset).mockResolvedValue({ success: true });
 
@@ -1330,6 +1396,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockRejectedValue(new Error('network error'));
 
@@ -1374,6 +1441,7 @@ describe('CatalogView', () => {
         toolsets: getToolsets(),
         refetchToolsets,
         refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
       }));
       return render(<CatalogView />);
     };
@@ -1565,6 +1633,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockResolvedValue(undefined);
 
@@ -1609,6 +1678,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments,
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteApplication).mockResolvedValue(undefined);
 
@@ -1656,6 +1726,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockRejectedValue(new Error('network error'));
 

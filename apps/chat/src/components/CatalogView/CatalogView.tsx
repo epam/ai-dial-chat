@@ -14,7 +14,7 @@ import type {
   ToolsetLogoutBodyDto,
 } from '@epam/chat-api-client';
 import type { FC } from 'react';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
@@ -34,6 +34,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
@@ -104,9 +105,29 @@ interface Props {
 const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const initialDetailsItemId =
-    searchParams.get(CatalogQuery.ItemId) ?? undefined;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const itemIdParam = searchParams.get(CatalogQuery.ItemId) ?? undefined;
+  const initialDetailsItemId = itemIdParam;
+
+  /*
+   * `itemId` is a one-shot signal from a shared-invitation redirect (see
+   * SharedInvitationPage) meant to open the details panel once. Clearing it
+   * here keeps it from lingering in the URL, so a later navigation back to
+   * the same deployment's shared link isn't ignored just because the param
+   * still equals a value Catalog already consumed once before.
+   */
+  useEffect(() => {
+    if (!itemIdParam) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete(CatalogQuery.ItemId);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [itemIdParam, setSearchParams]);
+
   const { showNotification } = useNotification();
   const { user } = useUser();
   const isAdmin = user?.isAdmin ?? false;
@@ -127,6 +148,12 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     isLoading: isFavoritesLoading,
     toggleFavorite,
   } = useFavoriteApplications();
+  const {
+    sortKey,
+    setSortKey,
+    filterTopics: persistedFilterTopics,
+    setFilterTopics,
+  } = useCatalogSortFilterPreference();
 
   const isLoading = isDeploymentsLoading || isFavoritesLoading;
 
@@ -160,6 +187,17 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         : catalogItems,
     [catalogItems, isSelectorMode],
   );
+
+  const reconciledFilterTopics = useMemo(() => {
+    const availableTopics = new Set(
+      visibleCatalogItems.flatMap((item) => item.topics),
+    );
+    return new Set(
+      Array.from(persistedFilterTopics).filter((topic) =>
+        availableTopics.has(topic),
+      ),
+    );
+  }, [visibleCatalogItems, persistedFilterTopics]);
 
   const {
     folderItems: publishFolderItems,
@@ -623,6 +661,10 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       }
       initialDetailsItemId={initialDetailsItemId}
       onCardClick={isSelectorMode ? handleCardSelect : undefined}
+      sortKey={isSelectorMode ? undefined : sortKey}
+      onSortChange={isSelectorMode ? undefined : setSortKey}
+      filterTopics={isSelectorMode ? undefined : reconciledFilterTopics}
+      onFilterTopicsChange={isSelectorMode ? undefined : setFilterTopics}
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}

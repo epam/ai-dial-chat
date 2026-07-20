@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  BadRequestException,
   ForbiddenException,
   NotFoundException,
   ServiceUnavailableException,
@@ -38,10 +39,12 @@ function makeService(callbackBaseUrl = 'https://example.com/callback') {
 
   const deploymentsService = {
     invalidateListCache: vi.fn().mockResolvedValue(undefined),
+    resolveDeploymentItem: vi.fn().mockResolvedValue(null),
   } as unknown as DeploymentsService;
 
   const toolsetsService = {
     invalidateListCache: vi.fn().mockResolvedValue(undefined),
+    resolveToolsetItem: vi.fn().mockResolvedValue(null),
   } as unknown as ToolsetsService;
 
   const service = new ShareService(
@@ -232,6 +235,162 @@ describe('ShareService', () => {
       await expect(
         service.acceptInvitation('token', 'abc123', 'user-sub-1'),
       ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('treats a 400 "already belong to you" accept error as success instead of throwing', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation')
+        .mockResolvedValueOnce(
+          okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
+        )
+        .mockResolvedValueOnce({
+          error: 'Resource gpt-4o already belong to you',
+          response: { status: 400 } as Response,
+        } as never);
+
+      const result = await service.acceptInvitation(
+        'token',
+        'abc123',
+        'user-sub-1',
+      );
+
+      expect(result).toEqual({ itemId: 'gpt-4o' });
+    });
+
+    it('still throws BadRequestException for a 400 accept error unrelated to already owning the resource', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation')
+        .mockResolvedValueOnce(
+          okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
+        )
+        .mockResolvedValueOnce({
+          error: 'Invitation has expired',
+          response: { status: 400 } as Response,
+        } as never);
+
+      await expect(
+        service.acceptInvitation('token', 'abc123', 'user-sub-1'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('returns sharedToolset for a toolsets/-prefixed itemId, without calling resolveDeploymentItem', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({
+          id: 'abc123',
+          resources: [{ url: 'toolsets/b/search__0.0.1' }],
+        }),
+      );
+      const sharedToolset = { id: 'toolsets/b/search__0.0.1', toolset: 'x' };
+      vi.mocked(toolsetsService.resolveToolsetItem).mockResolvedValue(
+        sharedToolset as never,
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+      );
+
+      expect(result).toEqual({
+        itemId: 'toolsets/b/search__0.0.1',
+        sharedToolset,
+      });
+      expect(toolsetsService.resolveToolsetItem).toHaveBeenCalledWith(
+        'user-sub-1',
+        'token-abc',
+        'toolsets/b/search__0.0.1',
+      );
+      expect(deploymentsService.resolveDeploymentItem).not.toHaveBeenCalled();
+    });
+
+    it('returns sharedDeployment for an applications/-prefixed itemId', async () => {
+      const { service, deploymentsService } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({
+          id: 'abc123',
+          resources: [{ url: 'applications/b/my-app__1.0' }],
+        }),
+      );
+      const sharedDeployment = {
+        id: 'applications/b/my-app__1.0',
+        type: 'application',
+      };
+      vi.mocked(deploymentsService.resolveDeploymentItem).mockResolvedValue(
+        sharedDeployment as never,
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+      );
+
+      expect(result).toEqual({
+        itemId: 'applications/b/my-app__1.0',
+        sharedDeployment,
+      });
+    });
+
+    it('falls back to resolveToolsetItem for an ambiguous id when resolveDeploymentItem finds nothing', async () => {
+      const { service, deploymentsService, toolsetsService } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({
+          id: 'abc123',
+          resources: [{ url: 'root-toolset-copy' }],
+        }),
+      );
+      vi.mocked(deploymentsService.resolveDeploymentItem).mockResolvedValue(
+        null,
+      );
+      const sharedToolset = { id: 'root-toolset-copy', toolset: 'x' };
+      vi.mocked(toolsetsService.resolveToolsetItem).mockResolvedValue(
+        sharedToolset as never,
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+      );
+
+      expect(result).toEqual({
+        itemId: 'root-toolset-copy',
+        sharedToolset,
+      });
+    });
+
+    it('omits both sharedDeployment and sharedToolset when nothing resolves', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({ id: 'abc123', resources: [{ url: 'unknown-id' }] }),
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+      );
+
+      expect(result).toEqual({ itemId: 'unknown-id' });
+    });
+
+    it('still succeeds with only itemId when summary resolution throws', async () => {
+      const { service, deploymentsService } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getInvitation').mockResolvedValue(
+        okResponse({ id: 'abc123', resources: [{ url: 'gpt-4o' }] }),
+      );
+      vi.mocked(deploymentsService.resolveDeploymentItem).mockRejectedValue(
+        new Error('upstream boom'),
+      );
+
+      const result = await service.acceptInvitation(
+        'token-abc',
+        'abc123',
+        'user-sub-1',
+      );
+
+      expect(result).toEqual({ itemId: 'gpt-4o' });
     });
   });
 
