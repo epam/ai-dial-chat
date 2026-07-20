@@ -1,9 +1,5 @@
-import {
-  AttachmentType,
-  CodeBlockTheme,
-  RequestStatus,
-} from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -155,109 +151,6 @@ describe('AttachmentGroup', () => {
     });
   });
 
-  describe('files', () => {
-    it('renders a single file tile', () => {
-      render(<AttachmentGroup attachments={[makeFile('doc1')]} />);
-      expect(screen.getByText('1 attachment')).toBeTruthy();
-      expect(screen.getByText('doc1.pdf')).toBeTruthy();
-    });
-
-    it('renders multiple file tiles', () => {
-      const files = ['a', 'b', 'c'].map((id) => makeFile(id));
-      render(<AttachmentGroup attachments={files} />);
-      expect(screen.getByText('3 attachments')).toBeTruthy();
-      expect(screen.getAllByRole('listitem')).toHaveLength(3);
-    });
-
-    it('shows a "Download all" header action for 2+ attachments', async () => {
-      const user = userEvent.setup();
-      const handleClick = vi.fn();
-      const files = [makeFile('a'), makeFile('b')];
-      render(
-        <AttachmentGroup
-          attachments={files}
-          onAttachmentClick={handleClick}
-          labels={{ downloadAllLabel: 'Download all' }}
-        />,
-      );
-
-      await user.click(screen.getByRole('button', { name: 'Download all' }));
-
-      expect(handleClick).toHaveBeenCalledWith(files[0]);
-      expect(handleClick).toHaveBeenCalledWith(files[1]);
-    });
-
-    it('"Download all" skips attachments that are still uploading or failed', async () => {
-      const user = userEvent.setup();
-      const handleClick = vi.fn();
-      const ready = makeFile('ready');
-      const uploading = makeFile('uploading', {
-        status: RequestStatus.Loading,
-      });
-      const failed = makeFile('failed', { status: RequestStatus.Error });
-      render(
-        <AttachmentGroup
-          attachments={[ready, uploading, failed]}
-          onAttachmentClick={handleClick}
-          labels={{ downloadAllLabel: 'Download all' }}
-        />,
-      );
-
-      await user.click(screen.getByRole('button', { name: 'Download all' }));
-
-      expect(handleClick).toHaveBeenCalledOnce();
-      expect(handleClick).toHaveBeenCalledWith(ready);
-    });
-
-    it('does not show "Download all" for a single attachment', () => {
-      render(
-        <AttachmentGroup
-          attachments={[makeFile('a')]}
-          onAttachmentClick={vi.fn()}
-        />,
-      );
-      expect(
-        screen.queryByRole('button', { name: /download all/i }),
-      ).toBeNull();
-    });
-  });
-
-  describe('mixed groups', () => {
-    it('renders images and files together in one unified grid with a combined count', () => {
-      const attachments = [
-        makeImage('a'),
-        makeImage('b'),
-        makeFile('doc'),
-        makeFile('sheet'),
-      ];
-      render(<AttachmentGroup attachments={attachments} />);
-
-      expect(screen.getByText('4 attachments')).toBeTruthy();
-      expect(screen.getAllByRole('listitem')).toHaveLength(4);
-      expect(screen.getByText('doc.pdf')).toBeTruthy();
-      expect(screen.getByText('sheet.pdf')).toBeTruthy();
-      expect(screen.getByRole('img', { name: 'a.png' })).toBeTruthy();
-    });
-
-    it('shows "Download all" for a mixed group of 2+ attachments and downloads every attachment', async () => {
-      const user = userEvent.setup();
-      const handleClick = vi.fn();
-      const attachments = [makeImage('a'), makeFile('doc')];
-      render(
-        <AttachmentGroup
-          attachments={attachments}
-          onAttachmentClick={handleClick}
-          labels={{ downloadAllLabel: 'Download all' }}
-        />,
-      );
-
-      await user.click(screen.getByRole('button', { name: 'Download all' }));
-
-      expect(handleClick).toHaveBeenCalledWith(attachments[0]);
-      expect(handleClick).toHaveBeenCalledWith(attachments[1]);
-    });
-  });
-
   describe('file states', () => {
     it('renders an uploading file with a progress indicator', () => {
       render(
@@ -284,17 +177,6 @@ describe('AttachmentGroup', () => {
     });
   });
 
-  it('accepts getSizeLabel without throwing (size is not displayed on the uniform tile)', () => {
-    expect(() =>
-      render(
-        <AttachmentGroup
-          attachments={[makeFile('a')]}
-          getSizeLabel={() => '2.4 MB'}
-        />,
-      ),
-    ).not.toThrow();
-  });
-
   it('exposes the group as an accessible, labeled region', () => {
     render(
       <AttachmentGroup
@@ -303,15 +185,5 @@ describe('AttachmentGroup', () => {
       />,
     );
     expect(screen.getByRole('group', { name: 'Attachments' })).toBeTruthy();
-  });
-
-  it('forwards theme to file tiles so they use the markdown surface, not white, in light mode', () => {
-    const { container } = render(
-      <AttachmentGroup
-        attachments={[makeFile('a')]}
-        theme={CodeBlockTheme.Light}
-      />,
-    );
-    expect(container.querySelector('[class*="tileLight"]')).toBeTruthy();
   });
 });

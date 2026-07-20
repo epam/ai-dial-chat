@@ -1,6 +1,7 @@
 import type { CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import {
   CatalogEntityType,
+  CatalogSortKey,
   CredentialsBadgeState,
   CredentialsUiState,
   getCredentialsBadgeState,
@@ -17,6 +18,7 @@ import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
+import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
@@ -74,6 +76,10 @@ const capturedPublishProps: {
     onPublishExpandedPathsChange?: (paths: Set<string>) => void;
     publishLoadingPaths?: Set<string>;
     isConnectVisible?: (item: CatalogItem) => boolean;
+    sortKey?: string;
+    onSortChange?: (key: string) => void;
+    filterTopics?: Set<string>;
+    onFilterTopicsChange?: (topics: Set<string>) => void;
   } | null;
 } = { current: null };
 
@@ -110,6 +116,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     getPublishHistory,
     isPublishVisible,
     isConnectVisible,
+    sortKey,
+    onSortChange,
+    filterTopics,
+    onFilterTopicsChange,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
@@ -134,6 +144,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     getPublishHistory?: (item: CatalogItem) => Promise<unknown[]>;
     isPublishVisible?: (item: CatalogItem) => boolean;
     isConnectVisible?: (item: CatalogItem) => boolean;
+    sortKey?: string;
+    onSortChange?: (key: string) => void;
+    filterTopics?: Set<string>;
+    onFilterTopicsChange?: (topics: Set<string>) => void;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
     capturedPublishProps.current = {
@@ -144,6 +158,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onPublishExpandedPathsChange,
       publishLoadingPaths,
       isConnectVisible,
+      sortKey,
+      onSortChange,
+      filterTopics,
+      onFilterTopicsChange,
     };
 
     return (
@@ -337,6 +355,13 @@ vi.mock('../../../hooks/publish/usePublishFolders', () => ({
   usePublishFolders: vi.fn(),
 }));
 
+vi.mock(
+  '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference',
+  () => ({
+    useCatalogSortFilterPreference: vi.fn(),
+  }),
+);
+
 describe('CatalogView', () => {
   const user = userEvent.setup({ delay: null });
   let capturedPopup: ReturnType<typeof makeFakePopup> | undefined;
@@ -400,6 +425,12 @@ describe('CatalogView', () => {
       onExpandedPathsChange: vi.fn(),
       onCreatePublishFolder: vi.fn(),
       hasPublishWriteAccess: vi.fn().mockReturnValue(true),
+    });
+    vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+      sortKey: CatalogSortKey.RecentlyUpdated,
+      setSortKey: vi.fn(),
+      filterTopics: new Set(),
+      setFilterTopics: vi.fn(),
     });
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Ready,

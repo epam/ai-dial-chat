@@ -4,6 +4,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogEntityType } from '../../../types/entity-type';
+import { CatalogSortKey } from '../../../types/sort';
 import { Catalog } from '../Catalog';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -76,6 +77,8 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     isMyAppsActive,
     onMyAppsChange,
     onViewModeChange,
+    sortKey,
+    onSortChange,
   }: {
     title?: string;
     query: string;
@@ -86,9 +89,12 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     isMyAppsActive?: boolean;
     onMyAppsChange?: (isActive: boolean) => void;
     onViewModeChange?: (mode: string) => void;
+    sortKey?: string;
+    onSortChange?: (key: string) => void;
   }) => (
     <div>
       <span>{title ?? 'Browse'}</span>
+      <span>{`sortKey:${sortKey}`}</span>
       <input
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
@@ -112,6 +118,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
       ))}
       <button onClick={() => onMyAppsChange?.(!isMyAppsActive)}>My Apps</button>
       <button onClick={() => onViewModeChange?.('list')}>List view</button>
+      <button onClick={() => onSortChange?.('newest')}>Sort newest</button>
     </div>
   ),
 }));
@@ -501,5 +508,58 @@ describe('Catalog', () => {
     );
 
     await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+  });
+
+  it('defaults to recently-updated sort and empty filters when uncontrolled', () => {
+    render(<Catalog items={[]} favorites={[]} />);
+    expect(screen.getByText('sortKey:recently-updated')).toBeTruthy();
+  });
+
+  it('uses the controlled sortKey prop instead of internal default', () => {
+    render(
+      <Catalog items={[]} favorites={[]} sortKey={CatalogSortKey.Newest} />,
+    );
+    expect(screen.getByText('sortKey:newest')).toBeTruthy();
+  });
+
+  it('calls onSortChange when the sort option changes', async () => {
+    const onSortChange = vi.fn();
+    render(<Catalog items={[]} favorites={[]} onSortChange={onSortChange} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sort newest' }));
+
+    expect(onSortChange).toHaveBeenCalledWith(CatalogSortKey.Newest);
+  });
+
+  it('uses the controlled filterTopics prop instead of internal state', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { topics: ['Free'] }),
+          makeItem('2', 'Gemini', { topics: ['Paid'] }),
+        ]}
+        favorites={[]}
+        filterTopics={new Set(['Paid'])}
+      />,
+    );
+
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('1 items');
+  });
+
+  it('calls onFilterTopicsChange when a topic filter is applied', async () => {
+    const onFilterTopicsChange = vi.fn();
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude', { topics: ['Free'] })]}
+        favorites={[]}
+        onFilterTopicsChange={onFilterTopicsChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Free' }));
+
+    expect(onFilterTopicsChange).toHaveBeenCalledWith(new Set(['Free']));
   });
 });

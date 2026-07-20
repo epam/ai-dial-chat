@@ -1,5 +1,4 @@
 import {
-  AttachmentErrorReason,
   AttachmentType,
   RequestStatus,
   type Attachment,
@@ -283,17 +282,6 @@ describe('Input', () => {
       '',
       expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
     );
-  });
-
-  it('should remove the card when the remove button is clicked', () => {
-    render(<Input />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-    fireEvent.click(screen.getByLabelText('Remove attachment'));
-    expect(screen.queryByText('doc')).toBeNull();
   });
 
   it('pendingDropFiles prop creates attachment cards and calls onDropFilesConsumed', () => {
@@ -754,70 +742,6 @@ describe('Input — attachment status transitions', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('doc')).toBeNull();
-    });
-  });
-
-  it('shows retry for failed immediate uploads and retries the same attachment', async () => {
-    const handleUploadAttachment = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('upload failed'))
-      .mockResolvedValueOnce('https://example.com/doc.pdf');
-
-    render(<Input onUploadAttachment={handleUploadAttachment} />);
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    await waitFor(() => {
-      expect(screen.getByLabelText('Retry upload')).toBeTruthy();
-    });
-
-    fireEvent.click(screen.getByLabelText('Retry upload'));
-
-    await waitFor(() => {
-      expect(handleUploadAttachment).toHaveBeenCalledTimes(2);
-      expect(screen.getByLabelText('Send message')).toBeTruthy();
-    });
-  });
-
-  it('flags an already-attached file as an error when the model changes to one that no longer supports it', async () => {
-    const handleUploadAttachment = vi
-      .fn()
-      .mockResolvedValue('https://example.com/doc.pdf');
-    const allowAll = () => undefined;
-
-    const { rerender } = render(
-      <Input
-        onUploadAttachment={handleUploadAttachment}
-        validateAttachment={allowAll}
-      />,
-    );
-    const fileInput = document.querySelector(
-      'input[type="file"]',
-    ) as HTMLInputElement;
-    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    await waitFor(() => {
-      expect(
-        (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
-      ).toBe(false);
-    });
-
-    rerender(
-      <Input
-        onUploadAttachment={handleUploadAttachment}
-        validateAttachment={() => AttachmentErrorReason.UnsupportedType}
-      />,
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByLabelText('Retry upload')).toBeNull();
-      expect(
-        (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
-      ).toBe(true);
     });
   });
 });

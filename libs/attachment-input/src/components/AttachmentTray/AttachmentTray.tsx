@@ -40,11 +40,7 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
             onRetry={onRetry}
             onExpand={onExpand}
             labels={{ removeLabel, retryLabel, clickLabel }}
-            onClick={
-              onAttachmentClick
-                ? () => onAttachmentClick(attachment)
-                : undefined
-            }
+            onClick={onAttachmentClick}
           />
         </div>
       ))}
