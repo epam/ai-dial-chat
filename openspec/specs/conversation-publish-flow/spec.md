@@ -71,6 +71,12 @@ Destination folder picker, search, and inline folder creation SHALL behave ident
 - **WHEN** the user searches for a folder name and selects a matching folder
 - **THEN** `selectedFolderPath` updates exactly as it would for a catalog entity publish flow
 
+Inline folder creation SHALL also validate the new folder name identically to the catalog publish flow (see `catalog-publish-flow`'s "Inline folder creation validates the name client-side" requirement — empty name, `..`/forbidden characters, or a duplicate sibling name are all rejected client-side before `onCreatePublishFolder` is called). `PublishConversationPanelContainer` SHALL supply the validation error strings (`ConversationPublishI18nKeys.EmptyFolderNameError`, `InvalidFolderNameError`, `DuplicateFolderNameError`) via `PublishPanelTexts.createFolderEmptyNameError`/`createFolderInvalidNameError`/`createFolderDuplicateNameError`.
+
+#### Scenario: User enters a path-traversal folder name in the conversation publish panel
+- **WHEN** the user types `../EscapeFolder` into the inline create row and confirms
+- **THEN** an inline validation error is shown and no publish request is sent with an invalid `folderPath`
+
 ### Requirement: Submit button always reads "Publish"; already-published-to-folder disables submit instead of offering replace
 
 The pinned footer's submit button SHALL always show the fixed label "Publish" (i18n key `conversationPublish.submitLabel`) regardless of folder selection — never an "Update version" variant, since conversations have no version to update. When the selected folder already has a prior publication of this same conversation (history for that folder is non-empty), the submit button SHALL be disabled and a distinct callout (i18n key `conversationPublish.alreadyPublishedWarning`, NOT the catalog `ReplaceWarning` wording) SHALL be shown, since there is no supported "publish again to the same folder" action in this iteration (see design.md D2).
