@@ -3,6 +3,7 @@ import { FC, MouseEvent, useState } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
 import { StarToggleButton } from '../../StarToggleButton/StarToggleButton';
+import styles from '../ListView.module.scss';
 
 export const StarCellRenderer: FC<
   ICellRendererParams<CatalogItem, unknown, GridContext>
@@ -19,8 +20,12 @@ export const StarCellRenderer: FC<
   };
 
   return (
-    <div className="flex h-full items-center justify-center pe-4">
-      <StarToggleButton isStarred={isStarred} onClick={handleToggle} />
+    <div className="flex h-full items-center justify-end pe-4">
+      <StarToggleButton
+        isStarred={isStarred}
+        onClick={handleToggle}
+        className={!isStarred ? styles.starToggleOff : undefined}
+      />
     </div>
   );
 };

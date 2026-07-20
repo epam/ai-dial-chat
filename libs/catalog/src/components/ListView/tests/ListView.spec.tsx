@@ -13,10 +13,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     emptyStateTitle,
     additionalGridOptions,
     ariaLabel,
+    withoutHeaderBorders,
+    alternateOddRowColors,
   }: {
     rowData: CatalogItem[];
     emptyStateTitle?: string;
     additionalGridOptions?: {
+      rowHeight?: number;
       context?: {
         onToggleFavorite?: (id: string, isStarred: boolean) => void;
         selectedItemId?: string;
@@ -24,11 +27,18 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       getRowClass?: (params: { data: CatalogItem }) => string | undefined;
     };
     ariaLabel?: string;
+    withoutHeaderBorders?: boolean;
+    alternateOddRowColors?: boolean;
     [key: string]: unknown;
   }) => {
     const ctx = additionalGridOptions?.context;
     return (
-      <div aria-label={ariaLabel}>
+      <div
+        aria-label={ariaLabel}
+        data-row-height={additionalGridOptions?.rowHeight}
+        data-without-header-borders={String(Boolean(withoutHeaderBorders))}
+        data-alternate-odd-row-colors={String(Boolean(alternateOddRowColors))}
+      >
         {!rowData?.length && emptyStateTitle && <span>{emptyStateTitle}</span>}
         {rowData?.map((item) => (
           <div
@@ -137,5 +147,30 @@ describe('ListView', () => {
     );
 
     expect(screen.getByText('selected')).toBeTruthy();
+  });
+
+  it('uses a fixed dense row height — constant across every row regardless of content', () => {
+    render(<ListView items={[]} query="" ariaLabel="Catalog" />);
+    expect(
+      screen.getByLabelText('Catalog').getAttribute('data-row-height'),
+    ).toBe('60');
+  });
+
+  it('removes ag-grid header column dividers (no vertical dividers in this view)', () => {
+    render(<ListView items={[]} query="" ariaLabel="Catalog" />);
+    expect(
+      screen
+        .getByLabelText('Catalog')
+        .getAttribute('data-without-header-borders'),
+    ).toBe('true');
+  });
+
+  it("does not enable ag-grid's built-in alternating row colors (zebra striping is done via CSS override instead, to avoid stacking with it)", () => {
+    render(<ListView items={[]} query="" ariaLabel="Catalog" />);
+    expect(
+      screen
+        .getByLabelText('Catalog')
+        .getAttribute('data-alternate-odd-row-colors'),
+    ).toBe('false');
   });
 });

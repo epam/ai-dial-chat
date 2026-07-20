@@ -109,8 +109,8 @@ export type { FavoritesProps } from './models/favorites';
 export { ListView } from './components/ListView/ListView';
 export type { ListViewProps } from './models/list-props';
 
-export { EntityBadge } from './components/EntityBadge/EntityBadge';
-export type { EntityBadgeProps } from './components/EntityBadge/EntityBadge';
+export { EntityTypeLabel } from './components/EntityTypeLabel/EntityTypeLabel';
+export type { EntityTypeLabelProps } from './components/EntityTypeLabel/EntityTypeLabel';
 
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';

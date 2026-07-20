@@ -4,7 +4,8 @@ The system SHALL expose `GET /api/v1/deployments` that proxies DIAL Core `GET /v
 
 The endpoint:
 - MUST require authentication via `SessionGuard`; respond 401 when no valid session is present.
-- SHALL accept an optional `interface_type` query parameter as a repeatable string value validated against `('chat' | 'embeddings' | 'mcp' | 'custom_ui' | 'all')`; passing an unrecognised value MUST respond 400.
+- SHALL accept an optional `interface_type` query parameter as a repeatable string value validated against `('chat' | 'embedding' | 'mcp' | 'custom_ui' | 'all')`; passing an unrecognised value MUST respond 400.
+- SHALL accept an optional `refresh` query parameter validated as a boolean (`true` or `false` after DTO transformation); passing any other value MUST respond 400.
 - SHALL forward the `interface_type` values to DIAL Core `GET /v1/deployments` when provided.
 - SHALL call DIAL Core using the `@epam/ai-dial-typescript-sdk` client (`listDeployments`), passing the session access token.
 - SHALL map the DIAL Core response `deployments` array to `DeploymentItemDto[]` using the normalisation rules in the `DeploymentItemDto shape` requirement below.
@@ -12,8 +13,11 @@ The endpoint:
 - SHALL respond 502 when DIAL Core returns a non-2xx response.
 - SHALL respond 503 when DIAL Core is unreachable or times out.
 - SHALL apply `@Throttle({ default: { limit: 60, ttl: 60000 } })`.
-- SHALL cache the **unfiltered** full DIAL Core response under key `deployments:list:<userSub>` for 30 000 ms; `interface_type` filtering SHALL be applied in-process after cache retrieval.
-- SHALL set response header `Cache-Control: private, max-age=30`.
+- SHALL cache the unfiltered DIAL Core response under key `deployments:list:<userSub>` for 30 000 ms and filtered DIAL Core responses under key `deployments:list:<userSub>:interface:<type[,type]>` for 30 000 ms.
+- SHALL, when a filtered cache entry is absent but the unfiltered cache entry is present, apply `interface_type` filtering in-process after cache retrieval without calling DIAL Core.
+- SHALL bypass server-side deployments cache entirely when `refresh=true`, call DIAL Core, and replace the relevant cache entry with the fresh mapped response.
+- SHALL set response header `Cache-Control: private, max-age=30` for normal requests.
+- SHALL set response header `Cache-Control: private, no-store` when `refresh=true`.
 - MUST NOT log the session access token.
 
 #### Scenario: Authenticated user receives all deployments without filter
@@ -46,6 +50,11 @@ The endpoint:
 - **WHEN** `GET /api/v1/deployments?interface_type=unknown` is called
 - **THEN** the endpoint responds 400 with a validation error referencing `interface_type`
 
+#### Scenario: Invalid refresh value returns 400
+
+- **WHEN** `GET /api/v1/deployments?refresh=maybe` is called
+- **THEN** the endpoint responds 400 with a validation error referencing `refresh`
+
 #### Scenario: Unauthenticated request rejected
 
 - **WHEN** `GET /api/v1/deployments` is called without a valid session cookie
@@ -71,6 +80,12 @@ The endpoint:
 - **WHEN** `deployments:list:<userSub>` is present in cache and `interface_type=chat` is requested
 - **THEN** the service returns cached deployments filtered in-process without calling DIAL Core
 
+#### Scenario: Refresh bypasses deployments cache
+
+- **WHEN** `deployments:list:<userSub>:interface:chat` is present in cache and `GET /api/v1/deployments?interface_type=chat&refresh=true` is requested
+- **THEN** the service calls DIAL Core instead of returning the cached entry
+- **AND** the response header is `Cache-Control: private, no-store`
+
 ---
 
 ### Requirement: DeploymentItemDto shape
@@ -88,6 +103,16 @@ The endpoint:
 - `isMy?: boolean` — `true` when the session `bucket` appears as a path segment of the deployment `id` (e.g. `applications/{bucket}/{name}`); `false` otherwise; computed post-cache and never stored in the cache entry
 - `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
 - `features?: DeploymentFeaturesDto` — feature flags from DIAL Core, including the new `mcp?: boolean` field (see below)
+
+`DeploymentItemDto.conversationStarters?: ConversationStartersDto` SHALL expose Quick Apps conversation starter settings mapped from `application_properties.conversation_starters`. It SHALL be set only for `type === 'application'` items with at least one valid starter.
+
+`ConversationStartersDto` SHALL contain:
+- `introText?: string` mapped from `application_properties.conversation_starters.intro_text`
+- `autoSubmit?: boolean` mapped from `application_properties.conversation_starters.auto_submit`
+- `chatMessageInputDisabled?: boolean` mapped from `application_properties.conversation_starters.chat_message_input_disabled`
+- `starters: ConversationStarterDto[]`, where each starter contains `title: string` and `text: string` from the corresponding raw starter
+
+Invalid or blank starters SHALL be omitted. If no valid starters remain, `conversationStarters` SHALL be omitted. Non-application deployments SHALL NOT expose `conversationStarters`, even if a malformed source payload contains `application_properties`.
 
 `DeploymentFeaturesDto.mcp?: boolean` SHALL be `true` when any of the following is present on the raw DIAL Core list entry, and `undefined` (omitted) otherwise:
 - `features.mcp === true` (read defensively, the same way `DeploymentFeaturesDetailsDto.mcp` is already populated for the deployment-details endpoint);
@@ -157,17 +182,32 @@ The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SH
 - **WHEN** a DIAL Core `ApplicationOpenAi` entry has `interfaces` containing `'mcp'` and neither `features.mcp` nor a root-level `mcp` descriptor
 - **THEN** the mapped `DeploymentItemDto` has `features.mcp: true`
 
+#### Scenario: Application conversation starters mapped from application properties
+
+- **WHEN** a DIAL Core `ApplicationOpenAi` entry has `application_properties.conversation_starters` with `intro_text`, `auto_submit`, `chat_message_input_disabled`, and one starter `{ title, text }`
+- **THEN** the mapped `DeploymentItemDto` has `conversationStarters.introText`, `conversationStarters.autoSubmit`, `conversationStarters.chatMessageInputDisabled`, and `conversationStarters.starters[0]` mapped to `{ title, text }`
+
+#### Scenario: Non-application item omits conversationStarters
+
+- **WHEN** a model or toolset entry contains a malformed `application_properties.conversation_starters` payload
+- **THEN** the mapped `DeploymentItemDto` has `conversationStarters` as `undefined`
+
+#### Scenario: Empty or invalid starters omit conversationStarters
+
+- **WHEN** an application entry has `application_properties.conversation_starters.starters` with no valid `{ title, text }` pairs
+- **THEN** the mapped `DeploymentItemDto` has `conversationStarters` as `undefined`
+
 ---
 
 ### Requirement: Deployments domain structure
 
 The backend SHALL implement the deployments feature in `apps/chat-api/src/deployments/` following the established domain pattern:
 
-- `deployments.controller.ts` — thin controller with `@Get() listDeployments(@Query() query: DeploymentsQueryDto, @Req() req)`
+- `deployments.controller.ts` — thin controller with `@Get() listDeployments(@Query() query: DeploymentsQueryDto, @Req() req, @Res({ passthrough: true }) res)`
 - `deployments.service.ts` — `DeploymentsService` injects `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) for the shared DIAL SDK client; calls SDK `listDeployments`; maps and caches results
 - `deployments.module.ts` — `DeploymentsModule` providing `DeploymentsService`; no external domain imports needed
 - `dto/deployment-item.dto.ts` — `DeploymentItemDto` and `DeploymentsResponseDto` with `@ApiProperty` decorators
-- `dto/deployments-query.dto.ts` — `DeploymentsQueryDto` with `interface_type` field: `@IsOptional`, `@IsArray`, `@IsIn([...], { each: true })`, `@Transform` for comma-separated coercion
+- `dto/deployments-query.dto.ts` — `DeploymentsQueryDto` with `interface_type` field: `@IsOptional`, `@IsArray`, `@IsIn([...], { each: true })`, `@Transform` for comma-separated coercion, and `refresh?: boolean` with `@IsBoolean` plus `true`/`false` string coercion
 - `tests/deployments.controller.spec.ts`
 - `tests/deployments.service.spec.ts`
 - `tests/deployments.controller.integration.spec.ts`
@@ -182,7 +222,7 @@ The backend SHALL implement the deployments feature in `apps/chat-api/src/deploy
 #### Scenario: Controller delegates to service with parsed query
 
 - **WHEN** `listDeployments` is called with a validated `DeploymentsQueryDto`
-- **THEN** the controller extracts `sub` and `at` from `req.user` and calls `deploymentsService.listDeployments(sub, at, query.interface_type)`
+- **THEN** the controller extracts `sub`, `at`, and `bucket` from `req.user`, sets the appropriate `Cache-Control` header, and calls `deploymentsService.listDeployments(sub, at, bucket, query.interface_type, query.refresh)`
 
 ---
 
@@ -193,17 +233,18 @@ The `listDeployments` handler SHALL be annotated:
 - `@ApiTags('deployments')`
 - `@ApiOperation({ operationId: 'listDeployments', summary: 'List deployments by interface type' })`
 - `@ApiQuery` for `interface_type` with enum values and multi-value example
+- `@ApiQuery` for `refresh` as an optional boolean cache-bypass flag
 - `@ApiResponse({ status: 200, type: DeploymentsResponseDto })`
 - Standard 400, 401, 403, 429, 502, 503 `@ApiResponse` entries
 
 The `'deployments'` tag SHALL be added in `openapi.config.ts`; the `'catalog'` tag SHALL be removed.
 
-Running `npm run openapi` SHALL produce a `DeploymentsApi` class in `@epam/chat-api-client` with a `listDeployments(params?: ListDeploymentsRequest)` method typed to return `Promise<DeploymentsResponseDto>` where `ListDeploymentsRequest` contains `interfaceType?: string[]`.
+Running `npm run openapi` SHALL produce a `DeploymentsApi` class in `@epam/chat-api-client` with a `listDeployments(params?: ListDeploymentsRequest)` method typed to return `Promise<DeploymentsResponseDto>` where `ListDeploymentsRequest` contains `interfaceType?: string[]` and `refresh?: boolean`.
 
 #### Scenario: Generated client exposes typed listDeployments method
 
 - **WHEN** `npm run openapi` runs after adding the deployments controller
-- **THEN** `@epam/chat-api-client` exports a `DeploymentsApi` class with `listDeployments` method accepting optional `interfaceType` array
+- **THEN** `@epam/chat-api-client` exports a `DeploymentsApi` class with `listDeployments` method accepting optional `interfaceType` array and `refresh` boolean
 
 ---
 
@@ -212,8 +253,11 @@ Running `npm run openapi` SHALL produce a `DeploymentsApi` class in `@epam/chat-
 `apps/chat/src/server-api/deployments.api.ts` SHALL export:
 
 ```ts
-export const getDeployments = (interfaceType?: string[]): Promise<DeploymentsResponseDto> =>
-  deploymentsApi.listDeployments({ interfaceType });
+export const getDeployments = (
+  interfaceType?: string[],
+  refresh?: boolean,
+): Promise<DeploymentsResponseDto> =>
+  deploymentsApi.listDeployments({ interfaceType, refresh });
 ```
 
 `deploymentsApi` SHALL be instantiated in `api-client.ts`. Any existing `catalogApi` instance SHALL be removed.
@@ -228,6 +272,11 @@ export const getDeployments = (interfaceType?: string[]): Promise<DeploymentsRes
 - **WHEN** `getDeployments(['chat'])` is called
 - **THEN** it calls `deploymentsApi.listDeployments({ interfaceType: ['chat'] })`
 
+#### Scenario: getDeployments can request a fresh list
+
+- **WHEN** `getDeployments(['chat'], true)` is called
+- **THEN** it calls `deploymentsApi.listDeployments({ interfaceType: ['chat'], refresh: true })`
+
 ---
 
 ### Requirement: Backend service tests for deployments
@@ -237,8 +286,10 @@ export const getDeployments = (interfaceType?: string[]): Promise<DeploymentsRes
 - Successful mapping of `ModelOpenAi`, `ApplicationOpenAi`, `ToolsetOpenAi` entries to `DeploymentItemDto[]`
 - Items without `id` are skipped
 - `displayName` falls back to `id` when `display_name` is absent
+- Quick Apps `application_properties.conversation_starters` is mapped to `conversationStarters`
 - Cache hit — returns cached value without calling DIAL Core
 - `interface_type` filter applied after cache hit — correct item count returned
+- `refresh=true` bypasses the cached deployments list and calls DIAL Core
 - DIAL Core 502 → service throws `BadGatewayException`
 - DIAL Core unreachable → service throws `ServiceUnavailableException`
 
@@ -253,6 +304,11 @@ All DIAL Core calls SHALL be mocked; no live network calls.
 
 - **WHEN** `deployments:list:<userSub>` is populated in cache
 - **THEN** the SDK `listDeployments` is NOT called on the second request
+
+#### Scenario: Service test — refresh skips cached value
+
+- **WHEN** `listDeployments` is called with `refresh=true` while a deployments cache entry exists
+- **THEN** the SDK `listDeployments` is called and the returned deployments come from the fresh DIAL Core response
 
 ---
 

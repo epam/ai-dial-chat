@@ -1,5 +1,6 @@
 import type { ColDef } from 'ag-grid-community';
 import { CatalogItem } from '../../models/catalog-item';
+import styles from './ListView.module.scss';
 import { EntityTypeCellRenderer } from './Renders/EntityTypeCellRenderer';
 import { FolderCellRenderer } from './Renders/FolderCellRenderer';
 import { NameCellRenderer } from './Renders/NameCellRenderer';
@@ -10,7 +11,8 @@ import { TagsCellRenderer } from './Renders/TagsCellRenderer';
 export const CATALOG_COLUMNS: ColDef<CatalogItem>[] = [
   {
     headerName: 'Name',
-    flex: 4,
+    flex: 1,
+    minWidth: 220,
     field: 'name',
     filter: false,
     cellRenderer: NameCellRenderer,
@@ -18,7 +20,7 @@ export const CATALOG_COLUMNS: ColDef<CatalogItem>[] = [
   },
   {
     headerName: 'Type',
-    flex: 2,
+    width: 110,
     field: 'type',
     filter: false,
     sortable: false,
@@ -28,7 +30,7 @@ export const CATALOG_COLUMNS: ColDef<CatalogItem>[] = [
   {
     headerName: 'Folder',
     field: 'folder',
-    flex: 3,
+    width: 170,
     filter: false,
     cellRenderer: FolderCellRenderer,
     valueGetter: (p) => p.data?.folder,
@@ -36,20 +38,20 @@ export const CATALOG_COLUMNS: ColDef<CatalogItem>[] = [
   {
     headerName: 'Tags',
     field: 'topics',
-    flex: 2,
+    width: 230,
     filter: false,
     sortable: false,
     cellRenderer: TagsCellRenderer,
     valueGetter: (p) => p.data?.topics,
   },
   {
-    headerName: '',
+    headerName: 'Favorite',
     field: 'isStarred',
     width: 72,
-    flex: undefined,
     filter: false,
     sortable: false,
     resizable: false,
+    headerClass: styles.favHeader,
     cellRenderer: StarCellRenderer,
   },
 ];

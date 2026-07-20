@@ -2,7 +2,6 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
-import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import type { CardProps } from '../../models/card-props';
 import { getFeaturedEntityStyle } from '../../utils/styles';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
@@ -109,7 +108,6 @@ export const Card: FC<CardProps> = ({
         size="sm"
         query={query}
         className="min-w-0 flex-1"
-        typeColor={ENTITY_TYPE_COLOR[item.type]}
         iconClassName={styles.cardIcon}
       />
 

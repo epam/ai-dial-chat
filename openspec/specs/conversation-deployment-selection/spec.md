@@ -148,6 +148,55 @@ The send callback SHALL NOT fire when `selectedItemId` is `null` — enforced by
 
 ---
 
+### Requirement: ConversationRoute renders deployment conversation starters
+
+`apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx` SHALL render starter buttons and intro text for the selected deployment on the new-conversation screen.
+
+The route SHALL derive schema-based starters from `selectedDeploymentConfiguration` first. If the selected deployment configuration does not provide schema starter buttons, the route SHALL fall back to Quick Apps starters from `selectedDeployment.conversationStarters`, normalized through `getQuickAppConversationStarters`.
+
+Quick Apps mapping on the frontend SHALL:
+- Trim `introText`, starter `title`, and starter `text`.
+- Omit invalid starters whose title or text is blank.
+- Treat `autoSubmit` as `true` unless the API value is explicitly `false`.
+- Map `chatMessageInputDisabled === true` to the composer's disabled input state.
+
+The displayed intro text SHALL use the schema description when present; otherwise it SHALL use Quick Apps `conversationStarters.introText`. The input SHALL be disabled when either `selectedDeploymentConfiguration.isChatMessageInputDisabled` or Quick Apps `conversationStarters.chatMessageInputDisabled` is true.
+
+Selecting a starter with submit enabled SHALL create a conversation through the existing first-message flow using the starter text and the selected deployment id, without adding any schema `configuration_value`. Selecting a starter with submit disabled SHALL populate the chat input with the starter text without creating a conversation.
+
+State ownership: `ConversationRoute` owns the derived starter list, intro text, input-disabled state, and transient populated input message. `DeploymentsContext` owns the selected deployment item and deployment configuration fetch.
+
+**i18n impact:** None; this uses user-configured starter/intro text and existing composer labels.
+
+**RTL / UI impact:** Starter layout is delegated to `StarterButtons`, which already owns RTL overflow behavior. New intro text is plain centered text and uses logical layout inherited from the page.
+
+**Memoisation:** Derived Quick Apps starter settings SHALL be memoized from `selectedDeployment.conversationStarters`; starter selection handlers SHALL be wrapped in `useCallback`.
+
+**Accessibility:** Starter controls SHALL remain real buttons via `StarterButtons`; intro text is static descriptive copy and does not need a live region.
+
+#### Scenario: Quick Apps intro and starters render on new conversation screen
+
+- **WHEN** the selected application deployment has `conversationStarters.introText` and valid `starters`, and its deployment configuration does not define schema starters
+- **THEN** the new-conversation screen shows the intro text and renders the starter buttons above the input
+
+#### Scenario: Schema starters take precedence over Quick Apps starters
+
+- **WHEN** `selectedDeploymentConfiguration` provides schema starters and the selected deployment also has `conversationStarters`
+- **THEN** the rendered starters come from the schema configuration, not the Quick Apps fallback
+
+#### Scenario: Non-submit Quick Apps starter populates the input
+
+- **WHEN** a user selects a Quick Apps starter whose normalized `submit` flag is false
+- **THEN** the chat input is populated with the starter text and no conversation is created
+
+#### Scenario: Submit Quick Apps starter creates a conversation without schema configuration
+
+- **WHEN** a user selects a Quick Apps starter whose normalized `submit` flag is true
+- **THEN** `apiCreateConversation` is called with the starter text, selected deployment id, and attachments only
+- **AND** no schema `configuration_value` is added to the first message
+
+---
+
 ### Requirement: Backend and frontend tests for catalogItemId
 
 `apps/chat-api/src/conversations/tests/conversation.controller.integration.spec.ts` SHALL cover:

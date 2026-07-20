@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsIn, IsOptional } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsOptional } from 'class-validator';
 
 export enum DeploymentInterfaceType {
   Chat = 'chat',
@@ -20,4 +20,13 @@ export class DeploymentsQueryDto {
     return value;
   })
   interface_type?: DeploymentInterfaceType[];
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }: { value: unknown }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  refresh?: boolean;
 }

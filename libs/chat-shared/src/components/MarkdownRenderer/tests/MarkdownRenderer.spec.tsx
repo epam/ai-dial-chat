@@ -14,6 +14,15 @@ const TABLE_MARKDOWN = `| Name | Description |
 | --- | --- |
 | Alpha | A long table value |`;
 
+const SECTION_ROW_MARKDOWN = `| Name | Description |
+| --- | --- |
+| Alpha | A long table value |
+| Group B |  |
+| Beta | Another value |`;
+
+const EMPTY_TABLE_MARKDOWN = `| Name | Description |
+| --- | --- |`;
+
 const FENCED_TS_MARKDOWN = `\`\`\`typescript
 const x = 1;
 \`\`\``;
@@ -43,9 +52,51 @@ describe('MarkdownRenderer', () => {
     expect(tableWrapper?.className).toContain('max-w-full');
     expect(tableWrapper?.className).toContain('min-w-0');
     expect(tableWrapper?.className).toContain('overflow-hidden');
+    expect(tableWrapper?.className).toContain('rounded-xl');
+    expect(tableWrapper?.className).toContain('border');
     expect(scrollContainer?.className).toContain('overflow-x-auto');
-    expect(scrollContainer?.className).toContain('rounded');
-    expect(scrollContainer?.className).toContain('border');
+  });
+
+  it('marks column headers with scope="col" and sticky uppercase styling', () => {
+    render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
+
+    const columnHeader = screen.getByRole('columnheader', { name: 'Name' });
+    expect(columnHeader.getAttribute('scope')).toBe('col');
+    expect(columnHeader.className).toContain('sticky');
+    expect(columnHeader.className).toContain('uppercase');
+  });
+
+  it('applies a shared row class to every row for zebra/hover styling', () => {
+    render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
+
+    const rows = screen.getAllByRole('row');
+    expect(rows.length).toBe(2);
+    rows.forEach((row) => expect(row.className).toContain('row'));
+  });
+
+  it('detects a section row (single non-empty cell) without misdetecting normal rows', () => {
+    render(<MarkdownRenderer content={SECTION_ROW_MARKDOWN} />);
+
+    const sectionCell = screen.getByRole('cell', { name: 'Group B' });
+    const sectionRow = sectionCell.closest('tr');
+    expect(sectionRow?.className).toContain('sectionRow');
+
+    const normalCell = screen.getByRole('cell', { name: 'Alpha' });
+    const normalRow = normalCell.closest('tr');
+    expect(normalRow?.className).not.toContain('sectionRow');
+
+    const headerRow = screen
+      .getByRole('columnheader', { name: 'Name' })
+      .closest('tr');
+    expect(headerRow?.className).not.toContain('sectionRow');
+  });
+
+  it('renders a header-only table (no body rows) without error', () => {
+    render(<MarkdownRenderer content={EMPTY_TABLE_MARKDOWN} />);
+
+    const table = screen.getByRole('table');
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeTruthy();
+    expect(table.querySelector('tbody')?.children.length ?? 0).toBe(0);
   });
 
   it('merges table class overrides with the scrolling defaults', () => {
