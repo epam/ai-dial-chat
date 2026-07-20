@@ -727,4 +727,18 @@ export class ChatMessages extends BaseElement {
     const chatMessage = await this.hoverOverMessage(message);
     await this.setMessageTemplateIcon(chatMessage).click();
   }
+
+  public async likeMessage(messageIndex: number) {
+    await this.hoverOverMessage(messageIndex);
+    const respPromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'POST' && resp.status() === 200,
+    );
+    await this.getChatMessageRate(messageIndex, Rate.like).click();
+    await respPromise;
+  }
+
+  public async dislikeMessage(messageIndex: number) {
+    await this.hoverOverMessage(messageIndex);
+    await this.getChatMessageRate(messageIndex, Rate.dislike).click();
+  }
 }

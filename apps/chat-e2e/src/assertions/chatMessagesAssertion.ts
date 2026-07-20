@@ -1,7 +1,17 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { ElementLabel, ElementState, ExpectedMessages } from '@/src/testData';
-import { AttributeValues, Attributes } from '@/src/ui/domData';
+import {
+  ElementLabel,
+  ElementState,
+  ExpectedMessages,
+  Rate,
+} from '@/src/testData';
+import {
+  AttributeValues,
+  Attributes,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
 import { ChatMessages } from '@/src/ui/webElements';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator, expect } from '@playwright/test';
 
 export class ChatMessagesAssertion extends BaseAssertion {
@@ -247,5 +257,22 @@ export class ChatMessagesAssertion extends BaseAssertion {
 
   public assertCopiedMessage(copiedMessage: string, expectedMessage: string) {
     this.assertValue(copiedMessage.replace(/\r\n/g, '\n'), expectedMessage);
+  }
+
+  public async assertRate(rate: Rate, messageIndex: number) {
+    const likeIcon = this.chatMessages.getChatMessageRate(messageIndex, rate);
+    await this.assertElementState(likeIcon, 'visible');
+    await this.assertElementActionabilityState(likeIcon, 'disabled');
+    await this.assertElementColor(
+      likeIcon,
+      ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+    );
+    await this.assertElementState(
+      this.chatMessages.getChatMessageRate(
+        messageIndex,
+        rate === Rate.like ? Rate.dislike : Rate.like,
+      ),
+      'hidden',
+    );
   }
 }
