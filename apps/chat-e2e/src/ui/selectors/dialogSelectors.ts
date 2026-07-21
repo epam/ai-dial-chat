@@ -296,6 +296,7 @@ export const EntityEditorEntitySettingsPreviewSelectors = {
   entityInfoContainer: '[data-qa="entity-info-container"]',
   entityInfo: '[data-qa="entity-info"]',
   entityName: '[data-qa="entity-name"]',
+  introText: '[data-qa="intro-text"]',
 };
 
 export const AddEntityGeneralInfoFormSelector = {

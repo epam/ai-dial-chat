@@ -101,19 +101,30 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
     this.conversationStartersSection.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.conversationStartersList,
     );
-  // Intro text field — disabled until at least one starter is added
-  public introTextInput = this.conversationStartersSection.getChildElementBySelector(
-    AddQuickApp2SettingsFormSelector.introTextInput,
-  );
+  public introTextInput =
+    this.conversationStartersSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.introTextInput,
+    );
 
   // Add a starter by filling the last (empty) row: title then prompt.
-  // The list appends a fresh empty row once a row gets content.
+  // The list appends a fresh empty row once a row gets content, so target the
+  // current last row (its two inputs) to support adding several starters.
   public async addStarter(title: string, prompt: string) {
     const inputs = this.conversationStartersList.getChildElementBySelector(
       Tags.input,
     );
-    await inputs.getNthElement(1).fill(title);
-    await inputs.getNthElement(2).fill(prompt);
+    const count = await inputs.getElementsCount();
+    await inputs.getNthElement(count - 1).fill(title);
+    await inputs.getNthElement(count).fill(prompt);
+  }
+
+  // Remove a starter by its 1-based row index (the trash button of that row).
+  // The last empty row's trash is disabled, so only real starters are removable.
+  public async removeStarter(rowIndex: number) {
+    await this.conversationStartersList
+      .getChildElementBySelector(Tags.button)
+      .getNthElement(rowIndex)
+      .click();
   }
 
   // Context & Tools subsections

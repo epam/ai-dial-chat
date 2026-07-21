@@ -335,7 +335,11 @@ dialTest(
   '[Quick app 2.0] Attachments section is collapsed by default\n' + // EPMRTC-8649
     '[Quick app 2.0] Conversation starters section is collapsed by default\n' + // EPMRTC-8648
     '[Quick app 2.0] Attachment types and Max attachments number are available\n' + // EPMRTC-7268
-  '[Quick app 2.0] Starters settings are editable only when at least one starter is added', //'EPMRTC-8716
+    '[Quick app 2.0] Starters settings are editable only when at least one starter is added\n' + //'EPMRTC-8716
+    '[Quick app 2.0] A conversation starter button appears in the preview\n' + // EPMRTC-8711
+    '[Quick app 2.0] A long starter button title is truncated in the preview\n' + // EPMRTC-8727
+    '[Quick app 2.0] Intro text is shown above the starters in the preview\n' + // EPMRTC-8724
+    '[Quick app 2.0] A removed starter button disappears from the preview', // EPMRTC-8712
   async ({
     marketplacePage,
     entityEditorPage,
@@ -349,10 +353,14 @@ dialTest(
     modelApiHelper,
     baseAssertion,
     setTestIds,
+    quickApp2EditorAppSettingsPreviewChat,
   }) => {
     setTestIds('EPMRTC-8649', 'EPMRTC-8648', 'EPMRTC-7268', 'EPMRTC-8716');
     const quickAppName = GeneratorUtil.randomApplicationName();
     const maxAttachments = 2;
+    const starterTitle = GeneratorUtil.randomString(10);
+    const longStarterTitle = GeneratorUtil.randomString(200);
+    const introTextValue = GeneratorUtil.randomString(15);
 
     await dialTest.step(
       'Precondition: create a Quick app 2.0 via API with a tool-supporting orchestrator model',
@@ -460,12 +468,74 @@ dialTest(
       'Add a starter and verify the Intro text field becomes editable',
       async () => {
         await quickApp2EditorViewForm.addStarter(
-          GeneratorUtil.randomString(10),
+          starterTitle,
           GeneratorUtil.randomString(10),
         );
         await baseAssertion.assertElementActionabilityState(
           quickApp2EditorViewForm.introTextInput,
           'enabled',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Add a second starter with a long title and an intro text; let the preview update',
+      async () => {
+        await quickApp2EditorViewForm.addStarter(
+          longStarterTitle,
+          GeneratorUtil.randomString(10),
+        );
+        await quickApp2EditorViewForm.introTextInput.fillInInput(
+          introTextValue,
+        );
+        await entityEditorPage.waitForExpectedResponses(async () => {
+          await quickApp2EditorViewForm.conversationStartersSection.hoverOver();
+          await entityEditorHeader.focusOn();
+        }, [{ apiMethod: 'PUT', urlPattern: API.applicationCreateHost }]);
+      },
+    );
+
+    await dialTest.step(
+      'The starter buttons and intro text appear in the preview; the long title is truncated',
+      async () => {
+        await baseAssertion.assertElementState(
+          quickApp2EditorAppSettingsPreviewChat.getStarterButton(starterTitle),
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          quickApp2EditorAppSettingsPreviewChat.getStarterButton(
+            longStarterTitle,
+          ),
+          'visible',
+        );
+        await baseAssertion.assertElementTextIsTruncated(
+          quickApp2EditorAppSettingsPreviewChat.getStarterButtonLabel(
+            longStarterTitle,
+          ),
+        );
+        await baseAssertion.assertElementContainsText(
+          quickApp2EditorAppSettingsPreviewChat.introText,
+          introTextValue,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Remove the first starter and verify it disappears from the preview',
+      async () => {
+        await entityEditorPage.waitForExpectedResponses(
+          () => quickApp2EditorViewForm.removeStarter(1),
+          [{ apiMethod: 'PUT', urlPattern: API.applicationCreateHost }],
+        );
+        await baseAssertion.assertElementState(
+          quickApp2EditorAppSettingsPreviewChat.getStarterButton(starterTitle),
+          'hidden',
+        );
+        await baseAssertion.assertElementState(
+          quickApp2EditorAppSettingsPreviewChat.getStarterButton(
+            longStarterTitle,
+          ),
+          'visible',
         );
       },
     );
