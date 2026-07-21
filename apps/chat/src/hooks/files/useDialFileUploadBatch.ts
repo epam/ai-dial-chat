@@ -1,6 +1,9 @@
 import type { DialFile, DialUploadFileItem } from '@epam/ai-dial-ui-kit';
 import { DialFileManagerTabs, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type { ListFilesItemDto } from '@epam/chat-api-client';
+import type {
+  ListFilesItemDto,
+  UploadArchiveEntryResultDto,
+} from '@epam/chat-api-client';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
@@ -23,6 +26,23 @@ interface FileUploadValidationResult {
   valid: boolean;
   message?: string;
 }
+
+const ARCHIVE_FAILED_FILE_LIST_LIMIT = 5;
+
+const formatArchiveFailedEntry = (
+  result: UploadArchiveEntryResultDto,
+): string => (result.error ? `${result.path} (${result.error})` : result.path);
+
+const formatArchiveFailedEntries = (
+  failedResults: UploadArchiveEntryResultDto[],
+  getRestLabel: (count: number) => string,
+): string => {
+  const visibleResults = failedResults.slice(0, ARCHIVE_FAILED_FILE_LIST_LIMIT);
+  const visible = visibleResults.map(formatArchiveFailedEntry).join(', ');
+  const hiddenCount = failedResults.length - visibleResults.length;
+
+  return hiddenCount > 0 ? `${visible}${getRestLabel(hiddenCount)}` : visible;
+};
 
 export interface UseDialFileUploadBatchOptions {
   bucket: string;
@@ -251,18 +271,27 @@ export const useDialFileUploadBatch = ({
             destinationApiPath,
           );
           const successCount = results.filter((r) => r.success).length;
-          const failedCount = results.length - successCount;
+          const failedResults = results.filter((r) => !r.success);
+          const failedCount = failedResults.length;
+          const failedFiles = formatArchiveFailedEntries(
+            failedResults,
+            (count) => t(DialFileManagerI18nKeys.AndOtherItems, { count }),
+          );
 
           if (results.length > 0 && successCount === 0) {
             onNotification?.({
               variant: NotificationVariant.Error,
-              message: t(DialFileManagerI18nKeys.UploadArchiveError),
+              message: t(DialFileManagerI18nKeys.UploadArchiveFilesError, {
+                count: failedCount,
+                files: failedFiles,
+              }),
             });
           } else if (failedCount > 0) {
             onNotification?.({
               variant: NotificationVariant.Error,
               message: t(DialFileManagerI18nKeys.UploadArchivePartialError, {
                 count: failedCount,
+                files: failedFiles,
               }),
             });
           }

@@ -347,6 +347,7 @@ export enum DialFileManagerI18nKeys {
   MetadataAuthorLabel = 'dialFileManager.metadataAuthorLabel',
   UploadArchiveAction = 'dialFileManager.uploadArchiveAction',
   UploadArchiveError = 'dialFileManager.uploadArchiveError',
+  UploadArchiveFilesError = 'dialFileManager.uploadArchiveFilesError',
   UploadArchivePartialError = 'dialFileManager.uploadArchivePartialError',
 }
 
