@@ -444,6 +444,18 @@ export enum ConversationExportI18nKeys {
   CloseQueueConfirmDescriptionMixed = 'conversationExport.closeQueueConfirmDescriptionMixed',
 }
 
+export enum ConversationImportI18nKeys {
+  ImportLabel = 'conversationImport.importLabel',
+  QueueTitle = 'conversationImport.queueTitle',
+  SuccessTitle = 'conversationImport.successTitle',
+  Success = 'conversationImport.success',
+  FailedTitle = 'conversationImport.failedTitle',
+  Failed = 'conversationImport.failed',
+  WarningAttachmentSkipped = 'conversationImport.warningAttachmentSkipped',
+  AttachmentNameConflict = 'conversationImport.attachmentNameConflict',
+  UnsupportedFormat = 'conversationImport.unsupportedFormat',
+}
+
 export enum SidebarI18nKeys {
   ToggleOpen = 'sidebar.base.toggleOpen',
   AriaLabel = 'sidebar.sources.ariaLabel',

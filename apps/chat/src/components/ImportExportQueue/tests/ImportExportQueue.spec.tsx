@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ExportJob } from '../../../models/conversation-export';
+import type { QueueJob } from '../../../models/conversation-queue';
 import { ExportJobStatus } from '../../../types/conversation-export';
 import ImportExportQueue from '../ImportExportQueue';
 
@@ -63,6 +64,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     );
   },
   ConfirmationPopupVariant: { Danger: 'danger', Info: 'info' },
+  DialEllipsisTooltip: ({
+    text,
+    className,
+  }: {
+    text: ReactNode;
+    className?: string;
+  }) => <span className={className}>{text}</span>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -74,7 +82,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconChevronUp: () => null,
 }));
 
-const makeJob = (overrides: Partial<ExportJob> = {}): ExportJob => ({
+const makeJob = (overrides: Partial<QueueJob> = {}): QueueJob => ({
   id: 'job-1',
   label: 'My Chat',
   status: ExportJobStatus.InProgress,
@@ -87,7 +95,7 @@ describe('ImportExportQueue', () => {
   const user = userEvent.setup({ delay: null });
 
   const renderQueue = (
-    jobs: ExportJob[],
+    jobs: QueueJob[],
     props: Partial<{
       onDismiss: (id: string) => void;
       onRetry: (id: string) => void;
@@ -385,5 +393,24 @@ describe('ImportExportQueue', () => {
 
     expect(screen.queryByText('1')).toBeNull();
     expect(screen.queryByText('2')).toBeNull();
+  });
+
+  it('renders a job description as a secondary line above the label', () => {
+    renderQueue([
+      makeJob({
+        label: 'My Chat',
+        description: 'Folder 1 / Folder 2',
+      }),
+    ]);
+
+    expect(screen.getByText('Folder 1 / Folder 2')).toBeTruthy();
+    expect(screen.getByText('My Chat')).toBeTruthy();
+  });
+
+  it('renders no secondary line when a job has no description', () => {
+    renderQueue([makeJob({ label: 'My Chat' })]);
+
+    expect(screen.getByText('My Chat')).toBeTruthy();
+    expect(document.querySelectorAll('.text-secondary').length).toBe(0);
   });
 });
