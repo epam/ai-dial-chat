@@ -8,10 +8,7 @@
       --ci-more-tile-bg-hover,
       var(--bg-accent-primary-alpha, #7da4ff2e)
     );
-    color: var(
-      --ci-more-tile-color-hover,
-      var(--text-accent-primary-hover, #2764d9)
-    );
+    color: var(--ci-more-tile-color-hover, var(--text-accent, #2764d9));
     border-color: var(
       --ci-more-tile-border-hover,
       color-mix(
