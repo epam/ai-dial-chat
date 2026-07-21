@@ -333,7 +333,9 @@ dialTest(
 
 dialTest(
   '[Quick app 2.0] Attachments section is collapsed by default\n' + // EPMRTC-8649
-    '[Quick app 2.0] Attachment types and Max attachments number are available', // EPMRTC-7268
+    '[Quick app 2.0] Conversation starters section is collapsed by default\n' + // EPMRTC-8648
+    '[Quick app 2.0] Attachment types and Max attachments number are available\n' + // EPMRTC-7268
+  '[Quick app 2.0] Starters settings are editable only when at least one starter is added', //'EPMRTC-8716
   async ({
     marketplacePage,
     entityEditorPage,
@@ -348,7 +350,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8649', 'EPMRTC-7268');
+    setTestIds('EPMRTC-8649', 'EPMRTC-8648', 'EPMRTC-7268', 'EPMRTC-8716');
     const quickAppName = GeneratorUtil.randomApplicationName();
     const maxAttachments = 2;
 
@@ -380,8 +382,12 @@ dialTest(
     });
 
     await dialTest.step(
-      'Verify the Attachments section is collapsed by default',
+      'Verify the Attachments and Conversation starters sections are collapsed by default',
       async () => {
+        await baseAssertion.assertElementState(
+          quickApp2EditorViewForm.conversationStartersList,
+          'hidden',
+        );
         await baseAssertion.assertElementState(
           quickApp2EditorViewForm.attachmentTypesField,
           'hidden',
@@ -434,6 +440,32 @@ dialTest(
         await baseAssertion.assertElementContainsText(
           fileManagerModal,
           ExpectedConstants.attachmentsUpToFiles(maxAttachments),
+        );
+        await fileManagerModal.getCloseButton().click();
+      },
+    );
+
+    await dialTest.step(
+      'The Intro text field is disabled while there are no starters',
+      async () => {
+        await quickApp2EditorViewForm.conversationStartersSectionToggle.click();
+        await baseAssertion.assertElementActionabilityState(
+          quickApp2EditorViewForm.introTextInput,
+          'disabled',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Add a starter and verify the Intro text field becomes editable',
+      async () => {
+        await quickApp2EditorViewForm.addStarter(
+          GeneratorUtil.randomString(10),
+          GeneratorUtil.randomString(10),
+        );
+        await baseAssertion.assertElementActionabilityState(
+          quickApp2EditorViewForm.introTextInput,
+          'enabled',
         );
       },
     );

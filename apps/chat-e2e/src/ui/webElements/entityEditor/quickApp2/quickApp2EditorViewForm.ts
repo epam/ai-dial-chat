@@ -1,3 +1,4 @@
+import { Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { AddQuickApp2SettingsFormSelector } from '@/src/ui/selectors';
 import {
@@ -91,6 +92,29 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public conversationStartersSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.conversationStartersSection,
   );
+  public conversationStartersSectionToggle =
+    this.conversationStartersSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.sectionToggle,
+    );
+  // Rendered only when the conversation starters section is expanded
+  public conversationStartersList =
+    this.conversationStartersSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.conversationStartersList,
+    );
+  // Intro text field — disabled until at least one starter is added
+  public introTextInput = this.conversationStartersSection.getChildElementBySelector(
+    AddQuickApp2SettingsFormSelector.introTextInput,
+  );
+
+  // Add a starter by filling the last (empty) row: title then prompt.
+  // The list appends a fresh empty row once a row gets content.
+  public async addStarter(title: string, prompt: string) {
+    const inputs = this.conversationStartersList.getChildElementBySelector(
+      Tags.input,
+    );
+    await inputs.getNthElement(1).fill(title);
+    await inputs.getNthElement(2).fill(prompt);
+  }
 
   // Context & Tools subsections
   public agentsAndToolsetsField =

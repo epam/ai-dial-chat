@@ -340,6 +340,8 @@ export const AddQuickApp2SettingsFormSelector = {
   contextToolsSection: '[data-qa="context-tools-section"]',
   attachmentsSection: '[data-qa="attachments-section"]',
   conversationStartersSection: '[data-qa="conversation-starters-section"]',
+  conversationStartersList: '[data-qa="conversation-starters-list"]', // rendered only when the starters section is expanded
+  introTextInput: '#introText', // Intro text field; disabled until at least one starter exists
 
   // Orchestrator section — model + temperature
   orchestratorModel: '[data-qa="orchestrator-model"]',

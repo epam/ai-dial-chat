@@ -60,7 +60,11 @@ export const ConversationStartersList: FC<ConversationStartersListProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-2" onBlur={handleContainerBlur}>
+    <div
+      className="flex flex-col gap-2"
+      onBlur={handleContainerBlur}
+      data-qa="conversation-starters-list"
+    >
       {value.map((item, index) => {
         const isLastRow = index === value.length - 1;
 
