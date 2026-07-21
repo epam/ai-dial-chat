@@ -495,6 +495,7 @@ dialTest(
     chat,
     chatMessages,
     chatMessagesAssertion,
+    dislikeCommentModal,
     setTestIds,
     conversationData,
     dataInjector,
@@ -610,6 +611,10 @@ dialTest(
           ThemeColorAttributes.textAccentPrimary,
         );
         await chatMessages.rateCompareRowMessage(Side.left, rate, 2);
+        if (rate === Rate.dislike){
+          await chatMessagesAssertion.assertElementState(dislikeCommentModal, 'visible');
+          await dislikeCommentModal.sendComment();
+        }
         const messageRateIcon = chatMessages.getCompareRowMessageRate(
           Side.left,
           rate,
