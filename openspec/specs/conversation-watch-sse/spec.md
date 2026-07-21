@@ -76,10 +76,10 @@ No i18n keys, no RTL impact, no caching, no analytics events for this endpoint.
 
 `watchForDisplayNameUpdate` in `ConversationsContext` SHALL:
 
-1. Call `conversationsApi.watchConversationRaw({ watchConversationBodyDto: { path } })` (generated client Raw variant) to get the `Response`.
+1. Call `conversationsApi.watchConversationRaw({ watchConversationBodyDto: { path } })` (generated client Raw variant) to get the `Response`, where `path` is the bucket-stripped, decode-normalized conversation path (`getConversationPath`).
 2. Read the SSE body via `response.body.getReader()` and a `TextDecoder`, splitting on `\n`.
 3. On each `data:` line: parse JSON `{ url, action, timestamp }`.
-4. On an `UPDATE` action for the subscribed URL: call `getConversation(conversationPath)` once.
+4. On an `UPDATE` action for the subscribed URL: call `getConversation(fullConversationId)` once, where `fullConversationId` is `safeDecodeURIComponent(conversationId)` (`apps/chat/src/utils/string-utils.ts`) — the **bucket-included**, decode-normalized id — NOT the bucket-stripped `path` used in step 1. `getConversation`'s `path` query param must include the bucket to resolve correctly (see `conversations-api` spec); passing the bucket-stripped path caused a 400 from DIAL Core for Quick App conversations, whose deployment-id segment itself contains a slash (`applications/{bucket}/{appName}`).
 5. If `result.llmNamingDone === true` or `result.name?.trim() !== previousName.trim()`: call `updateConversationTitle`, `onUpdated(result.name)`, `silentRefreshConversations()`, then close the connection.
 6. On any other action or a `data:` line that does not match: continue reading.
 7. Abort the connection after `DISPLAY_NAME_WATCH_TIMEOUT_MS = 120_000` using an `AbortController` passed to the fetch.
@@ -111,3 +111,8 @@ No new i18n keys. No RTL impact. No analytics events. No memoisation changes bey
 
 - **WHEN** the `Conversation` page unmounts while a watch is open
 - **THEN** the cleanup function aborts the SSE fetch and no further state updates occur
+
+#### Scenario: getConversation on UPDATE uses the full, bucket-included id for a Quick App conversation
+
+- **WHEN** the watched conversation id is `bucket/applications/bucket/My%20App__0.0.1__title__uuid` and an `UPDATE` event arrives
+- **THEN** `watchConversationRaw` was called with the bucket-stripped, decoded path (`applications/bucket/My App__0.0.1__title__uuid`), and the subsequent `getConversation` call receives the full, bucket-included, decoded id (`bucket/applications/bucket/My App__0.0.1__title__uuid`) — not the bucket-stripped path

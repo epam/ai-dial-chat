@@ -1,5 +1,6 @@
 import {
   DialNotification,
+  DialSpinner,
   NotificationVariant,
   StepStatus,
 } from '@epam/ai-dial-ui-kit';
@@ -244,32 +245,50 @@ const AppsEditor: FC = () => {
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-auto">
-        {hasVisitedGeneralStep && (
-          <div className={isGeneralStep ? 'h-full' : 'hidden'}>
-            <GeneralForm
-              ref={generalFormRef}
-              schemaId={schemaId}
-              appId={
-                isEditingExistingApp ? (existingAppId ?? undefined) : undefined
-              }
-              initialValues={generalFormInitialValues}
-              onCreated={handleCreated}
+      <div className="relative min-h-0 flex-1 overflow-auto">
+        <div className="size-full" inert={isSaving}>
+          {hasVisitedGeneralStep && (
+            <div className={isGeneralStep ? 'h-full' : 'hidden'}>
+              <GeneralForm
+                ref={generalFormRef}
+                schemaId={schemaId}
+                appId={
+                  isEditingExistingApp
+                    ? (existingAppId ?? undefined)
+                    : undefined
+                }
+                initialValues={generalFormInitialValues}
+                onCreated={handleCreated}
+              />
+            </div>
+          )}
+          {!isGeneralStep && (
+            <SettingsStep
+              ref={settingsStepRef}
+              schema={schema}
+              appId={appIdForSettings}
+              appDisplayName={appDisplayName}
+              appIconUrl={appIconUrl}
+              isPreviewing={isPreviewing}
+              onUpdated={handleSettingsUpdated}
+              onSaveSuccess={handleSaveSuccess}
+              onSaveError={handleSaveError}
             />
+          )}
+        </div>
+        {isSaving && (
+          <div
+            className="absolute inset-0 flex items-center justify-center bg-blackout"
+            aria-label={t(AppsEditorI18nKeys.SavingOverlayLabel)}
+            aria-live="polite"
+          >
+            <div className="flex items-center gap-3 rounded-lg bg-layer-2 px-4 py-3 shadow-lg">
+              <DialSpinner />
+              <span className="text-sm text-primary">
+                {t(AppsEditorI18nKeys.SavingOverlayLabel)}
+              </span>
+            </div>
           </div>
-        )}
-        {!isGeneralStep && (
-          <SettingsStep
-            ref={settingsStepRef}
-            schema={schema}
-            appId={appIdForSettings}
-            appDisplayName={appDisplayName}
-            appIconUrl={appIconUrl}
-            isPreviewing={isPreviewing}
-            onUpdated={handleSettingsUpdated}
-            onSaveSuccess={handleSaveSuccess}
-            onSaveError={handleSaveError}
-          />
         )}
       </div>
     </div>

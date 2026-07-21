@@ -35,6 +35,7 @@ import {
   buildExportFileName,
   serializeExportEnvelope,
 } from '../utils/export-conversation';
+import { safeDecodeURIComponent } from '../utils/string-utils';
 import { buildDialArchive, type ZipAttachmentEntry } from '../utils/zip-export';
 
 /** Placeholder app name used in export file names — this branch has no app display-name config yet. */
@@ -63,18 +64,9 @@ const classifyExportError = (error: unknown): ExportErrorClassification => {
   return { isUnauthorized: false, isNotFound: false };
 };
 
-/**
- * `ConversationListItemDto.id` (and the panel's context id) is the full DIAL Core
- * resource id, e.g. `conversations/{bucket}/{name}`. `getConversation`'s backend
- * handler expects `{bucket}/{name}` (bucket kept — needed to correctly route
- * shared/public/cross-bucket conversations) — strip only the leading `conversations/`
- * segment, the same normalization `getConversationRoute` applies when building a
- * conversation's URL (`apps/chat/src/constants/routes.ts`). Do NOT chain
- * `getConversationPath` on top here — that additionally strips the bucket, which is
- * correct for delete/rename but wrong for get-by-path.
- */
+/** Bucket-included, decode-normalized `getConversation` path — see conversations-api spec's "Frontend behaviour". */
 const toApiConversationPath = (conversationId: string): string =>
-  normalizeConversationId(conversationId);
+  safeDecodeURIComponent(normalizeConversationId(conversationId));
 
 /**
  * Export-all is scoped to the user's own chats — it must not include conversations

@@ -624,6 +624,7 @@
   },
   "appsEditor": {
     "exitPreviewButton": "Exit preview",
+    "savingOverlay": "Saving in progress…",
     "previewChat": {
       "placeholder": "Send a message to preview this application…",
       "ariaLabel": "Application preview chat"
