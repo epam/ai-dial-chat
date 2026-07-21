@@ -4,7 +4,6 @@ const baseConfig: Record<string, unknown> = {
   DIAL_CORE_URL: 'https://dial-core.example.com',
   AUTH_SESSION_SECRET: 'a'.repeat(64),
   AUTH_CALLBACK_BASE_URL: 'http://localhost:3005',
-  AUTH_PROVIDERS: '[]',
 };
 
 describe('validate', () => {
@@ -31,5 +30,43 @@ describe('validate', () => {
     expect(() => validate({ ...baseConfig, LOG_LEVEL: 'trace' })).toThrow(
       /Environment validation failed/,
     );
+  });
+
+  it('defaults ADMIN_ROLE_NAMES to ["admin"] when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.ADMIN_ROLE_NAMES).toEqual(['admin']);
+  });
+
+  it('parses a comma-separated ADMIN_ROLE_NAMES list', () => {
+    const config = validate({
+      ...baseConfig,
+      ADMIN_ROLE_NAMES: 'super-admin, admin',
+    });
+    expect(config.ADMIN_ROLE_NAMES).toEqual(['super-admin', 'admin']);
+  });
+
+  it('defaults DIAL_ROLES_FIELD to "dial_roles" when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.DIAL_ROLES_FIELD).toBe('dial_roles');
+  });
+
+  it('parses a comma-separated AUTH_AUTH0_ADMIN_ROLE_NAMES list', () => {
+    const config = validate({
+      ...baseConfig,
+      AUTH_AUTH0_ADMIN_ROLE_NAMES: 'super-admin, admin',
+    });
+    expect(config.AUTH_AUTH0_ADMIN_ROLE_NAMES).toEqual([
+      'super-admin',
+      'admin',
+    ]);
+  });
+
+  it('accepts a valid AUTH_POST_LOGOUT_REDIRECT_URI', () => {
+    expect(() =>
+      validate({
+        ...baseConfig,
+        AUTH_POST_LOGOUT_REDIRECT_URI: 'https://chat.example.com',
+      }),
+    ).not.toThrow();
   });
 });
