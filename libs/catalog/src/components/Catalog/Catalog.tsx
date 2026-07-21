@@ -70,6 +70,8 @@ export const Catalog: FC<CatalogProps> = ({
   onSortChange,
   filterTopics: controlledFilterTopics,
   onFilterTopicsChange,
+  isMyAppsActive: controlledIsMyAppsActive,
+  onMyAppsActiveChange,
 }) => {
   const { typography } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
@@ -113,10 +115,11 @@ export const Catalog: FC<CatalogProps> = ({
   const [internalFilters, setInternalFilters] = useState<Set<string>>(
     new Set(),
   );
-  const [isMyAppsActive, setIsMyAppsActive] = useState(false);
+  const [internalIsMyAppsActive, setInternalIsMyAppsActive] = useState(false);
 
   const sortKey = controlledSortKey ?? internalSortKey;
   const filters = controlledFilterTopics ?? internalFilters;
+  const isMyAppsActive = controlledIsMyAppsActive ?? internalIsMyAppsActive;
 
   const handleSortChange = useCallback(
     (key: string) => {
@@ -133,6 +136,14 @@ export const Catalog: FC<CatalogProps> = ({
       onFilterTopicsChange?.(topics);
     },
     [onFilterTopicsChange],
+  );
+
+  const handleMyAppsActiveChange = useCallback(
+    (isActive: boolean) => {
+      setInternalIsMyAppsActive(isActive);
+      onMyAppsActiveChange?.(isActive);
+    },
+    [onMyAppsActiveChange],
   );
 
   const filteredItems = useMemo(
@@ -400,7 +411,7 @@ export const Catalog: FC<CatalogProps> = ({
             onFiltersChange={handleFiltersChange}
             filterValues={allFilterValues}
             isMyAppsActive={isMyAppsActive}
-            onMyAppsChange={setIsMyAppsActive}
+            onMyAppsChange={handleMyAppsActiveChange}
             filterFromLabel={titles?.filterFromLabel}
             filterMyAppsLabel={titles?.filterMyAppsLabel}
             filterTopicsLabel={titles?.filterTopicsLabel}

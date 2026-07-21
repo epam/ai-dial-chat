@@ -80,6 +80,8 @@ const capturedPublishProps: {
     onSortChange?: (key: string) => void;
     filterTopics?: Set<string>;
     onFilterTopicsChange?: (topics: Set<string>) => void;
+    isMyAppsActive?: boolean;
+    onMyAppsActiveChange?: (isActive: boolean) => void;
   } | null;
 } = { current: null };
 
@@ -121,6 +123,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onSortChange,
     filterTopics,
     onFilterTopicsChange,
+    isMyAppsActive,
+    onMyAppsActiveChange,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
@@ -150,6 +154,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onSortChange?: (key: string) => void;
     filterTopics?: Set<string>;
     onFilterTopicsChange?: (topics: Set<string>) => void;
+    isMyAppsActive?: boolean;
+    onMyAppsActiveChange?: (isActive: boolean) => void;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
     capturedPublishProps.current = {
@@ -164,6 +170,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onSortChange,
       filterTopics,
       onFilterTopicsChange,
+      isMyAppsActive,
+      onMyAppsActiveChange,
     };
 
     return (
@@ -435,6 +443,8 @@ describe('CatalogView', () => {
       setSortKey: vi.fn(),
       filterTopics: new Set(),
       setFilterTopics: vi.fn(),
+      isMyAppsActive: false,
+      setIsMyAppsActive: vi.fn(),
     });
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Ready,
@@ -1776,5 +1786,120 @@ describe('CatalogView', () => {
     expect(showNotification).not.toHaveBeenCalledWith(
       expect.objectContaining({ variant: 'success' }),
     );
+  });
+
+  describe('sort/filter persistence wiring', () => {
+    it('passes the persisted sortKey, filterTopics, and isMyAppsActive through to Catalog', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      });
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.Newest,
+        setSortKey: vi.fn(),
+        filterTopics: new Set(['nlp']),
+        setFilterTopics: vi.fn(),
+        isMyAppsActive: true,
+        setIsMyAppsActive: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.sortKey).toBe(
+        CatalogSortKey.Newest,
+      );
+      expect(capturedPublishProps.current?.filterTopics).toEqual(
+        new Set(['nlp']),
+      );
+      expect(capturedPublishProps.current?.isMyAppsActive).toBe(true);
+    });
+
+    it('drops a persisted topic filter that no longer exists in the current items', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      });
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.RecentlyUpdated,
+        setSortKey: vi.fn(),
+        filterTopics: new Set(['deprecated-topic']),
+        setFilterTopics: vi.fn(),
+        isMyAppsActive: false,
+        setIsMyAppsActive: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.filterTopics).toEqual(new Set());
+    });
+
+    it('forwards Catalog sort changes to the persistence hook setter', () => {
+      const setSortKey = vi.fn();
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.RecentlyUpdated,
+        setSortKey,
+        filterTopics: new Set(),
+        setFilterTopics: vi.fn(),
+        isMyAppsActive: false,
+        setIsMyAppsActive: vi.fn(),
+      });
+
+      render(<CatalogView />);
+      capturedPublishProps.current?.onSortChange?.(CatalogSortKey.NameAZ);
+
+      expect(setSortKey).toHaveBeenCalledWith(CatalogSortKey.NameAZ);
+    });
+
+    it('forwards Catalog My Apps toggle changes to the persistence hook setter', () => {
+      const setIsMyAppsActive = vi.fn();
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.RecentlyUpdated,
+        setSortKey: vi.fn(),
+        filterTopics: new Set(),
+        setFilterTopics: vi.fn(),
+        isMyAppsActive: false,
+        setIsMyAppsActive,
+      });
+
+      render(<CatalogView />);
+      capturedPublishProps.current?.onMyAppsActiveChange?.(true);
+
+      expect(setIsMyAppsActive).toHaveBeenCalledWith(true);
+    });
+
+    it('does not forward sort/filter/My-Apps controlled props in selector mode', () => {
+      render(<CatalogView isSelectorMode onClose={vi.fn()} />);
+
+      expect(capturedPublishProps.current?.sortKey).toBeUndefined();
+      expect(capturedPublishProps.current?.onSortChange).toBeUndefined();
+      expect(capturedPublishProps.current?.filterTopics).toBeUndefined();
+      expect(
+        capturedPublishProps.current?.onFilterTopicsChange,
+      ).toBeUndefined();
+      expect(capturedPublishProps.current?.isMyAppsActive).toBeUndefined();
+      expect(
+        capturedPublishProps.current?.onMyAppsActiveChange,
+      ).toBeUndefined();
+    });
   });
 });
