@@ -6,6 +6,18 @@ import {
   Matches,
 } from 'class-validator';
 
+export enum AuthProviderId {
+  Auth0 = 'auth0',
+  AzureAd = 'azure-ad',
+  AzureB2c = 'azure-b2c',
+  GitLab = 'gitlab',
+  Google = 'google',
+  Keycloak = 'keycloak',
+  PingId = 'ping-id',
+  Cognito = 'cognito',
+  Okta = 'okta',
+}
+
 export class ProviderConfig {
   @IsString()
   @IsNotEmpty()

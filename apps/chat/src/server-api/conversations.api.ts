@@ -41,11 +41,15 @@ export const getConversation = (
 export const saveConversation = (
   conversationPath: string,
   conversation: ConversationResponseDto,
+  signal?: AbortSignal,
 ) =>
-  conversationsApi.saveConversation({
-    path: conversationPath,
-    saveConversationBodyDto: { conversation },
-  });
+  conversationsApi.saveConversation(
+    {
+      path: conversationPath,
+      saveConversationBodyDto: { conversation },
+    },
+    ...(signal ? [{ signal }] : []),
+  );
 
 export const deleteConversation = (conversationPath: string) =>
   conversationsApi.deleteConversation({ path: conversationPath });

@@ -25,6 +25,7 @@ import {
 } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
+import { StringUtils } from '../../common/utils/string-utils';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
 import { buildDialFileUrl } from '../dial-resource-path.util';
@@ -53,6 +54,59 @@ export interface UploadedArchiveFile {
 
 const getFileNameFromPath = (path: string): string =>
   path.split('/').filter(Boolean).pop() ?? 'file';
+
+const DIAL_RESOURCE_SEGMENT_BYTE_LIMIT = 255;
+const ARCHIVE_ENTRY_CONFLICT_RETRY_LIMIT = 50;
+
+const splitFilePath = (
+  path: string,
+): { parentPath: string; fileName: string } => {
+  const slashIndex = path.lastIndexOf('/');
+  if (slashIndex === -1) {
+    return { parentPath: '', fileName: path };
+  }
+
+  return {
+    parentPath: path.slice(0, slashIndex + 1),
+    fileName: path.slice(slashIndex + 1),
+  };
+};
+
+const buildDeduplicatedFileName = (fileName: string, index: number): string => {
+  const dotIndex = fileName.lastIndexOf('.');
+  const hasExtension = dotIndex > 0;
+  const baseName = hasExtension ? fileName.slice(0, dotIndex) : fileName;
+  const extension = hasExtension ? fileName.slice(dotIndex) : '';
+  const suffix = ` (${index})`;
+  const suffixBytes = StringUtils.getUtf8ByteLength(suffix);
+  const extensionLimit = Math.max(
+    0,
+    DIAL_RESOURCE_SEGMENT_BYTE_LIMIT - suffixBytes - 1,
+  );
+  const safeExtension = StringUtils.truncateToUtf8Bytes(
+    extension,
+    extensionLimit,
+  );
+  const baseLimit = Math.max(
+    1,
+    DIAL_RESOURCE_SEGMENT_BYTE_LIMIT -
+      suffixBytes -
+      StringUtils.getUtf8ByteLength(safeExtension),
+  );
+  const safeBase =
+    StringUtils.truncateToUtf8Bytes(baseName, baseLimit).trimEnd() ||
+    StringUtils.truncateToUtf8Bytes('file', baseLimit);
+
+  return `${safeBase}${suffix}${safeExtension}`;
+};
+
+const buildDeduplicatedFilePath = (path: string, index: number): string => {
+  const { parentPath, fileName } = splitFilePath(path);
+  return `${parentPath}${buildDeduplicatedFileName(fileName, index)}`;
+};
+
+const isConflictError = (err: unknown): boolean =>
+  err instanceof HttpException && err.getStatus() === HttpStatus.CONFLICT;
 
 const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
   const formData = new FormData();
@@ -293,24 +347,22 @@ export class FilesUploadService {
         cumulativeBytes += entryBytes;
 
         try {
-          await this.uploadArchiveEntryFromTemp(
-            bucket,
-            entryPath,
-            entryTempPath,
-            token,
-            signal,
-          );
-          results.push({ path: entryPath, success: true });
+          const uploadedPath =
+            await this.uploadArchiveEntryWithDeduplicatedName(
+              bucket,
+              entryPath,
+              entryTempPath,
+              token,
+              signal,
+            );
+          results.push({ path: uploadedPath, success: true });
         } catch (err) {
           this.throwIfArchiveUploadAborted(signal);
 
-          const isConflict =
-            err instanceof HttpException &&
-            err.getStatus() === HttpStatus.CONFLICT;
           results.push({
             path: entryPath,
             success: false,
-            error: isConflict
+            error: isConflictError(err)
               ? 'Conflict'
               : err instanceof HttpException
                 ? err.message
@@ -324,6 +376,49 @@ export class FilesUploadService {
     }
 
     return results;
+  }
+
+  private async uploadArchiveEntryWithDeduplicatedName(
+    bucket: string,
+    path: string,
+    tempPath: string,
+    token: string,
+    signal: AbortSignal,
+  ): Promise<string> {
+    let nextPath = path;
+
+    for (
+      let conflictIndex = 0;
+      conflictIndex <= ARCHIVE_ENTRY_CONFLICT_RETRY_LIMIT;
+      conflictIndex += 1
+    ) {
+      try {
+        await this.uploadArchiveEntryFromTemp(
+          bucket,
+          nextPath,
+          tempPath,
+          token,
+          signal,
+        );
+        return nextPath;
+      } catch (err) {
+        this.throwIfArchiveUploadAborted(signal);
+
+        if (
+          !isConflictError(err) ||
+          conflictIndex === ARCHIVE_ENTRY_CONFLICT_RETRY_LIMIT
+        ) {
+          throw err;
+        }
+
+        nextPath = buildDeduplicatedFilePath(path, conflictIndex + 1);
+        this.logger.warn(
+          `Archive entry upload conflict: bucket=${bucket}, originalPath=${path}, retryPath=${nextPath}`,
+        );
+      }
+    }
+
+    throw new ConflictException('File already exists at this path');
   }
 
   private async stageArchiveEntryToTemp(
@@ -425,7 +520,7 @@ export class FilesUploadService {
           'If-None-Match': '*',
           'Content-Type': `multipart/form-data; boundary=${boundary}`,
         },
-        body: Readable.toWeb(multipartStream) as unknown as BodyInit,
+        body: Readable.toWeb(multipartStream) as RequestInit['body'],
         signal,
         duplex: 'half',
       } as RequestInit & { duplex: 'half' });

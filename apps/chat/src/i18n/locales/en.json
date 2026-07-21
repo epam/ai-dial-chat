@@ -315,11 +315,14 @@
   "conversationPublish": {
     "panelAriaLabel": "Publish conversation",
     "alreadyPublishedWarning": "This conversation is already published in {folder}.",
-    "successMessage": "Conversation published successfully."
+    "successMessage": "Conversation published successfully.",
+    "emptyFolderNameError": "Folder name cannot be empty.",
+    "invalidFolderNameError": "Folder name contains invalid characters.",
+    "duplicateFolderNameError": "A folder with this name already exists."
   },
   "conversationExport": {
     "exportLabel": "Export",
-    "exportAllLabel": "Export all conversations",
+    "exportAllLabel": "Export",
     "withAttachmentsOption": "With attachments",
     "withoutAttachmentsOption": "Without attachments",
     "queueTitle": "Exporting",
@@ -331,15 +334,26 @@
     "failedSingle": "\"{{title}}\" was not exported. Please try again.",
     "failedAll": "Conversations were not exported. Please try again.",
     "warningAttachmentSkipped": "One or more attachments could not be exported and were skipped.",
-    "closeJobAriaLabel": "Close \"{{title}}\" export",
-    "retryJobAriaLabel": "Retry \"{{title}}\" export",
-    "collapseQueueAriaLabel": "Collapse export queue",
-    "expandQueueAriaLabel": "Expand export queue",
-    "closeQueueAriaLabel": "Close export queue",
+    "closeJobAriaLabel": "Close \"{{title}}\"",
+    "retryJobAriaLabel": "Retry \"{{title}}\"",
+    "collapseQueueAriaLabel": "Collapse queue",
+    "expandQueueAriaLabel": "Expand queue",
+    "closeQueueAriaLabel": "Close queue",
     "closeQueueConfirmHeader": "Close queue?",
-    "closeQueueConfirmDescriptionInProgress": "Some exports are still in progress.",
-    "closeQueueConfirmDescriptionFailed": "Some exports have failed.",
-    "closeQueueConfirmDescriptionMixed": "Some exports are still in progress, and some have failed."
+    "closeQueueConfirmDescriptionInProgress": "Some items are still in progress.",
+    "closeQueueConfirmDescriptionFailed": "Some items have failed.",
+    "closeQueueConfirmDescriptionMixed": "Some items are still in progress, and some have failed."
+  },
+  "conversationImport": {
+    "importLabel": "Import",
+    "queueTitle": "Importing",
+    "successTitle": "Import successful",
+    "success": "{{names}} imported.",
+    "failedTitle": "Error",
+    "failed": "{{names}} was not imported. Please try again.",
+    "warningAttachmentSkipped": "{{names}} could not be uploaded and were skipped.",
+    "attachmentNameConflict": "{{names}} already exists. Please rename it and try again.",
+    "unsupportedFormat": "This file could not be imported. Please choose a valid export file."
   },
   "auth": {
     "signedInAs": "Signed in as {{email}}",
@@ -551,8 +565,10 @@
     "metadataAuthorLabel": "Author:",
     "uploadArchiveAction": "Upload archive",
     "uploadArchiveError": "Failed to upload the archive",
-    "uploadArchivePartialError_one": "{{count}} item in the archive could not be uploaded",
-    "uploadArchivePartialError_other": "{{count}} items in the archive could not be uploaded"
+    "uploadArchiveFilesError_one": "Failed to upload this archive file: {{files}}",
+    "uploadArchiveFilesError_other": "Failed to upload these archive files: {{files}}",
+    "uploadArchivePartialError_one": "{{count}} item in the archive could not be uploaded: {{files}}",
+    "uploadArchivePartialError_other": "{{count}} items in the archive could not be uploaded: {{files}}"
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."
@@ -670,7 +686,8 @@
       "popupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again."
     },
     "success": {
-      "login": "Successfully logged in."
+      "login": "Successfully logged in.",
+      "logout": "Successfully logged out."
     }
   }
 }

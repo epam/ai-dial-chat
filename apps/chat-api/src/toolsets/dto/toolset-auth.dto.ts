@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Matches,
   ValidateIf,
@@ -15,8 +16,12 @@ export enum ToolsetCredentialsLevel {
 }
 
 /*
- * Allowlist for the toolset reference/url that is forwarded to DIAL Core and
- * written to log lines. Mirrors the deployment-id character set.
+ * Allowlist for the toolset reference/url the client submits. Kept for
+ * backward compatibility with existing clients and written to log lines, but
+ * the service derives the actual url sent to DIAL Core from the trusted
+ * `toolsetName` route parameter rather than this field — see
+ * `resolveToolsetLoginUrl` in `toolsets.service.ts`. Mirrors the
+ * deployment-id character set.
  */
 const TOOLSET_URL_PATTERN = /^(?:[\w.\-:@/]|%[\dA-Fa-f]{2})+$/;
 const TOOLSET_URL_MESSAGE =
@@ -84,9 +89,18 @@ export class ToolsetLogoutBodyDto {
   @IsEnum(ToolsetCredentialsLevel)
   credentialsLevel!: ToolsetCredentialsLevel;
 
-  @ApiProperty({ enum: ToolsetAuthType, example: ToolsetAuthType.OAuth })
+  @ApiPropertyOptional({
+    enum: ToolsetAuthType,
+    example: ToolsetAuthType.OAuth,
+    description:
+      'Authentication type used by the toolset. Optional — a caller that ' +
+      "doesn't already have this loaded (e.g. logging out by id alone) can " +
+      "omit it; the server looks up the toolset's own stored authentication " +
+      'type instead.',
+  })
+  @IsOptional()
   @IsEnum(ToolsetAuthType)
-  authenticationType!: ToolsetAuthType;
+  authenticationType?: ToolsetAuthType;
 }
 
 export class ToolsetAuthResultDto {
