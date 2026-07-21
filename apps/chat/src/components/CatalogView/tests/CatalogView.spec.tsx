@@ -101,6 +101,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     items,
     onToggleFavorite,
     onUseInChat,
+    isPrimaryActionVisible,
     onEdit,
     onDelete,
     onFetchDetails,
@@ -126,6 +127,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
+    isPrimaryActionVisible?: (item: CatalogItem) => boolean;
     onEdit?: (item: CatalogItem) => void;
     onDelete?: (item: CatalogItem) => Promise<void>;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
@@ -203,15 +205,17 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             favorite {item.id}
           </button>
         ))}
-        {(items ?? []).map((item) => (
-          <button
-            key={`use-in-chat-${item.id}`}
-            type="button"
-            onClick={() => onUseInChat?.(item)}
-          >
-            use in chat {item.id}
-          </button>
-        ))}
+        {(items ?? [])
+          .filter((item) => isPrimaryActionVisible?.(item) ?? true)
+          .map((item) => (
+            <button
+              key={`use-in-chat-${item.id}`}
+              type="button"
+              onClick={() => onUseInChat?.(item)}
+            >
+              use in chat {item.id}
+            </button>
+          ))}
         {(items ?? []).map((item) => (
           <button
             key={`edit-${item.id}`}
@@ -938,6 +942,37 @@ describe('CatalogView', () => {
 
     expect(setSelectedItemId).toHaveBeenCalledWith('my-app');
     expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
+  });
+
+  it('does not render Use in chat for a Toolset item', () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/b/search__0.0.1',
+          toolset: 'toolsets/b/search__0.0.1',
+          displayName: 'Search',
+        },
+      ],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
+    });
+
+    render(<CatalogView />);
+
+    expect(
+      screen.queryByRole('button', {
+        name: 'use in chat toolsets/b/search__0.0.1',
+      }),
+    ).toBeNull();
   });
 
   it('updates the selection when Use in chat is clicked on a different deployment', async () => {
