@@ -5,4 +5,5 @@ export enum StorageKey {
   KeyboardShortcut = 'keyboardShortcut',
   CatalogSortKey = 'catalogSortKey',
   CatalogFilterTopics = 'catalogFilterTopics',
+  CatalogIsMyAppsActive = 'catalogIsMyAppsActive',
 }

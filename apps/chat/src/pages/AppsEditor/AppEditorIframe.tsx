@@ -329,12 +329,18 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             onSaveError?.(event.data?.error ?? '');
             break;
           case AppsEditorEvent.RequestToolsetLogin:
-            if (typeof event.data?.toolsetId === 'string' && event.data.toolsetId) {
+            if (
+              typeof event.data?.toolsetId === 'string' &&
+              event.data.toolsetId
+            ) {
               void handleToolsetLoginRequest(event.data.toolsetId);
             }
             break;
           case AppsEditorEvent.RequestToolsetLogout:
-            if (typeof event.data?.toolsetId === 'string' && event.data.toolsetId) {
+            if (
+              typeof event.data?.toolsetId === 'string' &&
+              event.data.toolsetId
+            ) {
               void handleToolsetLogoutRequest(event.data.toolsetId);
             }
             break;

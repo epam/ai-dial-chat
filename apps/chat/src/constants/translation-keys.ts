@@ -10,6 +10,7 @@ export enum ChatI18nKeys {
   GreetingNightNoName = 'chat.greetingNightNoName',
   StreamError = 'chat.streamError',
   CreateConversationError = 'chat.createConversationError',
+  ConversationNotFound = 'chat.conversationNotFound',
   DeleteMessageTitle = 'chat.deleteMessageTitle',
   DeleteMessageDescription = 'chat.deleteMessageDescription',
   StarterConfirmTitle = 'chat.starterConfirmTitle',
