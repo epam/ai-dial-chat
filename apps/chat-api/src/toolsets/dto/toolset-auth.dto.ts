@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Matches,
   ValidateIf,
@@ -88,9 +89,18 @@ export class ToolsetLogoutBodyDto {
   @IsEnum(ToolsetCredentialsLevel)
   credentialsLevel!: ToolsetCredentialsLevel;
 
-  @ApiProperty({ enum: ToolsetAuthType, example: ToolsetAuthType.OAuth })
+  @ApiPropertyOptional({
+    enum: ToolsetAuthType,
+    example: ToolsetAuthType.OAuth,
+    description:
+      'Authentication type used by the toolset. Optional — a caller that ' +
+      "doesn't already have this loaded (e.g. logging out by id alone) can " +
+      "omit it; the server looks up the toolset's own stored authentication " +
+      'type instead.',
+  })
+  @IsOptional()
   @IsEnum(ToolsetAuthType)
-  authenticationType!: ToolsetAuthType;
+  authenticationType?: ToolsetAuthType;
 }
 
 export class ToolsetAuthResultDto {
