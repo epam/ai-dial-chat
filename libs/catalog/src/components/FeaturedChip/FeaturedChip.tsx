@@ -16,8 +16,8 @@ export const FeaturedChip: FC<FeaturedChipProps> = ({ label, className }) => (
   <DialTag
     label={label}
     className={mergeClasses(
-      'rounded-2xl border-none text-[10px] font-semibold uppercase tracking-[0.06em]',
-      className,
+      'rounded-2xl border-none uppercase tracking-[0.06em]',
+      className ?? 'dial-caption-semi-text',
       styles.featuredChip,
     )}
   />

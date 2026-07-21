@@ -8,8 +8,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 
-const LABEL_CLASS_NAME =
-  '!text-[14px] !leading-[20px] font-semibold !text-primary gap-1';
+const LABEL_CLASS_NAME = '!dial-small-semi-text !text-primary gap-1';
 
 /** Props for the shared chat-settings form fields. */
 export interface ChatSettingsFieldsProps {

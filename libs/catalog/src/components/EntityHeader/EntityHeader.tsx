@@ -12,7 +12,7 @@ export interface EntityHeaderProps {
   item: CatalogItem;
   /** CSS class for the item name. Default: 'dial-h3-text text-primary'. */
   nameClassName?: string;
-  /** CSS class for the entity type label. Default: 'dial-caption-text font-semibold'. */
+  /** CSS class for the entity type label. Default: 'dial-caption-semi-text'. */
   typeClassName?: string;
   /** CSS class applied to the icon badge, e.g. to set border-radius. Default: 'rounded-[14px]'. */
   iconBadgeClassName?: string;
@@ -40,7 +40,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   nameClassName,
   versionClassName,
   showVersion = true,
-  typeClassName = 'dial-caption-text font-semibold',
+  typeClassName = 'dial-caption-semi-text',
   iconBadgeClassName = 'rounded-[14px]',
   featuredChipClassName,
   featuredLabel = 'Featured',

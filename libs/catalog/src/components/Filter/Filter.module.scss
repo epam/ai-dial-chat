@@ -43,9 +43,6 @@
 
 /* Matches dial-small-semi-text (14px / 20px, semibold). */
 .filterBtnLabel {
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 600;
   color: var(--text-primary, #131a29);
 }
 
@@ -99,11 +96,7 @@
   }
 }
 
-/* Matches dial-small-text (14px / 20px, normal). */
 .rowLabel {
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 400;
   color: var(--text-primary, #131a29);
 }
 
@@ -142,23 +135,13 @@
   }
 }
 
-/* Section separator ----------------------------------------- */
-
 .divider {
   background: rgba(0, 0, 0, 0.05); /* stroke-primary */
 }
 
-/* Topics section label --------------------------------------- */
-
-/* Matches dial-tiny-semi-text (12px / 16px, semibold). */
 .sectionLabel {
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 600;
   color: var(--text-tertiary, #98a2b3);
 }
-
-/* Footer ---------------------------------------------------- */
 
 .footer {
   border-top: 1px solid rgba(0, 0, 0, 0.05); /* stroke-primary */

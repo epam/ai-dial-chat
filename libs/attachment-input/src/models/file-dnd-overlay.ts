@@ -10,7 +10,7 @@ export interface FileDndOverlayColors {
 
 /** Typography overrides for the `FileDndOverlay` component. */
 export interface FileDndOverlayTypography {
-  /** CSS class applied to the title. Defaults to `'heading-3 font-semibold'`. */
+  /** CSS class applied to the title. Defaults to `'dial-h3-text'`. */
   titleClassName?: string;
   /** CSS class applied to the subtitle. Defaults to `'dial-small-text'`. */
   subtitleClassName?: string;

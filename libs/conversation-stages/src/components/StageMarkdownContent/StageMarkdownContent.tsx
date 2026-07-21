@@ -85,7 +85,8 @@ export const StageMarkdownContent: FC<Props> = memo(
                 <code
                   className={mergeClasses(
                     'inline-block px-1.5 py-1',
-                    typography?.codeClassName ?? 'rounded-md font-mono text-sm',
+                    typography?.codeClassName ??
+                      'dial-small-text rounded-md font-mono',
                     styles.codeInline,
                   )}
                 >

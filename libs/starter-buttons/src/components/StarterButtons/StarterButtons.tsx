@@ -1,9 +1,6 @@
+import { BASE_MD_ICON_PROPS } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import {
-  DIAL_ICON_SIZE,
-  DialDropdown,
-  DialRoundedButton,
-} from '@epam/ai-dial-ui-kit';
+import { DialDropdown, DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { IconDots, IconDotsVertical } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import type { StarterButtonsProps } from '../../models/starter-props';
@@ -18,6 +15,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
   onSelect,
   isMobile,
   labels,
+  styles,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const pillRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -136,15 +134,19 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
                 iconAfter={
                   isMobile ? (
                     <IconDots
-                      stroke={1.5}
-                      size={DIAL_ICON_SIZE.MD}
-                      aria-hidden
+                      {...BASE_MD_ICON_PROPS}
+                      stroke={
+                        styles?.iconStrokeWidth ?? BASE_MD_ICON_PROPS.stroke
+                      }
+                      size={styles?.iconSize ?? BASE_MD_ICON_PROPS.size}
                     />
                   ) : (
                     <IconDotsVertical
-                      stroke={1.5}
-                      size={DIAL_ICON_SIZE.MD}
-                      aria-hidden
+                      {...BASE_MD_ICON_PROPS}
+                      stroke={
+                        styles?.iconStrokeWidth ?? BASE_MD_ICON_PROPS.stroke
+                      }
+                      size={styles?.iconSize ?? BASE_MD_ICON_PROPS.size}
                     />
                   )
                 }
