@@ -208,7 +208,8 @@
     "uuid": "14.0.0",
     "shell-quote": "1.8.4",
     "http-proxy-middleware": "3.0.7",
-    "undici": "7.28.0"
+    "undici": "7.28.0",
+    "adm-zip": "0.6.0"
   },
   "engines": {
     "node": ">=24.11.1",
