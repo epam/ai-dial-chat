@@ -4,7 +4,7 @@ A modern full-stack chat application built with Nx monorepo, featuring a React f
 
 ## 📚 Table of Contents
 
-- [Overview](#overview)
+- [overview](#overview)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
