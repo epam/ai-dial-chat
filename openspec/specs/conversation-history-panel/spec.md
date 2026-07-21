@@ -42,7 +42,7 @@ When `isOpen` is `true`, `ConversationPanel` SHALL render conversation items spl
 - **Shared** — items where `source === ConversationSource.Shared` and `isPinned` is falsy.
 - **Organization** — items where `source === ConversationSource.Organization` and `isPinned` is falsy.
 
-Each section renders a disclosure button (chevron icon) as its header that toggles open/closed. All sections start expanded. A section with zero items after active search + tab filter SHALL be hidden. Each item SHALL display the conversation `title` (truncated) and its deployment icon according to the following rules:
+Each section renders a disclosure button (chevron icon) as its header that toggles open/closed. All sections start expanded. When a section is collapsed, all items in that section SHALL be hidden regardless of whether any item in that section is the currently active conversation. A section with zero items after active search + tab filter SHALL be hidden. Each item SHALL display the conversation `title` (truncated) and its deployment icon according to the following rules:
 
 - When `item.isIconLoading` is `true`, an animated skeleton placeholder MUST be shown in the icon slot instead of the deployment icon or fallback.
 - When `item.isIconLoading` is `false` or `undefined` and `item.iconUrl` is set, the resolved image MUST be shown.
@@ -115,6 +115,12 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 
 - **WHEN** the user clicks the My chats section disclosure button
 - **THEN** the My chats section items are no longer visible
+
+#### Scenario: Section collapses even when its active conversation is open
+
+- **WHEN** the user opens a conversation from the My chats section (making it the active conversation)
+- **AND** clicks the My chats section disclosure button to collapse the section
+- **THEN** the My chats section items are no longer visible, including the active conversation row
 
 #### Scenario: Deployment icon tooltip shown when iconTooltip is provided
 
