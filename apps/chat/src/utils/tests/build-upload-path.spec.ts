@@ -1,7 +1,7 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildUploadPath } from '../build-upload-path';
+import { buildImportUploadPath, buildUploadPath } from '../build-upload-path';
 
 const makeAttachment = (name: string): Attachment => ({
   id: 'att-1',
@@ -47,5 +47,27 @@ describe('buildUploadPath', () => {
   it('name with no extension is preserved', () => {
     const path = buildUploadPath(makeAttachment('README'));
     expect(path).toMatch(/README$/);
+  });
+});
+
+describe('buildImportUploadPath', () => {
+  const date = new Date(2026, 6, 17);
+
+  it('builds a day-level upload path', () => {
+    expect(buildImportUploadPath('report.pdf', date)).toBe(
+      'uploads/2026-07-17/report.pdf',
+    );
+  });
+
+  it('sanitizes and encodes the file name', () => {
+    expect(buildImportUploadPath('../../etc/passwd', date)).toBe(
+      'uploads/2026-07-17/passwd',
+    );
+  });
+
+  it('builds the same path for two same-named files (no de-duplication)', () => {
+    expect(buildImportUploadPath('photo.png', date)).toBe(
+      buildImportUploadPath('photo.png', date),
+    );
   });
 });
