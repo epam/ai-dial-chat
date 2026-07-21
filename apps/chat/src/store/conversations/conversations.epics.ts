@@ -50,6 +50,7 @@ import {
   isReplayConversation,
   isSettingsChanged,
   regenerateConversationId,
+  updateMessagesAttachmentsOnMove,
 } from '@/src/utils/app/conversation';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
@@ -65,6 +66,7 @@ import {
 import {
   addGeneratedFolderId,
   fitFolderNameToStorageLimits,
+  getFileMovesFromResult,
   getFolderFromId,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
@@ -3097,6 +3099,48 @@ const moveConversationEpic: AppEpic = (action$) =>
     }),
   );
 
+const updateAttachmentsOnFileMoveEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(FilesActions.moveFilesSuccess.type),
+    mergeMap(({ payload }) => {
+      const moves = getFileMovesFromResult(payload.result);
+
+      if (!moves.length) {
+        return EMPTY;
+      }
+
+      const loadedConversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      ).filter(
+        (conversation) =>
+          !isEntityIdLocal(conversation) &&
+          conversation.status === UploadStatus.LOADED,
+      ) as Conversation[];
+
+      const updateActions = loadedConversations.flatMap((conversation) => {
+        if (!conversation.messages?.length) {
+          return [];
+        }
+
+        const { messages, isUpdated } = updateMessagesAttachmentsOnMove(
+          conversation.messages,
+          moves,
+        );
+
+        return isUpdated
+          ? [
+              ConversationsActions.updateConversation({
+                id: conversation.id,
+                values: { messages },
+              }),
+            ]
+          : [];
+      });
+
+      return updateActions.length ? from(updateActions) : EMPTY;
+    }),
+  );
+
 const updateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.updateConversation.type),
@@ -4073,6 +4117,7 @@ export const ConversationsEpics = combineEpics(
   moveConversationEpic,
   moveConversationFailEpic,
   updateConversationEpic,
+  updateAttachmentsOnFileMoveEpic,
   updateLocalConversationEpic,
   saveConversationEpic,
   createNewConversationsEpic,

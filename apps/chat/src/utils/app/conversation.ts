@@ -28,7 +28,8 @@ import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
-import { constructPath } from './file';
+import { constructPath, isAttachmentLink } from './file';
+import type { FileMove } from './folders';
 import {
   getConversationRootId,
   getEntityBucket,
@@ -486,6 +487,75 @@ export const updateMessagesAttachmentsTitles = (
       }),
     },
   }));
+};
+
+export const updateAttachmentUrlOnMove = (
+  url: string | undefined,
+  moves: FileMove[],
+): string | undefined => {
+  if (!url || isAttachmentLink(url)) {
+    return url;
+  }
+
+  const decodedUrl = ApiUtils.decodeApiUrl(url);
+
+  for (const { sourceUrl, destinationUrl } of moves) {
+    if (decodedUrl === sourceUrl) {
+      return ApiUtils.encodeApiUrl(destinationUrl);
+    }
+
+    if (decodedUrl.startsWith(`${sourceUrl}/`)) {
+      return ApiUtils.encodeApiUrl(
+        decodedUrl.replace(`${sourceUrl}/`, `${destinationUrl}/`),
+      );
+    }
+  }
+
+  return url;
+};
+
+export const updateMessagesAttachmentsOnMove = (
+  messages: Message[],
+  moves: FileMove[],
+): { messages: Message[]; isUpdated: boolean } => {
+  let isUpdated = false;
+
+  const updatedMessages = messages.map((message) => {
+    const attachments = message.custom_content?.attachments;
+
+    if (!attachments?.length) {
+      return message;
+    }
+
+    const updatedAttachments = attachments.map((attachment) => {
+      const url = updateAttachmentUrlOnMove(attachment.url, moves);
+      const reference_url = updateAttachmentUrlOnMove(
+        attachment.reference_url,
+        moves,
+      );
+
+      if (
+        url === attachment.url &&
+        reference_url === attachment.reference_url
+      ) {
+        return attachment;
+      }
+
+      isUpdated = true;
+
+      return { ...attachment, url, reference_url };
+    });
+
+    return {
+      ...message,
+      custom_content: {
+        ...message.custom_content,
+        attachments: updatedAttachments,
+      },
+    };
+  });
+
+  return { messages: isUpdated ? updatedMessages : messages, isUpdated };
 };
 
 export const isConversationInfoEntity = (

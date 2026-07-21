@@ -10,8 +10,13 @@ import {
 import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
-import { BaseDialEntity, FeatureType, PartialBy } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
+import {
+  BaseDialEntity,
+  FeatureType,
+  MoveModel,
+  PartialBy,
+} from '@/src/types/common';
+import { DialFile, FileOperationsResult } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
@@ -551,6 +556,38 @@ export const updateMovedEntityId = (
     return entityId.replace(old, newParentFolderId);
   }
   return entityId;
+};
+
+export interface FileMove {
+  sourceUrl: string;
+  destinationUrl: string;
+}
+
+export const getFileMovesFromResult = (
+  result?: FileOperationsResult<MoveModel>,
+): FileMove[] =>
+  (result?.results ?? [])
+    .map(({ data }) => ({
+      sourceUrl: data.sourceUrl,
+      destinationUrl: data.destinationUrl,
+    }))
+    .filter(
+      ({ sourceUrl, destinationUrl }) =>
+        !!sourceUrl && !!destinationUrl && sourceUrl !== destinationUrl,
+    );
+
+export const updatePathOnMove = (path: string, moves: FileMove[]): string => {
+  for (const { sourceUrl, destinationUrl } of moves) {
+    if (path === sourceUrl) {
+      return destinationUrl;
+    }
+
+    if (path.startsWith(`${sourceUrl}/`)) {
+      return path.replace(`${sourceUrl}/`, `${destinationUrl}/`);
+    }
+  }
+
+  return path;
 };
 
 export const getFolderIdFromEntityId = (id: string) =>

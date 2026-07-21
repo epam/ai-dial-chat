@@ -39,8 +39,13 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
+  getFileMovesFromResult,
+  updatePathOnMove,
+} from '@/src/utils/app/folders';
+import {
   isEntityIdExternal,
   isEntityIdLocal,
+  isMyApplication,
   isMyEntity,
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
@@ -64,6 +69,7 @@ import {
   ApplicationTypesSchemasActions,
   ChatActions,
   ConversationsActions,
+  FilesActions,
   MarketplaceActions,
   ModelsActions,
   PromptsActions,
@@ -1112,6 +1118,57 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
     }),
   );
 
+const updateApplicationIconsOnFileMoveEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(FilesActions.moveFilesSuccess.type),
+    mergeMap(({ payload }) => {
+      const moves = getFileMovesFromResult(payload.result);
+
+      if (!moves.length) {
+        return EMPTY;
+      }
+
+      const affectedApplications = ModelsSelectors.selectModels(state$.value)
+        .filter((model) => isMyApplication(model) && !!model.iconUrl)
+        .map((model) => ({
+          model,
+          newIconUrl: updatePathOnMove(model.iconUrl as string, moves),
+        }))
+        .filter(({ model, newIconUrl }) => newIconUrl !== model.iconUrl);
+
+      if (!affectedApplications.length) {
+        return EMPTY;
+      }
+
+      return from(affectedApplications).pipe(
+        mergeMap(({ model, newIconUrl }) =>
+          ApplicationService.get(model.id).pipe(
+            mergeMap((application) =>
+              application
+                ? of(
+                    ApplicationActions.edit({
+                      oldApplication: application,
+                      updatedApplication: {
+                        ...application,
+                        iconUrl: newIconUrl,
+                      },
+                    }),
+                  )
+                : EMPTY,
+            ),
+            catchError((err) => {
+              console.error(
+                'Failed to update application icon after file move:',
+                err,
+              );
+              return EMPTY;
+            }),
+          ),
+        ),
+      );
+    }),
+  );
+
 export const ApplicationEpics = combineEpics(
   initEpic,
   createApplicationEpic,
@@ -1130,4 +1187,5 @@ export const ApplicationEpics = combineEpics(
   setSelectedWidgetEpic,
   initQueryParamsEpic,
   setQueryParamsEpic,
+  updateApplicationIconsOnFileMoveEpic,
 );
