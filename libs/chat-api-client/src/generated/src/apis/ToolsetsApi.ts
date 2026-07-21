@@ -306,7 +306,7 @@ export class ToolsetsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Revokes a toolset\'s credentials by proxying DIAL Core (POST /v1/ops/toolset/signout).
+   * Revokes a toolset\'s credentials by proxying DIAL Core (POST /v1/ops/toolset/signout). When the request body omits `authenticationType`, the toolset\'s own stored authentication type is looked up first (same lookup as `GET /api/v1/toolsets/{toolsetName}`).
    * Revoke toolset credentials
    */
   async logoutToolsetRaw(
@@ -354,7 +354,7 @@ export class ToolsetsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Revokes a toolset\'s credentials by proxying DIAL Core (POST /v1/ops/toolset/signout).
+   * Revokes a toolset\'s credentials by proxying DIAL Core (POST /v1/ops/toolset/signout). When the request body omits `authenticationType`, the toolset\'s own stored authentication type is looked up first (same lookup as `GET /api/v1/toolsets/{toolsetName}`).
    * Revoke toolset credentials
    */
   async logoutToolset(
