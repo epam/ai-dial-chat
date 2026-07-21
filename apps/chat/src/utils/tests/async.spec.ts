@@ -76,15 +76,11 @@ describe('runWithConcurrency', () => {
 
     it('lets the other concurrent items keep running instead of aborting the batch', async () => {
       const completed: number[] = [];
-      const results = await runWithConcurrency(
-        [1, 2, 3, 4],
-        4,
-        async (n) => {
-          if (n === 1) throw new Error('boom');
-          completed.push(n);
-          return n;
-        },
-      );
+      const results = await runWithConcurrency([1, 2, 3, 4], 4, async (n) => {
+        if (n === 1) throw new Error('boom');
+        completed.push(n);
+        return n;
+      });
       expect(completed.sort((a, b) => a - b)).toEqual([2, 3, 4]);
       expect(results.sort((a, b) => a - b)).toEqual([2, 3, 4]);
     });
