@@ -1,4 +1,4 @@
-import { DialFile, DialFileNodeType } from '@epam/ai-dial-ui-kit';
+import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
 import { describe, expect, it } from 'vitest';
 import { PublishFolderNode } from '../models/publish';
 import {
@@ -6,9 +6,10 @@ import {
   filterFolderTree,
   fromFolderPathKey,
   getSiblingFolderNames,
-  insertPlaceholderDialFile,
+  getUniqueFolderName,
   toDialFileTree,
   toFolderPathKey,
+  validateFolderName,
 } from './publish-folder-tree';
 
 const tree: PublishFolderNode[] = [
@@ -115,31 +116,6 @@ describe('toDialFileTree', () => {
   });
 });
 
-describe('insertPlaceholderDialFile', () => {
-  const files: DialFile[] = toDialFileTree(tree);
-
-  it('inserts a root-level placeholder', () => {
-    const result = insertPlaceholderDialFile(files, [], 'New folder');
-    expect(result.at(-1)).toMatchObject({
-      path: 'New folder',
-      name: 'New folder',
-    });
-  });
-
-  it('inserts a placeholder under a nested parent', () => {
-    const result = insertPlaceholderDialFile(
-      files,
-      ['Shared', 'Data Science'],
-      'New folder',
-    );
-    const parent = result[0].items?.[0];
-    expect(parent?.items?.at(-1)).toMatchObject({
-      path: 'Shared/Data Science/New folder',
-      name: 'New folder',
-    });
-  });
-});
-
 describe('getSiblingFolderNames', () => {
   it('returns root-level names when parentPath is empty', () => {
     expect(getSiblingFolderNames(tree, [])).toEqual(['Shared', 'My workspace']);
@@ -157,5 +133,75 @@ describe('getSiblingFolderNames', () => {
         'Published models',
       ]),
     ).toEqual([]);
+  });
+});
+
+describe('validateFolderName', () => {
+  const messages = {
+    empty: 'empty',
+    invalid: 'invalid',
+    duplicate: 'duplicate',
+  };
+
+  it('returns null for a valid, non-duplicate name', () => {
+    expect(validateFolderName('New folder', ['Shared'], messages)).toBeNull();
+  });
+
+  it('trims the value before validating', () => {
+    expect(validateFolderName('  New folder  ', [], messages)).toBeNull();
+  });
+
+  it('returns the empty message for a blank name', () => {
+    expect(validateFolderName('   ', [], messages)).toBe('empty');
+  });
+
+  it.each([
+    '../EscapeFolder',
+    '..',
+    'a/b',
+    'a\\b',
+    'a:b',
+    'a;b',
+    'a,b',
+    'a=b',
+    'a{b}',
+    'a&b',
+    'a"b',
+  ])('returns the invalid message for %s', (name) => {
+    expect(validateFolderName(name, [], messages)).toBe('invalid');
+  });
+
+  it('returns the duplicate message for a case-insensitive sibling match', () => {
+    expect(validateFolderName('shared', ['Shared'], messages)).toBe(
+      'duplicate',
+    );
+  });
+});
+
+describe('getUniqueFolderName', () => {
+  it('returns the base name unchanged when no sibling has it', () => {
+    expect(getUniqueFolderName('New folder', ['Shared'])).toBe('New folder');
+  });
+
+  it('appends " 2" when a sibling already has the base name', () => {
+    expect(getUniqueFolderName('New folder', ['New folder'])).toBe(
+      'New folder 2',
+    );
+  });
+
+  it('matches case-insensitively when checking for a taken name', () => {
+    expect(getUniqueFolderName('New folder', ['new folder'])).toBe(
+      'New folder 2',
+    );
+  });
+
+  it('skips every already-taken suffix to find the first free one', () => {
+    expect(
+      getUniqueFolderName('New folder', [
+        'New folder',
+        'New folder 2',
+        'New folder 3',
+      ]),
+    ).toBe('New folder 4');
   });
 });

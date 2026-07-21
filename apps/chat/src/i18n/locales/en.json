@@ -315,7 +315,10 @@
   "conversationPublish": {
     "panelAriaLabel": "Publish conversation",
     "alreadyPublishedWarning": "This conversation is already published in {folder}.",
-    "successMessage": "Conversation published successfully."
+    "successMessage": "Conversation published successfully.",
+    "emptyFolderNameError": "Folder name cannot be empty.",
+    "invalidFolderNameError": "Folder name contains invalid characters.",
+    "duplicateFolderNameError": "A folder with this name already exists."
   },
   "conversationExport": {
     "exportLabel": "Export",
@@ -670,7 +673,8 @@
       "popupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again."
     },
     "success": {
-      "login": "Successfully logged in."
+      "login": "Successfully logged in.",
+      "logout": "Successfully logged out."
     }
   }
 }

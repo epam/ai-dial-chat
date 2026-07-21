@@ -37,6 +37,16 @@ export interface PublishPanelTexts {
   submitError?: string;
   /** Message shown when a folder search query matches no folders; `{query}` is replaced. */
   folderEmptyStateText?: string;
+  /** Label for the per-row context menu action that creates a folder alongside the clicked folder. */
+  addSiblingFolderLabel?: string;
+  /** Label for the per-row context menu action that creates a folder inside the clicked folder. */
+  addChildFolderLabel?: string;
+  /** Inline error shown while creating a folder with an empty name. */
+  createFolderEmptyNameError?: string;
+  /** Inline error shown while creating a folder whose name contains `..` or a forbidden character. */
+  createFolderInvalidNameError?: string;
+  /** Inline error shown while creating a folder whose name duplicates a sibling. */
+  createFolderDuplicateNameError?: string;
   /** Message shown while publish history is loading. */
   historyLoadingText?: string;
   /** Message shown when publish history failed to load. */
@@ -143,6 +153,11 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
     folderEmptyStateText,
+    addSiblingFolderLabel,
+    addChildFolderLabel,
+    createFolderEmptyNameError,
+    createFolderInvalidNameError,
+    createFolderDuplicateNameError,
     historyLoadingText,
     historyErrorText,
     rootFolderLabel = 'Organization',
@@ -233,6 +248,11 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           searchQuery={searchQuery}
           disabled={isSubmitting}
           noResultsText={folderEmptyStateText}
+          addSiblingFolderLabel={addSiblingFolderLabel}
+          addChildFolderLabel={addChildFolderLabel}
+          emptyFolderNameError={createFolderEmptyNameError}
+          invalidFolderNameError={createFolderInvalidNameError}
+          duplicateFolderNameError={createFolderDuplicateNameError}
           rootLabel={rootFolderLabel}
         />
         {derived.calloutKind !== PublishCalloutKind.None &&
