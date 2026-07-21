@@ -187,6 +187,7 @@ class ConversationListItemDto {
   sharedWithMe: boolean;    // True when the conversation was shared with the current user
   publishedWithMe: boolean; // True when this conversation is from the public bucket (organisation content)
   isPinned: boolean;        // True when the user has pinned this conversation
+  isReadonly: boolean;      // True when the caller does not have WRITE permission on this exact resource
 }
 
 class ConversationListResponseDto {
@@ -204,6 +205,8 @@ class ConversationListResponseDto {
 Items from all three sources are merged and sorted by `updatedAt` descending. `FOLDER` items are filtered out from bucket results. The `getSharedResources` response does not include `updatedAt`; shared items default to `updatedAt: 0`.
 
 **Ownership flags.** Items from the `'public'` bucket always have `publishedWithMe: true` forced, regardless of the DIAL Core flag value. Items from `getSharedResources` always have `sharedWithMe: true` forced. User-bucket items pass through the DIAL Core `sharedWithMe`/`publishedWithMe` flags unchanged.
+
+**No personal/public merging.** The service SHALL NOT attempt to match or merge a user-bucket item with a public-bucket item, even when a personal conversation has been published and both a personal copy and a public copy exist. Each is returned as its own independent list item with its own `id`: the personal copy keeps its user-bucket `id`, real `isReadonly` (from DIAL Core permissions), and `publishedWithMe: false` (unless DIAL Core itself reports otherwise); the public copy is a separate entry with its own `conversations/public/...` id, `isReadonly: true`, and `publishedWithMe: true`. This guarantees any link built from a returned `id` (conversation open/navigation links, and share links created via `POST /api/v1/share`) always resolves to the bucket that specific item actually represents, and that the personal copy's pin status and permissions are never affected by publishing.
 
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
@@ -283,6 +286,18 @@ Error codes:
 
 - **WHEN** `GET /api/v1/conversations/list?limit=1001` is called (exceeds max 1000)
 - **THEN** the response is 400 with a validation error
+
+#### Scenario: Published conversation's personal and public copies both appear as independent items
+
+- **WHEN** a user-bucket item and a public-bucket item — the personal and published copies of the same conversation — are both returned by DIAL Core in the same `listConversations` call, regardless of whether their relative paths coincide
+- **THEN** the response `items` array contains two entries: one with the user-bucket item's own `id`, real `isReadonly`, and `publishedWithMe: false`, and one with the public-bucket item's own `id` (`conversations/public/...`), `isReadonly: true`, and `publishedWithMe: true`
+- **AND** neither item's `id`, `isReadonly`, or `isPinned` is altered because of the other item's existence
+
+#### Scenario: Publishing a pinned personal conversation does not change its pin status
+
+- **WHEN** a user has pinned their own conversation (its user-bucket `id` is in the pinned-ids set) and that same conversation has also been published to the public bucket
+- **THEN** the response item with the user-bucket `id` has `isPinned: true`
+- **AND** the response item with the public-bucket `id` has `isPinned: false` (pins are never applied to a `publishedWithMe: true` item unless its own id was explicitly pinned)
 
 ---
 
