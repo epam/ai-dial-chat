@@ -106,13 +106,12 @@ const controlsBgColors = {
 };
 
 const borderColors = {
-  focus: 'var(--stroke-focus, #161B2D)',
   'accent-primary': 'var(--stroke-accent-primary, #124ACE)',
   'accent-primary-hover': 'var(--stroke-accent-primary-hover, #7DA4FF)',
   'accent-secondary': 'var(--stroke-accent-secondary, #007274)',
   'accent-tertiary': 'var(--stroke-accent-tertiary, #7E39EC)',
-  'hover-tint': 'var(--stroke-hover-tint, rgba(0, 0, 0, 0.12))',
-  hairline: 'var(--stroke-hairline, rgba(0, 0, 0, 0.05))',
+  'hover-tint': 'var(--stroke-hover-tint, #0000001f)',
+  hairline: 'var(--stroke-hairline, #0000000d)',
 
   // new colors
   transparent: 'transparent',
