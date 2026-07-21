@@ -38,6 +38,8 @@ import {
   AttachmentCanvasI18nKeys,
   ButtonsI18nKeys,
 } from '../constants/translation-keys';
+import { useDeployments } from '../context/DeploymentsContext';
+import { useOptionalOverlay } from '../context/overlay/OverlayContext';
 import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
@@ -84,6 +86,35 @@ const App: FC = () => {
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
+
+  /*
+   * OverlayContext (an ancestor of DeploymentsProvider) cannot call
+   * useDeployments() itself, so it hands off a pending overlay-selected
+   * modelId here, where both contexts are reachable. Silently ignored if the
+   * id is not in the loaded deployments list — matches SET_OVERLAY_OPTIONS'
+   * "unknown modelId falls back to normal default-deployment resolution".
+   */
+  const overlay = useOptionalOverlay();
+  const {
+    items: deploymentItemsForOverlay,
+    isLoading: isDeploymentsLoading,
+    restoreSelectedItemId,
+  } = useDeployments();
+  useEffect(() => {
+    if (!overlay?.pendingModelId || isDeploymentsLoading) return;
+    const exists = deploymentItemsForOverlay.some(
+      (item) => item.id === overlay.pendingModelId,
+    );
+    if (exists) {
+      restoreSelectedItemId(overlay.pendingModelId);
+    }
+    overlay.clearPendingModelId();
+  }, [
+    overlay,
+    deploymentItemsForOverlay,
+    isDeploymentsLoading,
+    restoreSelectedItemId,
+  ]);
 
   const [isNavOpen, setIsNavOpen] = useState(false);
   const closeNav = useCallback(() => setIsNavOpen(false), []);

@@ -32,4 +32,22 @@ describe('validate', () => {
       /Environment validation failed/,
     );
   });
+
+  it('defaults OVERLAY_ENABLED to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.OVERLAY_ENABLED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+  ])('parses OVERLAY_ENABLED=%s as %s', (rawValue, expected) => {
+    const config = validate({ ...baseConfig, OVERLAY_ENABLED: rawValue });
+    expect(config.OVERLAY_ENABLED).toBe(expected);
+  });
+
+  it('treats any non-"false"/"0"/"no" string as OVERLAY_ENABLED=true', () => {
+    const config = validate({ ...baseConfig, OVERLAY_ENABLED: 'yes' });
+    expect(config.OVERLAY_ENABLED).toBe(true);
+  });
 });

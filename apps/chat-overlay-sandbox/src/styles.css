@@ -1,0 +1,46 @@
+.sandbox-event-log {
+  max-inline-size: 720px;
+  margin-block-start: 16px;
+}
+
+.sandbox-event-log h2 {
+  margin-block: 0 8px;
+}
+
+.sandbox-event-log__scroll {
+  block-size: min(260px, 34dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #b6c2d1;
+  border-radius: 8px;
+  padding-block: 8px;
+  padding-inline: 12px;
+  background: #ffffff;
+  color: #111827;
+}
+
+.sandbox-event-log__scroll:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.sandbox-event-log__list {
+  margin: 0;
+  padding-inline-start: 20px;
+  overflow-wrap: anywhere;
+}
+
+.sandbox-event-log__list li + li {
+  margin-block-start: 4px;
+}
+
+.sandbox-event-log__empty {
+  margin: 0;
+  color: #374151;
+}
+
+@media (max-width: 768px) {
+  .sandbox-event-log__scroll {
+    block-size: min(220px, 30dvh);
+  }
+}

@@ -17,6 +17,7 @@ import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
 import { GenerationProvider } from './context/GenerationContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { OverlayModeGate } from './context/overlay/OverlayContext';
 import { SourcesSidebarProvider } from './context/SourcesSidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { UserConfigProvider } from './context/UserConfigContext';
@@ -49,17 +50,19 @@ root.render(
                         <Route
                           path="*"
                           element={
-                            <RequireAuth>
-                              <GenerationProvider>
-                                <UserConfigProvider>
-                                  <DeploymentsProvider>
-                                    <ConversationsProvider>
-                                      <App />
-                                    </ConversationsProvider>
-                                  </DeploymentsProvider>
-                                </UserConfigProvider>
-                              </GenerationProvider>
-                            </RequireAuth>
+                            <OverlayModeGate>
+                              <RequireAuth>
+                                <GenerationProvider>
+                                  <UserConfigProvider>
+                                    <DeploymentsProvider>
+                                      <ConversationsProvider>
+                                        <App />
+                                      </ConversationsProvider>
+                                    </DeploymentsProvider>
+                                  </UserConfigProvider>
+                                </GenerationProvider>
+                              </RequireAuth>
+                            </OverlayModeGate>
                           }
                         />
                       </Routes>

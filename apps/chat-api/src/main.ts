@@ -6,7 +6,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import 'reflect-metadata';
 import { AppModule } from './app/app.module';
-import { buildFrameSrcDirective } from './config/csp';
+import { createHelmetOptions } from './config/csp';
 import { EnvironmentVariables } from './config/environment.config';
 import { resolveLogLevels } from './config/log-levels';
 import {
@@ -33,31 +33,7 @@ async function bootstrap() {
   });
 
   // Security headers middleware
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: [
-            "'self'",
-            "'unsafe-inline'",
-            'https://fonts.googleapis.com',
-          ],
-          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-          scriptSrc: ["'self'"],
-          workerSrc: ["'self'", 'blob:'],
-          imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
-          connectSrc: ["'self'", 'blob:'],
-          frameSrc: buildFrameSrcDirective(allowedIframeOrigins),
-        },
-      },
-      hsts: {
-        maxAge: 31536000, // 1 year in seconds
-        includeSubDomains: true,
-        preload: true,
-      },
-    }),
-  );
+  app.use(helmet(createHelmetOptions(allowedIframeOrigins ?? [])));
 
   app.useGlobalPipes(
     new ValidationPipe({

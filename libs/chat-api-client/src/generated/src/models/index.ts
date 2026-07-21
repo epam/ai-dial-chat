@@ -462,6 +462,18 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   fileManagerTabs: Array<string>;
+  /**
+   * Whether the chat-overlay embedded runtime mode is enabled. Sourced from OVERLAY_ENABLED.
+   * @type {boolean}
+   * @memberof ClientConfigDto
+   */
+  overlayEnabled: boolean;
+  /**
+   * Host origins allowed to embed this app. Sourced from ALLOWED_IFRAME_ORIGINS, the same list used for CSP frame-ancestors/frame-src.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  overlayAllowedOrigins: Array<string>;
 }
 /**
  *

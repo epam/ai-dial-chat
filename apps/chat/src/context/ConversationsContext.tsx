@@ -25,6 +25,7 @@ import {
 } from '../server-api/conversations.api';
 import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { getConversationPath } from '../utils/conversation-path';
+import { useOptionalOverlay } from './overlay/OverlayContext';
 import { useUserConfig } from './UserConfigContext';
 
 const DISPLAY_NAME_WATCH_TIMEOUT_MS = 120_000;
@@ -87,6 +88,12 @@ export const ConversationsProvider = ({
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const overlay = useOptionalOverlay();
+
+  useEffect(() => {
+    overlay?.notifyConversationsUpdated();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversations]);
 
   const refreshConversations = useCallback(async () => {
     setIsLoading(true);

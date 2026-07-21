@@ -13,6 +13,7 @@ import {
   useState,
 } from 'react';
 import { useGeneration } from '../../context/GenerationContext';
+import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import {
   CompletionMode,
   stopCompletion,
@@ -80,7 +81,11 @@ export const useConversationStream = ({
   const activeGenerationIdRef = useRef<string | null>(null);
   const activeGenerationPathRef = useRef<string | null>(null);
   const resumingPathsRef = useRef<Set<string>>(new Set());
+  /* Generation ids stopped by the user — onComplete emits STOP_GENERATING's
+   * counterpart (nothing) instead of GPT_END_GENERATING for these. */
+  const stoppedGenerationIdsRef = useRef<Set<string>>(new Set());
   const { startGeneration, completeGeneration } = useGeneration();
+  const overlay = useOptionalOverlay();
 
   /*
    * ConversationPage is NOT remounted when navigating between conversations
@@ -153,6 +158,7 @@ export const useConversationStream = ({
 
       const controller = startGeneration(conversationPath, genId);
       addStreamingPath(conversationPath);
+      overlay?.notifyGenerationStart();
 
       streamCompletion(
         conversationPath,
@@ -189,6 +195,11 @@ export const useConversationStream = ({
               setStoppablePath(null);
             }
             completeGeneration(conversationPath, genId);
+            if (stoppedGenerationIdsRef.current.has(genId)) {
+              stoppedGenerationIdsRef.current.delete(genId);
+            } else {
+              overlay?.notifyGenerationEnd();
+            }
             /*
              * Only refresh displayed state if the user is still viewing this
              * conversation; otherwise leave the currently-shown chat untouched.
@@ -246,6 +257,7 @@ export const useConversationStream = ({
       addStreamingPath,
       removeStreamingPath,
       isPathDisplayed,
+      overlay,
     ],
   );
 
@@ -255,6 +267,9 @@ export const useConversationStream = ({
 
     const conversationPath = getConversationPath(conversationId);
     if (activeGenerationPathRef.current !== conversationPath) return;
+
+    stoppedGenerationIdsRef.current.add(genId);
+    overlay?.notifyStopGenerating();
 
     /*
      * Only signal the backend; it aborts upstream, saves the partial, and closes
@@ -268,7 +283,7 @@ export const useConversationStream = ({
         onStopError?.(error);
       },
     );
-  }, [conversationId, onStopError]);
+  }, [conversationId, onStopError, overlay]);
 
   /*
    * A hard refresh mid-generation loads a conversation whose last message is

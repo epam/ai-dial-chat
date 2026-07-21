@@ -11,6 +11,7 @@ import {
   memo,
   Suspense,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -31,6 +32,7 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
@@ -66,6 +68,7 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const { showNotification } = useNotification();
+  const overlay = useOptionalOverlay();
   const {
     items,
     selectedItemId,
@@ -74,6 +77,17 @@ const ConversationRoute: FC = () => {
     isLoading,
     error,
   } = useDeployments();
+
+  /*
+   * This is the "no conversation selected" empty state. Overlay mode must
+   * still reach READY_TO_INTERACT here after an inaccessible overlayConversationId
+   * falls back to this route, rather than staying pre-interactive forever
+   * waiting for a conversation that never loads.
+   */
+  useEffect(() => {
+    overlay?.notifyConversationLoaded();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Boolean(overlay)]);
 
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),

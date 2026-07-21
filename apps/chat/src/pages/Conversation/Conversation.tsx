@@ -33,7 +33,9 @@ import {
   useGeneration,
 } from '../../context/GenerationContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
+import { useActiveConversationBridge } from '../../hooks/conversation/useActiveConversationBridge';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
@@ -88,6 +90,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     watchForDisplayNameUpdate,
   } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const overlay = useOptionalOverlay();
+  const [overlayInputContent, setOverlayInputContent] = useState({
+    revision: 0,
+    value: '',
+  });
+  const notifiedLoadedConversationIdRef = useRef<string | null>(null);
 
   const { handleUploadAudio, handleTranscribeAudio, isTranscriptionSupported } =
     useAudioTranscription({
@@ -444,6 +452,29 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     showNetworkError: handleNetworkUploadError,
   });
 
+  useEffect(() => {
+    if (!overlay || isFetching || !conversation || !conversationId) return;
+    if (notifiedLoadedConversationIdRef.current === conversationId) return;
+    notifiedLoadedConversationIdRef.current = conversationId;
+    overlay.notifyConversationLoaded();
+  }, [overlay, isFetching, conversation, conversationId]);
+
+  const handleOverlayInputContent = useCallback((content: string) => {
+    setOverlayInputContent((prev) => ({
+      revision: prev.revision + 1,
+      value: content,
+    }));
+  }, []);
+
+  useActiveConversationBridge({
+    conversation,
+    conversationId,
+    conversationRef,
+    setConversation,
+    handleSend,
+    setOverlayInputContent: handleOverlayInputContent,
+  });
+
   const handleLike = useCallback(
     async (messageIndex: number, rating: MessageRating | null) => {
       const success = await handleRateMessage(messageIndex, rating);
@@ -532,6 +563,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onTranscribeAudio={handleTranscribeAudio}
           conversation={conversation}
           onConversationChange={handleConversationChange}
+          inputContent={overlay ? overlayInputContent.value : undefined}
+          inputContentRevision={
+            overlay ? overlayInputContent.revision : undefined
+          }
         />
       </div>
 

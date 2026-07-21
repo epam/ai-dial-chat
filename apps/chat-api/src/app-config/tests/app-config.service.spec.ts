@@ -60,6 +60,8 @@ describe('AppConfigService', () => {
         'shared',
         'organization',
       ]);
+      expect(result.config.overlayEnabled).toBe(false);
+      expect(result.config.overlayAllowedOrigins).toEqual([]);
     });
 
     it('returns resolved values when providers succeed', async () => {
@@ -70,6 +72,9 @@ describe('AppConfigService', () => {
         if (key === 'deployments.defaultDeploymentId') return 'gpt-4o';
         if (key === 'dialCore.externalUrl') return 'https://dial.example.com';
         if (key === 'fileManager.availableTabs') return ['my_files'];
+        if (key === 'overlay.enabled') return true;
+        if (key === 'overlay.allowedOrigins')
+          return ['https://partner.example.com'];
         return undefined;
       });
       const result = await service.getClientConfig(ctx);
@@ -82,6 +87,10 @@ describe('AppConfigService', () => {
         'https://dial.example.com',
       );
       expect(result.config.fileManagerTabs).toEqual(['my_files']);
+      expect(result.config.overlayEnabled).toBe(true);
+      expect(result.config.overlayAllowedOrigins).toEqual([
+        'https://partner.example.com',
+      ]);
     });
 
     it('returns null defaultDeploymentId when DEFAULT_DEPLOYMENT is not set', async () => {
@@ -138,7 +147,7 @@ describe('AppConfigService', () => {
         first,
         60_000,
       );
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(6);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(8);
     });
 
     it('does not share cached config across role sets', async () => {
@@ -155,7 +164,7 @@ describe('AppConfigService', () => {
         roles: ['viewer'],
       });
 
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(12);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(16);
     });
   });
 

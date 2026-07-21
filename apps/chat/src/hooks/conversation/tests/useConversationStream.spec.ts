@@ -1,9 +1,14 @@
+import {
+  OverlayEventType,
+  OverlayRequestType,
+} from '@epam/ai-dial-chat-shared';
 import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GenerationProvider } from '../../../context/GenerationContext';
+import { OverlayProvider } from '../../../context/overlay/OverlayContext';
 import {
   CompletionMode,
   type StreamCompletionOptions,
@@ -15,7 +20,26 @@ import {
   saveConversation,
   watchConversation,
 } from '../../../server-api/conversations.api';
+import { AuthStatus } from '../../../types/auth-status';
 import { useConversationStream } from '../useConversationStream';
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
+
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => ({
+    config: { overlayAllowedOrigins: ['https://partner.example.com'] },
+  }),
+}));
+
+vi.mock('../../../context/auth/UserContext', () => ({
+  useUser: () => ({ status: AuthStatus.Authenticated }),
+}));
+
+vi.mock('../../../context/ThemeContext', () => ({
+  useTheme: () => ({ setTheme: vi.fn() }),
+}));
 
 vi.mock('../../../server-api/chat-stream.api', () => ({
   streamCompletion: vi.fn(),
@@ -97,6 +121,13 @@ const makeAwaitingConversation = (): Conversation =>
 
 const wrapper = ({ children }: { children: ReactNode }) =>
   createElement(GenerationProvider, null, children);
+
+const overlayWrapper = ({ children }: { children: ReactNode }) =>
+  createElement(
+    GenerationProvider,
+    null,
+    createElement(OverlayProvider, null, children),
+  );
 
 const makeParams = (
   overrides?: Partial<Parameters<typeof useConversationStream>[0]>,
@@ -926,6 +957,144 @@ describe('useConversationStream', () => {
        */
       rerender({ conversationId: 'bucket/gpt-4o__Background__id' });
       expect(result.current.isStreaming).toBe(false);
+    });
+  });
+
+  describe('overlay mode generation lifecycle events', () => {
+    const establishOverlayHostDomain = () => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: {
+            type: OverlayRequestType.SetOverlayOptions,
+            requestId: 'setup',
+            payload: { hostDomain: 'https://partner.example.com' },
+          },
+          source: window.parent,
+          origin: 'https://partner.example.com',
+        }),
+      );
+    };
+
+    it('emits GPT_START_GENERATING before GPT_END_GENERATING for a sendMessage-triggered generation', async () => {
+      const { result } = renderHook(() => useConversationStream(makeParams()), {
+        wrapper: overlayWrapper,
+      });
+      establishOverlayHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      await act(async () => {
+        result.current.startStream(
+          'bucket/gpt-4o__Hello__uuid',
+          'hello',
+          0,
+          'gpt-4o',
+        );
+      });
+
+      const overlayEventTypes = postMessageSpy.mock.calls
+        .map(([message]) => (message as { type?: string }).type)
+        .filter(
+          (type) =>
+            type === OverlayEventType.GptStartGenerating ||
+            type === OverlayEventType.GptEndGenerating,
+        );
+
+      expect(overlayEventTypes).toEqual([
+        OverlayEventType.GptStartGenerating,
+        OverlayEventType.GptEndGenerating,
+      ]);
+    });
+
+    it('does not emit GPT_END_GENERATING without a preceding GPT_START_GENERATING', async () => {
+      mockStreamCompletion.mockImplementation(() => {
+        // keep stream open — no onComplete, so GPT_END_GENERATING must not fire
+      });
+      const { result } = renderHook(() => useConversationStream(makeParams()), {
+        wrapper: overlayWrapper,
+      });
+      establishOverlayHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      await act(async () => {
+        result.current.startStream(
+          'bucket/gpt-4o__Hello__uuid',
+          'hello',
+          0,
+          'gpt-4o',
+        );
+      });
+
+      const overlayEventTypes = postMessageSpy.mock.calls.map(
+        ([message]) => (message as { type?: string }).type,
+      );
+      expect(overlayEventTypes).toContain(OverlayEventType.GptStartGenerating);
+      expect(overlayEventTypes).not.toContain(
+        OverlayEventType.GptEndGenerating,
+      );
+    });
+
+    it('posts no @DIAL_OVERLAY generation event when not in overlay mode', async () => {
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+      const { result } = renderHook(() => useConversationStream(makeParams()), {
+        wrapper,
+      });
+
+      await act(async () => {
+        result.current.startStream(
+          'bucket/gpt-4o__Hello__uuid',
+          'hello',
+          0,
+          'gpt-4o',
+        );
+      });
+
+      expect(postMessageSpy).not.toHaveBeenCalled();
+    });
+
+    it('emits STOP_GENERATING on user-initiated stop, and GPT_END_GENERATING does not also fire for that generation', async () => {
+      let capturedOnComplete: StreamCompletionOptions['onComplete'] | null =
+        null;
+      mockStreamCompletion.mockImplementation((_p, _m, _model, opts) => {
+        capturedOnComplete = opts.onComplete;
+      });
+
+      const { result } = renderHook(
+        () =>
+          useConversationStream(
+            makeParams({ conversationId: 'bucket/gpt-4o__Hello__uuid' }),
+          ),
+        { wrapper: overlayWrapper },
+      );
+      establishOverlayHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      await act(async () => {
+        result.current.startStream(
+          'bucket/gpt-4o__Hello__uuid',
+          'hello',
+          0,
+          'gpt-4o',
+          undefined,
+          'stop-gen-id',
+        );
+      });
+
+      await act(async () => {
+        result.current.handleStop();
+      });
+
+      // Backend closes the stream after the abort, as it normally does.
+      await act(async () => {
+        await capturedOnComplete?.();
+      });
+
+      const overlayEventTypes = postMessageSpy.mock.calls.map(
+        ([message]) => (message as { type?: string }).type,
+      );
+      expect(overlayEventTypes).toContain(OverlayEventType.StopGenerating);
+      expect(overlayEventTypes).not.toContain(
+        OverlayEventType.GptEndGenerating,
+      );
     });
   });
 });

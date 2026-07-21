@@ -119,6 +119,14 @@ interface Props {
   /** Called when the user clicks "Browse full catalog" inside the model picker. */
   onBrowseCatalog?: () => void;
   /**
+   * Externally-driven text to seed into the message input (e.g. overlay
+   * mode's `setInputContent`). Applies once on content/revision change; the
+   * user's own typing after that is not overridden until this changes again.
+   */
+  inputContent?: string;
+  /** Token that forces `inputContent` to re-apply even if its string is unchanged. */
+  inputContentRevision?: number;
+  /**
    * When provided, the model selector shows this model only and renders
    * disabled (dimmed, does not open) instead of allowing a different model
    * to be picked. The chip stays visible — it is not hidden.
@@ -157,6 +165,8 @@ const ConversationView: FC<Props> = ({
   onConversationChange,
   onBrowseCatalog,
   fixedModel,
+  inputContent,
+  inputContentRevision,
 }) => {
   const isModelFixed = !!fixedModel;
   const { t } = useTranslation();
@@ -620,6 +630,8 @@ const ConversationView: FC<Props> = ({
             <Suspense fallback={null}>
               <ConversationInput
                 styles={CONVERSATION_VIEW_INPUT_STYLES}
+                message={inputContent}
+                messageRevision={inputContentRevision}
                 onSend={handleSendWithAnchor}
                 onUploadAttachment={onUploadAttachment}
                 onStop={canStopAssistant ? onStop : undefined}
