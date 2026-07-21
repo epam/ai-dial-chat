@@ -2,60 +2,70 @@
 
 ## Requirements
 
-### Requirement: CreateConversationDto accepts catalogItemId
+### Requirement: CreateConversationDto accepts deploymentId
 
-`apps/chat-api/src/conversations/dto/create-conversation.dto.ts` SHALL include a required `catalogItemId` field:
+`apps/chat-api/src/conversations/dto/create-conversation.dto.ts` SHALL include a required `deploymentId` field:
 
 ```ts
 @ApiProperty({
-  description: 'The id of the selected catalog item (CatalogItemDto.id) to use as the conversation model/application',
-  example: 'anthropic.claude-v3-sonnet',
+  description:
+    'ID of the catalog item (model or application) to use for this conversation. May contain percent-encoded bytes.',
+  example: 'applications/catalog/Untitled%20app%201__0.0.1',
   minLength: 1,
   maxLength: 256,
+  pattern: DEPLOYMENT_ID_PATTERN.source,
 })
 @IsString()
 @MinLength(1)
 @MaxLength(256)
-@Matches(/^[\w.\-:@/]+$/, {
-  message: 'catalogItemId may only contain alphanumeric characters, dots, hyphens, colons, at-signs, and forward slashes',
+@Matches(DEPLOYMENT_ID_PATTERN, {
+  message: DEPLOYMENT_ID_VALIDATION_MESSAGE,
 })
-catalogItemId!: string;
+deploymentId!: string;
 ```
 
-No default is allowed. If `catalogItemId` is absent or fails validation, `ValidationPipe` MUST respond 400.
+Where `DEPLOYMENT_ID_PATTERN` is defined in `apps/chat-api/src/common/validators/deployment-id.pattern.ts`:
 
-The Swagger `@ApiResponse({ status: 400 })` annotation on the `createConversation` handler MUST list missing/invalid `catalogItemId` as an example of a 400 case.
+```ts
+export const DEPLOYMENT_ID_PATTERN = /^(?:[\w.\-:@/]|%[\dA-Fa-f]{2})+$/;
+export const DEPLOYMENT_ID_VALIDATION_MESSAGE =
+  'Must contain only supported characters or valid percent-encoded bytes';
+```
 
-#### Scenario: Valid request with catalogItemId returns 201
+No default is allowed. If `deploymentId` is absent or fails validation, `ValidationPipe` MUST respond 400.
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello", "catalogItemId": "anthropic.claude-v3-sonnet" }`
-- **THEN** the response status is 201 and the returned conversation has `model.id === "anthropic.claude-v3-sonnet"`
+The Swagger `@ApiResponse({ status: 400 })` annotation on the `createConversation` handler MUST list missing/invalid `deploymentId` as an example of a 400 case.
 
-#### Scenario: Missing catalogItemId returns 400
+#### Scenario: Valid request with deploymentId returns 201
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello" }` and no `catalogItemId`
-- **THEN** the response status is 400 with a validation error referencing `catalogItemId`
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello", "deploymentId": "applications/catalog/MyApp__1.0.0" }`
+- **THEN** the response status is 201 and the returned conversation has `model.id === "applications/catalog/MyApp__1.0.0"`
 
-#### Scenario: Empty string catalogItemId returns 400
+#### Scenario: Missing deploymentId returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello", "catalogItemId": "" }`
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello" }` and no `deploymentId`
+- **THEN** the response status is 400 with a validation error referencing `deploymentId`
+
+#### Scenario: Empty string deploymentId returns 400
+
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello", "deploymentId": "" }`
 - **THEN** the response status is 400
 
-#### Scenario: catalogItemId exceeding 256 chars returns 400
+#### Scenario: deploymentId exceeding 256 chars returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `catalogItemId` of length 257
+- **WHEN** `POST /api/v1/conversations` is called with `deploymentId` of length 257
 - **THEN** the response status is 400
 
-#### Scenario: catalogItemId with disallowed characters returns 400
+#### Scenario: deploymentId with disallowed characters returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `catalogItemId` containing characters outside `[\w.\-:@/]` (e.g. `"bad id!"`)
-- **THEN** the response status is 400 with a validation error referencing `catalogItemId`
+- **WHEN** `POST /api/v1/conversations` is called with `deploymentId` containing invalid characters (e.g. `"bad id!"`, `"path with spaces"`, `"percent%2"` with malformed percent encoding)
+- **THEN** the response status is 400 with a validation error referencing `deploymentId`
 
 ---
 
-### Requirement: ConversationService uses catalogItemId from DTO
+### Requirement: ConversationService uses deploymentId from DTO
 
-`ConversationService.createConversation` SHALL accept a `catalogItemId: string` parameter and use it for both `model.id` and `assistantModelId` in the constructed `Conversation` object. The hardcoded `'anthropic.claude-v3-sonnet'` strings SHALL be removed.
+`ConversationService.createConversation` SHALL accept a `deploymentId: string` parameter and use it for both `model.id` and `assistantModelId` in the constructed `Conversation` object.
 
 The signature SHALL be:
 
@@ -64,87 +74,101 @@ async createConversation(
   firstMessage: string,
   token: string,
   bucket: string,
-  catalogItemId: string,
-  attachments?: MessageAttachment[],
-): Promise<Conversation>
+  deploymentId: string,
+  customContent?: MessageCustomContentDto,
+): Promise<ConversationResponseDto>
 ```
 
-The controller SHALL pass `dto.catalogItemId` to the service call.
+The controller SHALL pass `dto.deploymentId` to the service call.
 
 #### Scenario: Returned conversation has correct model.id
 
-- **WHEN** `ConversationService.createConversation('Hello', token, bucket, 'my-catalog-item')` is called
-- **THEN** the returned `Conversation.model.id === 'my-catalog-item'` and `Conversation.assistantModelId === 'my-catalog-item'`
-
-#### Scenario: Hardcoded model string is absent from service
-
-- **WHEN** the source file `apps/chat-api/src/conversations/conversation.service.ts` is read
-- **THEN** the string `'anthropic.claude-v3-sonnet'` does not appear anywhere in the file
+- **WHEN** `ConversationService.createConversation('Hello', token, bucket, 'applications/catalog/MyApp__1.0.0')` is called
+- **THEN** the returned `ConversationResponseDto.model.id === 'applications/catalog/MyApp__1.0.0'` and `assistantModelId === 'applications/catalog/MyApp__1.0.0'`
 
 ---
 
-### Requirement: Generated client and frontend wrapper updated for catalogItemId
+### Requirement: Generated client and frontend wrapper updated for deploymentId
 
-After adding `catalogItemId` to `CreateConversationDto`, the following MUST run and pass:
+After adding `deploymentId` to `CreateConversationDto`, the following MUST run and pass:
 
 1. `npm run openapi`
 2. `npm run openapi:check`
 3. `npm exec nx build chat-api-client -- --skip-nx-cache`
 4. `npm exec nx lint chat-api-client`
 
-`apps/chat/src/server-api/conversations.api.ts` SHALL export `createConversation` accepting and forwarding `catalogItemId`:
+`apps/chat/src/server-api/conversations.api.ts` SHALL export `createConversation` accepting and forwarding `deploymentId`:
 
 ```ts
 export const createConversation = (
   firstMessage: string,
-  catalogItemId: string,
+  deploymentId: string,
   attachments?: AttachmentDto[],
+  configurationValue?: Record<string, unknown>,
+  formValue?: Record<string, unknown>,
 ) =>
   conversationsApi.createConversation({
     createConversationDto: {
       firstMessage,
-      catalogItemId,
-      ...(attachments?.length ? { attachments } : {}),
+      deploymentId,
+      ...(attachments?.length || configurationValue || formValue
+        ? {
+            custom_content: {
+              ...(attachments?.length ? { attachments } : {}),
+              ...(configurationValue
+                ? { configuration_value: configurationValue }
+                : {}),
+              ...(formValue ? { form_value: formValue } : {}),
+            },
+          }
+        : {}),
     },
   });
 ```
 
-#### Scenario: Generated client accepts catalogItemId in CreateConversationDto
+#### Scenario: Generated client accepts deploymentId in CreateConversationDto
 
-- **WHEN** `npm run openapi` runs after the DTO change
-- **THEN** the generated `CreateConversationDto` type in `@epam/chat-api-client` includes `catalogItemId: string` as a required field
+- **WHEN** `npm run openapi` runs
+- **THEN** the generated `CreateConversationDto` type in `@epam/chat-api-client` includes `deploymentId: string` as a required field
 
-#### Scenario: Frontend wrapper compiles with updated signature
+#### Scenario: Frontend wrapper forwards all custom_content fields
 
-- **WHEN** `npm exec nx build chat -- --skip-nx-cache` runs
-- **THEN** the build succeeds without TypeScript errors referencing `catalogItemId`
+- **WHEN** `createConversation('Hello', 'dep-1', attachments, configValue, formValue)` is called
+- **THEN** the generated client receives `custom_content` with all three optional fields (attachments, configuration_value, form_value) when present
 
 ---
 
-### Requirement: ConversationRoute passes selectedCatalogItemId to createConversation
+### Requirement: ConversationRoute passes selectedItemId to createConversation
 
 `apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx` SHALL:
 
 1. Call `useDeployments()` to get `{ items, selectedItemId, setSelectedItemId, isLoading, error }`.
-2. Pass `catalogItems`, `selectedCatalogItemId`, `onSelectedCatalogItemChange`, and the four translated label props into `<ConversationInput>`.
-3. Include `selectedItemId` (non-null guard) in the `apiCreateConversation` call as `catalogItemId`:
+2. Pass the selected deployment item and related state/handlers into the conversation input component.
+3. Include `selectedItemId` (non-null guard) in the `apiCreateConversation` call as `deploymentId`:
 
 ```ts
+// Regular message send (handleCreateConversation):
 if (!selectedItemId) return;
+const attachmentDtos = attachmentsToDtos(attachments || []);
 await apiCreateConversation(message, selectedItemId, attachmentDtos);
+
+// Schema starter with configuration (handleStarterSelect):
+if (!selectedItemId) return;
+const configurationValue = propertyKey ? { [propertyKey]: starter.const } : undefined;
+await apiCreateConversation(text, selectedItemId, [], configurationValue);
 ```
 
-The send callback SHALL NOT fire when `selectedItemId` is `null` — enforced by the `Input` component's disabled state and by the explicit guard in `handleSend`. `ModelsContext` MUST NOT be used.
+The send callback SHALL NOT fire when `selectedItemId` is `null` — which can occur during initial load, when the deployments list is empty, or when explicitly cleared — enforced by the input component's disabled send button state and by explicit `if (!selectedItemId) return;` guards in `handleCreateConversation`, `handleStarterSelect`, and `NewConversationComposer.handleSend`.
 
-#### Scenario: handleSend passes selectedItemId as catalogItemId to apiCreateConversation
+#### Scenario: handleCreateConversation passes selectedItemId as deploymentId to apiCreateConversation
 
-- **WHEN** `handleSend('Hello', [])` is called with `useDeployments().selectedItemId === 'item-1'`
-- **THEN** `apiCreateConversation` is called with `('Hello', 'item-1', [])`
+- **WHEN** the user sends a message and `ConversationRoute`'s `handleCreateConversation` is invoked with `useDeployments().selectedItemId === 'item-1'`
+- **THEN** `apiCreateConversation` is called with `(message, 'item-1', attachmentDtos)`
 
-#### Scenario: handleSend is a no-op when selectedItemId is null
+#### Scenario: handleCreateConversation is a no-op when selectedItemId is null
 
-- **WHEN** `handleSend('Hello', [])` is called with `useDeployments().selectedItemId === null`
-- **THEN** `apiCreateConversation` is NOT called
+- **WHEN** the user attempts to send and `useDeployments().selectedItemId === null` (e.g., during initial load or when deployments list is empty)
+- **THEN** `handleCreateConversation` returns early, `apiCreateConversation` is NOT called, and the send button is disabled via `NewConversationComposer.handleSend`'s check of `!selectedDeploymentId`
 
 ---
 
@@ -197,40 +221,39 @@ State ownership: `ConversationRoute` owns the derived starter list, intro text, 
 
 ---
 
-### Requirement: Backend and frontend tests for catalogItemId
+### Requirement: Backend and frontend tests for deploymentId
 
 `apps/chat-api/src/conversations/tests/conversation.controller.integration.spec.ts` SHALL cover:
 
-1. 201 with a valid `catalogItemId` — returned conversation has `model.id === catalogItemId`.
-2. 400 when `catalogItemId` is missing.
-3. 400 when `catalogItemId` is an empty string.
-4. 400 when `catalogItemId` exceeds 256 characters.
-5. 400 when `catalogItemId` contains disallowed characters (e.g. `"bad id!"`).
+1. 201 with a valid `deploymentId` — returned conversation has `model.id === deploymentId`.
+2. 400 when `deploymentId` is missing.
+3. 400 when `deploymentId` is an empty string.
+4. 400 when `deploymentId` exceeds 256 characters.
+5. 400 when `deploymentId` contains disallowed characters (e.g. `"bad id!"`, malformed percent encoding).
 
 `apps/chat-api/src/conversations/tests/conversation.service.spec.ts` SHALL cover:
 
-1. `createConversation` returns a `Conversation` with `model.id` equal to the passed `catalogItemId`.
-2. `assistantModelId` equals `catalogItemId`.
-3. The hardcoded string `'anthropic.claude-v3-sonnet'` is not referenced.
+1. `createConversation` returns a `ConversationResponseDto` with `model.id` equal to the passed `deploymentId`.
+2. `assistantModelId` equals `deploymentId`.
 
-A unit test in `apps/chat/src/server-api/` SHALL verify that `createConversation(firstMessage, catalogItemId, attachments)` passes `catalogItemId` as a field of the generated-client request body `createConversationDto`.
+A unit test in `apps/chat/src/server-api/` SHALL verify that `createConversation(firstMessage, deploymentId, attachments, configValue, formValue)` passes `deploymentId` as a field of the generated-client request body `createConversationDto`.
 
-#### Scenario: Integration test — 201 with catalogItemId
+#### Scenario: Integration test — 201 with deploymentId
 
-- **WHEN** `POST /api/v1/conversations` receives `{ firstMessage: 'Hi', catalogItemId: 'gpt-4' }`
-- **THEN** the response status is 201 and `body.model.id === 'gpt-4'`
+- **WHEN** `POST /api/v1/conversations` receives `{ firstMessage: 'Hi', deploymentId: 'applications/catalog/MyApp__1.0.0' }`
+- **THEN** the response status is 201 and `body.model.id === 'applications/catalog/MyApp__1.0.0'`
 
-#### Scenario: Integration test — 400 without catalogItemId
+#### Scenario: Integration test — 400 without deploymentId
 
-- **WHEN** `POST /api/v1/conversations` receives `{ firstMessage: 'Hi' }` with no `catalogItemId`
+- **WHEN** `POST /api/v1/conversations` receives `{ firstMessage: 'Hi' }` with no `deploymentId`
 - **THEN** the response status is 400
 
-#### Scenario: Integration test — 400 with invalid catalogItemId characters
+#### Scenario: Integration test — 400 with invalid deploymentId characters
 
-- **WHEN** `POST /api/v1/conversations` receives `{ firstMessage: 'Hi', catalogItemId: 'bad id!' }`
+- **WHEN** `POST /api/v1/conversations` receives `{ firstMessage: 'Hi', deploymentId: 'bad id!' }`
 - **THEN** the response status is 400
 
-#### Scenario: Wrapper passes catalogItemId to the generated client
+#### Scenario: Wrapper passes deploymentId to the generated client
 
-- **WHEN** `createConversation('Hello', 'dep-1')` is called
-- **THEN** the generated `conversationsApi.createConversation` is invoked with `{ createConversationDto: { firstMessage: 'Hello', catalogItemId: 'dep-1' } }`
+- **WHEN** `createConversation('Hello', 'dep-1', attachments, configValue, formValue)` is called
+- **THEN** the generated `conversationsApi.createConversation` is invoked with `{ createConversationDto: { firstMessage: 'Hello', deploymentId: 'dep-1', custom_content: { attachments, configuration_value: configValue, form_value: formValue } } }`
