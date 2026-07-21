@@ -46,3 +46,21 @@ describe('ToolsetBodyDto — intro', () => {
     expect(errors.some((e) => e.property === 'intro')).toBe(true);
   });
 });
+
+describe('ToolsetBodyDto — endpoint', () => {
+  it('passes when endpoint is an empty string (draft toolset)', async () => {
+    const errors = await validateDto({ ...BASE_BODY, endpoint: '' });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects when endpoint is missing', async () => {
+    const { endpoint: _omitted, ...noEndpoint } = BASE_BODY;
+    const errors = await validateDto(noEndpoint);
+    expect(errors.some((e) => e.property === 'endpoint')).toBe(true);
+  });
+
+  it('rejects a non-empty endpoint with an invalid protocol', async () => {
+    const errors = await validateDto({ ...BASE_BODY, endpoint: 'ftp://nope' });
+    expect(errors.some((e) => e.property === 'endpoint')).toBe(true);
+  });
+});

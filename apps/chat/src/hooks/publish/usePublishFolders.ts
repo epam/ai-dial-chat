@@ -2,7 +2,7 @@ import { PublishFolderNode } from '@epam/ai-dial-catalog';
 import type { ListFilesItemDto } from '@epam/chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createFolder, listPublicFiles } from '../../server-api/files.api';
+import { listPublicFiles } from '../../server-api/files.api';
 import { safeDecodeURI } from '../../utils/string-utils';
 
 /**
@@ -50,7 +50,15 @@ export interface UsePublishFoldersResult {
   loadingPaths: Set<string>;
   /** Called by the folder tree when the set of expanded folders changes. */
   onExpandedPathsChange: (paths: Set<string>) => void;
-  /** Creates a folder under `parentPath` in the Organization/public bucket. */
+  /**
+   * Adds a folder under `parentPath` to the in-memory tree only — it is
+   * never created on the backend here. The path becomes real once the user
+   * actually publishes to it: the publish request writes to the nested
+   * `folderPath`, which DIAL Core storage creates implicitly, the same way
+   * writing a file to a new prefix does. This avoids leaving an orphaned
+   * empty folder behind when the user picks a new-folder name and then
+   * cancels the publish.
+   */
   onCreatePublishFolder: (parentPath: string[], name: string) => Promise<void>;
   /** Heuristic write-access check for a folder path (see the TODO above). */
   hasPublishWriteAccess: (folderPath: string[]) => boolean;
@@ -120,34 +128,31 @@ export const usePublishFolders = (): UsePublishFoldersResult => {
   );
 
   const onCreatePublishFolder = useCallback(
-    async (parentPath: string[], name: string) => {
+    (parentPath: string[], name: string): Promise<void> => {
       const parentApiPath = toApiPath(parentPath) ?? '';
       const parentItems = cache.get(parentApiPath) ?? [];
       const parentBucket = parentItems[0]?.bucket ?? cache.get('')?.[0]?.bucket;
       if (parentBucket == null) {
         throw new Error('Cannot create folder: parent bucket is unknown');
       }
-      const created = await createFolder({
-        bucket: parentBucket,
-        parentPath: toApiPath(parentPath),
+      const folderApiPath = `${parentApiPath}${name}/`;
+      const folderItem: ListFilesItemDto = {
         name,
-      });
+        path: folderApiPath,
+        folderId: `${parentBucket}/${folderApiPath}`,
+        nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+        bucket: parentBucket,
+        parentPath: parentApiPath || undefined,
+      };
       setCache((prev) => {
         const next = new Map(prev);
-        const folderItem: ListFilesItemDto = {
-          name: created.name,
-          path: created.path,
-          folderId: created.folderId,
-          nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
-          bucket: created.bucket,
-          parentPath: created.parentPath || undefined,
-        };
         next.set(parentApiPath, [
           ...(next.get(parentApiPath) ?? []),
           folderItem,
         ]);
         return next;
       });
+      return Promise.resolve();
     },
     [cache],
   );

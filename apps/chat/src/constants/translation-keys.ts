@@ -414,6 +414,9 @@ export enum ConversationPublishI18nKeys {
   PanelAriaLabel = 'conversationPublish.panelAriaLabel',
   AlreadyPublishedWarning = 'conversationPublish.alreadyPublishedWarning',
   SuccessMessage = 'conversationPublish.successMessage',
+  EmptyFolderNameError = 'conversationPublish.emptyFolderNameError',
+  InvalidFolderNameError = 'conversationPublish.invalidFolderNameError',
+  DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
 }
 
 export enum ConversationExportI18nKeys {
@@ -579,6 +582,7 @@ export enum ToolsetEditorI18nKeys {
   ErrorLogoutFailed = 'toolsetEditor.error.logoutFailed',
   ErrorPopupBlocked = 'toolsetEditor.error.popupBlocked',
   LoginSuccess = 'toolsetEditor.success.login',
+  LogoutSuccess = 'toolsetEditor.success.logout',
 }
 
 export enum ErrorBoundaryI18nKeys {
