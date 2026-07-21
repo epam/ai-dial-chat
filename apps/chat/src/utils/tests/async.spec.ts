@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runWithConcurrency } from '../async';
 
 describe('runWithConcurrency', () => {
@@ -55,5 +55,49 @@ describe('runWithConcurrency', () => {
       async (n) => n,
     );
     expect(results).toEqual([]);
+  });
+
+  describe('when a worker throws', () => {
+    beforeEach(() => {
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('skips the failing item and still collects the rest', async () => {
+      const results = await runWithConcurrency([1, 2, 3], 2, async (n) => {
+        if (n === 2) throw new Error('boom');
+        return n;
+      });
+      expect(results.sort((a, b) => a - b)).toEqual([1, 3]);
+    });
+
+    it('lets the other concurrent items keep running instead of aborting the batch', async () => {
+      const completed: number[] = [];
+      const results = await runWithConcurrency(
+        [1, 2, 3, 4],
+        4,
+        async (n) => {
+          if (n === 1) throw new Error('boom');
+          completed.push(n);
+          return n;
+        },
+      );
+      expect(completed.sort((a, b) => a - b)).toEqual([2, 3, 4]);
+      expect(results.sort((a, b) => a - b)).toEqual([2, 3, 4]);
+    });
+
+    it('logs the error via console.error', async () => {
+      const error = new Error('boom');
+      await runWithConcurrency([1], 1, async () => {
+        throw error;
+      });
+      expect(console.error).toHaveBeenCalledWith(
+        'runWithConcurrency: worker failed for item',
+        error,
+      );
+    });
   });
 });
