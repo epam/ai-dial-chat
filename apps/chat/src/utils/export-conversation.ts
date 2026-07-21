@@ -1,28 +1,22 @@
 import type {
   Conversation,
-  ExportFolderV5,
-  ExportFormatV5,
+  ExportFolder,
+  ExportFormat,
 } from '@epam/ai-dial-chat-shared';
 import { ExportFileNameKind } from '../types/conversation-export';
+import { formatDateYMD } from './date';
 
 export const buildExportEnvelope = (
   conversations: Conversation[],
-  folders: ExportFolderV5[] = [],
-): ExportFormatV5 => ({
+  folders: ExportFolder[] = [],
+): ExportFormat => ({
   version: 5,
   history: conversations,
   folders,
 });
 
-export const serializeExportEnvelope = (envelope: ExportFormatV5): Blob =>
+export const serializeExportEnvelope = (envelope: ExportFormat): Blob =>
   new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
-
-const formatExportDate = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
 
 const EXPORT_FILE_EXTENSION: Record<ExportFileNameKind, string> = {
   [ExportFileNameKind.SingleConversation]: 'json',
@@ -35,4 +29,4 @@ export const buildExportFileName = (
   appName: string,
   date: Date = new Date(),
 ): string =>
-  `${formatExportDate(date)}_${appName}_${kind}.${EXPORT_FILE_EXTENSION[kind]}`;
+  `${formatDateYMD(date)}_${appName}_${kind}.${EXPORT_FILE_EXTENSION[kind]}`;
