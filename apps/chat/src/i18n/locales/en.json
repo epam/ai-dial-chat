@@ -554,8 +554,10 @@
     "metadataAuthorLabel": "Author:",
     "uploadArchiveAction": "Upload archive",
     "uploadArchiveError": "Failed to upload the archive",
-    "uploadArchivePartialError_one": "{{count}} item in the archive could not be uploaded",
-    "uploadArchivePartialError_other": "{{count}} items in the archive could not be uploaded"
+    "uploadArchiveFilesError_one": "Failed to upload this archive file: {{files}}",
+    "uploadArchiveFilesError_other": "Failed to upload these archive files: {{files}}",
+    "uploadArchivePartialError_one": "{{count}} item in the archive could not be uploaded: {{files}}",
+    "uploadArchivePartialError_other": "{{count}} items in the archive could not be uploaded: {{files}}"
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."

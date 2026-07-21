@@ -3961,6 +3961,37 @@ describe('useDialFileManager', () => {
       );
     });
 
+    it('shows a file-list failure toast when all returned archive entries fail', async () => {
+      mockUploadArchive.mockResolvedValue({
+        results: [
+          { path: 'reports/a.txt', success: false, error: 'Invalid path' },
+        ],
+      });
+      const onNotification = vi.fn();
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET, onNotification }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => {
+        result.current.onUploadArchive(
+          new File(['zip'], 'archive.zip'),
+          'archive.zip',
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() =>
+        expect(onNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: NotificationVariant.Error,
+            message: 'dialFileManager.uploadArchiveFilesError',
+          }),
+        ),
+      );
+    });
+
     it('shows a full-failure toast when the request rejects', async () => {
       mockUploadArchive.mockRejectedValue(new Error('network error'));
       const onNotification = vi.fn();

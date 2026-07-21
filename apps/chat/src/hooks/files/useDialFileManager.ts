@@ -25,6 +25,7 @@ import type {
   RenameItemDto,
   RevokeAccessItemDto,
   ShareFilesDtoPermissionEnum,
+  UploadArchiveEntryResultDto,
 } from '@epam/chat-api-client';
 import {
   ArchiveItemDtoNodeTypeEnum,
@@ -301,6 +302,7 @@ interface CopyMoveResult {
 }
 
 const UPLOAD_CONCURRENCY = 3;
+const ARCHIVE_FAILED_FILE_LIST_LIMIT = 5;
 const RESERVED_MARKER_NAME = HIDDEN_FILE;
 const PATH_SEPARATOR_REGEXP = /[/\\]/;
 
@@ -564,6 +566,21 @@ const updateEntry = (
     i === index ? { ...f, ...changes } : f,
   );
   return { ...prev, files };
+};
+
+const formatArchiveFailedEntry = (
+  result: UploadArchiveEntryResultDto,
+): string => (result.error ? `${result.path} (${result.error})` : result.path);
+
+const formatArchiveFailedEntries = (
+  failedResults: UploadArchiveEntryResultDto[],
+  getRestLabel: (count: number) => string,
+): string => {
+  const visibleResults = failedResults.slice(0, ARCHIVE_FAILED_FILE_LIST_LIMIT);
+  const visible = visibleResults.map(formatArchiveFailedEntry).join(', ');
+  const hiddenCount = failedResults.length - visibleResults.length;
+
+  return hiddenCount > 0 ? `${visible}${getRestLabel(hiddenCount)}` : visible;
 };
 
 interface SharedRootMeta {
@@ -1440,18 +1457,27 @@ export const useDialFileManager = ({
             destinationApiPath,
           );
           const successCount = results.filter((r) => r.success).length;
-          const failedCount = results.length - successCount;
+          const failedResults = results.filter((r) => !r.success);
+          const failedCount = failedResults.length;
+          const failedFiles = formatArchiveFailedEntries(
+            failedResults,
+            (count) => t(DialFileManagerI18nKeys.AndOtherItems, { count }),
+          );
 
           if (results.length > 0 && successCount === 0) {
             onNotification?.({
               variant: NotificationVariant.Error,
-              message: t(DialFileManagerI18nKeys.UploadArchiveError),
+              message: t(DialFileManagerI18nKeys.UploadArchiveFilesError, {
+                count: failedCount,
+                files: failedFiles,
+              }),
             });
           } else if (failedCount > 0) {
             onNotification?.({
               variant: NotificationVariant.Error,
               message: t(DialFileManagerI18nKeys.UploadArchivePartialError, {
                 count: failedCount,
+                files: failedFiles,
               }),
             });
           }
