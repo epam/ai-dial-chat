@@ -31,11 +31,6 @@ div[role='menu']:has(> [role='none']) {
   }
 }
 
-// DS token overrides
-.dial-small-text {
-  line-height: 24px;
-}
-
 // new chat button in header — primary action button style
 .new-chat-rail-btn {
   &:hover {
