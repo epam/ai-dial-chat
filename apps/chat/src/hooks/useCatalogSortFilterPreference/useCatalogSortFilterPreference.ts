@@ -8,13 +8,15 @@ interface UseCatalogSortFilterPreferenceResult {
   setSortKey: (key: CatalogSortKey) => void;
   filterTopics: Set<string>;
   setFilterTopics: (topics: Set<string>) => void;
+  isMyAppsActive: boolean;
+  setIsMyAppsActive: (isActive: boolean) => void;
 }
 
 /**
- * Persists the Catalog page's sort key and "From" topic filter selection to
- * `localStorage` (via `useLocalStorage`) so they survive reloads. Lives at
- * the app edge because `libs/catalog` must not access browser storage
- * directly (library isolation).
+ * Persists the Catalog page's sort key, "From" topic filter, and "My Apps"
+ * toggle to `localStorage` (via `useLocalStorage`) so they survive reloads.
+ * Lives at the app edge because `libs/catalog` must not access browser
+ * storage directly (library isolation).
  */
 export const useCatalogSortFilterPreference =
   (): UseCatalogSortFilterPreferenceResult => {
@@ -25,6 +27,10 @@ export const useCatalogSortFilterPreference =
     const [storedFilterTopics, setStoredFilterTopics] = useLocalStorage<
       string[]
     >(StorageKey.CatalogFilterTopics, []);
+    const [isMyAppsActive, setIsMyAppsActive] = useLocalStorage<boolean>(
+      StorageKey.CatalogIsMyAppsActive,
+      false,
+    );
 
     const sortKey = Object.values(CatalogSortKey).includes(
       storedSortKey as CatalogSortKey,
@@ -52,5 +58,15 @@ export const useCatalogSortFilterPreference =
       [setStoredFilterTopics],
     );
 
-    return { sortKey, setSortKey, filterTopics, setFilterTopics };
+    const validatedIsMyAppsActive =
+      typeof isMyAppsActive === 'boolean' ? isMyAppsActive : false;
+
+    return {
+      sortKey,
+      setSortKey,
+      filterTopics,
+      setFilterTopics,
+      isMyAppsActive: validatedIsMyAppsActive,
+      setIsMyAppsActive,
+    };
   };

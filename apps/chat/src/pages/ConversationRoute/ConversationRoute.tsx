@@ -5,17 +5,10 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
-import {
-  FC,
-  lazy,
-  memo,
-  Suspense,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
+import { FC, memo, Suspense, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useDeploymentSelectorOverlay } from '../../components/DeploymentSelector/useDeploymentSelectorOverlay';
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
@@ -23,15 +16,9 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
-import {
-  ButtonsI18nKeys,
-  ChatI18nKeys,
-  DeploymentSelectorI18nKeys,
-  FavoritesI18nKeys,
-} from '../../constants/translation-keys';
+import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   createConversation as apiCreateConversation,
@@ -40,22 +27,11 @@ import {
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import {
   getStarterConversationText,
   getStartersFromSchema,
 } from '../../utils/starter-option';
-
-const DeploymentSelectorPanel = lazy(
-  () => import('../../components/DeploymentSelector/DeploymentSelectorPanel'),
-);
-
-const CatalogModal = lazy(async () => {
-  const module =
-    await import('../../components/DeploymentSelector/CatalogModal');
-  return { default: module.default };
-});
 
 /*
  * TODO: rename page and component
@@ -80,24 +56,6 @@ const ConversationRoute: FC = () => {
     [items, selectedItemId],
   );
 
-  const [isCatalogPickerOpen, setIsCatalogPickerOpen] = useState(false);
-
-  const { favoriteIds, toggleFavorite } = useFavoriteApplications();
-  const favoriteCatalogItems = useMemo(
-    () =>
-      items
-        .filter((d) => favoriteIds.has(d.id))
-        .map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
-    [items, favoriteIds],
-  );
-
-  const selectedCatalogItem = useMemo(
-    () =>
-      selectedDeployment
-        ? mapDeploymentToCatalogItem(selectedDeployment, favoriteIds)
-        : undefined,
-    [selectedDeployment, favoriteIds],
-  );
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
       items.map(({ id, displayName, iconUrl, type, inputAttachmentTypes }) => ({
@@ -213,6 +171,8 @@ const ConversationRoute: FC = () => {
     [description, propertyKey, selectedItemId, navigate, showNotification, t],
   );
 
+  const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
+
   return (
     <Suspense fallback={<RouteFallback />}>
       <NewConversationComposer
@@ -228,46 +188,14 @@ const ConversationRoute: FC = () => {
         message={inputMessage}
         inputStyles={CONVERSATION_ROUTE_INPUT_STYLES}
         onCreateConversation={handleCreateConversation}
-        modelPickerOverlay={(onClose) => (
-          <Suspense fallback={null}>
-            <DeploymentSelectorPanel
-              favorites={favoriteCatalogItems}
-              selectedId={selectedItemId}
-              selectedItem={selectedCatalogItem}
-              onSelect={setSelectedItemId}
-              onToggleFavorite={toggleFavorite}
-              onBrowseCatalog={() => setIsCatalogPickerOpen(true)}
-              onClose={onClose}
-              labels={{
-                searchPlaceholder: t(
-                  DeploymentSelectorI18nKeys.SearchPlaceholder,
-                ),
-                favoritesLabel: t(FavoritesI18nKeys.FavoritesLabel),
-                emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
-                browseCatalogLabel: t(ButtonsI18nKeys.Browse),
-                removeFromFavoritesLabel: t(
-                  FavoritesI18nKeys.RemoveFromFavorites,
-                ),
-                currentlySelectedLabel: t(
-                  DeploymentSelectorI18nKeys.CurrentlySelectedLabel,
-                ),
-                addToFavoritesLabel: t(FavoritesI18nKeys.AddToFavorites),
-              }}
-            />
-          </Suspense>
-        )}
+        modelPickerOverlay={renderOverlay}
       >
         <StarterButtons
           starters={activeStarters}
           onSelect={handleStarterSelect}
         />
       </NewConversationComposer>
-      <Suspense fallback={null}>
-        <CatalogModal
-          isOpen={isCatalogPickerOpen}
-          onClose={() => setIsCatalogPickerOpen(false)}
-        />
-      </Suspense>
+      {catalogModal}
     </Suspense>
   );
 };

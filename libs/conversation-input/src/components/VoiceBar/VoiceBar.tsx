@@ -5,7 +5,7 @@ import {
   DialGhostIconButton,
   DialSpinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconMicrophone, IconX } from '@tabler/icons-react';
+import { IconCheck, IconPlaystationSquare, IconX } from '@tabler/icons-react';
 import {
   type CSSProperties,
   type FC,
@@ -186,7 +186,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
       {isRecording ? (
         <DialGhostIconButton
           icon={
-            <IconMicrophone
+            <IconPlaystationSquare
               size={DIAL_ICON_SIZE.LG}
               className={styles.micRecordingIcon}
               aria-hidden
@@ -238,7 +238,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
         style={style}
         className={mergeClasses(
           styles.container,
-          'flex min-h-[56px] w-full flex-col gap-3 rounded border px-3 py-3 desktop:flex-row desktop:items-center desktop:gap-2 desktop:py-2',
+          'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border px-3 desktop:flex-row desktop:items-center desktop:gap-2 desktop:py-2',
           isError && styles.containerError,
         )}
       >
