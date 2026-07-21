@@ -33,7 +33,7 @@ export interface AppIdentityProps {
   query?: string;
   /** Additional classes applied to the root element. */
   className?: string;
-  /** CSS class for the type label. Default: 'dial-caption-text font-semibold'. */
+  /** CSS class for the type label. Default: 'dial-caption-semi-text'. */
   typeClassName?: string;
   /** CSS class for the entity name. Default: 'dial-body-semi-text text-primary'. */
   nameClassName?: string;
@@ -57,7 +57,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   size,
   query,
   className,
-  typeClassName,
+  typeClassName = 'dial-caption-semi-text',
   nameClassName = 'dial-body-semi-text text-primary',
   versionClassName = 'dial-tiny-text text-secondary',
   lastUsedClassName = 'dial-tiny-text text-tertiary',

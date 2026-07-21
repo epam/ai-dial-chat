@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { ToolbarTypography } from '../../models/toolbar-props';
 import { getFromLabel } from '../../utils/catalog-filter';
 import styles from './Filter.module.scss';
 
@@ -38,6 +39,7 @@ export interface FilterProps {
   clearLabel?: string;
   /** Label for the footer Apply button. Default: 'Apply'. */
   applyLabel?: string;
+  typography: ToolbarTypography;
 }
 
 const getFilterButtonLabel = (
@@ -79,6 +81,7 @@ export const Filter: FC<FilterProps> = ({
   defaultLabel = 'From',
   clearLabel = 'Clear',
   applyLabel = 'Apply',
+  typography,
 }) => {
   const isActive = (isMyAppsActive ?? false) || checked.size > 0;
   const [isOpen, setIsOpen] = useState(false);
@@ -229,7 +232,14 @@ export const Filter: FC<FilterProps> = ({
               )}
               aria-hidden
             />
-            <span className={styles.rowLabel}>{myAppsLabel}</span>
+            <span
+              className={mergeClasses(
+                styles.rowLabel,
+                typography.filterButtonClassName ?? 'dial-small-semi-text',
+              )}
+            >
+              {myAppsLabel}
+            </span>
           </div>
 
           {topics.length > 0 && (
@@ -242,6 +252,8 @@ export const Filter: FC<FilterProps> = ({
               <div
                 className={mergeClasses(
                   'px-[10px] pb-1 pt-[10px] uppercase tracking-[0.06em]',
+                  typography.filterSectionLabelClassName ??
+                    'dial-tiny-semi-text',
                   styles.sectionLabel,
                 )}
                 aria-hidden
@@ -328,7 +340,14 @@ export const Filter: FC<FilterProps> = ({
           className={mergeClasses('shrink-0', styles.filterBtnFunnel)}
           aria-hidden
         />
-        <span className={styles.filterBtnLabel}>{buttonLabel}</span>
+        <span
+          className={mergeClasses(
+            styles.filterBtnLabel,
+            typography.filterButtonClassName ?? 'dial-small-semi-text',
+          )}
+        >
+          {buttonLabel}
+        </span>
         <IconChevronDown
           size={14}
           strokeWidth={2.2}

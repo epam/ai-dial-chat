@@ -154,13 +154,8 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
               sources={filteredSources}
               title={labels.sourcesSectionTitle}
               searchQuery={searchQuery}
-              titleClassName={styles?.typography?.sectionTitleClassName}
-              linkClassName={styles?.typography?.sourceLinkClassName}
-              quoteClassName={styles?.typography?.sourceQuoteClassName}
-              colors={{
-                link: styles?.colors?.sourceLink,
-                quote: styles?.colors?.sourceQuote,
-              }}
+              typography={styles?.typography}
+              colors={styles?.colors}
               copyLabel={labels.copySourceLabel}
               onSourceClick={onSourceClick}
             />

@@ -13,10 +13,6 @@ export const FileDndOverlay: FC<FileDndOverlayProps> = ({
 }) => {
   const { title, subtitle } = labels ?? {};
   const { colors, typography } = overlayStyles ?? {};
-  const {
-    titleClassName = 'heading-3 font-semibold',
-    subtitleClassName = 'dial-small-text',
-  } = typography ?? {};
 
   if (!isVisible) return null;
 
@@ -60,10 +56,20 @@ export const FileDndOverlay: FC<FileDndOverlayProps> = ({
     >
       <div className="flex flex-col items-center text-center">
         <Icon size={100} className={resolvedIconClassName} aria-hidden />
-        <span className={mergeClasses('mt-5', titleClassName)}>
+        <span
+          className={mergeClasses(
+            'mt-5',
+            typography?.titleClassName ?? 'dial-h3-text',
+          )}
+        >
           {resolvedTitle}
         </span>
-        <span className={mergeClasses('mt-4', subtitleClassName)}>
+        <span
+          className={mergeClasses(
+            'mt-4',
+            typography?.subtitleClassName ?? 'dial-small-text',
+          )}
+        >
           {resolvedSubtitle}
         </span>
       </div>

@@ -8,7 +8,10 @@ import {
   IconLayoutList,
 } from '@tabler/icons-react';
 import { FC } from 'react';
-import { CatalogSortOption, ToolbarProps } from '../../../models/toolbar-props';
+import {
+  CatalogSortOption,
+  ToolbarStyles,
+} from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { Filter } from '../../Filter/Filter';
 import { ItemHeader } from '../../ItemHeader/ItemHeader';
@@ -19,7 +22,7 @@ interface TitleRowProps {
   viewMode: CatalogViewMode;
   onViewModeChange: (mode: CatalogViewMode) => void;
   title?: string;
-  styles?: ToolbarProps['styles'];
+  styles?: ToolbarStyles;
   query: string;
   onQueryChange: (q: string) => void;
   searchPlaceholder?: string;
@@ -177,6 +180,7 @@ export const TitleRow: FC<TitleRowProps> = ({
           defaultLabel={filterFromLabel}
           myAppsLabel={filterMyAppsLabel}
           topicsLabel={filterTopicsLabel}
+          typography={browseStyles.typography}
         />
       </div>
     </div>
