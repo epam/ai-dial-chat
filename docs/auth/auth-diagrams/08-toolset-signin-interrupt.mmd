@@ -1,0 +1,41 @@
+%% Interactive toolset sign-in during a chat completion.
+%% Separate from the OIDC login flow above (03-login-flow.mmd) — this is
+%% DIAL Core asking the already-authenticated user to (re)supply toolset
+%% credentials mid-completion via the client-channel RPC mechanism.
+
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant SPA as React SPA
+    participant BFF as NestJS BFF
+    participant CORE as DIAL Core
+
+    SPA->>BFF: POST /api/v1/client-channel/subscribe
+    BFF->>CORE: POST /v1/ops/client-channel/subscribe
+    CORE-->>BFF: 200 text/event-stream<br/>X-DIAL-CLIENT-CHANNEL-ID: chan-1
+    BFF-->>SPA: Relayed SSE stream<br/>X-DIAL-CLIENT-CHANNEL-ID: chan-1
+
+    U->>SPA: Sends a chat message
+    SPA->>BFF: POST /api/v1/conversations/completions<br/>{ clientChannelId: "chan-1", ... }
+    BFF->>CORE: Completion request<br/>X-DIAL-CLIENT-CHANNEL-ID: chan-1
+
+    CORE->>CORE: Tool call needs credentials
+    CORE-->>BFF: SSE event on chan-1:<br/>{ id, method: "toolset/signin", params: { toolsetId } }
+    BFF-->>SPA: Relayed SSE event
+
+    SPA->>U: Shows global toolset sign-in dialog
+    U->>SPA: Log in (API key or OAuth)
+    SPA->>BFF: POST /api/v1/toolsets/{id}/login
+    BFF->>CORE: POST /v1/ops/toolset/signin
+    CORE-->>BFF: 200 success
+    BFF-->>SPA: 200 success
+
+    SPA->>BFF: POST /api/v1/client-channel/report<br/>{ id, result: "success" }
+    BFF->>CORE: POST /v1/ops/client-channel/report
+    CORE->>CORE: Resumes the blocked tool call
+    CORE-->>BFF: Completion continues streaming
+    BFF-->>SPA: Completion continues streaming
+
+    Note over SPA,CORE: On logout, tab close, or the feature flag<br/>flipping off, the SPA unsubscribes the channel.
+    SPA->>BFF: POST /api/v1/client-channel/unsubscribe
+    BFF->>CORE: POST /v1/ops/client-channel/unsubscribe

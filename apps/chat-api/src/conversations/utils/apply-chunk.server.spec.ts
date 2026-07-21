@@ -77,6 +77,20 @@ describe('applyChunkToMessage', () => {
     expect(stages[0].content).toBe('part1part2');
   });
 
+  it('normalizes a null name on the first chunk for a new stage (DIAL Core "stage opened" signal)', () => {
+    const msg = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_content: {
+          stages: [{ index: 0, name: null, status: null }],
+        },
+      }),
+    );
+    const stages = (msg.custom_content as { stages: { name: string }[] })
+      .stages;
+    expect(stages[0].name).toBe('');
+  });
+
   it('preserves explicitly empty stage content while merging stage updates', () => {
     const msg1 = applyChunkToMessage(
       baseMessage(),

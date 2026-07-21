@@ -302,3 +302,56 @@ describe('ConversationsContext — renameConversation', () => {
     expect(userConfigApi.pinConversation).not.toHaveBeenCalled();
   });
 });
+
+describe('ConversationsContext — watchForDisplayNameUpdate', () => {
+  const encoder = new TextEncoder();
+
+  /** Builds a fake SSE `ReadableStream` that yields the given `data:` lines, then ends. */
+  const makeSseStream = (dataLines: string[]): ReadableStream<Uint8Array> => {
+    let index = 0;
+    return {
+      getReader: () => ({
+        read: async () => {
+          if (index < dataLines.length) {
+            const value = encoder.encode(dataLines[index]);
+            index += 1;
+            return { done: false, value };
+          }
+          return { done: true, value: undefined };
+        },
+        releaseLock: () => {
+          /* no-op */
+        },
+      }),
+    } as unknown as ReadableStream<Uint8Array>;
+  };
+
+  it('calls getConversation with the full bucket-qualified id, not the stripped path', async () => {
+    vi.mocked(conversationsApi.watchConversation).mockResolvedValue(
+      makeSseStream(['data: {"action":"UPDATE"}\n\n']),
+    );
+    vi.mocked(conversationsApi.getConversation).mockResolvedValue({
+      name: 'Renamed by LLM',
+      llmNamingDone: true,
+    } as never);
+
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    act(() => {
+      result.current.watchForDisplayNameUpdate(
+        'conversations/bucket/applications/bucket/app__0.0.1__title__uuid',
+        'title',
+        vi.fn(),
+      );
+    });
+
+    await waitFor(() => {
+      expect(conversationsApi.getConversation).toHaveBeenCalledWith(
+        'bucket/applications/bucket/app__0.0.1__title__uuid',
+      );
+    });
+  });
+});

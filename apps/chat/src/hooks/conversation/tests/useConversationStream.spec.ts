@@ -17,6 +17,15 @@ import {
 } from '../../../server-api/conversations.api';
 import { useConversationStream } from '../useConversationStream';
 
+vi.mock('../../../context/ClientChannelContext', () => ({
+  useClientChannel: vi.fn(() => ({
+    channelId: null,
+    pendingEvents: [],
+    reportEvent: vi.fn(),
+    ensureConnected: vi.fn(),
+  })),
+}));
+
 vi.mock('../../../server-api/chat-stream.api', () => ({
   streamCompletion: vi.fn(),
   stopCompletion: vi.fn().mockResolvedValue(undefined),
@@ -155,7 +164,9 @@ describe('useConversationStream', () => {
     });
 
     await waitFor(() => {
-      expect(mockGetConversation).toHaveBeenCalledWith('gpt-4o__Hello__uuid');
+      expect(mockGetConversation).toHaveBeenCalledWith(
+        'bucket/gpt-4o__Hello__uuid',
+      );
     });
   });
 
@@ -276,6 +287,7 @@ describe('useConversationStream', () => {
       'regenerate',
       // Regenerate truncates at the assistant index (same as the local index).
       3,
+      undefined,
     );
   });
 
@@ -306,6 +318,7 @@ describe('useConversationStream', () => {
       'edit',
       // Edit truncates at the user message — one before the placeholder index.
       2,
+      undefined,
     );
   });
 
@@ -505,7 +518,9 @@ describe('useConversationStream', () => {
     });
 
     await waitFor(() => {
-      expect(mockGetConversation).toHaveBeenCalledWith('gpt-4o__Hello__uuid');
+      expect(mockGetConversation).toHaveBeenCalledWith(
+        'bucket/gpt-4o__Hello__uuid',
+      );
       expect(setConversation).toHaveBeenCalledWith(serverAfterStop);
     });
   });
@@ -574,11 +589,12 @@ describe('useConversationStream', () => {
       expect.any(String),
       'append',
       undefined,
+      undefined,
     );
 
     await waitFor(() => {
       expect(mockGetConversation).toHaveBeenCalledWith(
-        'applications/catalog/Team%2FApp%20One__0.0.1__title',
+        'bucket/applications/catalog/Team%2FApp%20One__0.0.1__title',
       );
     });
   });
@@ -872,7 +888,9 @@ describe('useConversationStream', () => {
           await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
         });
 
-        expect(mockGetConversation).toHaveBeenCalledWith('gpt-4o__Hello__uuid');
+        expect(mockGetConversation).toHaveBeenCalledWith(
+          'bucket/gpt-4o__Hello__uuid',
+        );
         expect(result.current.isStreaming).toBe(false);
       } finally {
         vi.useRealTimers();
@@ -913,7 +931,7 @@ describe('useConversationStream', () => {
 
       await waitFor(() => {
         expect(mockGetConversation).toHaveBeenCalledWith(
-          'gpt-4o__Background__id',
+          'bucket/gpt-4o__Background__id',
         );
       });
 

@@ -2,6 +2,7 @@ import {
   AppConfigApi,
   ApplicationsApi,
   AuthApi,
+  ClientChannelApi,
   Configuration,
   ConversationsApi,
   DeploymentsApi,
@@ -177,3 +178,4 @@ export const rateApi = new RateApi(config);
 export const toolsetsApi = new ToolsetsApi(config);
 export const shareApi = new ShareApi(config);
 export const publishApi = new PublishApi(config);
+export const clientChannelApi = new ClientChannelApi(config);

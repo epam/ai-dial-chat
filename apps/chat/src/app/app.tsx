@@ -55,6 +55,9 @@ const ToolsetEditorPage = lazy(
 const ToolsetAuthCallbackPage = lazy(
   () => import('../pages/ToolsetAuthCallback/ToolsetAuthCallback'),
 );
+const ToolsetSigninDialog = lazy(
+  () => import('../components/ToolsetSigninDialog/ToolsetSigninDialog'),
+);
 const SharedInvitationPage = lazy(
   () => import('../pages/SharedInvitation/SharedInvitation'),
 );
@@ -173,6 +176,9 @@ const App: FC = () => {
 
   return (
     <div className="flex size-full flex-row">
+      <Suspense fallback={null}>
+        <ToolsetSigninDialog />
+      </Suspense>
       <Navigation isOpen={isNavOpen} onClose={closeNav} />
 
       <ConversationPanelView

@@ -39,6 +39,20 @@ describe('cleanStageName', () => {
     expect(name).toBe('PyInterpreter: Read weather data file');
   });
 
+  it('returns an empty name instead of throwing when given null (DIAL Core "stage opened" chunk)', () => {
+    expect(cleanStageName(null as unknown as string)).toEqual({
+      name: '',
+      durationLabel: undefined,
+    });
+  });
+
+  it('returns an empty name instead of throwing when given undefined', () => {
+    expect(cleanStageName(undefined as unknown as string)).toEqual({
+      name: '',
+      durationLabel: undefined,
+    });
+  });
+
   it('does not force Title Case or otherwise rewrite the remaining text', () => {
     expect(cleanStageName('Via MCP').name).toBe('Via MCP');
     expect(cleanStageName('Read Weather Data File').name).toBe(
