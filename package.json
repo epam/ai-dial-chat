@@ -210,7 +210,6 @@
     "http-proxy-middleware": "3.0.7",
     "undici": "7.28.0",
     "adm-zip": "0.6.0",
-    "node-tar": "7.5.20",
     "brace-expansion": "5.0.7",
     "axios": "1.18.0"
   },
