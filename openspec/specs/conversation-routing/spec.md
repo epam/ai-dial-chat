@@ -32,10 +32,10 @@ The application SHALL declare a React Router v6 route at `/conversations/:conver
 - **WHEN** the user navigates to `/conversations/<id>` for a conversation present in context
 - **THEN** `<ConversationPage>` mounts, retrieves the `Conversation` from context, and the message log is visible with `role="log"` and `aria-live="polite"`
 
-#### Scenario: Unknown conversation ID renders not-found state
+#### Scenario: Unknown conversation ID redirects to home page
 
 - **WHEN** the user navigates to `/conversations/does-not-exist`
-- **THEN** `<ConversationPage>` renders a "conversation not found" message with `role="alert"` and does NOT redirect
+- **THEN** `<ConversationPage>` detects the conversation is not present in context and navigates to `/` (home page)
 
 #### Scenario: ConversationPage is lazy-loaded
 
