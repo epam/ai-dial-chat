@@ -633,9 +633,16 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
     );
 
   useEffect(() => {
+    const activeElement = document.activeElement;
+    const isSomethingElseFocused =
+      activeElement &&
+      activeElement !== document.body &&
+      activeElement !== textareaRef.current;
+
     if (
       !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
-      !asrFlowRef.current
+      !asrFlowRef.current &&
+      !isSomethingElseFocused
     ) {
       textareaRef.current?.focus();
     }
