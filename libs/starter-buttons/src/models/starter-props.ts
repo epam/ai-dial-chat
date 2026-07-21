@@ -8,6 +8,13 @@ export interface StarterButtonsLabels {
   overflow: string;
 }
 
+export interface StarterButtonsStyles {
+  /** Extra CSS class applied to the outer container div. */
+  iconSize?: number;
+  /** Stroke width of the search and clear icons. Defaults to the icon's own default. */
+  iconStrokeWidth?: number;
+}
+
 /** Props for the StarterButtons component. */
 export interface StarterButtonsProps {
   /** Starter prompt options to display as buttons. */
@@ -18,4 +25,6 @@ export interface StarterButtonsProps {
   isMobile?: boolean;
   /** Localized labels used within the component. */
   labels: StarterButtonsLabels;
+  /** Optional style overrides. */
+  styles?: StarterButtonsStyles;
 }

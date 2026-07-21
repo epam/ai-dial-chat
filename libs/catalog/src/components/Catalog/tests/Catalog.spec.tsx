@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -451,6 +451,65 @@ describe('Catalog', () => {
     expect(screen.queryByText('Claude', { selector: 'span' })).toBeNull();
   });
 
+  it('reopens the details panel when initialDetailsItemId reappears after being cleared', async () => {
+    const onFetchDetails = vi.fn().mockResolvedValue(undefined);
+    const items = [makeItem('1', 'Claude')];
+    const { rerender } = render(
+      <Catalog
+        items={items}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        initialDetailsItemId="1"
+      />,
+    );
+
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    rerender(
+      <Catalog
+        items={items}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        initialDetailsItemId={undefined}
+      />,
+    );
+    rerender(
+      <Catalog
+        items={items}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        initialDetailsItemId="1"
+      />,
+    );
+
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledTimes(2));
+  });
+
+  it('does not reopen the details panel for the same initialDetailsItemId across an items identity change', async () => {
+    const onFetchDetails = vi.fn().mockResolvedValue(undefined);
+    const { rerender } = render(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        initialDetailsItemId="1"
+      />,
+    );
+
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+
+    rerender(
+      <Catalog
+        items={[makeItem('1', 'Claude')]}
+        favorites={[]}
+        onFetchDetails={onFetchDetails}
+        initialDetailsItemId="1"
+      />,
+    );
+
+    await waitFor(() => expect(onFetchDetails).toHaveBeenCalledOnce());
+  });
+
   it('defaults to recently-updated sort and empty filters when uncontrolled', () => {
     render(<Catalog items={[]} favorites={[]} />);
     expect(screen.getByText('sortKey:recently-updated')).toBeTruthy();
@@ -502,5 +561,37 @@ describe('Catalog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Free' }));
 
     expect(onFilterTopicsChange).toHaveBeenCalledWith(new Set(['Free']));
+  });
+
+  it('uses the controlled isMyAppsActive prop instead of internal state', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { isMyApp: true }),
+          makeItem('2', 'Gemini', { isMyApp: false }),
+        ]}
+        favorites={[]}
+        isMyAppsActive
+      />,
+    );
+
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('1 items');
+  });
+
+  it('calls onMyAppsActiveChange when the My Apps filter is toggled', async () => {
+    const onMyAppsActiveChange = vi.fn();
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        onMyAppsActiveChange={onMyAppsActiveChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'My Apps' }));
+
+    expect(onMyAppsActiveChange).toHaveBeenCalledWith(true);
   });
 });

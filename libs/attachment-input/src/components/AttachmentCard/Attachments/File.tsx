@@ -131,13 +131,18 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
   const typeRow = Glyph && (
     <div
       className={mergeClasses(
-        'flex items-center gap-1 overflow-hidden',
+        'flex w-full items-center gap-1',
         isError && cornerIconSpacing,
       )}
     >
       <Glyph size={16} className={styles.typeText} aria-hidden />
+
       <span
-        className={mergeClasses(metaClassName, 'truncate', styles.typeText)}
+        className={mergeClasses(
+          metaClassName,
+          'min-w-0 flex-1 truncate',
+          styles.typeText,
+        )}
       >
         {sizeLabel ? `${typeLabel} · ${sizeLabel}` : typeLabel}
       </span>

@@ -9,7 +9,20 @@ Core using the caller's session access token. The request body SHALL be validate
 including an optional `intro` string field limited to 90 characters, the per-user toolset
 list cache SHALL be invalidated on success, and DIAL Core error statuses SHALL be mapped to
 typed HTTP responses. When `intro` is provided, it SHALL be forwarded to DIAL Core as part of
-the create request body.
+the create request body. The `endpoint` field SHALL be required to be present but MAY be an
+empty string — an empty string is accepted so the toolset editor can create a draft toolset
+right after its General step, before the endpoint is collected on the Settings step; when
+non-empty, `endpoint` SHALL still be validated as a well-formed `http(s)://` or `sse://` URL.
+
+#### Scenario: Successful create with a draft (empty) endpoint
+- **WHEN** an authenticated user POSTs a toolset body with `endpoint` set to an empty string
+- **THEN** the service proxies the create to DIAL Core and returns the created toolset
+  identifier
+
+#### Scenario: Missing endpoint field
+- **WHEN** an authenticated user POSTs a toolset body with the `endpoint` field omitted
+  entirely
+- **THEN** the endpoint responds with a 400 and does not call DIAL Core
 
 #### Scenario: Successful create
 - **WHEN** an authenticated user POSTs a valid toolset body

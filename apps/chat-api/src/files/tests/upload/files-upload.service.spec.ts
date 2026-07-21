@@ -496,10 +496,12 @@ describe('FilesUploadService', () => {
       );
     });
 
-    it('reports a conflicting entry as failed while other entries still succeed', async () => {
+    it('uploads a conflicting entry with a deduplicated file name', async () => {
       const { service } = makeService();
-      vi.spyOn(globalThis, 'fetch')
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
         .mockResolvedValueOnce(new Response(null, { status: 412 }))
+        .mockResolvedValueOnce(okFetchUpload())
         .mockResolvedValueOnce(okFetchUpload());
       const buffer = await buildZipBuffer([
         { name: 'a.txt' },
@@ -511,9 +513,35 @@ describe('FilesUploadService', () => {
       );
 
       expect(result.results).toEqual([
-        { path: 'reports/a.txt', success: false, error: 'Conflict' },
+        { path: 'reports/a (1).txt', success: true },
         { path: 'reports/b.txt', success: true },
       ]);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+      expect(fetchSpy.mock.calls[1]?.[0]).toBe(
+        'http://dial-core/v1/files/bucket/reports/a%20(1).txt',
+      );
+    });
+
+    it('increments the deduplicated file name until upload succeeds', async () => {
+      const { service } = makeService();
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(new Response(null, { status: 412 }))
+        .mockResolvedValueOnce(new Response(null, { status: 412 }))
+        .mockResolvedValueOnce(okFetchUpload());
+      const buffer = await buildZipBuffer([{ name: 'a.txt' }]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([
+        { path: 'reports/a (2).txt', success: true },
+      ]);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
+      expect(fetchSpy.mock.calls[2]?.[0]).toBe(
+        'http://dial-core/v1/files/bucket/reports/a%20(2).txt',
+      );
     });
 
     it('rejects path-traversal entries without attempting to upload them', async () => {

@@ -76,6 +76,12 @@ export interface ToolsetFormErrors {
   tokenEndpoint?: string;
 }
 
+/**
+ * Redirect state for the admin ToolsetEditor/Catalog OAuth login flow.
+ * `initiateOAuthLogin` writes this into the *popup's own* `sessionStorage`
+ * before navigating it to the provider, since the popup and its opener do
+ * not share a `sessionStorage` partition once navigated cross-origin.
+ */
 export interface ToolsetRedirectState {
   toolsetId: string;
   credentialsLevel?: ToolsetCredentialsLevel;

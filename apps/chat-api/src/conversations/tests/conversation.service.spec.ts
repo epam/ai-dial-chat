@@ -137,8 +137,8 @@ describe('ConversationService', () => {
       } as never,
     );
     /*
-     * Default: no path collision on create (metadata lookup returns empty).
-     * Individual createConversation tests override this when needed.
+     * Default: no path collision on duplicate (metadata lookup returns 404).
+     * Individual duplicateConversation tests override this when needed.
      */
     vi.spyOn(
       service['dialClient'].client,
@@ -146,6 +146,7 @@ describe('ConversationService', () => {
     ).mockResolvedValue({
       data: null,
       error: { status: 404 },
+      response: new Response(null, { status: 404 }),
     } as never);
   });
 
@@ -165,7 +166,9 @@ describe('ConversationService', () => {
 
       expect(saveConversationSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'form-example__What%20do%20you%20want%20to%20do%3F',
+        expect.stringMatching(
+          /^form-example__What%20do%20you%20want%20to%20do%3F__[\w-]+$/,
+        ),
         expect.any(Object),
       );
     });
@@ -186,7 +189,9 @@ describe('ConversationService', () => {
 
       expect(saveConversationSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'applications/catalog/Team%2FApp%20One__0.0.1__Hello',
+        expect.stringMatching(
+          /^applications\/catalog\/Team%2FApp%20One__0\.0\.1__Hello__[\w-]+$/,
+        ),
         expect.any(Object),
       );
       expect(result.model.id).toBe(deploymentId);
@@ -203,7 +208,9 @@ describe('ConversationService', () => {
       );
 
       expect(result.name).toBe('New chat');
-      expect(result.id).toBe('test-bucket/form-example__New chat');
+      expect(result.id).toMatch(
+        /^test-bucket\/form-example__New chat__[0-9a-f-]{36}$/,
+      );
     });
 
     it('returns a conversation with a UUID-format id', async () => {
@@ -275,15 +282,7 @@ describe('ConversationService', () => {
       expect(result.assistantModelId).toBe('my-catalog-item');
     });
 
-    it('uses the base name when no conversation with that title exists', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversationMetadata',
-      ).mockResolvedValue({
-        data: null,
-        error: { status: 404 },
-      } as never);
-
+    it('uses the base name for the conversation title', async () => {
       const result = await service.createConversation(
         'What is AI?',
         'test-token',
@@ -294,13 +293,15 @@ describe('ConversationService', () => {
       expect(result.name).toBe('What is AI?');
     });
 
-    it('keeps the unsuffixed name when a conversation with the same title already exists', async () => {
-      vi.spyOn(
+    it('always appends a UUID suffix to the conversation path', async () => {
+      const getMetadataSpy = vi.spyOn(
         service['dialClient'].client,
         'getConversationMetadata',
-      ).mockResolvedValue({
-        data: { name: 'gpt-4o__What is AI?' },
-      } as never);
+      );
+      const saveSpy = vi.spyOn(
+        service['dialClient'].client,
+        'saveConversation',
+      );
 
       const result = await service.createConversation(
         'What is AI?',
@@ -309,60 +310,10 @@ describe('ConversationService', () => {
         'gpt-4o',
       );
 
-      expect(result.name).toBe('What is AI?');
+      expect(getMetadataSpy).not.toHaveBeenCalled();
       expect(result.id).toMatch(
         /^test-bucket\/gpt-4o__What is AI\?__[0-9a-f-]{36}$/,
       );
-    });
-
-    it('uses a 3-part path when the 2-part path already exists', async () => {
-      const getMetadataSpy = vi
-        .spyOn(service['dialClient'].client, 'getConversationMetadata')
-        .mockResolvedValue({
-          data: { name: 'gpt-4o__What is AI?' },
-        } as never);
-      const saveSpy = vi.spyOn(
-        service['dialClient'].client,
-        'saveConversation',
-      );
-
-      await service.createConversation(
-        'What is AI?',
-        'test-token',
-        'test-bucket',
-        'gpt-4o',
-      );
-
-      expect(getMetadataSpy).toHaveBeenCalledWith(
-        'test-bucket',
-        'gpt-4o__What%20is%20AI%3F',
-        expect.any(Object),
-      );
-      expect(saveSpy).toHaveBeenCalledWith(
-        'test-bucket',
-        expect.stringMatching(/^gpt-4o__What%20is%20AI%3F__[\w-]+$/),
-        expect.any(Object),
-      );
-    });
-
-    it('uses base name when path collision check fails', async () => {
-      vi.spyOn(
-        service['dialClient'].client,
-        'getConversationMetadata',
-      ).mockRejectedValue(new Error('DIAL Core unreachable'));
-      const saveSpy = vi.spyOn(
-        service['dialClient'].client,
-        'saveConversation',
-      );
-
-      const result = await service.createConversation(
-        'What is AI?',
-        'test-token',
-        'test-bucket',
-        'gpt-4o',
-      );
-
-      expect(result.name).toBe('What is AI?');
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
         expect.stringMatching(/^gpt-4o__What%20is%20AI%3F__[\w-]+$/),
@@ -999,7 +950,10 @@ describe('ConversationService', () => {
       });
       const metadataSpy = vi
         .spyOn(service['dialClient'].client, 'getConversationMetadata')
-        .mockResolvedValue({ error: { status: 404 } } as never);
+        .mockResolvedValue({
+          error: { status: 404 },
+          response: new Response(null, { status: 404 }),
+        } as never);
       const saveSpy = vi
         .spyOn(service['dialClient'].client, 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
@@ -1755,6 +1709,83 @@ describe('ConversationService', () => {
       );
       expect(userItem?.publishedWithMe).toBe(false);
       expect(pubItem?.publishedWithMe).toBe(true);
+    });
+
+    it('returns the personal and public copies as two independent items when relative paths match', async () => {
+      const personalItem = {
+        url: 'conversations/test-bucket/gpt-4o__shared-title',
+        nodeType: 'FILE',
+        updatedAt: 2000,
+        permissions: ['READ', 'WRITE'],
+      };
+      mockMetadata(
+        [personalItem],
+        [
+          {
+            url: 'conversations/public/gpt-4o__shared-title',
+            nodeType: 'FILE',
+            updatedAt: 2000,
+          },
+        ],
+      );
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'conversations/test-bucket/gpt-4o__shared-title',
+            publishedWithMe: false,
+            isReadonly: false,
+          }),
+          expect.objectContaining({
+            id: 'conversations/public/gpt-4o__shared-title',
+            publishedWithMe: true,
+            isReadonly: true,
+          }),
+        ]),
+      );
+    });
+
+    it("preserves the personal copy's pin status after the conversation is published", async () => {
+      const personalMetadataItem = {
+        url: 'conversations/test-bucket/gpt-4o__shared-title',
+        nodeType: 'FILE',
+        updatedAt: 2000,
+        permissions: ['READ', 'WRITE'],
+      };
+      mockMetadata(
+        [personalMetadataItem],
+        [
+          {
+            url: 'conversations/public/gpt-4o__shared-title',
+            nodeType: 'FILE',
+            updatedAt: 2000,
+          },
+        ],
+      );
+      mockUserConfigService.getPinnedIds.mockResolvedValue([
+        'conversations/test-bucket/gpt-4o__shared-title',
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      const personalItem = result.items.find(
+        (i) => i.id === 'conversations/test-bucket/gpt-4o__shared-title',
+      );
+      const publicItem = result.items.find(
+        (i) => i.id === 'conversations/public/gpt-4o__shared-title',
+      );
+      expect(personalItem?.isPinned).toBe(true);
+      expect(publicItem?.isPinned).toBe(false);
     });
 
     it('merges items from getSharedResources and sets sharedWithMe: true', async () => {

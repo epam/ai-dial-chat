@@ -1163,7 +1163,7 @@
     },
     "/api/v1/toolsets/{toolsetName}/logout": {
       "post": {
-        "description": "Revokes a toolset's credentials by proxying DIAL Core (POST /v1/ops/toolset/signout).",
+        "description": "Revokes a toolset's credentials by proxying DIAL Core (POST /v1/ops/toolset/signout). When the request body omits `authenticationType`, the toolset's own stored authentication type is looked up first (same lookup as `GET /api/v1/toolsets/{toolsetName}`).",
         "operationId": "logoutToolset",
         "parameters": [
           {
@@ -1207,6 +1207,9 @@
           },
           "403": {
             "description": "Caller lacks permission"
+          },
+          "404": {
+            "description": "Toolset not found (only reachable when `authenticationType` is omitted and the lookup fails)"
           },
           "429": {
             "description": "Rate limit exceeded"
@@ -5325,10 +5328,11 @@
           "authenticationType": {
             "type": "string",
             "enum": ["NONE", "API_KEY", "OAUTH"],
-            "example": "OAUTH"
+            "example": "OAUTH",
+            "description": "Authentication type used by the toolset. Optional — a caller that doesn't already have this loaded (e.g. logging out by id alone) can omit it; the server looks up the toolset's own stored authentication type instead."
           }
         },
-        "required": ["url", "credentialsLevel", "authenticationType"]
+        "required": ["url", "credentialsLevel"]
       },
       "AttachmentDto": {
         "type": "object",
@@ -6923,6 +6927,22 @@
             "type": "string",
             "description": "Identifier (DIAL Core resource path) of the entity the invitation grants access to.",
             "example": "gpt-4o"
+          },
+          "sharedDeployment": {
+            "description": "List-item summary of the shared model/application, resolved by id at accept time so the frontend can show its details panel without waiting on a bulk deployments list refresh. Omitted when itemId is a toolset, or when resolution failed (a best-effort step that never fails the accept call itself).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeploymentItemDto"
+              }
+            ]
+          },
+          "sharedToolset": {
+            "description": "List-item summary of the shared toolset, resolved by id at accept time so the frontend can show its details panel without waiting on a bulk toolsets list refresh. Omitted when itemId is not a toolset, or when resolution failed (a best-effort step that never fails the accept call itself).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DialToolsetDto"
+              }
+            ]
           }
         },
         "required": ["itemId"]

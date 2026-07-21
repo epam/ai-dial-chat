@@ -169,6 +169,7 @@ const renderSettings = (endpoint = 'https://example.com/mcp') =>
       toolsetId="toolsets/b/my__1.0.0"
       onChange={vi.fn()}
       onAuthChange={vi.fn()}
+      onEnsureSaved={vi.fn().mockResolvedValue(true)}
     />,
   );
 
@@ -223,6 +224,7 @@ describe('SettingsForm — copy endpoint', () => {
         toolsetId=""
         onChange={vi.fn()}
         onAuthChange={vi.fn()}
+        onEnsureSaved={vi.fn().mockResolvedValue(true)}
       />,
     );
     expect(screen.getByRole('alert').textContent).toContain(
@@ -262,6 +264,7 @@ describe('SettingsForm — Connect toolset section', () => {
         toolsetId=""
         onChange={vi.fn()}
         onAuthChange={vi.fn()}
+        onEnsureSaved={vi.fn().mockResolvedValue(true)}
       />,
     );
     expect(screen.queryByText(CatalogI18nKeys.ConnectToolsetTitle)).toBeNull();
@@ -284,6 +287,7 @@ describe('SettingsForm — Connect toolset section', () => {
         toolsetId="toolsets/b/my__1.0.0"
         onChange={vi.fn()}
         onAuthChange={vi.fn()}
+        onEnsureSaved={vi.fn().mockResolvedValue(true)}
       />,
     );
     expect(screen.queryByText(CatalogI18nKeys.ConnectToolsetTitle)).toBeNull();

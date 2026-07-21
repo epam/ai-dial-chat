@@ -51,6 +51,7 @@ export const PillTabs: FC<PillTabsProps> = memo(
               label={tab.label}
               selected={isActive}
               onClick={() => onTabChange(tab.id)}
+              aria-selected={isActive}
               className={mergeClasses(
                 'box-border h-auto shrink-0 justify-center rounded-full p-2 text-center',
                 tabClassName,

@@ -36,6 +36,7 @@ interface Props {
   toolsetId: string;
   onChange: (patch: Partial<ToolsetFormData>) => void;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
+  onEnsureSaved: () => Promise<boolean>;
 }
 
 const SettingsForm: FC<Props> = ({
@@ -45,6 +46,7 @@ const SettingsForm: FC<Props> = ({
   toolsetId,
   onChange,
   onAuthChange,
+  onEnsureSaved,
 }) => {
   const { t } = useTranslation();
   const { config } = useAppConfig();
@@ -144,6 +146,7 @@ const SettingsForm: FC<Props> = ({
         toolsetId={toolsetId}
         endpoint={form.endpoint}
         onAuthChange={onAuthChange}
+        onEnsureSaved={onEnsureSaved}
       />
 
       {isConnectVisible && (

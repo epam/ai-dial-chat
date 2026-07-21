@@ -14,6 +14,10 @@ export interface ToolbarTypography {
   titleClassName?: string;
   /** Typography class for the total count. Default: `'dial-tiny-text'`. */
   countClassName?: string;
+  /** Typography class for the filter section label. Default: `'dial-tiny-semi-text'`. */
+  filterSectionLabelClassName?: string;
+  /** Typography class for the filter checkbox labels. Default: `'dial-small-semi-text'`. */
+  filterButtonClassName?: string;
 }
 
 /** Color overrides for `Toolbar`, applied via CSS custom properties. */

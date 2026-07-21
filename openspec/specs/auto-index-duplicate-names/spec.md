@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define how conversations derive display names and storage paths in DIAL Core. Both create and duplicate use unsuffixed titles; path uniqueness uses an optional UUID segment on collision instead of numeric title deduplication.
+Define how conversations derive display names and storage paths in DIAL Core. Both create and duplicate use unsuffixed titles instead of numeric title deduplication. Path uniqueness for `createConversation` uses an unconditional UUID segment; `duplicateConversation` uses an optional UUID segment on collision.
 
 ## Requirements
 
@@ -23,11 +23,10 @@ When `POST /api/v1/conversations` is called, the backend SHALL set `conversation
 | `"Hello"`, `"Hello 1"` | `"Hello"` | `"Hello"` |
 | `"New chat"` | `""` | `"New chat"` |
 
-#### Scenario: Base name is not taken
+#### Scenario: Base name is used regardless of path collision
 
-- **GIVEN** no conversation exists at path `gpt-4o__My query`
 - **WHEN** `POST /api/v1/conversations` is called with `firstMessage: "My query"`
-- **THEN** the created conversation has `name: "My query"` and is stored at path `gpt-4o__My query`
+- **THEN** the created conversation has `name: "My query"` and is stored at path `gpt-4o__My query__<uuid>`
 
 #### Scenario: Duplicate display title does not add numeric suffix
 
@@ -82,9 +81,38 @@ Path uniqueness SHALL be handled by the same UUID-segment mechanism as `createCo
 
 ---
 
-### Requirement: Conversation path uses `{deploymentId}__{name}` format without a UUID suffix
+### Requirement: `createConversation` path always includes a UUID segment
 
-The DIAL Core storage path for a newly created or duplicated conversation SHALL be:
+The DIAL Core storage path for a newly **created** conversation SHALL always be:
+
+```
+{deploymentId}__{baseName}__{uuid}
+```
+
+where `{baseName}` is the sanitised display name and `{uuid}` is `crypto.randomUUID()` generated at create time. The UUID segment is unconditional — `createConversation` SHALL NOT perform a path-existence check before building the path. `conversation.name` SHALL remain the unsuffixed `{baseName}`.
+
+#### Scenario: Conversation path always has three segments
+
+- **WHEN** a conversation is created with `deploymentId: "gpt-4o"` and base name `"Hello"`
+- **THEN** the DIAL Core path is `gpt-4o__Hello__<uuid>`
+- **AND** `conversation.id` is `{bucket}/gpt-4o__Hello__<uuid>`
+- **AND** `conversation.name` is `"Hello"` (unsuffixed)
+
+#### Scenario: No collision check on create
+
+- **WHEN** `createConversation` is called
+- **THEN** `getConversationMetadata` is NOT called to check for an existing path
+
+#### Scenario: getConversationTitleFromName extracts unsuffixed title from 3-part path
+
+- **WHEN** the filename is `gpt-4o__Hello__<uuid>`
+- **THEN** `getConversationTitleFromName` returns `"Hello"`
+
+---
+
+### Requirement: `duplicateConversation` path uses `{deploymentId}__{name}` format without a UUID suffix unless the path collides
+
+The DIAL Core storage path for a **duplicated** conversation SHALL be:
 
 ```
 {deploymentId}__{baseName}
@@ -92,33 +120,28 @@ The DIAL Core storage path for a newly created or duplicated conversation SHALL 
 
 when no resource already exists at that path in the user's bucket, where `{baseName}` is the sanitised display name. No UUID segment is appended in this case.
 
-When a resource **already exists** at `{deploymentId}__{baseName}`, the backend SHALL instead persist at:
+When a resource **already exists** at `{deploymentId}__{baseName}`, `duplicateConversation` SHALL instead persist at:
 
 ```
 {deploymentId}__{baseName}__{uuid}
 ```
 
-where `{uuid}` is `crypto.randomUUID()` generated at create/duplicate time. In both cases `conversation.name` SHALL remain the unsuffixed `{baseName}`.
+where `{uuid}` is `crypto.randomUUID()` generated at duplicate time. In both cases `conversation.name` SHALL remain the unsuffixed `{baseName}`.
 
 Collision detection SHALL use a targeted existence check for `{deploymentId}__{baseName}` — not a full-bucket title scan.
 
-#### Scenario: Conversation path is two segments when path is free
+#### Scenario: Duplicate path is two segments when path is free
 
-- **WHEN** a conversation is created with `deploymentId: "gpt-4o"` and base name `"Hello"` and no collision
+- **WHEN** a conversation is duplicated with `deploymentId: "gpt-4o"` and base name `"Hello"` and no collision
 - **THEN** the DIAL Core path is `gpt-4o__Hello`
 - **AND** `conversation.id` is `{bucket}/gpt-4o__Hello`
 
-#### Scenario: Conversation path gains UUID segment on collision
+#### Scenario: Duplicate path gains UUID segment on collision
 
 - **GIVEN** a conversation already exists at `gpt-4o__Hello`
-- **WHEN** another conversation is created with the same base name `"Hello"`
+- **WHEN** another conversation is duplicated with the same base name `"Hello"`
 - **THEN** the new DIAL Core path is `gpt-4o__Hello__<uuid>`
 - **AND** `conversation.name` is `"Hello"` (unsuffixed)
-
-#### Scenario: getConversationTitleFromName extracts unsuffixed title from 3-part path
-
-- **WHEN** the filename is `gpt-4o__Hello__<uuid>`
-- **THEN** `getConversationTitleFromName` returns `"Hello"`
 
 ---
 

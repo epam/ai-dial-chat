@@ -37,7 +37,8 @@ const SharedInvitationPage: FC<Props> = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const { refetchDeployments, refetchToolsets } = useDeployments();
+  const { refetchDeployments, refetchToolsets, mergeSharedItem } =
+    useDeployments();
   const { invitationId } = useParams<{ invitationId: string }>();
   const hasStartedRef = useRef(false);
 
@@ -47,16 +48,21 @@ const SharedInvitationPage: FC<Props> = ({
 
     const accept = async () => {
       try {
-        const { itemId } = await acceptInvitation(invitationId);
+        const { itemId, sharedDeployment, sharedToolset } =
+          await acceptInvitation(invitationId);
         /*
          * The catalog's details panel only opens for `itemId` if it can find
          * a matching entry in the already-loaded deployments/toolsets list
-         * (see `Catalog`'s `initialDetailsItemId` effect). That list was
-         * fetched once on app mount, before this resource was shared, so it
-         * must be refreshed before navigating there or the panel silently
-         * fails to open.
+         * (see `Catalog`'s `initialDetailsItemId` effect). DIAL Core doesn't
+         * guarantee a bulk list refresh already reflects a just-granted
+         * share, so the refetch below can still come back without the new
+         * item. `mergeSharedItem` runs after it (not before/in parallel) so
+         * the backend-resolved item always wins over a stale refetch instead
+         * of being overwritten by it.
          */
         await Promise.all([refetchDeployments(), refetchToolsets()]);
+        const sharedItem = sharedDeployment ?? sharedToolset;
+        if (sharedItem) mergeSharedItem(sharedItem);
         navigate(getTargetRoute(itemId), { replace: true });
       } catch (err) {
         const errorMessage = await getApiErrorMessage(err);
@@ -78,6 +84,7 @@ const SharedInvitationPage: FC<Props> = ({
     errorFallbackRoute,
     refetchDeployments,
     refetchToolsets,
+    mergeSharedItem,
   ]);
 
   return <RouteFallback />;

@@ -86,15 +86,19 @@ export class ConversationService {
     relativePath: string,
   ): Promise<boolean> {
     try {
-      const { data, error } =
+      const { data, error, response } =
         (await this.dialClient.client.getConversationMetadata(
           bucket,
           encodeDialResourcePath(relativePath),
           { headers: getBearerAuthHeaders(token) },
-        )) as { data?: unknown; error?: unknown };
+        )) as {
+          data?: unknown;
+          error?: unknown;
+          response?: globalThis.Response;
+        };
 
       if (error != null) {
-        if (isHttpLikeError(error) && error.status === 404) {
+        if (response?.status === 404) {
           return false;
         }
         this.logger.warn(
@@ -125,15 +129,7 @@ export class ConversationService {
     const uuid = crypto.randomUUID();
     const baseName = getConversationName('New chat', firstMessage);
     const name = baseName;
-    const twoPartPath = `${deploymentId}__${baseName}`;
-    const pathExists = await this.conversationPathExists(
-      token,
-      bucket,
-      twoPartPath,
-    );
-    const conversationPath = pathExists
-      ? `${deploymentId}__${baseName}__${uuid}`
-      : twoPartPath;
+    const conversationPath = `${deploymentId}__${baseName}__${uuid}`;
     const folderId = `${bucket}`; // TODO: check
 
     const userMessage: ConversationMessageDto = {
@@ -683,75 +679,26 @@ export class ConversationService {
           });
 
       /*
-       * Extract the path within a bucket from a DIAL Core resource URL.
-       * URL format: "conversations/<bucket>/<relative-path>"
-       * Stripping the first two segments lets us match the same conversation
-       * across different buckets (e.g. user bucket vs. public bucket).
-       * Falls back to item.name when url is absent.
+       * The user's personal-bucket copy and its public-bucket copy (if the
+       * conversation has been published) are always returned as two
+       * independent list items, each with its own resource id — a personal,
+       * writable entry and a separate, read-only public entry. They are
+       * intentionally not merged/deduplicated: matching them by relative
+       * path is unreliable (publish lets the user pick an arbitrary target
+       * folder, so the public path rarely mirrors the personal one), and
+       * merging previously caused the personal copy's pin state to be lost
+       * and any link built from the merged item to point at the wrong
+       * bucket. Keeping both means every link/pin/permission stays scoped
+       * to the bucket it actually belongs to.
        */
-      const getBucketRelativePath = (item: MetadataItem): string => {
-        if (item.url) {
-          const parts = item.url.split('/');
-          return parts.length >= 3 ? parts.slice(2).join('/') : item.url;
-        }
-        return item.name ?? '';
-      };
-
-      /*
-       * Paths of public-bucket items on this page — used to:
-       *   1. Skip public items that duplicate a user-bucket item (dedup)
-       *   2. Promote user-bucket items that are org-published to publishedWithMe: true
-       */
-      const publicItemPaths = new Set(
-        publicError == null && publicData
-          ? (publicData.items ?? [])
-              .filter((item) => item.nodeType !== 'FOLDER')
-              .map(getBucketRelativePath)
-          : [],
-      );
-
-      /*
-       * IDs of user-bucket items that also exist in the public bucket.
-       * These should be shown as org-published (Organization section) rather
-       * than My Chats, because DIAL Core may not set publishedWithMe on
-       * user-bucket copies.
-       */
-      const orgPublishedUserIds = new Set(
-        (userData.items ?? [])
-          .filter(
-            (item) =>
-              item.nodeType !== 'FOLDER' &&
-              publicItemPaths.has(getBucketRelativePath(item)),
-          )
-          .map(
-            (item) => item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`,
-          ),
-      );
-
-      const userItems = mapItems(userData.items ?? []).map((item) =>
-        orgPublishedUserIds.has(item.id)
-          ? { ...item, publishedWithMe: true }
-          : item,
-      );
-
-      /*
-       * Paths of user-bucket items on this page — used to skip public items
-       * that are already represented as user items above.
-       */
-      const userItemPaths = new Set(
-        (userData.items ?? [])
-          .filter((item) => item.nodeType !== 'FOLDER')
-          .map(getBucketRelativePath),
-      );
+      const userItems = mapItems(userData.items ?? []);
 
       const publicItems =
         publicError == null && publicData
-          ? mapItems(
-              (publicData.items ?? []).filter(
-                (item) => !userItemPaths.has(getBucketRelativePath(item)),
-              ),
-              { publishedWithMe: true, isReadonly: true },
-            )
+          ? mapItems(publicData.items ?? [], {
+              publishedWithMe: true,
+              isReadonly: true,
+            })
           : [];
       const sharedItems =
         sharedError == null && sharedData

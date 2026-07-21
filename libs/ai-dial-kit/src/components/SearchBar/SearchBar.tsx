@@ -87,7 +87,7 @@ export const SearchBar: FC<SearchBarProps> = ({
           type="text"
           className={mergeClasses(
             styles.input,
-            'min-w-0 flex-1 border-0 p-0 text-sm font-normal leading-5 outline-none',
+            'dial-small-text min-w-0 flex-1 border-0 p-0 outline-none',
             inputClassName,
           )}
           value={value}

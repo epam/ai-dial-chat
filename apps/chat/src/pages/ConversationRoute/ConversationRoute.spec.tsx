@@ -1,6 +1,7 @@
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -191,6 +192,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     mockUseUser.mockReturnValue({
       user: {
@@ -308,6 +310,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     renderRoute();
@@ -335,6 +338,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     renderRoute();
     await waitFor(() => {
@@ -362,6 +366,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     renderRoute();
     await waitFor(() => {
@@ -392,6 +397,11 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: function (
+        item: DeploymentItemDto | DialToolsetDto,
+      ): void {
+        throw new Error('Function not implemented.');
+      },
     });
 
     renderRoute();
@@ -406,6 +416,67 @@ describe('ConversationRoute', () => {
     expect(screen.getByLabelText('Input message').textContent).toBe(
       'Write a draft',
     );
+    expect(mockCreateConversation).not.toHaveBeenCalled();
+  });
+
+  it('uses Quick Apps populate-only behavior even when the deployment configuration mirrors a submit-only schema starter', async () => {
+    const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
+      type: 'object',
+      isChatMessageInputDisabled: true,
+      properties: {
+        starter: {
+          description: 'Choose how to start',
+          oneOf: [
+            {
+              const: 0,
+              title: 'Draft',
+              'dial:widgetOptions': {
+                populateText: null,
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    mockUseDeployments.mockReturnValue({
+      items: [
+        {
+          ...mockItems[0],
+          conversationStarters: {
+            introText: 'Choose how to start',
+            autoSubmit: false,
+            chatMessageInputDisabled: false,
+            starters: [{ title: 'Draft', text: 'Write a draft' }],
+          },
+        },
+      ],
+      selectedItemId: 'gpt-4o',
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
+    });
+
+    renderRoute();
+
+    expect(screen.getByLabelText('Input disabled').textContent).toBe('false');
+
+    await act(async () => {
+      screen.getByText('Draft').click();
+    });
+
+    expect(screen.getByLabelText('Input message').textContent).toBe(
+      'Write a draft',
+    );
+    expect(screen.getByLabelText('Input disabled').textContent).toBe('false');
     expect(mockCreateConversation).not.toHaveBeenCalled();
   });
 
@@ -430,6 +501,11 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: function (
+        item: DeploymentItemDto | DialToolsetDto,
+      ): void {
+        throw new Error('Function not implemented.');
+      },
     });
 
     renderRoute();
@@ -479,6 +555,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     renderRoute();
@@ -493,6 +570,66 @@ describe('ConversationRoute', () => {
         'deepseek-ocr-2',
         [],
         { starter: 0 },
+      );
+    });
+  });
+
+  it('uses each starter own prompt instead of the shared schema description', async () => {
+    const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
+      type: 'object',
+      properties: {
+        starter: {
+          description: 'Choose how to start',
+          oneOf: [
+            {
+              const: 0,
+              title: 'OCR image',
+              'dial:widgetOptions': {
+                populateText: 'Scan this image',
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+            {
+              const: 1,
+              title: 'Summarize',
+              'dial:widgetOptions': {
+                populateText: 'Summarize this document',
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    mockUseDeployments.mockReturnValue({
+      items: mockItems,
+      selectedItemId: 'deepseek-ocr-2',
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
+    });
+
+    renderRoute();
+
+    await act(async () => {
+      screen.getByText('Summarize').click();
+    });
+
+    await waitFor(() => {
+      expect(mockCreateConversation).toHaveBeenCalledWith(
+        'Summarize this document',
+        'deepseek-ocr-2',
+        [],
+        { starter: 1 },
       );
     });
   });
@@ -529,6 +666,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     renderRoute();
@@ -578,6 +716,7 @@ describe('ConversationRoute', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     mockCreateConversation.mockRejectedValueOnce({
       response: {

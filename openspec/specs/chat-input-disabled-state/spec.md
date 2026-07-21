@@ -37,18 +37,25 @@ The `Input` component's `<textarea>` element SHALL receive the native `disabled`
 
 ---
 
-### Requirement: Input blocks send when isInputDisabled is true
+### Requirement: Input blocks send when isInputDisabled is true, except for an already-populated message
 
-The `Input` component's internal `handleSend` function SHALL return early without calling `onSend` when `isInputDisabled` is `true`. The send button SHALL be rendered with `isDisabled={isInputDisabled || !hasModelSelected}`.
+The `Input` component's send button SHALL be rendered with `isDisabled={!hasModelSelected || hasBlockedAttachments}` — `isInputDisabled` is deliberately excluded from this expression. The send button only ever renders when `hasSendableContent` is true (non-empty message or attachments present), so this has no observable effect while the message is empty: with typing blocked by the disabled textarea (see above) and the attach button also disabled, the only way `hasSendableContent` can be true while `isInputDisabled` is true is a starter having populated `message` (see the Quick Apps "populate prompt" starter behavior, `apps/chat/src/utils/quick-app-conversation-starters.ts`). In that one case, the user cannot edit the populated text but SHALL still be able to submit it via the send button, since "Disable chat input" otherwise leaves them no way to act on a populate-only starter's text.
 
-#### Scenario: Send button is disabled
+The Enter key SHALL NOT submit while `isInputDisabled` is `true`, regardless of message content — `handleKeyDown`'s Enter-send branch SHALL explicitly require `!isInputDisabled` in addition to `canSend`/`hasModelSelected`/`!isStreaming`. This keeps every keyboard-driven path blocked ("just not edit"), leaving the send **button** as the sole exception.
 
-- **WHEN** `Input` is rendered with `isInputDisabled={true}`
-- **THEN** the send button is disabled and clicking it does not call `onSend`
+#### Scenario: Send button is disabled when there is nothing to send
+
+- **WHEN** `Input` is rendered with `isInputDisabled={true}` and no message or attachments
+- **THEN** the send button does not render (unaffected by this requirement — behavior identical to before)
+
+#### Scenario: Send button is enabled when a message is already populated
+
+- **WHEN** `Input` is rendered with `isInputDisabled={true}` and `message="Hello"` (as set by a populate-only Quick Apps starter)
+- **THEN** the send button is enabled and clicking it calls `onSend("Hello", [])`
 
 #### Scenario: Enter key does not submit
 
-- **WHEN** `Input` is rendered with `isInputDisabled={true}` and the user presses Enter
+- **WHEN** `Input` is rendered with `isInputDisabled={true}` (with or without a populated message) and the user presses Enter
 - **THEN** `onSend` is not called
 
 ---
@@ -100,17 +107,35 @@ and pass it as `isInputDisabled={isInputDisabled}` to `ConversationInput`. The v
 
 ### Requirement: App-edge derivation of isInputDisabled in ConversationView
 
-`apps/chat/src/components/ConversationView/ConversationView.tsx` SHALL add `selectedDeploymentConfiguration` to its `useDeployments()` destructuring, derive `isInputDisabled` by the same formula as `ConversationRoute`, and pass it as `isInputDisabled={isInputDisabled}` to `ConversationInput`.
+`apps/chat/src/components/ConversationView/ConversationView.tsx` SHALL add `selectedDeploymentConfiguration` to its `useDeployments()` destructuring and derive `isInputDisabled` as:
 
-#### Scenario: Flag true — ConversationView passes isInputDisabled true
+```ts
+const hasQuickAppStarters =
+  getQuickAppConversationStarters(selectedDeployment?.conversationStarters)
+    .starters.length > 0;
+const isInputDisabled =
+  !hasQuickAppStarters &&
+  !!selectedDeploymentConfiguration?.isChatMessageInputDisabled;
+```
 
-- **WHEN** `selectedDeploymentConfiguration` contains `{ isChatMessageInputDisabled: true }`
+and pass it as `isInputDisabled={isInputDisabled}` to `ConversationInput`, where `selectedDeployment` is the deployment resolved from `activeDeploymentId` (the `fixedModel` id when set, otherwise `selectedItemId`).
+
+`isChatMessageInputDisabled` is a deployment-configuration-schema flag meant to persist for the entire conversation, for form/schema-driven apps that always require a button- or `configuration_value`-driven message (they provide an ongoing interaction path via per-message embedded buttons, so the free-text path can stay blocked indefinitely). Quick Apps' `conversationStarters.chatMessageInputDisabled` (surfaced through the same underlying schema flag on some deployments) is, by contrast, only ever a welcome-screen nudge to pick a starter — once a conversation exists there is no further button-driven interaction to fall back on, so `ConversationView` MUST NOT keep the input disabled for a deployment that exposes Quick Apps starters, regardless of what the schema flag says.
+
+#### Scenario: Flag true, no Quick Apps starters — ConversationView passes isInputDisabled true
+
+- **WHEN** `selectedDeploymentConfiguration` contains `{ isChatMessageInputDisabled: true }` and the resolved deployment has no valid Quick Apps `conversationStarters`
 - **THEN** `ConversationInput` receives `isInputDisabled={true}` in `ConversationView`
 
 #### Scenario: Flag absent — ConversationView passes isInputDisabled false
 
 - **WHEN** `selectedDeploymentConfiguration` is `null` or does not contain `isChatMessageInputDisabled`
 - **THEN** `ConversationInput` receives `isInputDisabled={false}` in `ConversationView`
+
+#### Scenario: Flag true but deployment has Quick Apps starters — input stays enabled after the first message
+
+- **WHEN** `selectedDeploymentConfiguration.isChatMessageInputDisabled` is `true` AND the resolved deployment has valid Quick Apps `conversationStarters`
+- **THEN** `ConversationInput` receives `isInputDisabled={false}` in `ConversationView`, so the user can send free-form follow-up messages after starting the conversation from a starter
 
 ---
 
@@ -130,9 +155,9 @@ Starter buttons (rendered via `renderFooterActions` or the starters bar), form b
 `libs/conversation-input/src/components/Input/tests/Input.spec.tsx` SHALL include test cases covering:
 
 - `isInputDisabled={true}` renders the textarea with the `disabled` attribute.
-- `isInputDisabled={true}` renders the send button as disabled.
+- `isInputDisabled={true}` with an already-populated `message` renders the send button as enabled, and clicking it calls `onSend`.
 - `isInputDisabled={true}` renders the attach button as disabled.
-- `isInputDisabled={true}` does not call `onSend` when Enter is pressed.
+- `isInputDisabled={true}` does not call `onSend` when Enter is pressed, populated message or not.
 - `isInputDisabled={false}` (or omitted) allows send via Enter.
 
 ---

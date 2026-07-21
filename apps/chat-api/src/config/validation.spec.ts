@@ -5,7 +5,6 @@ const validBaseConfig = {
   DIAL_CORE_URL: 'https://dial-core.example.com',
   AUTH_SESSION_SECRET: 'a'.repeat(64),
   AUTH_CALLBACK_BASE_URL: 'http://localhost:3005',
-  AUTH_PROVIDERS: '[]',
 };
 
 describe('validate - ALLOWED_IFRAME_ORIGINS', () => {

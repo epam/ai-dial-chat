@@ -839,6 +839,58 @@ describe('ToolsetsService', () => {
       ).rejects.toThrow(ServiceUnavailableException);
     });
   });
+
+  describe('resolveToolsetItem', () => {
+    it('resolves the caller bucket then delegates to getToolset', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        okResponse({ bucket: 'test-bucket' }),
+      );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        okResponse(rawMockToolset),
+      );
+
+      const result = await service.resolveToolsetItem(
+        'user1',
+        'token-abc',
+        'my-toolset',
+      );
+
+      expect(result).toEqual(mockEnrichedToolset);
+    });
+
+    it('returns null when getToolset 404s (no such toolset / no access)', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        okResponse({ bucket: 'test-bucket' }),
+      );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        errResponse(404),
+      );
+
+      const result = await service.resolveToolsetItem(
+        'user1',
+        'token-abc',
+        'unknown-toolset',
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it('throws on a genuine upstream 5xx rather than returning null', async () => {
+      const { service } = makeService();
+      vi.spyOn(service['dialClient'].client, 'getUserBucket').mockResolvedValue(
+        okResponse({ bucket: 'test-bucket' }),
+      );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        errResponse(502),
+      );
+
+      await expect(
+        service.resolveToolsetItem('user1', 'token-abc', 'my-toolset'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+  });
 });
 
 function makeWriteService() {
@@ -1388,6 +1440,46 @@ describe('ToolsetsService — write operations', () => {
         }),
       ).rejects.toThrow(UnauthorizedException);
     });
+
+    it('derives url from the toolsetName path param, ignoring a mismatched body.url', async () => {
+      const { service } = makeWriteService();
+      const signinSpy = vi
+        .spyOn(service['dialClient'].client, 'toolsetSignin')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.loginToolset('user1', 'token', id, {
+        url: 'toolsets/test-bucket/My%2520toolset__0.0.1',
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: ToolsetAuthType.ApiKey,
+        apiKey: 'secret-key',
+      });
+
+      const sentBody = signinSpy.mock.calls[0][0].body as Record<
+        string,
+        unknown
+      >;
+      expect(sentBody.url).toBe('toolsets/test-bucket/My toolset__0.0.1');
+    });
+
+    it('sends the raw (percent-decoded) resource reference as url', async () => {
+      const { service } = makeWriteService();
+      const signinSpy = vi
+        .spyOn(service['dialClient'].client, 'toolsetSignin')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.loginToolset('user1', 'token', id, {
+        url: id,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: ToolsetAuthType.ApiKey,
+        apiKey: 'secret-key',
+      });
+
+      const sentBody = signinSpy.mock.calls[0][0].body as Record<
+        string,
+        unknown
+      >;
+      expect(sentBody.url).toBe('toolsets/test-bucket/My toolset__0.0.1');
+    });
   });
 
   describe('logoutToolset', () => {
@@ -1399,7 +1491,7 @@ describe('ToolsetsService — write operations', () => {
         .spyOn(service['dialClient'].client, 'toolSetSignout')
         .mockResolvedValue(mutationSdkOk);
 
-      await service.logoutToolset('user1', 'token', id, {
+      await service.logoutToolset('user1', 'token', 'test-bucket', id, {
         url: id,
         credentialsLevel: ToolsetCredentialsLevel.User,
         authenticationType: ToolsetAuthType.OAuth,
@@ -1413,7 +1505,7 @@ describe('ToolsetsService — write operations', () => {
           body: expect.objectContaining({
             authenticationType: ToolsetAuthType.OAuth,
             credentialsLevel: ToolsetCredentialsLevel.User,
-            url: id,
+            url: 'toolsets/test-bucket/My toolset__0.0.1',
           }),
         }),
       );
@@ -1428,7 +1520,7 @@ describe('ToolsetsService — write operations', () => {
         .spyOn(service['dialClient'].client, 'toolSetSignout')
         .mockResolvedValue(mutationSdkOk);
 
-      await service.logoutToolset('user1', 'token', id, {
+      await service.logoutToolset('user1', 'token', 'test-bucket', id, {
         url: id,
         credentialsLevel: ToolsetCredentialsLevel.App,
         authenticationType: ToolsetAuthType.ApiKey,
@@ -1450,7 +1542,7 @@ describe('ToolsetsService — write operations', () => {
         'toolSetSignout',
       ).mockResolvedValue(errResponse(404));
 
-      await service.logoutToolset('user1', 'token', id, {
+      await service.logoutToolset('user1', 'token', 'test-bucket', id, {
         url: id,
         credentialsLevel: ToolsetCredentialsLevel.Global,
         authenticationType: ToolsetAuthType.OAuth,
@@ -1469,12 +1561,83 @@ describe('ToolsetsService — write operations', () => {
       ).mockResolvedValue(errResponse(401));
 
       await expect(
-        service.logoutToolset('user1', 'token', id, {
+        service.logoutToolset('user1', 'token', 'test-bucket', id, {
           url: id,
           credentialsLevel: ToolsetCredentialsLevel.User,
           authenticationType: ToolsetAuthType.OAuth,
         }),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('resolves the authentication type from the stored toolset when the body omits it', async () => {
+      const { service, cacheManager } = makeWriteService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getCustomToolSet',
+      ).mockResolvedValue(
+        okResponse({
+          displayName: 'My toolset',
+          authSettings: { authentication_type: 'OAUTH' },
+        }),
+      );
+      const signoutSpy = vi
+        .spyOn(service['dialClient'].client, 'toolSetSignout')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.logoutToolset('user1', 'token', 'test-bucket', id, {
+        url: id,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+      });
+
+      expect(signoutSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            authenticationType: ToolsetAuthType.OAuth,
+          }),
+        }),
+      );
+      expect(cacheManager.del).toHaveBeenCalledWith(
+        `toolsets:single:user1:${id}`,
+      );
+    });
+
+    it('rejects when the body omits authenticationType and the stored toolset has none supported', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getCustomToolSet',
+      ).mockResolvedValue(
+        okResponse({
+          displayName: 'My toolset',
+          authSettings: { authentication_type: 'NONE' },
+        }),
+      );
+
+      await expect(
+        service.logoutToolset('user1', 'token', 'test-bucket', id, {
+          url: id,
+          credentialsLevel: ToolsetCredentialsLevel.User,
+        }),
+      ).rejects.toThrow('Unsupported toolset authentication type');
+    });
+
+    it('derives url from the toolsetName path param, ignoring a mismatched body.url', async () => {
+      const { service } = makeWriteService();
+      const signoutSpy = vi
+        .spyOn(service['dialClient'].client, 'toolSetSignout')
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.logoutToolset('user1', 'token', 'test-bucket', id, {
+        url: 'toolsets/test-bucket/My%2520toolset__0.0.1',
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        authenticationType: ToolsetAuthType.OAuth,
+      });
+
+      const sentBody = signoutSpy.mock.calls[0][0].body as Record<
+        string,
+        unknown
+      >;
+      expect(sentBody.url).toBe('toolsets/test-bucket/My toolset__0.0.1');
     });
   });
 });

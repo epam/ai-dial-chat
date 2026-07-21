@@ -69,9 +69,9 @@ export const Favorites: FC<FavoritesProps> = ({
   const titleClassName =
     favoritesStyles?.typography?.titleClassName ??
     'dial-body-semi-text text-primary';
+
   const countClassName =
-    favoritesStyles?.typography?.countClassName ??
-    'dial-tiny-semi-text text-secondary';
+    favoritesStyles?.typography?.countClassName ?? 'dial-tiny-semi-text';
   const cssVars = {
     '--cat-favorites-border': favoritesStyles?.colors?.border,
   } as CSSProperties;
@@ -413,6 +413,7 @@ export const Favorites: FC<FavoritesProps> = ({
                 <span
                   className={mergeClasses(
                     'min-w-[32px] select-none px-1 text-center',
+                    countClassName,
                     styles.pageCounter,
                   )}
                 >

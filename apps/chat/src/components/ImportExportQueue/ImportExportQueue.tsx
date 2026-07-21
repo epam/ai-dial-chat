@@ -3,6 +3,7 @@ import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DialConfirmationPopup,
+  DialEllipsisTooltip,
   DialIconButton,
   DialProgressBar,
   DialProgressBarSize,
@@ -22,12 +23,12 @@ import {
   ButtonsI18nKeys,
   ConversationExportI18nKeys,
 } from '../../constants/translation-keys';
-import type { ExportJob } from '../../models/conversation-export';
+import type { QueueJob } from '../../models/conversation-queue';
 import { ExportJobStatus } from '../../types/conversation-export';
 
 interface Props {
   title: string;
-  jobs: ExportJob[];
+  jobs: QueueJob[];
   onClose: () => void;
   onDismiss: (jobId: string) => void;
   onRetry: (jobId: string) => void;
@@ -47,24 +48,41 @@ const getCloseConfirmDescriptionKey = (
 };
 
 interface JobRowProps {
-  job: ExportJob;
+  job: QueueJob;
   onDismiss: (jobId: string) => void;
   onRetry: (jobId: string) => void;
 }
+
+/*
+ * Fixed footprint for every trailing status slot (close/retry buttons and the
+ * plain success/failed icons) so switching between them on status change
+ * (e.g. in-progress → success) never shifts the row's width/layout.
+ */
+const STATUS_SLOT_CLASS = 'flex size-7 shrink-0 items-center justify-center';
 
 const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
   const { t } = useTranslation();
 
   return (
     <div className="flex items-center gap-2 px-3 py-2">
-      <span className="dial-small-text min-w-0 flex-1 truncate text-primary">
-        {job.label}
-      </span>
-      {job.status === ExportJobStatus.Success && (
-        <IconCircleCheckFilled
-          size={16}
-          className="shrink-0 text-accent-secondary"
+      <div className="min-w-0 flex-1">
+        {job.description && (
+          <DialEllipsisTooltip
+            text={job.description}
+            className="dial-caption-text text-secondary"
+            contentClassName="!z-[80]"
+          />
+        )}
+        <DialEllipsisTooltip
+          text={job.label}
+          className="dial-small-text text-primary"
+          contentClassName="!z-[80]"
         />
+      </div>
+      {job.status === ExportJobStatus.Success && (
+        <span className={STATUS_SLOT_CLASS}>
+          <IconCircleCheckFilled size={16} className="text-accent-secondary" />
+        </span>
       )}
       {job.status === ExportJobStatus.Failed && (
         <>
@@ -81,9 +99,11 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
               />
             }
             onClick={() => onRetry(job.id)}
-            className="shrink-0"
+            className={STATUS_SLOT_CLASS}
           />
-          <IconAlertCircleFilled size={16} className="shrink-0 text-error" />
+          <span className={STATUS_SLOT_CLASS}>
+            <IconAlertCircleFilled size={16} className="text-error" />
+          </span>
         </>
       )}
       {job.status === ExportJobStatus.InProgress && (
@@ -95,7 +115,7 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
           size={ElementSize.Small}
           icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
           onClick={() => onDismiss(job.id)}
-          className="shrink-0"
+          className={STATUS_SLOT_CLASS}
         />
       )}
     </div>
@@ -149,15 +169,13 @@ const ImportExportQueue: FC<Props> = ({
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-4 end-4 z-[70] w-[320px] rounded-lg bg-layer-2 shadow-lg"
+      className="w-[320px] rounded-lg bg-layer-2 shadow-lg"
     >
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-2">
-          <span className="dial-small-text font-semibold text-primary">
-            {title}
-          </span>
+          <span className="dial-small-semi-text text-primary">{title}</span>
           {failedCount > 0 && (
-            <span className="dial-small-text inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-controls-error px-1 font-semibold leading-none text-white">
+            <span className="dial-small-semi-text inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-controls-error px-1 text-white">
               {failedCount}
             </span>
           )}
@@ -185,6 +203,7 @@ const ImportExportQueue: FC<Props> = ({
               )
             }
             onClick={() => setIsCollapsed((value) => !value)}
+            className={STATUS_SLOT_CLASS}
           />
           <DialIconButton
             aria-label={t(ConversationExportI18nKeys.CloseQueueAriaLabel)}
@@ -192,6 +211,7 @@ const ImportExportQueue: FC<Props> = ({
             size={ElementSize.Small}
             icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
             onClick={handleClose}
+            className={STATUS_SLOT_CLASS}
           />
         </div>
       </div>

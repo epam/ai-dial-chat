@@ -25,6 +25,7 @@ import {
 import { applyChunkToMessages } from '../../utils/apply-chunk';
 import { getConversationPath } from '../../utils/conversation-path';
 import { isAwaitingGenerationResume } from '../../utils/generation-resume';
+import { safeDecodeURIComponent } from '../../utils/string-utils';
 
 /*
  * Safety-net only: the primary completion signal is the `/watch` SSE event
@@ -200,7 +201,7 @@ export const useConversationStream = ({
                * (including server-computed fields like stage attachment `data`).
                */
               const refreshed = (await getConversation(
-                conversationPath,
+                safeDecodeURIComponent(currentConversationId),
               )) as Conversation;
               if (!isPathDisplayed(conversationPath)) return;
               setConversation(refreshed);
@@ -303,7 +304,7 @@ export const useConversationStream = ({
       const finalCheck = async () => {
         try {
           const result = (await getConversation(
-            conversationPath,
+            safeDecodeURIComponent(currentConversationId),
           )) as Conversation;
           finish(result);
         } catch {
@@ -353,7 +354,7 @@ export const useConversationStream = ({
 
               try {
                 const result = (await getConversation(
-                  conversationPath,
+                  safeDecodeURIComponent(currentConversationId),
                 )) as Conversation;
                 if (!isAwaitingGenerationResume(result)) {
                   finish(result);

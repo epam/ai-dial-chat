@@ -12,6 +12,18 @@ export interface AcceptInvitationResponseDto {
    * @memberof AcceptInvitationResponseDto
    */
   itemId: string;
+  /**
+   * List-item summary of the shared model/application, resolved by id at accept time so the frontend can show its details panel without waiting on a bulk deployments list refresh. Omitted when itemId is a toolset, or when resolution failed (a best-effort step that never fails the accept call itself).
+   * @type {DeploymentItemDto}
+   * @memberof AcceptInvitationResponseDto
+   */
+  sharedDeployment?: DeploymentItemDto;
+  /**
+   * List-item summary of the shared toolset, resolved by id at accept time so the frontend can show its details panel without waiting on a bulk toolsets list refresh. Omitted when itemId is not a toolset, or when resolution failed (a best-effort step that never fails the accept call itself).
+   * @type {DialToolsetDto}
+   * @memberof AcceptInvitationResponseDto
+   */
+  sharedToolset?: DialToolsetDto;
 }
 /**
  *
@@ -4626,11 +4638,11 @@ export interface ToolsetLogoutBodyDto {
    */
   credentialsLevel: ToolsetLogoutBodyDtoCredentialsLevelEnum;
   /**
-   *
+   * Authentication type used by the toolset. Optional — a caller that doesn't already have this loaded (e.g. logging out by id alone) can omit it; the server looks up the toolset's own stored authentication type instead.
    * @type {string}
    * @memberof ToolsetLogoutBodyDto
    */
-  authenticationType: ToolsetLogoutBodyDtoAuthenticationTypeEnum;
+  authenticationType?: ToolsetLogoutBodyDtoAuthenticationTypeEnum;
 }
 
 /**

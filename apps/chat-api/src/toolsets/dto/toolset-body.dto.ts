@@ -8,6 +8,7 @@ import {
   IsString,
   Matches,
   MaxLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -139,9 +140,16 @@ export class ToolsetBodyDto {
   @MaxLength(90)
   intro?: string;
 
+  /*
+   * Empty string is allowed: the toolset editor creates a draft toolset
+   * right after its first (General) step, before the endpoint is collected
+   * on the second (Settings) step. `ValidateIf` makes every validator below
+   * conditional, so a missing `endpoint` (not the same as an empty string)
+   * still fails `@IsString()` and is rejected.
+   */
   @ApiProperty({ example: 'https://my-toolset.example.com/mcp' })
   @IsString()
-  @IsNotEmpty()
+  @ValidateIf((o: ToolsetBodyDto) => o.endpoint !== '')
   @Matches(ENDPOINT_URL_PATTERN, { message: ENDPOINT_URL_MESSAGE })
   endpoint!: string;
 

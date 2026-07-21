@@ -118,7 +118,34 @@ DIAL Core's sharing mechanism grants READ access to the resource at its original
 
 `resolveConversationLocation` in `ConversationService` is the single implementation point for this routing logic. It MUST NOT fall back to the session bucket when the first path segment is neither the session bucket nor `public` — it SHALL extract and use that segment as the target bucket.
 
-**Frontend behaviour.** The `Conversation` page passes the full URL wildcard param (`{bucket}/{name}`) directly to `GET /api/v1/conversations?path=...` after `decodeURIComponent`. The same decoded path (with the bucket stripped) is used for `saveConversation` and `streamCompletion`, which operate on the user's own copy only.
+**Frontend behaviour.** `GET /api/v1/conversations?path=...`'s `path` query param MUST include the bucket — unlike `saveConversation`'s/`streamCompletion`'s `path` body field, which is bucket-stripped and operates on the user's own copy only. Callers MUST apply the normalization matching the target endpoint's contract:
+
+- For `saveConversation`, `streamCompletion`, `stopCompletion`, `deleteConversation`, `watchConversation`, `renameConversation`, `generateConversationTitle`, `duplicateConversation` (every endpoint whose contract is bucket-stripped): `apps/chat/src/utils/conversation-path.ts`'s `getConversationPath(conversationId)` strips the bucket prefix, then decodes the remainder with the shared `safeDecodeURIComponent` (`apps/chat/src/utils/string-utils.ts` — try/catch, fall back to the original string on failure).
+- For every `getConversation` call site (`useConversationStream`'s post-stream/resume refresh, `ConversationsContext`'s `watchForDisplayNameUpdate`, `useConversationExport`'s `toApiConversationPath`): call `safeDecodeURIComponent` directly on the **full** id (bucket included, no stripping), since `GET /api/v1/conversations` needs the bucket to resolve the correct DIAL Core bucket per the routing table above. There is no dedicated helper for this — a bare `safeDecodeURIComponent(conversationId)` is the whole normalization; introducing a same-signature wrapper (e.g. a `normalizeConversationIdEncoding`) around it would only rename the call with no behavior difference. The `Conversation` page's initial load passes the route's already-decoded wildcard param directly, since the router performs the equivalent single decode.
+
+**Why the decode step exists at all.** `POST /api/v1/conversations`'s `deploymentId` MUST be percent-encoded by the caller when it contains reserved characters (see the `DEPLOYMENT_ID_PATTERN` requirement above); the response `id` field is built by concatenating that (possibly percent-encoded) `deploymentId` directly with an otherwise-raw message-derived name and uuid, without decoding it first — so `conversation.id` can contain a percent-encoded fragment mixed with raw text. Every caller passes the normalized result into an API client that percent-encodes the whole value exactly once. Without the decode step, an already-encoded fragment gets double-encoded on the wire (e.g. `%20` → `%2520`) and DIAL Core rejects the request with 400 — this mirrors the backend's own `encodeDialResourcePath` (decode-then-encode) normalization used when persisting. Passing the bucket-**stripped** `getConversationPath` result to `getConversation` is an equally invalid variant of this bug: it 400s specifically for Quick App conversations, whose deployment-id segment (`applications/{bucket}/{appName}`) itself contains a slash, so DIAL Core resolves the wrong resource once the leading session-bucket segment is missing.
+
+#### Scenario: getConversationPath decodes an already-percent-encoded deployment-id fragment
+
+- **WHEN** `conversation.id` is `"bucket/applications/catalog/My%20App__0.0.1__Hello there__uuid"` (the deploymentId segment was percent-encoded at create time; the message-derived segment is raw)
+- **THEN** `getConversationPath` returns `"applications/catalog/My App__0.0.1__Hello there__uuid"` (fully decoded, bucket stripped), for use with `saveConversation`/`streamCompletion`/etc.
+
+#### Scenario: getConversationPath leaves genuinely raw text with a literal "%" unchanged
+
+- **WHEN** `conversation.id` is `"bucket/gpt-4o__50% off__uuid"` (the `%` is not part of a valid percent-encoding triple)
+- **THEN** `decodeURIComponent` throws internally and `getConversationPath` falls back to returning the path unchanged: `"gpt-4o__50% off__uuid"`
+
+#### Scenario: safeDecodeURIComponent decodes the full id for getConversation, keeping the bucket
+
+- **WHEN** `conversation.id` is `"bucket/applications/bucket/My%20App__0.0.1__Hello there__uuid"`
+- **THEN** `safeDecodeURIComponent(conversation.id)` returns `"bucket/applications/bucket/My App__0.0.1__Hello there__uuid"` (fully decoded, bucket retained), so `GET /api/v1/conversations?path=...` both resolves the correct bucket and encodes the value exactly once
+
+**Building the `/conversations/:id` browser route.** `apps/chat/src/constants/routes.ts`'s `getConversationRoute(id)` builds the client-side navigable URL from a `conversation.id` that may contain the same mixed-encoding pattern described above. It SHALL decode each `/`-delimited segment with the same safe `decodeURIComponent` before re-encoding it once with `encodeURIComponent`, rather than encoding the raw segment directly — a raw segment can already be percent-encoded (the deployment-id fragment), and encoding it a second time produces a double-encoded URL that the router's single automatic decode-on-navigation cannot undo, so the subsequent `GET /api/v1/conversations?path=...` request 400s.
+
+#### Scenario: getConversationRoute decodes a segment before re-encoding it once
+
+- **WHEN** `getConversationRoute` is called with `"tenant/applications/catalog/Team%2FApp%20One__0.0.1__title"`
+- **THEN** it returns `"/conversations/tenant/applications/catalog/Team%2FApp%20One__0.0.1__title"` — the segment is decoded then re-encoded exactly once, not compounded into `Team%252FApp%2520One`
 
 #### Scenario: Own conversation is fetched from the session bucket
 
@@ -160,6 +187,7 @@ class ConversationListItemDto {
   sharedWithMe: boolean;    // True when the conversation was shared with the current user
   publishedWithMe: boolean; // True when this conversation is from the public bucket (organisation content)
   isPinned: boolean;        // True when the user has pinned this conversation
+  isReadonly: boolean;      // True when the caller does not have WRITE permission on this exact resource
 }
 
 class ConversationListResponseDto {
@@ -177,6 +205,8 @@ class ConversationListResponseDto {
 Items from all three sources are merged and sorted by `updatedAt` descending. `FOLDER` items are filtered out from bucket results. The `getSharedResources` response does not include `updatedAt`; shared items default to `updatedAt: 0`.
 
 **Ownership flags.** Items from the `'public'` bucket always have `publishedWithMe: true` forced, regardless of the DIAL Core flag value. Items from `getSharedResources` always have `sharedWithMe: true` forced. User-bucket items pass through the DIAL Core `sharedWithMe`/`publishedWithMe` flags unchanged.
+
+**No personal/public merging.** The service SHALL NOT attempt to match or merge a user-bucket item with a public-bucket item, even when a personal conversation has been published and both a personal copy and a public copy exist. Each is returned as its own independent list item with its own `id`: the personal copy keeps its user-bucket `id`, real `isReadonly` (from DIAL Core permissions), and `publishedWithMe: false` (unless DIAL Core itself reports otherwise); the public copy is a separate entry with its own `conversations/public/...` id, `isReadonly: true`, and `publishedWithMe: true`. This guarantees any link built from a returned `id` (conversation open/navigation links, and share links created via `POST /api/v1/share`) always resolves to the bucket that specific item actually represents, and that the personal copy's pin status and permissions are never affected by publishing.
 
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
@@ -256,6 +286,18 @@ Error codes:
 
 - **WHEN** `GET /api/v1/conversations/list?limit=1001` is called (exceeds max 1000)
 - **THEN** the response is 400 with a validation error
+
+#### Scenario: Published conversation's personal and public copies both appear as independent items
+
+- **WHEN** a user-bucket item and a public-bucket item — the personal and published copies of the same conversation — are both returned by DIAL Core in the same `listConversations` call, regardless of whether their relative paths coincide
+- **THEN** the response `items` array contains two entries: one with the user-bucket item's own `id`, real `isReadonly`, and `publishedWithMe: false`, and one with the public-bucket item's own `id` (`conversations/public/...`), `isReadonly: true`, and `publishedWithMe: true`
+- **AND** neither item's `id`, `isReadonly`, or `isPinned` is altered because of the other item's existence
+
+#### Scenario: Publishing a pinned personal conversation does not change its pin status
+
+- **WHEN** a user has pinned their own conversation (its user-bucket `id` is in the pinned-ids set) and that same conversation has also been published to the public bucket
+- **THEN** the response item with the user-bucket `id` has `isPinned: true`
+- **AND** the response item with the public-bucket `id` has `isPinned: false` (pins are never applied to a `publishedWithMe: true` item unless its own id was explicitly pinned)
 
 ---
 

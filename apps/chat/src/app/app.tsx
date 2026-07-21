@@ -52,8 +52,8 @@ const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
 );
-const ToolsetEditorCallbackPage = lazy(
-  () => import('../pages/ToolsetEditor/ToolsetEditorCallback'),
+const ToolsetAuthCallbackPage = lazy(
+  () => import('../pages/ToolsetAuthCallback/ToolsetAuthCallback'),
 );
 const SharedInvitationPage = lazy(
   () => import('../pages/SharedInvitation/SharedInvitation'),
@@ -202,8 +202,8 @@ const App: FC = () => {
           <Route
             element={
               <ChatLayout
-                isHistoryPanelOpen={isPanelOpen}
-                onToggleHistoryPanel={togglePanel}
+                isPanelOpen={isPanelOpen}
+                onTogglePanel={togglePanel}
                 onNewChat={() => navigate(ROUTES.Root)}
               />
             }
@@ -277,7 +277,7 @@ const App: FC = () => {
             element={
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
-                  <ToolsetEditorCallbackPage />
+                  <ToolsetAuthCallbackPage />
                 </Suspense>
               </RouteErrorBoundary>
             }
@@ -287,7 +287,7 @@ const App: FC = () => {
             element={
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
-                  <ToolsetEditorCallbackPage />
+                  <ToolsetAuthCallbackPage />
                 </Suspense>
               </RouteErrorBoundary>
             }

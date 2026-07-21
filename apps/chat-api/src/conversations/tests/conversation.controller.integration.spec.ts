@@ -257,7 +257,9 @@ describe('ConversationController (integration)', () => {
         })
         .expect(201);
 
-      expect(result.body.id).toBe('test-bucket/gpt-4o__Hello from integration');
+      expect(result.body.id).toMatch(
+        /^test-bucket\/gpt-4o__Hello from integration__[0-9a-f-]{36}$/,
+      );
       expect(result.body.messages).toHaveLength(1);
       expect(result.body.messages[0].content).toBe('Hello from integration');
 
@@ -549,6 +551,36 @@ describe('ConversationController (integration)', () => {
       await request(app.getHttpServer())
         .get(`/conversations/list?nextToken=${'x'.repeat(513)}`)
         .expect(400);
+    });
+
+    it('returns the public-bucket item verbatim for a published conversation, without falling back to the caller bucket', async () => {
+      const response = {
+        items: [
+          {
+            id: 'conversations/public/folder/gpt-4o__shared-title',
+            title: 'shared-title',
+            updatedAt: 2000,
+            sharedWithMe: false,
+            publishedWithMe: true,
+            isPinned: false,
+            isReadonly: true,
+          },
+        ],
+        nextToken: undefined,
+      };
+      service.listConversations.mockReturnValue(response);
+
+      const { body } = await request(app.getHttpServer())
+        .get('/conversations/list')
+        .expect(200);
+
+      expect(body.items).toHaveLength(1);
+      expect(body.items[0].id).toBe(
+        'conversations/public/folder/gpt-4o__shared-title',
+      );
+      expect(
+        body.items[0].id.startsWith(`conversations/${TEST_USER.bucket}/`),
+      ).toBe(false);
     });
   });
 

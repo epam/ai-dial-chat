@@ -64,6 +64,7 @@ const postOAuthResult = (flowId: string, message: Record<string, unknown>) => {
 };
 
 const mockNavigate = vi.fn();
+const mockSetSearchParams = vi.fn();
 let mockSearchParams = new URLSearchParams();
 
 const capturedPublishProps: {
@@ -79,12 +80,14 @@ const capturedPublishProps: {
     onSortChange?: (key: string) => void;
     filterTopics?: Set<string>;
     onFilterTopicsChange?: (topics: Set<string>) => void;
+    isMyAppsActive?: boolean;
+    onMyAppsActiveChange?: (isActive: boolean) => void;
   } | null;
 } = { current: null };
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
-  useSearchParams: () => [mockSearchParams],
+  useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }));
 
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
@@ -100,6 +103,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     items,
     onToggleFavorite,
     onUseInChat,
+    isPrimaryActionVisible,
     onEdit,
     onDelete,
     onFetchDetails,
@@ -119,12 +123,15 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onSortChange,
     filterTopics,
     onFilterTopicsChange,
+    isMyAppsActive,
+    onMyAppsActiveChange,
   }: {
     createOptions?: CreateOption[];
     items?: CatalogItem[];
     favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
     onUseInChat?: (item: CatalogItem) => void;
+    isPrimaryActionVisible?: (item: CatalogItem) => boolean;
     onEdit?: (item: CatalogItem) => void;
     onDelete?: (item: CatalogItem) => Promise<void>;
     onFetchDetails?: (item: CatalogItem) => Promise<unknown>;
@@ -147,6 +154,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onSortChange?: (key: string) => void;
     filterTopics?: Set<string>;
     onFilterTopicsChange?: (topics: Set<string>) => void;
+    isMyAppsActive?: boolean;
+    onMyAppsActiveChange?: (isActive: boolean) => void;
   }) => {
     const [fetchResult, setFetchResult] = useState<string>('');
     capturedPublishProps.current = {
@@ -161,6 +170,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
       onSortChange,
       filterTopics,
       onFilterTopicsChange,
+      isMyAppsActive,
+      onMyAppsActiveChange,
     };
 
     return (
@@ -202,15 +213,17 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
             favorite {item.id}
           </button>
         ))}
-        {(items ?? []).map((item) => (
-          <button
-            key={`use-in-chat-${item.id}`}
-            type="button"
-            onClick={() => onUseInChat?.(item)}
-          >
-            use in chat {item.id}
-          </button>
-        ))}
+        {(items ?? [])
+          .filter((item) => isPrimaryActionVisible?.(item) ?? true)
+          .map((item) => (
+            <button
+              key={`use-in-chat-${item.id}`}
+              type="button"
+              onClick={() => onUseInChat?.(item)}
+            >
+              use in chat {item.id}
+            </button>
+          ))}
         {(items ?? []).map((item) => (
           <button
             key={`edit-${item.id}`}
@@ -403,6 +416,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentLimits).mockResolvedValue({});
     vi.mocked(useNotification).mockReturnValue({
@@ -429,6 +443,8 @@ describe('CatalogView', () => {
       setSortKey: vi.fn(),
       filterTopics: new Set(),
       setFilterTopics: vi.fn(),
+      isMyAppsActive: false,
+      setIsMyAppsActive: vi.fn(),
     });
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Ready,
@@ -738,6 +754,26 @@ describe('CatalogView', () => {
     );
   });
 
+  it('clears the itemId search param once it has been read, so it acts as a one-shot signal', () => {
+    mockSearchParams = new URLSearchParams({ itemId: 'gpt-4o' });
+
+    render(<CatalogView />);
+
+    expect(mockSetSearchParams).toHaveBeenCalledOnce();
+    const [updater, options] = mockSetSearchParams.mock.calls[0];
+    expect(options).toEqual({ replace: true });
+    const result = updater(mockSearchParams);
+    expect(result.has('itemId')).toBe(false);
+  });
+
+  it('does not touch the URL when there is no itemId search param', () => {
+    mockSearchParams = new URLSearchParams();
+
+    render(<CatalogView />);
+
+    expect(mockSetSearchParams).not.toHaveBeenCalled();
+  });
+
   it('adds toolsets from deployments context to catalog items', () => {
     vi.mocked(useDeployments).mockReturnValue({
       items: [
@@ -763,6 +799,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -792,6 +829,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(useFavoriteApplications).mockReturnValue({
       favoriteIds: new Set(),
@@ -834,6 +872,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -869,6 +908,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -901,6 +941,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -911,6 +952,37 @@ describe('CatalogView', () => {
 
     expect(setSelectedItemId).toHaveBeenCalledWith('my-app');
     expect(mockNavigate).toHaveBeenCalledWith(ROUTES.Root);
+  });
+
+  it('does not render Use in chat for a Toolset item', () => {
+    vi.mocked(useDeployments).mockReturnValue({
+      items: [],
+      selectedItemId: null,
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [
+        {
+          id: 'toolsets/b/search__0.0.1',
+          toolset: 'toolsets/b/search__0.0.1',
+          displayName: 'Search',
+        },
+      ],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
+    });
+
+    render(<CatalogView />);
+
+    expect(
+      screen.queryByRole('button', {
+        name: 'use in chat toolsets/b/search__0.0.1',
+      }),
+    ).toBeNull();
   });
 
   it('updates the selection when Use in chat is clicked on a different deployment', async () => {
@@ -930,6 +1002,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
 
     render(<CatalogView />);
@@ -954,6 +1027,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'gpt-4o',
@@ -1065,6 +1139,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'my-app',
@@ -1124,6 +1199,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockResolvedValue({
       id: 'search-tool',
@@ -1198,6 +1274,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('502'));
 
@@ -1234,6 +1311,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
 
@@ -1276,6 +1354,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockResolvedValue({ success: true });
 
@@ -1317,6 +1396,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(logoutToolset).mockResolvedValue({ success: true });
 
@@ -1361,6 +1441,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(loginToolset).mockRejectedValue(new Error('network error'));
 
@@ -1405,6 +1486,7 @@ describe('CatalogView', () => {
         toolsets: getToolsets(),
         refetchToolsets,
         refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
       }));
       return render(<CatalogView />);
     };
@@ -1596,6 +1678,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets,
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockResolvedValue(undefined);
 
@@ -1640,6 +1723,7 @@ describe('CatalogView', () => {
       toolsets: [],
       refetchToolsets: vi.fn(),
       refetchDeployments,
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteApplication).mockResolvedValue(undefined);
 
@@ -1687,6 +1771,7 @@ describe('CatalogView', () => {
       ],
       refetchToolsets: vi.fn(),
       refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
     });
     vi.mocked(deleteToolset).mockRejectedValue(new Error('network error'));
 
@@ -1701,5 +1786,115 @@ describe('CatalogView', () => {
     expect(showNotification).not.toHaveBeenCalledWith(
       expect.objectContaining({ variant: 'success' }),
     );
+  });
+
+  describe('sort/filter persistence wiring', () => {
+    it('passes the persisted sortKey, filterTopics, and isMyAppsActive through to Catalog', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      });
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.Newest,
+        setSortKey: vi.fn(),
+        filterTopics: new Set(['nlp']),
+        setFilterTopics: vi.fn(),
+        isMyAppsActive: true,
+        setIsMyAppsActive: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.sortKey).toBe(CatalogSortKey.Newest);
+      expect(capturedPublishProps.current?.isMyAppsActive).toBe(true);
+    });
+
+    it('drops a persisted topic filter that no longer exists in the current items', () => {
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [{ id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' }],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        mergeSharedItem: vi.fn(),
+      });
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.RecentlyUpdated,
+        setSortKey: vi.fn(),
+        filterTopics: new Set(['deprecated-topic']),
+        setFilterTopics: vi.fn(),
+        isMyAppsActive: false,
+        setIsMyAppsActive: vi.fn(),
+      });
+
+      render(<CatalogView />);
+
+      expect(capturedPublishProps.current?.filterTopics).toEqual(new Set());
+    });
+
+    it('forwards Catalog sort changes to the persistence hook setter', () => {
+      const setSortKey = vi.fn();
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.RecentlyUpdated,
+        setSortKey,
+        filterTopics: new Set(),
+        setFilterTopics: vi.fn(),
+        isMyAppsActive: false,
+        setIsMyAppsActive: vi.fn(),
+      });
+
+      render(<CatalogView />);
+      capturedPublishProps.current?.onSortChange?.(CatalogSortKey.NameAZ);
+
+      expect(setSortKey).toHaveBeenCalledWith(CatalogSortKey.NameAZ);
+    });
+
+    it('forwards Catalog My Apps toggle changes to the persistence hook setter', () => {
+      const setIsMyAppsActive = vi.fn();
+      vi.mocked(useCatalogSortFilterPreference).mockReturnValue({
+        sortKey: CatalogSortKey.RecentlyUpdated,
+        setSortKey: vi.fn(),
+        filterTopics: new Set(),
+        setFilterTopics: vi.fn(),
+        isMyAppsActive: false,
+        setIsMyAppsActive,
+      });
+
+      render(<CatalogView />);
+      capturedPublishProps.current?.onMyAppsActiveChange?.(true);
+
+      expect(setIsMyAppsActive).toHaveBeenCalledWith(true);
+    });
+
+    it('does not forward sort/filter/My-Apps controlled props in selector mode', () => {
+      render(<CatalogView isSelectorMode onClose={vi.fn()} />);
+
+      expect(capturedPublishProps.current?.sortKey).toBeUndefined();
+      expect(capturedPublishProps.current?.onSortChange).toBeUndefined();
+      expect(capturedPublishProps.current?.filterTopics).toBeUndefined();
+      expect(
+        capturedPublishProps.current?.onFilterTopicsChange,
+      ).toBeUndefined();
+      expect(capturedPublishProps.current?.isMyAppsActive).toBeUndefined();
+      expect(
+        capturedPublishProps.current?.onMyAppsActiveChange,
+      ).toBeUndefined();
+    });
   });
 });

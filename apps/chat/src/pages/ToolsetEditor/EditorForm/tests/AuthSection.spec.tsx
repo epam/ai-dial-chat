@@ -1,5 +1,5 @@
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -219,6 +219,7 @@ const renderSection = (
   onAuthChange = vi.fn(),
   endpoint = VALID_ENDPOINT,
   errors: ToolsetFormErrors = {},
+  onEnsureSaved = vi.fn().mockResolvedValue(true),
 ) =>
   render(
     <AuthSection
@@ -228,6 +229,7 @@ const renderSection = (
       toolsetId={toolsetId}
       endpoint={endpoint}
       onAuthChange={onAuthChange}
+      onEnsureSaved={onEnsureSaved}
     />,
   );
 
@@ -430,6 +432,24 @@ describe('AuthSection', () => {
       );
     });
 
+    it('does not open a popup when saving unsaved changes fails', async () => {
+      const onEnsureSaved = vi.fn().mockResolvedValue(false);
+      renderSection(
+        oauthWithConfigAuth(),
+        'toolsets/b/my__1.0.0',
+        vi.fn(),
+        VALID_ENDPOINT,
+        {},
+        onEnsureSaved,
+      );
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+      );
+      await waitFor(() => expect(onEnsureSaved).toHaveBeenCalledOnce());
+      expect(window.open).not.toHaveBeenCalled();
+      expect(capturedPopup).toBeUndefined();
+    });
+
     it('does not open a popup when authorizationEndpoint is missing', async () => {
       renderSection({
         ...oauthWithConfigAuth(),
@@ -623,6 +643,41 @@ describe('AuthSection', () => {
       );
     });
 
+    it('saves unsaved changes before logging in', async () => {
+      vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+      const onEnsureSaved = vi.fn().mockResolvedValue(true);
+      renderSection(
+        apiKeyAuth(),
+        'toolsets/b/my__1.0.0',
+        vi.fn(),
+        VALID_ENDPOINT,
+        {},
+        onEnsureSaved,
+      );
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+      );
+      await waitFor(() => expect(onEnsureSaved).toHaveBeenCalledOnce());
+      expect(toolsetsApi.loginToolset).toHaveBeenCalled();
+    });
+
+    it('does not attempt to log in when saving unsaved changes fails', async () => {
+      const onEnsureSaved = vi.fn().mockResolvedValue(false);
+      renderSection(
+        apiKeyAuth(),
+        'toolsets/b/my__1.0.0',
+        vi.fn(),
+        VALID_ENDPOINT,
+        {},
+        onEnsureSaved,
+      );
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+      );
+      await waitFor(() => expect(onEnsureSaved).toHaveBeenCalledOnce());
+      expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
+    });
+
     it('disables the Log In button when endpoint is empty', () => {
       renderSection(apiKeyAuth(), 'toolsets/b/my__1.0.0', vi.fn(), '');
       const btn = screen.getByRole('button', {
@@ -671,6 +726,76 @@ describe('AuthSection', () => {
         name: ButtonsI18nKeys.LogIn,
       }) as HTMLButtonElement;
       expect(btn.disabled).toBe(true);
+    });
+  });
+
+  describe('Logout', () => {
+    it('calls logoutToolset, shows a success notification, and closes the confirm dialog', async () => {
+      vi.mocked(toolsetsApi.logoutToolset).mockResolvedValue({
+        success: true,
+      });
+      const onAuthChange = vi.fn();
+      renderSection(
+        { ...apiKeyAuth(), isLoggedIn: true },
+        'toolsets/b/my__1.0.0',
+        onAuthChange,
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogOut }),
+      );
+      const dialog = screen.getByRole('dialog');
+      await user.click(
+        within(dialog).getByRole('button', { name: ButtonsI18nKeys.LogOut }),
+      );
+
+      await waitFor(() =>
+        expect(toolsetsApi.logoutToolset).toHaveBeenCalledWith(
+          'toolsets/b/my__1.0.0',
+          expect.objectContaining({ url: 'toolsets/b/my__1.0.0' }),
+        ),
+      );
+      expect(onAuthChange).toHaveBeenCalledWith({ isLoggedIn: false });
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Success,
+        message: ToolsetEditorI18nKeys.LogoutSuccess,
+      });
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('shows an error notification when logout fails', async () => {
+      vi.mocked(toolsetsApi.logoutToolset).mockRejectedValue(new Error('fail'));
+      renderSection({ ...apiKeyAuth(), isLoggedIn: true });
+
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogOut }),
+      );
+      const dialog = screen.getByRole('dialog');
+      await user.click(
+        within(dialog).getByRole('button', { name: ButtonsI18nKeys.LogOut }),
+      );
+
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Error,
+          message: ToolsetEditorI18nKeys.ErrorLogoutFailed,
+        }),
+      );
+    });
+
+    it('does not call logoutToolset when the confirm dialog is cancelled', async () => {
+      renderSection({ ...apiKeyAuth(), isLoggedIn: true });
+
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogOut }),
+      );
+      const dialog = screen.getByRole('dialog');
+      await user.click(
+        within(dialog).getByRole('button', { name: ButtonsI18nKeys.Cancel }),
+      );
+
+      expect(toolsetsApi.logoutToolset).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
 });

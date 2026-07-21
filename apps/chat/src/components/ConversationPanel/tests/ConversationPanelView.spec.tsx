@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useConversationExport } from '../../../hooks/useConversationExport';
+import { useConversationImport } from '../../../hooks/useConversationImport';
 import { discardSharedCatalogItem } from '../../../server-api/share.api';
 import {
   ConversationExportMode,
@@ -201,6 +202,8 @@ vi.mock('@tabler/icons-react', () => ({
   IconCopy: () => null,
   IconDotsVertical: () => null,
   IconDownload: () => null,
+  IconFileArrowLeft: () => null,
+  IconFileArrowRight: () => null,
   IconPencilMinus: () => null,
   IconPin: () => null,
   IconPinnedFilled: () => null,
@@ -287,6 +290,7 @@ vi.mock(
 );
 vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
   default: ({
+    title,
     jobs,
     onDismiss,
     onRetry,
@@ -300,6 +304,7 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
     if (jobs.length === 0) return null;
     return (
       <div role="status">
+        <span>{title}</span>
         {jobs.map((job) => (
           <div key={job.id}>
             <span>{job.label}</span>
@@ -314,6 +319,7 @@ vi.mock('../../ImportExportQueue/ImportExportQueue', () => ({
   },
 }));
 vi.mock('../../../hooks/useConversationExport');
+vi.mock('../../../hooks/useConversationImport');
 vi.mock('../get-conversation-source', () => ({
   getConversationSource: () => undefined,
 }));
@@ -359,9 +365,13 @@ const mockExportSingle = vi.fn().mockResolvedValue(undefined);
 const mockExportAll = vi.fn().mockResolvedValue(undefined);
 const mockDismissJob = vi.fn();
 const mockRetryJob = vi.fn();
+const mockImportConversations = vi.fn().mockResolvedValue(undefined);
+const mockDismissImportJob = vi.fn();
+const mockRetryImportJob = vi.fn();
 
 const EXPORT_LABEL = 'conversationExport.exportLabel';
 const EXPORT_ALL_LABEL = 'conversationExport.exportAllLabel';
+const IMPORT_LABEL = 'conversationImport.importLabel';
 
 const baseContextValue = {
   conversations: [
@@ -416,6 +426,13 @@ beforeEach(() => {
     exportAll: mockExportAll,
     dismissJob: mockDismissJob,
     retryJob: mockRetryJob,
+    dismissAll: vi.fn(),
+  });
+  vi.mocked(useConversationImport).mockReturnValue({
+    jobs: [],
+    importConversations: mockImportConversations,
+    dismissJob: mockDismissImportJob,
+    retryJob: mockRetryImportJob,
     dismissAll: vi.fn(),
   });
 });
@@ -1090,6 +1107,195 @@ describe('ConversationPanelView — export', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(mockRetryJob).toHaveBeenCalledWith('job-3');
+  });
+});
+
+describe('ConversationPanelView — import header action', () => {
+  it('dropdown contains an Import item positioned after Export all', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    openDropdown();
+    expect(screen.getAllByRole('button', { name: IMPORT_LABEL })).toHaveLength(
+      1,
+    );
+  });
+
+  it('clicking Import triggers the hidden file input', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const clickSpy = vi.spyOn(fileInput, 'click');
+
+    openDropdown();
+    fireEvent.click(screen.getByRole('button', { name: IMPORT_LABEL }));
+
+    expect(clickSpy).toHaveBeenCalledOnce();
+  });
+
+  it('accepts .json, .dial, and .zip files', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    expect(fileInput.accept).toBe('.json,.dial,.zip');
+  });
+
+  it('selecting a file calls importConversations with that file', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['{}'], 'export.json', {
+      type: 'application/json',
+    });
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(mockImportConversations).toHaveBeenCalledWith(file);
+  });
+
+  it('resets the file input value after selection so the same file can be re-picked', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['{}'], 'export.json');
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(fileInput.value).toBe('');
+  });
+});
+
+describe('ConversationPanelView — separate import/export transfer queues', () => {
+  it('shows an import job in its own non-modal queue', () => {
+    vi.mocked(useConversationImport).mockReturnValue({
+      jobs: [
+        {
+          id: 'imp-1',
+          label: 'Imported Chat',
+          status: ExportJobStatus.InProgress,
+        },
+      ],
+      importConversations: mockImportConversations,
+      dismissJob: mockDismissImportJob,
+      retryJob: mockRetryImportJob,
+      dismissAll: vi.fn(),
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+
+    expect(screen.getByRole('status')).toBeTruthy();
+    expect(screen.getByText('Imported Chat')).toBeTruthy();
+  });
+
+  it('renders two separate queues with their own titles when both import and export jobs are present', () => {
+    vi.mocked(useConversationExport).mockReturnValue({
+      jobs: [
+        { id: 'job-1', label: 'Chat 1', status: ExportJobStatus.InProgress },
+      ],
+      exportSingle: mockExportSingle,
+      exportAll: mockExportAll,
+      dismissJob: mockDismissJob,
+      retryJob: mockRetryJob,
+      dismissAll: vi.fn(),
+    });
+    vi.mocked(useConversationImport).mockReturnValue({
+      jobs: [
+        {
+          id: 'imp-1',
+          label: 'Imported Chat',
+          status: ExportJobStatus.InProgress,
+        },
+      ],
+      importConversations: mockImportConversations,
+      dismissJob: mockDismissImportJob,
+      retryJob: mockRetryImportJob,
+      dismissAll: vi.fn(),
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+
+    expect(screen.getAllByRole('status')).toHaveLength(2);
+    expect(screen.getByText('conversationExport.queueTitle')).toBeTruthy();
+    expect(screen.getByText('conversationImport.queueTitle')).toBeTruthy();
+  });
+
+  it('shows the Importing title when only import jobs are present', () => {
+    vi.mocked(useConversationImport).mockReturnValue({
+      jobs: [
+        {
+          id: 'imp-1',
+          label: 'Imported Chat',
+          status: ExportJobStatus.InProgress,
+        },
+      ],
+      importConversations: mockImportConversations,
+      dismissJob: mockDismissImportJob,
+      retryJob: mockRetryImportJob,
+      dismissAll: vi.fn(),
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+
+    expect(screen.getByText('conversationImport.queueTitle')).toBeTruthy();
+  });
+
+  it('shows the Exporting title when only export jobs are present', () => {
+    vi.mocked(useConversationExport).mockReturnValue({
+      jobs: [
+        { id: 'job-1', label: 'Chat 1', status: ExportJobStatus.InProgress },
+      ],
+      exportSingle: mockExportSingle,
+      exportAll: mockExportAll,
+      dismissJob: mockDismissJob,
+      retryJob: mockRetryJob,
+      dismissAll: vi.fn(),
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+
+    expect(screen.getByText('conversationExport.queueTitle')).toBeTruthy();
+  });
+
+  it('wires the import queue dismiss button to the import hook', () => {
+    vi.mocked(useConversationImport).mockReturnValue({
+      jobs: [
+        {
+          id: 'imp-1',
+          label: 'Imported Chat',
+          status: ExportJobStatus.InProgress,
+        },
+      ],
+      importConversations: mockImportConversations,
+      dismissJob: mockDismissImportJob,
+      retryJob: mockRetryImportJob,
+      dismissAll: vi.fn(),
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(mockDismissImportJob).toHaveBeenCalledWith('imp-1');
+    expect(mockDismissJob).not.toHaveBeenCalled();
+  });
+
+  it('wires the import queue retry button to the import hook', () => {
+    vi.mocked(useConversationImport).mockReturnValue({
+      jobs: [
+        { id: 'imp-1', label: 'Imported Chat', status: ExportJobStatus.Failed },
+      ],
+      importConversations: mockImportConversations,
+      dismissJob: mockDismissImportJob,
+      retryJob: mockRetryImportJob,
+      dismissAll: vi.fn(),
+    });
+
+    render(<ConversationPanelView {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(mockRetryImportJob).toHaveBeenCalledWith('imp-1');
+    expect(mockRetryJob).not.toHaveBeenCalled();
   });
 });
 

@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
+import * as conversationsApi from '../../../server-api/conversations.api';
 import AppPreviewChat from '../AppPreviewChat';
 
 vi.mock('../../../context/AppConfigContext', () => ({
@@ -136,13 +137,14 @@ vi.mock('../../../components/StarterButtons/StarterButtons', () => ({
 
 describe('AppPreviewChat', () => {
   const mockUseDeployments = vi.mocked(DeploymentsContextModule.useDeployments);
+  const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseDeployments.mockReturnValue({
       items: [
         {
-          id: 'applications/bucket/My%20App',
+          id: 'applications/bucket/My App',
           displayName: 'My App',
           type: 'application',
           conversationStarters: {
@@ -169,5 +171,39 @@ describe('AppPreviewChat', () => {
     expect(screen.getByLabelText('Input message').textContent).toBe(
       'Write a draft',
     );
+  });
+
+  it('creates the conversation with the raw, unencoded app id', async () => {
+    mockUseDeployments.mockReturnValue({
+      items: [
+        {
+          id: 'applications/bucket/My App',
+          displayName: 'My App',
+          type: 'application',
+          conversationStarters: {
+            introText: 'Choose how to start',
+            autoSubmit: true,
+            starters: [{ title: 'Draft', text: 'Write a draft' }],
+          },
+        },
+      ],
+    } as unknown as ReturnType<typeof DeploymentsContextModule.useDeployments>);
+    mockCreateConversation.mockResolvedValue({
+      id: 'bucket/applications/bucket/My App__1.0__Write a draft__uuid',
+    } as never);
+
+    render(<AppPreviewChat appId="applications/bucket/My App" />);
+
+    await act(async () => {
+      screen.getByRole('button', { name: 'Draft' }).click();
+    });
+
+    await waitFor(() => {
+      expect(mockCreateConversation).toHaveBeenCalledWith(
+        'Write a draft',
+        'applications/bucket/My App',
+        undefined,
+      );
+    });
   });
 });

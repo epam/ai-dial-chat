@@ -9,18 +9,15 @@ import {
   ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
 import SourcesSidebarToggle from '../Header/SourcesSidebarToggle';
+import styles from './ChatLayout.module.scss';
 
 interface Props {
-  isHistoryPanelOpen: boolean;
-  onToggleHistoryPanel: () => void;
+  isPanelOpen: boolean;
+  onTogglePanel: () => void;
   onNewChat: () => void;
 }
 
-const ChatLayout: FC<Props> = ({
-  isHistoryPanelOpen,
-  onToggleHistoryPanel,
-  onNewChat,
-}) => {
+const ChatLayout: FC<Props> = ({ isPanelOpen, onTogglePanel, onNewChat }) => {
   const { t } = useTranslation();
 
   return (
@@ -38,15 +35,15 @@ const ChatLayout: FC<Props> = ({
           tooltipProps={{
             tooltip: t(ConversationPanelI18nKeys.ToggleAriaLabel),
           }}
-          onClick={onToggleHistoryPanel}
+          onClick={onTogglePanel}
         />
-        {!isHistoryPanelOpen && (
+        {!isPanelOpen && (
           <DialGhostIconButton
             icon={<IconPlus size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
             aria-label={t(ButtonsI18nKeys.NewChat)}
             tooltipProps={{ tooltip: t(ButtonsI18nKeys.NewChat) }}
             onClick={onNewChat}
-            className="new-chat-rail-btn"
+            className={styles.newChatButton}
           />
         )}
         <div className="ms-auto">

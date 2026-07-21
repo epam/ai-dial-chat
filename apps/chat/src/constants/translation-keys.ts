@@ -10,6 +10,7 @@ export enum ChatI18nKeys {
   GreetingNightNoName = 'chat.greetingNightNoName',
   StreamError = 'chat.streamError',
   CreateConversationError = 'chat.createConversationError',
+  ConversationNotFound = 'chat.conversationNotFound',
   DeleteMessageTitle = 'chat.deleteMessageTitle',
   DeleteMessageDescription = 'chat.deleteMessageDescription',
   StarterConfirmTitle = 'chat.starterConfirmTitle',
@@ -347,6 +348,7 @@ export enum DialFileManagerI18nKeys {
   MetadataAuthorLabel = 'dialFileManager.metadataAuthorLabel',
   UploadArchiveAction = 'dialFileManager.uploadArchiveAction',
   UploadArchiveError = 'dialFileManager.uploadArchiveError',
+  UploadArchiveFilesError = 'dialFileManager.uploadArchiveFilesError',
   UploadArchivePartialError = 'dialFileManager.uploadArchivePartialError',
 }
 
@@ -414,6 +416,9 @@ export enum ConversationPublishI18nKeys {
   PanelAriaLabel = 'conversationPublish.panelAriaLabel',
   AlreadyPublishedWarning = 'conversationPublish.alreadyPublishedWarning',
   SuccessMessage = 'conversationPublish.successMessage',
+  EmptyFolderNameError = 'conversationPublish.emptyFolderNameError',
+  InvalidFolderNameError = 'conversationPublish.invalidFolderNameError',
+  DuplicateFolderNameError = 'conversationPublish.duplicateFolderNameError',
 }
 
 export enum ConversationExportI18nKeys {
@@ -439,6 +444,18 @@ export enum ConversationExportI18nKeys {
   CloseQueueConfirmDescriptionInProgress = 'conversationExport.closeQueueConfirmDescriptionInProgress',
   CloseQueueConfirmDescriptionFailed = 'conversationExport.closeQueueConfirmDescriptionFailed',
   CloseQueueConfirmDescriptionMixed = 'conversationExport.closeQueueConfirmDescriptionMixed',
+}
+
+export enum ConversationImportI18nKeys {
+  ImportLabel = 'conversationImport.importLabel',
+  QueueTitle = 'conversationImport.queueTitle',
+  SuccessTitle = 'conversationImport.successTitle',
+  Success = 'conversationImport.success',
+  FailedTitle = 'conversationImport.failedTitle',
+  Failed = 'conversationImport.failed',
+  WarningAttachmentSkipped = 'conversationImport.warningAttachmentSkipped',
+  AttachmentNameConflict = 'conversationImport.attachmentNameConflict',
+  UnsupportedFormat = 'conversationImport.unsupportedFormat',
 }
 
 export enum SidebarI18nKeys {
@@ -533,6 +550,7 @@ export enum AppsEditorI18nKeys {
   SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
   SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
   ExitPreviewButton = 'appsEditor.exitPreviewButton',
+  SavingOverlayLabel = 'appsEditor.savingOverlay',
   PreviewChatPlaceholder = 'appsEditor.previewChat.placeholder',
   PreviewChatAriaLabel = 'appsEditor.previewChat.ariaLabel',
   ErrorCreateFailed = 'appsEditor.error.createFailed',
@@ -579,6 +597,7 @@ export enum ToolsetEditorI18nKeys {
   ErrorLogoutFailed = 'toolsetEditor.error.logoutFailed',
   ErrorPopupBlocked = 'toolsetEditor.error.popupBlocked',
   LoginSuccess = 'toolsetEditor.success.login',
+  LogoutSuccess = 'toolsetEditor.success.logout',
 }
 
 export enum ErrorBoundaryI18nKeys {

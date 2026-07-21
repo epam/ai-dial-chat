@@ -2,7 +2,7 @@
 
 ### Requirement: POST /api/v1/files/upload-archive endpoint
 
-The BFF SHALL expose `POST /api/v1/files/upload-archive` (multipart/form-data) that accepts a ZIP archive and a destination, streams-extracts its entries via `yauzl`, and uploads each valid entry to DIAL Core via `FilesUploadService.uploadFile(bucket, path, file, token, 'create-only')`, returning a per-entry result array.
+The BFF SHALL expose `POST /api/v1/files/upload-archive` (multipart/form-data) that accepts a ZIP archive and a destination, streams-extracts its entries via `yauzl`, and uploads each valid entry to DIAL Core using the create-only contract. If DIAL Core reports a name collision for an entry, the service SHALL retry that same entry with a deduplicated sibling name (`name (1).ext`, `name (2).ext`, etc.) until the upload succeeds or the retry limit is reached. The endpoint returns a per-entry result array with the final uploaded path for successful entries.
 
 **State ownership**: `FilesUploadService` (`apps/chat-api/src/files/upload/files-upload.service.ts`) owns all extraction/upload logic, including single-file upload (`uploadFile`, `uploadFileStream`) and archive extraction (`extractAndUploadArchive` and its temp-file staging helpers); `FilesController` delegates through the `FilesService` facade (thin-controller pattern).
 
@@ -29,7 +29,7 @@ Multipart fields: `file` (the ZIP, binary), `bucket` (string), `destinationPath`
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `path` | `string` | Destination path of the extracted entry (relative to bucket) |
+| `path` | `string` | Final destination path of the extracted entry (relative to bucket); for conflict-resolved entries this is the deduplicated path |
 | `success` | `boolean` | `true` when the entry was extracted and uploaded successfully |
 | `error` | `string?` | Human-readable error reason when `success` is `false` |
 
@@ -80,7 +80,7 @@ uploadArchive(
 {
   "results": [
     { "path": "reports/q1.pdf", "success": true },
-    { "path": "reports/q2.pdf", "success": false, "error": "Conflict" }
+    { "path": "reports/q2 (1).pdf", "success": true }
   ]
 }
 ```
@@ -115,10 +115,17 @@ uploadArchive(
 - **WHEN** cumulative decompressed bytes across entries exceeds `ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES` partway through extraction
 - **THEN** extraction is aborted, the endpoint returns `422 Unprocessable Entity`, and any entries already uploaded before the abort remain (no rollback, matching the partial-failure posture of `/copy`/`/move` folder operations)
 
-#### Scenario: Conflicting entry is reported as a failed result, extraction continues
+#### Scenario: Conflicting entry is uploaded with a deduplicated name
 
 - **WHEN** one entry's destination path already exists and DIAL Core returns 412 for that entry's `create-only` upload
-- **THEN** that entry's result is `{ success: false, error: "Conflict" }` and the remaining entries are still processed
+- **THEN** the service retries the same entry using the next available deduplicated sibling name, such as `reports/q1 (1).pdf`
+- **AND** the entry's result is `{ "path": "reports/q1 (1).pdf", "success": true }`
+- **AND** the remaining entries are still processed
+
+#### Scenario: Deduplicated name also conflicts
+
+- **WHEN** an entry's original path and first deduplicated path both already exist
+- **THEN** the service continues retrying with incremented suffixes, such as `reports/q1 (2).pdf`, until an available name is created
 
 ---
 
@@ -183,24 +190,47 @@ Every archive entry SHALL be rejected (recorded as a failed result, not extracte
 
 **Cache invalidation**: on completion, the hook invalidates the cache entry for the destination folder and increments `retryCounter`, matching `onUploadFiles`.
 
-**Notifications**: full failure (network/validation error, or every entry in `results` failed) surfaces via `onNotification(NotificationVariant.Error, ...)`. Partial failure (some entries failed) surfaces via a distinct partial-failure message reporting the failed count, matching the `CopyPartialError`/`MovePartialError` convention. Full success shows no toast — the extracted files appearing in the refreshed listing is the confirmation.
+**Notifications**: request-level failure (network/validation error, non-ZIP, oversized archive, timeout) surfaces via `onNotification(NotificationVariant.Error, ...)` with the generic archive-upload error because no per-entry result list is available. If the request succeeds but every entry in `results` failed, the hook surfaces an all-failed archive-entry message containing the failed file list. Partial failure (some entries failed) surfaces via a distinct partial-failure message containing the failed count and failed file list, matching the `CopyPartialError`/`MovePartialError` convention while adding actionable file names. Full success shows no toast — the extracted files appearing in the refreshed listing is the confirmation.
 
-**Memoisation**: `onUploadArchive` SHALL be a `useCallback` with dependencies `[bucket, onNotification, t]`.
+The failed file list SHALL be built from failed `UploadArchiveEntryResultDto` entries as `path` or `path (error)` when an entry includes an error. The list SHALL display at most five entries and append the existing `dialFileManager.andOtherItems` label for the remaining count.
+
+**Memoisation**: `onUploadArchive` SHALL be a `useCallback` with dependencies that include `bucket`, `rootLabel`, `onNotification`, and `t`.
 
 #### Scenario: Successful archive upload refreshes the destination folder
 
 - **WHEN** `onUploadArchive` completes with all entries successful
 - **THEN** the destination folder's cache entry is cleared, `retryCounter` increments, and no toast is shown
 
-#### Scenario: Partial archive upload failure shows a toast with the failed count
+#### Scenario: Partial archive upload failure shows a toast with failed files
 
 - **WHEN** `onUploadArchive` completes with some entries failed
-- **THEN** `onNotification` is called once with `NotificationVariant.Error` and a message reporting the failed count
+- **THEN** `onNotification` is called once with `NotificationVariant.Error` and a message reporting the failed count and failed file list
 
-#### Scenario: Full archive upload failure shows a toast
+#### Scenario: All returned archive entries fail
+
+- **WHEN** `onUploadArchive` completes with a non-empty `results` array and every entry failed
+- **THEN** `onNotification` is called once with `NotificationVariant.Error` and a message listing the failed files
+
+#### Scenario: Request-level archive upload failure shows a generic toast
 
 - **WHEN** the `uploadArchive` request itself rejects (network error, non-ZIP, oversized)
 - **THEN** `onNotification` is called once with `NotificationVariant.Error`
+
+---
+
+### Requirement: Archive entry conflicts are resolved server-side
+
+Archive entry name collisions SHALL NOT depend on the ui-kit's upload conflict popup. The ui-kit can only compare the selected archive file's prepared name against the currently loaded destination folder items before calling `onUploadArchive`; it does not inspect the ZIP contents. Therefore, conflicts for files inside the archive SHALL be resolved by the BFF during extraction/upload using the DIAL Core create-only response as the source of truth.
+
+If the ui-kit opens its conflict popup during archive selection, that popup concerns only the selected archive name prepared by the ui-kit and SHALL NOT be treated as resolution for entries inside the archive. When the user proceeds from that popup, `onUploadArchive` SHALL send the selected archive and destination folder to the BFF, and the BFF SHALL perform per-entry deduplication. If the user cancels the popup, no archive upload request is made.
+
+#### Scenario: Existing file inside archive destination does not require a popup
+
+- **GIVEN** the destination folder contains `reports/q1.pdf`
+- **AND** the selected archive contains `reports/q1.pdf`
+- **WHEN** the archive upload runs
+- **THEN** the BFF uploads the entry as `reports/q1 (1).pdf` or the next available deduplicated name
+- **AND** no frontend replace/duplicate decision is required for that archive entry
 
 ---
 
@@ -222,13 +252,15 @@ Every archive entry SHALL be rejected (recorded as a failed result, not extracte
 
 ### Requirement: i18n keys for upload archive
 
-The following keys SHALL be added to `apps/chat/src/i18n/locales/en.json` with matching members added to `DialFileManagerI18nKeys` in `apps/chat/src/constants/translation-keys.ts`:
+The following base keys SHALL be represented in `DialFileManagerI18nKeys` (`apps/chat/src/constants/translation-keys.ts`) and `apps/chat/src/i18n/locales/en.json`. Pluralized archive-entry failure messages SHALL use i18next `_one` / `_other` locale entries while frontend code calls the base key.
 
-| Key | English value (example) |
-|-----|--------------------------|
+| Base key | Locale entry / English value (example) |
+|----------|----------------------------------------|
 | `dialFileManager.uploadArchiveAction` | `Upload archive` |
 | `dialFileManager.uploadArchiveError` | `Failed to upload the archive` |
-| `dialFileManager.uploadArchivePartialError` | `{{count}} item(s) in the archive could not be uploaded` |
+| `dialFileManager.uploadArchiveFilesError` | `_one`: `Failed to upload this archive file: {{files}}`; `_other`: `Failed to upload these archive files: {{files}}` |
+| `dialFileManager.uploadArchivePartialError` | `_one`: `{{count}} item in the archive could not be uploaded: {{files}}`; `_other`: `{{count}} items in the archive could not be uploaded: {{files}}` |
+| `dialFileManager.andOtherItems` | Reused to append hidden failed-file counts when more than five entries fail |
 
 #### Scenario: Upload-archive toolbar label uses i18n key
 
