@@ -499,6 +499,50 @@ describe('files.reducers quick attachments', () => {
     expect(nextState.selectedFilesIds).toEqual(['files/test/other.txt']);
     expect(nextState.files).toHaveLength(1);
   });
+
+  it('resetDeviceAttachmentFlag clears isFromDeviceAttachment for matching ids', () => {
+    const otherId = 'files/test/other.txt';
+    const state = {
+      ...filesSlice.getInitialState(),
+      files: [
+        makeFile({
+          id: fileId,
+          isFromDeviceAttachment: true,
+        }),
+        makeFile({
+          id: otherId,
+          isFromDeviceAttachment: true,
+        }),
+      ],
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.resetDeviceAttachmentFlag({ ids: [fileId] }),
+    );
+
+    expect(nextState.files[0].isFromDeviceAttachment).toBeFalsy();
+    expect(nextState.files[1].isFromDeviceAttachment).toBe(true);
+  });
+
+  it('resetDeviceAttachmentFlag leaves non-device files untouched', () => {
+    const state = {
+      ...filesSlice.getInitialState(),
+      files: [
+        makeFile({
+          id: fileId,
+        }),
+      ],
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.resetDeviceAttachmentFlag({ ids: [fileId] }),
+    );
+
+    expect(nextState.files[0].isFromDeviceAttachment).toBeUndefined();
+    expect(nextState.files).toHaveLength(1);
+  });
 });
 
 describe('files.reducers getFullListingSuccess', () => {
