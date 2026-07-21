@@ -108,6 +108,15 @@ export class EnvironmentVariables {
   @IsUrl({ require_tld: false })
   AUTH_POST_LOGOUT_REDIRECT_URI?: string;
 
+  /**
+   * Legacy configuration path, temporarily kept alongside the discrete
+   * per-provider variables below. When set, it takes precedence over
+   * AUTH_{PROVIDER}_* variables.
+   */
+  @IsOptional()
+  @IsString()
+  AUTH_PROVIDERS?: string;
+
   @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return ['admin'];

@@ -81,6 +81,8 @@ ALLOWED_IFRAME_ORIGINS=
 
 At least one identity provider (see [Auth provider environment variables](#auth-provider-environment-variables) below) must also be configured for login to work; the application otherwise boots with no providers registered.
 
+> **Legacy mode (temporary):** setting `AUTH_PROVIDERS` (JSON array of provider configs, the pre-migration format) still works and takes precedence over all `AUTH_{PROVIDER}_*` variables below — when `AUTH_PROVIDERS` is set, the discrete per-provider variables are ignored entirely. This is a transitional escape hatch for deployments not yet migrated and will be removed; new configurations should use the per-provider variables.
+
 **Optional:**
 
 | Variable                                | Default                        | Description                                                                                                                                                                                                                                                                                                                                                                                              |

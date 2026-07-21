@@ -62,9 +62,9 @@ This mirrors the reference app's own field names 1:1, so an operator migrating a
 
 Add `AUTH_POST_LOGOUT_REDIRECT_URI` (required if at least one provider is configured) to `EnvironmentVariables`, replacing the current per-entry `postLogoutRedirectUri` JSON field. Every assembled `ProviderConfig.postLogoutRedirectUri` is set to this single value. Rejected: reusing `AUTH_CALLBACK_BASE_URL` (that variable is documented as the API's own OIDC redirect-URI base, a distinct concern from where the browser should land after IdP logout — typically the SPA origin, not the API origin).
 
-### 6. Fully replace `AUTH_PROVIDERS`, no dual path
+### 6. Temporary dual path: `AUTH_PROVIDERS` kept as a legacy fallback
 
-`AUTH_PROVIDERS` is deleted from `EnvironmentVariables` and `ProviderRegistryService` in the same change (**BREAKING**). No env var is read for backward compatibility. This keeps `ProviderRegistryService` free of a legacy branch and matches how this codebase treats other breaking config changes (fail fast, single path) rather than carrying a long-lived dual-path.
+Reversal of the original "fully replace, no dual path" decision: `AUTH_PROVIDERS` stays as an optional field on `EnvironmentVariables`. `ProviderRegistryService.onModuleInit()` checks it first — if set, it runs the original `JSON.parse` + `plainToInstance(ProviderConfig, entry)` path (unchanged from before this feature) and the discrete `AUTH_{PROVIDER}_*` variables are ignored entirely; if unset, it falls through to `buildProviderConfigs(env)`. This is intentionally a transitional escape hatch, not a permanent two-path architecture — it exists so deployments that haven't migrated their `.env`/secrets yet keep working, and is expected to be removed in a follow-up change once migration is complete. `ProviderConfig`'s existing `@IsNotEmpty()` /`@Matches()` field validators still apply per-entry in both paths via the shared `validateSync(providerConfig, …)` call, so a malformed legacy JSON entry still fails boot the same way it did before this feature existed.
 
 ## Risks / Trade-offs
 
