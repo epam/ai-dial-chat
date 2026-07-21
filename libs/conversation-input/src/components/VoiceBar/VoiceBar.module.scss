@@ -1,24 +1,36 @@
 .container {
   background: var(--ci-bg, var(--bg-layer-0, #fcfcfc));
-  border-color: var(--ci-border, var(--stroke-secondary, #d1dbea));
+  border-color: var(--ci-border, rgba(0, 0, 0, 0.05));
+  box-shadow: var(--ci-shadow, 0 8px 24px rgba(16, 24, 40, 0.08));
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+
+  &:hover:not(:focus-within) {
+    border-color: var(--ci-border-hover, rgba(0, 0, 0, 0.12));
+  }
+
+  &:focus-within {
+    border-color: var(
+      --ci-border-focus,
+      color-mix(in srgb, var(--stroke-accent-primary, #7da4ff) 50%, transparent)
+    );
+    box-shadow: var(--ci-shadow-focus, 0 8px 24px rgba(16, 24, 40, 0.08));
+  }
 
   &.containerError {
-    border-color: var(--ci-voice-error, var(--error-default, #f04438));
+    border-color: var(--ci-voice-error, var(--stroke-error, #ae2f2f));
   }
 }
 
 .waveformCanvas {
-  /*
-   * `color` is read via getComputedStyle in the canvas draw effect so that
-   * the bar fill respects the themed value without hard-coding a hex.
-   */
   color: var(--ci-voice-waveform, var(--text-primary, #161b2d));
 }
 
 .recordingDot {
-  background: var(--ci-voice-accent, var(--error-default, #f04438));
+  background: var(--ci-voice-accent, var(--controls-bg-error, #ae2f2f));
 }
 
 .micRecordingIcon {
-  color: var(--ci-voice-accent, var(--error-default, #f04438));
+  color: var(--ci-voice-accent, var(--text-error, #ae2f2f));
 }

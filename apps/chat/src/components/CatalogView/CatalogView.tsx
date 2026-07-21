@@ -153,6 +153,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     setSortKey,
     filterTopics: persistedFilterTopics,
     setFilterTopics,
+    isMyAppsActive,
+    setIsMyAppsActive,
   } = useCatalogSortFilterPreference();
 
   const isLoading = isDeploymentsLoading || isFavoritesLoading;
@@ -485,7 +487,6 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const isPrimaryActionVisible = useCallback(
     (item: CatalogItem) =>
       item.type === CatalogEntityType.Model ||
-      item.type === CatalogEntityType.Toolset ||
       item.type === CatalogEntityType.Application,
     [],
   );
@@ -665,6 +666,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       onSortChange={isSelectorMode ? undefined : setSortKey}
       filterTopics={isSelectorMode ? undefined : reconciledFilterTopics}
       onFilterTopicsChange={isSelectorMode ? undefined : setFilterTopics}
+      isMyAppsActive={isSelectorMode ? undefined : isMyAppsActive}
+      onMyAppsActiveChange={isSelectorMode ? undefined : setIsMyAppsActive}
       onFetchDetails={handleFetchDetails}
       onToggleFavorite={onToggleFavorite}
       onUseInChat={handleUseInChat}
