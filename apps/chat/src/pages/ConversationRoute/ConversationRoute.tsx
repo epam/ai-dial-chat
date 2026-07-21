@@ -5,17 +5,10 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
-import {
-  FC,
-  lazy,
-  memo,
-  Suspense,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
+import { FC, memo, Suspense, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useDeploymentSelectorOverlay } from '../../components/DeploymentSelector/useDeploymentSelectorOverlay';
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
@@ -39,10 +32,6 @@ import {
   getStarterPopulateText,
   getStartersFromSchema,
 } from '../../utils/starter-option';
-
-const DeploymentSelectorOverlay = lazy(
-  () => import('../../components/DeploymentSelector/DeploymentSelectorOverlay'),
-);
 
 /*
  * TODO: rename page and component
@@ -170,6 +159,8 @@ const ConversationRoute: FC = () => {
     [description, propertyKey, selectedItemId, navigate, showNotification, t],
   );
 
+  const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
+
   return (
     <Suspense fallback={<RouteFallback />}>
       <NewConversationComposer
@@ -185,17 +176,14 @@ const ConversationRoute: FC = () => {
         message={inputMessage}
         inputStyles={CONVERSATION_ROUTE_INPUT_STYLES}
         onCreateConversation={handleCreateConversation}
-        modelPickerOverlay={(onClose) => (
-          <Suspense fallback={null}>
-            <DeploymentSelectorOverlay onClose={onClose} />
-          </Suspense>
-        )}
+        modelPickerOverlay={renderOverlay}
       >
         <StarterButtons
           starters={activeStarters}
           onSelect={handleStarterSelect}
         />
       </NewConversationComposer>
+      {catalogModal}
     </Suspense>
   );
 };

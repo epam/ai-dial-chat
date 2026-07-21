@@ -60,12 +60,9 @@ import {
 } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { isMessageChanged } from '../../utils/message-utils';
+import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import ConversationMessageItem from './ConversationMessageItem';
-
-const DeploymentSelectorOverlay = lazy(
-  () => import('../DeploymentSelector/DeploymentSelectorOverlay'),
-);
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -155,6 +152,7 @@ const ConversationView: FC<Props> = ({
   fixedModel,
 }) => {
   const isModelFixed = !!fixedModel;
+  const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
   const { t } = useTranslation();
   const { showNotification } = useNotification();
   const isMobile = useIsMobile();
@@ -656,15 +654,7 @@ const ConversationView: FC<Props> = ({
                 hideAttachFile={!isAttachmentsAllowed}
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
-                modelPickerOverlay={
-                  isModelFixed
-                    ? undefined
-                    : (onClose) => (
-                        <Suspense fallback={null}>
-                          <DeploymentSelectorOverlay onClose={onClose} />
-                        </Suspense>
-                      )
-                }
+                modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
               />
             </Suspense>
             <Suspense fallback={null}>
@@ -748,6 +738,7 @@ const ConversationView: FC<Props> = ({
           </>
         )}
       </div>
+      {catalogModal}
     </>
   );
 };
