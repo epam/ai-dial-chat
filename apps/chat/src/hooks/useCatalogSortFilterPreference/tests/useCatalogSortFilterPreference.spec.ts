@@ -13,11 +13,12 @@ describe('useCatalogSortFilterPreference', () => {
     vi.restoreAllMocks();
   });
 
-  it('defaults to RecentlyUpdated and an empty set when nothing is persisted', () => {
+  it('defaults to RecentlyUpdated, an empty set, and My Apps off when nothing is persisted', () => {
     const { result } = renderHook(() => useCatalogSortFilterPreference());
 
     expect(result.current.sortKey).toBe(CatalogSortKey.RecentlyUpdated);
     expect(result.current.filterTopics).toEqual(new Set());
+    expect(result.current.isMyAppsActive).toBe(false);
   });
 
   it('restores a persisted sort key', () => {
@@ -99,5 +100,40 @@ describe('useCatalogSortFilterPreference', () => {
     });
 
     expect(result.current.sortKey).toBe(CatalogSortKey.NameAZ);
+  });
+
+  it('restores a persisted My Apps toggle', () => {
+    localStorage.setItem(
+      StorageKey.CatalogIsMyAppsActive,
+      JSON.stringify(true),
+    );
+
+    const { result } = renderHook(() => useCatalogSortFilterPreference());
+
+    expect(result.current.isMyAppsActive).toBe(true);
+  });
+
+  it('falls back to false when the persisted My Apps value is not a boolean', () => {
+    localStorage.setItem(
+      StorageKey.CatalogIsMyAppsActive,
+      JSON.stringify('not-a-boolean'),
+    );
+
+    const { result } = renderHook(() => useCatalogSortFilterPreference());
+
+    expect(result.current.isMyAppsActive).toBe(false);
+  });
+
+  it('persists the My Apps toggle when setIsMyAppsActive is called', () => {
+    const { result } = renderHook(() => useCatalogSortFilterPreference());
+
+    act(() => {
+      result.current.setIsMyAppsActive(true);
+    });
+
+    expect(result.current.isMyAppsActive).toBe(true);
+    expect(localStorage.getItem(StorageKey.CatalogIsMyAppsActive)).toBe(
+      JSON.stringify(true),
+    );
   });
 });

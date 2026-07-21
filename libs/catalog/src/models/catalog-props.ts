@@ -215,4 +215,11 @@ export interface CatalogProps {
   filterTopics?: Set<string>;
   /** Called when the user applies a new topic filter selection; required to control `filterTopics`. */
   onFilterTopicsChange?: (topics: Set<string>) => void;
+  /**
+   * Externally-controlled "My Apps" filter toggle. When omitted, `Catalog`
+   * manages its own state internally, defaulting to `false`.
+   */
+  isMyAppsActive?: boolean;
+  /** Called when the user toggles the "My Apps" filter; required to control `isMyAppsActive`. */
+  onMyAppsActiveChange?: (isActive: boolean) => void;
 }
