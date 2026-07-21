@@ -149,7 +149,7 @@
     "@types/yauzl": "^3.4.0"
   },
   "overrides": {
-    "js-yaml": "4.2.0",
+    "js-yaml": "4.3.0",
     "multer": "2.2.0"
   }
 }

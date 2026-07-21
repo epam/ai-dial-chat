@@ -14,7 +14,10 @@ import {
   ToolsetOAuthResultType,
 } from '../../../types/toolsets';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
-import ToolsetEditorCallback from '../ToolsetEditorCallback';
+import ToolsetAuthCallback from '../ToolsetAuthCallback';
+
+const setRedirectState = (state: ToolsetRedirectState) =>
+  sessionStorage.setItem(TOOLSET_REDIRECT_STATE_KEY, JSON.stringify(state));
 
 /** Listens on the flow's channel and resolves with the first message posted to it. */
 const listenForResult = (flowId: string): Promise<ToolsetOAuthChannelMessage> =>
@@ -34,9 +37,6 @@ vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
   default: () => <div>Loading</div>,
 }));
 
-const setRedirectState = (state: ToolsetRedirectState) =>
-  sessionStorage.setItem(TOOLSET_REDIRECT_STATE_KEY, JSON.stringify(state));
-
 const renderCallback = (
   search = '?code=test-code',
   route = '/auth/toolset-signin',
@@ -44,19 +44,16 @@ const renderCallback = (
   render(
     <MemoryRouter initialEntries={[`${route}${search}`]}>
       <Routes>
-        <Route
-          path="/auth/toolset-signin"
-          element={<ToolsetEditorCallback />}
-        />
+        <Route path="/auth/toolset-signin" element={<ToolsetAuthCallback />} />
         <Route
           path="/toolset-editor/callback"
-          element={<ToolsetEditorCallback />}
+          element={<ToolsetAuthCallback />}
         />
       </Routes>
     </MemoryRouter>,
   );
 
-describe('ToolsetEditorCallback', () => {
+describe('ToolsetAuthCallback', () => {
   const mockClose = vi.fn();
 
   beforeEach(() => {
@@ -106,9 +103,7 @@ describe('ToolsetEditorCallback', () => {
   });
 
   it('closes the window even when loginToolset throws', async () => {
-    setRedirectState({
-      toolsetId: 'toolsets/b/my__1.0.0',
-    });
+    setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0' });
     vi.mocked(toolsetsApi.loginToolset).mockRejectedValue(
       new Error('network error'),
     );
@@ -119,9 +114,7 @@ describe('ToolsetEditorCallback', () => {
   });
 
   it('removes the redirect state from sessionStorage after running', async () => {
-    setRedirectState({
-      toolsetId: 'toolsets/b/my__1.0.0',
-    });
+    setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0' });
     vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
 
     renderCallback('?code=any-code');
@@ -150,10 +143,7 @@ describe('ToolsetEditorCallback', () => {
   });
 
   it('posts a failure message on the flow channel when the OAuth state mismatches', async () => {
-    setRedirectState({
-      toolsetId: 'toolsets/b/my__1.0.0',
-      state: 'flow-1',
-    });
+    setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0', state: 'flow-1' });
 
     const resultPromise = listenForResult('flow-1');
     renderCallback('?code=auth-code-xyz&state=different-flow');
@@ -165,10 +155,7 @@ describe('ToolsetEditorCallback', () => {
   });
 
   it('posts a failure message on the flow channel when the code query param is missing', async () => {
-    setRedirectState({
-      toolsetId: 'toolsets/b/my__1.0.0',
-      state: 'flow-1',
-    });
+    setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0', state: 'flow-1' });
 
     const resultPromise = listenForResult('flow-1');
     renderCallback('?state=flow-1');
@@ -190,10 +177,7 @@ describe('ToolsetEditorCallback', () => {
   });
 
   it('posts a failure message on the flow channel when loginToolset rejects', async () => {
-    setRedirectState({
-      toolsetId: 'toolsets/b/my__1.0.0',
-      state: 'flow-1',
-    });
+    setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0', state: 'flow-1' });
     vi.mocked(toolsetsApi.loginToolset).mockRejectedValue(
       new Error('network error'),
     );
