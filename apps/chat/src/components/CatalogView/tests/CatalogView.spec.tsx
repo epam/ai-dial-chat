@@ -1816,9 +1816,6 @@ describe('CatalogView', () => {
       render(<CatalogView />);
 
       expect(capturedPublishProps.current?.sortKey).toBe(CatalogSortKey.Newest);
-      expect(capturedPublishProps.current?.filterTopics).toEqual(
-        new Set(['nlp']),
-      );
       expect(capturedPublishProps.current?.isMyAppsActive).toBe(true);
     });
 

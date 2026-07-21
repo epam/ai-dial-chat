@@ -35,7 +35,7 @@ The application SHALL declare a React Router v6 route at `/conversations/:conver
 #### Scenario: Unknown conversation ID redirects to home page with notification
 
 - **WHEN** the user navigates to `/conversations/does-not-exist`
-- **THEN** `<ConversationPage>` detects the conversation is not present in context, displays a notification alert informing the user that the conversation was not found, and navigates to `/` (home page). The notification SHALL use the application's toast/notification system with an appropriate message from the i18n translation layer
+- **THEN** `<ConversationPage>` detects the conversation is not present in context, displays an error notification with the message "The conversation was not found." (translated via `ChatI18nKeys.ConversationNotFound`), and navigates to `/` (home page). The notification SHALL be shown exactly once per failed conversation ID, even if the load attempt is retried
 
 #### Scenario: ConversationPage is lazy-loaded
 

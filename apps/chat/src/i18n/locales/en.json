@@ -29,6 +29,7 @@
     "placeholder": "How can I help you today?",
     "streamError": "Something went wrong while generating the response.",
     "createConversationError": "Failed to create the conversation. Please try again.",
+    "conversationNotFound": "The conversation was not found.",
     "deleteMessageTitle": "Confirm deleting message?",
     "deleteMessageDescription": "Are you sure that you want to delete the message?",
     "starterConfirmTitle": "Confirm action",
