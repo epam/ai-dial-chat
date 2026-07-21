@@ -646,9 +646,7 @@ const DialFileManagerModal: FC<Props> = ({
         <div className="flex flex-col gap-1">
           <span>{title}</span>
           {headerDescription != null && (
-            <p className="text-start text-sm font-normal">
-              {headerDescription}
-            </p>
+            <p className="dial-small-text text-start">{headerDescription}</p>
           )}
         </div>
       }

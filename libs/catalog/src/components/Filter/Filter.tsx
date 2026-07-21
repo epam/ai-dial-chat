@@ -39,7 +39,8 @@ export interface FilterProps {
   clearLabel?: string;
   /** Label for the footer Apply button. Default: 'Apply'. */
   applyLabel?: string;
-  typography: ToolbarTypography;
+  /** Optional typography overrides for the filter button and section label. */
+  typography?: ToolbarTypography;
 }
 
 const getFilterButtonLabel = (
@@ -235,7 +236,7 @@ export const Filter: FC<FilterProps> = ({
             <span
               className={mergeClasses(
                 styles.rowLabel,
-                typography.filterButtonClassName ?? 'dial-small-semi-text',
+                typography?.filterButtonClassName ?? 'dial-small-semi-text',
               )}
             >
               {myAppsLabel}
@@ -252,7 +253,7 @@ export const Filter: FC<FilterProps> = ({
               <div
                 className={mergeClasses(
                   'px-[10px] pb-1 pt-[10px] uppercase tracking-[0.06em]',
-                  typography.filterSectionLabelClassName ??
+                  typography?.filterSectionLabelClassName ??
                     'dial-tiny-semi-text',
                   styles.sectionLabel,
                 )}
@@ -343,7 +344,7 @@ export const Filter: FC<FilterProps> = ({
         <span
           className={mergeClasses(
             styles.filterBtnLabel,
-            typography.filterButtonClassName ?? 'dial-small-semi-text',
+            typography?.filterButtonClassName ?? 'dial-small-semi-text',
           )}
         >
           {buttonLabel}

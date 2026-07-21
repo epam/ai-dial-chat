@@ -1,3 +1,4 @@
+import { BASE_LG_ICON_PROPS } from '@epam/ai-dial-chat-shared';
 import {
   PanelEmpty,
   PanelNoResults,
@@ -5,7 +6,7 @@ import {
   SidebarOrientation,
   SidebarPanel,
 } from '@epam/ai-dial-sidebar';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
 import type { ConversationSourcesPanelProps } from '../../models/conversation-sources-panel-props';
@@ -103,9 +104,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       rightActions={
         !isEmpty && (
           <DialGhostIconButton
-            icon={
-              <IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} aria-hidden />
-            }
+            icon={<IconDownload {...BASE_LG_ICON_PROPS} />}
             aria-label={labels.downloadAllLabel}
             tooltipProps={{ tooltip: labels.downloadAllLabel }}
             onClick={onDownloadAll}

@@ -43,11 +43,6 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
    * to fenced code blocks. Migrate to `codeBlockContainer` for the block container.
    */
   codeBlock?: string;
-  /**
-   * @deprecated Was the font-size class on the `<pre>` wrapper; has no effect on fenced blocks
-   * now that `<pre>` is a passthrough.
-   */
-  codeBlockFont?: string;
   /** Extra classes on the {@link MarkdownCodeBlock} outer container. */
   codeBlockContainer?: string;
   /** Extra classes on the {@link MarkdownCodeBlock} header bar. */

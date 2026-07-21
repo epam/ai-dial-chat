@@ -31,23 +31,6 @@ div[role='menu']:has(> [role='none']) {
   }
 }
 
-// new chat button in header — primary action button style
-.new-chat-rail-btn {
-  &:hover {
-    background: var(
-      --cp-new-chat-hover,
-      var(--bg-accent-primary-alpha, #7da4ff2e)
-    ) !important;
-  }
-
-  &:active {
-    background: var(
-      --cp-new-chat-active,
-      var(--bg-accent-primary-alpha, #7da4ff2e)
-    ) !important;
-  }
-}
-
 // new dropdown styles
 
 .cp-dropdown-overlay {

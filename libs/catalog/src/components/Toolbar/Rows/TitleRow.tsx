@@ -180,7 +180,7 @@ export const TitleRow: FC<TitleRowProps> = ({
           defaultLabel={filterFromLabel}
           myAppsLabel={filterMyAppsLabel}
           topicsLabel={filterTopicsLabel}
-          typography={browseStyles.typography}
+          typography={browseStyles?.typography}
         />
       </div>
     </div>
