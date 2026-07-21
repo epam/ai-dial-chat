@@ -43,7 +43,7 @@ import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import {
-  getStarterPopulateText,
+  getStarterConversationText,
   getStartersFromSchema,
 } from '../../utils/starter-option';
 
@@ -110,7 +110,11 @@ const ConversationRoute: FC = () => {
     [items],
   );
 
-  const { starters, propertyKey, description } = useMemo(
+  const {
+    starters: schemaStarters,
+    propertyKey: schemaPropertyKey,
+    description: schemaDescription,
+  } = useMemo(
     () => getStartersFromSchema(selectedDeploymentConfiguration),
     [selectedDeploymentConfiguration],
   );
@@ -119,15 +123,23 @@ const ConversationRoute: FC = () => {
       getQuickAppConversationStarters(selectedDeployment?.conversationStarters),
     [selectedDeployment?.conversationStarters],
   );
-  const activeStarters =
-    starters.length > 0 ? starters : quickAppStarters.starters;
-  const starterIntroText = description ?? quickAppStarters.introText;
+  const usingQuickAppStarters = quickAppStarters.starters.length > 0;
+  const activeStarters = usingQuickAppStarters
+    ? quickAppStarters.starters
+    : schemaStarters;
+  const propertyKey = usingQuickAppStarters ? undefined : schemaPropertyKey;
+  const description = usingQuickAppStarters ? undefined : schemaDescription;
+  const starterIntroText = usingQuickAppStarters
+    ? quickAppStarters.introText
+    : (schemaDescription ?? quickAppStarters.introText);
 
   const isInputDisabled = useMemo(
     () =>
-      !!selectedDeploymentConfiguration?.isChatMessageInputDisabled ||
-      quickAppStarters.isChatMessageInputDisabled,
+      usingQuickAppStarters
+        ? quickAppStarters.isChatMessageInputDisabled
+        : !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
     [
+      usingQuickAppStarters,
       selectedDeploymentConfiguration,
       quickAppStarters.isChatMessageInputDisabled,
     ],
@@ -166,7 +178,7 @@ const ConversationRoute: FC = () => {
   const handleStarterSelect = useCallback(
     (starter: StarterOption) => {
       if (starter['dial:widgetOptions'].submit) {
-        const text = description ?? getStarterPopulateText(starter);
+        const text = getStarterConversationText(starter, description);
         if (!selectedItemId) {
           return;
         }
@@ -194,7 +206,7 @@ const ConversationRoute: FC = () => {
 
         void createAndNavigate();
       } else {
-        const text = description ?? getStarterPopulateText(starter);
+        const text = getStarterConversationText(starter, description);
         setInputMessage(text);
       }
     },

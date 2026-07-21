@@ -64,6 +64,7 @@ import {
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { isMessageChanged } from '../../utils/message-utils';
+import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import DeploymentSelectorPanel from '../DeploymentSelector/DeploymentSelectorPanel';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import ConversationMessageItem from './ConversationMessageItem';
@@ -253,9 +254,18 @@ const ConversationView: FC<Props> = ({
     [fixedModel],
   );
 
+  const hasQuickAppStarters = useMemo(
+    () =>
+      getQuickAppConversationStarters(selectedDeployment?.conversationStarters)
+        .starters.length > 0,
+    [selectedDeployment?.conversationStarters],
+  );
+
   const isInputDisabled = useMemo(
-    () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
-    [selectedDeploymentConfiguration],
+    () =>
+      !hasQuickAppStarters &&
+      !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
+    [hasQuickAppStarters, selectedDeploymentConfiguration],
   );
 
   const deploymentLookup = useMemo<

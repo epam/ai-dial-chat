@@ -38,13 +38,27 @@ describe('getConversationRoute', () => {
     );
   });
 
-  it('protects encoded resource data from router decoding', () => {
+  /*
+   * The backend concatenates a Quick App's (possibly percent-encoded)
+   * deployment id directly into the conversation id. Each URL segment is
+   * decoded first (undoing any pre-existing encoding) before being
+   * re-encoded exactly once, so the router's single automatic decode on
+   * navigation lands back on the fully raw, correctly single-encoded value
+   * — not a double-encoded one.
+   */
+  it('decodes an already-percent-encoded segment before re-encoding it once', () => {
     expect(
       getConversationRoute(
         'tenant/applications/catalog/Team%2FApp%20One__0.0.1__title',
       ),
     ).toBe(
-      '/conversations/tenant/applications/catalog/Team%252FApp%2520One__0.0.1__title',
+      '/conversations/tenant/applications/catalog/Team%2FApp%20One__0.0.1__title',
+    );
+  });
+
+  it('leaves a literal, non-percent-encoding "%" in a segment unchanged when decoding fails', () => {
+    expect(getConversationRoute('tenant/gpt-4o__50% off__title')).toBe(
+      '/conversations/tenant/gpt-4o__50%25%20off__title',
     );
   });
 

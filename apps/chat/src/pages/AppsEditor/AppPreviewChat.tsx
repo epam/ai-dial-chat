@@ -54,7 +54,6 @@ import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
-import { encodeDeploymentId } from '../../utils/deployment-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { getStarterPopulateText } from '../../utils/starter-option';
@@ -76,24 +75,26 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   const { items } = useDeployments();
 
   /*
-   * `appId` is the raw, human-readable application id used by the settings
-   * iframe's postMessage protocol (e.g. "applications/<bucket>/My App__1.0").
-   * Chat completion calls require a percent-encoded deployment id instead.
+   * `appId` is the raw, human-readable application id (e.g.
+   * "applications/<bucket>/My App__1.0") and matches `items[].id`. It is used
+   * as-is everywhere here — deploymentId/model/deployment are always sent as
+   * JSON body fields (createConversation, streamCompletion, transcribeAudio),
+   * never a raw URL path segment, so percent-encoding it would only embed
+   * literal `%` characters that get double-encoded once the conversation's
+   * stored path is built from it.
    */
-  const deploymentId = useMemo(() => encodeDeploymentId(appId), [appId]);
-
   const fixedModel = useMemo(
     () => ({
-      id: deploymentId,
+      id: appId,
       displayName: appDisplayName,
       iconUrl: resolveCatalogIconUrl(appIconUrl),
     }),
-    [deploymentId, appDisplayName, appIconUrl],
+    [appId, appDisplayName, appIconUrl],
   );
 
   const appDeployment = useMemo(
-    () => items.find((item) => item.id === deploymentId),
-    [items, deploymentId],
+    () => items.find((item) => item.id === appId),
+    [items, appId],
   );
   const quickAppStarters = useMemo(
     () => getQuickAppConversationStarters(appDeployment?.conversationStarters),
@@ -137,7 +138,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       bucket,
       transcribeSizeLimitBytes,
       asrModelId,
-      selectedDeploymentId: deploymentId,
+      selectedDeploymentId: appId,
     });
 
   const handleStopError = useCallback(() => {
@@ -169,7 +170,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
       const attachmentDtos = attachmentsToDtos(attachments || []);
       const created = await apiCreateConversation(
         message,
-        deploymentId,
+        appId,
         attachmentDtos,
       );
       const savedConversation = {
@@ -201,13 +202,13 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         created.id,
         message,
         withPlaceholder.messages.length - 1,
-        deploymentId,
+        appId,
         attachmentDtos?.length ? { attachments: attachmentDtos } : undefined,
         crypto.randomUUID(),
         CompletionMode.ContinueLastUser,
       );
     },
-    [deploymentId, startStream],
+    [appId, startStream],
   );
 
   const handleStarterSelect = useCallback(
@@ -278,7 +279,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     setConversation,
     navigate: handlePreviewNavigate as NavigateFunction,
     showNetworkError: handleNetworkUploadError,
-    fixedModelId: deploymentId,
+    fixedModelId: appId,
   });
 
   const handleConversationChange = useCallback(
@@ -319,7 +320,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         <Suspense fallback={null}>
           <NewConversationComposer
             deployments={[fixedModel]}
-            selectedDeploymentId={deploymentId}
+            selectedDeploymentId={appId}
             isModelSelectorDisabled
             selectedDeployment={appDeployment}
             isInputDisabled={quickAppStarters.isChatMessageInputDisabled}
@@ -347,7 +348,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     >
       <ConversationView
         messages={conversation.messages}
-        initialModelId={deploymentId}
+        initialModelId={appId}
         fixedModel={fixedModel}
         onSend={handleSend}
         onUploadAttachment={handlePostCreateUploadAttachment}

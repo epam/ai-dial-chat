@@ -100,17 +100,35 @@ and pass it as `isInputDisabled={isInputDisabled}` to `ConversationInput`. The v
 
 ### Requirement: App-edge derivation of isInputDisabled in ConversationView
 
-`apps/chat/src/components/ConversationView/ConversationView.tsx` SHALL add `selectedDeploymentConfiguration` to its `useDeployments()` destructuring, derive `isInputDisabled` by the same formula as `ConversationRoute`, and pass it as `isInputDisabled={isInputDisabled}` to `ConversationInput`.
+`apps/chat/src/components/ConversationView/ConversationView.tsx` SHALL add `selectedDeploymentConfiguration` to its `useDeployments()` destructuring and derive `isInputDisabled` as:
 
-#### Scenario: Flag true — ConversationView passes isInputDisabled true
+```ts
+const hasQuickAppStarters =
+  getQuickAppConversationStarters(selectedDeployment?.conversationStarters)
+    .starters.length > 0;
+const isInputDisabled =
+  !hasQuickAppStarters &&
+  !!selectedDeploymentConfiguration?.isChatMessageInputDisabled;
+```
 
-- **WHEN** `selectedDeploymentConfiguration` contains `{ isChatMessageInputDisabled: true }`
+and pass it as `isInputDisabled={isInputDisabled}` to `ConversationInput`, where `selectedDeployment` is the deployment resolved from `activeDeploymentId` (the `fixedModel` id when set, otherwise `selectedItemId`).
+
+`isChatMessageInputDisabled` is a deployment-configuration-schema flag meant to persist for the entire conversation, for form/schema-driven apps that always require a button- or `configuration_value`-driven message (they provide an ongoing interaction path via per-message embedded buttons, so the free-text path can stay blocked indefinitely). Quick Apps' `conversationStarters.chatMessageInputDisabled` (surfaced through the same underlying schema flag on some deployments) is, by contrast, only ever a welcome-screen nudge to pick a starter — once a conversation exists there is no further button-driven interaction to fall back on, so `ConversationView` MUST NOT keep the input disabled for a deployment that exposes Quick Apps starters, regardless of what the schema flag says.
+
+#### Scenario: Flag true, no Quick Apps starters — ConversationView passes isInputDisabled true
+
+- **WHEN** `selectedDeploymentConfiguration` contains `{ isChatMessageInputDisabled: true }` and the resolved deployment has no valid Quick Apps `conversationStarters`
 - **THEN** `ConversationInput` receives `isInputDisabled={true}` in `ConversationView`
 
 #### Scenario: Flag absent — ConversationView passes isInputDisabled false
 
 - **WHEN** `selectedDeploymentConfiguration` is `null` or does not contain `isChatMessageInputDisabled`
 - **THEN** `ConversationInput` receives `isInputDisabled={false}` in `ConversationView`
+
+#### Scenario: Flag true but deployment has Quick Apps starters — input stays enabled after the first message
+
+- **WHEN** `selectedDeploymentConfiguration.isChatMessageInputDisabled` is `true` AND the resolved deployment has valid Quick Apps `conversationStarters`
+- **THEN** `ConversationInput` receives `isInputDisabled={false}` in `ConversationView`, so the user can send free-form follow-up messages after starting the conversation from a starter
 
 ---
 

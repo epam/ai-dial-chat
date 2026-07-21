@@ -118,7 +118,34 @@ DIAL Core's sharing mechanism grants READ access to the resource at its original
 
 `resolveConversationLocation` in `ConversationService` is the single implementation point for this routing logic. It MUST NOT fall back to the session bucket when the first path segment is neither the session bucket nor `public` — it SHALL extract and use that segment as the target bucket.
 
-**Frontend behaviour.** The `Conversation` page passes the full URL wildcard param (`{bucket}/{name}`) directly to `GET /api/v1/conversations?path=...` after `decodeURIComponent`. The same decoded path (with the bucket stripped) is used for `saveConversation` and `streamCompletion`, which operate on the user's own copy only.
+**Frontend behaviour.** `GET /api/v1/conversations?path=...`'s `path` query param MUST include the bucket — unlike `saveConversation`'s/`streamCompletion`'s `path` body field, which is bucket-stripped and operates on the user's own copy only. Callers MUST apply the normalization matching the target endpoint's contract:
+
+- For `saveConversation`, `streamCompletion`, `stopCompletion`, `deleteConversation`, `watchConversation`, `renameConversation`, `generateConversationTitle`, `duplicateConversation` (every endpoint whose contract is bucket-stripped): `apps/chat/src/utils/conversation-path.ts`'s `getConversationPath(conversationId)` strips the bucket prefix, then decodes the remainder with the shared `safeDecodeURIComponent` (`apps/chat/src/utils/string-utils.ts` — try/catch, fall back to the original string on failure).
+- For every `getConversation` call site (`useConversationStream`'s post-stream/resume refresh, `ConversationsContext`'s `watchForDisplayNameUpdate`, `useConversationExport`'s `toApiConversationPath`): call `safeDecodeURIComponent` directly on the **full** id (bucket included, no stripping), since `GET /api/v1/conversations` needs the bucket to resolve the correct DIAL Core bucket per the routing table above. There is no dedicated helper for this — a bare `safeDecodeURIComponent(conversationId)` is the whole normalization; introducing a same-signature wrapper (e.g. a `normalizeConversationIdEncoding`) around it would only rename the call with no behavior difference. The `Conversation` page's initial load passes the route's already-decoded wildcard param directly, since the router performs the equivalent single decode.
+
+**Why the decode step exists at all.** `POST /api/v1/conversations`'s `deploymentId` MUST be percent-encoded by the caller when it contains reserved characters (see the `DEPLOYMENT_ID_PATTERN` requirement above); the response `id` field is built by concatenating that (possibly percent-encoded) `deploymentId` directly with an otherwise-raw message-derived name and uuid, without decoding it first — so `conversation.id` can contain a percent-encoded fragment mixed with raw text. Every caller passes the normalized result into an API client that percent-encodes the whole value exactly once. Without the decode step, an already-encoded fragment gets double-encoded on the wire (e.g. `%20` → `%2520`) and DIAL Core rejects the request with 400 — this mirrors the backend's own `encodeDialResourcePath` (decode-then-encode) normalization used when persisting. Passing the bucket-**stripped** `getConversationPath` result to `getConversation` is an equally invalid variant of this bug: it 400s specifically for Quick App conversations, whose deployment-id segment (`applications/{bucket}/{appName}`) itself contains a slash, so DIAL Core resolves the wrong resource once the leading session-bucket segment is missing.
+
+#### Scenario: getConversationPath decodes an already-percent-encoded deployment-id fragment
+
+- **WHEN** `conversation.id` is `"bucket/applications/catalog/My%20App__0.0.1__Hello there__uuid"` (the deploymentId segment was percent-encoded at create time; the message-derived segment is raw)
+- **THEN** `getConversationPath` returns `"applications/catalog/My App__0.0.1__Hello there__uuid"` (fully decoded, bucket stripped), for use with `saveConversation`/`streamCompletion`/etc.
+
+#### Scenario: getConversationPath leaves genuinely raw text with a literal "%" unchanged
+
+- **WHEN** `conversation.id` is `"bucket/gpt-4o__50% off__uuid"` (the `%` is not part of a valid percent-encoding triple)
+- **THEN** `decodeURIComponent` throws internally and `getConversationPath` falls back to returning the path unchanged: `"gpt-4o__50% off__uuid"`
+
+#### Scenario: safeDecodeURIComponent decodes the full id for getConversation, keeping the bucket
+
+- **WHEN** `conversation.id` is `"bucket/applications/bucket/My%20App__0.0.1__Hello there__uuid"`
+- **THEN** `safeDecodeURIComponent(conversation.id)` returns `"bucket/applications/bucket/My App__0.0.1__Hello there__uuid"` (fully decoded, bucket retained), so `GET /api/v1/conversations?path=...` both resolves the correct bucket and encodes the value exactly once
+
+**Building the `/conversations/:id` browser route.** `apps/chat/src/constants/routes.ts`'s `getConversationRoute(id)` builds the client-side navigable URL from a `conversation.id` that may contain the same mixed-encoding pattern described above. It SHALL decode each `/`-delimited segment with the same safe `decodeURIComponent` before re-encoding it once with `encodeURIComponent`, rather than encoding the raw segment directly — a raw segment can already be percent-encoded (the deployment-id fragment), and encoding it a second time produces a double-encoded URL that the router's single automatic decode-on-navigation cannot undo, so the subsequent `GET /api/v1/conversations?path=...` request 400s.
+
+#### Scenario: getConversationRoute decodes a segment before re-encoding it once
+
+- **WHEN** `getConversationRoute` is called with `"tenant/applications/catalog/Team%2FApp%20One__0.0.1__title"`
+- **THEN** it returns `"/conversations/tenant/applications/catalog/Team%2FApp%20One__0.0.1__title"` — the segment is decoded then re-encoded exactly once, not compounded into `Team%252FApp%2520One`
 
 #### Scenario: Own conversation is fetched from the session bucket
 
