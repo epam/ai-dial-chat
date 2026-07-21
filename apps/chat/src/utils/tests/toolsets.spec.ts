@@ -13,6 +13,7 @@ import {
 import type { ToolsetFormData } from '../../types/toolsets';
 import {
   buildToolsetAuthorizeUrl,
+  encodeToolsetId,
   extractToolsetApiErrorMessage,
   formToToolsetBody,
   getStorageSafeUniqueToolsetName,
@@ -21,6 +22,8 @@ import {
   isToolsetAuthValid,
   isToolsetFormValid,
   isValidEndpointUrl,
+  navigateToolsetOAuthPopup,
+  openToolsetOAuthPopup,
   toolsetDtoToForm,
   waitForToolsetOAuthResult,
 } from '../toolsets';
@@ -65,6 +68,26 @@ const baseForm = (): ToolsetFormData => ({
     withLogin: WithLogin.WithoutLogin,
     isLoggedIn: false,
   },
+});
+
+describe('encodeToolsetId', () => {
+  it('percent-encodes each segment but keeps / as a literal separator', () => {
+    expect(encodeToolsetId('toolsets/b/My Toolset__1.0.0')).toBe(
+      'toolsets/b/My%20Toolset__1.0.0',
+    );
+  });
+
+  it('double-encodes an already-percent-encoded id (must only ever be called on the raw id)', () => {
+    expect(encodeToolsetId('toolsets/b/My%20Toolset__1.0.0')).toBe(
+      'toolsets/b/My%2520Toolset__1.0.0',
+    );
+  });
+
+  it('is a no-op for an id with no reserved characters', () => {
+    expect(encodeToolsetId('toolsets/b/my__1.0.0')).toBe(
+      'toolsets/b/my__1.0.0',
+    );
+  });
 });
 
 describe('getStorageSafeUniqueToolsetName', () => {
@@ -338,7 +361,7 @@ describe('formToToolsetBody', () => {
 });
 
 describe('buildToolsetAuthorizeUrl', () => {
-  it('builds an OAuth authorize URL with state and scopes', () => {
+  it('builds an OAuth authorize URL with the given state and scopes', () => {
     const result = buildToolsetAuthorizeUrl(
       {
         authenticationType: ToolsetAuthTypes.OAuth,
@@ -349,14 +372,30 @@ describe('buildToolsetAuthorizeUrl', () => {
         scopes: ['read', 'write'],
       },
       'http://localhost/auth/toolset-signin',
+      'encoded-state',
     );
 
     expect(result).not.toBeNull();
-    const url = new URL(result?.url ?? '');
+    const url = new URL(result ?? '');
     expect(url.searchParams.get('response_type')).toBe('code');
     expect(url.searchParams.get('client_id')).toBe('client');
     expect(url.searchParams.get('scope')).toBe('read write');
-    expect(url.searchParams.get('state')).toBe(result?.state);
+    expect(url.searchParams.get('state')).toBe('encoded-state');
+  });
+
+  it('returns null when the auth config is missing a client id', () => {
+    const result = buildToolsetAuthorizeUrl(
+      {
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+      },
+      'http://localhost/auth/toolset-signin',
+      'encoded-state',
+    );
+
+    expect(result).toBeNull();
   });
 });
 
@@ -717,6 +756,75 @@ describe('initiateOAuthLogin', () => {
     expect(popup.opener).toBeNull();
     expect(popup.location.href).toContain('https://auth.example.com/authorize');
     expect(popup.location.href).toContain(`state=${result.flowId}`);
+  });
+});
+
+describe('openToolsetOAuthPopup / navigateToolsetOAuthPopup', () => {
+  let openSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    openSpy = vi.spyOn(window, 'open');
+  });
+
+  afterEach(() => {
+    openSpy.mockRestore();
+  });
+
+  it('openToolsetOAuthPopup opens a blank same-origin popup', () => {
+    const popup = makeFakePopup();
+    openSpy.mockReturnValue(popup as unknown as Window);
+
+    const result = openToolsetOAuthPopup();
+
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    expect(result).toBe(popup);
+  });
+
+  it('openToolsetOAuthPopup returns null when the browser blocks the popup', () => {
+    openSpy.mockReturnValue(null);
+    expect(openToolsetOAuthPopup()).toBeNull();
+  });
+
+  it('navigateToolsetOAuthPopup closes the popup and returns InvalidConfig when the auth config is invalid', () => {
+    const popup = makeFakePopup();
+
+    const result = navigateToolsetOAuthPopup(
+      popup as unknown as Window,
+      {
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+      },
+      'toolsets/b/my-toolset__1',
+    );
+
+    expect(result.type).toBe(ToolsetOAuthInitiationResultType.InvalidConfig);
+    expect(popup.close).toHaveBeenCalledOnce();
+  });
+
+  it('navigateToolsetOAuthPopup writes redirect state into the given popup and navigates it', () => {
+    const popup = makeFakePopup();
+
+    const result = navigateToolsetOAuthPopup(
+      popup as unknown as Window,
+      validOAuthConfig,
+      'toolsets/b/my-toolset__1',
+    );
+
+    expect(result.type).toBe(ToolsetOAuthInitiationResultType.Started);
+    if (result.type !== ToolsetOAuthInitiationResultType.Started) return;
+
+    expect(result.popup).toBe(popup);
+    const stored = JSON.parse(
+      popup.sessionStorage.getItem('toolset-redirect-state') ?? '{}',
+    );
+    expect(stored).toMatchObject({
+      toolsetId: 'toolsets/b/my-toolset__1',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+      state: result.flowId,
+    });
+    expect(popup.opener).toBeNull();
+    expect(popup.location.href).toContain('https://auth.example.com/authorize');
   });
 });
 

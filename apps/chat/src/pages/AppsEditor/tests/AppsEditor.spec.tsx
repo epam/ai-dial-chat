@@ -122,6 +122,9 @@ describe('AppsEditor', () => {
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
     expect(screen.getByText('settings-step').dataset.previewing).toBe('false');
+    expect(
+      screen.getByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
+    ).toBeTruthy();
 
     await act(async () => {
       resolveRefetch();
@@ -134,6 +137,9 @@ describe('AppsEditor', () => {
       }),
     ).toBeTruthy();
     expect(screen.getByText('settings-step').dataset.previewing).toBe('true');
+    expect(
+      screen.queryByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
+    ).toBeNull();
   });
 
   it('refetches deployments when settings report an update', () => {

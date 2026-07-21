@@ -69,6 +69,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const conversationRef = useRef<Conversation | null>(null);
   const displayNameWatchCleanupRef = useRef<(() => void) | null>(null);
   const displayNameWatchKeyRef = useRef<string | null>(null);
+  const notificationShownForRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
@@ -382,6 +383,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           }
         }
       } catch {
+        if (notificationShownForRef.current !== id) {
+          notificationShownForRef.current = id;
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(ChatI18nKeys.ConversationNotFound),
+          });
+        }
         navigate(ROUTES.Root);
       } finally {
         setIsFetching(false);
@@ -394,6 +402,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       resumeIfAwaitingGeneration,
       updateConversationTitle,
       getGeneration,
+      showNotification,
+      t,
     ],
   );
 
@@ -526,7 +536,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     );
 
   if (!conversation) {
-    navigate(ROUTES.Root);
     return null;
   }
 

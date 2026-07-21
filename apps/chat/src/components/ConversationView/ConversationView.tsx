@@ -38,11 +38,9 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
-  DeploymentSelectorI18nKeys,
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
-  FavoritesI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
@@ -55,16 +53,15 @@ import { useChatSettingsFormConfig } from '../../hooks/conversation/useChatSetti
 import { useConversationScroll } from '../../hooks/conversation/useConversationScroll';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
-import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import {
   dialFilesToAttachments,
   dialFolderPathToAttachment,
 } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { isMessageChanged } from '../../utils/message-utils';
-import DeploymentSelectorPanel from '../DeploymentSelector/DeploymentSelectorPanel';
+import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
+import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import ConversationMessageItem from './ConversationMessageItem';
 
@@ -116,8 +113,6 @@ interface Props {
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
   conversation: Conversation;
   onConversationChange: (conv: Conversation) => void;
-  /** Called when the user clicks "Browse full catalog" inside the model picker. */
-  onBrowseCatalog?: () => void;
   /**
    * Externally-driven text to seed into the message input (e.g. overlay
    * mode's `setInputContent`). Applies once on content/revision change; the
@@ -163,12 +158,12 @@ const ConversationView: FC<Props> = ({
   onTranscribeAudio,
   conversation,
   onConversationChange,
-  onBrowseCatalog,
   fixedModel,
   inputContent,
   inputContentRevision,
 }) => {
   const isModelFixed = !!fixedModel;
+  const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
   const { t } = useTranslation();
   const { showNotification } = useNotification();
   const isMobile = useIsMobile();
@@ -191,28 +186,11 @@ const ConversationView: FC<Props> = ({
     isLoading,
     error,
   } = useDeployments();
-  const { favoriteIds, toggleFavorite } = useFavoriteApplications();
   const activeDeploymentId = fixedModel?.id ?? selectedItemId;
-
-  const favoriteCatalogItems = useMemo(
-    () =>
-      items
-        .filter((d) => favoriteIds.has(d.id))
-        .map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
-    [items, favoriteIds],
-  );
 
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === activeDeploymentId),
     [items, activeDeploymentId],
-  );
-
-  const selectedCatalogItem = useMemo(
-    () =>
-      selectedDeployment
-        ? mapDeploymentToCatalogItem(selectedDeployment, favoriteIds)
-        : undefined,
-    [selectedDeployment, favoriteIds],
   );
 
   const {
@@ -263,9 +241,18 @@ const ConversationView: FC<Props> = ({
     [fixedModel],
   );
 
+  const hasQuickAppStarters = useMemo(
+    () =>
+      getQuickAppConversationStarters(selectedDeployment?.conversationStarters)
+        .starters.length > 0,
+    [selectedDeployment?.conversationStarters],
+  );
+
   const isInputDisabled = useMemo(
-    () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
-    [selectedDeploymentConfiguration],
+    () =>
+      !hasQuickAppStarters &&
+      !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
+    [hasQuickAppStarters, selectedDeploymentConfiguration],
   );
 
   const deploymentLookup = useMemo<
@@ -689,38 +676,7 @@ const ConversationView: FC<Props> = ({
                 hideAttachFile={!isAttachmentsAllowed}
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
-                modelPickerOverlay={
-                  isModelFixed
-                    ? undefined
-                    : (onClose) => (
-                        <DeploymentSelectorPanel
-                          favorites={favoriteCatalogItems}
-                          selectedId={selectedItemId}
-                          selectedItem={selectedCatalogItem}
-                          onSelect={setSelectedItemId}
-                          onToggleFavorite={toggleFavorite}
-                          onBrowseCatalog={onBrowseCatalog}
-                          onClose={onClose}
-                          labels={{
-                            searchPlaceholder: t(
-                              DeploymentSelectorI18nKeys.SearchPlaceholder,
-                            ),
-                            favoritesLabel: t(FavoritesI18nKeys.FavoritesLabel),
-                            emptyHint: t(DeploymentSelectorI18nKeys.EmptyHint),
-                            browseCatalogLabel: t(ButtonsI18nKeys.Browse),
-                            removeFromFavoritesLabel: t(
-                              FavoritesI18nKeys.RemoveFromFavorites,
-                            ),
-                            currentlySelectedLabel: t(
-                              DeploymentSelectorI18nKeys.CurrentlySelectedLabel,
-                            ),
-                            addToFavoritesLabel: t(
-                              FavoritesI18nKeys.AddToFavorites,
-                            ),
-                          }}
-                        />
-                      )
-                }
+                modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
               />
             </Suspense>
             <Suspense fallback={null}>
@@ -804,6 +760,7 @@ const ConversationView: FC<Props> = ({
           </>
         )}
       </div>
+      {catalogModal}
     </>
   );
 };

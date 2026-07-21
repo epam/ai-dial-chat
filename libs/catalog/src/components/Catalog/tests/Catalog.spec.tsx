@@ -562,4 +562,36 @@ describe('Catalog', () => {
 
     expect(onFilterTopicsChange).toHaveBeenCalledWith(new Set(['Free']));
   });
+
+  it('uses the controlled isMyAppsActive prop instead of internal state', () => {
+    render(
+      <Catalog
+        items={[
+          makeItem('1', 'Claude', { isMyApp: true }),
+          makeItem('2', 'Gemini', { isMyApp: false }),
+        ]}
+        favorites={[]}
+        isMyAppsActive
+      />,
+    );
+
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('1 items');
+  });
+
+  it('calls onMyAppsActiveChange when the My Apps filter is toggled', async () => {
+    const onMyAppsActiveChange = vi.fn();
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        onMyAppsActiveChange={onMyAppsActiveChange}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'My Apps' }));
+
+    expect(onMyAppsActiveChange).toHaveBeenCalledWith(true);
+  });
 });

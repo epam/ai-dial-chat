@@ -25,6 +25,7 @@ import {
 } from '../server-api/conversations.api';
 import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { getConversationPath } from '../utils/conversation-path';
+import { safeDecodeURIComponent } from '../utils/string-utils';
 import { useOptionalOverlay } from './overlay/OverlayContext';
 import { useUserConfig } from './UserConfigContext';
 
@@ -131,8 +132,10 @@ export const ConversationsProvider = ({
       previousName: string,
       onUpdated: (title: string) => void,
     ) => {
-      const conversationPath = getConversationPath(
-        normalizeConversationId(conversationId),
+      const normalizedConversationId = normalizeConversationId(conversationId);
+      const conversationPath = getConversationPath(normalizedConversationId);
+      const fullConversationId = safeDecodeURIComponent(
+        normalizedConversationId,
       );
 
       const controller = new AbortController();
@@ -179,7 +182,7 @@ export const ConversationsProvider = ({
 
               try {
                 const conversation = (await getConversation(
-                  conversationPath,
+                  fullConversationId,
                 )) as ConversationResponseDto;
                 const nextName = conversation.name?.trim();
                 if (

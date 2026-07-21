@@ -638,12 +638,28 @@ describe('Input — isInputDisabled', () => {
     expect(textarea?.disabled).toBe(false);
   });
 
-  it('send button is disabled when isInputDisabled is true', () => {
+  /*
+   * A disabled textarea can never receive typed input, so the only way a
+   * message exists while isInputDisabled is true is a starter having
+   * populated it (see chat-input-disabled-state spec). In that one case the
+   * user still needs to submit the (unamendable) populated text, so the send
+   * button stays enabled instead of being blocked like the rest of the
+   * free-text path.
+   */
+  it('send button is enabled when isInputDisabled is true and a message is already populated', () => {
     render(<Input message="Hello" isInputDisabled />);
     const sendButton = screen.getByLabelText(
       'Send message',
     ) as HTMLButtonElement;
-    expect(sendButton.disabled).toBe(true);
+    expect(sendButton.disabled).toBe(false);
+  });
+
+  it('clicking send still calls onSend when isInputDisabled is true and a message is already populated', async () => {
+    const handleSend = vi.fn();
+    render(<Input message="Hello" isInputDisabled onSend={handleSend} />);
+    const sendButton = screen.getByLabelText('Send message');
+    fireEvent.click(sendButton);
+    await waitFor(() => expect(handleSend).toHaveBeenCalledWith('Hello', []));
   });
 
   it('attach button is disabled when isInputDisabled is true', () => {

@@ -9,7 +9,78 @@ import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { Issuer, type Client } from 'openid-client';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import { buildProviderConfigs } from './provider-builders';
 import { ProviderConfig } from './provider.types';
+
+const PROVIDER_ENV_KEYS = [
+  'AUTH_PROVIDERS',
+  'AUTH_POST_LOGOUT_REDIRECT_URI',
+  'ADMIN_ROLE_NAMES',
+  'DIAL_ROLES_FIELD',
+  'AUTH_AUTH0_CLIENT_ID',
+  'AUTH_AUTH0_SECRET',
+  'AUTH_AUTH0_HOST',
+  'AUTH_AUTH0_AUDIENCE',
+  'AUTH_AUTH0_NAME',
+  'AUTH_AUTH0_SCOPE',
+  'AUTH_AUTH0_ADMIN_ROLE_NAMES',
+  'AUTH_AUTH0_DIAL_ROLES_FIELD',
+  'AUTH_AZURE_AD_CLIENT_ID',
+  'AUTH_AZURE_AD_SECRET',
+  'AUTH_AZURE_AD_TENANT_ID',
+  'AUTH_AZURE_AD_NAME',
+  'AUTH_AZURE_AD_SCOPE',
+  'AUTH_AZURE_AD_ADMIN_ROLE_NAMES',
+  'AUTH_AZURE_AD_DIAL_ROLES_FIELD',
+  'AUTH_AZURE_B2C_TENANT_ID',
+  'AUTH_AZURE_B2C_CLIENT_ID',
+  'AUTH_AZURE_B2C_CLIENT_SECRET',
+  'AUTH_AZURE_B2C_USER_FLOW',
+  'AUTH_AZURE_B2C_ISSUER',
+  'AUTH_AZURE_B2C_NAME',
+  'AUTH_AZURE_B2C_SCOPE',
+  'AUTH_AZURE_B2C_ADMIN_ROLE_NAMES',
+  'AUTH_AZURE_B2C_DIAL_ROLES_FIELD',
+  'AUTH_GITLAB_CLIENT_ID',
+  'AUTH_GITLAB_SECRET',
+  'AUTH_GITLAB_HOST',
+  'AUTH_GITLAB_NAME',
+  'AUTH_GITLAB_SCOPE',
+  'AUTH_GITLAB_ADMIN_ROLE_NAMES',
+  'AUTH_GITLAB_DIAL_ROLES_FIELD',
+  'AUTH_GOOGLE_CLIENT_ID',
+  'AUTH_GOOGLE_SECRET',
+  'AUTH_GOOGLE_NAME',
+  'AUTH_GOOGLE_SCOPE',
+  'AUTH_KEYCLOAK_CLIENT_ID',
+  'AUTH_KEYCLOAK_SECRET',
+  'AUTH_KEYCLOAK_HOST',
+  'AUTH_KEYCLOAK_NAME',
+  'AUTH_KEYCLOAK_SCOPE',
+  'AUTH_KEYCLOAK_ADMIN_ROLE_NAMES',
+  'AUTH_KEYCLOAK_DIAL_ROLES_FIELD',
+  'AUTH_PING_ID_CLIENT_ID',
+  'AUTH_PING_ID_SECRET',
+  'AUTH_PING_ID_HOST',
+  'AUTH_PING_ID_NAME',
+  'AUTH_PING_ID_SCOPE',
+  'AUTH_PING_ID_ADMIN_ROLE_NAMES',
+  'AUTH_PING_ID_DIAL_ROLES_FIELD',
+  'AUTH_COGNITO_CLIENT_ID',
+  'AUTH_COGNITO_SECRET',
+  'AUTH_COGNITO_HOST',
+  'AUTH_COGNITO_NAME',
+  'AUTH_COGNITO_SCOPE',
+  'AUTH_COGNITO_ADMIN_ROLE_NAMES',
+  'AUTH_COGNITO_DIAL_ROLES_FIELD',
+  'AUTH_OKTA_CLIENT_ID',
+  'AUTH_OKTA_CLIENT_SECRET',
+  'AUTH_OKTA_ISSUER',
+  'AUTH_OKTA_NAME',
+  'AUTH_OKTA_SCOPE',
+  'AUTH_OKTA_ADMIN_ROLE_NAMES',
+  'AUTH_OKTA_DIAL_ROLES_FIELD',
+] as const satisfies readonly (keyof EnvironmentVariables)[];
 
 @Injectable()
 export class ProviderRegistryService implements OnModuleInit {
@@ -23,8 +94,15 @@ export class ProviderRegistryService implements OnModuleInit {
     private readonly config: ConfigService<EnvironmentVariables, true>,
   ) {}
 
-  async onModuleInit(): Promise<void> {
-    const raw = this.config.get('AUTH_PROVIDERS', { infer: true });
+  private readProviderEnv(): EnvironmentVariables {
+    const env = {} as EnvironmentVariables;
+    for (const key of PROVIDER_ENV_KEYS) {
+      env[key] = this.config.get(key, { infer: true }) as never;
+    }
+    return env;
+  }
+
+  private buildLegacyProviderConfigs(raw: string): ProviderConfig[] {
     let parsed: unknown[];
     try {
       parsed = JSON.parse(raw) as unknown[];
@@ -36,8 +114,17 @@ export class ProviderRegistryService implements OnModuleInit {
       throw new Error('AUTH_PROVIDERS must be a non-empty JSON array');
     }
 
-    const providerConfigs = parsed.map((entry) => {
-      const providerConfig = plainToInstance(ProviderConfig, entry);
+    return parsed.map((entry) => plainToInstance(ProviderConfig, entry));
+  }
+
+  async onModuleInit(): Promise<void> {
+    const env = this.readProviderEnv();
+
+    const rawProviderConfigs = env.AUTH_PROVIDERS
+      ? this.buildLegacyProviderConfigs(env.AUTH_PROVIDERS)
+      : buildProviderConfigs(env);
+
+    const providerConfigs = rawProviderConfigs.map((providerConfig) => {
       const errors = validateSync(providerConfig, {
         whitelist: true,
         forbidNonWhitelisted: false,
@@ -80,8 +167,7 @@ export class ProviderRegistryService implements OnModuleInit {
   listProviders(): Array<{ id: string; label: string }> {
     return Array.from(this.clients.values()).map(({ config }) => ({
       id: config.id,
-      label:
-        config.label ?? config.id.charAt(0).toUpperCase() + config.id.slice(1),
+      label: config.label ?? config.id,
     }));
   }
 }

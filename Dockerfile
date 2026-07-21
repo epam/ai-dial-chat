@@ -1,9 +1,16 @@
 # syntax=docker/dockerfile:1
 
 # ─────────────────────────────────────────────
+# Stage 0: install the patched package manager used by all stages
+# ─────────────────────────────────────────────
+FROM node:24.17-alpine AS node-base
+
+RUN npm install --global npm@12.0.1
+
+# ─────────────────────────────────────────────
 # Stage 1: install all workspace dependencies
 # ─────────────────────────────────────────────
-FROM node:24-alpine AS deps
+FROM node-base AS deps
 
 WORKDIR /workspace
 
@@ -33,7 +40,7 @@ RUN npm exec nx run chat-api:prune
 # ─────────────────────────────────────────────
 # Stage 3: lean production image
 # ─────────────────────────────────────────────
-FROM node:24-alpine AS runner
+FROM node-base AS runner
 
 ENV NODE_ENV=production
 

@@ -225,7 +225,6 @@ export const Input: FC<InputProps> = ({
     deployments === undefined || selectedDeploymentId != null;
 
   const handleSend = async () => {
-    if (isInputDisabled) return;
     const currentMessage = message;
     const currentAttachments = attachments;
     setMessage('');
@@ -269,7 +268,7 @@ export const Input: FC<InputProps> = ({
 
     if (shouldSend) {
       e.preventDefault();
-      if (!isStreaming && canSend && hasModelSelected) {
+      if (!isStreaming && canSend && hasModelSelected && !isInputDisabled) {
         handleSend();
       }
     }
@@ -444,11 +443,7 @@ export const Input: FC<InputProps> = ({
                     <SendButton
                       key={sendButtonKey}
                       onSend={handleSend}
-                      isDisabled={
-                        isInputDisabled ||
-                        !hasModelSelected ||
-                        hasBlockedAttachments
-                      }
+                      isDisabled={!hasModelSelected || hasBlockedAttachments}
                       ariaLabel={sendLabel}
                       isExiting={isSendButtonExiting}
                     />

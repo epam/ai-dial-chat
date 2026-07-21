@@ -1,3 +1,13 @@
+/*
+ * Registered as the sole OAuth redirect_uri for every toolset's IdP client
+ * (ROUTES.ToolsetEditorCallback = '/toolset-editor/callback'; also reachable
+ * via ROUTES.ToolsetSignIn = '/auth/toolset-signin' — both routes render this
+ * component). `initiateOAuthLogin` (apps/chat/src/utils/toolsets.ts) opens
+ * this route in a same-origin popup it controls and writes the redirect
+ * state into *that popup's own* `sessionStorage` before navigating it to the
+ * provider, then this route reports success/failure back over a flow-scoped
+ * `BroadcastChannel`.
+ */
 import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useEffect, useRef } from 'react';
@@ -5,6 +15,7 @@ import { useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { TOOLSET_REDIRECT_STATE_KEY } from '../../constants/toolsets';
 import { loginToolset } from '../../server-api/toolsets';
+import { ROUTES } from '../../types/routes';
 import type {
   ToolsetOAuthChannelMessage,
   ToolsetRedirectState,
@@ -58,7 +69,7 @@ const reportResultAndClose = async (
  * `BroadcastChannel` keyed by the OAuth `state` so that tab can refresh
  * immediately instead of requiring a manual reload.
  */
-const ToolsetEditorCallback: FC = () => {
+const ToolsetAuthCallback: FC = () => {
   const [searchParams] = useSearchParams();
   // Guard against React 18 StrictMode double-invocation of the effect.
   const hasRun = useRef(false);
@@ -102,7 +113,7 @@ const ToolsetEditorCallback: FC = () => {
           code,
           redirectUri:
             redirectState.redirectUri ??
-            `${window.location.origin}${window.location.pathname}`,
+            `${window.location.origin}${ROUTES.ToolsetEditorCallback}`,
         };
         await loginToolset(redirectState.toolsetId, body);
         await reportResultAndClose(flowId, {
@@ -125,4 +136,4 @@ const ToolsetEditorCallback: FC = () => {
   return <RouteFallback />;
 };
 
-export default memo(ToolsetEditorCallback);
+export default memo(ToolsetAuthCallback);

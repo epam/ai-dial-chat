@@ -5,6 +5,7 @@ import {
   generateConversationTitle,
   getConversation,
   listConversations,
+  saveConversation,
 } from '../conversations.api';
 
 describe('createConversation', () => {
@@ -182,6 +183,44 @@ describe('getConversation', () => {
 
     expect(spy).toHaveBeenCalledWith(
       { path: 'bucket/chat.json' },
+      { signal: controller.signal },
+    );
+  });
+});
+
+describe('saveConversation', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('calls conversationsApi with the path and conversation body', async () => {
+    const spy = vi
+      .spyOn(conversationsApi, 'saveConversation')
+      .mockResolvedValue({} as never);
+    const conversation = { id: 'bucket/chat.json' } as never;
+
+    await saveConversation('bucket/chat.json', conversation);
+
+    expect(spy).toHaveBeenCalledWith({
+      path: 'bucket/chat.json',
+      saveConversationBodyDto: { conversation },
+    });
+  });
+
+  it('passes an AbortSignal through to the generated client when provided', async () => {
+    const spy = vi
+      .spyOn(conversationsApi, 'saveConversation')
+      .mockResolvedValue({} as never);
+    const controller = new AbortController();
+    const conversation = { id: 'bucket/chat.json' } as never;
+
+    await saveConversation('bucket/chat.json', conversation, controller.signal);
+
+    expect(spy).toHaveBeenCalledWith(
+      {
+        path: 'bucket/chat.json',
+        saveConversationBodyDto: { conversation },
+      },
       { signal: controller.signal },
     );
   });

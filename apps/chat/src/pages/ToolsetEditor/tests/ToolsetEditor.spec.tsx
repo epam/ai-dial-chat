@@ -4,7 +4,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TOOLSET_REDIRECT_STATE_KEY } from '../../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
@@ -359,6 +358,7 @@ describe('ToolsetEditor', () => {
   });
 
   it('returns to the requested screen after saving a new OAuth toolset without starting login', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
     renderEditor(`${ROUTES.ToolsetEditor}?returnUrl=%2Fprevious`);
 
     await user.click(
@@ -381,7 +381,7 @@ describe('ToolsetEditor', () => {
       }),
     );
     expect(toolsetsApi.loginToolset).not.toHaveBeenCalled();
-    expect(sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY)).toBeNull();
+    expect(openSpy).not.toHaveBeenCalled();
   });
 
   it('saves a new OAuth with-login toolset with a redirect URI', async () => {

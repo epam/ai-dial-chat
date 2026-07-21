@@ -43,9 +43,12 @@ await overlay.ready(); // resolves after the full handshake (READY_TO_INTERACT)
 await overlay.sendMessage('Hello!');
 const { messages } = await overlay.getMessages();
 
-const unsubscribe = overlay.subscribe(OverlayEventType.GptStartGenerating, () => {
-  console.log('generation started');
-});
+const unsubscribe = overlay.subscribe(
+  OverlayEventType.GptStartGenerating,
+  () => {
+    console.log('generation started');
+  },
+);
 
 // Later:
 unsubscribe();
@@ -54,7 +57,7 @@ overlay.destroy();
 
 Notes:
 
-- `setSystemPrompt`/`setTemperature` persist onto the active conversation the same way the app's own UI does — the new value takes effect on the *next* message sent, not retroactively on an in-flight generation.
+- `setSystemPrompt`/`setTemperature` persist onto the active conversation the same way the app's own UI does — the new value takes effect on the _next_ message sent, not retroactively on an in-flight generation.
 - `setOverlayOptions` bypasses the readiness gate: it is also how the initial handshake options exchange happens (the library sends it automatically right after receiving the app's `READY` event), so it can be called at any time, including before `ready()` resolves.
 - Deferred for a future change: `getConversations`, `getSelectedConversations`, `selectConversation`, `createConversation`, `createLocalConversation`, `deleteConversation`, `renameConversation`, `createPlaybackConversation`, `stopSelectedPlaybackConversation`, `exportConversation`, `importConversation`.
 
@@ -63,7 +66,10 @@ Notes:
 Creates one or more `ChatOverlay` instances behind fixed-position toggle/close/(optional) fullscreen chrome.
 
 ```ts
-import { ChatOverlayManager, OverlayPosition } from '@epam/ai-dial-chat-overlay';
+import {
+  ChatOverlayManager,
+  OverlayPosition,
+} from '@epam/ai-dial-chat-overlay';
 
 const manager = new ChatOverlayManager();
 
@@ -87,33 +93,33 @@ manager.destroy();
 
 ## Options (`ChatOverlayOptions`)
 
-| Option                  | Type                 | Description                                                                                  |
-| ------------------------ | -------------------- | ---------------------------------------------------------------------------------------------- |
-| `domain`                 | `string`             | Full URL of the chat app instance to embed (origin + optional path).                          |
-| `requestTimeout`         | `number?`            | Milliseconds to wait for a request's response before rejecting. Defaults to `10000`.          |
-| `loaderStyles`           | `Record<string, string>?` | Inline CSS properties applied to the loader element while visible.                       |
-| `loaderClass`            | `string?`            | CSS class applied to the loader element.                                                      |
-| `loaderInnerHTML`        | `string?`            | Custom HTML rendered inside the loader, replacing the default spinner.                        |
-| `loaderHideEvent`        | `OverlayEventType?`  | Event whose receipt hides the loader. Defaults to `OverlayEventType.Ready`.                   |
-| `enabledFeatures`        | `OverlayFeature[]?`  | Embed-time features to enable, e.g. `OverlayFeature.VoiceInput` for microphone access.         |
-| `theme`                  | `string?`            | Theme name applied to the embedded app.                                                       |
-| `modelId`                | `string?`            | Deployment/model id to select in the embedded app.                                             |
-| `overlayConversationId`  | `string?`            | Conversation id the embedded app should load and display.                                     |
+| Option                  | Type                      | Description                                                                            |
+| ----------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
+| `domain`                | `string`                  | Full URL of the chat app instance to embed (origin + optional path).                   |
+| `requestTimeout`        | `number?`                 | Milliseconds to wait for a request's response before rejecting. Defaults to `10000`.   |
+| `loaderStyles`          | `Record<string, string>?` | Inline CSS properties applied to the loader element while visible.                     |
+| `loaderClass`           | `string?`                 | CSS class applied to the loader element.                                               |
+| `loaderInnerHTML`       | `string?`                 | Custom HTML rendered inside the loader, replacing the default spinner.                 |
+| `loaderHideEvent`       | `OverlayEventType?`       | Event whose receipt hides the loader. Defaults to `OverlayEventType.Ready`.            |
+| `enabledFeatures`       | `OverlayFeature[]?`       | Embed-time features to enable, e.g. `OverlayFeature.VoiceInput` for microphone access. |
+| `theme`                 | `string?`                 | Theme name applied to the embedded app.                                                |
+| `modelId`               | `string?`                 | Deployment/model id to select in the embedded app.                                     |
+| `overlayConversationId` | `string?`                 | Conversation id the embedded app should load and display.                              |
 
 `ChatOverlayManagerOptions` extends `ChatOverlayOptions` with `overlayId` (required), `position` (`OverlayPosition`, default `RightBottom`), `width`/`height` (default `380`/`600`), `zIndex` (default `999999`), `allowFullscreen`, and `toggleButtonAriaLabel`/`closeButtonAriaLabel`/`fullscreenButtonAriaLabel`.
 
 ## Events (`OverlayEventType`)
 
-| Event                        | Fires when                                                                  |
-| ----------------------------- | ---------------------------------------------------------------------------- |
-| `InitReady`                  | Immediately, before any host identity is known.                             |
-| `Ready`                      | Once auth/model-load state resolves in the embedded app.                     |
-| `ReadyToInteract`             | Once, after the active conversation is first selected/loaded.                |
-| `SelectedConversationLoaded`  | Whenever a conversation finishes loading (initial load or navigation).       |
-| `GptStartGenerating`          | When a generation starts for the active conversation.                       |
-| `GptEndGenerating`            | When a generation completes normally (not on user-initiated stop).           |
-| `StopGenerating`              | When the user (or host) stops an in-flight generation.                       |
-| `ConversationsUpdated`        | Whenever the app's conversation list changes.                               |
+| Event                        | Fires when                                                             |
+| ---------------------------- | ---------------------------------------------------------------------- |
+| `InitReady`                  | Immediately, before any host identity is known.                        |
+| `Ready`                      | Once auth/model-load state resolves in the embedded app.               |
+| `ReadyToInteract`            | Once, after the active conversation is first selected/loaded.          |
+| `SelectedConversationLoaded` | Whenever a conversation finishes loading (initial load or navigation). |
+| `GptStartGenerating`         | When a generation starts for the active conversation.                  |
+| `GptEndGenerating`           | When a generation completes normally (not on user-initiated stop).     |
+| `StopGenerating`             | When the user (or host) stops an in-flight generation.                 |
+| `ConversationsUpdated`       | Whenever the app's conversation list changes.                          |
 
 ## Deployment prerequisites
 

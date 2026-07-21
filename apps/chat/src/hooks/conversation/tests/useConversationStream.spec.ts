@@ -186,7 +186,9 @@ describe('useConversationStream', () => {
     });
 
     await waitFor(() => {
-      expect(mockGetConversation).toHaveBeenCalledWith('gpt-4o__Hello__uuid');
+      expect(mockGetConversation).toHaveBeenCalledWith(
+        'bucket/gpt-4o__Hello__uuid',
+      );
     });
   });
 
@@ -536,7 +538,9 @@ describe('useConversationStream', () => {
     });
 
     await waitFor(() => {
-      expect(mockGetConversation).toHaveBeenCalledWith('gpt-4o__Hello__uuid');
+      expect(mockGetConversation).toHaveBeenCalledWith(
+        'bucket/gpt-4o__Hello__uuid',
+      );
       expect(setConversation).toHaveBeenCalledWith(serverAfterStop);
     });
   });
@@ -575,7 +579,7 @@ describe('useConversationStream', () => {
     expect(abortFired).toBe(false);
   });
 
-  it('streams with the correct path format for path-encoded conversation IDs', async () => {
+  it('decodes an already-percent-encoded conversation id segment so it is not double-encoded downstream', async () => {
     const { result } = renderHook(
       () =>
         useConversationStream(
@@ -597,7 +601,7 @@ describe('useConversationStream', () => {
     });
 
     expect(mockStreamCompletion).toHaveBeenCalledWith(
-      'applications/catalog/Team%2FApp%20One__0.0.1__title',
+      'applications/catalog/Team/App One__0.0.1__title',
       'hello',
       'applications/catalog/Team%2FApp%20One__0.0.1',
       expect.any(Object),
@@ -609,7 +613,7 @@ describe('useConversationStream', () => {
 
     await waitFor(() => {
       expect(mockGetConversation).toHaveBeenCalledWith(
-        'applications/catalog/Team%2FApp%20One__0.0.1__title',
+        'bucket/applications/catalog/Team/App One__0.0.1__title',
       );
     });
   });
@@ -903,7 +907,9 @@ describe('useConversationStream', () => {
           await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
         });
 
-        expect(mockGetConversation).toHaveBeenCalledWith('gpt-4o__Hello__uuid');
+        expect(mockGetConversation).toHaveBeenCalledWith(
+          'bucket/gpt-4o__Hello__uuid',
+        );
         expect(result.current.isStreaming).toBe(false);
       } finally {
         vi.useRealTimers();
@@ -944,7 +950,7 @@ describe('useConversationStream', () => {
 
       await waitFor(() => {
         expect(mockGetConversation).toHaveBeenCalledWith(
-          'gpt-4o__Background__id',
+          'bucket/gpt-4o__Background__id',
         );
       });
 

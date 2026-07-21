@@ -1,4 +1,5 @@
 import { ROUTES } from '../types/routes';
+import { safeDecodeURIComponent } from '../utils/string-utils';
 
 const CONVERSATION_ROUTE_PREFIX = `${ROUTES.Conversations}/`;
 const CONVERSATION_ROUTE_PREFIX_NO_LEADING_SLASH =
@@ -33,6 +34,14 @@ export const getConversationRoute = (id: string): string => {
     return ROUTES.Root;
   }
 
-  const encoded = segments.map(encodeURIComponent).join('/');
+  /*
+   * A segment can already be percent-encoded (e.g. a Quick App deployment id
+   * segment, which the backend concatenates into the conversation id as
+   * received). Decoding first (safely — a raw segment can contain a literal,
+   * non-percent-encoding "%") before re-encoding avoids double-encoding it.
+   */
+  const encoded = segments
+    .map((segment) => encodeURIComponent(safeDecodeURIComponent(segment)))
+    .join('/');
   return `${ROUTES.Conversations}/${encoded}`;
 };
