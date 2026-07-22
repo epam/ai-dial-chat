@@ -178,7 +178,7 @@ apps/chat-api/src/auth/
 ├── keys/
 │   └── keys.service.ts                 # active + previous keys from env (hex, validated on init)
 ├── providers/
-│   ├── provider-registry.service.ts    # AUTH_PROVIDERS parse + struct-validate + Issuer.discover
+│   ├── provider-registry.service.ts    # per-provider env assembly + struct-validate + Issuer.discover
 │   └── provider.types.ts               # ProviderConfig with class-validator decorators
 ├── refresh/
 │   └── refresh.service.ts              # server-side token refresh + per-pod sid-keyed mutex
@@ -261,7 +261,7 @@ The proposed pattern is the only column that scores well on **all four** of your
 
 4. **Logout policy**: best-effort `end_session_endpoint` redirect when the provider advertises one; graceful fallback to `/` otherwise. Token revocation attempted before redirect (best-effort, non-fatal).
 
-5. **Provider list scope for v1**: provider-neutral — any OIDC provider works via `AUTH_PROVIDERS` config. Keycloak and Auth0 are smoke-tested; Okta and Entra ID work but are not yet regression-tested.
+5. **Provider list scope for v1**: provider-neutral — any of the 9 supported OIDC providers works via its discrete `AUTH_{PROVIDER}_*` env vars (see `apps/chat-api/README.md`). Keycloak and Auth0 are smoke-tested; Okta and Entra ID work but are not yet regression-tested.
 
 6. **Key management**: env-only for v1 (`AUTH_SESSION_SECRET` / `AUTH_SESSION_PREV_SECRET`). KMS integration deferred. Key rotation procedure: set old active key as `AUTH_SESSION_PREV_SECRET`, generate new key for `AUTH_SESSION_SECRET`, redeploy. Existing sessions decrypt via the previous key for one grace period.
 

@@ -62,9 +62,9 @@ This mirrors the reference app's own field names 1:1, so an operator migrating a
 
 Add `AUTH_POST_LOGOUT_REDIRECT_URI` (required if at least one provider is configured) to `EnvironmentVariables`, replacing the current per-entry `postLogoutRedirectUri` JSON field. Every assembled `ProviderConfig.postLogoutRedirectUri` is set to this single value. Rejected: reusing `AUTH_CALLBACK_BASE_URL` (that variable is documented as the API's own OIDC redirect-URI base, a distinct concern from where the browser should land after IdP logout — typically the SPA origin, not the API origin).
 
-### 6. Temporary dual path: `AUTH_PROVIDERS` kept as a legacy fallback
+### 6. `AUTH_PROVIDERS` removed outright (no dual path)
 
-Reversal of the original "fully replace, no dual path" decision: `AUTH_PROVIDERS` stays as an optional field on `EnvironmentVariables`. `ProviderRegistryService.onModuleInit()` checks it first — if set, it runs the original `JSON.parse` + `plainToInstance(ProviderConfig, entry)` path (unchanged from before this feature) and the discrete `AUTH_{PROVIDER}_*` variables are ignored entirely; if unset, it falls through to `buildProviderConfigs(env)`. This is intentionally a transitional escape hatch, not a permanent two-path architecture — it exists so deployments that haven't migrated their `.env`/secrets yet keep working, and is expected to be removed in a follow-up change once migration is complete. `ProviderConfig`'s existing `@IsNotEmpty()` /`@Matches()` field validators still apply per-entry in both paths via the shared `validateSync(providerConfig, …)` call, so a malformed legacy JSON entry still fails boot the same way it did before this feature existed.
+Final removal, superseding the earlier "temporary dual path" iteration of this design: `AUTH_PROVIDERS` is deleted from `EnvironmentVariables` entirely, and `ProviderRegistryService.onModuleInit()` always calls `buildProviderConfigs(env)` — there is no `JSON.parse(AUTH_PROVIDERS)` branch left anywhere in the service. Operators still running the legacy JSON variable must migrate to the discrete `AUTH_{PROVIDER}_*` variables before upgrading; there is no grace-period fallback. `ProviderConfig`'s existing `@IsNotEmpty()`/`@Matches()` field validators still apply per-entry via the shared `validateSync(providerConfig, …)` call in the single remaining path.
 
 ## Risks / Trade-offs
 
