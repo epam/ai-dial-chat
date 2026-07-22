@@ -66,7 +66,7 @@ export const Limits: FC<LimitsProps> = ({
           </div>
           <div
             className={mergeClasses(
-              'h-1.5 overflow-hidden rounded-[3px]',
+              'h-1.5 overflow-hidden rounded',
               styles.progressTrack,
             )}
             role="progressbar"
@@ -76,7 +76,7 @@ export const Limits: FC<LimitsProps> = ({
           >
             <div
               className={mergeClasses(
-                'h-full rounded-[3px] [transition:width_0.3s_ease]',
+                'h-full rounded [transition:width_0.3s_ease]',
                 styles.progressFill,
               )}
               style={{

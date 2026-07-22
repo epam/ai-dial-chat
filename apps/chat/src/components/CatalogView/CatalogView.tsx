@@ -702,7 +702,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         <ConnectPopoverContainer item={item} onClose={onClose} />
       )}
       styles={{
-        typography: { pageHeadingFontClassName: 'catalog-heading-text' },
+        typography: { pageHeadingFontClassName: 'dial-h1-text' },
       }}
       titles={{
         pageTitle: t(NavigationI18nKeys.Catalog),

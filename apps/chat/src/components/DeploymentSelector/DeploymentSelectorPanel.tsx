@@ -264,7 +264,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
               icon={
                 <IconStarFilled
                   size={DIAL_ICON_SIZE.SM}
-                  className="text-[var(--text-warning-icon,#eec840)]"
+                  className="text-warning-icon"
                 />
               }
               aria-label={removeFromFavoritesLabel}
