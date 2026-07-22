@@ -155,14 +155,18 @@ export class FilesUploadService {
         uploadMode === 'create-only' ? { 'If-None-Match': '*' } : {};
 
       const { data, error, response } =
-        (await this.dialClient.client.uploadFile(bucket, path, {
-          headers: {
-            ...getBearerAuthHeaders(token),
-            ...conditionalHeaders,
+        (await this.dialClient.client.uploadFile(
+          bucket,
+          encodeDialResourcePath(path),
+          {
+            headers: {
+              ...getBearerAuthHeaders(token),
+              ...conditionalHeaders,
+            },
+            body: buildUploadFormData(file, path) as unknown as string,
+            signal: AbortSignal.timeout(this.getTimeoutMs()),
           },
-          body: buildUploadFormData(file, path) as unknown as string,
-          signal: AbortSignal.timeout(this.getTimeoutMs()),
-        })) as { data?: { url?: string }; error?: unknown; response: Response };
+        )) as { data?: { url?: string }; error?: unknown; response: Response };
 
       if (error != null) {
         if (response.status === 412) {
