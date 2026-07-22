@@ -150,14 +150,58 @@ describe('useDialFileUploadBatch', () => {
 
       expect(validation).toEqual({ valid: true });
     });
+
+    it('routes an archive conflict fallback back through archive upload', async () => {
+      const { result, invalidateFolders } = renderUploadBatch();
+      const file = new File(['zip'], 'archive.zip');
+
+      act(() => {
+        result.current.onUploadFiles(
+          [{ name: 'archive', fileContent: file }],
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() =>
+        expect(mockUploadArchive).toHaveBeenCalledWith(
+          file,
+          BUCKET,
+          'reports/archive/',
+        ),
+      );
+      expect(mockUploadFile).not.toHaveBeenCalled();
+      expect(invalidateFolders).toHaveBeenCalledWith(['reports/']);
+    });
+
+    it('keeps ordinary ZIP file uploads on the normal file-upload path', async () => {
+      const { result } = renderUploadBatch();
+      const file = new File(['zip'], 'archive.zip');
+
+      act(() => {
+        result.current.onUploadFiles(
+          [{ name: 'archive.zip', fileContent: file }],
+          '/My files/reports',
+        );
+      });
+
+      await waitFor(() =>
+        expect(mockUploadFile).toHaveBeenCalledWith(
+          BUCKET,
+          'reports/archive.zip',
+          file,
+          expect.objectContaining({ uploadMode: 'create-only' }),
+        ),
+      );
+      expect(mockUploadArchive).not.toHaveBeenCalled();
+    });
   });
 
   describe('onUploadArchive', () => {
     it('invalidates the destination cache and shows no toast on full success', async () => {
       mockUploadArchive.mockResolvedValue({
         results: [
-          { path: 'reports/a.txt', success: true },
-          { path: 'reports/b.txt', success: true },
+          { path: 'reports/archive/a.txt', success: true },
+          { path: 'reports/archive/b.txt', success: true },
         ],
       });
 
@@ -167,7 +211,7 @@ describe('useDialFileUploadBatch', () => {
       act(() => {
         result.current.onUploadArchive(
           new File(['zip'], 'archive.zip'),
-          'archive.zip',
+          'archive',
           '/My files/reports',
         );
       });
@@ -191,7 +235,7 @@ describe('useDialFileUploadBatch', () => {
       act(() => {
         result.current.onUploadArchive(
           new File(['zip'], 'archive.zip'),
-          'archive.zip',
+          'archive',
           '/My files/reports',
         );
       });
@@ -218,7 +262,7 @@ describe('useDialFileUploadBatch', () => {
       act(() => {
         result.current.onUploadArchive(
           new File(['zip'], 'archive.zip'),
-          'archive.zip',
+          'archive',
           '/My files/reports',
         );
       });
@@ -241,7 +285,7 @@ describe('useDialFileUploadBatch', () => {
       act(() => {
         result.current.onUploadArchive(
           new File(['zip'], 'archive.zip'),
-          'archive.zip',
+          'archive',
           '/My files/reports',
         );
       });
@@ -256,25 +300,21 @@ describe('useDialFileUploadBatch', () => {
       );
     });
 
-    it('resolves bucket and destinationPath relative to the destination folder', async () => {
+    it('resolves bucket and destinationPath to an archive-named child folder', async () => {
       mockUploadArchive.mockResolvedValue({ results: [] });
 
       const { result } = renderUploadBatch();
 
       const file = new File(['zip'], 'archive.zip');
       act(() => {
-        result.current.onUploadArchive(
-          file,
-          'archive.zip',
-          '/My files/reports',
-        );
+        result.current.onUploadArchive(file, 'archive', '/My files/reports');
       });
 
       await waitFor(() =>
         expect(mockUploadArchive).toHaveBeenCalledWith(
           file,
           BUCKET,
-          'reports/',
+          'reports/archive/',
         ),
       );
     });

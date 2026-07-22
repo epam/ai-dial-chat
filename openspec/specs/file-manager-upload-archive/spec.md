@@ -10,11 +10,11 @@ The BFF SHALL expose `POST /api/v1/files/upload-archive` (multipart/form-data) t
 
 **Rate limit**: `@Throttle({ default: { limit: 5, ttl: 60000 } })` — matching `/download-archive`'s stricter limit (archive operations are heavier than single-file operations).
 
-**Caching**: no NestJS cache read/write. Frontend-side folder-listing cache for the destination folder is invalidated by the hook on completion.
+**Caching**: no NestJS cache read/write. Frontend-side folder-listing cache for the parent destination folder is invalidated by the hook on completion so the archive-named child folder appears in the refreshed listing.
 
 #### Request
 
-Multipart fields: `file` (the ZIP, binary), `bucket` (string), `destinationPath` (string, relative path within bucket — the folder entries are extracted into).
+Multipart fields: `file` (the ZIP, binary), `bucket` (string), `destinationPath` (string, relative path within bucket — the final folder entries are extracted into). The frontend SHALL pass an archive-named child folder as `destinationPath`; for example, uploading `archive.zip` from `reports/` calls the endpoint with `destinationPath: "reports/archive/"`, using the ui-kit's prepared archive name without the `.zip` extension.
 
 **`UploadArchiveDto`** (`apps/chat-api/src/files/dto/upload-archive.dto.ts`, describes the non-file fields for Swagger/validation):
 
@@ -79,8 +79,8 @@ uploadArchive(
 ```json
 {
   "results": [
-    { "path": "reports/q1.pdf", "success": true },
-    { "path": "reports/q2 (1).pdf", "success": true }
+    { "path": "reports/archive/q1.pdf", "success": true },
+    { "path": "reports/archive/q2 (1).pdf", "success": true }
   ]
 }
 ```
@@ -118,14 +118,14 @@ uploadArchive(
 #### Scenario: Conflicting entry is uploaded with a deduplicated name
 
 - **WHEN** one entry's destination path already exists and DIAL Core returns 412 for that entry's `create-only` upload
-- **THEN** the service retries the same entry using the next available deduplicated sibling name, such as `reports/q1 (1).pdf`
-- **AND** the entry's result is `{ "path": "reports/q1 (1).pdf", "success": true }`
+- **THEN** the service retries the same entry using the next available deduplicated sibling name, such as `reports/archive/q1 (1).pdf`
+- **AND** the entry's result is `{ "path": "reports/archive/q1 (1).pdf", "success": true }`
 - **AND** the remaining entries are still processed
 
 #### Scenario: Deduplicated name also conflicts
 
 - **WHEN** an entry's original path and first deduplicated path both already exist
-- **THEN** the service continues retrying with incremented suffixes, such as `reports/q1 (2).pdf`, until an available name is created
+- **THEN** the service continues retrying with incremented suffixes, such as `reports/archive/q1 (2).pdf`, until an available name is created
 
 ---
 
@@ -184,22 +184,33 @@ Every archive entry SHALL be rejected (recorded as a failed result, not extracte
 
 ### Requirement: onUploadArchive wired on useDialFileManager
 
-`useDialFileManager` SHALL expose `onUploadArchive(file: File, name: string, destinationFolder: string)`, wired to ui-kit's `DialFileManager.onUploadArchive` prop, that resolves `destinationFolder` to `{ bucket, destinationPath }` (same resolution as `onUploadFiles`) and calls the new `uploadArchive` server-api wrapper.
+`useDialFileManager` SHALL expose `onUploadArchive(file: File, name: string, destinationFolder: string)`, wired to ui-kit's `DialFileManager.onUploadArchive` prop, that resolves `destinationFolder` to the parent API folder path (same resolution as `onUploadFiles`), appends the provided archive `name` as a trailing-slashed child folder, and calls the new `uploadArchive` server-api wrapper with that archive-named `destinationPath`.
+
+If the ui-kit's archive conflict resolver falls back to `onUploadFiles` because the browser reports a ZIP with an empty or non-standard MIME type, `useDialFileManager` SHALL detect the single-file shape `{ fileContent.name: "*.zip", name: "<archive-folder-name>" }` and route it back through the archive upload path instead of uploading the ZIP as a normal file.
 
 **State ownership**: `onUploadArchive` reuses the hook's existing `uploadBatchState` (no new progress-state shape is introduced) to represent the in-flight archive upload as a single indeterminate item, since the BFF returns one aggregated result rather than per-entry progress events.
 
-**Cache invalidation**: on completion, the hook invalidates the cache entry for the destination folder and increments `retryCounter`, matching `onUploadFiles`.
+**Cache invalidation**: on completion, the hook invalidates the cache entry for the parent destination folder and increments `retryCounter`, matching `onUploadFiles`. The archive-named child folder's contents are fetched only after the user opens that folder.
 
-**Notifications**: request-level failure (network/validation error, non-ZIP, oversized archive, timeout) surfaces via `onNotification(NotificationVariant.Error, ...)` with the generic archive-upload error because no per-entry result list is available. If the request succeeds but every entry in `results` failed, the hook surfaces an all-failed archive-entry message containing the failed file list. Partial failure (some entries failed) surfaces via a distinct partial-failure message containing the failed count and failed file list, matching the `CopyPartialError`/`MovePartialError` convention while adding actionable file names. Full success shows no toast — the extracted files appearing in the refreshed listing is the confirmation.
+**Notifications**: request-level failure (network/validation error, non-ZIP, oversized archive, timeout) surfaces via `onNotification(NotificationVariant.Error, ...)` with the generic archive-upload error because no per-entry result list is available. If the request succeeds but every entry in `results` failed, the hook surfaces an all-failed archive-entry message containing the failed file list. Partial failure (some entries failed) surfaces via a distinct partial-failure message containing the failed count and failed file list, matching the `CopyPartialError`/`MovePartialError` convention while adding actionable file names. Full success shows no toast — the archive-named child folder appearing in the refreshed parent listing is the confirmation.
 
 The failed file list SHALL be built from failed `UploadArchiveEntryResultDto` entries as `path` or `path (error)` when an entry includes an error. The list SHALL display at most five entries and append the existing `dialFileManager.andOtherItems` label for the remaining count.
 
-**Memoisation**: `onUploadArchive` SHALL be a `useCallback` with dependencies that include `bucket`, `rootLabel`, `onNotification`, and `t`.
+**Memoisation**: archive upload handling SHALL be memoised with dependencies that include `bucket`, `rootLabel`, `onNotification`, and `t`; `onUploadArchive` MAY delegate to that memoised handler.
 
-#### Scenario: Successful archive upload refreshes the destination folder
+#### Scenario: Successful archive upload refreshes the parent destination folder
 
-- **WHEN** `onUploadArchive` completes with all entries successful
-- **THEN** the destination folder's cache entry is cleared, `retryCounter` increments, and no toast is shown
+- **WHEN** `onUploadArchive` receives `name: "archive"` and `destinationFolder: "/My files/reports"` and completes with all entries successful
+- **THEN** `uploadArchive` is called with `destinationPath: "reports/archive/"`
+- **AND** the parent destination folder's cache entry (`reports/`) is cleared, `retryCounter` increments, and no toast is shown
+
+#### Scenario: Archive conflict fallback does not create a normal ZIP file
+
+- **GIVEN** the selected archive file is `archive.zip`
+- **AND** the ui-kit resolves an archive-name conflict and calls `onUploadFiles` with one item named `archive` or `archive (1)`
+- **WHEN** `useDialFileManager` handles that callback
+- **THEN** it calls `uploadArchive` with `destinationPath: "reports/archive/"` or `destinationPath: "reports/archive (1)/"`
+- **AND** it does not call the normal single-file upload wrapper
 
 #### Scenario: Partial archive upload failure shows a toast with failed files
 
@@ -222,14 +233,14 @@ The failed file list SHALL be built from failed `UploadArchiveEntryResultDto` en
 
 Archive entry name collisions SHALL NOT depend on the ui-kit's upload conflict popup. The ui-kit can only compare the selected archive file's prepared name against the currently loaded destination folder items before calling `onUploadArchive`; it does not inspect the ZIP contents. Therefore, conflicts for files inside the archive SHALL be resolved by the BFF during extraction/upload using the DIAL Core create-only response as the source of truth.
 
-If the ui-kit opens its conflict popup during archive selection, that popup concerns only the selected archive name prepared by the ui-kit and SHALL NOT be treated as resolution for entries inside the archive. When the user proceeds from that popup, `onUploadArchive` SHALL send the selected archive and destination folder to the BFF, and the BFF SHALL perform per-entry deduplication. If the user cancels the popup, no archive upload request is made.
+If the ui-kit opens its conflict popup during archive selection, that popup concerns only the selected archive name prepared by the ui-kit and SHALL NOT be treated as resolution for entries inside the archive. When the user proceeds from that popup, `onUploadArchive` SHALL send the selected archive and archive-named destination path to the BFF, and the BFF SHALL perform per-entry deduplication. If the user cancels the popup, no archive upload request is made.
 
 #### Scenario: Existing file inside archive destination does not require a popup
 
-- **GIVEN** the destination folder contains `reports/q1.pdf`
+- **GIVEN** the archive-named destination folder contains `reports/archive/reports/q1.pdf`
 - **AND** the selected archive contains `reports/q1.pdf`
 - **WHEN** the archive upload runs
-- **THEN** the BFF uploads the entry as `reports/q1 (1).pdf` or the next available deduplicated name
+- **THEN** the BFF uploads the entry as `reports/archive/reports/q1 (1).pdf` or the next available deduplicated name
 - **AND** no frontend replace/duplicate decision is required for that archive entry
 
 ---
