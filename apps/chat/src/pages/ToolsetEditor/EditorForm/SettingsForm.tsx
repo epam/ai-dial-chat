@@ -36,7 +36,7 @@ interface Props {
   toolsetId: string;
   onChange: (patch: Partial<ToolsetFormData>) => void;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
-  onEnsureSaved: () => Promise<boolean>;
+  onEnsureSaved: () => Promise<string | false>;
 }
 
 const SettingsForm: FC<Props> = ({

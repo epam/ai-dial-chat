@@ -2,6 +2,7 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { ResponseError } from '@epam/chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
@@ -52,6 +53,7 @@ vi.mock('../ToolsetEditorView', () => ({
     onChange,
     onAuthChange,
     onNext,
+    onEnsureSaved,
   }: {
     step: string;
     toolsetId: string;
@@ -63,122 +65,140 @@ vi.mock('../ToolsetEditorView', () => ({
     onChange: (patch: Record<string, unknown>) => void;
     onAuthChange: (patch: Record<string, unknown>) => void;
     onNext: () => void;
-  }) => (
-    <div>
-      <span>{`current-step-${step}`}</span>
-      <span>{`toolset-id-${toolsetId}`}</span>
-      <button type="button" onClick={onNext}>
-        go-next
-      </button>
-      {errors.endpoint && <p role="alert">{errors.endpoint}</p>}
-      {errors.authorizationEndpoint && (
-        <p role="alert">{errors.authorizationEndpoint}</p>
-      )}
-      {errors.tokenEndpoint && <p role="alert">{errors.tokenEndpoint}</p>}
-      <button
-        type="button"
-        onClick={() => {
-          onChange({ endpoint: '' });
-        }}
-      >
-        touch-empty-endpoint
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onChange({ name: 'Updated name' });
-        }}
-      >
-        change-name
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onChange({ endpoint: 'https://example.com/mcp' });
-          onAuthChange({
-            authenticationType: ToolsetAuthTypes.ApiKey,
-            withLogin: WithLogin.WithLogin,
-            keyHeader: 'X-API-Key',
-            apiKey: 'secret',
-          });
-        }}
-      >
-        fill-api-key-toolset
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onChange({ endpoint: 'https://example.com/mcp' });
-          onAuthChange({
-            authenticationType: ToolsetAuthTypes.ApiKey,
-            withLogin: WithLogin.WithoutLogin,
-            keyHeader: 'X-API-Key',
-            apiKey: '',
-          });
-        }}
-      >
-        fill-api-key-without-login-toolset
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onChange({ endpoint: 'https://example.com/mcp' });
-          onAuthChange({
-            authenticationType: ToolsetAuthTypes.OAuth,
-            withLogin: WithLogin.WithConfig,
-            clientId: 'client-id',
-            clientSecret: 'client-secret',
-            authorizationEndpoint: 'https://auth.example.com/oauth/authorize',
-            tokenEndpoint: 'https://auth.example.com/oauth/token',
-          });
-        }}
-      >
-        fill-oauth-toolset
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onChange({ endpoint: 'https://example.com/mcp' });
-          onAuthChange({
-            authenticationType: ToolsetAuthTypes.OAuth,
-            withLogin: WithLogin.WithLogin,
-          });
-        }}
-      >
-        fill-oauth-with-login-toolset
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onChange({ endpoint: 'https://example.com/mcp' });
-          onAuthChange({
-            authenticationType: ToolsetAuthTypes.OAuth,
-            withLogin: WithLogin.WithConfig,
-            clientId: 'client-id',
-            clientSecret: 'client-secret',
-          });
-        }}
-      >
-        fill-oauth-toolset-without-endpoints
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onChange({ endpoint: 'https://example.com/mcp' });
-          onAuthChange({
-            authenticationType: ToolsetAuthTypes.OAuth,
-            withLogin: WithLogin.WithConfig,
-            clientId: 'client-id',
-            clientSecret: 'client-secret',
-            authorizationEndpoint: 'not a url',
-            tokenEndpoint: 'https://auth.example.com/oauth/token',
-          });
-        }}
-      >
-        fill-invalid-oauth-toolset
-      </button>
-    </div>
-  ),
+    onEnsureSaved: () => Promise<string | false>;
+  }) => {
+    const [ensureSavedResult, setEnsureSavedResult] = useState<string | null>(
+      null,
+    );
+    return (
+      <div>
+        <span>{`current-step-${step}`}</span>
+        <span>{`toolset-id-${toolsetId}`}</span>
+        <button type="button" onClick={onNext}>
+          go-next
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            const result = await onEnsureSaved();
+            setEnsureSavedResult(result === false ? 'false' : result);
+          }}
+        >
+          invoke-ensure-saved
+        </button>
+        {ensureSavedResult != null && (
+          <span>{`ensure-saved-result-${ensureSavedResult}`}</span>
+        )}
+        {errors.endpoint && <p role="alert">{errors.endpoint}</p>}
+        {errors.authorizationEndpoint && (
+          <p role="alert">{errors.authorizationEndpoint}</p>
+        )}
+        {errors.tokenEndpoint && <p role="alert">{errors.tokenEndpoint}</p>}
+        <button
+          type="button"
+          onClick={() => {
+            onChange({ endpoint: '' });
+          }}
+        >
+          touch-empty-endpoint
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onChange({ name: 'Updated name' });
+          }}
+        >
+          change-name
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onChange({ endpoint: 'https://example.com/mcp' });
+            onAuthChange({
+              authenticationType: ToolsetAuthTypes.ApiKey,
+              withLogin: WithLogin.WithLogin,
+              keyHeader: 'X-API-Key',
+              apiKey: 'secret',
+            });
+          }}
+        >
+          fill-api-key-toolset
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onChange({ endpoint: 'https://example.com/mcp' });
+            onAuthChange({
+              authenticationType: ToolsetAuthTypes.ApiKey,
+              withLogin: WithLogin.WithoutLogin,
+              keyHeader: 'X-API-Key',
+              apiKey: '',
+            });
+          }}
+        >
+          fill-api-key-without-login-toolset
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onChange({ endpoint: 'https://example.com/mcp' });
+            onAuthChange({
+              authenticationType: ToolsetAuthTypes.OAuth,
+              withLogin: WithLogin.WithConfig,
+              clientId: 'client-id',
+              clientSecret: 'client-secret',
+              authorizationEndpoint: 'https://auth.example.com/oauth/authorize',
+              tokenEndpoint: 'https://auth.example.com/oauth/token',
+            });
+          }}
+        >
+          fill-oauth-toolset
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onChange({ endpoint: 'https://example.com/mcp' });
+            onAuthChange({
+              authenticationType: ToolsetAuthTypes.OAuth,
+              withLogin: WithLogin.WithLogin,
+            });
+          }}
+        >
+          fill-oauth-with-login-toolset
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onChange({ endpoint: 'https://example.com/mcp' });
+            onAuthChange({
+              authenticationType: ToolsetAuthTypes.OAuth,
+              withLogin: WithLogin.WithConfig,
+              clientId: 'client-id',
+              clientSecret: 'client-secret',
+            });
+          }}
+        >
+          fill-oauth-toolset-without-endpoints
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onChange({ endpoint: 'https://example.com/mcp' });
+            onAuthChange({
+              authenticationType: ToolsetAuthTypes.OAuth,
+              withLogin: WithLogin.WithConfig,
+              clientId: 'client-id',
+              clientSecret: 'client-secret',
+              authorizationEndpoint: 'not a url',
+              tokenEndpoint: 'https://auth.example.com/oauth/token',
+            });
+          }}
+        >
+          fill-invalid-oauth-toolset
+        </button>
+      </div>
+    );
+  },
 }));
 
 const renderEditor = (initialEntry: string = ROUTES.ToolsetEditor) =>
@@ -328,6 +348,51 @@ describe('ToolsetEditor', () => {
         }),
       ),
     );
+  });
+
+  it('resolves onEnsureSaved to the freshly created toolset id for a brand-new toolset', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'fill-api-key-toolset',
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: 'invoke-ensure-saved',
+      }),
+    );
+
+    expect(
+      await screen.findByText('ensure-saved-result-toolsets/b/my__0.0.1'),
+    ).toBeTruthy();
+    expect(toolsetsApi.createToolset).toHaveBeenCalledOnce();
+  });
+
+  it('resolves onEnsureSaved to the already-persisted id without another request when nothing changed', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'fill-api-key-toolset',
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'invoke-ensure-saved' }),
+    );
+    await screen.findByText('ensure-saved-result-toolsets/b/my__0.0.1');
+
+    await user.click(
+      screen.getByRole('button', { name: 'invoke-ensure-saved' }),
+    );
+
+    await waitFor(() =>
+      expect(toolsetsApi.createToolset).toHaveBeenCalledOnce(),
+    );
+    expect(
+      screen.getByText('ensure-saved-result-toolsets/b/my__0.0.1'),
+    ).toBeTruthy();
   });
 
   it('saves a newly created API-key toolset without login using only the key header', async () => {

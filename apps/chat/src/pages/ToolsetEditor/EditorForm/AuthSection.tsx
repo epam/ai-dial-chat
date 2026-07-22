@@ -55,7 +55,7 @@ interface Props {
   toolsetId: string;
   endpoint: string;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
-  onEnsureSaved: () => Promise<boolean>;
+  onEnsureSaved: () => Promise<string | false>;
 }
 
 const ORDERED_AUTH_TYPES = [
@@ -119,11 +119,11 @@ const AuthSection: FC<Props> = ({
   const handleLogIn = async () => {
     if (!canLogIn) return;
 
-    const saved = await onEnsureSaved();
-    if (!saved) return;
+    const savedToolsetId = await onEnsureSaved();
+    if (!savedToolsetId) return;
 
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
-      const initiation = initiateOAuthLogin(auth, toolsetId);
+      const initiation = initiateOAuthLogin(auth, savedToolsetId);
       if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
         showNotification({
           variant: NotificationVariant.Error,
@@ -164,7 +164,7 @@ const AuthSection: FC<Props> = ({
          * stuck showing "logged out" for a login that already went through.
          */
         try {
-          const refreshed = await getToolset(toolsetId);
+          const refreshed = await getToolset(savedToolsetId);
           if (refreshed.authSettings?.userLevelAuthStatus === 'SIGNED_IN') {
             onAuthChange({ isLoggedIn: true });
             showNotification({
@@ -182,14 +182,14 @@ const AuthSection: FC<Props> = ({
     setIsAuthBusy(true);
     try {
       const body: ToolsetLoginBodyDto = {
-        url: toolsetId,
+        url: savedToolsetId,
         credentialsLevel:
           ToolsetCredentialsLevel.User as ToolsetLoginBodyDto['credentialsLevel'],
         authenticationType:
           auth.authenticationType as ToolsetLoginBodyDto['authenticationType'],
         apiKey: auth.apiKey?.trim(),
       };
-      await loginToolset(toolsetId, body);
+      await loginToolset(savedToolsetId, body);
       onAuthChange({ isLoggedIn: true });
     } catch {
       showNotification({
