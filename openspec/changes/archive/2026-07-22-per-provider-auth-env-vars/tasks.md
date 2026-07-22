@@ -2,12 +2,12 @@
 
 - [x] 1.1 Add app-wide `AUTH_POST_LOGOUT_REDIRECT_URI`, `ADMIN_ROLE_NAMES` (default `admin`, comma-separated → `string[]`), and `DIAL_ROLES_FIELD` (default `dial_roles`) fields to `EnvironmentVariables` in `apps/chat-api/src/config/environment.config.ts`.
 - [x] 1.2 Add the discrete per-provider optional string fields to `EnvironmentVariables` for all 9 providers (Auth0, Azure AD, Azure B2C, GitLab, Google, Keycloak, PingID, Cognito, Okta), grouped under a `// Auth providers` comment block, following the field names and comma-separated-role transforms in design.md §2–4.
-- [x] 1.3 ~~Remove~~ Add back the `AUTH_PROVIDERS?: string` field (now optional, legacy) to `EnvironmentVariables` — reversed per follow-up request to keep a temporary dual-mode (see task 6).
+- [x] 1.3 Remove the `AUTH_PROVIDERS?: string` field from `EnvironmentVariables` entirely (final removal, superseding the earlier temporary dual-mode — see task 6).
 
 ## 2. Provider assembly
 
 - [x] 2.1 Create `apps/chat-api/src/auth/providers/provider-builders.ts` with hardcoded id constants, per-provider default-scope and default-label maps, and one `build{Provider}Config(env): ProviderConfig | undefined` function per provider implementing: presence check on `CLIENT_ID`, throw-on-partial-config, issuer derivation (design.md §3), scope/label defaults (design.md §4), admin-roles/roles-claim fallback chain (design.md §4), and `postLogoutRedirectUri` from `AUTH_POST_LOGOUT_REDIRECT_URI`.
-- [x] 2.2 Update `ProviderRegistryService.onModuleInit()` (`apps/chat-api/src/auth/providers/provider-registry.service.ts`) to call all 9 builders when `AUTH_PROVIDERS` is unset, filter out `undefined` results, and keep the existing `validateSync(ProviderConfig)` pass per assembled entry. (Revised: the `JSON.parse(AUTH_PROVIDERS)` path is kept, not removed — see task 6.)
+- [x] 2.2 Update `ProviderRegistryService.onModuleInit()` (`apps/chat-api/src/auth/providers/provider-registry.service.ts`) to always call all 9 builders, filter out `undefined` results, and keep the existing `validateSync(ProviderConfig)` pass per assembled entry. The `JSON.parse(AUTH_PROVIDERS)` legacy path has been removed — see task 6.
 - [x] 2.3 Update `ProviderRegistryService.listProviders()`'s label fallback to use the per-provider default-label map from `provider-builders.ts` instead of the mechanical `id.charAt(0).toUpperCase() + id.slice(1)` capitalization. (Superseded: labels are now defaulted inside each builder, so `listProviders()` only needs `config.label ?? config.id` as a defensive fallback.)
 
 ## 3. Tests
@@ -25,10 +25,10 @@
 - [x] 5.1 Run `npm exec nx test chat-api` and `npm exec nx lint chat-api`. (`nx test chat-api`'s vitest worker pool crashes on this machine independent of this change — reproduced identically on the pre-change codebase; `npx vitest run --config apps/chat-api/vitest.config.ts` is the reliable equivalent and passes. `npm exec nx lint chat-api` passes after `--fix`.)
 - [ ] 5.2 Boot `apps/chat-api` locally with a discrete-variable Auth0 (or Google) configuration and confirm `GET /api/v1/auth/providers` returns the expected `{ id, label }[]` shape, and that login/logout still round-trip end to end. (Not run — requires network access to a real or mocked OIDC discovery endpoint, which this session doesn't have. Deferred to the user/reviewer with real IdP credentials.)
 
-## 6. Temporary dual-mode (AUTH_PROVIDERS kept as legacy fallback)
+## 6. Final removal of AUTH_PROVIDERS (supersedes the earlier temporary dual-mode)
 
-- [x] 6.1 Add `AUTH_PROVIDERS?: string` back to `EnvironmentVariables` as optional (`@IsOptional() @IsString()`), documented as a temporary legacy field.
-- [x] 6.2 Add `ProviderRegistryService.buildLegacyProviderConfigs(raw: string): ProviderConfig[]` (the original `JSON.parse` + `plainToInstance(ProviderConfig, entry)` logic) and branch `onModuleInit()` on `env.AUTH_PROVIDERS`: legacy path when set, `buildProviderConfigs(env)` otherwise. Shared `validateSync` still runs on the result of either path.
-- [x] 6.3 Add tests to `provider-registry.service.spec.ts` for the legacy path: registers from `AUTH_PROVIDERS` JSON, malformed JSON fails boot, structurally invalid entry fails boot, and `AUTH_PROVIDERS` takes precedence over discrete variables when both are set.
-- [x] 6.4 Update `apps/chat-api/README.md` and `docs/environment-variables-migration-guide.md` with a legacy-mode callout describing the precedence rule and that it's transitional.
+- [x] 6.1 Remove `AUTH_PROVIDERS?: string` and its doc comment from `EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`).
+- [x] 6.2 Remove `ProviderRegistryService.buildLegacyProviderConfigs()` and the `env.AUTH_PROVIDERS` branch from `onModuleInit()` (`apps/chat-api/src/auth/providers/provider-registry.service.ts`); `onModuleInit()` now always calls `buildProviderConfigs(env)`. Drop `'AUTH_PROVIDERS'` from `PROVIDER_ENV_KEYS` and the now-unused `plainToInstance` import.
+- [x] 6.3 Remove the `legacy AUTH_PROVIDERS JSON mode` describe block from `provider-registry.service.spec.ts` (registers-from-JSON, malformed-JSON, structurally-invalid-entry, and precedence-over-discrete-variables tests).
+- [x] 6.4 Remove the legacy-mode callouts from `apps/chat-api/README.md` and `docs/environment-variables-migration-guide.md`; reword the "migrating from AUTH_PROVIDERS" section to past tense (the variable is gone, not merely deprecated). Update the remaining `AUTH_PROVIDERS=...` JSON examples in `README.md` (root), `docs/auth/testing-current-auth-implementation.md`, and `docs/auth/auth-bff-encrypted-cookie.md` to discrete `AUTH_KEYCLOAK_*` variables, and update `apps/chat-api/src/openapi-spec.ts`'s `ensureOpenApiEnv()` fixture from `AUTH_PROVIDERS` JSON to discrete `AUTH_OKTA_*` variables (Okta's direct-issuer path accepts the same arbitrary local URL).
 - [x] 6.5 Re-run `npx vitest run --config apps/chat-api/vitest.config.ts` and `npm exec nx lint chat-api -- --fix`; confirm green.

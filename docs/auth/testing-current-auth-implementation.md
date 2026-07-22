@@ -62,7 +62,11 @@ CORS_ORIGIN=http://localhost:4207
 
 AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=http://localhost:4207
-AUTH_PROVIDERS=[{"id":"keycloak","issuer":"https://your-idp.example.com/realms/your-realm","clientId":"your-client-id","clientSecret":"<client-secret>","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
+AUTH_POST_LOGOUT_REDIRECT_URI=http://localhost:4207
+AUTH_KEYCLOAK_CLIENT_ID=your-client-id
+AUTH_KEYCLOAK_SECRET=<client-secret>
+AUTH_KEYCLOAK_HOST=your-idp.example.com/realms/your-realm
+AUTH_KEYCLOAK_ADMIN_ROLE_NAMES=admin
 ```
 
 > **Callback URL vs. OIDC callback base**

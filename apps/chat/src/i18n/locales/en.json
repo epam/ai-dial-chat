@@ -327,7 +327,7 @@
   },
   "conversationExport": {
     "exportLabel": "Export",
-    "exportAllLabel": "Export",
+    "exportAllLabel": "Export conservations",
     "withAttachmentsOption": "With attachments",
     "withoutAttachmentsOption": "Without attachments",
     "queueTitle": "Exporting",
@@ -350,7 +350,7 @@
     "closeQueueConfirmDescriptionMixed": "Some items are still in progress, and some have failed."
   },
   "conversationImport": {
-    "importLabel": "Import",
+    "importLabel": "Import conversations",
     "queueTitle": "Importing",
     "successTitle": "Import successful",
     "success": "{{names}} imported.",
