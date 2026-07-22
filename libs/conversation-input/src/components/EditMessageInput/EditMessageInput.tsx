@@ -1,11 +1,14 @@
 import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { RequestStatus, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { BASE_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { IconFile } from '@tabler/icons-react';
 import {
   ChangeEvent,
   type FC,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -36,6 +39,10 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   fileAccept,
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
+  onDialFileSystemClick,
+  dialFileSystemLabel,
+  pendingAttachments,
+  onPendingAttachmentsConsumed,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDropFiles, setPendingDropFiles] = useState<File[]>([]);
@@ -93,6 +100,21 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
     setPendingDropFiles(files);
   }, []);
 
+  const dialFileSystemMenuItem = useMemo(
+    () =>
+      onDialFileSystemClick
+        ? [
+            {
+              key: 'dial-fs',
+              label: dialFileSystemLabel ?? 'DIAL file system',
+              icon: <IconFile size={BASE_ICON_SIZE} aria-hidden />,
+              onClick: onDialFileSystemClick,
+            },
+          ]
+        : [],
+    [onDialFileSystemClick, dialFileSystemLabel],
+  );
+
   return (
     <div className={mergeClasses('flex w-full flex-col gap-2', className)}>
       {/* Bordered box — contains kept attachments, new attachments, and the textarea */}
@@ -115,6 +137,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         validateAttachment={validateAttachment}
         maximumAttachmentsAmount={maximumAttachmentsAmount}
         onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
+        pendingAttachments={pendingAttachments}
+        onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
       />
 
       {/* Action row — outside the bordered box */}
@@ -138,6 +162,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
                 addMenuTitle={addMenuTitle}
                 menuTitle={menuTitle}
                 menuCloseLabel={menuCloseLabel}
+                extraMenuItems={dialFileSystemMenuItem}
               />
             </>
           )}
