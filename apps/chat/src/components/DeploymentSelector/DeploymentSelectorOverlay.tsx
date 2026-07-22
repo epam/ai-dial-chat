@@ -15,7 +15,7 @@ interface Props {
   selectedId?: string | null;
   selectedItem?: CatalogItem;
   onSelect: (id: string) => void;
-  onToggleFavorite: (id: string, isFavorite: boolean) => void;
+  onToggleFavorite: (id: string, isFavorite: boolean) => Promise<void> | void;
   onClose: () => void;
   onBrowseCatalog?: () => void;
 }
