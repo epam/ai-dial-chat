@@ -1,6 +1,6 @@
 import { Tags } from '@/src/ui/domData';
 import { EntityEditorEntitySettingsPreviewSelectors } from '@/src/ui/selectors';
-import { BaseElement } from '@/src/ui/webElements';
+import { BaseElement, Button } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
 export class EntityEditorEntitySettingsPreviewChat extends BaseElement {
@@ -10,6 +10,18 @@ export class EntityEditorEntitySettingsPreviewChat extends BaseElement {
       EntityEditorEntitySettingsPreviewSelectors.entitySettingsChatModeContainer,
       parentLocator,
     );
+  }
+
+  public introText = this.getChildElementBySelector(
+    EntityEditorEntitySettingsPreviewSelectors.introText,
+  );
+
+  public getStarterButton(title: string): Button {
+    return new Button(this.page, title, this.rootLocator);
+  }
+
+  public getStarterButtonLabel(title: string): BaseElement {
+    return this.getStarterButton(title).getChildElementBySelector(Tags.span);
   }
 
   public previewChatIconContainer = this.getChildElementBySelector(
