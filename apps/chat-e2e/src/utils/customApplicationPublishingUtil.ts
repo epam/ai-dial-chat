@@ -60,11 +60,12 @@ export class CustomApplicationPublishingUtil {
     return appData;
   }
 
-  public async uploadApplicationIcon() {
+  public async uploadApplicationIcon(parentPath?: string) {
     const filename = GeneratorUtil.randomFilename('svg');
     const iconUrl = await this.fileApiHelper!.putFileWithCustomName(
       filename,
       Attachment.appIconSvg,
+      { parentPath },
     );
     return (
       iconUrl.substring(0, iconUrl.lastIndexOf('/') + 1) +
@@ -77,6 +78,7 @@ export class CustomApplicationPublishingUtil {
     inputAttachmentTypes?: string[];
     hasIcon?: boolean;
     namesToExclude?: string[];
+    iconParentPath?: string;
   }): Promise<CustomAppAttributes> {
     const appName = options?.appName ?? GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomEntityVersion(
@@ -89,7 +91,7 @@ export class CustomApplicationPublishingUtil {
 
     let iconUrl;
     if (options?.hasIcon) {
-      iconUrl = await this.uploadApplicationIcon();
+      iconUrl = await this.uploadApplicationIcon(options?.iconParentPath);
       builder.withIconUrl(iconUrl);
     }
 
