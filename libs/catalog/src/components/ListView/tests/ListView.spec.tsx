@@ -6,6 +6,7 @@ import { CatalogEntityType } from '../../../types/entity-type';
 import { ListView } from '../ListView';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   mergeClasses: (...args: (string | undefined)[]) =>
     args.filter(Boolean).join(' '),
   DialGrid: ({

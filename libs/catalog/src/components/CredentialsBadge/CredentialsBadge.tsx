@@ -12,7 +12,7 @@ export interface CredentialsBadgeProps {
   loggedOutLabel?: string;
   /** Additional CSS class applied for layout/spacing (e.g. margins). */
   className?: string;
-  /** Typography/color classes for the badge itself. Default: `'bg-error text-[10px] font-semibold uppercase tracking-[0.06em] text-error'`. */
+  /** Typography/color classes for the badge itself. Default: `'bg-error dial-caption-semi-text uppercase tracking-[0.06em] text-error'`. */
   badgeClassName?: string;
 }
 
@@ -21,7 +21,7 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
   credentials,
   loggedOutLabel = 'LOGGED OUT',
   className,
-  badgeClassName = 'bg-error text-[10px] font-semibold uppercase tracking-[0.06em] text-error',
+  badgeClassName = 'bg-error dial-caption-semi-text uppercase tracking-[0.06em] text-error',
 }) => {
   if (credentials == null) return null;
 

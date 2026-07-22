@@ -22,6 +22,7 @@ export * from './utils/format-last-used';
 export * from './utils/format-file-size';
 export * from './utils/file-download';
 export * from './constants/mime-types';
+export * from './constants/icon';
 export * from './constants/dial';
 
 export * from './components/DeploymentIcon/DeploymentIcon';
