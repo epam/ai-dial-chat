@@ -4,15 +4,16 @@ Single source of truth for the diagrams referenced in [`../auth-bff-encrypted-co
 
 Each `.mmd` file is a standalone Mermaid source. SVG versions (committed next to them) are what the markdown actually embeds.
 
-| Source `.mmd`                                                        | Rendered                                        |
-| -------------------------------------------------------------------- | ----------------------------------------------- |
-| [`01-high-level-architecture.mmd`](./01-high-level-architecture.mmd) | High-level BFF architecture                     |
-| [`02-provider-registry.mmd`](./02-provider-registry.mmd)             | Multi-provider registry                         |
-| [`03-login-flow.mmd`](./03-login-flow.mmd)                           | Login (Authorization Code + PKCE)               |
-| [`04-api-request-refresh.mmd`](./04-api-request-refresh.mmd)         | Authenticated API request + transparent refresh |
-| [`05-logout-flow.mmd`](./05-logout-flow.mmd)                         | Federated logout                                |
-| [`06-cross-pod-stateless.mmd`](./06-cross-pod-stateless.mmd)         | Cross-pod stateless decryption                  |
-| [`07-cookie-structure.mmd`](./07-cookie-structure.mmd)               | Encrypted cookie payload structure              |
+| Source `.mmd`                                                          | Rendered                                          |
+| ---------------------------------------------------------------------- | ------------------------------------------------- |
+| [`01-high-level-architecture.mmd`](./01-high-level-architecture.mmd)   | High-level BFF architecture                       |
+| [`02-provider-registry.mmd`](./02-provider-registry.mmd)               | Multi-provider registry                           |
+| [`03-login-flow.mmd`](./03-login-flow.mmd)                             | Login (Authorization Code + PKCE)                 |
+| [`04-api-request-refresh.mmd`](./04-api-request-refresh.mmd)           | Authenticated API request + transparent refresh   |
+| [`05-logout-flow.mmd`](./05-logout-flow.mmd)                           | Federated logout                                  |
+| [`06-cross-pod-stateless.mmd`](./06-cross-pod-stateless.mmd)           | Cross-pod stateless decryption                    |
+| [`07-cookie-structure.mmd`](./07-cookie-structure.mmd)                 | Encrypted cookie payload structure                |
+| [`08-toolset-signin-interrupt.mmd`](./08-toolset-signin-interrupt.mmd) | Mid-completion toolset sign-in via client-channel |
 
 ---
 

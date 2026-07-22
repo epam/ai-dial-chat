@@ -9,6 +9,7 @@ import { ApplicationSchemasModule } from '../application-schemas/application-sch
 import { ApplicationsModule } from '../applications/applications.module';
 import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
+import { ClientChannelModule } from '../client-channel/client-channel.module';
 import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
 import { validate } from '../config/validation';
 import { ConversationModule } from '../conversations/conversation.module';
@@ -55,6 +56,7 @@ import { createServeStaticOptions } from './static-assets';
     ModelsModule,
     ToolsetsModule,
     ChatModule,
+    ClientChannelModule,
     ConversationModule,
     UserConfigModule,
     FilesModule,

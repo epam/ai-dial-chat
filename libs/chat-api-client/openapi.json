@@ -1329,6 +1329,121 @@
         "tags": ["chat"]
       }
     },
+    "/api/v1/client-channel/subscribe": {
+      "post": {
+        "description": "Opens an SSE stream proxying DIAL Core's client-channel RPC events (e.g. `toolset/signin`) for the authenticated session. Relays the upstream stream without buffering and echoes the assigned X-DIAL-CLIENT-CHANNEL-ID response header. Send the same header on reconnect to resume an existing channel.",
+        "operationId": "subscribeClientChannel",
+        "parameters": [
+          {
+            "name": "x-dial-client-channel-id",
+            "in": "header",
+            "description": "Existing channel id — send only when reconnecting.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream of client-channel RPC events"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "502": {
+            "description": "DIAL Core rejected or failed the subscription"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Subscribe to the DIAL Core client channel",
+        "tags": [
+          "client-channel"
+        ]
+      }
+    },
+    "/api/v1/client-channel/report": {
+      "post": {
+        "description": "Forwards a `{ id, result }` RPC response (e.g. a toolset sign-in success/denial) to DIAL Core for the given channel, so Core can resume or terminate the blocked tool call.",
+        "operationId": "reportClientChannel",
+        "parameters": [
+          {
+            "name": "x-dial-client-channel-id",
+            "in": "header",
+            "description": "The active client channel id.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportClientChannelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Report accepted"
+          },
+          "400": {
+            "description": "Missing/invalid channel id header or malformed body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          }
+        },
+        "summary": "Report an RPC response on the client channel",
+        "tags": [
+          "client-channel"
+        ]
+      }
+    },
+    "/api/v1/client-channel/unsubscribe": {
+      "post": {
+        "description": "Closes the given client channel on DIAL Core. Treats an already-gone channel (404) as idempotent success.",
+        "operationId": "unsubscribeClientChannel",
+        "parameters": [
+          {
+            "name": "x-dial-client-channel-id",
+            "in": "header",
+            "description": "The active client channel id to close.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unsubscribed successfully"
+          },
+          "400": {
+            "description": "Missing or invalid channel id header"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Unsubscribe from the client channel",
+        "tags": [
+          "client-channel"
+        ]
+      }
+    },
     "/api/v1/conversations": {
       "post": {
         "description": "Creates a new conversation with an initial user message and returns it with a server-assigned ID.",
@@ -3968,7 +4083,10 @@
             "description": "Text inserted into the chat input"
           }
         },
-        "required": ["title", "text"]
+        "required": [
+          "title",
+          "text"
+        ]
       },
       "ConversationStartersDto": {
         "type": "object",
@@ -3993,7 +4111,9 @@
             }
           }
         },
-        "required": ["starters"]
+        "required": [
+          "starters"
+        ]
       },
       "DeploymentItemDto": {
         "type": "object",
@@ -5614,6 +5734,28 @@
         },
         "required": ["id", "object", "choices"]
       },
+      "ReportClientChannelDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The `id` of the RPC request being answered.",
+            "example": "a1b2c3d4-e5f6-4789-a012-3456789abcde"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "success",
+              "denied"
+            ],
+            "example": "success"
+          }
+        },
+        "required": [
+          "id",
+          "result"
+        ]
+      },
       "CreateConversationDto": {
         "type": "object",
         "properties": {
@@ -5981,6 +6123,11 @@
                 "$ref": "#/components/schemas/MessageCustomContentDto"
               }
             ]
+          },
+          "clientChannelId": {
+            "type": "string",
+            "description": "Active DIAL Core client-channel id (from `POST /v1/client-channel/subscribe`), forwarded to DIAL Core so a mid-completion `toolset/signin` event can be correlated to this request. Omitted when no channel is active yet.",
+            "example": "a1b2c3d4-e5f6-4789-a012-3456789abcde"
           }
         },
         "required": ["generationId", "path", "model", "mode"]

@@ -172,6 +172,63 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('features.liveChatInteraction', () => {
+    it('returns true when LIVE_CHAT_INTERACTION_ENABLED is true', async () => {
+      const { provider } = makeProvider({
+        LIVE_CHAT_INTERACTION_ENABLED: true,
+      });
+      expect(await provider.resolve('features.liveChatInteraction', ctx)).toBe(
+        true,
+      );
+    });
+
+    it('returns undefined when LIVE_CHAT_INTERACTION_ENABLED is absent', async () => {
+      const { provider } = makeProvider({
+        LIVE_CHAT_INTERACTION_ENABLED: undefined,
+      });
+      expect(
+        await provider.resolve('features.liveChatInteraction', ctx),
+      ).toBeUndefined();
+    });
+
+    describe('role gating via LIVE_CHAT_INTERACTION_ENABLED_ROLES', () => {
+      it('returns true when the roles env var is empty (unrestricted)', async () => {
+        const { provider } = makeProvider({
+          LIVE_CHAT_INTERACTION_ENABLED: true,
+          LIVE_CHAT_INTERACTION_ENABLED_ROLES: [],
+        });
+        expect(
+          await provider.resolve('features.liveChatInteraction', ctx),
+        ).toBe(true);
+      });
+
+      it('returns true when user has a matching role', async () => {
+        const { provider } = makeProvider({
+          LIVE_CHAT_INTERACTION_ENABLED: true,
+          LIVE_CHAT_INTERACTION_ENABLED_ROLES: ['admin'],
+        });
+        const ctxWithRole: AppConfigEvalContext = { ...ctx, roles: ['admin'] };
+        expect(
+          await provider.resolve('features.liveChatInteraction', ctxWithRole),
+        ).toBe(true);
+      });
+
+      it('returns false when user roles do not intersect with the allowed roles', async () => {
+        const { provider } = makeProvider({
+          LIVE_CHAT_INTERACTION_ENABLED: true,
+          LIVE_CHAT_INTERACTION_ENABLED_ROLES: ['admin'],
+        });
+        const ctxWithRole: AppConfigEvalContext = {
+          ...ctx,
+          roles: ['viewer'],
+        };
+        expect(
+          await provider.resolve('features.liveChatInteraction', ctxWithRole),
+        ).toBe(false);
+      });
+    });
+  });
+
   describe('dialCore.externalUrl', () => {
     it('returns the external URL when DIAL_CORE_EXTERNAL_URL is set', async () => {
       const { provider } = makeProvider({

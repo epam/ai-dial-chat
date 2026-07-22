@@ -619,4 +619,24 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   FILE_MANAGER_AVAILABLE_TABS?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  LIVE_CHAT_INTERACTION_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  LIVE_CHAT_INTERACTION_ENABLED_ROLES?: string[] = [];
 }

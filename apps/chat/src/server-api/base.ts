@@ -7,6 +7,7 @@ export enum ApiEndpoints {
   AUTH_ME = '/api/v1/auth/me',
   AUTH_LOGOUT = '/api/v1/auth/logout',
   TRANSCRIPTION = '/api/v1/transcription',
+  CLIENT_CHANNEL = '/api/v1/client-channel',
 }
 
 export class UnauthorizedError extends Error {
