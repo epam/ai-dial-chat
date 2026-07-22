@@ -38,7 +38,12 @@ const Header: FC<Props> = ({
   const isConversationPanel = isConversationRoute || isRootRoute;
 
   return (
-    <header className="relative z-30 grid min-h-[64px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-tertiary bg-layer-0 desktop:hidden">
+    <header
+      className={mergeClasses(
+        'z-30 grid min-h-[64px] w-full grid-cols-[1fr_auto_1fr] items-center bg-transparent desktop:hidden',
+        isRootRoute ? 'absolute inset-x-0 top-0' : 'relative',
+      )}
+    >
       <div className="flex items-center gap-1 ps-3">
         {onConversationPanelToggle != null && isConversationPanel && (
           <DialGhostIconButton

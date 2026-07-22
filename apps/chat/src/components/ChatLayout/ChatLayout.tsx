@@ -1,13 +1,15 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconLayoutSidebarRight, IconPlus } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useMatch } from 'react-router-dom';
 import {
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
+import { ROUTES } from '../../types/routes';
 import SourcesSidebarToggle from '../Header/SourcesSidebarToggle';
 import styles from './ChatLayout.module.scss';
 
@@ -19,10 +21,16 @@ interface Props {
 
 const ChatLayout: FC<Props> = ({ isPanelOpen, onTogglePanel, onNewChat }) => {
   const { t } = useTranslation();
+  const isRootRoute = !!useMatch(ROUTES.Root);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="hidden h-16 shrink-0 items-center gap-2 px-2 desktop:flex">
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div
+        className={mergeClasses(
+          'hidden items-center gap-2 px-2 desktop:flex',
+          isRootRoute ? 'absolute inset-x-0 top-0 z-10 h-16' : 'h-16 shrink-0',
+        )}
+      >
         <DialGhostIconButton
           icon={
             <IconLayoutSidebarRight
