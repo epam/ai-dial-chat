@@ -152,9 +152,8 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
     }
   }, []);
 
-  const hasResults =
-    hasAnyFilteredResults ??
-    (filteredItems.length > 0 || filteredFolders.length > 0);
+  const hasSearchResultsInOtherSections =
+    !!searchTerm.length && hasAnyFilteredResults;
 
   if (filteredItems.length > 0 || filteredFolders.length > 0) {
     return (
@@ -197,7 +196,7 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
     );
   }
 
-  if (hasResults) {
+  if (hasSearchResultsInOtherSections) {
     return null;
   }
 
