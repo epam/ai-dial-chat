@@ -70,7 +70,7 @@ interface Props {
   modelSelectorError?: unknown;
   isInputDisabled?: boolean;
   placeholder: string;
-  /** Optional text shown above the starter buttons and the composer input. */
+  /** Optional text shown below the composer input and above starter buttons. */
   introText?: string;
   /** Initial textarea content (e.g. populated by a starter selection). */
   message?: string;
@@ -81,7 +81,7 @@ interface Props {
     attachments: Attachment[],
     chatSettings: NewConversationChatSettings,
   ) => Promise<void>;
-  /** Rendered above the composer input (e.g. starter buttons). */
+  /** Rendered below the composer input (e.g. starter buttons). */
   children?: ReactNode;
 }
 
@@ -259,12 +259,6 @@ const NewConversationComposer: FC<Props> = ({
         role="region"
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
-        {introText && (
-          <p className="dial-small-text mb-4 max-w-3xl text-center text-secondary">
-            {introText}
-          </p>
-        )}
-        {children}
         <ConversationInput
           onSend={handleSend}
           onUploadAttachment={handleUploadAttachment}
@@ -328,6 +322,12 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentClick={handleAttachmentClick}
           modelPickerOverlay={modelPickerOverlay}
         />
+        {introText && (
+          <p className="dial-small-text mb-4 mt-4 max-w-3xl text-center text-secondary">
+            {introText}
+          </p>
+        )}
+        {children}
       </div>
       {isDialFileManagerOpen && (
         <DialFileManagerModal
