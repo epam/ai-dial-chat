@@ -219,7 +219,7 @@ const renderSection = (
   onAuthChange = vi.fn(),
   endpoint = VALID_ENDPOINT,
   errors: ToolsetFormErrors = {},
-  onEnsureSaved = vi.fn().mockResolvedValue(true),
+  onEnsureSaved = vi.fn().mockResolvedValue(toolsetId),
 ) =>
   render(
     <AuthSection
@@ -604,6 +604,29 @@ describe('AuthSection', () => {
       }) as HTMLButtonElement;
       expect(btn.disabled).toBe(false);
     });
+
+    it('uses the id returned by onEnsureSaved, not a stale toolsetId prop, for the first login of a brand-new toolset', async () => {
+      const onEnsureSaved = vi
+        .fn()
+        .mockResolvedValue('toolsets/b/newly-created');
+      renderSection(
+        oauthWithConfigAuth(),
+        '',
+        vi.fn(),
+        VALID_ENDPOINT,
+        {},
+        onEnsureSaved,
+      );
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+      );
+      await waitFor(() => expect(capturedPopup).toBeDefined());
+      const stored = capturedPopup?.sessionStorage.getItem(
+        TOOLSET_REDIRECT_STATE_KEY,
+      );
+      const state = JSON.parse(stored as string);
+      expect(state.toolsetId).toBe('toolsets/b/newly-created');
+    });
   });
 
   describe('API key login', () => {
@@ -645,7 +668,7 @@ describe('AuthSection', () => {
 
     it('saves unsaved changes before logging in', async () => {
       vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
-      const onEnsureSaved = vi.fn().mockResolvedValue(true);
+      const onEnsureSaved = vi.fn().mockResolvedValue('toolsets/b/my__1.0.0');
       renderSection(
         apiKeyAuth(),
         'toolsets/b/my__1.0.0',
@@ -659,6 +682,30 @@ describe('AuthSection', () => {
       );
       await waitFor(() => expect(onEnsureSaved).toHaveBeenCalledOnce());
       expect(toolsetsApi.loginToolset).toHaveBeenCalled();
+    });
+
+    it('uses the id returned by onEnsureSaved, not a stale toolsetId prop, for the first login of a brand-new toolset', async () => {
+      vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+      const onEnsureSaved = vi
+        .fn()
+        .mockResolvedValue('toolsets/b/newly-created');
+      renderSection(
+        apiKeyAuth(),
+        '',
+        vi.fn(),
+        VALID_ENDPOINT,
+        {},
+        onEnsureSaved,
+      );
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+      );
+      await waitFor(() =>
+        expect(toolsetsApi.loginToolset).toHaveBeenCalledWith(
+          'toolsets/b/newly-created',
+          expect.objectContaining({ url: 'toolsets/b/newly-created' }),
+        ),
+      );
     });
 
     it('does not attempt to log in when saving unsaved changes fails', async () => {

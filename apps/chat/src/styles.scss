@@ -92,6 +92,6 @@ div[role='menu']:has(> [role='none']) {
 }
 
 .dial-loading-notification div[role='alert'] {
-  background: var(--bg-neutral, #fcfcfc);
+  background: var(--layer-raised, #fcfcfc);
   color: var(--text-primary, #161b2d);
 }

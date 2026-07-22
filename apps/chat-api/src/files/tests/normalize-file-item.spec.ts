@@ -127,4 +127,30 @@ describe('normalizeFileItem', () => {
     expect(result.contentLength).toBe(12345);
     expect(result.contentType).toBe('application/pdf');
   });
+
+  it('infers contentType from the file extension when missing', () => {
+    const result = normalizeFileItem(
+      {
+        nodeType: 'ITEM',
+        url: 'folder/photo.png',
+        name: 'photo.png',
+        parentPath: 'folder/',
+      },
+      BUCKET,
+    );
+    expect(result.contentType).toBe('image/png');
+  });
+
+  it('leaves contentType undefined when it is missing and the extension is unknown', () => {
+    const result = normalizeFileItem(
+      {
+        nodeType: 'ITEM',
+        url: 'folder/README',
+        name: 'README',
+        parentPath: 'folder/',
+      },
+      BUCKET,
+    );
+    expect(result.contentType).toBeUndefined();
+  });
 });

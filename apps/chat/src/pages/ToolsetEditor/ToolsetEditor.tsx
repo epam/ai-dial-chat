@@ -266,7 +266,7 @@ const ToolsetEditor: FC = () => {
   }, [form, t, persistFormIfChanged, setEditorStep]);
 
   const handleEnsureSaved = useCallback(
-    async () => (await persistFormIfChanged()) != null,
+    async () => (await persistFormIfChanged()) ?? false,
     [persistFormIfChanged],
   );
 
