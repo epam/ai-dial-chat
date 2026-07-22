@@ -273,8 +273,12 @@ export class ApplicationsService {
         `Updated application ${applicationName}, invalidated applications and deployments list caches (sub: ${userSub})`,
       );
     } catch (err) {
-      this.logger.warn(
-        `Updated application ${applicationName} but failed to invalidate list caches (sub: ${userSub}): ${err instanceof Error ? err.message : String(err)}`,
+      handleDialFetchError(
+        err,
+        `invalidate list caches after updating application "${applicationName}" (sub: ${userSub})`,
+        this.logger,
+        0,
+        { swallow: true },
       );
     }
 

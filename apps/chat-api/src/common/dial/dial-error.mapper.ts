@@ -125,19 +125,40 @@ export const handleDialSdkError = (
   throw new BadGatewayException('Unexpected response from DIAL Core');
 };
 
+interface HandleDialFetchError {
+  (err: unknown, context: string, logger?: Logger, timeoutMs?: number): never;
+  (
+    err: unknown,
+    context: string,
+    logger: Logger | undefined,
+    timeoutMs: number | undefined,
+    options: { swallow: true },
+  ): void;
+}
+
 /**
  * Handles errors caught in a raw-`fetch` try/catch block. Re-throws Nest
  * exceptions as-is; maps `AbortError` (timeout) and unexpected errors.
  * Call this immediately after catching a fetch rejection — for a non-ok
  * `response.ok === false`, use `mapDialHttpStatus` instead.
+ *
+ * Pass `{ swallow: true }` for failures that must only be logged and never
+ * propagated (e.g. a cache-invalidation step after the real operation already
+ * succeeded) — the error is logged with the same messages as the throwing
+ * path, but the call returns instead of throwing.
  */
-export const handleDialFetchError = (
+const handleDialFetchErrorImpl = (
   err: unknown,
   context: string,
   logger?: Logger,
   timeoutMs?: number,
-): never => {
+  options?: { swallow?: boolean },
+): void => {
   if (err instanceof HttpException) {
+    if (options?.swallow) {
+      logger?.warn(`${context} failed: ${err.message}`);
+      return;
+    }
     throw err;
   }
 
@@ -147,6 +168,9 @@ export const handleDialFetchError = (
     logger?.error(
       `DIAL Core request timed out after ${timeoutMs ?? 0}ms (${context})`,
     );
+    if (options?.swallow) {
+      return;
+    }
     throw new ServiceUnavailableException('DIAL Core request timed out');
   }
 
@@ -154,5 +178,11 @@ export const handleDialFetchError = (
     `Unexpected error during ${context}: ${error.name ?? 'Error'}`,
     error.stack,
   );
+  if (options?.swallow) {
+    return;
+  }
   throw new ServiceUnavailableException('DIAL Core is currently unavailable');
 };
+
+export const handleDialFetchError =
+  handleDialFetchErrorImpl as unknown as HandleDialFetchError;
