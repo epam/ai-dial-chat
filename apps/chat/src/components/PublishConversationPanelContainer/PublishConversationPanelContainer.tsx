@@ -12,7 +12,6 @@ import {
   ButtonsI18nKeys,
   ConversationPublishI18nKeys,
 } from '../../constants/translation-keys';
-import { useConversations } from '../../context/ConversationsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import {
@@ -54,7 +53,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
-  const { refreshConversations } = useConversations();
 
   const {
     folderItems,
@@ -115,7 +113,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
         variant: NotificationVariant.Success,
         message: t(ConversationPublishI18nKeys.SuccessMessage),
       });
-      void refreshConversations();
     },
   });
 

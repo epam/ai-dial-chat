@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import {
@@ -59,7 +58,6 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => {
 
 vi.mock('../../../hooks/publish/usePublishFolders');
 vi.mock('../../../server-api/conversation-publish.api');
-vi.mock('../../../context/ConversationsContext');
 vi.mock('../../../context/NotificationContext');
 
 vi.mock('react-i18next', () => ({
@@ -67,7 +65,6 @@ vi.mock('react-i18next', () => ({
 }));
 
 const mockShowNotification = vi.fn();
-const mockRefreshConversations = vi.fn();
 
 const baseFoldersResult = {
   folderItems: [{ path: ['Shared'], name: 'Shared' }],
@@ -103,9 +100,6 @@ beforeEach(() => {
     showNotification: mockShowNotification,
     dismissNotification: vi.fn(),
   });
-  vi.mocked(useConversations).mockReturnValue({
-    refreshConversations: mockRefreshConversations,
-  } as unknown as ReturnType<typeof useConversations>);
 });
 
 describe('PublishConversationPanelContainer', () => {
@@ -149,7 +143,7 @@ describe('PublishConversationPanelContainer', () => {
     expect(onCreatePublishFolder).toHaveBeenCalledWith(['Shared'], 'New');
   });
 
-  it('publishes successfully: closes the panel, shows a success notification, and refreshes the conversation list', async () => {
+  it('publishes successfully: closes the panel and shows a pending-approval success notification without refreshing the conversation list', async () => {
     vi.mocked(publishConversation).mockResolvedValue({
       path: 'conversations/bucket-123/my-conversation-abc',
       folderPath: 'Shared',
@@ -181,8 +175,11 @@ describe('PublishConversationPanelContainer', () => {
       );
     });
     await waitFor(() => {
-      expect(mockShowNotification).toHaveBeenCalled();
-      expect(mockRefreshConversations).toHaveBeenCalled();
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'conversationPublish.successMessage',
+        }),
+      );
       expect(onClose).toHaveBeenCalled();
     });
   });
@@ -200,7 +197,6 @@ describe('PublishConversationPanelContainer', () => {
       expect(screen.getByRole('alert')).toBeTruthy();
     });
     expect(mockShowNotification).not.toHaveBeenCalled();
-    expect(mockRefreshConversations).not.toHaveBeenCalled();
   });
 
   it('maps publish-history entries into hasExistingPublicationInFolder for the selected folder', async () => {
