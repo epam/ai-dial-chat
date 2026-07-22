@@ -245,3 +245,38 @@ describe('getPartialAndFullyChosenFolders with directContainerFolderIds', () => 
     expect(partialChosenFolderIds).toContain('files/public/folderX/sub/');
   });
 });
+
+describe('getPartialAndFullyChosenFolders with folder/prompt id collision', () => {
+  // A folder and a root-level prompt share the exact same path string
+  // (the prompt is named identically to the folder). The prompt id equals
+  // the folder id without a trailing slash.
+  const folderPath = 'prompts/bucket/collide';
+  const folders = [{ id: folderPath }] as FolderInterface[];
+  const items = [
+    { id: folderPath }, // root prompt named exactly like the folder
+    { id: `${folderPath}/child-a` },
+    { id: `${folderPath}/child-b` },
+  ] as ShareEntity[];
+
+  it('keeps the folder partial when one child is unselected despite the id collision', () => {
+    const { fullyChosenFolderIds, partialChosenFolderIds } =
+      getPartialAndFullyChosenFolders(folders, items, [
+        folderPath,
+        `${folderPath}/child-a`,
+        // child-b intentionally left unselected
+      ]);
+
+    expect(fullyChosenFolderIds).not.toContain(`${folderPath}/`);
+    expect(partialChosenFolderIds).toContain(`${folderPath}/`);
+  });
+
+  it('marks the folder fully chosen when all its children are selected', () => {
+    const { fullyChosenFolderIds } = getPartialAndFullyChosenFolders(
+      folders,
+      items,
+      items.map((i) => i.id),
+    );
+
+    expect(fullyChosenFolderIds).toContain(`${folderPath}/`);
+  });
+});

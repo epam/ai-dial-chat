@@ -110,6 +110,7 @@ export const CodeInterpreterField: FC = () => {
       control={control}
       render={({ field }) => (
         <ToggleSwitchField
+          id="code-interpreter"
           label={t(MarketplaceI18nKeys.CodeInterpreter)}
           info={t(MarketplaceI18nKeys.CodeInterpreterInfo)}
           isOn={field.value}

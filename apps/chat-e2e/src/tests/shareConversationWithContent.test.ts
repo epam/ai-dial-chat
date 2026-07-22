@@ -977,7 +977,7 @@ dialSharedWithMeTest(
         );
         await expect
           .soft(
-            additionalShareUserChatMessages.getMessageStage(
+            additionalShareUserChatMessages.getExpandedMessageStage(
               chatResponseIndex + 2,
               1,
             ),

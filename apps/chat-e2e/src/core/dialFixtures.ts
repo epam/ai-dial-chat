@@ -47,6 +47,7 @@ import {
   InformationModal,
   ListboxMenu,
   MessageTemplateModal,
+  PdfPreviewModal,
   PromptBar,
   PublishingFilter,
   PublishingRules,
@@ -120,6 +121,7 @@ import { EntityEditorHeaderAssertion } from '@/src/assertions/entityEditorHeader
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
+import { PdfPreviewModalAssertion } from '@/src/assertions/pdfPreviewModalAssertion';
 import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
 import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishingRulesAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
@@ -235,8 +237,11 @@ const dialTest = test.extend<{
   externalAppEditorViewForm: ExternalAppEditorViewForm;
   externalAppEditorAppSettingsPreview: EntityEditorEntitySettingsCardPreview;
   quickApp2EditorContainer: QuickApp2EditorContainer;
+  quickApp2EditorAppSettingsPreviewChat: EntityEditorEntitySettingsPreviewChat;
   quickApp2EditorViewForm: QuickApp2EditorViewForm;
   agentAndToolsetSelectModal: AgentAndToolsetSelectModal;
+  agentAndToolsetSelectModalEntityMenu: DropdownMenu;
+  agentAndToolsetSelectModalEntityMenuAssertion: MenuAssertion;
   externalAppEditorAppSettingsPreviewBody: EntityEditorEntitySettingsCardPreviewBody;
   externalAppEditorAppSettingsPreviewCard: EntityEditorPreviewCard;
   toolsetEditorContainer: ToolsetEditorContainer;
@@ -371,6 +376,8 @@ const dialTest = test.extend<{
   informationModal: InformationModal;
   listboxMenu: ListboxMenu;
   informationModalAssertion: InformationModalAssertion;
+  pdfPreviewModal: PdfPreviewModal;
+  pdfPreviewModalAssertion: PdfPreviewModalAssertion;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
   organizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
@@ -701,8 +708,31 @@ const dialTest = test.extend<{
       quickApp2EditorContainer.getEntityEditorViewForm();
     await use(quickApp2EditorViewForm);
   },
+  quickApp2EditorAppSettingsPreviewChat: async (
+    { quickApp2EditorContainer },
+    use,
+  ) => {
+    await use(
+      quickApp2EditorContainer
+        .getEntityEditorEntitySettingsPreview()
+        .getEntityEditorEntitySettingsPreviewBody()
+        .getAppEditorAppSettingsPreviewChat(),
+    );
+  },
   agentAndToolsetSelectModal: async ({ page }, use) => {
     await use(new AgentAndToolsetSelectModal(page));
+  },
+  agentAndToolsetSelectModalEntityMenu: async (
+    { agentAndToolsetSelectModal },
+    use,
+  ) => {
+    await use(agentAndToolsetSelectModal.getEntities().getEntityDropdownMenu());
+  },
+  agentAndToolsetSelectModalEntityMenuAssertion: async (
+    { agentAndToolsetSelectModalEntityMenu },
+    use,
+  ) => {
+    await use(new MenuAssertion(agentAndToolsetSelectModalEntityMenu));
   },
   toolsetEditorContainer: async ({ entityEditorPage }, use) => {
     const toolsetEditorContainer = entityEditorPage.getToolsetEditorContainer();
@@ -1012,6 +1042,16 @@ const dialTest = test.extend<{
   shareModal: async ({ page }, use) => {
     const shareModal = new ShareModal(page);
     await use(shareModal);
+  },
+  pdfPreviewModal: async ({ page }, use) => {
+    const pdfPreviewModal = new PdfPreviewModal(page);
+    await use(pdfPreviewModal);
+  },
+  pdfPreviewModalAssertion: async ({ pdfPreviewModal }, use) => {
+    const pdfPreviewModalAssertion = new PdfPreviewModalAssertion(
+      pdfPreviewModal,
+    );
+    await use(pdfPreviewModalAssertion);
   },
   shareAppModal: async ({ page }, use) => {
     const shareAppModal = new ShareAppModal(page);

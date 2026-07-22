@@ -9,6 +9,7 @@ import {
 } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import { constructPath, formatFileSize } from '@/src/utils/app/file';
 import {
   buildFileTree,
@@ -1412,10 +1413,14 @@ export const useFileManager = ({
     (filesToUpload: DialUploadFileItem[], destinationUrl: string) => {
       if (filesToUpload.length === 0) return;
 
+      const isFromDeviceAttachment =
+        getQuickAttachmentsSavingPath() === destinationUrl;
+
       dispatch(
         FilesActions.uploadFiles({
           files: filesToUpload,
           destinationUrl,
+          isFromDeviceAttachment,
         }),
       );
 

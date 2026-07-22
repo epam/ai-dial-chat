@@ -23,6 +23,8 @@ export class ChatMessages extends BaseElement {
     super(page, ChatSelectors.chatMessages, parentLocator);
   }
 
+  public referenceButton = new Button(this.page, ChatSelectors.referenceButton);
+
   public loadingCursor = this.getChildElementBySelector(
     ChatSelectors.loadingCursor,
   );
@@ -65,6 +67,31 @@ export class ChatMessages extends BaseElement {
   public messageStageLoader = (messagesIndex: number, stageIndex: number) =>
     this.messageStage(messagesIndex, stageIndex).locator(
       ChatSelectors.stageLoader,
+    );
+
+  public messageStageContent = (messagesIndex: number, stageIndex: number) =>
+    this.messageStage(messagesIndex, stageIndex).locator(
+      `~${ChatSelectors.stageContent}`,
+    );
+
+  public messageStageContentCopyButton = (
+    messagesIndex: number,
+    stageIndex: number,
+  ) =>
+    new Button(
+      this.page,
+      ChatSelectors.stageContentCopyButton,
+      this.messageStageContent(messagesIndex, stageIndex),
+    );
+
+  public messageStageContentDownloadButton = (
+    messagesIndex: number,
+    stageIndex: number,
+  ) =>
+    new Button(
+      this.page,
+      ChatSelectors.stageContentDownloadButton,
+      this.messageStageContent(messagesIndex, stageIndex),
     );
 
   public showMoreButton = this.getChildElementBySelector(
@@ -205,9 +232,21 @@ export class ChatMessages extends BaseElement {
       .locator(Tags.td);
   }
 
-  public getMessageStage(messagesIndex: number, stageIndex: number) {
+  public getExpandedMessageStage(messagesIndex: number, stageIndex: number) {
     return this.messageStage(messagesIndex, stageIndex).locator(
       ChatSelectors.openedStage,
+    );
+  }
+
+  public getCollapsedMessageStage(messagesIndex: number, stageIndex: number) {
+    return this.messageStage(messagesIndex, stageIndex).locator(
+      ChatSelectors.closedStage,
+    );
+  }
+
+  public getStageErrorIcon(messagesIndex: number, stageIndex: number) {
+    return this.messageStage(messagesIndex, stageIndex).locator(
+      IconSelectors.exclamationCircleIcon,
     );
   }
 
@@ -291,6 +330,25 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(
       ErrorLabelSelectors.errorContainer,
     );
+  }
+
+  public getChatMessageAttachmentContent(
+    message: string | number,
+    attachmentTitle: string,
+  ) {
+    return this.getChatMessage(message)
+      .filter({ hasText: attachmentTitle })
+      .locator(ChatSelectors.attachmentContent);
+  }
+
+  public getChatMessageAttachmentReference(
+    message: string | number,
+    attachmentTitle: string,
+  ) {
+    return this.getChatMessageAttachmentContent(
+      message,
+      attachmentTitle,
+    ).locator(this.referenceButton.getElementLocator());
   }
 
   public getChatMessageContent(message: string | number) {
@@ -548,7 +606,7 @@ export class ChatMessages extends BaseElement {
   }
 
   public async isMessageStageOpened(messagesIndex: number, stageIndex: number) {
-    return this.getMessageStage(messagesIndex, stageIndex).isVisible();
+    return this.getExpandedMessageStage(messagesIndex, stageIndex).isVisible();
   }
 
   public async openMessageStage(messagesIndex: number, stageIndex: number) {

@@ -203,6 +203,16 @@ export const filesSlice = createSlice({
         (id) => !payload.ids.includes(id),
       );
     },
+    resetDeviceAttachmentFlag: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.files = state.files.map((file) =>
+        payload.ids.includes(file.id) && file.isFromDeviceAttachment
+          ? { ...file, isFromDeviceAttachment: false }
+          : file,
+      );
+    },
     uploadFileSuccess: (
       state,
       {
@@ -1271,6 +1281,7 @@ export const filesSlice = createSlice({
       }: PayloadAction<{
         files: DialUploadFileItem[];
         destinationUrl: string;
+        isFromDeviceAttachment?: boolean;
       }>,
     ) => {
       state.isUploadingFiles = true;
@@ -1299,6 +1310,7 @@ export const filesSlice = createSlice({
           fileContent,
           contentLength: file.fileContent.size,
           contentType: fileContent.type,
+          isFromDeviceAttachment: payload.isFromDeviceAttachment ?? false,
         });
 
         if (file.fileContent.size) {

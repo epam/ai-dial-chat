@@ -109,6 +109,10 @@ export class EntitiesTree extends BaseElement {
     );
   }
 
+  getEntities() {
+    return this.getChildElementBySelector(this.entitySelector);
+  }
+
   getEntityCheckbox(name: string, index?: number) {
     return this.getEntityByName(name, index).locator(
       `[${Attributes.type}="${AttributeValues.checkbox}"]`,
@@ -128,9 +132,7 @@ export class EntitiesTree extends BaseElement {
   }
 
   public async getEntitiesCount() {
-    return this.getChildElementBySelector(
-      this.entitySelector,
-    ).getElementsCount();
+    return this.getEntities().getElementsCount();
   }
 
   public getEntityPlaybackIcon(name: string, index?: number) {
