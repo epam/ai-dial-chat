@@ -72,9 +72,14 @@ export interface ModelSelectorLabels {
 export interface InputProps {
   /**
    * Message value. Sets the initial textarea content on mount and syncs the
-   * textarea whenever the value changes to a non-empty string.
+   * textarea whenever the value changes.
    */
   message?: string;
+  /**
+   * Optional token that forces the textarea to resync from `message`, even
+   * when `message` itself is the same string as before.
+   */
+  messageRevision?: number;
   /** Called on every keystroke with the current textarea value. */
   onChange?: (message: string) => void;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. Returning a rejected promise transitions attachments to Error state. */

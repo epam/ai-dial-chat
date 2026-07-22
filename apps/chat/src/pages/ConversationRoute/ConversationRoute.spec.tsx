@@ -16,6 +16,13 @@ import { AuthStatus } from '../../types/auth-status';
 import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
 import ConversationRoute from './ConversationRoute';
 
+const overlayMocks = vi.hoisted(() => ({
+  current: undefined as
+    | { notifyConversationLoaded: ReturnType<typeof vi.fn> }
+    | undefined,
+  notifyConversationLoaded: vi.fn(),
+}));
+
 vi.mock('../../hooks/attachment/useOpenAttachmentCanvas', () => ({
   useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
 }));
@@ -31,6 +38,9 @@ vi.mock('../../context/AppConfigContext', () => ({
 vi.mock('../../context/DeploymentsContext');
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../context/NotificationContext');
+vi.mock('../../context/overlay/OverlayContext', () => ({
+  useOptionalOverlay: () => overlayMocks.current,
+}));
 vi.mock('../../hooks/keyboard-shortcut/useKeyboardShortcutPreference');
 vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/files.api');
@@ -180,6 +190,7 @@ describe('ConversationRoute', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    overlayMocks.current = undefined;
     mockUseDeployments.mockReturnValue({
       items: mockItems,
       selectedItemId: 'gpt-4o',
@@ -231,6 +242,25 @@ describe('ConversationRoute', () => {
       expect(screen.getByLabelText('Selected deployment').textContent).toBe(
         'gpt-4o',
       );
+    });
+  });
+
+  it('notifies overlay when overlay context becomes available after initial render', async () => {
+    const view = renderRoute();
+
+    expect(overlayMocks.notifyConversationLoaded).not.toHaveBeenCalled();
+
+    overlayMocks.current = {
+      notifyConversationLoaded: overlayMocks.notifyConversationLoaded,
+    };
+    view.rerender(
+      <MemoryRouter>
+        <ConversationRoute />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(overlayMocks.notifyConversationLoaded).toHaveBeenCalledOnce();
     });
   });
 

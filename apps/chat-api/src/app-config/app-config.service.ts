@@ -52,6 +52,8 @@ export class AppConfigService {
     let defaultDeploymentId: string | null = null;
     let dialCoreExternalUrl: string | null = null;
     let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
+    let overlayEnabled = false;
+    let overlayAllowedOrigins: string[] = [];
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -76,6 +78,10 @@ export class AppConfigService {
         fileManagerTabs = Array.isArray(resolved)
           ? resolved
           : DEFAULT_FILE_MANAGER_TABS;
+      } else if (def.key === 'overlay.enabled') {
+        overlayEnabled = resolved === true;
+      } else if (def.key === 'overlay.allowedOrigins') {
+        overlayAllowedOrigins = Array.isArray(resolved) ? resolved : [];
       }
     }
 
@@ -88,6 +94,8 @@ export class AppConfigService {
         defaultDeploymentId,
         dialCoreExternalUrl,
         fileManagerTabs,
+        overlayEnabled,
+        overlayAllowedOrigins,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

@@ -1,0 +1,9 @@
+{
+  "name": "chat-overlay-sandbox",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "private": true,
+  "dependencies": {
+    "@epam/ai-dial-chat-overlay": "*"
+  }
+}

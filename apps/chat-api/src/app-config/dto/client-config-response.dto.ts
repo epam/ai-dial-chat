@@ -47,6 +47,21 @@ export class ClientConfigDto {
     example: ['my_files', 'shared', 'organization'],
   })
   fileManagerTabs!: string[];
+
+  @ApiProperty({
+    description:
+      'Whether the chat-overlay embedded runtime mode is enabled. Sourced from OVERLAY_ENABLED.',
+    example: false,
+  })
+  overlayEnabled!: boolean;
+
+  @ApiProperty({
+    description:
+      'Host origins allowed to embed this app. Sourced from ALLOWED_IFRAME_ORIGINS, the same list used for CSP frame-ancestors/frame-src.',
+    type: [String],
+    example: ['https://partner.example.com'],
+  })
+  overlayAllowedOrigins!: string[];
 }
 
 export class ClientConfigMetadataDto {
