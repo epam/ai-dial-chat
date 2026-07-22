@@ -37,15 +37,19 @@ export class ChatMessagesAssertion extends BaseAssertion {
   ) {
     const button =
       label === 'more'
-        ? this.chatMessages.showMoreButton.getElementLocator()
-        : this.chatMessages.showLessButton.getElementLocator();
+        ? this.chatMessages.showMoreButton
+        : this.chatMessages.showLessButton;
     expectedState === 'visible'
-      ? await expect
-          .soft(button, ExpectedMessages.buttonIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(button, ExpectedMessages.buttonIsNotVisible)
-          .toBeHidden();
+      ? await this.assertElementState(
+          button,
+          'visible',
+          ExpectedMessages.buttonIsVisible,
+        )
+      : await this.assertElementState(
+          button,
+          'hidden',
+          ExpectedMessages.buttonIsNotVisible,
+        );
   }
 
   public async assertShowMoreLessButtonColor(
