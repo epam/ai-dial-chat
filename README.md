@@ -29,7 +29,7 @@
 
 **DIAL Chat** is a default UI for [DIAL](https://dialx.ai). DIAL can be used as headless system, but UI is recommended to learn the capability.
 
-Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](./LICENSE), while code taken from original repository is still subject to [original MIT license](./license-original). Due to rework we introduced lots of new features such as various IDP support, model side-by-side compare, [DIAL extensions](https://dialx.ai/extension-framework) support, conversation replays, branding and many more.
+Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](./LICENSE), while code taken from original repository is still subject to [original MIT license](./license-original). Due to rework we introduced lots of new features such as various IDP support, model side-by-side compare, [DIAL extensions](http://web.archive.org/web/20251117064928/https://dialx.ai/extension-framework) support, conversation replays, branding and many more.
 
 ![ai-dial-chat](./docs/ai-dial-chat.png)
 
