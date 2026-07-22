@@ -15,7 +15,16 @@ export enum AppsEditorStep {
 }
 
 export enum AppsEditorEvent {
+  /** Sent once the embedded QuickApps iframe's UI has rendered. Controls only the loading-spinner overlay — it does NOT indicate the iframe's data model is loaded/safe to save; see `ReadyToSave`. */
   ReadyToInteract = 'readyToInteract',
+  /**
+   * Sent by the embedded QuickApps iframe once its own internal application
+   * model has finished loading and validating, and it is safe for the host
+   * to send `TriggerSave`. Distinct from `ReadyToInteract` (UI rendered) —
+   * gates the Save/Preview buttons. May be sent more than once (e.g. after
+   * an internal reload); the host takes the latest occurrence at face value.
+   */
+  ReadyToSave = 'readyToSave',
   UpdatedSuccess = 'updatedApplicationSuccess',
   TriggerSave = 'TRIGGER_SAVE',
   SaveSuccess = 'SAVE_SUCCESS',

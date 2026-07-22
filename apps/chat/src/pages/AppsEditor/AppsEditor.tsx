@@ -35,6 +35,15 @@ import SettingsStep from './SettingsStep';
  */
 const SETTINGS_SAVE_TIMEOUT_MS = 20000;
 
+/**
+ * Safety-net timeout for the Settings step's initial `ReadyToSave` signal —
+ * distinct from `SETTINGS_SAVE_TIMEOUT_MS`, which covers a save already in
+ * flight. If the embedded editor never reports it is ready to save within
+ * this window, Save/Preview would otherwise stay disabled forever with no
+ * explanation.
+ */
+const SETTINGS_READY_TIMEOUT_MS = 60000;
+
 const AppsEditor: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -103,6 +112,7 @@ const AppsEditor: FC = () => {
             iconUrl: existingDeployment.iconUrl,
             version: existingDeployment.displayVersion,
             topics: existingDeployment.topics,
+            intro: existingDeployment.intro,
           }
         : undefined,
     [existingDeployment],
@@ -160,6 +170,18 @@ const AppsEditor: FC = () => {
     setIsSettingsReady(false);
   }, [schema, appIdForSettings]);
 
+  /* Safety net for the initial ReadyToSave signal itself (see
+   * SETTINGS_READY_TIMEOUT_MS above) — armed whenever the Settings step is
+   * visible and not yet ready, and re-armed whenever schema/appId change (a
+   * fresh iframe load). Cleared as soon as isSettingsReady flips true. */
+  useEffect(() => {
+    if (isGeneralStep || isSettingsReady) return;
+    const timeoutId = setTimeout(() => {
+      setSaveError(t(AppsEditorI18nKeys.ErrorSettingsNotReady));
+    }, SETTINGS_READY_TIMEOUT_MS);
+    return () => clearTimeout(timeoutId);
+  }, [isGeneralStep, isSettingsReady, appIdForSettings, schema, t]);
+
   const clearSaveTimeout = useCallback(() => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -170,7 +192,10 @@ const AppsEditor: FC = () => {
   useEffect(() => clearSaveTimeout, [clearSaveTimeout]);
 
   const handleSettingsUpdated = useCallback(() => {
-    void refetchDeployments();
+    /* Best-effort intermediate refresh — a definitive Save always follows,
+     * so briefly stale data here is corrected by that later refetch and
+     * doesn't need to bypass the 30s server-side cache. */
+    void refetchDeployments(false);
   }, [refetchDeployments]);
 
   const handleSaveSuccess = useCallback(() => {
@@ -178,6 +203,28 @@ const AppsEditor: FC = () => {
     if (isPreviewing) return;
 
     const completeSave = async () => {
+      try {
+        /*
+         * The embedded Settings-step editor persists straight to DIAL Core
+         * from its own iframe and holds its own in-memory copy of the
+         * General-step fields (name/description/...) from whenever it last
+         * loaded the app. If General were persisted *before* triggering this
+         * save, the iframe's own save would overwrite those fields right
+         * back to its stale copy. Persisting General *after* the Settings
+         * save succeeds means the General PATCH's GET-then-merge reads the
+         * just-saved document and layers the new General values on top of
+         * it, so neither side clobbers the other.
+         */
+        if (pendingSaveAction === 'save' && hasExistingAppOnMountRef.current) {
+          await generalFormRef.current?.persist();
+        }
+      } catch {
+        setIsSaving(false);
+        setSaveError(t(AppsEditorI18nKeys.ErrorSaveFailed));
+        setPendingSaveAction(null);
+        return;
+      }
+
       await refetchDeployments().catch(() => undefined);
       setIsSaving(false);
       if (pendingSaveAction === 'preview') {
@@ -196,6 +243,7 @@ const AppsEditor: FC = () => {
     refetchDeployments,
     navigate,
     returnUrl,
+    t,
   ]);
 
   const handleSaveError = useCallback(
@@ -227,27 +275,9 @@ const AppsEditor: FC = () => {
     setSaveError('');
     setIsSaving(true);
     setPendingSaveAction('save');
-
-    const triggerSettingsSave = () => {
-      startSaveTimeout();
-      settingsStepRef.current?.triggerSave();
-    };
-
-    const persistThenSave = async () => {
-      try {
-        if (hasExistingAppOnMountRef.current) {
-          await generalFormRef.current?.persist();
-        }
-        triggerSettingsSave();
-      } catch {
-        setSaveError(t(AppsEditorI18nKeys.ErrorSaveFailed));
-        setIsSaving(false);
-        setPendingSaveAction(null);
-      }
-    };
-
-    void persistThenSave();
-  }, [isGeneralStep, startSaveTimeout, t]);
+    startSaveTimeout();
+    settingsStepRef.current?.triggerSave();
+  }, [isGeneralStep, startSaveTimeout]);
 
   const handlePreview = useCallback(() => {
     if (isPreviewing) {
@@ -332,11 +362,7 @@ const AppsEditor: FC = () => {
               <GeneralForm
                 ref={generalFormRef}
                 schemaId={schemaId}
-                appId={
-                  isEditingExistingApp
-                    ? (existingAppId ?? undefined)
-                    : undefined
-                }
+                appId={appIdForSettings || undefined}
                 initialValues={generalFormInitialValues}
                 onCreated={handleCreated}
               />

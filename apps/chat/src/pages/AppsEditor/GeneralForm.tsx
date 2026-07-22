@@ -48,6 +48,7 @@ export interface GeneralFormInitialValues {
   iconUrl?: string;
   version?: string;
   topics?: string[];
+  intro?: string;
 }
 
 interface Props {
@@ -252,6 +253,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       version: values.version,
       lastUsed: '',
       description: values.description,
+      intro: values.intro,
       folder: [],
       topics: values.topics,
       iconUrl: values.iconUrl.trim() || undefined,

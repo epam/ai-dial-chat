@@ -310,6 +310,41 @@ describe('AppsEditor', () => {
       expect(nextButton.disabled).toBe(false);
     });
 
+    it('surfaces an error when the Settings step never reports readiness within the readiness timeout', () => {
+      vi.useFakeTimers();
+      shouldSettingsAutoReady = false;
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+      act(() => {
+        vi.advanceTimersByTime(15000);
+      });
+
+      expect(
+        screen.getByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+      ).toBeTruthy();
+      const saveButton = screen.getByRole('button', {
+        name: EditorI18nKeys.SaveButton,
+      }) as HTMLButtonElement;
+      expect(saveButton.disabled).toBe(true);
+    });
+
+    it('does not surface the readiness-timeout error once the Settings step becomes ready in time', () => {
+      vi.useFakeTimers();
+      shouldSettingsAutoReady = false;
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+      act(() => {
+        latestSettingsStepProps.onReadyChange?.(true);
+      });
+      act(() => {
+        vi.advanceTimersByTime(15000);
+      });
+
+      expect(
+        screen.queryByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+      ).toBeNull();
+    });
+
     it('times out and re-enables Save with an error when no response arrives', () => {
       vi.useFakeTimers();
       /* No appId: skips the persist step entirely so the save is triggered
@@ -356,15 +391,15 @@ describe('AppsEditor', () => {
         vi.advanceTimersByTime(20000);
       });
 
-      expect(screen.queryByText(AppsEditorI18nKeys.ErrorSaveTimeout)).toBeNull();
+      expect(
+        screen.queryByText(AppsEditorI18nKeys.ErrorSaveTimeout),
+      ).toBeNull();
     });
   });
 
   describe('Save & Exit persist sequencing', () => {
-    it('calls persist before triggering the Settings step save for an existing app', async () => {
-      renderEditor(
-        'step=general&schema=quickapps2-schema&appId=existing-app',
-      );
+    it('triggers the Settings step save before persisting General fields for an existing app', async () => {
+      renderEditor('step=general&schema=quickapps2-schema&appId=existing-app');
 
       act(() => {
         latestGeneralFormProps?.onCreated('existing-app', 'My App', undefined);
@@ -373,19 +408,24 @@ describe('AppsEditor', () => {
       await userEvent.click(
         screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
       );
+
+      expect(settingsStepTriggerSave).toHaveBeenCalledOnce();
+      expect(generalFormPersist).not.toHaveBeenCalled();
+
+      await act(async () => {
+        latestSettingsStepProps.onSaveSuccess?.();
+        await Promise.resolve();
+      });
 
       await waitFor(() => expect(generalFormPersist).toHaveBeenCalledOnce());
-      expect(settingsStepTriggerSave).toHaveBeenCalledOnce();
-      const persistOrder = generalFormPersist.mock.invocationCallOrder[0];
       const triggerOrder = settingsStepTriggerSave.mock.invocationCallOrder[0];
-      expect(persistOrder).toBeLessThan(triggerOrder);
+      const persistOrder = generalFormPersist.mock.invocationCallOrder[0];
+      expect(triggerOrder).toBeLessThan(persistOrder);
     });
 
-    it('surfaces an error and does not trigger the Settings step save when persist fails', async () => {
+    it('surfaces an error and does not exit when persist fails after the Settings step save succeeds', async () => {
       generalFormPersist.mockRejectedValue(new Error('network error'));
-      renderEditor(
-        'step=general&schema=quickapps2-schema&appId=existing-app',
-      );
+      renderEditor('step=general&schema=quickapps2-schema&appId=existing-app');
 
       act(() => {
         latestGeneralFormProps?.onCreated('existing-app', 'My App', undefined);
@@ -394,13 +434,17 @@ describe('AppsEditor', () => {
       await userEvent.click(
         screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
       );
+
+      await act(async () => {
+        latestSettingsStepProps.onSaveSuccess?.();
+        await Promise.resolve();
+      });
 
       await waitFor(() =>
         expect(
           screen.getByText(AppsEditorI18nKeys.ErrorSaveFailed),
         ).toBeTruthy(),
       );
-      expect(settingsStepTriggerSave).not.toHaveBeenCalled();
       const saveButton = screen.getByRole('button', {
         name: EditorI18nKeys.SaveButton,
       }) as HTMLButtonElement;
@@ -418,9 +462,11 @@ describe('AppsEditor', () => {
         screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
       );
 
-      await waitFor(() =>
-        expect(settingsStepTriggerSave).toHaveBeenCalledOnce(),
-      );
+      await act(async () => {
+        latestSettingsStepProps.onSaveSuccess?.();
+        await Promise.resolve();
+      });
+
       expect(generalFormPersist).not.toHaveBeenCalled();
     });
   });

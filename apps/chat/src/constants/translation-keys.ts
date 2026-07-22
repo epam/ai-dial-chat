@@ -556,6 +556,7 @@ export enum AppsEditorI18nKeys {
   ErrorCreateFailed = 'appsEditor.error.createFailed',
   ErrorSaveFailed = 'appsEditor.error.saveFailed',
   ErrorSaveTimeout = 'appsEditor.error.saveTimeout',
+  ErrorSettingsNotReady = 'appsEditor.error.settingsNotReady',
 }
 
 export enum ToolsetEditorI18nKeys {

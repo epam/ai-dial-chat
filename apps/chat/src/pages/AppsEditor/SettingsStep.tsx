@@ -20,7 +20,7 @@ interface Props {
   onUpdated?: () => void;
   onSaveSuccess?: () => void;
   onSaveError?: (error: string) => void;
-  /** Notifies the host whenever the embedded editor's readiness to interact changes. */
+  /** Notifies the host whenever the embedded editor's readiness to save changes (`AppsEditorEvent.ReadyToSave`), not merely UI-rendered readiness. */
   onReadyChange?: (isReady: boolean) => void;
 }
 
