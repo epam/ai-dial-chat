@@ -51,6 +51,79 @@ schema for `CreateApplicationBodyDto`.
 - **WHEN** a request to the create endpoint has no valid session cookie
 - **THEN** the endpoint responds with 401
 
+### Requirement: Update application endpoint
+
+The backend SHALL expose `PATCH /api/v1/applications/:applicationName` that updates the
+General-step fields (`name`, `description`, `iconUrl`, `topics`, `intro`) of an existing
+Quick App for the authenticated session user. The `applicationName` path parameter SHALL
+be validated the same way as the delete endpoint's `GetApplicationDto`. The request body
+SHALL be validated via `UpdateApplicationBodyDto`, which carries the same field
+constraints as `CreateApplicationBodyDto` minus `type` and `version` (immutable on
+update). The service SHALL resolve the existing DIAL Core application resource (bucket +
+path) the same way `deleteApplication` does, fetch the current stored application via
+DIAL Core (`getCustomApplication`), merge only the supplied General-step fields into it —
+preserving `application_type_schema_id`, `displayVersion`, and `application_properties`
+(including orchestrator/tool set settings) untouched — and persist the merged result via
+`saveCustomApplication` at the same resource path. On success, the per-user applications
+list cache and deployments list cache SHALL both be invalidated, mirroring
+`deleteApplication`'s cache invalidation. DIAL Core error statuses SHALL be mapped to
+typed HTTP responses.
+
+The endpoint SHALL be URI-versioned at `/api/v1/applications/:applicationName`,
+rate-limited via `@Throttle({ default: { limit: 10, ttl: 60000 } })` (same limit as
+create/delete), and documented via `@nestjs/swagger` (`@ApiOperation` with
+`operationId: 'updateApplication'`, `@ApiResponse` for every status below). Authorization
+matches `deleteApplication`: any authenticated user may update their own application, no
+additional role restriction.
+
+#### Scenario: Successful update
+- **WHEN** an authenticated user PATCHes `/api/v1/applications/applications%2Fusers%2Fu-123%2Fmy-app__1.0.0`
+  with updated `name`, `description`, `iconUrl`, `topics`, and `intro` for an application
+  they own
+- **THEN** the service fetches the existing stored application, merges in only the
+  supplied General-step fields, persists it at the same resource path, invalidates the
+  applications and deployments list caches, and responds `200 OK` with the updated
+  application identifier
+
+#### Scenario: Settings-step configuration is preserved
+- **WHEN** the update request omits `applicationProperties`/orchestrator or tool set data
+  (the update endpoint does not accept those fields at all)
+- **THEN** the existing `application_properties`, `application_type_schema_id`, and
+  `displayVersion` already stored for that application are carried through unchanged in
+  the merged body sent to DIAL Core
+
+#### Scenario: Invalid update body
+- **WHEN** the request body fails DTO validation (for example, `intro` exceeds 90
+  characters, or `name` contains disallowed characters)
+- **THEN** the endpoint responds with a 400 and does not call DIAL Core
+
+#### Scenario: Invalid application name
+- **WHEN** the `applicationName` path parameter contains characters disallowed by
+  `DEPLOYMENT_ID_PATTERN`
+- **THEN** the endpoint responds `400 Bad Request` and does not call DIAL Core
+
+#### Scenario: Not authenticated
+- **WHEN** the request has no valid session cookie
+- **THEN** the endpoint responds `401 Unauthorized`
+
+#### Scenario: Application not found
+- **WHEN** DIAL Core reports the resolved application path does not exist
+- **THEN** the endpoint responds `404 Not Found`
+
+#### Scenario: Rate limit exceeded
+- **WHEN** the caller exceeds 10 update requests within 60 seconds
+- **THEN** the endpoint responds `429 Too Many Requests`
+
+#### Scenario: DIAL Core error
+- **WHEN** DIAL Core returns an error status while fetching or saving the application
+- **THEN** the endpoint maps it to the corresponding typed HTTP error (e.g. `502`/`503`)
+
+#### Scenario: OpenAPI contract regenerated
+- **WHEN** `UpdateApplicationBodyDto` and the `updateApplication` operation are added
+- **THEN** `npm run openapi` regenerates the spec, `npm run openapi:check` passes, and the
+  generated `@epam/chat-api-client` exposes `ApplicationsApi.updateApplication(...)` with
+  an `UpdateApplicationBodyDto` type
+
 ### Requirement: Delete application endpoint
 
 The backend SHALL expose `DELETE /api/v1/applications/:applicationName` that deletes an

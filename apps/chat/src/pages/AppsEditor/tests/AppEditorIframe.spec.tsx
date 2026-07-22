@@ -1,5 +1,6 @@
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TOOLSET_REDIRECT_STATE_KEY } from '../../../constants/toolsets';
 import * as UserContextModule from '../../../context/auth/UserContext';
@@ -43,8 +44,9 @@ const DEFAULT_PROPS = {
   onUpdated: vi.fn(),
 };
 
-const renderIframe = (props?: Partial<typeof DEFAULT_PROPS>) =>
-  render(<AppEditorIframe {...DEFAULT_PROPS} {...props} />);
+const renderIframe = (
+  props?: Partial<ComponentProps<typeof AppEditorIframe>>,
+) => render(<AppEditorIframe {...DEFAULT_PROPS} {...props} />);
 
 describe('AppEditorIframe', () => {
   beforeEach(() => {
@@ -137,6 +139,105 @@ describe('AppEditorIframe', () => {
       'message',
       expect.any(Function),
     );
+  });
+});
+
+describe('AppEditorIframe — ready-to-save readiness', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+  });
+
+  it('does not report ready when only readyToInteract arrives', () => {
+    const onReadyChange = vi.fn();
+    renderIframe({ onReadyChange });
+    onReadyChange.mockClear();
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.ReadyToInteract}`,
+        },
+        origin: 'https://editor.example.com',
+      }),
+    );
+
+    expect(onReadyChange).not.toHaveBeenCalledWith(true);
+  });
+
+  it('reports ready once readyToSave arrives', () => {
+    const onReadyChange = vi.fn();
+    renderIframe({ onReadyChange });
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.ReadyToSave}`,
+        },
+        origin: 'https://editor.example.com',
+      }),
+    );
+
+    expect(onReadyChange).toHaveBeenCalledWith(true);
+  });
+
+  it('re-gates readiness to false when the iframe reloads for a different app', () => {
+    const onReadyChange = vi.fn();
+    const { rerender } = render(
+      <AppEditorIframe {...DEFAULT_PROPS} onReadyChange={onReadyChange} />,
+    );
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.ReadyToSave}`,
+        },
+        origin: 'https://editor.example.com',
+      }),
+    );
+    expect(onReadyChange).toHaveBeenCalledWith(true);
+    onReadyChange.mockClear();
+
+    rerender(
+      <AppEditorIframe
+        {...DEFAULT_PROPS}
+        appId="different-app"
+        onReadyChange={onReadyChange}
+      />,
+    );
+
+    expect(onReadyChange).toHaveBeenCalledWith(false);
+  });
+
+  it('ignores a readyToSave message from a different origin', () => {
+    const onReadyChange = vi.fn();
+    renderIframe({ onReadyChange });
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.ReadyToSave}`,
+        },
+        origin: 'https://evil.example.com',
+      }),
+    );
+
+    expect(onReadyChange).not.toHaveBeenCalledWith(true);
   });
 });
 

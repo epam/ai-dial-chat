@@ -21,6 +21,10 @@ import type {
   CreateApplicationBodyDto,
   CreatedApplicationDto,
 } from './dto/create-application.dto';
+import type {
+  UpdateApplicationBodyDto,
+  UpdatedApplicationDto,
+} from './dto/update-application.dto';
 
 type DialApplication = components['schemas']['Application'];
 
@@ -185,6 +189,100 @@ export class ApplicationsService {
     } catch (err) {
       return handleDialFetchError(err, 'create application', this.logger, 0);
     }
+  }
+
+  async updateApplication(
+    userSub: string,
+    accessToken: string,
+    applicationName: string,
+    body: UpdateApplicationBodyDto,
+  ): Promise<UpdatedApplicationDto> {
+    const authHeaders = getBearerAuthHeaders(accessToken);
+    let bucket: string;
+    let path: string;
+
+    try {
+      ({ bucket, path } = await this.resolveApplicationResource(
+        authHeaders,
+        applicationName,
+      ));
+
+      const existingResponse =
+        await this.dialClient.client.getCustomApplication(bucket, path, {
+          headers: authHeaders,
+        });
+      if (existingResponse.error) {
+        return mapDialHttpStatus(
+          existingResponse.response.status,
+          `get application "${applicationName}"`,
+          this.logger,
+        );
+      }
+
+      /*
+       * Only the General-step fields are overwritten. Everything else
+       * fetched from DIAL Core — `application_type_schema_id`,
+       * `displayVersion`, `application_properties` (orchestrator/tool set
+       * state) — is carried through unchanged so this update can never
+       * affect the Settings step.
+       */
+      const mergedBody: DialApplication = {
+        ...(existingResponse.data as DialApplication),
+        displayName: body.name,
+      };
+      if (body.description != null) mergedBody.description = body.description;
+      if (body.iconUrl != null) mergedBody.iconUrl = body.iconUrl;
+      if (body.topics != null && body.topics.length > 0) {
+        mergedBody.descriptionKeywords = body.topics;
+      }
+      if (body.intro != null) mergedBody.intro = body.intro;
+
+      const saveResponse = await this.dialClient.client.saveCustomApplication(
+        bucket,
+        path,
+        {
+          headers: authHeaders,
+          body: mergedBody,
+        },
+      );
+      if (saveResponse.error) {
+        return mapDialHttpStatus(
+          saveResponse.response.status,
+          `update application "${applicationName}"`,
+          this.logger,
+        );
+      }
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        `update application "${applicationName}"`,
+        this.logger,
+        0,
+      );
+    }
+
+    /*
+     * The DIAL Core update already succeeded above — a cache-layer hiccup
+     * here must not turn a successful update into an error response, so it's
+     * logged and swallowed rather than propagated.
+     */
+    try {
+      await this.cacheManager.del(`applications:list:${userSub}`);
+      await this.deploymentsService.invalidateListCache(userSub);
+      this.logger.debug(
+        `Updated application ${applicationName}, invalidated applications and deployments list caches (sub: ${userSub})`,
+      );
+    } catch (err) {
+      handleDialFetchError(
+        err,
+        `invalidate list caches after updating application "${applicationName}" (sub: ${userSub})`,
+        this.logger,
+        0,
+        { swallow: true },
+      );
+    }
+
+    return { id: `applications/${bucket}/${path}` };
   }
 
   async deleteApplication(

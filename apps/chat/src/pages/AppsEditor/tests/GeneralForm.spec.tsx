@@ -7,12 +7,16 @@ import {
   AppsEditorI18nKeys,
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
-import { createApplication } from '../../../server-api/applications';
+import {
+  createApplication,
+  updateApplication,
+} from '../../../server-api/applications';
 import type { GeneralFormHandle } from '../GeneralForm';
 import GeneralForm from '../GeneralForm';
 
 vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
+  updateApplication: vi.fn(),
 }));
 
 vi.mock('@epam/ai-dial-kit', () => ({
@@ -242,7 +246,7 @@ describe('GeneralForm', () => {
     );
   });
 
-  it('normalizes undefined initial values before preview and submit', async () => {
+  it('normalizes undefined initial values and calls onCreated on Next without persisting for an existing app', async () => {
     const onCreated = vi.fn();
     const ref = createRef<GeneralFormHandle>();
 
@@ -265,12 +269,135 @@ describe('GeneralForm', () => {
       await ref.current?.submit();
     });
 
+    await waitFor(() =>
+      expect(onCreated).toHaveBeenCalledWith(
+        'users/u/apps/existing',
+        'My App',
+        undefined,
+      ),
+    );
+    expect(updateApplication).not.toHaveBeenCalled();
+    expect(createApplication).not.toHaveBeenCalled();
+  });
+
+  it('advances to the next step without persisting edited General fields for an existing app', async () => {
+    const onCreated = vi.fn();
+    const ref = createRef<GeneralFormHandle>();
+
+    renderForm(
+      {
+        appId: 'users/u/apps/existing',
+        onCreated,
+        initialValues: { name: 'My App' },
+      },
+      ref,
+    );
+
+    await user.clear(getNameInput());
+    await user.type(getNameInput(), 'Renamed App');
+    await user.type(
+      screen.getByLabelText(EditorI18nKeys.DescriptionLabel),
+      'New description',
+    );
+    await user.type(
+      screen.getByLabelText(EditorI18nKeys.IntroLabel) as HTMLInputElement,
+      'New intro',
+    );
+
+    await act(async () => {
+      await ref.current?.submit();
+    });
+
+    expect(updateApplication).not.toHaveBeenCalled();
     expect(onCreated).toHaveBeenCalledWith(
       'users/u/apps/existing',
-      'My App',
+      'Renamed App',
       undefined,
     );
     expect(createApplication).not.toHaveBeenCalled();
+  });
+
+  describe('persist', () => {
+    it('does not call updateApplication when no field changed from the seeded initial values', async () => {
+      const ref = createRef<GeneralFormHandle>();
+
+      renderForm(
+        {
+          appId: 'users/u/apps/existing',
+          initialValues: { name: 'My App', topics: ['a', 'b'] },
+        },
+        ref,
+      );
+
+      await act(async () => {
+        await ref.current?.persist();
+      });
+
+      expect(updateApplication).not.toHaveBeenCalled();
+    });
+
+    it('calls updateApplication with the current values when a field changed from the seeded initial values', async () => {
+      const ref = createRef<GeneralFormHandle>();
+      vi.mocked(updateApplication).mockResolvedValue({
+        id: 'users/u/apps/existing',
+      });
+
+      renderForm(
+        {
+          appId: 'users/u/apps/existing',
+          initialValues: { name: 'My App' },
+        },
+        ref,
+      );
+
+      await user.clear(getNameInput());
+      await user.type(getNameInput(), 'Renamed App');
+      await user.type(
+        screen.getByLabelText(EditorI18nKeys.DescriptionLabel),
+        'New description',
+      );
+      await user.type(
+        screen.getByLabelText(EditorI18nKeys.IntroLabel) as HTMLInputElement,
+        'New intro',
+      );
+
+      await act(async () => {
+        await ref.current?.persist();
+      });
+
+      expect(updateApplication).toHaveBeenCalledWith('users/u/apps/existing', {
+        name: 'Renamed App',
+        description: 'New description',
+        iconUrl: undefined,
+        topics: undefined,
+        intro: 'New intro',
+      });
+    });
+
+    it('rejects and does not swallow the error when updateApplication fails', async () => {
+      const ref = createRef<GeneralFormHandle>();
+      vi.mocked(updateApplication).mockRejectedValue(
+        new Error('network error'),
+      );
+
+      renderForm(
+        {
+          appId: 'users/u/apps/existing',
+          initialValues: { name: 'My App' },
+        },
+        ref,
+      );
+
+      await user.clear(getNameInput());
+      await user.type(getNameInput(), 'Renamed App');
+
+      await expect(
+        act(async () => {
+          await ref.current?.persist();
+        }),
+      ).rejects.toThrow('network error');
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
   });
 
   it('shows error message when API call fails', async () => {

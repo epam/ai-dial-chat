@@ -371,6 +371,68 @@
       }
     },
     "/api/v1/applications/{applicationName}": {
+      "patch": {
+        "description": "Updates the General-step fields (name, description, iconUrl, topics, intro) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties, version) is preserved untouched. Invalidates the applications and deployments list caches on success.",
+        "operationId": "updateApplication",
+        "parameters": [
+          {
+            "name": "applicationName",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-app__1.0",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatedApplicationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid application name or body fields"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Update an application",
+        "tags": ["applications"]
+      },
       "delete": {
         "description": "Deletes an application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.",
         "operationId": "deleteApplication",
@@ -3931,6 +3993,54 @@
         "required": ["name", "type"]
       },
       "CreatedApplicationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "users/my-user/applications/my-app"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "My App"
+          },
+          "object": {
+            "type": "string",
+            "example": "application"
+          }
+        },
+        "required": ["id"]
+      },
+      "UpdateApplicationBodyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "My App"
+          },
+          "description": {
+            "type": "string",
+            "example": "A custom application."
+          },
+          "iconUrl": {
+            "type": "string",
+            "example": "https://example.com/icon.svg"
+          },
+          "topics": {
+            "example": ["nlp", "assistant"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "intro": {
+            "type": "string",
+            "example": "Summarizes long documents in one line.",
+            "maxLength": 90
+          }
+        },
+        "required": ["name"]
+      },
+      "UpdatedApplicationDto": {
         "type": "object",
         "properties": {
           "id": {

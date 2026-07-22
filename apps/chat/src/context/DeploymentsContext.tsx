@@ -51,8 +51,16 @@ export interface DeploymentsContextType {
   toolsets: DialToolsetDto[];
   /** Re-fetches toolsets from the API and updates the catalog list. Call after creating/updating a toolset. */
   refetchToolsets: () => Promise<void>;
-  /** Re-fetches deployments from the API and updates the catalog list. Call after creating/deleting an application. */
-  refetchDeployments: () => Promise<void>;
+  /**
+   * Re-fetches deployments from the API and updates the catalog list. Call
+   * after creating/deleting an application.
+   * @param refresh Bypasses the 30s server-side cache when true (default).
+   * Pass `false` for a refetch that only needs to reflect a mutation the
+   * backend already invalidated its own cache for (e.g. after this app's own
+   * PATCH endpoint ran), or for a best-effort intermediate refresh where
+   * brief staleness is acceptable because a later refetch will correct it.
+   */
+  refetchDeployments: (refresh?: boolean) => Promise<void>;
   /**
    * Synchronously upserts a single deployment or toolset into local state,
    * without issuing any request. Use right after accepting a share
@@ -278,23 +286,26 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [showNotification, t]);
 
-  const refetchDeployments = useCallback(async () => {
-    const requestId = ++deploymentsRequestIdRef.current;
-    try {
-      const { deployments } = await getDeployments(
-        [ListDeploymentsInterfaceTypeEnum.Chat],
-        true,
-      );
-      if (deploymentsRequestIdRef.current !== requestId) return;
-      setRawDeployments(sortDeployments(deployments ?? []));
-    } catch {
-      if (deploymentsRequestIdRef.current !== requestId) return;
-      showNotification({
-        variant: NotificationVariant.Error,
-        message: t(DeploymentSelectorI18nKeys.RefetchDeploymentsFailed),
-      });
-    }
-  }, [showNotification, t]);
+  const refetchDeployments = useCallback(
+    async (refresh = true) => {
+      const requestId = ++deploymentsRequestIdRef.current;
+      try {
+        const { deployments } = await getDeployments(
+          [ListDeploymentsInterfaceTypeEnum.Chat],
+          refresh,
+        );
+        if (deploymentsRequestIdRef.current !== requestId) return;
+        setRawDeployments(sortDeployments(deployments ?? []));
+      } catch {
+        if (deploymentsRequestIdRef.current !== requestId) return;
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: t(DeploymentSelectorI18nKeys.RefetchDeploymentsFailed),
+        });
+      }
+    },
+    [showNotification, t],
+  );
 
   const mergeSharedItem = useCallback(
     (item: DeploymentItemDto | DialToolsetDto) => {
