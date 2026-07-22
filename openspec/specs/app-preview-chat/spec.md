@@ -126,8 +126,8 @@ When a Settings-step save succeeds for a preview request, `AppsEditor` SHALL awa
 - **AND** the subsequent `GET /api/v1/conversations?path=...` request for that conversation succeeds (no double-encoded segment, no 400 from DIAL Core)
 
 The preview composer SHALL:
-- Render `conversationStarters.introText` above the starter buttons and the input when present.
-- Render `StarterButtons` above the input when valid starters are present.
+- Render `conversationStarters.introText` below the input and above the starter buttons when present.
+- Render `StarterButtons` below the input when valid starters are present.
 - Disable free-form input when `conversationStarters.chatMessageInputDisabled === true`.
 - Treat `autoSubmit` as `true` unless the API value is explicitly `false`.
 
@@ -144,7 +144,7 @@ Selecting a starter with submit enabled SHALL create or append to the preview co
 #### Scenario: Preview shows saved Quick Apps starters without page reload
 - **WHEN** the user changes conversation starters in the Settings iframe, clicks Preview, and the iframe posts `AppsEditorEvent.SaveSuccess`
 - **THEN** `AppsEditor` awaits `refetchDeployments()` before entering preview mode
-- **AND** the preview chat shows the saved starter buttons and intro text without a full browser reload
+- **AND** the preview chat shows the saved starter buttons and intro text below the input without a full browser reload
 
 #### Scenario: Preview non-submit starter populates input
 - **WHEN** the user selects a preview starter whose normalized `submit` flag is false
