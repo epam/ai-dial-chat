@@ -43,8 +43,8 @@ describe('useFavoriteApplications', () => {
     const { result } = renderHook(() => useFavoriteApplications());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    act(() => {
-      result.current.toggleFavorite(
+    await act(async () => {
+      await result.current.toggleFavorite(
         'toolsets/b/salesforce',
         true,
         FavoriteEntityType.Toolset,
@@ -56,5 +56,25 @@ describe('useFavoriteApplications', () => {
       true,
     );
     expect(updateInstalledDeployment).not.toHaveBeenCalled();
+  });
+
+  it('reverts optimistic update when API call fails', async () => {
+    vi.mocked(updateInstalledDeployment).mockRejectedValueOnce(
+      new Error('API error'),
+    );
+
+    const { result } = renderHook(() => useFavoriteApplications());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    /* Call toggleFavorite and expect it to reject */
+    await expect(
+      act(async () => {
+        await result.current.toggleFavorite('new-app', true);
+      }),
+    ).rejects.toThrow('API error');
+
+    /* State should be reverted after rejection */
+    expect(result.current.favoriteIds.has('new-app')).toBe(false);
   });
 });

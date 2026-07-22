@@ -78,6 +78,10 @@
     "removedTitle": "Removed from Favorites",
     "added": "\"{{name}}\" added to Favorites",
     "removed": "\"{{name}}\" removed from Favorites",
+    "addFailedTitle": "Failed to Add",
+    "addFailed": "Could not add \"{{name}}\" to Favorites",
+    "removeFailedTitle": "Failed to Remove",
+    "removeFailed": "Could not remove \"{{name}}\" from Favorites",
     "favoritesLabel": "Favorites",
     "addToFavoritesLabel": "Add to favorites",
     "removeFromFavoritesLabel": "Remove from favorites"

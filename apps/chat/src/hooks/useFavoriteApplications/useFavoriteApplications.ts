@@ -17,7 +17,7 @@ interface UseFavoriteApplicationsResult {
     id: string,
     isFavorite: boolean,
     entityType?: FavoriteEntityType,
-  ) => void;
+  ) => Promise<void>;
 }
 
 /** Loads and persists catalog application favorites via the user config API. */
@@ -58,11 +58,11 @@ const useFavoriteApplications = (): UseFavoriteApplicationsResult => {
   }, []);
 
   const toggleFavorite = useCallback(
-    (
+    async (
       id: string,
       isFavorite: boolean,
       entityType = FavoriteEntityType.Deployment,
-    ) => {
+    ): Promise<void> => {
       setFavoriteIds((prev) => {
         const next = new Set(prev);
         if (isFavorite) {
@@ -78,7 +78,9 @@ const useFavoriteApplications = (): UseFavoriteApplicationsResult => {
           ? updateInstalledToolset
           : updateInstalledDeployment;
 
-      updateInstalled(id, isFavorite).catch(() => {
+      try {
+        await updateInstalled(id, isFavorite);
+      } catch (error) {
         setFavoriteIds((prev) => {
           const restored = new Set(prev);
           if (isFavorite) {
@@ -88,7 +90,8 @@ const useFavoriteApplications = (): UseFavoriteApplicationsResult => {
           }
           return restored;
         });
-      });
+        throw error;
+      }
     },
     [],
   );
