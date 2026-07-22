@@ -31,6 +31,7 @@ import { FolderInterface } from '@epam/ai-dial-shared';
 interface Props<T> {
   filteredItems: T[];
   filteredFolders: FolderInterface[];
+  hasAnyFilteredResults?: boolean;
   featureType: FeatureType.Chat | FeatureType.Prompt;
   searchTerm: string;
   itemComponent: ReactNode | ((isDraggingOver: boolean) => ReactNode);
@@ -46,6 +47,7 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
     hasScrolledOnce,
     filteredItems,
     filteredFolders,
+    hasAnyFilteredResults,
     featureType,
     searchTerm,
     itemComponent,
@@ -150,6 +152,10 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
     }
   }, []);
 
+  const hasResults =
+    hasAnyFilteredResults ??
+    (filteredItems.length > 0 || filteredFolders.length > 0);
+
   if (filteredItems.length > 0 || filteredFolders.length > 0) {
     return (
       <div
@@ -191,6 +197,10 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
     );
   }
 
+  if (hasResults) {
+    return null;
+  }
+
   return (
     <div className="flex grow place-content-center">
       {searchTerm.length ? <NoResultsFound /> : <NoData />}
@@ -201,6 +211,7 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
 export function SidebarSections<T>({
   filteredItems,
   filteredFolders,
+  hasAnyFilteredResults,
   featureType,
   searchTerm,
   itemComponent,
@@ -257,6 +268,7 @@ export function SidebarSections<T>({
         hasScrolledOnce={hasScrolledOnce}
         filteredItems={filteredItems}
         filteredFolders={filteredFolders}
+        hasAnyFilteredResults={hasAnyFilteredResults}
         featureType={featureType}
         searchTerm={searchTerm}
         itemComponent={itemComponent}

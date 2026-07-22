@@ -1,5 +1,6 @@
 import { DragEvent, useCallback, useMemo } from 'react';
 
+import { useHasAnySearchResults } from '@/src/hooks/useHasAnySearchResults';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
@@ -77,6 +78,16 @@ export const Chatbar = () => {
         (conversation) => conversation.folderId === getConversationRootId(),
       ),
     [filteredConversations],
+  );
+
+  const hasAnyFilteredResults = useHasAnySearchResults(
+    FeatureType.Chat,
+    searchTerm,
+    rootFilteredConversations.length > 0 || filteredFolders.length > 0,
+    {
+      selectFilteredItems: ConversationsSelectors.selectFilteredConversations,
+      selectFilteredFolders: ConversationsSelectors.selectFilteredFolders,
+    },
   );
 
   const handleDrop = useCallback(
@@ -157,6 +168,7 @@ export const Chatbar = () => {
       folderComponent={<ChatFolders />}
       filteredItems={rootFilteredConversations}
       filteredFolders={filteredFolders}
+      hasAnyFilteredResults={hasAnyFilteredResults}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
       onSearchTerm={handleSearchTerm}
