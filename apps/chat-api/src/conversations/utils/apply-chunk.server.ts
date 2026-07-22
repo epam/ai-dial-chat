@@ -49,6 +49,39 @@ interface SseChunk {
   choices?: SseChoice[];
 }
 
+/** DIAL Core's in-band mid-stream error chunk shape: `{ error: {...} }` instead of `{ choices: [...] }`. */
+export interface DialStreamErrorPayload {
+  message: string;
+  type?: string;
+  code?: string;
+  displayMessage?: string;
+}
+
+interface RawDialStreamError {
+  message?: string;
+  type?: string;
+  code?: string;
+  display_message?: string;
+}
+
+/**
+ * Detects DIAL Core's mid-stream error chunk (no `choices`, just an `error`
+ * object) — e.g. emitted when a QuickApp's downstream tool call can't reach
+ * its upstream server. Returns `null` for a normal delta chunk.
+ */
+export const extractDialStreamError = (
+  rawChunk: unknown,
+): DialStreamErrorPayload | null => {
+  const error = (rawChunk as { error?: RawDialStreamError })?.error;
+  if (!error || typeof error.message !== 'string') return null;
+  return {
+    message: error.message,
+    type: error.type,
+    code: error.code,
+    displayMessage: error.display_message,
+  };
+};
+
 const mergeStageAttachments = (
   existing: StageAttachment[],
   incoming: StageAttachment[],
@@ -100,7 +133,14 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
           : result[idx].attachments,
       };
     } else {
-      result.push(stage);
+      /*
+       * A brand-new stage's first chunk can carry `name: null` (DIAL Core's
+       * "stage opened, name pending" signal, before the name text streams
+       * in) — normalize it the same way the merge branch above already
+       * coalesces `null` to `''`, so a persisted stage never carries a
+       * `null` name if the frontend renders it directly after reload.
+       */
+      result.push({ ...stage, name: stage.name ?? '' });
     }
   }
   return result;

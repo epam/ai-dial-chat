@@ -138,7 +138,7 @@ describe('AppConfigService', () => {
         first,
         60_000,
       );
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(6);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(7);
     });
 
     it('does not share cached config across role sets', async () => {
@@ -155,7 +155,7 @@ describe('AppConfigService', () => {
         roles: ['viewer'],
       });
 
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(12);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(14);
     });
   });
 

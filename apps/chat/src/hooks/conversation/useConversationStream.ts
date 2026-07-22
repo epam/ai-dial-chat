@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useClientChannel } from '../../context/ClientChannelContext';
 import { useGeneration } from '../../context/GenerationContext';
 import {
   CompletionMode,
@@ -82,6 +83,7 @@ export const useConversationStream = ({
   const activeGenerationPathRef = useRef<string | null>(null);
   const resumingPathsRef = useRef<Set<string>>(new Set());
   const { startGeneration, completeGeneration } = useGeneration();
+  const { channelId, ensureConnected } = useClientChannel();
 
   /*
    * ConversationPage is NOT remounted when navigating between conversations
@@ -155,6 +157,13 @@ export const useConversationStream = ({
       const controller = startGeneration(conversationPath, genId);
       addStreamingPath(conversationPath);
 
+      /*
+       * Best-effort: nudge a disconnected client channel to reconnect so a
+       * `toolset/signin` event has a chance to reach this completion. Never
+       * blocks or delays the send — see design.md Decision 2.
+       */
+      ensureConnected();
+
       streamCompletion(
         conversationPath,
         userContent,
@@ -199,6 +208,14 @@ export const useConversationStream = ({
               /*
                * Backend has already saved the conversation; reload to get server-persisted state
                * (including server-computed fields like stage attachment `data`).
+               * Unlike `streamCompletion`/`watchConversation` (which take the
+               * bucket-stripped `conversationPath` and re-qualify it
+               * server-side against the session bucket), `GET /conversations`
+               * requires the full `{bucket}/{name}` path — passing the
+               * stripped path here breaks any deployment id containing a
+               * slash (e.g. `applications/{bucket}/{app}__{version}`),
+               * since the backend would then treat `applications` itself as
+               * the bucket.
                */
               const refreshed = (await getConversation(
                 safeDecodeURIComponent(currentConversationId),
@@ -237,6 +254,7 @@ export const useConversationStream = ({
         genId,
         mode,
         serverMessageIndex,
+        channelId ?? undefined,
       );
     },
     // setConversation and conversationRef are stable refs — intentionally omitted
@@ -247,6 +265,8 @@ export const useConversationStream = ({
       addStreamingPath,
       removeStreamingPath,
       isPathDisplayed,
+      channelId,
+      ensureConnected,
     ],
   );
 
@@ -303,6 +323,8 @@ export const useConversationStream = ({
 
       const finalCheck = async () => {
         try {
+          // `getConversation` needs the full bucket-qualified path — see the
+          // comment on the other `getConversation` call in this file.
           const result = (await getConversation(
             safeDecodeURIComponent(currentConversationId),
           )) as Conversation;

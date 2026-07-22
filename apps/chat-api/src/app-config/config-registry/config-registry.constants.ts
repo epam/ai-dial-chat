@@ -96,4 +96,19 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'FILE_MANAGER_AVAILABLE_TABS',
   },
+  {
+    key: 'features.liveChatInteraction',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the chat app subscribes to the DIAL Core client channel and shows the ' +
+      'interactive toolset sign-in dialog when a completion needs mid-stream toolset ' +
+      'credentials. Set LIVE_CHAT_INTERACTION_ENABLED_ROLES to restrict to specific roles.',
+    owner: 'chat-team',
+    envVar: 'LIVE_CHAT_INTERACTION_ENABLED',
+    allowedRolesEnvVar: 'LIVE_CHAT_INTERACTION_ENABLED_ROLES',
+  },
 ];

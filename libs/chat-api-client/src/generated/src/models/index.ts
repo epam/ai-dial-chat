@@ -3874,6 +3874,36 @@ export interface RenameItemResultDto {
 /**
  *
  * @export
+ * @interface ReportClientChannelDto
+ */
+export interface ReportClientChannelDto {
+  /**
+   * The `id` of the RPC request being answered.
+   * @type {string}
+   * @memberof ReportClientChannelDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ReportClientChannelDto
+   */
+  result: ReportClientChannelDtoResultEnum;
+}
+
+/**
+ * @export
+ */
+export const ReportClientChannelDtoResultEnum = {
+  Success: 'success',
+  Denied: 'denied',
+} as const;
+export type ReportClientChannelDtoResultEnum =
+  (typeof ReportClientChannelDtoResultEnum)[keyof typeof ReportClientChannelDtoResultEnum];
+
+/**
+ *
+ * @export
  * @interface RevokeAccessDto
  */
 export interface RevokeAccessDto {
@@ -3977,6 +4007,12 @@ export interface SendCompletionDto {
    * @memberof SendCompletionDto
    */
   customContent?: MessageCustomContentDto;
+  /**
+   * Active DIAL Core client-channel id (from `POST /v1/client-channel/subscribe`), forwarded to DIAL Core so a mid-completion `toolset/signin` event can be correlated to this request. Omitted when no channel is active yet.
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  clientChannelId?: string;
 }
 
 /**

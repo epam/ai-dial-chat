@@ -189,10 +189,11 @@ apps/chat/src/
 
 Current implementation uses **React Context** with no external state library.
 
-| Context        | State owned                                                                                        |
-| -------------- | -------------------------------------------------------------------------------------------------- |
-| `UserContext`  | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()` |
-| `ThemeContext` | Active theme ID, theme list, `setTheme()`, logo URL, loading flag                                  |
+| Context                | State owned                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UserContext`          | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()`                                                                                                                                                                                                                                                   |
+| `ThemeContext`         | Active theme ID, theme list, `setTheme()`, logo URL, loading flag                                                                                                                                                                                                                                                                                    |
+| `ClientChannelContext` | DIAL Core client-channel id, pending `toolset/signin` events, `reportEvent()`, `ensureConnected()` — mounted inside `RequireAuth` alongside `GenerationProvider` so it survives conversation navigation; see [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-toolset-sign-in-during-a-completion) |
 
 Context pattern (reference: `ThemeContext.tsx`):
 
@@ -229,6 +230,7 @@ Behaviour applied automatically:
 | `AUTH_ME`        | `/api/v1/auth/me`        |
 | `AUTH_PROVIDERS` | `/api/v1/auth/providers` |
 | `AUTH_LOGOUT`    | `/api/v1/auth/logout`    |
+| `CLIENT_CHANNEL` | `/api/v1/client-channel` |
 
 ### SSE streaming
 
@@ -280,6 +282,7 @@ apps/chat-api/src/
 │   └── utils/
 ├── conversations/         # Conversation CRUD + completions
 ├── chat/                  # Direct DIAL Core proxy
+├── client-channel/        # DIAL Core client-channel proxy (subscribe/report/unsubscribe SSE relay)
 ├── deployments/           # Available deployments listing
 ├── models/                # Available models listing
 ├── themes/                # Theme config + icon serving
@@ -321,6 +324,16 @@ One folder per domain. **No `modules/` wrapper** — `{domain}.module.ts` sits d
 | `GET`  | `/api/v1/models`                           | List available models (cached)                           |
 | `GET`  | `/api/deployments`                         | List available deployments                               |
 | `GET`  | `/api/v1/deployments/{deployment}/details` | Full per-entity detail for one deployment by id (cached) |
+
+#### Client Channel (`/api/v1/client-channel`)
+
+DIAL Core RPC proxy used to deliver mid-completion `toolset/signin` interrupts. See [`docs/auth/auth-bff-encrypted-cookie.md` §5.5](./auth/auth-bff-encrypted-cookie.md#55-interactive-toolset-sign-in-during-a-completion).
+
+| Method | Path                                 | Description                                         |
+| ------ | ------------------------------------ | --------------------------------------------------- |
+| `POST` | `/api/v1/client-channel/subscribe`   | Open the SSE relay, get/resume a channel id         |
+| `POST` | `/api/v1/client-channel/report`      | Report `{ id, result }` back to a blocked tool call |
+| `POST` | `/api/v1/client-channel/unsubscribe` | Close the channel                                   |
 
 #### Infrastructure
 

@@ -691,5 +691,20 @@
       "login": "Successfully logged in.",
       "logout": "Successfully logged out."
     }
+  },
+  "toolsetSignin": {
+    "dialogTitle": "Toolset sign-in required",
+    "dialogDescription": "One or more tools need you to sign in before the conversation can continue.",
+    "rowDecline": "Decline",
+    "declineAll": "Decline all",
+    "fallbackName": "Toolset",
+    "apiKeyLabel": "API key",
+    "apiKeyPlaceholder": "Enter API key",
+    "errorLoginFailed": "Failed to log in. Please try again.",
+    "errorPopupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again.",
+    "errorDeclineFailed": "Failed to decline. Please try again.",
+    "errorRetry": "Retry",
+    "statusLoginSuccess": "Login succeeded for {{name}}.",
+    "statusDeclineSuccess": "Declined {{name}}."
   }
 }

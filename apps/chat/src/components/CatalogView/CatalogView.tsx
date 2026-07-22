@@ -6,13 +6,9 @@ import {
   CredentialsLevel,
   CredentialStatus,
   CreateOption,
-  ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import type {
-  ToolsetLoginBodyDto,
-  ToolsetLogoutBodyDto,
-} from '@epam/chat-api-client';
+import type { ToolsetLogoutBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +30,10 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
+import {
+  ToolsetLoginOutcomeType,
+  useToolsetLogin,
+} from '../../hooks/toolsets/useToolsetLogin';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
 import useFavoriteApplications, {
   FavoriteEntityType,
@@ -45,22 +45,12 @@ import {
   getCatalogPublishHistory,
   publishCatalogEntity,
 } from '../../server-api/publish.api';
-import {
-  deleteToolset,
-  getToolset,
-  loginToolset,
-  logoutToolset,
-} from '../../server-api/toolsets';
+import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
-import {
-  ToolsetAuthTypes,
-  ToolsetCredentialsLevel,
-  ToolsetOAuthInitiationResultType,
-  ToolsetOAuthResultType,
-  WithLogin,
-} from '../../types/toolsets';
+import type { ToolsetAuthTypes } from '../../types/toolsets';
+import { ToolsetCredentialsLevel } from '../../types/toolsets';
 import { isQuickAppSchema } from '../../utils/application-schema';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
@@ -76,10 +66,6 @@ import {
   mapPublishHistoryEntryDto,
   toPublishEntityType,
 } from '../../utils/publish';
-import {
-  initiateOAuthLogin,
-  waitForToolsetOAuthResult,
-} from '../../utils/toolsets';
 import ConnectPopoverContainer from '../ConnectPopoverContainer/ConnectPopoverContainer';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
@@ -291,6 +277,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [isAdmin, showNotification, t],
   );
 
+  const { login: loginToolsetShared } = useToolsetLogin();
+
   const handleLogin = useCallback(
     async (
       item: CatalogItem,
@@ -301,101 +289,44 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         params.level === CredentialsLevel.User
           ? ToolsetCredentialsLevel.User
           : ToolsetCredentialsLevel.Global;
+      const toolset = toolsets.find((t) => t.id === item.id);
 
-      if (authenticationType === ToolsetAuthenticationType.OAuth) {
-        const toolset = toolsets.find((t) => t.id === item.id);
-        const initiation = initiateOAuthLogin(
-          {
-            authenticationType: ToolsetAuthTypes.OAuth,
-            withLogin: WithLogin.WithConfig,
-            isLoggedIn: false,
-            clientId: toolset?.authSettings?.clientId,
-            authorizationEndpoint: toolset?.authSettings?.authorizationEndpoint,
-            scopes: toolset?.authSettings?.scopesSupported,
-            codeChallenge: toolset?.authSettings?.codeChallenge,
-            codeChallengeMethod: toolset?.authSettings?.codeChallengeMethod,
-          },
-          item.id,
-          credentialsLevel,
-        );
-        if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
-          showNotification({
-            variant: NotificationVariant.Error,
-            message: t(
-              initiation.type === ToolsetOAuthInitiationResultType.Blocked
-                ? ToolsetEditorI18nKeys.ErrorPopupBlocked
-                : ToolsetEditorI18nKeys.ErrorLoginFailed,
-            ),
-          });
-          return;
-        }
+      const outcome = await loginToolsetShared({
+        toolsetId: item.id,
+        credentialsLevel,
+        authenticationType: authenticationType as unknown as ToolsetAuthTypes,
+        apiKey: params.apiKey,
+        oauthSettings: {
+          clientId: toolset?.authSettings?.clientId,
+          authorizationEndpoint: toolset?.authSettings?.authorizationEndpoint,
+          scopes: toolset?.authSettings?.scopesSupported,
+          codeChallenge: toolset?.authSettings?.codeChallenge,
+          codeChallengeMethod: toolset?.authSettings?.codeChallengeMethod,
+        },
+        isCurrentlyFailed:
+          getLevelStatus(item, params.level) === CredentialStatus.Failed,
+      });
 
-        const result = await waitForToolsetOAuthResult(
-          initiation.popup,
-          initiation.flowId,
-        );
-
-        if (result.type === ToolsetOAuthResultType.Success) {
+      switch (outcome.type) {
+        case ToolsetLoginOutcomeType.Success:
           showLoginSuccess(item, params.level);
           await refetchToolsets();
-        } else if (result.type === ToolsetOAuthResultType.Failure) {
+          return;
+        case ToolsetLoginOutcomeType.PopupBlocked:
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(ToolsetEditorI18nKeys.ErrorPopupBlocked),
+          });
+          return;
+        case ToolsetLoginOutcomeType.Failure:
           showNotification({
             variant: NotificationVariant.Error,
             message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
           });
-        } else if (result.type === ToolsetOAuthResultType.Cancelled) {
-          /*
-           * The callback popup posts its result and closes itself
-           * back-to-back — under load the opener can observe `popup.closed`
-           * before the `BroadcastChannel` message arrives, so a login that
-           * actually succeeded server-side can still surface as Cancelled
-           * here. Re-checking the toolset's real status before giving up
-           * silently avoids reporting a false cancel for a login that
-           * already went through.
-           */
-          try {
-            const refreshed = await getToolset(item.id);
-            const statusField =
-              params.level === CredentialsLevel.User
-                ? refreshed.authSettings?.userLevelAuthStatus
-                : refreshed.authSettings?.globalAuthStatus;
-            if (statusField === 'SIGNED_IN') {
-              showLoginSuccess(item, params.level);
-              await refetchToolsets();
-            }
-          } catch {
-            // Best-effort verification only — a genuine cancel stays silent.
-          }
-        }
-        return;
-      }
-
-      try {
-        if (getLevelStatus(item, params.level) === CredentialStatus.Failed) {
-          await logoutToolset(item.id, {
-            url: item.id,
-            credentialsLevel:
-              credentialsLevel as ToolsetLogoutBodyDto['credentialsLevel'],
-            authenticationType:
-              authenticationType as ToolsetLogoutBodyDto['authenticationType'],
-          });
-        }
-        const body: ToolsetLoginBodyDto = {
-          url: item.id,
-          credentialsLevel:
-            credentialsLevel as ToolsetLoginBodyDto['credentialsLevel'],
-          authenticationType:
-            authenticationType as ToolsetLoginBodyDto['authenticationType'],
-          apiKey: params.apiKey?.trim(),
-        };
-        await loginToolset(item.id, body);
-        showLoginSuccess(item, params.level);
-        await refetchToolsets();
-      } catch {
-        showNotification({
-          variant: NotificationVariant.Error,
-          message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
-        });
+          return;
+        case ToolsetLoginOutcomeType.Cancelled:
+          // Silent — matches the pre-refactor behavior for a genuine cancel.
+          return;
       }
     },
     [
@@ -405,6 +336,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       getLevelStatus,
       showLoginSuccess,
       refetchToolsets,
+      loginToolsetShared,
     ],
   );
 
