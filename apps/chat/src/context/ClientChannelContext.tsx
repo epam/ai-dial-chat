@@ -196,6 +196,18 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
 
   const ensureConnected = useCallback(() => {
     if (isStoppedRef.current || !isEnabledRef.current) return;
+
+    /*
+     * Core reuses the same RPC `id` across separate completions (it is not
+     * a globally unique value), so a resolution recorded for a previous
+     * completion must not permanently suppress the dialog for a later one.
+     * Forgetting resolved ids at the start of every new completion keeps the
+     * dedup guard scoped to "duplicate delivery within the same occurrence"
+     * (still-pending events in `eventsMapRef` are untouched) instead of
+     * "never show this id again for the rest of the session".
+     */
+    resolvedIdsRef.current.clear();
+
     if (abortControllerRef.current || channelIdRef.current) return;
     attemptRef.current = 0;
     clearRetryTimeout();

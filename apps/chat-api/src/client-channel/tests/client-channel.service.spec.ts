@@ -151,7 +151,7 @@ describe('ClientChannelService', () => {
           Authorization: 'Bearer token',
           'X-DIAL-CLIENT-CHANNEL-ID': 'channel-1',
         }),
-        body: { id: 'event-1', result: 'success' },
+        body: { jsonrpc: '2.0', id: 'event-1', result: 'success' },
       });
     });
 

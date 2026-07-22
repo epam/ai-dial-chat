@@ -172,6 +172,50 @@ describe('ClientChannelProvider', () => {
     expect(result.current.pendingEvents).toHaveLength(1);
   });
 
+  it('shows the dialog again for a new completion that reuses a previously-declined event id', async () => {
+    /*
+     * Core's RPC `id` is not globally unique across completions (e.g. it
+     * can be scoped to a per-conversation tool-call counter), so declining
+     * an event must not permanently suppress that id for the rest of the
+     * session — only for duplicate deliveries of the same occurrence.
+     */
+    mockUseFeatureFlag.mockReturnValue(true);
+    const { stream, push } = makeControllableStream();
+    mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+    const { result } = renderHook(() => useClientChannel(), { wrapper });
+    await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+    const frame =
+      'data: {"id":"evt-1","method":"toolset/signin","params":{"toolsetId":"toolsets/b/my-toolset"}}\n\n';
+    await act(async () => {
+      push(frame);
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.pendingEvents).toHaveLength(1));
+
+    await act(async () => {
+      await result.current.reportEvent('evt-1', 'denied');
+    });
+    expect(result.current.pendingEvents).toHaveLength(0);
+
+    // A new completion starts — the frontend nudges the channel via ensureConnected().
+    act(() => {
+      result.current.ensureConnected();
+    });
+
+    await act(async () => {
+      push(frame);
+      await Promise.resolve();
+    });
+
+    await waitFor(() =>
+      expect(result.current.pendingEvents).toEqual([
+        { id: 'evt-1', toolsetId: 'toolsets/b/my-toolset' },
+      ]),
+    );
+  });
+
   it('unsubscribes and clears pending events when the flag flips to disabled', async () => {
     mockUseFeatureFlag.mockReturnValue(true);
     const { stream, push } = makeControllableStream();

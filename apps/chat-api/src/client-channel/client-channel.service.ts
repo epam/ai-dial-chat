@@ -100,7 +100,11 @@ export class ClientChannelService {
           ...getBearerAuthHeaders(token),
           [CHANNEL_ID_HEADER]: channelId,
         },
-        body: { id: body.id, result: body.result } as never,
+        body: {
+          jsonrpc: '2.0',
+          id: body.id,
+          result: body.result,
+        } as never,
       });
       if (response.error) {
         return mapDialHttpStatus(

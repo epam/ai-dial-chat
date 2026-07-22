@@ -181,6 +181,30 @@ const ToolsetSigninDialog: FC = () => {
     [rowStates],
   );
 
+  /*
+   * Core's RPC `id` can reappear in a later, unrelated completion (see
+   * ClientChannelContext's `resolvedIdsRef` handling), so a row's local
+   * state must not survive past the event it belonged to — otherwise a
+   * fresh occurrence of the same id would render with a stale leftover
+   * status (e.g. permanently stuck "processing" from a prior resolved
+   * decline/login) instead of starting clean.
+   */
+  useEffect(() => {
+    const activeIds = new Set(pendingEvents.map((event) => event.id));
+    setRowStates((prev) => {
+      let changed = false;
+      const next: Record<string, RowState> = {};
+      for (const [eventId, state] of Object.entries(prev)) {
+        if (activeIds.has(eventId)) {
+          next[eventId] = state;
+        } else {
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [pendingEvents]);
+
   const setRowState = useCallback(
     (eventId: string, patch: Partial<RowState>) => {
       setRowStates((prev) => ({
@@ -359,14 +383,17 @@ const ToolsetSigninDialog: FC = () => {
 
   if (pendingEvents.length === 0) return null;
 
-  const footer = (
-    <div className="flex items-center justify-end gap-2 px-6 pb-6">
-      <NeutralButton
-        label={t(ToolsetSigninI18nKeys.DeclineAll)}
-        onClick={handleDeclineAll}
-      />
-    </div>
-  );
+  /* With a single pending event, the row's own Decline button already
+   * covers it — showing "Decline all" too is a redundant duplicate action. */
+  const footer =
+    pendingEvents.length > 1 ? (
+      <div className="flex items-center justify-end gap-2 px-6 py-4">
+        <NeutralButton
+          label={t(ToolsetSigninI18nKeys.DeclineAll)}
+          onClick={handleDeclineAll}
+        />
+      </div>
+    ) : undefined;
 
   return (
     <DialPopup
@@ -377,7 +404,7 @@ const ToolsetSigninDialog: FC = () => {
       header={t(ToolsetSigninI18nKeys.DialogTitle)}
       footer={footer}
     >
-      <div className="flex flex-col gap-2 px-6 py-2">
+      <div className="flex flex-col gap-2 px-6 py-4">
         <p className="dial-small-text text-secondary">
           {t(ToolsetSigninI18nKeys.DialogDescription)}
         </p>

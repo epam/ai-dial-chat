@@ -7,9 +7,9 @@ import { IsEnum, IsString, Matches, MaxLength } from 'class-validator';
  * own trust boundary for it, since the value is echoed back to Core and may
  * end up in log lines.
  */
-export const RPC_ID_PATTERN = /^[\w-]+$/;
+export const RPC_ID_PATTERN = /^[\w./-]+$/;
 const RPC_ID_MESSAGE =
-  'Must contain only letters, digits, dashes, and underscores';
+  'Must contain only letters, digits, dashes, underscores, dots, and slashes';
 
 export enum ToolsetSigninResult {
   Success = 'success',
