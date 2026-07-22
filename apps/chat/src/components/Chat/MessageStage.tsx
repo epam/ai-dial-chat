@@ -94,6 +94,7 @@ const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
       {t(ChatI18nKeys.ContentTooLarge, { limit })}
       <div className="flex items-center gap-2 text-secondary">
         <DialGhostIconButton
+          aria-label="copy"
           tooltipProps={{
             tooltip: isCopied
               ? t(ChatI18nKeys.Copied)
@@ -106,6 +107,7 @@ const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
           icon={isCopied ? <IconCheck size={18} /> : <IconCopy size={18} />}
         />
         <DialGhostIconButton
+          aria-label="download"
           tooltipProps={{
             tooltip: t(ChatI18nKeys.Download),
             isTriggerClickable: true,
@@ -184,6 +186,7 @@ export const MessageStage = ({ stage }: MessageStageProps) => {
             'grid max-w-full grid-flow-row overflow-auto',
             isOpened ? 'border-t border-secondary p-2' : 'h-0',
           )}
+          data-qa="stage-content"
         >
           {isOpened && stage.content && <StageView content={stage.content} />}
           <MessageAttachments attachments={stage.attachments} isInner />
