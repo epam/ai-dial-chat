@@ -44,10 +44,11 @@ function getFilteredItems<T>({
   selectedItems,
 }: getFilteredItemsArgs<T>) {
   if (!items) {
-    return !inputValue ||
-      selectedItems?.some((item) => getItemLabel(item) === inputValue)
+    const trimmedInputValue = inputValue?.trim();
+    return !trimmedInputValue ||
+      selectedItems?.some((item) => getItemLabel(item) === trimmedInputValue)
       ? []
-      : [inputValue as T];
+      : [trimmedInputValue as T];
   }
   if (!selectedItems) {
     return items;
@@ -212,32 +213,44 @@ export function MultipleComboBox<T>({
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
-        case useCombobox.stateChangeTypes.InputBlur:
+        case useCombobox.stateChangeTypes.InputBlur: {
           if (!newSelectedItem) {
             return;
           }
 
-          if (
-            getItemLabel(newSelectedItem) &&
-            !getItemLabel(newSelectedItem).trim()
-          ) {
+          const itemToAdd: T =
+            typeof newSelectedItem === 'string'
+              ? (newSelectedItem.trim() as T)
+              : newSelectedItem;
+
+          if (getItemLabel(itemToAdd) && !getItemLabel(itemToAdd).trim()) {
             return;
           }
 
           if (
             validationRegExp &&
-            typeof newSelectedItem === 'string' &&
-            !validationRegExp.test(newSelectedItem)
+            typeof itemToAdd === 'string' &&
+            !validationRegExp.test(itemToAdd)
           ) {
             handleError?.();
             return;
           }
 
-          addSelectedItem(newSelectedItem);
-          onChangeSelectedItems([...(selectedItems ?? []), newSelectedItem]);
+          if (
+            selectedItems?.some(
+              (item) => getItemLabel(item) === getItemLabel(itemToAdd),
+            )
+          ) {
+            setInputValue('');
+            return;
+          }
+
+          addSelectedItem(itemToAdd);
+          onChangeSelectedItems([...(selectedItems ?? []), itemToAdd]);
           setInputValue('');
 
           break;
+        }
 
         case useCombobox.stateChangeTypes.InputChange:
           handleClearError?.();
