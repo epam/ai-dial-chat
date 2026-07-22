@@ -15,6 +15,7 @@ import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
+  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
@@ -216,6 +217,9 @@ const selectQuickAppsModel = (state: RootState) =>
 const selectQuickAppsSchemaId = (state: RootState) =>
   rootSelector(state).quickAppsSchemaId ?? DEFAULT_QUICK_APPS_SCHEMA_ID;
 
+const selectQuickAppsSchemaId2 = (state: RootState) =>
+  rootSelector(state).quickAppsSchemaId2 ?? DEFAULT_QUICK_APPS_SCHEMA_2_ID;
+
 const selectExternalAppsSchemaId = (state: RootState) =>
   rootSelector(state).externalAppsSchemaId ?? DEFAULT_EXTERNAL_APPS_SCHEMA_ID;
 
@@ -235,6 +239,7 @@ const selectDefaults = createSelector(
     selectQuickAppsHost,
     selectQuickAppsModel,
     selectQuickAppsSchemaId,
+    selectQuickAppsSchemaId2,
     selectExternalAppsSchemaId,
     selectDialApiHost,
     selectDefaultSystemPrompt,
@@ -244,6 +249,7 @@ const selectDefaults = createSelector(
     quickAppsHost,
     quickAppsModel,
     quickAppsSchemaId,
+    quickAppsSchemaId2,
     externalAppsSchemaId,
     dialApiHost,
     defaultSystemPrompt,
@@ -253,6 +259,7 @@ const selectDefaults = createSelector(
       quickAppsHost,
       quickAppsModel,
       quickAppsSchemaId,
+      quickAppsSchemaId2,
       externalAppsSchemaId,
       dialApiHost,
       defaultSystemPrompt,

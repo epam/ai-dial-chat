@@ -237,6 +237,7 @@ const dialTest = test.extend<{
   externalAppEditorViewForm: ExternalAppEditorViewForm;
   externalAppEditorAppSettingsPreview: EntityEditorEntitySettingsCardPreview;
   quickApp2EditorContainer: QuickApp2EditorContainer;
+  quickApp2EditorAppSettingsPreviewChat: EntityEditorEntitySettingsPreviewChat;
   quickApp2EditorViewForm: QuickApp2EditorViewForm;
   agentAndToolsetSelectModal: AgentAndToolsetSelectModal;
   agentAndToolsetSelectModalEntityMenu: DropdownMenu;
@@ -706,6 +707,17 @@ const dialTest = test.extend<{
     const quickApp2EditorViewForm =
       quickApp2EditorContainer.getEntityEditorViewForm();
     await use(quickApp2EditorViewForm);
+  },
+  quickApp2EditorAppSettingsPreviewChat: async (
+    { quickApp2EditorContainer },
+    use,
+  ) => {
+    await use(
+      quickApp2EditorContainer
+        .getEntityEditorEntitySettingsPreview()
+        .getEntityEditorEntitySettingsPreviewBody()
+        .getAppEditorAppSettingsPreviewChat(),
+    );
   },
   agentAndToolsetSelectModal: async ({ page }, use) => {
     await use(new AgentAndToolsetSelectModal(page));

@@ -35,6 +35,7 @@ import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
@@ -424,7 +425,14 @@ const updateApplicationEpic: AppEpic = (action$, state$) =>
 
                 const schemaId =
                   updatedCustomApplication.applicationTypeSchemaId;
-                if (schemaId && schemaId === DEFAULT_QUICK_APPS_SCHEMA_2_ID) {
+                if (
+                  schemaId &&
+                  schemaId ===
+                    DefaultsService.get(
+                      'quickAppsSchemaId2',
+                      DEFAULT_QUICK_APPS_SCHEMA_2_ID,
+                    )
+                ) {
                   actions.push(
                     of(
                       ChatActions.getConfigurationSchema({
@@ -515,7 +523,14 @@ const editApplicationEpic: AppEpic = (action$, state$) =>
           ];
 
           const schemaId = payload.updatedApplication.applicationTypeSchemaId;
-          if (schemaId && schemaId === DEFAULT_QUICK_APPS_SCHEMA_2_ID) {
+          if (
+            schemaId &&
+            schemaId ===
+              DefaultsService.get(
+                'quickAppsSchemaId2',
+                DEFAULT_QUICK_APPS_SCHEMA_2_ID,
+              )
+          ) {
             actions.push(
               of(
                 ChatActions.getConfigurationSchema({
@@ -591,7 +606,10 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           if (!modelFromState || acceptSharedWithMe) {
             const isQuickApp2 =
               application.applicationTypeSchemaId ===
-              DEFAULT_QUICK_APPS_SCHEMA_2_ID;
+              DefaultsService.get(
+                'quickAppsSchemaId2',
+                DEFAULT_QUICK_APPS_SCHEMA_2_ID,
+              );
             const featuresRecord = {
               ...(dialEntity?.features ?? application.features ?? {}),
             };
