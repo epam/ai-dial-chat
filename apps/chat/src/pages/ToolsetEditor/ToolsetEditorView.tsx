@@ -23,7 +23,7 @@ interface Props {
   toolsetId: string;
   onNext: () => void;
   onCancel: () => void;
-  onEnsureSaved: () => Promise<boolean>;
+  onEnsureSaved: () => Promise<string | false>;
   onChange: (patch: Partial<ToolsetFormData>) => void;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
 }

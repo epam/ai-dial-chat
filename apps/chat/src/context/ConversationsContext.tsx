@@ -25,6 +25,7 @@ import {
 } from '../server-api/conversations.api';
 import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { getConversationPath } from '../utils/conversation-path';
+import { safeDecodeURIComponent } from '../utils/string-utils';
 import { useUserConfig } from './UserConfigContext';
 
 const DISPLAY_NAME_WATCH_TIMEOUT_MS = 120_000;
@@ -124,8 +125,10 @@ export const ConversationsProvider = ({
       previousName: string,
       onUpdated: (title: string) => void,
     ) => {
-      const conversationPath = getConversationPath(
-        normalizeConversationId(conversationId),
+      const normalizedConversationId = normalizeConversationId(conversationId);
+      const conversationPath = getConversationPath(normalizedConversationId);
+      const fullConversationId = safeDecodeURIComponent(
+        normalizedConversationId,
       );
 
       const controller = new AbortController();
@@ -176,7 +179,7 @@ export const ConversationsProvider = ({
                 // which re-qualifies server-side) would break any deployment
                 // id containing a slash, e.g. `applications/{bucket}/{app}`.
                 const conversation = (await getConversation(
-                  normalizeConversationId(conversationId),
+                  fullConversationId,
                 )) as ConversationResponseDto;
                 const nextName = conversation.name?.trim();
                 if (

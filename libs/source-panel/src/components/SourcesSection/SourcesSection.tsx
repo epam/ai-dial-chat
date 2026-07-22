@@ -11,15 +11,11 @@ import {
 import { IconCopy } from '@tabler/icons-react';
 import { memo, useMemo, useState, type FC } from 'react';
 import type { QuotationSource } from '../../models/quotation-source';
+import {
+  ConversationSourcesPanelColors,
+  ConversationSourcesPanelTypography,
+} from '../ConversationSourcesPanel/ConversationSourcesPanel';
 import styles from './SourcesSection.module.scss';
-
-/** CSS custom-property overrides for the `SourcesSection` component. */
-interface SourcesSectionColors {
-  /** Source link color. */
-  link?: string;
-  /** Source quote text color. */
-  quote?: string;
-}
 
 export interface SourcesSectionProps {
   /** Heading text for the sources section. */
@@ -32,14 +28,10 @@ export interface SourcesSectionProps {
   copiedLabel?: string;
   /** Current search query — used to highlight matches in source titles and quotes. */
   searchQuery?: string;
-  /** CSS class applied to the section heading. Defaults to `'dial-body-semi-text'`. */
-  titleClassName?: string;
-  /** CSS class applied to each source link. Defaults to `'dial-small-text'`. */
-  linkClassName?: string;
-  /** CSS class applied to the quote text. Defaults to `'dial-tiny-text'`. */
-  quoteClassName?: string;
+  /** Typography (font utility class) overrides for section headings and source text. */
+  typography?: ConversationSourcesPanelTypography;
   /** Color overrides applied as CSS custom properties. */
-  colors?: SourcesSectionColors;
+  colors?: ConversationSourcesPanelColors;
   /** When provided, called on source link click instead of following the href. */
   onSourceClick?: (source: QuotationSource) => void;
 }
@@ -51,19 +43,22 @@ const SourcesSection: FC<SourcesSectionProps> = ({
   copyLabel,
   copiedLabel = 'Link copied to clipboard',
   searchQuery = '',
-  titleClassName = 'dial-body-semi-text',
-  linkClassName = 'dial-small-text',
-  quoteClassName = 'dial-tiny-text',
+  typography,
   colors,
   onSourceClick,
 }) => {
   const [copyStatus, setCopyStatus] = useState('');
 
+  const titleClassName =
+    typography?.sectionTitleClassName ?? 'dial-body-semi-text';
+  const linkClassName = typography?.sourceLinkClassName ?? 'dial-small-text';
+  const quoteClassName = typography?.sourceQuoteClassName ?? 'dial-tiny-text';
+
   const sectionCssVars = useMemo(
     () =>
       buildCssVars({
-        '--sp-source-link': colors?.link,
-        '--sp-source-quote': colors?.quote,
+        '--sp-source-link': colors?.sourceLink,
+        '--sp-source-quote': colors?.sourceQuote,
       }),
     [colors],
   );

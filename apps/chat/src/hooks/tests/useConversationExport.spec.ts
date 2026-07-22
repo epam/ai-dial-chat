@@ -217,6 +217,24 @@ describe('useConversationExport', () => {
         expect.any(AbortSignal),
       );
     });
+
+    it('decodes an already-percent-encoded Quick App deployment id segment before calling getConversation (regression: double-encoding 400 from DIAL Core)', async () => {
+      mockGetConversation.mockResolvedValue(makeConversation());
+      const { result } = renderHook(() => useConversationExport());
+
+      await act(async () => {
+        await result.current.exportSingle(
+          'conversations/bucket-xyz/applications/bucket-xyz/My%20App__0.0.1__title__uuid',
+          'My Chat',
+          ConversationExportMode.WithoutAttachments,
+        );
+      });
+
+      expect(mockGetConversation).toHaveBeenCalledWith(
+        'bucket-xyz/applications/bucket-xyz/My App__0.0.1__title__uuid',
+        expect.any(AbortSignal),
+      );
+    });
   });
 
   describe('exportSingle — with attachments', () => {

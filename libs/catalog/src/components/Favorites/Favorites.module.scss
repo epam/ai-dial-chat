@@ -4,7 +4,7 @@
 }
 
 .navBtn {
-  color: var(--text-accent-primary, #2764d9);
+  color: var(--text-accent, #2764d9);
   transition: background-color 150ms ease;
 
   @media (hover: hover) {
@@ -24,9 +24,6 @@
 }
 
 .pageCounter {
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1;
   color: var(--text-secondary, #575f73);
 }
 

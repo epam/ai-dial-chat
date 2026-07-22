@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { normalizeConversationId } from '../constants/routes';
 import { ConversationExportI18nKeys } from '../constants/translation-keys';
 import { useNotification } from '../context/NotificationContext';
-import type { ExportJob } from '../models/conversation-export';
+import type { QueueJob } from '../models/conversation-queue';
 import { UnauthorizedError } from '../server-api/base';
 import {
   getConversation,
@@ -24,12 +24,18 @@ import {
   ExportFileNameKind,
   ExportJobStatus,
 } from '../types/conversation-export';
-import { isDialFileId, resolveDialFileBucketAndPath } from '../utils/dial-file';
+import { runWithConcurrency } from '../utils/async';
+import {
+  collectAttachmentRefs,
+  type AttachmentRef,
+} from '../utils/attachment-refs';
+import { resolveDialFileBucketAndPath } from '../utils/dial-file';
 import {
   buildExportEnvelope,
   buildExportFileName,
   serializeExportEnvelope,
 } from '../utils/export-conversation';
+import { safeDecodeURIComponent } from '../utils/string-utils';
 import { buildDialArchive, type ZipAttachmentEntry } from '../utils/zip-export';
 
 /** Placeholder app name used in export file names — this branch has no app display-name config yet. */
@@ -58,18 +64,9 @@ const classifyExportError = (error: unknown): ExportErrorClassification => {
   return { isUnauthorized: false, isNotFound: false };
 };
 
-/**
- * `ConversationListItemDto.id` (and the panel's context id) is the full DIAL Core
- * resource id, e.g. `conversations/{bucket}/{name}`. `getConversation`'s backend
- * handler expects `{bucket}/{name}` (bucket kept — needed to correctly route
- * shared/public/cross-bucket conversations) — strip only the leading `conversations/`
- * segment, the same normalization `getConversationRoute` applies when building a
- * conversation's URL (`apps/chat/src/constants/routes.ts`). Do NOT chain
- * `getConversationPath` on top here — that additionally strips the bucket, which is
- * correct for delete/rename but wrong for get-by-path.
- */
+/** Bucket-included, decode-normalized `getConversation` path — see conversations-api spec's "Frontend behaviour". */
 const toApiConversationPath = (conversationId: string): string =>
-  normalizeConversationId(conversationId);
+  safeDecodeURIComponent(normalizeConversationId(conversationId));
 
 /**
  * Export-all is scoped to the user's own chats — it must not include conversations
@@ -80,54 +77,9 @@ const isOwnConversation = (
   item: Pick<ConversationListItemDto, 'sharedWithMe' | 'publishedWithMe'>,
 ): boolean => !item.sharedWithMe && !item.publishedWithMe;
 
-interface AttachmentRef {
-  fileId: string;
-}
-
-/**
- * Collects unique attachment references across all messages. The same file can be
- * attached to more than one message (e.g. re-shared in a later turn) — dedupe by
- * `fileId` so it is fetched and zipped only once instead of once per occurrence.
- */
-const collectAttachmentRefs = (conversation: Conversation): AttachmentRef[] => {
-  const fileIds = new Set<string>();
-  for (const message of conversation.messages) {
-    for (const attachment of message.custom_content?.attachments ?? []) {
-      const fileId = attachment.url ?? attachment.reference_url;
-      if (fileId != null && isDialFileId(fileId)) {
-        fileIds.add(fileId);
-      }
-    }
-  }
-  return Array.from(fileIds, (fileId) => ({ fileId }));
-};
-
-const runWithConcurrency = async <T, R>(
-  items: T[],
-  limit: number,
-  worker: (item: T) => Promise<R | undefined>,
-): Promise<R[]> => {
-  const results: R[] = [];
-  let nextIndex = 0;
-
-  const runNext = async (): Promise<void> => {
-    const currentIndex = nextIndex;
-    nextIndex += 1;
-    if (currentIndex >= items.length) return;
-    const result = await worker(items[currentIndex]);
-    if (result !== undefined) results.push(result);
-    await runNext();
-  };
-
-  await Promise.all(
-    Array.from({ length: Math.min(limit, items.length) }, runNext),
-  );
-  return results;
-};
-
 interface UseConversationExportResult {
   /** Export jobs, most recently added last. Multiple jobs can be in progress concurrently. */
-  jobs: ExportJob[];
+  jobs: QueueJob[];
   /** Enqueues a single-conversation export job and starts it immediately. */
   exportSingle: (
     conversationId: string,
@@ -154,12 +106,12 @@ interface UseConversationExportResult {
 export const useConversationExport = (): UseConversationExportResult => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
-  const [jobs, setJobs] = useState<ExportJob[]>([]);
+  const [jobs, setJobs] = useState<QueueJob[]>([]);
 
   const controllersRef = useRef(new Map<string, AbortController>());
   const retryFnsRef = useRef(new Map<string, () => Promise<void>>());
 
-  const updateJob = useCallback((jobId: string, patch: Partial<ExportJob>) => {
+  const updateJob = useCallback((jobId: string, patch: Partial<QueueJob>) => {
     setJobs((prev) =>
       prev.map((job) => (job.id === jobId ? { ...job, ...patch } : job)),
     );

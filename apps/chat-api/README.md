@@ -46,7 +46,12 @@ Create a `.env.local` file in the project root:
 # Required
 AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=http://localhost:3005
-AUTH_PROVIDERS=[{"id":"your-provider","issuer":"https://your-issuer.example.com","clientId":"your-client-id","clientSecret":"<client-secret>","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
+AUTH_POST_LOGOUT_REDIRECT_URI=http://localhost:4207
+
+# At least one identity provider must be configured — example for Auth0:
+AUTH_AUTH0_CLIENT_ID=your-client-id
+AUTH_AUTH0_SECRET=<client-secret>
+AUTH_AUTH0_HOST=your-tenant.auth0.com
 
 # Optional
 PORT=3005
@@ -69,11 +74,14 @@ ALLOWED_IFRAME_ORIGINS=
 
 **Required:**
 
-| Variable                 | Description                                            | Example                        |
-| ------------------------ | ------------------------------------------------------ | ------------------------------ |
-| `AUTH_SESSION_SECRET`    | 32-byte session encryption key encoded as 64 hex chars | `<64-character-hex-secret>`    |
-| `AUTH_CALLBACK_BASE_URL` | Public API base URL used for OIDC redirect URIs        | `http://localhost:3005`        |
-| `AUTH_PROVIDERS`         | JSON array of OIDC provider configs                    | `[{"id":"your-provider",...}]` |
+| Variable                 | Description                                            | Example                     |
+| ------------------------ | ------------------------------------------------------ | --------------------------- |
+| `AUTH_SESSION_SECRET`    | 32-byte session encryption key encoded as 64 hex chars | `<64-character-hex-secret>` |
+| `AUTH_CALLBACK_BASE_URL` | Public API base URL used for OIDC redirect URIs        | `http://localhost:3005`     |
+
+At least one identity provider (see [Auth provider environment variables](#auth-provider-environment-variables) below) must also be configured for login to work; the application otherwise boots with no providers registered.
+
+> **Legacy mode (temporary):** setting `AUTH_PROVIDERS` (JSON array of provider configs, the pre-migration format) still works and takes precedence over all `AUTH_{PROVIDER}_*` variables below — when `AUTH_PROVIDERS` is set, the discrete per-provider variables are ignored entirely. This is a transitional escape hatch for deployments not yet migrated and will be removed; new configurations should use the per-provider variables.
 
 **Optional:**
 
@@ -86,6 +94,9 @@ ALLOWED_IFRAME_ORIGINS=
 | `AUTH_SESSION_COOKIE_NAME`              | `__Host-chat.sess`             | Session cookie name                                                                                                                                                                                                                                                                                                                                                                                      |
 | `AUTH_TRANSACTION_COOKIE_NAME`          | `__Host-chat.tx`               | Login transaction cookie name                                                                                                                                                                                                                                                                                                                                                                            |
 | `AUTH_COOKIE_SECURE`                    | `true`                         | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names when disabled                                                                                                                                                                                                                                                                                                |
+| `AUTH_POST_LOGOUT_REDIRECT_URI`         | —                              | Where the browser lands after IdP logout, applied to every configured provider. Required if at least one identity provider is configured.                                                                                                                                                                                                                                                                |
+| `ADMIN_ROLE_NAMES`                      | `admin`                        | Comma-separated fallback admin role names, used by any provider that doesn't set its own `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES`                                                                                                                                                                                                                                                                              |
+| `DIAL_ROLES_FIELD`                      | `dial_roles`                   | Fallback dot-separated path to the roles claim in the ID/access token, used by any provider that doesn't set its own `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`                                                                                                                                                                                                                                                  |
 | `DIAL_CORE_URL`                         | —                              | AI DIAL core service URL                                                                                                                                                                                                                                                                                                                                                                                 |
 | `DIAL_API_VERSION`                      | `2024-10-21`                   | API version query parameter sent to DIAL Core chat completion requests                                                                                                                                                                                                                                                                                                                                   |
 | `DIAL_API_KEY`                          | —                              | Server-only API key sent as `Api-Key` to DIAL Core for utility-model naming. Not used for user-scoped routes; those continue to use the session access token. Must be stored as a deployment secret.                                                                                                                                                                                                     |
@@ -109,6 +120,124 @@ ALLOWED_IFRAME_ORIGINS=
 | `FILE_MANAGER_AVAILABLE_TABS`           | `my_files,shared,organization` | Comma-separated subset of `my_files`, `shared`, `organization` controlling which File Manager tabs are shown. Unknown values (including `review`) are dropped; an unset or fully-invalid value falls back to all three tabs.                                                                                                                                                                             |
 | `LIVE_CHAT_INTERACTION_ENABLED`         | `false`                        | Enables the interactive toolset sign-in flow: the frontend subscribes to DIAL Core's client-channel and shows a global sign-in dialog when a completion needs mid-stream toolset credentials (`features.liveChatInteraction`).                                                                                                                                                                           |
 | `LIVE_CHAT_INTERACTION_ENABLED_ROLES`   | —                              | Comma-separated roles allowed to use the feature above when it is enabled. Unset or empty means unrestricted (all authenticated users).                                                                                                                                                                                                                                                                  |
+
+#### Auth provider environment variables
+
+Each identity provider is configured through its own set of discrete environment variables, following the `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` convention. A provider is registered only when its `CLIENT_ID` variable is set; an unconfigured provider is silently skipped. If `CLIENT_ID` is set but another field that provider requires is missing, the application fails to boot with an error naming the missing variable. The provider's `id` (used in `/api/v1/auth/login/<id>` and in the `/api/v1/auth/providers` response) is fixed in code and cannot be overridden. Only one instance of each provider type is supported.
+
+**Auth0** (`id: auth0`)
+
+| Variable                      | Required | Default                               |
+| ----------------------------- | :------: | ------------------------------------- |
+| `AUTH_AUTH0_CLIENT_ID`        |  Yes\*   | —                                     |
+| `AUTH_AUTH0_SECRET`           |  Yes\*   | —                                     |
+| `AUTH_AUTH0_HOST`             |  Yes\*   | —                                     |
+| `AUTH_AUTH0_AUDIENCE`         |    No    | —                                     |
+| `AUTH_AUTH0_NAME`             |    No    | `Auth0`                               |
+| `AUTH_AUTH0_SCOPE`            |    No    | `openid email profile offline_access` |
+| `AUTH_AUTH0_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                    |
+| `AUTH_AUTH0_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                    |
+
+**Azure AD** (`id: azure-ad`)
+
+| Variable                         | Required | Default                                         |
+| -------------------------------- | :------: | ----------------------------------------------- |
+| `AUTH_AZURE_AD_CLIENT_ID`        |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_SECRET`           |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_TENANT_ID`        |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_NAME`             |    No    | `Azure AD`                                      |
+| `AUTH_AZURE_AD_SCOPE`            |    No    | `openid profile user.Read email offline_access` |
+| `AUTH_AZURE_AD_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                              |
+| `AUTH_AZURE_AD_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                              |
+
+**Azure B2C** (`id: azure-b2c`)
+
+| Variable                          | Required | Default                               |
+| --------------------------------- | :------: | ------------------------------------- |
+| `AUTH_AZURE_B2C_CLIENT_ID`        |  Yes\*   | —                                     |
+| `AUTH_AZURE_B2C_CLIENT_SECRET`    |  Yes\*   | —                                     |
+| `AUTH_AZURE_B2C_TENANT_ID`        | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_USER_FLOW`        | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_ISSUER`           | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_NAME`             |    No    | `Azure B2C`                           |
+| `AUTH_AZURE_B2C_SCOPE`            |    No    | `openid profile email offline_access` |
+| `AUTH_AZURE_B2C_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                    |
+| `AUTH_AZURE_B2C_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                    |
+
+\*\* Either `AUTH_AZURE_B2C_ISSUER` on its own, or both `AUTH_AZURE_B2C_TENANT_ID` and `AUTH_AZURE_B2C_USER_FLOW` together. When `AUTH_AZURE_B2C_ISSUER` is not set, the issuer is derived as `https://${TENANT_ID}.b2clogin.com/${TENANT_ID}.onmicrosoft.com/${USER_FLOW}/v2.0`.
+
+**GitLab** (`id: gitlab`)
+
+| Variable                       | Required | Default            |
+| ------------------------------ | :------: | ------------------ |
+| `AUTH_GITLAB_CLIENT_ID`        |  Yes\*   | —                  |
+| `AUTH_GITLAB_SECRET`           |  Yes\*   | —                  |
+| `AUTH_GITLAB_HOST`             |  Yes\*   | —                  |
+| `AUTH_GITLAB_NAME`             |    No    | `GitLab`           |
+| `AUTH_GITLAB_SCOPE`            |    No    | `read_user`        |
+| `AUTH_GITLAB_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES` |
+| `AUTH_GITLAB_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD` |
+
+**Google** (`id: google`)
+
+| Variable                | Required | Default                               |
+| ----------------------- | :------: | ------------------------------------- |
+| `AUTH_GOOGLE_CLIENT_ID` |  Yes\*   | —                                     |
+| `AUTH_GOOGLE_SECRET`    |  Yes\*   | —                                     |
+| `AUTH_GOOGLE_NAME`      |    No    | `Google`                              |
+| `AUTH_GOOGLE_SCOPE`     |    No    | `openid email profile offline_access` |
+
+Google has no host variable (issuer is the fixed `https://accounts.google.com`) and no per-provider admin-role/roles-claim override — it always uses `ADMIN_ROLE_NAMES` / `DIAL_ROLES_FIELD`.
+
+**Keycloak** (`id: keycloak`)
+
+| Variable                         | Required | Default                                                             |
+| -------------------------------- | :------: | ------------------------------------------------------------------- |
+| `AUTH_KEYCLOAK_CLIENT_ID`        |  Yes\*   | —                                                                   |
+| `AUTH_KEYCLOAK_SECRET`           |  Yes\*   | —                                                                   |
+| `AUTH_KEYCLOAK_HOST`             |  Yes\*   | — (include the realm path, e.g. `keycloak.example.com/realms/dial`) |
+| `AUTH_KEYCLOAK_NAME`             |    No    | `Keycloak`                                                          |
+| `AUTH_KEYCLOAK_SCOPE`            |    No    | `openid email profile offline_access`                               |
+| `AUTH_KEYCLOAK_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                                  |
+| `AUTH_KEYCLOAK_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                                  |
+
+**PingID** (`id: ping-id`)
+
+| Variable                        | Required | Default            |
+| ------------------------------- | :------: | ------------------ |
+| `AUTH_PING_ID_CLIENT_ID`        |  Yes\*   | —                  |
+| `AUTH_PING_ID_SECRET`           |  Yes\*   | —                  |
+| `AUTH_PING_ID_HOST`             |  Yes\*   | —                  |
+| `AUTH_PING_ID_NAME`             |    No    | `PingID`           |
+| `AUTH_PING_ID_SCOPE`            |    No    | `offline_access`   |
+| `AUTH_PING_ID_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES` |
+| `AUTH_PING_ID_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD` |
+
+**Cognito** (`id: cognito`)
+
+| Variable                        | Required | Default                                                    |
+| ------------------------------- | :------: | ---------------------------------------------------------- |
+| `AUTH_COGNITO_CLIENT_ID`        |  Yes\*   | —                                                          |
+| `AUTH_COGNITO_SECRET`           |  Yes\*   | —                                                          |
+| `AUTH_COGNITO_HOST`             |  Yes\*   | — (e.g. `cognito-idp.{region}.amazonaws.com/{userPoolId}`) |
+| `AUTH_COGNITO_NAME`             |    No    | `Cognito`                                                  |
+| `AUTH_COGNITO_SCOPE`            |    No    | `openid email profile`                                     |
+| `AUTH_COGNITO_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                         |
+| `AUTH_COGNITO_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                         |
+
+**Okta** (`id: okta`)
+
+| Variable                     | Required | Default                                                             |
+| ---------------------------- | :------: | ------------------------------------------------------------------- |
+| `AUTH_OKTA_CLIENT_ID`        |  Yes\*   | —                                                                   |
+| `AUTH_OKTA_CLIENT_SECRET`    |  Yes\*   | —                                                                   |
+| `AUTH_OKTA_ISSUER`           |  Yes\*   | — (full issuer URL, e.g. `https://dev-123.okta.com/oauth2/default`) |
+| `AUTH_OKTA_NAME`             |    No    | `Okta`                                                              |
+| `AUTH_OKTA_SCOPE`            |    No    | `openid email profile`                                              |
+| `AUTH_OKTA_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                                  |
+| `AUTH_OKTA_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                                  |
+
+\* Required only if that provider is being configured at all (signaled by its `CLIENT_ID` variable being set); the provider is skipped entirely otherwise.
 
 ### 3. Run the Application
 

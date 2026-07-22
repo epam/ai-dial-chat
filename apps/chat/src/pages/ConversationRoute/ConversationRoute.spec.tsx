@@ -419,6 +419,67 @@ describe('ConversationRoute', () => {
     expect(mockCreateConversation).not.toHaveBeenCalled();
   });
 
+  it('uses Quick Apps populate-only behavior even when the deployment configuration mirrors a submit-only schema starter', async () => {
+    const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
+      type: 'object',
+      isChatMessageInputDisabled: true,
+      properties: {
+        starter: {
+          description: 'Choose how to start',
+          oneOf: [
+            {
+              const: 0,
+              title: 'Draft',
+              'dial:widgetOptions': {
+                populateText: null,
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    mockUseDeployments.mockReturnValue({
+      items: [
+        {
+          ...mockItems[0],
+          conversationStarters: {
+            introText: 'Choose how to start',
+            autoSubmit: false,
+            chatMessageInputDisabled: false,
+            starters: [{ title: 'Draft', text: 'Write a draft' }],
+          },
+        },
+      ],
+      selectedItemId: 'gpt-4o',
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
+    });
+
+    renderRoute();
+
+    expect(screen.getByLabelText('Input disabled').textContent).toBe('false');
+
+    await act(async () => {
+      screen.getByText('Draft').click();
+    });
+
+    expect(screen.getByLabelText('Input message').textContent).toBe(
+      'Write a draft',
+    );
+    expect(screen.getByLabelText('Input disabled').textContent).toBe('false');
+    expect(mockCreateConversation).not.toHaveBeenCalled();
+  });
+
   it('creates a conversation from auto-submit Quick Apps starter without configuration value', async () => {
     mockUseDeployments.mockReturnValue({
       items: [
@@ -509,6 +570,66 @@ describe('ConversationRoute', () => {
         'deepseek-ocr-2',
         [],
         { starter: 0 },
+      );
+    });
+  });
+
+  it('uses each starter own prompt instead of the shared schema description', async () => {
+    const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
+      type: 'object',
+      properties: {
+        starter: {
+          description: 'Choose how to start',
+          oneOf: [
+            {
+              const: 0,
+              title: 'OCR image',
+              'dial:widgetOptions': {
+                populateText: 'Scan this image',
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+            {
+              const: 1,
+              title: 'Summarize',
+              'dial:widgetOptions': {
+                populateText: 'Summarize this document',
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    mockUseDeployments.mockReturnValue({
+      items: mockItems,
+      selectedItemId: 'deepseek-ocr-2',
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
+    });
+
+    renderRoute();
+
+    await act(async () => {
+      screen.getByText('Summarize').click();
+    });
+
+    await waitFor(() => {
+      expect(mockCreateConversation).toHaveBeenCalledWith(
+        'Summarize this document',
+        'deepseek-ocr-2',
+        [],
+        { starter: 1 },
       );
     });
   });

@@ -13,9 +13,6 @@ import {
 
 vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/user-config.api');
-vi.mock('../../utils/conversation-path', () => ({
-  getConversationPath: (id: string) => id,
-}));
 vi.mock('../UserConfigContext', () => ({
   useUserConfig: () => ({
     setPinnedConversation: vi.fn().mockResolvedValue(undefined),
@@ -304,35 +301,33 @@ describe('ConversationsContext — renameConversation', () => {
 });
 
 describe('ConversationsContext — watchForDisplayNameUpdate', () => {
-  const encoder = new TextEncoder();
-
-  /** Builds a fake SSE `ReadableStream` that yields the given `data:` lines, then ends. */
-  const makeSseStream = (dataLines: string[]): ReadableStream<Uint8Array> => {
-    let index = 0;
-    return {
-      getReader: () => ({
-        read: async () => {
-          if (index < dataLines.length) {
-            const value = encoder.encode(dataLines[index]);
-            index += 1;
-            return { done: false, value };
-          }
-          return { done: true, value: undefined };
-        },
-        releaseLock: () => {
-          /* no-op */
-        },
-      }),
-    } as unknown as ReadableStream<Uint8Array>;
+  const buildUpdateEventStream = () => {
+    const encoder = new TextEncoder();
+    return new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ action: 'UPDATE' })}\n\n`),
+        );
+        controller.close();
+      },
+    });
   };
 
-  it('calls getConversation with the full bucket-qualified id, not the stripped path', async () => {
-    vi.mocked(conversationsApi.watchConversation).mockResolvedValue(
-      makeSseStream(['data: {"action":"UPDATE"}\n\n']),
+  /*
+   * Regression test: `getConversation`'s backend contract requires the bucket
+   * to remain in `path` (unlike `watchConversation`'s bucket-stripped body
+   * field) — passing the stripped path here previously caused a 400 once the
+   * conversation id embedded a slash-containing Quick App deployment id.
+   */
+  it('calls getConversation with the full, bucket-included conversation id while watchConversation gets the bucket-stripped path', async () => {
+    const conversationId =
+      'bucket/applications/bucket/My%20App__0.0.1__title__uuid';
+
+    vi.mocked(conversationsApi.watchConversation).mockResolvedValueOnce(
+      buildUpdateEventStream(),
     );
-    vi.mocked(conversationsApi.getConversation).mockResolvedValue({
-      name: 'Renamed by LLM',
-      llmNamingDone: true,
+    vi.mocked(conversationsApi.getConversation).mockResolvedValueOnce({
+      name: 'New Name',
     } as never);
 
     const { result } = renderHook(() => useConversations(), {
@@ -340,18 +335,23 @@ describe('ConversationsContext — watchForDisplayNameUpdate', () => {
     });
     await waitFor(() => expect(result.current.conversations).toHaveLength(3));
 
+    const onUpdated = vi.fn();
     act(() => {
       result.current.watchForDisplayNameUpdate(
-        'conversations/bucket/applications/bucket/app__0.0.1__title__uuid',
-        'title',
-        vi.fn(),
+        conversationId,
+        'Old Name',
+        onUpdated,
       );
     });
 
-    await waitFor(() => {
-      expect(conversationsApi.getConversation).toHaveBeenCalledWith(
-        'bucket/applications/bucket/app__0.0.1__title__uuid',
-      );
-    });
+    await waitFor(() => expect(onUpdated).toHaveBeenCalledWith('New Name'));
+
+    expect(conversationsApi.getConversation).toHaveBeenCalledWith(
+      'bucket/applications/bucket/My App__0.0.1__title__uuid',
+    );
+    expect(conversationsApi.watchConversation).toHaveBeenCalledWith(
+      'applications/bucket/My App__0.0.1__title__uuid',
+      expect.anything(),
+    );
   });
 });

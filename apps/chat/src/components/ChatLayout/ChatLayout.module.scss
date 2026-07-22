@@ -1,0 +1,15 @@
+.newChatButton {
+  &:hover {
+    background: var(
+      --cp-new-chat-hover,
+      var(--bg-accent-primary-alpha, #7da4ff2e)
+    ) !important;
+  }
+
+  &:active {
+    background: var(
+      --cp-new-chat-active,
+      var(--bg-accent-primary-alpha, #7da4ff2e)
+    ) !important;
+  }
+}

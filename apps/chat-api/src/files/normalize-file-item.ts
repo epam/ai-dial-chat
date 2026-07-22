@@ -1,3 +1,4 @@
+import { lookup } from 'mime-types';
 import { FileNodeType } from './dto/list-files.dto';
 import type { ListFilesItemDto } from './dto/list-files.dto';
 
@@ -74,7 +75,8 @@ export const normalizeFileItem = (
 
   if (!isFolder) {
     result.contentLength = item.contentLength;
-    result.contentType = item.contentType;
+    result.contentType =
+      (item.contentType ?? lookup(item.name ?? rawPath)) || undefined;
   }
 
   return result;

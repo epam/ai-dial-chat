@@ -54,6 +54,25 @@ Clicking the preview button SHALL trigger the same save flow as the existing Sav
 - **WHEN** the Apps editor is in preview mode (`isPreviewing === true`) and the still-mounted, hidden `AppEditorIframe` posts any `AppsEditorEvent.SaveSuccess` or `AppsEditorEvent.SaveError` message
 - **THEN** `AppsEditor` ignores it (no navigation, no error notification, no state change) because no save was requested while previewing
 
+### Requirement: Saving overlay while a save (or preview-save) is in flight
+`AppsEditor` SHALL render a blocking overlay over its main content area (General form / Settings step, whichever is visible) whenever `isSaving` is `true` — covering both the normal Save action and the Preview action's underlying save-then-refetch sequence, since both leave the UI otherwise unchanged until they resolve. The content wrapper `AppsEditor` renders the General form / Settings step inside MUST carry an explicit fill class (`size-full`), since `SettingsStep`'s root uses `size-full` and needs an ancestor chain of defined heights — an unstyled wrapper collapses the iframe to its browser-default height instead of filling the available space.
+
+The overlay backdrop SHALL use the semi-transparent `bg-blackout` background (not an opaque `bg-layer-*` color) so the iframe/form content stays dimly visible underneath, matching the processing-overlay pattern already used in `DialFileManagerShell`. The spinner and label SHALL be rendered inside a small opaque card (`bg-layer-2`, rounded, `shadow-lg`) centered within the backdrop, so the "Saving in progress…" text keeps sufficient contrast regardless of what layer/theme is showing through the translucent backdrop. The overlay SHALL show a `DialSpinner` and the i18n label `AppsEditorI18nKeys.SavingOverlayLabel` (`appsEditor.savingOverlay`, "Saving in progress…"), announced via `aria-label` + `aria-live="polite"` on the outer backdrop container. The content underneath SHALL be made `inert` while the overlay is shown, so it is excluded from the tab order and the accessibility tree instead of merely being visually covered.
+
+#### Scenario: Overlay shown while the preview save is in flight
+- **WHEN** the user clicks Preview and the settings iframe's `SaveSuccess`/`SaveError` postMessage, or the subsequent `refetchDeployments()` call, has not yet resolved
+- **THEN** a translucent `bg-blackout` backdrop covers the Settings step content, with an opaque `DialSpinner` + "Saving in progress…" card centered on top
+- **AND** the underlying General form / Settings step content is `inert` (not focusable, not in the accessibility tree)
+- **AND** the settings iframe continues to fill its full height underneath the backdrop (no layout collapse)
+
+#### Scenario: Overlay hidden once preview mode is entered
+- **WHEN** `refetchDeployments()` resolves and `AppsEditor` switches to the preview chat pane
+- **THEN** the overlay is no longer rendered
+
+#### Scenario: Overlay also shown for the normal Save action
+- **WHEN** the user clicks the normal Save button (General or Settings step) and the resulting save has not yet completed
+- **THEN** the same overlay is shown, since `isSaving` is `true` for that action too
+
 ### Requirement: Exit preview returns to the settings iframe without reload
 Clicking "Exit preview" SHALL switch the visible pane back to `AppEditorIframe` without re-saving and without remounting/reloading the iframe (its `src`, load state, and internal state are preserved from before Preview was entered). It SHALL NOT delete or otherwise affect the preview conversation, since it may be re-entered later in the same session.
 
@@ -91,11 +110,24 @@ The preview pane SHALL use the same conversation-creation, streaming, and intera
 ### Requirement: Preview chat renders Quick Apps conversation starters
 When a Settings-step save succeeds for a preview request, `AppsEditor` SHALL await `refetchDeployments()` before switching to preview mode. `refetchDeployments()` owns bypassing the deployments cache; if the refetch fails, preview entry SHALL NOT be blocked, but the preview pane may use the best-known deployment list already in context.
 
-`AppPreviewChat` SHALL resolve the application deployment from `useDeployments().items` and render Quick Apps `conversationStarters` through the same `getQuickAppConversationStarters` utility used by the main new-conversation screen.
+`AppPreviewChat` SHALL resolve the application deployment by matching `useDeployments().items[].id` against the raw `appId` prop (the same raw, human-readable id used by the settings iframe's postMessage protocol), since `items[].id` is always the raw id. It SHALL render Quick Apps `conversationStarters` through the same `getQuickAppConversationStarters` utility used by the main new-conversation screen.
+
+`AppPreviewChat` SHALL use the raw `appId` as-is for every deployment-identifying value it produces or forwards — `fixedModel.id`, `apiCreateConversation`'s `deploymentId` argument, `startStream`'s `model` argument, `useAudioTranscription`'s `selectedDeploymentId`, and `useConversationHandlers`' `fixedModelId`. It SHALL NOT percent-encode `appId` (e.g. via `encodeDeploymentId`) for any of these, because each of them is consumed as a JSON body field (`createConversation`, `streamCompletion`, `transcribeAudio`), never as a raw URL path segment. Percent-encoding it would embed literal `%` characters into the value; since the backend builds the created conversation's stored resource path directly from this value and the frontend's own URL-building code later percent-encodes that whole stored path once when fetching/saving/watching the conversation, a pre-encoded input becomes double-encoded on the wire and DIAL Core rejects the request with 400.
+
+#### Scenario: Preview resolves the deployment for an app id containing reserved characters
+
+- **WHEN** `appId` is `"applications/bucket/My App"` (contains a space) and `useDeployments().items` contains an entry with `id: "applications/bucket/My App"`
+- **THEN** `AppPreviewChat` resolves that entry as the application deployment and renders its `conversationStarters`
+
+#### Scenario: Conversation creation from preview uses the raw app id
+
+- **WHEN** the user selects a submit-enabled starter (or sends a manually typed first message) in the preview pane for `appId: "applications/bucket/My App"`
+- **THEN** `apiCreateConversation` is called with `deploymentId: "applications/bucket/My App"` (raw, unencoded) — not `"applications/bucket/My%20App"`
+- **AND** the subsequent `GET /api/v1/conversations?path=...` request for that conversation succeeds (no double-encoded segment, no 400 from DIAL Core)
 
 The preview composer SHALL:
-- Render `conversationStarters.introText` above the starter buttons and the input when present.
-- Render `StarterButtons` above the input when valid starters are present.
+- Render `conversationStarters.introText` below the input and above the starter buttons when present.
+- Render `StarterButtons` below the input when valid starters are present.
 - Disable free-form input when `conversationStarters.chatMessageInputDisabled === true`.
 - Treat `autoSubmit` as `true` unless the API value is explicitly `false`.
 
@@ -112,7 +144,7 @@ Selecting a starter with submit enabled SHALL create or append to the preview co
 #### Scenario: Preview shows saved Quick Apps starters without page reload
 - **WHEN** the user changes conversation starters in the Settings iframe, clicks Preview, and the iframe posts `AppsEditorEvent.SaveSuccess`
 - **THEN** `AppsEditor` awaits `refetchDeployments()` before entering preview mode
-- **AND** the preview chat shows the saved starter buttons and intro text without a full browser reload
+- **AND** the preview chat shows the saved starter buttons and intro text below the input without a full browser reload
 
 #### Scenario: Preview non-submit starter populates input
 - **WHEN** the user selects a preview starter whose normalized `submit` flag is false
@@ -155,7 +187,7 @@ While the preview pane is shown, the `EditorHeader` Cancel and Save buttons SHAL
 ### Requirement: Accessibility and i18n for the preview surface
 The preview button SHALL expose an accessible name via i18n (not a bare icon with no label) and the preview chat region SHALL use the same ARIA conventions as the main conversation view (`role="log"` + `aria-live="polite"` for the message list). All new user-visible strings SHALL be added to `translation-keys.ts` under `AppsEditorI18nKeys` and to every locale file in `apps/chat/src/i18n/locales/`, including `ar.json`.
 
-New keys: `AppsEditorI18nKeys.PreviewButton` (`appsEditor.previewButton`), `AppsEditorI18nKeys.ExitPreviewButton` (`appsEditor.exitPreviewButton`), `AppsEditorI18nKeys.PreviewChatPlaceholder` (`appsEditor.previewChat.placeholder`), `AppsEditorI18nKeys.PreviewChatAriaLabel` (`appsEditor.previewChat.ariaLabel`).
+New keys: `AppsEditorI18nKeys.PreviewButton` (`appsEditor.previewButton`), `AppsEditorI18nKeys.ExitPreviewButton` (`appsEditor.exitPreviewButton`), `AppsEditorI18nKeys.PreviewChatPlaceholder` (`appsEditor.previewChat.placeholder`), `AppsEditorI18nKeys.PreviewChatAriaLabel` (`appsEditor.previewChat.ariaLabel`), `AppsEditorI18nKeys.SavingOverlayLabel` (`appsEditor.savingOverlay`).
 
 #### Scenario: Preview button has an accessible name
 - **WHEN** a screen reader focuses the preview/exit-preview button

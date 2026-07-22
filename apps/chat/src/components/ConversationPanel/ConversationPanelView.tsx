@@ -32,6 +32,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ChangeEvent,
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +45,7 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   ConversationExportI18nKeys,
+  ConversationImportI18nKeys,
   ConversationPanelI18nKeys,
   ShareI18nKeys,
 } from '../../constants/translation-keys';
@@ -52,6 +54,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationExport } from '../../hooks/useConversationExport';
+import { useConversationImport } from '../../hooks/useConversationImport';
 import { discardSharedCatalogItem } from '../../server-api/share.api';
 import { ConversationExportMode } from '../../types/conversation-export';
 import { ROUTES } from '../../types/routes';
@@ -104,10 +107,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     jobs: exportJobs,
     exportSingle,
     exportAll,
-    dismissJob,
-    retryJob,
-    dismissAll,
+    dismissJob: dismissExportJob,
+    retryJob: retryExportJob,
+    dismissAll: dismissAllExports,
   } = useConversationExport();
+  const {
+    jobs: importJobs,
+    importConversations,
+    dismissJob: dismissImportJob,
+    retryJob: retryImportJob,
+    dismissAll: dismissAllImports,
+  } = useConversationImport();
   const {
     conversations: items,
     isLoading,
@@ -181,6 +191,25 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const handleExportAll = useCallback(() => {
     void exportAll();
   }, [exportAll]);
+
+  const importFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleImportClick = useCallback(() => {
+    importFileInputRef.current?.click();
+  }, []);
+
+  const handleImportFileChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      // Reset so selecting the same file again re-triggers onChange.
+      event.target.value = '';
+      if (file) void importConversations(file);
+    },
+    [importConversations],
+  );
+
+  const exportQueueTitle = t(ConversationExportI18nKeys.QueueTitle);
+  const importQueueTitle = t(ConversationImportI18nKeys.QueueTitle);
 
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
@@ -614,17 +643,37 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           <ConversationPanelMenu
             activeConversationId={activeConversationId}
             onExportAll={handleExportAll}
+            onImport={handleImportClick}
           />
         }
       />
 
-      <ImportExportQueue
-        title={t(ConversationExportI18nKeys.QueueTitle)}
-        jobs={exportJobs}
-        onClose={dismissAll}
-        onDismiss={dismissJob}
-        onRetry={retryJob}
+      <input
+        ref={importFileInputRef}
+        type="file"
+        accept=".json,.dial,.zip"
+        className="sr-only"
+        aria-hidden
+        tabIndex={-1}
+        onChange={handleImportFileChange}
       />
+
+      <div className="fixed bottom-4 end-4 z-[70] flex flex-col-reverse gap-2">
+        <ImportExportQueue
+          title={importQueueTitle}
+          jobs={importJobs}
+          onClose={dismissAllImports}
+          onDismiss={dismissImportJob}
+          onRetry={retryImportJob}
+        />
+        <ImportExportQueue
+          title={exportQueueTitle}
+          jobs={exportJobs}
+          onClose={dismissAllExports}
+          onDismiss={dismissExportJob}
+          onRetry={retryExportJob}
+        />
+      </div>
 
       <DialConfirmationPopup
         open={!!pendingDeleteId}

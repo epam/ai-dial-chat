@@ -559,7 +559,7 @@ describe('useConversationStream', () => {
     expect(abortFired).toBe(false);
   });
 
-  it('streams with the correct path format for path-encoded conversation IDs', async () => {
+  it('decodes an already-percent-encoded conversation id segment so it is not double-encoded downstream', async () => {
     const { result } = renderHook(
       () =>
         useConversationStream(
@@ -581,7 +581,7 @@ describe('useConversationStream', () => {
     });
 
     expect(mockStreamCompletion).toHaveBeenCalledWith(
-      'applications/catalog/Team%2FApp%20One__0.0.1__title',
+      'applications/catalog/Team/App One__0.0.1__title',
       'hello',
       'applications/catalog/Team%2FApp%20One__0.0.1',
       expect.any(Object),
@@ -594,7 +594,7 @@ describe('useConversationStream', () => {
 
     await waitFor(() => {
       expect(mockGetConversation).toHaveBeenCalledWith(
-        'bucket/applications/catalog/Team%2FApp%20One__0.0.1__title',
+        'bucket/applications/catalog/Team/App One__0.0.1__title',
       );
     });
   });

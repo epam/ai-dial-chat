@@ -7,7 +7,7 @@ import { CatalogEntityType } from '../../types/entity-type';
 export interface EntityTypeLabelProps {
   /** Entity category — resolves the label's color via ENTITY_TYPE_COLOR. */
   type: CatalogEntityType;
-  /** CSS class for the label text. Default: 'dial-caption-text font-semibold'. */
+  /** CSS class for the label text. Default: 'dial-caption-semi-text'. */
   className?: string;
 }
 
@@ -18,7 +18,7 @@ export interface EntityTypeLabelProps {
  */
 export const EntityTypeLabel: FC<EntityTypeLabelProps> = ({
   type,
-  className = 'dial-caption-text font-semibold',
+  className = 'dial-caption-semi-text',
 }) => (
   <span
     className={mergeClasses('uppercase tracking-[0.06em]', className)}

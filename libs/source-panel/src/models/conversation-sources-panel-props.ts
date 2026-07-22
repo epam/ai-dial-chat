@@ -41,9 +41,9 @@ export interface ConversationSourcesPanelColors {
 export interface ConversationSourcesPanelTypography {
   /** CSS class applied to each section heading (`<h2>`). Defaults to `'dial-body-semi-text'`. */
   sectionTitleClassName?: string;
-  /** CSS class applied to each source link. Defaults to `'dial-small-text !text-accent-primary'`. */
+  /** CSS class applied to each source link. Defaults to `'dial-small-text'`. */
   sourceLinkClassName?: string;
-  /** CSS class applied to each source quote paragraph. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** CSS class applied to each source quote paragraph. Defaults to `'dial-tiny-text'`. */
   sourceQuoteClassName?: string;
 }
 

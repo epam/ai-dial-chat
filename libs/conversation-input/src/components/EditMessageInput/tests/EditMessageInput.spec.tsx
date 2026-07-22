@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EditMessageInput } from '../EditMessageInput';
 
@@ -56,5 +56,40 @@ describe('EditMessageInput — external pendingDropFiles', () => {
       />,
     );
     expect(onConsumed).not.toHaveBeenCalled();
+  });
+});
+
+describe('EditMessageInput — DIAL file system menu item', () => {
+  it('does not render the "DIAL file system" item when onDialFileSystemClick is absent', async () => {
+    render(<EditMessageInput onCancel={vi.fn()} onSave={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText('Add'));
+    expect(await screen.findByText('Attach file')).toBeTruthy();
+    expect(screen.queryByText('DIAL file system')).toBeNull();
+  });
+
+  it('renders the "DIAL file system" item when onDialFileSystemClick is provided', async () => {
+    render(
+      <EditMessageInput
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        onDialFileSystemClick={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText('Add'));
+    expect(await screen.findByText('DIAL file system')).toBeTruthy();
+  });
+
+  it('calls onDialFileSystemClick when the item is clicked', async () => {
+    const handleClick = vi.fn();
+    render(
+      <EditMessageInput
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        onDialFileSystemClick={handleClick}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText('Add'));
+    fireEvent.click(await screen.findByText('DIAL file system'));
+    expect(handleClick).toHaveBeenCalledOnce();
   });
 });

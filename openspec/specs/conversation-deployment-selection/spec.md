@@ -176,7 +176,7 @@ The send callback SHALL NOT fire when `selectedItemId` is `null` — which can o
 
 `apps/chat/src/pages/ConversationRoute/ConversationRoute.tsx` SHALL render starter buttons and intro text for the selected deployment on the new-conversation screen.
 
-The route SHALL derive schema-based starters from `selectedDeploymentConfiguration` first. If the selected deployment configuration does not provide schema starter buttons, the route SHALL fall back to Quick Apps starters from `selectedDeployment.conversationStarters`, normalized through `getQuickAppConversationStarters`.
+The route SHALL derive Quick Apps starters from `selectedDeployment.conversationStarters` first, normalized through `getQuickAppConversationStarters`. Only when the deployment has no valid Quick Apps starters SHALL the route fall back to schema-based starters derived from `selectedDeploymentConfiguration`. Quick Apps starters take priority because `selectedDeploymentConfiguration`'s `starter`/`button` schema property can be an auto-generated mirror of the same Quick Apps starters, and that mirror is not guaranteed to preserve the app's configured submit-vs-populate behavior (see the "populate-only" bug scenario below) — Quick Apps' own `conversationStarters` config (title, text, `autoSubmit`, `chatMessageInputDisabled`, `introText`) is the fully-configured, authoritative source for this feature. `propertyKey` and `description` (both derived from the schema) SHALL be treated as `undefined` whenever Quick Apps starters are the active source, so a selected Quick Apps starter never picks up a stale schema `configuration_value` or schema description.
 
 Quick Apps mapping on the frontend SHALL:
 - Trim `introText`, starter `title`, and starter `text`.
@@ -184,9 +184,13 @@ Quick Apps mapping on the frontend SHALL:
 - Treat `autoSubmit` as `true` unless the API value is explicitly `false`.
 - Map `chatMessageInputDisabled === true` to the composer's disabled input state.
 
-The displayed intro text SHALL use the schema description when present; otherwise it SHALL use Quick Apps `conversationStarters.introText`. The input SHALL be disabled when either `selectedDeploymentConfiguration.isChatMessageInputDisabled` or Quick Apps `conversationStarters.chatMessageInputDisabled` is true.
+The displayed intro text SHALL use Quick Apps `conversationStarters.introText` when Quick Apps starters are the active source; otherwise it SHALL use the schema description (falling back to Quick Apps `introText` if the schema has none).
+
+Input-disabled state follows the same source precedence as starters: when Quick Apps starters are the active source, `isInputDisabled` SHALL come exclusively from Quick Apps `conversationStarters.chatMessageInputDisabled` — the schema's `isChatMessageInputDisabled` SHALL be ignored in that case, since it can be a stale/incorrect mirror of the same underlying setting. Only when Quick Apps starters are NOT the active source (a genuinely schema-only deployment) SHALL `isInputDisabled` come from `selectedDeploymentConfiguration.isChatMessageInputDisabled`.
 
 Selecting a starter with submit enabled SHALL create a conversation through the existing first-message flow using the starter text and the selected deployment id, without adding any schema `configuration_value`. Selecting a starter with submit disabled SHALL populate the chat input with the starter text without creating a conversation.
+
+The starter text used for both the created conversation's first message and the populated input SHALL be computed by `getStarterConversationText(starter, description)`: the schema `description` is a fallback used only when the selected starter's own `dial:widgetOptions.populateText` is explicitly `null`. When `populateText` is a non-null string, that starter's own text SHALL always be used, even when a schema `description` is also present — the shared schema description (or Quick Apps intro text) MUST NOT override an individual starter's configured prompt.
 
 State ownership: `ConversationRoute` owns the derived starter list, intro text, input-disabled state, and transient populated input message. `DeploymentsContext` owns the selected deployment item and deployment configuration fetch.
 
@@ -201,12 +205,28 @@ State ownership: `ConversationRoute` owns the derived starter list, intro text, 
 #### Scenario: Quick Apps intro and starters render on new conversation screen
 
 - **WHEN** the selected application deployment has `conversationStarters.introText` and valid `starters`, and its deployment configuration does not define schema starters
-- **THEN** the new-conversation screen shows the intro text and renders the starter buttons above the input
+- **THEN** the new-conversation screen shows the intro text and renders the starter buttons below the input
 
-#### Scenario: Schema starters take precedence over Quick Apps starters
+#### Scenario: Quick Apps starters take precedence over a schema mirror
 
-- **WHEN** `selectedDeploymentConfiguration` provides schema starters and the selected deployment also has `conversationStarters`
-- **THEN** the rendered starters come from the schema configuration, not the Quick Apps fallback
+- **WHEN** `selectedDeploymentConfiguration` provides schema starters and the selected deployment also has valid Quick Apps `conversationStarters`
+- **THEN** the rendered starters, intro text, and starter-selection behavior come from the Quick Apps configuration, not the schema
+
+#### Scenario: Schema starters are used when the deployment has no Quick Apps starters
+
+- **WHEN** `selectedDeploymentConfiguration` provides schema starters and the selected deployment has no valid Quick Apps `conversationStarters`
+- **THEN** the rendered starters come from the schema configuration
+
+#### Scenario: Populate-only Quick Apps starter is respected even when the schema forces submit
+
+- **WHEN** the deployment's Quick Apps `conversationStarters` has `autoSubmit: false` (the App Editor's "Populate prompt in the chat input" behavior) for a starter, AND `selectedDeploymentConfiguration` mirrors that same starter with `dial:widgetOptions: { populateText: null, submit: true }` and a shared `description`
+- **THEN** selecting the starter populates the chat input with the Quick Apps starter's own `text` and does NOT create a conversation
+- **AND** `apiCreateConversation` is NOT called, and the schema `description` is NOT sent as the message
+
+#### Scenario: Quick Apps chatMessageInputDisabled: false is respected even when the schema mirror is disabled
+
+- **WHEN** the deployment's Quick Apps `conversationStarters` has `chatMessageInputDisabled: false`, AND `selectedDeploymentConfiguration.isChatMessageInputDisabled` is `true` (a stale/incorrect schema mirror), AND Quick Apps starters are the active source
+- **THEN** `isInputDisabled` is `false` both before and after selecting a populate-only starter — the user can type, edit, and send a message
 
 #### Scenario: Non-submit Quick Apps starter populates the input
 
@@ -218,6 +238,16 @@ State ownership: `ConversationRoute` owns the derived starter list, intro text, 
 - **WHEN** a user selects a Quick Apps starter whose normalized `submit` flag is true
 - **THEN** `apiCreateConversation` is called with the starter text, selected deployment id, and attachments only
 - **AND** no schema `configuration_value` is added to the first message
+
+#### Scenario: Each schema starter uses its own prompt even when a shared description is present
+
+- **WHEN** the deployment configuration's `starter`/`button` property has a `description` AND the selected `StarterOption` has a non-null `dial:widgetOptions.populateText`
+- **THEN** `apiCreateConversation` (or the populated input) uses that starter's own `populateText`, not the schema `description`
+
+#### Scenario: Null populateText falls back to the schema description
+
+- **WHEN** the selected `StarterOption` has `dial:widgetOptions.populateText === null` and the schema property defines a `description`
+- **THEN** the created conversation's first message (or populated input) uses the schema `description` text
 
 ---
 

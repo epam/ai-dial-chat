@@ -208,8 +208,8 @@ const App: FC = () => {
           <Route
             element={
               <ChatLayout
-                isHistoryPanelOpen={isPanelOpen}
-                onToggleHistoryPanel={togglePanel}
+                isPanelOpen={isPanelOpen}
+                onTogglePanel={togglePanel}
                 onNewChat={() => navigate(ROUTES.Root)}
               />
             }

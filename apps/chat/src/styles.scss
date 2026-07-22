@@ -31,35 +31,6 @@ div[role='menu']:has(> [role='none']) {
   }
 }
 
-// DS token overrides or new tokens
-.catalog-heading-text {
-  font-size: 22px;
-  line-height: 32px;
-  font-weight: 600;
-}
-
-// DS token overrides
-.dial-small-text {
-  line-height: 24px;
-}
-
-// new chat button in header — primary action button style
-.new-chat-rail-btn {
-  &:hover {
-    background: var(
-      --cp-new-chat-hover,
-      var(--bg-accent-secondary-alpha, #37babc2e)
-    ) !important;
-  }
-
-  &:active {
-    background: var(
-      --cp-new-chat-active,
-      var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
-    ) !important;
-  }
-}
-
 // new dropdown styles
 
 .cp-dropdown-overlay {
@@ -121,6 +92,6 @@ div[role='menu']:has(> [role='none']) {
 }
 
 .dial-loading-notification div[role='alert'] {
-  background: var(--bg-neutral, #fcfcfc);
+  background: var(--layer-raised, #fcfcfc);
   color: var(--text-primary, #161b2d);
 }
