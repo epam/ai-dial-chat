@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
 import { toRelativePath } from '../dial-resource-path.util';
@@ -35,7 +36,7 @@ export class FilesDownloadService {
     try {
       const { error, response } = (await this.dialClient.client.downloadFile(
         bucket,
-        relativePath,
+        encodeDialResourcePath(relativePath),
         {
           headers: getBearerAuthHeaders(token),
           parseAs: 'stream',

@@ -52,7 +52,7 @@ interface Props {
   /** Called with the selected item's id. The panel closes itself after calling this. */
   onSelect: (id: string) => void;
   /** Called when the star button is clicked to add/remove an item from favorites. */
-  onToggleFavorite: (id: string, isFavorite: boolean) => void;
+  onToggleFavorite: (id: string, isFavorite: boolean) => Promise<void> | void;
   /** Called when the user clicks "Browse". */
   onBrowseCatalog?: () => void;
   /** Called by the panel to request that the parent popover close. */

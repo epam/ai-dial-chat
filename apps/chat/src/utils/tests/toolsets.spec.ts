@@ -838,7 +838,7 @@ describe('waitForToolsetOAuthResult', () => {
   };
 
   it('resolves with the success message posted on the flow channel', async () => {
-    const popup = { closed: false } as unknown as Window;
+    const popup = { closed: false, close: vi.fn() } as unknown as Window;
     const resultPromise = waitForToolsetOAuthResult(popup, flowId);
 
     postMessage({
@@ -855,7 +855,7 @@ describe('waitForToolsetOAuthResult', () => {
   });
 
   it('resolves with the failure message posted on the flow channel', async () => {
-    const popup = { closed: false } as unknown as Window;
+    const popup = { closed: false, close: vi.fn() } as unknown as Window;
     const resultPromise = waitForToolsetOAuthResult(popup, flowId);
 
     postMessage({
@@ -867,6 +867,21 @@ describe('waitForToolsetOAuthResult', () => {
       type: ToolsetOAuthResultType.Failure,
       reason: ToolsetOAuthFailureReason.StateMismatch,
     });
+  });
+
+  it('closes the popup itself as soon as a result message arrives', async () => {
+    const close = vi.fn();
+    const popup = { closed: false, close } as unknown as Window;
+    const resultPromise = waitForToolsetOAuthResult(popup, flowId);
+
+    postMessage({
+      type: ToolsetOAuthResultType.Success,
+      toolsetId: 'toolsets/b/my-toolset__1',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+    });
+
+    await resultPromise;
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it('resolves as Cancelled when the popup is closed manually', async () => {

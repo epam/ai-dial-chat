@@ -191,6 +191,10 @@ const AuthSection: FC<Props> = ({
       };
       await loginToolset(savedToolsetId, body);
       onAuthChange({ isLoggedIn: true });
+      showNotification({
+        variant: NotificationVariant.Success,
+        message: t(ToolsetEditorI18nKeys.LoginSuccess),
+      });
     } catch {
       showNotification({
         variant: NotificationVariant.Error,

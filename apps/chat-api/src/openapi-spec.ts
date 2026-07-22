@@ -18,15 +18,11 @@ const ensureOpenApiEnv = () => {
   process.env['AUTH_SESSION_SECRET'] ??=
     '0000000000000000000000000000000000000000000000000000000000000000';
   process.env['AUTH_CALLBACK_BASE_URL'] ??= 'http://localhost:3005';
-  process.env['AUTH_PROVIDERS'] ??= JSON.stringify([
-    {
-      id: 'local',
-      label: 'Local',
-      issuer: 'http://localhost:3005',
-      clientId: 'openapi-generator',
-      clientSecret: 'openapi-generator',
-    },
-  ]);
+  process.env['AUTH_POST_LOGOUT_REDIRECT_URI'] ??= 'http://localhost:3005';
+  process.env['AUTH_OKTA_CLIENT_ID'] ??= 'openapi-generator';
+  process.env['AUTH_OKTA_CLIENT_SECRET'] ??= 'openapi-generator';
+  process.env['AUTH_OKTA_ISSUER'] ??= 'http://localhost:3005';
+  process.env['AUTH_OKTA_NAME'] ??= 'Local';
 };
 
 const generateOpenApiSpec = async () => {

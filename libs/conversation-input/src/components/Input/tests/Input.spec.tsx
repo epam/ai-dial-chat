@@ -103,6 +103,30 @@ describe('Input', () => {
     expect(textarea?.value).toBe('Hello');
   });
 
+  it('should clear textarea when message changes to an empty string', () => {
+    const { container, rerender } = render(<Input message="Hello" />);
+    const textarea = container.querySelector('textarea');
+
+    rerender(<Input message="" />);
+
+    expect(textarea?.value).toBe('');
+  });
+
+  it('should re-apply the same message when messageRevision changes', () => {
+    const { container, rerender } = render(
+      <Input message="Draft" messageRevision={1} />,
+    );
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.value).toBe('Draft');
+
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'User edited draft' } });
+    }
+    rerender(<Input message="Draft" messageRevision={2} />);
+
+    expect(textarea?.value).toBe('Draft');
+  });
+
   it('should call onSend with message text and clear textarea on Enter', () => {
     const handleSend = vi.fn();
     const { container } = render(<Input onSend={handleSend} />);

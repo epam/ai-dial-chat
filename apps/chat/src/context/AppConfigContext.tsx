@@ -26,6 +26,8 @@ interface AppConfigState {
     defaultDeploymentId: string | null;
     dialCoreExternalUrl: string | null;
     fileManagerTabs: string[];
+    overlayEnabled: boolean;
+    overlayAllowedOrigins: string[];
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -39,6 +41,8 @@ const INITIAL_STATE: AppConfigState = {
     defaultDeploymentId: null,
     dialCoreExternalUrl: null,
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
+    overlayEnabled: false,
+    overlayAllowedOrigins: [],
   },
 };
 
@@ -69,6 +73,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             dialCoreExternalUrl: response.config?.dialCoreExternalUrl ?? null,
             fileManagerTabs:
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
+            overlayEnabled: response.config?.overlayEnabled ?? false,
+            overlayAllowedOrigins: response.config?.overlayAllowedOrigins ?? [],
           },
           metadata: response.metadata,
         });

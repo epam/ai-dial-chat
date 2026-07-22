@@ -83,6 +83,7 @@ stale id.
   stale id, so the very first click succeeds
 
 ### Requirement: OAuth redirect and callback handshake
+
 For OAuth login with config, the system SHALL save the OAuth configuration (Editor) or use the
 already-configured toolset (Catalog), persist the redirect state (`toolsetId`,
 `credentialsLevel`) to `sessionStorage`, and open the provider authorization URL in a new
@@ -92,7 +93,13 @@ Catalog-initiated login (`GLOBAL` only reachable by an admin managing a public t
 authorize URL SHALL include `code_challenge`/`code_challenge_method` query parameters when the
 toolset's stored OAuth configuration includes them. A shared callback route, loaded inside that
 new window, SHALL read the persisted state and complete login by submitting the authorization
-`code`, `redirectUri`, and the stored `credentialsLevel`, then close the window. The page that
+`code`, `redirectUri`, and the stored `credentialsLevel`, then post the outcome to the opener over
+the flow's `BroadcastChannel` and wait, without closing itself. The opener SHALL close the
+callback window itself immediately after receiving that message, so the window never closes
+before its result has been delivered. The callback window SHALL additionally carry its own
+bounded safety-net auto-close timer, started once the outcome has been posted, that closes the
+window if the opener has not already done so by the time it fires — covering the case where the
+opener tab was itself closed or navigated away before it could process the message. The page that
 initiated login (Toolset Editor or Catalog) is never navigated away and does not automatically
 refresh; the user reopens it to see updated status.
 
@@ -119,11 +126,23 @@ refresh; the user reopens it to see updated status.
   `code_challenge_method`
 - **THEN** the authorize URL includes both as query parameters
 
-#### Scenario: Complete OAuth callback and close the window
+#### Scenario: Complete OAuth callback and report the result
 - **WHEN** the provider redirects back to the callback route inside the window opened for
   login
 - **THEN** the system reads the stored redirect state, calls the login endpoint with the code,
-  redirect URI, and the stored `credentialsLevel`, then closes the window
+  redirect URI, and the stored `credentialsLevel`, and posts the outcome to the opener over the
+  flow's `BroadcastChannel` without closing itself
+
+#### Scenario: Opener closes the callback window on receiving the result
+- **WHEN** the opener's `BroadcastChannel` listener receives the callback window's posted result
+- **THEN** the opener resolves the login outcome and closes the callback window itself, so the
+  window is never observed closed before its message was delivered
+
+#### Scenario: Callback window self-closes if the opener never does
+- **WHEN** the callback window has posted its result but the opener has not closed it before the
+  window's own safety-net timer elapses (e.g. because the opener tab was closed or navigated
+  away)
+- **THEN** the callback window closes itself
 
 #### Scenario: Callback without stored state
 - **WHEN** the callback route is reached with no valid stored redirect state
@@ -259,4 +278,16 @@ neither `API_KEY` nor `OAUTH`, the request SHALL fail with `400 Bad Request`.
 - **WHEN** a logout request includes `authenticationType`
 - **THEN** the server uses the supplied value directly and does not perform the stored-toolset
   lookup
+
+### Requirement: API-key login success notification
+
+When an API-key login succeeds, the system SHALL show a success notification, matching the
+notification already shown for a successful OAuth login, regardless of whether the login was
+initiated from the Toolset Editor's Auth section or the Catalog Details Panel.
+
+#### Scenario: API-key login success notification in the Toolset Editor
+- **WHEN** a user submits a valid API key in the Toolset Editor's Auth section and the login
+  request succeeds
+- **THEN** the system shows a success notification in addition to marking the toolset as logged
+  in
 

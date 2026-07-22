@@ -10,6 +10,7 @@ export * from './models/import-export';
 export * from './types/attachment';
 export * from './types/mime-type';
 export * from './types/code-editor';
+export * from './types/overlay/overlay-protocol';
 export * from './utils/string-utils';
 export * from './utils/merge-class';
 export * from './utils/build-css-vars';

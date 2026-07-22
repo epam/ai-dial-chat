@@ -108,15 +108,6 @@ export class EnvironmentVariables {
   @IsUrl({ require_tld: false })
   AUTH_POST_LOGOUT_REDIRECT_URI?: string;
 
-  /**
-   * Legacy configuration path, temporarily kept alongside the discrete
-   * per-provider variables below. When set, it takes precedence over
-   * AUTH_{PROVIDER}_* variables.
-   */
-  @IsOptional()
-  @IsString()
-  AUTH_PROVIDERS?: string;
-
   @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return ['admin'];
@@ -608,6 +599,20 @@ export class EnvironmentVariables {
       'Each allowed iframe origin must be an origin URL with no path or query string',
   })
   ALLOWED_IFRAME_ORIGINS?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    // Reads the raw source value (not `value`, which class-transformer's
+    // `enableImplicitConversion` may have already coerced to `true` for any
+    // non-empty string, including the literal string "false") so an env var
+    // explicitly set to "false"/"0"/"no" parses to `false` as intended.
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  OVERLAY_ENABLED?: boolean = false;
 
   @IsOptional()
   @Transform(({ value }) => {

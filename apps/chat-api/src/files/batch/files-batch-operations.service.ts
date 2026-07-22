@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
 import { buildDialFileResourceUrl } from '../dial-resource-path.util';
@@ -160,7 +161,7 @@ export class FilesBatchOperationsService {
     try {
       const { error, response } = (await this.dialClient.client.deleteFile(
         bucket,
-        relPath,
+        encodeDialResourcePath(relPath),
         {
           headers: getBearerAuthHeaders(at),
           signal: AbortSignal.timeout(this.getTimeoutMs()),

@@ -1,3 +1,5 @@
+# Spec: auth-provider-env-config
+
 ## ADDED Requirements
 
 ### Requirement: Fixed, hardcoded provider ids
@@ -9,33 +11,23 @@ The system SHALL support exactly nine OIDC providers — Auth0, Azure AD, Azure 
 - **WHEN** the application boots with `AUTH_AUTH0_CLIENT_ID`, `AUTH_AUTH0_SECRET`, and `AUTH_AUTH0_HOST` set
 - **THEN** the registered provider's id is exactly `auth0`, regardless of any other environment variable value
 
-### Requirement: Per-provider environment variables configure providers when AUTH_PROVIDERS is unset
+### Requirement: Per-provider environment variables configure providers
 
-The system SHALL read each provider's configuration from discrete environment variables named `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` (matching the reference DIAL Chat frontend convention) whenever the legacy `AUTH_PROVIDERS` environment variable is not set.
+The system SHALL read each provider's configuration from discrete environment variables named `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` (matching the reference DIAL Chat frontend convention).
 
 #### Scenario: Auth0 configured via discrete variables
 
-- **WHEN** `AUTH_PROVIDERS` is not set, and `AUTH_AUTH0_CLIENT_ID`, `AUTH_AUTH0_SECRET`, and `AUTH_AUTH0_HOST` are set
+- **WHEN** `AUTH_AUTH0_CLIENT_ID`, `AUTH_AUTH0_SECRET`, and `AUTH_AUTH0_HOST` are set
 - **THEN** the system registers an `auth0` provider using those values, deriving the OIDC issuer as `https://${AUTH_AUTH0_HOST}/`
 
-### Requirement: Legacy AUTH_PROVIDERS variable is temporarily supported and takes precedence
+### Requirement: The legacy AUTH_PROVIDERS variable is no longer supported
 
-The system SHALL continue to accept the legacy `AUTH_PROVIDERS` environment variable (a JSON array of provider configs, in the pre-migration format). When `AUTH_PROVIDERS` is set to a non-empty value, the system SHALL parse and register providers from it exactly as before this feature existed, and SHALL ignore all discrete `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` variables entirely. This is a temporary migration aid and is expected to be removed in a follow-up change.
+The system SHALL NOT read or parse an `AUTH_PROVIDERS` environment variable. Provider registration SHALL always be assembled from the discrete `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` variables described in this capability.
 
-#### Scenario: AUTH_PROVIDERS takes precedence over discrete variables
+#### Scenario: AUTH_PROVIDERS has no effect
 
-- **WHEN** both `AUTH_PROVIDERS` (a valid JSON array) and one or more discrete `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` variables are set
-- **THEN** only the providers described in `AUTH_PROVIDERS` are registered; the discrete variables have no effect
-
-#### Scenario: Malformed AUTH_PROVIDERS JSON fails boot
-
-- **WHEN** `AUTH_PROVIDERS` is set to a value that is not valid JSON
-- **THEN** application boot fails with an error identifying `AUTH_PROVIDERS`
-
-#### Scenario: Discrete variables apply once AUTH_PROVIDERS is removed
-
-- **WHEN** `AUTH_PROVIDERS` is unset (removed from the environment) and discrete `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` variables are set
-- **THEN** provider registration falls through to the discrete-variable path described in the previous requirement
+- **WHEN** an `AUTH_PROVIDERS` environment variable is set (legacy JSON-array value, malformed value, or otherwise) alongside one or more discrete `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` variables
+- **THEN** the system ignores `AUTH_PROVIDERS` entirely and registers providers using only the discrete variables
 
 ### Requirement: A provider is included only when its variables are present
 

@@ -368,32 +368,50 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   );
 
   const onToggleFavorite = useCallback(
-    (id: string, isFavorite: boolean) => {
+    async (id: string, isFavorite: boolean) => {
       if (isLoading) return;
       const item = catalogItems.find((catalogItem) => catalogItem.id === id);
-      toggleFavorite(
-        id,
-        isFavorite,
-        item?.type === CatalogEntityType.Toolset
-          ? FavoriteEntityType.Toolset
-          : FavoriteEntityType.Deployment,
-      );
       const name = item?.name ?? id;
 
-      showNotification({
-        variant: isFavorite
-          ? NotificationVariant.Success
-          : NotificationVariant.Info,
-        title: t(
-          isFavorite
-            ? FavoritesI18nKeys.AddedTitle
-            : FavoritesI18nKeys.RemovedTitle,
-        ),
-        message: t(
-          isFavorite ? FavoritesI18nKeys.Added : FavoritesI18nKeys.Removed,
-          { name },
-        ),
-      });
+      try {
+        await toggleFavorite(
+          id,
+          isFavorite,
+          item?.type === CatalogEntityType.Toolset
+            ? FavoriteEntityType.Toolset
+            : FavoriteEntityType.Deployment,
+        );
+
+        showNotification({
+          variant: isFavorite
+            ? NotificationVariant.Success
+            : NotificationVariant.Info,
+          title: t(
+            isFavorite
+              ? FavoritesI18nKeys.AddedTitle
+              : FavoritesI18nKeys.RemovedTitle,
+          ),
+          message: t(
+            isFavorite ? FavoritesI18nKeys.Added : FavoritesI18nKeys.Removed,
+            { name },
+          ),
+        });
+      } catch {
+        showNotification({
+          variant: NotificationVariant.Error,
+          title: t(
+            isFavorite
+              ? FavoritesI18nKeys.AddFailedTitle
+              : FavoritesI18nKeys.RemoveFailedTitle,
+          ),
+          message: t(
+            isFavorite
+              ? FavoritesI18nKeys.AddFailed
+              : FavoritesI18nKeys.RemoveFailed,
+            { name },
+          ),
+        });
+      }
     },
     [isLoading, toggleFavorite, catalogItems, showNotification, t],
   );

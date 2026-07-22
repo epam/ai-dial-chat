@@ -85,6 +85,30 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
   },
   {
+    key: 'overlay.enabled',
+    type: 'config',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the chat-overlay embedded runtime mode is reachable. Distinct from ALLOWED_IFRAME_ORIGINS: has no effect unless at least one origin is also allowlisted there.',
+    owner: 'chat-team',
+    envVar: 'OVERLAY_ENABLED',
+  },
+  {
+    key: 'overlay.allowedOrigins',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      'Host origins allowed to embed this app, exposed to the client for self-diagnosis. Sourced from ALLOWED_IFRAME_ORIGINS, the same list that drives CSP frame-ancestors/frame-src.',
+    owner: 'chat-team',
+    envVar: 'ALLOWED_IFRAME_ORIGINS',
+  },
+  {
     key: 'fileManager.availableTabs',
     type: 'config',
     valueType: 'json',

@@ -142,6 +142,44 @@ describe('ToolsetAuthCallback', () => {
     });
   });
 
+  it('does not close the window immediately after posting a message on the flow channel', async () => {
+    setRedirectState({
+      toolsetId: 'toolsets/b/my__1.0.0',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+      state: 'flow-1',
+    });
+    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+
+    const resultPromise = listenForResult('flow-1');
+    renderCallback('?code=auth-code-xyz&state=flow-1');
+
+    await resultPromise;
+    expect(mockClose).not.toHaveBeenCalled();
+  });
+
+  it('closes the window itself if the opener never does, once the safety-net delay elapses', async () => {
+    vi.useFakeTimers();
+    try {
+      setRedirectState({
+        toolsetId: 'toolsets/b/my__1.0.0',
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        state: 'flow-1',
+      });
+      vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+
+      const resultPromise = listenForResult('flow-1');
+      renderCallback('?code=auth-code-xyz&state=flow-1');
+
+      await resultPromise;
+      expect(mockClose).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(4000);
+      expect(mockClose).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('posts a failure message on the flow channel when the OAuth state mismatches', async () => {
     setRedirectState({ toolsetId: 'toolsets/b/my__1.0.0', state: 'flow-1' });
 

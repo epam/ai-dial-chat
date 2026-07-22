@@ -38,36 +38,46 @@ const readRedirectState = (): ToolsetRedirectState | null => {
   }
 };
 
-/** Gives the browser a tick to flush a just-posted `BroadcastChannel` message to the opener before this popup tears down. */
-const CLOSE_DELAY_MS = 50;
+/**
+ * Safety-net delay before this popup closes itself after posting a result,
+ * used only if the opener never closes it (e.g. the opener tab was closed or
+ * navigated away before it could process the message). In the common case
+ * the opener's `waitForToolsetOAuthResult` closes this popup right after
+ * receiving the message, well before this fires.
+ */
+const SELF_CLOSE_FALLBACK_MS = 4000;
 
 /**
- * Posts the OAuth result to the flow-scoped `BroadcastChannel` the opener is
- * waiting on, then closes this popup. The delay before `window.close()`
- * matters: closing immediately after `postMessage` can tear the popup down
- * before the browser hands the message off to the opener's tab, which the
- * opener would otherwise misread as a cancelled flow.
+ * Reports the OAuth result to the flow-scoped `BroadcastChannel` the opener
+ * is waiting on. This popup does not close itself immediately afterwards —
+ * the opener closes it once the message is received, so the popup is never
+ * observed closed before the message has arrived. A bounded fallback timer
+ * closes the popup here too, in case the opener can't (e.g. it was closed or
+ * navigated away). With no `flowId` there is nothing for an opener to
+ * receive, so the popup closes itself right away instead.
  */
-const reportResultAndClose = async (
+const reportResult = (
   flowId: string | undefined,
   message: ToolsetOAuthChannelMessage,
 ) => {
-  if (flowId) {
-    const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
-    channel.postMessage(message);
-    channel.close();
+  if (!flowId) {
+    window.close();
+    return;
   }
-  await new Promise((resolve) => setTimeout(resolve, CLOSE_DELAY_MS));
-  window.close();
+  const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+  channel.postMessage(message);
+  channel.close();
+  setTimeout(() => window.close(), SELF_CLOSE_FALLBACK_MS);
 };
 
 /**
  * This route only ever runs inside the popup window opened by
- * `initiateOAuthLogin` — it always closes the window on completion rather
- * than navigating, since the editor/Catalog tab that opened it never
- * navigated away. Before closing, it reports success/failure over a
- * `BroadcastChannel` keyed by the OAuth `state` so that tab can refresh
- * immediately instead of requiring a manual reload.
+ * `initiateOAuthLogin` — it never navigates, since the editor/Catalog tab
+ * that opened it never navigated away either. It reports success/failure
+ * over a `BroadcastChannel` keyed by the OAuth `state` so that tab can
+ * refresh immediately instead of requiring a manual reload, and lets the
+ * opener close this window once it has received that report (see
+ * `reportResult`).
  */
 const ToolsetAuthCallback: FC = () => {
   const [searchParams] = useSearchParams();
@@ -86,7 +96,7 @@ const ToolsetAuthCallback: FC = () => {
       const flowId = redirectState?.state ?? state ?? undefined;
 
       if (!code || !redirectState?.toolsetId) {
-        await reportResultAndClose(flowId, {
+        reportResult(flowId, {
           type: ToolsetOAuthResultType.Failure,
           reason: !redirectState?.toolsetId
             ? ToolsetOAuthFailureReason.MissingRedirectState
@@ -96,7 +106,7 @@ const ToolsetAuthCallback: FC = () => {
       }
 
       if (redirectState.state != null && redirectState.state !== state) {
-        await reportResultAndClose(flowId, {
+        reportResult(flowId, {
           type: ToolsetOAuthResultType.Failure,
           reason: ToolsetOAuthFailureReason.StateMismatch,
         });
@@ -116,14 +126,14 @@ const ToolsetAuthCallback: FC = () => {
             `${window.location.origin}${ROUTES.ToolsetEditorCallback}`,
         };
         await loginToolset(redirectState.toolsetId, body);
-        await reportResultAndClose(flowId, {
+        reportResult(flowId, {
           type: ToolsetOAuthResultType.Success,
           toolsetId: redirectState.toolsetId,
           credentialsLevel:
             redirectState.credentialsLevel ?? ToolsetCredentialsLevel.User,
         });
       } catch {
-        await reportResultAndClose(flowId, {
+        reportResult(flowId, {
           type: ToolsetOAuthResultType.Failure,
           reason: ToolsetOAuthFailureReason.LoginRequestFailed,
         });

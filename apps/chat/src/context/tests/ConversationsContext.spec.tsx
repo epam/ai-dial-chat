@@ -1,15 +1,22 @@
 import {
+  OverlayEventType,
+  OverlayRequestType,
+} from '@epam/ai-dial-chat-shared';
+import {
   ConversationDeletionFailureDtoCodeEnum,
   type ConversationDeletionResultDto,
 } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { createElement, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as userConfigApi from '../../server-api/user-config.api';
+import { AuthStatus } from '../../types/auth-status';
 import {
   ConversationsProvider,
   useConversations,
 } from '../ConversationsContext';
+import { OverlayProvider } from '../overlay/OverlayContext';
 
 vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/user-config.api');
@@ -17,6 +24,21 @@ vi.mock('../UserConfigContext', () => ({
   useUserConfig: () => ({
     setPinnedConversation: vi.fn().mockResolvedValue(undefined),
   }),
+}));
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
+vi.mock('../AppConfigContext', () => ({
+  useAppConfig: () => ({
+    config: { overlayAllowedOrigins: ['https://partner.example.com'] },
+  }),
+}));
+vi.mock('../auth/UserContext', () => ({
+  useUser: () => ({ status: AuthStatus.Authenticated }),
+}));
+vi.mock('../ThemeContext', () => ({
+  useTheme: () => ({ setTheme: vi.fn() }),
 }));
 
 const mockListConversations = vi.mocked(conversationsApi.listConversations);
@@ -353,5 +375,39 @@ describe('ConversationsContext — watchForDisplayNameUpdate', () => {
       'applications/bucket/My App__0.0.1__title__uuid',
       expect.anything(),
     );
+  });
+});
+
+describe('ConversationsContext — overlay mode', () => {
+  const overlayWrapper = ({ children }: { children: ReactNode }) =>
+    createElement(
+      OverlayProvider,
+      null,
+      createElement(ConversationsProvider, null, children),
+    );
+
+  it('emits CONVERSATIONS_UPDATED once the list loads', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: overlayWrapper,
+    });
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'setup',
+          payload: { hostDomain: 'https://partner.example.com' },
+        },
+        source: window.parent,
+        origin: 'https://partner.example.com',
+      }),
+    );
+    const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+    await waitFor(() => expect(result.current.conversations).toHaveLength(3));
+
+    const eventTypes = postMessageSpy.mock.calls.map(
+      ([message]) => (message as { type?: string }).type,
+    );
+    expect(eventTypes).toContain(OverlayEventType.ConversationsUpdated);
   });
 });

@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -56,18 +57,22 @@ export class FilesListingService {
     permissions?: string[];
   }> {
     const { data, error, response } =
-      await this.dialClient.client.getFileMetadata(bucket, normalizedPath, {
-        headers: getBearerAuthHeaders(at),
-        params: {
-          query: {
-            token: query.token,
-            limit: query.limit,
-            recursive: query.recursive ?? false,
-            permissions: query.permissions ?? true,
+      await this.dialClient.client.getFileMetadata(
+        bucket,
+        encodeDialResourcePath(normalizedPath),
+        {
+          headers: getBearerAuthHeaders(at),
+          params: {
+            query: {
+              token: query.token,
+              limit: query.limit,
+              recursive: query.recursive ?? false,
+              permissions: query.permissions ?? true,
+            },
           },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
         },
-        signal: AbortSignal.timeout(this.getTimeoutMs()),
-      });
+      );
 
     if (error != null) {
       this.logger.warn(
@@ -291,10 +296,14 @@ export class FilesListingService {
       );
 
       const { data, error, response } =
-        await this.dialClient.client.getFileMetadata(bucket, path, {
-          headers: getBearerAuthHeaders(token),
-          signal: AbortSignal.timeout(this.getTimeoutMs()),
-        });
+        await this.dialClient.client.getFileMetadata(
+          bucket,
+          encodeDialResourcePath(path),
+          {
+            headers: getBearerAuthHeaders(token),
+            signal: AbortSignal.timeout(this.getTimeoutMs()),
+          },
+        );
 
       if (error != null) {
         this.logger.warn(
@@ -360,13 +369,17 @@ export class FilesListingService {
     do {
       page += 1;
       const { data, error, response } =
-        await this.dialClient.client.getFileMetadata(bucket, relFolderPath, {
-          headers: getBearerAuthHeaders(at),
-          params: {
-            query: { recursive: true, limit: 1000, token },
+        await this.dialClient.client.getFileMetadata(
+          bucket,
+          encodeDialResourcePath(relFolderPath),
+          {
+            headers: getBearerAuthHeaders(at),
+            params: {
+              query: { recursive: true, limit: 1000, token },
+            },
+            signal: AbortSignal.timeout(this.getTimeoutMs()),
           },
-          signal: AbortSignal.timeout(this.getTimeoutMs()),
-        });
+        );
 
       if (error != null) {
         this.logger.warn(
