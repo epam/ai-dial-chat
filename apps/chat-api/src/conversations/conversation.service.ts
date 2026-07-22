@@ -49,7 +49,11 @@ import type {
   MetadataResult,
   SharedResourcesResult,
 } from './types/conversation.types';
-import { applyChunkToMessage } from './utils/apply-chunk.server';
+import {
+  applyChunkToMessage,
+  extractDialStreamError,
+  type DialStreamErrorPayload,
+} from './utils/apply-chunk.server';
 import { buildConversationHistory } from './utils/conversation-history-builder';
 import {
   buildConversationUrl,
@@ -290,6 +294,9 @@ export class ConversationService {
         response: globalThis.Response;
       };
     if (error != null || !data) {
+      this.logger.debug(
+        `getStoredConversation rejected — bucket: ${bucket}, subPath: ${subPath}, status: ${response.status}, error: ${JSON.stringify(error)}`,
+      );
       handleDialSdkError(
         error,
         'conversations.getStoredConversation',
@@ -1174,6 +1181,7 @@ export class ConversationService {
     signal: AbortSignal,
     res: Response,
     initialAssembledMessage: ConversationMessageDto,
+    clientChannelId?: string,
   ): Promise<
     | {
         outcome: 'rejected';
@@ -1198,6 +1206,9 @@ export class ConversationService {
           headers: {
             ...getBearerAuthHeaders(token),
             Accept: 'text/event-stream',
+            ...(clientChannelId
+              ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
+              : {}),
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },
           parseAs: 'stream',
@@ -1219,10 +1230,16 @@ export class ConversationService {
       const decoder = new TextDecoder();
       let sseBuffer = '';
       let receivedDone = false;
+      let streamError: DialStreamErrorPayload | null = null;
 
       while (true) {
         const { done, value } = await upstreamReader.read();
-        if (done) break;
+        if (done) {
+          this.logger.debug(
+            `relayModelCompletion upstream socket closed without [DONE] — model: ${model}`,
+          );
+          break;
+        }
 
         res.write(value);
 
@@ -1241,12 +1258,37 @@ export class ConversationService {
             }
             try {
               const parsed: unknown = JSON.parse(payload);
+              const errorPayload = extractDialStreamError(parsed);
+              if (errorPayload) {
+                /*
+                 * DIAL Core signals a mid-stream failure (e.g. a QuickApp's
+                 * downstream tool call couldn't reach its upstream server)
+                 * with a `{ error: {...} }` chunk instead of the usual
+                 * `choices`-shaped delta, immediately followed by `[DONE]`.
+                 * Treat it the same as a genuine stream error rather than
+                 * letting it fall through `applyChunkToMessage` (which
+                 * silently ignores it) and persisting an empty, non-error
+                 * "completed" message.
+                 */
+                streamError = errorPayload;
+                break;
+              }
               assembledMessage = applyChunkToMessage(assembledMessage, parsed);
             } catch {
-              // Malformed chunk — skip
+              /*
+               * Never log the payload itself here — chunk content is
+               * conversation text, and this fires once per malformed chunk
+               * rather than once per stream, so it must not become a
+               * per-token content log at debug level.
+               */
+              this.logger.debug(
+                `relayModelCompletion malformed chunk — model: ${model}, length: ${payload.length}`,
+              );
             }
           }
         }
+
+        if (streamError) break;
 
         /*
          * `[DONE]` is the SSE completion signal. Stop here rather than waiting
@@ -1255,14 +1297,36 @@ export class ConversationService {
          * registered as active and reject the next request (e.g. regenerate)
          * with a 409 conflict.
          */
-        if (receivedDone) break;
+        if (receivedDone) {
+          this.logger.debug(
+            `relayModelCompletion received [DONE] — model: ${model}`,
+          );
+          break;
+        }
       }
 
+      if (streamError) {
+        this.logger.debug(
+          `relayModelCompletion outcome: error (in-band stream error chunk) — model: ${model}: ${streamError.message}`,
+        );
+        return {
+          outcome: 'error',
+          error: new Error(streamError.displayMessage ?? streamError.message),
+          assembledMessage,
+        };
+      }
+
+      this.logger.debug(
+        `relayModelCompletion outcome: completed — model: ${model}, assembledContentLength: ${assembledMessage.content?.length ?? 0}`,
+      );
       return { outcome: 'completed', assembledMessage };
     } catch (err) {
       const isAbort =
         err instanceof Error &&
         (err.name === 'AbortError' || err.name === 'DOMException');
+      this.logger.debug(
+        `relayModelCompletion outcome: ${isAbort ? 'aborted' : 'error'} — model: ${model}: ${err instanceof Error ? err.message : String(err)}`,
+      );
       return isAbort
         ? { outcome: 'aborted', assembledMessage }
         : { outcome: 'error', error: err, assembledMessage };
@@ -1293,6 +1357,7 @@ export class ConversationService {
     customContent: MessageCustomContentDto | undefined,
     sessionId: string,
     res: Response,
+    clientChannelId?: string,
   ): Promise<void> {
     this.logger.debug(
       `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}, mode: ${mode}`,
@@ -1458,6 +1523,7 @@ export class ConversationService {
       abortController.signal,
       res,
       assembledMessage,
+      clientChannelId,
     );
 
     switch (relayResult.outcome) {

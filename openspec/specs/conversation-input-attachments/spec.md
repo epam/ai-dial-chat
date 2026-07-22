@@ -164,6 +164,35 @@ When `pendingDropFiles` changes to a non-empty array, `EditMessageInput` SHALL m
 
 ---
 
+### Requirement: EditMessageInput accepts externally-supplied pending attachments
+
+`EditMessageInput` SHALL accept two new optional props, mirroring the same-named props already on `ConversationInputProps`:
+- `pendingAttachments?: Attachment[]` — already-uploaded attachments supplied by the host (e.g. selected from the DIAL file manager), awaiting insertion into the edit tray
+- `onPendingAttachmentsConsumed?: () => void` — signals that the host may clear its pending queue
+
+`EditMessageInput` SHALL forward both props unchanged to its inner `Input`, which already inserts `pendingAttachments` into the tray without invoking `onUploadAttachment` for them (see the `useAttachments` pending-attachments effect).
+
+`EditMessageInput` SHALL also accept `onDialFileSystemClick?: () => void` and `dialFileSystemLabel?: string`, with the same contract as `ConversationInputProps`: when `onDialFileSystemClick` is absent, the "DIAL file system" menu item is not rendered.
+
+#### Scenario: External pending attachments appear in edit input
+
+- **WHEN** `EditMessageInput` receives a non-empty `pendingAttachments` prop
+- **THEN** those attachments are added to the attachment tray in the edit input
+- **THEN** `onUploadAttachment` is NOT called for them
+
+#### Scenario: onPendingAttachmentsConsumed is called after consuming external attachments
+
+- **WHEN** `EditMessageInput` processes the externally-supplied `pendingAttachments`
+- **THEN** it calls the `onPendingAttachmentsConsumed` callback to allow the parent to clear its state
+
+#### Scenario: DIAL file system menu item absent without a handler
+
+- **GIVEN** `onDialFileSystemClick` is not passed to `EditMessageInput`
+- **WHEN** the user opens the edit-mode attach (+) menu
+- **THEN** only "Attach file" appears; "DIAL file system" is absent
+
+---
+
 ### Requirement: DisplayAttachment carries an optional error reason
 
 `DisplayAttachment` in `libs/chat-shared/src/models/chat.ts` SHALL gain an optional field `errorReason?: AttachmentErrorReason`.

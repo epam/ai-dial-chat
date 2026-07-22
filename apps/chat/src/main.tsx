@@ -13,6 +13,7 @@ import NotificationContainer from './components/Notification/NotificationContain
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import AppConfigProvider from './context/AppConfigContext';
 import { UserProvider } from './context/auth/UserContext';
+import { ClientChannelProvider } from './context/ClientChannelContext';
 import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
 import { GenerationProvider } from './context/GenerationContext';
@@ -53,13 +54,15 @@ root.render(
                             <OverlayModeGate>
                               <RequireAuth>
                                 <GenerationProvider>
-                                  <UserConfigProvider>
-                                    <DeploymentsProvider>
-                                      <ConversationsProvider>
-                                        <App />
-                                      </ConversationsProvider>
-                                    </DeploymentsProvider>
-                                  </UserConfigProvider>
+                                  <ClientChannelProvider>
+                                    <UserConfigProvider>
+                                      <DeploymentsProvider>
+                                        <ConversationsProvider>
+                                          <App />
+                                        </ConversationsProvider>
+                                      </DeploymentsProvider>
+                                    </UserConfigProvider>
+                                  </ClientChannelProvider>
                                 </GenerationProvider>
                               </RequireAuth>
                             </OverlayModeGate>

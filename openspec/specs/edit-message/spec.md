@@ -63,15 +63,24 @@ The inline edit area consists of two parts stacked vertically:
 ### Requirement: Managing attachments in edit mode
 While in edit mode, the user SHALL be able to remove existing attachments and add new ones, subject to the same restrictions as the conversation input.
 
+The attach (+) button's menu in edit mode SHALL offer the same options as the new-message composer: "Attach file" (local device upload) and, when a DIAL file system handler is supplied, "DIAL file system" (select from file manager). Files selected via the file manager are added to the shared attachment tray the same way as locally-uploaded files, without a duplicate upload call.
+
 #### Scenario: Removing an existing attachment
 - **WHEN** the user clicks the remove button on an attachment card in the edit area
 - **THEN** the attachment is removed from the edit area
 
-#### Scenario: Adding a new attachment
-- **WHEN** the user clicks the attach (+) button in the action row
-- **THEN** a file picker opens (desktop: dropdown menu; mobile: bottom sheet)
+#### Scenario: Adding a new attachment via local upload
+- **WHEN** the user clicks the attach (+) button in the action row and selects "Attach file"
+- **THEN** a native file picker opens (desktop: dropdown menu; mobile: bottom sheet)
 - **WHEN** the user selects a file
 - **THEN** the new file appears in the shared attachment tray inside the bordered box, alongside any pre-existing attachments
+
+#### Scenario: Adding a new attachment via the DIAL file manager
+- **WHEN** the user clicks the attach (+) button in the action row and selects "DIAL file system"
+- **THEN** the same `DialFileManagerModal` used by the new-message composer opens
+- **WHEN** the user selects one or more files and clicks Attach
+- **THEN** the selected files appear in the shared attachment tray inside the bordered box, alongside any pre-existing attachments
+- **THEN** the selected files are NOT passed through `onUploadAttachment` again, since they are already-uploaded DIAL storage files
 
 ---
 

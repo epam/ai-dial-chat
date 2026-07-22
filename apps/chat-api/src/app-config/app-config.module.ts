@@ -6,6 +6,7 @@ import { CompositeConfigProvider } from './config-registry/composite-config.prov
 import { EnvConfigProvider } from './config-registry/env-config.provider';
 import { StaticDefaultsProvider } from './config-registry/static-defaults.provider';
 import { FeatureFlagsService } from './feature-flags/feature-flags.service';
+import { FeatureGuard } from './feature-flags/feature.guard';
 
 @Module({
   imports: [AuthModule],
@@ -16,7 +17,8 @@ import { FeatureFlagsService } from './feature-flags/feature-flags.service';
     CompositeConfigProvider,
     AppConfigService,
     FeatureFlagsService,
+    FeatureGuard,
   ],
-  exports: [AppConfigService, FeatureFlagsService],
+  exports: [AppConfigService, FeatureFlagsService, FeatureGuard],
 })
 export class AppConfigModule {}

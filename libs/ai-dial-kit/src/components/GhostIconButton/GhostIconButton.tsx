@@ -43,7 +43,7 @@ export const GhostIconButton: FC<GhostIconButtonProps> = ({
   return (
     <DialGhostIconButton
       className={mergeClasses(
-        'rounded-[6px]',
+        'rounded-md',
         isActive ? activeClassName : inactiveClassName,
         className,
       )}

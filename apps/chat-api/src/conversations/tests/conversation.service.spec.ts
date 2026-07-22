@@ -1100,6 +1100,7 @@ describe('ConversationService', () => {
       customContent?: Record<string, unknown>,
       mode = CompletionMode.Append,
       streamChunks = [': keepalive\n\n'],
+      clientChannelId?: string,
     ) => {
       vi.spyOn(
         service['dialClient'].client,
@@ -1135,9 +1136,62 @@ describe('ConversationService', () => {
         customContent as never,
         'test-session-id',
         res as never,
+        clientChannelId,
       );
       return { sendSpy, res };
     };
+
+    it('forwards the client channel id as X-DIAL-CLIENT-CHANNEL-ID when provided', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+        undefined,
+        CompletionMode.Append,
+        [': keepalive\n\n'],
+        'channel-123',
+      );
+
+      expect(sendSpy.mock.calls[0][1].headers).toMatchObject({
+        'X-DIAL-CLIENT-CHANNEL-ID': 'channel-123',
+      });
+    });
+
+    it('omits X-DIAL-CLIENT-CHANNEL-ID when no channel id is provided', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: ConversationMessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+        ],
+      };
+
+      const { sendSpy } = await callStream(
+        conversation,
+        'Next message',
+        'gpt-4o',
+      );
+
+      expect(sendSpy.mock.calls[0][1].headers).not.toHaveProperty(
+        'X-DIAL-CLIENT-CHANNEL-ID',
+      );
+    });
 
     it('excludes ConversationMessageRole.Status messages from the DIAL Core payload', async () => {
       const conversation = {
@@ -1387,6 +1441,68 @@ describe('ConversationService', () => {
       expect((assistantMsg as Record<string, unknown>).hasStreamError).toBe(
         true,
       );
+    });
+
+    it('saves partial message with hasStreamError for an in-band DIAL error chunk (no choices)', async () => {
+      vi.spyOn(
+        service['dialClient'].client,
+        'getConversation',
+      ).mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const saveConversationSpy = vi
+        .spyOn(service['dialClient'].client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      const encoder = new TextEncoder();
+      const mockStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"choices":[{"index":0,"finish_reason":null,"delta":{"role":"assistant"}}]}\n\n',
+            ),
+          );
+          controller.enqueue(
+            encoder.encode(
+              'data: {"error":{"message":"Failed to connect to upstream server","type":"runtime_error","code":"BAD_GATEWAY","display_message":"Failed to connect to upstream server"}}\n\n',
+            ),
+          );
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        },
+      });
+      vi.spyOn(
+        service['dialClient'].client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(mockStream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }),
+      } as never);
+
+      const res = makeMockRes();
+      await service.streamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const errorSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { content?: string; hasStreamError?: boolean }[];
+      };
+      const assistantMsg = errorSave.messages.at(-1) as Record<string, unknown>;
+      expect(assistantMsg.hasStreamError).toBe(true);
+      expect(assistantMsg.content).toBe('');
     });
 
     it('writes SSE chunks to res and saves conversation on completion', async () => {

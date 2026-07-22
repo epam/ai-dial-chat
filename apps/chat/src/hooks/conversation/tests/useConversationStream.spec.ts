@@ -23,6 +23,15 @@ import {
 import { AuthStatus } from '../../../types/auth-status';
 import { useConversationStream } from '../useConversationStream';
 
+vi.mock('../../../context/ClientChannelContext', () => ({
+  useClientChannel: vi.fn(() => ({
+    channelId: null,
+    pendingEvents: [],
+    reportEvent: vi.fn(),
+    ensureConnected: vi.fn(),
+  })),
+}));
+
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
 }));
@@ -309,6 +318,7 @@ describe('useConversationStream', () => {
       'regenerate',
       // Regenerate truncates at the assistant index (same as the local index).
       3,
+      undefined,
     );
   });
 
@@ -339,6 +349,7 @@ describe('useConversationStream', () => {
       'edit',
       // Edit truncates at the user message — one before the placeholder index.
       2,
+      undefined,
     );
   });
 
@@ -608,6 +619,7 @@ describe('useConversationStream', () => {
       undefined,
       expect.any(String),
       'append',
+      undefined,
       undefined,
     );
 

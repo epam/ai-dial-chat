@@ -600,6 +600,22 @@ export enum ToolsetEditorI18nKeys {
   LogoutSuccess = 'toolsetEditor.success.logout',
 }
 
+export enum ToolsetSigninI18nKeys {
+  DialogTitle = 'toolsetSignin.dialogTitle',
+  DialogDescription = 'toolsetSignin.dialogDescription',
+  RowDecline = 'toolsetSignin.rowDecline',
+  DeclineAll = 'toolsetSignin.declineAll',
+  FallbackName = 'toolsetSignin.fallbackName',
+  ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
+  ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
+  ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',
+  ErrorPopupBlocked = 'toolsetSignin.errorPopupBlocked',
+  ErrorDeclineFailed = 'toolsetSignin.errorDeclineFailed',
+  ErrorRetry = 'toolsetSignin.errorRetry',
+  StatusLoginSuccess = 'toolsetSignin.statusLoginSuccess',
+  StatusDeclineSuccess = 'toolsetSignin.statusDeclineSuccess',
+}
+
 export enum ErrorBoundaryI18nKeys {
   Heading = 'errorBoundary.heading',
   Description = 'errorBoundary.description',

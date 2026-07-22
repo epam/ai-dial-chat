@@ -143,6 +143,19 @@ _Source: [`auth-diagrams/06-cross-pod-stateless.mmd`](./auth-diagrams/06-cross-p
 
 Any pod can decrypt any cookie because all pods share the same active key + previous keys. No session affinity is required.
 
+### 5.5 Interactive Toolset Sign-In During a Completion
+
+![Toolset sign-in interrupt](./auth-diagrams/08-toolset-signin-interrupt.svg)
+
+_Source: [`auth-diagrams/08-toolset-signin-interrupt.mmd`](./auth-diagrams/08-toolset-signin-interrupt.mmd)_
+
+**This is a separate flow from application OIDC login (5.1) and does not touch the session cookie.** The user is already authenticated to Chat; this flow lets DIAL Core ask that already-authenticated user to (re)supply _toolset_ credentials mid-completion, via a generic client-channel RPC mechanism:
+
+- The SPA subscribes once per session to `POST /api/v1/client-channel/subscribe`, a BFF-relayed SSE stream proxying DIAL Core's own `/v1/ops/client-channel/subscribe`. The BFF never exposes the session's access token to the browser — it stays server-side, same as every other BFF-proxied call.
+- The assigned channel id travels with subsequent completion requests (`X-DIAL-CLIENT-CHANNEL-ID`), so Core can correlate a `toolset/signin` event back to the specific blocked tool call.
+- A `toolset/signin` event surfaces a global dialog; the user logs in with the existing toolset API-key/OAuth mechanics (unchanged from the Catalog/Toolset-Editor flows), and the result is reported back on the same channel (`POST /api/v1/client-channel/report`) so Core can resume or terminate the tool call.
+- Gated behind the `liveChatInteraction` feature flag (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`); unsubscribes on logout, tab close, or the flag flipping off.
+
 ---
 
 ## 6. NestJS Module Layout (Shipped)

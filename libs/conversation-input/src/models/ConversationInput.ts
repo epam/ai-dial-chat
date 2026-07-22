@@ -114,6 +114,14 @@ export interface EditMessageInputProps {
    * selectable.
    */
   fileAccept?: string;
+  /** Called when user selects "DIAL file system" from the attach menu. When absent, the menu item is not rendered. */
+  onDialFileSystemClick?: () => void;
+  /** Label for the "DIAL file system" menu item. Defaults to `'DIAL file system'`. */
+  dialFileSystemLabel?: string;
+  /** Already-uploaded attachments supplied by the host and awaiting insertion into the local tray. */
+  pendingAttachments?: Attachment[];
+  /** Called after `pendingAttachments` have been inserted into the local tray. */
+  onPendingAttachmentsConsumed?: () => void;
 }
 
 /** Props accepted by the `ConversationInput` component. */

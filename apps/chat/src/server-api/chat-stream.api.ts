@@ -48,6 +48,7 @@ export const streamCompletion = (
   generationId?: string,
   mode?: SendCompletionDtoModeEnum,
   messageIndex?: number,
+  clientChannelId?: string,
 ): void => {
   const { onChunk, onComplete, onError, signal } = options;
 
@@ -72,6 +73,7 @@ export const streamCompletion = (
           ...(generationId != null && { generationId }),
           ...(mode != null && { mode }),
           ...(messageIndex != null && { messageIndex }),
+          ...(clientChannelId != null && { clientChannelId }),
         }),
       });
     } catch (err) {

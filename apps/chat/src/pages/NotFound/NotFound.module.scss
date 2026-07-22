@@ -7,10 +7,10 @@
   line-height: 0.88;
   background: linear-gradient(
     110deg,
-    var(--text-accent-primary, #124ace) 0%,
+    var(--bg-control-accent, #124ace) 0%,
     var(--bg-accent-secondary, #37babc) 32%,
     var(--bg-accent-tertiary, #a972ff) 64%,
-    var(--text-accent-primary, #124ace) 100%
+    var(--bg-control-accent, #124ace) 100%
   );
   background-size: 220% 100%;
   filter: drop-shadow(0 12px 26px rgb(18 74 206 / 14%));

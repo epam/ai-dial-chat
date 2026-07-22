@@ -91,4 +91,17 @@ export class SendCompletionDto {
   @ValidateNested()
   @Type(() => MessageCustomContentDto)
   custom_content?: MessageCustomContentDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Active DIAL Core client-channel id (from `POST /v1/client-channel/subscribe`), forwarded to DIAL Core so a mid-completion `toolset/signin` event can be correlated to this request. Omitted when no channel is active yet.',
+    example: 'a1b2c3d4-e5f6-4789-a012-3456789abcde',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(256)
+  @Matches(/^[\w.-]+$/, {
+    message: 'clientChannelId contains invalid characters',
+  })
+  clientChannelId?: string;
 }

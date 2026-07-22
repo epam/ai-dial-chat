@@ -28,13 +28,21 @@ export interface CleanedStageName {
  * Never re-cases or rewrites the remaining text.
  */
 export const cleanStageName = (rawName: string): CleanedStageName => {
+  /*
+   * Defensive: a stage's first streamed chunk can carry `name: null`
+   * (DIAL Core's "stage opened, name pending" signal). Callers are expected
+   * to normalize this before it reaches here, but guard anyway since this
+   * is a shared lib function and a `null`/`undefined` value would otherwise
+   * throw on `.replace()` below.
+   */
+  const safeRawName = rawName ?? '';
   BRACKET_GROUP_RE.lastIndex = 0;
   let groupMatch: RegExpExecArray | null;
   let durationMatch: RegExpExecArray | null = null;
   let groupIndex = -1;
   let groupLength = 0;
 
-  while ((groupMatch = BRACKET_GROUP_RE.exec(rawName))) {
+  while ((groupMatch = BRACKET_GROUP_RE.exec(safeRawName))) {
     const inner = groupMatch[0].slice(1, -1);
     const innerMatch = DURATION_INNER_RE.exec(inner);
     if (innerMatch) {
@@ -47,8 +55,9 @@ export const cleanStageName = (rawName: string): CleanedStageName => {
 
   const withoutDuration =
     durationMatch && groupIndex >= 0
-      ? rawName.slice(0, groupIndex) + rawName.slice(groupIndex + groupLength)
-      : rawName;
+      ? safeRawName.slice(0, groupIndex) +
+        safeRawName.slice(groupIndex + groupLength)
+      : safeRawName;
 
   const name = withoutDuration
     .replace(TRAILING_COLON_RE, '')

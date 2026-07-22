@@ -81,7 +81,15 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
           : result[idx].attachments,
       };
     } else {
-      result.push(stage);
+      /*
+       * A brand-new stage's first chunk can carry `name: null` (DIAL Core's
+       * "stage opened, name pending" signal, before the name text streams
+       * in) — `Stage.name` is typed as non-nullable, so this must be
+       * normalized here the same way the merge branch above already
+       * coalesces `null` to `''`, or downstream renderers that assume a
+       * string (e.g. `cleanStageName`) crash on the very first chunk.
+       */
+      result.push({ ...stage, name: stage.name ?? '' });
     }
   }
   return result;
