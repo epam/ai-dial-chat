@@ -3,8 +3,8 @@ import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { ReactNode, useEffect } from 'react';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
@@ -87,11 +87,6 @@ vi.mock('../../components/StarterButtons/StarterButtons', () => ({
     </div>
   ),
 }));
-vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-router-dom')>();
-  return { ...actual, useNavigate: vi.fn(() => vi.fn()) };
-});
-
 vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-conversation-input')>();
@@ -172,6 +167,22 @@ const renderRoute = () =>
     </MemoryRouter>,
   );
 
+const RouteStateDriver = ({ deploymentId }: { deploymentId: string }) => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate('.', { replace: true, state: { deploymentId } });
+  }, [deploymentId, navigate]);
+  return null;
+};
+
+const renderRouteWithDeploymentState = (deploymentId: string) =>
+  render(
+    <MemoryRouter>
+      <RouteStateDriver deploymentId={deploymentId} />
+      <ConversationRoute />
+    </MemoryRouter>,
+  );
+
 describe('ConversationRoute', () => {
   const mockUseDeployments = vi.mocked(DeploymentsContextModule.useDeployments);
   const mockUseUser = vi.mocked(UserContextModule.useUser);
@@ -187,6 +198,7 @@ describe('ConversationRoute', () => {
     attachmentToDtoModule.attachmentsToDtos,
   );
   const mockShowNotification = vi.fn();
+  const mockRestoreSelectedItemId = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -195,7 +207,7 @@ describe('ConversationRoute', () => {
       items: mockItems,
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
-      restoreSelectedItemId: vi.fn(),
+      restoreSelectedItemId: mockRestoreSelectedItemId,
       selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
@@ -242,6 +254,25 @@ describe('ConversationRoute', () => {
       expect(screen.getByLabelText('Selected deployment').textContent).toBe(
         'gpt-4o',
       );
+    });
+  });
+
+  it('restores deploymentId when router state changes while composer stays mounted', async () => {
+    const view = renderRouteWithDeploymentState('gpt-4o-mini');
+
+    await waitFor(() => {
+      expect(mockRestoreSelectedItemId).toHaveBeenCalledWith('gpt-4o-mini');
+    });
+
+    view.rerender(
+      <MemoryRouter>
+        <RouteStateDriver deploymentId="gpt-4.1" />
+        <ConversationRoute />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(mockRestoreSelectedItemId).toHaveBeenCalledWith('gpt-4.1');
     });
   });
 
