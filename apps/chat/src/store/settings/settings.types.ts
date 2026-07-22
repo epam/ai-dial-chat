@@ -38,6 +38,7 @@ export interface SettingsState {
   quickAppsHost?: string;
   quickAppsModel?: string;
   quickAppsSchemaId?: string;
+  quickAppsSchemaId2?: string;
   externalAppsSchemaId?: string;
   dialApiHost?: string;
   dialCoreExternalUrl?: string;
