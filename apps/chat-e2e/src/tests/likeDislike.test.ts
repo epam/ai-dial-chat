@@ -1,7 +1,6 @@
-import { ChatI18nKeys } from '@/chat/constants/i18n';
 import { ChatMessagesAssertion } from '@/src/assertions';
 import dialTest from '@/src/core/dialFixtures';
-import { Rate } from '@/src/testData';
+import { DislikeCommentFields, Rate, RateTooltip } from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { ChatMessages, DislikeCommentModal } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
@@ -332,12 +331,12 @@ dialTest(
         await chatMessages.dislikeMessage(messageIndex);
         await chatMessagesAssertion.assertElementText(
           dislikeCommentModal.title,
-          ChatI18nKeys.SendFeedback,
+          DislikeCommentFields.title,
         );
         await chatMessagesAssertion.assertElementAttribute(
           dislikeCommentModal.commentInput,
           Attributes.placeholder,
-          ChatI18nKeys.OptionalFeedbackComment,
+          DislikeCommentFields.inputPlaceholder,
         );
         await chatMessagesAssertion.assertElementState(
           dislikeCommentModal.sendButton,
@@ -406,7 +405,7 @@ dialTest(
           const icon = chatMessages.getChatMessageRate(messageIndex, rate);
           await icon.hover();
           await tooltipAssertion.assertTooltipContent(
-            rate === Rate.like ? ChatI18nKeys.Like : ChatI18nKeys.Dislike,
+            rate === Rate.like ? RateTooltip.Like : RateTooltip.Dislike,
           );
           await chatMessagesAssertion.assertElementColor(icon, expectedColor);
         }

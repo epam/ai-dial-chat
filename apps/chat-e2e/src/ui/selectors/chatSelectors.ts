@@ -49,7 +49,6 @@ export const DislikeCommentModalSelectors = {
   title: '[data-qa="modal-entity-name"]',
   commentInput: '[data-qa="dislike-comment-input"]',
   sendButton: '[data-qa="dislike-send-button"]',
-  closeButtonAriaLabel: 'Close dialog',
 };
 
 export const PlaybackSelectors = {

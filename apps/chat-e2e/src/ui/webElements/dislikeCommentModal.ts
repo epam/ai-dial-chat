@@ -1,3 +1,4 @@
+import { API } from '@/src/testData';
 import { DislikeCommentModalSelectors } from '@/src/ui/selectors';
 import { Popup } from '@/src/ui/webElements/common/popup';
 import { Page } from '@playwright/test';
@@ -23,7 +24,10 @@ export class DislikeCommentModal extends Popup {
 
   public async sendComment() {
     const respPromise = this.page.waitForResponse(
-      (resp) => resp.request().method() === 'POST' && resp.status() === 200,
+      (resp) =>
+        resp.request().method() === 'POST' &&
+        resp.url().includes(API.rateHost) &&
+        resp.status() === 200,
     );
     await this.sendButton.click();
     return respPromise;
