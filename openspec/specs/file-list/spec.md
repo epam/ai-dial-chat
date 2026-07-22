@@ -225,8 +225,21 @@ The system SHALL map each item in the DIAL Core folder response to a `ListFilesI
 - `folderId` for folders → `${bucket}:${normalizedPath}`.
 - `folderId` for files → `${bucket}:${parentPath ?? ""}`.
 - `contentLength` and `contentType` → omitted (undefined) for folder items.
+- `contentType` for file items → `item.contentType` when DIAL Core supplies it; otherwise SHALL be inferred from the file name's extension via `mime-types`' `lookup()`, falling back to `undefined` when the extension is unknown or absent. This fallback exists because the sharing SDK response consumed by `file-manager-shared-list` does not include `contentType`/`contentLength` per item, unlike the regular metadata endpoint used here.
 - `updatedAt` → forwarded as `number` (Unix ms) from DIAL; note that `DialModifiedEntity.updatedAt` is typed as `string` in the ui-kit — callers must cast if using the TypeScript type directly.
 - `bucket` → propagated from the request query parameter (DIAL items may not include it).
+
+#### Scenario: contentType is inferred from extension when DIAL Core omits it
+
+- **GIVEN** a file item has no `contentType` from the upstream response and its name is `photo.png`
+- **WHEN** `normalizeFileItem` maps the item
+- **THEN** the resulting `contentType` is `"image/png"`
+
+#### Scenario: contentType stays undefined for an unrecognized extension
+
+- **GIVEN** a file item has no `contentType` from the upstream response and its name is `README` (no extension)
+- **WHEN** `normalizeFileItem` maps the item
+- **THEN** the resulting `contentType` is `undefined`
 
 ---
 

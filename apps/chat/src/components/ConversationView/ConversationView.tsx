@@ -561,6 +561,24 @@ const ConversationView: FC<Props> = ({
                     hideAttachFile={!isAttachmentsAllowed}
                     fileAccept={fileAccept}
                     onAttachmentClick={handleMessageAttachmentClick}
+                    onDialFileSystemClick={
+                      isAttachmentsAllowed
+                        ? () => setIsDialFileManagerOpen(true)
+                        : undefined
+                    }
+                    dialFileSystemLabel={t(
+                      ConversationI18nKeys.AttachMenuDialFileSystem,
+                    )}
+                    pendingAttachments={
+                      isEditActive && isThisMessageEditing
+                        ? pendingDialAttachments
+                        : undefined
+                    }
+                    onPendingAttachmentsConsumed={
+                      isEditActive && isThisMessageEditing
+                        ? () => setPendingDialAttachments([])
+                        : undefined
+                    }
                   />
                 </div>
               );

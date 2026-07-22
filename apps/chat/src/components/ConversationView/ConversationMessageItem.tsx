@@ -119,6 +119,14 @@ interface Props {
   fileAccept?: string;
   /** When provided, called instead of the default download action when an attachment card is activated. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Called when user selects "DIAL file system" from the edit-message attach menu. When absent, the menu item is not rendered. */
+  onDialFileSystemClick?: () => void;
+  /** Label for the "DIAL file system" menu item. */
+  dialFileSystemLabel?: string;
+  /** Already-uploaded attachments supplied by the host and awaiting insertion into the edit-message tray. */
+  pendingAttachments?: Attachment[];
+  /** Called after `pendingAttachments` have been inserted into the edit-message tray. */
+  onPendingAttachmentsConsumed?: () => void;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -163,6 +171,10 @@ const ConversationMessageItem: FC<Props> = ({
   hideAttachFile,
   fileAccept,
   onAttachmentClick: onAttachmentClickProp,
+  onDialFileSystemClick,
+  dialFileSystemLabel,
+  pendingAttachments,
+  onPendingAttachmentsConsumed,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
@@ -264,6 +276,10 @@ const ConversationMessageItem: FC<Props> = ({
             onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
             hideAttachFile={hideAttachFile}
             fileAccept={fileAccept}
+            onDialFileSystemClick={onDialFileSystemClick}
+            dialFileSystemLabel={dialFileSystemLabel}
+            pendingAttachments={pendingAttachments}
+            onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
           />
         </Suspense>
       </div>
