@@ -1,3 +1,4 @@
+import { Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { AddQuickApp2SettingsFormSelector } from '@/src/ui/selectors';
 import {
@@ -91,6 +92,40 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public conversationStartersSection = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.conversationStartersSection,
   );
+  public conversationStartersSectionToggle =
+    this.conversationStartersSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.sectionToggle,
+    );
+  // Rendered only when the conversation starters section is expanded
+  public conversationStartersList =
+    this.conversationStartersSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.conversationStartersList,
+    );
+  public introTextInput =
+    this.conversationStartersSection.getChildElementBySelector(
+      AddQuickApp2SettingsFormSelector.introTextInput,
+    );
+
+  // Add a starter by filling the last (empty) row: title then prompt.
+  // The list appends a fresh empty row once a row gets content, so target the
+  // current last row (its two inputs) to support adding several starters.
+  public async addStarter(title: string, prompt: string) {
+    const inputs = this.conversationStartersList.getChildElementBySelector(
+      Tags.input,
+    );
+    const count = await inputs.getElementsCount();
+    await inputs.getNthElement(count - 1).fill(title);
+    await inputs.getNthElement(count).fill(prompt);
+  }
+
+  // Remove a starter by its 1-based row index (the trash button of that row).
+  // The last empty row's trash is disabled, so only real starters are removable.
+  public async removeStarter(rowIndex: number) {
+    await this.conversationStartersList
+      .getChildElementBySelector(Tags.button)
+      .getNthElement(rowIndex)
+      .click();
+  }
 
   // Context & Tools subsections
   public agentsAndToolsetsField =
