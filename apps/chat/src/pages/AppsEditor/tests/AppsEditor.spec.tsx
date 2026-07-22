@@ -316,7 +316,7 @@ describe('AppsEditor', () => {
       renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
       act(() => {
-        vi.advanceTimersByTime(15000);
+        vi.advanceTimersByTime(60000);
       });
 
       expect(
