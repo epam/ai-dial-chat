@@ -67,12 +67,15 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   const isLg = size === 'lg';
   const logoClass = isLg
     ? 'h-[54px] w-[54px] rounded-[14px]'
-    : 'h-[44px] w-[44px] rounded-[12px]';
+    : 'h-[44px] w-[44px] rounded-lg';
   const logoSize = isLg ? 54 : 44;
 
   return (
     <div
-      className={mergeClasses('flex min-w-0 items-start gap-[14px]', className)}
+      className={mergeClasses(
+        'flex min-w-0 items-start gap-[14px] rounded-xl',
+        className,
+      )}
     >
       {/* Logo — flex-shrink-0 so a long name can never squeeze the icon */}
       <div
