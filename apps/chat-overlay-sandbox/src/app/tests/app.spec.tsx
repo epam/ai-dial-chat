@@ -34,6 +34,10 @@ describe('App', () => {
     render(<App />);
 
     const forbiddenPatterns = [
+      /create conversation/i,
+      /rename conversation/i,
+      /delete conversation/i,
+      /select conversation/i,
       /playback/i,
       /import/i,
       /export/i,

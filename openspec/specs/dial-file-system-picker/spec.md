@@ -37,6 +37,29 @@ The chat input's `+` attachment menu SHALL include a "DIAL file system" item (i1
 
 ---
 
+### Requirement: DIAL file system button available while editing a message
+
+The edit-message attach (+) menu (`EditMessageInput`, rendered while a message is in edit mode) SHALL offer the same "DIAL file system" item as the new-message composer, using the same `DialFileManagerModal` instance.
+
+- `EditMessageInputProps` SHALL expose `onDialFileSystemClick?: () => void` and `dialFileSystemLabel?: string`, with the same absent-means-not-rendered contract as `InputProps`/`ConversationInputProps`.
+- `ConversationView` SHALL wire the edit-mode handler to the same `isDialFileManagerOpen` state and `DialFileManagerModal` instance used by the new-message composer — no second modal instance is created for editing.
+- Files attached while editing SHALL be routed to the message currently being edited via `pendingAttachments`/`onPendingAttachmentsConsumed` on `EditMessageInput`, gated so they are never delivered to the new-message composer's draft while an edit is in progress, and vice versa.
+
+#### Scenario: DIAL file system item appears while editing
+
+- **GIVEN** a message is in edit mode and `onDialFileSystemClick` is provided to `EditMessageInput`
+- **WHEN** the user clicks the `+` trigger button in the edit action row
+- **THEN** the menu shows "Attach file" and "DIAL file system" in that order, matching the new-message composer
+
+#### Scenario: Files attached during edit go to the edited message only
+
+- **GIVEN** a message is in edit mode and the user opens the DIAL file system modal from the edit action row
+- **WHEN** the user selects files and clicks Attach
+- **THEN** the selected files appear in the edited message's attachment tray
+- **THEN** the new-message composer's draft attachments are unaffected
+
+---
+
 ### Requirement: Open FileManager in modal
 
 The system SHALL open a `DialPopup` modal (title `"DIAL file system"`, i18n key `dialFileManager.title`) when the user selects "DIAL file system" from the attachment menu. The modal SHALL render `DialFileManager` from `@epam/ai-dial-ui-kit` as its body and use `!h-[min(800px,100dvh)]`, matching the legacy file-manager modal's 800px cap and overriding the ui-kit's desktop auto-height.

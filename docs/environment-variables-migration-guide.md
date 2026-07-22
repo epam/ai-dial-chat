@@ -7,28 +7,25 @@ directly — all runtime config is served by the API (see `AppConfigContext`).
 
 ## Auth / session
 
-| Variable                        | Required                                       | Default            | Description                                                                                                                         |
-| ------------------------------- | ---------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `AUTH_SESSION_SECRET`           | Yes                                            | —                  | 64-char hex (32-byte) session encryption key                                                                                        |
-| `AUTH_SESSION_PREV_SECRET`      | No                                             | —                  | Previous secret, accepted during key rotation                                                                                       |
-| `AUTH_SESSION_COOKIE_NAME`      | No                                             | `__Host-chat.sess` | Session cookie name                                                                                                                 |
-| `AUTH_TRANSACTION_COOKIE_NAME`  | No                                             | `__Host-chat.tx`   | Login transaction cookie name                                                                                                       |
-| `AUTH_COOKIE_SECURE`            | No                                             | `true`             | Set `false` only for local HTTP smoke testing; drops `__Host-` prefix when disabled                                                 |
-| `AUTH_CALLBACK_BASE_URL`        | Yes                                            | —                  | Public API base URL used for OIDC redirect URIs                                                                                     |
-| `AUTH_POST_LOGOUT_REDIRECT_URI` | If any provider is configured (new-style only) | —                  | Where the browser lands after IdP logout; applied to every configured provider                                                      |
-| `ADMIN_ROLE_NAMES`              | No                                             | `admin`            | Comma-separated fallback admin role names, used when a provider sets no override                                                    |
-| `DIAL_ROLES_FIELD`              | No                                             | `dial_roles`       | Fallback dot-separated roles-claim path, used when a provider sets no override                                                      |
-| `AUTH_PROVIDERS`                | No (legacy, temporary)                         | —                  | JSON array of OIDC provider configs, pre-migration format. When set, takes precedence over all `AUTH_{PROVIDER}_*` variables below. |
+| Variable                        | Required                                       | Default            | Description                                                                         |
+| ------------------------------- | ---------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------- |
+| `AUTH_SESSION_SECRET`           | Yes                                            | —                  | 64-char hex (32-byte) session encryption key                                        |
+| `AUTH_SESSION_PREV_SECRET`      | No                                             | —                  | Previous secret, accepted during key rotation                                       |
+| `AUTH_SESSION_COOKIE_NAME`      | No                                             | `__Host-chat.sess` | Session cookie name                                                                 |
+| `AUTH_TRANSACTION_COOKIE_NAME`  | No                                             | `__Host-chat.tx`   | Login transaction cookie name                                                       |
+| `AUTH_COOKIE_SECURE`            | No                                             | `true`             | Set `false` only for local HTTP smoke testing; drops `__Host-` prefix when disabled |
+| `AUTH_CALLBACK_BASE_URL`        | Yes                                            | —                  | Public API base URL used for OIDC redirect URIs                                     |
+| `AUTH_POST_LOGOUT_REDIRECT_URI` | If any provider is configured (new-style only) | —                  | Where the browser lands after IdP logout; applied to every configured provider      |
+| `ADMIN_ROLE_NAMES`              | No                                             | `admin`            | Comma-separated fallback admin role names, used when a provider sets no override    |
+| `DIAL_ROLES_FIELD`              | No                                             | `dial_roles`       | Fallback dot-separated roles-claim path, used when a provider sets no override      |
 
 ### Auth providers
 
 Each identity provider is configured through discrete `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` variables instead of a single JSON blob. A provider is registered only when its `CLIENT_ID` variable is set. See `apps/chat-api/README.md` § "Auth provider environment variables" for the full per-provider variable tables (Auth0, Azure AD, Azure B2C, GitLab, Google, Keycloak, PingID, Cognito, Okta), including required fields, defaults, and issuer derivation.
 
-> **Legacy `AUTH_PROVIDERS` mode (temporary):** the old single-JSON-array variable is still accepted and takes precedence over the discrete per-provider variables when set — this is a transitional dual-path kept for deployments not yet migrated, and will be removed. New configurations should use the per-provider variables below.
+### Migrated from `AUTH_PROVIDERS`
 
-### Migrating from `AUTH_PROVIDERS`
-
-The single `AUTH_PROVIDERS` JSON-array environment variable is being phased out in favor of discrete per-provider variables (it is still accepted for now — see the legacy-mode note above). For each object that used to be an entry in that array, map its fields to the new provider-specific variables:
+The single `AUTH_PROVIDERS` JSON-array environment variable has been removed; it is no longer read at boot. For each object that used to be an entry in that array, map its fields to the new provider-specific variables:
 
 | Old `AUTH_PROVIDERS[i]` field | New variable(s)                                                                                                                                         | Notes                                                                                                                                                                                          |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

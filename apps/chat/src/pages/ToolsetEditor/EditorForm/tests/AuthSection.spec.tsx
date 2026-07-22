@@ -179,7 +179,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       </div>
     ) : null,
   ConfirmationPopupVariant: { Danger: 'danger' },
-  NotificationVariant: { Error: 'error' },
+  NotificationVariant: { Error: 'error', Success: 'success' },
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   DIAL_ICON_SIZE: { SM: 16 },
   mergeClasses: (...classes: (string | undefined | false)[]) =>
@@ -646,6 +646,22 @@ describe('AuthSection', () => {
         'toolsets/b/my__1.0.0',
         expect.objectContaining({
           authenticationType: ToolsetAuthTypes.ApiKey,
+        }),
+      );
+    });
+
+    it('shows a success notification on successful API key login', async () => {
+      vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+      renderSection(apiKeyAuth());
+      await user.click(
+        screen.getByRole('button', {
+          name: ButtonsI18nKeys.LogIn,
+        }),
+      );
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Success,
+          message: ToolsetEditorI18nKeys.LoginSuccess,
         }),
       );
     });

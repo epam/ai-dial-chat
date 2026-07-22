@@ -108,15 +108,6 @@ export class EnvironmentVariables {
   @IsUrl({ require_tld: false })
   AUTH_POST_LOGOUT_REDIRECT_URI?: string;
 
-  /**
-   * Legacy configuration path, temporarily kept alongside the discrete
-   * per-provider variables below. When set, it takes precedence over
-   * AUTH_{PROVIDER}_* variables.
-   */
-  @IsOptional()
-  @IsString()
-  AUTH_PROVIDERS?: string;
-
   @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return ['admin'];
@@ -633,4 +624,24 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   FILE_MANAGER_AVAILABLE_TABS?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  LIVE_CHAT_INTERACTION_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  LIVE_CHAT_INTERACTION_ENABLED_ROLES?: string[] = [];
 }

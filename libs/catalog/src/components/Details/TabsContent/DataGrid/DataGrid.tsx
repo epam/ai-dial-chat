@@ -33,7 +33,7 @@ export const DataGrid: FC<DataGridProps> = ({
     <div
       className={mergeClasses(
         styles.container,
-        'grid overflow-hidden rounded-[6px]',
+        'grid overflow-hidden rounded-md',
       )}
       style={{ gridTemplateColumns: template }}
     >

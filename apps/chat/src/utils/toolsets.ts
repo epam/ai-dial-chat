@@ -256,13 +256,15 @@ const DEFAULT_OAUTH_CLOSE_GRACE_MS = 300;
 /**
  * Waits for the OAuth callback popup to report a result over the flow's
  * `BroadcastChannel`, resolving with `Cancelled` if the popup is closed
- * manually or no result arrives before the timeout elapses.
+ * manually (with no result ever posted) or no result arrives before the
+ * timeout elapses.
  *
- * The callback popup posts its result and calls `window.close()` back to
- * back, so the popup can finish closing before the browser has flushed that
- * `BroadcastChannel` message to this tab. Detecting `popup.closed` is
- * therefore not proof a result was never posted — `closeGraceMs` gives an
- * in-flight message a short window to still arrive before giving up.
+ * The callback popup does not close itself after posting a result — this
+ * function closes it as soon as the message is received, so the popup can
+ * never be observed closed before its message has arrived. `closeGraceMs`
+ * therefore only matters for a genuine manual cancellation (the user closes
+ * the popup before it ever posts anything), where there is no message to
+ * race against.
  */
 export const waitForToolsetOAuthResult = (
   popup: Window,
@@ -293,6 +295,7 @@ export const waitForToolsetOAuthResult = (
     };
 
     channel.onmessage = (event: MessageEvent<ToolsetOAuthChannelMessage>) => {
+      popup.close();
       finish(event.data);
     };
 
@@ -310,6 +313,22 @@ export const waitForToolsetOAuthResult = (
       finish({ type: ToolsetOAuthResultType.Cancelled });
     }, timeoutMs);
   });
+
+/**
+ * Derives a human-readable name from a raw toolset id when no `DialToolsetDto`
+ * is available yet (e.g. a `toolset/signin` event for a toolset whose
+ * metadata hasn't loaded) — takes the last path segment, strips a trailing
+ * `__version` suffix, and decodes percent-encoding.
+ */
+export const getToolsetFallbackName = (toolsetId: string): string => {
+  const lastSegment = toolsetId.split('/').pop() ?? toolsetId;
+  const [namePart] = lastSegment.split('__');
+  try {
+    return decodeURIComponent(namePart);
+  } catch {
+    return namePart;
+  }
+};
 
 const TOOLSETS_ID_PREFIX = 'toolsets/';
 const PUBLIC_BUCKET_SEGMENT = 'public';

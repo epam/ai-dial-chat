@@ -23,6 +23,8 @@ The system SHALL expose `GET /api/v1/files/shared` in `apps/chat-api/src/files/f
 
 The service SHALL call the DIAL Core sharing SDK method for files (`resourceTypes: ['FILE']`) and map results to `ListFilesItemDto[]` using the existing `normalizeFileItem` utility. No `sharedWithMe` flag is added to the DTO — the endpoint itself guarantees all items are shared.
 
+The sharing SDK response does not include `contentType`/`contentLength` per item (unlike the regular metadata endpoint used by `GET /api/v1/files/list`). `normalizeFileItem` compensates by inferring `contentType` from the file name's extension (see `file-list`'s "Normalize DIAL metadata to FileManager-compatible nodes" requirement) so that MIME-type-based attach restrictions (`dial-file-manager-attach-validation`) apply consistently to shared files, not only to `my_files`/`organization` files.
+
 **Error codes:** 400, 401, 429, 502, 503, 500.
 
 **Feature flag:** None. Available to all authenticated users.

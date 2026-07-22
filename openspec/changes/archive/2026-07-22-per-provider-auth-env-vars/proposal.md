@@ -5,15 +5,14 @@
 ## What Changes
 
 - Add discrete per-provider environment variables, one set per supported identity provider, following the `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` naming convention from the reference `apps/chat` README.
-- **Temporary dual-path**: the legacy single `AUTH_PROVIDERS` JSON-array variable is kept working as a transitional escape hatch. When `AUTH_PROVIDERS` is set, it takes precedence and the discrete `AUTH_{PROVIDER}_*` variables are ignored entirely; when unset, the discrete variables drive provider assembly. This is not a permanent two-path design — `AUTH_PROVIDERS` is expected to be removed in a follow-up change once deployments have migrated.
+- Remove the legacy single `AUTH_PROVIDERS` JSON-array variable entirely: it is no longer read at boot, and provider registration always comes from the discrete `AUTH_{PROVIDER}_*` variables. (The temporary dual-path from the previous iteration of this change has been superseded by this final removal.)
 - Support the same provider set as the reference app: Auth0, Azure AD, Azure B2C, GitLab, Google, Keycloak, PingID, Cognito, Okta.
 - Each provider's `id` (used as the OIDC route segment, e.g. `/api/v1/auth/login/auth0`) is a fixed constant in code, never configurable via environment variable.
 - Assemble the internal provider configuration array at boot by reading only the environment variables for providers that are actually configured (presence of that provider's required fields), applying provider-specific field defaults (default `scope`, default display `label`) where the reference app defines one.
 - Add one new app-wide environment variable for the post-logout redirect target (used for every configured provider), replacing the current per-provider `postLogoutRedirectUri` JSON field.
 - Add app-wide `ADMIN_ROLE_NAMES` and `DIAL_ROLES_FIELD` environment variables as fallback defaults, overridable per provider (mirroring the reference app's `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES` / `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`).
 - Derive each provider's OIDC issuer URL from that provider's own host/tenant-style variable(s) instead of accepting a raw `issuer` string directly (except where the reference app itself expects a full issuer, e.g. Okta, or an explicit override, e.g. Azure B2C).
-- Keep the `AUTH_PROVIDERS` JSON-array parsing/validation path as a legacy fallback, tried first in `ProviderRegistryService.onModuleInit()`; the discrete per-provider path only runs when `AUTH_PROVIDERS` is unset.
-- Update `apps/chat-api/README.md` and `docs/environment-variables-migration-guide.md` to document the new variables and the temporary legacy-mode precedence rule.
+- Update `apps/chat-api/README.md` and `docs/environment-variables-migration-guide.md` to document the new variables and the `AUTH_PROVIDERS` → per-provider migration mapping, dropping the legacy-mode precedence callout.
 
 ## Capabilities
 

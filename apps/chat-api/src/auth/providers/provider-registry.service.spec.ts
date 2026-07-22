@@ -227,54 +227,6 @@ describe('ProviderRegistryService', () => {
     });
   });
 
-  describe('legacy AUTH_PROVIDERS JSON mode', () => {
-    const LEGACY_PROVIDER = {
-      id: 'legacy-keycloak',
-      issuer: 'https://keycloak.example.com/realms/test',
-      clientId: 'chat-app',
-      clientSecret: 'secret',
-      scope: 'openid email profile',
-      postLogoutRedirectUri: 'https://app.example.com',
-    };
-
-    it('registers a provider from AUTH_PROVIDERS JSON', async () => {
-      const module = await buildModule({
-        AUTH_PROVIDERS: JSON.stringify([LEGACY_PROVIDER]),
-      });
-      await module.init();
-      const svc = module.get(ProviderRegistryService);
-      const entry = svc.getProvider('legacy-keycloak');
-      expect(entry).toBeDefined();
-      expect(entry.client).toBeDefined();
-    });
-
-    it('malformed AUTH_PROVIDERS JSON throws on init', async () => {
-      const module = await buildModule({ AUTH_PROVIDERS: 'not-json' });
-      await expect(module.init()).rejects.toThrow();
-    });
-
-    it('structurally invalid entry (missing clientSecret) throws on init', async () => {
-      const invalid = { ...LEGACY_PROVIDER, clientSecret: undefined };
-      const module = await buildModule({
-        AUTH_PROVIDERS: JSON.stringify([invalid]),
-      });
-      await expect(module.init()).rejects.toThrow();
-      expect(discoverSpy).not.toHaveBeenCalled();
-    });
-
-    it('takes precedence over discrete per-provider variables when both are set', async () => {
-      const module = await buildModule({
-        ...KEYCLOAK_ENV,
-        AUTH_PROVIDERS: JSON.stringify([LEGACY_PROVIDER]),
-      });
-      await module.init();
-      const svc = module.get(ProviderRegistryService);
-      const list = svc.listProviders();
-      expect(list).toHaveLength(1);
-      expect(list[0].id).toBe('legacy-keycloak');
-    });
-  });
-
   describe('admin roles fallback chain', () => {
     it('provider-specific admin roles override the app-wide default', async () => {
       const module = await buildModule({

@@ -227,7 +227,7 @@ export const Filter: FC<FilterProps> = ({
           >
             <span
               className={mergeClasses(
-                'flex size-5 shrink-0 items-center justify-center rounded-[6px]',
+                'flex size-5 shrink-0 items-center justify-center rounded-md',
                 styles.checkbox,
                 pendingMyApps && styles.checkboxChecked,
               )}
@@ -286,7 +286,7 @@ export const Filter: FC<FilterProps> = ({
                     >
                       <span
                         className={mergeClasses(
-                          'flex size-5 shrink-0 items-center justify-center rounded-[6px]',
+                          'flex size-5 shrink-0 items-center justify-center rounded-md',
                           styles.checkbox,
                           isChecked && styles.checkboxChecked,
                         )}

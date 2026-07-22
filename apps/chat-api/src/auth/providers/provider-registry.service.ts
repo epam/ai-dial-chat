@@ -5,7 +5,6 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { Issuer, type Client } from 'openid-client';
 import type { EnvironmentVariables } from '../../config/environment.config';
@@ -13,7 +12,6 @@ import { buildProviderConfigs } from './provider-builders';
 import { ProviderConfig } from './provider.types';
 
 const PROVIDER_ENV_KEYS = [
-  'AUTH_PROVIDERS',
   'AUTH_POST_LOGOUT_REDIRECT_URI',
   'ADMIN_ROLE_NAMES',
   'DIAL_ROLES_FIELD',
@@ -102,27 +100,10 @@ export class ProviderRegistryService implements OnModuleInit {
     return env;
   }
 
-  private buildLegacyProviderConfigs(raw: string): ProviderConfig[] {
-    let parsed: unknown[];
-    try {
-      parsed = JSON.parse(raw) as unknown[];
-    } catch {
-      throw new Error('AUTH_PROVIDERS is not valid JSON');
-    }
-
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      throw new Error('AUTH_PROVIDERS must be a non-empty JSON array');
-    }
-
-    return parsed.map((entry) => plainToInstance(ProviderConfig, entry));
-  }
-
   async onModuleInit(): Promise<void> {
     const env = this.readProviderEnv();
 
-    const rawProviderConfigs = env.AUTH_PROVIDERS
-      ? this.buildLegacyProviderConfigs(env.AUTH_PROVIDERS)
-      : buildProviderConfigs(env);
+    const rawProviderConfigs = buildProviderConfigs(env);
 
     const providerConfigs = rawProviderConfigs.map((providerConfig) => {
       const errors = validateSync(providerConfig, {

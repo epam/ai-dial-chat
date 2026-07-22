@@ -229,6 +229,7 @@ export class ConversationController {
       dto.custom_content,
       sid,
       res,
+      dto.clientChannelId,
     );
   }
 

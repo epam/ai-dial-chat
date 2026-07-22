@@ -124,6 +124,10 @@ export enum FavoritesI18nKeys {
   Added = 'favorites.added',
   RemovedTitle = 'favorites.removedTitle',
   Removed = 'favorites.removed',
+  AddFailedTitle = 'favorites.addFailedTitle',
+  AddFailed = 'favorites.addFailed',
+  RemoveFailedTitle = 'favorites.removeFailedTitle',
+  RemoveFailed = 'favorites.removeFailed',
   FavoritesLabel = 'favorites.favoritesLabel',
   AddToFavorites = 'favorites.addToFavoritesLabel',
   RemoveFromFavorites = 'favorites.removeFromFavoritesLabel',
@@ -598,6 +602,22 @@ export enum ToolsetEditorI18nKeys {
   ErrorPopupBlocked = 'toolsetEditor.error.popupBlocked',
   LoginSuccess = 'toolsetEditor.success.login',
   LogoutSuccess = 'toolsetEditor.success.logout',
+}
+
+export enum ToolsetSigninI18nKeys {
+  DialogTitle = 'toolsetSignin.dialogTitle',
+  DialogDescription = 'toolsetSignin.dialogDescription',
+  RowDecline = 'toolsetSignin.rowDecline',
+  DeclineAll = 'toolsetSignin.declineAll',
+  FallbackName = 'toolsetSignin.fallbackName',
+  ApiKeyLabel = 'toolsetSignin.apiKeyLabel',
+  ApiKeyPlaceholder = 'toolsetSignin.apiKeyPlaceholder',
+  ErrorLoginFailed = 'toolsetSignin.errorLoginFailed',
+  ErrorPopupBlocked = 'toolsetSignin.errorPopupBlocked',
+  ErrorDeclineFailed = 'toolsetSignin.errorDeclineFailed',
+  ErrorRetry = 'toolsetSignin.errorRetry',
+  StatusLoginSuccess = 'toolsetSignin.statusLoginSuccess',
+  StatusDeclineSuccess = 'toolsetSignin.statusDeclineSuccess',
 }
 
 export enum ErrorBoundaryI18nKeys {

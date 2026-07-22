@@ -143,6 +143,19 @@ _Source: [`auth-diagrams/06-cross-pod-stateless.mmd`](./auth-diagrams/06-cross-p
 
 Any pod can decrypt any cookie because all pods share the same active key + previous keys. No session affinity is required.
 
+### 5.5 Interactive Toolset Sign-In During a Completion
+
+![Toolset sign-in interrupt](./auth-diagrams/08-toolset-signin-interrupt.svg)
+
+_Source: [`auth-diagrams/08-toolset-signin-interrupt.mmd`](./auth-diagrams/08-toolset-signin-interrupt.mmd)_
+
+**This is a separate flow from application OIDC login (5.1) and does not touch the session cookie.** The user is already authenticated to Chat; this flow lets DIAL Core ask that already-authenticated user to (re)supply _toolset_ credentials mid-completion, via a generic client-channel RPC mechanism:
+
+- The SPA subscribes once per session to `POST /api/v1/client-channel/subscribe`, a BFF-relayed SSE stream proxying DIAL Core's own `/v1/ops/client-channel/subscribe`. The BFF never exposes the session's access token to the browser — it stays server-side, same as every other BFF-proxied call.
+- The assigned channel id travels with subsequent completion requests (`X-DIAL-CLIENT-CHANNEL-ID`), so Core can correlate a `toolset/signin` event back to the specific blocked tool call.
+- A `toolset/signin` event surfaces a global dialog; the user logs in with the existing toolset API-key/OAuth mechanics (unchanged from the Catalog/Toolset-Editor flows), and the result is reported back on the same channel (`POST /api/v1/client-channel/report`) so Core can resume or terminate the tool call.
+- Gated behind the `liveChatInteraction` feature flag (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`); unsubscribes on logout, tab close, or the flag flipping off.
+
 ---
 
 ## 6. NestJS Module Layout (Shipped)
@@ -165,7 +178,7 @@ apps/chat-api/src/auth/
 ├── keys/
 │   └── keys.service.ts                 # active + previous keys from env (hex, validated on init)
 ├── providers/
-│   ├── provider-registry.service.ts    # AUTH_PROVIDERS parse + struct-validate + Issuer.discover
+│   ├── provider-registry.service.ts    # per-provider env assembly + struct-validate + Issuer.discover
 │   └── provider.types.ts               # ProviderConfig with class-validator decorators
 ├── refresh/
 │   └── refresh.service.ts              # server-side token refresh + per-pod sid-keyed mutex
@@ -248,7 +261,7 @@ The proposed pattern is the only column that scores well on **all four** of your
 
 4. **Logout policy**: best-effort `end_session_endpoint` redirect when the provider advertises one; graceful fallback to `/` otherwise. Token revocation attempted before redirect (best-effort, non-fatal).
 
-5. **Provider list scope for v1**: provider-neutral — any OIDC provider works via `AUTH_PROVIDERS` config. Keycloak and Auth0 are smoke-tested; Okta and Entra ID work but are not yet regression-tested.
+5. **Provider list scope for v1**: provider-neutral — any of the 9 supported OIDC providers works via its discrete `AUTH_{PROVIDER}_*` env vars (see `apps/chat-api/README.md`). Keycloak and Auth0 are smoke-tested; Okta and Entra ID work but are not yet regression-tested.
 
 6. **Key management**: env-only for v1 (`AUTH_SESSION_SECRET` / `AUTH_SESSION_PREV_SECRET`). KMS integration deferred. Key rotation procedure: set old active key as `AUTH_SESSION_PREV_SECRET`, generate new key for `AUTH_SESSION_SECRET`, redeploy. Existing sessions decrypt via the previous key for one grace period.
 

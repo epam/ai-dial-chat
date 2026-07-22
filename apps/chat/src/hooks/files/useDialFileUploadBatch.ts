@@ -44,6 +44,27 @@ const formatArchiveFailedEntries = (
   return hiddenCount > 0 ? `${visible}${getRestLabel(hiddenCount)}` : visible;
 };
 
+const buildArchiveDestinationPath = (
+  destinationApiPath: string,
+  archiveName: string,
+): string => `${destinationApiPath}${archiveName}/`;
+
+const hasZipExtension = (name: string): boolean => /\.zip$/i.test(name);
+
+const getArchiveConflictUploadFallback = (
+  files: DialUploadFileItem[],
+): DialUploadFileItem | undefined => {
+  const [file] = files;
+
+  if (files.length !== 1 || file == null) {
+    return undefined;
+  }
+
+  return hasZipExtension(file.fileContent.name) && !hasZipExtension(file.name)
+    ? file
+    : undefined;
+};
+
 export interface UseDialFileUploadBatchOptions {
   bucket: string;
   rootLabel: string;
@@ -104,9 +125,86 @@ export const useDialFileUploadBatch = ({
     useState<FileUploadBatchState | null>(null);
   const uploadAbortControllerRef = useRef<AbortController | null>(null);
 
+  const uploadArchiveToFolder = useCallback(
+    (file: File, name: string, destinationFolder: string) => {
+      const destinationApiPath = virtualPathToApiPath(
+        destinationFolder,
+        rootLabel,
+      );
+
+      setUploadBatchState({
+        files: [
+          {
+            id: `${Date.now()}-archive`,
+            name,
+            status: FileUploadStatus.Uploading,
+          },
+        ],
+        isOpen: true,
+      });
+
+      const run = async (): Promise<void> => {
+        try {
+          const { results } = await uploadArchive(
+            file,
+            bucket,
+            buildArchiveDestinationPath(destinationApiPath, name),
+          );
+          const successCount = results.filter((r) => r.success).length;
+          const failedResults = results.filter((r) => !r.success);
+          const failedCount = failedResults.length;
+          const failedFiles = formatArchiveFailedEntries(
+            failedResults,
+            (count) => t(DialFileManagerI18nKeys.AndOtherItems, { count }),
+          );
+
+          if (results.length > 0 && successCount === 0) {
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              message: t(DialFileManagerI18nKeys.UploadArchiveFilesError, {
+                count: failedCount,
+                files: failedFiles,
+              }),
+            });
+          } else if (failedCount > 0) {
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              message: t(DialFileManagerI18nKeys.UploadArchivePartialError, {
+                count: failedCount,
+                files: failedFiles,
+              }),
+            });
+          }
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.UploadArchiveError),
+          });
+        } finally {
+          invalidateFolders([destinationApiPath]);
+          bumpRetry();
+          setUploadBatchState(null);
+        }
+      };
+
+      void run();
+    },
+    [bucket, rootLabel, onNotification, t, invalidateFolders, bumpRetry],
+  );
+
   const onUploadFiles = useCallback(
     (files: DialUploadFileItem[], destinationFolder: string) => {
       if (files.length === 0) return;
+
+      const archiveConflictFile = getArchiveConflictUploadFallback(files);
+      if (archiveConflictFile != null) {
+        uploadArchiveToFolder(
+          archiveConflictFile.fileContent,
+          archiveConflictFile.name,
+          destinationFolder,
+        );
+        return;
+      }
 
       const controller = new AbortController();
       uploadAbortControllerRef.current = controller;
@@ -242,74 +340,15 @@ export const useDialFileUploadBatch = ({
       sharedRootMetaRef,
       invalidateFolders,
       bumpRetry,
+      uploadArchiveToFolder,
     ],
   );
 
   const onUploadArchive = useCallback(
     (file: File, name: string, destinationFolder: string) => {
-      const destinationApiPath = virtualPathToApiPath(
-        destinationFolder,
-        rootLabel,
-      );
-
-      setUploadBatchState({
-        files: [
-          {
-            id: `${Date.now()}-archive`,
-            name,
-            status: FileUploadStatus.Uploading,
-          },
-        ],
-        isOpen: true,
-      });
-
-      const run = async (): Promise<void> => {
-        try {
-          const { results } = await uploadArchive(
-            file,
-            bucket,
-            destinationApiPath,
-          );
-          const successCount = results.filter((r) => r.success).length;
-          const failedResults = results.filter((r) => !r.success);
-          const failedCount = failedResults.length;
-          const failedFiles = formatArchiveFailedEntries(
-            failedResults,
-            (count) => t(DialFileManagerI18nKeys.AndOtherItems, { count }),
-          );
-
-          if (results.length > 0 && successCount === 0) {
-            onNotification?.({
-              variant: NotificationVariant.Error,
-              message: t(DialFileManagerI18nKeys.UploadArchiveFilesError, {
-                count: failedCount,
-                files: failedFiles,
-              }),
-            });
-          } else if (failedCount > 0) {
-            onNotification?.({
-              variant: NotificationVariant.Error,
-              message: t(DialFileManagerI18nKeys.UploadArchivePartialError, {
-                count: failedCount,
-                files: failedFiles,
-              }),
-            });
-          }
-        } catch {
-          onNotification?.({
-            variant: NotificationVariant.Error,
-            message: t(DialFileManagerI18nKeys.UploadArchiveError),
-          });
-        } finally {
-          invalidateFolders([destinationApiPath]);
-          bumpRetry();
-          setUploadBatchState(null);
-        }
-      };
-
-      void run();
+      uploadArchiveToFolder(file, name, destinationFolder);
     },
-    [bucket, rootLabel, onNotification, t, invalidateFolders, bumpRetry],
+    [uploadArchiveToFolder],
   );
 
   const onValidateUpload = useCallback(

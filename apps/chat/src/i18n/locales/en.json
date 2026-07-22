@@ -78,6 +78,10 @@
     "removedTitle": "Removed from Favorites",
     "added": "\"{{name}}\" added to Favorites",
     "removed": "\"{{name}}\" removed from Favorites",
+    "addFailedTitle": "Failed to Add",
+    "addFailed": "Could not add \"{{name}}\" to Favorites",
+    "removeFailedTitle": "Failed to Remove",
+    "removeFailed": "Could not remove \"{{name}}\" from Favorites",
     "favoritesLabel": "Favorites",
     "addToFavoritesLabel": "Add to favorites",
     "removeFromFavoritesLabel": "Remove from favorites"
@@ -316,14 +320,14 @@
   "conversationPublish": {
     "panelAriaLabel": "Publish conversation",
     "alreadyPublishedWarning": "This conversation is already published in {folder}.",
-    "successMessage": "Conversation published successfully.",
+    "successMessage": "Publish request submitted. It will appear in Organization once an admin approves it.",
     "emptyFolderNameError": "Folder name cannot be empty.",
     "invalidFolderNameError": "Folder name contains invalid characters.",
     "duplicateFolderNameError": "A folder with this name already exists."
   },
   "conversationExport": {
     "exportLabel": "Export",
-    "exportAllLabel": "Export",
+    "exportAllLabel": "Export conservations",
     "withAttachmentsOption": "With attachments",
     "withoutAttachmentsOption": "Without attachments",
     "queueTitle": "Exporting",
@@ -346,7 +350,7 @@
     "closeQueueConfirmDescriptionMixed": "Some items are still in progress, and some have failed."
   },
   "conversationImport": {
-    "importLabel": "Import",
+    "importLabel": "Import conversations",
     "queueTitle": "Importing",
     "successTitle": "Import successful",
     "success": "{{names}} imported.",
@@ -691,5 +695,20 @@
       "login": "Successfully logged in.",
       "logout": "Successfully logged out."
     }
+  },
+  "toolsetSignin": {
+    "dialogTitle": "Toolset sign-in required",
+    "dialogDescription": "One or more tools need you to sign in before the conversation can continue.",
+    "rowDecline": "Decline",
+    "declineAll": "Decline all",
+    "fallbackName": "Toolset",
+    "apiKeyLabel": "API key",
+    "apiKeyPlaceholder": "Enter API key",
+    "errorLoginFailed": "Failed to log in. Please try again.",
+    "errorPopupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again.",
+    "errorDeclineFailed": "Failed to decline. Please try again.",
+    "errorRetry": "Retry",
+    "statusLoginSuccess": "Login succeeded for {{name}}.",
+    "statusDeclineSuccess": "Declined {{name}}."
   }
 }
