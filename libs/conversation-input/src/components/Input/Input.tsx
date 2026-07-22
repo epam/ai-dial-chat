@@ -40,6 +40,7 @@ const SEND_BUTTON_EXIT_MS = 160;
 
 export const Input: FC<InputProps> = ({
   message: messageProp = '',
+  messageRevision,
   onSend,
   onUploadAttachment,
   onStop,
@@ -134,6 +135,7 @@ export const Input: FC<InputProps> = ({
 
   const { message, setMessage, textareaRef, isMultiLine } = useMessageState({
     messageProp,
+    messageRevision,
   });
 
   const handleExpandPastedText = useCallback(

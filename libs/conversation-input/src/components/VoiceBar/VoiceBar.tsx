@@ -218,7 +218,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
                   <IconCheck
                     size={24}
                     aria-hidden
-                    className="text-control-permanent rounded-full bg-controls-accent-primary"
+                    className="rounded-full bg-controls-accent-primary text-control-permanent"
                   />
                 </div>
               }

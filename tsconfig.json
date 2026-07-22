@@ -53,6 +53,12 @@
     },
     {
       "path": "./libs/share"
+    },
+    {
+      "path": "./libs/chat-overlay"
+    },
+    {
+      "path": "./apps/chat-overlay-sandbox"
     }
   ]
 }

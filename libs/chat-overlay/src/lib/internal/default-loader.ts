@@ -1,0 +1,2 @@
+/** Default animated loader markup shown while the embedded app is not yet ready. */
+export const DEFAULT_LOADER_INNER_HTML = `<svg viewBox="0 0 50 50" width="32" height="32" role="presentation" aria-hidden="true"><circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="31.4 31.4"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" /></circle></svg>`;

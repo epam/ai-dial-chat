@@ -134,7 +134,7 @@ describe('FilesFolderService', () => {
 
       expect(sdkClient.uploadFile).toHaveBeenCalledWith(
         'my-bucket',
-        'asdasd/d/New folder 1/.dial_folder',
+        'asdasd/d/New%20folder%201/.dial_folder',
         expect.any(Object),
       );
     });

@@ -58,6 +58,8 @@ describe('AppConfigContext', () => {
       'shared',
       'organization',
     ]);
+    expect(result.current.config.overlayEnabled).toBe(false);
+    expect(result.current.config.overlayAllowedOrigins).toEqual([]);
   });
 
   it('transitions to ready after successful API call', async () => {
@@ -73,6 +75,31 @@ describe('AppConfigContext', () => {
     expect(result.current.config.dialCoreExternalUrl).toBe(
       'https://dial.example.com',
     );
+  });
+
+  it('populates overlayEnabled/overlayAllowedOrigins from a successful API call', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: { asrEnabled: false },
+      config: {
+        asrModelId: null,
+        transcribeSizeLimitBytes: 5_242_880,
+        dialCoreExternalUrl: null,
+        overlayEnabled: true,
+        overlayAllowedOrigins: ['https://partner.example.com'],
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.overlayEnabled).toBe(true);
+    expect(result.current.config.overlayAllowedOrigins).toEqual([
+      'https://partner.example.com',
+    ]);
   });
 
   it('reflects a narrowed fileManagerTabs value once the config resolves', async () => {
@@ -112,6 +139,8 @@ describe('AppConfigContext', () => {
       5 * 1024 * 1024,
     );
     expect(result.current.config.dialCoreExternalUrl).toBeNull();
+    expect(result.current.config.overlayEnabled).toBe(false);
+    expect(result.current.config.overlayAllowedOrigins).toEqual([]);
   });
 
   it('keeps dialCoreExternalUrl null when the backend omits it', async () => {

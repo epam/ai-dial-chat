@@ -130,9 +130,14 @@ export interface ConversationInputProps {
   placeholder?: string;
   /**
    * Message value. Sets the initial textarea content on mount and syncs the
-   * textarea whenever the value changes to a non-empty string.
+   * textarea whenever the value changes.
    */
   message?: string;
+  /**
+   * Optional token that forces the textarea to resync from `message`, even
+   * when `message` itself is the same string as before.
+   */
+  messageRevision?: number;
   /** Optional welcome heading rendered above the input. */
   welcomeText?: string;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */

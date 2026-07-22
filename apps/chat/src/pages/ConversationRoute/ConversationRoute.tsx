@@ -5,7 +5,15 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
-import { FC, memo, Suspense, useCallback, useMemo, useState } from 'react';
+import {
+  FC,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useDeploymentSelectorOverlay } from '../../components/DeploymentSelector/useDeploymentSelectorOverlay';
@@ -19,6 +27,7 @@ import { getConversationRoute } from '../../constants/routes';
 import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   createConversation as apiCreateConversation,
@@ -42,6 +51,7 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const { showNotification } = useNotification();
+  const overlay = useOptionalOverlay();
   const {
     items,
     selectedItemId,
@@ -50,6 +60,17 @@ const ConversationRoute: FC = () => {
     isLoading,
     error,
   } = useDeployments();
+
+  /*
+   * This is the "no conversation selected" empty state. Overlay mode must
+   * still reach READY_TO_INTERACT here after an inaccessible overlayConversationId
+   * falls back to this route, rather than staying pre-interactive forever
+   * waiting for a conversation that never loads.
+   */
+  useEffect(() => {
+    overlay?.notifyConversationLoaded();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Boolean(overlay)]);
 
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),

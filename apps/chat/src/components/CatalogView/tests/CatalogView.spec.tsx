@@ -455,6 +455,8 @@ describe('CatalogView', () => {
         defaultDeploymentId: null,
         dialCoreExternalUrl: 'https://dial.example.com',
         fileManagerTabs: ['my_files', 'shared', 'organization'],
+        overlayEnabled: false,
+        overlayAllowedOrigins: [],
       },
     });
   });
@@ -723,6 +725,8 @@ describe('CatalogView', () => {
           defaultDeploymentId: null,
           dialCoreExternalUrl: null,
           fileManagerTabs: ['my_files', 'shared', 'organization'],
+          overlayEnabled: false,
+          overlayAllowedOrigins: [],
         },
       });
 

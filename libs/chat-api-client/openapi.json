@@ -1297,9 +1297,7 @@
           }
         },
         "summary": "Subscribe to the DIAL Core client channel",
-        "tags": [
-          "client-channel"
-        ]
+        "tags": ["client-channel"]
       }
     },
     "/api/v1/client-channel/report": {
@@ -1345,9 +1343,7 @@
           }
         },
         "summary": "Report an RPC response on the client channel",
-        "tags": [
-          "client-channel"
-        ]
+        "tags": ["client-channel"]
       }
     },
     "/api/v1/client-channel/unsubscribe": {
@@ -1377,9 +1373,7 @@
           }
         },
         "summary": "Unsubscribe from the client channel",
-        "tags": [
-          "client-channel"
-        ]
+        "tags": ["client-channel"]
       }
     },
     "/api/v1/conversations": {
@@ -3714,12 +3708,27 @@
             "items": {
               "type": "string"
             }
+          },
+          "overlayEnabled": {
+            "type": "boolean",
+            "description": "Whether the chat-overlay embedded runtime mode is enabled. Sourced from OVERLAY_ENABLED.",
+            "example": false
+          },
+          "overlayAllowedOrigins": {
+            "description": "Host origins allowed to embed this app. Sourced from ALLOWED_IFRAME_ORIGINS, the same list used for CSP frame-ancestors/frame-src.",
+            "example": ["https://partner.example.com"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "asrModelId",
           "transcribeSizeLimitBytes",
-          "fileManagerTabs"
+          "fileManagerTabs",
+          "overlayEnabled",
+          "overlayAllowedOrigins"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -3973,10 +3982,7 @@
             "description": "Text inserted into the chat input"
           }
         },
-        "required": [
-          "title",
-          "text"
-        ]
+        "required": ["title", "text"]
       },
       "ConversationStartersDto": {
         "type": "object",
@@ -4001,9 +4007,7 @@
             }
           }
         },
-        "required": [
-          "starters"
-        ]
+        "required": ["starters"]
       },
       "DeploymentItemDto": {
         "type": "object",
@@ -5634,17 +5638,11 @@
           },
           "result": {
             "type": "string",
-            "enum": [
-              "success",
-              "denied"
-            ],
+            "enum": ["success", "denied"],
             "example": "success"
           }
         },
-        "required": [
-          "id",
-          "result"
-        ]
+        "required": ["id", "result"]
       },
       "CreateConversationDto": {
         "type": "object",
