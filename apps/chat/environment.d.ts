@@ -10,6 +10,7 @@ declare global {
       QUICK_APPS_HOST?: string;
       QUICK_APPS_MODEL?: string;
       QUICK_APPS_SCHEMA_ID?: string;
+      QUICK_APPS_SCHEMA_2_ID?: string;
 
       EXTERNAL_APPS_SCHEMA_ID?: string;
 
