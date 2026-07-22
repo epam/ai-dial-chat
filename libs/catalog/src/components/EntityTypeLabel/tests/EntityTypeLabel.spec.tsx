@@ -6,12 +6,10 @@ import { EntityTypeLabel } from '../EntityTypeLabel';
 
 /**
  * jsdom normalizes a plain hex color to `rgb(r, g, b)` when read back via
- * `el.style.color`. CSS `var()` expressions are preserved as-is (jsdom cannot
- * resolve custom properties), so we return them unchanged.
+ * `el.style.color`.
  */
-const toExpectedColor = (color: string): string => {
-  if (color.startsWith('var(')) return color;
-  const n = parseInt(color.slice(1), 16);
+const toExpectedColor = (hex: string): string => {
+  const n = parseInt(hex.slice(1), 16);
   return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
 };
 

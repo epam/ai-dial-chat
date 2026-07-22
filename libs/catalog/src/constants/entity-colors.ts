@@ -2,7 +2,7 @@ import { CatalogEntityType } from '../types/entity-type';
 
 /** Hex color per entity type — used for the type label, featured card border, and drop shadow. */
 export const ENTITY_TYPE_COLOR: Record<CatalogEntityType, string> = {
-  [CatalogEntityType.Model]: 'var(--text-accent, #2764D9)',
+  [CatalogEntityType.Model]: '#2764D9',
   [CatalogEntityType.Application]: '#059669',
   [CatalogEntityType.Agent]: '#7C3AED',
   [CatalogEntityType.Skill]: '#0E7490',
