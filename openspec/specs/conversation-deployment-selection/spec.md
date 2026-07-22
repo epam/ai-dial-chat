@@ -205,7 +205,7 @@ State ownership: `ConversationRoute` owns the derived starter list, intro text, 
 #### Scenario: Quick Apps intro and starters render on new conversation screen
 
 - **WHEN** the selected application deployment has `conversationStarters.introText` and valid `starters`, and its deployment configuration does not define schema starters
-- **THEN** the new-conversation screen shows the intro text and renders the starter buttons above the input
+- **THEN** the new-conversation screen shows the intro text and renders the starter buttons below the input
 
 #### Scenario: Quick Apps starters take precedence over a schema mirror
 
