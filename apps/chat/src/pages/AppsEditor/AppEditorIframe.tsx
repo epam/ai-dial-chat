@@ -247,13 +247,10 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         }
 
         /*
-         * Cancelled: the callback popup posts its result and closes itself
-         * back-to-back — under load the opener can observe `popup.closed`
-         * before the `BroadcastChannel` message arrives, so a login that
-         * actually succeeded server-side can still surface as Cancelled
-         * here. Re-fetching the toolset's real status (same recheck
-         * `CatalogView`/`AuthSection` already do) avoids reporting a false
-         * failure to the iframe for a login that already went through.
+         * Treat the backend as the final authority if popup tracking or
+         * cross-process message delivery ever still reports a false cancel.
+         * This avoids reporting a failed login to the iframe after it
+         * actually completed server-side.
          */
         try {
           const refreshed = await getToolset(encodedToolsetId);

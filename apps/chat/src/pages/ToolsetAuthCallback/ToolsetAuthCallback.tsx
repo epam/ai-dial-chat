@@ -39,22 +39,14 @@ const readRedirectState = (): ToolsetRedirectState | null => {
 };
 
 /**
- * Safety-net delay before this popup closes itself after posting a result,
- * used only if the opener never closes it (e.g. the opener tab was closed or
- * navigated away before it could process the message). In the common case
- * the opener's `waitForToolsetOAuthResult` closes this popup right after
- * receiving the message, well before this fires.
- */
-const SELF_CLOSE_FALLBACK_MS = 4000;
-
-/**
  * Reports the OAuth result to the flow-scoped `BroadcastChannel` the opener
  * is waiting on. This popup does not close itself immediately afterwards —
  * the opener closes it once the message is received, so the popup is never
- * observed closed before the message has arrived. A bounded fallback timer
- * closes the popup here too, in case the opener can't (e.g. it was closed or
- * navigated away). With no `flowId` there is nothing for an opener to
- * receive, so the popup closes itself right away instead.
+ * observed closed before the message has arrived. `postMessage` determines
+ * the eligible destination channels and queues their delivery tasks before
+ * returning, so closing only this sender afterwards does not cancel the
+ * queued messages. With no `flowId` there is nothing for an opener to
+ * receive, so the popup closes itself right away.
  */
 const reportResult = (
   flowId: string | undefined,
@@ -67,7 +59,6 @@ const reportResult = (
   const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
   channel.postMessage(message);
   channel.close();
-  setTimeout(() => window.close(), SELF_CLOSE_FALLBACK_MS);
 };
 
 /**

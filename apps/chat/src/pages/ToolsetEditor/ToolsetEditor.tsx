@@ -186,8 +186,18 @@ const ToolsetEditor: FC = () => {
         }
         return next;
       });
+
+      /*
+       * AuthSection only reports isLoggedIn=true after the login request has
+       * succeeded (or a successful OAuth login has been recovered).
+       * Keep the shared toolset list in sync with that confirmed status so
+       * returning to the Catalog does not expose the pre-auth snapshot.
+       */
+      if (patch.isLoggedIn === true) {
+        void refetchToolsets();
+      }
     },
-    [],
+    [refetchToolsets],
   );
 
   const setEditorStep = useCallback(
