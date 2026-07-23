@@ -18,6 +18,15 @@ export enum AppsEditorEvent {
   /** Sent once the embedded QuickApps iframe's UI has rendered. Controls only the loading-spinner overlay — it does NOT indicate the iframe's data model is loaded/safe to save; see `ReadyToSave`. */
   ReadyToInteract = 'readyToInteract',
   /**
+   * Sent by the embedded QuickApps iframe once its session has resolved and
+   * the user is not authenticated (or the session errored). In this case the
+   * iframe never becomes safe to save (`ReadyToSave` will not arrive), so the
+   * host treats this as an expected non-ready state rather than a failure —
+   * see the "Settings step readiness gates Save and Preview" requirement in
+   * the `quick-app-authoring` spec.
+   */
+  LoggedOut = 'loggedOut',
+  /**
    * Sent by the embedded QuickApps iframe once its own internal application
    * model has finished loading and validating, and it is safe for the host
    * to send `TriggerSave`. Distinct from `ReadyToInteract` (UI rendered) —
@@ -86,4 +95,16 @@ export interface TriggerSaveGeneralPayload {
 export interface TriggerSaveMessage {
   type: AppsEditorEvent.TriggerSave;
   general?: TriggerSaveGeneralPayload;
+}
+
+/**
+ * Payload of a `SaveSuccess` message posted by the embedded QuickApps iframe once a
+ * `TriggerSave` completes successfully. `hasChanges` reflects whether any user-editable
+ * field (Settings-step configuration or a forwarded `general` field) actually changed as
+ * part of that save, excluding server-managed metadata such as `updatedAt`. Absent on
+ * embedded editors that predate this contract — treat as `false` in that case.
+ */
+export interface SaveSuccessMessage {
+  type: AppsEditorEvent.SaveSuccess;
+  hasChanges?: boolean;
 }

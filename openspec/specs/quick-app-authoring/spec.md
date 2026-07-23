@@ -99,6 +99,57 @@ itself touched), matching prior behavior for that step.
   Settings step
 - **THEN** that configuration and version are unchanged after the save completes
 
+### Requirement: SaveSuccess reports whether persisted data changed
+
+The Settings step's embedded editor (the separate Quick Apps application loaded at
+`schema.editorUrl`, out of this repo's source tree) SHALL include a `hasChanges: boolean`
+field on the `AppsEditorEvent.SaveSuccess` message it posts back to the host after a
+`TriggerSave` completes successfully — for both a plain Settings-step save and one that also
+carried a `general` payload. `hasChanges` SHALL be computed by the embedded editor by
+comparing the record it is about to persist against the record as it existed before this
+save, and SHALL be `true` if any field the user can edit changed — Settings-step
+configuration (`application_properties`, including orchestrator/tool set state,
+conversation starters, chat-input-disabled state, etc.) or any forwarded `general` field
+(name, description, icon URL, topics, intro). It SHALL be `false` when none of those fields
+changed, even though the save still updates server-managed metadata such as `updatedAt`. A
+save that persists no user-editable field change but still touches only metadata (e.g. a
+no-op re-save) SHALL report `hasChanges: false`.
+
+This field is part of the cross-repo `postMessage` contract between this host
+(`apps/chat/src/pages/AppsEditor`) and the embedded Quick Apps editor; it requires a
+corresponding change in the Quick Apps editor's own save-completion code, not only in this
+repo. Until the embedded editor sends it, the host SHALL treat a `SaveSuccess` without the
+field as `hasChanges: false` (see the `app-preview-chat` spec's "Preview session resets when
+the saved configuration actually changed" requirement for how the host uses this value).
+
+On this repo's side, `apps/chat/src/types/apps-editor.ts` SHALL declare a
+`SaveSuccessMessage` interface (`{ type: AppsEditorEvent.SaveSuccess; hasChanges?: boolean }`)
+and `AppEditorIframe`'s message handler SHALL forward the received `hasChanges` value (or
+`undefined`) to its `onSaveSuccess` prop, which SHALL be widened from `() => void` to
+`(hasChanges: boolean) => void` (normalizing a missing/non-boolean field to `false` before
+calling it), threading it through `SettingsStep` to `AppsEditor`.
+
+#### Scenario: Settings-only change is reported
+- **WHEN** the user changes orchestrator/tool set configuration in the Settings step and
+  triggers a save
+- **THEN** the embedded editor's `SaveSuccess` message includes `hasChanges: true`
+
+#### Scenario: General-only change is reported
+- **WHEN** the user only edits a General step field (forwarded via the `general` payload) and
+  no Settings-step configuration changed, then triggers Save & Exit
+- **THEN** the embedded editor's `SaveSuccess` message includes `hasChanges: true`
+
+#### Scenario: No user-editable field changed
+- **WHEN** the user triggers a save (e.g. via Preview) without having changed any
+  Settings-step configuration or General field since the last save
+- **THEN** the embedded editor's `SaveSuccess` message includes `hasChanges: false`, even
+  though the persisted record's `updatedAt` still advances
+
+#### Scenario: Host forwards the flag to `onSaveSuccess`
+- **WHEN** `AppEditorIframe` receives a `SaveSuccess` message with `hasChanges: true`
+- **THEN** it calls `onSaveSuccess(true)` (not the no-argument call used before this
+  requirement)
+
 ### Requirement: Settings step readiness gates Save and Preview
 
 The Settings step's embedded editor runs in an iframe and communicates over
@@ -111,6 +162,26 @@ indefinitely with no recovery short of reloading the page. As a defense in depth
 any other case where no response arrives, a save or preview action that does not
 receive a response within a bounded timeout SHALL time out, reset the loading state, and
 surface an error, rather than leaving the buttons stuck disabled forever.
+
+The embedded editor MAY instead post a `LoggedOut` message once its session has resolved
+and the user is not authenticated (or the session errored). In that case `ReadyToInteract`
+was already sent (so the loading spinner clears) but `ReadyToSave` will never arrive, since
+the embedded editor cannot load its data model without an authenticated session. This is an
+expected state, not a readiness failure, so the host SHALL NOT surface the generic
+"Settings not ready" timeout error while, or after, a `LoggedOut` message has been received
+for the current Settings-step session — including suppressing an instance of that error
+already shown before `LoggedOut` arrived. The "Save & Exit" and "Preview" buttons SHALL
+remain disabled in this state, since `ReadyToSave` still gates them and will not arrive.
+
+#### Scenario: A logged-out signal suppresses the readiness-timeout error
+- **WHEN** the Settings step's iframe posts `LoggedOut` before the readiness timeout elapses
+- **THEN** the timeout does not surface the "Settings not ready" error once it elapses, and
+  the "Save & Exit" and "Preview" buttons remain disabled
+
+#### Scenario: A logged-out signal clears an already-surfaced readiness-timeout error
+- **WHEN** the readiness timeout has already surfaced the "Settings not ready" error and the
+  Settings step's iframe then posts `LoggedOut`
+- **THEN** the "Settings not ready" error is cleared
 
 #### Scenario: Save & Exit is disabled before the Settings step is ready
 - **WHEN** the Settings step's iframe has not yet sent `ReadyToInteract`

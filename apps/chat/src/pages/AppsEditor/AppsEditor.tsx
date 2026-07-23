@@ -62,6 +62,21 @@ const AppsEditor: FC = () => {
   >(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isSettingsReady, setIsSettingsReady] = useState(false);
+  /**
+   * Whether the embedded Settings-step editor reported the user is logged
+   * out (`AppsEditorEvent.LoggedOut`). In that case `ReadyToSave` will never
+   * arrive, so the readiness timeout below must not surface its generic
+   * "not ready" error — being logged out is an expected state, not a
+   * readiness failure.
+   */
+  const [isLoggedOut, setIsLoggedOut] = useState(false);
+  /**
+   * Bumped whenever a Settings-step save reports a real configuration
+   * change (`SaveSuccessMessage.hasChanges === true`). Passed to
+   * `SettingsStep` as `AppPreviewChat`'s `key`, so the preview pane
+   * remounts and starts a fresh session the next time it is shown.
+   */
+  const [previewResetKey, setPreviewResetKey] = useState(0);
 
   const generalFormRef = useRef<GeneralFormHandle>(null);
   const settingsStepRef = useRef<SettingsStepHandle>(null);
@@ -168,15 +183,37 @@ const AppsEditor: FC = () => {
     if (settingsReadyKeyRef.current === key) return;
     settingsReadyKeyRef.current = key;
     setIsSettingsReady(false);
+    setIsLoggedOut(false);
   }, [schema, appIdForSettings]);
+
+  /* Read inside the readiness-timeout callback below so a LoggedOut signal
+   * that arrives at any point before the timeout fires is honored, without
+   * having to re-arm the timeout every time isLoggedOut changes. */
+  const isLoggedOutRef = useRef(isLoggedOut);
+  useEffect(() => {
+    isLoggedOutRef.current = isLoggedOut;
+  }, [isLoggedOut]);
+
+  /* Clears an already-surfaced readiness-timeout error once the Settings
+   * step reports the user is logged out — that explains why ReadyToSave
+   * never arrived, so the generic "not ready" error is misleading. */
+  useEffect(() => {
+    if (!isLoggedOut) return;
+    setSaveError((prev) =>
+      prev === t(AppsEditorI18nKeys.ErrorSettingsNotReady) ? '' : prev,
+    );
+  }, [isLoggedOut, t]);
 
   /* Safety net for the initial ReadyToSave signal itself (see
    * SETTINGS_READY_TIMEOUT_MS above) — armed whenever the Settings step is
    * visible and not yet ready, and re-armed whenever schema/appId change (a
-   * fresh iframe load). Cleared as soon as isSettingsReady flips true. */
+   * fresh iframe load). Cleared as soon as isSettingsReady flips true. Skips
+   * surfacing the error if the Settings step reported the user is logged
+   * out, since ReadyToSave is then expected to never arrive. */
   useEffect(() => {
     if (isGeneralStep || isSettingsReady) return;
     const timeoutId = setTimeout(() => {
+      if (isLoggedOutRef.current) return;
       setSaveError(t(AppsEditorI18nKeys.ErrorSettingsNotReady));
     }, SETTINGS_READY_TIMEOUT_MS);
     return () => clearTimeout(timeoutId);
@@ -198,30 +235,36 @@ const AppsEditor: FC = () => {
     void refetchDeployments(false);
   }, [refetchDeployments]);
 
-  const handleSaveSuccess = useCallback(() => {
-    clearSaveTimeout();
-    if (isPreviewing) return;
+  const handleSaveSuccess = useCallback(
+    (hasChanges: boolean) => {
+      clearSaveTimeout();
+      if (isPreviewing) return;
 
-    const completeSave = async () => {
-      await refetchDeployments().catch(() => undefined);
-      setIsSaving(false);
-      if (pendingSaveAction === 'preview') {
-        setIsPreviewing(true);
-      } else {
-        navigate(returnUrl);
-      }
-      setPendingSaveAction(null);
-    };
+      const completeSave = async () => {
+        await refetchDeployments().catch(() => undefined);
+        setIsSaving(false);
+        if (hasChanges) {
+          setPreviewResetKey((prev) => prev + 1);
+        }
+        if (pendingSaveAction === 'preview') {
+          setIsPreviewing(true);
+        } else {
+          navigate(returnUrl);
+        }
+        setPendingSaveAction(null);
+      };
 
-    void completeSave();
-  }, [
-    clearSaveTimeout,
-    isPreviewing,
-    pendingSaveAction,
-    refetchDeployments,
-    navigate,
-    returnUrl,
-  ]);
+      void completeSave();
+    },
+    [
+      clearSaveTimeout,
+      isPreviewing,
+      pendingSaveAction,
+      refetchDeployments,
+      navigate,
+      returnUrl,
+    ],
+  );
 
   const handleSaveError = useCallback(
     (error: string) => {
@@ -360,6 +403,8 @@ const AppsEditor: FC = () => {
               onSaveSuccess={handleSaveSuccess}
               onSaveError={handleSaveError}
               onReadyChange={setIsSettingsReady}
+              onLoggedOutChange={setIsLoggedOut}
+              previewResetKey={previewResetKey}
             />
           )}
         </div>

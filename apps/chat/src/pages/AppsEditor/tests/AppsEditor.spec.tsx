@@ -15,10 +15,12 @@ import AppsEditor from '../AppsEditor';
 
 let latestSettingsStepProps: {
   onUpdated?: () => void;
-  onSaveSuccess?: () => void;
+  onSaveSuccess?: (hasChanges: boolean) => void;
   onSaveError?: (error: string) => void;
   onReadyChange?: (isReady: boolean) => void;
+  onLoggedOutChange?: (isLoggedOut: boolean) => void;
   isPreviewing?: boolean;
+  previewResetKey?: number;
 } = {};
 
 let latestGeneralFormProps: {
@@ -40,10 +42,12 @@ vi.mock('../SettingsStep', () => ({
   default: forwardRef(function MockSettingsStep(
     props: {
       onUpdated?: () => void;
-      onSaveSuccess?: () => void;
+      onSaveSuccess?: (hasChanges: boolean) => void;
       onSaveError?: (error: string) => void;
       onReadyChange?: (isReady: boolean) => void;
+      onLoggedOutChange?: (isLoggedOut: boolean) => void;
       isPreviewing?: boolean;
+      previewResetKey?: number;
     },
     ref,
   ) {
@@ -56,7 +60,10 @@ vi.mock('../SettingsStep', () => ({
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-      <div data-previewing={props.isPreviewing ? 'true' : 'false'}>
+      <div
+        data-previewing={props.isPreviewing ? 'true' : 'false'}
+        data-preview-reset-key={props.previewResetKey ?? 0}
+      >
         settings-step
       </div>
     );
@@ -145,7 +152,7 @@ describe('AppsEditor', () => {
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
     act(() => {
-      latestSettingsStepProps.onSaveSuccess?.();
+      latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -169,7 +176,7 @@ describe('AppsEditor', () => {
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
     act(() => {
-      latestSettingsStepProps.onSaveSuccess?.();
+      latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -232,7 +239,7 @@ describe('AppsEditor', () => {
       screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
     );
     act(() => {
-      latestSettingsStepProps.onSaveSuccess?.();
+      latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
@@ -250,7 +257,7 @@ describe('AppsEditor', () => {
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
     act(() => {
-      latestSettingsStepProps.onSaveSuccess?.();
+      latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -347,6 +354,44 @@ describe('AppsEditor', () => {
       ).toBeNull();
     });
 
+    it('does not surface the readiness-timeout error when a logged-out signal arrives first', () => {
+      vi.useFakeTimers();
+      shouldSettingsAutoReady = false;
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+      act(() => {
+        latestSettingsStepProps.onLoggedOutChange?.(true);
+      });
+      act(() => {
+        vi.advanceTimersByTime(60000);
+      });
+
+      expect(
+        screen.queryByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+      ).toBeNull();
+    });
+
+    it('clears an already-surfaced readiness-timeout error once a logged-out signal arrives', () => {
+      vi.useFakeTimers();
+      shouldSettingsAutoReady = false;
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+      act(() => {
+        vi.advanceTimersByTime(60000);
+      });
+      expect(
+        screen.getByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+      ).toBeTruthy();
+
+      act(() => {
+        latestSettingsStepProps.onLoggedOutChange?.(true);
+      });
+
+      expect(
+        screen.queryByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+      ).toBeNull();
+    });
+
     it('times out and re-enables Save with an error when no response arrives', () => {
       vi.useFakeTimers();
       renderEditor('step=settings&schema=quickapps2-schema');
@@ -382,7 +427,7 @@ describe('AppsEditor', () => {
         saveButton.click();
       });
       await act(async () => {
-        latestSettingsStepProps.onSaveSuccess?.();
+        latestSettingsStepProps.onSaveSuccess?.(false);
         await Promise.resolve();
       });
 
@@ -454,11 +499,54 @@ describe('AppsEditor', () => {
       );
 
       await act(async () => {
-        latestSettingsStepProps.onSaveSuccess?.();
+        latestSettingsStepProps.onSaveSuccess?.(false);
         await Promise.resolve();
       });
 
       await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
+    });
+  });
+
+  describe('Preview session reset on configuration change', () => {
+    it('bumps the preview reset key when a save reports hasChanges: true', async () => {
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+      const keyBefore = Number(
+        screen.getByText('settings-step').dataset.previewResetKey,
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+      await act(async () => {
+        latestSettingsStepProps.onSaveSuccess?.(true);
+        await Promise.resolve();
+      });
+
+      await waitFor(() =>
+        expect(
+          Number(screen.getByText('settings-step').dataset.previewResetKey),
+        ).toBe(keyBefore + 1),
+      );
+    });
+
+    it('does not bump the preview reset key when a save reports hasChanges: false', async () => {
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+      const keyBefore = Number(
+        screen.getByText('settings-step').dataset.previewResetKey,
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+      await act(async () => {
+        latestSettingsStepProps.onSaveSuccess?.(false);
+        await Promise.resolve();
+      });
+
+      await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
+      expect(
+        Number(screen.getByText('settings-step').dataset.previewResetKey),
+      ).toBe(keyBefore);
     });
   });
 });
