@@ -50,18 +50,27 @@ interface Props {
   onUpdated?: () => void;
   onSaveSuccess?: () => void;
   onSaveError?: (error: string) => void;
+  /**
+   * Notifies the host whenever the iframe's readiness to save changes.
+   * Reflects `AppsEditorEvent.ReadyToSave` (the embedded editor's own data
+   * model is loaded/validated and it is safe to trigger a save) — not the
+   * generic `ReadyToInteract` (UI rendered), which only controls this
+   * component's own loading-spinner overlay.
+   */
+  onReadyChange?: (isReady: boolean) => void;
 }
 
 const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
   function AppEditorIframe(
-    { schema, appId, onUpdated, onSaveSuccess, onSaveError },
+    { schema, appId, onUpdated, onSaveSuccess, onSaveError, onReadyChange },
     ref,
   ) {
     const { t } = useTranslation();
     const { user } = useUser();
     const { currentTheme } = useTheme();
 
-    const [isLoading, setIsLoading] = useState(true);
+    const [isUiLoading, setIsUiLoading] = useState(true);
+    const [isReadyToSave, setIsReadyToSave] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     const iframeUrl = useMemo(() => {
@@ -238,13 +247,10 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         }
 
         /*
-         * Cancelled: the callback popup posts its result and closes itself
-         * back-to-back — under load the opener can observe `popup.closed`
-         * before the `BroadcastChannel` message arrives, so a login that
-         * actually succeeded server-side can still surface as Cancelled
-         * here. Re-fetching the toolset's real status (same recheck
-         * `CatalogView`/`AuthSection` already do) avoids reporting a false
-         * failure to the iframe for a login that already went through.
+         * Treat the backend as the final authority if popup tracking or
+         * cross-process message delivery ever still reports a false cancel.
+         * This avoids reporting a failed login to the iframe after it
+         * actually completed server-side.
          */
         try {
           const refreshed = await getToolset(encodedToolsetId);
@@ -317,7 +323,10 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         const displayName = schema.displayName ?? '';
         switch (event.data?.type) {
           case `${displayName}/${AppsEditorEvent.ReadyToInteract}`:
-            setIsLoading(false);
+            setIsUiLoading(false);
+            break;
+          case `${displayName}/${AppsEditorEvent.ReadyToSave}`:
+            setIsReadyToSave(true);
             break;
           case `${displayName}/${AppsEditorEvent.UpdatedSuccess}`:
             onUpdated?.();
@@ -369,12 +378,23 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     useEffect(() => {
       const iframe = iframeRef.current;
       if (!iframe) return;
-      const handleLoad = () => setIsLoading(false);
+      const handleLoad = () => setIsUiLoading(false);
       iframe.addEventListener('load', handleLoad);
       return () => {
         iframe.removeEventListener('load', handleLoad);
       };
     }, [iframeUrl]);
+
+    /* Re-gates readiness-to-save whenever the iframe reloads for a different
+     * app/schema, so a stale `true` from the previous app doesn't leak into
+     * the newly loaded one — the new iframe must send its own ReadyToSave. */
+    useEffect(() => {
+      setIsReadyToSave(false);
+    }, [iframeUrl]);
+
+    useEffect(() => {
+      onReadyChange?.(isReadyToSave);
+    }, [isReadyToSave, onReadyChange]);
 
     useImperativeHandle(
       ref,
@@ -392,7 +412,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
 
     return (
       <div className="relative size-full">
-        {isLoading && (
+        {isUiLoading && (
           <div
             className="absolute inset-0 flex items-center justify-center bg-layer-1"
             aria-label={t(AppsEditorI18nKeys.SettingsStepLoadingLabel)}

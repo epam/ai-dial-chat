@@ -2387,6 +2387,12 @@ export interface DialToolsetAuthSettingsDto {
    */
   authenticationType: DialToolsetAuthSettingsDtoAuthenticationTypeEnum;
   /**
+   * Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration
+   * @type {boolean}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  dynamicallyRegistered?: boolean;
+  /**
    *
    * @type {string}
    * @memberof DialToolsetAuthSettingsDto
@@ -4354,6 +4360,12 @@ export interface ToolsetAuthSettingsDto {
    */
   authenticationType?: ToolsetAuthSettingsDtoAuthenticationTypeEnum;
   /**
+   * Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration
+   * @type {boolean}
+   * @memberof ToolsetAuthSettingsDto
+   */
+  dynamicallyRegistered?: boolean;
+  /**
    * Whether the toolset has global (shared) credentials signed in
    * @type {string}
    * @memberof ToolsetAuthSettingsDto
@@ -4763,6 +4775,43 @@ export interface TranscribeAudioDto {
 /**
  *
  * @export
+ * @interface UpdateApplicationBodyDto
+ */
+export interface UpdateApplicationBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof UpdateApplicationBodyDto
+   */
+  topics?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  intro?: string;
+}
+/**
+ *
+ * @export
  * @interface UpdateInstalledDto
  */
 export interface UpdateInstalledDto {
@@ -4810,6 +4859,31 @@ export interface UpdateSelectedDeploymentDto {
    * @memberof UpdateSelectedDeploymentDto
    */
   id?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface UpdatedApplicationDto
+ */
+export interface UpdatedApplicationDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedApplicationDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedApplicationDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedApplicationDto
+   */
+  object?: string;
 }
 /**
  *

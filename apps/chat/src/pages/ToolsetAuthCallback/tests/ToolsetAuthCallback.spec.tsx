@@ -157,8 +157,8 @@ describe('ToolsetAuthCallback', () => {
     expect(mockClose).not.toHaveBeenCalled();
   });
 
-  it('closes the window itself if the opener never does, once the safety-net delay elapses', async () => {
-    vi.useFakeTimers();
+  it('closes its sending channel after queuing the result', async () => {
+    const closeChannelSpy = vi.spyOn(BroadcastChannel.prototype, 'close');
     try {
       setRedirectState({
         toolsetId: 'toolsets/b/my__1.0.0',
@@ -172,11 +172,9 @@ describe('ToolsetAuthCallback', () => {
 
       await resultPromise;
       expect(mockClose).not.toHaveBeenCalled();
-
-      await vi.advanceTimersByTimeAsync(4000);
-      expect(mockClose).toHaveBeenCalledOnce();
+      expect(closeChannelSpy).toHaveBeenCalledTimes(2);
     } finally {
-      vi.useRealTimers();
+      closeChannelSpy.mockRestore();
     }
   });
 

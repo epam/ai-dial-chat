@@ -6,6 +6,7 @@ import {
   Header,
   HttpCode,
   Param,
+  Patch,
   Post,
   Req,
 } from '@nestjs/common';
@@ -20,6 +21,10 @@ import {
   CreatedApplicationDto,
 } from './dto/create-application.dto';
 import { GetApplicationDto } from './dto/get-application.dto';
+import {
+  UpdateApplicationBodyDto,
+  UpdatedApplicationDto,
+} from './dto/update-application.dto';
 
 @ApiTags('applications')
 @Controller({ path: 'applications', version: '1' })
@@ -100,6 +105,57 @@ export class ApplicationsController {
   ): Promise<CreatedApplicationDto> {
     const { sub, at } = req.user as SessionUser;
     return this.applicationsService.createApplication(sub, at, body);
+  }
+
+  @Patch(':applicationName')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'updateApplication',
+    summary: 'Update an application',
+    description:
+      'Updates the General-step fields (name, description, iconUrl, topics, intro) of an ' +
+      'existing application for the authenticated session user, by proxying DIAL Core. ' +
+      'Settings-step configuration (application_properties, version) is preserved untouched. ' +
+      'Invalidates the applications and deployments list caches on success.',
+  })
+  @ApiBody({ type: UpdateApplicationBodyDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Application updated successfully',
+    type: UpdatedApplicationDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error — invalid application name or body fields',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 403, description: 'Caller lacks permission' })
+  @ApiResponse({ status: 404, description: 'Application not found' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  updateApplication(
+    @Req() req: Request,
+    @Param() params: GetApplicationDto,
+    @Body() body: UpdateApplicationBodyDto,
+  ): Promise<UpdatedApplicationDto> {
+    const { sub, at } = req.user as SessionUser;
+    return this.applicationsService.updateApplication(
+      sub,
+      at,
+      params.applicationName,
+      body,
+    );
   }
 
   @Delete(':applicationName')

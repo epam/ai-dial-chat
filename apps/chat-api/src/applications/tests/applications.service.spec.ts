@@ -11,6 +11,7 @@ import type { DialClientService } from '../../dial/dial-client.service';
 import { ApplicationsService } from '../applications.service';
 import type { ApplicationsResponseDto } from '../dto/application.dto';
 import type { CreateApplicationBodyDto } from '../dto/create-application.dto';
+import type { UpdateApplicationBodyDto } from '../dto/update-application.dto';
 
 const mockApp = { id: 'my-app', object: 'application', display_name: 'My App' };
 const mockList: ApplicationsResponseDto = { data: [mockApp] };
@@ -27,6 +28,7 @@ function makeDeps() {
       getApplications: vi.fn(),
       getUserBucket: vi.fn(),
       saveCustomApplication: vi.fn(),
+      getCustomApplication: vi.fn(),
       deleteCustomApplication: vi.fn(),
     },
     baseUrl: 'http://dial-core',
@@ -419,6 +421,153 @@ describe('ApplicationsService', () => {
         service.createApplication('user1', 't', body),
       ).rejects.toThrow();
       expect(cacheManager.del).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateApplication', () => {
+    const id = 'applications/test-bucket/My%20App__0.0.1';
+    const updateBody: UpdateApplicationBodyDto = { name: 'Updated App' };
+    const existingApp = {
+      displayName: 'My App',
+      displayVersion: '0.0.1',
+      application_type_schema_id: 'https://mydial.epam.com/schema',
+      application_properties: {
+        orchestrator: { system_prompt: { type: 'custom' } },
+        tool_sets: ['toolset-1'],
+      },
+      description: 'Old description',
+    };
+
+    const mockUpdateApplicationSdk = (
+      service: ApplicationsService,
+      getResponse = okResponse(existingApp),
+      saveResponse = okResponse({}),
+    ) => {
+      const getCustomApplicationSpy = vi
+        .spyOn(service['dialClient'].client, 'getCustomApplication')
+        .mockResolvedValue(getResponse);
+      const saveCustomApplicationSpy = vi
+        .spyOn(service['dialClient'].client, 'saveCustomApplication')
+        .mockResolvedValue(saveResponse);
+
+      return { getCustomApplicationSpy, saveCustomApplicationSpy };
+    };
+
+    it('merges General-step fields, persists at the same path, and invalidates caches', async () => {
+      const { service, cacheManager, deploymentsService } = makeService();
+      const { getCustomApplicationSpy, saveCustomApplicationSpy } =
+        mockUpdateApplicationSdk(service);
+
+      const result = await service.updateApplication('user1', 'token', id, {
+        name: 'Updated App',
+        description: 'New description',
+        iconUrl: 'https://example.com/icon.svg',
+        topics: ['nlp'],
+        intro: 'New intro',
+      });
+
+      expect(getCustomApplicationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'My%20App__0.0.1',
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+        }),
+      );
+      expect(saveCustomApplicationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'My%20App__0.0.1',
+        expect.objectContaining({
+          body: {
+            displayName: 'Updated App',
+            displayVersion: '0.0.1',
+            application_type_schema_id: 'https://mydial.epam.com/schema',
+            application_properties: existingApp.application_properties,
+            description: 'New description',
+            iconUrl: 'https://example.com/icon.svg',
+            descriptionKeywords: ['nlp'],
+            intro: 'New intro',
+          },
+        }),
+      );
+      expect(result).toEqual({ id });
+      expect(cacheManager.del).toHaveBeenCalledWith('applications:list:user1');
+      expect(deploymentsService.invalidateListCache).toHaveBeenCalledWith(
+        'user1',
+      );
+    });
+
+    it('preserves application_properties, application_type_schema_id, and displayVersion when omitted from the body', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+
+      await service.updateApplication('user1', 'token', id, updateBody);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).toMatchObject({
+        application_properties: existingApp.application_properties,
+        application_type_schema_id: existingApp.application_type_schema_id,
+        displayVersion: existingApp.displayVersion,
+      });
+    });
+
+    it('does not merge topics when omitted', async () => {
+      const { service } = makeService();
+      const { saveCustomApplicationSpy } = mockUpdateApplicationSdk(service);
+
+      await service.updateApplication('user1', 'token', id, updateBody);
+
+      const [, , { body: sentBody }] = saveCustomApplicationSpy.mock.calls[0];
+      expect(sentBody).not.toHaveProperty('descriptionKeywords');
+    });
+
+    it('throws NotFoundException when the existing application fetch returns 404', async () => {
+      const { service } = makeService();
+      mockUpdateApplicationSdk(service, errResponse(404));
+
+      await expect(
+        service.updateApplication('u', 't', id, updateBody),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('throws ForbiddenException when saveCustomApplication returns 403', async () => {
+      const { service } = makeService();
+      mockUpdateApplicationSdk(service, undefined, errResponse(403));
+
+      await expect(
+        service.updateApplication('u', 't', id, updateBody),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws BadGatewayException when DIAL Core returns a 5xx while saving', async () => {
+      const { service } = makeService();
+      mockUpdateApplicationSdk(service, undefined, errResponse(500));
+
+      await expect(
+        service.updateApplication('u', 't', id, updateBody),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getCustomApplication',
+      ).mockRejectedValue(new TypeError('fetch failed'));
+
+      await expect(
+        service.updateApplication('u', 't', id, updateBody),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('does not invalidate cache when the update fails', async () => {
+      const { service, cacheManager, deploymentsService } = makeService();
+      mockUpdateApplicationSdk(service, undefined, errResponse(409));
+
+      await expect(
+        service.updateApplication('user1', 't', id, updateBody),
+      ).rejects.toThrow();
+      expect(cacheManager.del).not.toHaveBeenCalled();
+      expect(deploymentsService.invalidateListCache).not.toHaveBeenCalled();
     });
   });
 

@@ -371,6 +371,68 @@
       }
     },
     "/api/v1/applications/{applicationName}": {
+      "patch": {
+        "description": "Updates the General-step fields (name, description, iconUrl, topics, intro) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties, version) is preserved untouched. Invalidates the applications and deployments list caches on success.",
+        "operationId": "updateApplication",
+        "parameters": [
+          {
+            "name": "applicationName",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-app__1.0",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateApplicationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatedApplicationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid application name or body fields"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Update an application",
+        "tags": ["applications"]
+      },
       "delete": {
         "description": "Deletes an application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.",
         "operationId": "deleteApplication",
@@ -1286,8 +1348,14 @@
           "200": {
             "description": "SSE stream of client-channel RPC events"
           },
+          "400": {
+            "description": "The reconnect channel id header is present but invalid"
+          },
           "401": {
             "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The liveChatInteraction feature is not enabled for this user"
           },
           "502": {
             "description": "DIAL Core rejected or failed the subscription"
@@ -1334,6 +1402,9 @@
           },
           "401": {
             "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The liveChatInteraction feature is not enabled for this user"
           },
           "429": {
             "description": "Rate limit exceeded"
@@ -3948,6 +4019,54 @@
         },
         "required": ["id"]
       },
+      "UpdateApplicationBodyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "My App"
+          },
+          "description": {
+            "type": "string",
+            "example": "A custom application."
+          },
+          "iconUrl": {
+            "type": "string",
+            "example": "https://example.com/icon.svg"
+          },
+          "topics": {
+            "example": ["nlp", "assistant"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "intro": {
+            "type": "string",
+            "example": "Summarizes long documents in one line.",
+            "maxLength": 90
+          }
+        },
+        "required": ["name"]
+      },
+      "UpdatedApplicationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "users/my-user/applications/my-app"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "My App"
+          },
+          "object": {
+            "type": "string",
+            "example": "application"
+          }
+        },
+        "required": ["id"]
+      },
       "DeploymentFeaturesDto": {
         "type": "object",
         "properties": {
@@ -4484,6 +4603,11 @@
             "type": "string",
             "description": "Type of authentication",
             "enum": ["OAUTH", "API_KEY", "NONE"]
+          },
+          "dynamicallyRegistered": {
+            "type": "boolean",
+            "description": "Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration",
+            "example": true
           },
           "globalAuthStatus": {
             "type": "string",
@@ -5109,6 +5233,11 @@
             "type": "string",
             "example": "OAUTH",
             "enum": ["OAUTH", "API_KEY", "NONE"]
+          },
+          "dynamicallyRegistered": {
+            "type": "boolean",
+            "description": "Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration",
+            "example": true
           },
           "apiKeyHeader": {
             "type": "string",

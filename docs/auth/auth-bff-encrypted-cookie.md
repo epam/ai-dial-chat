@@ -155,6 +155,14 @@ _Source: [`auth-diagrams/08-toolset-signin-interrupt.mmd`](./auth-diagrams/08-to
 - The assigned channel id travels with subsequent completion requests (`X-DIAL-CLIENT-CHANNEL-ID`), so Core can correlate a `toolset/signin` event back to the specific blocked tool call.
 - A `toolset/signin` event surfaces a global dialog; the user logs in with the existing toolset API-key/OAuth mechanics (unchanged from the Catalog/Toolset-Editor flows), and the result is reported back on the same channel (`POST /api/v1/client-channel/report`) so Core can resume or terminate the tool call.
 - Gated behind the `liveChatInteraction` feature flag (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`); unsubscribes on logout, tab close, or the flag flipping off.
+- Toolset OAuth opens an external-provider popup and tracks it from the initiating Chat tab. The
+  Chat response therefore uses `Cross-Origin-Opener-Policy: same-origin-allow-popups` (rather
+  than Helmet's `same-origin` default), preventing provider navigation from severing the
+  opener's `WindowProxy` and producing a false `popup.closed` cancellation. Before navigating
+  externally, the popup still sets its own `window.opener` to `null` to prevent reverse tabnabbing.
+  After the callback posts its result, it closes only its sending `BroadcastChannel`; the
+  initiating tab closes the popup after receiving the already-queued message, with no
+  timer-based handoff.
 
 ---
 
