@@ -79,45 +79,50 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
           contentClassName="!z-[80]"
         />
       </div>
-      {job.status === ExportJobStatus.Success && (
-        <span className={STATUS_SLOT_CLASS}>
-          <IconCircleCheckFilled size={16} className="text-accent-secondary" />
-        </span>
-      )}
-      {job.status === ExportJobStatus.Failed && (
-        <>
+      <div className="flex shrink-0 items-center gap-1">
+        {job.status === ExportJobStatus.Success && (
+          <span className={STATUS_SLOT_CLASS}>
+            <IconCircleCheckFilled
+              size={16}
+              className="text-accent-secondary"
+            />
+          </span>
+        )}
+        {job.status === ExportJobStatus.Failed && (
+          <>
+            <DialIconButton
+              aria-label={t(ConversationExportI18nKeys.RetryJobAriaLabel, {
+                title: job.label,
+              })}
+              appearance={ButtonAppearance.Ghost}
+              size={ElementSize.Small}
+              icon={
+                <IconRefresh
+                  size={DIAL_ICON_SIZE.SM}
+                  className="text-secondary"
+                />
+              }
+              onClick={() => onRetry(job.id)}
+              className={STATUS_SLOT_CLASS}
+            />
+            <span className={STATUS_SLOT_CLASS}>
+              <IconAlertCircleFilled size={16} className="text-error" />
+            </span>
+          </>
+        )}
+        {job.status === ExportJobStatus.InProgress && (
           <DialIconButton
-            aria-label={t(ConversationExportI18nKeys.RetryJobAriaLabel, {
+            aria-label={t(ConversationExportI18nKeys.CloseJobAriaLabel, {
               title: job.label,
             })}
             appearance={ButtonAppearance.Ghost}
             size={ElementSize.Small}
-            icon={
-              <IconRefresh
-                size={DIAL_ICON_SIZE.SM}
-                className="text-secondary"
-              />
-            }
-            onClick={() => onRetry(job.id)}
+            icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
+            onClick={() => onDismiss(job.id)}
             className={STATUS_SLOT_CLASS}
           />
-          <span className={STATUS_SLOT_CLASS}>
-            <IconAlertCircleFilled size={16} className="text-error" />
-          </span>
-        </>
-      )}
-      {job.status === ExportJobStatus.InProgress && (
-        <DialIconButton
-          aria-label={t(ConversationExportI18nKeys.CloseJobAriaLabel, {
-            title: job.label,
-          })}
-          appearance={ButtonAppearance.Ghost}
-          size={ElementSize.Small}
-          icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
-          onClick={() => onDismiss(job.id)}
-          className={STATUS_SLOT_CLASS}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 };
