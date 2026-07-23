@@ -555,7 +555,7 @@ export enum EditPromptFormFields {
 }
 
 export enum DislikeCommentFields {
-  title = 'SendFeedback',
+  title = 'Send feedback',
   inputPlaceholder = 'Type an optional comment to your feedback',
 }
 
