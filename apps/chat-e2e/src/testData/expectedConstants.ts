@@ -441,6 +441,9 @@ export const ExpectedConstants = {
   toolsetLoginRequiredTitle: 'Toolset login required',
   toolsetsRequireLoginSubtitle:
     'The toolsets that "Quick app" uses to generate a response require a login',
+  // Toasts shown after declining toolset sign-in requests.
+  toolsetSignInRequestDeclined: 'Toolset sign in request declined',
+  allToolsetSignInRequestsDeclined: 'All toolset sign in requests declined',
   // Confirmation dialog shown on Save & Exit when the config has invalid items.
   saveOnlyValidDataTitle: 'Only valid data will be saved',
   saveOnlyValidDataMessage:
