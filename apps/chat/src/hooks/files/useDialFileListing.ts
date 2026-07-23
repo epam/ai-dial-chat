@@ -338,19 +338,89 @@ export const useDialFileListing = ({
 
   const bumpRetry = retry;
 
-  const invalidateFolders = useCallback((apiPaths: string[]) => {
-    if (apiPaths.length === 0) return;
-    setCache((prev) => {
-      const next = new Map(prev);
-      apiPaths.forEach((k) => next.delete(k));
-      return next;
-    });
-    setListingPermissionsCache((prev) => {
-      const next = new Map(prev);
-      apiPaths.forEach((k) => next.delete(k));
-      return next;
-    });
-  }, []);
+  const invalidateFolders = useCallback(
+    (apiPaths: string[]) => {
+      if (apiPaths.length === 0) return;
+
+      /*
+       * `folderPath` itself is refetched by the retryCounter-driven effect
+       * above (via bumpRetry), which already replaces the cache entry only
+       * once fresh data arrives rather than deleting it upfront. Any other
+       * invalidated key that is an ancestor of `folderPath` — or an
+       * already-expanded tree node — is otherwise never refetched:
+       * `buildFromCache` recurses top-down from the bucket root, so a
+       * deleted ancestor entry breaks the tree walk and makes the
+       * still-cached `folderPath` node disappear from `items` until the
+       * ancestor is explicitly refetched here.
+       */
+      const expandedApiPaths = new Set(
+        [...expandedPaths].map((p) => virtualPathToApiPath(p, rootLabel)),
+      );
+      const isVisible = (k: string): boolean =>
+        k === folderPath || folderPath.startsWith(k) || expandedApiPaths.has(k);
+
+      /*
+       * Keys that aren't currently rendered are safe to purge outright — the
+       * next browse/expand will lazily refetch them. Keys that ARE visible
+       * are refreshed in place instead (fetch first, then overwrite the
+       * cache entry): deleting a visible key before the refetch resolves
+       * makes `buildFromCache` treat it as empty for that window, producing
+       * a visible flash of "No files yet" even though the old data was
+       * still correct.
+       */
+      const keysToPurgeImmediately = apiPaths.filter((k) => !isVisible(k));
+      const keysNeedingRefetch = apiPaths.filter(
+        (k) => isVisible(k) && k !== folderPath,
+      );
+
+      if (keysToPurgeImmediately.length > 0) {
+        setCache((prev) => {
+          const next = new Map(prev);
+          keysToPurgeImmediately.forEach((k) => next.delete(k));
+          return next;
+        });
+        setListingPermissionsCache((prev) => {
+          const next = new Map(prev);
+          keysToPurgeImmediately.forEach((k) => next.delete(k));
+          return next;
+        });
+      }
+
+      keysNeedingRefetch.forEach((apiPath) => {
+        const loadFolder = async (): Promise<void> => {
+          try {
+            const { items: flat, permissions } = await fetchByTab(
+              activeTab,
+              bucket,
+              apiPath,
+              sharedRootMetaRef.current,
+            );
+            setCache((prev) => new Map(prev).set(apiPath, flat));
+            if (permissions != null) {
+              setListingPermissionsCache((prev) =>
+                new Map(prev).set(apiPath, permissions),
+              );
+            }
+          } catch {
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              message: t(DialFileManagerI18nKeys.FolderLoadError),
+            });
+          }
+        };
+        void loadFolder();
+      });
+    },
+    [
+      activeTab,
+      bucket,
+      folderPath,
+      expandedPaths,
+      rootLabel,
+      onNotification,
+      t,
+    ],
+  );
 
   const mergeCreatedFolder = useCallback(
     (

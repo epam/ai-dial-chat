@@ -1,6 +1,7 @@
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -16,7 +17,7 @@ import {
 
 async function bootstrap() {
   const runtimeEnvironment = process.env;
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: resolveLogLevels(
       runtimeEnvironment['NODE_ENV'],
       runtimeEnvironment['LOG_LEVEL'],
@@ -30,6 +31,12 @@ async function bootstrap() {
   const configService = app.get(ConfigService<EnvironmentVariables, true>);
   const allowedIframeOrigins = configService.get('ALLOWED_IFRAME_ORIGINS', {
     infer: true,
+  });
+
+  app.useBodyParser('json', {
+    limit: configService.get('CONVERSATION_BODY_SIZE_LIMIT_BYTES', {
+      infer: true,
+    }),
   });
 
   // Security headers middleware
