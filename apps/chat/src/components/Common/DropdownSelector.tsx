@@ -89,7 +89,7 @@ export function DropdownSelector({
               />
             </components.MultiValueRemove>
           ),
-          IndicatorsContainer: (props) =>
+          IndicatorsContainer: () =>
             isMenuOpen ? (
               <IconChevronUp size={18} className="text-primary" />
             ) : (
