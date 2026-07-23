@@ -1348,8 +1348,14 @@
           "200": {
             "description": "SSE stream of client-channel RPC events"
           },
+          "400": {
+            "description": "The reconnect channel id header is present but invalid"
+          },
           "401": {
             "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The liveChatInteraction feature is not enabled for this user"
           },
           "502": {
             "description": "DIAL Core rejected or failed the subscription"
@@ -1396,6 +1402,9 @@
           },
           "401": {
             "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The liveChatInteraction feature is not enabled for this user"
           },
           "429": {
             "description": "Rate limit exceeded"
@@ -4595,6 +4604,11 @@
             "description": "Type of authentication",
             "enum": ["OAUTH", "API_KEY", "NONE"]
           },
+          "dynamicallyRegistered": {
+            "type": "boolean",
+            "description": "Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration",
+            "example": true
+          },
           "globalAuthStatus": {
             "type": "string",
             "description": "Whether the toolset has global (shared) credentials signed in",
@@ -5219,6 +5233,11 @@
             "type": "string",
             "example": "OAUTH",
             "enum": ["OAUTH", "API_KEY", "NONE"]
+          },
+          "dynamicallyRegistered": {
+            "type": "boolean",
+            "description": "Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration",
+            "example": true
           },
           "apiKeyHeader": {
             "type": "string",
