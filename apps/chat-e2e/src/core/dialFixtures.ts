@@ -147,6 +147,7 @@ import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
+import { ToolsetSignInMockHelper } from '@/src/testData/toolsets/toolsetSignInMockHelper';
 import { DialErrorPage } from '@/src/ui/pages/dialErrorPage';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
@@ -500,6 +501,7 @@ const dialTest = test.extend<{
   previewToolsetLoginModal: ToolsetLoginModal;
   previewToolsetLoginModalAssertion: ToolsetLoginModalAssertion;
   toolsetLoginEventsModal: ToolsetLoginEventsModal;
+  toolsetSignInMock: ToolsetSignInMockHelper;
   connectToolsetModal: ConnectToolsetModal;
 }>({
   beforeTestCleanup: [
@@ -2090,6 +2092,10 @@ const dialTest = test.extend<{
   toolsetLoginEventsModal: async ({ page }, use) => {
     const toolsetLoginEventsModal = new ToolsetLoginEventsModal(page);
     await use(toolsetLoginEventsModal);
+  },
+  toolsetSignInMock: async ({ page }, use) => {
+    const toolsetSignInMock = new ToolsetSignInMockHelper(page);
+    await use(toolsetSignInMock);
   },
   connectToolsetModal: async ({ page }, use) => {
     const connectToolsetModal = new ConnectToolsetModal(page);

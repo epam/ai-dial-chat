@@ -11,13 +11,9 @@ import {
 } from '@/src/testData';
 import { ApiKeyMockHelper } from '@/src/testData/toolsets/apiKeyMockHelper';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
+import { ToolsetSignInMockHelper } from '@/src/testData/toolsets/toolsetSignInMockHelper';
 import { GeneratorUtil } from '@/src/utils';
-import {
-  PublishActions,
-  Toolset,
-  ToolsetAuthStatus,
-  ToolsetAuthTypes,
-} from '@epam/ai-dial-shared';
+import { PublishActions, Toolset } from '@epam/ai-dial-shared';
 
 dialAdminTest(
   '[Quick app 2.0] Manage credentials form is available for public toolsets from Quick app 2.0 editor', // EPMRTC-7997
@@ -197,6 +193,7 @@ dialTest.only(
     toolsetLoginEventsModal,
     previewToolsetLoginModal,
     previewToolsetLoginModalAssertion,
+    toolsetSignInMock,
     toast,
     baseAssertion,
     setTestIds,
@@ -242,13 +239,11 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Make both toolsets appear as logged-out OAuth / API key (mock their auth settings)',
+      'Mock the toolsets as logged-out OAuth / API key and serve the enriched listing',
       async () => {
-        // Real creation with OAuth/API key auth_settings and a fake endpoint is
-        // rejected by the backend, so — like the other login tests — inject
-        // auth_settings into the mocked toolset routes. Set up each helper
-        // granularly WITHOUT its listing route so a single listing handler
-        // (below) can enrich BOTH toolsets in one response.
+        // Real creation with OAuth/API key auth_settings is rejected by the
+        // backend, so set up each auth helper WITHOUT its own listing route —
+        // the single listing route (below) enriches every toolset at once.
         oauthMock = new OAuthMockHelper(page, oauthToolset, oauthEndpoint);
         await oauthMock.setupToolsetRoutes();
         await oauthMock.setupSignInRoute();
@@ -262,48 +257,21 @@ dialTest.only(
         await apiKeyMock.setupSignOutRoute();
         apiKeyMock.enableMocking();
 
-        // The login modal fetches GET /api/toolsets-listing via rxjs fromFetch
-        // during chat streaming. Fetching the real listing from inside the
-        // route handler (route.fetch / page.request) gets torn down with the
-        // page fetch lifecycle and hangs forever (endless spinner). Instead,
-        // grab the real listing ONCE via the test's own API context, enrich
-        // both toolsets, and let the route fulfill instantly from that cache.
-        const mockConfig = oauthMock.getMockConfig();
-        const listing = await toolsetApiHelper.listToolsets();
-        for (const toolset of listing) {
-          // The OAuth toolset (logged in via popup) and the decline toolset
-          // both appear as logged-out OAuth in the modal.
-          if (
-            toolset.reference === oauthToolset.reference ||
-            toolset.reference === declineToolset.reference
-          ) {
-            toolset.auth_settings = {
-              authentication_type: ToolsetAuthTypes.OAUTH,
-              authorization_endpoint: mockConfig.authorization_endpoint,
-              token_endpoint: mockConfig.token_endpoint,
-              scopes_supported: mockConfig.scopes_supported,
-              code_challenge_method: mockConfig.code_challenge_method,
-              global_auth_status: ToolsetAuthStatus.SIGNED_OUT,
-              user_level_auth_status: ToolsetAuthStatus.SIGNED_OUT,
-            };
-          } else if (toolset.reference === apiKeyToolset.reference) {
-            toolset.auth_settings = {
-              authentication_type: ToolsetAuthTypes.API_KEY,
-              // The login form pre-fills (and requires) the key header from
-              // here; without it the hidden config field stays empty and the
-              // Log in button never enables.
-              api_key_header: ExpectedConstants.apiKeyHeaderName,
-              global_auth_status: ToolsetAuthStatus.SIGNED_OUT,
-              user_level_auth_status: ToolsetAuthStatus.SIGNED_OUT,
-            };
-          }
-        }
-        await page.context().route(`**${API.toolsetsHost()}`, (route) =>
-          route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({ data: listing }),
-          }),
+        const oauthSettings = ToolsetSignInMockHelper.loggedOutOAuthSettings(
+          oauthMock.getMockConfig(),
+        );
+        await toolsetSignInMock.setupToolsetsListingRoute(
+          await toolsetApiHelper.listToolsets(),
+          [
+            { toolset: oauthToolset, authSettings: oauthSettings },
+            { toolset: declineToolset, authSettings: oauthSettings },
+            {
+              toolset: apiKeyToolset,
+              authSettings: ToolsetSignInMockHelper.loggedOutApiKeySettings(
+                ExpectedConstants.apiKeyHeaderName,
+              ),
+            },
+          ],
         );
       },
     );
@@ -339,52 +307,13 @@ dialTest.only(
     });
 
     await dialTest.step(
-      'Mock the live-chat sign-in channel to require login for both toolsets, then send a message to trigger it',
+      'Send a message in the preview to trigger the sign-in modal',
       async () => {
-        // The sign-in modal is driven by the SSE channel
-        // '/api/client-channels/subscribe' (Feature.LiveChatInteraction) — the
-        // real backend only pushes it for a toolset that actually needs login,
-        // so for our mocked NONE-auth toolsets we push the events ourselves.
-        // Each event's toolsetId is decoded via decodeApiUrl on the client; use
-        // the toolset id so it matches both the toolsets map key and the
-        // logInToolsetSuccess payload that resolves (removes) the event.
-        const events = [oauthToolset, apiKeyToolset, declineToolset]
-          .map((toolset, index) =>
-            [
-              'data:',
-              JSON.stringify({
-                id: `${index + 1}`,
-                method: 'toolset/signin',
-                params: { toolsetId: toolset.id },
-              }),
-            ].join(' '),
-          )
-          .join('\n');
-        // The real channel is a single long-lived stream; our mock closes the
-        // response, so the client reconnects every few seconds. Push the events
-        // only on the FIRST subscribe — otherwise each reconnect re-adds the
-        // already-resolved events and the logged-in toolset rows reappear. Keep
-        // the channel id on every response so report stays resolvable.
-        let eventsPushed = false;
-        await page.route(`**${API.subscribeHost()}`, async (route) => {
-          await route.fulfill({
-            status: 200,
-            contentType: 'text/event-stream',
-            headers: { 'x-dial-client-channel-id': 'e2e-mocked-channel' },
-            body: eventsPushed ? '' : events,
-          });
-          eventsPushed = true;
-        });
-        // A signed-in toolset is reported back to the channel; the row is only
-        // removed on report success, so the fake channel id must resolve too.
-        await page.route(`**${API.reportHost()}`, (route) =>
-          route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: '{}',
-          }),
-        );
-
+        await toolsetSignInMock.setupSignInChannel([
+          oauthToolset,
+          apiKeyToolset,
+          declineToolset,
+        ]);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -466,7 +395,6 @@ dialTest.only(
           toolsetLoginEventsModal.getRowByToolsetName(oauthToolsetName),
           'hidden',
         );
-        // The API key toolset still needs a login.
         await baseAssertion.assertElementState(
           toolsetLoginEventsModal.getRowByToolsetName(apiKeyToolsetName),
           'visible',
@@ -486,7 +414,6 @@ dialTest.only(
           GeneratorUtil.randomString(10),
         );
         await previewToolsetLoginModal.loginButton.click();
-        // Last pending login resolved — the whole modal unmounts.
         await baseAssertion.assertElementState(
           toolsetLoginEventsModal,
           'hidden',
@@ -500,7 +427,6 @@ dialTest.only(
   '[Quick app 2.0] Login form for one not public toolset in App editor - Decline all\n' + // EPMRTC-8563
     '[Quick app 2.0] Login form for more than one not public toolset in App editor - Decline all', // EPMRTC-8565
   async ({
-    page,
     marketplacePage,
     entityEditorPage,
     quickApp2Builder,
@@ -511,6 +437,7 @@ dialTest.only(
     dialHomePage,
     sendMessage,
     toolsetLoginEventsModal,
+    toolsetSignInMock,
     toast,
     baseAssertion,
     setTestIds,
@@ -542,26 +469,17 @@ dialTest.only(
       'Make both toolsets appear as logged-out OAuth (mock the listing)',
       async () => {
         // No login happens here — decline all only needs the toolsets to show
-        // up as login-requiring, so just enrich the cached listing.
-        const references = [firstToolset.reference, secondToolset.reference];
-        const listing = await toolsetApiHelper.listToolsets();
-        for (const toolset of listing) {
-          if (references.includes(toolset.reference)) {
-            toolset.auth_settings = {
-              authentication_type: ToolsetAuthTypes.OAUTH,
-              authorization_endpoint: API.authorizationEndpoint(endpoint),
-              token_endpoint: API.tokenEndpoint(endpoint),
-              global_auth_status: ToolsetAuthStatus.SIGNED_OUT,
-              user_level_auth_status: ToolsetAuthStatus.SIGNED_OUT,
-            };
-          }
-        }
-        await page.context().route(`**${API.toolsetsHost()}`, (route) =>
-          route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({ data: listing }),
-          }),
+        // up as login-requiring.
+        const oauthSettings = ToolsetSignInMockHelper.loggedOutOAuthSettings({
+          authorization_endpoint: API.authorizationEndpoint(endpoint),
+          token_endpoint: API.tokenEndpoint(endpoint),
+        });
+        await toolsetSignInMock.setupToolsetsListingRoute(
+          await toolsetApiHelper.listToolsets(),
+          [
+            { toolset: firstToolset, authSettings: oauthSettings },
+            { toolset: secondToolset, authSettings: oauthSettings },
+          ],
         );
       },
     );
@@ -596,39 +514,12 @@ dialTest.only(
     });
 
     await dialTest.step(
-      'Mock the sign-in channel for both toolsets and send a message to trigger the modal',
+      'Send a message in the preview to trigger the sign-in modal',
       async () => {
-        const events = [firstToolset, secondToolset]
-          .map((toolset, index) =>
-            [
-              'data:',
-              JSON.stringify({
-                id: `${index + 1}`,
-                method: 'toolset/signin',
-                params: { toolsetId: toolset.id },
-              }),
-            ].join(' '),
-          )
-          .join('\n');
-        let eventsPushed = false;
-        await page.route(`**${API.subscribeHost()}`, async (route) => {
-          await route.fulfill({
-            status: 200,
-            contentType: 'text/event-stream',
-            headers: { 'x-dial-client-channel-id': 'e2e-mocked-channel' },
-            body: eventsPushed ? '' : events,
-          });
-          eventsPushed = true;
-        });
-        // Decline all reports every event; the rows clear only on report success.
-        await page.route(`**${API.reportHost()}`, (route) =>
-          route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: '{}',
-          }),
-        );
-
+        await toolsetSignInMock.setupSignInChannel([
+          firstToolset,
+          secondToolset,
+        ]);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
