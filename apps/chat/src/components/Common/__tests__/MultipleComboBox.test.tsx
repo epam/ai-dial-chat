@@ -108,6 +108,35 @@ describe('MultipleComboBox', () => {
     expect(onChangeSelectedItems).toHaveBeenCalledWith(['ba']);
   });
 
+  it('trims leading and trailing spaces from typed input before adding', async () => {
+    const getItemLabel = vi.fn((item: TestItem) => item.label);
+    render(
+      <MultipleComboBox
+        getItemLabel={getItemLabel}
+        getItemValue={getItemLabel}
+        onChangeSelectedItems={onChangeSelectedItems}
+      />,
+    );
+
+    await userEvent.type(screen.getByRole('combobox'), '  ba  {enter}');
+    expect(onChangeSelectedItems).toHaveBeenCalledWith(['ba']);
+  });
+
+  it('does not add a duplicate item that only differs by surrounding spaces', async () => {
+    const label = (s: string) => s;
+    render(
+      <MultipleComboBox
+        getItemLabel={label}
+        getItemValue={label}
+        onChangeSelectedItems={onChangeSelectedItems}
+        initialSelectedItems={['test']}
+      />,
+    );
+
+    await userEvent.type(screen.getByRole('combobox'), '  test  {enter}');
+    expect(onChangeSelectedItems).not.toHaveBeenCalled();
+  });
+
   it('deletes selected item when close button is clicked', async () => {
     const selectedItems = [items[0], items[1]];
     render(

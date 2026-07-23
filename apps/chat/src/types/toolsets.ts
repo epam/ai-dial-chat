@@ -105,3 +105,8 @@ export type ToolsetContextMenuDisabledActions = Partial<{
   connect: boolean;
   repair: boolean;
 }>;
+
+export interface ToolsetTool {
+  name: string;
+  title: string;
+}

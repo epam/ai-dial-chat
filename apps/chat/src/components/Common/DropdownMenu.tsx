@@ -5,6 +5,7 @@ import {
   FloatingPortal,
   FloatingTree,
   Placement,
+  Strategy,
   autoUpdate,
   flip,
   offset,
@@ -74,6 +75,7 @@ interface MenuProps {
   isMenuOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
   placement?: Placement;
+  strategy?: Strategy;
   shouldFlip?: boolean;
   shouldApplySize?: boolean;
   enableAncestorScroll?: boolean;
@@ -95,6 +97,7 @@ const MenuComponent = forwardRef<
     trigger,
     type = 'dropdown',
     placement,
+    strategy,
     isMenuOpen,
     onOpenChange,
     shouldFlip = true,
@@ -149,6 +152,7 @@ const MenuComponent = forwardRef<
       handleOpenChange(isOpened);
     },
     placement: placement ?? (isNested ? 'right-start' : 'bottom-start'),
+    strategy,
     middleware: [
       offset(0),
       ...(shouldFlip ? [flip()] : []),
