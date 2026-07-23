@@ -12,8 +12,9 @@ import {
   MAX_PROMPT_TOKENS_DEFAULT_PERCENT,
   MAX_PROMPT_TOKENS_DEFAULT_VALUE,
 } from '@/src/constants/default-server-settings';
+import { NA_VERSION } from '@/src/constants/publication';
 
-import { ApiUtils } from './api';
+import { ApiUtils, parseEntityApiKey } from './api';
 
 import { TiktokenEncoding } from 'tiktoken';
 
@@ -80,13 +81,19 @@ export function mapCoreEntityToDialModel(
         ? maxTotalTokens - maxResponseTokens
         : undefined);
   }
+  const id = ApiUtils.decodeApiUrl(entity.id);
+  const { version: parsedVersion } = parseEntityApiKey(id, {
+    parseVersion: true,
+  });
 
   return {
     id: ApiUtils.decodeApiUrl(entity.id),
     reference: entity.reference,
     name: entity.display_name ?? entity.id,
     isDefault,
-    version: entity.display_version,
+    version:
+      entity.display_version ??
+      (parsedVersion === NA_VERSION ? undefined : parsedVersion),
     description: entity.description,
     updatedAt: fixDate(entity.updated_at),
     createdAt: fixDate(entity.created_at),
