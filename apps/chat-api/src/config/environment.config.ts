@@ -541,6 +541,12 @@ export class EnvironmentVariables {
   TRANSCRIBE_SIZE_LIMIT_BYTES?: number = 5 * 1024 * 1024;
 
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  CONVERSATION_BODY_SIZE_LIMIT_BYTES?: number = 10 * 1024 * 1024;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
     return String(value)

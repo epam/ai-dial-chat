@@ -522,6 +522,7 @@ describe('toolsetDtoToForm', () => {
       allowedTools: ['tool1'],
       authSettings: {
         authenticationType: 'OAUTH',
+        dynamicallyRegistered: false,
         clientId: 'client',
         authorizationEndpoint: 'https://auth.example.com/authorize',
         tokenEndpoint: 'https://auth.example.com/token',
@@ -551,6 +552,27 @@ describe('toolsetDtoToForm', () => {
       codeChallengeMethod: 'S256',
     });
     expect(form.auth.clientSecret).toBeUndefined();
+  });
+
+  it('restores WithLogin for a dynamically registered OAuth client', () => {
+    const dto: DialToolsetDto = {
+      id: 'toolsets/b/My%20toolset__0.0.1',
+      toolset: 'toolsets/b/My%20toolset__0.0.1',
+      displayName: 'My toolset',
+      endpoint: 'https://my-toolset.example.com/mcp',
+      authSettings: {
+        authenticationType: 'OAUTH',
+        dynamicallyRegistered: true,
+        clientId: 'dynamically-registered-client',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+        tokenEndpoint: 'https://auth.example.com/token',
+      },
+    };
+
+    const form = toolsetDtoToForm(dto);
+
+    expect(form.auth.withLogin).toBe(WithLogin.WithLogin);
+    expect(form.auth.clientId).toBe('dynamically-registered-client');
   });
 
   it('repairs encoded endpoint URLs returned from the API before showing them in the editor', () => {

@@ -127,6 +127,7 @@ const mapToolsetAuthSettings = (
 
   return {
     authenticationType: getString(raw, 'authentication_type'),
+    dynamicallyRegistered: getBoolean(raw, 'dynamically_registered'),
     globalAuthStatus: getString(raw, 'global_auth_status'),
     appLevelAuthStatus: getString(raw, 'app_level_auth_status'),
     userLevelAuthStatus: getString(raw, 'user_level_auth_status'),

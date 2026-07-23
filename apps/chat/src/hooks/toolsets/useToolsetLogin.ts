@@ -160,12 +160,10 @@ export const useToolsetLogin = (): {
       }
 
       /*
-       * Cancelled: the callback popup posts its result and closes itself
-       * back-to-back — the opener can observe `popup.closed` before the
-       * `BroadcastChannel` message arrives, so a login that actually
-       * succeeded server-side can still surface as Cancelled here.
-       * Re-checking the toolset's real status avoids reporting a false
-       * cancel for a login that already went through.
+       * Treat the backend as the final authority if popup tracking or
+       * cross-process message delivery ever still reports a false cancel.
+       * This avoids reporting cancellation for a login that actually
+       * completed server-side.
        */
       try {
         const refreshed = await getToolset(toolsetId);

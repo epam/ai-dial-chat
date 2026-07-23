@@ -2387,6 +2387,12 @@ export interface DialToolsetAuthSettingsDto {
    */
   authenticationType: DialToolsetAuthSettingsDtoAuthenticationTypeEnum;
   /**
+   * Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration
+   * @type {boolean}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  dynamicallyRegistered?: boolean;
+  /**
    *
    * @type {string}
    * @memberof DialToolsetAuthSettingsDto
@@ -4353,6 +4359,12 @@ export interface ToolsetAuthSettingsDto {
    * @memberof ToolsetAuthSettingsDto
    */
   authenticationType?: ToolsetAuthSettingsDtoAuthenticationTypeEnum;
+  /**
+   * Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration
+   * @type {boolean}
+   * @memberof ToolsetAuthSettingsDto
+   */
+  dynamicallyRegistered?: boolean;
   /**
    * Whether the toolset has global (shared) credentials signed in
    * @type {string}

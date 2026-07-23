@@ -398,8 +398,13 @@ export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => {
     withLogin = WithLogin.WithoutLogin;
   } else if (
     authenticationType === ToolsetAuthTypes.OAuth &&
-    authSettings?.clientId
+    authSettings?.dynamicallyRegistered === false
   ) {
+    /*
+     * A public client id exists for both dynamically registered and manually
+     * configured OAuth clients. Core's explicit registration flag is the
+     * reliable way to restore the editor mode.
+     */
     withLogin = WithLogin.WithConfig;
   }
 

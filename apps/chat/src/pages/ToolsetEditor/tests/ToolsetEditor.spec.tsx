@@ -196,6 +196,12 @@ vi.mock('../ToolsetEditorView', () => ({
         >
           fill-invalid-oauth-toolset
         </button>
+        <button
+          type="button"
+          onClick={() => onAuthChange({ isLoggedIn: true })}
+        >
+          report-login-success
+        </button>
       </div>
     );
   },
@@ -486,6 +492,18 @@ describe('ToolsetEditor', () => {
     await user.click(
       screen.getByRole('button', {
         name: 'save-toolset',
+      }),
+    );
+
+    await waitFor(() => expect(mockRefetchToolsets).toHaveBeenCalledOnce());
+  });
+
+  it('refetches toolsets after the auth section reports a successful login', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'report-login-success',
       }),
     );
 
