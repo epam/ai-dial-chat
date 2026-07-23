@@ -240,21 +240,23 @@ const AppsEditor: FC = () => {
       clearSaveTimeout();
       if (isPreviewing) return;
 
-      const completeSave = async () => {
-        await refetchDeployments().catch(() => undefined);
-        setIsSaving(false);
-        if (hasChanges) {
-          setPreviewResetKey((prev) => prev + 1);
-        }
-        if (pendingSaveAction === 'preview') {
-          setIsPreviewing(true);
-        } else {
-          navigate(returnUrl);
-        }
-        setPendingSaveAction(null);
-      };
+      /* Fire-and-forget: the deployments list only needs to reflect this
+       * save's changes eventually. `DeploymentsContext` is a shared,
+       * reactive source, so once this resolves, any reader (including
+       * AppPreviewChat) re-renders with the fresh data on its own — nothing
+       * here should block on it before showing preview or navigating away. */
+      void refetchDeployments().catch(() => undefined);
 
-      void completeSave();
+      setIsSaving(false);
+      if (hasChanges) {
+        setPreviewResetKey((prev) => prev + 1);
+      }
+      if (pendingSaveAction === 'preview') {
+        setIsPreviewing(true);
+      } else {
+        navigate(returnUrl);
+      }
+      setPendingSaveAction(null);
     },
     [
       clearSaveTimeout,

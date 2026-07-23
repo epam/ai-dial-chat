@@ -401,61 +401,6 @@ describe('AppEditorIframe — triggerSave', () => {
   });
 });
 
-describe('AppEditorIframe — triggerSave', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockUseUser.mockReturnValue({
-      status: AuthStatus.Authenticated,
-      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
-      refresh: vi.fn(),
-      reset: vi.fn(),
-    });
-    mockUseTheme.mockReturnValue({
-      currentTheme: 'dark',
-      selectedTheme: 'dark',
-      setTheme: vi.fn(),
-      isLoading: false,
-    });
-  });
-
-  it('posts TriggerSave with the given general payload', () => {
-    const ref = createRef<AppEditorIframeHandle>();
-    renderIframe({}, ref);
-    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
-    const postMessageSpy = vi.spyOn(
-      iframe.contentWindow as Window,
-      'postMessage',
-    );
-
-    ref.current?.triggerSave({ name: 'My App', description: 'desc' });
-
-    expect(postMessageSpy).toHaveBeenCalledWith(
-      {
-        type: AppsEditorEvent.TriggerSave,
-        general: { name: 'My App', description: 'desc' },
-      },
-      'https://editor.example.com',
-    );
-  });
-
-  it('posts TriggerSave with no general payload when none is passed', () => {
-    const ref = createRef<AppEditorIframeHandle>();
-    renderIframe({}, ref);
-    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
-    const postMessageSpy = vi.spyOn(
-      iframe.contentWindow as Window,
-      'postMessage',
-    );
-
-    ref.current?.triggerSave();
-
-    expect(postMessageSpy).toHaveBeenCalledWith(
-      { type: AppsEditorEvent.TriggerSave, general: undefined },
-      'https://editor.example.com',
-    );
-  });
-});
-
 describe('AppEditorIframe — toolset login request', () => {
   const makeFakePopup = () => {
     const store = new Map<string, string>();
