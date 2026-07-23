@@ -387,8 +387,6 @@ export const useDialFileListing = ({
       }
 
       keysNeedingRefetch.forEach((apiPath) => {
-        if (expandingApiPathsRef.current.has(apiPath)) return;
-        expandingApiPathsRef.current.add(apiPath);
         const loadFolder = async (): Promise<void> => {
           try {
             const { items: flat, permissions } = await fetchByTab(
@@ -403,14 +401,11 @@ export const useDialFileListing = ({
                 new Map(prev).set(apiPath, permissions),
               );
             }
-            erroredApiPathsRef.current.delete(apiPath);
           } catch {
             onNotification?.({
               variant: NotificationVariant.Error,
               message: t(DialFileManagerI18nKeys.FolderLoadError),
             });
-          } finally {
-            expandingApiPathsRef.current.delete(apiPath);
           }
         };
         void loadFolder();
