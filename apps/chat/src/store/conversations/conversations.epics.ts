@@ -81,6 +81,7 @@ import {
   isEntityIdExternal,
   isEntityIdLocal,
   isMyBucket,
+  isMyEntity,
 } from '@/src/utils/app/id';
 import {
   mergeMessages,
@@ -3113,7 +3114,7 @@ const updateAttachmentsOnFileMoveEpic: AppEpic = (action$, state$) =>
         state$.value,
       ).filter(
         (conversation) =>
-          !isEntityIdLocal(conversation) &&
+          isMyEntity(conversation) &&
           conversation.status === UploadStatus.LOADED,
       ) as Conversation[];
 
