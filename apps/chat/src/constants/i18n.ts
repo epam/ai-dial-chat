@@ -482,6 +482,7 @@ export enum SideBarI18nKeys {
   AreYouSureDeleteItem = 'Are you sure you want to delete',
   DoYouWantToDeleteFollowing = 'Do you want to delete the following',
   ItemsQuestion = 'items?',
+  DeletingWillStopSharingFile = '\nDeleting will stop sharing and other users will no longer see this file.',
   CopyingFiles = 'Copying files',
   MovingItems = 'Moving items',
   ItemsBeingAction = '{{count}} items are being {{action}}\u2026',
