@@ -319,7 +319,10 @@ describe('AppEditorIframe — ready-to-save readiness', () => {
   it('re-gates logged-out to false when the iframe reloads for a different app', () => {
     const onLoggedOutChange = vi.fn();
     const { rerender } = render(
-      <AppEditorIframe {...DEFAULT_PROPS} onLoggedOutChange={onLoggedOutChange} />,
+      <AppEditorIframe
+        {...DEFAULT_PROPS}
+        onLoggedOutChange={onLoggedOutChange}
+      />,
     );
 
     fireEvent(

@@ -4,6 +4,7 @@ import type { QuotationSource } from '@epam/ai-dial-source-panel';
 import { useMemo } from 'react';
 import { resolveMessageAnnotations } from '../../utils/annotation';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
+import { isReferenceOnlyAttachment } from '../../utils/reference-attachment';
 
 /**
  * Derives uploaded (user), generated (assistant) attachment lists, and quotation sources
@@ -23,13 +24,27 @@ export const useConversationSources = (
     const seenUrls = new Set<string>();
 
     for (const msg of messages) {
-      const attachments = attachmentDtosToDisplayAttachments(
-        msg.custom_content?.attachments,
-      );
+      const dtos = msg.custom_content?.attachments;
       if (msg.role === MessageRole.User) {
-        uploaded.push(...attachments);
+        uploaded.push(...attachmentDtosToDisplayAttachments(dtos));
       } else if (msg.role === MessageRole.Assistant) {
-        generated.push(...attachments);
+        const regularDtos = dtos?.filter(
+          (dto) => !isReferenceOnlyAttachment(dto),
+        );
+        generated.push(...attachmentDtosToDisplayAttachments(regularDtos));
+
+        for (const dto of dtos ?? []) {
+          if (!isReferenceOnlyAttachment(dto)) continue;
+          const url = dto.reference_url as string;
+          if (seenUrls.has(url)) continue;
+          seenUrls.add(url);
+          sources.push({
+            url,
+            title: dto.title ?? url,
+            contentType: dto.reference_type ?? dto.type ?? '',
+            quote: dto.data,
+          });
+        }
 
         for (const annotation of resolveMessageAnnotations(msg)) {
           const att = annotation?.body?.source?.attachment;
