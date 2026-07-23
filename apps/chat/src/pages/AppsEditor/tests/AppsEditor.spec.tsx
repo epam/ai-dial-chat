@@ -164,7 +164,7 @@ describe('AppsEditor', () => {
     expect(screen.getByText('settings-step').dataset.previewing).toBe('true');
   });
 
-  it('waits for deployments refetch before entering preview mode', async () => {
+  it('enters preview mode immediately without waiting for the deployments refetch', async () => {
     let resolveRefetch: () => void = () => undefined;
     const refetchPromise = new Promise<void>((resolve) => {
       resolveRefetch = resolve;
@@ -180,22 +180,42 @@ describe('AppsEditor', () => {
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
-    expect(screen.getByText('settings-step').dataset.previewing).toBe('false');
     expect(
-      screen.getByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
-    ).toBeTruthy();
-
-    await act(async () => {
-      resolveRefetch();
-      await refetchPromise;
-    });
-
-    expect(
-      await screen.findByRole('button', {
+      screen.getByRole('button', {
         name: AppsEditorI18nKeys.ExitPreviewButton,
       }),
     ).toBeTruthy();
     expect(screen.getByText('settings-step').dataset.previewing).toBe('true');
+    expect(
+      screen.queryByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
+    ).toBeNull();
+
+    // The still-unresolved refetch must not cause any later error or state change.
+    await act(async () => {
+      resolveRefetch();
+      await refetchPromise;
+    });
+  });
+
+  it('does not block or error preview entry when the deployments refetch rejects', async () => {
+    refetchDeployments.mockImplementationOnce(() =>
+      Promise.reject(new Error('boom')),
+    );
+    renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+    await act(async () => {
+      latestSettingsStepProps.onSaveSuccess?.(false);
+      await Promise.resolve();
+    });
+
+    expect(
+      screen.getByRole('button', {
+        name: AppsEditorI18nKeys.ExitPreviewButton,
+      }),
+    ).toBeTruthy();
     expect(
       screen.queryByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
     ).toBeNull();
@@ -250,7 +270,7 @@ describe('AppsEditor', () => {
     ).toBeNull();
   });
 
-  it('disables Cancel and Save while previewing', async () => {
+  it('hides Cancel and Save while previewing', async () => {
     renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
     await userEvent.click(
@@ -261,13 +281,12 @@ describe('AppsEditor', () => {
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
-    const cancelButton = screen.getByRole('button', {
-      name: ButtonsI18nKeys.Cancel,
-    }) as HTMLButtonElement;
     await screen.findByRole('button', {
       name: AppsEditorI18nKeys.ExitPreviewButton,
     });
-    expect(cancelButton.disabled).toBe(true);
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.Cancel }),
+    ).toBeNull();
     expect(
       screen.getByRole('button', {
         name: AppsEditorI18nKeys.ExitPreviewButton,
