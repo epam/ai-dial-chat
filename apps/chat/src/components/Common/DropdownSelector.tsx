@@ -1,4 +1,5 @@
-import { IconX } from '@tabler/icons-react';
+import { IconChevronDown, IconChevronUp, IconX } from '@tabler/icons-react';
+import { useState } from 'react';
 import Select, { Props as SelectProps, components } from 'react-select';
 
 import classNames from 'classnames';
@@ -26,6 +27,16 @@ export function DropdownSelector({
   ...selectProps
 }: Props) {
   const { t } = useTranslation(Translation.Common);
+
+  const [isMenuOpen, setIsMenuOpen] = selectProps.menuIsOpen
+    ? [selectProps.menuIsOpen, selectProps.onMenuOpen]
+    : useState(false);
+  const onMenuOpen = () => {
+    if (!isMenuOpen) {
+      selectProps.onMenuOpen?.();
+    }
+    setIsMenuOpen?.(!isMenuOpen);
+  };
   return (
     <Tooltip
       triggerClassName={classNames(
@@ -38,6 +49,11 @@ export function DropdownSelector({
         {...selectProps}
         closeMenuOnSelect={closeMenuOnSelect}
         name="colors"
+        onMenuOpen={onMenuOpen}
+        onMenuClose={() => {
+          selectProps.onMenuClose?.();
+          setIsMenuOpen?.(false);
+        }}
         menuPortalTarget={document.body}
         components={{
           ClearIndicator: (props) => (
@@ -73,6 +89,12 @@ export function DropdownSelector({
               />
             </components.MultiValueRemove>
           ),
+          IndicatorsContainer: (props) =>
+            isMenuOpen ? (
+              <IconChevronUp size={18} className="text-primary" />
+            ) : (
+              <IconChevronDown size={18} className="text-primary" />
+            ),
         }}
         styles={{
           indicatorsContainer: (styles) => ({
@@ -121,9 +143,9 @@ export function DropdownSelector({
               color: 'var(--text-primary)',
             },
           }),
-          indicatorSeparator: (styles, state) => ({
+          indicatorSeparator: (styles) => ({
             ...styles,
-            visibility: state.hasValue ? 'visible' : 'hidden',
+            visibility: 'hidden',
             backgroundColor: 'var(--text-secondary)',
           }),
           multiValue: (styles, state) => ({
