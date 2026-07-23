@@ -173,7 +173,7 @@ dialAdminTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Quick app 2.0] Login form for one not public toolset in App editor - Log in Oauth\n' + // EPMRTC-8559
     '[Quick app 2.0] Login form for one not public toolset in App editor - Log in API key\n' + // EPMRTC-8561
     '[Quick app 2.0] Login form for more than one not public toolset in App editor - Login for each\n' + // EPMRTC-8560
@@ -423,7 +423,7 @@ dialTest.only(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Quick app 2.0] Login form for one not public toolset in App editor - Decline all\n' + // EPMRTC-8563
     '[Quick app 2.0] Login form for more than one not public toolset in App editor - Decline all', // EPMRTC-8565
   async ({
