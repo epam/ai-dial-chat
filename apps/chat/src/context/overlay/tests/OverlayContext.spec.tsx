@@ -7,6 +7,7 @@ import { createElement, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthStatus } from '../../../types/auth-status';
 import {
+  type ConversationListBridge,
   OverlayProvider,
   useOptionalOverlay,
   useOverlay,
@@ -266,13 +267,16 @@ describe('OverlayContext', () => {
       const { result } = renderHook(() => useOverlay(), { wrapper });
       const sendMessage = vi.fn().mockResolvedValue({ messages: [] });
       act(() => {
-        result.current.registerActiveConversationBridge({
-          getMessages: () => ({ messages: [] }),
-          sendMessage,
-          setInputContent: vi.fn(),
-          setSystemPrompt: vi.fn(),
-          setTemperature: vi.fn(),
-        });
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages: () => ({ messages: [] }),
+            sendMessage,
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'conv-1',
+        );
       });
       const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
 
@@ -301,13 +305,16 @@ describe('OverlayContext', () => {
       establishHostDomain();
       const sendMessage = vi.fn().mockResolvedValue({ messages: [] });
       act(() => {
-        result.current.registerActiveConversationBridge({
-          getMessages: () => ({ messages: [] }),
-          sendMessage,
-          setInputContent: vi.fn(),
-          setSystemPrompt: vi.fn(),
-          setTemperature: vi.fn(),
-        });
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages: () => ({ messages: [] }),
+            sendMessage,
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'conv-1',
+        );
       });
       const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
 
@@ -342,13 +349,16 @@ describe('OverlayContext', () => {
       expect(postMessageSpy).not.toHaveBeenCalled();
 
       act(() => {
-        result.current.registerActiveConversationBridge({
-          getMessages: () => ({ messages: [] }),
-          sendMessage: vi.fn(),
-          setInputContent: vi.fn(),
-          setSystemPrompt: vi.fn(),
-          setTemperature: vi.fn(),
-        });
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages: () => ({ messages: [] }),
+            sendMessage: vi.fn(),
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'conv-1',
+        );
       });
 
       await waitFor(() => {
@@ -372,13 +382,16 @@ describe('OverlayContext', () => {
       const sendMessage = vi.fn().mockResolvedValue({ messages: [] });
 
       act(() => {
-        result.current.registerActiveConversationBridge({
-          getMessages: () => ({ messages: [] }),
-          sendMessage,
-          setInputContent: vi.fn(),
-          setSystemPrompt: vi.fn(),
-          setTemperature: vi.fn(),
-        });
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages: () => ({ messages: [] }),
+            sendMessage,
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'conv-1',
+        );
       });
 
       expect(() =>
@@ -407,13 +420,16 @@ describe('OverlayContext', () => {
       const sendMessage = vi.fn().mockRejectedValue(new Error('send failed'));
 
       act(() => {
-        result.current.registerActiveConversationBridge({
-          getMessages: () => ({ messages: [] }),
-          sendMessage,
-          setInputContent: vi.fn(),
-          setSystemPrompt: vi.fn(),
-          setTemperature: vi.fn(),
-        });
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages: () => ({ messages: [] }),
+            sendMessage,
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'conv-1',
+        );
       });
 
       dispatchFromHost({
@@ -448,22 +464,28 @@ describe('OverlayContext', () => {
       }));
 
       act(() => {
-        result.current.registerActiveConversationBridge({
-          getMessages: firstGetMessages,
-          sendMessage: vi.fn(),
-          setInputContent: vi.fn(),
-          setSystemPrompt: vi.fn(),
-          setTemperature: vi.fn(),
-        });
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages: firstGetMessages,
+            sendMessage: vi.fn(),
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'conv-1',
+        );
       });
       act(() => {
-        result.current.registerActiveConversationBridge({
-          getMessages: secondGetMessages,
-          sendMessage: vi.fn(),
-          setInputContent: vi.fn(),
-          setSystemPrompt: vi.fn(),
-          setTemperature: vi.fn(),
-        });
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages: secondGetMessages,
+            sendMessage: vi.fn(),
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'conv-1',
+        );
       });
 
       dispatchFromHost({
@@ -485,16 +507,19 @@ describe('OverlayContext', () => {
 
       const getMessages = vi.fn(() => ({ messages: [] }));
       act(() => {
-        result.current.registerActiveConversationBridge({
-          getMessages,
-          sendMessage: vi.fn(),
-          setInputContent: vi.fn(),
-          setSystemPrompt: vi.fn(),
-          setTemperature: vi.fn(),
-        });
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages,
+            sendMessage: vi.fn(),
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'conv-1',
+        );
       });
       act(() => {
-        result.current.registerActiveConversationBridge(null);
+        result.current.registerActiveConversationBridge(null, null);
       });
 
       dispatchFromHost({
@@ -528,13 +553,16 @@ describe('OverlayContext', () => {
 
       const getMessages = vi.fn(() => ({ messages: [] }));
       act(() => {
-        result.current.registerActiveConversationBridge({
-          getMessages,
-          sendMessage: vi.fn(),
-          setInputContent: vi.fn(),
-          setSystemPrompt: vi.fn(),
-          setTemperature: vi.fn(),
-        });
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages,
+            sendMessage: vi.fn(),
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'conv-1',
+        );
       });
 
       expect(getMessages).not.toHaveBeenCalled();
@@ -544,6 +572,452 @@ describe('OverlayContext', () => {
             (message as { requestId?: string }).requestId === 'expired-get',
         ),
       ).toBe(false);
+    });
+  });
+
+  describe('conversation-list bridge', () => {
+    const establishHostDomain = () => {
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'setup',
+        payload: { hostDomain: 'https://partner.example.com' },
+      });
+    };
+
+    const makeListBridge = (
+      overrides?: Partial<{
+        getConversations: () => unknown[];
+        createConversation: (options: unknown) => Promise<unknown>;
+        deleteConversation: (id: string) => Promise<unknown>;
+        renameConversation: (id: string, newName: string) => Promise<unknown>;
+        selectConversation: (id: string) => Promise<unknown>;
+      }>,
+    ): ConversationListBridge =>
+      ({
+        getConversations: vi.fn(() => []),
+        createConversation: vi.fn().mockResolvedValue({ conversation: null }),
+        deleteConversation: vi.fn().mockResolvedValue({}),
+        renameConversation: vi.fn().mockResolvedValue({}),
+        selectConversation: vi.fn().mockResolvedValue({}),
+        ...overrides,
+      }) as ConversationListBridge;
+
+    const responsesFor = (
+      postMessageSpy: ReturnType<typeof vi.spyOn>,
+      requestId: string,
+    ) =>
+      (postMessageSpy.mock.calls as Array<[unknown, unknown?]>)
+        .map(([message]) => message as { requestId?: string; payload?: never })
+        .filter((message) => message.requestId === requestId);
+
+    it('answers GET_CONVERSATIONS once a conversation-list bridge registers', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+      const bridge = makeListBridge({
+        getConversations: vi.fn(() => [{ id: 'conv-1', title: 'One' }]),
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.GetConversations,
+        requestId: 'get-conversations-1',
+      });
+      expect(postMessageSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+
+      await waitFor(() => {
+        const responses = responsesFor(postMessageSpy, 'get-conversations-1');
+        expect(responses).toHaveLength(1);
+        expect(
+          (responses[0] as unknown as { payload: { conversations: unknown[] } })
+            .payload.conversations,
+        ).toEqual([{ id: 'conv-1', title: 'One' }]);
+      });
+    });
+
+    it('drops a queued conversation-list request once expiresAt passes without a bridge', async () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.DeleteConversation,
+        requestId: 'expired-delete',
+        payload: { id: 'conv-1' },
+        expiresAt: Date.now() + 50,
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(51);
+      });
+
+      const bridge = makeListBridge();
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+
+      expect(bridge.deleteConversation).not.toHaveBeenCalled();
+      expect(responsesFor(postMessageSpy, 'expired-delete')).toHaveLength(0);
+    });
+
+    it('returns an empty array for GET_SELECTED_CONVERSATIONS when no conversation is mounted', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+      act(() => {
+        result.current.registerConversationListBridge(makeListBridge());
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.GetSelectedConversations,
+        requestId: 'get-selected-empty',
+      });
+
+      await waitFor(() => {
+        const responses = responsesFor(postMessageSpy, 'get-selected-empty');
+        expect(responses).toHaveLength(1);
+        expect(
+          (responses[0] as unknown as { payload: { conversations: unknown[] } })
+            .payload.conversations,
+        ).toEqual([]);
+      });
+    });
+
+    it('returns the active conversation for GET_SELECTED_CONVERSATIONS from the list snapshot when id shapes differ', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+      const bridge = makeListBridge({
+        getConversations: vi.fn(() => [
+          {
+            id: 'conversations/bucket/conv-1',
+            title: 'Active conversation',
+          },
+        ]),
+      });
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+      act(() => {
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages: () => ({ messages: [] }),
+            sendMessage: vi.fn(),
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'bucket/conv-1',
+        );
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.GetSelectedConversations,
+        requestId: 'get-selected-one',
+      });
+
+      await waitFor(() => {
+        const responses = responsesFor(postMessageSpy, 'get-selected-one');
+        expect(responses).toHaveLength(1);
+        expect(
+          (responses[0] as unknown as { payload: { conversations: unknown[] } })
+            .payload.conversations,
+        ).toEqual([
+          {
+            id: 'conversations/bucket/conv-1',
+            title: 'Active conversation',
+          },
+        ]);
+      });
+    });
+
+    it('falls back to a minimal projection for a just-created conversation not yet in the snapshot', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+      act(() => {
+        result.current.registerConversationListBridge(makeListBridge());
+      });
+      act(() => {
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages: () => ({ messages: [] }),
+            sendMessage: vi.fn(),
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'brand-new-conv',
+        );
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.GetSelectedConversations,
+        requestId: 'get-selected-fallback',
+      });
+
+      await waitFor(() => {
+        const responses = responsesFor(postMessageSpy, 'get-selected-fallback');
+        expect(responses).toHaveLength(1);
+        const { conversations } = (
+          responses[0] as unknown as {
+            payload: { conversations: { id: string }[] };
+          }
+        ).payload;
+        expect(conversations).toHaveLength(1);
+        expect(conversations[0].id).toBe('brand-new-conv');
+      });
+    });
+
+    it('resolves SELECT_CONVERSATION once the target conversation registers as active when id shapes differ', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+      const bridge = makeListBridge({
+        getConversations: vi.fn(() => [
+          {
+            id: 'conversations/bucket/conv-1',
+            title: 'Selected conversation',
+          },
+        ]),
+      });
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.SelectConversation,
+        requestId: 'select-1',
+        payload: { id: 'conversations/bucket/conv-1' },
+      });
+
+      await waitFor(() => {
+        expect(bridge.selectConversation).toHaveBeenCalledWith(
+          'conversations/bucket/conv-1',
+        );
+      });
+      expect(responsesFor(postMessageSpy, 'select-1')).toHaveLength(0);
+
+      act(() => {
+        result.current.registerActiveConversationBridge(
+          {
+            getMessages: () => ({ messages: [] }),
+            sendMessage: vi.fn(),
+            setInputContent: vi.fn(),
+            setSystemPrompt: vi.fn(),
+            setTemperature: vi.fn(),
+          },
+          'bucket/conv-1',
+        );
+      });
+
+      await waitFor(() => {
+        const responses = responsesFor(postMessageSpy, 'select-1');
+        expect(responses).toHaveLength(1);
+        expect(
+          (responses[0] as unknown as { payload: { conversation: unknown } })
+            .payload.conversation,
+        ).toEqual({
+          id: 'conversations/bucket/conv-1',
+          title: 'Selected conversation',
+        });
+      });
+    });
+
+    it('drops SELECT_CONVERSATION for an id that never registers as active before expiresAt', async () => {
+      vi.useFakeTimers();
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+      const bridge = makeListBridge();
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.SelectConversation,
+        requestId: 'select-inaccessible',
+        payload: { id: 'unknown-conv' },
+        expiresAt: Date.now() + 50,
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(51);
+      });
+
+      expect(responsesFor(postMessageSpy, 'select-inaccessible')).toHaveLength(
+        0,
+      );
+    });
+
+    it('forwards CREATE_CONVERSATION to the bridge and posts its resolved payload verbatim', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+      const bridge = makeListBridge({
+        createConversation: vi.fn().mockResolvedValue({
+          conversation: { id: 'new-conv', title: 'New conversation' },
+        }),
+      });
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.CreateConversation,
+        requestId: 'create-1',
+        payload: { deploymentId: 'gpt-4o', firstMessage: 'Hello' },
+      });
+
+      await waitFor(() => {
+        expect(bridge.createConversation).toHaveBeenCalledWith({
+          deploymentId: 'gpt-4o',
+          firstMessage: 'Hello',
+        });
+        const responses = responsesFor(postMessageSpy, 'create-1');
+        expect(responses).toHaveLength(1);
+        expect(
+          (responses[0] as unknown as { payload: { conversation: unknown } })
+            .payload.conversation,
+        ).toEqual({ id: 'new-conv', title: 'New conversation' });
+      });
+    });
+
+    it('forwards CREATE_LOCAL_CONVERSATION to the bridge with an empty options object', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const bridge = makeListBridge();
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.CreateLocalConversation,
+        requestId: 'create-local-1',
+      });
+
+      await waitFor(() => {
+        expect(bridge.createConversation).toHaveBeenCalledWith({});
+      });
+    });
+
+    it('forwards DELETE_CONVERSATION and posts the bridge error verbatim', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+      const bridge = makeListBridge({
+        deleteConversation: vi.fn().mockResolvedValue({
+          error: { code: 'NOT_FOUND', message: 'no such conversation' },
+        }),
+      });
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.DeleteConversation,
+        requestId: 'delete-1',
+        payload: { id: 'conv-1' },
+      });
+
+      await waitFor(() => {
+        expect(bridge.deleteConversation).toHaveBeenCalledWith('conv-1');
+        const responses = responsesFor(postMessageSpy, 'delete-1');
+        expect(responses).toHaveLength(1);
+        expect(
+          (responses[0] as unknown as { payload: { error: unknown } }).payload
+            .error,
+        ).toEqual({ code: 'NOT_FOUND', message: 'no such conversation' });
+      });
+    });
+
+    it('forwards RENAME_CONVERSATION with id and newName', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const bridge = makeListBridge({
+        renameConversation: vi.fn().mockResolvedValue({
+          conversation: { id: 'conv-1', title: 'Renamed' },
+        }),
+      });
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.RenameConversation,
+        requestId: 'rename-1',
+        payload: { id: 'conv-1', newName: 'Renamed' },
+      });
+
+      await waitFor(() => {
+        expect(bridge.renameConversation).toHaveBeenCalledWith(
+          'conv-1',
+          'Renamed',
+        );
+      });
+    });
+
+    it('rejects a malformed RENAME_CONVERSATION payload without calling the bridge', () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const bridge = makeListBridge();
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.RenameConversation,
+        requestId: 'rename-malformed',
+        payload: { id: 'conv-1' },
+      });
+
+      expect(bridge.renameConversation).not.toHaveBeenCalled();
+    });
+
+    it('ignores conversation-list requests from an untrusted origin', () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const bridge = makeListBridge();
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+
+      dispatchFromHost(
+        {
+          type: OverlayRequestType.GetConversations,
+          requestId: 'get-other-origin',
+        },
+        'https://other.example.com',
+      );
+
+      expect(bridge.getConversations).not.toHaveBeenCalled();
+    });
+
+    it('unregisters the bridge and leaves a subsequent request pending', () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+      const bridge = makeListBridge();
+      act(() => {
+        result.current.registerConversationListBridge(bridge);
+      });
+      act(() => {
+        result.current.registerConversationListBridge(null);
+      });
+
+      dispatchFromHost({
+        type: OverlayRequestType.GetConversations,
+        requestId: 'get-after-unregister',
+      });
+
+      expect(bridge.getConversations).not.toHaveBeenCalled();
+      expect(responsesFor(postMessageSpy, 'get-after-unregister')).toHaveLength(
+        0,
+      );
     });
   });
 
