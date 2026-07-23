@@ -44,6 +44,15 @@ and whether a login is triggered on save.
 - **THEN** the configuration can be saved without submitting credentials and without
   triggering a login
 
+#### Scenario: Reopen an OAuth toolset with dynamic client registration
+- **WHEN** the editor loads a saved OAuth toolset that Core marks as dynamically registered
+- **THEN** the login mode is restored as "with login", even though the returned OAuth settings
+  contain the dynamically assigned client ID and endpoints
+
+#### Scenario: Reopen an OAuth toolset with manual client configuration
+- **WHEN** the editor loads a saved OAuth toolset that Core marks as not dynamically registered
+- **THEN** the login mode is restored as "with login & config"
+
 ### Requirement: Persist unsaved changes before login
 Clicking "Log in" (API Key or OAuth) SHALL first persist any unsaved editor changes — creating
 the toolset if it has no id yet, or updating it if the form has changed since it was last
