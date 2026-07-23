@@ -766,12 +766,16 @@ export class ChatMessages extends BaseElement {
     const respPromise = this.page.waitForResponse(
       (resp) => resp.request().method() === 'POST' && resp.status() === 200,
     );
-    await this.getChatMessageRate(messageIndex, Rate.like).click();
+    await this.getChatMessageRate(messageIndex, Rate.like).click({
+      force: true,
+    });
     await respPromise;
   }
 
   public async dislikeMessage(messageIndex: number) {
     await this.hoverOverMessage(messageIndex);
-    await this.getChatMessageRate(messageIndex, Rate.dislike).click();
+    await this.getChatMessageRate(messageIndex, Rate.dislike).click({
+      force: true,
+    });
   }
 }
