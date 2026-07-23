@@ -203,28 +203,6 @@ const AppsEditor: FC = () => {
     if (isPreviewing) return;
 
     const completeSave = async () => {
-      try {
-        /*
-         * The embedded Settings-step editor persists straight to DIAL Core
-         * from its own iframe and holds its own in-memory copy of the
-         * General-step fields (name/description/...) from whenever it last
-         * loaded the app. If General were persisted *before* triggering this
-         * save, the iframe's own save would overwrite those fields right
-         * back to its stale copy. Persisting General *after* the Settings
-         * save succeeds means the General PATCH's GET-then-merge reads the
-         * just-saved document and layers the new General values on top of
-         * it, so neither side clobbers the other.
-         */
-        if (pendingSaveAction === 'save' && hasExistingAppOnMountRef.current) {
-          await generalFormRef.current?.persist();
-        }
-      } catch {
-        setIsSaving(false);
-        setSaveError(t(AppsEditorI18nKeys.ErrorSaveFailed));
-        setPendingSaveAction(null);
-        return;
-      }
-
       await refetchDeployments().catch(() => undefined);
       setIsSaving(false);
       if (pendingSaveAction === 'preview') {
@@ -243,7 +221,6 @@ const AppsEditor: FC = () => {
     refetchDeployments,
     navigate,
     returnUrl,
-    t,
   ]);
 
   const handleSaveError = useCallback(
@@ -276,7 +253,10 @@ const AppsEditor: FC = () => {
     setIsSaving(true);
     setPendingSaveAction('save');
     startSaveTimeout();
-    settingsStepRef.current?.triggerSave();
+    const general = hasExistingAppOnMountRef.current
+      ? generalFormRef.current?.getValues()
+      : undefined;
+    settingsStepRef.current?.triggerSave(general);
   }, [isGeneralStep, startSaveTimeout]);
 
   const handlePreview = useCallback(() => {

@@ -67,3 +67,23 @@ export interface ToolsetLogoutResultPayload {
   reason?: string;
   credentials?: RefreshedToolsetCredentials;
 }
+
+/**
+ * Current General-step values carried on a `TriggerSave` message so the embedded
+ * QuickApps editor can merge them into the single save it already performs, instead of
+ * the host persisting them separately. Deliberately excludes `version` — Settings-step
+ * save must not alter the application's version.
+ */
+export interface TriggerSaveGeneralPayload {
+  name: string;
+  description?: string;
+  iconUrl?: string;
+  topics?: string[];
+  intro?: string;
+}
+
+/** Payload of a `TriggerSave` message posted to the embedded QuickApps iframe. */
+export interface TriggerSaveMessage {
+  type: AppsEditorEvent.TriggerSave;
+  general?: TriggerSaveGeneralPayload;
+}

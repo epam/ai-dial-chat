@@ -3,12 +3,13 @@ import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
 import { forwardRef, memo, useImperativeHandle, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppsEditorI18nKeys } from '../../constants/translation-keys';
+import type { TriggerSaveGeneralPayload } from '../../types/apps-editor';
 import type { AppEditorIframeHandle } from './AppEditorIframe';
 import AppEditorIframe from './AppEditorIframe';
 import AppPreviewChat from './AppPreviewChat';
 
 export interface SettingsStepHandle {
-  triggerSave: () => void;
+  triggerSave: (general?: TriggerSaveGeneralPayload) => void;
 }
 
 interface Props {
@@ -45,7 +46,8 @@ const SettingsStep = forwardRef<SettingsStepHandle, Props>(
     useImperativeHandle(
       ref,
       () => ({
-        triggerSave: () => iframeRef.current?.triggerSave(),
+        triggerSave: (general?: TriggerSaveGeneralPayload) =>
+          iframeRef.current?.triggerSave(general),
       }),
       [],
     );

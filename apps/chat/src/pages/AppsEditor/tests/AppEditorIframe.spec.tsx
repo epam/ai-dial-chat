@@ -1,6 +1,7 @@
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, Ref } from 'react';
+import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TOOLSET_REDIRECT_STATE_KEY } from '../../../constants/toolsets';
 import * as UserContextModule from '../../../context/auth/UserContext';
@@ -10,6 +11,7 @@ import * as toolsetsApi from '../../../server-api/toolsets';
 import { AppsEditorEvent } from '../../../types/apps-editor';
 import { AuthStatus } from '../../../types/auth-status';
 import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
+import type { AppEditorIframeHandle } from '../AppEditorIframe';
 import AppEditorIframe from '../AppEditorIframe';
 
 vi.mock('../../../context/auth/UserContext');
@@ -46,7 +48,8 @@ const DEFAULT_PROPS = {
 
 const renderIframe = (
   props?: Partial<ComponentProps<typeof AppEditorIframe>>,
-) => render(<AppEditorIframe {...DEFAULT_PROPS} {...props} />);
+  ref?: Ref<AppEditorIframeHandle>,
+) => render(<AppEditorIframe {...DEFAULT_PROPS} {...props} ref={ref} />);
 
 describe('AppEditorIframe', () => {
   beforeEach(() => {
@@ -238,6 +241,61 @@ describe('AppEditorIframe — ready-to-save readiness', () => {
     );
 
     expect(onReadyChange).not.toHaveBeenCalledWith(true);
+  });
+});
+
+describe('AppEditorIframe — triggerSave', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+  });
+
+  it('posts TriggerSave with the given general payload', () => {
+    const ref = createRef<AppEditorIframeHandle>();
+    renderIframe({}, ref);
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    ref.current?.triggerSave({ name: 'My App', description: 'desc' });
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        type: AppsEditorEvent.TriggerSave,
+        general: { name: 'My App', description: 'desc' },
+      },
+      'https://editor.example.com',
+    );
+  });
+
+  it('posts TriggerSave with no general payload when none is passed', () => {
+    const ref = createRef<AppEditorIframeHandle>();
+    renderIframe({}, ref);
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    ref.current?.triggerSave();
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      { type: AppsEditorEvent.TriggerSave, general: undefined },
+      'https://editor.example.com',
+    );
   });
 });
 

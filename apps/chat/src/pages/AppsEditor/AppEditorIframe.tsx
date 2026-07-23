@@ -20,6 +20,8 @@ import { getToolset, logoutToolset } from '../../server-api/toolsets';
 import type {
   ToolsetLoginResultPayload,
   ToolsetLogoutResultPayload,
+  TriggerSaveGeneralPayload,
+  TriggerSaveMessage,
 } from '../../types/apps-editor';
 import { AppsEditorEvent } from '../../types/apps-editor';
 import {
@@ -41,7 +43,7 @@ import {
 } from '../../utils/toolsets';
 
 export interface AppEditorIframeHandle {
-  triggerSave: () => void;
+  triggerSave: (general?: TriggerSaveGeneralPayload) => void;
 }
 
 interface Props {
@@ -399,10 +401,14 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     useImperativeHandle(
       ref,
       () => ({
-        triggerSave: () => {
+        triggerSave: (general?: TriggerSaveGeneralPayload) => {
           if (!schema.editorUrl) return;
+          const message: TriggerSaveMessage = {
+            type: AppsEditorEvent.TriggerSave,
+            general,
+          };
           iframeRef.current?.contentWindow?.postMessage(
-            { type: AppsEditorEvent.TriggerSave },
+            message,
             new URL(schema.editorUrl).origin,
           );
         },

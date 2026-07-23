@@ -25,21 +25,17 @@ import {
   BasicI18nKeys,
   EditorI18nKeys,
 } from '../../constants/translation-keys';
-import {
-  createApplication,
-  updateApplication,
-} from '../../server-api/applications';
+import { createApplication } from '../../server-api/applications';
+import type { TriggerSaveGeneralPayload } from '../../types/apps-editor';
 import { isQuickAppSchema } from '../../utils/application-schema';
 
 export interface GeneralFormHandle {
   submit: () => Promise<void>;
   /**
-   * Persists the current form values to the update-application endpoint when they
-   * differ from the values the form was initially seeded with. Resolves without a
-   * network call when nothing changed. Rejects on failure so the caller can surface
-   * an error before proceeding.
+   * Current in-memory General-step values, normalized the same way values used to be
+   * trimmed before being sent to `update-application`. Excludes `version`.
    */
-  persist: () => Promise<void>;
+  getValues: () => TriggerSaveGeneralPayload;
 }
 
 export interface GeneralFormInitialValues {
@@ -92,14 +88,11 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const hasSeededInitialValuesRef = useRef(false);
-  const seededValuesRef = useRef<DeploymentCreationFormValues>(EMPTY_VALUES);
 
   useEffect(() => {
     if (hasSeededInitialValuesRef.current || !initialValues) return;
     hasSeededInitialValuesRef.current = true;
-    const seededValues = normalizeFormValues(initialValues);
-    seededValuesRef.current = seededValues;
-    setValues(seededValues);
+    setValues(normalizeFormValues(initialValues));
   }, [initialValues]);
 
   const labels: DeploymentCreationFormLabels = useMemo(
@@ -210,40 +203,21 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
     }
   }, [isSubmitting, values, appId, t, onCreated, schemaId]);
 
-  const handlePersist = useCallback(async () => {
-    if (!appId) return;
-
-    const seededValues = seededValuesRef.current;
-    const trimmedName = values.name.trim();
-    const trimmedDescription = values.description.trim();
-    const trimmedIconUrl = values.iconUrl.trim();
-    const trimmedIntro = values.intro.trim();
-    const isTopicsEqual =
-      values.topics.length === seededValues.topics.length &&
-      values.topics.every((topic) => seededValues.topics.includes(topic));
-    const isDirty =
-      trimmedName !== seededValues.name.trim() ||
-      trimmedDescription !== seededValues.description.trim() ||
-      trimmedIconUrl !== seededValues.iconUrl.trim() ||
-      trimmedIntro !== seededValues.intro.trim() ||
-      !isTopicsEqual;
-
-    if (!isDirty) return;
-
-    await updateApplication(appId, {
-      name: trimmedName,
-      description: trimmedDescription || undefined,
-      iconUrl: trimmedIconUrl || undefined,
+  const getValues = useCallback(
+    (): TriggerSaveGeneralPayload => ({
+      name: values.name.trim(),
+      description: values.description.trim() || undefined,
+      iconUrl: values.iconUrl.trim() || undefined,
       topics: values.topics.length > 0 ? values.topics : undefined,
-      intro: trimmedIntro || undefined,
-    });
-  }, [appId, values]);
-
-  useImperativeHandle(
-    ref,
-    () => ({ submit: handleSubmit, persist: handlePersist }),
-    [handleSubmit, handlePersist],
+      intro: values.intro.trim() || undefined,
+    }),
+    [values],
   );
+
+  useImperativeHandle(ref, () => ({ submit: handleSubmit, getValues }), [
+    handleSubmit,
+    getValues,
+  ]);
 
   const previewItem = useMemo<CatalogItem>(
     () => ({

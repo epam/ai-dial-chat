@@ -10,6 +10,7 @@ import {
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
+import type { TriggerSaveGeneralPayload } from '../../../types/apps-editor';
 import AppsEditor from '../AppsEditor';
 
 let latestSettingsStepProps: {
@@ -30,9 +31,10 @@ let latestGeneralFormProps: {
  * readiness-gating behavior itself flip this off before rendering. */
 let shouldSettingsAutoReady = true;
 
-const settingsStepTriggerSave = vi.fn();
+const settingsStepTriggerSave =
+  vi.fn<(general?: TriggerSaveGeneralPayload) => void>();
 const generalFormSubmit = vi.fn();
-const generalFormPersist = vi.fn();
+const generalFormGetValues = vi.fn<() => TriggerSaveGeneralPayload>();
 
 vi.mock('../SettingsStep', () => ({
   default: forwardRef(function MockSettingsStep(
@@ -76,7 +78,7 @@ vi.mock('../GeneralForm', () => ({
     latestGeneralFormProps = props;
     useImperativeHandle(ref, () => ({
       submit: generalFormSubmit,
-      persist: generalFormPersist,
+      getValues: generalFormGetValues,
     }));
     return <div>general-form</div>;
   }),
@@ -108,7 +110,7 @@ describe('AppsEditor', () => {
     latestSettingsStepProps = {};
     latestGeneralFormProps = null;
     shouldSettingsAutoReady = true;
-    generalFormPersist.mockReset().mockResolvedValue(undefined);
+    generalFormGetValues.mockReset().mockReturnValue({ name: 'My App' });
     mockUseDeployments.mockReturnValue({
       schemas: [SCHEMA],
       items: [],
@@ -347,9 +349,6 @@ describe('AppsEditor', () => {
 
     it('times out and re-enables Save with an error when no response arrives', () => {
       vi.useFakeTimers();
-      /* No appId: skips the persist step entirely so the save is triggered
-       * synchronously within the click handler, keeping the fake-timer
-       * assertions below deterministic. */
       renderEditor('step=settings&schema=quickapps2-schema');
 
       const saveButton = screen.getByRole('button', {
@@ -397,8 +396,12 @@ describe('AppsEditor', () => {
     });
   });
 
-  describe('Save & Exit persist sequencing', () => {
-    it('triggers the Settings step save before persisting General fields for an existing app', async () => {
+  describe('Save & Exit forwards General values to the Settings step', () => {
+    it('includes the current General values in triggerSave for an existing app', async () => {
+      generalFormGetValues.mockReturnValue({
+        name: 'Renamed App',
+        description: 'desc',
+      });
       renderEditor('step=general&schema=quickapps2-schema&appId=existing-app');
 
       act(() => {
@@ -409,49 +412,13 @@ describe('AppsEditor', () => {
         screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
       );
 
-      expect(settingsStepTriggerSave).toHaveBeenCalledOnce();
-      expect(generalFormPersist).not.toHaveBeenCalled();
-
-      await act(async () => {
-        latestSettingsStepProps.onSaveSuccess?.();
-        await Promise.resolve();
+      expect(settingsStepTriggerSave).toHaveBeenCalledWith({
+        name: 'Renamed App',
+        description: 'desc',
       });
-
-      await waitFor(() => expect(generalFormPersist).toHaveBeenCalledOnce());
-      const triggerOrder = settingsStepTriggerSave.mock.invocationCallOrder[0];
-      const persistOrder = generalFormPersist.mock.invocationCallOrder[0];
-      expect(triggerOrder).toBeLessThan(persistOrder);
     });
 
-    it('surfaces an error and does not exit when persist fails after the Settings step save succeeds', async () => {
-      generalFormPersist.mockRejectedValue(new Error('network error'));
-      renderEditor('step=general&schema=quickapps2-schema&appId=existing-app');
-
-      act(() => {
-        latestGeneralFormProps?.onCreated('existing-app', 'My App', undefined);
-      });
-
-      await userEvent.click(
-        screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
-      );
-
-      await act(async () => {
-        latestSettingsStepProps.onSaveSuccess?.();
-        await Promise.resolve();
-      });
-
-      await waitFor(() =>
-        expect(
-          screen.getByText(AppsEditorI18nKeys.ErrorSaveFailed),
-        ).toBeTruthy(),
-      );
-      const saveButton = screen.getByRole('button', {
-        name: EditorI18nKeys.SaveButton,
-      }) as HTMLButtonElement;
-      expect(saveButton.disabled).toBe(false);
-    });
-
-    it('skips persist entirely for a brand-new app', async () => {
+    it('does not include a general payload when saving a brand-new app created in this session', async () => {
       renderEditor('step=general&schema=quickapps2-schema');
 
       act(() => {
@@ -462,12 +429,36 @@ describe('AppsEditor', () => {
         screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
       );
 
+      expect(settingsStepTriggerSave).toHaveBeenCalledWith(undefined);
+    });
+
+    it('does not include a general payload when triggering Preview', async () => {
+      renderEditor('step=settings&schema=quickapps2-schema&appId=existing-app');
+
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+
+      expect(settingsStepTriggerSave).toHaveBeenCalledWith();
+    });
+
+    it('does not call update-application-style persistence on save success', async () => {
+      renderEditor('step=general&schema=quickapps2-schema&appId=existing-app');
+
+      act(() => {
+        latestGeneralFormProps?.onCreated('existing-app', 'My App', undefined);
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
+      );
+
       await act(async () => {
         latestSettingsStepProps.onSaveSuccess?.();
         await Promise.resolve();
       });
 
-      expect(generalFormPersist).not.toHaveBeenCalled();
+      await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
     });
   });
 });

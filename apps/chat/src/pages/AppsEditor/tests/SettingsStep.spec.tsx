@@ -1,13 +1,18 @@
 import { render, screen } from '@testing-library/react';
-import { forwardRef } from 'react';
+import type { Ref } from 'react';
+import { createRef, forwardRef, useImperativeHandle } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import type { SettingsStepHandle } from '../SettingsStep';
 import SettingsStep from '../SettingsStep';
+
+const mockTriggerSave = vi.fn();
 
 vi.mock('../AppEditorIframe', () => ({
   default: forwardRef(function MockAppEditorIframe(
     _props: unknown,
-    _ref: unknown,
+    ref: Ref<{ triggerSave: typeof mockTriggerSave }>,
   ) {
+    useImperativeHandle(ref, () => ({ triggerSave: mockTriggerSave }));
     return <div>iframe-content</div>;
   }),
 }));
@@ -64,5 +69,14 @@ describe('SettingsStep', () => {
     render(<SettingsStep schema={SCHEMA} appId="" isPreviewing={false} />);
 
     expect(screen.queryByText(/preview-chat-/)).toBeNull();
+  });
+
+  it('forwards the general payload from triggerSave to the embedded iframe', () => {
+    const ref = createRef<SettingsStepHandle>();
+    render(<SettingsStep schema={SCHEMA} appId="abc" ref={ref} />);
+
+    ref.current?.triggerSave({ name: 'My App' });
+
+    expect(mockTriggerSave).toHaveBeenCalledWith({ name: 'My App' });
   });
 });
