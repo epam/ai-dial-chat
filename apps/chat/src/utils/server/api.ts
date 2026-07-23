@@ -294,7 +294,7 @@ export const getModelIdWithoutVersion = (id: string) => {
   }
   const name = parts.slice(0, -1).join(pathKeySeparator);
   const version = parts.at(-1)?.replace(/^_/, '');
-  if (!version || !validVersionRegEx.test(version)) {
+  if (!version) {
     return id;
   }
   if (parts.at(-1)?.startsWith('_')) {
