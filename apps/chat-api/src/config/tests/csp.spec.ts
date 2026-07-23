@@ -62,6 +62,17 @@ describe('Helmet security headers', () => {
     app = undefined;
   });
 
+  it('keeps cross-origin OAuth popup references observable by the opener', async () => {
+    app = await createTestApp([]);
+    const response = await request(app.getHttpServer())
+      .get('/ping')
+      .expect(200);
+
+    expect(response.headers['cross-origin-opener-policy']).toBe(
+      'same-origin-allow-popups',
+    );
+  });
+
   it("sends frame-ancestors 'none' and keeps X-Frame-Options when the allowlist is empty", async () => {
     app = await createTestApp([]);
     const response = await request(app.getHttpServer())

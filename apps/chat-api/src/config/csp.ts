@@ -19,11 +19,16 @@ export const buildFrameAncestorsDirective = (
  * Disables `frameguard` (which sends `X-Frame-Options: SAMEORIGIN` by
  * default) only once at least one origin is allowlisted, relying solely on
  * CSP `frame-ancestors` for framing control in that case; the empty-allowlist
- * default-deny posture (frameguard enabled) is otherwise unchanged.
+ * default-deny posture (frameguard enabled) is otherwise unchanged. Uses
+ * `same-origin-allow-popups` for COOP so navigating an OAuth popup to an
+ * external identity provider does not sever the opener's WindowProxy and
+ * make an active popup look closed. The popup clears its own `window.opener`
+ * before that navigation, preserving reverse-tabnabbing protection.
  */
 export const createHelmetOptions = (
   allowedIframeOrigins: string[],
 ): HelmetOptions => ({
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
