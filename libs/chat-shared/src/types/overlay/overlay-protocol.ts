@@ -22,6 +22,20 @@ export enum OverlayRequestType {
   SetTemperature = '@DIAL_OVERLAY/SET_TEMPERATURE',
   /** Set host-provided options (theme, model, conversation, host domain). */
   SetOverlayOptions = '@DIAL_OVERLAY/SET_OVERLAY_OPTIONS',
+  /** Fetch the current user's conversation list. */
+  GetConversations = '@DIAL_OVERLAY/GET_CONVERSATIONS',
+  /** Fetch the currently displayed (active) conversation(s). */
+  GetSelectedConversations = '@DIAL_OVERLAY/GET_SELECTED_CONVERSATIONS',
+  /** Navigate to and load a specific conversation by id. */
+  SelectConversation = '@DIAL_OVERLAY/SELECT_CONVERSATION',
+  /** Create a new conversation, persisting immediately if a first message is given. */
+  CreateConversation = '@DIAL_OVERLAY/CREATE_CONVERSATION',
+  /** Open the conversation composer without persisting anything. */
+  CreateLocalConversation = '@DIAL_OVERLAY/CREATE_LOCAL_CONVERSATION',
+  /** Delete a conversation by id. */
+  DeleteConversation = '@DIAL_OVERLAY/DELETE_CONVERSATION',
+  /** Rename a conversation by id. */
+  RenameConversation = '@DIAL_OVERLAY/RENAME_CONVERSATION',
 }
 
 /**
@@ -69,6 +83,41 @@ export interface OverlayChatMessage {
   role: string;
   /** Message text content. */
   content: string;
+}
+
+/**
+ * Host-agnostic projection of a conversation, exposed by the conversation-list
+ * methods. Declared independently of `@epam/chat-api-client` or any app-owned
+ * type so this module keeps no dependency on generated/app code.
+ */
+export interface OverlayConversation {
+  /** Conversation id. */
+  id: string;
+  /** Conversation title. */
+  title: string;
+  /** Epoch milliseconds of the conversation's last update. */
+  updatedAt: number;
+  /** Whether the conversation is pinned. */
+  isPinned: boolean;
+  /** Whether the current user has read-only access. */
+  isReadonly: boolean;
+  /** Whether the conversation was shared with the current user. */
+  sharedWithMe: boolean;
+  /** Whether the conversation was published with the current user. */
+  publishedWithMe: boolean;
+}
+
+/**
+ * Explicit error signal carried by conversation-list method responses
+ * (`SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `DELETE_CONVERSATION`,
+ * `RENAME_CONVERSATION`) so invalid ids/values/forbidden actions reject with
+ * a clear reason instead of the request silently timing out.
+ */
+export interface OverlayConversationError {
+  /** `NOT_FOUND` for an unknown/inaccessible id, `FORBIDDEN` for a read-only/shared-without-write-access conversation, `INVALID_ARGUMENT` for a rejected value (e.g. blank rename). */
+  code: 'NOT_FOUND' | 'FORBIDDEN' | 'INVALID_ARGUMENT';
+  /** Human-readable description of the failure. */
+  message: string;
 }
 
 /**
@@ -134,6 +183,34 @@ export interface SetTemperaturePayload {
   temperature: number;
 }
 
+/** Payload of a `SELECT_CONVERSATION` request. */
+export interface SelectConversationPayload {
+  /** Id of the conversation to select. */
+  id: string;
+}
+
+/** Payload of a `DELETE_CONVERSATION` request. */
+export interface DeleteConversationPayload {
+  /** Id of the conversation to delete. */
+  id: string;
+}
+
+/** Payload of a `RENAME_CONVERSATION` request. */
+export interface RenameConversationPayload {
+  /** Id of the conversation to rename. */
+  id: string;
+  /** New title for the conversation. */
+  newName: string;
+}
+
+/** Payload of a `CREATE_CONVERSATION` request. */
+export interface CreateConversationPayload {
+  /** Deployment/model id to create the conversation with, if given. */
+  deploymentId?: string;
+  /** Initial message to persist immediately. Omitted/blank opens the composer instead. */
+  firstMessage?: string;
+}
+
 /** Response payload of a `GET_MESSAGES` request. */
 export interface GetMessagesResponse {
   /** Messages in the active conversation. */
@@ -162,6 +239,54 @@ export interface SetTemperatureResponse {
 export interface SetOverlayOptionsResponse {
   /** Whether the supplied options were applied (`false` only signals a fallback, never a thrown error). */
   applied: boolean;
+}
+
+/** Response payload of a `GET_CONVERSATIONS` request. */
+export interface GetConversationsResponse {
+  /** The current user's conversation list. */
+  conversations: OverlayConversation[];
+}
+
+/** Response payload of a `GET_SELECTED_CONVERSATIONS` request. */
+export interface GetSelectedConversationsResponse {
+  /** Currently displayed conversation(s); empty when no conversation is mounted. */
+  conversations: OverlayConversation[];
+}
+
+/** Response payload of a `SELECT_CONVERSATION` request. */
+export interface SelectConversationResponse {
+  /** The now-selected conversation's projection, present on success. */
+  conversation?: OverlayConversation;
+  /** Present when the selection failed. */
+  error?: OverlayConversationError;
+}
+
+/** Response payload of a `CREATE_CONVERSATION` request. */
+export interface CreateConversationResponse {
+  /** The created conversation's projection, or `null` when the composer path was taken. */
+  conversation: OverlayConversation | null;
+  /** Present when creation failed. */
+  error?: OverlayConversationError;
+}
+
+/** Response payload of a `CREATE_LOCAL_CONVERSATION` request. */
+export interface CreateLocalConversationResponse {
+  /** Always `null` — the composer opens without persisting anything. */
+  conversation: null;
+}
+
+/** Response payload of a `DELETE_CONVERSATION` request. */
+export interface DeleteConversationResponse {
+  /** Present when deletion failed. */
+  error?: OverlayConversationError;
+}
+
+/** Response payload of a `RENAME_CONVERSATION` request. */
+export interface RenameConversationResponse {
+  /** The renamed conversation's projection, present on success. */
+  conversation?: OverlayConversation;
+  /** Present when the rename failed. */
+  error?: OverlayConversationError;
 }
 
 /**

@@ -42,6 +42,7 @@ import { useDeployments } from '../context/DeploymentsContext';
 import { useOptionalOverlay } from '../context/overlay/OverlayContext';
 import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
+import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
@@ -89,6 +90,13 @@ const App: FC = () => {
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
+
+  /*
+   * Registers the overlay's conversation-list bridge. Mounted here (below
+   * ConversationsProvider/DeploymentsProvider) so both are reachable; no-op
+   * outside overlay mode.
+   */
+  useConversationListBridge();
 
   /*
    * OverlayContext (an ancestor of DeploymentsProvider) cannot call

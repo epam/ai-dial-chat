@@ -46,6 +46,10 @@ export const isConversationNotFoundError = (error: unknown): boolean => {
   return response.status === 404;
 };
 
+/** HTTP status code carried by a thrown API error, or `undefined` if none is attached. */
+export const getApiErrorStatus = (error: unknown): number | undefined =>
+  getErrorResponse(error)?.status;
+
 export const getApiErrorMessage = async (
   error: unknown,
 ): Promise<string | null> => {

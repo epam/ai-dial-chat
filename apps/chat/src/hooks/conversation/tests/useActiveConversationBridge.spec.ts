@@ -32,10 +32,16 @@ const makeConversation = (overrides?: Partial<Conversation>): Conversation =>
 
 const makeOverlay = (): OverlayContextType & {
   registerActiveConversationBridge: ReturnType<
-    typeof vi.fn<(bridge: ActiveConversationBridge | null) => void>
+    typeof vi.fn<
+      (
+        bridge: ActiveConversationBridge | null,
+        conversationId: string | null,
+      ) => void
+    >
   >;
 } => ({
   registerActiveConversationBridge: vi.fn(),
+  registerConversationListBridge: vi.fn(),
   pendingModelId: null,
   clearPendingModelId: vi.fn(),
   notifyConversationLoaded: vi.fn(),
@@ -104,10 +110,12 @@ describe('useActiveConversationBridge', () => {
         setSystemPrompt: expect.any(Function),
         setTemperature: expect.any(Function),
       }),
+      'bucket/gpt-4o__Hello__uuid',
     );
 
     unmount();
     expect(overlay.registerActiveConversationBridge).toHaveBeenLastCalledWith(
+      null,
       null,
     );
   });
@@ -311,6 +319,7 @@ describe('useActiveConversationBridge', () => {
     expect(overlay.registerActiveConversationBridge).toHaveBeenCalledTimes(3);
     expect(overlay.registerActiveConversationBridge).toHaveBeenLastCalledWith(
       expect.objectContaining({ getMessages: expect.any(Function) }),
+      'bucket/gpt-4o__Hello__uuid',
     );
   });
 });
