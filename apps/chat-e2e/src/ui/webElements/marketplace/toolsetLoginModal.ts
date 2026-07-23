@@ -8,8 +8,16 @@ import { Toolset } from '@epam/ai-dial-shared';
 import { Page } from '@playwright/test';
 
 export class ToolsetLoginModal extends Popup {
-  constructor(page: Page) {
-    super(page, ToolsetLoginModalSelectors.modalContainer);
+  // In the App editor this dialog renders twice (QA2 form + global dialogs);
+  // pass useInteractiveDuplicate to target the second (interactive) one.
+  constructor(page: Page, useInteractiveDuplicate = false) {
+    super(
+      page,
+      useInteractiveDuplicate ? '' : ToolsetLoginModalSelectors.modalContainer,
+      useInteractiveDuplicate
+        ? page.locator(ToolsetLoginModalSelectors.modalContainer).last()
+        : undefined,
+    );
   }
 
   public header = this.getChildElementBySelector(
