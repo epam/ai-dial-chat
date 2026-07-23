@@ -656,8 +656,12 @@ const ConversationView: FC<Props> = ({
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
                 isAudioMessageSupported={isAudioMessageSupported}
                 micLabel={t(VoiceRecordingI18nKeys.MicLabel)}
-                stopRecordingLabel={t(VoiceRecordingI18nKeys.StopRecordingLabel)}
-                discardRecordingLabel={t(VoiceRecordingI18nKeys.DiscardRecordingLabel)}
+                stopRecordingLabel={t(
+                  VoiceRecordingI18nKeys.StopRecordingLabel,
+                )}
+                discardRecordingLabel={t(
+                  VoiceRecordingI18nKeys.DiscardRecordingLabel,
+                )}
                 timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
                 messageHistory={messageHistory}
                 sendOnEnter={sendOnEnter}

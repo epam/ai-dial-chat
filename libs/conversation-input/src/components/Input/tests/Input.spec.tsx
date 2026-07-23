@@ -444,10 +444,7 @@ describe('Input', () => {
 
   it('should hide mic button when isAudioMessageSupported is false', () => {
     render(
-      <Input
-        isAudioMessageSupported={false}
-        micLabel="Record voice message"
-      />,
+      <Input isAudioMessageSupported={false} micLabel="Record voice message" />,
     );
     expect(screen.queryByLabelText('Record voice message')).toBeNull();
   });

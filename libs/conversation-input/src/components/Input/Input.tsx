@@ -171,11 +171,7 @@ export const Input: FC<InputProps> = ({
   });
 
   const handleAttachAudio = useCallback(
-    (blob: Blob) => {
-      const ext = blob.type.split(';')[0].split('/')[1] ?? 'webm';
-      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -1);
-      const mimeType = blob.type.split(';')[0] || 'audio/webm';
-      const file = new File([blob], `voice-${ts}.${ext}`, { type: mimeType });
+    (file: File) => {
       addAttachments(buildAttachments([file]));
     },
     [addAttachments, buildAttachments],

@@ -2,6 +2,7 @@ import {
   ResponseFormat,
   type Attachment,
   type DeploymentItem,
+  type DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import {
   FileDndOverlay,
@@ -179,7 +180,7 @@ const NewConversationComposer: FC<Props> = ({
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
 
   const handleAttachmentClick = useCallback(
-    (attachment: Attachment) => {
+    (attachment: DisplayAttachment) => {
       void openAttachmentCanvas(attachment);
     },
     [openAttachmentCanvas],
@@ -294,7 +295,9 @@ const NewConversationComposer: FC<Props> = ({
           isAudioMessageSupported={isAudioMessageSupported}
           micLabel={t(VoiceRecordingI18nKeys.MicLabel)}
           stopRecordingLabel={t(VoiceRecordingI18nKeys.StopRecordingLabel)}
-          discardRecordingLabel={t(VoiceRecordingI18nKeys.DiscardRecordingLabel)}
+          discardRecordingLabel={t(
+            VoiceRecordingI18nKeys.DiscardRecordingLabel,
+          )}
           timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
           sendOnEnter={sendOnEnter}
           chatSettings={chatSettings}

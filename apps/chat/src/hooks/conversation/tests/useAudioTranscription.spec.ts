@@ -1,11 +1,6 @@
 import { AttachmentType } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  transcribeAudio,
-  transcribeAudioWithAsrModel,
-} from '../../../server-api/chat.api';
-import { uploadFile } from '../../../server-api/files.api';
 import { useAudioTranscription } from '../useAudioTranscription';
 
 const mockUseDeployments = vi.fn();
@@ -13,22 +8,6 @@ const mockUseDeployments = vi.fn();
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => mockUseDeployments(),
 }));
-vi.mock('../../../server-api/files.api', () => ({
-  uploadFile: vi.fn(),
-}));
-vi.mock('../../../server-api/chat.api', () => ({
-  transcribeAudio: vi.fn(),
-  transcribeAudioWithAsrModel: vi.fn(),
-}));
-vi.mock('../../../utils/build-upload-path', () => ({
-  buildUploadPath: vi.fn(
-    (attachment: { name: string }) => `uploads/${attachment.name}`,
-  ),
-}));
-
-const mockUploadFile = vi.mocked(uploadFile);
-const mockTranscribeAudio = vi.mocked(transcribeAudio);
-const mockTranscribeAudioWithAsrModel = vi.mocked(transcribeAudioWithAsrModel);
 
 const makeItem = (id: string, inputAttachmentTypes?: string[]) => ({
   id,
@@ -43,123 +22,58 @@ describe('useAudioTranscription', () => {
     mockUseDeployments.mockReturnValue({ items: [] });
   });
 
-  it('uploads audio within the size limit', async () => {
-    mockUploadFile.mockResolvedValue({ url: 'https://example.com/audio.webm' });
-    const { result } = renderHook(() =>
-      useAudioTranscription({
-        bucket: 'user-bucket',
-        transcribeSizeLimitBytes: 1000,
-      }),
-    );
-
-    const file = new File(['a'], 'audio.webm', { type: 'audio/webm' });
-    await expect(
-      result.current.handleUploadAudio(file, 'audio/webm'),
-    ).resolves.toBe('https://example.com/audio.webm');
-    expect(mockUploadFile).toHaveBeenCalledWith(
-      'user-bucket',
-      'uploads/audio.webm',
-      file,
-    );
-  });
-
-  it('rejects audio exceeding the size limit without uploading', async () => {
-    const { result } = renderHook(() =>
-      useAudioTranscription({
-        bucket: 'user-bucket',
-        transcribeSizeLimitBytes: 1,
-      }),
-    );
-
-    const file = new File(['too-large'], 'audio.webm', { type: 'audio/webm' });
-    await expect(
-      result.current.handleUploadAudio(file, 'audio/webm'),
-    ).rejects.toThrow(/exceeds the 1 byte limit/);
-    expect(mockUploadFile).not.toHaveBeenCalled();
-  });
-
-  it('transcribes via the deployment when no ASR model is configured', async () => {
-    mockTranscribeAudio.mockResolvedValue('hello world');
-    const { result } = renderHook(() =>
-      useAudioTranscription({
-        bucket: 'user-bucket',
-        transcribeSizeLimitBytes: 1000,
-        selectedDeploymentId: 'gpt-4o',
-      }),
-    );
-
-    await expect(
-      result.current.handleTranscribeAudio('https://example.com/audio.webm'),
-    ).resolves.toBe('hello world');
-    expect(mockTranscribeAudio).toHaveBeenCalledWith({
-      audioUrl: 'https://example.com/audio.webm',
-      mimeType: 'audio/webm',
-      deployment: 'gpt-4o',
-    });
-    expect(mockTranscribeAudioWithAsrModel).not.toHaveBeenCalled();
-  });
-
-  it('transcribes via the ASR model when configured', async () => {
-    mockTranscribeAudioWithAsrModel.mockResolvedValue('hi there');
-    const { result } = renderHook(() =>
-      useAudioTranscription({
-        bucket: 'user-bucket',
-        transcribeSizeLimitBytes: 1000,
-        asrModelId: 'asr-model',
-        selectedDeploymentId: 'gpt-4o',
-      }),
-    );
-
-    await expect(
-      result.current.handleTranscribeAudio('https://example.com/audio.webm'),
-    ).resolves.toBe('hi there');
-    expect(mockTranscribeAudioWithAsrModel).toHaveBeenCalledWith({
-      audioUrl: 'https://example.com/audio.webm',
-      mimeType: 'audio/webm',
-    });
-    expect(mockTranscribeAudio).not.toHaveBeenCalled();
-  });
-
-  it('reports transcription supported when an ASR model is configured, regardless of deployment', () => {
-    const { result } = renderHook(() =>
-      useAudioTranscription({
-        bucket: 'user-bucket',
-        transcribeSizeLimitBytes: 1000,
-        asrModelId: 'asr-model',
-        selectedDeploymentId: undefined,
-      }),
-    );
-
-    expect(result.current.isTranscriptionSupported).toBe(true);
-  });
-
-  it('reports transcription supported based on the selected deployment capability', () => {
+  it('returns false when no deployment is selected', () => {
     mockUseDeployments.mockReturnValue({
       items: [makeItem('gpt-4o', ['audio/webm'])],
     });
     const { result } = renderHook(() =>
-      useAudioTranscription({
-        bucket: 'user-bucket',
-        transcribeSizeLimitBytes: 1000,
-        selectedDeploymentId: 'gpt-4o',
-      }),
+      useAudioTranscription({ selectedDeploymentId: undefined }),
     );
 
-    expect(result.current.isTranscriptionSupported).toBe(true);
+    expect(result.current.isAudioMessageSupported).toBe(false);
   });
 
-  it('reports transcription unsupported when the deployment lacks audio input support', () => {
+  it('returns false when the selected deployment is not found in the list', () => {
+    mockUseDeployments.mockReturnValue({
+      items: [makeItem('gpt-4o', ['audio/webm'])],
+    });
+    const { result } = renderHook(() =>
+      useAudioTranscription({ selectedDeploymentId: 'unknown-model' }),
+    );
+
+    expect(result.current.isAudioMessageSupported).toBe(false);
+  });
+
+  it('returns true when the selected deployment supports audio input', () => {
+    mockUseDeployments.mockReturnValue({
+      items: [makeItem('gpt-4o', ['audio/webm'])],
+    });
+    const { result } = renderHook(() =>
+      useAudioTranscription({ selectedDeploymentId: 'gpt-4o' }),
+    );
+
+    expect(result.current.isAudioMessageSupported).toBe(true);
+  });
+
+  it('returns false when the selected deployment has no audio input types', () => {
     mockUseDeployments.mockReturnValue({
       items: [makeItem('gpt-4o', ['image/png'])],
     });
     const { result } = renderHook(() =>
-      useAudioTranscription({
-        bucket: 'user-bucket',
-        transcribeSizeLimitBytes: 1000,
-        selectedDeploymentId: 'gpt-4o',
-      }),
+      useAudioTranscription({ selectedDeploymentId: 'gpt-4o' }),
     );
 
-    expect(result.current.isTranscriptionSupported).toBe(false);
+    expect(result.current.isAudioMessageSupported).toBe(false);
+  });
+
+  it('returns false when the selected deployment has no attachment types configured', () => {
+    mockUseDeployments.mockReturnValue({
+      items: [makeItem('gpt-4o')],
+    });
+    const { result } = renderHook(() =>
+      useAudioTranscription({ selectedDeploymentId: 'gpt-4o' }),
+    );
+
+    expect(result.current.isAudioMessageSupported).toBe(false);
   });
 });

@@ -57,11 +57,15 @@ export const AudioAttachment: FC<AudioAttachmentProps> = ({
   return (
     <div
       style={cssVars}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      aria-label={onClick ? clickLabel : undefined}
-      onClick={onClick ? handleCardClick : undefined}
-      onKeyDown={onClick ? handleKeyDown : undefined}
+      {...(onClick != null
+        ? {
+            role: 'button' as const,
+            tabIndex: 0,
+            'aria-label': clickLabel,
+            onClick: handleCardClick,
+            onKeyDown: handleKeyDown,
+          }
+        : {})}
       className={mergeClasses(
         'group relative flex w-full min-w-[280px] max-w-[300px] flex-col gap-2 rounded-xl border p-3',
         onClick && 'cursor-pointer',
@@ -78,11 +82,7 @@ export const AudioAttachment: FC<AudioAttachmentProps> = ({
         )}
       >
         {searchQuery ? (
-          <Highlight
-            text={attachment.name}
-            query={searchQuery}
-            maxLines={1}
-          />
+          <Highlight text={attachment.name} query={searchQuery} maxLines={1} />
         ) : (
           attachment.name
         )}

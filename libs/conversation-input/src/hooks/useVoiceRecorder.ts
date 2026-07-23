@@ -12,8 +12,8 @@ export enum VoiceRecorderState {
 
 /** Options accepted by `useVoiceRecorder`. */
 export interface UseVoiceRecorderOptions {
-  /** Called when the user stops recording. Receives the raw audio blob. */
-  onAttachAudio: (blob: Blob) => void;
+  /** Called when the user stops recording. Receives a ready-to-attach `File` with a timestamped name. */
+  onAttachAudio: (file: File) => void;
 }
 
 /** Return value of `useVoiceRecorder`. */
@@ -152,7 +152,11 @@ export const useVoiceRecorder = ({
     recorder.onstop = () => {
       const effectiveMime = mimeTypeRef.current || 'audio/webm';
       const blob = new Blob(chunksRef.current, { type: effectiveMime });
-      onAttachAudioRef.current(blob);
+      const baseMime = effectiveMime.split(';')[0];
+      const ext = baseMime.split('/')[1] ?? 'webm';
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -1);
+      const file = new File([blob], `voice-${ts}.${ext}`, { type: baseMime });
+      onAttachAudioRef.current(file);
       cleanupMedia();
       setElapsedSeconds(0);
       setErrorMessage(null);
