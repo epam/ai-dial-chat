@@ -36,7 +36,7 @@ const ReviewCodeAppSectionView = ({
   const isFilesLoading = useAppSelector(FilesSelectors.selectAreFilesLoading);
 
   useEffect(() => {
-    dispatch(FilesActions.getFiles({ id: config.sourceFolder }));
+    dispatch(FilesActions.getFilesWithFolders({ id: config.sourceFolder }));
   }, [dispatch, config.sourceFolder]);
 
   return (

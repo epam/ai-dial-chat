@@ -712,31 +712,45 @@ export const useFileManager = ({
     [t],
   );
 
+  const sharedByMeFileNames = useMemo(
+    () =>
+      new Set(
+        files
+          .filter((file) => file.isShared && !file.sharedWithMe)
+          .map((file) => file.name),
+      ),
+    [files],
+  );
+
   const renderDeleteConfirmationContent = useCallback(
-    (files: string[]) => {
+    (fileNames: string[]) => {
+      const hasSharedItems = fileNames.some((name) =>
+        sharedByMeFileNames.has(name),
+      );
       return (
         <div className="px-6 py-3 text-sm">
           <p className="mb-3 text-secondary">
-            {files.length === 1 ? (
+            {fileNames.length === 1 ? (
               <>
                 {t(SideBarI18nKeys.AreYouSureDeleteItem)}{' '}
                 <span className="break-all text-primary">
-                  “{files[0].split('/').pop()}”?
+                  “{fileNames[0]}”?
                 </span>
               </>
             ) : (
               <>
                 {t(SideBarI18nKeys.DoYouWantToDeleteFollowing)}{' '}
                 <span className="text-primary">
-                  {files.length} {t(SideBarI18nKeys.ItemsQuestion)}
+                  {fileNames.length} {t(SideBarI18nKeys.ItemsQuestion)}
                 </span>
               </>
             )}
+            {hasSharedItems && t(SideBarI18nKeys.DeletingWillStopSharingFile)}
           </p>
         </div>
       );
     },
-    [t],
+    [t, sharedByMeFileNames],
   );
 
   const handleMoveFiles = useCallback(

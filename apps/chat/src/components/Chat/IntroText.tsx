@@ -32,6 +32,7 @@ const IntroTextView = ({ schema, isWideLayout }: IntroTextViewProps) => {
 
   return (
     <div
+      data-qa="intro-text"
       className={classNames(
         'break-words px-2 text-center text-lg font-semibold md:last:mb-5 lg:mx-auto lg:w-[768px]',
         isWideLayout ? 'mx-4 mt-4' : 'sm:m-4',
