@@ -3105,7 +3105,7 @@ const updateAttachmentsOnFileMoveEpic: AppEpic = (action$, state$) =>
     mergeMap(({ payload }) => {
       const moves = getFileMovesFromResult(payload.result);
 
-      if (!moves.length) {
+      if (!moves.size) {
         return EMPTY;
       }
 

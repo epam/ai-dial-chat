@@ -29,7 +29,7 @@ import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { constructPath, isAttachmentLink } from './file';
-import type { FileMove } from './folders';
+import type { FileMovesMap } from './folders';
 import {
   getConversationRootId,
   getEntityBucket,
@@ -491,32 +491,20 @@ export const updateMessagesAttachmentsTitles = (
 
 export const updateAttachmentUrlOnMove = (
   url: string | undefined,
-  moves: FileMove[],
+  moves: FileMovesMap,
 ): string | undefined => {
   if (!url || isAttachmentLink(url)) {
     return url;
   }
 
-  const decodedUrl = ApiUtils.decodeApiUrl(url);
+  const destinationUrl = moves.get(ApiUtils.decodeApiUrl(url));
 
-  for (const { sourceUrl, destinationUrl } of moves) {
-    if (decodedUrl === sourceUrl) {
-      return ApiUtils.encodeApiUrl(destinationUrl);
-    }
-
-    if (decodedUrl.startsWith(`${sourceUrl}/`)) {
-      return ApiUtils.encodeApiUrl(
-        decodedUrl.replace(`${sourceUrl}/`, `${destinationUrl}/`),
-      );
-    }
-  }
-
-  return url;
+  return destinationUrl ? ApiUtils.encodeApiUrl(destinationUrl) : url;
 };
 
 export const updateMessagesAttachmentsOnMove = (
   messages: Message[],
-  moves: FileMove[],
+  moves: FileMovesMap,
 ): { messages: Message[]; isUpdated: boolean } => {
   let isUpdated = false;
 

@@ -1074,58 +1074,64 @@ describe('utils/app/conversation.ts', () => {
   describe('updateAttachmentUrlOnMove', () => {
     const oldFolderId = `${ApiKeys.Files}/${bucket}/OldFolder`;
     const newFolderId = `${ApiKeys.Files}/${bucket}/NewFolder`;
-    const folderMove = [
-      { sourceUrl: oldFolderId, destinationUrl: newFolderId },
-    ];
+    const moves = new Map([
+      [`${oldFolderId}/file.svg`, `${newFolderId}/file.svg`],
+    ]);
 
-    it('Should rewrite a url matching a moved folder prefix', () => {
-      expect(
-        updateAttachmentUrlOnMove(`${oldFolderId}/file.svg`, folderMove),
-      ).toBe(`${newFolderId}/file.svg`);
+    it('Should rewrite a url matching a moved file', () => {
+      expect(updateAttachmentUrlOnMove(`${oldFolderId}/file.svg`, moves)).toBe(
+        `${newFolderId}/file.svg`,
+      );
     });
 
-    it('Should rewrite a url in nested subfolders of a moved folder', () => {
-      expect(
-        updateAttachmentUrlOnMove(`${oldFolderId}/sub/file.svg`, folderMove),
-      ).toBe(`${newFolderId}/sub/file.svg`);
+    it('Should leave a sibling file in the same folder unchanged', () => {
+      const url = `${oldFolderId}/other.svg`;
+      expect(updateAttachmentUrlOnMove(url, moves)).toBe(url);
     });
 
-    it('Should rewrite a url matching a moved file exactly', () => {
-      const fileMove = [
-        {
-          sourceUrl: `${oldFolderId}/file.svg`,
-          destinationUrl: `${newFolderId}/renamed.svg`,
-        },
-      ];
-      expect(
-        updateAttachmentUrlOnMove(`${oldFolderId}/file.svg`, fileMove),
-      ).toBe(`${newFolderId}/renamed.svg`);
+    it('Should leave a file in a subfolder of the source folder unchanged', () => {
+      const url = `${oldFolderId}/SubFolder/nested.svg`;
+      expect(updateAttachmentUrlOnMove(url, moves)).toBe(url);
     });
 
-    it('Should leave urls outside any moved folder unchanged', () => {
+    it('Should rewrite each moved file when a whole folder is moved', () => {
+      const folderMoves = new Map([
+        [`${oldFolderId}/SubFolder/a.svg`, `${newFolderId}/SubFolder/a.svg`],
+        [`${oldFolderId}/SubFolder/b.svg`, `${newFolderId}/SubFolder/b.svg`],
+      ]);
+
+      expect(
+        updateAttachmentUrlOnMove(
+          `${oldFolderId}/SubFolder/a.svg`,
+          folderMoves,
+        ),
+      ).toBe(`${newFolderId}/SubFolder/a.svg`);
+      expect(
+        updateAttachmentUrlOnMove(`${oldFolderId}/kept.svg`, folderMoves),
+      ).toBe(`${oldFolderId}/kept.svg`);
+    });
+
+    it('Should leave urls outside the moved files unchanged', () => {
       const url = `${ApiKeys.Files}/${bucket}/OtherFolder/file.svg`;
-      expect(updateAttachmentUrlOnMove(url, folderMove)).toBe(url);
-    });
-
-    it('Should not rewrite a folder whose id only shares a name prefix', () => {
-      const url = `${ApiKeys.Files}/${bucket}/OldFolderExtra/file.svg`;
-      expect(updateAttachmentUrlOnMove(url, folderMove)).toBe(url);
+      expect(updateAttachmentUrlOnMove(url, moves)).toBe(url);
     });
 
     it('Should leave external links unchanged', () => {
       const link = 'https://example.com/OldFolder/file.svg';
-      expect(updateAttachmentUrlOnMove(link, folderMove)).toBe(link);
+      expect(updateAttachmentUrlOnMove(link, moves)).toBe(link);
     });
 
     it('Should return undefined url as is', () => {
-      expect(updateAttachmentUrlOnMove(undefined, folderMove)).toBeUndefined();
+      expect(updateAttachmentUrlOnMove(undefined, moves)).toBeUndefined();
     });
   });
 
   describe('updateMessagesAttachmentsOnMove', () => {
     const oldFolderId = `${ApiKeys.Files}/${bucket}/OldFolder`;
     const newFolderId = `${ApiKeys.Files}/${bucket}/NewFolder`;
-    const moves = [{ sourceUrl: oldFolderId, destinationUrl: newFolderId }];
+    const moves = new Map([
+      [`${oldFolderId}/file.svg`, `${newFolderId}/file.svg`],
+    ]);
 
     it('Should rewrite affected attachment url and reference_url and flag as updated', () => {
       const messages = [
@@ -1166,7 +1172,7 @@ describe('utils/app/conversation.ts', () => {
               {
                 type: 'image/svg+xml',
                 title: 'icon',
-                url: `${ApiKeys.Files}/${bucket}/OtherFolder/file.svg`,
+                url: `${oldFolderId}/other.svg`,
               },
             ],
           },

@@ -34,6 +34,7 @@ import {
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
+import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -44,6 +45,7 @@ import {
   updatePathOnMove,
 } from '@/src/utils/app/folders';
 import {
+  isApplicationId,
   isEntityIdExternal,
   isEntityIdLocal,
   isMyApplication,
@@ -55,7 +57,10 @@ import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
-import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
+import {
+  ApiDetailedApplicationTypeSchema,
+  ApplicationTypeSchemaProperties,
+} from '@/src/types/application-type-schema';
 import {
   ApplicationStatus,
   CustomApplicationModel,
@@ -1142,38 +1147,56 @@ const updateApplicationIconsOnFileMoveEpic: AppEpic = (action$, state$) =>
     mergeMap(({ payload }) => {
       const moves = getFileMovesFromResult(payload.result);
 
-      if (!moves.length) {
+      if (!moves.size) {
         return EMPTY;
       }
 
       const affectedApplications = ModelsSelectors.selectModels(state$.value)
-        .filter((model) => isMyApplication(model) && !!model.iconUrl)
+        .filter(
+          (model) =>
+            isApplicationId(model.id) &&
+            isMyApplication(model) &&
+            !!model.iconUrl,
+        )
         .map((model) => ({
-          model,
-          newIconUrl: updatePathOnMove(model.iconUrl as string, moves),
+          id: model.id,
+          newIconUrl: updatePathOnMove(model.iconUrl ?? '', moves),
+          currentIconUrl: model.iconUrl,
         }))
-        .filter(({ model, newIconUrl }) => newIconUrl !== model.iconUrl);
+        .filter(
+          ({ newIconUrl, currentIconUrl }) => newIconUrl !== currentIconUrl,
+        );
 
       if (!affectedApplications.length) {
         return EMPTY;
       }
 
       return from(affectedApplications).pipe(
-        mergeMap(({ model, newIconUrl }) =>
-          ApplicationService.get(model.id).pipe(
-            mergeMap((application) =>
-              application
-                ? of(
-                    ApplicationActions.edit({
-                      oldApplication: application,
-                      updatedApplication: {
-                        ...application,
-                        iconUrl: newIconUrl,
-                      },
-                    }),
+        mergeMap(({ id, newIconUrl }) =>
+          ApplicationService.get(id).pipe(
+            mergeMap((application) => {
+              if (!application) {
+                return EMPTY;
+              }
+
+              const schema$: Observable<
+                ApiDetailedApplicationTypeSchema | undefined
+              > = application.applicationTypeSchemaId
+                ? ApplicationTypesSchemasService.getApplicationTypeSchema(
+                    application.applicationTypeSchemaId,
                   )
-                : EMPTY,
-            ),
+                : of(undefined);
+
+              return schema$.pipe(
+                map((schema) =>
+                  ApplicationActions.edit({
+                    oldApplication: application,
+                    updatedApplication: { ...application, iconUrl: newIconUrl },
+                    schema,
+                  }),
+                ),
+              );
+            }),
             catchError((err) => {
               console.error(
                 'Failed to update application icon after file move:',

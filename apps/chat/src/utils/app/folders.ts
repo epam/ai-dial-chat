@@ -558,37 +558,25 @@ export const updateMovedEntityId = (
   return entityId;
 };
 
-export interface FileMove {
-  sourceUrl: string;
-  destinationUrl: string;
-}
+export type FileMovesMap = Map<string, string>;
 
 export const getFileMovesFromResult = (
   result?: FileOperationsResult<MoveModel>,
-): FileMove[] =>
-  (result?.results ?? [])
-    .map(({ data }) => ({
-      sourceUrl: data.sourceUrl,
-      destinationUrl: data.destinationUrl,
-    }))
-    .filter(
-      ({ sourceUrl, destinationUrl }) =>
-        !!sourceUrl && !!destinationUrl && sourceUrl !== destinationUrl,
-    );
+): FileMovesMap => {
+  const moves: FileMovesMap = new Map();
 
-export const updatePathOnMove = (path: string, moves: FileMove[]): string => {
-  for (const { sourceUrl, destinationUrl } of moves) {
-    if (path === sourceUrl) {
-      return destinationUrl;
-    }
-
-    if (path.startsWith(`${sourceUrl}/`)) {
-      return path.replace(`${sourceUrl}/`, `${destinationUrl}/`);
+  for (const { data } of result?.results ?? []) {
+    const { sourceUrl, destinationUrl } = data;
+    if (sourceUrl && destinationUrl && sourceUrl !== destinationUrl) {
+      moves.set(sourceUrl, destinationUrl);
     }
   }
 
-  return path;
+  return moves;
 };
+
+export const updatePathOnMove = (path: string, moves: FileMovesMap): string =>
+  moves.get(path) ?? path;
 
 export const getFolderIdFromEntityId = (id: string) =>
   id.split('/').slice(0, -1).join('/');
