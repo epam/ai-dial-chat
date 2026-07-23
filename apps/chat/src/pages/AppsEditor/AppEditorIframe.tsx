@@ -20,6 +20,8 @@ import { getToolset, logoutToolset } from '../../server-api/toolsets';
 import type {
   ToolsetLoginResultPayload,
   ToolsetLogoutResultPayload,
+  TriggerSaveGeneralPayload,
+  TriggerSaveMessage,
 } from '../../types/apps-editor';
 import { AppsEditorEvent } from '../../types/apps-editor';
 import {
@@ -41,14 +43,19 @@ import {
 } from '../../utils/toolsets';
 
 export interface AppEditorIframeHandle {
-  triggerSave: () => void;
+  triggerSave: (general?: TriggerSaveGeneralPayload) => void;
 }
 
 interface Props {
   schema: ApplicationSchemaSummaryDto;
   appId: string;
   onUpdated?: () => void;
-  onSaveSuccess?: () => void;
+  /**
+   * Called when the embedded editor's `SaveSuccess` message resolves, with
+   * `hasChanges` normalized to a strict boolean (a missing/non-boolean field
+   * on the message is treated as `false`) — see `SaveSuccessMessage`.
+   */
+  onSaveSuccess?: (hasChanges: boolean) => void;
   onSaveError?: (error: string) => void;
   /**
    * Notifies the host whenever the iframe's readiness to save changes.
@@ -58,11 +65,26 @@ interface Props {
    * component's own loading-spinner overlay.
    */
   onReadyChange?: (isReady: boolean) => void;
+  /**
+   * Notifies the host whenever the iframe reports the user is logged out
+   * (`AppsEditorEvent.LoggedOut`). Since `ReadyToSave` will never arrive in
+   * that case, the host uses this to distinguish an expected "not
+   * authenticated" state from a genuine readiness failure.
+   */
+  onLoggedOutChange?: (isLoggedOut: boolean) => void;
 }
 
 const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
   function AppEditorIframe(
-    { schema, appId, onUpdated, onSaveSuccess, onSaveError, onReadyChange },
+    {
+      schema,
+      appId,
+      onUpdated,
+      onSaveSuccess,
+      onSaveError,
+      onReadyChange,
+      onLoggedOutChange,
+    },
     ref,
   ) {
     const { t } = useTranslation();
@@ -71,6 +93,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
 
     const [isUiLoading, setIsUiLoading] = useState(true);
     const [isReadyToSave, setIsReadyToSave] = useState(false);
+    const [isLoggedOut, setIsLoggedOut] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     const iframeUrl = useMemo(() => {
@@ -328,11 +351,14 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           case `${displayName}/${AppsEditorEvent.ReadyToSave}`:
             setIsReadyToSave(true);
             break;
+          case `${displayName}/${AppsEditorEvent.LoggedOut}`:
+            setIsLoggedOut(true);
+            break;
           case `${displayName}/${AppsEditorEvent.UpdatedSuccess}`:
             onUpdated?.();
             break;
           case AppsEditorEvent.SaveSuccess:
-            onSaveSuccess?.();
+            onSaveSuccess?.(event.data?.hasChanges === true);
             break;
           case AppsEditorEvent.SaveError:
             onSaveError?.(event.data?.error ?? '');
@@ -385,24 +411,34 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       };
     }, [iframeUrl]);
 
-    /* Re-gates readiness-to-save whenever the iframe reloads for a different
-     * app/schema, so a stale `true` from the previous app doesn't leak into
-     * the newly loaded one — the new iframe must send its own ReadyToSave. */
+    /* Re-gates readiness-to-save (and the logged-out flag) whenever the
+     * iframe reloads for a different app/schema, so stale values from the
+     * previous app don't leak into the newly loaded one — the new iframe
+     * must send its own ReadyToSave/LoggedOut. */
     useEffect(() => {
       setIsReadyToSave(false);
+      setIsLoggedOut(false);
     }, [iframeUrl]);
 
     useEffect(() => {
       onReadyChange?.(isReadyToSave);
     }, [isReadyToSave, onReadyChange]);
 
+    useEffect(() => {
+      onLoggedOutChange?.(isLoggedOut);
+    }, [isLoggedOut, onLoggedOutChange]);
+
     useImperativeHandle(
       ref,
       () => ({
-        triggerSave: () => {
+        triggerSave: (general?: TriggerSaveGeneralPayload) => {
           if (!schema.editorUrl) return;
+          const message: TriggerSaveMessage = {
+            type: AppsEditorEvent.TriggerSave,
+            general,
+          };
           iframeRef.current?.contentWindow?.postMessage(
-            { type: AppsEditorEvent.TriggerSave },
+            message,
             new URL(schema.editorUrl).origin,
           );
         },

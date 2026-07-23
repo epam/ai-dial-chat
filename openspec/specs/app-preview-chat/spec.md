@@ -154,6 +154,51 @@ Selecting a starter with submit enabled SHALL create or append to the preview co
 - **WHEN** the user selects a preview starter whose normalized `submit` flag is true
 - **THEN** the preview conversation is created or appended using the starter text and the fixed application deployment id
 
+### Requirement: Preview session resets when the saved configuration actually changed
+
+A Settings-step save (triggered either by "Save & Exit" or by "Preview") completes with a
+`SaveSuccess` postMessage from the embedded Quick Apps editor. That message MAY carry a
+`hasChanges: boolean` field — see the `quick-app-authoring` spec's "SaveSuccess reports
+whether persisted data changed" requirement for what the embedded editor SHALL compute and
+send. `AppsEditor` SHALL treat `hasChanges` as `false` when the field is absent (an embedded
+editor build that predates this contract), preserving prior behavior until the embedded
+editor is updated.
+
+Whenever a `SaveSuccess` arrives with `hasChanges === true`, `AppsEditor` SHALL discard the
+current preview session before the next time the preview pane is shown: any preview
+conversation already created SHALL be deleted (the same best-effort, non-blocking deletion
+used when leaving the editor), and the in-memory preview state (conversation, messages, and
+any populated-but-unsent composer input) SHALL be reset so the preview pane renders its
+initial composer-only welcome state, reflecting the just-saved configuration, the next time
+it becomes visible. This reset happens at save time regardless of whether the preview pane is
+currently visible, since a Settings-step edit can only be made while the iframe (not the
+preview pane) is showing.
+
+When `hasChanges` is `false` (or absent), the existing preview conversation and its
+accumulated messages SHALL be left exactly as they are — this is the same "history survives
+toggling" behavior already required above, now scoped explicitly to saves that made no
+persisted change.
+
+#### Scenario: Preview starts fresh after a real configuration change
+- **WHEN** the user has an existing preview conversation, exits preview, changes a Settings
+  step or General step field, and the resulting save's `SaveSuccess` reports
+  `hasChanges: true`
+- **THEN** the previous preview conversation is deleted
+- **AND** the next time the preview pane is shown it renders the composer-only welcome state
+  (empty history, empty input) reflecting the latest configuration, not the prior
+  conversation
+
+#### Scenario: Preview retains history when nothing meaningful changed
+- **WHEN** the user has an existing preview conversation, exits preview, and saves again
+  (e.g. via Save & Exit staying on the page, or clicking Preview without editing anything)
+  with `SaveSuccess` reporting `hasChanges: false`
+- **THEN** the preview conversation and its messages are unchanged, matching the existing
+  "History survives toggling" scenario
+
+#### Scenario: Missing `hasChanges` field preserves prior behavior
+- **WHEN** the embedded Quick Apps editor posts `SaveSuccess` without a `hasChanges` field
+- **THEN** `AppsEditor` treats it as `false` and does not reset the preview session
+
 ### Requirement: Preview conversation is deleted when the editor is left
 The preview conversation, if one was created during the session, SHALL be deleted when the Apps editor Settings step (and therefore the component owning the preview conversation) unmounts — including when the user clicks Cancel, when a normal Save succeeds and navigates away, or when the user otherwise navigates away from `/apps-editor`. Deletion failures SHALL be logged and SHALL NOT block or surface an error during navigation.
 
