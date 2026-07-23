@@ -75,7 +75,7 @@
     "mime-types": "^2.1.35",
     "monaco-editor": "^0.55.1",
     "nanoid": "^5.1.5",
-    "next": "16.2.6",
+    "next": "^16.2.11",
     "next-auth": "^4.24.14",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
