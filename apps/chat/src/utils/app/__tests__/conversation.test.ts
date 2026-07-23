@@ -28,6 +28,8 @@ import {
   isValidConversationForCompare,
   regenerateConversationId,
   sortByDateAndName,
+  updateAttachmentUrlOnMove,
+  updateMessagesAttachmentsOnMove,
   updateMessagesAttachmentsTitles,
 } from '@/src/utils/app/conversation';
 
@@ -65,8 +67,10 @@ const mockFns = vi.hoisted(() => {
     isConversationWithFormSchema: vi.fn(),
     getFileRootId: vi.fn(),
     getLastPathSegment: vi.fn((s: string) => s.split('/').pop()),
+    isAttachmentLink: vi.fn((url: string) => /^https?:\/\//.test(url)),
     ApiUtils: {
       decodeApiUrl: vi.fn((s: string) => s),
+      encodeApiUrl: vi.fn((s: string) => s),
     },
   };
 });
@@ -96,6 +100,7 @@ vi.mock('@/src/utils/app/id', () => ({
 vi.mock('@/src/utils/app/file', () => ({
   constructPath: mockFns.constructPath,
   notAllowedSymbolsRegex: /[<>]/g,
+  isAttachmentLink: mockFns.isAttachmentLink,
 }));
 vi.mock('@/src/utils/server/api', () => ({
   getConversationApiKey: mockFns.getConversationApiKey,
@@ -1063,6 +1068,130 @@ describe('utils/app/conversation.ts', () => {
       expect(
         updateMessagesAttachmentsTitles([testMessage3, testMessage4], []),
       ).toEqual([testMessage3, testMessage4]);
+    });
+  });
+
+  describe('updateAttachmentUrlOnMove', () => {
+    const oldFolderId = `${ApiKeys.Files}/${bucket}/OldFolder`;
+    const newFolderId = `${ApiKeys.Files}/${bucket}/NewFolder`;
+    const moves = new Map([
+      [`${oldFolderId}/file.svg`, `${newFolderId}/file.svg`],
+    ]);
+
+    it('Should rewrite a url matching a moved file', () => {
+      expect(updateAttachmentUrlOnMove(`${oldFolderId}/file.svg`, moves)).toBe(
+        `${newFolderId}/file.svg`,
+      );
+    });
+
+    it('Should leave a sibling file in the same folder unchanged', () => {
+      const url = `${oldFolderId}/other.svg`;
+      expect(updateAttachmentUrlOnMove(url, moves)).toBe(url);
+    });
+
+    it('Should leave a file in a subfolder of the source folder unchanged', () => {
+      const url = `${oldFolderId}/SubFolder/nested.svg`;
+      expect(updateAttachmentUrlOnMove(url, moves)).toBe(url);
+    });
+
+    it('Should rewrite each moved file when a whole folder is moved', () => {
+      const folderMoves = new Map([
+        [`${oldFolderId}/SubFolder/a.svg`, `${newFolderId}/SubFolder/a.svg`],
+        [`${oldFolderId}/SubFolder/b.svg`, `${newFolderId}/SubFolder/b.svg`],
+      ]);
+
+      expect(
+        updateAttachmentUrlOnMove(
+          `${oldFolderId}/SubFolder/a.svg`,
+          folderMoves,
+        ),
+      ).toBe(`${newFolderId}/SubFolder/a.svg`);
+      expect(
+        updateAttachmentUrlOnMove(`${oldFolderId}/kept.svg`, folderMoves),
+      ).toBe(`${oldFolderId}/kept.svg`);
+    });
+
+    it('Should leave urls outside the moved files unchanged', () => {
+      const url = `${ApiKeys.Files}/${bucket}/OtherFolder/file.svg`;
+      expect(updateAttachmentUrlOnMove(url, moves)).toBe(url);
+    });
+
+    it('Should leave external links unchanged', () => {
+      const link = 'https://example.com/OldFolder/file.svg';
+      expect(updateAttachmentUrlOnMove(link, moves)).toBe(link);
+    });
+
+    it('Should return undefined url as is', () => {
+      expect(updateAttachmentUrlOnMove(undefined, moves)).toBeUndefined();
+    });
+  });
+
+  describe('updateMessagesAttachmentsOnMove', () => {
+    const oldFolderId = `${ApiKeys.Files}/${bucket}/OldFolder`;
+    const newFolderId = `${ApiKeys.Files}/${bucket}/NewFolder`;
+    const moves = new Map([
+      [`${oldFolderId}/file.svg`, `${newFolderId}/file.svg`],
+    ]);
+
+    it('Should rewrite affected attachment url and reference_url and flag as updated', () => {
+      const messages = [
+        {
+          content: '',
+          role: Role.User,
+          custom_content: {
+            attachments: [
+              {
+                type: 'image/svg+xml',
+                title: 'icon',
+                url: `${oldFolderId}/file.svg`,
+                reference_url: `${oldFolderId}/file.svg`,
+              },
+            ],
+          },
+        },
+      ];
+
+      const result = updateMessagesAttachmentsOnMove(messages, moves);
+
+      expect(result.isUpdated).toBe(true);
+      expect(result.messages[0].custom_content?.attachments?.[0]).toMatchObject(
+        {
+          url: `${newFolderId}/file.svg`,
+          reference_url: `${newFolderId}/file.svg`,
+        },
+      );
+    });
+
+    it('Should return the same messages reference when nothing is affected', () => {
+      const messages = [
+        {
+          content: '',
+          role: Role.User,
+          custom_content: {
+            attachments: [
+              {
+                type: 'image/svg+xml',
+                title: 'icon',
+                url: `${oldFolderId}/other.svg`,
+              },
+            ],
+          },
+        },
+      ];
+
+      const result = updateMessagesAttachmentsOnMove(messages, moves);
+
+      expect(result.isUpdated).toBe(false);
+      expect(result.messages).toBe(messages);
+    });
+
+    it('Should leave messages without attachments untouched', () => {
+      const messages = [{ content: 'no attachments', role: Role.User }];
+
+      const result = updateMessagesAttachmentsOnMove(messages, moves);
+
+      expect(result.isUpdated).toBe(false);
+      expect(result.messages).toBe(messages);
     });
   });
 

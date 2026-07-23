@@ -55,8 +55,8 @@ export interface Props {
   onRegenerate?: () => void;
 }
 
-const CONTEXT_MENU_OFFSET = 100;
-const CONTEXT_MENU_REGENERATE_OFFSET = 130;
+const CONTEXT_MENU_OFFSET = 143;
+const CONTEXT_MENU_REGENERATE_OFFSET = 173;
 
 export const ChatMessage: FC<Props> = memo(
   ({

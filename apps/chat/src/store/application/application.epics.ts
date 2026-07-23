@@ -34,14 +34,21 @@ import {
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
+import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
+  getFileMovesFromResult,
+  updatePathOnMove,
+} from '@/src/utils/app/folders';
+import {
+  isApplicationId,
   isEntityIdExternal,
   isEntityIdLocal,
+  isMyApplication,
   isMyEntity,
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
@@ -50,7 +57,10 @@ import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
-import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
+import {
+  ApiDetailedApplicationTypeSchema,
+  ApplicationTypeSchemaProperties,
+} from '@/src/types/application-type-schema';
 import {
   ApplicationStatus,
   CustomApplicationModel,
@@ -65,6 +75,7 @@ import {
   ApplicationTypesSchemasActions,
   ChatActions,
   ConversationsActions,
+  FilesActions,
   MarketplaceActions,
   ModelsActions,
   PromptsActions,
@@ -1130,6 +1141,75 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
     }),
   );
 
+const updateApplicationIconsOnFileMoveEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(FilesActions.moveFilesSuccess.type),
+    mergeMap(({ payload }) => {
+      const moves = getFileMovesFromResult(payload.result);
+
+      if (!moves.size) {
+        return EMPTY;
+      }
+
+      const affectedApplications = ModelsSelectors.selectModels(state$.value)
+        .filter(
+          (model) =>
+            isApplicationId(model.id) &&
+            isMyApplication(model) &&
+            !!model.iconUrl,
+        )
+        .map((model) => ({
+          id: model.id,
+          newIconUrl: updatePathOnMove(model.iconUrl ?? '', moves),
+          currentIconUrl: model.iconUrl,
+        }))
+        .filter(
+          ({ newIconUrl, currentIconUrl }) => newIconUrl !== currentIconUrl,
+        );
+
+      if (!affectedApplications.length) {
+        return EMPTY;
+      }
+
+      return from(affectedApplications).pipe(
+        mergeMap(({ id, newIconUrl }) =>
+          ApplicationService.get(id).pipe(
+            mergeMap((application) => {
+              if (!application) {
+                return EMPTY;
+              }
+
+              const schema$: Observable<
+                ApiDetailedApplicationTypeSchema | undefined
+              > = application.applicationTypeSchemaId
+                ? ApplicationTypesSchemasService.getApplicationTypeSchema(
+                    application.applicationTypeSchemaId,
+                  )
+                : of(undefined);
+
+              return schema$.pipe(
+                map((schema) =>
+                  ApplicationActions.edit({
+                    oldApplication: application,
+                    updatedApplication: { ...application, iconUrl: newIconUrl },
+                    schema,
+                  }),
+                ),
+              );
+            }),
+            catchError((err) => {
+              console.error(
+                'Failed to update application icon after file move:',
+                err,
+              );
+              return EMPTY;
+            }),
+          ),
+        ),
+      );
+    }),
+  );
+
 export const ApplicationEpics = combineEpics(
   initEpic,
   createApplicationEpic,
@@ -1148,4 +1228,5 @@ export const ApplicationEpics = combineEpics(
   setSelectedWidgetEpic,
   initQueryParamsEpic,
   setQueryParamsEpic,
+  updateApplicationIconsOnFileMoveEpic,
 );
