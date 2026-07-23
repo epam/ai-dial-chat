@@ -172,6 +172,13 @@ const selectPublicFolders = createSelector([selectToolsets], (toolsets) => {
   );
 });
 
+const selectAllowedTools = (state: RootState) =>
+  rootSelector(state).allowedTools?.tools ?? [];
+const selectAllowedToolsEndpoint = (state: RootState) =>
+  rootSelector(state).allowedTools?.endpoint;
+const selectAllowedToolsStatus = (state: RootState) =>
+  rootSelector(state).allowedToolsStatus;
+
 export const ToolsetSelectors = {
   selectInitialized,
   selectToolsetsMap,
@@ -191,4 +198,7 @@ export const ToolsetSelectors = {
   selectAllGroupToolsetsKeySet,
   selectToolsetsTopics,
   selectPublicFolders,
+  selectAllowedTools,
+  selectAllowedToolsEndpoint,
+  selectAllowedToolsStatus,
 };

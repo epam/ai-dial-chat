@@ -11,6 +11,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetEditorSteps,
   ToolsetModel,
+  ToolsetTool,
 } from '@/src/types/toolsets';
 
 import { ToolsetState } from '@/src/store/toolset/toolset.types';
@@ -30,6 +31,9 @@ const initialState: ToolsetState = {
   editorStep: ToolsetEditorSteps.General,
 
   publishRequestToolsets: [],
+
+  allowedTools: undefined,
+  allowedToolsStatus: UploadStatus.UNINITIALIZED,
 };
 
 export const toolsetSlice = createSlice({
@@ -294,6 +298,26 @@ export const toolsetSlice = createSlice({
       _action: PayloadAction<{ id: string; status?: number; traceId?: string }>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
+    },
+    getAllowedTools: (state, _action: PayloadAction<{ id: string }>) => {
+      state.allowedToolsStatus = UploadStatus.LOADING;
+    },
+    getAllowedToolsSuccess: (
+      state,
+      { payload }: PayloadAction<{ id: string; tools: ToolsetTool[] }>,
+    ) => {
+      state.allowedToolsStatus = UploadStatus.LOADED;
+      state.allowedTools = {
+        endpoint: state.toolsetsMap[payload.id]?.endpoint as string,
+        tools: payload.tools,
+      };
+    },
+    getAllowedToolsFailed: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
+      state.allowedToolsStatus = UploadStatus.FAILED;
+      state.allowedTools = undefined;
     },
   },
 });

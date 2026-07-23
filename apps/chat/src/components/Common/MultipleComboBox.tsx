@@ -24,6 +24,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { CommonI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
+import { Loader } from '@/src/components/Common/Loader';
 
 import { CloseButtonSmall } from './CloseButtons';
 import { Tooltip } from './Tooltip';
@@ -44,10 +47,11 @@ function getFilteredItems<T>({
   selectedItems,
 }: getFilteredItemsArgs<T>) {
   if (!items) {
-    return !inputValue ||
-      selectedItems?.some((item) => getItemLabel(item) === inputValue)
+    const trimmedInputValue = inputValue?.trim();
+    return !trimmedInputValue ||
+      selectedItems?.some((item) => getItemLabel(item) === trimmedInputValue)
       ? []
-      : [inputValue as T];
+      : [trimmedInputValue as T];
   }
   if (!selectedItems) {
     return items;
@@ -88,6 +92,7 @@ interface Props<T> {
   /** When true, shows `connectorLabel` between selected pills (not before the first). */
   showConnectorBetweenSelectedItems?: boolean;
   connectorLabel?: string;
+  isLoading?: boolean;
 }
 
 export function MultipleComboBox<T>({
@@ -115,6 +120,7 @@ export function MultipleComboBox<T>({
   inputRef: inputRefProp,
   showConnectorBetweenSelectedItems,
   connectorLabel,
+  isLoading,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
@@ -183,6 +189,7 @@ export function MultipleComboBox<T>({
     highlightedIndex,
     getItemProps,
     selectedItem,
+    openMenu,
   } = useCombobox({
     items: displayedItems,
     itemToString: (item: T | null) => (item ? getItemLabel(item) : 'null item'),
@@ -200,6 +207,11 @@ export function MultipleComboBox<T>({
             isOpen: true, // keep the menu open after selection.
             highlightedIndex: 0, // with the first option highlighted.
           };
+        case useCombobox.stateChangeTypes.InputClick:
+          return {
+            ...changes,
+            isOpen: true, // always open on click (never toggle closed).
+          };
         default:
           return changes;
       }
@@ -212,32 +224,44 @@ export function MultipleComboBox<T>({
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
-        case useCombobox.stateChangeTypes.InputBlur:
+        case useCombobox.stateChangeTypes.InputBlur: {
           if (!newSelectedItem) {
             return;
           }
 
-          if (
-            getItemLabel(newSelectedItem) &&
-            !getItemLabel(newSelectedItem).trim()
-          ) {
+          const itemToAdd: T =
+            typeof newSelectedItem === 'string'
+              ? (newSelectedItem.trim() as T)
+              : newSelectedItem;
+
+          if (getItemLabel(itemToAdd) && !getItemLabel(itemToAdd).trim()) {
             return;
           }
 
           if (
             validationRegExp &&
-            typeof newSelectedItem === 'string' &&
-            !validationRegExp.test(newSelectedItem)
+            typeof itemToAdd === 'string' &&
+            !validationRegExp.test(itemToAdd)
           ) {
             handleError?.();
             return;
           }
 
-          addSelectedItem(newSelectedItem);
-          onChangeSelectedItems([...(selectedItems ?? []), newSelectedItem]);
+          if (
+            selectedItems?.some(
+              (item) => getItemLabel(item) === getItemLabel(itemToAdd),
+            )
+          ) {
+            setInputValue('');
+            return;
+          }
+
+          addSelectedItem(itemToAdd);
+          onChangeSelectedItems([...(selectedItems ?? []), itemToAdd]);
           setInputValue('');
 
           break;
+        }
 
         case useCombobox.stateChangeTypes.InputChange:
           handleClearError?.();
@@ -366,6 +390,11 @@ export function MultipleComboBox<T>({
                 onChange: (e: ChangeEvent<HTMLInputElement>) => {
                   cursorPositionRef.current = e.target.selectionStart;
                 },
+                onFocus: () => {
+                  if (!isOpen) {
+                    openMenu();
+                  }
+                },
               })}
               data-qa="filter-value-input"
             />
@@ -411,10 +440,10 @@ export function MultipleComboBox<T>({
                 )}
           </ul>
         </div>
-        {hasDeleteAll && selectedItems.length > 0 ? (
-          <div className={closeButtonClassName}>
+        <div className="flex flex-col justify-center gap-2">
+          {hasDeleteAll && selectedItems.length > 0 && (
             <CloseButtonSmall
-              className="text-primary"
+              className={classNames('text-primary', closeButtonClassName)}
               disabled={disabled}
               onClick={(e) => {
                 e.stopPropagation();
@@ -422,8 +451,9 @@ export function MultipleComboBox<T>({
                 onChangeSelectedItems([]);
               }}
             />
-          </div>
-        ) : null}
+          )}
+          {!!isLoading && <Loader size={DEFAULT_ICON_SIZES.SMALL} />}
+        </div>
       </div>
     </Tooltip>
   );
