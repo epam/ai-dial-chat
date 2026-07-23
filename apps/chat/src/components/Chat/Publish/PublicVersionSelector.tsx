@@ -182,6 +182,7 @@ export function PublicVersionSelector({
       listClassName="min-w-fit"
       disabled={mappedAllVersions.length <= 1}
       placement="bottom-end"
+      strategy="fixed"
       trigger={
         <DialLinkButton
           onClick={stopBubbling}
