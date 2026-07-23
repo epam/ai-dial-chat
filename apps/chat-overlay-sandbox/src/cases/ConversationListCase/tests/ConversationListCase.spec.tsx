@@ -39,6 +39,9 @@ describe('ConversationListCase', () => {
       return mocks.directInstanceMethods;
     });
     mocks.directInstanceMethods.ready.mockResolvedValue(true);
+    mocks.directInstanceMethods.getConversations.mockResolvedValue({
+      conversations: [],
+    });
     mocks.getChatOverlayHost.mockReturnValue('https://chat.example.com');
   });
 
@@ -66,6 +69,55 @@ describe('ConversationListCase', () => {
 
     await user.click(button);
     expect(mocks.directInstanceMethods.getConversations).toHaveBeenCalledOnce();
+  });
+
+  it('shows conversation titles in the id selector while preserving selected ids', async () => {
+    const user = userEvent.setup();
+    const longConversationId =
+      'conversations/user@example.com/folder/very-long-conversation-id';
+    mocks.directInstanceMethods.getConversations.mockResolvedValueOnce({
+      conversations: [
+        {
+          id: longConversationId,
+          title: 'Quarterly planning',
+          updatedAt: 0,
+          isPinned: false,
+          isReadonly: false,
+          sharedWithMe: false,
+          publishedWithMe: false,
+        },
+      ],
+    });
+    await renderReady();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Get conversations',
+      }),
+    );
+
+    const option = (await screen.findByRole('option', {
+      name: 'Quarterly planning',
+    })) as HTMLOptionElement;
+    expect(option.value).toBe(longConversationId);
+    expect(
+      screen.queryByRole('option', { name: longConversationId }),
+    ).toBeNull();
+
+    const selector = screen.getByRole('combobox', {
+      name: 'Conversation id',
+    }) as HTMLSelectElement;
+    await user.selectOptions(selector, longConversationId);
+    expect(selector.value).toBe(longConversationId);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Select conversation by id',
+      }),
+    );
+    expect(mocks.directInstanceMethods.selectConversation).toHaveBeenCalledWith(
+      longConversationId,
+    );
   });
 
   it('calls getSelectedConversations on the overlay', async () => {

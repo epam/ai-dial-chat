@@ -15,7 +15,7 @@ import { getChatOverlayHost } from '../../env';
 interface ConversationListControlsProps {
   title: string;
   isReady: boolean;
-  conversationIds: string[];
+  conversations: ConversationSelectorOption[];
   onGetConversations: () => void;
   onGetSelectedConversations: () => void;
   onRefreshList: () => void;
@@ -26,25 +26,21 @@ interface ConversationListControlsProps {
   onDeleteConversation: (id: string) => void;
 }
 
-const MAX_CONVERSATION_ID_OPTION_LENGTH = 42;
+interface ConversationSelectorOption {
+  id: string;
+  title: string;
+}
 
-const formatConversationIdOption = (id: string): string => {
-  if (id.length <= MAX_CONVERSATION_ID_OPTION_LENGTH) {
-    return id;
-  }
-
-  const visibleLength = MAX_CONVERSATION_ID_OPTION_LENGTH - 3;
-  const startLength = Math.ceil(visibleLength / 2);
-  const endLength = Math.floor(visibleLength / 2);
-
-  return `${id.slice(0, startLength)}...${id.slice(-endLength)}`;
-};
+const getConversationSelectorLabel = ({
+  id,
+  title,
+}: ConversationSelectorOption): string => title.trim() || id;
 
 /** Control panel for exercising the conversation-list methods against one visible overlay. */
 const ConversationListControls: FC<ConversationListControlsProps> = ({
   title,
   isReady,
-  conversationIds,
+  conversations,
   onGetConversations,
   onGetSelectedConversations,
   onRefreshList,
@@ -134,9 +130,13 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
                 onChange={handleConversationIdSelect}
               >
                 <option value="">— select from last Get conversations —</option>
-                {conversationIds.map((id) => (
-                  <option key={id} value={id}>
-                    {formatConversationIdOption(id)}
+                {conversations.map((conversation) => (
+                  <option
+                    key={conversation.id}
+                    value={conversation.id}
+                    title={conversation.id}
+                  >
+                    {getConversationSelectorLabel(conversation)}
                   </option>
                 ))}
               </select>
@@ -200,9 +200,9 @@ const ConversationListCase: FC = () => {
   const directOverlayRef = useRef<ChatOverlay | null>(null);
   const [isDirectReady, setIsDirectReady] = useState(false);
   const [directLog, setDirectLog] = useState<string[]>([]);
-  const [directConversationIds, setDirectConversationIds] = useState<string[]>(
-    [],
-  );
+  const [directConversations, setDirectConversations] = useState<
+    ConversationSelectorOption[]
+  >([]);
 
   const appendDirectLog = useCallback((line: string) => {
     setDirectLog((prev) => [
@@ -238,7 +238,9 @@ const ConversationListCase: FC = () => {
     const response = await directOverlayRef.current?.getConversations();
     appendDirectLog(`getConversations -> ${JSON.stringify(response)}`);
     if (response) {
-      setDirectConversationIds(response.conversations.map((c) => c.id));
+      setDirectConversations(
+        response.conversations.map(({ id, title }) => ({ id, title })),
+      );
     }
   }, [appendDirectLog]);
 
@@ -306,7 +308,7 @@ const ConversationListCase: FC = () => {
       <ConversationListControls
         title="ChatOverlay"
         isReady={isDirectReady}
-        conversationIds={directConversationIds}
+        conversations={directConversations}
         onGetConversations={() => void handleDirectGetConversations()}
         onGetSelectedConversations={() =>
           void handleDirectGetSelectedConversations()
