@@ -26,7 +26,7 @@ export class DislikeCommentModal extends Popup {
     const respPromise = this.page.waitForResponse(
       (resp) =>
         resp.request().method() === 'POST' &&
-        resp.url().includes(API.rateHost) &&
+        resp.url().includes(API.rateHost()) &&
         resp.status() === 200,
     );
     await this.sendButton.click();
