@@ -5,32 +5,28 @@ Static sandbox for exercising `@epam/ai-dial-chat-overlay` against a deployed
 
 ## Deployment
 
-Build the image from the workspace root:
+The root workspace `Dockerfile` builds this app into the same image as
+`apps/chat` and `apps/chat-api`. When enabled, `chat-api` serves the sandbox at:
 
 ```bash
-docker build -f apps/chat-overlay-sandbox/Dockerfile -t chat-overlay-sandbox .
+https://<chat-host>/overlay-sandbox/
 ```
 
-The deployed container reads the embedded chat URL from runtime environment:
-
-```bash
-CHAT_OVERLAY_HOST=https://development-overlay-ng.example.com
-```
-
-The image generates `/env.js` from that value when the container starts, so
-changing `CHAT_OVERLAY_HOST` in Helm values does not require rebuilding the
-image.
-
-The embedded chat environment must allow this sandbox origin:
+Enable the sandbox route and overlay runtime mode in the embedded chat
+environment:
 
 ```bash
 OVERLAY_ENABLED=true
-ALLOWED_IFRAME_ORIGINS=https://development-overlay-sandbox-ng.example.com
+OVERLAY_SANDBOX_ENABLED=true
+ALLOWED_IFRAME_ORIGINS=https://<chat-host>
 ```
+
+The deployed sandbox embeds `window.location.origin`, so no separate sandbox
+image or runtime host variable is required.
 
 ## Local Development
 
-Local Vite runs can keep using the build-time fallback:
+Local Vite runs can override the embedded chat host:
 
 ```bash
 VITE_CHAT_OVERLAY_HOST=http://localhost:4207

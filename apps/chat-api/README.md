@@ -68,6 +68,8 @@ AUTH_COOKIE_SECURE=false
 ALLOWED_IFRAME_ORIGINS=
 # Enable chat overlay runtime mode; requires ALLOWED_IFRAME_ORIGINS
 OVERLAY_ENABLED=false
+# Serve overlay sandbox at /overlay-sandbox/
+OVERLAY_SANDBOX_ENABLED=false
 ```
 
 **Note**: `.env.local` takes precedence over `.env` and is not committed to version control.
@@ -118,6 +120,7 @@ At least one identity provider (see [Auth provider environment variables](#auth-
 | `HIDDEN_ENTITY_TAG`                     | No                             | A special topic name for models and toolsets that should remain hidden in the Catalog but be visible in the Quick App 2.0 form.                                                                                                                                                                                                                                                                          | Any string |     |
 | `ALLOWED_IFRAME_ORIGINS`                | —                              | Comma-separated list of origins allowed to frame this app and be loaded by it (added to CSP `frame-ancestors` and `frame-src`). Each entry must be an origin only (`scheme://host[:port]`, no path or query string) with an `https://` (or `http://` for local development only) scheme. Required for chat overlay mode and iframe integrations such as Quick Apps editors. Example: `https://quickapps.example.com` |
 | `OVERLAY_ENABLED`                       | `false`                        | Enables embedded chat overlay runtime mode. Has no effect unless `ALLOWED_IFRAME_ORIGINS` also includes at least one allowed host origin.                                                                                                                                                                                                                                                                |
+| `OVERLAY_SANDBOX_ENABLED`               | `false`                        | Serves the overlay sandbox static app at `/overlay-sandbox/`. Intended for development/test environments only; the route is not served when disabled.                                                                                                                                                                                                                                                     |
 | `FILE_MANAGER_AVAILABLE_TABS`           | `my_files,shared,organization` | Comma-separated subset of `my_files`, `shared`, `organization` controlling which File Manager tabs are shown. Unknown values (including `review`) are dropped; an unset or fully-invalid value falls back to all three tabs.                                                                                                                                                                             |
 | `LIVE_CHAT_INTERACTION_ENABLED`         | `false`                        | Enables the interactive toolset sign-in flow: the frontend subscribes to DIAL Core's client-channel and shows a global sign-in dialog when a completion needs mid-stream toolset credentials (`features.liveChatInteraction`).                                                                                                                                                                           |
 | `LIVE_CHAT_INTERACTION_ENABLED_ROLES`   | —                              | Comma-separated roles allowed to use the feature above when it is enabled. Unset or empty means unrestricted (all authenticated users).                                                                                                                                                                                                                                                                  |
@@ -387,7 +390,21 @@ The API also serves the built React application. Static files are served from:
 apps/chat/dist
 ```
 
-All routes except those prefixed with `/api/*` serve the React application's `index.html`. This enables SPA routing for frontend routes such as `/catalog` and `/conversations/:id` while API endpoints continue to be handled by NestJS.
+All routes except those prefixed with `/api/*` or `/overlay-sandbox/*` serve
+the React application's `index.html`. This enables SPA routing for frontend
+routes such as `/catalog` and `/conversations/:id` while API endpoints continue
+to be handled by NestJS.
+
+When `OVERLAY_SANDBOX_ENABLED=true`, the API also serves the built overlay
+sandbox from:
+
+```
+apps/chat-overlay-sandbox/dist
+```
+
+The sandbox is mounted at `/overlay-sandbox/`. The main React application's SPA
+fallback excludes `/overlay-sandbox/*`, so disabled or missing sandbox routes do
+not fall through to the chat UI.
 
 ## Logging
 

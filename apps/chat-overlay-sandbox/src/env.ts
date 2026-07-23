@@ -1,7 +1,4 @@
-/** Runtime env var carrying the chat app's overlay host URL in deployed containers. */
-export const CHAT_OVERLAY_HOST_ENV_VAR = 'CHAT_OVERLAY_HOST';
-
-/** Vite build-time fallback used for local development without a container. */
+/** Vite local-development override for the chat app's overlay host URL. */
 export const VITE_CHAT_OVERLAY_HOST_ENV_VAR = 'VITE_CHAT_OVERLAY_HOST';
 
 const normalizeHost = (host: string | undefined): string | null => {
@@ -10,16 +7,18 @@ const normalizeHost = (host: string | undefined): string | null => {
 };
 
 /**
- * Reads the chat app's overlay host URL. Deployed static builds read the
- * runtime-generated `/env.js`; local Vite runs keep using the `VITE_` fallback.
- * Returns `null` when unset so callers can render a visible message instead of
- * silently constructing an iframe with an empty `src`.
+ * Reads the chat app's overlay host URL. Production builds are served by
+ * `chat-api` under `/overlay-sandbox/`, so the embedded chat is same-origin.
+ * Local Vite runs can override that with the `VITE_` fallback.
+ * Returns `null` only when neither source is available so callers can render a
+ * visible message instead of silently constructing an iframe with an empty
+ * `src`.
  */
 export const getChatOverlayHost = (): string | null => {
-  const runtimeHost =
+  const currentOrigin =
     typeof window === 'undefined'
       ? null
-      : normalizeHost(window.__CHAT_OVERLAY_SANDBOX_CONFIG__?.chatOverlayHost);
+      : normalizeHost(window.location.origin);
 
-  return runtimeHost ?? normalizeHost(import.meta.env.VITE_CHAT_OVERLAY_HOST);
+  return normalizeHost(import.meta.env.VITE_CHAT_OVERLAY_HOST) ?? currentOrigin;
 };
