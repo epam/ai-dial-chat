@@ -198,7 +198,9 @@ describe('AppsEditor', () => {
   });
 
   it('does not block or error preview entry when the deployments refetch rejects', async () => {
-    refetchDeployments.mockReturnValueOnce(Promise.reject(new Error('boom')));
+    refetchDeployments.mockImplementationOnce(() =>
+      Promise.reject(new Error('boom')),
+    );
     renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
     await userEvent.click(
@@ -268,7 +270,7 @@ describe('AppsEditor', () => {
     ).toBeNull();
   });
 
-  it('disables Cancel and Save while previewing', async () => {
+  it('hides Cancel and Save while previewing', async () => {
     renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
     await userEvent.click(
@@ -279,13 +281,12 @@ describe('AppsEditor', () => {
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
-    const cancelButton = screen.getByRole('button', {
-      name: ButtonsI18nKeys.Cancel,
-    }) as HTMLButtonElement;
     await screen.findByRole('button', {
       name: AppsEditorI18nKeys.ExitPreviewButton,
     });
-    expect(cancelButton.disabled).toBe(true);
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.Cancel }),
+    ).toBeNull();
     expect(
       screen.getByRole('button', {
         name: AppsEditorI18nKeys.ExitPreviewButton,
