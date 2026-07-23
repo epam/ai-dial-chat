@@ -9,9 +9,12 @@ vi.mock('../../cases/DirectOverlayCase/DirectOverlayCase', () => ({
 vi.mock('../../cases/ManagerOverlayCase/ManagerOverlayCase', () => ({
   default: () => <div>Manager case content</div>,
 }));
+vi.mock('../../cases/ConversationListCase/ConversationListCase', () => ({
+  default: () => <div>Conversation-list case content</div>,
+}));
 
 describe('App', () => {
-  it('lists only the v1-scoped cases', () => {
+  it('lists the v1-scoped cases and the conversation-list case', () => {
     render(<App />);
 
     expect(
@@ -20,9 +23,14 @@ describe('App', () => {
     expect(
       screen.getByRole('button', { name: 'ChatOverlayManager case' }),
     ).toBeTruthy();
+    expect(
+      screen.getByRole('button', {
+        name: 'Conversation-list methods case',
+      }),
+    ).toBeTruthy();
   });
 
-  it('does not present conversation create/rename/delete/select/playback/import-export cases', () => {
+  it('does not present still-deferred playback/import-export cases', () => {
     render(<App />);
 
     const forbiddenPatterns = [
@@ -65,5 +73,17 @@ describe('App', () => {
       screen.getByRole('button', { name: 'ChatOverlayManager case' }),
     );
     expect(screen.getByText('Manager case content')).toBeTruthy();
+  });
+
+  it('navigates to the conversation-list case', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Conversation-list methods case',
+      }),
+    );
+    expect(screen.getByText('Conversation-list case content')).toBeTruthy();
   });
 });

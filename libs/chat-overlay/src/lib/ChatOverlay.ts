@@ -1,12 +1,23 @@
 import {
   type ChatOverlayOptions,
+  type CreateConversationPayload,
+  type CreateConversationResponse,
+  type CreateLocalConversationResponse,
+  type DeleteConversationPayload,
+  type DeleteConversationResponse,
+  type GetConversationsResponse,
   type GetMessagesResponse,
+  type GetSelectedConversationsResponse,
   type OverlayMessageEvent,
   type OverlayMessageRequest,
   type OverlayMessageResponse,
   OverlayEventType,
   OverlayFeature,
   OverlayRequestType,
+  type RenameConversationPayload,
+  type RenameConversationResponse,
+  type SelectConversationPayload,
+  type SelectConversationResponse,
   type SendMessagePayload,
   type SendMessageResponse,
   type SetInputContentPayload,
@@ -168,6 +179,74 @@ export class ChatOverlay {
     const payload: SetTemperaturePayload = { temperature };
     return this.send<SetTemperatureResponse>(
       OverlayRequestType.SetTemperature,
+      payload,
+    );
+  }
+
+  /** Fetches the current user's conversation list. */
+  getConversations(): Promise<GetConversationsResponse> {
+    return this.send<GetConversationsResponse>(
+      OverlayRequestType.GetConversations,
+    );
+  }
+
+  /** Fetches the currently displayed (active) conversation(s). */
+  getSelectedConversations(): Promise<GetSelectedConversationsResponse> {
+    return this.send<GetSelectedConversationsResponse>(
+      OverlayRequestType.GetSelectedConversations,
+    );
+  }
+
+  /** Navigates to and loads the conversation matching `id`. */
+  selectConversation(id: string): Promise<SelectConversationResponse> {
+    const payload: SelectConversationPayload = { id };
+    return this.send<SelectConversationResponse>(
+      OverlayRequestType.SelectConversation,
+      payload,
+    );
+  }
+
+  /**
+   * Creates a new conversation. With a non-blank `firstMessage`, persists
+   * immediately and returns its projection. Without one, opens the composer
+   * and resolves with `{ conversation: null }` — identical to
+   * `createLocalConversation()`.
+   */
+  createConversation(options?: {
+    deploymentId?: string;
+    firstMessage?: string;
+  }): Promise<CreateConversationResponse> {
+    const payload: CreateConversationPayload = { ...options };
+    return this.send<CreateConversationResponse>(
+      OverlayRequestType.CreateConversation,
+      payload,
+    );
+  }
+
+  /** Opens the composer without persisting anything. */
+  createLocalConversation(): Promise<CreateLocalConversationResponse> {
+    return this.send<CreateLocalConversationResponse>(
+      OverlayRequestType.CreateLocalConversation,
+    );
+  }
+
+  /** Deletes the conversation matching `id`. */
+  deleteConversation(id: string): Promise<DeleteConversationResponse> {
+    const payload: DeleteConversationPayload = { id };
+    return this.send<DeleteConversationResponse>(
+      OverlayRequestType.DeleteConversation,
+      payload,
+    );
+  }
+
+  /** Renames the conversation matching `id` to `newName`. */
+  renameConversation(
+    id: string,
+    newName: string,
+  ): Promise<RenameConversationResponse> {
+    const payload: RenameConversationPayload = { id, newName };
+    return this.send<RenameConversationResponse>(
+      OverlayRequestType.RenameConversation,
       payload,
     );
   }

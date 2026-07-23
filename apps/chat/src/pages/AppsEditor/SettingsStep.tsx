@@ -19,10 +19,19 @@ interface Props {
   appIconUrl?: string;
   isPreviewing?: boolean;
   onUpdated?: () => void;
-  onSaveSuccess?: () => void;
+  onSaveSuccess?: (hasChanges: boolean) => void;
   onSaveError?: (error: string) => void;
   /** Notifies the host whenever the embedded editor's readiness to save changes (`AppsEditorEvent.ReadyToSave`), not merely UI-rendered readiness. */
   onReadyChange?: (isReady: boolean) => void;
+  /** Notifies the host whenever the embedded editor reports the user is logged out (`AppsEditorEvent.LoggedOut`). */
+  onLoggedOutChange?: (isLoggedOut: boolean) => void;
+  /**
+   * Bumped by the host whenever a save reports a real configuration change
+   * (`SaveSuccessMessage.hasChanges === true`). Passed as `AppPreviewChat`'s
+   * `key`, so it remounts — discarding the previous preview conversation and
+   * composer state — the next time the preview pane is shown.
+   */
+  previewResetKey?: number;
 }
 
 const SettingsStep = forwardRef<SettingsStepHandle, Props>(
@@ -37,6 +46,8 @@ const SettingsStep = forwardRef<SettingsStepHandle, Props>(
       onSaveSuccess,
       onSaveError,
       onReadyChange,
+      onLoggedOutChange,
+      previewResetKey,
     },
     ref,
   ) {
@@ -64,6 +75,7 @@ const SettingsStep = forwardRef<SettingsStepHandle, Props>(
               onSaveSuccess={onSaveSuccess}
               onSaveError={onSaveError}
               onReadyChange={onReadyChange}
+              onLoggedOutChange={onLoggedOutChange}
             />
           </div>
           {appId && (
@@ -74,6 +86,7 @@ const SettingsStep = forwardRef<SettingsStepHandle, Props>(
               )}
             >
               <AppPreviewChat
+                key={previewResetKey}
                 appId={appId}
                 appDisplayName={appDisplayName ?? schema.displayName}
                 appIconUrl={appIconUrl ?? schema.iconUrl}

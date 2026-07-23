@@ -118,6 +118,45 @@ describe('AppEditorIframe', () => {
     expect(onUpdated).toHaveBeenCalledOnce();
   });
 
+  it('calls onSaveSuccess with hasChanges: true when the SaveSuccess message carries it', () => {
+    const onSaveSuccess = vi.fn();
+    renderIframe({ onSaveSuccess });
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type: AppsEditorEvent.SaveSuccess, hasChanges: true },
+        origin: 'https://editor.example.com',
+      }),
+    );
+    expect(onSaveSuccess).toHaveBeenCalledWith(true);
+  });
+
+  it('calls onSaveSuccess with hasChanges: false when the SaveSuccess message carries it', () => {
+    const onSaveSuccess = vi.fn();
+    renderIframe({ onSaveSuccess });
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type: AppsEditorEvent.SaveSuccess, hasChanges: false },
+        origin: 'https://editor.example.com',
+      }),
+    );
+    expect(onSaveSuccess).toHaveBeenCalledWith(false);
+  });
+
+  it('normalizes a missing hasChanges field on SaveSuccess to false', () => {
+    const onSaveSuccess = vi.fn();
+    renderIframe({ onSaveSuccess });
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type: AppsEditorEvent.SaveSuccess },
+        origin: 'https://editor.example.com',
+      }),
+    );
+    expect(onSaveSuccess).toHaveBeenCalledWith(false);
+  });
+
   it('ignores messages from a different origin', () => {
     const onUpdated = vi.fn();
     renderIframe({ onUpdated });
@@ -241,6 +280,124 @@ describe('AppEditorIframe — ready-to-save readiness', () => {
     );
 
     expect(onReadyChange).not.toHaveBeenCalledWith(true);
+  });
+
+  it('reports logged out once a loggedOut message arrives', () => {
+    const onLoggedOutChange = vi.fn();
+    renderIframe({ onLoggedOutChange });
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.LoggedOut}`,
+        },
+        origin: 'https://editor.example.com',
+      }),
+    );
+
+    expect(onLoggedOutChange).toHaveBeenCalledWith(true);
+  });
+
+  it('ignores a loggedOut message from a different origin', () => {
+    const onLoggedOutChange = vi.fn();
+    renderIframe({ onLoggedOutChange });
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.LoggedOut}`,
+        },
+        origin: 'https://evil.example.com',
+      }),
+    );
+
+    expect(onLoggedOutChange).not.toHaveBeenCalledWith(true);
+  });
+
+  it('re-gates logged-out to false when the iframe reloads for a different app', () => {
+    const onLoggedOutChange = vi.fn();
+    const { rerender } = render(
+      <AppEditorIframe {...DEFAULT_PROPS} onLoggedOutChange={onLoggedOutChange} />,
+    );
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.LoggedOut}`,
+        },
+        origin: 'https://editor.example.com',
+      }),
+    );
+    expect(onLoggedOutChange).toHaveBeenCalledWith(true);
+    onLoggedOutChange.mockClear();
+
+    rerender(
+      <AppEditorIframe
+        {...DEFAULT_PROPS}
+        appId="different-app"
+        onLoggedOutChange={onLoggedOutChange}
+      />,
+    );
+
+    expect(onLoggedOutChange).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('AppEditorIframe — triggerSave', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+  });
+
+  it('posts TriggerSave with the given general payload', () => {
+    const ref = createRef<AppEditorIframeHandle>();
+    renderIframe({}, ref);
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    ref.current?.triggerSave({ name: 'My App', description: 'desc' });
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        type: AppsEditorEvent.TriggerSave,
+        general: { name: 'My App', description: 'desc' },
+      },
+      'https://editor.example.com',
+    );
+  });
+
+  it('posts TriggerSave with no general payload when none is passed', () => {
+    const ref = createRef<AppEditorIframeHandle>();
+    renderIframe({}, ref);
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    ref.current?.triggerSave();
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      { type: AppsEditorEvent.TriggerSave, general: undefined },
+      'https://editor.example.com',
+    );
   });
 });
 

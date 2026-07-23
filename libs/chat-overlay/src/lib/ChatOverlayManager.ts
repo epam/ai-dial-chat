@@ -1,7 +1,14 @@
 import type {
   ChatOverlayOptions,
+  CreateConversationResponse,
+  CreateLocalConversationResponse,
+  DeleteConversationResponse,
+  GetConversationsResponse,
   GetMessagesResponse,
+  GetSelectedConversationsResponse,
   OverlayEventType,
+  RenameConversationResponse,
+  SelectConversationResponse,
   SendMessageResponse,
   SetOverlayOptionsResponse,
   SetSystemPromptResponse,
@@ -306,6 +313,58 @@ export class ChatOverlayManager {
     temperature: number,
   ): Promise<SetTemperatureResponse> {
     return this.getEntry(overlayId).overlay.setTemperature(temperature);
+  }
+
+  /** Fetches the current user's conversation list for `overlayId`. */
+  getConversations(overlayId: string): Promise<GetConversationsResponse> {
+    return this.getEntry(overlayId).overlay.getConversations();
+  }
+
+  /** Fetches `overlayId`'s currently displayed (active) conversation(s). */
+  getSelectedConversations(
+    overlayId: string,
+  ): Promise<GetSelectedConversationsResponse> {
+    return this.getEntry(overlayId).overlay.getSelectedConversations();
+  }
+
+  /** Navigates `overlayId` to and loads the conversation matching `id`. */
+  selectConversation(
+    overlayId: string,
+    id: string,
+  ): Promise<SelectConversationResponse> {
+    return this.getEntry(overlayId).overlay.selectConversation(id);
+  }
+
+  /** Creates a new conversation for `overlayId`. */
+  createConversation(
+    overlayId: string,
+    options?: { deploymentId?: string; firstMessage?: string },
+  ): Promise<CreateConversationResponse> {
+    return this.getEntry(overlayId).overlay.createConversation(options);
+  }
+
+  /** Opens `overlayId`'s composer without persisting anything. */
+  createLocalConversation(
+    overlayId: string,
+  ): Promise<CreateLocalConversationResponse> {
+    return this.getEntry(overlayId).overlay.createLocalConversation();
+  }
+
+  /** Deletes the conversation matching `id` for `overlayId`. */
+  deleteConversation(
+    overlayId: string,
+    id: string,
+  ): Promise<DeleteConversationResponse> {
+    return this.getEntry(overlayId).overlay.deleteConversation(id);
+  }
+
+  /** Renames the conversation matching `id` to `newName` for `overlayId`. */
+  renameConversation(
+    overlayId: string,
+    id: string,
+    newName: string,
+  ): Promise<RenameConversationResponse> {
+    return this.getEntry(overlayId).overlay.renameConversation(id, newName);
   }
 
   /** Updates theme/model/conversation options for `overlayId`. */
