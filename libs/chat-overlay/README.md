@@ -59,7 +59,34 @@ Notes:
 
 - `setSystemPrompt`/`setTemperature` persist onto the active conversation the same way the app's own UI does — the new value takes effect on the _next_ message sent, not retroactively on an in-flight generation.
 - `setOverlayOptions` bypasses the readiness gate: it is also how the initial handshake options exchange happens (the library sends it automatically right after receiving the app's `READY` event), so it can be called at any time, including before `ready()` resolves.
-- Deferred for a future change: `getConversations`, `getSelectedConversations`, `selectConversation`, `createConversation`, `createLocalConversation`, `deleteConversation`, `renameConversation`, `createPlaybackConversation`, `stopSelectedPlaybackConversation`, `exportConversation`, `importConversation`.
+- Deferred for a future change: `createPlaybackConversation`, `stopSelectedPlaybackConversation`, `exportConversation`, `importConversation`.
+
+#### Conversation-list methods
+
+```ts
+const { conversations } = await overlay.getConversations();
+const { conversations: selected } = await overlay.getSelectedConversations();
+
+// Persists immediately and navigates to the new conversation.
+const { conversation } = await overlay.createConversation({
+  deploymentId: 'gpt-4o',
+  firstMessage: 'Hello!',
+});
+
+// Opens the composer without persisting anything — identical to
+// createConversation() called with no firstMessage.
+await overlay.createLocalConversation();
+
+const { conversation: selectedConversation } = await overlay.selectConversation(
+  conversation!.id,
+);
+await overlay.renameConversation(conversation!.id, 'New title');
+await overlay.deleteConversation(conversation!.id);
+```
+
+`selectConversation`, `createConversation`, `deleteConversation`, and `renameConversation` responses carry an optional `error: { code: 'NOT_FOUND' | 'FORBIDDEN' | 'INVALID_ARGUMENT'; message: string }` field for invalid ids/values/forbidden actions instead of the request silently timing out. `getConversations`/`getSelectedConversations` have no error field — they are snapshot reads with no failure mode beyond the request timeout. One documented asymmetry: `selectConversation`/a persisted `createConversation` for an inaccessible id has no way to distinguish "will never load" from "still loading", so it degrades to the request's ordinary timeout rather than an explicit error.
+
+**Compatibility break:** `createConversation`'s signature replaces the historical positional `(parentPath?, local?)` shape used by pre-`@epam/ai-dial-chat-overlay` overlay integrations with `createConversation(options?: { deploymentId?: string; firstMessage?: string })`. `parentPath` has no replacement — this app has no folder concept for conversations. The old `local` boolean is replaced by omitting `firstMessage`: `createConversation()` called with no `firstMessage` behaves identically to `createLocalConversation()`.
 
 ### ChatOverlayManager
 
@@ -83,6 +110,7 @@ manager.createOverlay({
 });
 
 await manager.sendMessage('support-widget', 'Hello!');
+const { conversations } = await manager.getConversations('support-widget');
 manager.showOverlay('support-widget');
 manager.hideOverlay('support-widget');
 manager.removeOverlay('support-widget');

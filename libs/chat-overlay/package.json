@@ -19,5 +19,15 @@
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*"
+  },
+  "nx": {
+    "tags": [
+      "publishable"
+    ],
+    "targets": {
+      "publish": {
+        "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      }
+    }
   }
 }

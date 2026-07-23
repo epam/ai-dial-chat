@@ -1,3 +1,8 @@
+## Purpose
+
+Define the Chat API application's bootstrap, security, validation, health, rate-limiting, and
+theme-service requirements.
+
 ## Requirements
 
 ---
@@ -82,12 +87,23 @@ The application SHALL expose `GET /api/health` returning HTTP 200 with a JSON bo
 
 ### Requirement: Security headers via Helmet
 
-The application SHALL apply `helmet()` middleware in `main.ts` to set standard HTTP security headers (CSP, HSTS, X-Frame-Options, etc.) on all responses.
+The application SHALL apply `helmet()` middleware in `main.ts` to set standard HTTP security
+headers (CSP, HSTS, X-Frame-Options, etc.) on all responses. The configured
+Cross-Origin-Opener-Policy SHALL be `same-origin-allow-popups` so cross-origin OAuth provider
+navigation does not sever the initiating Chat tab's popup reference; OAuth popups SHALL
+independently clear their own `window.opener` before external navigation to retain
+reverse-tabnabbing protection.
 
 #### Scenario: Security headers present on API responses
 
 - **WHEN** any API endpoint is called
 - **THEN** the response includes `X-Content-Type-Options: nosniff` and `X-Frame-Options`
+
+#### Scenario: OAuth-compatible opener policy
+
+- **WHEN** any Chat page is served through the API application
+- **THEN** its `Cross-Origin-Opener-Policy` response header is
+  `same-origin-allow-popups`
 
 ---
 

@@ -1,7 +1,8 @@
-> **Sync note (add-file-manager-delete):** `DialFileManagerModal` now accepts
-> `onDeleteFiles` and `deleteConfirmationOptions` wired from `useDialFileManager`.
-> The spec previously noted delete was absent; that is no longer the case when
-> this change ships.
+> **Sync note (2026-07-23):** The "read-only" framing below was inaccurate.
+> `DialFileManagerModal` (attach picker, `actionProfile = Attach`) intentionally
+> allows Upload, Create folder, Delete, Rename, and Download — only Move, Copy,
+> and permission-management actions are excluded. The requirements below were
+> rewritten to match this actual, intended behavior.
 
 ## ADDED Requirements
 
@@ -113,20 +114,20 @@ The system SHALL provide a `useDialFileManager(options: { bucket: string; rootLa
 
 ---
 
-### Requirement: Select and attach read-only DIAL files
+### Requirement: Select and attach DIAL files with scoped mutation actions
 
-`DialFileManager` SHALL be configured in read-only mode. The following props MUST be omitted (not passed):
+`DialFileManager` is rendered with `actionProfile = DialFileManagerActionProfile.Attach`. This profile scopes down — but does not eliminate — mutation actions: Upload, Create folder, Delete, Rename, and Download remain reachable so the user can manage files while picking what to attach; Move, Copy, and permission-management actions are excluded because they imply a destination/ownership context the attach flow does not have.
 
-- `onUploadFiles`
-- `onDeleteFiles`
+The following props MUST be omitted (not passed), because their actions are gated off by `actionProfile = Attach` (via `isCopyMoveDuplicateAllowed` / `isShareActionsAllowed` in `dial-file-manager-path.util.ts`):
+
 - `onMoveToFiles`
 - `onCopyFiles`
-- `onDownloadFiles`
-- `onCreateFolder`
-- `onRenameValidate`
 - `onManagePermissions`
+- `onUnshareFiles`
+- `onRemoveFilesAccess`
+- `onGetInfo`
 
-The following props SHALL be passed:
+The following props SHALL be passed, wired from `useDialFileManager`:
 
 | Prop | Value |
 |------|-------|
@@ -137,13 +138,18 @@ The following props SHALL be passed:
 | `selectedPaths` | controlled modal selection |
 | `onSelectedPathsChange` | updates controlled modal selection |
 | `gridOptions.selectionMode` | `GridSelectionMode.MULTIPLE` |
-| `uploadEnabled` | `false` |
+| `uploadEnabled` | computed by `useDialFileManager` from active tab and write permission (e.g. `true` on the "My files" tab when the user has write access; `false` on read-only tabs such as Organization or the Shared root) — never hardcoded |
+| `onUploadFiles` / `onUploadArchive` / `onValidateUpload` | wired; reachable via the toolbar "New" action when `uploadEnabled` is `true` |
+| `onCreateFolder` / `onCreateFolderValidate` | wired; reachable via the toolbar "New" action alongside upload |
+| `onDeleteFiles` / `deleteConfirmationOptions` | wired; reachable as a row/bulk action on the "My files" tab |
+| `onRenameValidate` | wired; reachable as a row action when `uploadEnabled` is `true` |
+| `onDownloadFiles` | wired; reachable as a row/bulk action unconditionally |
 | `emptyStateTitle` | `t(DialFileManagerI18nKeys.Empty)` |
 | `emptyStateDescription` | `""` |
 
-No bulk-action toolbar is enabled (no `bulkActionsToolbarOptions`).
+`bulkActionsToolbarOptions` derives from the same action set and additionally always strips `ManagePermissions`, matching the excluded-props list above.
 
-Only rows with `nodeType === DialFileNodeType.ITEM` SHALL be selectable. The modal footer SHALL contain an "Attach" primary button (i18n key `dialFileManager.attach`) disabled while no files are selected or files are loading.
+Only rows with `nodeType === DialFileNodeType.ITEM` SHALL be selectable for attaching. The modal footer SHALL contain an "Attach" primary button (i18n key `dialFileManager.attach`) disabled while no files are selected or files are loading. Selecting the Attach button attaches the current selection; it does not depend on whether Upload/Create-folder/Delete/Rename/Download were used beforehand in the same session.
 
 When the user clicks "Attach":
 
@@ -241,24 +247,34 @@ The existing "Attach file" menu item and device-file-picker behavior MUST be unm
 
 ---
 
-### Requirement: No mutation actions available
+### Requirement: Scoped mutation actions available
 
-None of the following actions SHALL be accessible from the `DialFileManager` rendered in this modal:
+The `DialFileManager` rendered in this modal exposes a subset of mutation actions, gated by `actionProfile = Attach`:
 
-- Upload
-- Download
-- Delete
-- Rename
-- Move / Copy
-- Create folder
-- Manage permissions
+**Reachable** (row, bulk, and/or toolbar action, subject to tab/permission as noted above):
 
-All mutation-related props on `DialFileManager` MUST be omitted (see read-only prop table above).
+- Upload (toolbar "New" action, when `uploadEnabled` is `true`)
+- Create folder (toolbar "New" action, when `uploadEnabled` is `true`)
+- Delete (row/bulk action on the "My files" tab)
+- Rename (row action, when `uploadEnabled` is `true`)
+- Download (row/bulk action, unconditional)
 
-#### Scenario: No mutation actions
+**NOT reachable** (props omitted; excluded from `actionLabels` / `bulkActionsToolbarOptions`):
 
-- **GIVEN** the file manager modal is open with files displayed
-- **THEN** no upload button, delete option, rename option, move/copy option, or create-folder option is visible or reachable via keyboard
+- Move
+- Copy
+- Manage permissions (including unshare / remove access)
+- Get info
+
+#### Scenario: Upload and create-folder are available on My files with write access
+
+- **GIVEN** the file manager modal is open on the "My files" tab and the user has write access to the current folder
+- **THEN** the toolbar's "New" action offers both "Upload" and "Create folder"
+
+#### Scenario: Move, copy, and permission management are absent
+
+- **GIVEN** the file manager modal is open with files displayed, on any tab
+- **THEN** no move option, copy option, or manage-permissions option is visible or reachable via keyboard, regardless of selection
 
 ---
 

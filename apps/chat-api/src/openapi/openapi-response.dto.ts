@@ -318,6 +318,13 @@ export class DialToolsetAuthSettingsDto {
   @ApiProperty({ example: 'OAUTH', enum: ['OAUTH', 'API_KEY', 'NONE'] })
   authenticationType!: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration',
+    example: true,
+  })
+  dynamicallyRegistered?: boolean;
+
   @ApiPropertyOptional({ example: 'X-Api-Key' })
   apiKeyHeader?: string;
 

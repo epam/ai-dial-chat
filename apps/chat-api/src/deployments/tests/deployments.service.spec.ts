@@ -1343,6 +1343,7 @@ describe('DeploymentsService', () => {
           features: { mcp: true, tools: false, cache: false },
           auth_settings: {
             authentication_type: 'OAUTH',
+            dynamically_registered: true,
             client_id: 'public-client-id',
             client_secret: 'super-secret',
             code_verifier: 'super-secret-verifier',
@@ -1390,6 +1391,7 @@ describe('DeploymentsService', () => {
           }),
           authSettings: {
             authenticationType: 'OAUTH',
+            dynamicallyRegistered: true,
             clientId: 'public-client-id',
             codeChallenge: 'challenge-value',
             codeChallengeMethod: 'S256',

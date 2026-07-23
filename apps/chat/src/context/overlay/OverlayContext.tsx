@@ -1,10 +1,21 @@
 import {
+  type CreateConversationPayload,
+  type CreateConversationResponse,
+  type DeleteConversationPayload,
+  type DeleteConversationResponse,
+  type GetConversationsResponse,
   type GetMessagesResponse,
+  type GetSelectedConversationsResponse,
+  type OverlayConversation,
   type OverlayMessageEvent,
   type OverlayMessageRequest,
   type OverlayMessageResponse,
   OverlayEventType,
   OverlayRequestType,
+  type RenameConversationPayload,
+  type RenameConversationResponse,
+  type SelectConversationPayload,
+  type SelectConversationResponse,
   type SendMessageResponse,
   type SetOverlayOptionsPayload,
   type SetOverlayOptionsResponse,
@@ -16,6 +27,7 @@ import {
 import {
   createContext,
   FC,
+  MutableRefObject,
   ReactNode,
   useCallback,
   useContext,
@@ -27,6 +39,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getConversationRoute } from '../../constants/routes';
 import { AuthStatus } from '../../types/auth-status';
+import { conversationIdsMatch } from '../../utils/conversation-id-match';
 import { useAppConfig } from '../AppConfigContext';
 import { useUser } from '../auth/UserContext';
 import { useTheme } from '../ThemeContext';
@@ -49,11 +62,45 @@ export interface ActiveConversationBridge {
   setTemperature: (temperature: number) => Promise<SetTemperatureResponse>;
 }
 
+/**
+ * Read/write surface over the current user's conversation list, backed by
+ * `ConversationsContext`/`DeploymentsContext`/navigation. Registered/
+ * unregistered by the conversation-list bridge hook via
+ * `registerConversationListBridge`.
+ */
+export interface ConversationListBridge {
+  /** Returns the current user's conversation list. */
+  getConversations: () => OverlayConversation[];
+  /** Creates a new conversation, persisting immediately if `firstMessage` is given. */
+  createConversation: (options: {
+    deploymentId?: string;
+    firstMessage?: string;
+  }) => Promise<CreateConversationResponse>;
+  /** Deletes the conversation matching `id`. */
+  deleteConversation: (id: string) => Promise<DeleteConversationResponse>;
+  /** Renames the conversation matching `id` to `newName`. */
+  renameConversation: (
+    id: string,
+    newName: string,
+  ) => Promise<RenameConversationResponse>;
+  /** Navigates to the conversation matching `id`. */
+  selectConversation: (id: string) => Promise<SelectConversationResponse>;
+}
+
 /** Public API exposed by `OverlayProvider` via `useOverlay`/`useOptionalOverlay`. */
 export interface OverlayContextType {
-  /** Registers (or, with `null`, unregisters) the bridge backing active-conversation requests. */
+  /**
+   * Registers (or, with `null`, unregisters) the bridge backing
+   * active-conversation requests, along with the id of the conversation it
+   * backs (`null` when no conversation is mounted, e.g. the composer route).
+   */
   registerActiveConversationBridge: (
     bridge: ActiveConversationBridge | null,
+    conversationId: string | null,
+  ) => void;
+  /** Registers (or, with `null`, unregisters) the bridge backing conversation-list requests. */
+  registerConversationListBridge: (
+    bridge: ConversationListBridge | null,
   ) => void;
   /** Deployment id received via `SET_OVERLAY_OPTIONS`, awaiting application once deployments are available. */
   pendingModelId: string | null;
@@ -82,10 +129,28 @@ const ACTIVE_CONVERSATION_REQUEST_TYPES: ReadonlySet<OverlayRequestType> =
     OverlayRequestType.SetTemperature,
   ]);
 
+const CONVERSATION_LIST_REQUEST_TYPES: ReadonlySet<OverlayRequestType> =
+  new Set([
+    OverlayRequestType.GetConversations,
+    OverlayRequestType.GetSelectedConversations,
+    OverlayRequestType.SelectConversation,
+    OverlayRequestType.CreateConversation,
+    OverlayRequestType.CreateLocalConversation,
+    OverlayRequestType.DeleteConversation,
+    OverlayRequestType.RenameConversation,
+  ]);
+
 const DEFAULT_PENDING_BRIDGE_REQUEST_TIMEOUT_MS = 10000;
 
 interface PendingBridgeRequest {
   request: OverlayMessageRequest;
+  timeoutId: number;
+}
+
+interface PendingConversationSelection {
+  requestId: string;
+  requestType: OverlayRequestType;
+  targetId: string;
   timeoutId: number;
 }
 
@@ -96,6 +161,44 @@ const getRequestExpiresAt = (request: OverlayMessageRequest): number =>
 
 const isRequestExpired = (request: OverlayMessageRequest): boolean =>
   typeof request.expiresAt === 'number' && request.expiresAt <= Date.now();
+
+/** Queues `request` on `requestsRef` until `getRequestExpiresAt` passes, then drops it. */
+const queuePendingRequest = (
+  requestsRef: MutableRefObject<PendingBridgeRequest[]>,
+  request: OverlayMessageRequest,
+): void => {
+  const expiresAt = getRequestExpiresAt(request);
+  const delayMs = expiresAt - Date.now();
+  if (delayMs <= 0) {
+    return;
+  }
+
+  requestsRef.current = requestsRef.current.filter((pending) => {
+    if (pending.request.requestId !== request.requestId) {
+      return true;
+    }
+    window.clearTimeout(pending.timeoutId);
+    return false;
+  });
+
+  const timeoutId = window.setTimeout(() => {
+    requestsRef.current = requestsRef.current.filter(
+      (pending) => pending.request.requestId !== request.requestId,
+    );
+  }, delayMs);
+
+  requestsRef.current.push({ request, timeoutId });
+};
+
+/** Clears every queued request on `requestsRef` and their timeouts. */
+const clearPendingRequests = (
+  requestsRef: MutableRefObject<PendingBridgeRequest[]>,
+): void => {
+  requestsRef.current.forEach(({ timeoutId }) => {
+    window.clearTimeout(timeoutId);
+  });
+  requestsRef.current = [];
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -136,6 +239,38 @@ const hasSetOverlayOptionsPayload = (
   );
 };
 
+const hasSelectConversationPayload = (
+  payload: unknown,
+): payload is SelectConversationPayload => hasStringPayload(payload, 'id');
+
+const hasDeleteConversationPayload = (
+  payload: unknown,
+): payload is DeleteConversationPayload => hasStringPayload(payload, 'id');
+
+const hasRenameConversationPayload = (
+  payload: unknown,
+): payload is RenameConversationPayload =>
+  hasStringPayload(payload, 'id') && hasStringPayload(payload, 'newName');
+
+const hasCreateConversationPayload = (
+  payload: unknown,
+): payload is Partial<CreateConversationPayload> | null | undefined => {
+  if (payload == null) {
+    return true;
+  }
+  if (!isRecord(payload)) {
+    return false;
+  }
+  return (
+    (!('deploymentId' in payload) ||
+      payload.deploymentId == null ||
+      typeof payload.deploymentId === 'string') &&
+    (!('firstMessage' in payload) ||
+      payload.firstMessage == null ||
+      typeof payload.firstMessage === 'string')
+  );
+};
+
 const logOverlayWarning = (message: string, error?: unknown): void => {
   if (error) {
     console.warn(`Overlay: ${message}`, error);
@@ -173,7 +308,13 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const hasEmittedReadyToInteractRef = useRef(false);
   const hasPendingConversationLoadedEventRef = useRef(false);
   const activeBridgeRef = useRef<ActiveConversationBridge | null>(null);
+  const currentConversationIdRef = useRef<string | null>(null);
+  const conversationListBridgeRef = useRef<ConversationListBridge | null>(null);
   const pendingBridgeRequestsRef = useRef<PendingBridgeRequest[]>([]);
+  const pendingConversationListRequestsRef = useRef<PendingBridgeRequest[]>([]);
+  const pendingConversationSelectionsRef = useRef<
+    PendingConversationSelection[]
+  >([]);
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
 
   const postBootstrapEvent = useCallback((type: OverlayEventType) => {
@@ -210,41 +351,14 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
     [overlayAllowedOrigins],
   );
 
-  const clearPendingBridgeRequests = useCallback(() => {
-    pendingBridgeRequestsRef.current.forEach(({ timeoutId }) => {
+  const clearAllPendingRequests = useCallback(() => {
+    clearPendingRequests(pendingBridgeRequestsRef);
+    clearPendingRequests(pendingConversationListRequestsRef);
+    pendingConversationSelectionsRef.current.forEach(({ timeoutId }) => {
       window.clearTimeout(timeoutId);
     });
-    pendingBridgeRequestsRef.current = [];
+    pendingConversationSelectionsRef.current = [];
   }, []);
-
-  const queuePendingBridgeRequest = useCallback(
-    (request: OverlayMessageRequest) => {
-      const expiresAt = getRequestExpiresAt(request);
-      const delayMs = expiresAt - Date.now();
-      if (delayMs <= 0) {
-        return;
-      }
-
-      pendingBridgeRequestsRef.current =
-        pendingBridgeRequestsRef.current.filter((pending) => {
-          if (pending.request.requestId !== request.requestId) {
-            return true;
-          }
-          window.clearTimeout(pending.timeoutId);
-          return false;
-        });
-
-      const timeoutId = window.setTimeout(() => {
-        pendingBridgeRequestsRef.current =
-          pendingBridgeRequestsRef.current.filter(
-            (pending) => pending.request.requestId !== request.requestId,
-          );
-      }, delayMs);
-
-      pendingBridgeRequestsRef.current.push({ request, timeoutId });
-    },
-    [],
-  );
 
   const executeAgainstBridge = useCallback(
     (
@@ -290,7 +404,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       }
       const bridge = activeBridgeRef.current;
       if (!bridge) {
-        queuePendingBridgeRequest(request);
+        queuePendingRequest(pendingBridgeRequestsRef, request);
         return;
       }
       const requestType = request.type as OverlayRequestType;
@@ -321,12 +435,76 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           logOverlayWarning(`failed to execute ${requestType}`, error);
         });
     },
-    [executeAgainstBridge, postToHost, queuePendingBridgeRequest],
+    [executeAgainstBridge, postToHost],
+  );
+
+  const buildSelectedConversationProjection =
+    useCallback((): OverlayConversation | null => {
+      const id = currentConversationIdRef.current;
+      if (!id) {
+        return null;
+      }
+      const fromSnapshot = conversationListBridgeRef.current
+        ?.getConversations()
+        .find((conversation) => conversationIdsMatch(conversation.id, id));
+      if (fromSnapshot) {
+        return fromSnapshot;
+      }
+      /*
+       * The active bridge only carries an id (task 5.1), not a title, so a
+       * conversation created moments ago (not yet reflected in the
+       * conversation-list bridge's snapshot) is reported with an empty
+       * title rather than omitted entirely.
+       */
+      return {
+        id,
+        title: '',
+        updatedAt: Date.now(),
+        isPinned: false,
+        isReadonly: false,
+        sharedWithMe: false,
+        publishedWithMe: false,
+      };
+    }, []);
+
+  const resolvePendingConversationSelections = useCallback(
+    (conversationId: string) => {
+      if (pendingConversationSelectionsRef.current.length === 0) {
+        return;
+      }
+      const matches = pendingConversationSelectionsRef.current.filter(
+        (pending) => conversationIdsMatch(pending.targetId, conversationId),
+      );
+      if (matches.length === 0) {
+        return;
+      }
+      pendingConversationSelectionsRef.current =
+        pendingConversationSelectionsRef.current.filter(
+          (pending) => !conversationIdsMatch(pending.targetId, conversationId),
+        );
+      const conversation = buildSelectedConversationProjection();
+      matches.forEach(({ requestType, requestId, timeoutId }) => {
+        window.clearTimeout(timeoutId);
+        const responsePayload: SelectConversationResponse = {
+          conversation: conversation ?? undefined,
+        };
+        postToHost({
+          type: `${requestType}/RESPONSE`,
+          requestId,
+          payload: responsePayload,
+        });
+      });
+    },
+    [buildSelectedConversationProjection, postToHost],
   );
 
   const registerActiveConversationBridge = useCallback(
-    (bridge: ActiveConversationBridge | null) => {
+    (
+      bridge: ActiveConversationBridge | null,
+      conversationId: string | null,
+    ) => {
       activeBridgeRef.current = bridge;
+      currentConversationIdRef.current = conversationId;
       if (bridge && pendingBridgeRequestsRef.current.length > 0) {
         const pending = pendingBridgeRequestsRef.current;
         pendingBridgeRequestsRef.current = [];
@@ -335,8 +513,172 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           handleActiveConversationRequest(request);
         });
       }
+      if (conversationId) {
+        resolvePendingConversationSelections(conversationId);
+      }
     },
-    [handleActiveConversationRequest],
+    [handleActiveConversationRequest, resolvePendingConversationSelections],
+  );
+
+  const queueConversationSelectionWait = useCallback(
+    (
+      targetId: string,
+      requestType: OverlayRequestType,
+      request: OverlayMessageRequest,
+    ) => {
+      const expiresAt = getRequestExpiresAt(request);
+      const delayMs = expiresAt - Date.now();
+      if (delayMs <= 0) {
+        return;
+      }
+      const timeoutId = window.setTimeout(() => {
+        pendingConversationSelectionsRef.current =
+          pendingConversationSelectionsRef.current.filter(
+            (pending) => pending.requestId !== request.requestId,
+          );
+      }, delayMs);
+      pendingConversationSelectionsRef.current.push({
+        requestId: request.requestId,
+        requestType,
+        targetId,
+        timeoutId,
+      });
+    },
+    [],
+  );
+
+  const executeAgainstConversationListBridge = useCallback(
+    (
+      bridge: ConversationListBridge,
+      type: OverlayRequestType,
+      payload: unknown,
+    ): Promise<unknown> | null => {
+      switch (type) {
+        case OverlayRequestType.GetConversations: {
+          const responsePayload: GetConversationsResponse = {
+            conversations: bridge.getConversations(),
+          };
+          return Promise.resolve(responsePayload);
+        }
+        case OverlayRequestType.CreateConversation: {
+          if (!hasCreateConversationPayload(payload)) {
+            return null;
+          }
+          return bridge.createConversation({
+            deploymentId: payload?.deploymentId,
+            firstMessage: payload?.firstMessage,
+          });
+        }
+        case OverlayRequestType.CreateLocalConversation:
+          return bridge.createConversation({});
+        case OverlayRequestType.DeleteConversation:
+          if (!hasDeleteConversationPayload(payload)) {
+            return null;
+          }
+          return bridge.deleteConversation(payload.id);
+        case OverlayRequestType.RenameConversation:
+          if (!hasRenameConversationPayload(payload)) {
+            return null;
+          }
+          return bridge.renameConversation(payload.id, payload.newName);
+        default:
+          return Promise.resolve(undefined);
+      }
+    },
+    [],
+  );
+
+  const handleConversationListRequest = useCallback(
+    (request: OverlayMessageRequest) => {
+      if (isRequestExpired(request)) {
+        return;
+      }
+      const requestType = request.type as OverlayRequestType;
+
+      if (requestType === OverlayRequestType.GetSelectedConversations) {
+        const conversation = buildSelectedConversationProjection();
+        const responsePayload: GetSelectedConversationsResponse = {
+          conversations: conversation ? [conversation] : [],
+        };
+        postToHost({
+          type: `${requestType}/RESPONSE`,
+          requestId: request.requestId,
+          payload: responsePayload,
+        });
+        return;
+      }
+
+      if (requestType === OverlayRequestType.SelectConversation) {
+        if (!hasSelectConversationPayload(request.payload)) {
+          logOverlayWarning(`rejected malformed ${requestType} payload`);
+          return;
+        }
+        const bridge = conversationListBridgeRef.current;
+        if (!bridge) {
+          queuePendingRequest(pendingConversationListRequestsRef, request);
+          return;
+        }
+        const { id } = request.payload;
+        void bridge.selectConversation(id).catch((error) => {
+          logOverlayWarning(`failed to execute ${requestType}`, error);
+        });
+        queueConversationSelectionWait(id, requestType, request);
+        return;
+      }
+
+      const bridge = conversationListBridgeRef.current;
+      if (!bridge) {
+        queuePendingRequest(pendingConversationListRequestsRef, request);
+        return;
+      }
+      let responsePromise: Promise<unknown> | null = null;
+      try {
+        responsePromise = executeAgainstConversationListBridge(
+          bridge,
+          requestType,
+          request.payload,
+        );
+      } catch (error) {
+        logOverlayWarning(`failed to execute ${requestType}`, error);
+        return;
+      }
+      if (!responsePromise) {
+        logOverlayWarning(`rejected malformed ${requestType} payload`);
+        return;
+      }
+      void responsePromise
+        .then((responsePayload) => {
+          postToHost({
+            type: `${requestType}/RESPONSE`,
+            requestId: request.requestId,
+            payload: responsePayload,
+          });
+        })
+        .catch((error) => {
+          logOverlayWarning(`failed to execute ${requestType}`, error);
+        });
+    },
+    [
+      buildSelectedConversationProjection,
+      executeAgainstConversationListBridge,
+      postToHost,
+      queueConversationSelectionWait,
+    ],
+  );
+
+  const registerConversationListBridge = useCallback(
+    (bridge: ConversationListBridge | null) => {
+      conversationListBridgeRef.current = bridge;
+      if (bridge && pendingConversationListRequestsRef.current.length > 0) {
+        const pending = pendingConversationListRequestsRef.current;
+        pendingConversationListRequestsRef.current = [];
+        pending.forEach(({ request, timeoutId }) => {
+          window.clearTimeout(timeoutId);
+          handleConversationListRequest(request);
+        });
+      }
+    },
+    [handleConversationListRequest],
   );
 
   const handleSetOverlayOptions = useCallback(
@@ -406,6 +748,15 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           return;
         }
         handleActiveConversationRequest(data);
+        return;
+      }
+      if (
+        CONVERSATION_LIST_REQUEST_TYPES.has(data.type as OverlayRequestType)
+      ) {
+        if (!isTrustedHostOrigin(event.origin)) {
+          return;
+        }
+        handleConversationListRequest(data);
       }
     };
     window.addEventListener('message', handleMessage);
@@ -413,10 +764,11 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }, [
     handleSetOverlayOptions,
     handleActiveConversationRequest,
+    handleConversationListRequest,
     isTrustedHostOrigin,
   ]);
 
-  useEffect(() => clearPendingBridgeRequests, [clearPendingBridgeRequests]);
+  useEffect(() => clearAllPendingRequests, [clearAllPendingRequests]);
 
   useEffect(() => {
     if (hasSentInitReadyRef.current) return;
@@ -459,6 +811,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const value = useMemo<OverlayContextType>(
     () => ({
       registerActiveConversationBridge,
+      registerConversationListBridge,
       pendingModelId,
       clearPendingModelId,
       notifyConversationLoaded,
@@ -469,6 +822,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }),
     [
       registerActiveConversationBridge,
+      registerConversationListBridge,
       pendingModelId,
       clearPendingModelId,
       notifyConversationLoaded,
