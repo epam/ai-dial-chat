@@ -25,6 +25,7 @@ import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
+  DEFAULT_QUICK_APPS_SCHEMA_2_ID,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 import { HeadersNames } from '@/src/constants/server';
@@ -174,6 +175,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
     quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
     quickAppsSchemaId:
       process.env.QUICK_APPS_SCHEMA_ID || DEFAULT_QUICK_APPS_SCHEMA_ID,
+    quickAppsSchemaId2:
+      process.env.QUICK_APPS_SCHEMA_2_ID || DEFAULT_QUICK_APPS_SCHEMA_2_ID,
     externalAppsSchemaId:
       process.env.EXTERNAL_APPS_SCHEMA_ID || DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
     dialApiHost: process.env.DIAL_API_HOST || '',
