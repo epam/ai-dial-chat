@@ -428,24 +428,24 @@ describe('Input', () => {
     expect(onAttachmentsLimitExceeded).toHaveBeenCalledWith(3, 2);
   });
 
-  it('should show mic button when isTranscriptionSupported and message is empty', () => {
-    render(<Input isTranscriptionSupported micLabel="Record voice message" />);
+  it('should show mic button when isAudioMessageSupported is true', () => {
+    render(<Input isAudioMessageSupported micLabel="Record voice message" />);
     expect(screen.getByLabelText('Record voice message')).toBeTruthy();
   });
 
-  it('should hide mic button when message is not empty', () => {
+  it('should show mic button when isAudioMessageSupported is true and message is not empty', () => {
     const { container } = render(
-      <Input isTranscriptionSupported micLabel="Record voice message" />,
+      <Input isAudioMessageSupported micLabel="Record voice message" />,
     );
     const textarea = container.querySelector('textarea')!;
     fireEvent.change(textarea, { target: { value: 'Hello' } });
-    expect(screen.queryByLabelText('Record voice message')).toBeNull();
+    expect(screen.getByLabelText('Record voice message')).toBeTruthy();
   });
 
-  it('should hide mic button when isTranscriptionSupported is false', () => {
+  it('should hide mic button when isAudioMessageSupported is false', () => {
     render(
       <Input
-        isTranscriptionSupported={false}
+        isAudioMessageSupported={false}
         micLabel="Record voice message"
       />,
     );

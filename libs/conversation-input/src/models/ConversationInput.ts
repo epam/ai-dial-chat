@@ -122,6 +122,12 @@ export interface EditMessageInputProps {
   pendingAttachments?: Attachment[];
   /** Called after `pendingAttachments` have been inserted into the local tray. */
   onPendingAttachmentsConsumed?: () => void;
+  /**
+   * Called when the user clicks or keyboard-activates an attachment card in the tray.
+   * Covers both newly-added and pre-existing (kept) attachments.
+   * When absent the cards are not rendered as interactive.
+   */
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }
 
 /** Props accepted by the `ConversationInput` component. */
@@ -195,20 +201,15 @@ export interface ConversationInputProps {
    * The host app derives this from the selected deployment's `inputAttachmentTypes`.
    * When `false` or absent, the mic button is hidden and the voice bar is never shown.
    */
-  isTranscriptionSupported?: boolean;
-  /**
-   * Called when the user confirms a voice recording.
-   * Receives the recorded `File` and its detected MIME type.
-   * Should resolve with the DIAL storage URL for the uploaded audio.
-   */
-  onUploadAudio?: (file: File, contentType: string) => Promise<string>;
-  /**
-   * Called after successful audio upload with the returned DIAL storage URL.
-   * Should resolve with the transcript text.
-   */
-  onTranscribeAudio?: (audioUrl: string) => Promise<string>;
+  isAudioMessageSupported?: boolean;
   /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
   micLabel?: string;
+  /** Accessible label for the stop-recording button inside the voice bar. Defaults to `'Stop recording'`. */
+  stopRecordingLabel?: string;
+  /** Accessible label for the discard / X button inside the voice bar. Defaults to `'Discard recording'`. */
+  discardRecordingLabel?: string;
+  /** `aria-label` for the elapsed-time region inside the voice bar. Defaults to `'Recording time'`. */
+  timerAriaLabel?: string;
   /**
    * Controls which key combination submits the message.
    * - `SendOnEnter.Enter` (default): Enter submits; Shift+Enter inserts a newline.
@@ -270,10 +271,10 @@ export interface ConversationInputProps {
   hideAttachFile?: boolean;
   /**
    * Called when the user clicks or keyboard-activates an attachment card.
-   * Receives the full `Attachment` object (including the local `File`).
+   * Receives a `DisplayAttachment` (covers both new and pre-existing attachments).
    * When absent the card is not rendered as interactive.
    */
-  onAttachmentClick?: (attachment: Attachment) => void;
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /**
    * When provided, the desktop model-selector chip opens this panel instead of
    * the flat deployment list. Receives `onClose` so the panel can close the
