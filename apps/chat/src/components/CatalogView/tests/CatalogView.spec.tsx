@@ -25,10 +25,7 @@ import useFavoriteApplications, {
 import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
-import {
-  getCatalogPublishHistory,
-  publishCatalogEntity,
-} from '../../../server-api/publish.api';
+import { publishCatalogEntity } from '../../../server-api/publish.api';
 import {
   deleteToolset,
   getToolset,
@@ -93,7 +90,6 @@ vi.mock('react-router-dom', () => ({
 vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   publishCatalogEntity: vi.fn(),
-  getCatalogPublishHistory: vi.fn(),
 }));
 
 vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
@@ -605,48 +601,14 @@ describe('CatalogView', () => {
       ).rejects.toThrow('Forbidden');
     });
 
-    it('resolves getPublishHistory to the mapped history entries', async () => {
-      vi.mocked(getCatalogPublishHistory).mockResolvedValue([
-        {
-          entityId: 'tool-abc123',
-          entityType: 'toolset',
-          folderPath: 'Organization/Data Science',
-          version: '1.2.0',
-          publishedAt: '2026-07-13T10:00:00.000Z',
-          publishedBy: 'user@example.com',
-        },
-      ]);
-
+    it('never fetches publish history and always resolves an empty list (version history is not fetched, see GH issue #7897)', async () => {
       render(<CatalogView />);
       const history =
         await capturedPublishProps.current?.getPublishHistory?.(
           makeCatalogItem(),
         );
 
-      expect(getCatalogPublishHistory).toHaveBeenCalledWith(
-        'toolset',
-        'tool-abc123',
-      );
-      expect(history).toEqual([
-        {
-          version: '1.2.0',
-          publishedAt: Date.parse('2026-07-13T10:00:00.000Z'),
-          publishedBy: 'user@example.com',
-          folderPath: ['Organization', 'Data Science'],
-        },
-      ]);
-    });
-
-    it('propagates a publish-history API failure (e.g. 502) to the caller', async () => {
-      vi.mocked(getCatalogPublishHistory).mockRejectedValue(
-        new Error('Bad Gateway'),
-      );
-
-      render(<CatalogView />);
-
-      await expect(
-        capturedPublishProps.current?.getPublishHistory?.(makeCatalogItem()),
-      ).rejects.toThrow('Bad Gateway');
+      expect(history).toEqual([]);
     });
 
     it('shows Publish only for isMyApp items of a publishable type', () => {
