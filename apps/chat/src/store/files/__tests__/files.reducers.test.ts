@@ -576,4 +576,76 @@ describe('files.reducers getFullListingSuccess', () => {
     const file = nextState.files.find((f) => f.id === fileId);
     expect(file?.publishedWithMe).toBe(true);
   });
+
+  it('keeps the known content length when a listing result has none (no size flicker while uploading)', () => {
+    const folderPath = 'files/my-bucket';
+    const fileId = `${folderPath}/uploading.png`;
+    const state = {
+      ...filesSlice.getInitialState(),
+      files: [
+        makeFile({ id: fileId, folderId: folderPath, contentLength: 42 }),
+      ],
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.getFullListingSuccess({
+        folderPath,
+        files: [
+          makeFile({ id: fileId, folderId: folderPath, contentLength: 0 }),
+        ],
+      }),
+    );
+
+    const file = nextState.files.find((f) => f.id === fileId);
+    expect(file?.contentLength).toBe(42);
+  });
+
+  it('falls back to the locally cached size for a new file that has no content length yet', () => {
+    const folderPath = 'files/my-bucket';
+    const fileId = `${folderPath}/new.png`;
+    const state = {
+      ...filesSlice.getInitialState(),
+      localFileSizeCache: { [fileId]: 128 },
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.getFullListingSuccess({
+        folderPath,
+        files: [
+          makeFile({ id: fileId, folderId: folderPath, contentLength: 0 }),
+        ],
+      }),
+    );
+
+    const file = nextState.files.find((f) => f.id === fileId);
+    expect(file?.contentLength).toBe(128);
+  });
+
+  it('prefers the backend content length once it arrives and clears the local cache', () => {
+    const folderPath = 'files/my-bucket';
+    const fileId = `${folderPath}/done.png`;
+    const state = {
+      ...filesSlice.getInitialState(),
+      files: [
+        makeFile({ id: fileId, folderId: folderPath, contentLength: 42 }),
+      ],
+      localFileSizeCache: { [fileId]: 42 },
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.getFullListingSuccess({
+        folderPath,
+        files: [
+          makeFile({ id: fileId, folderId: folderPath, contentLength: 100 }),
+        ],
+      }),
+    );
+
+    const file = nextState.files.find((f) => f.id === fileId);
+    expect(file?.contentLength).toBe(100);
+    expect(nextState.localFileSizeCache[fileId]).toBeUndefined();
+  });
 });
