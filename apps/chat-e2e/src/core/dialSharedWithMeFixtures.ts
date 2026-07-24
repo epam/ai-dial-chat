@@ -31,7 +31,10 @@ import {
   ModelInfoTooltip,
   PromptBar,
   PromptModalDialog,
+  PublishingFilter,
   PublishingRequestDialog,
+  PublishingRules,
+  SelectFolderManagerModal,
   SelectFolderModal,
   SendMessage,
   TalkToAgentDialog,
@@ -65,6 +68,7 @@ import { PromptAssertion } from '@/src/assertions/promptAssertion';
 import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
+import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishingRulesAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
@@ -209,6 +213,13 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFileManagerModalFoldersTreeAssertion: FoldersTreeAssertion;
   additionalShareUserToolsetLoginModal: ToolsetLoginModal;
   additionalShareUserToolsetLoginModalAssertion: ToolsetLoginModalAssertion;
+  additionalShareUserSelectFolderManagerModal: SelectFolderManagerModal;
+  additionalShareUserSelectFolderManagerModalManager: FileManager;
+  additionalShareUserSelectFolderManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
+  additionalShareUserSelectFolderManagerModalFoldersTree: FoldersTree;
+  additionalShareUserPublishingRules: PublishingRules;
+  additionalShareUserPublishingFilter: PublishingFilter;
+  additionalShareUserPublishingRulesAssertion: PublishingRulesAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -1132,6 +1143,62 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserToolsetLoginModalAssertion =
       new ToolsetLoginModalAssertion(additionalShareUserToolsetLoginModal);
     await use(additionalShareUserToolsetLoginModalAssertion);
+  },
+  additionalShareUserSelectFolderManagerModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserSelectFolderManagerModal =
+      new SelectFolderManagerModal(additionalShareUserPage);
+    await use(additionalShareUserSelectFolderManagerModal);
+  },
+  additionalShareUserSelectFolderManagerModalManager: async (
+    { additionalShareUserSelectFolderManagerModal },
+    use,
+  ) => {
+    const additionalShareUserSelectFolderManagerModalManager =
+      additionalShareUserSelectFolderManagerModal.getFileManager();
+    await use(additionalShareUserSelectFolderManagerModalManager);
+  },
+  additionalShareUserSelectFolderManagerModalCollapsibleSidebar: async (
+    { additionalShareUserSelectFolderManagerModalManager },
+    use,
+  ) => {
+    const additionalShareUserSelectFolderManagerModalCollapsibleSidebar =
+      additionalShareUserSelectFolderManagerModalManager.getFileManagerCollapsibleSidebar();
+    await use(additionalShareUserSelectFolderManagerModalCollapsibleSidebar);
+  },
+  additionalShareUserSelectFolderManagerModalFoldersTree: async (
+    { additionalShareUserSelectFolderManagerModalCollapsibleSidebar },
+    use,
+  ) => {
+    const additionalShareUserSelectFolderManagerModalFoldersTree =
+      additionalShareUserSelectFolderManagerModalCollapsibleSidebar.getFoldersTree();
+    await use(additionalShareUserSelectFolderManagerModalFoldersTree);
+  },
+  additionalShareUserPublishingRules: async (
+    { additionalShareUserPublishingRequestDialog },
+    use,
+  ) => {
+    const additionalShareUserPublishingRules =
+      additionalShareUserPublishingRequestDialog.getPublishingRules();
+    await use(additionalShareUserPublishingRules);
+  },
+  additionalShareUserPublishingFilter: async (
+    { additionalShareUserPublishingRules },
+    use,
+  ) => {
+    const additionalShareUserPublishingFilter =
+      additionalShareUserPublishingRules.gePublishingFilter();
+    await use(additionalShareUserPublishingFilter);
+  },
+  additionalShareUserPublishingRulesAssertion: async (
+    { additionalShareUserPublishingRules },
+    use,
+  ) => {
+    const additionalShareUserPublishingRulesAssertion =
+      new PublishingRulesAssertion(additionalShareUserPublishingRules);
+    await use(additionalShareUserPublishingRulesAssertion);
   },
 });
 
