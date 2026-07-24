@@ -1,4 +1,7 @@
 'use server';
+
+import { getAllowedImageSources } from './allowed-image-sources';
+
 export const cleanHeaderDirectives = (directives: string) =>
   directives.replace(/\s{2,}/g, ' ').trim();
 
@@ -14,7 +17,7 @@ export const getFrameContentSecurityPolicyDirectives = (disabled = false) => {
   const frameAncestors = process.env.ALLOWED_IFRAME_ORIGINS;
   const frameSrc = process.env.ALLOWED_IFRAME_SOURCES;
   const scriptSrc = process.env.ALLOWED_SCRIPT_SOURCES;
-  const imageSources = process.env.ALLOWED_IMAGE_SOURCES;
+  const imageSources = getAllowedImageSources();
   const themesConfigHost = process.env.THEMES_CONFIG_HOST;
   const isDev = process.env.NODE_ENV === 'development';
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
