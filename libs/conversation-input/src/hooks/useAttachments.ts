@@ -98,6 +98,7 @@ export const useAttachments = ({
     return () => {
       attachmentsRef.current.forEach((a) => {
         if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+        if (a.playUrl) URL.revokeObjectURL(a.playUrl);
       });
     };
   }, []);
@@ -105,15 +106,22 @@ export const useAttachments = ({
   const buildAttachments = useCallback((files: File[]): Attachment[] => {
     return files.map((file) => {
       const isImage = file.type.startsWith('image/');
+      const isAudio = file.type.startsWith('audio/');
       const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
+      const playUrl = isAudio ? URL.createObjectURL(file) : undefined;
       return {
         id: generateAttachmentId(),
         name: file.name,
         contentType: file.type,
         file,
-        type: isImage ? AttachmentType.Image : AttachmentType.File,
+        type: isImage
+          ? AttachmentType.Image
+          : isAudio
+            ? AttachmentType.Audio
+            : AttachmentType.File,
         status: RequestStatus.Idle,
         previewUrl,
+        playUrl,
       };
     });
   }, []);
@@ -186,42 +194,34 @@ export const useAttachments = ({
 
   const addAttachments = useCallback(
     (newAttachments: Attachment[], upload = true) => {
-      let toAdd: Attachment[] = [];
-      let exceededLimit:
-        | {
-            count: number;
-            limit: number;
-          }
-        | undefined;
-      updateAttachments((prev) => {
-        const existingIds = new Set(prev.map((a) => a.id));
-        toAdd = newAttachments.filter((a) => !existingIds.has(a.id));
+      /* Compute toAdd from the ref rather than inside the state updater.
+       * React 18 StrictMode double-invokes updaters; a side-effect assignment
+       * inside the updater would produce toAdd=[] on the second call (the
+       * attachment is already in prev), causing runAtRate to receive an empty
+       * array and skipping upload entirely. */
+      const existingIds = new Set(attachmentsRef.current.map((a) => a.id));
+      const toAdd = newAttachments.filter((a) => !existingIds.has(a.id));
 
-        if (
-          maximumAttachmentsAmount != null &&
-          maximumAttachmentsAmount > 0 &&
-          Number.isFinite(maximumAttachmentsAmount)
-        ) {
-          const count = baseAttachmentsAmount + prev.length + toAdd.length;
-          if (count > maximumAttachmentsAmount) {
-            exceededLimit = {
-              count,
-              limit: maximumAttachmentsAmount,
-            };
-            return prev;
-          }
+      if (toAdd.length === 0) return;
+
+      if (
+        maximumAttachmentsAmount != null &&
+        maximumAttachmentsAmount > 0 &&
+        Number.isFinite(maximumAttachmentsAmount)
+      ) {
+        const count =
+          baseAttachmentsAmount + attachmentsRef.current.length + toAdd.length;
+        if (count > maximumAttachmentsAmount) {
+          toAdd.forEach((attachment) => {
+            if (attachment.previewUrl)
+              URL.revokeObjectURL(attachment.previewUrl);
+          });
+          onAttachmentsLimitExceeded?.(count, maximumAttachmentsAmount);
+          return;
         }
-
-        return [...prev, ...toAdd];
-      });
-
-      if (exceededLimit != null) {
-        toAdd.forEach((attachment) => {
-          if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
-        });
-        onAttachmentsLimitExceeded?.(exceededLimit.count, exceededLimit.limit);
-        return;
       }
+
+      updateAttachments((prev) => [...prev, ...toAdd]);
 
       if (upload) {
         const validToUpload: Attachment[] = [];
@@ -308,6 +308,7 @@ export const useAttachments = ({
       updateAttachments((prev) => {
         const target = prev.find((a) => a.id === id);
         if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+        if (target?.playUrl) URL.revokeObjectURL(target.playUrl);
         return prev.filter((a) => a.id !== id);
       });
     },
