@@ -44,6 +44,13 @@ export const MessageInputSelectors = {
   inputAttachedFolderName: '[data-qa="attached-folder-name"]',
 };
 
+export const DislikeCommentModalSelectors = {
+  modal: '[data-qa="dislike-comment-modal"]',
+  title: '[data-qa="modal-entity-name"]',
+  commentInput: '[data-qa="dislike-comment-input"]',
+  sendButton: '[data-qa="dislike-send-button"]',
+};
+
 export const PlaybackSelectors = {
   playbackContainer: '[data-qa="playback"]',
   playbackAppTitle: '[data-qa="entity-name"]',
