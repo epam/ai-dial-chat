@@ -107,3 +107,34 @@ A failure resolving shared resources SHALL degrade to `sharedWithMe: false` for 
 
 - **WHEN** the source DTO omits `sharedWithMe` entirely (e.g. an older cached response shape during rollout)
 - **THEN** the resulting `CatalogItem.sharedWithMe` is `false`, not `undefined`
+
+### Requirement: Shared application folders hide internal bucket identifiers
+
+`apps/chat/src/utils/map-deployment-to-catalog-item.ts`'s `resolveDeploymentFolder` SHALL use the authoritative `DeploymentItemDto.sharedWithMe` flag to replace a shared application's first `applicationFolder` segment (the owner's internal bucket identifier) with the localized `catalog.folder.shared` label. Any readable nested folder segments after the owner bucket SHALL be preserved.
+
+Owned applications SHALL continue to resolve to `catalog.folder.personal`, and public applications SHALL continue to replace the `public` segment with `catalog.folder.public`. `libs/catalog` SHALL remain unaware of DIAL bucket and sharing semantics and SHALL render only the resolved `CatalogItem.folder` supplied by the app-level mapper.
+
+**i18n impact**: add `catalog.folder.shared` with the English value `Shared with me`.
+
+**RTL / direction impact**: none; the change replaces one text segment and does not introduce directional layout or icons.
+
+**Accessibility impact**: none; the existing non-interactive folder path remains unchanged.
+
+**Feature flag, memoisation, and telemetry impact**: none.
+
+#### Scenario: Root-level shared application hides the owner bucket
+
+- **GIVEN** a deployment has `sharedWithMe: true` and `applicationFolder: applications/<owner-bucket>`
+- **WHEN** it is mapped to a `CatalogItem`
+- **THEN** its folder is `[catalog.folder.shared]`, and `<owner-bucket>` is not exposed
+
+#### Scenario: Nested shared application preserves readable folders
+
+- **GIVEN** a deployment has `sharedWithMe: true` and `applicationFolder: applications/<owner-bucket>/team`
+- **WHEN** it is mapped to a `CatalogItem`
+- **THEN** its folder is `[catalog.folder.shared, team]`, and `<owner-bucket>` is not exposed
+
+#### Scenario: Existing owned and public folder labels are unchanged
+
+- **WHEN** owned and public applications are mapped to catalog items
+- **THEN** their first folder segment remains `catalog.folder.personal` and `catalog.folder.public` respectively
