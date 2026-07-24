@@ -59,6 +59,9 @@
     },
     {
       "path": "./apps/chat-overlay-sandbox"
+    },
+    {
+      "path": "./libs/scheduled-tasks"
     }
   ]
 }

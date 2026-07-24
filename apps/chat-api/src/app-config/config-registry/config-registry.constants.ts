@@ -135,4 +135,19 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'LIVE_CHAT_INTERACTION_ENABLED',
     allowedRolesEnvVar: 'LIVE_CHAT_INTERACTION_ENABLED_ROLES',
   },
+  {
+    key: 'features.scheduledTasksEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Scheduled Tasks page and its sidebar navigation entry are shown. ' +
+      'UI shell only in this iteration — no scheduled task data source yet. Set ' +
+      'SCHEDULED_TASKS_ENABLED_ROLES to restrict to specific roles.',
+    owner: 'chat-team',
+    envVar: 'SCHEDULED_TASKS_ENABLED',
+    allowedRolesEnvVar: 'SCHEDULED_TASKS_ENABLED_ROLES',
+  },
 ];

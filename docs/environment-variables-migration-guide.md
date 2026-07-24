@@ -7,17 +7,17 @@ directly — all runtime config is served by the API (see `AppConfigContext`).
 
 ## Auth / session
 
-| Variable                        | Required                                       | Default            | Description                                                                                                                         |
-| ------------------------------- | ---------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `AUTH_SESSION_SECRET`           | Yes                                            | —                  | 64-char hex (32-byte) session encryption key                                                                                        |
-| `AUTH_SESSION_PREV_SECRET`      | No                                             | —                  | Previous secret, accepted during key rotation                                                                                       |
-| `AUTH_SESSION_COOKIE_NAME`      | No                                             | `__Host-chat.sess` | Session cookie name                                                                                                                 |
-| `AUTH_TRANSACTION_COOKIE_NAME`  | No                                             | `__Host-chat.tx`   | Login transaction cookie name                                                                                                       |
-| `AUTH_COOKIE_SECURE`            | No                                             | `true`             | Set `false` only for local HTTP smoke testing; drops `__Host-` prefix when disabled                                                 |
-| `AUTH_CALLBACK_BASE_URL`        | Yes                                            | —                  | Public API base URL used for OIDC redirect URIs                                                                                     |
-| `AUTH_POST_LOGOUT_REDIRECT_URI` | If any provider is configured (new-style only) | —                  | Where the browser lands after IdP logout; applied to every configured provider                                                      |
-| `ADMIN_ROLE_NAMES`              | No                                             | `admin`            | Comma-separated fallback admin role names, used when a provider sets no override                                                    |
-| `DIAL_ROLES_FIELD`              | No                                             | `dial_roles`       | Fallback dot-separated roles-claim path, used when a provider sets no override                                                      |
+| Variable                        | Required                                       | Default            | Description                                                                         |
+| ------------------------------- | ---------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------- |
+| `AUTH_SESSION_SECRET`           | Yes                                            | —                  | 64-char hex (32-byte) session encryption key                                        |
+| `AUTH_SESSION_PREV_SECRET`      | No                                             | —                  | Previous secret, accepted during key rotation                                       |
+| `AUTH_SESSION_COOKIE_NAME`      | No                                             | `__Host-chat.sess` | Session cookie name                                                                 |
+| `AUTH_TRANSACTION_COOKIE_NAME`  | No                                             | `__Host-chat.tx`   | Login transaction cookie name                                                       |
+| `AUTH_COOKIE_SECURE`            | No                                             | `true`             | Set `false` only for local HTTP smoke testing; drops `__Host-` prefix when disabled |
+| `AUTH_CALLBACK_BASE_URL`        | Yes                                            | —                  | Public API base URL used for OIDC redirect URIs                                     |
+| `AUTH_POST_LOGOUT_REDIRECT_URI` | If any provider is configured (new-style only) | —                  | Where the browser lands after IdP logout; applied to every configured provider      |
+| `ADMIN_ROLE_NAMES`              | No                                             | `admin`            | Comma-separated fallback admin role names, used when a provider sets no override    |
+| `DIAL_ROLES_FIELD`              | No                                             | `dial_roles`       | Fallback dot-separated roles-claim path, used when a provider sets no override      |
 
 ### Auth providers
 

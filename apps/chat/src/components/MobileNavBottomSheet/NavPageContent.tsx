@@ -6,7 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { NAVIGATION_CONFIG } from '../../constants/navigation';
 import { NavigationI18nKeys } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
+import { UserConfigStatus } from '../../types/user-config-status';
 import styles from './MobileNavBottomSheet.module.scss';
 import ProfilePageContent from './ProfilePageContent';
 
@@ -18,6 +20,13 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { push, close } = useSheetNavigation();
+  const { status, features } = useAppConfig();
+
+  const navItems = NAVIGATION_CONFIG.filter(
+    ({ featureFlag }) =>
+      featureFlag == null ||
+      (status === UserConfigStatus.Ready && features[featureFlag] === true),
+  );
 
   const handleNavItem = (path: string) => {
     close();
@@ -33,7 +42,7 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
 
   return (
     <ul className="flex flex-col pb-4">
-      {NAVIGATION_CONFIG.map(({ path, icon: Icon, labelKey }) => (
+      {navItems.map(({ path, icon: Icon, labelKey }) => (
         <li key={path}>
           <button
             type="button"

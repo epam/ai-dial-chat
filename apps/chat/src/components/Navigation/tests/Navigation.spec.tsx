@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import type { AriaAttributes } from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NAVIGATION_CONFIG } from '../../../constants/navigation';
 import { NavigationI18nKeys } from '../../../constants/translation-keys';
+import { UserConfigStatus } from '../../../types/user-config-status';
 import Navigation from '../Navigation';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -25,6 +26,11 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentThemeFavicon: undefined }),
 }));
 
+const useAppConfigMock = vi.fn();
+vi.mock('../../../context/AppConfigContext', () => ({
+  useAppConfig: () => useAppConfigMock(),
+}));
+
 vi.mock('../UserMenu', () => ({
   default: () => <div>User menu</div>,
 }));
@@ -41,6 +47,13 @@ const renderNavigation = (initialPath = '/') =>
   );
 
 describe('Navigation', () => {
+  beforeEach(() => {
+    useAppConfigMock.mockReturnValue({
+      status: UserConfigStatus.Ready,
+      features: { scheduledTasksEnabled: true },
+    });
+  });
+
   it('renders the nav landmark with aria-label', () => {
     renderNavigation();
     expect(
@@ -98,5 +111,43 @@ describe('Navigation', () => {
   it('Catalog nav item has href="/catalog"', () => {
     const { container } = renderNavigation();
     expect(container.querySelector('a[href="/catalog"]')).toBeTruthy();
+  });
+
+  it('hides a feature-flag-gated nav item when the flag is off', () => {
+    useAppConfigMock.mockReturnValue({
+      status: UserConfigStatus.Ready,
+      features: { scheduledTasksEnabled: false },
+    });
+    renderNavigation();
+    expect(
+      screen.queryByRole('button', {
+        name: NavigationI18nKeys.ScheduledTasks,
+      }),
+    ).toBeNull();
+  });
+
+  it('shows a feature-flag-gated nav item when the flag is on', () => {
+    useAppConfigMock.mockReturnValue({
+      status: UserConfigStatus.Ready,
+      features: { scheduledTasksEnabled: true },
+    });
+    renderNavigation();
+    expect(
+      screen.getByRole('button', { name: NavigationI18nKeys.ScheduledTasks }),
+    ).toBeTruthy();
+  });
+
+  it('always renders ungated nav items regardless of flag values', () => {
+    useAppConfigMock.mockReturnValue({
+      status: UserConfigStatus.Ready,
+      features: { scheduledTasksEnabled: false },
+    });
+    renderNavigation();
+    expect(
+      screen.getByRole('button', { name: NavigationI18nKeys.Home }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: NavigationI18nKeys.Catalog }),
+    ).toBeTruthy();
   });
 });

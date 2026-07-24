@@ -1348,8 +1348,14 @@
           "200": {
             "description": "SSE stream of client-channel RPC events"
           },
+          "400": {
+            "description": "The reconnect channel id header is present but invalid"
+          },
           "401": {
             "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The liveChatInteraction feature is not enabled for this user"
           },
           "502": {
             "description": "DIAL Core rejected or failed the subscription"
@@ -1396,6 +1402,9 @@
           },
           "401": {
             "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The liveChatInteraction feature is not enabled for this user"
           },
           "429": {
             "description": "Rate limit exceeded"
@@ -3645,6 +3654,205 @@
         },
         "summary": "Get publish history for a catalog entity",
         "tags": ["publish"]
+      }
+    },
+    "/api/v1/scheduled-tasks": {
+      "get": {
+        "description": "Returns the DIAL Scheduler schedules visible to the authenticated session user. Proxies the DIAL Scheduler routed-deployment API using the session access token. Results are cached server-side for 30 seconds per user.",
+        "operationId": "listScheduledTasks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved scheduled task list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListScheduledTasksResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "List scheduled tasks",
+        "tags": ["scheduled-tasks"]
+      },
+      "post": {
+        "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the authenticated session user's dial-oauth credentials. Invalidates the scheduled tasks list cache on success.",
+        "operationId": "createScheduledTask",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScheduledTaskBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Scheduled task created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedScheduledTaskDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — missing or invalid fields"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "Create a scheduled task",
+        "tags": ["scheduled-tasks"]
+      }
+    },
+    "/api/v1/scheduled-tasks/{scheduleId}": {
+      "get": {
+        "description": "Returns a single DIAL Scheduler schedule by id, proxying DIAL Scheduler using the session user's access token. Not cached.",
+        "operationId": "getScheduledTask",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "required": true,
+            "in": "path",
+            "description": "DIAL Scheduler schedule identifier.",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "example": "sched_123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the scheduled task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledTaskDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid scheduleId"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "404": {
+            "description": "Scheduled task not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "Get a scheduled task by id",
+        "tags": ["scheduled-tasks"]
+      },
+      "put": {
+        "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.",
+        "operationId": "updateScheduledTask",
+        "parameters": [
+          {
+            "name": "scheduleId",
+            "required": true,
+            "in": "path",
+            "description": "DIAL Scheduler schedule identifier.",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{1,128}$",
+              "example": "sched_123",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScheduledTaskBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scheduled task updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatedScheduledTaskDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid scheduleId or body fields"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The scheduledTasksEnabled feature is not enabled for this user"
+          },
+          "404": {
+            "description": "Scheduled task not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable, timed out, or SCHEDULER_APP_ID is not configured"
+          }
+        },
+        "summary": "Update a scheduled task",
+        "tags": ["scheduled-tasks"]
       }
     }
   },
@@ -7314,6 +7522,252 @@
           "publishedAt",
           "publishedBy"
         ]
+      },
+      "ScheduleCronDto": {
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "minute": "0",
+              "hour": "9"
+            },
+            "description": "Cron field map using supported Scheduler keys (year, month, day, week, day_of_week, hour, minute, second)."
+          }
+        },
+        "required": ["fields"]
+      },
+      "ScheduleTriggerDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-07-24T09:00:00.000Z"
+          },
+          "cron": {
+            "$ref": "#/components/schemas/ScheduleCronDto"
+          }
+        }
+      },
+      "ScheduledTaskDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "sched_123"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Daily summary"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "nextRunTime": {
+            "type": "string",
+            "example": "2026-07-28T12:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "triggerType": {
+            "type": "string",
+            "enum": ["cron", "date"],
+            "example": "cron"
+          },
+          "serviceId": {
+            "type": "string",
+            "example": "dial-oauth"
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "70e570e9-cc23-4ffd-9182-078d09f116ac"
+          }
+        },
+        "required": ["id", "displayName", "trigger"]
+      },
+      "ListScheduledTasksResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduledTaskDto"
+            }
+          },
+          "count": {
+            "type": "number",
+            "example": 4,
+            "description": "Total number of schedules upstream, across all pages."
+          },
+          "limit": {
+            "type": "number",
+            "example": 20,
+            "description": "Page size used by the upstream DIAL Scheduler response."
+          },
+          "offset": {
+            "type": "number",
+            "example": 0,
+            "description": "Offset of `items` within the full upstream result set."
+          },
+          "next": {
+            "type": "object",
+            "example": null,
+            "nullable": true,
+            "description": "Upstream URL for the next page, or null if this is the last page."
+          },
+          "previous": {
+            "type": "object",
+            "example": null,
+            "nullable": true,
+            "description": "Upstream URL for the previous page, or null if this is the first page."
+          }
+        },
+        "required": ["items"]
+      },
+      "CreateScheduledTaskBodyDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "Daily summary"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4.1-mini-2025-04-14"
+          },
+          "prompt": {
+            "type": "string",
+            "example": "Summarize my inbox"
+          },
+          "stream": {
+            "type": "boolean",
+            "example": true,
+            "default": true
+          }
+        },
+        "required": ["displayName", "trigger", "model", "prompt"]
+      },
+      "CreatedScheduledTaskDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "sched_123"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Daily summary"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "nextRunTime": {
+            "type": "string",
+            "example": "2026-07-28T12:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "triggerType": {
+            "type": "string",
+            "enum": ["cron", "date"],
+            "example": "cron"
+          },
+          "serviceId": {
+            "type": "string",
+            "example": "dial-oauth"
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "70e570e9-cc23-4ffd-9182-078d09f116ac"
+          }
+        },
+        "required": ["id", "displayName", "trigger"]
+      },
+      "UpdateScheduledTaskBodyDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "Daily summary"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4.1-mini-2025-04-14"
+          },
+          "prompt": {
+            "type": "string",
+            "example": "Summarize my inbox"
+          },
+          "stream": {
+            "type": "boolean",
+            "example": true,
+            "default": true
+          }
+        },
+        "required": ["displayName", "trigger", "model", "prompt"]
+      },
+      "UpdatedScheduledTaskDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "sched_123"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Daily summary"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScheduleTriggerDto"
+          },
+          "nextRunTime": {
+            "type": "string",
+            "example": "2026-07-28T12:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-07-23T21:27:07.000Z"
+          },
+          "triggerType": {
+            "type": "string",
+            "enum": ["cron", "date"],
+            "example": "cron"
+          },
+          "serviceId": {
+            "type": "string",
+            "example": "dial-oauth"
+          },
+          "createdBy": {
+            "type": "string",
+            "example": "70e570e9-cc23-4ffd-9182-078d09f116ac"
+          }
+        },
+        "required": ["id", "displayName", "trigger"]
       }
     }
   }

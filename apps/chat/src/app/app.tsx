@@ -50,6 +50,12 @@ const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
+const ScheduledTasksPage = lazy(
+  () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
+);
+const ScheduledTaskCreatePage = lazy(
+  () => import('../pages/ScheduledTaskCreatePage/ScheduledTaskCreatePage'),
+);
 const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
@@ -295,6 +301,26 @@ const App: FC = () => {
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
                   <DialFileManagerPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.ScheduledTasks}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ScheduledTasksPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.ScheduledTaskCreate}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ScheduledTaskCreatePage />
                 </Suspense>
               </RouteErrorBoundary>
             }

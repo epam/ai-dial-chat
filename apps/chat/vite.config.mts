@@ -84,6 +84,10 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/deployment-creation-form/src/index.ts',
       ),
+      '@epam/ai-dial-scheduled-tasks': path.resolve(
+        __dirname,
+        '../../libs/scheduled-tasks/src/index.ts',
+      ),
       '@epam/ai-dial-react-pdf-highlighter/styles.css': path.resolve(
         __dirname,
         '../../node_modules/@epam/ai-dial-react-pdf-highlighter/dist/index.css',

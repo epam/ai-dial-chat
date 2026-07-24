@@ -19,4 +19,6 @@ export enum ROUTES {
   ToolsetEditorCallback = '/toolset-editor/callback',
   ToolsetSignIn = '/auth/toolset-signin',
   FileManager = '/files',
+  ScheduledTasks = '/scheduled-tasks',
+  ScheduledTaskCreate = '/scheduled-tasks/new',
 }
