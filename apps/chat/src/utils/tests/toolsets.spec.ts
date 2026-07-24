@@ -1,6 +1,8 @@
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { ResponseError } from '@epam/chat-api-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ToolsetOAuthCallbackQuery } from '../../constants/toolsets';
+import { ROUTES } from '../../types/routes';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
@@ -18,14 +20,12 @@ import {
   formToToolsetBody,
   getStorageSafeUniqueToolsetName,
   getToolsetOAuthChannelName,
-  getToolsetOAuthResultStorageKey,
   initiateOAuthLogin,
   isToolsetAuthValid,
   isToolsetFormValid,
   isValidEndpointUrl,
   navigateToolsetOAuthPopup,
   openToolsetOAuthPopup,
-  persistToolsetOAuthResult,
   toolsetDtoToForm,
   waitForToolsetOAuthResult,
 } from '../toolsets';
@@ -854,10 +854,10 @@ describe('openToolsetOAuthPopup / navigateToolsetOAuthPopup', () => {
 
 describe('waitForToolsetOAuthResult', () => {
   const flowId = 'flow-123';
-
-  beforeEach(() => {
-    localStorage.clear();
-  });
+  const defaultWaitOptions = {
+    toolsetId: 'toolsets/b/my-toolset__1',
+    credentialsLevel: ToolsetCredentialsLevel.User,
+  };
 
   const postMessage = (message: unknown) => {
     const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
@@ -867,7 +867,11 @@ describe('waitForToolsetOAuthResult', () => {
 
   it('resolves with the success message posted on the flow channel', async () => {
     const popup = { closed: false, close: vi.fn() } as unknown as Window;
-    const resultPromise = waitForToolsetOAuthResult(popup, flowId);
+    const resultPromise = waitForToolsetOAuthResult(
+      popup,
+      flowId,
+      defaultWaitOptions,
+    );
 
     postMessage({
       type: ToolsetOAuthResultType.Success,
@@ -884,7 +888,11 @@ describe('waitForToolsetOAuthResult', () => {
 
   it('resolves with the failure message posted on the flow channel', async () => {
     const popup = { closed: false, close: vi.fn() } as unknown as Window;
-    const resultPromise = waitForToolsetOAuthResult(popup, flowId);
+    const resultPromise = waitForToolsetOAuthResult(
+      popup,
+      flowId,
+      defaultWaitOptions,
+    );
 
     postMessage({
       type: ToolsetOAuthResultType.Failure,
@@ -900,7 +908,11 @@ describe('waitForToolsetOAuthResult', () => {
   it('closes the popup itself as soon as a result message arrives', async () => {
     const close = vi.fn();
     const popup = { closed: false, close } as unknown as Window;
-    const resultPromise = waitForToolsetOAuthResult(popup, flowId);
+    const resultPromise = waitForToolsetOAuthResult(
+      popup,
+      flowId,
+      defaultWaitOptions,
+    );
 
     postMessage({
       type: ToolsetOAuthResultType.Success,
@@ -918,6 +930,7 @@ describe('waitForToolsetOAuthResult', () => {
       popup as unknown as Window,
       flowId,
       {
+        ...defaultWaitOptions,
         pollIntervalMs: 5,
         timeoutMs: 10_000,
       },
@@ -930,34 +943,67 @@ describe('waitForToolsetOAuthResult', () => {
     });
   });
 
-  it('recovers a persisted result after the channel event is missed and the popup closes', async () => {
+  it('recovers the first successful login from the callback URL when the channel event is missed', async () => {
     const close = vi.fn();
-    const popup = { closed: false, close } as {
+    const popup = {
+      closed: false,
+      close,
+      location: { href: 'https://provider.example.com/authorize' },
+    } as {
       closed: boolean;
       close: ReturnType<typeof vi.fn>;
+      location: { href: string };
     };
     const resultPromise = waitForToolsetOAuthResult(
       popup as unknown as Window,
       flowId,
       {
+        ...defaultWaitOptions,
         pollIntervalMs: 5,
         timeoutMs: 10_000,
       },
     );
-    const result = {
+    const callbackUrl = new URL(ROUTES.ToolsetSignIn, window.location.origin);
+    callbackUrl.searchParams.set(
+      ToolsetOAuthCallbackQuery.Result,
+      ToolsetOAuthResultType.Success,
+    );
+    popup.location.href = callbackUrl.toString();
+
+    await expect(resultPromise).resolves.toEqual({
       type: ToolsetOAuthResultType.Success,
-      toolsetId: 'toolsets/b/my-toolset__1',
-      credentialsLevel: ToolsetCredentialsLevel.User,
-    } as const;
-
-    expect(persistToolsetOAuthResult(flowId, result)).toBe(true);
-    popup.closed = true;
-
-    await expect(resultPromise).resolves.toEqual(result);
+      ...defaultWaitOptions,
+    });
     expect(close).toHaveBeenCalledOnce();
-    expect(
-      localStorage.getItem(getToolsetOAuthResultStorageKey(flowId)),
-    ).toBeNull();
+  });
+
+  it('recovers a failed login and its reason from the callback URL', async () => {
+    const close = vi.fn();
+    const callbackUrl = new URL(
+      ROUTES.ToolsetEditorCallback,
+      window.location.origin,
+    );
+    callbackUrl.searchParams.set(
+      ToolsetOAuthCallbackQuery.Result,
+      ToolsetOAuthResultType.Failure,
+    );
+    callbackUrl.searchParams.set(
+      ToolsetOAuthCallbackQuery.FailureReason,
+      ToolsetOAuthFailureReason.StateMismatch,
+    );
+    const popup = {
+      closed: false,
+      close,
+      location: { href: callbackUrl.toString() },
+    } as unknown as Window;
+
+    await expect(
+      waitForToolsetOAuthResult(popup, flowId, defaultWaitOptions),
+    ).resolves.toEqual({
+      type: ToolsetOAuthResultType.Failure,
+      reason: ToolsetOAuthFailureReason.StateMismatch,
+    });
+    expect(close).toHaveBeenCalledOnce();
   });
 
   it('resolves as Cancelled when the pending timeout elapses with no result', async () => {
@@ -966,6 +1012,7 @@ describe('waitForToolsetOAuthResult', () => {
 
     await expect(
       waitForToolsetOAuthResult(popup, flowId, {
+        ...defaultWaitOptions,
         pollIntervalMs: 5,
         timeoutMs: 20,
       }),
@@ -982,6 +1029,7 @@ describe('waitForToolsetOAuthResult', () => {
       popup as unknown as Window,
       flowId,
       {
+        ...defaultWaitOptions,
         pollIntervalMs: 5,
         timeoutMs: 50,
       },
