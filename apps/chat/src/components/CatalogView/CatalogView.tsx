@@ -3,10 +3,12 @@ import {
   CatalogEntityType,
   CatalogItem,
   CatalogItemDetailsFetchResult,
+  CatalogViewMode,
   CredentialsLevel,
   CredentialStatus,
   CreateOption,
 } from '@epam/ai-dial-catalog';
+import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ToolsetLogoutBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
@@ -38,6 +40,7 @@ import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilter
 import useFavoriteApplications, {
   FavoriteEntityType,
 } from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
@@ -150,6 +153,21 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [schemas],
   );
 
+  const isMarketplaceEnabled = useUiFeature(OverlayFeature.Marketplace);
+  const isMarketplaceTableViewEnabled = useUiFeature(
+    OverlayFeature.MarketplaceTableView,
+  );
+  const isMarketplaceHideMyAppsEnabled = useUiFeature(
+    OverlayFeature.MarketplaceHideMyApps,
+  );
+  const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
+  const isCustomApplicationsEnabled = useUiFeature(
+    OverlayFeature.CustomApplications,
+  );
+  const isHideCustomAppCreationEnabled = useUiFeature(
+    OverlayFeature.HideCustomAppCreation,
+  );
+
   const catalogItems = useMemo(
     () => [
       ...deployments.map((d) =>
@@ -161,20 +179,32 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           quickAppSchemaId,
         ),
       ),
-      ...toolsets.map((toolset) =>
-        mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
-      ),
+      ...(isToolsetsEnabled
+        ? toolsets.map((toolset) =>
+            mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
+          )
+        : []),
     ],
-    [deployments, favoriteIds, t, toolsets, quickAppSchemaId, isAdmin],
+    [
+      deployments,
+      favoriteIds,
+      t,
+      toolsets,
+      quickAppSchemaId,
+      isAdmin,
+      isToolsetsEnabled,
+    ],
   );
 
-  const visibleCatalogItems = useMemo(
-    () =>
-      isSelectorMode
-        ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
-        : catalogItems,
-    [catalogItems, isSelectorMode],
-  );
+  const visibleCatalogItems = useMemo(() => {
+    let result = isSelectorMode
+      ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
+      : catalogItems;
+    if (isMarketplaceHideMyAppsEnabled) {
+      result = result.filter((item) => !item.isMyApp);
+    }
+    return result;
+  }, [catalogItems, isSelectorMode, isMarketplaceHideMyAppsEnabled]);
 
   const reconciledFilterTopics = useMemo(() => {
     const availableTopics = new Set(
@@ -458,6 +488,18 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [dialCoreExternalUrl],
   );
 
+  const isApplicationsSharingEnabled = useUiFeature(
+    OverlayFeature.ApplicationsSharing,
+  );
+  const isToolsetsSharingEnabled = useUiFeature(OverlayFeature.ToolsetsSharing);
+  const isShareVisible = useCallback(
+    (item: CatalogItem) =>
+      item.type === CatalogEntityType.Toolset
+        ? isToolsetsSharingEnabled
+        : isApplicationsSharingEnabled,
+    [isApplicationsSharingEnabled, isToolsetsSharingEnabled],
+  );
+
   const getPublishHistory = useCallback(async (item: CatalogItem) => {
     const entityType = toPublishEntityType(item.type);
     if (!entityType) {
@@ -572,7 +614,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
 
-    if (quickAppSchemaId) {
+    if (
+      quickAppSchemaId &&
+      isCustomApplicationsEnabled &&
+      !isHideCustomAppCreationEnabled
+    ) {
       options.push({
         label: t(CatalogI18nKeys.CreateQuickApp),
         onClick: () =>
@@ -586,18 +632,32 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       });
     }
 
-    options.push({
-      label: t(CatalogI18nKeys.CreateToolset),
-      onClick: () => {
-        const params = new URLSearchParams({
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        });
-        navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
-      },
-    });
+    if (isToolsetsEnabled) {
+      options.push({
+        label: t(CatalogI18nKeys.CreateToolset),
+        onClick: () => {
+          const params = new URLSearchParams({
+            [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          });
+          navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
+        },
+      });
+    }
 
     return options;
-  }, [quickAppSchemaId, navigate, t, buildEditorUrl]);
+  }, [
+    quickAppSchemaId,
+    navigate,
+    t,
+    buildEditorUrl,
+    isCustomApplicationsEnabled,
+    isHideCustomAppCreationEnabled,
+    isToolsetsEnabled,
+  ]);
+
+  if (!isMarketplaceEnabled && !isSelectorMode) {
+    return null;
+  }
 
   return (
     <Catalog
@@ -607,6 +667,9 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       createOptions={createOptions}
       hideCreateButton={isSelectorMode}
       hidePageTitle={isSelectorMode}
+      initialViewMode={
+        isMarketplaceTableViewEnabled ? CatalogViewMode.List : undefined
+      }
       selectedItemId={
         isSelectorMode ? (selectedItemId ?? undefined) : undefined
       }
@@ -647,6 +710,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       shareOverlay={(item, onClose) => (
         <SharePopoverContainer item={item} onClose={onClose} />
       )}
+      isShareVisible={isShareVisible}
       isConnectVisible={isConnectVisible}
       connectOverlay={(item, onClose) => (
         <ConnectPopoverContainer item={item} onClose={onClose} />

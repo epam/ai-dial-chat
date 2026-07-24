@@ -6,6 +6,7 @@ import {
   transcribeAudioWithAsrModel,
 } from '../../../server-api/chat.api';
 import { uploadFile } from '../../../server-api/files.api';
+import { useUiFeature } from '../../useUiFeature';
 import { useAudioTranscription } from '../useAudioTranscription';
 
 const mockUseDeployments = vi.fn();
@@ -25,10 +26,12 @@ vi.mock('../../../utils/build-upload-path', () => ({
     (attachment: { name: string }) => `uploads/${attachment.name}`,
   ),
 }));
+vi.mock('../../useUiFeature');
 
 const mockUploadFile = vi.mocked(uploadFile);
 const mockTranscribeAudio = vi.mocked(transcribeAudio);
 const mockTranscribeAudioWithAsrModel = vi.mocked(transcribeAudioWithAsrModel);
+const mockUseUiFeature = vi.mocked(useUiFeature);
 
 const makeItem = (id: string, inputAttachmentTypes?: string[]) => ({
   id,
@@ -41,6 +44,7 @@ describe('useAudioTranscription', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseDeployments.mockReturnValue({ items: [] });
+    mockUseUiFeature.mockReturnValue(true);
   });
 
   it('uploads audio within the size limit', async () => {
@@ -157,6 +161,20 @@ describe('useAudioTranscription', () => {
         bucket: 'user-bucket',
         transcribeSizeLimitBytes: 1000,
         selectedDeploymentId: 'gpt-4o',
+      }),
+    );
+
+    expect(result.current.isTranscriptionSupported).toBe(false);
+  });
+
+  it('reports transcription unsupported when voice-input is disabled, even with an ASR model configured', () => {
+    mockUseUiFeature.mockReturnValue(false);
+    const { result } = renderHook(() =>
+      useAudioTranscription({
+        bucket: 'user-bucket',
+        transcribeSizeLimitBytes: 1000,
+        asrModelId: 'asr-model',
+        selectedDeploymentId: undefined,
       }),
     );
 

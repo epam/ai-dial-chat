@@ -81,6 +81,26 @@ describe('ShareButton', () => {
     expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
   });
 
+  it('hides Share when isShareVisible returns false, even though the built-in rule allows it', () => {
+    render(
+      <ShareButton
+        item={makeItem(CatalogEntityType.Toolset)}
+        isShareVisible={() => false}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+  });
+
+  it('shows Share when isShareVisible returns true and the built-in rule allows it', () => {
+    render(
+      <ShareButton
+        item={makeItem(CatalogEntityType.Toolset)}
+        isShareVisible={() => true}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+  });
+
   it('uses the provided label', () => {
     render(
       <ShareButton

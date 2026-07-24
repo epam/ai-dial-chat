@@ -15,6 +15,7 @@ import {
 
 const mockNavigate = vi.fn();
 const mockSetTheme = vi.fn();
+const mockApplyOverlayOverride = vi.fn();
 let mockAuthStatus = AuthStatus.Authenticated;
 let mockOverlayAllowedOrigins: string[] = ['https://partner.example.com'];
 
@@ -34,6 +35,14 @@ vi.mock('../../auth/UserContext', () => ({
 
 vi.mock('../../ThemeContext', () => ({
   useTheme: () => ({ setTheme: mockSetTheme }),
+}));
+
+vi.mock('../../UiFeaturesContext', () => ({
+  useUiFeatures: () => ({
+    isEnabled: () => true,
+    enabledFeatures: new Set(),
+    applyOverlayOverride: mockApplyOverlayOverride,
+  }),
 }));
 
 const wrapper = ({ children }: { children: ReactNode }) =>
@@ -251,6 +260,130 @@ describe('OverlayContext', () => {
       });
 
       expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('abc'));
+    });
+
+    it('applies enabledFeatures via UiFeaturesContext when present', async () => {
+      renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-enabled-features',
+        payload: {
+          hostDomain: 'https://partner.example.com',
+          enabledFeatures: ['header', 'likes'],
+        },
+      });
+
+      expect(mockApplyOverlayOverride).toHaveBeenCalledWith([
+        'header',
+        'likes',
+      ]);
+      await waitFor(() => {
+        const responseCalls = postMessageSpy.mock.calls.filter(
+          ([message]) =>
+            (message as { requestId?: string }).requestId ===
+            'req-enabled-features',
+        );
+        expect(responseCalls).toHaveLength(1);
+      });
+    });
+
+    it('does not call applyOverlayOverride when enabledFeatures is absent', () => {
+      renderHook(() => useOverlay(), { wrapper });
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-no-enabled-features',
+        payload: {
+          hostDomain: 'https://partner.example.com',
+          theme: 'dark',
+        },
+      });
+
+      expect(mockApplyOverlayOverride).not.toHaveBeenCalled();
+    });
+
+    it('rejects a non-array enabledFeatures payload as malformed', () => {
+      renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-invalid-enabled-features',
+        payload: {
+          hostDomain: 'https://partner.example.com',
+          enabledFeatures: 'header,likes',
+        },
+      });
+
+      expect(mockApplyOverlayOverride).not.toHaveBeenCalled();
+      expect(postMessageSpy).not.toHaveBeenCalled();
+    });
+
+    it('logs unknown enabledFeatures values and still applies the request', async () => {
+      renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-unknown-enabled-features',
+        payload: {
+          hostDomain: 'https://partner.example.com',
+          enabledFeatures: ['header', 'not-a-real-feature', 'report-an-issue'],
+        },
+      });
+
+      expect(mockApplyOverlayOverride).toHaveBeenCalledWith([
+        'header',
+        'not-a-real-feature',
+        'report-an-issue',
+      ]);
+      expect(console.warn).toHaveBeenCalledWith(
+        'Overlay: ignored unknown enabledFeatures entry: "not-a-real-feature"',
+      );
+      expect(console.warn).toHaveBeenCalledWith(
+        'Overlay: ignored unknown enabledFeatures entry: "report-an-issue"',
+      );
+      await waitFor(() => {
+        const responseCalls = postMessageSpy.mock.calls.filter(
+          ([message]) =>
+            (message as { requestId?: string }).requestId ===
+            'req-unknown-enabled-features',
+        );
+        expect(responseCalls).toHaveLength(1);
+        expect(responseCalls[0][0]).toMatchObject({
+          payload: { applied: true },
+        });
+      });
+    });
+
+    it('applies theme, modelId, and enabledFeatures together before a single response', async () => {
+      renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      act(() => {
+        dispatchFromHost({
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-combined',
+          payload: {
+            hostDomain: 'https://partner.example.com',
+            theme: 'dark',
+            modelId: 'gpt-4o',
+            enabledFeatures: ['header'],
+          },
+        });
+      });
+
+      expect(mockSetTheme).toHaveBeenCalledWith('dark');
+      expect(mockApplyOverlayOverride).toHaveBeenCalledWith(['header']);
+      await waitFor(() => {
+        const responseCalls = postMessageSpy.mock.calls.filter(
+          ([message]) =>
+            (message as { requestId?: string }).requestId === 'req-combined',
+        );
+        expect(responseCalls).toHaveLength(1);
+      });
     });
   });
 

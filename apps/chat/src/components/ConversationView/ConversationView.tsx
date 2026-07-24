@@ -2,6 +2,7 @@ import {
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
+  OverlayFeature,
   StatusEvent,
   type Attachment,
   type Conversation,
@@ -54,6 +55,7 @@ import { useConversationScroll } from '../../hooks/conversation/useConversationS
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import {
   dialFilesToAttachments,
   dialFolderPathToAttachment,
@@ -169,6 +171,19 @@ const ConversationView: FC<Props> = ({
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
+  const isTopSettingsEnabled = useUiFeature(OverlayFeature.TopSettings);
+  const isTopChatModelSettingsEnabled = useUiFeature(
+    OverlayFeature.TopChatModelSettings,
+  );
+  const isDisallowChangeAgentEnabled = useUiFeature(
+    OverlayFeature.DisallowChangeAgent,
+  );
+  const isChatInputBorderEnabled = useUiFeature(OverlayFeature.ChatInputBorder);
+  const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
+  const isSkipFocusChatInputOnloadEnabled = useUiFeature(
+    OverlayFeature.SkipFocusChatInputOnload,
+  );
+  const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -568,7 +583,9 @@ const ConversationView: FC<Props> = ({
                       selectedDeployment?.maxInputAttachments
                     }
                     onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
-                    hideAttachFile={!isAttachmentsAllowed}
+                    hideAttachFile={
+                      !isAttachmentsAllowed || !isInputFilesEnabled
+                    }
                     fileAccept={fileAccept}
                     onAttachmentClick={handleMessageAttachmentClick}
                     onDialFileSystemClick={
@@ -644,13 +661,25 @@ const ConversationView: FC<Props> = ({
                 onAttachmentsChange={handleAttachmentsChange}
                 placeholder={placeholder}
                 deployments={
-                  fixedModel ? fixedDeploymentItems : deploymentItems
+                  isTopChatModelSettingsEnabled
+                    ? fixedModel
+                      ? fixedDeploymentItems
+                      : deploymentItems
+                    : undefined
                 }
                 selectedDeploymentId={
                   fixedModel ? fixedModel.id : selectedItemId
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
-                isModelSelectorDisabled={isModelFixed}
+                isModelSelectorDisabled={
+                  isModelFixed || isDisallowChangeAgentEnabled
+                }
+                isSendDisabled={isDisabledSendEnabled}
+                inputClassName={
+                  isChatInputBorderEnabled
+                    ? 'border-2 border-accent-primary'
+                    : undefined
+                }
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
@@ -662,7 +691,7 @@ const ConversationView: FC<Props> = ({
                 onUploadAudio={onUploadAudio}
                 onTranscribeAudio={onTranscribeAudio}
                 sendOnEnter={sendOnEnter}
-                chatSettings={chatSettings}
+                chatSettings={isTopSettingsEnabled ? chatSettings : undefined}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}
                 pendingAttachments={
                   !isEditActive ? pendingDialAttachments : undefined
@@ -675,7 +704,7 @@ const ConversationView: FC<Props> = ({
                     ? () => setPendingDialAttachments([])
                     : undefined
                 }
-                autoFocus={!isMobile}
+                autoFocus={!isMobile && !isSkipFocusChatInputOnloadEnabled}
                 onDialFileSystemClick={
                   isAttachmentsAllowed
                     ? () => setIsDialFileManagerOpen(true)
@@ -691,7 +720,7 @@ const ConversationView: FC<Props> = ({
                   selectedDeployment?.maxInputAttachments
                 }
                 onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
-                hideAttachFile={!isAttachmentsAllowed}
+                hideAttachFile={!isAttachmentsAllowed || !isInputFilesEnabled}
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}

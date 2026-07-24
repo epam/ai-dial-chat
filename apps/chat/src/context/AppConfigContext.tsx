@@ -17,7 +17,7 @@ import { useUser } from './auth/UserContext';
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
 
-interface AppConfigState {
+export interface AppConfigState {
   status: UserConfigStatus;
   features: Record<string, boolean>;
   config: {
@@ -28,6 +28,7 @@ interface AppConfigState {
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
+    enabledUiFeatures: string[] | null;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -43,6 +44,7 @@ const INITIAL_STATE: AppConfigState = {
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
+    enabledUiFeatures: null,
   },
 };
 
@@ -75,6 +77,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,
             overlayAllowedOrigins: response.config?.overlayAllowedOrigins ?? [],
+            enabledUiFeatures: response.config?.enabledUiFeatures ?? null,
           },
           metadata: response.metadata,
         });

@@ -1,10 +1,17 @@
-import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
+import {
+  MessageRole,
+  OverlayFeature,
+  type Message,
+} from '@epam/ai-dial-chat-shared';
+import type { MessageActionsProps } from '@epam/ai-dial-conversation-messages';
 import { render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ComponentProps } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AttachmentsI18nKeys,
   CitationsI18nKeys,
 } from '../../../constants/translation-keys';
+import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import ConversationMessageItem from '../ConversationMessageItem';
 
 const mockHandleAttachmentClick = vi.fn();
@@ -14,6 +21,24 @@ vi.mock('../../../hooks/attachment/useAttachmentAction', () => ({
     handleAttachmentClick: mockHandleAttachmentClick,
   }),
 }));
+
+vi.mock('../../../hooks/useUiFeature');
+
+let capturedActions: MessageActionsProps | undefined;
+
+vi.mock('@epam/ai-dial-conversation-messages', async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import('@epam/ai-dial-conversation-messages')
+    >();
+  return {
+    ...actual,
+    MessageBubble: (props: ComponentProps<typeof actual.MessageBubble>) => {
+      capturedActions = props.actions;
+      return <actual.MessageBubble {...props} />;
+    },
+  };
+});
 
 vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
   const actual =
@@ -78,6 +103,15 @@ const defaultProps = {
   executedLabel: 'Executed',
   stepsLabel: (count: number) => `${count} Steps`,
 };
+
+beforeEach(() => {
+  vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+    (feature) =>
+      feature !== OverlayFeature.HideEditUserMessage &&
+      feature !== OverlayFeature.HideRegenerateAssistantMessage &&
+      feature !== OverlayFeature.HideDeleteUserMessage,
+  );
+});
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -155,5 +189,98 @@ describe('ConversationMessageItem — stopped generation', () => {
     );
     expect(screen.getByText('Partial answer')).toBeTruthy();
     expect(screen.queryByText('Stopped generating')).toBeNull();
+  });
+});
+
+describe('ConversationMessageItem — message action gates', () => {
+  const ASSISTANT_MESSAGE: Message = {
+    role: MessageRole.Assistant,
+    content: 'Hello there',
+    timestamp: '2024-01-01T00:00:03Z',
+  };
+
+  it('includes edit/delete for a user message and like/dislike for an assistant message by default', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={USER_MESSAGE}
+        onStartEdit={vi.fn()}
+        onDeleteMessage={vi.fn()}
+      />,
+    );
+    expect(capturedActions?.onEdit).toBeDefined();
+    expect(capturedActions?.onDelete).toBeDefined();
+
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={ASSISTANT_MESSAGE}
+        index={1}
+        onRegenerateMessage={vi.fn()}
+        onRateMessage={vi.fn()}
+        onDislikeMessage={vi.fn()}
+      />,
+    );
+    expect(capturedActions?.onRegenerate).toBeDefined();
+    expect(capturedActions?.onLike).toBeDefined();
+    expect(capturedActions?.onDislike).toBeDefined();
+  });
+
+  it('omits onEdit when hide-edit-user-message is enabled', () => {
+    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+      (feature) => feature === OverlayFeature.HideEditUserMessage,
+    );
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={USER_MESSAGE}
+        onStartEdit={vi.fn()}
+      />,
+    );
+    expect(capturedActions?.onEdit).toBeUndefined();
+  });
+
+  it('omits onDelete when hide-delete-user-message is enabled', () => {
+    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+      (feature) => feature === OverlayFeature.HideDeleteUserMessage,
+    );
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={USER_MESSAGE}
+        onDeleteMessage={vi.fn()}
+      />,
+    );
+    expect(capturedActions?.onDelete).toBeUndefined();
+  });
+
+  it('omits onRegenerate when hide-regenerate-assistant-message is enabled', () => {
+    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+      (feature) => feature === OverlayFeature.HideRegenerateAssistantMessage,
+    );
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={ASSISTANT_MESSAGE}
+        onRegenerateMessage={vi.fn()}
+      />,
+    );
+    expect(capturedActions?.onRegenerate).toBeUndefined();
+  });
+
+  it('omits onLike and onDislike when likes is disabled', () => {
+    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+      (feature) => feature !== OverlayFeature.Likes,
+    );
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={ASSISTANT_MESSAGE}
+        onRateMessage={vi.fn()}
+        onDislikeMessage={vi.fn()}
+      />,
+    );
+    expect(capturedActions?.onLike).toBeUndefined();
+    expect(capturedActions?.onDislike).toBeUndefined();
   });
 });

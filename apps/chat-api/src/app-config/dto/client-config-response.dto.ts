@@ -62,6 +62,20 @@ export class ClientConfigDto {
     example: ['https://partner.example.com'],
   })
   overlayAllowedOrigins!: string[];
+
+  @ApiProperty({
+    description:
+      'When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.',
+    type: [String],
+    nullable: true,
+    example: [
+      'header',
+      'likes',
+      'conversations-sharing',
+      'hide-new-conversation',
+    ],
+  })
+  enabledUiFeatures!: string[] | null;
 }
 
 export class ClientConfigMetadataDto {

@@ -1,4 +1,5 @@
 import {
+  OverlayFeature,
   ResponseFormat,
   type Attachment,
   type DeploymentItem,
@@ -35,6 +36,7 @@ import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerSta
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
@@ -181,6 +183,18 @@ const NewConversationComposer: FC<Props> = ({
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const isEmptyChatSettingsEnabled = useUiFeature(
+    OverlayFeature.EmptyChatSettings,
+  );
+  const isHideEmptyChatChangeAgentEnabled = useUiFeature(
+    OverlayFeature.HideEmptyChatChangeAgent,
+  );
+  const isChatInputBorderEnabled = useUiFeature(OverlayFeature.ChatInputBorder);
+  const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
+  const isSkipFocusChatInputOnloadEnabled = useUiFeature(
+    OverlayFeature.SkipFocusChatInputOnload,
+  );
+  const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   const { displayName } = useUserProfile();
   const firstName = displayName.split(' ')[0];
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
@@ -288,11 +302,19 @@ const NewConversationComposer: FC<Props> = ({
           )}
           placeholder={placeholder}
           styles={inputStyles}
-          deployments={deployments}
+          deployments={
+            isHideEmptyChatChangeAgentEnabled ? undefined : deployments
+          }
           selectedDeploymentId={selectedDeploymentId}
           onDeploymentChange={onDeploymentChange}
           isInputDisabled={isInputDisabled}
           isModelSelectorDisabled={isModelSelectorDisabled}
+          isSendDisabled={isDisabledSendEnabled}
+          inputClassName={
+            isChatInputBorderEnabled
+              ? 'border-2 border-accent-primary'
+              : undefined
+          }
           modelSelectorLabels={modelSelectorLabels}
           addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
           sendLabel={t(ChatI18nKeys.SendMessage)}
@@ -302,12 +324,12 @@ const NewConversationComposer: FC<Props> = ({
           onUploadAudio={handleUploadAudio}
           onTranscribeAudio={handleTranscribeAudio}
           sendOnEnter={sendOnEnter}
-          chatSettings={chatSettings}
+          chatSettings={isEmptyChatSettingsEnabled ? chatSettings : undefined}
           pendingDropFiles={pendingFiles}
           onDropFilesConsumed={onFilesConsumed}
           pendingAttachments={pendingDialAttachments}
           onPendingAttachmentsConsumed={clearPendingDialAttachments}
-          autoFocus={!isMobile}
+          autoFocus={!isMobile && !isSkipFocusChatInputOnloadEnabled}
           onDialFileSystemClick={
             isAttachmentsAllowed ? openDialFileManager : undefined
           }
@@ -317,7 +339,7 @@ const NewConversationComposer: FC<Props> = ({
           }
           maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
           onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
-          hideAttachFile={!isAttachmentsAllowed}
+          hideAttachFile={!isAttachmentsAllowed || !isInputFilesEnabled}
           fileAccept={fileAccept}
           onAttachmentClick={handleAttachmentClick}
           modelPickerOverlay={modelPickerOverlay}

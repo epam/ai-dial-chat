@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import {
   DIAL_ICON_SIZE,
@@ -36,6 +37,7 @@ import {
 import { useLogout } from '../../hooks/logout/useLogout';
 import { useThemeOptions } from '../../hooks/theme/useThemeOptions';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { AuthStatus } from '../../types/auth-status';
 import { ThemeId } from '../../types/theme-id';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
@@ -58,6 +60,7 @@ export const UserMenu = memo(() => {
   } = useUserProfile();
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
+  const isUserSettingsHidden = useUiFeature(OverlayFeature.HideUserSettings);
 
   if (status !== AuthStatus.Authenticated || !user || isMobile) {
     return null;
@@ -138,7 +141,7 @@ export const UserMenu = memo(() => {
         </div>
       ),
     },
-    ...(SUPPORTED_LANGUAGES.length > 1
+    ...(!isUserSettingsHidden && SUPPORTED_LANGUAGES.length > 1
       ? [
           {
             key: 'language',
@@ -161,39 +164,43 @@ export const UserMenu = memo(() => {
     //   icon: <IconColorSwatch size={DIAL_ICON_SIZE.SM} aria-hidden />,
     //   children: themeChildren,
     // },
-    {
-      key: 'keyboard-shortcuts',
-      label: (
-        <span className="dial-small-text">
-          {t(SettingsI18nKeys.KeyboardShortcuts)}
-        </span>
-      ),
-      icon: <IconKeyboard size={DIAL_ICON_SIZE.SM} aria-hidden />,
-      children: [
-        {
-          key: 'shortcut-enter',
-          label: (
-            <MenuItemLabel
-              label={t(SettingsI18nKeys.ShortcutEnter)}
-              isActive={preference === SendOnEnter.Enter}
-            />
-          ),
-          onClick: () => setPreference(SendOnEnter.Enter),
-        },
-        {
-          key: 'shortcut-meta-enter',
-          label: (
-            <MenuItemLabel
-              label={t(SettingsI18nKeys.ShortcutMetaEnter, {
-                modifier: metaKey,
-              })}
-              isActive={preference === SendOnEnter.MetaEnter}
-            />
-          ),
-          onClick: () => setPreference(SendOnEnter.MetaEnter),
-        },
-      ],
-    },
+    ...(!isUserSettingsHidden
+      ? [
+          {
+            key: 'keyboard-shortcuts',
+            label: (
+              <span className="dial-small-text">
+                {t(SettingsI18nKeys.KeyboardShortcuts)}
+              </span>
+            ),
+            icon: <IconKeyboard size={DIAL_ICON_SIZE.SM} aria-hidden />,
+            children: [
+              {
+                key: 'shortcut-enter',
+                label: (
+                  <MenuItemLabel
+                    label={t(SettingsI18nKeys.ShortcutEnter)}
+                    isActive={preference === SendOnEnter.Enter}
+                  />
+                ),
+                onClick: () => setPreference(SendOnEnter.Enter),
+              },
+              {
+                key: 'shortcut-meta-enter',
+                label: (
+                  <MenuItemLabel
+                    label={t(SettingsI18nKeys.ShortcutMetaEnter, {
+                      modifier: metaKey,
+                    })}
+                    isActive={preference === SendOnEnter.MetaEnter}
+                  />
+                ),
+                onClick: () => setPreference(SendOnEnter.MetaEnter),
+              },
+            ],
+          },
+        ]
+      : []),
     { key: 'divider-1', type: DropdownItemType.Divider },
     {
       key: 'logout',

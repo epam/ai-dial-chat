@@ -198,6 +198,12 @@ export interface InputProps {
    */
   isModelSelectorDisabled?: boolean;
   /**
+   * When `true`, disables the send action without removing or dimming the
+   * send button itself. Independent of `isInputDisabled`/`isStreaming`.
+   * Defaults to `false`.
+   */
+  isSendDisabled?: boolean;
+  /**
    * When `true`, the mic button is rendered and voice recording is enabled.
    * Derived by the host app from the selected deployment's `inputAttachmentTypes`.
    */

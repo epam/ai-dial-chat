@@ -10,6 +10,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   welcomeText,
   styles: stylesProp,
   className,
+  inputClassName,
   isInputDisabled = false,
   ...inputProps
 }) => {
@@ -45,6 +46,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           isStreaming={isStreaming}
           isInputDisabled={isInputDisabled}
           {...inputProps}
+          className={inputClassName}
           colors={colors?.input}
           typography={typography?.input}
         />

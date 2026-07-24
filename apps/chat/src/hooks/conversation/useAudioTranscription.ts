@@ -1,5 +1,6 @@
 import {
   isAudioTranscriptionSupported,
+  OverlayFeature,
   type Attachment,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback, useMemo, useRef } from 'react';
@@ -10,6 +11,7 @@ import {
 } from '../../server-api/chat.api';
 import { uploadFile } from '../../server-api/files.api';
 import { buildUploadPath } from '../../utils/build-upload-path';
+import { useUiFeature } from '../useUiFeature';
 
 interface Params {
   bucket: string | undefined;
@@ -32,6 +34,7 @@ export const useAudioTranscription = ({
 }: Params): Result => {
   const { items } = useDeployments();
   const lastAudioMimeTypeRef = useRef<string>('audio/webm');
+  const isVoiceInputEnabled = useUiFeature(OverlayFeature.VoiceInput);
 
   const handleUploadAudio = useCallback(
     async (file: File, contentType: string): Promise<string> => {
@@ -73,10 +76,11 @@ export const useAudioTranscription = ({
   );
 
   const isTranscriptionSupported = useMemo(() => {
+    if (!isVoiceInputEnabled) return false;
     if (asrModelId != null) return true;
     const selectedItem = items.find((item) => item.id === selectedDeploymentId);
     return isAudioTranscriptionSupported(selectedItem?.inputAttachmentTypes);
-  }, [asrModelId, items, selectedDeploymentId]);
+  }, [isVoiceInputEnabled, asrModelId, items, selectedDeploymentId]);
 
   return { handleUploadAudio, handleTranscribeAudio, isTranscriptionSupported };
 };

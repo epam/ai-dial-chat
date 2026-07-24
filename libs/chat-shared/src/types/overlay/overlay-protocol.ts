@@ -64,9 +64,85 @@ export enum OverlayEventType {
 
 /**
  * Optional embed-time features a host can opt into via
- * `ChatOverlayOptions.enabledFeatures`.
+ * `ChatOverlayOptions.enabledFeatures`. Each member gates exactly one owning
+ * UI surface in the embedded app; see `apps/chat`'s `UiFeaturesContext` for
+ * the default-on/default-off classification of each value.
  */
 export enum OverlayFeature {
+  /** Enables the "Add app" menu's Code Apps entry. */
+  CodeApps = 'code-apps',
+  /** Enables the "Add app" menu's custom-application creation entry point. */
+  CustomApplications = 'custom-applications',
+  /** Hides the "Custom app" creation entry in the "Add app" menu. */
+  HideCustomAppCreation = 'hide-custom-app-creation',
+  /** Renders an opt-in border embellishment on the chat header. */
+  ChatHeaderBorder = 'chat-header-border',
+  /** Renders an opt-in border embellishment on the chat input container. */
+  ChatInputBorder = 'chat-input-border',
+  /** Disables the send action on the chat input without removing the button. */
+  DisabledSend = 'disabled-send',
+  /** Suppresses the chat input's auto-focus effect on load. */
+  SkipFocusChatInputOnload = 'skip-focus-chat-input-onload',
+  /** Enables the comment field in the negative-feedback (dislike) modal. */
+  DislikeComment = 'dislike-comment',
+  /** Enables attaching files to a message via the conversation input. */
+  InputFiles = 'input-files',
+  /** Enables like/dislike actions on assistant messages. */
+  Likes = 'likes',
+  /** Enables the live-chat-interaction sign-in UI affordance. */
+  LiveChatInteraction = 'live-chat-interaction',
+  /** Restricts (disables) changing the selected agent/model on the conversation top bar. */
+  DisallowChangeAgent = 'disallow-change-agent',
+  /** Hides the new-conversation controls in the header/layout. */
+  HideNewConversation = 'hide-new-conversation',
+  /** Enables the model/deployment selector on the conversation top bar. */
+  TopChatModelSettings = 'top-chat-model-settings',
+  /** Enables the conversation top-bar settings panel. */
+  TopSettings = 'top-settings',
+  /** Enables the empty-chat (new conversation composer) settings UI. */
+  EmptyChatSettings = 'empty-chat-settings',
+  /** Hides the model selector on the empty-chat composer screen. */
+  HideEmptyChatChangeAgent = 'hide-empty-chat-change-agent',
+  /** Enables the attachments-manager (`AttachmentCanvasProvider`) mount. */
+  AttachmentsManager = 'attachments-manager',
+  /** Enables the conversations-panel toggle button. */
+  ConversationsPanelToggle = 'conversations-panel-toggle',
+  /** Enables the conversations sidebar section. */
+  ConversationsSection = 'conversations-section',
+  /** Enables the app header. */
+  Header = 'header',
+  /** Makes the conversations sidebar section open by default. */
+  ShowConversationsSectionByDefault = 'showConversationsSectionByDefault',
+  /** Renders the sidebar's layout divider borders. */
+  ShowLayoutDividers = 'show-layout-dividers',
+  /** Enables the marketplace (`/catalog`) route. */
+  Marketplace = 'marketplace',
+  /** Restricts the marketplace to hide the current user's own/shared-with-me apps. */
+  MarketplaceHideMyApps = 'marketplace-hide-my-apps',
+  /** Makes the marketplace's table view the initial default (instead of grid). */
+  MarketplaceTableView = 'marketplace-table-view',
+  /** Hides the delete action on a user's own messages. */
+  HideDeleteUserMessage = 'hide-delete-user-message',
+  /** Hides the edit action on a user's own messages. */
+  HideEditUserMessage = 'hide-edit-user-message',
+  /** Hides the regenerate action on assistant messages. */
+  HideRegenerateAssistantMessage = 'hide-regenerate-assistant-message',
+  /** Enables the conversation-publishing entry point. */
+  ConversationsPublishing = 'conversations-publishing',
+  /** Enables the application-sharing entry point. */
+  ApplicationsSharing = 'applications-sharing',
+  /** Enables the conversation-sharing entry point. */
+  ConversationsSharing = 'conversations-sharing',
+  /** Enables the toolset-sharing entry point. */
+  ToolsetsSharing = 'toolsets-sharing',
+  /** Enables toolsets functionality. */
+  Toolsets = 'toolsets',
+  /** Enables the theme-driven custom logo/favicon. */
+  CustomLogo = 'custom-logo',
+  /** Hides the user avatar/menu button in the header. */
+  HideUserMenu = 'hide-user-menu',
+  /** Hides the settings entry in the user menu. */
+  HideUserSettings = 'hide-user-settings',
   /** Enables the `microphone` permission on the iframe's `allow` attribute for voice input. */
   VoiceInput = 'voice-input',
 }
@@ -157,6 +233,11 @@ export interface SetOverlayOptionsPayload {
   modelId?: string;
   /** Conversation id to navigate to and load, if provided. */
   overlayConversationId?: string;
+  /**
+   * UI-feature keys that replace (not merge with) the app's current effective
+   * UI-feature set, if provided. Array only — no comma-separated-string form.
+   */
+  enabledFeatures?: string[];
 }
 
 /** Payload of a `SEND_MESSAGE` request. */

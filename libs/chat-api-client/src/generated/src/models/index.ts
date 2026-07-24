@@ -474,6 +474,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   overlayAllowedOrigins: Array<string>;
+  /**
+   * When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  enabledUiFeatures: Array<string> | null;
 }
 /**
  *

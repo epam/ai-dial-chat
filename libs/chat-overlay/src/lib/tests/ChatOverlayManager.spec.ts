@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ChatOverlay } from '../ChatOverlay';
 import { ChatOverlayManager } from '../ChatOverlayManager';
@@ -205,5 +206,24 @@ describe('ChatOverlayManager', () => {
       deleteSpy.mockRestore();
       renameSpy.mockRestore();
     });
+  });
+
+  it('forwards setOverlayOptions with enabledFeatures unchanged to the underlying ChatOverlay instance', () => {
+    manager = new ChatOverlayManager();
+    manager.createOverlay({ overlayId: 'test', domain: DOMAIN });
+
+    const setOverlayOptionsSpy = vi
+      .spyOn(ChatOverlay.prototype, 'setOverlayOptions')
+      .mockResolvedValue({ applied: true });
+
+    void manager.setOverlayOptions('test', {
+      enabledFeatures: [OverlayFeature.Header],
+    });
+
+    expect(setOverlayOptionsSpy).toHaveBeenCalledWith({
+      enabledFeatures: ['header'],
+    });
+
+    setOverlayOptionsSpy.mockRestore();
   });
 });

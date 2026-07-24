@@ -643,6 +643,18 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @Transform(({ value }) => {
+    if (value == null || value === '') return null;
+    const parts = String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+    return parts.length > 0 ? parts : null;
+  })
+  @IsString({ each: true })
+  ENABLED_UI_FEATURES?: string[] | null = null;
+
+  @IsOptional()
+  @Transform(({ value }) => {
     if (value == null) return undefined;
     if (typeof value === 'boolean') return value;
     return !['false', '0', 'no'].includes(String(value).toLowerCase());
