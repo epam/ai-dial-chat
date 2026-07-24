@@ -18,12 +18,14 @@ import {
   formToToolsetBody,
   getStorageSafeUniqueToolsetName,
   getToolsetOAuthChannelName,
+  getToolsetOAuthResultStorageKey,
   initiateOAuthLogin,
   isToolsetAuthValid,
   isToolsetFormValid,
   isValidEndpointUrl,
   navigateToolsetOAuthPopup,
   openToolsetOAuthPopup,
+  persistToolsetOAuthResult,
   toolsetDtoToForm,
   waitForToolsetOAuthResult,
 } from '../toolsets';
@@ -853,6 +855,10 @@ describe('openToolsetOAuthPopup / navigateToolsetOAuthPopup', () => {
 describe('waitForToolsetOAuthResult', () => {
   const flowId = 'flow-123';
 
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   const postMessage = (message: unknown) => {
     const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
     channel.postMessage(message);
@@ -922,6 +928,36 @@ describe('waitForToolsetOAuthResult', () => {
     await expect(resultPromise).resolves.toEqual({
       type: ToolsetOAuthResultType.Cancelled,
     });
+  });
+
+  it('recovers a persisted result after the channel event is missed and the popup closes', async () => {
+    const close = vi.fn();
+    const popup = { closed: false, close } as {
+      closed: boolean;
+      close: ReturnType<typeof vi.fn>;
+    };
+    const resultPromise = waitForToolsetOAuthResult(
+      popup as unknown as Window,
+      flowId,
+      {
+        pollIntervalMs: 5,
+        timeoutMs: 10_000,
+      },
+    );
+    const result = {
+      type: ToolsetOAuthResultType.Success,
+      toolsetId: 'toolsets/b/my-toolset__1',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+    } as const;
+
+    expect(persistToolsetOAuthResult(flowId, result)).toBe(true);
+    popup.closed = true;
+
+    await expect(resultPromise).resolves.toEqual(result);
+    expect(close).toHaveBeenCalledOnce();
+    expect(
+      localStorage.getItem(getToolsetOAuthResultStorageKey(flowId)),
+    ).toBeNull();
   });
 
   it('resolves as Cancelled when the pending timeout elapses with no result', async () => {

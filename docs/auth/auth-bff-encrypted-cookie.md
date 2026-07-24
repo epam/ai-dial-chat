@@ -160,9 +160,11 @@ _Source: [`auth-diagrams/08-toolset-signin-interrupt.mmd`](./auth-diagrams/08-to
   than Helmet's `same-origin` default), preventing provider navigation from severing the
   opener's `WindowProxy` and producing a false `popup.closed` cancellation. Before navigating
   externally, the popup still sets its own `window.opener` to `null` to prevent reverse tabnabbing.
-  After the callback posts its result, it closes only its sending `BroadcastChannel`; the
-  initiating tab closes the popup after receiving the already-queued message, with no
-  timer-based handoff.
+  After completing login, the callback persists a non-secret, flow-scoped result in
+  `localStorage`, posts the same result through `BroadcastChannel`, and closes itself. The
+  initiating tab consumes and removes the durable result through a storage event or popup poll,
+  so a dropped channel event cannot lose the completed login or prevent status refresh. OAuth
+  codes and credentials are never stored.
 
 ---
 

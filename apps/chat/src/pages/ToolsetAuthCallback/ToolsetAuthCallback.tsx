@@ -26,7 +26,10 @@ import {
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
 } from '../../types/toolsets';
-import { getToolsetOAuthChannelName } from '../../utils/toolsets';
+import {
+  getToolsetOAuthChannelName,
+  persistToolsetOAuthResult,
+} from '../../utils/toolsets';
 
 const readRedirectState = (): ToolsetRedirectState | null => {
   const raw = sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY);
@@ -39,14 +42,9 @@ const readRedirectState = (): ToolsetRedirectState | null => {
 };
 
 /**
- * Reports the OAuth result to the flow-scoped `BroadcastChannel` the opener
- * is waiting on. This popup does not close itself immediately afterwards —
- * the opener closes it once the message is received, so the popup is never
- * observed closed before the message has arrived. `postMessage` determines
- * the eligible destination channels and queues their delivery tasks before
- * returning, so closing only this sender afterwards does not cancel the
- * queued messages. With no `flowId` there is nothing for an opener to
- * receive, so the popup closes itself right away.
+ * Persists the non-secret result before broadcasting it. The durable copy
+ * lets the opener recover the outcome after this popup closes even if the
+ * environment drops the one-shot BroadcastChannel event.
  */
 const reportResult = (
   flowId: string | undefined,
@@ -56,19 +54,29 @@ const reportResult = (
     window.close();
     return;
   }
-  const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
-  channel.postMessage(message);
-  channel.close();
+  const persisted = persistToolsetOAuthResult(flowId, message);
+  try {
+    const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+    channel.postMessage(message);
+    channel.close();
+  } catch {
+    // The durable result remains available when the channel is unavailable.
+  } finally {
+    /*
+     * Close immediately only when the result is recoverable without the
+     * channel. If storage is unavailable, leave the popup for the opener to
+     * close after receiving the BroadcastChannel event.
+     */
+    if (persisted) window.close();
+  }
 };
 
 /**
  * This route only ever runs inside the popup window opened by
  * `initiateOAuthLogin` — it never navigates, since the editor/Catalog tab
  * that opened it never navigated away either. It reports success/failure
- * over a `BroadcastChannel` keyed by the OAuth `state` so that tab can
- * refresh immediately instead of requiring a manual reload, and lets the
- * opener close this window once it has received that report (see
- * `reportResult`).
+ * over a `BroadcastChannel` plus a durable, flow-scoped storage entry so the
+ * initiating tab can refresh even if one delivery mechanism is unavailable.
  */
 const ToolsetAuthCallback: FC = () => {
   const [searchParams] = useSearchParams();
