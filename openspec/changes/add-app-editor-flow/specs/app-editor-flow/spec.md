@@ -166,7 +166,7 @@ The page header SHALL be the shared `EditorHeader` component (see "Shared editor
 
 - **WHEN** the user is on the Settings step and clicks the header's "Preview" button
 - **THEN** `isSaving` becomes true, `pendingSaveAction` is set to `preview`, and `settingsStepRef.current.triggerSave()` is called
-- **AND** when the iframe posts back a `SAVE_SUCCESS` message, `refetchDeployments()` is awaited before `isPreviewing` becomes true
+- **AND** when the iframe posts back a `SAVE_SUCCESS` message, `refetchDeployments()` is called fire-and-forget and `isPreviewing` becomes true immediately without waiting for the refetch
 - **AND** the preview chat input derives attachment availability and limits from the refreshed deployment's `inputAttachmentTypes` and `maxInputAttachments`
 
 #### Scenario: Settings updates refresh deployment metadata before preview
