@@ -10,7 +10,7 @@ import {
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
-import { constructPath, formatFileSize } from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
 import {
   buildFileTree,
   convertToUIKitFile,
@@ -557,12 +557,26 @@ export const useFileManager = ({
     }
   }, [dispatch, currentPath, destinationPath, folders]);
 
+  const visibleColumns = useMemo<FileManagerColumnKey[]>(() => {
+    const columns: FileManagerColumnKey[] = [
+      FileManagerColumnKey.Name,
+      FileManagerColumnKey.UpdatedAt,
+      FileManagerColumnKey.Size,
+      FileManagerColumnKey.Actions,
+    ];
+
+    if (activeTab === DialFileManagerTabs.Shared) {
+      columns.push(FileManagerColumnKey.Author);
+    }
+
+    return columns;
+  }, [activeTab]);
+
   const {
     fileTreeItems,
     rootFolder,
     loadedFoldersPaths,
     sharedByMePaths,
-    visibleColumns,
     currentPathRootAlias,
     uploadEnabled,
   } = useMemo(() => {
@@ -570,12 +584,6 @@ export const useFileManager = ({
     let filteredFolders = folders;
     let pathRootAlias = translateChat(MY_FILES_SECTION);
     let uploadEnabled = true;
-    const visibleColumns: FileManagerColumnKey[] = [
-      FileManagerColumnKey.Name,
-      FileManagerColumnKey.UpdatedAt,
-      FileManagerColumnKey.Size,
-      FileManagerColumnKey.Actions,
-    ];
 
     switch (activeTab) {
       case DialFileManagerTabs.MyFiles:
@@ -594,7 +602,6 @@ export const useFileManager = ({
         filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
         filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
         pathRootAlias = translateChat(SHARED_WITH_ME_FILES_SECTION);
-        visibleColumns.push(FileManagerColumnKey.Author);
         break;
       case DialFileManagerTabs.Organization:
         filteredFiles = filterFilesByFilters(files, PublishedWithMeFilter);
@@ -659,7 +666,6 @@ export const useFileManager = ({
       fileTreeItems: items,
       loadedFoldersPaths,
       sharedByMePaths,
-      visibleColumns,
       currentPathRootAlias: pathRootAlias,
       uploadEnabled,
     };
@@ -1168,19 +1174,6 @@ export const useFileManager = ({
           | keyof typeof gridColumnHeaderLabels
           | undefined;
         const label = colId ? gridColumnHeaderLabels[colId] : undefined;
-
-        if (colId === 'size' && label) {
-          updated = true;
-          return {
-            ...col,
-            headerName: label,
-            cellRenderer: (params: { data?: FileManagerGridRow | null }) =>
-              params.data?.nodeType === DialFileNodeType.ITEM &&
-              params.data.contentLength != null
-                ? formatFileSize(params.data.contentLength)
-                : '',
-          } as ColDef<FileManagerGridRow>;
-        }
 
         if (label && col.headerName !== label) {
           updated = true;
