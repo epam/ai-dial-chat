@@ -140,6 +140,10 @@ const AuthSection: FC<Props> = ({
       const result = await waitForToolsetOAuthResult(
         initiation.popup,
         initiation.flowId,
+        {
+          toolsetId: savedToolsetId,
+          credentialsLevel: ToolsetCredentialsLevel.User,
+        },
       );
       setIsAuthBusy(false);
 

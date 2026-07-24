@@ -12,6 +12,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ToolsetOAuthCallbackQuery } from '../../../constants/toolsets';
 import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { useAppConfig } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
@@ -1563,6 +1564,40 @@ describe('CatalogView', () => {
       expect(showNotification).toHaveBeenCalledWith(
         expect.objectContaining({ variant: 'success' }),
       );
+    });
+
+    it('shows the success notification on the first attempt when the channel event is missed', async () => {
+      const refetchToolsets = vi.fn().mockResolvedValue(undefined);
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue({
+        notifications: [],
+        showNotification,
+        dismissNotification: vi.fn(),
+      });
+      renderWithOAuthToolset(refetchToolsets);
+
+      await user.click(
+        screen.getByRole('button', {
+          name: `login user ${oauthToolset.id}`,
+        }),
+      );
+
+      const callbackUrl = new URL(ROUTES.ToolsetSignIn, window.location.origin);
+      callbackUrl.searchParams.set(
+        ToolsetOAuthCallbackQuery.Result,
+        ToolsetOAuthResultType.Success,
+      );
+      if (capturedPopup) capturedPopup.location.href = callbackUrl.toString();
+
+      await waitFor(
+        () =>
+          expect(showNotification).toHaveBeenCalledWith(
+            expect.objectContaining({ variant: 'success' }),
+          ),
+        { timeout: 2000 },
+      );
+      expect(refetchToolsets).toHaveBeenCalledOnce();
+      expect(getToolset).not.toHaveBeenCalled();
     });
 
     it('shows an error notification and does not refetch when the OAuth result is a failure', async () => {
