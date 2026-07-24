@@ -526,11 +526,7 @@ export class ChatMessages extends BaseElement {
     );
     await thumb.hover({ force: true });
     await thumb.waitFor();
-    const respPromise = this.page.waitForResponse(
-      (resp) => resp.request().method() === 'POST' && resp.status() === 200,
-    );
     await thumb.click();
-    return respPromise;
   }
 
   public async openDeleteCompareRowMessageDialog(
@@ -763,5 +759,23 @@ export class ChatMessages extends BaseElement {
   public async openMessageTemplateModal(message: string | number) {
     const chatMessage = await this.hoverOverMessage(message);
     await this.setMessageTemplateIcon(chatMessage).click();
+  }
+
+  public async likeMessage(messageIndex: number) {
+    await this.hoverOverMessage(messageIndex);
+    const respPromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'POST' && resp.status() === 200,
+    );
+    await this.getChatMessageRate(messageIndex, Rate.like).click({
+      force: true,
+    });
+    await respPromise;
+  }
+
+  public async dislikeMessage(messageIndex: number) {
+    await this.hoverOverMessage(messageIndex);
+    await this.getChatMessageRate(messageIndex, Rate.dislike).click({
+      force: true,
+    });
   }
 }
