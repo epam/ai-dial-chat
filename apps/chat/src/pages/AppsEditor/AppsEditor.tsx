@@ -236,26 +236,34 @@ const AppsEditor: FC = () => {
   }, [refetchDeployments]);
 
   const handleSaveSuccess = useCallback(
-    (hasChanges: boolean) => {
+    async (hasChanges: boolean) => {
       clearSaveTimeout();
       if (isPreviewing) return;
 
-      /* Fire-and-forget: the deployments list only needs to reflect this
-       * save's changes eventually. `DeploymentsContext` is a shared,
-       * reactive source, so once this resolves, any reader (including
-       * AppPreviewChat) re-renders with the fresh data on its own — nothing
-       * here should block on it before showing preview or navigating away. */
-      void refetchDeployments().catch(() => undefined);
-
-      setIsSaving(false);
       if (hasChanges) {
         setPreviewResetKey((prev) => prev + 1);
       }
+
       if (pendingSaveAction === 'preview') {
+        /* Fire-and-forget: nothing should block before showing the preview
+         * pane. `DeploymentsContext` is a shared reactive source, so once
+         * the refetch resolves, any reader re-renders on its own. */
+        void refetchDeployments().catch(() => undefined);
+        setIsSaving(false);
         setIsPreviewing(true);
       } else {
+        /* Save & Exit: wait for the deployments list to be fresh so the
+         * catalog reflects the updated app as soon as the user lands there. */
+        try {
+          await refetchDeployments();
+        } catch (error) {
+          console.error('Failed to refetch deployments after save:', error);
+        } finally {
+          setIsSaving(false);
+        }
         navigate(returnUrl);
       }
+
       setPendingSaveAction(null);
     },
     [
