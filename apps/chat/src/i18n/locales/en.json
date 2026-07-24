@@ -175,7 +175,8 @@
     },
     "folder": {
       "personal": "Personal",
-      "public": "Public"
+      "public": "Public",
+      "shared": "Shared with me"
     }
   },
   "deploymentSelector": {

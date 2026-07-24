@@ -179,6 +179,7 @@ export enum CatalogI18nKeys {
   TabToolsets = 'catalog.tab.toolsets',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
+  FolderShared = 'catalog.folder.shared',
   CredentialsSignedInLabel = 'catalog.details.credentials.signedInLabel',
   CredentialsSignedOutLabel = 'catalog.details.credentials.signedOutLabel',
   CredentialsApiKeyFieldHint = 'catalog.details.credentials.apiKeyFieldHint',

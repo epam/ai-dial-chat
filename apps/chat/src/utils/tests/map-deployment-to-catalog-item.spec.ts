@@ -119,6 +119,76 @@ describe('mapDeploymentToCatalogItem', () => {
     expect(result.sharedWithMe).toBe(false);
   });
 
+  it('replaces the owner bucket with the translated shared folder for a shared application', () => {
+    const t = ((key: string) => key) as TFunction;
+
+    const result = mapDeploymentToCatalogItem(
+      {
+        ...baseDeployment,
+        isMy: false,
+        sharedWithMe: true,
+        applicationFolder: 'applications/internal-owner-bucket/team',
+      },
+      undefined,
+      undefined,
+      t,
+    );
+
+    expect(result.folder).toEqual([CatalogI18nKeys.FolderShared, 'team']);
+    expect(result.folder).not.toContain('internal-owner-bucket');
+  });
+
+  it('uses only the translated shared folder when a shared application has no folder metadata', () => {
+    const t = ((key: string) => key) as TFunction;
+
+    const result = mapDeploymentToCatalogItem(
+      {
+        ...baseDeployment,
+        isMy: false,
+        sharedWithMe: true,
+        applicationFolder: undefined,
+      },
+      undefined,
+      undefined,
+      t,
+    );
+
+    expect(result.folder).toEqual([CatalogI18nKeys.FolderShared]);
+  });
+
+  it('keeps the translated personal folder for an owned application', () => {
+    const t = ((key: string) => key) as TFunction;
+
+    const result = mapDeploymentToCatalogItem(
+      {
+        ...baseDeployment,
+        applicationFolder: 'applications/internal-owner-bucket/team',
+      },
+      undefined,
+      undefined,
+      t,
+    );
+
+    expect(result.folder).toEqual([CatalogI18nKeys.FolderPersonal]);
+  });
+
+  it('keeps readable nested folders for a public application', () => {
+    const t = ((key: string) => key) as TFunction;
+
+    const result = mapDeploymentToCatalogItem(
+      {
+        ...baseDeployment,
+        isMy: false,
+        applicationFolder: 'applications/public/team',
+      },
+      undefined,
+      undefined,
+      t,
+    );
+
+    expect(result.folder).toEqual([CatalogI18nKeys.FolderPublic, 'team']);
+  });
+
   it('sets supportsMcp to true when the deployment reports features.mcp true', () => {
     const result = mapDeploymentToCatalogItem({
       ...baseDeployment,
