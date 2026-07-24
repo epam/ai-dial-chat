@@ -5,15 +5,18 @@
  * component). `initiateOAuthLogin` (apps/chat/src/utils/toolsets.ts) opens
  * this route in a same-origin popup it controls and writes the redirect
  * state into *that popup's own* `sessionStorage` before navigating it to the
- * provider, then this route reports success/failure back over a flow-scoped
- * `BroadcastChannel`.
+ * provider, then this route exposes success/failure through the popup URL and
+ * a flow-scoped `BroadcastChannel`.
  */
 import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import { TOOLSET_REDIRECT_STATE_KEY } from '../../constants/toolsets';
+import {
+  TOOLSET_REDIRECT_STATE_KEY,
+  ToolsetOAuthCallbackQuery,
+} from '../../constants/toolsets';
 import { loginToolset } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
 import type {
@@ -26,10 +29,7 @@ import {
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
 } from '../../types/toolsets';
-import {
-  getToolsetOAuthChannelName,
-  persistToolsetOAuthResult,
-} from '../../utils/toolsets';
+import { getToolsetOAuthChannelName } from '../../utils/toolsets';
 
 const readRedirectState = (): ToolsetRedirectState | null => {
   const raw = sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY);
@@ -41,33 +41,48 @@ const readRedirectState = (): ToolsetRedirectState | null => {
   }
 };
 
+const replacePopupUrl = (url: URL): void => {
+  try {
+    window.history.replaceState(
+      {},
+      document.title,
+      `${url.pathname}${url.search}`,
+    );
+  } catch {
+    // BroadcastChannel can still deliver the result if History API is unavailable.
+  }
+};
+
 /**
- * Persists the non-secret result before broadcasting it. The durable copy
- * lets the opener recover the outcome after this popup closes even if the
- * environment drops the one-shot BroadcastChannel event.
+ * Writes the result into this same-origin popup's URL before broadcasting it.
+ * The opener polls that URL and closes the popup after consuming the result,
+ * so a dropped BroadcastChannel event cannot lose the completed login.
  */
 const reportResult = (
   flowId: string | undefined,
   message: ToolsetOAuthChannelMessage,
 ) => {
+  const resultUrl = new URL(window.location.pathname, window.location.origin);
+  resultUrl.searchParams.set(ToolsetOAuthCallbackQuery.Result, message.type);
+  if (message.type === ToolsetOAuthResultType.Failure) {
+    resultUrl.searchParams.set(
+      ToolsetOAuthCallbackQuery.FailureReason,
+      message.reason,
+    );
+  }
+  replacePopupUrl(resultUrl);
+
   if (!flowId) {
     window.close();
     return;
   }
-  const persisted = persistToolsetOAuthResult(flowId, message);
+
   try {
     const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
     channel.postMessage(message);
     channel.close();
   } catch {
-    // The durable result remains available when the channel is unavailable.
-  } finally {
-    /*
-     * Close immediately only when the result is recoverable without the
-     * channel. If storage is unavailable, leave the popup for the opener to
-     * close after receiving the BroadcastChannel event.
-     */
-    if (persisted) window.close();
+    // The result remains available in the popup URL.
   }
 };
 
@@ -75,8 +90,8 @@ const reportResult = (
  * This route only ever runs inside the popup window opened by
  * `initiateOAuthLogin` — it never navigates, since the editor/Catalog tab
  * that opened it never navigated away either. It reports success/failure
- * over a `BroadcastChannel` plus a durable, flow-scoped storage entry so the
- * initiating tab can refresh even if one delivery mechanism is unavailable.
+ * over a `BroadcastChannel` plus its own same-origin URL so the initiating
+ * tab can refresh even if the channel event is unavailable.
  */
 const ToolsetAuthCallback: FC = () => {
   const [searchParams] = useSearchParams();
@@ -93,6 +108,15 @@ const ToolsetAuthCallback: FC = () => {
       const redirectState = readRedirectState();
       sessionStorage.removeItem(TOOLSET_REDIRECT_STATE_KEY);
       const flowId = redirectState?.state ?? state ?? undefined;
+
+      /*
+       * Remove the one-time authorization code from the address bar/history
+       * before making the login request. `reportResult` later replaces this
+       * clean URL with the non-secret completion marker.
+       */
+      replacePopupUrl(
+        new URL(window.location.pathname, window.location.origin),
+      );
 
       if (!code || !redirectState?.toolsetId) {
         reportResult(flowId, {
