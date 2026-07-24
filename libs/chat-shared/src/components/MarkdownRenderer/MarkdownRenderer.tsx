@@ -116,9 +116,6 @@ export interface MarkdownRendererColors {
   border?: string;
 }
 
-/** GFM remark plugins list, shared across all markdown instances. */
-const remarkPlugins = [remarkGfm];
-
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
 
@@ -138,12 +135,81 @@ interface HastTextLike {
   children?: HastTextLike[];
 }
 
+interface MarkdownAstNode {
+  type: string;
+  value?: string;
+  lang?: string | null;
+  meta?: string | null;
+  position?: {
+    start?: {
+      offset?: number;
+    };
+  };
+  children?: MarkdownAstNode[];
+}
+
+interface VFileLike {
+  value?: unknown;
+}
+
 /** Recursively concatenates the text content of a hast node. */
 const getNodeText = (node: HastTextLike | undefined): string => {
   if (!node) return '';
   if (node.type === 'text') return node.value ?? '';
   return (node.children ?? []).map(getNodeText).join('');
 };
+
+const getSourceLineAtOffset = (source: string, offset: number): string => {
+  const lineEnd = source.indexOf('\n', offset);
+  return source.slice(offset, lineEnd === -1 ? undefined : lineEnd);
+};
+
+const isFencedCodeBlock = (node: MarkdownAstNode, source: string): boolean => {
+  if (node.lang || node.meta) return true;
+
+  const offset = node.position?.start?.offset;
+  if (typeof offset !== 'number') return true;
+
+  const openingLine = getSourceLineAtOffset(source, offset);
+  return /^[ ]{0,3}(```|~~~)/.test(openingLine);
+};
+
+const toParagraphNode = (node: MarkdownAstNode): MarkdownAstNode => ({
+  type: 'paragraph',
+  position: node.position,
+  children: [
+    {
+      type: 'text',
+      value: node.value ?? '',
+    },
+  ],
+});
+
+const replaceIndentedCodeBlocks = (
+  node: MarkdownAstNode,
+  source: string,
+): MarkdownAstNode => {
+  if (node.type === 'code') {
+    return isFencedCodeBlock(node, source) ? node : toParagraphNode(node);
+  }
+
+  if (node.children) {
+    node.children = node.children.map((child) =>
+      replaceIndentedCodeBlocks(child, source),
+    );
+  }
+
+  return node;
+};
+
+const remarkPlainTextIndentedCodeBlocks =
+  () => (tree: MarkdownAstNode, file: VFileLike) => {
+    if (typeof file.value !== 'string') return;
+    replaceIndentedCodeBlocks(tree, file.value);
+  };
+
+/** GFM remark plugins list, shared across all markdown instances. */
+const remarkPlugins = [remarkGfm, remarkPlainTextIndentedCodeBlocks];
 
 const buildMarkdownComponents = (
   cn: MarkdownRendererClassNames,

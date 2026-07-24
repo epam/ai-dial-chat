@@ -31,6 +31,13 @@ const FENCED_NO_LANG_MARKDOWN = `\`\`\`
 plain code
 \`\`\``;
 
+const INDENTED_TEXT_MARKDOWN = `Summary:
+
+    first indented line
+    second indented line
+
+Done.`;
+
 const EXTENDED_MARKDOWN = `#### Smaller heading
 
 ---
@@ -164,6 +171,19 @@ describe('MarkdownRenderer', () => {
     const codeEl = screen.getByText('const');
     expect(codeEl.tagName).toBe('CODE');
     expect(codeEl.closest('[class*="sticky"]')).toBeNull();
+  });
+
+  it('renders indented text without backticks as plain markdown text', () => {
+    const { container } = render(
+      <MarkdownRenderer
+        content={INDENTED_TEXT_MARKDOWN}
+        codeBlockCopyLabel="Copy code"
+      />,
+    );
+
+    expect(container.querySelector('pre')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Copy code' })).toBeNull();
+    expect(container.textContent).toContain('first indented line');
   });
 
   it('hides the copy button when isStreaming is true', () => {

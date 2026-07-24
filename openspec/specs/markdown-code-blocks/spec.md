@@ -39,9 +39,9 @@ The system SHALL extract the language identifier from the `className="language-{
 
 ---
 
-### Requirement: Support multiline code blocks without a language
+### Requirement: Support fenced multiline code blocks without a language
 
-The system SHALL treat a `<code>` node whose string children contain a newline character (`\n`) and whose `className` does not match `language-*` as a block code node. Such nodes MUST render as `MarkdownCodeBlock` with `language=""`. The header MUST NOT show any label text in this case but MUST still render the copy button (when not streaming).
+The system SHALL treat a fenced code block whose markdown fence has no language tag (for example ` ``` ` or ` ~~~ `) as a block code node. Such nodes MUST render as `MarkdownCodeBlock` with `language=""`. The header MUST NOT show any label text in this case but MUST still render the copy button (when not streaming).
 
 #### Scenario: Plaintext multiline block without language
 
@@ -51,6 +51,20 @@ The system SHALL treat a `<code>` node whose string children contain a newline c
 - **AND** the header contains no language label text
 - **AND** the copy button is present
 - **AND** both `line1` and `line2` appear inside the scrollable body
+
+---
+
+### Requirement: Render unfenced indented blocks as prose
+
+The system SHALL NOT render CommonMark indented code blocks as `MarkdownCodeBlock` unless the original markdown source uses a fenced code block marker (` ``` ` or ` ~~~ `). Unfenced indented blocks SHOULD render as plain markdown prose so legacy assistant responses that used indentation for formatting do not split into prose, a code frame, and prose again.
+
+#### Scenario: Unfenced indented text remains plain text
+
+- **GIVEN** the markdown string contains `Summary:\n\n    first indented line\n    second indented line\n\nDone.`
+- **WHEN** `MarkdownRenderer` renders the content
+- **THEN** no `MarkdownCodeBlock` container is rendered
+- **AND** no code-copy button is rendered
+- **AND** `first indented line` appears as plain message text
 
 ---
 
