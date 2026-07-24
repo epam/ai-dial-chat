@@ -10,14 +10,17 @@ import {
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
+import type { TriggerSaveGeneralPayload } from '../../../types/apps-editor';
 import AppsEditor from '../AppsEditor';
 
 let latestSettingsStepProps: {
   onUpdated?: () => void;
-  onSaveSuccess?: () => void;
+  onSaveSuccess?: (hasChanges: boolean) => void;
   onSaveError?: (error: string) => void;
   onReadyChange?: (isReady: boolean) => void;
+  onLoggedOutChange?: (isLoggedOut: boolean) => void;
   isPreviewing?: boolean;
+  previewResetKey?: number;
 } = {};
 
 let latestGeneralFormProps: {
@@ -30,18 +33,21 @@ let latestGeneralFormProps: {
  * readiness-gating behavior itself flip this off before rendering. */
 let shouldSettingsAutoReady = true;
 
-const settingsStepTriggerSave = vi.fn();
+const settingsStepTriggerSave =
+  vi.fn<(general?: TriggerSaveGeneralPayload) => void>();
 const generalFormSubmit = vi.fn();
-const generalFormPersist = vi.fn();
+const generalFormGetValues = vi.fn<() => TriggerSaveGeneralPayload>();
 
 vi.mock('../SettingsStep', () => ({
   default: forwardRef(function MockSettingsStep(
     props: {
       onUpdated?: () => void;
-      onSaveSuccess?: () => void;
+      onSaveSuccess?: (hasChanges: boolean) => void;
       onSaveError?: (error: string) => void;
       onReadyChange?: (isReady: boolean) => void;
+      onLoggedOutChange?: (isLoggedOut: boolean) => void;
       isPreviewing?: boolean;
+      previewResetKey?: number;
     },
     ref,
   ) {
@@ -54,7 +60,10 @@ vi.mock('../SettingsStep', () => ({
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-      <div data-previewing={props.isPreviewing ? 'true' : 'false'}>
+      <div
+        data-previewing={props.isPreviewing ? 'true' : 'false'}
+        data-preview-reset-key={props.previewResetKey ?? 0}
+      >
         settings-step
       </div>
     );
@@ -76,7 +85,7 @@ vi.mock('../GeneralForm', () => ({
     latestGeneralFormProps = props;
     useImperativeHandle(ref, () => ({
       submit: generalFormSubmit,
-      persist: generalFormPersist,
+      getValues: generalFormGetValues,
     }));
     return <div>general-form</div>;
   }),
@@ -108,7 +117,7 @@ describe('AppsEditor', () => {
     latestSettingsStepProps = {};
     latestGeneralFormProps = null;
     shouldSettingsAutoReady = true;
-    generalFormPersist.mockReset().mockResolvedValue(undefined);
+    generalFormGetValues.mockReset().mockReturnValue({ name: 'My App' });
     mockUseDeployments.mockReturnValue({
       schemas: [SCHEMA],
       items: [],
@@ -143,7 +152,7 @@ describe('AppsEditor', () => {
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
     act(() => {
-      latestSettingsStepProps.onSaveSuccess?.();
+      latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
@@ -155,7 +164,7 @@ describe('AppsEditor', () => {
     expect(screen.getByText('settings-step').dataset.previewing).toBe('true');
   });
 
-  it('waits for deployments refetch before entering preview mode', async () => {
+  it('enters preview mode immediately without waiting for the deployments refetch', async () => {
     let resolveRefetch: () => void = () => undefined;
     const refetchPromise = new Promise<void>((resolve) => {
       resolveRefetch = resolve;
@@ -167,26 +176,46 @@ describe('AppsEditor', () => {
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
     act(() => {
-      latestSettingsStepProps.onSaveSuccess?.();
+      latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
-    expect(screen.getByText('settings-step').dataset.previewing).toBe('false');
     expect(
-      screen.getByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
-    ).toBeTruthy();
-
-    await act(async () => {
-      resolveRefetch();
-      await refetchPromise;
-    });
-
-    expect(
-      await screen.findByRole('button', {
+      screen.getByRole('button', {
         name: AppsEditorI18nKeys.ExitPreviewButton,
       }),
     ).toBeTruthy();
     expect(screen.getByText('settings-step').dataset.previewing).toBe('true');
+    expect(
+      screen.queryByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
+    ).toBeNull();
+
+    // The still-unresolved refetch must not cause any later error or state change.
+    await act(async () => {
+      resolveRefetch();
+      await refetchPromise;
+    });
+  });
+
+  it('does not block or error preview entry when the deployments refetch rejects', async () => {
+    refetchDeployments.mockImplementationOnce(() =>
+      Promise.reject(new Error('boom')),
+    );
+    renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+    await act(async () => {
+      latestSettingsStepProps.onSaveSuccess?.(false);
+      await Promise.resolve();
+    });
+
+    expect(
+      screen.getByRole('button', {
+        name: AppsEditorI18nKeys.ExitPreviewButton,
+      }),
+    ).toBeTruthy();
     expect(
       screen.queryByLabelText(AppsEditorI18nKeys.SavingOverlayLabel),
     ).toBeNull();
@@ -230,7 +259,7 @@ describe('AppsEditor', () => {
       screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
     );
     act(() => {
-      latestSettingsStepProps.onSaveSuccess?.();
+      latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
@@ -241,24 +270,23 @@ describe('AppsEditor', () => {
     ).toBeNull();
   });
 
-  it('disables Cancel and Save while previewing', async () => {
+  it('hides Cancel and Save while previewing', async () => {
     renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
     await userEvent.click(
       screen.getByRole('button', { name: BasicI18nKeys.Preview }),
     );
     act(() => {
-      latestSettingsStepProps.onSaveSuccess?.();
+      latestSettingsStepProps.onSaveSuccess?.(false);
     });
 
     expect(refetchDeployments).toHaveBeenCalledOnce();
-    const cancelButton = screen.getByRole('button', {
-      name: ButtonsI18nKeys.Cancel,
-    }) as HTMLButtonElement;
     await screen.findByRole('button', {
       name: AppsEditorI18nKeys.ExitPreviewButton,
     });
-    expect(cancelButton.disabled).toBe(true);
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.Cancel }),
+    ).toBeNull();
     expect(
       screen.getByRole('button', {
         name: AppsEditorI18nKeys.ExitPreviewButton,
@@ -345,11 +373,46 @@ describe('AppsEditor', () => {
       ).toBeNull();
     });
 
+    it('does not surface the readiness-timeout error when a logged-out signal arrives first', () => {
+      vi.useFakeTimers();
+      shouldSettingsAutoReady = false;
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+      act(() => {
+        latestSettingsStepProps.onLoggedOutChange?.(true);
+      });
+      act(() => {
+        vi.advanceTimersByTime(60000);
+      });
+
+      expect(
+        screen.queryByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+      ).toBeNull();
+    });
+
+    it('clears an already-surfaced readiness-timeout error once a logged-out signal arrives', () => {
+      vi.useFakeTimers();
+      shouldSettingsAutoReady = false;
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+      act(() => {
+        vi.advanceTimersByTime(60000);
+      });
+      expect(
+        screen.getByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+      ).toBeTruthy();
+
+      act(() => {
+        latestSettingsStepProps.onLoggedOutChange?.(true);
+      });
+
+      expect(
+        screen.queryByText(AppsEditorI18nKeys.ErrorSettingsNotReady),
+      ).toBeNull();
+    });
+
     it('times out and re-enables Save with an error when no response arrives', () => {
       vi.useFakeTimers();
-      /* No appId: skips the persist step entirely so the save is triggered
-       * synchronously within the click handler, keeping the fake-timer
-       * assertions below deterministic. */
       renderEditor('step=settings&schema=quickapps2-schema');
 
       const saveButton = screen.getByRole('button', {
@@ -383,7 +446,7 @@ describe('AppsEditor', () => {
         saveButton.click();
       });
       await act(async () => {
-        latestSettingsStepProps.onSaveSuccess?.();
+        latestSettingsStepProps.onSaveSuccess?.(false);
         await Promise.resolve();
       });
 
@@ -397,8 +460,12 @@ describe('AppsEditor', () => {
     });
   });
 
-  describe('Save & Exit persist sequencing', () => {
-    it('triggers the Settings step save before persisting General fields for an existing app', async () => {
+  describe('Save & Exit forwards General values to the Settings step', () => {
+    it('includes the current General values in triggerSave for an existing app', async () => {
+      generalFormGetValues.mockReturnValue({
+        name: 'Renamed App',
+        description: 'desc',
+      });
       renderEditor('step=general&schema=quickapps2-schema&appId=existing-app');
 
       act(() => {
@@ -409,49 +476,13 @@ describe('AppsEditor', () => {
         screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
       );
 
-      expect(settingsStepTriggerSave).toHaveBeenCalledOnce();
-      expect(generalFormPersist).not.toHaveBeenCalled();
-
-      await act(async () => {
-        latestSettingsStepProps.onSaveSuccess?.();
-        await Promise.resolve();
+      expect(settingsStepTriggerSave).toHaveBeenCalledWith({
+        name: 'Renamed App',
+        description: 'desc',
       });
-
-      await waitFor(() => expect(generalFormPersist).toHaveBeenCalledOnce());
-      const triggerOrder = settingsStepTriggerSave.mock.invocationCallOrder[0];
-      const persistOrder = generalFormPersist.mock.invocationCallOrder[0];
-      expect(triggerOrder).toBeLessThan(persistOrder);
     });
 
-    it('surfaces an error and does not exit when persist fails after the Settings step save succeeds', async () => {
-      generalFormPersist.mockRejectedValue(new Error('network error'));
-      renderEditor('step=general&schema=quickapps2-schema&appId=existing-app');
-
-      act(() => {
-        latestGeneralFormProps?.onCreated('existing-app', 'My App', undefined);
-      });
-
-      await userEvent.click(
-        screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
-      );
-
-      await act(async () => {
-        latestSettingsStepProps.onSaveSuccess?.();
-        await Promise.resolve();
-      });
-
-      await waitFor(() =>
-        expect(
-          screen.getByText(AppsEditorI18nKeys.ErrorSaveFailed),
-        ).toBeTruthy(),
-      );
-      const saveButton = screen.getByRole('button', {
-        name: EditorI18nKeys.SaveButton,
-      }) as HTMLButtonElement;
-      expect(saveButton.disabled).toBe(false);
-    });
-
-    it('skips persist entirely for a brand-new app', async () => {
+    it('does not include a general payload when saving a brand-new app created in this session', async () => {
       renderEditor('step=general&schema=quickapps2-schema');
 
       act(() => {
@@ -462,12 +493,79 @@ describe('AppsEditor', () => {
         screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
       );
 
+      expect(settingsStepTriggerSave).toHaveBeenCalledWith(undefined);
+    });
+
+    it('does not include a general payload when triggering Preview', async () => {
+      renderEditor('step=settings&schema=quickapps2-schema&appId=existing-app');
+
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+
+      expect(settingsStepTriggerSave).toHaveBeenCalledWith();
+    });
+
+    it('does not call update-application-style persistence on save success', async () => {
+      renderEditor('step=general&schema=quickapps2-schema&appId=existing-app');
+
+      act(() => {
+        latestGeneralFormProps?.onCreated('existing-app', 'My App', undefined);
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
+      );
+
       await act(async () => {
-        latestSettingsStepProps.onSaveSuccess?.();
+        latestSettingsStepProps.onSaveSuccess?.(false);
         await Promise.resolve();
       });
 
-      expect(generalFormPersist).not.toHaveBeenCalled();
+      await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
+    });
+  });
+
+  describe('Preview session reset on configuration change', () => {
+    it('bumps the preview reset key when a save reports hasChanges: true', async () => {
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+      const keyBefore = Number(
+        screen.getByText('settings-step').dataset.previewResetKey,
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+      await act(async () => {
+        latestSettingsStepProps.onSaveSuccess?.(true);
+        await Promise.resolve();
+      });
+
+      await waitFor(() =>
+        expect(
+          Number(screen.getByText('settings-step').dataset.previewResetKey),
+        ).toBe(keyBefore + 1),
+      );
+    });
+
+    it('does not bump the preview reset key when a save reports hasChanges: false', async () => {
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+      const keyBefore = Number(
+        screen.getByText('settings-step').dataset.previewResetKey,
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+      await act(async () => {
+        latestSettingsStepProps.onSaveSuccess?.(false);
+        await Promise.resolve();
+      });
+
+      await waitFor(() => expect(refetchDeployments).toHaveBeenCalledOnce());
+      expect(
+        Number(screen.getByText('settings-step').dataset.previewResetKey),
+      ).toBe(keyBefore);
     });
   });
 });

@@ -4803,6 +4803,11 @@
             "description": "Type of authentication",
             "enum": ["OAUTH", "API_KEY", "NONE"]
           },
+          "dynamicallyRegistered": {
+            "type": "boolean",
+            "description": "Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration",
+            "example": true
+          },
           "globalAuthStatus": {
             "type": "string",
             "description": "Whether the toolset has global (shared) credentials signed in",
@@ -5427,6 +5432,11 @@
             "type": "string",
             "example": "OAUTH",
             "enum": ["OAUTH", "API_KEY", "NONE"]
+          },
+          "dynamicallyRegistered": {
+            "type": "boolean",
+            "description": "Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration",
+            "example": true
           },
           "apiKeyHeader": {
             "type": "string",

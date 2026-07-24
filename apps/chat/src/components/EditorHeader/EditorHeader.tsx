@@ -72,18 +72,22 @@ const EditorHeader: FC<Props> = ({
           onClick={onPreview}
         />
       )}
-      <NeutralButton
-        type="button"
-        label={cancelButtonLabel}
-        onClick={onCancel}
-        disabled={isSaving || isPreviewing}
-      />
-      <PrimaryButton
-        type="button"
-        label={saveButtonLabel}
-        onClick={onSave}
-        disabled={isSaving || isPreviewing || isSaveDisabled}
-      />
+      {!isPreviewing && (
+        <>
+          <NeutralButton
+            type="button"
+            label={cancelButtonLabel}
+            onClick={onCancel}
+            disabled={isSaving}
+          />
+          <PrimaryButton
+            type="button"
+            label={saveButtonLabel}
+            onClick={onSave}
+            disabled={isSaving || isSaveDisabled}
+          />
+        </>
+      )}
     </div>
   </header>
 );

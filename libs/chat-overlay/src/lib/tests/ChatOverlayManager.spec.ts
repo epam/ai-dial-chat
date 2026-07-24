@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ChatOverlay } from '../ChatOverlay';
 import { ChatOverlayManager } from '../ChatOverlayManager';
 
 const DOMAIN = 'https://chat.example.com/embed';
@@ -126,5 +127,83 @@ describe('ChatOverlayManager', () => {
     ).toBe(0);
     expect(() => window.dispatchEvent(new Event('resize'))).not.toThrow();
     expect(() => manager?.sendMessage('one', 'hi')).toThrow();
+  });
+
+  describe('conversation-list method forwarding', () => {
+    it('throws a descriptive error for an unknown overlayId for each new method', () => {
+      manager = new ChatOverlayManager();
+      expect(() => manager?.getConversations('missing-id')).toThrow(
+        /missing-id/,
+      );
+      expect(() => manager?.getSelectedConversations('missing-id')).toThrow(
+        /missing-id/,
+      );
+      expect(() => manager?.selectConversation('missing-id', 'conv-1')).toThrow(
+        /missing-id/,
+      );
+      expect(() => manager?.createConversation('missing-id')).toThrow(
+        /missing-id/,
+      );
+      expect(() => manager?.createLocalConversation('missing-id')).toThrow(
+        /missing-id/,
+      );
+      expect(() => manager?.deleteConversation('missing-id', 'conv-1')).toThrow(
+        /missing-id/,
+      );
+      expect(() =>
+        manager?.renameConversation('missing-id', 'conv-1', 'New name'),
+      ).toThrow(/missing-id/);
+    });
+
+    it('forwards each new method to the underlying ChatOverlay instance with the same arguments', () => {
+      manager = new ChatOverlayManager();
+      manager.createOverlay({ overlayId: 'test', domain: DOMAIN });
+
+      const getConversationsSpy = vi
+        .spyOn(ChatOverlay.prototype, 'getConversations')
+        .mockResolvedValue({ conversations: [] });
+      const getSelectedSpy = vi
+        .spyOn(ChatOverlay.prototype, 'getSelectedConversations')
+        .mockResolvedValue({ conversations: [] });
+      const selectSpy = vi
+        .spyOn(ChatOverlay.prototype, 'selectConversation')
+        .mockResolvedValue({});
+      const createSpy = vi
+        .spyOn(ChatOverlay.prototype, 'createConversation')
+        .mockResolvedValue({ conversation: null });
+      const createLocalSpy = vi
+        .spyOn(ChatOverlay.prototype, 'createLocalConversation')
+        .mockResolvedValue({ conversation: null });
+      const deleteSpy = vi
+        .spyOn(ChatOverlay.prototype, 'deleteConversation')
+        .mockResolvedValue({});
+      const renameSpy = vi
+        .spyOn(ChatOverlay.prototype, 'renameConversation')
+        .mockResolvedValue({});
+
+      void manager.getConversations('test');
+      void manager.getSelectedConversations('test');
+      void manager.selectConversation('test', 'conv-1');
+      void manager.createConversation('test', { firstMessage: 'Hi' });
+      void manager.createLocalConversation('test');
+      void manager.deleteConversation('test', 'conv-1');
+      void manager.renameConversation('test', 'conv-1', 'New name');
+
+      expect(getConversationsSpy).toHaveBeenCalledOnce();
+      expect(getSelectedSpy).toHaveBeenCalledOnce();
+      expect(selectSpy).toHaveBeenCalledWith('conv-1');
+      expect(createSpy).toHaveBeenCalledWith({ firstMessage: 'Hi' });
+      expect(createLocalSpy).toHaveBeenCalledOnce();
+      expect(deleteSpy).toHaveBeenCalledWith('conv-1');
+      expect(renameSpy).toHaveBeenCalledWith('conv-1', 'New name');
+
+      getConversationsSpy.mockRestore();
+      getSelectedSpy.mockRestore();
+      selectSpy.mockRestore();
+      createSpy.mockRestore();
+      createLocalSpy.mockRestore();
+      deleteSpy.mockRestore();
+      renameSpy.mockRestore();
+    });
   });
 });

@@ -206,7 +206,7 @@ module.exports = {
         'main-inset-rtl': 'inset -1px 0 8px rgba(0, 0, 0, 0.04)',
       },
       borderRadius: {
-        DEFAULT: '5px',
+        DEFAULT: '4px',
       },
       opacity: {
         15: '15%',

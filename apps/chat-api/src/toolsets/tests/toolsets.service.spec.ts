@@ -633,6 +633,7 @@ describe('ToolsetsService', () => {
             transport: 'SSE',
             authSettings: {
               authentication_type: 'OAUTH',
+              dynamically_registered: true,
               client_id: 'client-from-custom-resource',
               client_secret: 'secret-value',
               authorization_endpoint: 'https://auth.example.com/authorize',
@@ -675,6 +676,7 @@ describe('ToolsetsService', () => {
       });
       expect(result.authSettings).toMatchObject({
         authenticationType: 'OAUTH',
+        dynamicallyRegistered: true,
         clientId: 'client-from-custom-resource',
         authorizationEndpoint: 'https://auth.example.com/authorize',
         tokenEndpoint: 'https://auth.example.com/token',
