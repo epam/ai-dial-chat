@@ -82,6 +82,12 @@ The attach (+) button's menu in edit mode SHALL offer the same options as the ne
 - **THEN** the selected files appear in the shared attachment tray inside the bordered box, alongside any pre-existing attachments
 - **THEN** the selected files are NOT passed through `onUploadAttachment` again, since they are already-uploaded DIAL storage files
 
+#### Scenario: Clicking an attachment card opens the canvas preview
+
+- **WHEN** the user clicks or keyboard-activates an attachment card in the edit-mode tray
+- **THEN** the canvas panel opens with a preview of that attachment
+- **AND** this applies to both pre-existing attachments (from the original message) and newly added ones
+
 ---
 
 ### Requirement: Cancelling an edit

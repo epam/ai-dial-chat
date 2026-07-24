@@ -1,5 +1,9 @@
 # Spec: conversations-api
 
+## Purpose
+
+Define the versioned conversation REST API, DIAL Core persistence contract, path handling, generated-client integration, and conversation lifecycle behavior used by the chat frontend.
+
 ## Requirements
 
 ### Requirement: POST /api/v1/conversations creates and persists a new conversation
@@ -319,7 +323,7 @@ Integration tests SHALL cover key endpoints using supertest in `apps/chat-api/sr
 
 ### Requirement: DELETE /api/v1/conversations cleans up pin state
 
-When a conversation is deleted, `deleteConversation` fires a fire-and-forget call to `userConfigService.updatePin(id, false, ...)` to remove the deleted id from `user-config.json`. The cleanup is non-fatal — errors are logged but do not affect the 204 response to the client. The conversation id for cleanup is reconstructed as `conversations/${bucket}/${conversationPath}`.
+When a conversation is deleted, `deleteConversation` SHALL fire a fire-and-forget call to `userConfigService.updatePin(id, false, ...)` to remove the deleted id from `user-config.json`. The cleanup is non-fatal — errors are logged but do not affect the 204 response to the client. The conversation id for cleanup is reconstructed as `conversations/${bucket}/${conversationPath}`.
 
 See the [user-config-api spec](../user-config-api/spec.md) for `updatePin` semantics.
 
@@ -330,7 +334,7 @@ See the [user-config-api spec](../user-config-api/spec.md) for `updatePin` seman
 
 ---
 
-### Requirement: PATCH /api/v1/conversations renames a conversation by moving it to a new DIAL Core path
+### Requirement: PATCH /api/v1/conversations renames a conversation without changing its DIAL Core path
 
 The backend SHALL expose `PATCH /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint accepts query parameter `path` (validated by `RenameConversationDto` — `@IsString @MinLength(1) @MaxLength(512)`) and a JSON body `RenameConversationBodyDto`:
 
@@ -412,7 +416,7 @@ Error codes:
 
 On `POST /api/v1/conversations`, `ConversationService.createConversation` SHALL set `conversation.name` to the base name from `getConversationName('New chat', firstMessage)` without calling `resolveUniqueConversationName`.
 
-When the 2-part storage path `{deploymentId}__{baseName}` collides with an existing resource, the service SHALL persist at `{deploymentId}__{baseName}__{uuid}` while keeping `conversation.name` as the unsuffixed base name. See the [auto-index-duplicate-names spec](../auto-index-duplicate-names/spec.md).
+The service SHALL always persist the conversation at `{deploymentId}__{baseName}__{uuid}`, where `{uuid}` is freshly generated for this conversation, while keeping `conversation.name` as the unsuffixed base name. The UUID segment is unconditional: creation SHALL NOT perform a path-existence check for `{deploymentId}__{baseName}`. For versioned or multi-segment deployment IDs, the invariant is the trailing UUID rather than a fixed total number of `__`-separated segments. See the [auto-index-duplicate-names spec](../auto-index-duplicate-names/spec.md).
 
 `llmNamingDone` SHALL NOT be set on create (field absent or false).
 
@@ -421,6 +425,13 @@ When the 2-part storage path `{deploymentId}__{baseName}` collides with an exist
 - **GIVEN** a conversation with `name: "Hello"` already exists in the user's bucket
 - **WHEN** `POST /api/v1/conversations` is called with `firstMessage: "Hello"`
 - **THEN** the response body has `name: "Hello"` (not `"Hello 1"`)
+
+#### Scenario: Create always returns a fresh UUID-suffixed id
+
+- **WHEN** `POST /api/v1/conversations` is called twice with `deploymentId: "gpt-4o"` and `firstMessage: "Hello"`
+- **THEN** both response ids match `{bucket}/gpt-4o__Hello__<uuid>`
+- **AND** the two response ids are different
+- **AND** `getConversationMetadata` is NOT called to check the unsuffixed path
 
 #### Scenario: Create does not invoke LLM naming
 

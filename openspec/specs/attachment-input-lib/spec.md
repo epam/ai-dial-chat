@@ -100,10 +100,13 @@ All `apps/chat` files that previously imported from `apps/chat/src/utils/attachm
 
 ### Requirement: AttachmentCard renders an inline audio player for audio attachments
 
-When `attachment.type === AttachmentType.Audio`, `AttachmentCard` SHALL render a wide card (full tray width, minimum `280px`) instead of the standard `100×100` square. The card SHALL contain:
+When `attachment.type === AttachmentType.Audio`, `AttachmentCard` SHALL render a wide card (minimum `280px`, maximum `300px`) instead of the standard `100×100` square. The card root SHALL have `position: relative` (`relative` Tailwind class) so that absolutely-positioned action buttons resolve correctly. The card SHALL contain:
 - The attachment filename truncated to one line at the top.
-- A download icon button (`IconDownload`) on the same row as the filename when an `onClick` prop is provided. Clicking it SHALL call `onClick(id)` and NOT bubble to any outer click handler.
-- A native `<audio controls>` element using `attachment.playUrl` as `src` and `preload="metadata"`. The element SHALL span the full card width.
+- A native `<audio controls>` element using `attachment.playUrl` as `src` and `preload="metadata"`. The element SHALL span the full card width. Clicks on the `<audio>` element SHALL call `stopPropagation` so they do NOT propagate to the card's own click handler.
+- A `DownloadAction` button (absolutely positioned, `end-1 top-1`) when `onDownload` is provided. Clicking it SHALL call `onDownload(id)` and SHALL NOT bubble to the card's click handler.
+- A `RemoveAction` button (absolutely positioned, `end-1 top-1`) when `onRemove` is provided. Clicking it SHALL call `onRemove(id)` and SHALL NOT bubble to the card's click handler.
+
+When `onClick` is provided, the card root SHALL act as a keyboard-accessible button (`role="button"`, `tabIndex={0}`, `aria-label` from `labels.clickLabel`). Clicking the card body (outside the audio controls and action buttons) SHALL call `onClick(id)`. When either `onDownload` or `onRemove` is provided, the card SHALL apply `pe-8` end padding to prevent content from overlapping the action button area.
 
 The audio card variant SHALL use the same border and background CSS custom properties as the standard card.
 
@@ -113,11 +116,28 @@ The audio card variant SHALL use the same border and background CSS custom prope
 - **THEN** an `<audio>` element with `controls` is present in the DOM
 - **AND** the `<audio>` element's `src` equals `attachment.playUrl`
 
-#### Scenario: Audio card shows download button when onClick provided
+#### Scenario: Audio card shows download button when onDownload provided
+
+- **WHEN** `AttachmentCard` is rendered with `type === AttachmentType.Audio` and an `onDownload` prop
+- **THEN** a download icon button is rendered in the top-end corner of the card
+- **AND** clicking it calls `onDownload(id)` without triggering audio playback or the card's click handler
+
+#### Scenario: Audio card shows remove button when onRemove provided
+
+- **WHEN** `AttachmentCard` is rendered with `type === AttachmentType.Audio` and an `onRemove` prop
+- **THEN** a remove icon button is rendered in the top-end corner of the card
+- **AND** clicking it calls `onRemove(id)` without triggering the card's click handler
+
+#### Scenario: Audio card body is clickable when onClick provided
 
 - **WHEN** `AttachmentCard` is rendered with `type === AttachmentType.Audio` and an `onClick` prop
-- **THEN** a download icon button is rendered
-- **AND** clicking it calls `onClick` without triggering audio playback or outer click handlers
+- **THEN** the card root has `role="button"` and `tabIndex={0}`
+- **AND** clicking the card body (outside the audio controls and action buttons) calls `onClick(id)`
+
+#### Scenario: Audio player interaction does not trigger canvas open
+
+- **WHEN** the user interacts with the `<audio>` controls on an audio card
+- **THEN** the click event does NOT propagate to the card's click handler
 
 #### Scenario: Audio card is wider than standard card
 
