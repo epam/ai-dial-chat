@@ -3,6 +3,7 @@ import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   API,
+  BooleanOperator,
   ExpectedConstants,
   MenuOptions,
   PublishingRulesFilterTarget,
@@ -101,6 +102,7 @@ dialSharedWithMeTest(
           },
           'visible',
           'visible',
+          BooleanOperator.or,
         );
         await additionalShareUserPublishingRulesAssertion.assertElementState(
           additionalShareUserPublishingRules.addRuleButton,
