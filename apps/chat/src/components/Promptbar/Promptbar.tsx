@@ -1,5 +1,6 @@
 import { DragEvent, useCallback, useMemo } from 'react';
 
+import { useHasAnySearchResults } from '@/src/hooks/useHasAnySearchResults';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
@@ -63,6 +64,16 @@ export const Promptbar = () => {
   );
 
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
+
+  const hasAnyFilteredResults = useHasAnySearchResults(
+    FeatureType.Prompt,
+    searchTerm,
+    rootFilteredPrompts.length > 0 || filteredFolders.length > 0,
+    {
+      selectFilteredItems: PromptsSelectors.selectFilteredPrompts,
+      selectFilteredFolders: PromptsSelectors.selectFilteredFolders,
+    },
+  );
 
   const handleDrop = useCallback(
     (e: DragEvent<HTMLDivElement>) => {
@@ -137,6 +148,7 @@ export const Promptbar = () => {
       folderComponent={<PromptFolders />}
       filteredItems={rootFilteredPrompts}
       filteredFolders={filteredFolders}
+      hasAnyFilteredResults={hasAnyFilteredResults}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
       onSearchTerm={handleSearchTerm}

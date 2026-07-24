@@ -10,8 +10,13 @@ import {
 import { isHiddenEntity } from '@/src/utils/app/search';
 
 import { Conversation, PrepareNameOptions } from '@/src/types/chat';
-import { BaseDialEntity, FeatureType, PartialBy } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
+import {
+  BaseDialEntity,
+  FeatureType,
+  MoveModel,
+  PartialBy,
+} from '@/src/types/common';
+import { DialFile, FileOperationsResult } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
@@ -552,6 +557,26 @@ export const updateMovedEntityId = (
   }
   return entityId;
 };
+
+export type FileMovesMap = Map<string, string>;
+
+export const getFileMovesFromResult = (
+  result?: FileOperationsResult<MoveModel>,
+): FileMovesMap => {
+  const moves: FileMovesMap = new Map();
+
+  for (const { data } of result?.results ?? []) {
+    const { sourceUrl, destinationUrl } = data;
+    if (sourceUrl && destinationUrl && sourceUrl !== destinationUrl) {
+      moves.set(sourceUrl, destinationUrl);
+    }
+  }
+
+  return moves;
+};
+
+export const updatePathOnMove = (path: string, moves: FileMovesMap): string =>
+  moves.get(path) ?? path;
 
 export const getFolderIdFromEntityId = (id: string) =>
   id.split('/').slice(0, -1).join('/');

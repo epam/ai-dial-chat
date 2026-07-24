@@ -2,6 +2,7 @@ import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import {
   ToolsetEditorSteps,
   ToolsetModel,
+  ToolsetTool,
   ToolsetsMap,
 } from '@/src/types/toolsets';
 
@@ -21,4 +22,10 @@ export interface ToolsetState {
   editorStep: ToolsetEditorSteps;
 
   publishRequestToolsets: PublishRequestDialAIEntityModel[];
+
+  allowedTools?: {
+    endpoint: string;
+    tools: ToolsetTool[];
+  };
+  allowedToolsStatus: UploadStatus;
 }

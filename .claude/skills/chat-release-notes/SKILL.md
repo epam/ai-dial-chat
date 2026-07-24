@@ -163,12 +163,12 @@ Add this section **only** when the range introduces at least one env-var, behavi
 ## Deployment Changes
 
 ### New environment variables
-<table: Variable | Default | Description>
+<table: Variable | Required | Description | Available Values | Default values>
 
 ### Deprecated environment variables
 > [!CAUTION]
 > Still works, but will be removed in future versions.
-<table: Variable | Replacement | Description>
+<table: Variable | Required | Description | Available Values | Default values>
 
 ### Removed environment variables
 <table: Variable | Reason>
@@ -196,7 +196,7 @@ If a change requires the operator to touch a config file outside this repo (DIAL
 
 **Crucial — what does *not* belong here**: per-conversation settings, per-app overlay options the embedder passes at runtime, in-chat user preferences. Those changes belong in the **Features** bullet body where they're introduced. `Deployment Changes` is for operator-facing concerns: env vars, default-on/off behavioral shifts, schema-level deprecations.
 
-For the env-var tables, the description column comes from `apps/chat/README.md` when the row exists there; otherwise from the `process.env.VAR` access site's surrounding code. Cite default values verbatim from the README's "Default values" column or the `?? '<default>'` clause in source.
+For the env-var tables, use the 5-column structure `Variable | Required | Description | Available Values | Default values` — matching `apps/chat/README.md`'s own env-var tables. Pull each column from the README row when it exists there; otherwise from the `process.env.VAR` access site's surrounding code (`Required` from whether the code falls back to a default or errors without it, `Available Values` from any enum/union/allowed-list in the type or validation, `Default values` from the `?? '<default>'` clause in source).
 
 For the feature-flag tables, the entries are the `Feature` enum members added or removed in the range (from the §3 `features.ts` diff). These flags are the keys an operator lists in the `ENABLED_FEATURES` env var, so they belong here with the other operator-facing concerns. The `Flag` column uses the enum's **string value** in backticks (e.g. `` `voice-input` ``, `` `conversations-publishing` ``), not the TypeScript member name — consistent with the §5 rule #5 that backticks feature-flag keys. The description comes from the trailing `//` comment on the enum line.
 

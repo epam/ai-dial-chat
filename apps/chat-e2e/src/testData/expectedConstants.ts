@@ -563,6 +563,11 @@ export enum EditPromptFormFields {
   promptContent = 'Prompt',
 }
 
+export enum DislikeCommentFields {
+  title = 'Send feedback',
+  inputPlaceholder = 'Type an optional comment to your feedback',
+}
+
 export enum EntityEditorToolsetTypes {
   Toolset = 'toolset',
 }
@@ -671,6 +676,7 @@ export const API = {
   unsubscribeHost: () => `${API.api}/client-channels/unsubscribe`,
   reportHost: () => `${API.api}/client-channels/report`,
   limitsHost: (id: string) => `/api/deployments/${id}/limits`,
+  rateHost: () => `${API.api}/rate`,
 };
 
 export const Import = {
@@ -738,6 +744,11 @@ export enum ImportedModelIds {
 export enum Rate {
   like = 'like',
   dislike = 'dislike',
+}
+
+export enum RateTooltip {
+  Like = 'Like',
+  Dislike = 'Dislike',
 }
 
 export enum ThemeId {

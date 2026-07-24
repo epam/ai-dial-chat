@@ -94,6 +94,7 @@ export * from './entityEditor/toolset/toolsetEditorViewForm';
 export * from './entityEditor/toolset/toolsetEditorContainer';
 export * from './replaceConfirmationModal';
 export * from './renameConversationModal';
+export * from './dislikeCommentModal';
 export * from './shareModal';
 export * from './settingsModal';
 export * from './promptPreviewModalWindow';
