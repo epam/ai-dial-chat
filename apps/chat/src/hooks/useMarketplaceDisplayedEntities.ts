@@ -4,6 +4,7 @@ import { groupMarketplaceEntityAndSaveOrder } from '@/src/utils/app/marketplace'
 import {
   doesMarketplaceEntityMatchFilters,
   isInstalledEntity,
+  isPersonalSourceType,
 } from '@/src/utils/marketplace';
 
 import { MarketplaceEntity, MarketplaceFilters } from '@/src/types/marketplace';
@@ -62,11 +63,30 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     MARKETPLACE_ENTITIES_SEARCH_OPTIONS,
   );
 
+  const shouldHidePersonalSources =
+    selectedTab !== MarketplaceTabs.MY_WORKSPACE && isHideMyAppsEnabled;
+
+  // A source filter selected on a tab where it's a valid option (e.g. "My
+  // custom apps" on My Workspace) shouldn't zero out results on a tab where
+  // that source is hidden/unavailable (e.g. DIAL Marketplace).
+  const effectiveFilters = useMemo(
+    () =>
+      shouldHidePersonalSources
+        ? {
+            ...selectedFilters,
+            [FilterTypes.SOURCES]: selectedFilters[FilterTypes.SOURCES].filter(
+              (source) => !isPersonalSourceType(source),
+            ),
+          }
+        : selectedFilters,
+    [selectedFilters, shouldHidePersonalSources],
+  );
+
   const isSomeFilterNotEmpty =
     !!searchTerm.length ||
-    !!selectedFilters[FilterTypes.ENTITY_TYPE].length ||
-    !!selectedFilters[FilterTypes.TOPICS].length ||
-    !!selectedFilters[FilterTypes.SOURCES].length;
+    !!effectiveFilters[FilterTypes.ENTITY_TYPE].length ||
+    !!effectiveFilters[FilterTypes.TOPICS].length ||
+    !!effectiveFilters[FilterTypes.SOURCES].length;
 
   const featuredEntities = useMemo<T[]>(() => {
     if (
@@ -77,7 +97,7 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
       return [];
     }
 
-    const shouldHidePersonal = isHideMyAppsEnabled && !!isPersonalEntity;
+    const shouldHidePersonal = shouldHidePersonalSources && !!isPersonalEntity;
 
     return allEntities.filter(
       (e) =>
@@ -90,24 +110,21 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     isSomeFilterNotEmpty,
     allEntities,
     defaultRecentModelsIds,
-    isHideMyAppsEnabled,
+    shouldHidePersonalSources,
     isPersonalEntity,
   ]);
 
   const displayedEntities = useMemo(() => {
-    const filters = selectedFilters;
-
     const filteredEntities = searchedEntities.filter((entity) =>
       doesMarketplaceEntityMatchFilters(
         entity,
-        filters,
+        effectiveFilters,
         applicationTypeSchemas,
       ),
     );
 
     const isMyWorkspace = selectedTab === MarketplaceTabs.MY_WORKSPACE;
-    const shouldHidePersonal =
-      !isMyWorkspace && isHideMyAppsEnabled && !!isPersonalEntity;
+    const shouldHidePersonal = shouldHidePersonalSources && !!isPersonalEntity;
 
     const entitiesForTab = isMyWorkspace
       ? filteredEntities.filter((entity) =>
@@ -163,10 +180,10 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     selectedTab,
     isSomeFilterNotEmpty,
     selectedViewType,
-    selectedFilters,
+    effectiveFilters,
     applicationTypeSchemas,
     installedEntitiesIds,
-    isHideMyAppsEnabled,
+    shouldHidePersonalSources,
     isPersonalEntity,
   ]);
 
