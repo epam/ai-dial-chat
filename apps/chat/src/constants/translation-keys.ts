@@ -528,6 +528,11 @@ export enum AttachmentCanvasI18nKeys {
   ForbiddenErrorLabel = 'attachmentCanvas.forbiddenErrorLabel',
 }
 
+export enum AnnouncementBannerI18nKeys {
+  RegionAriaLabel = 'announcementBanner.regionAriaLabel',
+  CloseLabel = 'announcementBanner.closeLabel',
+}
+
 export enum EditorI18nKeys {
   StepGeneral = 'editor.stepGeneral',
   StepsNavAriaLabel = 'editor.stepsNavAriaLabel',

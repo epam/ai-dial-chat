@@ -62,6 +62,17 @@ export class ClientConfigDto {
     example: ['https://partner.example.com'],
   })
   overlayAllowedOrigins!: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.',
+    example: 'Welcome to <a href="https://dialx.ai">DIAL</a>!',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  announcementHtml!: string | null;
 }
 
 export class ClientConfigMetadataDto {

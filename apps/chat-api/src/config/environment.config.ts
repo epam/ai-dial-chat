@@ -513,6 +513,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  ANNOUNCEMENT_HTML_MESSAGE?: string;
+
+  @IsOptional()
+  @IsString()
   ASR_MODEL?: string;
 
   @IsOptional()

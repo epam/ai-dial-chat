@@ -3792,6 +3792,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "announcementHtml": {
+            "type": "string",
+            "description": "Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.",
+            "example": "Welcome to <a href=\"https://dialx.ai\">DIAL</a>!",
+            "nullable": true
           }
         },
         "required": [

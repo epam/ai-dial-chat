@@ -586,6 +586,10 @@
     "loadErrorLabel": "Failed to load file",
     "forbiddenErrorLabel": "You don't have permission to access this file"
   },
+  "announcementBanner": {
+    "regionAriaLabel": "Announcement",
+    "closeLabel": "Close announcement"
+  },
   "errorBoundary": {
     "heading": "Something went wrong",
     "description": "An unexpected error occurred. You can try again or reload the page.",
