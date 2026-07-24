@@ -3,10 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
-import {
-  getConversationPublishHistory,
-  publishConversation,
-} from '../../../server-api/conversation-publish.api';
+import { publishConversation } from '../../../server-api/conversation-publish.api';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer';
 
 vi.mock('@epam/ai-dial-catalog', async (importOriginal) => {
@@ -76,8 +73,8 @@ const baseFoldersResult = {
   hasPublishWriteAccess: () => true,
 };
 
-const renderContainer = async (props?: Partial<{ isOpen: boolean }>) => {
-  const result = render(
+const renderContainer = (props?: Partial<{ isOpen: boolean }>) =>
+  render(
     <PublishConversationPanelContainer
       isOpen
       conversationPath="my-conversation-abc"
@@ -86,15 +83,10 @@ const renderContainer = async (props?: Partial<{ isOpen: boolean }>) => {
       {...props}
     />,
   );
-  // Let the mount-time publish-history fetch settle before the test interacts.
-  await waitFor(() => expect(getConversationPublishHistory).toHaveBeenCalled());
-  return result;
-};
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(usePublishFolders).mockReturnValue(baseFoldersResult);
-  vi.mocked(getConversationPublishHistory).mockResolvedValue([]);
   vi.mocked(useNotification).mockReturnValue({
     notifications: [],
     showNotification: mockShowNotification,
@@ -106,18 +98,6 @@ describe('PublishConversationPanelContainer', () => {
   it('renders the conversation title as the resource summary', async () => {
     await renderContainer();
     expect(screen.getByText('Q3 planning notes')).toBeTruthy();
-  });
-
-  it('does not fetch history while the panel is closed', () => {
-    render(
-      <PublishConversationPanelContainer
-        isOpen={false}
-        conversationPath="my-conversation-abc"
-        conversationTitle="Q3 planning notes"
-        onClose={vi.fn()}
-      />,
-    );
-    expect(getConversationPublishHistory).not.toHaveBeenCalled();
   });
 
   it('selecting a folder updates selectedFolderPath', async () => {
@@ -159,9 +139,6 @@ describe('PublishConversationPanelContainer', () => {
         onClose={onClose}
       />,
     );
-    await waitFor(() =>
-      expect(getConversationPublishHistory).toHaveBeenCalled(),
-    );
 
     await userEvent.click(
       screen.getByRole('button', { name: 'Select Shared' }),
@@ -199,21 +176,13 @@ describe('PublishConversationPanelContainer', () => {
     expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
-  it('maps publish-history entries into hasExistingPublicationInFolder for the selected folder', async () => {
-    vi.mocked(getConversationPublishHistory).mockResolvedValue([
-      {
-        path: 'conversations/bucket-123/my-conversation-abc',
-        folderPath: 'Shared',
-        publishedAt: new Date().toISOString(),
-        publishedBy: 'Valery Dluski',
-      },
-    ]);
+  it('never reports an existing publication in the folder (version history is not fetched, see GH issue #7897)', async () => {
     await renderContainer();
 
     await userEvent.click(
       screen.getByRole('button', { name: 'Select Shared' }),
     );
 
-    expect(screen.getByText('existing:true')).toBeTruthy();
+    expect(screen.getByText('existing:false')).toBeTruthy();
   });
 });
