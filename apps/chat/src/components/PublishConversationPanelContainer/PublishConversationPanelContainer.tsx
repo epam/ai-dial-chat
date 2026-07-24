@@ -14,10 +14,7 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
-import {
-  getConversationPublishHistory,
-  publishConversation,
-} from '../../server-api/conversation-publish.api';
+import { publishConversation } from '../../server-api/conversation-publish.api';
 
 /** Props for `PublishConversationPanelContainer`. */
 interface Props {
@@ -32,9 +29,6 @@ interface Props {
   /** Conversation-row action trigger that receives focus after dismissal. */
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
-
-const splitFolderPath = (folderPath: string): string[] =>
-  folderPath ? folderPath.split('/') : [];
 
 /**
  * Wires the shared catalog publish building blocks (`usePublishFlow`,
@@ -63,39 +57,13 @@ const PublishConversationPanelContainer: FC<Props> = ({
     hasPublishWriteAccess,
   } = usePublishFolders();
 
-  const [history, setHistory] = useState<PublishHistoryEntry[]>([]);
-  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  /*
+   * Version history is not fetched: the backend endpoint is not yet
+   * functional (returns 503 for DIAL Core, see GH issue #7897).
+   */
+  const [history] = useState<PublishHistoryEntry[]>([]);
+  const [isHistoryLoading] = useState(false);
   const [hasHistoryError, setHasHistoryError] = useState(false);
-
-  useEffect(() => {
-    if (!isOpen || !conversationPath) {
-      return;
-    }
-    let isCancelled = false;
-    setIsHistoryLoading(true);
-    setHasHistoryError(false);
-    getConversationPublishHistory(conversationPath)
-      .then((entries) => {
-        if (isCancelled) return;
-        setHistory(
-          entries.map((entry) => ({
-            version: undefined,
-            publishedAt: new Date(entry.publishedAt).getTime(),
-            publishedBy: entry.publishedBy,
-            folderPath: splitFolderPath(entry.folderPath),
-          })),
-        );
-      })
-      .catch(() => {
-        if (!isCancelled) setHasHistoryError(true);
-      })
-      .finally(() => {
-        if (!isCancelled) setIsHistoryLoading(false);
-      });
-    return () => {
-      isCancelled = true;
-    };
-  }, [isOpen, conversationPath]);
 
   const resource: PublishResourceSummary = { title: conversationTitle };
 
@@ -119,7 +87,6 @@ const PublishConversationPanelContainer: FC<Props> = ({
   useEffect(() => {
     if (!isOpen) {
       publishFlow.reset();
-      setHistory([]);
       setHasHistoryError(false);
     }
     // Reset publish-flow-local state only when the panel closes.

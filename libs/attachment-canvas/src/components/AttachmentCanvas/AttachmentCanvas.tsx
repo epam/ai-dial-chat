@@ -133,6 +133,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   const bodyContainerClassName = useMemo(() => {
     switch (content.type) {
       case AttachmentContentType.Image:
+      case AttachmentContentType.Audio:
       case AttachmentContentType.Unsupported:
       case AttachmentContentType.Error:
         return 'h-full overflow-auto p-4 flex items-center justify-center';
@@ -166,6 +167,20 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
             alt={fileName ?? ''}
             className="max-h-full max-w-full object-contain"
           />
+        );
+      case AttachmentContentType.Audio:
+        return (
+          <audio
+            controls
+            src={content.url}
+            aria-label={fileName ?? 'Audio attachment'}
+            className="w-full max-w-sm"
+            preload="metadata"
+          >
+            {content.mimeType && (
+              <source src={content.url} type={content.mimeType} />
+            )}
+          </audio>
         );
       case AttachmentContentType.Markdown:
         return (

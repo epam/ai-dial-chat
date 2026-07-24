@@ -200,21 +200,17 @@ export interface InputProps {
   /**
    * When `true`, the mic button is rendered and voice recording is enabled.
    * Derived by the host app from the selected deployment's `inputAttachmentTypes`.
+   * When `false` or absent, the mic button is hidden and the voice bar is never shown.
    */
-  isTranscriptionSupported?: boolean;
-  /**
-   * Called when the user confirms a voice recording.
-   * Receives the recorded `File` and its detected MIME type.
-   * Resolves with the DIAL storage URL for the uploaded audio.
-   */
-  onUploadAudio?: (file: File, contentType: string) => Promise<string>;
-  /**
-   * Called after successful audio upload with the DIAL storage URL.
-   * Resolves with the transcript text.
-   */
-  onTranscribeAudio?: (audioUrl: string) => Promise<string>;
+  isAudioMessageSupported?: boolean;
   /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
   micLabel?: string;
+  /** Accessible label for the stop-recording button inside the voice bar. Defaults to `'Stop recording'`. */
+  stopRecordingLabel?: string;
+  /** Accessible label for the discard / X button inside the voice bar. Defaults to `'Discard recording'`. */
+  discardRecordingLabel?: string;
+  /** `aria-label` for the elapsed-time region inside the voice bar. Defaults to `'Recording time'`. */
+  timerAriaLabel?: string;
   /**
    * Controls which key combination submits the message.
    * - `SendOnEnter.Enter` (default): Enter submits; Shift+Enter inserts a newline.
@@ -263,10 +259,11 @@ export interface InputProps {
   onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
   /**
    * Called when the user clicks or keyboard-activates an attachment card.
-   * Receives the full `Attachment` object (including the local `File`).
+   * Receives a `DisplayAttachment` — covers both newly-added attachments
+   * (which carry a local `File`) and pre-existing ones (which only have a URL).
    * When absent the card is not rendered as interactive.
    */
-  onAttachmentClick?: (attachment: Attachment) => void;
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /**
    * When provided, the desktop model-selector chip opens this panel instead of
    * the flat deployment list. Receives `onClose` so the panel can close the

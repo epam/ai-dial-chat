@@ -179,6 +179,7 @@ export enum CatalogI18nKeys {
   TabToolsets = 'catalog.tab.toolsets',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
+  FolderShared = 'catalog.folder.shared',
   CredentialsSignedInLabel = 'catalog.details.credentials.signedInLabel',
   CredentialsSignedOutLabel = 'catalog.details.credentials.signedOutLabel',
   CredentialsApiKeyFieldHint = 'catalog.details.credentials.apiKeyFieldHint',
@@ -650,4 +651,11 @@ export enum ShareI18nKeys {
   LoadingLabel = 'share.loadingLabel',
   ErrorTitle = 'share.errorTitle',
   InvitationAcceptError = 'share.invitationAcceptError',
+}
+
+export enum VoiceRecordingI18nKeys {
+  MicLabel = 'voiceRecording.micLabel',
+  StopRecordingLabel = 'voiceRecording.stopRecordingLabel',
+  DiscardRecordingLabel = 'voiceRecording.discardRecordingLabel',
+  TimerAriaLabel = 'voiceRecording.timerAriaLabel',
 }

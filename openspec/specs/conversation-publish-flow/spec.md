@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Define the conversation publishing UI flow, including eligibility, destination selection, approval-request submission, feedback, internationalization, RTL behavior, and accessibility.
+
+## Requirements
 
 ### Requirement: Publish action is offered only for owned, writable conversations
 
@@ -59,7 +63,7 @@ The pinned footer's "Cancel" button SHALL call the same `onClose` handler as the
 
 ### Requirement: Panel body renders a title-only resource summary instead of the catalog version pill
 
-The scrollable body SHALL render the shared `PublishPanel` lib component (destination folder picker with search, inline folder creation, replace/no-access/submit-error callouts, publish history list) configured with a `PublishResourceSummary` built from the conversation's title (no icon, no version) rather than a `CatalogItem`. The summary row SHALL show the conversation's title and SHALL NOT render a version pill or any `{name}__{version}`-style identifier, since conversations have no version.
+The scrollable body SHALL render the shared `PublishPanel` lib component (destination folder picker with search, inline folder creation, no-access/submit-error callouts, publish history list) configured with a `PublishResourceSummary` built from the conversation's title (no icon, no version) rather than a `CatalogItem`. The summary row SHALL show the conversation's title and SHALL NOT render a version pill or any `{name}__{version}`-style identifier, since conversations have no version.
 
 Destination folder picker, search, and inline folder creation SHALL behave identically to the catalog publish flow (folder tree via `PublishFoldersTree`, bucket root selectable as `[]`, lazy-loaded children, optimistic create with rollback on failure), reusing `usePublishFolders` (the renamed, shared `useCatalogPublishFolders`).
 
@@ -77,19 +81,22 @@ Inline folder creation SHALL also validate the new folder name identically to th
 - **WHEN** the user types `../EscapeFolder` into the inline create row and confirms
 - **THEN** an inline validation error is shown and no publish request is sent with an invalid `folderPath`
 
-### Requirement: Submit button always reads "Publish"; already-published-to-folder disables submit instead of offering replace
+### Requirement: Submit always creates a publish request and is not blocked by publication history
 
-The pinned footer's submit button SHALL always show the fixed label "Publish" (i18n key `conversationPublish.submitLabel`) regardless of folder selection — never an "Update version" variant, since conversations have no version to update. When the selected folder already has a prior publication of this same conversation (history for that folder is non-empty), the submit button SHALL be disabled and a distinct callout (i18n key `conversationPublish.alreadyPublishedWarning`, NOT the catalog `ReplaceWarning` wording) SHALL be shown, since there is no supported "publish again to the same folder" action in this iteration (see design.md D2).
+The pinned footer's submit button SHALL always show the fixed label "Publish" (i18n key `buttons.publish`) regardless of folder selection — never an "Update version" variant, since conversations have no version to update. Each submission creates a new admin-approval request rather than updating or replacing an existing published conversation. Therefore, prior publication history for the selected folder is informational only and SHALL NOT disable the submit button or show an "already published" or replace-warning callout. When the selected folder is valid and writable and no submission is already in flight, the user SHALL be allowed to submit another publish request for the same conversation and folder.
 
 #### Scenario: First publish to a folder is allowed
 - **GIVEN** the conversation has never been published to the selected folder
 - **WHEN** the user selects that folder
 - **THEN** the submit button is enabled and reads "Publish"
 
-#### Scenario: Republishing to an already-published folder is blocked
+#### Scenario: Another publish request to a previously used folder is allowed
 - **GIVEN** the conversation has a prior publication in the selected folder
 - **WHEN** the user selects that folder
-- **THEN** the submit button is disabled and the "already published" callout is shown instead of a replace-warning
+- **THEN** the submit button remains enabled and reads "Publish"
+- **AND** no "already published" or replace-warning callout is shown
+- **WHEN** the user clicks "Publish"
+- **THEN** a new admin-approval request is submitted
 
 #### Scenario: Long folder names never appear in the button label
 - **WHEN** any folder or the root is selected, regardless of name length
@@ -121,7 +128,6 @@ New keys (non-exhaustive — implementation SHALL add any additional strings nee
 |---|---|
 | `buttons.publish` (`ButtonsI18nKeys.Publish`) | "Publish" — row menu label, panel title, and submit-button label |
 | `conversationPublish.panelAriaLabel` | "Publish conversation" |
-| `conversationPublish.alreadyPublishedWarning` | "This conversation is already published in {folder}." |
 | `conversationPublish.successMessage` | "Publish request submitted. It will appear in Organization once an admin approves it." |
 
 #### Scenario: Row menu label resolves via i18n
@@ -142,11 +148,7 @@ The panel SHALL use `end-0`/`inset-y-0` and `rtl:-translate-x-full` for its slid
 
 ### Requirement: Accessibility — panel is keyboard- and screen-reader-navigable
 
-The panel root SHALL expose `role="dialog"`, `aria-modal="true"`, and `aria-label`. The Close button SHALL have an `aria-label` sourced from i18n. The submit-error and already-published callouts SHALL use `role="alert"`. The publish history list SHALL expose list semantics (`role="list"`/`role="listitem"` or equivalent), matching `catalog-publish-api`'s existing history-list accessibility requirement. Focus SHALL move into the panel when it opens and return to the triggering row's action-menu button when it closes (standard modal focus-management pattern, matching `DetailsPanel`'s existing behavior).
-
-#### Scenario: Screen reader announces the already-published callout
-- **WHEN** the already-published callout renders
-- **THEN** it is exposed with `role="alert"` so assistive technology announces it immediately
+The panel root SHALL expose `role="dialog"`, `aria-modal="true"`, and `aria-label`. The Close button SHALL have an `aria-label` sourced from i18n. The submit-error callout SHALL use `role="alert"`. The publish history list SHALL expose list semantics (`role="list"`/`role="listitem"` or equivalent), matching `catalog-publish-api`'s existing history-list accessibility requirement. Focus SHALL move into the panel when it opens and return to the triggering row's action-menu button when it closes (standard modal focus-management pattern, matching `DetailsPanel`'s existing behavior).
 
 #### Scenario: Focus returns to the triggering control on close
 - **WHEN** the panel closes via Cancel, Close, or Escape

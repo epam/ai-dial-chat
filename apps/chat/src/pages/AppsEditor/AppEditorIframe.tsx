@@ -250,6 +250,10 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         const result = await waitForToolsetOAuthResult(
           initiation.popup,
           initiation.flowId,
+          {
+            toolsetId: encodedToolsetId,
+            credentialsLevel,
+          },
         );
         if (result.type === ToolsetOAuthResultType.Success) {
           postToolsetLoginResult(targetOrigin, {

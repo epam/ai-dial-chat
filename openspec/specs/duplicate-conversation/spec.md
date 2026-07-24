@@ -1,15 +1,63 @@
-## ADDED Requirements
+# Spec: duplicate-conversation
+
+## Purpose
+
+Define the backend, generated-client, state-management, and UI behavior for duplicating a conversation into the authenticated user's bucket with a fresh stable identifier.
+
+## Requirements
 
 ### Requirement: Backend duplicate endpoint
-The system SHALL expose `POST /api/conversations/duplicate?path=<sourcePath>` that copies the source conversation into the authenticated user's own bucket and returns `{ newPath: string }`. The destination name SHALL be unique (conflict-free) within the user's bucket. The endpoint SHALL return 401 when unauthenticated, 400 when `path` is missing or empty, and 502 when DIAL Core rejects the copy.
+The system SHALL expose `POST /api/v1/conversations/duplicate?path=<sourcePath>` that copies the source conversation into the authenticated user's own bucket. The endpoint is protected by `SessionGuard`, accepts no request body, and returns HTTP 201 with:
+
+```json
+{
+  "newPath": "conversations/user-bucket/gpt-4o__My%20chat__550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+The returned `newPath` is the encoded full DIAL Core resource path and SHALL be treated as an opaque conversation identifier by callers.
+
+The duplicated conversation SHALL keep the source conversation's stored display name, sanitised via `prepareEntityName`, without adding a numeric title suffix. Its destination storage path SHALL always end with a fresh `crypto.randomUUID()` segment:
+
+```
+{deploymentId}__{displayName}__{uuid}
+```
+
+The UUID is unconditional, including when the corresponding unsuffixed destination path is free. `duplicateConversation` SHALL NOT perform a destination path-existence check. A trailing UUID from the source path SHALL NOT be reused. Existing legacy source paths without a UUID remain valid inputs.
+
+Rate limiting: `@Throttle({ default: { limit: 20, ttl: 60000 } })`.
+
+Generated-client impact:
+- OpenAPI operationId: `duplicateConversation`
+- SDK method: `ConversationsApi.duplicateConversation({ path })`
+- Query DTO: `ConversationPathDto`
+- Response DTO: `DuplicateConversationResponseDto` (`{ newPath: string }`)
+- Frontend callers use the normal generated method through `apps/chat/src/server-api/conversations.api.ts`
+
+Error codes:
+- `400 Bad Request` — `path` is missing, empty, or invalid
+- `401 Unauthorized` — the caller has no valid session
+- `403 Forbidden` — the caller cannot read the source conversation
+- `404 Not Found` — the source conversation does not exist
+- `502 Bad Gateway` — DIAL Core rejects the read or save operation
+- `503 Service Unavailable` — DIAL Core is unreachable
+
+This behavior does not require a new API version: UUID-suffixed `newPath` values were already valid collision responses, so consumers already have to treat the returned path as opaque. Existing stored paths are not migrated.
 
 #### Scenario: Successful duplication from shared conversation
-- **WHEN** an authenticated user calls `POST /api/conversations/duplicate?path=other-bucket/path/to/chat.json`
-- **THEN** the system copies the conversation to the user's bucket and returns `{ newPath: "conversations/<user-bucket>/path/to/chat.json" }` with HTTP 200
+- **WHEN** an authenticated user calls `POST /api/v1/conversations/duplicate?path=other-bucket/gpt-4o__My%20chat__<source-uuid>`
+- **THEN** the system copies the conversation to the user's bucket and returns `{ newPath: "conversations/<user-bucket>/gpt-4o__My%20chat__<fresh-uuid>" }` with HTTP 201
 
-#### Scenario: Unique name on collision
-- **WHEN** a conversation with the same title already exists in the user's bucket
-- **THEN** the system appends a numeric suffix (e.g., ` (1)`, ` (2)`) to produce a collision-free destination path and returns the resolved `newPath`
+#### Scenario: UUID is appended when the unsuffixed destination path is free
+- **GIVEN** no resource exists at `gpt-4o__My chat` in the user's bucket
+- **WHEN** the user duplicates a conversation named `"My chat"`
+- **THEN** the duplicate is stored at `gpt-4o__My chat__<fresh-uuid>`
+- **AND** no destination metadata lookup is performed
+
+#### Scenario: Repeated duplicates retain the display name and receive different ids
+- **WHEN** the same conversation named `"My chat"` is duplicated twice
+- **THEN** both duplicated conversations keep `name: "My chat"` without a numeric suffix
+- **AND** their `newPath` values end with different freshly generated UUIDs
 
 #### Scenario: Missing path parameter
 - **WHEN** the request omits the `path` query parameter
@@ -20,7 +68,7 @@ The system SHALL expose `POST /api/conversations/duplicate?path=<sourcePath>` th
 - **THEN** the system returns HTTP 401
 
 ### Requirement: Server-API duplicate function
-The frontend server-api module SHALL expose `duplicateConversation(conversationPath: string)` that calls `POST /api/conversations/duplicate?path=<conversationPath>` and returns `{ newPath: string }`.
+The frontend server-api module SHALL expose `duplicateConversation(conversationPath: string)` that delegates to `ConversationsApi.duplicateConversation({ path: conversationPath })` and returns `{ newPath: string }`. It SHALL NOT construct the REST request through `server-api/base.ts`.
 
 #### Scenario: Successful call
 - **WHEN** `duplicateConversation("other-bucket/some/chat.json")` is called

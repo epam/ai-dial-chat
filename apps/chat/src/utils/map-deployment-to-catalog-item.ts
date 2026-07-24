@@ -98,7 +98,10 @@ const stripPrefixSegments = (raw: string, prefix: string): string[] =>
     .map(safeDecodeURIComponent);
 
 export const resolveDeploymentFolder = (
-  deployment: Pick<DeploymentItemDto, 'isMy' | 'applicationFolder'>,
+  deployment: Pick<
+    DeploymentItemDto,
+    'isMy' | 'sharedWithMe' | 'applicationFolder'
+  >,
   t: TFunction,
 ): string[] => {
   if (deployment.isMy) {
@@ -109,6 +112,10 @@ export const resolveDeploymentFolder = (
     deployment.applicationFolder ?? '',
     APPLICATIONS_PREFIX,
   );
+
+  if (deployment.sharedWithMe) {
+    return [t(CatalogI18nKeys.FolderShared), ...segments.slice(1)];
+  }
 
   if (segments[0]?.toLowerCase() === PUBLIC_SEGMENT) {
     return [t(CatalogI18nKeys.FolderPublic), ...segments.slice(1)];

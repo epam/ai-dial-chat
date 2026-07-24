@@ -15,6 +15,12 @@ export const DEFAULT_TOOLSET_VERSION = '0.0.1';
 /** `sessionStorage` key `initiateOAuthLogin` writes the admin flow's `ToolsetRedirectState` under, in the popup it opens. */
 export const TOOLSET_REDIRECT_STATE_KEY = 'toolset-redirect-state';
 
+/** Query parameters written into the callback popup URL after an OAuth flow completes. */
+export enum ToolsetOAuthCallbackQuery {
+  Result = 'toolsetOAuthResult',
+  FailureReason = 'toolsetOAuthFailureReason',
+}
+
 export interface AuthTypeOption {
   labelKey: ToolsetEditorI18nKeys;
   Icon: TablerIcon;

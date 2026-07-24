@@ -175,7 +175,8 @@
     },
     "folder": {
       "personal": "Personal",
-      "public": "Public"
+      "public": "Public",
+      "shared": "Shared with me"
     }
   },
   "deploymentSelector": {
@@ -716,5 +717,11 @@
     "errorRetry": "Retry",
     "statusLoginSuccess": "Login succeeded for {{name}}.",
     "statusDeclineSuccess": "Declined {{name}}."
+  },
+  "voiceRecording": {
+    "micLabel": "Record voice message",
+    "stopRecordingLabel": "Stop recording",
+    "discardRecordingLabel": "Discard recording",
+    "timerAriaLabel": "Recording time"
   }
 }
