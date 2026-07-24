@@ -3,8 +3,11 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 
-export default defineConfig(() => ({
+const OVERLAY_SANDBOX_BASE_PATH = '/overlay-sandbox/';
+
+export default defineConfig(({ command }) => ({
   root: import.meta.dirname,
+  base: command === 'serve' ? '/' : OVERLAY_SANDBOX_BASE_PATH,
   cacheDir: '../../node_modules/.vite/apps/chat-overlay-sandbox',
   server: {
     port: 4300,

@@ -244,20 +244,30 @@ For both states:
 `apps/chat/src/hooks/conversation-sources/useConversationSources.ts` SHALL export `useConversationSources(messages: Message[])` returning `{ uploaded: DisplayAttachment[]; generated: DisplayAttachment[]; sources: QuotationSource[] }`. The hook SHALL:
 
 - Walk `messages` once in a single loop.
-- Partition attachments by `MessageRole.User` (`uploaded`) vs `MessageRole.Assistant` (`generated`) using `attachmentDtosToDisplayAttachments` from `apps/chat/src/utils/attachment-dto-to-display.ts`.
-- For assistant messages, also walk `msg.custom_content?.annotations ?? []`. For each annotation where `annotation?.body?.source?.attachment?.url` is present, append a `QuotationSource` to `sources`:
-  - `url` — `annotation.body.source.attachment.url`
-  - `title` — `annotation.body.title ?? url`
-  - `quote` — `annotation.body.quote` (optional)
-- Deduplicate `sources` by `url` (first occurrence wins); skip subsequent annotations with the same URL.
+- For user messages: push all attachments into `uploaded` via `attachmentDtosToDisplayAttachments`.
+- For assistant messages:
+  - Split `msg.custom_content?.attachments` into **reference-only** dtos (`isReferenceOnlyAttachment` from `apps/chat/src/utils/reference-attachment.ts` returns `true`) and **regular** dtos (all others).
+  - Push only the regular dtos into `generated` via `attachmentDtosToDisplayAttachments`.
+  - For each reference-only dto, if `dto.reference_url` has not been seen before, append a `QuotationSource` to `sources`:
+    - `url` — `dto.reference_url`
+    - `title` — `dto.title ?? dto.reference_url`
+    - `contentType` — `dto.reference_type ?? dto.type ?? ''`
+    - `quote` — `dto.data` (optional)
+  - Also walk `msg.custom_content?.annotations ?? []`. For each annotation where `annotation?.body?.source?.attachment?.url` is present and not already seen, append a `QuotationSource` to `sources`:
+    - `url` — `annotation.body.source.attachment.url`
+    - `title` — `annotation.body.title ?? url`
+    - `contentType` — `annotation.body.source.attachment.type ?? ''`
+    - `quote` — `annotation.body.quote` (optional)
+- Deduplicate `sources` by `url` across both reference-only attachments and annotations (first occurrence wins), using a shared `seenUrls` set.
 - Tolerate `null`/`undefined` annotation items without throwing.
 - Return the three lists wrapped in `useMemo`, keyed on the `messages` reference.
 
-`QuotationSource` is defined in `apps/chat/src/models/quotation-source.ts` as:
+`QuotationSource` is defined in `libs/source-panel/src/models/quotation-source.ts` as:
 ```ts
 interface QuotationSource {
   url: string;
   title: string;
+  contentType: string;
   quote?: string;
 }
 ```
@@ -273,15 +283,21 @@ interface QuotationSource {
 - **THEN** all derived attachments appear in `uploaded` in message order
 - **AND** `generated` and `sources` are empty
 
-#### Scenario: Only assistant attachments
+#### Scenario: Only assistant attachments without reference_url
 
-- **WHEN** every message in the input has `role: MessageRole.Assistant` and one attachment each
+- **WHEN** every message in the input has `role: MessageRole.Assistant` and one regular (url-bearing) attachment each
 - **THEN** all derived attachments appear in `generated` in message order
-- **AND** `uploaded` is empty
+- **AND** `uploaded` and `sources` are empty
+
+#### Scenario: Reference-only attachment goes to sources, not generated
+
+- **WHEN** an assistant message has one attachment with `reference_url` set and no `url`
+- **THEN** `generated` receives no entry from that attachment
+- **AND** `sources` contains one `QuotationSource` with `url = dto.reference_url`, `title = dto.title`, `contentType = dto.reference_type ?? dto.type ?? ''`, and `quote = dto.data`
 
 #### Scenario: Mixed roles
 
-- **WHEN** a user message with one attachment is followed by an assistant message with two attachments
+- **WHEN** a user message with one attachment is followed by an assistant message with two regular attachments
 - **THEN** `uploaded` has one entry from the user message and `generated` has two entries from the assistant message
 
 #### Scenario: Message without custom_content
@@ -294,10 +310,10 @@ interface QuotationSource {
 - **WHEN** an assistant message has `custom_content.annotations` containing two annotations each with `body.source.attachment.url`
 - **THEN** both appear in `sources` in annotation order
 
-#### Scenario: Duplicate source URLs are deduplicated
+#### Scenario: Duplicate source URLs are deduplicated across reference attachments and annotations
 
-- **WHEN** two annotations reference the same `url`
-- **THEN** `sources` contains only the first occurrence
+- **WHEN** a reference-only attachment and a subsequent annotation both reference the same `url`
+- **THEN** `sources` contains only the first occurrence (the reference attachment)
 
 #### Scenario: Annotations without a source URL are skipped
 
@@ -328,9 +344,9 @@ For `SourcesSection`:
 - When `sources.length === 0`: return `null` (no title or empty message rendered).
 - When `sources.length > 0`: render a `<ul>` where each `<li>` contains two rows:
   - **Row 1** (flex, `items-center`, `justify-between`): an `<a href={source.url} target="_blank" rel="noopener noreferrer">` showing `source.title` with `truncate`; and a `DialGhostIconButton` with `IconCopy` that calls `navigator.clipboard.writeText(source.url)` on click, `aria-label={copyLabel}`.
-  - **Row 2** (only when `source.quote` is present): a `<p>` with `line-clamp-5` and `max-h-[80px] overflow-hidden` rendering `source.quote`.
+  - **Row 2** (only when `source.quote` is present): a `<div>` with `quoteClassName` (typography), `styles.quote` (color token), `line-clamp-5`, and `[&>div>*+*]:mt-1` (spacing between block elements), containing a `MarkdownRenderer` rendering `source.quote`. The `[&>div>*+*]:mt-1` selector targets the block-level children of `MarkdownRenderer`'s root `<div>` to add consistent vertical spacing between headings, paragraphs, and lists.
 
-`SourcesSection` is located at `apps/chat/src/components/ConversationSourcesPanel/sections/SourcesSection/SourcesSection.tsx`.
+`SourcesSection` is located at `libs/source-panel/src/components/SourcesSection/SourcesSection.tsx`.
 
 #### Scenario: Uploaded Files section with attachments
 
@@ -367,10 +383,10 @@ For `SourcesSection`:
 - **WHEN** a `QuotationSource` has no `quote` field
 - **THEN** no second row is rendered for that item
 
-#### Scenario: Quote row is clamped to five lines
+#### Scenario: Quote is rendered as markdown and clamped to five lines
 
 - **WHEN** a `QuotationSource` has a `quote` value
-- **THEN** the quote paragraph has `line-clamp-5` and `max-h-[80px]` applied
+- **THEN** the quote is rendered via `MarkdownRenderer` inside a wrapper div that has `line-clamp-5` applied, so markdown formatting is visible and the block is clamped at five lines with spacing between block elements
 
 #### Scenario: Read-only attachment cards without handler
 
