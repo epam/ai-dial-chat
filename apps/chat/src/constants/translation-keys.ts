@@ -647,3 +647,10 @@ export enum ShareI18nKeys {
   ErrorTitle = 'share.errorTitle',
   InvitationAcceptError = 'share.invitationAcceptError',
 }
+
+export enum VoiceRecordingI18nKeys {
+  MicLabel = 'voiceRecording.micLabel',
+  StopRecordingLabel = 'voiceRecording.stopRecordingLabel',
+  DiscardRecordingLabel = 'voiceRecording.discardRecordingLabel',
+  TimerAriaLabel = 'voiceRecording.timerAriaLabel',
+}

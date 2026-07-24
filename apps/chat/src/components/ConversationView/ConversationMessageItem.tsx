@@ -280,6 +280,7 @@ const ConversationMessageItem: FC<Props> = ({
             dialFileSystemLabel={dialFileSystemLabel}
             pendingAttachments={pendingAttachments}
             onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
+            onAttachmentClick={handleAttachmentClick}
           />
         </Suspense>
       </div>

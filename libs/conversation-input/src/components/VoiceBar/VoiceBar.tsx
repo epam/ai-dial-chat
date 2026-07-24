@@ -3,12 +3,12 @@ import {
   DIAL_ICON_SIZE,
   DialErrorText,
   DialGhostIconButton,
-  DialSpinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconPlaystationSquare, IconX } from '@tabler/icons-react';
+import { IconPlayerStopFilled, IconX } from '@tabler/icons-react';
 import {
   type CSSProperties,
   type FC,
+  type RefObject,
   useCallback,
   useEffect,
   useRef,
@@ -18,32 +18,32 @@ import styles from './VoiceBar.module.scss';
 
 const BAR_WIDTH = 3;
 const BAR_GAP = 1;
+const BAR_STEP = BAR_WIDTH + BAR_GAP;
+const RING_SIZE = 200;
 
-const SPLASH_SECTIONS = 6;
-const MIN_SPLASH_FRACTION = 0.12; // bars never collapse below this fraction of height
+const formatTime = (seconds: number): string =>
+  `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 
 /** Props accepted by the `VoiceBar` component. */
 export interface VoiceBarProps {
   /** Current recorder state — must not be `'idle'` when this component is rendered. */
   state: VoiceRecorderState;
-  /** Accumulated RMS amplitude history. `null` before recording starts. */
-  waveformData: Float32Array | null;
+  /** Stable ref to the live `AnalyserNode` during recording; `.current` is `null` when idle. */
+  analyserNodeRef: RefObject<AnalyserNode | null>;
+  /** Elapsed recording time in whole seconds. */
+  elapsedSeconds: number;
   /** Error message in `error` state; `null` otherwise. */
   errorMessage: string | null;
-  /** Called when the user clicks the red mic button to stop recording. */
+  /** Called when the user clicks the stop button to finish recording. */
   onStop: () => void;
-  /** Called when the user clicks the checkmark to confirm, or retry after an error. */
-  onConfirm: () => void;
-  /** Called when the user clicks the X to discard the recording or cancel uploading. */
+  /** Called when the user clicks the X to discard the recording. */
   onDiscard: () => void;
-  /** Accessible label for the stop-recording mic button. Defaults to `'Stop recording'`. */
+  /** Accessible label for the stop-recording button. Defaults to `'Stop recording'`. */
   stopLabel?: string;
-  /** Accessible label for the confirm / retry button. Defaults to `'Send voice message'`. */
-  confirmLabel?: string;
   /** Accessible label for the discard / cancel button. Defaults to `'Discard recording'`. */
   discardLabel?: string;
-  /** Accessible label for the uploading progress indicator. Defaults to `'Uploading…'`. */
-  uploadingLabel?: string;
+  /** Accessible label for the recording timer region. Defaults to `'Recording time'`. */
+  timerLabel?: string;
   /** CSS custom properties forwarded from the parent (e.g. `--ci-bg`, `--ci-border`). */
   style?: CSSProperties;
   /** Extra class names applied to the root element. */
@@ -51,144 +51,156 @@ export interface VoiceBarProps {
 }
 
 /**
- * Renders the voice recording bar: waveform canvas, state-based controls,
- * and an error text for the `error` state. Replaces the `Input` component
+ * Renders the voice recording bar: a live MM:SS timer, a scrolling waveform canvas
+ * driven by a ring buffer, and state-based controls. Replaces the `Input` component
  * while voice state is not `idle`.
  */
 export const VoiceBar: FC<VoiceBarProps> = ({
   state,
-  waveformData,
+  analyserNodeRef,
+  elapsedSeconds,
   errorMessage,
   onStop,
-  onConfirm,
   onDiscard,
   stopLabel = 'Stop recording',
-  confirmLabel = 'Send voice message',
   discardLabel = 'Discard recording',
-  uploadingLabel = 'Uploading…',
+  timerLabel = 'Recording time',
   style,
   className,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const waveformDataRef = useRef<Float32Array | null>(null);
-  const isRecordingRef = useRef(false);
+  const ringBufferRef = useRef<Float32Array>(new Float32Array(RING_SIZE));
+  const writeIndexRef = useRef(0);
+  /* Tracks sub-bar-width scroll offset in pixels (0 … BAR_STEP) for smooth animation. */
+  const scrollPxRef = useRef(0);
   const isRecording = state === VoiceRecorderState.Recording;
-  const isUploading = state === VoiceRecorderState.Uploading;
   const isError = state === VoiceRecorderState.Error;
 
-  // Keep a ref so draw callbacks always see the latest recording state
-  isRecordingRef.current = isRecording;
+  /* Draw the ring buffer as a scrolling bar histogram spanning the full canvas width.
+   * Uses scrollPxRef for sub-bar-width translation so bars slide at 1 px/frame rather
+   * than jumping by a full bar width every BAR_STEP frames. */
+  const drawCanvas = useCallback((canvas: HTMLCanvasElement) => {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-  /** Draw live splash animation: SPLASH_SECTIONS arch-shaped groups filling the full
-   *  canvas width, each scaled by the current RMS amplitude. */
-  const drawSplash = useCallback(
-    (canvas: HTMLCanvasElement, currentRms: number) => {
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+    canvas.width = canvas.clientWidth || 200;
+    canvas.height = canvas.clientHeight || 32;
 
-      canvas.width = canvas.clientWidth || 200;
-      canvas.height = canvas.clientHeight || 32;
+    const { width, height } = canvas;
+    ctx.clearRect(0, 0, width, height);
 
-      const { width, height } = canvas;
-      ctx.clearRect(0, 0, width, height);
+    const barColor = getComputedStyle(canvas).color;
+    ctx.fillStyle = barColor;
 
-      const barColor = getComputedStyle(canvas).color;
-      ctx.fillStyle = barColor;
+    /* Cap barCount so we never ask for more bars than the ring buffer holds. */
+    const barCount = Math.min(
+      Math.max(1, Math.floor(width / BAR_STEP)),
+      RING_SIZE - 1,
+    );
+    const writeIndex = writeIndexRef.current;
+    const offset = scrollPxRef.current;
 
-      // Scale: RMS ~0.03-0.15 → 0.18-0.9 after ×6
-      const amplitude = Math.min(1, currentRms * 6);
-      const barCount = Math.max(1, Math.floor(width / (BAR_WIDTH + BAR_GAP)));
+    /* Clip to canvas bounds so the extra right-edge bar does not overflow. */
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, width, height);
+    ctx.clip();
+    ctx.translate(-offset, 0);
 
-      for (let i = 0; i < barCount; i++) {
-        // |sin| over SPLASH_SECTIONS half-periods → SPLASH_SECTIONS humps
-        const t = (i / barCount) * SPLASH_SECTIONS * Math.PI;
-        const envelope = Math.abs(Math.sin(t));
-        const fraction = Math.max(MIN_SPLASH_FRACTION, envelope * amplitude);
-        const barHeight = Math.max(3, fraction * height);
-        ctx.fillRect(
-          i * (BAR_WIDTH + BAR_GAP),
-          (height - barHeight) / 2,
-          BAR_WIDTH,
-          barHeight,
-        );
-      }
-    },
-    [],
-  );
+    /* Draw barCount + 1 bars: the extra bar fills the gap revealed by translation.
+     * Formula: bar i maps to ring-buffer slot (writeIndex - barCount + i) mod RING_SIZE.
+     * This guarantees that when writeIndex advances and offset resets, old bar(i+1)
+     * shows the same slot as new bar(i) — visual continuity across the wrap boundary. */
+    for (let i = 0; i <= barCount; i++) {
+      const sampleIdx =
+        (((writeIndex - barCount + i) % RING_SIZE) + RING_SIZE) % RING_SIZE;
+      const raw = ringBufferRef.current[sampleIdx] ?? 0;
+      const amplitude = Math.min(1, raw * 6);
+      const barHeight = Math.max(3, amplitude * height);
+      ctx.fillRect(
+        i * BAR_STEP,
+        (height - barHeight) / 2,
+        BAR_WIDTH,
+        barHeight,
+      );
+    }
 
-  /** Draw the frozen history histogram after recording stops. */
-  const drawWaveform = useCallback(
-    (canvas: HTMLCanvasElement, data: Float32Array | null) => {
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+    ctx.restore();
+  }, []);
 
-      canvas.width = canvas.clientWidth || 200;
-      canvas.height = canvas.clientHeight || 32;
-
-      const { width, height } = canvas;
-      ctx.clearRect(0, 0, width, height);
-
-      if (!data || data.length === 0) return;
-
-      const barColor = getComputedStyle(canvas).color;
-      ctx.fillStyle = barColor;
-
-      const barCount = Math.max(1, Math.floor(width / (BAR_WIDTH + BAR_GAP)));
-
-      for (let i = 0; i < barCount; i++) {
-        const sampleIndex = Math.floor((i / barCount) * data.length);
-        const raw = data[sampleIndex] ?? 0;
-        const amplitude = Math.min(1, raw * 6);
-        const barHeight = Math.max(3, amplitude * height);
-        ctx.fillRect(
-          i * (BAR_WIDTH + BAR_GAP),
-          (height - barHeight) / 2,
-          BAR_WIDTH,
-          barHeight,
-        );
-      }
-    },
-    [],
-  );
-
-  // Redraw whenever waveform data changes
+  /*
+   * RAF loop: runs only during recording. Advances scrollPxRef by 1 px per frame
+   * for smooth scrolling. Every BAR_STEP pixels a new RMS sample is written to the
+   * ring buffer (overwriting the oldest slot). This keeps bar heights stable for
+   * BAR_STEP consecutive frames and avoids per-frame flicker.
+   */
   useEffect(() => {
-    waveformDataRef.current = waveformData;
+    if (!isRecording) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    if (isRecordingRef.current) {
-      const currentRms = waveformData?.[waveformData.length - 1] ?? 0;
-      drawSplash(canvas, currentRms);
-    } else {
-      drawWaveform(canvas, waveformData);
-    }
-  }, [waveformData, drawSplash, drawWaveform]);
 
-  // Redraw on resize so bars never overflow into the controls area
+    /* Reset ring buffer and scroll offset for a fresh recording session. */
+    ringBufferRef.current.fill(0);
+    writeIndexRef.current = 0;
+    scrollPxRef.current = 0;
+
+    let rafId: number;
+
+    const tick = () => {
+      /* Advance sub-bar scroll offset; sample the analyser once per full bar width. */
+      scrollPxRef.current += 1;
+      if (scrollPxRef.current >= BAR_STEP) {
+        scrollPxRef.current -= BAR_STEP;
+        const analyser = analyserNodeRef.current;
+        if (analyser) {
+          const buf = new Uint8Array(analyser.frequencyBinCount);
+          analyser.getByteTimeDomainData(buf);
+          let sum = 0;
+          for (let j = 0; j < buf.length; j++) {
+            const s = (buf[j] - 128) / 128;
+            sum += s * s;
+          }
+          ringBufferRef.current[writeIndexRef.current % RING_SIZE] = Math.sqrt(
+            sum / buf.length,
+          );
+          writeIndexRef.current++;
+        }
+      }
+      drawCanvas(canvas);
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, [isRecording, analyserNodeRef, drawCanvas]);
+
+  /* Redraw on resize — preserves accumulated ring buffer content at the new width. */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const observer = new ResizeObserver(() => {
-      if (isRecordingRef.current) {
-        const data = waveformDataRef.current;
-        const currentRms = data?.[data.length - 1] ?? 0;
-        drawSplash(canvas, currentRms);
-      } else {
-        drawWaveform(canvas, waveformDataRef.current);
-      }
+      drawCanvas(canvas);
     });
     observer.observe(canvas);
     return () => observer.disconnect();
-  }, [drawSplash, drawWaveform]);
+  }, [drawCanvas]);
 
   const controls = (
     <div className="flex flex-shrink-0 items-center justify-end gap-1">
-      {isRecording ? (
+      <DialGhostIconButton
+        icon={<IconX size={DIAL_ICON_SIZE.LG} aria-hidden />}
+        aria-label={discardLabel}
+        className="size-10 flex-shrink-0"
+        onClick={onDiscard}
+      />
+      {isRecording && (
         <DialGhostIconButton
           icon={
-            <IconPlaystationSquare
+            <IconPlayerStopFilled
               size={DIAL_ICON_SIZE.LG}
-              className={styles.micRecordingIcon}
+              className={styles.stopRecordingIcon}
               aria-hidden
             />
           }
@@ -196,38 +208,6 @@ export const VoiceBar: FC<VoiceBarProps> = ({
           className="size-10 flex-shrink-0"
           onClick={onStop}
         />
-      ) : (
-        <>
-          <DialGhostIconButton
-            icon={<IconX size={DIAL_ICON_SIZE.LG} aria-hidden />}
-            aria-label={discardLabel}
-            className="size-10 flex-shrink-0"
-            onClick={onDiscard}
-          />
-          {isUploading ? (
-            <DialSpinner
-              fullWidth={false}
-              size={DIAL_ICON_SIZE.LG}
-              ariaLabel={uploadingLabel}
-              className="flex size-10 flex-shrink-0 items-center justify-center"
-            />
-          ) : (
-            <DialGhostIconButton
-              icon={
-                <div className="flex size-8 items-center justify-center rounded-full bg-controls-accent-primary">
-                  <IconCheck
-                    size={24}
-                    aria-hidden
-                    className="rounded-full bg-controls-accent-primary text-control-permanent"
-                  />
-                </div>
-              }
-              aria-label={confirmLabel}
-              className="size-10 flex-shrink-0"
-              onClick={onConfirm}
-            />
-          )}
-        </>
       )}
     </div>
   );
@@ -242,16 +222,18 @@ export const VoiceBar: FC<VoiceBarProps> = ({
           isError && styles.containerError,
         )}
       >
-        {/* Row 1 on mobile / inline on desktop: recording dot + canvas */}
+        {/* Row 1 on mobile / inline on desktop: timer + waveform canvas */}
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {isRecording && (
-            <span
-              className={mergeClasses(
-                styles.recordingDot,
-                'size-2 flex-shrink-0 rounded-full',
-              )}
-              aria-hidden
-            />
+            <>
+              <span className={styles.recordingDot} aria-hidden />
+              <span
+                className={mergeClasses(styles.timer, 'flex-shrink-0')}
+                aria-label={timerLabel}
+              >
+                {formatTime(elapsedSeconds)}
+              </span>
+            </>
           )}
           <canvas
             ref={canvasRef}
