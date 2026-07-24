@@ -3,6 +3,7 @@ import {
   ResponseFormat,
   type Attachment,
   type DeploymentItem,
+  type DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import {
   FileDndOverlay,
@@ -21,8 +22,8 @@ import {
   ConversationI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
+  VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
@@ -106,9 +107,6 @@ const NewConversationComposer: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
-  const {
-    config: { asrModelId, transcribeSizeLimitBytes },
-  } = useAppConfig();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
 
@@ -160,13 +158,9 @@ const NewConversationComposer: FC<Props> = ({
     !isDialFileManagerOpen,
   );
 
-  const { handleUploadAudio, handleTranscribeAudio, isTranscriptionSupported } =
-    useAudioTranscription({
-      bucket,
-      transcribeSizeLimitBytes,
-      asrModelId,
-      selectedDeploymentId,
-    });
+  const { isAudioMessageSupported } = useAudioTranscription({
+    selectedDeploymentId,
+  });
 
   const chatSettings = useChatSettingsFormConfig({
     mode: 'local',
@@ -200,7 +194,7 @@ const NewConversationComposer: FC<Props> = ({
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
 
   const handleAttachmentClick = useCallback(
-    (attachment: Attachment) => {
+    (attachment: DisplayAttachment) => {
       void openAttachmentCanvas(attachment);
     },
     [openAttachmentCanvas],
@@ -320,9 +314,13 @@ const NewConversationComposer: FC<Props> = ({
           sendLabel={t(ChatI18nKeys.SendMessage)}
           sendTitle={t(ChatI18nKeys.SendMessage)}
           stopLabel={t(ChatI18nKeys.StopStreaming)}
-          isTranscriptionSupported={isTranscriptionSupported}
-          onUploadAudio={handleUploadAudio}
-          onTranscribeAudio={handleTranscribeAudio}
+          isAudioMessageSupported={isAudioMessageSupported}
+          micLabel={t(VoiceRecordingI18nKeys.MicLabel)}
+          stopRecordingLabel={t(VoiceRecordingI18nKeys.StopRecordingLabel)}
+          discardRecordingLabel={t(
+            VoiceRecordingI18nKeys.DiscardRecordingLabel,
+          )}
+          timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
           sendOnEnter={sendOnEnter}
           chatSettings={isEmptyChatSettingsEnabled ? chatSettings : undefined}
           pendingDropFiles={pendingFiles}

@@ -24,7 +24,6 @@ import {
   ConversationPanelI18nKeys,
   RateI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -73,9 +72,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
-    config: { asrModelId, transcribeSizeLimitBytes },
-  } = useAppConfig();
-  const {
     restoreSelectedItemId,
     selectedItemId: currentSelectedItemId,
     isLoading: isDeploymentsLoading,
@@ -98,13 +94,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   });
   const notifiedLoadedConversationIdRef = useRef<string | null>(null);
 
-  const { handleUploadAudio, handleTranscribeAudio, isTranscriptionSupported } =
-    useAudioTranscription({
-      bucket,
-      transcribeSizeLimitBytes,
-      asrModelId,
-      selectedDeploymentId: currentSelectedItemId,
-    });
+  const { isAudioMessageSupported } = useAudioTranscription({
+    selectedDeploymentId: currentSelectedItemId,
+  });
 
   const { showNotification } = useNotification();
 
@@ -567,9 +559,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}
           duplicateError={duplicateError ?? undefined}
-          isTranscriptionSupported={isTranscriptionSupported}
-          onUploadAudio={handleUploadAudio}
-          onTranscribeAudio={handleTranscribeAudio}
+          isAudioMessageSupported={isAudioMessageSupported}
           conversation={conversation}
           onConversationChange={handleConversationChange}
           inputContent={overlay ? overlayInputContent.value : undefined}

@@ -59,6 +59,9 @@ export const Input: FC<InputProps> = ({
   sendLabel,
   stopLabel,
   micLabel = 'Record voice message',
+  stopRecordingLabel,
+  discardRecordingLabel,
+  timerAriaLabel,
   colors,
   typography,
   className,
@@ -80,9 +83,7 @@ export const Input: FC<InputProps> = ({
   isInputDisabled = false,
   isModelSelectorDisabled = false,
   isSendDisabled = false,
-  isTranscriptionSupported = false,
-  onUploadAudio,
-  onTranscribeAudio,
+  isAudioMessageSupported = false,
   sendOnEnter = SendOnEnter.Enter,
   prefixAttachments = [],
   onRemovePrefixAttachment,
@@ -170,26 +171,23 @@ export const Input: FC<InputProps> = ({
     onAttachmentsLimitExceeded,
   });
 
-  const handleTranscript = useCallback(
-    (transcript: string) => {
-      setMessage(transcript);
-      onChange?.(transcript);
+  const handleAttachAudio = useCallback(
+    (file: File) => {
+      addAttachments(buildAttachments([file]));
     },
-    [onChange, setMessage],
+    [addAttachments, buildAttachments],
   );
 
   const {
     state: voiceState,
-    waveformData,
+    analyserNodeRef,
+    elapsedSeconds,
     errorMessage: voiceError,
     startRecording,
     stopRecording,
-    confirmRecording,
     discardRecording,
   } = useVoiceRecorder({
-    onUploadAudio,
-    onTranscribeAudio,
-    onTranscript: handleTranscript,
+    onAttachAudio: handleAttachAudio,
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -291,11 +289,14 @@ export const Input: FC<InputProps> = ({
     return (
       <VoiceBar
         state={voiceState}
-        waveformData={waveformData}
+        analyserNodeRef={analyserNodeRef}
+        elapsedSeconds={elapsedSeconds}
         errorMessage={voiceError}
         onStop={stopRecording}
-        onConfirm={confirmRecording}
         onDiscard={discardRecording}
+        stopLabel={stopRecordingLabel}
+        discardLabel={discardRecordingLabel}
+        timerLabel={timerAriaLabel}
         style={cssVars}
         className={className}
       />
@@ -354,7 +355,9 @@ export const Input: FC<InputProps> = ({
           onAttachmentClick={
             onAttachmentClick != null
               ? (id) => {
-                  const found = attachments.find((a) => a.id === id);
+                  const found = [...prefixAttachments, ...attachments].find(
+                    (a) => a.id === id,
+                  );
                   if (found != null) onAttachmentClick(found);
                 }
               : undefined
@@ -459,17 +462,15 @@ export const Input: FC<InputProps> = ({
                 )}
               </>
             )}
-            {isTranscriptionSupported &&
-              !message.trim() &&
-              !isSendButtonExiting && (
-                <DialGhostIconButton
-                  icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
-                  aria-label={micLabel}
-                  className="size-8 flex-shrink-0"
-                  onClick={startRecording}
-                  disabled={isInputDisabled || isStreaming}
-                />
-              )}
+            {isAudioMessageSupported && !isSendButtonExiting && (
+              <DialGhostIconButton
+                icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
+                aria-label={micLabel}
+                className="size-8 flex-shrink-0"
+                onClick={startRecording}
+                disabled={isInputDisabled || isStreaming}
+              />
+            )}
           </div>
         </div>
       )}

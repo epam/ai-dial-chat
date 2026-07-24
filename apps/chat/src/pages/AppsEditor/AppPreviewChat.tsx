@@ -36,7 +36,6 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
 } from '../../constants/translation-keys';
-import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -67,9 +66,6 @@ interface Props {
 const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
-  const {
-    config: { asrModelId, transcribeSizeLimitBytes },
-  } = useAppConfig();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const { items } = useDeployments();
@@ -133,13 +129,9 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     [showNotification, t],
   );
 
-  const { handleUploadAudio, handleTranscribeAudio, isTranscriptionSupported } =
-    useAudioTranscription({
-      bucket,
-      transcribeSizeLimitBytes,
-      asrModelId,
-      selectedDeploymentId: appId,
-    });
+  const { isAudioMessageSupported } = useAudioTranscription({
+    selectedDeploymentId: appId,
+  });
 
   const handleStopError = useCallback(() => {
     showNotification({
@@ -366,9 +358,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
         streamErrorText={hasStreamError ? t(ChatI18nKeys.StreamError) : ''}
         stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
-        isTranscriptionSupported={isTranscriptionSupported}
-        onUploadAudio={handleUploadAudio}
-        onTranscribeAudio={handleTranscribeAudio}
+        isAudioMessageSupported={isAudioMessageSupported}
         conversation={conversation}
         onConversationChange={handleConversationChange}
       />

@@ -21,6 +21,7 @@ export type {
   AttachmentCanvasContent,
   PlainTextCanvasContent,
   ImageCanvasContent,
+  AudioCanvasContent,
   MarkdownCanvasContent,
   JsonCanvasContent,
   PdfCanvasContent,

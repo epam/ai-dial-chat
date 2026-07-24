@@ -43,6 +43,7 @@ import {
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
+  VoiceRecordingI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -110,9 +111,7 @@ interface Props {
   isReadOnly?: boolean;
   onDuplicateConversation?: () => void;
   duplicateError?: string;
-  isTranscriptionSupported?: boolean;
-  onUploadAudio?: (file: File, contentType: string) => Promise<string>;
-  onTranscribeAudio?: (audioUrl: string) => Promise<string>;
+  isAudioMessageSupported?: boolean;
   conversation: Conversation;
   onConversationChange: (conv: Conversation) => void;
   /**
@@ -155,9 +154,7 @@ const ConversationView: FC<Props> = ({
   isReadOnly = false,
   onDuplicateConversation,
   duplicateError,
-  isTranscriptionSupported = false,
-  onUploadAudio,
-  onTranscribeAudio,
+  isAudioMessageSupported = false,
   conversation,
   onConversationChange,
   fixedModel,
@@ -467,7 +464,7 @@ const ConversationView: FC<Props> = ({
   );
 
   const handleInputAttachmentClick = useCallback(
-    (attachment: Attachment) => {
+    (attachment: DisplayAttachment) => {
       void openAttachmentCanvas(attachment);
     },
     [openAttachmentCanvas],
@@ -686,10 +683,16 @@ const ConversationView: FC<Props> = ({
                 sendLabel={t(ChatI18nKeys.SendMessage)}
                 sendTitle={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
-                isTranscriptionSupported={isTranscriptionSupported}
+                isAudioMessageSupported={isAudioMessageSupported}
+                micLabel={t(VoiceRecordingI18nKeys.MicLabel)}
+                stopRecordingLabel={t(
+                  VoiceRecordingI18nKeys.StopRecordingLabel,
+                )}
+                discardRecordingLabel={t(
+                  VoiceRecordingI18nKeys.DiscardRecordingLabel,
+                )}
+                timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
                 messageHistory={messageHistory}
-                onUploadAudio={onUploadAudio}
-                onTranscribeAudio={onTranscribeAudio}
                 sendOnEnter={sendOnEnter}
                 chatSettings={isTopSettingsEnabled ? chatSettings : undefined}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}

@@ -13,7 +13,10 @@ import {
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
 } from '../../../types/toolsets';
-import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
+import {
+  getToolsetOAuthChannelName,
+  getToolsetOAuthResultStorageKey,
+} from '../../../utils/toolsets';
 import ToolsetAuthCallback from '../ToolsetAuthCallback';
 
 const setRedirectState = (state: ToolsetRedirectState) =>
@@ -58,6 +61,7 @@ describe('ToolsetAuthCallback', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     sessionStorage.clear();
     vi.spyOn(window, 'close').mockImplementation(mockClose);
   });
@@ -142,7 +146,7 @@ describe('ToolsetAuthCallback', () => {
     });
   });
 
-  it('does not close the window immediately after posting a message on the flow channel', async () => {
+  it('persists the result and closes after posting it on the flow channel', async () => {
     setRedirectState({
       toolsetId: 'toolsets/b/my__1.0.0',
       credentialsLevel: ToolsetCredentialsLevel.User,
@@ -153,8 +157,13 @@ describe('ToolsetAuthCallback', () => {
     const resultPromise = listenForResult('flow-1');
     renderCallback('?code=auth-code-xyz&state=flow-1');
 
-    await resultPromise;
-    expect(mockClose).not.toHaveBeenCalled();
+    const result = await resultPromise;
+    expect(mockClose).toHaveBeenCalledOnce();
+    expect(
+      JSON.parse(
+        localStorage.getItem(getToolsetOAuthResultStorageKey('flow-1')) ?? '',
+      ),
+    ).toMatchObject({ result });
   });
 
   it('closes its sending channel after queuing the result', async () => {
@@ -171,7 +180,7 @@ describe('ToolsetAuthCallback', () => {
       renderCallback('?code=auth-code-xyz&state=flow-1');
 
       await resultPromise;
-      expect(mockClose).not.toHaveBeenCalled();
+      expect(mockClose).toHaveBeenCalledOnce();
       expect(closeChannelSpy).toHaveBeenCalledTimes(2);
     } finally {
       closeChannelSpy.mockRestore();

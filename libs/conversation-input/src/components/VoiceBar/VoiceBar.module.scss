@@ -24,13 +24,38 @@
 }
 
 .waveformCanvas {
-  color: var(--ci-voice-waveform, var(--text-tertiary, #808898));
+  color: var(--ci-voice-waveform, var(--text-primary, #161b2d));
+}
+
+.timer {
+  color: var(--ci-voice-waveform, var(--text-primary, #161b2d));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stopRecordingIcon {
+  color: var(--ci-voice-accent, var(--text-error, #ae2f2f));
+}
+
+@keyframes recording-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
 }
 
 .recordingDot {
-  background: var(--ci-voice-accent, var(--controls-bg-error, #ae2f2f));
-}
-
-.micRecordingIcon {
-  color: var(--ci-voice-accent, var(--text-error, #ae2f2f));
+  display: block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--ci-voice-accent, var(--text-error, #ae2f2f));
+  animation: recording-pulse 1.2s ease-in-out infinite;
+  pointer-events: none;
 }

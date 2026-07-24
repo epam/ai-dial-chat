@@ -244,27 +244,117 @@ export const initiateOAuthLogin = (
 };
 
 const TOOLSET_OAUTH_CHANNEL_PREFIX = 'toolset-oauth-';
+const TOOLSET_OAUTH_RESULT_STORAGE_PREFIX = 'toolset-oauth-result-';
+const TOOLSET_OAUTH_RESULT_TTL_MS = 10 * 60 * 1000;
 
 /** Name of the same-origin `BroadcastChannel` shared by an OAuth flow's opener and its callback popup. */
 export const getToolsetOAuthChannelName = (flowId: string): string =>
   `${TOOLSET_OAUTH_CHANNEL_PREFIX}${flowId}`;
 
-const DEFAULT_OAUTH_RESULT_TIMEOUT_MS = 5 * 60 * 1000;
-const DEFAULT_OAUTH_POPUP_POLL_INTERVAL_MS = 500;
-const DEFAULT_OAUTH_CLOSE_GRACE_MS = 300;
+/** Storage key for the durable, non-secret result of one OAuth flow. */
+export const getToolsetOAuthResultStorageKey = (flowId: string): string =>
+  `${TOOLSET_OAUTH_RESULT_STORAGE_PREFIX}${flowId}`;
+
+interface StoredToolsetOAuthResult {
+  expiresAt: number;
+  result: ToolsetOAuthChannelMessage;
+}
+
+const isStoredToolsetOAuthResult = (
+  value: unknown,
+): value is StoredToolsetOAuthResult => {
+  if (value == null || typeof value !== 'object') return false;
+  const stored = value as Partial<StoredToolsetOAuthResult>;
+  if (typeof stored.expiresAt !== 'number' || stored.result == null) {
+    return false;
+  }
+  if (stored.result.type === ToolsetOAuthResultType.Success) {
+    return (
+      typeof stored.result.toolsetId === 'string' &&
+      typeof stored.result.credentialsLevel === 'string'
+    );
+  }
+  return (
+    stored.result.type === ToolsetOAuthResultType.Failure &&
+    typeof stored.result.reason === 'string'
+  );
+};
+
+const removeStoredToolsetOAuthResult = (flowId: string): void => {
+  try {
+    localStorage.removeItem(getToolsetOAuthResultStorageKey(flowId));
+  } catch {
+    // BroadcastChannel remains the fallback when storage is unavailable.
+  }
+};
+
+const clearExpiredToolsetOAuthResults = (): void => {
+  const now = Date.now();
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index);
+    if (!key?.startsWith(TOOLSET_OAUTH_RESULT_STORAGE_PREFIX)) continue;
+    try {
+      const raw = localStorage.getItem(key);
+      const stored = raw == null ? null : (JSON.parse(raw) as unknown);
+      if (!isStoredToolsetOAuthResult(stored) || stored.expiresAt <= now) {
+        localStorage.removeItem(key);
+      }
+    } catch {
+      localStorage.removeItem(key);
+    }
+  }
+};
 
 /**
- * Waits for the OAuth callback popup to report a result over the flow's
- * `BroadcastChannel`, resolving with `Cancelled` if the popup is closed
- * manually (with no result ever posted) or no result arrives before the
- * timeout elapses.
- *
- * The callback popup does not close itself after posting a result — this
- * function closes it as soon as the message is received, so the popup can
- * never be observed closed before its message has arrived. `closeGraceMs`
- * therefore only matters for a genuine manual cancellation (the user closes
- * the popup before it ever posts anything), where there is no message to
- * race against.
+ * Persists a non-secret callback result before the popup closes, allowing the
+ * opener to recover it even when the BroadcastChannel event is delayed or
+ * dropped by the browser/environment.
+ */
+export const persistToolsetOAuthResult = (
+  flowId: string,
+  result: ToolsetOAuthChannelMessage,
+): boolean => {
+  try {
+    clearExpiredToolsetOAuthResults();
+    const stored: StoredToolsetOAuthResult = {
+      expiresAt: Date.now() + TOOLSET_OAUTH_RESULT_TTL_MS,
+      result,
+    };
+    localStorage.setItem(
+      getToolsetOAuthResultStorageKey(flowId),
+      JSON.stringify(stored),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const takeStoredToolsetOAuthResult = (
+  flowId: string,
+): ToolsetOAuthChannelMessage | null => {
+  try {
+    const key = getToolsetOAuthResultStorageKey(flowId);
+    const raw = localStorage.getItem(key);
+    if (raw == null) return null;
+    localStorage.removeItem(key);
+    const stored = JSON.parse(raw) as unknown;
+    return isStoredToolsetOAuthResult(stored) && stored.expiresAt > Date.now()
+      ? stored.result
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const DEFAULT_OAUTH_RESULT_TIMEOUT_MS = 5 * 60 * 1000;
+const DEFAULT_OAUTH_POPUP_POLL_INTERVAL_MS = 500;
+
+/**
+ * Waits for the OAuth callback popup to report a result over BroadcastChannel
+ * or through its flow-scoped durable storage entry. The callback persists the
+ * result before closing, so observing `popup.closed` can synchronously
+ * distinguish a completed flow from a genuine manual cancellation.
  */
 export const waitForToolsetOAuthResult = (
   popup: Window,
@@ -272,39 +362,53 @@ export const waitForToolsetOAuthResult = (
   {
     timeoutMs = DEFAULT_OAUTH_RESULT_TIMEOUT_MS,
     pollIntervalMs = DEFAULT_OAUTH_POPUP_POLL_INTERVAL_MS,
-    closeGraceMs = DEFAULT_OAUTH_CLOSE_GRACE_MS,
   }: {
     timeoutMs?: number;
     pollIntervalMs?: number;
-    closeGraceMs?: number;
   } = {},
 ): Promise<ToolsetOAuthResult> =>
   new Promise((resolve) => {
     const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
     let settled = false;
-    let closeGraceTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const finish = (outcome: ToolsetOAuthResult) => {
       if (settled) return;
       settled = true;
       clearInterval(pollId);
       clearTimeout(timeoutId);
-      if (closeGraceTimeoutId != null) clearTimeout(closeGraceTimeoutId);
+      window.removeEventListener('storage', handleStorage);
+      removeStoredToolsetOAuthResult(flowId);
       channel.close();
       resolve(outcome);
     };
 
-    channel.onmessage = (event: MessageEvent<ToolsetOAuthChannelMessage>) => {
+    const finishReportedResult = (result: ToolsetOAuthChannelMessage) => {
       popup.close();
-      finish(event.data);
+      finish(result);
     };
 
+    const takePersistedResult = (): boolean => {
+      const result = takeStoredToolsetOAuthResult(flowId);
+      if (result == null) return false;
+      finishReportedResult(result);
+      return true;
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === getToolsetOAuthResultStorageKey(flowId)) {
+        takePersistedResult();
+      }
+    };
+
+    channel.onmessage = (event: MessageEvent<ToolsetOAuthChannelMessage>) => {
+      finishReportedResult(event.data);
+    };
+    window.addEventListener('storage', handleStorage);
+
     const pollId = setInterval(() => {
-      if (popup.closed && closeGraceTimeoutId == null) {
-        closeGraceTimeoutId = setTimeout(
-          () => finish({ type: ToolsetOAuthResultType.Cancelled }),
-          closeGraceMs,
-        );
+      if (takePersistedResult()) return;
+      if (popup.closed) {
+        finish({ type: ToolsetOAuthResultType.Cancelled });
       }
     }, pollIntervalMs);
 
@@ -312,6 +416,8 @@ export const waitForToolsetOAuthResult = (
       popup.close();
       finish({ type: ToolsetOAuthResultType.Cancelled });
     }, timeoutMs);
+
+    takePersistedResult();
   });
 
 /**
