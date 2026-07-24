@@ -7,6 +7,7 @@ import {
 } from '@/src/utils/app/application';
 import { pluralizeDisplayName } from '@/src/utils/app/application-type-schema';
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
+import { getToolsetAuthFilterValues } from '@/src/utils/marketplace';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { MarketplaceFilters } from '@/src/types/marketplace';
@@ -24,6 +25,8 @@ import {
   MarketplaceEntitiesTabs,
   MarketplaceTabs,
   SourceType,
+  TOOLSET_AUTH_FILTER_VALUES,
+  ToolsetAuthFilter,
 } from '@/src/constants/marketplace';
 
 import { MarketplaceActions } from './marketplace.reducers';
@@ -148,6 +151,27 @@ const selectToolsetSourceTypes = createSelector(
   },
 );
 
+const selectToolsetAuthFilters = createSelector(
+  [ToolsetSelectors.selectToolsets],
+  (toolsets: ToolsetModel[]) => {
+    const presentValues = new Set<ToolsetAuthFilter>();
+
+    for (const toolset of toolsets) {
+      for (const value of getToolsetAuthFilterValues(toolset)) {
+        presentValues.add(value);
+      }
+
+      if (presentValues.size === TOOLSET_AUTH_FILTER_VALUES.length) {
+        break;
+      }
+    }
+
+    return TOOLSET_AUTH_FILTER_VALUES.filter((value) =>
+      presentValues.has(value),
+    );
+  },
+);
+
 const selectDeleteEntity = (state: RootState) =>
   rootSelector(state).deleteEntity;
 
@@ -176,6 +200,7 @@ const selectFiltersContent = createSelector(
     ToolsetSelectors.selectAreToolsetsLoaded,
     selectSelectedTab,
     SettingsSelectors.selectEnabledFeatures,
+    selectToolsetAuthFilters,
   ],
   (
     selectedEntitiesTab: MarketplaceEntitiesTabs,
@@ -190,6 +215,7 @@ const selectFiltersContent = createSelector(
     areToolsetsLoaded: boolean,
     selectedTab,
     enabledFeatures,
+    toolsetAuthFilters: ToolsetAuthFilter[],
   ) => {
     const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
     const shouldHidePersonalSources =
@@ -208,6 +234,7 @@ const selectFiltersContent = createSelector(
       return {
         topicsFilters: topics,
         sourcesFilters: filterPersonalSources(sourceTypes),
+        authFilters: [] as ToolsetAuthFilter[],
         selectedFilters: selectedAgentsFilters,
         showLoader: !areModelsLoaded || !!isMarketplaceLoading,
         setFilters: MarketplaceActions.setSelectedAgentsFilters,
@@ -216,6 +243,7 @@ const selectFiltersContent = createSelector(
     return {
       topicsFilters: toolsetsTopics,
       sourcesFilters: filterPersonalSources(toolsetSourceTypes),
+      authFilters: toolsetAuthFilters,
       selectedFilters: selectedToolsetsFilters,
       showLoader: !areToolsetsLoaded || !!isMarketplaceLoading,
       setFilters: MarketplaceActions.setSelectedToolsetsFilters,
@@ -244,6 +272,7 @@ export const MarketplaceSelectors = {
   selectDetailsModel,
   selectSourceTypes,
   selectToolsetSourceTypes,
+  selectToolsetAuthFilters,
   selectDeleteEntity,
   selectDetailsEntity,
   selectDetailsToolset,
