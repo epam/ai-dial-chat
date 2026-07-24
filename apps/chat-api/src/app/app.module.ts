@@ -1,6 +1,6 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -11,6 +11,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
 import { ClientChannelModule } from '../client-channel/client-channel.module';
 import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
+import { EnvironmentVariables } from '../config/environment.config';
 import { validate } from '../config/validation';
 import { ConversationModule } from '../conversations/conversation.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
@@ -47,7 +48,15 @@ import { createServeStaticOptions } from './static-assets';
         limit: 100, // 100 requests per minute
       },
     ]),
-    ServeStaticModule.forRoot(createServeStaticOptions()),
+    ServeStaticModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<EnvironmentVariables, true>) =>
+        createServeStaticOptions({
+          overlaySandboxEnabled: configService.get('OVERLAY_SANDBOX_ENABLED', {
+            infer: true,
+          }),
+        }),
+    }),
     DialCoreModule,
     AppConfigModule,
     ApplicationSchemasModule,
