@@ -1,3 +1,4 @@
+import type { ScheduledTaskCardGridLabels } from './scheduled-task-card-grid-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
 
 /** A single sort option shown in the Scheduled Tasks toolbar sort control. */
@@ -8,8 +9,8 @@ export interface ScheduledTasksSortOption {
   label: string;
 }
 
-/** Localized text strings used by the {@link ScheduledTasks} component. */
-export interface ScheduledTasksTexts {
+/** Localized labels used by the {@link ScheduledTasks} component. */
+export interface ScheduledTasksLabels {
   /** Page title, e.g. "Scheduled tasks". */
   title: string;
   /** One-line description shown beneath the title. */
@@ -38,16 +39,8 @@ export interface ScheduledTasksTexts {
   sharedSectionTitle: string;
   /** Title for the section grouping items with `sectionKey: 'myTasks'`. */
   myTasksSectionTitle: string;
-  /** Label shown in a card's "new" badge. */
-  cardNewBadgeLabel?: string;
-  /** Accessible label for a card's overflow-menu trigger. */
-  cardActionsLabel?: string;
-  /** Label for the "Edit" card menu action. */
-  cardEditActionLabel?: string;
-  /** Label for the "Run now" card menu action. */
-  cardRunNowActionLabel?: string;
-  /** Label for the "Delete" card menu action. */
-  cardDeleteActionLabel?: string;
+  /** Localized labels forwarded as-is to every card in the grid. */
+  cardLabels?: ScheduledTaskCardGridLabels;
 }
 
 /** Style overrides for the {@link ScheduledTasks} component. */
@@ -66,8 +59,8 @@ export interface ScheduledTasksStyles {
 
 /** Props for the {@link ScheduledTasks} component. */
 export interface ScheduledTasksProps {
-  /** Localized text strings. */
-  texts: ScheduledTasksTexts;
+  /** Localized labels. */
+  labels: ScheduledTasksLabels;
   /** Called when the user activates the primary "create task" action. */
   onCreateClick: () => void;
   /** Current value of the toolbar search input. */

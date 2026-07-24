@@ -139,7 +139,7 @@ const baseValues: ScheduledTaskCreateFormValues = {
 const renderForm = (overrides?: Partial<ScheduledTaskCreateFormProps>) =>
   render(
     <ScheduledTaskCreateForm
-      texts={{
+      labels={{
         pageTitle: 'New scheduled task',
         displayNameLabel: 'Name',
         displayNameRequired: 'Name is required',

@@ -28,24 +28,30 @@ vi.mock('../../../hooks/scheduled-tasks/useScheduledTasks', () => ({
 }));
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
+  ScheduledTasksSortKey: {
+    FirstToRun: 'firstToRun',
+    LastToRun: 'lastToRun',
+    Newest: 'newest',
+    NameAZ: 'nameAZ',
+  },
   ScheduledTasks: ({
-    texts,
+    labels,
     onCreateClick,
     items,
     error,
     onRetry,
   }: {
-    texts: { title: string; createButtonLabel: string; retryLabel: string };
+    labels: { title: string; createButtonLabel: string; retryLabel: string };
     onCreateClick: () => void;
     items: { id: string }[];
     error: Error | null;
     onRetry: () => void;
   }) => (
     <div>
-      {texts.title}
+      {labels.title}
       <span>items:{items.length}</span>
-      {error && <button onClick={onRetry}>{texts.retryLabel}</button>}
-      <button onClick={onCreateClick}>{texts.createButtonLabel}</button>
+      {error && <button onClick={onRetry}>{labels.retryLabel}</button>}
+      <button onClick={onCreateClick}>{labels.createButtonLabel}</button>
     </div>
   ),
 }));

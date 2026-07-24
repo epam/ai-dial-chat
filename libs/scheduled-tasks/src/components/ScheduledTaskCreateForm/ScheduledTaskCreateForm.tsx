@@ -24,7 +24,7 @@ import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create
  * own and performs no routing, i18n, or network calls.
  */
 export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
-  texts,
+  labels,
   values,
   errors,
   modelOptions,
@@ -47,10 +47,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
   const selectedModelLabel =
     modelOptions.find((option) => option.id === values.modelId)?.label ??
-    texts.modelPlaceholder;
+    labels.modelPlaceholder;
   const selectedFrequencyLabel =
-    texts.frequencyOptions.find((option) => option.key === values.frequency)
-      ?.label ?? texts.frequencyLabel;
+    labels.frequencyOptions.find((option) => option.key === values.frequency)
+      ?.label ?? labels.frequencyLabel;
 
   return (
     <div
@@ -61,18 +61,18 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     >
       <div className="flex items-center justify-between gap-4">
         <h1 className={mergeClasses('truncate', titleClassName)}>
-          {texts.pageTitle}
+          {labels.pageTitle}
         </h1>
         <div className="flex items-center gap-2">
           <NeutralButton
             type="button"
-            label={texts.cancelButtonLabel}
+            label={labels.cancelButtonLabel}
             onClick={onCancel}
             disabled={isSubmitting}
           />
           <PrimaryButton
             type="button"
-            label={texts.createButtonLabel}
+            label={labels.createButtonLabel}
             onClick={onSubmit}
             disabled={isCreateDisabled}
           />
@@ -84,23 +84,23 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           id="scheduled-task-display-name"
           value={values.displayName}
           onChange={(value) => onFieldChange('displayName', value ?? '')}
-          labelProps={{ label: texts.displayNameLabel, required: true }}
+          labelProps={{ label: labels.displayNameLabel, required: true }}
           invalid={Boolean(errors.displayName)}
           error={errors.displayName}
         />
 
         <fieldset className="flex flex-col gap-3">
           <legend className={scheduleSectionLabelClassName}>
-            {texts.scheduleSectionLabel}
+            {labels.scheduleSectionLabel}
           </legend>
 
           <DialSegmentedControl
-            ariaLabel={texts.scheduleTypeAriaLabel}
+            ariaLabel={labels.scheduleTypeAriaLabel}
             value={values.scheduleType}
             onChange={(value) => onFieldChange('scheduleType', value)}
             options={[
-              { value: 'once', label: texts.scheduleTypeOnceLabel },
-              { value: 'recurring', label: texts.scheduleTypeRecurringLabel },
+              { value: 'once', label: labels.scheduleTypeOnceLabel },
+              { value: 'recurring', label: labels.scheduleTypeRecurringLabel },
             ]}
           />
 
@@ -110,7 +110,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               type="datetime-local"
               value={values.runAt ?? ''}
               onChange={(value) => onFieldChange('runAt', value ?? '')}
-              labelProps={{ label: texts.runAtLabel, required: true }}
+              labelProps={{ label: labels.runAtLabel, required: true }}
               invalid={Boolean(errors.runAt)}
               error={errors.runAt}
             />
@@ -121,7 +121,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               <DialDropdown
                 matchReferenceWidth={false}
                 placement="bottom-start"
-                items={texts.frequencyOptions.map((option) => ({
+                items={labels.frequencyOptions.map((option) => ({
                   key: option.key,
                   label: (
                     <span className="flex w-full items-center justify-between gap-2">
@@ -137,7 +137,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 <GhostButton
                   type="button"
                   label={selectedFrequencyLabel}
-                  aria-label={texts.frequencyLabel}
+                  aria-label={labels.frequencyLabel}
                   iconAfter={
                     <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
                   }
@@ -149,7 +149,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 type="time"
                 value={values.time}
                 onChange={(value) => onFieldChange('time', value ?? '')}
-                labelProps={{ label: texts.timeLabel, required: true }}
+                labelProps={{ label: labels.timeLabel, required: true }}
                 invalid={Boolean(errors.time)}
                 error={errors.time}
               />
@@ -159,7 +159,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   id="scheduled-task-day-of-week"
                   value={values.dayOfWeek ?? ''}
                   onChange={(value) => onFieldChange('dayOfWeek', value ?? '')}
-                  labelProps={{ label: texts.dayOfWeekLabel, required: true }}
+                  labelProps={{ label: labels.dayOfWeekLabel, required: true }}
                   invalid={Boolean(errors.dayOfWeek)}
                   error={errors.dayOfWeek}
                 />
@@ -170,7 +170,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   id="scheduled-task-day-of-month"
                   value={values.dayOfMonth ?? ''}
                   onChange={(value) => onFieldChange('dayOfMonth', value ?? '')}
-                  labelProps={{ label: texts.dayOfMonthLabel, required: true }}
+                  labelProps={{ label: labels.dayOfMonthLabel, required: true }}
                   invalid={Boolean(errors.dayOfMonth)}
                   error={errors.dayOfMonth}
                 />
@@ -198,7 +198,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           <GhostButton
             type="button"
             label={selectedModelLabel}
-            aria-label={texts.modelLabel}
+            aria-label={labels.modelLabel}
             iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />}
           />
         </DialDropdown>
@@ -207,14 +207,14 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           id="scheduled-task-prompt"
           value={values.prompt}
           onChange={(value) => onFieldChange('prompt', value)}
-          labelProps={{ label: texts.promptLabel, required: true }}
+          labelProps={{ label: labels.promptLabel, required: true }}
           invalid={Boolean(errors.prompt)}
           error={errors.prompt}
         />
 
         <DialSwitch
           switchId="scheduled-task-stream"
-          label={texts.streamLabel}
+          label={labels.streamLabel}
           isOn={values.stream}
           onChange={(value) => onFieldChange('stream', value)}
         />

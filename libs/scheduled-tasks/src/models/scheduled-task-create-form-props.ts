@@ -62,8 +62,8 @@ export interface ScheduledTaskCreateFormErrors {
   prompt?: string;
 }
 
-/** Localized text strings used by the {@link ScheduledTaskCreateForm} component. */
-export interface ScheduledTaskCreateFormTexts {
+/** Localized labels used by the {@link ScheduledTaskCreateForm} component. */
+export interface ScheduledTaskCreateFormLabels {
   /** Page/header title, e.g. "New scheduled task". */
   pageTitle: string;
   /** Display name field label. */
@@ -116,8 +116,8 @@ export interface ScheduledTaskCreateFormStyles {
 
 /** Props for the {@link ScheduledTaskCreateForm} component. */
 export interface ScheduledTaskCreateFormProps {
-  /** Localized text strings. */
-  texts: ScheduledTaskCreateFormTexts;
+  /** Localized labels. */
+  labels: ScheduledTaskCreateFormLabels;
   /** Current field values. */
   values: ScheduledTaskCreateFormValues;
   /** Current per-field validation errors. */

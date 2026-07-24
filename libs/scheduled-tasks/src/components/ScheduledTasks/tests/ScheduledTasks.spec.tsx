@@ -101,7 +101,7 @@ const buildItem = (
 const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
   render(
     <ScheduledTasks
-      texts={{
+      labels={{
         title: 'Scheduled tasks',
         subtitle: 'Automate recurring tasks with scheduled runs.',
         createButtonLabel: 'New task',

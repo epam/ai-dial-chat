@@ -1,8 +1,8 @@
 import type { ScheduledTaskCardStyles } from './scheduled-task-card-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
 
-/** Localized text strings for the {@link ScheduledTaskCardGrid} component's cards. All have English defaults. */
-export interface ScheduledTaskCardGridTexts {
+/** Localized labels for the {@link ScheduledTaskCardGrid} component's cards. All have English defaults. */
+export interface ScheduledTaskCardGridLabels {
   /** Label shown in a card's "new" badge. Defaults to `'NEW'`. */
   newBadgeLabel?: string;
   /** Accessible label for a card's overflow-menu trigger. Defaults to `'More actions'`. */
@@ -27,8 +27,8 @@ export interface ScheduledTaskCardGridProps {
   onRunNow?: (id: string) => void;
   /** Called with a task id when the user activates "Delete" on a card. Omit to hide the action on every card. */
   onDelete?: (id: string) => void;
-  /** Localized text strings forwarded to each card. */
-  texts?: ScheduledTaskCardGridTexts;
+  /** Localized labels forwarded to each card. */
+  labels?: ScheduledTaskCardGridLabels;
   /** Style overrides forwarded to each card. */
   cardStyles?: ScheduledTaskCardStyles;
 }

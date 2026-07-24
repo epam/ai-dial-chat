@@ -9,7 +9,7 @@ export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
   onEdit,
   onRunNow,
   onDelete,
-  texts,
+  labels,
   cardStyles,
 }) => (
   <div className="grid grid-cols-1 gap-5 desktop:grid-cols-3">
@@ -21,7 +21,7 @@ export const ScheduledTaskCardGrid: FC<ScheduledTaskCardGridProps> = ({
         onEdit={onEdit}
         onRunNow={onRunNow}
         onDelete={onDelete}
-        texts={texts}
+        labels={labels}
         styles={cardStyles}
       />
     ))}

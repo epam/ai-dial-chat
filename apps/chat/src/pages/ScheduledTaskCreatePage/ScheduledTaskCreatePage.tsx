@@ -85,7 +85,7 @@ const ScheduledTaskCreatePage: FC = () => {
     [deploymentItems],
   );
 
-  const texts = useMemo(
+  const labels = useMemo(
     () => ({
       pageTitle: t(ScheduledTasksI18nKeys.CreatePageTitle),
       displayNameLabel: t(EditorI18nKeys.NameLabel),
@@ -219,7 +219,7 @@ const ScheduledTaskCreatePage: FC = () => {
 
   return (
     <ScheduledTaskCreateForm
-      texts={texts}
+      labels={labels}
       values={values}
       errors={errors}
       modelOptions={modelOptions}

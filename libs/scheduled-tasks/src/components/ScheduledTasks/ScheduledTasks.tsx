@@ -31,7 +31,7 @@ const SECTION_ORDER: ScheduledTaskSectionKey[] = ['shared', 'myTasks'];
  * section-grouped card grid, depending on `isLoading`/`error`/`items`.
  */
 export const ScheduledTasks: FC<ScheduledTasksProps> = ({
-  texts,
+  labels,
   onCreateClick,
   searchQuery,
   onSearchQueryChange,
@@ -56,7 +56,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   const emptyStateIconSize = scheduledTasksStyles?.emptyStateIconSize ?? 48;
 
   const activeSortLabel =
-    texts.sortOptions.find((option) => option.key === sortKey)?.label ?? '';
+    labels.sortOptions.find((option) => option.key === sortKey)?.label ?? '';
 
   const visibleItems = useMemo(
     () =>
@@ -69,32 +69,24 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
 
   const sections = useMemo(() => {
     const sectionTitles: Record<ScheduledTaskSectionKey, string> = {
-      shared: texts.sharedSectionTitle,
-      myTasks: texts.myTasksSectionTitle,
+      shared: labels.sharedSectionTitle,
+      myTasks: labels.myTasksSectionTitle,
     };
     return SECTION_ORDER.map((key) => ({
       key,
       title: sectionTitles[key],
       items: visibleItems.filter((item) => item.sectionKey === key),
     })).filter((section) => section.items.length > 0);
-  }, [visibleItems, texts.sharedSectionTitle, texts.myTasksSectionTitle]);
-
-  const cardTexts = {
-    newBadgeLabel: texts.cardNewBadgeLabel,
-    actionsLabel: texts.cardActionsLabel,
-    editActionLabel: texts.cardEditActionLabel,
-    runNowActionLabel: texts.cardRunNowActionLabel,
-    deleteActionLabel: texts.cardDeleteActionLabel,
-  };
+  }, [visibleItems, labels.sharedSectionTitle, labels.myTasksSectionTitle]);
 
   const statusMessage = isLoading
     ? undefined
     : error
-      ? texts.errorLabel
+      ? labels.errorLabel
       : items.length === 0
-        ? texts.emptyStateLabel
+        ? labels.emptyStateLabel
         : visibleItems.length === 0
-          ? texts.noResultsLabel
+          ? labels.noResultsLabel
           : `${visibleItems.length}`;
 
   const renderContent = () => {
@@ -105,8 +97,8 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     if (error) {
       return (
         <div className="flex flex-col items-center gap-3">
-          <p className={subtitleClassName}>{texts.errorLabel}</p>
-          <GhostButton label={texts.retryLabel} onClick={onRetry} />
+          <p className={subtitleClassName}>{labels.errorLabel}</p>
+          <GhostButton label={labels.retryLabel} onClick={onRetry} />
         </div>
       );
     }
@@ -121,13 +113,13 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
               stroke={1}
             />
           }
-          label={texts.emptyStateLabel}
+          label={labels.emptyStateLabel}
         />
       );
     }
 
     if (visibleItems.length === 0) {
-      return <p className={subtitleClassName}>{texts.noResultsLabel}</p>;
+      return <p className={subtitleClassName}>{labels.noResultsLabel}</p>;
     }
 
     return (
@@ -144,7 +136,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
               onEdit={onEdit}
               onRunNow={onRunNow}
               onDelete={onDelete}
-              texts={cardTexts}
+              labels={labels.cardLabels}
             />
           </ScheduledTaskSection>
         ))}
@@ -168,15 +160,15 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 gap-2">
           <h1 className={mergeClasses('truncate', titleClassName)}>
-            {texts.title}
+            {labels.title}
           </h1>
           <p className={mergeClasses('mt-1', subtitleClassName)}>
-            {texts.subtitle}
+            {labels.subtitle}
           </p>
         </div>
 
         <PrimaryButton
-          label={texts.createButtonLabel}
+          label={labels.createButtonLabel}
           iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
           onClick={onCreateClick}
           className="shrink-0"
@@ -189,9 +181,9 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
             value={searchQuery}
             onChange={onSearchQueryChange}
             labels={{
-              placeholder: texts.searchPlaceholder,
-              ariaLabel: texts.searchAriaLabel,
-              clearLabel: texts.clearSearchLabel,
+              placeholder: labels.searchPlaceholder,
+              ariaLabel: labels.searchAriaLabel,
+              clearLabel: labels.clearSearchLabel,
             }}
             iconSize={18}
             iconStrokeWidth={1.8}
@@ -203,12 +195,12 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           />
         </div>
 
-        {texts.sortOptions.length > 0 && (
+        {labels.sortOptions.length > 0 && (
           <DialDropdown
             matchReferenceWidth={false}
             placement="bottom-end"
             listClassName="cp-dropdown-overlay"
-            items={texts.sortOptions.map((option) => ({
+            items={labels.sortOptions.map((option) => ({
               key: option.key,
               label: (
                 <span className="flex w-full items-center justify-between gap-2">
@@ -223,7 +215,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           >
             <GhostButton
               label={activeSortLabel}
-              aria-label={texts.sortLabel}
+              aria-label={labels.sortLabel}
               className={mergeClasses('rounded-[4px]', sortButtonClassName)}
               iconBefore={<IconArrowsSort size={20} aria-hidden />}
               iconAfter={<IconChevronUp size={20} aria-hidden />}

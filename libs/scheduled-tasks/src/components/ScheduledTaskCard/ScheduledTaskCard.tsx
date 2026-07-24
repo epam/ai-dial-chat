@@ -24,15 +24,15 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   onEdit,
   onRunNow,
   onDelete,
-  texts,
+  labels,
   styles: cardStyles,
   className,
 }) => {
-  const newBadgeLabel = texts?.newBadgeLabel ?? 'NEW';
-  const actionsLabel = texts?.actionsLabel ?? 'More actions';
-  const editActionLabel = texts?.editActionLabel ?? 'Edit';
-  const runNowActionLabel = texts?.runNowActionLabel ?? 'Run now';
-  const deleteActionLabel = texts?.deleteActionLabel ?? 'Delete';
+  const newBadgeLabel = labels?.newBadgeLabel ?? 'NEW';
+  const actionsLabel = labels?.actionsLabel ?? 'More actions';
+  const editActionLabel = labels?.editActionLabel ?? 'Edit';
+  const runNowActionLabel = labels?.runNowActionLabel ?? 'Run now';
+  const deleteActionLabel = labels?.deleteActionLabel ?? 'Delete';
 
   const titleClassName =
     cardStyles?.titleClassName ?? 'dial-body-semi-text text-primary';

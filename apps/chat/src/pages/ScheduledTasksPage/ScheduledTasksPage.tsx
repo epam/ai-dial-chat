@@ -1,4 +1,7 @@
-import { ScheduledTasks } from '@epam/ai-dial-scheduled-tasks';
+import {
+  ScheduledTasks,
+  ScheduledTasksSortKey,
+} from '@epam/ai-dial-scheduled-tasks';
 import {
   memo,
   useCallback,
@@ -37,7 +40,9 @@ const ScheduledTasksPage: FC = () => {
   } = useScheduledTasks(isEnabled);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortKey, setSortKey] = useState('firstToRun');
+  const [sortKey, setSortKey] = useState<string>(
+    ScheduledTasksSortKey.FirstToRun,
+  );
 
   useEffect(() => {
     const state = location.state as NavigationState | null;
@@ -54,7 +59,7 @@ const ScheduledTasksPage: FC = () => {
     navigate(`${ROUTES.ScheduledTaskCreate}?${params.toString()}`);
   }, [navigate]);
 
-  const texts = useMemo(
+  const labels = useMemo(
     () => ({
       title: t(ScheduledTasksI18nKeys.PageTitle),
       subtitle: t(ScheduledTasksI18nKeys.PageSubtitle),
@@ -64,10 +69,22 @@ const ScheduledTasksPage: FC = () => {
       clearSearchLabel: t(ScheduledTasksI18nKeys.ClearSearchLabel),
       sortLabel: t(ScheduledTasksI18nKeys.SortLabel),
       sortOptions: [
-        { key: 'firstToRun', label: t(ScheduledTasksI18nKeys.SortFirstToRun) },
-        { key: 'lastToRun', label: t(ScheduledTasksI18nKeys.SortLastToRun) },
-        { key: 'newest', label: t(ScheduledTasksI18nKeys.SortNewest) },
-        { key: 'nameAZ', label: t(ScheduledTasksI18nKeys.SortNameAZ) },
+        {
+          key: ScheduledTasksSortKey.FirstToRun,
+          label: t(ScheduledTasksI18nKeys.SortFirstToRun),
+        },
+        {
+          key: ScheduledTasksSortKey.LastToRun,
+          label: t(ScheduledTasksI18nKeys.SortLastToRun),
+        },
+        {
+          key: ScheduledTasksSortKey.Newest,
+          label: t(ScheduledTasksI18nKeys.SortNewest),
+        },
+        {
+          key: ScheduledTasksSortKey.NameAZ,
+          label: t(ScheduledTasksI18nKeys.SortNameAZ),
+        },
       ],
       emptyStateLabel: t(ScheduledTasksI18nKeys.EmptyStateLabel),
       noResultsLabel: t(ScheduledTasksI18nKeys.ListNoResultsLabel),
@@ -75,11 +92,13 @@ const ScheduledTasksPage: FC = () => {
       retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
       sharedSectionTitle: t(ScheduledTasksI18nKeys.ListSharedSectionTitle),
       myTasksSectionTitle: t(ScheduledTasksI18nKeys.ListMyTasksSectionTitle),
-      cardNewBadgeLabel: t(ScheduledTasksI18nKeys.CardNewBadgeLabel),
-      cardActionsLabel: t(ScheduledTasksI18nKeys.CardActionsLabel),
-      cardEditActionLabel: t(ScheduledTasksI18nKeys.CardEditActionLabel),
-      cardRunNowActionLabel: t(ScheduledTasksI18nKeys.CardRunNowActionLabel),
-      cardDeleteActionLabel: t(ScheduledTasksI18nKeys.CardDeleteActionLabel),
+      cardLabels: {
+        newBadgeLabel: t(ScheduledTasksI18nKeys.CardNewBadgeLabel),
+        actionsLabel: t(ScheduledTasksI18nKeys.CardActionsLabel),
+        editActionLabel: t(ScheduledTasksI18nKeys.CardEditActionLabel),
+        runNowActionLabel: t(ScheduledTasksI18nKeys.CardRunNowActionLabel),
+        deleteActionLabel: t(ScheduledTasksI18nKeys.CardDeleteActionLabel),
+      },
     }),
     [t],
   );
@@ -95,7 +114,7 @@ const ScheduledTasksPage: FC = () => {
 
   return (
     <ScheduledTasks
-      texts={texts}
+      labels={labels}
       onCreateClick={handleCreateClick}
       searchQuery={searchQuery}
       onSearchQueryChange={setSearchQuery}

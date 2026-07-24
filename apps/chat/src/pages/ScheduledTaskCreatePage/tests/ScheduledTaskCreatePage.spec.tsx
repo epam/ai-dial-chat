@@ -27,7 +27,7 @@ vi.mock('../../../server-api/scheduled-tasks.api', () => ({
 }));
 
 interface FormProps {
-  texts: { cancelButtonLabel: string; createButtonLabel: string };
+  labels: { cancelButtonLabel: string; createButtonLabel: string };
   values: {
     displayName: string;
     modelId: string;
@@ -44,7 +44,7 @@ interface FormProps {
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
   ScheduledTaskCreateForm: ({
-    texts,
+    labels,
     values,
     errors,
     modelOptions,
@@ -79,9 +79,9 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       {errors.displayName && <span>{errors.displayName}</span>}
       {errors.modelId && <span>{errors.modelId}</span>}
       {errors.prompt && <span>{errors.prompt}</span>}
-      <button onClick={onCancel}>{texts.cancelButtonLabel}</button>
+      <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button onClick={onSubmit} disabled={isSubmitting}>
-        {texts.createButtonLabel}
+        {labels.createButtonLabel}
       </button>
     </div>
   ),

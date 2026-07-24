@@ -1,7 +1,7 @@
 import type { ScheduledTaskItem } from './scheduled-task-item';
 
-/** Localized text strings used by the {@link ScheduledTaskCard} component. All have English defaults. */
-export interface ScheduledTaskCardTexts {
+/** Localized labels used by the {@link ScheduledTaskCard} component. All have English defaults. */
+export interface ScheduledTaskCardLabels {
   /** Label shown in the "new" badge when `item.isNew` is set. Defaults to `'NEW'`. */
   newBadgeLabel?: string;
   /** Accessible label for the overflow-menu trigger button. Defaults to `'More actions'`. */
@@ -44,8 +44,8 @@ export interface ScheduledTaskCardProps {
   onRunNow?: (id: string) => void;
   /** Called with the task id when the user activates "Delete". Omit to hide the action. */
   onDelete?: (id: string) => void;
-  /** Localized text strings. */
-  texts?: ScheduledTaskCardTexts;
+  /** Localized labels. */
+  labels?: ScheduledTaskCardLabels;
   /** Style overrides. */
   styles?: ScheduledTaskCardStyles;
   /** Additional CSS class applied to the card root. */

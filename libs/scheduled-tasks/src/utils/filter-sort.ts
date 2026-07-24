@@ -1,11 +1,12 @@
 import type { ScheduledTaskItem } from '../models/scheduled-task-item';
 
 /** Sort keys supported by the Scheduled Tasks toolbar. */
-export type ScheduledTasksSortKey =
-  | 'firstToRun'
-  | 'lastToRun'
-  | 'newest'
-  | 'nameAZ';
+export enum ScheduledTasksSortKey {
+  FirstToRun = 'firstToRun',
+  LastToRun = 'lastToRun',
+  Newest = 'newest',
+  NameAZ = 'nameAZ',
+}
 
 /** Case-insensitive substring match against `displayName` and `descriptionPreview`. */
 export const filterScheduledTaskItems = (
@@ -43,7 +44,7 @@ export const sortScheduledTaskItems = (
 ): ScheduledTaskItem[] => {
   const sorted = [...items];
   switch (sortKey as ScheduledTasksSortKey) {
-    case 'firstToRun':
+    case ScheduledTasksSortKey.FirstToRun:
       return sorted.sort((a, b) =>
         compareByOptionalDate(
           a.sortValues.nextRunAt,
@@ -51,7 +52,7 @@ export const sortScheduledTaskItems = (
           1,
         ),
       );
-    case 'lastToRun':
+    case ScheduledTasksSortKey.LastToRun:
       return sorted.sort((a, b) =>
         compareByOptionalDate(
           a.sortValues.nextRunAt,
@@ -59,7 +60,7 @@ export const sortScheduledTaskItems = (
           -1,
         ),
       );
-    case 'newest':
+    case ScheduledTasksSortKey.Newest:
       return sorted.sort((a, b) =>
         compareByOptionalDate(
           a.sortValues.createdAt,
@@ -67,7 +68,7 @@ export const sortScheduledTaskItems = (
           -1,
         ),
       );
-    case 'nameAZ':
+    case ScheduledTasksSortKey.NameAZ:
       return sorted.sort((a, b) => a.displayName.localeCompare(b.displayName));
     default:
       return sorted;
