@@ -28,10 +28,10 @@ FROM deps AS builder
 # Copy the full monorepo source on top of the installed node_modules
 COPY . .
 
-# Build the React SPA → apps/chat/dist/
+# Build the React SPA → apps/chat/dist/ and overlay sandbox → apps/chat-overlay-sandbox/dist/
 # Keep Docker builds deterministic: parallel Nx build/typecheck tasks can race
 # while reading and regenerating declaration outputs in a clean image layer.
-RUN npm exec -- nx run-many --target=build --projects=@epam/chat --parallel=1
+RUN npm exec -- nx run-many --target=build --projects=@epam/chat,chat-overlay-sandbox --parallel=1
 
 # Build NestJS, generate a pruned package.json/lockfile, and copy
 # workspace packages → apps/chat-api/dist/{main.js,package.json,...,workspace_modules/}
@@ -57,6 +57,9 @@ RUN npm ci --omit=dev
 # React SPA static files
 # static-assets.ts resolves __dirname(dist)/../../chat/dist → /app/apps/chat/dist
 COPY --from=builder /workspace/apps/chat/dist /app/apps/chat/dist
+
+# Overlay sandbox static files served by chat-api at /overlay-sandbox when enabled.
+COPY --from=builder /workspace/apps/chat-overlay-sandbox/dist /app/apps/chat-overlay-sandbox/dist
 
 WORKDIR /app
 

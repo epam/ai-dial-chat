@@ -87,4 +87,20 @@ describe('validate', () => {
     const config = validate({ ...baseConfig, OVERLAY_ENABLED: 'yes' });
     expect(config.OVERLAY_ENABLED).toBe(true);
   });
+
+  it('defaults OVERLAY_SANDBOX_ENABLED to false when unset', () => {
+    const config = validate({ ...baseConfig });
+    expect(config.OVERLAY_SANDBOX_ENABLED).toBe(false);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+  ])('parses OVERLAY_SANDBOX_ENABLED=%s as %s', (rawValue, expected) => {
+    const config = validate({
+      ...baseConfig,
+      OVERLAY_SANDBOX_ENABLED: rawValue,
+    });
+    expect(config.OVERLAY_SANDBOX_ENABLED).toBe(expected);
+  });
 });
