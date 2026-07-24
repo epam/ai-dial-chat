@@ -136,7 +136,7 @@ export interface ToolsetOAuthFailureMessage {
   reason: ToolsetOAuthFailureReason;
 }
 
-/** Message posted by the OAuth callback popup onto its flow-scoped `BroadcastChannel`. */
+/** Non-secret result reported by the OAuth callback popup for one flow. */
 export type ToolsetOAuthChannelMessage =
   | ToolsetOAuthSuccessMessage
   | ToolsetOAuthFailureMessage;
