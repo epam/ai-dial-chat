@@ -51,6 +51,16 @@ export interface PdfCanvasContent {
   selectedHighlightId?: string;
 }
 
+/** Content payload for audio file attachments. */
+export interface AudioCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Audio;
+  /** Playback URL — object URL or resolved remote URL. */
+  url: string;
+  /** MIME type forwarded to the `<audio>` element (e.g. `audio/webm`). */
+  mimeType?: string;
+}
+
 /** Content payload for attachments whose format cannot be previewed. */
 export interface UnsupportedCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -73,6 +83,7 @@ export interface ErrorCanvasContent {
 export type AttachmentCanvasContent =
   | PlainTextCanvasContent
   | ImageCanvasContent
+  | AudioCanvasContent
   | MarkdownCanvasContent
   | JsonCanvasContent
   | PdfCanvasContent

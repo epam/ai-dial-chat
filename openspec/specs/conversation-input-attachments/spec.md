@@ -85,26 +85,20 @@ The image load tracking SHALL be isolated in a reusable hook owned by `libs/conv
 
 ---
 
-### Requirement: Voice recording props on ConversationInput
+### Requirement: Voice recording prop on ConversationInput
 
-`ConversationInputProps` (and the inner `InputProps`) SHALL accept three new optional props:
+`ConversationInputProps` (and the inner `InputProps`) SHALL accept an optional `isAudioMessageSupported?: boolean` prop. This prop is host-injected — the lib MUST NOT compute it internally or know about DIAL Core semantics. When absent or `false`, the mic button is hidden and the voice bar is never rendered.
 
-```ts
-isTranscriptionSupported?: boolean
-onUploadAudio?: (file: File, contentType: string) => Promise<string>
-onTranscribeAudio?: (audioUrl: string) => Promise<string>
-```
+When recording stops, the captured audio is immediately added as a `File` attachment to the message input tray (same as any locally-picked file). No upload or transcription callbacks are involved in the lib layer.
 
-These props are host-injected. The lib MUST NOT compute `isTranscriptionSupported` internally or know about DIAL Core semantics. When all three are absent, the mic button is hidden and the voice bar is never rendered.
+#### Scenario: isAudioMessageSupported absent — no mic button
 
-#### Scenario: All three props absent — no mic button
-
-- **WHEN** `ConversationInput` is rendered without `isTranscriptionSupported`, `onUploadAudio`, or `onTranscribeAudio`
+- **WHEN** `ConversationInput` is rendered without `isAudioMessageSupported` (or with it `false`)
 - **THEN** no mic button is rendered and no voice bar is ever shown
 
-#### Scenario: isTranscriptionSupported true — mic button present
+#### Scenario: isAudioMessageSupported true — mic button present
 
-- **WHEN** `isTranscriptionSupported` is `true` and the callbacks are provided
+- **WHEN** `isAudioMessageSupported` is `true`
 - **THEN** the mic button is rendered in the action bar
 
 ---
@@ -190,6 +184,29 @@ When `pendingDropFiles` changes to a non-empty array, `EditMessageInput` SHALL m
 - **GIVEN** `onDialFileSystemClick` is not passed to `EditMessageInput`
 - **WHEN** the user opens the edit-mode attach (+) menu
 - **THEN** only "Attach file" appears; "DIAL file system" is absent
+
+---
+
+### Requirement: EditMessageInput forwards attachment card clicks to the host
+
+`EditMessageInputProps` SHALL accept an optional `onAttachmentClick?: (attachment: DisplayAttachment) => void` prop. When provided, this callback is forwarded to the inner `Input` as `onAttachmentClick`.
+
+`Input` resolves the clicked card's `id` against both `prefixAttachments` (pre-existing kept attachments) and the newly-added `attachments` list, then calls the callback with the matching `DisplayAttachment`. When `onAttachmentClick` is absent, attachment cards in the edit tray are not rendered as interactive.
+
+#### Scenario: Clicking a pre-existing attachment card invokes the callback
+
+- **WHEN** `EditMessageInput` is rendered with `onAttachmentClick` and the user clicks a card for a pre-existing attachment
+- **THEN** `onAttachmentClick` is called with the matching `DisplayAttachment`
+
+#### Scenario: Clicking a newly-added attachment card invokes the callback
+
+- **WHEN** `EditMessageInput` is rendered with `onAttachmentClick` and the user clicks a card for a newly-added attachment
+- **THEN** `onAttachmentClick` is called with the matching `Attachment` (which extends `DisplayAttachment`)
+
+#### Scenario: Cards are inert without onAttachmentClick
+
+- **WHEN** `EditMessageInput` is rendered without `onAttachmentClick`
+- **THEN** attachment cards in the tray are not keyboard-accessible and do not respond to click
 
 ---
 

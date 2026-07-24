@@ -1,5 +1,9 @@
 # Spec: conversations-api
 
+## Purpose
+
+Define the versioned conversation REST API, DIAL Core persistence contract, path handling, generated-client integration, and conversation lifecycle behavior used by the chat frontend.
+
 ## Requirements
 
 ### Requirement: POST /api/v1/conversations creates and persists a new conversation
@@ -175,7 +179,7 @@ The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/
 
 - `limit` — integer, default 100, max 1000 (`@IsInt @Min(1) @Max(1000) @IsOptional`)
 - `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(512) @IsOptional`)
-- `path` — string subfolder path to scope the listing, default `''` (bucket root = "My Files") (`@IsString @MaxLength(512) @IsOptional`)
+- `path` — string subfolder path to scope the listing, default `''` (bucket root = "My Files"); callers may include or omit the trailing slash (`@IsString @MaxLength(512) @IsOptional`)
 
 On success the endpoint returns HTTP 200 with `ConversationListResponseDto`:
 
@@ -196,9 +200,9 @@ class ConversationListResponseDto {
 }
 ```
 
-**Three-way parallel fetch.** The service issues all of the following in a single `Promise.all`:
-1. `getConversationMetadata(bucket, path, { recursive: true, limit, token: userCursor })` — user's own conversations
-2. `getConversationMetadata('public', path, { recursive: true, limit, token: publicCursor })` — organisation-published conversations
+**Three-way parallel fetch.** Before issuing metadata requests, the service normalizes `path` to a DIAL Core folder path: `''` for an omitted/empty query and a trailing slash for every non-empty path, without adding a second slash when one is already present. It segment-encodes that normalized value as `folderPath`, then issues all of the following in a single `Promise.all`:
+1. `getConversationMetadata(bucket, folderPath, { recursive: true, limit, token: userCursor })` — user's own conversations
+2. `getConversationMetadata('public', folderPath, { recursive: true, limit, token: publicCursor })` — organisation-published conversations
 3. `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })` — conversations shared directly with the user
 4. `UserConfigService.getPinnedIds(token, bucket)` — pinned conversation IDs
 
@@ -210,7 +214,7 @@ Items from all three sources are merged and sorted by `updatedAt` descending. `F
 
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
-**Resilience.** If the public bucket or shared resources call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources. If the user bucket call fails, the endpoint returns the error to the client.
+**Resilience.** If the public bucket or shared resources call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources. If the user bucket call fails, the endpoint returns the error to the client — **except** when a non-empty `path` was requested and the failure is a `404` from DIAL Core: DIAL Core folders are virtual/prefix-only, so scoping to a subfolder with no blobs under it yet legitimately 404s upstream. That specific case is treated as an empty user-bucket result (logged as a warning, not an error) rather than propagated to the client. A `404` on the bucket root (omitted/empty `path`) is not covered by this exception and still returns an error.
 
 `isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). Errors fall back to `[]`.
 
@@ -280,7 +284,12 @@ Error codes:
 #### Scenario: path scopes both metadata queries
 
 - **WHEN** `GET /api/v1/conversations/list?path=work%2Fproject-x` is called
-- **THEN** the service calls `getConversationMetadata(bucket, 'work/project-x', ...)` AND `getConversationMetadata('public', 'work/project-x', ...)` and returns only conversations under that path
+- **THEN** the service calls `getConversationMetadata(bucket, 'work/project-x/', ...)` AND `getConversationMetadata('public', 'work/project-x/', ...)` and returns only conversations under that path
+
+#### Scenario: Scoped path with no user-bucket blobs yet is non-fatal
+
+- **WHEN** `GET /api/v1/conversations/list?path=work%2Fempty-folder` is called and DIAL Core returns 404 for the user-bucket metadata call
+- **THEN** the response is 200 with an empty result for the user-bucket portion; the 404 is logged as a warning, not propagated as an error
 
 #### Scenario: Invalid limit returns 400
 
@@ -319,7 +328,7 @@ Integration tests SHALL cover key endpoints using supertest in `apps/chat-api/sr
 
 ### Requirement: DELETE /api/v1/conversations cleans up pin state
 
-When a conversation is deleted, `deleteConversation` fires a fire-and-forget call to `userConfigService.updatePin(id, false, ...)` to remove the deleted id from `user-config.json`. The cleanup is non-fatal — errors are logged but do not affect the 204 response to the client. The conversation id for cleanup is reconstructed as `conversations/${bucket}/${conversationPath}`.
+When a conversation is deleted, `deleteConversation` SHALL fire a fire-and-forget call to `userConfigService.updatePin(id, false, ...)` to remove the deleted id from `user-config.json`. The cleanup is non-fatal — errors are logged but do not affect the 204 response to the client. The conversation id for cleanup is reconstructed as `conversations/${bucket}/${conversationPath}`.
 
 See the [user-config-api spec](../user-config-api/spec.md) for `updatePin` semantics.
 
@@ -330,7 +339,7 @@ See the [user-config-api spec](../user-config-api/spec.md) for `updatePin` seman
 
 ---
 
-### Requirement: PATCH /api/v1/conversations renames a conversation by moving it to a new DIAL Core path
+### Requirement: PATCH /api/v1/conversations renames a conversation without changing its DIAL Core path
 
 The backend SHALL expose `PATCH /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint accepts query parameter `path` (validated by `RenameConversationDto` — `@IsString @MinLength(1) @MaxLength(512)`) and a JSON body `RenameConversationBodyDto`:
 
@@ -412,7 +421,7 @@ Error codes:
 
 On `POST /api/v1/conversations`, `ConversationService.createConversation` SHALL set `conversation.name` to the base name from `getConversationName('New chat', firstMessage)` without calling `resolveUniqueConversationName`.
 
-When the 2-part storage path `{deploymentId}__{baseName}` collides with an existing resource, the service SHALL persist at `{deploymentId}__{baseName}__{uuid}` while keeping `conversation.name` as the unsuffixed base name. See the [auto-index-duplicate-names spec](../auto-index-duplicate-names/spec.md).
+The service SHALL always persist the conversation at `{deploymentId}__{baseName}__{uuid}`, where `{uuid}` is freshly generated for this conversation, while keeping `conversation.name` as the unsuffixed base name. The UUID segment is unconditional: creation SHALL NOT perform a path-existence check for `{deploymentId}__{baseName}`. For versioned or multi-segment deployment IDs, the invariant is the trailing UUID rather than a fixed total number of `__`-separated segments. See the [auto-index-duplicate-names spec](../auto-index-duplicate-names/spec.md).
 
 `llmNamingDone` SHALL NOT be set on create (field absent or false).
 
@@ -421,6 +430,13 @@ When the 2-part storage path `{deploymentId}__{baseName}` collides with an exist
 - **GIVEN** a conversation with `name: "Hello"` already exists in the user's bucket
 - **WHEN** `POST /api/v1/conversations` is called with `firstMessage: "Hello"`
 - **THEN** the response body has `name: "Hello"` (not `"Hello 1"`)
+
+#### Scenario: Create always returns a fresh UUID-suffixed id
+
+- **WHEN** `POST /api/v1/conversations` is called twice with `deploymentId: "gpt-4o"` and `firstMessage: "Hello"`
+- **THEN** both response ids match `{bucket}/gpt-4o__Hello__<uuid>`
+- **AND** the two response ids are different
+- **AND** `getConversationMetadata` is NOT called to check the unsuffixed path
 
 #### Scenario: Create does not invoke LLM naming
 
