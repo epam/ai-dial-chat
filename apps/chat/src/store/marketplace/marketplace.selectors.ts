@@ -7,6 +7,7 @@ import {
 } from '@/src/utils/app/application';
 import { pluralizeDisplayName } from '@/src/utils/app/application-type-schema';
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
+import { isPersonalSourceType } from '@/src/utils/marketplace';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { MarketplaceFilters } from '@/src/types/marketplace';
@@ -134,10 +135,6 @@ const selectToolsetSourceTypes = createSelector(
         sourceTypes.add(SourceType.Public);
       }
 
-      if (!isMyToolset(toolset) && !isMarketplaceEntityPublic(toolset)) {
-        sourceTypes.add(SourceType.SharedWithMe);
-      }
-
       // Early exit optimization
       if (sourceTypes.size === 3) {
         break;
@@ -154,13 +151,6 @@ const selectDeleteEntity = (state: RootState) =>
 const selectLoginEntity = (state: RootState) => rootSelector(state).loginEntity;
 
 const selectShowLoader = (state: RootState) => rootSelector(state).showLoader;
-
-const PERSONAL_SOURCE_TYPES = new Set([
-  SourceType.SharedWithMe,
-  SourceType.MyCustomApps,
-  SourceType.MyCodeApps,
-  SourceType.MyToolsets,
-]);
 
 const selectFiltersContent = createSelector(
   [
@@ -198,10 +188,7 @@ const selectFiltersContent = createSelector(
 
     const filterPersonalSources = (types: SourceType[]) =>
       shouldHidePersonalSources
-        ? types.filter(
-            (type) =>
-              !PERSONAL_SOURCE_TYPES.has(type) && !type.startsWith('My '),
-          )
+        ? types.filter((type) => !isPersonalSourceType(type))
         : types;
 
     if (isAgentsTab) {
