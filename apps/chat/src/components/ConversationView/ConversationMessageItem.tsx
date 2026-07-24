@@ -1,4 +1,3 @@
-import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import {
   CodeBlockTheme,
   isStatusMessage,
@@ -109,6 +108,8 @@ interface Props {
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
+  /** Called when the user clicks the preview button on a PDF citation. */
+  onPreviewReference?: (annotation: Annotation) => void;
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
@@ -165,6 +166,7 @@ const ConversationMessageItem: FC<Props> = ({
   thinkingLabel,
   executedLabel,
   stepsLabel,
+  onPreviewReference,
   validateAttachment,
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
@@ -209,24 +211,27 @@ const ConversationMessageItem: FC<Props> = ({
       citationGroups,
       handleAttachmentClick,
     );
-  const { openCanvas } = useAttachmentCanvas();
   const referenceGroups = useMemo(
     () => getReferenceAttachmentGroups(msg.custom_content?.attachments),
+    [msg.custom_content?.attachments],
+  );
+  const allDisplayAttachments = useMemo(
+    () => attachmentDtosToDisplayAttachments(msg.custom_content?.attachments),
+    [msg.custom_content?.attachments],
+  );
+  const nonReferenceDisplayAttachments = useMemo(
+    () =>
+      attachmentDtosToDisplayAttachments(
+        msg.custom_content?.attachments?.filter(
+          (a) => !isReferenceOnlyAttachment(a),
+        ),
+      ),
     [msg.custom_content?.attachments],
   );
   const handleOpenReferenceInBrowser = useCallback((annotation: Annotation) => {
     const attachment = annotation.body?.source?.attachment;
     if (attachment) openAnnotationAttachment(attachment);
   }, []);
-  const handlePreviewReference = useCallback(
-    (annotation: Annotation) => {
-      const attachment = annotation.body?.source?.attachment;
-      if (!attachment) return;
-      const canvasContent = referenceAttachmentToPdfCanvasContent(attachment);
-      if (canvasContent) openCanvas(canvasContent, attachment.title);
-    },
-    [openCanvas],
-  );
 
   if (isEditing) {
     return (
@@ -237,9 +242,7 @@ const ConversationMessageItem: FC<Props> = ({
               role={msg.role}
               text={msg.content}
               styles={{ ...USER_MESSAGE_TEXT_STYLES, className: 'justify-end' }}
-              attachments={attachmentDtosToDisplayAttachments(
-                msg.custom_content?.attachments,
-              )}
+              attachments={allDisplayAttachments}
               labels={{
                 showMoreLabel,
                 showLessLabel,
@@ -257,9 +260,7 @@ const ConversationMessageItem: FC<Props> = ({
         >
           <EditMessageInput
             message={msg.content}
-            initialAttachments={attachmentDtosToDisplayAttachments(
-              msg.custom_content?.attachments,
-            )}
+            initialAttachments={allDisplayAttachments}
             onCancel={() => onCancelEdit?.(index)}
             onSave={(text, kept, added) =>
               onEditMessage?.(index, text, kept, added)
@@ -347,11 +348,7 @@ const ConversationMessageItem: FC<Props> = ({
         markdownComponents={
           msg.role === MessageRole.Assistant ? markdownComponents : undefined
         }
-        attachments={attachmentDtosToDisplayAttachments(
-          msg.custom_content?.attachments?.filter(
-            (a) => !isReferenceOnlyAttachment(a),
-          ),
-        )}
+        attachments={nonReferenceDisplayAttachments}
         isStreaming={isStreaming}
         hasAlwaysVisibleActions={!isStreaming}
         actions={buildMessageActions(
@@ -385,9 +382,7 @@ const ConversationMessageItem: FC<Props> = ({
                         key={group.sourceUrl}
                         group={group}
                         onPreview={
-                          isPdfPagePreviewable
-                            ? handlePreviewReference
-                            : undefined
+                          isPdfPagePreviewable ? onPreviewReference : undefined
                         }
                         onOpenInBrowser={handleOpenReferenceInBrowser}
                         icon={<IconLink size={14} aria-hidden />}
