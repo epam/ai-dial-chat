@@ -3,7 +3,10 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TOOLSET_REDIRECT_STATE_KEY } from '../../../../constants/toolsets';
+import {
+  TOOLSET_REDIRECT_STATE_KEY,
+  ToolsetOAuthCallbackQuery,
+} from '../../../../constants/toolsets';
 import {
   ApiI18nKeys,
   ButtonsI18nKeys,
@@ -11,6 +14,7 @@ import {
 } from '../../../../constants/translation-keys';
 import { useNotification } from '../../../../context/NotificationContext';
 import * as toolsetsApi from '../../../../server-api/toolsets';
+import { ROUTES } from '../../../../types/routes';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
@@ -508,6 +512,35 @@ describe('AuthSection', () => {
         variant: NotificationVariant.Success,
         message: ToolsetEditorI18nKeys.LoginSuccess,
       });
+    });
+
+    it('shows the success notification on the first attempt when the channel event is missed', async () => {
+      const onAuthChange = vi.fn();
+      renderSection(
+        oauthWithConfigAuth(),
+        'toolsets/b/my__1.0.0',
+        onAuthChange,
+      );
+      await user.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+      );
+
+      const callbackUrl = new URL(ROUTES.ToolsetSignIn, window.location.origin);
+      callbackUrl.searchParams.set(
+        ToolsetOAuthCallbackQuery.Result,
+        ToolsetOAuthResultType.Success,
+      );
+      if (capturedPopup) capturedPopup.location.href = callbackUrl.toString();
+
+      await waitFor(
+        () => expect(onAuthChange).toHaveBeenCalledWith({ isLoggedIn: true }),
+        { timeout: 2000 },
+      );
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Success,
+        message: ToolsetEditorI18nKeys.LoginSuccess,
+      });
+      expect(toolsetsApi.getToolset).not.toHaveBeenCalled();
     });
 
     it('keeps Log in available and shows an error notification after a failed OAuth login', async () => {
