@@ -1035,3 +1035,71 @@ dialTest(
     );
   },
 );
+
+dialTest(
+  'Filled in values in Prompt are stored, the cursor stays in the Prompt field when user switches between browser tabs',
+  async ({
+    dialHomePage,
+    promptBar,
+    promptModalDialog,
+    promptModalAssertion,
+    localStorageManager,
+    context,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-9938');
+    const promptName = GeneratorUtil.randomPromptName();
+    const promptDescription = 'test description';
+    const promptContent = 'what is {{A}}';
+    let cursorPosition: number;
+
+    await dialTest.step(
+      'Click on "+" button to start prompt creation and fill in all fields',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await promptBar.createNewEntity();
+        await promptModalDialog.setField(promptModalDialog.name, promptName);
+        await promptModalDialog.setField(
+          promptModalDialog.description,
+          promptDescription,
+        );
+        await promptModalDialog.setField(
+          promptModalDialog.prompt,
+          promptContent,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Leave the cursor in the prompt body, switch to a new browser tab and back',
+      async () => {
+        cursorPosition = await promptModalDialog.prompt
+          .getElementLocator()
+          .evaluate(
+            (el: HTMLTextAreaElement) => el.selectionStart ?? el.value.length,
+          );
+        await context.newPage();
+        await dialHomePage.bringPageToFront();
+      },
+    );
+
+    await dialTest.step(
+      'Verify the fields are not cleared and the cursor stays in the prompt field',
+      async () => {
+        await promptModalAssertion.assertPromptName(promptName);
+        await promptModalAssertion.assertPromptDescription(promptDescription);
+        await promptModalAssertion.assertPromptContent(promptContent);
+        await promptModalAssertion.assertIsElementFocused(
+          promptModalDialog.prompt,
+          true,
+        );
+        await promptModalAssertion.assertCursorPosition(
+          promptModalDialog.prompt,
+          cursorPosition,
+        );
+      },
+    );
+  },
+);
