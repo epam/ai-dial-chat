@@ -1,19 +1,9 @@
-# node:24-alpine vulnerabilities in https://hub.docker.com/layers/library/node/24-alpine
-
-# picomatch
-
-CVE-2026-33671 exp:2026-09-20
-CVE-2026-12151 exp:2026-09-20
-
-# tar
-
-CVE-2026-59873
-CVE-2026-59874
-
 # brace-expansion
+CVE-2026-13149 exp:2026-09-20
 
-CVE-2026-13149
+#  tar
+CVE-2026-59873 exp:2026-09-20
+CVE-2026-59874 exp:2026-09-20
 
-# postcss
-
-CVE-2026-45623
+# undici
+CVE-2026-12151 exp:2026-09-20
