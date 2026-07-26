@@ -8,7 +8,7 @@ import {
   DeploymentCreationFormValues,
   validateDeploymentCreationFields,
 } from '@epam/ai-dial-deployment-creation-form';
-import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
 import {
   forwardRef,
   memo,
@@ -253,12 +253,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
             labels={labels}
           />
 
-          {submitError && (
-            <DialNotification
-              variant={NotificationVariant.Error}
-              message={submitError}
-            />
-          )}
+          {submitError && <ErrorMessageNotification message={submitError} />}
         </div>
       </div>
 

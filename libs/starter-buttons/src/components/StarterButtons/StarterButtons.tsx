@@ -2,7 +2,7 @@ import { BASE_MD_ICON_PROPS } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { DialDropdown, DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { IconDots, IconDotsVertical } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import type { StarterButtonsProps } from '../../models/starter-props';
 
 const MAX_VISIBLE = 4;
@@ -100,6 +100,14 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
     }),
   );
 
+  const iconProps = useMemo(() => {
+    return {
+      ...BASE_MD_ICON_PROPS,
+      stroke: styles?.iconStrokeWidth ?? BASE_MD_ICON_PROPS.stroke,
+      size: styles?.iconSize ?? BASE_MD_ICON_PROPS.size,
+    };
+  }, [styles?.iconStrokeWidth, styles?.iconSize]);
+
   return (
     <div ref={containerRef} className="mb-4 w-full">
       <div
@@ -133,21 +141,9 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
               <DialRoundedButton
                 iconAfter={
                   isMobile ? (
-                    <IconDots
-                      {...BASE_MD_ICON_PROPS}
-                      stroke={
-                        styles?.iconStrokeWidth ?? BASE_MD_ICON_PROPS.stroke
-                      }
-                      size={styles?.iconSize ?? BASE_MD_ICON_PROPS.size}
-                    />
+                    <IconDots {...iconProps} />
                   ) : (
-                    <IconDotsVertical
-                      {...BASE_MD_ICON_PROPS}
-                      stroke={
-                        styles?.iconStrokeWidth ?? BASE_MD_ICON_PROPS.stroke
-                      }
-                      size={styles?.iconSize ?? BASE_MD_ICON_PROPS.size}
-                    />
+                    <IconDotsVertical {...iconProps} />
                   )
                 }
                 aria-label={labels.overflow}

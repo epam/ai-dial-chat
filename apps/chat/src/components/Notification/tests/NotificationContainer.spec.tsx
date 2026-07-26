@@ -20,7 +20,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     Success: 'success',
     Loading: 'loading',
   },
-  DialNotification: ({
+  Notification: ({
     variant,
     title,
     message,

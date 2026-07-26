@@ -18,7 +18,7 @@ import {
   type MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
 import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
-import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -405,10 +405,7 @@ const ConversationMessageItem: FC<Props> = ({
               )}
               {msg.hasStreamError && (
                 <div className="w-full">
-                  <DialNotification
-                    variant={NotificationVariant.Error}
-                    message={streamErrorText}
-                  />
+                  <ErrorMessageNotification message={streamErrorText} />
                 </div>
               )}
             </>
