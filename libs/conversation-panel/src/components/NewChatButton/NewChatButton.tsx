@@ -7,7 +7,7 @@ import styles from './NewChatButton.module.scss';
 export interface NewChatButtonProps {
   /** Button label text (e.g. `"New chat"`). */
   label: string;
-  /** Called when the button is clicked or activated via keyboard. */
+  /** Called when the button is clicked. */
   onClick: () => void;
   /** Typography class applied to the label. Defaults to `'dial-small-semi-text'`. */
   labelClassName?: string;
