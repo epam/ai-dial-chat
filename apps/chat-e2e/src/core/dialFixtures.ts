@@ -153,6 +153,7 @@ import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { Banner } from '@/src/ui/webElements/banner';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
+import { DislikeCommentModal } from '@/src/ui/webElements/dislikeCommentModal';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
@@ -299,6 +300,7 @@ const dialTest = test.extend<{
   promptModalDialog: PromptModalDialog;
   renameConversationModal: RenameConversationModal;
   renameConversationModalAssertion: RenameConversationModalAssertion;
+  dislikeCommentModal: DislikeCommentModal;
   variableModalDialog: VariableModalDialog;
   chatHeader: ChatHeader;
   chatHeaderVersionDropdownMenu: DropdownMenu;
@@ -974,6 +976,10 @@ const dialTest = test.extend<{
   renameConversationModal: async ({ page }, use) => {
     const renameConversationModal = new RenameConversationModal(page);
     await use(renameConversationModal);
+  },
+  dislikeCommentModal: async ({ page }, use) => {
+    const dislikeCommentModal = new DislikeCommentModal(page);
+    await use(dislikeCommentModal);
   },
   renameConversationModalAssertion: async (
     { renameConversationModal },

@@ -448,8 +448,25 @@ export const filesSlice = createSlice({
         const inScopeFiles = payload.files
           .filter((f) => !f.folderId.endsWith(`/${CLIENTDATA_PATH}`))
           .map((newFile) => {
+            const cachedSize = state.localFileSizeCache[newFile.id];
+            if (newFile.contentLength) {
+              delete state.localFileSizeCache[newFile.id];
+            }
+
             const oldFile = prevById[newFile.id];
-            return oldFile ? { ...oldFile, ...newFile } : newFile;
+            if (!oldFile) {
+              return {
+                ...newFile,
+                contentLength: newFile.contentLength || cachedSize,
+              };
+            }
+
+            return {
+              ...oldFile,
+              ...newFile,
+              contentLength:
+                newFile.contentLength || oldFile.contentLength || cachedSize,
+            };
           });
         const uploadingInScope = state.files.filter(
           (f) =>
