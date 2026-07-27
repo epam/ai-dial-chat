@@ -105,7 +105,10 @@ const resolveSectionKey = (
  * `currentUserSub`, otherwise `myTasks` (also the fallback when either value
  * is missing). `nextRunTime`/`createdAt` come straight from the DIAL
  * Scheduler response; `trigger.date` is kept as a fallback for `nextRunAt`
- * for schedules created before those fields were tracked.
+ * for schedules created before those fields were tracked. `description`
+ * maps 1:1 to `descriptionPreview` (undefined when absent) with no
+ * truncation — the BFF's 500-char cap bounds the value, and the card's own
+ * line-clamp/ellipsis handles presentation-layer truncation.
  */
 export const mapScheduledTaskDtoToItem = (
   task: ScheduledTaskDto,
@@ -114,6 +117,7 @@ export const mapScheduledTaskDtoToItem = (
 ): ScheduledTaskItem => ({
   id: task.id,
   displayName: task.displayName,
+  descriptionPreview: task.description,
   scheduleLabel: buildScheduleLabel(task, t),
   sectionKey: resolveSectionKey(task, currentUserSub),
   sortValues: {

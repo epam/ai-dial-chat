@@ -1294,6 +1294,12 @@ export interface CreateScheduledTaskBodyDto {
   prompt: string;
   /**
    *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  description?: string;
+  /**
+   *
    * @type {boolean}
    * @memberof CreateScheduledTaskBodyDto
    */
@@ -1414,6 +1420,12 @@ export interface CreatedScheduledTaskDto {
    * @memberof CreatedScheduledTaskDto
    */
   createdBy?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  description?: string;
 }
 
 /**
@@ -4221,6 +4233,12 @@ export interface ScheduledTaskDto {
    * @memberof ScheduledTaskDto
    */
   createdBy?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  description?: string;
 }
 
 /**
@@ -5135,6 +5153,12 @@ export interface UpdateScheduledTaskBodyDto {
   prompt: string;
   /**
    *
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  description?: string;
+  /**
+   *
    * @type {boolean}
    * @memberof UpdateScheduledTaskBodyDto
    */
@@ -5238,6 +5262,12 @@ export interface UpdatedScheduledTaskDto {
    * @memberof UpdatedScheduledTaskDto
    */
   createdBy?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  description?: string;
 }
 
 /**

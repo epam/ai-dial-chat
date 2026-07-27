@@ -16,6 +16,8 @@ import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { type FC } from 'react';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 
+const DESCRIPTION_MAX_LENGTH = 500;
+
 /**
  * Presentational create-task form: display name, a one-shot/recurring
  * schedule section, a model picker, a prompt textarea, a stream toggle, and
@@ -87,6 +89,21 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           labelProps={{ label: labels.displayNameLabel, required: true }}
           invalid={Boolean(errors.displayName)}
           error={errors.displayName}
+        />
+
+        <Textarea
+          id="scheduled-task-description"
+          value={values.description ?? ''}
+          onChange={(value) => onFieldChange('description', value)}
+          labelProps={{ label: labels.descriptionLabel }}
+          maxLength={DESCRIPTION_MAX_LENGTH}
+          invalid={Boolean(errors.description)}
+          error={errors.description}
+          caption={
+            values.description
+              ? `${values.description.length}/${DESCRIPTION_MAX_LENGTH}`
+              : undefined
+          }
         />
 
         <fieldset className="flex flex-col gap-3">

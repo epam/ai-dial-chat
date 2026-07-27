@@ -493,6 +493,8 @@
       "modelLabel": "Model",
       "modelPlaceholder": "Select a model",
       "modelRequired": "Model is required",
+      "descriptionLabel": "Description",
+      "descriptionMaxLengthError": "Description must be 500 characters or fewer",
       "promptLabel": "Prompt",
       "promptRequired": "Prompt is required",
       "streamLabel": "Stream response",

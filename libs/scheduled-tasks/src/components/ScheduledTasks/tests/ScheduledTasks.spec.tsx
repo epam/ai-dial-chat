@@ -7,6 +7,15 @@ import { ScheduledTasksProps } from '../../../models/scheduled-tasks-props';
 import { ScheduledTasks } from '../ScheduledTasks';
 
 vi.mock('@epam/ai-dial-kit', () => ({
+  CardShell: ({
+    children,
+    ...rest
+  }: { children: ReactNode } & Record<string, unknown>) => (
+    <article {...rest}>{children}</article>
+  ),
+  FolderPath: ({ segments }: { segments: string[] }) => (
+    <>{segments.join(' / ')}</>
+  ),
   PrimaryButton: ({
     label,
     onClick,

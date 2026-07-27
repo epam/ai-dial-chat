@@ -24,6 +24,7 @@ import NotFoundPage from '../NotFound/NotFound';
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const MAX_ASCII_CONTROL_CODE = 31;
 const ASCII_DELETE_CODE = 127;
+const DESCRIPTION_MAX_LENGTH = 500;
 
 const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
   displayName: '',
@@ -121,6 +122,7 @@ const ScheduledTaskCreatePage: FC = () => {
       dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
       modelLabel: t(ScheduledTasksI18nKeys.CreateModelLabel),
       modelPlaceholder: t(ScheduledTasksI18nKeys.CreateModelPlaceholder),
+      descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
       promptLabel: t(ScheduledTasksI18nKeys.CreatePromptLabel),
       streamLabel: t(ScheduledTasksI18nKeys.CreateStreamLabel),
       cancelButtonLabel: t(ButtonsI18nKeys.Cancel),
@@ -161,6 +163,11 @@ const ScheduledTaskCreatePage: FC = () => {
       }
       if (!data.prompt.trim()) {
         nextErrors.prompt = t(ScheduledTasksI18nKeys.CreatePromptRequired);
+      }
+      if ((data.description?.length ?? 0) > DESCRIPTION_MAX_LENGTH) {
+        nextErrors.description = t(
+          ScheduledTasksI18nKeys.CreateDescriptionMaxLengthError,
+        );
       }
 
       if (data.scheduleType === 'once') {

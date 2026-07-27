@@ -10,6 +10,9 @@ import {
 import { Header } from '../Header';
 
 vi.mock('@epam/ai-dial-kit', () => ({
+  FolderPath: ({ segments }: { segments: string[] }) => (
+    <>{segments.join(' / ')}</>
+  ),
   PrimaryButton: ({
     label,
     onClick,
@@ -40,9 +43,6 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 vi.mock('../../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
-}));
-vi.mock('../../../FolderPath/FolderPath', () => ({
-  FolderPath: () => <div />,
 }));
 vi.mock('../ShareButton/ShareButton', () => ({
   ShareButton: ({ label }: { label?: string }) => (

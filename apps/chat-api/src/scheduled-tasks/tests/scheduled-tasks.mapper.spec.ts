@@ -91,6 +91,46 @@ describe('toUpstreamSchedulePayload', () => {
       toUpstreamSchedulePayload(body, DIAL_CORE_URL, DIAL_API_VERSION),
     ).toThrow(BadRequestException);
   });
+
+  it('includes a top-level description when provided, never nested under properties', () => {
+    const body: CreateScheduledTaskBodyDto = {
+      displayName: 'Daily summary',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+      model: 'gpt-4.1-mini-2025-04-14',
+      prompt: 'Summarize my inbox',
+      description: 'Summarizes unread inbox items every morning',
+    };
+
+    const upstream = toUpstreamSchedulePayload(
+      body,
+      DIAL_CORE_URL,
+      DIAL_API_VERSION,
+    );
+
+    expect(upstream.description).toBe(
+      'Summarizes unread inbox items every morning',
+    );
+    expect(
+      (upstream.properties as Record<string, unknown>).description,
+    ).toBeUndefined();
+  });
+
+  it('omits description from the upstream payload when not provided', () => {
+    const body: CreateScheduledTaskBodyDto = {
+      displayName: 'Daily summary',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+      model: 'gpt-4.1-mini-2025-04-14',
+      prompt: 'Summarize my inbox',
+    };
+
+    const upstream = toUpstreamSchedulePayload(
+      body,
+      DIAL_CORE_URL,
+      DIAL_API_VERSION,
+    );
+
+    expect(upstream.description).toBeUndefined();
+  });
 });
 
 describe('fromUpstreamSchedule', () => {
@@ -154,5 +194,28 @@ describe('fromUpstreamSchedule', () => {
       displayName: 'Hourly check',
       trigger: { date: undefined, cron: { fields: { minute: '0' } } },
     });
+  });
+
+  it('maps description when present', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_555',
+      display_name: 'Daily summary',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+      description: 'Summarizes unread inbox items every morning',
+    };
+
+    expect(fromUpstreamSchedule(upstream).description).toBe(
+      'Summarizes unread inbox items every morning',
+    );
+  });
+
+  it('maps a response missing description to undefined without throwing', () => {
+    const upstream: UpstreamScheduleResponse = {
+      id: 'sched_556',
+      display_name: 'Daily summary',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+    };
+
+    expect(fromUpstreamSchedule(upstream).description).toBeUndefined();
   });
 });

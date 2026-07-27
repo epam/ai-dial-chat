@@ -277,6 +277,8 @@ export enum ScheduledTasksI18nKeys {
   CreateModelLabel = 'scheduledTasks.create.modelLabel',
   CreateModelPlaceholder = 'scheduledTasks.create.modelPlaceholder',
   CreateModelRequired = 'scheduledTasks.create.modelRequired',
+  CreateDescriptionLabel = 'scheduledTasks.create.descriptionLabel',
+  CreateDescriptionMaxLengthError = 'scheduledTasks.create.descriptionMaxLengthError',
   CreatePromptLabel = 'scheduledTasks.create.promptLabel',
   CreatePromptRequired = 'scheduledTasks.create.promptRequired',
   CreateStreamLabel = 'scheduledTasks.create.streamLabel',

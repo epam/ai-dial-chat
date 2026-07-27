@@ -37,6 +37,14 @@ export class CreateScheduledTaskBodyDto {
   @IsNotEmpty()
   prompt!: string;
 
+  @ApiPropertyOptional({
+    example: 'Summarizes unread inbox items every morning',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
   @ApiPropertyOptional({ example: true, default: true })
   @IsOptional()
   @IsBoolean()

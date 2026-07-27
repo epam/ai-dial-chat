@@ -1,4 +1,5 @@
 import { Highlight, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { CardShell, FolderPath } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
@@ -6,18 +7,24 @@ import {
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
-  IconChevronRight,
   IconDotsVertical,
   IconEdit,
-  IconFolder,
   IconPlayerPlay,
   IconTrash,
 } from '@tabler/icons-react';
 import { type FC } from 'react';
 import type { ScheduledTaskCardProps } from '../../models/scheduled-task-card-props';
-import styles from './ScheduledTaskCard.module.scss';
 
-/** Single scheduled-task card: title, optional "new" badge and description, schedule pill, location breadcrumb, and an overflow menu limited to the actions the caller wired up. Matches the Catalog browse card's visual language (radius, padding, shadow, footer treatment). */
+/**
+ * Single scheduled-task card: title, optional "new" badge and description,
+ * schedule pill, location breadcrumb, and an overflow menu limited to the
+ * actions the caller wired up. Renders on the shared `CardShell` from
+ * `@epam/ai-dial-kit` (radius, padding, shadow, hover lift), the same shell
+ * the Catalog browse card uses. The card has a fixed height; a long
+ * description is clamped with an ellipsis, and the schedule pill (plus the
+ * location breadcrumb, when present) is pinned to the bottom regardless of
+ * description length.
+ */
 export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   item,
   searchQuery = '',
@@ -37,7 +44,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   const titleClassName =
     cardStyles?.titleClassName ?? 'dial-body-semi-text text-primary';
   const descriptionClassName =
-    cardStyles?.descriptionClassName ?? 'dial-small-text text-secondary';
+    cardStyles?.descriptionClassName ?? 'dial-small-text text-control-disable';
   const schedulePillClassName =
     cardStyles?.schedulePillClassName ?? 'bg-layer-2 border border-tertiary';
   const scheduleLabelClassName =
@@ -78,16 +85,12 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   }
 
   return (
-    <article
+    <CardShell
       role="group"
       aria-label={item.displayName}
-      className={mergeClasses(
-        'relative flex h-full flex-col gap-[14px] rounded-[20px] border-2 border-transparent p-[22px]',
-        styles.card,
-        className,
-      )}
+      className={mergeClasses('h-[232px]', className)}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex shrink-0 items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <Highlight
             text={item.displayName}
@@ -125,7 +128,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
       {item.descriptionPreview && (
         <p
           className={mergeClasses(
-            'line-clamp-2 min-h-[44px] !leading-[22px]',
+            'line-clamp-4 min-h-0 flex-1 overflow-hidden !leading-[22px]',
             descriptionClassName,
           )}
         >
@@ -133,55 +136,28 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
         </p>
       )}
 
-      <div className="flex min-h-[28px] items-center">
-        <span
-          className={mergeClasses(
-            'inline-block rounded-lg px-2 py-1',
-            schedulePillClassName,
-            scheduleLabelClassName,
-          )}
-        >
-          {item.scheduleLabel}
-        </span>
-      </div>
-
-      {item.locationSegments && item.locationSegments.length > 0 && (
-        <div className="mt-auto flex min-w-0 items-center gap-1 border-t border-tertiary pt-3">
-          <IconFolder
-            size={DIAL_ICON_SIZE.SM}
-            className={locationLabelClassName}
-            aria-hidden
-          />
-          {item.locationSegments.map((segment, index, segments) => {
-            const isLeaf = index === segments.length - 1;
-            return (
-              <span
-                key={`${segment}-${index}`}
-                className="flex min-w-0 items-center gap-1"
-              >
-                {index > 0 && (
-                  <IconChevronRight
-                    size={14}
-                    className={mergeClasses(
-                      locationLabelClassName,
-                      'rtl:scale-x-[-1]',
-                    )}
-                    aria-hidden
-                  />
-                )}
-                <span
-                  className={mergeClasses(
-                    'truncate',
-                    isLeaf ? locationLeafClassName : locationLabelClassName,
-                  )}
-                >
-                  {segment}
-                </span>
-              </span>
-            );
-          })}
+      <div className="mt-auto flex shrink-0 flex-col gap-3">
+        <div className="flex min-h-[28px] items-center">
+          <span
+            className={mergeClasses(
+              'inline-block rounded-lg px-2 py-1',
+              schedulePillClassName,
+              scheduleLabelClassName,
+            )}
+          >
+            {item.scheduleLabel}
+          </span>
         </div>
-      )}
-    </article>
+
+        {item.locationSegments && item.locationSegments.length > 0 && (
+          <FolderPath
+            segments={item.locationSegments}
+            labelClassName={locationLabelClassName}
+            leafClassName={locationLeafClassName}
+            className="border-t border-tertiary pt-3"
+          />
+        )}
+      </div>
+    </CardShell>
   );
 };

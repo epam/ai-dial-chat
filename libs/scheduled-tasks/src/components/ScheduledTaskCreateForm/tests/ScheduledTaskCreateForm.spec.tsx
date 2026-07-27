@@ -58,16 +58,25 @@ vi.mock('@epam/ai-dial-kit', () => ({
     value,
     onChange,
     error,
+    maxLength,
+    caption,
   }: {
     labelProps?: { label: ReactNode; required?: boolean };
     value: string;
     onChange: (value: string) => void;
     error?: string;
+    maxLength?: number;
+    caption?: string;
   }) => (
     <label>
       {labelProps?.label}
-      <textarea value={value} onChange={(e) => onChange(e.target.value)} />
+      <textarea
+        value={value}
+        maxLength={maxLength}
+        onChange={(e) => onChange(e.target.value)}
+      />
       {error && <span>{error}</span>}
+      {caption && <span>{caption}</span>}
     </label>
   ),
 }));
@@ -159,6 +168,7 @@ const renderForm = (overrides?: Partial<ScheduledTaskCreateFormProps>) =>
         dayOfMonthLabel: 'Day of month',
         modelLabel: 'Model',
         modelPlaceholder: 'Select a model',
+        descriptionLabel: 'Description',
         promptLabel: 'Prompt',
         streamLabel: 'Stream',
         cancelButtonLabel: 'Cancel',
@@ -183,10 +193,43 @@ describe('ScheduledTaskCreateForm', () => {
     expect(screen.getByText('Stream')).toBeTruthy();
   });
 
-  it('does not render a description field', () => {
+  it('renders an optional description field', () => {
     renderForm();
 
-    expect(screen.queryByText('Description')).toBeNull();
+    expect(screen.getByText('Description')).toBeTruthy();
+  });
+
+  it('does not block Create when description is empty', () => {
+    renderForm({
+      values: {
+        ...baseValues,
+        displayName: 'Daily summary',
+        modelId: 'gpt-4o',
+        prompt: 'Summarize my inbox',
+      },
+    });
+
+    expect(
+      (screen.getByRole('button', { name: 'Create' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+  });
+
+  it('respects the 500-character limit on the description field', () => {
+    renderForm();
+
+    expect(
+      (screen.getByLabelText('Description') as HTMLTextAreaElement).maxLength,
+    ).toBe(500);
+  });
+
+  it('calls onFieldChange when the description changes', async () => {
+    const onFieldChange = vi.fn();
+    renderForm({ onFieldChange });
+
+    await userEvent.type(screen.getByLabelText('Description'), 'x');
+
+    expect(onFieldChange).toHaveBeenCalledWith('description', 'x');
   });
 
   it('disables Create when displayName is empty', () => {

@@ -135,6 +135,17 @@ describe('mapScheduledTaskDtoToItem', () => {
     expect(result.locationSegments).toBeUndefined();
   });
 
+  it('maps description to descriptionPreview unmodified', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({ description: 'Summarizes unread inbox items every morning' }),
+      fakeT,
+    );
+
+    expect(result.descriptionPreview).toBe(
+      'Summarizes unread inbox items every morning',
+    );
+  });
+
   it('places the item under myTasks when createdBy matches currentUserSub', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({ createdBy: 'user-1' }),

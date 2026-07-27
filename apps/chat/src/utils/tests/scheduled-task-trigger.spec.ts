@@ -79,4 +79,47 @@ describe('mapFormValuesToCreateBody', () => {
     expect(body.prompt).toBe('Summarize my inbox');
     expect(body.stream).toBe(true);
   });
+
+  it('includes a trimmed description when non-empty', () => {
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      scheduleType: 'once',
+      runAt: '2026-07-24T09:00',
+      description: '  Summarizes unread inbox items  ',
+    });
+
+    expect(body.description).toBe('Summarizes unread inbox items');
+  });
+
+  it('omits description when empty', () => {
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      scheduleType: 'once',
+      runAt: '2026-07-24T09:00',
+      description: '',
+    });
+
+    expect(body.description).toBeUndefined();
+  });
+
+  it('omits description when whitespace-only', () => {
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      scheduleType: 'once',
+      runAt: '2026-07-24T09:00',
+      description: '   ',
+    });
+
+    expect(body.description).toBeUndefined();
+  });
+
+  it('omits description when not provided', () => {
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      scheduleType: 'once',
+      runAt: '2026-07-24T09:00',
+    });
+
+    expect(body.description).toBeUndefined();
+  });
 });

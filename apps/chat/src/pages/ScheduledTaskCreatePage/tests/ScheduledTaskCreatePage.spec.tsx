@@ -32,6 +32,7 @@ interface FormProps {
     displayName: string;
     modelId: string;
     prompt: string;
+    description?: string;
     scheduleType: string;
   };
   errors: Record<string, string | undefined>;
@@ -76,9 +77,15 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         value={values.prompt}
         onChange={(e) => onFieldChange('prompt', e.target.value)}
       />
+      <textarea
+        aria-label="description"
+        value={values.description ?? ''}
+        onChange={(e) => onFieldChange('description', e.target.value)}
+      />
       {errors.displayName && <span>{errors.displayName}</span>}
       {errors.modelId && <span>{errors.modelId}</span>}
       {errors.prompt && <span>{errors.prompt}</span>}
+      {errors.description && <span>{errors.description}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
       <button onClick={onSubmit} disabled={isSubmitting}>
         {labels.createButtonLabel}
@@ -203,6 +210,56 @@ describe('ScheduledTaskCreatePage', () => {
 
     expect(await screen.findByText('custom return page')).toBeTruthy();
     expect(showNotificationMock).toHaveBeenCalledOnce();
+  });
+
+  it('includes a trimmed description in the submit body when non-empty', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'description' }),
+      '  Summarizes unread inbox items  ',
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+    const body = createScheduledTaskMock.mock.calls[0][0];
+    expect(body.description).toBe('Summarizes unread inbox items');
+  });
+
+  it('omits description from the submit body when empty', async () => {
+    createScheduledTaskMock.mockResolvedValue({ id: 'sched_1' });
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).toHaveBeenCalledOnce();
+    const body = createScheduledTaskMock.mock.calls[0][0];
+    expect(body.description).toBeUndefined();
+  });
+
+  it('blocks submit and shows a validation error when description exceeds 500 characters', async () => {
+    renderAtRoute('/scheduled-tasks/new');
+
+    await fillValidForm();
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'description' }),
+      'a'.repeat(501),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.create' }),
+    );
+
+    expect(createScheduledTaskMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText('scheduledTasks.create.descriptionMaxLengthError'),
+    ).toBeTruthy();
   });
 
   it('shows an error notification and stays on the form when the API call fails', async () => {

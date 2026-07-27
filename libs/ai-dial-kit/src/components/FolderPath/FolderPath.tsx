@@ -4,13 +4,13 @@ import { IconChevronRight, IconFolder } from '@tabler/icons-react';
 import { FC } from 'react';
 import styles from './FolderPath.module.scss';
 
-/** Props for FolderPath. */
+/** Props for the {@link FolderPath} component. */
 export interface FolderPathProps {
   /** Folder breadcrumb segments, outermost first. */
   segments: string[];
-  /** CSS class applied to each breadcrumb label. Default: 'dial-small-text text-secondary'. */
+  /** CSS class applied to each breadcrumb label. Defaults to `'dial-small-text'`. */
   labelClassName?: string;
-  /** CSS class for the last (leaf) segment. Default: 'dial-small-semi-text'. */
+  /** CSS class applied to the last (leaf) segment. Defaults to `'dial-small-semi-text'`. */
   leafClassName?: string;
   /**
    * CSS class for the breadcrumb's `<nav>` container. `DialBreadcrumb`
@@ -24,8 +24,11 @@ export interface FolderPathProps {
 }
 
 /**
- * Renders folder segments as a read-only (non-clickable) DialBreadcrumb.
- * DialBreadcrumb scrolls horizontally on overflow rather than truncating.
+ * Renders folder-style path segments (e.g. a location or ownership
+ * breadcrumb on a browse-grid card) as a read-only, non-clickable
+ * `DialBreadcrumb`: a leading folder icon, a chevron separator mirrored in
+ * RTL, and the last segment styled as the current/leaf item. `DialBreadcrumb`
+ * scrolls horizontally on overflow rather than truncating.
  */
 export const FolderPath: FC<FolderPathProps> = ({
   segments,

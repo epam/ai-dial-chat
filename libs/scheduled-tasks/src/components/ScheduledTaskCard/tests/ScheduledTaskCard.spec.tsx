@@ -5,8 +5,35 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
 import { ScheduledTaskCard } from '../ScheduledTaskCard';
 
+interface MockPathItem {
+  label: ReactNode;
+  disabled?: boolean;
+  iconBefore?: ReactNode;
+}
+
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  DialIcon: ({ icon, className }: { icon: ReactNode; className?: string }) => (
+    <span className={className}>{icon}</span>
+  ),
+  DialBreadcrumb: ({
+    pathItems,
+    labelClassName,
+    className,
+  }: {
+    pathItems: MockPathItem[];
+    labelClassName?: string;
+    className?: string;
+  }) => (
+    <div className={className}>
+      {pathItems.map((item, i) => (
+        <span key={i} className={labelClassName}>
+          {item.iconBefore}
+          {item.label}
+        </span>
+      ))}
+    </div>
+  ),
   DialEllipsisTooltip: ({
     text,
     className,
@@ -105,5 +132,38 @@ describe('ScheduledTaskCard', () => {
     render(<ScheduledTaskCard item={buildItem({ isNew: true })} />);
 
     expect(screen.getByText('NEW')).toBeTruthy();
+  });
+
+  it('renders the card with a fixed height', () => {
+    render(<ScheduledTaskCard item={buildItem()} />);
+
+    expect(screen.getByRole('group').className).toContain('h-[232px]');
+  });
+
+  it('clamps a long description instead of growing the card', () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({
+          descriptionPreview: 'a'.repeat(600),
+        })}
+      />,
+    );
+
+    expect(screen.getByText('a'.repeat(600)).className).toContain(
+      'line-clamp-4',
+    );
+  });
+
+  it('pins the schedule pill to the bottom of the card regardless of description length', () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({ locationSegments: ['Public', 'Project folder'] })}
+      />,
+    );
+
+    const pill = screen.getByText('Every Monday 12:00');
+    const bottomGroup = pill.closest('div.mt-auto');
+    expect(bottomGroup).toBeTruthy();
+    expect(bottomGroup?.contains(screen.getByText('Public'))).toBe(true);
   });
 });

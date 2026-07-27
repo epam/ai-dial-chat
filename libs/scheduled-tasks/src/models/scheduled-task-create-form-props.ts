@@ -38,6 +38,8 @@ export interface ScheduledTaskCreateFormValues {
   dayOfMonth?: string;
   /** Selected deployment id sent to the BFF as `model` (required). */
   modelId: string;
+  /** Optional human-readable summary sent to the BFF as `description` (max 500 characters). */
+  description?: string;
   /** Prompt text sent to the BFF as `prompt` (required). */
   prompt: string;
   /** Whether the scheduled chat completion streams its response. */
@@ -58,6 +60,8 @@ export interface ScheduledTaskCreateFormErrors {
   dayOfMonth?: string;
   /** Error shown under the model field. */
   modelId?: string;
+  /** Error shown under the description field. */
+  description?: string;
   /** Error shown under the prompt field. */
   prompt?: string;
 }
@@ -94,6 +98,8 @@ export interface ScheduledTaskCreateFormLabels {
   modelLabel: string;
   /** Placeholder shown in the model dropdown trigger when no model is selected. */
   modelPlaceholder: string;
+  /** Description textarea label. */
+  descriptionLabel: string;
   /** Prompt textarea label. */
   promptLabel: string;
   /** Stream toggle label. */

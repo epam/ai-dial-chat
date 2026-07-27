@@ -15,6 +15,13 @@ interface UpstreamSchedulePayload {
   display_name: string;
   service_id: 'dial-oauth';
   trigger: UpstreamScheduleTrigger;
+  /*
+   * Not confirmed against a live DIAL Scheduler response or its
+   * openapi.json — assumed to mirror display_name/service_id as a
+   * top-level field per design.md. Verify before relying on this in
+   * production and update this comment once confirmed.
+   */
+  description?: string;
   properties: {
     target_type: 'chat_completion';
     url: string;
@@ -42,6 +49,7 @@ export interface UpstreamScheduleResponse {
   trigger_type?: string;
   service_id?: string;
   created_by?: string;
+  description?: string;
   [key: string]: unknown;
 }
 
@@ -79,6 +87,7 @@ export const toUpstreamSchedulePayload = (
   display_name: body.displayName,
   service_id: 'dial-oauth',
   trigger: toUpstreamTrigger(body.trigger),
+  ...(body.description ? { description: body.description } : {}),
   properties: {
     target_type: 'chat_completion',
     url: `${dialCoreUrl}/openai`,
@@ -108,4 +117,5 @@ export const fromUpstreamSchedule = (
   triggerType: upstream.trigger_type as ScheduleTriggerType | undefined,
   serviceId: upstream.service_id,
   createdBy: upstream.created_by,
+  description: upstream.description,
 });

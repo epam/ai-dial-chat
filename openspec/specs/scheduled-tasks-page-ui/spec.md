@@ -172,6 +172,25 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** the upstream task omits `createdBy`, or the current user's sub isn't available yet
 - **THEN** the mapped item's `sectionKey` is `'myTasks'`
 
+### Requirement: Card description is populated from the BFF description field
+
+`map-scheduled-task-dto.ts` SHALL map `ScheduledTaskDto.description` to `ScheduledTaskItem.descriptionPreview` in `mapScheduledTaskDtoToItem`, with no truncation or reformatting applied in the mapper (the 500-character BFF limit already bounds the value; `ScheduledTaskCard`'s existing line-clamp/ellipsis handling is the presentation-layer truncation boundary). When `ScheduledTaskDto.description` is `undefined`, `descriptionPreview` SHALL be `undefined`, matching the card's existing optional-description rendering and the client-side search behavior already speced against `descriptionPreview`.
+
+#### Scenario: Description maps to descriptionPreview
+
+- **WHEN** a `ScheduledTaskDto` with `description: "Summarizes unread inbox items every morning"` is mapped
+- **THEN** the resulting `ScheduledTaskItem.descriptionPreview` equals that same string, unmodified
+
+#### Scenario: Missing description maps to undefined
+
+- **WHEN** a `ScheduledTaskDto` omits `description`
+- **THEN** the resulting `ScheduledTaskItem.descriptionPreview` is `undefined`, and mapping does not throw
+
+#### Scenario: Newly created task with a description is searchable by that description immediately after list refresh
+
+- **WHEN** a task is created with a `description`, and the list is refetched afterward
+- **THEN** searching by a substring of that description matches the task's card, consistent with the existing `descriptionPreview` search-matching behavior
+
 ### Requirement: Client-side search and sort over the fetched list
 
 `ScheduledTasksPage`/`ScheduledTasks` SHALL filter the fetched `items` by case-insensitive substring match against `displayName` (and `descriptionPreview` when present) using `searchQuery`, and SHALL sort the filtered items by `sortKey`: `firstToRun`/`lastToRun` order by `sortValues.nextRunAt` ascending/descending (items missing `nextRunAt` sort last), `newest` orders by `sortValues.createdAt` descending (items missing `createdAt` sort last), and `nameAZ` orders by `displayName` ascending. No new query parameters are sent to `GET /api/v1/scheduled-tasks`; filtering and sorting operate entirely on the already-fetched array.

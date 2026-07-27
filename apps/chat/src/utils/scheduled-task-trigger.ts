@@ -38,11 +38,14 @@ export const mapFormValuesToCreateBody = (
       ? { date: new Date(values.runAt ?? '').toISOString() }
       : { cron: { fields: buildCronFields(values) } };
 
+  const trimmedDescription = values.description?.trim();
+
   return {
     displayName: values.displayName.trim(),
     trigger,
     model: values.modelId,
     prompt: values.prompt.trim(),
+    ...(trimmedDescription ? { description: trimmedDescription } : {}),
     stream: values.stream,
   };
 };

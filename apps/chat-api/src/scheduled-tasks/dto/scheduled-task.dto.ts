@@ -55,4 +55,11 @@ export class ScheduledTaskDto {
   @IsOptional()
   @IsString()
   createdBy?: string;
+
+  @ApiPropertyOptional({
+    example: 'Summarizes unread inbox items every morning',
+  })
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

@@ -26,6 +26,29 @@ This package is an internal workspace library. Add it as a dependency in your `p
 
 ## Components
 
+### CardShell
+
+Shared elevated-card shell for browse-grid cards: rounded corners, padding, a vertical gap between children, background, resting shadow, hover lift, and a `prefers-reduced-motion` fallback. Renders an `<article>` and accepts every standard `<article>` attribute (`role`, `aria-label`, `onClick`, `onKeyDown`, `style`, etc.) plus `className` for card-specific layout overrides.
+
+```tsx
+import { CardShell } from '@epam/ai-dial-kit';
+
+<CardShell role="group" aria-label={item.name} className="h-[232px]">
+  <h3>{item.name}</h3>
+  <p>{item.description}</p>
+</CardShell>;
+```
+
+### FolderPath
+
+Read-only, non-clickable breadcrumb for folder-style path segments: a leading folder icon, a chevron separator mirrored in RTL, and the last segment styled as the current/leaf item. Scrolls horizontally on overflow rather than truncating.
+
+```tsx
+import { FolderPath } from '@epam/ai-dial-kit';
+
+<FolderPath segments={['Public', 'Project folder']} />;
+```
+
 ### SearchBar
 
 Search input field with a leading search icon.

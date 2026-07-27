@@ -7600,6 +7600,10 @@
           "createdBy": {
             "type": "string",
             "example": "70e570e9-cc23-4ffd-9182-078d09f116ac"
+          },
+          "description": {
+            "type": "string",
+            "example": "Summarizes unread inbox items every morning"
           }
         },
         "required": ["id", "displayName", "trigger"]
@@ -7661,6 +7665,10 @@
             "type": "string",
             "example": "Summarize my inbox"
           },
+          "description": {
+            "type": "string",
+            "example": "Summarizes unread inbox items every morning"
+          },
           "stream": {
             "type": "boolean",
             "example": true,
@@ -7707,6 +7715,10 @@
           "createdBy": {
             "type": "string",
             "example": "70e570e9-cc23-4ffd-9182-078d09f116ac"
+          },
+          "description": {
+            "type": "string",
+            "example": "Summarizes unread inbox items every morning"
           }
         },
         "required": ["id", "displayName", "trigger"]
@@ -7728,6 +7740,10 @@
           "prompt": {
             "type": "string",
             "example": "Summarize my inbox"
+          },
+          "description": {
+            "type": "string",
+            "example": "Summarizes unread inbox items every morning"
           },
           "stream": {
             "type": "boolean",
@@ -7775,6 +7791,10 @@
           "createdBy": {
             "type": "string",
             "example": "70e570e9-cc23-4ffd-9182-078d09f116ac"
+          },
+          "description": {
+            "type": "string",
+            "example": "Summarizes unread inbox items every morning"
           }
         },
         "required": ["id", "displayName", "trigger"]

@@ -18,7 +18,7 @@ export interface ScheduledTaskCardLabels {
 export interface ScheduledTaskCardStyles {
   /** CSS class applied to the card's title. Defaults to `'dial-body-semi-text text-primary'`. */
   titleClassName?: string;
-  /** CSS class applied to the description/prompt-preview line. Defaults to `'dial-small-text text-secondary'`. */
+  /** CSS class applied to the description/prompt-preview line. Defaults to `'dial-small-text text-control-disable'`. */
   descriptionClassName?: string;
   /** CSS class applied to the schedule pill's background/border. Defaults to `'bg-layer-2 border border-tertiary'`. */
   schedulePillClassName?: string;

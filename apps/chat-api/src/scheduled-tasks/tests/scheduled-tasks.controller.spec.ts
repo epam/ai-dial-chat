@@ -241,6 +241,39 @@ describe('ScheduledTasksController (integration)', () => {
       );
     });
 
+    it('returns 201 when description is provided', async () => {
+      service.createScheduledTask.mockResolvedValue({
+        ...mockSchedule,
+        description: 'Summarizes unread inbox items every morning',
+      });
+      const body = {
+        ...validCreateBody,
+        description: 'Summarizes unread inbox items every morning',
+      };
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks')
+        .send(body)
+        .expect(201);
+
+      expect(res.body.description).toBe(
+        'Summarizes unread inbox items every morning',
+      );
+      expect(service.createScheduledTask).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        expect.objectContaining(body),
+      );
+    });
+
+    it('returns 400 when description exceeds 500 characters', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/scheduled-tasks')
+        .send({ ...validCreateBody, description: 'a'.repeat(501) })
+        .expect(400);
+      expect(service.createScheduledTask).not.toHaveBeenCalled();
+    });
+
     it('returns 400 when the mapper rejects an invalid trigger', async () => {
       service.createScheduledTask.mockRejectedValue(
         new BadRequestException(
@@ -369,6 +402,14 @@ describe('ScheduledTasksController (integration)', () => {
       await request(app.getHttpServer())
         .put('/api/v1/scheduled-tasks/sched_123')
         .send(rest)
+        .expect(400);
+      expect(service.updateScheduledTask).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when description exceeds 500 characters', async () => {
+      await request(app.getHttpServer())
+        .put('/api/v1/scheduled-tasks/sched_123')
+        .send({ ...validCreateBody, description: 'a'.repeat(501) })
         .expect(400);
       expect(service.updateScheduledTask).not.toHaveBeenCalled();
     });

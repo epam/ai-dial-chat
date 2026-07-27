@@ -1,27 +1,4 @@
-# Spec: scheduled-task-create-form
-
-## Requirements
-
-### Requirement: New task navigates to a dedicated create route
-
-The Scheduled Tasks list page's primary "create" action SHALL navigate to a new route, `ROUTES.ScheduledTaskCreate` (`/scheduled-tasks/new`), passing the current list URL as a `returnUrl` query parameter, instead of invoking a no-op handler. The route SHALL be lazy-loaded and registered in `apps/chat/src/app/app.tsx` using the same `RouteErrorBoundary` + `Suspense` + `RouteFallback` pattern as `ROUTES.ScheduledTasks`. State is owned by the `ScheduledTaskCreatePage` component (local `useState`) — no new React Context is introduced.
-
-**Feature flag:** reuses `scheduledTasksEnabled` (no new flag). **RTL impact:** page mirrors per logical-property rules (see RTL requirement below). **i18n impact:** see i18n requirement below. **Telemetry:** none in this iteration.
-
-#### Scenario: Create button navigates with returnUrl
-
-- **WHEN** `scheduledTasksEnabled` is `true` and the user activates the **New task** button on `/scheduled-tasks`
-- **THEN** the app navigates to `/scheduled-tasks/new?returnUrl=%2Fscheduled-tasks`
-
-#### Scenario: Flag disabled hides the create route
-
-- **WHEN** `scheduledTasksEnabled` resolves to `false` and the user navigates directly to `/scheduled-tasks/new`
-- **THEN** the app renders the same `NotFound` content it renders for any unregistered path
-
-#### Scenario: Route is lazy-loaded
-
-- **WHEN** the JS bundle is evaluated without navigating to `/scheduled-tasks/new`
-- **THEN** the create-task page code is NOT included in the initial bundle
+## MODIFIED Requirements
 
 ### Requirement: Cancel returns to returnUrl; valid submit calls the BFF create endpoint
 
@@ -124,27 +101,6 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 - **WHEN** the user types into the Description textarea
 - **THEN** the input cannot exceed 500 characters (`maxLength={500}`), and accessible feedback is shown once the field is non-empty
 
-### Requirement: Page maps form values to BFF trigger shape
-
-`ScheduledTaskCreatePage` SHALL convert form `values` to the BFF `trigger` field before calling `createScheduledTask`:
-
-- When `scheduleType === 'once'`: `trigger = { date: <ISO-8601 datetime> }` built from `runAt`
-- When `scheduleType === 'recurring'` and frequency is Daily: `trigger = { cron: { fields: { hour, minute } } }` from `time`
-- When frequency is Weekly: include `day_of_week` (exact field name confirmed against scheduler OpenAPI during implementation)
-- When frequency is Monthly: include `day` from `dayOfMonth`
-
-This mapping MUST live in `apps/chat` (page or `utils/`), not in the lib.
-
-#### Scenario: Once schedule sends trigger.date
-
-- **WHEN** the user selects schedule type Once with run at `2026-07-24T09:00` (local) and submits
-- **THEN** the POST body includes `trigger.date` as an ISO-8601 string and no `trigger.cron`
-
-#### Scenario: Daily recurring sends trigger.cron.fields
-
-- **WHEN** the user selects Recurring / Daily with time `09:00` and submits
-- **THEN** the POST body includes `trigger.cron.fields.hour = '9'` and `trigger.cron.fields.minute = '0'`
-
 ### Requirement: Create-task strings flow through react-i18next
 
 Every user-visible string on the create-task page (page title, schedule-section labels, frequency option labels, model/prompt/description/stream labels, validation messages, success/error notifications) MUST be resolved via `useTranslation().t()` in `ScheduledTaskCreatePage` and passed into the lib as plain strings. Feature-specific keys live under `scheduledTasks.create.*` in `apps/chat/src/i18n/locales/en.json`, referenced through `ScheduledTasksI18nKeys`. The display name label/required message MUST reuse `EditorI18nKeys.NameLabel` and `EditorI18nKeys.NameRequired`. Cancel/Create MUST reuse `ButtonsI18nKeys.Cancel` and `ButtonsI18nKeys.Create`.
@@ -158,22 +114,3 @@ Every user-visible string on the create-task page (page title, schedule-section 
 
 - **WHEN** `ScheduledTaskCreatePage` renders `<ScheduledTaskCreateForm />`
 - **THEN** display name text props resolve from `EditorI18nKeys` and Cancel/Create from `ButtonsI18nKeys`, not duplicated feature-scoped strings
-
-### Requirement: Create-task page supports RTL and meets AAA accessibility defaults
-
-All directional layout in the create-task header and form MUST use Tailwind logical properties (`ms/me`, `ps/pe`, `text-start/end`) instead of physical ones, per `.claude/rules/rtl.md`. Every form field MUST have an accessible label distinct from its placeholder. Dropdowns (frequency, model) MUST expose `aria-expanded` and mark the selected option via `aria-selected`/`aria-current`. Focus-visible styling on Cancel/Create MUST match hover feedback per `.claude/rules/a11y.md`.
-
-#### Scenario: Page mirrors under RTL
-
-- **WHEN** `document.documentElement.dir` is `rtl`
-- **THEN** the create-task header and form lay out mirrored with no hard-coded left/right offsets breaking the mirrored layout
-
-#### Scenario: Form fields are labeled
-
-- **WHEN** the create-task form renders
-- **THEN** display name, schedule controls, model, prompt, and stream each have an accessible name distinct from any placeholder text
-
-#### Scenario: Model dropdown exposes expanded/selected state
-
-- **WHEN** the user opens the model dropdown
-- **THEN** the trigger has `aria-expanded="true"` and the selected model option is marked `aria-selected="true"` (or `aria-current`)

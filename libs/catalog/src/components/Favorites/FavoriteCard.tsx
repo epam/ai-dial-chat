@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { CardShell } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
@@ -79,19 +80,17 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   );
 
   return (
-    <article
+    <CardShell
       data-card-id={item.id}
       role={handleClick != null ? 'button' : undefined}
       tabIndex={handleClick != null ? 0 : undefined}
       aria-label={item.name}
       className={mergeClasses(
-        'relative box-border flex min-w-0 cursor-pointer items-start gap-1',
-        'rounded-[20px] border-2 p-[22px] text-start',
-        styles.card,
+        'box-border min-w-0 cursor-pointer flex-row items-start gap-1 text-start',
         isLeaving && styles.cardLeaving,
         isSelected
           ? 'border-accent-primary !bg-accent-primary-alpha'
-          : 'border-transparent',
+          : undefined,
       )}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -139,6 +138,6 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         }
         className="self-end"
       />
-    </article>
+    </CardShell>
   );
 };

@@ -1,4 +1,4 @@
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { FolderPath, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import {
   IconKey,
@@ -21,7 +21,6 @@ import {
 } from '../../../types/toolset-auth';
 import { getCredentialsUiState } from '../../../utils/toolset-credentials';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
-import { FolderPath } from '../../FolderPath/FolderPath';
 import { ConnectButton } from './ConnectButton/ConnectButton';
 import { DeleteButton } from './DeleteButton/DeleteButton';
 import { ShareButton } from './ShareButton/ShareButton';
