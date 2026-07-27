@@ -1,6 +1,7 @@
+import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconFileDescription } from '@tabler/icons-react';
-import { memo, type FC } from 'react';
+import { memo, useCallback, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatch } from 'react-router-dom';
 import { SidebarI18nKeys } from '../../constants/translation-keys';
@@ -11,6 +12,12 @@ const SourcesSidebarToggle: FC = () => {
   const { t } = useTranslation();
   const isConversationRoute = !!useMatch(`${ROUTES.Conversations}/*`);
   const { isOpen, handleOpen } = useSourcesSidebar();
+  const { closeCanvas } = useAttachmentCanvas();
+
+  const handleClick = useCallback(() => {
+    closeCanvas();
+    handleOpen();
+  }, [closeCanvas, handleOpen]);
 
   if (!isConversationRoute || isOpen) {
     return null;
@@ -22,7 +29,7 @@ const SourcesSidebarToggle: FC = () => {
       aria-label={t(SidebarI18nKeys.ToggleOpen)}
       aria-pressed={isOpen}
       tooltipProps={{ tooltip: t(SidebarI18nKeys.ToggleOpen) }}
-      onClick={handleOpen}
+      onClick={handleClick}
     />
   );
 };

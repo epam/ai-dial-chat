@@ -17,6 +17,7 @@ import type {
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import { MIMEType } from '@epam/ai-dial-chat-shared';
+import { LRUCache } from 'lru-cache';
 import {
   annotationHighlightId,
   annotationsToPdfHighlights,
@@ -89,12 +90,77 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
   url,
 });
 
+/*
+ * Session-scoped LRU caches keyed by DIAL download URL.
+ * Cleared on conversation navigation via clearAttachmentCache().
+ * blobCache: up to 10 binary files (PDFs, etc.)
+ * textCache: up to 50 text files (markdown, JSON, plain text)
+ */
+const blobCache = new LRUCache<string, Promise<Blob>>({ max: 10 });
+const textCache = new LRUCache<string, Promise<string>>({ max: 50 });
+
+/** Clears all cached fetch results. Call this when leaving a conversation. */
+export const clearAttachmentCache = (): void => {
+  blobCache.clear();
+  textCache.clear();
+};
+
+/**
+ * Fetches a DIAL download URL and returns its body as a Blob.
+ * The result is cached by URL; failed requests are removed from cache so the
+ * next call retries the network.
+ */
+const fetchDialBlob = (dialUrl: string): Promise<Blob> => {
+  let p = blobCache.get(dialUrl);
+  if (p == null) {
+    p = fetch(dialUrl)
+      .then((r) => {
+        if (!r.ok)
+          throw Object.assign(new Error(`HTTP ${r.status}`), {
+            status: r.status,
+          });
+        return r.blob();
+      })
+      .catch((err: unknown) => {
+        blobCache.delete(dialUrl);
+        throw err;
+      });
+    blobCache.set(dialUrl, p);
+  }
+  return p;
+};
+
+/**
+ * Fetches a DIAL download URL and returns its body as text.
+ * The result is cached by URL; failed requests are removed from cache so the
+ * next call retries the network.
+ */
+const fetchDialText = (dialUrl: string): Promise<string> => {
+  let p = textCache.get(dialUrl);
+  if (p == null) {
+    p = fetch(dialUrl)
+      .then((r) => {
+        if (!r.ok)
+          throw Object.assign(new Error(`HTTP ${r.status}`), {
+            status: r.status,
+          });
+        return r.text();
+      })
+      .catch((err: unknown) => {
+        textCache.delete(dialUrl);
+        throw err;
+      });
+    textCache.set(dialUrl, p);
+  }
+  return p;
+};
+
 /**
  * Resolves a displayable Blob/object URL for an attachment's binary content: a
- * locally-picked `File`, an already-uploaded DIAL file, an existing preview
- * URL, or inline base64 `data` decoded into a Blob URL. Returns `undefined`
- * when none of these sources are available, or an `ErrorCanvasContent` when a
- * DIAL file fetch fails.
+ * locally-picked `File`, an already-uploaded DIAL file (fetched via LRU cache),
+ * an existing preview URL, or inline base64 `data` decoded into a Blob URL.
+ * Returns `undefined` when none of these sources are available, or an
+ * `ErrorCanvasContent` when a DIAL file fetch fails.
  */
 const resolveAttachmentBlobUrl = async (
   attachment: DisplayAttachment,
@@ -105,10 +171,11 @@ const resolveAttachmentBlobUrl = async (
   const dialUrl = resolveDialUrl(attachment);
   if (dialUrl != null) {
     try {
-      const response = await fetch(dialUrl);
-      if (!response.ok) return classifyFetchFailure(response.status, dialUrl);
-      return URL.createObjectURL(await response.blob());
-    } catch {
+      const blob = await fetchDialBlob(dialUrl);
+      return URL.createObjectURL(blob);
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      if (status != null) return classifyFetchFailure(status, dialUrl);
       return networkFailureContent(dialUrl);
     }
   }
@@ -121,9 +188,10 @@ const resolveAttachmentBlobUrl = async (
 
 /**
  * Resolves an attachment's textual content: a locally-picked `File`'s text,
- * fetched text from an already-uploaded DIAL file, or inline base64 `data`
- * decoded into UTF-8 text. Returns `undefined` when none of these sources are
- * available, or an `ErrorCanvasContent` when the fetch failed.
+ * fetched text from an already-uploaded DIAL file (via LRU cache), or inline
+ * base64 `data` decoded into UTF-8 text. Returns `undefined` when none of
+ * these sources are available, or an `ErrorCanvasContent` when the fetch
+ * failed.
  */
 const resolveAttachmentText = async (
   attachment: DisplayAttachment,
@@ -132,12 +200,10 @@ const resolveAttachmentText = async (
   const downloadUrl = resolveDialUrl(attachment);
   if (downloadUrl != null) {
     try {
-      const response = await fetch(downloadUrl);
-      if (!response.ok) {
-        return classifyFetchFailure(response.status, downloadUrl);
-      }
-      return response.text();
-    } catch {
+      return await fetchDialText(downloadUrl);
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      if (status != null) return classifyFetchFailure(status, downloadUrl);
       return networkFailureContent(downloadUrl);
     }
   }
@@ -147,14 +213,36 @@ const resolveAttachmentText = async (
   return undefined;
 };
 
-/** Resolves an image canvas content payload from a DisplayAttachment, or `null` if unavailable. */
-export const resolveImageCanvasContent = async (
+/**
+ * Resolves an image canvas content payload from a DisplayAttachment without
+ * fetching — returns the BFF download URL (or a local/inline blob URL)
+ * directly so the browser cache can be shared with the conversation view's
+ * `<img>` element. Error detection is delegated to `<img onError>` in the
+ * canvas renderer. Returns `null` if no URL source is available.
+ */
+export const resolveImageCanvasContent = (
   attachment: DisplayAttachment,
-): Promise<ImageCanvasContent | ErrorCanvasContent | null> => {
-  const result = await resolveAttachmentBlobUrl(attachment);
-  if (result == null) return null;
-  if (typeof result !== 'string') return result;
-  return { type: AttachmentContentType.Image, url: result };
+): ImageCanvasContent | null => {
+  if ('file' in attachment && (attachment as Attachment).file.size > 0) {
+    return {
+      type: AttachmentContentType.Image,
+      url: URL.createObjectURL((attachment as Attachment).file),
+    };
+  }
+  const dialUrl = resolveDialUrl(attachment);
+  if (dialUrl != null) {
+    return { type: AttachmentContentType.Image, url: dialUrl };
+  }
+  if (attachment.previewUrl != null) {
+    return { type: AttachmentContentType.Image, url: attachment.previewUrl };
+  }
+  if (attachment.data != null) {
+    return {
+      type: AttachmentContentType.Image,
+      url: base64ToBlobUrl(attachment.data, attachment.contentType),
+    };
+  }
+  return null;
 };
 
 /** Resolves a plain-text canvas content payload from a DisplayAttachment, or `null` if unavailable. */
