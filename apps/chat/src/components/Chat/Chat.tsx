@@ -591,8 +591,6 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
     () =>
       selectedConversations
         .map((conversation) => {
-          // conversation.model.id could be a reference, while schemas are
-          // stored under the resolved model id
           const resolvedModelId =
             modelsMap[conversation.model.id]?.id ?? conversation.model.id;
           return configurationSchemas.find(
