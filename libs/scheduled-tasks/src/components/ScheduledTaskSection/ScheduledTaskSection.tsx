@@ -16,17 +16,19 @@ export const ScheduledTaskSection: FC<ScheduledTaskSectionProps> = ({
 
   return (
     <section aria-label={title} className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <h2 className={titleClassName}>{title}</h2>
-        <span
-          className={mergeClasses(
-            'dial-tiny-text rounded-full px-2 py-0.5',
-            countBadgeClassName,
-          )}
-        >
-          {count}
-        </span>
-      </div>
+      {title && (
+        <div className="flex items-center gap-2">
+          <h2 className={titleClassName}>{title}</h2>
+          <span
+            className={mergeClasses(
+              'dial-tiny-text rounded-full px-2 py-0.5',
+              countBadgeClassName,
+            )}
+          >
+            {count}
+          </span>
+        </div>
+      )}
       {children}
     </section>
   );

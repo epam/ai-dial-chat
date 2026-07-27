@@ -10,9 +10,9 @@ export interface ScheduledTaskSectionStyles {
 
 /** Props for the {@link ScheduledTaskSection} component. */
 export interface ScheduledTaskSectionProps {
-  /** Section heading, e.g. "Shared" or "My tasks". */
-  title: string;
-  /** Number of items in this section, shown as a count badge next to the title. */
+  /** Section heading, e.g. "Shared". Omit to render the section without a heading/count row. */
+  title?: string;
+  /** Number of items in this section, shown as a count badge next to the title. Ignored when `title` is omitted. */
   count: number;
   /** Section content, typically a {@link ScheduledTaskCardGrid}. */
   children: ReactNode;

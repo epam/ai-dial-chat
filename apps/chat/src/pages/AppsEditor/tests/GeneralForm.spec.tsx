@@ -75,6 +75,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   };
 });
 
+vi.mock('@epam/ai-dial-catalog', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-catalog')>();
+  return {
+    ...actual,
+    Card: () => <div>Preview</div>,
+  };
+});
+
 type GeneralFormProps = Omit<ComponentProps<typeof GeneralForm>, 'ref'>;
 
 const DEFAULT_PROPS: Pick<GeneralFormProps, 'schemaId' | 'onCreated'> = {

@@ -66,7 +66,7 @@ All directional layout in the Scheduled Tasks header, toolbar, and empty state M
 - `error` is set → the content region renders an error message with a retry action that invokes `onRetry`.
 - `isLoading` is `false`, `error` is unset, and `items` (after client-side search filtering) is empty because the source list itself is empty → the content region renders the shared `PanelEmptyState` component (from `@epam/ai-dial-chat-shared`) with `texts.emptyStateLabel`.
 - `isLoading` is `false`, `error` is unset, the source list is non-empty, but `searchQuery` filters every item out → the content region renders a distinct "no results" state (not `PanelEmptyState`, not the card grid) using `texts.noResultsLabel`.
-- `isLoading` is `false`, `error` is unset, and at least one item survives the `searchQuery` filter → the content region renders the card grid: items are grouped by `sectionKey`, each group rendered as a `ScheduledTaskSection` (title + count badge) containing a `ScheduledTaskCardGrid` of `ScheduledTaskCard`s, ordered by `sortKey`.
+- `isLoading` is `false`, `error` is unset, and at least one item survives the `searchQuery` filter → the content region renders the card grid: items are grouped by `sectionKey`, each group rendered as a `ScheduledTaskSection` containing a `ScheduledTaskCardGrid` of `ScheduledTaskCard`s, ordered by `sortKey`. The `'shared'` group renders with a title + count badge (`texts.sharedSectionTitle`); the `'myTasks'` group renders with no title/count row, just its card grid.
 
 The component MUST NOT import from `apps/chat`, `server-api`, any generated API client, routing, feature-flag context, auth, env, or analytics — all such knowledge is passed in via props. Search filtering and sorting of `items` happen inside the lib (pure, deterministic given `items`/`searchQuery`/`sortKey`); fetching, DTO mapping, and locale-aware label formatting happen in the app.
 
@@ -98,7 +98,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 #### Scenario: Non-empty filtered items render grouped card grid
 
 - **WHEN** `items` contains entries with `sectionKey: 'shared'` and `sectionKey: 'myTasks'`, and at least one item matches `searchQuery`
-- **THEN** the content region renders one `ScheduledTaskSection` per distinct `sectionKey` present among the matching items, each showing a count badge equal to the number of matching items in that section, followed by that section's `ScheduledTaskCardGrid`
+- **THEN** the content region renders one `ScheduledTaskSection` per distinct `sectionKey` present among the matching items, followed by that section's `ScheduledTaskCardGrid`; the `'shared'` section shows a title and a count badge equal to the number of matching items in that section, while the `'myTasks'` section shows neither a title nor a count badge
 
 #### Scenario: Create button invokes the injected callback
 

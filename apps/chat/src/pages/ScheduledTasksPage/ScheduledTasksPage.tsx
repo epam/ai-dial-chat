@@ -91,7 +91,6 @@ const ScheduledTasksPage: FC = () => {
       errorLabel: t(ScheduledTasksI18nKeys.ListErrorLabel),
       retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
       sharedSectionTitle: t(ScheduledTasksI18nKeys.ListSharedSectionTitle),
-      myTasksSectionTitle: t(ScheduledTasksI18nKeys.ListMyTasksSectionTitle),
       cardLabels: {
         newBadgeLabel: t(ScheduledTasksI18nKeys.CardNewBadgeLabel),
         actionsLabel: t(ScheduledTasksI18nKeys.CardActionsLabel),

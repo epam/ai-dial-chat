@@ -37,8 +37,6 @@ export interface ScheduledTasksLabels {
   retryLabel: string;
   /** Title for the section grouping items with `sectionKey: 'shared'`. */
   sharedSectionTitle: string;
-  /** Title for the section grouping items with `sectionKey: 'myTasks'`. */
-  myTasksSectionTitle: string;
   /** Localized labels forwarded as-is to every card in the grid. */
   cardLabels?: ScheduledTaskCardGridLabels;
 }

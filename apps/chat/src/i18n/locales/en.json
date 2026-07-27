@@ -455,8 +455,7 @@
       "noResultsLabel": "No results",
       "errorLabel": "Failed to load scheduled tasks",
       "retryLabel": "Retry",
-      "sharedSectionTitle": "Shared",
-      "myTasksSectionTitle": "My tasks"
+      "sharedSectionTitle": "Shared"
     },
     "card": {
       "newBadgeLabel": "NEW",

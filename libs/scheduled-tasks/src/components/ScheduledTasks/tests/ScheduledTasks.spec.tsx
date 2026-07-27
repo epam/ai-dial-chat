@@ -127,7 +127,6 @@ const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
         errorLabel: 'Something went wrong',
         retryLabel: 'Retry',
         sharedSectionTitle: 'Shared',
-        myTasksSectionTitle: 'My tasks',
       }}
       onCreateClick={vi.fn()}
       searchQuery=""
@@ -207,7 +206,7 @@ describe('ScheduledTasks', () => {
     expect(screen.queryByText('No scheduled tasks yet')).toBeNull();
   });
 
-  it('renders a section with a count badge and a card for each matching item', () => {
+  it('renders cards for each matching item without a "My tasks" section heading', () => {
     renderScheduledTasks({
       items: [
         buildItem({ id: '1', displayName: 'Daily summary' }),
@@ -215,9 +214,28 @@ describe('ScheduledTasks', () => {
       ],
     });
 
-    expect(screen.getByRole('heading', { name: 'My tasks' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'My tasks' })).toBeNull();
     expect(screen.getByText('Daily summary')).toBeTruthy();
     expect(screen.getByText('Weekly digest')).toBeTruthy();
+  });
+
+  it('renders a "Shared" section heading with a count badge for shared items', () => {
+    renderScheduledTasks({
+      items: [
+        buildItem({
+          id: '1',
+          displayName: 'Daily summary',
+          sectionKey: 'shared',
+        }),
+        buildItem({
+          id: '2',
+          displayName: 'Weekly digest',
+          sectionKey: 'shared',
+        }),
+      ],
+    });
+
+    expect(screen.getByRole('heading', { name: 'Shared' })).toBeTruthy();
     expect(screen.getAllByText('2').length).toBeGreaterThan(0);
   });
 

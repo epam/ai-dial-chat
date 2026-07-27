@@ -68,16 +68,15 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   );
 
   const sections = useMemo(() => {
-    const sectionTitles: Record<ScheduledTaskSectionKey, string> = {
+    const sectionTitles: Partial<Record<ScheduledTaskSectionKey, string>> = {
       shared: labels.sharedSectionTitle,
-      myTasks: labels.myTasksSectionTitle,
     };
     return SECTION_ORDER.map((key) => ({
       key,
       title: sectionTitles[key],
       items: visibleItems.filter((item) => item.sectionKey === key),
     })).filter((section) => section.items.length > 0);
-  }, [visibleItems, labels.sharedSectionTitle, labels.myTasksSectionTitle]);
+  }, [visibleItems, labels.sharedSectionTitle]);
 
   const statusMessage = isLoading
     ? undefined
