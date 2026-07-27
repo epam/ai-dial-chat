@@ -1,6 +1,7 @@
 import { Highlight, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { CardShell, FolderPath } from '@epam/ai-dial-kit';
+import { FolderPath } from '@epam/ai-dial-kit';
 import {
+  CardShell,
   DIAL_ICON_SIZE,
   DialDropdown,
   DialIconButton,
@@ -19,7 +20,7 @@ import type { ScheduledTaskCardProps } from '../../models/scheduled-task-card-pr
  * Single scheduled-task card: title, optional "new" badge and description,
  * schedule pill, location breadcrumb, and an overflow menu limited to the
  * actions the caller wired up. Renders on the shared `CardShell` from
- * `@epam/ai-dial-kit` (radius, padding, shadow, hover lift), the same shell
+ * `@epam/ai-dial-ui-kit` (radius, padding, shadow, hover lift), the same shell
  * the Catalog browse card uses. The card has a fixed height; a long
  * description is clamped with an ellipsis, and the schedule pill (plus the
  * location breadcrumb, when present) is pinned to the bottom regardless of

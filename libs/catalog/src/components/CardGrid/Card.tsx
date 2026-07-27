@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { CardShell, FolderPath } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
+import { FolderPath } from '@epam/ai-dial-kit';
+import { CardShell, DIAL_ICON_SIZE, ElementSize } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import type { CardProps } from '../../models/card-props';

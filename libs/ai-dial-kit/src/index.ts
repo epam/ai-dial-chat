@@ -1,5 +1,3 @@
-export { CardShell } from './components/CardShell/CardShell';
-export type { CardShellProps } from './components/CardShell/CardShell';
 export { FolderPath } from './components/FolderPath/FolderPath';
 export type { FolderPathProps } from './components/FolderPath/FolderPath';
 export { GradientCheckIcon } from './components/GradientCheckIcon/GradientCheckIcon';

@@ -7,12 +7,6 @@ import { ScheduledTasksProps } from '../../../models/scheduled-tasks-props';
 import { ScheduledTasks } from '../ScheduledTasks';
 
 vi.mock('@epam/ai-dial-kit', () => ({
-  CardShell: ({
-    children,
-    ...rest
-  }: { children: ReactNode } & Record<string, unknown>) => (
-    <article {...rest}>{children}</article>
-  ),
   FolderPath: ({ segments }: { segments: string[] }) => (
     <>{segments.join(' / ')}</>
   ),
@@ -58,6 +52,12 @@ vi.mock('@epam/ai-dial-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  CardShell: ({
+    children,
+    ...rest
+  }: { children: ReactNode } & Record<string, unknown>) => (
+    <article {...rest}>{children}</article>
+  ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DialSpinner: () => <div role="progressbar" />,
   DialDropdown: ({ children }: { children: ReactNode }) => <>{children}</>,

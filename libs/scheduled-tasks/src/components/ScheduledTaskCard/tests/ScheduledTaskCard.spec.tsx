@@ -12,6 +12,12 @@ interface MockPathItem {
 }
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  CardShell: ({
+    children,
+    ...rest
+  }: { children: ReactNode } & Record<string, unknown>) => (
+    <article {...rest}>{children}</article>
+  ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DialIcon: ({ icon, className }: { icon: ReactNode; className?: string }) => (
     <span className={className}>{icon}</span>
