@@ -1,10 +1,4 @@
-import type { components } from '@epam/ai-dial-typescript-sdk';
-import {
-  BadGatewayException,
-  HttpException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
@@ -19,17 +13,6 @@ import type {
   RevokeAccessItemDto,
   RevokeAccessResponseDto,
 } from '../dto/revoke-access.dto';
-import type {
-  ShareItemDto,
-  ShareFilesResponseDto,
-} from '../dto/share-files.dto';
-import { SharePermission } from '../dto/share-files.dto';
-
-const mapSharePermission = (
-  permission: SharePermission,
-): Array<components['schemas']['ResourceAccessType']> =>
-  permission === SharePermission.ReadWrite ? ['READ', 'WRITE'] : ['READ'];
-
 @Injectable()
 export class FilesSharingService {
   private readonly logger = new Logger(FilesSharingService.name);
@@ -41,66 +24,6 @@ export class FilesSharingService {
 
   private getTimeoutMs(): number {
     return this.configService.get<number>('FILE_TRANSFER_TIMEOUT_MS') ?? 30_000;
-  }
-
-  async shareFiles(
-    items: ShareItemDto[],
-    permission: SharePermission,
-    at: string,
-  ): Promise<ShareFilesResponseDto> {
-    this.logger.log(`Share files started: itemCount=${items.length}`);
-
-    try {
-      const permissions = mapSharePermission(permission);
-      const { data, error, response } =
-        await this.dialClient.client.shareResource({
-          headers: getBearerAuthHeaders(at),
-          body: {
-            invitationType: 'LINK',
-            resources: items.map((item) => ({
-              url: buildDialFileResourceUrl(item.bucket, item.path),
-              permissions,
-            })),
-          },
-          signal: AbortSignal.timeout(this.getTimeoutMs()),
-        });
-
-      if (error != null) {
-        this.logger.warn(
-          `Share files failed: itemCount=${items.length}, status=${response.status}`,
-        );
-        return handleDialSdkError(
-          error,
-          'files.shareFiles',
-          this.logger,
-          response,
-        );
-      }
-
-      if (!data?.invitationLink) {
-        this.logger.warn(
-          `DIAL Core returned success with no invitation link: itemCount=${items.length}`,
-        );
-        throw new BadGatewayException(
-          'DIAL Core did not return an invitation link',
-        );
-      }
-
-      this.logger.log(
-        `Share files completed: itemCount=${items.length}, success=true`,
-      );
-
-      return { invitationLink: data.invitationLink };
-    } catch (err) {
-      if (err instanceof HttpException) {
-        throw err;
-      }
-      this.logger.error(
-        `Share files exception: itemCount=${items.length}`,
-        err,
-      );
-      return handleDialSdkError(err, 'files.shareFiles', this.logger);
-    }
   }
 
   async revokeAccess(

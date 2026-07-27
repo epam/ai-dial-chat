@@ -116,9 +116,6 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         data-has-unshare={String(
           Actions.Unshare in (gridOptions?.actionLabels ?? {}),
         )}
-        data-has-share={String(
-          Actions.ManagePermissions in (gridOptions?.actionLabels ?? {}),
-        )}
         data-has-remove-access={String(
           Actions.RemoveAccess in (gridOptions?.actionLabels ?? {}),
         )}
@@ -193,11 +190,6 @@ const defaultHookResult: UseDialFileManagerResult = {
   actionLabels: {},
   sharedWithMeIds: undefined,
   sharedByMePaths: new Set(),
-  shareTarget: null,
-  onManagePermissions: vi.fn(),
-  onCloseShareModal: vi.fn(),
-  onCreateShareLink: vi.fn(),
-  isSharing: false,
   onUnshareFiles: vi.fn(),
   isUnsharing: false,
   onRemoveFilesAccess: vi.fn(),
@@ -278,7 +270,6 @@ describe('DialFileManagerPage — full action matrix on my_files', () => {
         [DialFileManagerActions.Copy]: 'Copy',
         [DialFileManagerActions.Move]: 'Move',
         [DialFileManagerActions.Duplicate]: 'Duplicate',
-        [DialFileManagerActions.ManagePermissions]: 'Share',
         [DialFileManagerActions.RemoveAccess]: 'Remove access',
         [DialFileManagerActions.Info]: 'Info',
       },
@@ -295,7 +286,6 @@ describe('DialFileManagerPage — full action matrix on my_files', () => {
     expect(manager.getAttribute('data-has-bulk-copy')).toBe('true');
     expect(manager.getAttribute('data-has-bulk-move')).toBe('true');
     expect(manager.getAttribute('data-has-bulk-duplicate')).toBe('true');
-    expect(manager.getAttribute('data-has-share')).toBe('true');
     expect(manager.getAttribute('data-has-remove-access')).toBe('true');
     expect(manager.getAttribute('data-has-info')).toBe('true');
     expect(manager.getAttribute('data-has-upload-archive')).toBe('true');

@@ -40,7 +40,6 @@ const mockDownloadArchive = vi.mocked(filesApi.downloadArchive);
 const mockDeleteFiles = vi.mocked(filesApi.deleteFiles);
 const mockCopyFiles = vi.mocked(filesApi.copyFiles);
 const mockMoveFiles = vi.mocked(filesApi.moveFiles);
-const mockShareFiles = vi.mocked(filesApi.shareFiles);
 const mockDiscardShared = vi.mocked(filesApi.discardShared);
 const mockRevokeAccess = vi.mocked(filesApi.revokeAccess);
 const mockGetFileMetadata = vi.mocked(filesApi.getFileMetadata);
@@ -1862,42 +1861,6 @@ describe('useDialFileManager', () => {
       await waitFor(() =>
         expect(result.current.isFileMetadataLoading).toBe(false),
       );
-    });
-
-    it('is false while only isSharing is true (ShareFileModal already blocks the grid)', async () => {
-      mockListFiles.mockResolvedValue({
-        bucket: BUCKET,
-        path: '',
-        items: [
-          {
-            name: 'report.pdf',
-            path: `files/${BUCKET}/report.pdf`,
-            folderId: `${BUCKET}:`,
-            nodeType: ListFilesItemDtoNodeTypeEnum.Item,
-            bucket: BUCKET,
-          },
-        ],
-        nextToken: undefined,
-      });
-      mockShareFiles.mockImplementation(() => new Promise(() => undefined));
-
-      const { result } = renderHook(() =>
-        useDialFileManager({
-          bucket: BUCKET,
-          actionProfile: DialFileManagerActionProfile.Full,
-        }),
-      );
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-      act(() =>
-        result.current.onManagePermissions(`files/${BUCKET}/report.pdf`),
-      );
-      act(() => {
-        void result.current.onCreateShareLink('read').catch(() => undefined);
-      });
-
-      await waitFor(() => expect(result.current.isSharing).toBe(true));
-      expect(result.current.isAnyOperationInProgress).toBe(false);
     });
 
     it('is false when nothing is active', async () => {
