@@ -272,10 +272,15 @@ export const FileManagerModal = memo(
           UIActions.showToast({
             type: ToastType.Error,
             title: t(ChatI18nKeys.TooManyFilesSelected),
-            message: t(ChatI18nKeys.TooManyFilesDescription, {
-              count: accumulatedIds.size,
-              limit: maximumAttachmentsAmount,
-            }),
+            message: t(
+              maximumAttachmentsAmount === 1
+                ? ChatI18nKeys.TooManyFilesDescriptionSingular
+                : ChatI18nKeys.TooManyFilesDescription,
+              {
+                count: accumulatedIds.size,
+                limit: maximumAttachmentsAmount,
+              },
+            ),
           }),
         );
         return;
@@ -458,9 +463,14 @@ export const FileManagerModal = memo(
                 &nbsp;
                 {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
                   !!maximumAttachmentsAmount &&
-                  t(ChatI18nKeys.UpToFiles, {
-                    maxAttachmentsAmount: maximumAttachmentsAmount,
-                  })}
+                  t(
+                    maximumAttachmentsAmount === 1
+                      ? ChatI18nKeys.UpToFilesSingular
+                      : ChatI18nKeys.UpToFiles,
+                    {
+                      maxAttachmentsAmount: maximumAttachmentsAmount,
+                    },
+                  )}
               </p>
             )}
             {warningMessage && <p>{warningMessage}</p>}
