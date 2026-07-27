@@ -293,9 +293,7 @@ describe('DialFileManagerShell', () => {
 
   it('shows folderEmptyStateTitle when navigated into a subfolder', () => {
     renderShell({ path: '/My files/reports/' });
-    expect(
-      screen.getByText(baseLabels.folderEmptyStateTitle),
-    ).toBeTruthy();
+    expect(screen.getByText(baseLabels.folderEmptyStateTitle)).toBeTruthy();
   });
 
   it('shows the error/retry panel and calls retry on click', async () => {

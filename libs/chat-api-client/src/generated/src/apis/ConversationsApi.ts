@@ -73,7 +73,6 @@ export interface GetConversationPublishHistoryRequest {
 export interface ListConversationsRequest {
   limit?: number;
   nextToken?: string;
-  path?: string;
 }
 
 export interface PublishConversationRequest {
@@ -593,10 +592,6 @@ export class ConversationsApi extends runtime.BaseAPI {
 
     if (requestParameters['nextToken'] != null) {
       queryParameters['nextToken'] = requestParameters['nextToken'];
-    }
-
-    if (requestParameters['path'] != null) {
-      queryParameters['path'] = requestParameters['path'];
     }
 
     const headerParameters: runtime.HTTPHeaders = {};
