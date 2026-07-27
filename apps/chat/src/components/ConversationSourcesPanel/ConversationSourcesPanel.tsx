@@ -18,8 +18,8 @@ import {
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
-import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import usePanelMaxWidth from '../../hooks/usePanelMaxWidth';
 import { StorageKey } from '../../types/storage-key';
 import { isDialFileId } from '../../utils/dial-file';
 
@@ -93,8 +93,7 @@ const ConversationSourcesPanelContainer: FC = () => {
   }, [downloadableAttachments]);
 
   const isMobile = useIsMobile();
-  const viewportWidth = useViewportWidth();
-  const maxPanelWidth = Math.floor(viewportWidth * 0.5);
+  const maxPanelWidth = usePanelMaxWidth();
   const [storedWidth, setStoredWidth] = useLocalStorage(
     StorageKey.ConversationSourcesWidth,
     DEFAULT_PANEL_WIDTH,
