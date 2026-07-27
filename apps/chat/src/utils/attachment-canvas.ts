@@ -9,6 +9,7 @@ import type {
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
 import type {
   Annotation,
@@ -16,7 +17,7 @@ import type {
   AttachmentResource,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
-import { MIMEType } from '@epam/ai-dial-chat-shared';
+import { FileExtension, MIMEType } from '@epam/ai-dial-chat-shared';
 import { LRUCache } from 'lru-cache';
 import {
   annotationHighlightId,
@@ -89,6 +90,32 @@ const networkFailureContent = (url: string): ErrorCanvasContent => ({
   errorType: AttachmentErrorType.LoadFailed,
   url,
 });
+
+/* Returns true when an external source URL should be opened in the canvas
+ * rather than a new browser tab.
+ *
+ * Image and audio content types are trusted directly since web-search grounding
+ * APIs do not mislabel them. For document types we rely solely on the URL path
+ * extension — Google's grounding API labels every web reference (YouTube,
+ * Forbes, etc.) as 'text/markdown', so content-type alone is unreliable. */
+export const isExternalSourcePreviewable = (
+  contentType: string,
+  url: string,
+): boolean => {
+  if (contentType.startsWith('image/') || contentType.startsWith('audio/')) {
+    return true;
+  }
+  try {
+    const { pathname } = new URL(url);
+    const fileName = pathname.split('/').pop() ?? '';
+    const dot = fileName.lastIndexOf('.');
+    if (dot === -1) return false;
+    const ext = fileName.slice(dot + 1).toLowerCase();
+    return ext === FileExtension.PDF || isTextPreviewable(fileName);
+  } catch {
+    return false;
+  }
+};
 
 /*
  * Session-scoped LRU caches keyed by DIAL download URL.
