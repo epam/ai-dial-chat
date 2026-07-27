@@ -8,13 +8,11 @@ import type {
   FileManagerColumnKey,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
-import type { ShareFilesDtoPermissionEnum } from '@epam/chat-api-client';
 import type { FileUploadBatchState } from '../../components/DialFileManagerModal/types/upload';
 import type {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
 } from '../../types/file-manager-variant';
-import type { ShareTarget } from './useDialFileSharing';
 
 export interface FileUploadValidationResult {
   valid: boolean;
@@ -171,18 +169,6 @@ export interface UseDialFileManagerResult {
 
   /** Share: paths the user has shared with others, populated only on my_files tab. */
   sharedByMePaths: Set<string>;
-  /** Share: non-null while ShareFileModal should be open. */
-  shareTarget: ShareTarget | null;
-  /** Share: called by DialFileManager.onManagePermissions to open the modal for `path`. */
-  onManagePermissions: (path?: string) => void;
-  /** Share: closes ShareFileModal, clearing `shareTarget`. */
-  onCloseShareModal: () => void;
-  /** Share: called by ShareFileModal to create the invitation link; throws on failure. */
-  onCreateShareLink: (
-    permission: ShareFilesDtoPermissionEnum,
-  ) => Promise<string>;
-  /** True while a share request is in flight. */
-  isSharing: boolean;
 
   /** Unshare: called when user removes a shared-with-me item (Shared tab only). */
   onUnshareFiles: (files: DialFile[]) => void;
@@ -207,12 +193,11 @@ export interface UseDialFileManagerResult {
    * `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`,
    * `isMoving`, `isUnsharing`, `isRemovingAccess`, and `uploadBatchState != null`.
    *
-   * Deliberately excludes four flags, each already fully contained by its own
+   * Deliberately excludes three flags, each already fully contained by its own
    * scoped loading UI:
    * - `isLoading` — a read (listing fetch), not a mutation.
    * - `isSearching` — scoped to ui-kit's own search-progress UI.
    * - `isFileMetadataLoading` — has its own `loading` state in `fileMetadataPopupOptions`.
-   * - `isSharing` — already blocked by `ShareFileModal`'s own foreground `DialPopup`.
    */
   isAnyOperationInProgress: boolean;
 }

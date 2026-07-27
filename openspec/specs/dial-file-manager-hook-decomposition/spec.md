@@ -13,7 +13,7 @@ Specifies the internal ownership map between `useDialFileManager` (`apps/chat/sr
 - `useDialFileListing` SHALL own: per-tab/per-folder listing cache (`cache`, `listingPermissionsCache`), current `folderPath`/`path`, tree expand/collapse state (`expandedPaths`, `loadedPaths`, `folderPopupLoadingPaths`), search (`isSearching`, `searchResults`, debounce), shared-root navigation metadata (`sharedRootMetaRef`, `sharedRootIds`, `sharedByMePaths`), the tab-switch cache-reset effect, and the shared cache-mutation primitives (`invalidateFolders`, `bumpRetry`, `mergeCreatedFolder`) that the other four sub-hooks call. It MAY additionally expose `cache`, `listingPermissionsCache`, `sharedRootMetaRef`, and `setFolderPath` as read/narrow-write surface consumed by sibling sub-hooks (destination-conflict checks, owner-bucket resolution, and post-delete/-rename folder-path correction), provided no sibling hook holds its own copy of this state.
 - `useDialFileUploadBatch` SHALL own: `uploadBatchState`, the upload abort controller, `onUploadFiles`, `onUploadArchive`, `onValidateUpload`, `cancelUpload`, `clearUploadBatch`.
 - `useDialFileMutations` SHALL own: `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, the copy/move abort controller, `onCreateFolder`, `onCreateFolderValidate`, `onDownloadFiles`, `onDeleteFiles`, `onRenameValidate`, `onMoveToFiles`, `onCopyFiles`, `cancelCopyMove`.
-- `useDialFileSharing` SHALL own: `shareTarget`, `isSharing`, `isUnsharing`, `isRemovingAccess`, the share abort controller, `onManagePermissions`, `onCloseShareModal`, `onCreateShareLink`, `onUnshareFiles`, `onRemoveFilesAccess`.
+- `useDialFileSharing` SHALL own: `isUnsharing`, `isRemovingAccess`, `onUnshareFiles`, `onRemoveFilesAccess`.
 - `useDialFileMetadata` SHALL own: `fileMetadata`, `isFileMetadataLoading`, `onGetInfo`, `clearMetadata`.
 
 #### Scenario: Every result field maps to exactly one owning sub-hook
@@ -33,7 +33,7 @@ Specifies the internal ownership map between `useDialFileManager` (`apps/chat/sr
 #### Scenario: isAnyOperationInProgress preserves its exact inclusion list
 
 - **WHEN** the composer computes `isAnyOperationInProgress`
-- **THEN** it SHALL be the logical OR of exactly `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `isUnsharing`, `isRemovingAccess`, and `uploadBatchState != null`, deliberately excluding `isLoading`, `isSearching`, `isFileMetadataLoading`, and `isSharing` exactly as it did before decomposition
+- **THEN** it SHALL be the logical OR of exactly `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `isUnsharing`, `isRemovingAccess`, and `uploadBatchState != null`, deliberately excluding `isLoading`, `isSearching`, and `isFileMetadataLoading` exactly as it did before decomposition
 
 ### Requirement: Shared cache invalidation stays centralized
 
@@ -56,4 +56,4 @@ Decomposition SHALL NOT change any tab-dependent (`MyFiles`/`Shared`/`Organizati
 #### Scenario: Attach variant still excludes copy/move/duplicate and sharing actions
 
 - **WHEN** `useDialFileManager` is used with `variant: Attach` (actionProfile `Attach`) after decomposition
-- **THEN** `actionLabels` SHALL NOT include Copy, Move, Duplicate, ManagePermissions, or RemoveAccess, exactly as before decomposition
+- **THEN** `actionLabels` SHALL NOT include Copy, Move, Duplicate, or RemoveAccess, exactly as before decomposition
