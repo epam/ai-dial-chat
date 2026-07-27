@@ -1,6 +1,6 @@
-import type {
-  ScheduledTaskItem,
+import {
   ScheduledTaskSectionKey,
+  type ScheduledTaskItem,
 } from '@epam/ai-dial-scheduled-tasks';
 import type { ScheduledTaskDto } from '@epam/chat-api-client';
 import type { TFunction } from 'i18next';
@@ -94,9 +94,9 @@ const resolveSectionKey = (
   currentUserSub: string | undefined,
 ): ScheduledTaskSectionKey => {
   if (task.createdBy && currentUserSub && task.createdBy !== currentUserSub) {
-    return 'shared';
+    return ScheduledTaskSectionKey.Shared;
   }
-  return 'myTasks';
+  return ScheduledTaskSectionKey.MyTasks;
 };
 
 /**

@@ -1,10 +1,11 @@
+import type { ScheduledTasksSortKey } from '../utils/filter-sort';
 import type { ScheduledTaskCardGridLabels } from './scheduled-task-card-grid-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
 
 /** A single sort option shown in the Scheduled Tasks toolbar sort control. */
 export interface ScheduledTasksSortOption {
   /** Stable identifier for this sort option, passed back via `onSortChange`. */
-  key: string;
+  key: ScheduledTasksSortKey;
   /** Localized display label for this sort option. */
   label: string;
 }
@@ -66,9 +67,9 @@ export interface ScheduledTasksProps {
   /** Called when the toolbar search input value changes. */
   onSearchQueryChange: (query: string) => void;
   /** Key of the currently selected sort option. */
-  sortKey: string;
+  sortKey: ScheduledTasksSortKey;
   /** Called when the user selects a different sort option. */
-  onSortChange: (key: string) => void;
+  onSortChange: (key: ScheduledTasksSortKey) => void;
   /** Fetched tasks to render as cards, grouped by `sectionKey` and sorted by `sortKey`. */
   items: ScheduledTaskItem[];
   /** When `true`, the content region shows a loading spinner instead of `items`. Defaults to `false`. */

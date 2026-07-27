@@ -13,7 +13,7 @@ import {
   IconPlus,
 } from '@tabler/icons-react';
 import { FC, useMemo } from 'react';
-import type { ScheduledTaskSectionKey } from '../../models/scheduled-task-item';
+import { ScheduledTaskSectionKey } from '../../models/scheduled-task-item';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
 import {
   filterScheduledTaskItems,
@@ -22,7 +22,10 @@ import {
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
 import { ScheduledTaskSection } from '../ScheduledTaskSection/ScheduledTaskSection';
 
-const SECTION_ORDER: ScheduledTaskSectionKey[] = ['shared', 'myTasks'];
+const SECTION_ORDER: ScheduledTaskSectionKey[] = [
+  ScheduledTaskSectionKey.Shared,
+  ScheduledTaskSectionKey.MyTasks,
+];
 
 /**
  * Scheduled Tasks page shell: header with title/subtitle/create action, a
@@ -69,7 +72,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
 
   const sections = useMemo(() => {
     const sectionTitles: Partial<Record<ScheduledTaskSectionKey, string>> = {
-      shared: labels.sharedSectionTitle,
+      [ScheduledTaskSectionKey.Shared]: labels.sharedSectionTitle,
     };
     return SECTION_ORDER.map((key) => ({
       key,

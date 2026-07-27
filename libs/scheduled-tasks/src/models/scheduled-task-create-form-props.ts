@@ -1,8 +1,18 @@
 /** Whether a scheduled task runs once at a specific time or repeats on a cadence. */
-export type ScheduledTaskScheduleType = 'once' | 'recurring';
+export enum ScheduledTaskScheduleType {
+  Once = 'once',
+  Recurring = 'recurring',
+}
 
-/** Recurrence cadence for a `'recurring'` schedule type. */
-export type ScheduledTaskFrequency = 'daily' | 'weekly' | 'monthly';
+/** Recurrence cadence for a {@link ScheduledTaskScheduleType.Recurring} schedule type. */
+export enum ScheduledTaskFrequency {
+  Daily = 'daily',
+  Weekly = 'weekly',
+  Monthly = 'monthly',
+}
+
+/** Maximum allowed length, in characters, of {@link ScheduledTaskCreateFormValues.description}. */
+export const DESCRIPTION_MAX_LENGTH = 500;
 
 /** A single option rendered in the frequency dropdown. */
 export interface ScheduledTaskFrequencyOption {

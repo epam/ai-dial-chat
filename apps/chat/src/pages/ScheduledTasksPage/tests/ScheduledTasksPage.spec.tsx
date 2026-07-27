@@ -34,6 +34,10 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     Newest: 'newest',
     NameAZ: 'nameAZ',
   },
+  ScheduledTaskSectionKey: {
+    Shared: 'shared',
+    MyTasks: 'myTasks',
+  },
   ScheduledTasks: ({
     labels,
     onCreateClick,

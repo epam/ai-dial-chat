@@ -23,9 +23,9 @@ export type {
 } from './models/scheduled-task-card-grid-props';
 export type {
   ScheduledTaskItem,
-  ScheduledTaskSectionKey,
   ScheduledTaskSortValues,
 } from './models/scheduled-task-item';
+export { ScheduledTaskSectionKey } from './models/scheduled-task-item';
 export {
   filterScheduledTaskItems,
   sortScheduledTaskItems,
@@ -40,6 +40,9 @@ export type {
   ScheduledTaskCreateFormStyles,
   ScheduledTaskCreateFormModelOption,
   ScheduledTaskFrequencyOption,
+} from './models/scheduled-task-create-form-props';
+export {
+  DESCRIPTION_MAX_LENGTH,
   ScheduledTaskFrequency,
   ScheduledTaskScheduleType,
 } from './models/scheduled-task-create-form-props';

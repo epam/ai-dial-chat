@@ -44,6 +44,13 @@ interface FormProps {
 }
 
 vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
+  ScheduledTaskScheduleType: { Once: 'once', Recurring: 'recurring' },
+  ScheduledTaskFrequency: {
+    Daily: 'daily',
+    Weekly: 'weekly',
+    Monthly: 'monthly',
+  },
+  DESCRIPTION_MAX_LENGTH: 500,
   ScheduledTaskCreateForm: ({
     labels,
     values,

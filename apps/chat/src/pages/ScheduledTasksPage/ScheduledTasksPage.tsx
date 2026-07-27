@@ -40,7 +40,7 @@ const ScheduledTasksPage: FC = () => {
   } = useScheduledTasks(isEnabled);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortKey, setSortKey] = useState<string>(
+  const [sortKey, setSortKey] = useState<ScheduledTasksSortKey>(
     ScheduledTasksSortKey.FirstToRun,
   );
 

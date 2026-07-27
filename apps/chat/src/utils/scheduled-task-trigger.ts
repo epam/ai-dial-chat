@@ -1,4 +1,8 @@
-import { ScheduledTaskCreateFormValues } from '@epam/ai-dial-scheduled-tasks';
+import {
+  ScheduledTaskCreateFormValues,
+  ScheduledTaskFrequency,
+  ScheduledTaskScheduleType,
+} from '@epam/ai-dial-scheduled-tasks';
 import type {
   CreateScheduledTaskBodyDto,
   ScheduleTriggerDto,
@@ -13,10 +17,13 @@ const buildCronFields = (
     minute: String(Number(minute)),
   };
 
-  if (values.frequency === 'weekly' && values.dayOfWeek) {
+  if (values.frequency === ScheduledTaskFrequency.Weekly && values.dayOfWeek) {
     fields.day_of_week = values.dayOfWeek;
   }
-  if (values.frequency === 'monthly' && values.dayOfMonth) {
+  if (
+    values.frequency === ScheduledTaskFrequency.Monthly &&
+    values.dayOfMonth
+  ) {
     fields.day = values.dayOfMonth;
   }
 
@@ -34,7 +41,7 @@ export const mapFormValuesToCreateBody = (
   values: ScheduledTaskCreateFormValues,
 ): CreateScheduledTaskBodyDto => {
   const trigger: ScheduleTriggerDto =
-    values.scheduleType === 'once'
+    values.scheduleType === ScheduledTaskScheduleType.Once
       ? { date: new Date(values.runAt ?? '').toISOString() }
       : { cron: { fields: buildCronFields(values) } };
 

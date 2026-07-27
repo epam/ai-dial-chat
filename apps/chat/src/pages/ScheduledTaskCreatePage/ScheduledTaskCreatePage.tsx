@@ -1,7 +1,10 @@
 import {
+  DESCRIPTION_MAX_LENGTH,
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
+  ScheduledTaskFrequency,
+  ScheduledTaskScheduleType,
 } from '@epam/ai-dial-scheduled-tasks';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
@@ -24,12 +27,12 @@ import NotFoundPage from '../NotFound/NotFound';
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const MAX_ASCII_CONTROL_CODE = 31;
 const ASCII_DELETE_CODE = 127;
-const DESCRIPTION_MAX_LENGTH = 500;
+const RUN_AT_MIN_LEAD_MS = 60_000;
 
 const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
   displayName: '',
-  scheduleType: 'recurring',
-  frequency: 'daily',
+  scheduleType: ScheduledTaskScheduleType.Recurring,
+  frequency: ScheduledTaskFrequency.Daily,
   time: '09:00',
   modelId: '',
   prompt: '',
@@ -105,15 +108,15 @@ const ScheduledTaskCreatePage: FC = () => {
       frequencyLabel: t(ScheduledTasksI18nKeys.CreateFrequencyLabel),
       frequencyOptions: [
         {
-          key: 'daily' as const,
+          key: ScheduledTaskFrequency.Daily,
           label: t(ScheduledTasksI18nKeys.CreateFrequencyDaily),
         },
         {
-          key: 'weekly' as const,
+          key: ScheduledTaskFrequency.Weekly,
           label: t(ScheduledTasksI18nKeys.CreateFrequencyWeekly),
         },
         {
-          key: 'monthly' as const,
+          key: ScheduledTaskFrequency.Monthly,
           label: t(ScheduledTasksI18nKeys.CreateFrequencyMonthly),
         },
       ],
@@ -170,21 +173,31 @@ const ScheduledTaskCreatePage: FC = () => {
         );
       }
 
-      if (data.scheduleType === 'once') {
+      if (data.scheduleType === ScheduledTaskScheduleType.Once) {
         const runAtTime = data.runAt ? new Date(data.runAt).getTime() : NaN;
-        if (!data.runAt || Number.isNaN(runAtTime) || runAtTime <= Date.now()) {
+        if (
+          !data.runAt ||
+          Number.isNaN(runAtTime) ||
+          runAtTime <= Date.now() + RUN_AT_MIN_LEAD_MS
+        ) {
           nextErrors.runAt = t(ScheduledTasksI18nKeys.CreateRunAtRequired);
         }
       } else {
         if (!TIME_PATTERN.test(data.time)) {
           nextErrors.time = t(ScheduledTasksI18nKeys.CreateTimeInvalid);
         }
-        if (data.frequency === 'weekly' && !data.dayOfWeek?.trim()) {
+        if (
+          data.frequency === ScheduledTaskFrequency.Weekly &&
+          !data.dayOfWeek?.trim()
+        ) {
           nextErrors.dayOfWeek = t(
             ScheduledTasksI18nKeys.CreateDayOfWeekRequired,
           );
         }
-        if (data.frequency === 'monthly' && !data.dayOfMonth?.trim()) {
+        if (
+          data.frequency === ScheduledTaskFrequency.Monthly &&
+          !data.dayOfMonth?.trim()
+        ) {
           nextErrors.dayOfMonth = t(
             ScheduledTasksI18nKeys.CreateDayOfMonthRequired,
           );

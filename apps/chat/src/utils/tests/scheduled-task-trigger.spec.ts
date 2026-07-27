@@ -1,10 +1,14 @@
-import { ScheduledTaskCreateFormValues } from '@epam/ai-dial-scheduled-tasks';
+import {
+  ScheduledTaskCreateFormValues,
+  ScheduledTaskFrequency,
+  ScheduledTaskScheduleType,
+} from '@epam/ai-dial-scheduled-tasks';
 import { describe, expect, it } from 'vitest';
 import { mapFormValuesToCreateBody } from '../scheduled-task-trigger';
 
 const baseValues: ScheduledTaskCreateFormValues = {
   displayName: 'Daily summary',
-  scheduleType: 'once',
+  scheduleType: ScheduledTaskScheduleType.Once,
   time: '09:00',
   modelId: 'gpt-4o',
   prompt: 'Summarize my inbox',
@@ -15,7 +19,7 @@ describe('mapFormValuesToCreateBody', () => {
   it('maps a once schedule to trigger.date', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
-      scheduleType: 'once',
+      scheduleType: ScheduledTaskScheduleType.Once,
       runAt: '2026-07-24T09:00',
     });
 
@@ -26,8 +30,8 @@ describe('mapFormValuesToCreateBody', () => {
   it('maps a daily recurring schedule to trigger.cron.fields', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
-      scheduleType: 'recurring',
-      frequency: 'daily',
+      scheduleType: ScheduledTaskScheduleType.Recurring,
+      frequency: ScheduledTaskFrequency.Daily,
       time: '09:00',
     });
 
@@ -38,8 +42,8 @@ describe('mapFormValuesToCreateBody', () => {
   it('maps a weekly recurring schedule with day_of_week', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
-      scheduleType: 'recurring',
-      frequency: 'weekly',
+      scheduleType: ScheduledTaskScheduleType.Recurring,
+      frequency: ScheduledTaskFrequency.Weekly,
       time: '14:30',
       dayOfWeek: '1',
     });
@@ -54,8 +58,8 @@ describe('mapFormValuesToCreateBody', () => {
   it('maps a monthly recurring schedule with day', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
-      scheduleType: 'recurring',
-      frequency: 'monthly',
+      scheduleType: ScheduledTaskScheduleType.Recurring,
+      frequency: ScheduledTaskFrequency.Monthly,
       time: '00:05',
       dayOfMonth: '15',
     });
@@ -70,8 +74,8 @@ describe('mapFormValuesToCreateBody', () => {
   it('carries displayName, model, prompt, and stream through', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
-      scheduleType: 'recurring',
-      frequency: 'daily',
+      scheduleType: ScheduledTaskScheduleType.Recurring,
+      frequency: ScheduledTaskFrequency.Daily,
     });
 
     expect(body.displayName).toBe('Daily summary');
@@ -83,7 +87,7 @@ describe('mapFormValuesToCreateBody', () => {
   it('includes a trimmed description when non-empty', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
-      scheduleType: 'once',
+      scheduleType: ScheduledTaskScheduleType.Once,
       runAt: '2026-07-24T09:00',
       description: '  Summarizes unread inbox items  ',
     });
@@ -94,7 +98,7 @@ describe('mapFormValuesToCreateBody', () => {
   it('omits description when empty', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
-      scheduleType: 'once',
+      scheduleType: ScheduledTaskScheduleType.Once,
       runAt: '2026-07-24T09:00',
       description: '',
     });
@@ -105,7 +109,7 @@ describe('mapFormValuesToCreateBody', () => {
   it('omits description when whitespace-only', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
-      scheduleType: 'once',
+      scheduleType: ScheduledTaskScheduleType.Once,
       runAt: '2026-07-24T09:00',
       description: '   ',
     });
@@ -116,7 +120,7 @@ describe('mapFormValuesToCreateBody', () => {
   it('omits description when not provided', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
-      scheduleType: 'once',
+      scheduleType: ScheduledTaskScheduleType.Once,
       runAt: '2026-07-24T09:00',
     });
 

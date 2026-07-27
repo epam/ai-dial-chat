@@ -1,5 +1,8 @@
 /** Section a {@link ScheduledTaskItem} is grouped under in the card grid. */
-export type ScheduledTaskSectionKey = 'shared' | 'myTasks';
+export enum ScheduledTaskSectionKey {
+  Shared = 'shared',
+  MyTasks = 'myTasks',
+}
 
 /** Pre-computed values used to sort a {@link ScheduledTaskItem}; any field may be absent if the source data doesn't provide it, in which case that item sorts last for the corresponding sort key. */
 export interface ScheduledTaskSortValues {

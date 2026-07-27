@@ -2,8 +2,12 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
+import {
+  ScheduledTaskSectionKey,
+  type ScheduledTaskItem,
+} from '../../../models/scheduled-task-item';
 import { ScheduledTasksProps } from '../../../models/scheduled-tasks-props';
+import { ScheduledTasksSortKey } from '../../../utils/filter-sort';
 import { ScheduledTasks } from '../ScheduledTasks';
 
 vi.mock('@epam/ai-dial-kit', () => ({
@@ -102,7 +106,7 @@ const buildItem = (
   id: 'sched_1',
   displayName: 'Competitor Updates',
   scheduleLabel: 'Every Monday 12:00',
-  sectionKey: 'myTasks',
+  sectionKey: ScheduledTaskSectionKey.MyTasks,
   sortValues: {},
   ...overrides,
 });
@@ -119,8 +123,8 @@ const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
         clearSearchLabel: 'Clear scheduled tasks search',
         sortLabel: 'Sort',
         sortOptions: [
-          { key: 'firstToRun', label: 'First to run' },
-          { key: 'lastToRun', label: 'Last to run' },
+          { key: ScheduledTasksSortKey.FirstToRun, label: 'First to run' },
+          { key: ScheduledTasksSortKey.LastToRun, label: 'Last to run' },
         ],
         emptyStateLabel: 'No scheduled tasks yet',
         noResultsLabel: 'No results',
@@ -131,7 +135,7 @@ const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
       onCreateClick={vi.fn()}
       searchQuery=""
       onSearchQueryChange={vi.fn()}
-      sortKey="firstToRun"
+      sortKey={ScheduledTasksSortKey.FirstToRun}
       onSortChange={vi.fn()}
       items={[]}
       {...overrides}
@@ -225,12 +229,12 @@ describe('ScheduledTasks', () => {
         buildItem({
           id: '1',
           displayName: 'Daily summary',
-          sectionKey: 'shared',
+          sectionKey: ScheduledTaskSectionKey.Shared,
         }),
         buildItem({
           id: '2',
           displayName: 'Weekly digest',
-          sectionKey: 'shared',
+          sectionKey: ScheduledTaskSectionKey.Shared,
         }),
       ],
     });
@@ -245,7 +249,7 @@ describe('ScheduledTasks', () => {
         buildItem({ id: '1', displayName: 'Zeta' }),
         buildItem({ id: '2', displayName: 'Alpha' }),
       ],
-      sortKey: 'nameAZ',
+      sortKey: ScheduledTasksSortKey.NameAZ,
     });
 
     const titles = screen

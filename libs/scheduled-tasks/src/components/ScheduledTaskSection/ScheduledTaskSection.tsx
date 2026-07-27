@@ -15,7 +15,10 @@ export const ScheduledTaskSection: FC<ScheduledTaskSectionProps> = ({
     sectionStyles?.countBadgeClassName ?? 'bg-layer-3 text-secondary';
 
   return (
-    <section aria-label={title} className="flex flex-col gap-3">
+    <section
+      {...(title ? { 'aria-label': title } : {})}
+      className="flex flex-col gap-3"
+    >
       {title && (
         <div className="flex items-center gap-2">
           <h2 className={titleClassName}>{title}</h2>

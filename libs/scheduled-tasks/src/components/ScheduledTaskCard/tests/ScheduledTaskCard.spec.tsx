@@ -2,7 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
+import {
+  ScheduledTaskSectionKey,
+  type ScheduledTaskItem,
+} from '../../../models/scheduled-task-item';
 import { ScheduledTaskCard } from '../ScheduledTaskCard';
 
 interface MockPathItem {
@@ -92,7 +95,7 @@ const buildItem = (
   id: 'sched_1',
   displayName: 'Competitor Updates',
   scheduleLabel: 'Every Monday 12:00',
-  sectionKey: 'myTasks',
+  sectionKey: ScheduledTaskSectionKey.MyTasks,
   sortValues: {},
   ...overrides,
 });

@@ -14,9 +14,12 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { type FC } from 'react';
-import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
-
-const DESCRIPTION_MAX_LENGTH = 500;
+import {
+  DESCRIPTION_MAX_LENGTH,
+  ScheduledTaskCreateFormProps,
+  ScheduledTaskFrequency,
+  ScheduledTaskScheduleType,
+} from '../../models/scheduled-task-create-form-props';
 
 /**
  * Presentational create-task form: display name, a one-shot/recurring
@@ -116,12 +119,18 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             value={values.scheduleType}
             onChange={(value) => onFieldChange('scheduleType', value)}
             options={[
-              { value: 'once', label: labels.scheduleTypeOnceLabel },
-              { value: 'recurring', label: labels.scheduleTypeRecurringLabel },
+              {
+                value: ScheduledTaskScheduleType.Once,
+                label: labels.scheduleTypeOnceLabel,
+              },
+              {
+                value: ScheduledTaskScheduleType.Recurring,
+                label: labels.scheduleTypeRecurringLabel,
+              },
             ]}
           />
 
-          {values.scheduleType === 'once' && (
+          {values.scheduleType === ScheduledTaskScheduleType.Once && (
             <Input
               id="scheduled-task-run-at"
               type="datetime-local"
@@ -133,7 +142,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             />
           )}
 
-          {values.scheduleType === 'recurring' && (
+          {values.scheduleType === ScheduledTaskScheduleType.Recurring && (
             <>
               <DialDropdown
                 matchReferenceWidth={false}
@@ -171,7 +180,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 error={errors.time}
               />
 
-              {values.frequency === 'weekly' && (
+              {values.frequency === ScheduledTaskFrequency.Weekly && (
                 <Input
                   id="scheduled-task-day-of-week"
                   value={values.dayOfWeek ?? ''}
@@ -182,7 +191,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 />
               )}
 
-              {values.frequency === 'monthly' && (
+              {values.frequency === ScheduledTaskFrequency.Monthly && (
                 <Input
                   id="scheduled-task-day-of-month"
                   value={values.dayOfMonth ?? ''}

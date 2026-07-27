@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ScheduledTaskCreateFormProps,
   ScheduledTaskCreateFormValues,
+  ScheduledTaskFrequency,
+  ScheduledTaskScheduleType,
 } from '../../../models/scheduled-task-create-form-props';
 import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
 
@@ -137,8 +139,8 @@ vi.mock('@tabler/icons-react', () => ({
 
 const baseValues: ScheduledTaskCreateFormValues = {
   displayName: '',
-  scheduleType: 'recurring',
-  frequency: 'daily',
+  scheduleType: ScheduledTaskScheduleType.Recurring,
+  frequency: ScheduledTaskFrequency.Daily,
   time: '09:00',
   modelId: '',
   prompt: '',
@@ -159,9 +161,9 @@ const renderForm = (overrides?: Partial<ScheduledTaskCreateFormProps>) =>
         runAtLabel: 'Run at',
         frequencyLabel: 'Frequency',
         frequencyOptions: [
-          { key: 'daily', label: 'Daily' },
-          { key: 'weekly', label: 'Weekly' },
-          { key: 'monthly', label: 'Monthly' },
+          { key: ScheduledTaskFrequency.Daily, label: 'Daily' },
+          { key: ScheduledTaskFrequency.Weekly, label: 'Weekly' },
+          { key: ScheduledTaskFrequency.Monthly, label: 'Monthly' },
         ],
         timeLabel: 'Time',
         dayOfWeekLabel: 'Day of week',
@@ -316,14 +318,18 @@ describe('ScheduledTaskCreateForm', () => {
   });
 
   it('renders run-at instead of frequency/time when scheduleType is once', () => {
-    renderForm({ values: { ...baseValues, scheduleType: 'once' } });
+    renderForm({
+      values: { ...baseValues, scheduleType: ScheduledTaskScheduleType.Once },
+    });
 
     expect(screen.getByText('Run at')).toBeTruthy();
     expect(screen.queryByText('Time')).toBeNull();
   });
 
   it('renders day-of-week only when frequency is weekly', () => {
-    renderForm({ values: { ...baseValues, frequency: 'weekly' } });
+    renderForm({
+      values: { ...baseValues, frequency: ScheduledTaskFrequency.Weekly },
+    });
 
     expect(screen.getByText('Day of week')).toBeTruthy();
     expect(screen.queryByText('Day of month')).toBeNull();
