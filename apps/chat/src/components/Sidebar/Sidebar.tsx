@@ -33,6 +33,7 @@ interface Props<T> {
   side: SidebarSide;
   filteredItems: T[];
   filteredFolders: FolderInterface[];
+  hasAnyFilteredResults?: boolean;
   itemComponent: ReactNode | ((isDraggingOver: boolean) => ReactNode);
   folderComponent: ReactNode;
   footerComponent?: ReactNode;
@@ -51,6 +52,7 @@ export const Sidebar = <T,>({
   side,
   filteredItems,
   filteredFolders,
+  hasAnyFilteredResults,
   itemComponent,
   folderComponent,
   footerComponent,
@@ -147,6 +149,7 @@ export const Sidebar = <T,>({
             searchTerm={searchTerm}
             filteredItems={filteredItems}
             filteredFolders={filteredFolders}
+            hasAnyFilteredResults={hasAnyFilteredResults}
             featureType={featureType}
             itemComponent={itemComponent}
             folderComponent={folderComponent}

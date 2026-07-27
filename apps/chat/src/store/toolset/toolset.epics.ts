@@ -1259,6 +1259,23 @@ const repairToolsetFailEpic: AppEpic = (action$) =>
     }),
   );
 
+const getAllowedToolsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ToolsetActions.getAllowedTools.type),
+    switchMap(({ payload }) => {
+      return ToolsetService.getTools(payload.id).pipe(
+        switchMap((tools) =>
+          of(ToolsetActions.getAllowedToolsSuccess({ id: payload.id, tools })),
+        ),
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+
+          return of(ToolsetActions.getAllowedToolsFailed({ traceId }));
+        }),
+      );
+    }),
+  );
+
 export const ToolsetEpics = combineEpics(
   initEpic,
   getToolsetsEpic,
@@ -1291,4 +1308,7 @@ export const ToolsetEpics = combineEpics(
   loginToolsetFailEpic,
   logOutToolsetEpic,
   logOutToolsetFailEpic,
+
+  //Allowed tools
+  getAllowedToolsEpic,
 );

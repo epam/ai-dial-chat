@@ -23,10 +23,9 @@ import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
-import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
-import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
+import { AllowedToolsField } from '@/src/components/ToolsetEditor/EditorForm/AllowedToolsField';
 import { AuthField } from '@/src/components/ToolsetEditor/EditorForm/AuthField';
 import {
   ENDPOINT_PLACEHOLDER,
@@ -36,10 +35,7 @@ import {
 import { ToolsetTransportType } from '@epam/ai-dial-shared';
 
 const SelectorField = withLabel(DropdownSelector);
-const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const CopyUrlButton = withLabel(ToolsetLinkButton);
-
-const getComboBoxLabel = (item: unknown): string => item as string;
 
 const protocolOptions = [
   { label: ToolsetTransportType.SSE, value: ToolsetTransportType.SSE },
@@ -187,30 +183,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         title={t(CommonI18nKeys.AllowedTools)}
         className="px-3 pt-4 md:px-5"
       >
-        <Controller
-          name="allowedTools"
-          control={control}
-          render={({ field }) => (
-            <ComboBoxField
-              initialSelectedItems={field.value}
-              getItemLabel={getComboBoxLabel}
-              getItemValue={getComboBoxLabel}
-              onChangeSelectedItems={field.onChange}
-              placeholder={t(CommonI18nKeys.EnterOneOrMoreTools)}
-              id="allowedTools"
-              disabled={isToolsetPublic}
-              className={classNames(
-                'input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full',
-                isToolsetPublic && 'hover:border-primary',
-              )}
-              hasDeleteAll
-              hideSuggestions
-              itemHeightClassName="h-[31px]"
-              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
-              dataQa="combobox"
-            />
-          )}
-        />
+        <AllowedToolsField isToolsetPublic={isToolsetPublic} />
       </FormSection>
 
       <FormSection

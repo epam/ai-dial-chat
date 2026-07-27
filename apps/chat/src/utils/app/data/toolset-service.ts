@@ -14,6 +14,7 @@ import {
   ToolsetAuthPayloadBase,
   ToolsetInfo,
   ToolsetModel,
+  ToolsetTool,
 } from '@/src/types/toolsets';
 
 import { DataService } from './data-service';
@@ -86,5 +87,11 @@ export class ToolsetService {
         method: HTTPMethod.POST,
       },
     );
+  }
+
+  public static getTools(id: string): Observable<ToolsetTool[]> {
+    return ApiUtils.request(`/api/toolset/${ApiUtils.encodeApiUrl(id)}/tools`, {
+      method: HTTPMethod.GET,
+    }).pipe(map((res) => res.tools as ToolsetTool[]));
   }
 }
