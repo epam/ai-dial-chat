@@ -38,4 +38,5 @@ export const IconSelectors = {
   eyeIcon: '.tabler-icon.tabler-icon-eye',
   eyeOffIcon: '.tabler-icon.tabler-icon-eye-off',
   chevronDownIcon: '.tabler-icon.tabler-icon-chevron-down',
+  chevronUpIcon: '.tabler-icon.tabler-icon-chevron-up',
 };

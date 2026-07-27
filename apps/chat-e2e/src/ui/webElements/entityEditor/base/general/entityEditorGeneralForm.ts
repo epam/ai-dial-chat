@@ -38,9 +38,13 @@ export class EntityEditorGeneralForm extends EntityEditorForm {
   public topicsDropdownContainer = this.getChildElementBySelector(
     AddEntityGeneralInfoFormSelector.topicsDropdownContainer,
   );
-  public topicsDropdownToggle =
+  public topicsDropdownDownIcon =
     this.topicsDropdownContainer.getChildElementBySelector(
       IconSelectors.chevronDownIcon,
+    );
+  public topicsDropdownUpIcon =
+    this.topicsDropdownContainer.getChildElementBySelector(
+      IconSelectors.chevronUpIcon,
     );
   public selectedTopicPills =
     this.topicsDropdownContainer.getChildElementBySelector(

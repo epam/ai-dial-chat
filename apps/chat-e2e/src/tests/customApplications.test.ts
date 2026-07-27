@@ -1183,7 +1183,7 @@ dialTest(
     await dialTest.step(
       'Click on Topics drop down and verify the list is expanded',
       async () => {
-        await entityEditorGeneralForm.topicsDropdownToggle.click();
+        await entityEditorGeneralForm.topicsDropdownDownIcon.click();
         await baseAssertion.assertElementState(
           listboxMenu,
           'visible',
@@ -1285,14 +1285,14 @@ dialTest(
         version: appEntity.version,
         description: appEntity.description,
       });
-      await entityEditorGeneralForm.topicsDropdownToggle.click();
+      await entityEditorGeneralForm.topicsDropdownDownIcon.click();
       topicsToSelect = allTopics
         .sort((a, b) => a.length - b.length)
         .slice(0, 2);
       for (const topic of topicsToSelect) {
         await listboxMenu.selectOption(topic);
       }
-      await entityEditorGeneralForm.topicsDropdownToggle.click();
+      await entityEditorGeneralForm.topicsDropdownUpIcon.click();
       await entityEditorGeneralForm.addIconButton.click();
       const attachmentCheckbox =
         await fileManagerModalGrid.gridCheckboxByNameCell(
