@@ -122,7 +122,6 @@ The following props MUST be omitted (not passed), because their actions are gate
 
 - `onMoveToFiles`
 - `onCopyFiles`
-- `onManagePermissions`
 - `onUnshareFiles`
 - `onRemoveFilesAccess`
 - `onGetInfo`
@@ -147,7 +146,7 @@ The following props SHALL be passed, wired from `useDialFileManager`:
 | `emptyStateTitle` | `t(DialFileManagerI18nKeys.Empty)` |
 | `emptyStateDescription` | `""` |
 
-`bulkActionsToolbarOptions` derives from the same action set and additionally always strips `ManagePermissions`, matching the excluded-props list above.
+`bulkActionsToolbarOptions` derives from the same action set, matching the excluded-props list above.
 
 Only rows with `nodeType === DialFileNodeType.ITEM` SHALL be selectable for attaching. The modal footer SHALL contain an "Attach" primary button (i18n key `dialFileManager.attach`) disabled while no files are selected or files are loading. Selecting the Attach button attaches the current selection; it does not depend on whether Upload/Create-folder/Delete/Rename/Download were used beforehand in the same session.
 
