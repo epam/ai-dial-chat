@@ -179,7 +179,7 @@ The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/
 
 - `limit` — integer, default 100, max 1000 (`@IsInt @Min(1) @Max(1000) @IsOptional`)
 - `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(512) @IsOptional`)
-- `path` — string subfolder path to scope the listing, default `''` (bucket root = "My Files") (`@IsString @MaxLength(512) @IsOptional`)
+- `path` — string subfolder path to scope the listing, default `''` (bucket root = "My Files"); callers may include or omit the trailing slash (`@IsString @MaxLength(512) @IsOptional`)
 
 On success the endpoint returns HTTP 200 with `ConversationListResponseDto`:
 
@@ -200,9 +200,9 @@ class ConversationListResponseDto {
 }
 ```
 
-**Three-way parallel fetch.** The service issues all of the following in a single `Promise.all`:
-1. `getConversationMetadata(bucket, path, { recursive: true, limit, token: userCursor })` — user's own conversations
-2. `getConversationMetadata('public', path, { recursive: true, limit, token: publicCursor })` — organisation-published conversations
+**Three-way parallel fetch.** Before issuing metadata requests, the service normalizes `path` to a DIAL Core folder path: `''` for an omitted/empty query and a trailing slash for every non-empty path, without adding a second slash when one is already present. It segment-encodes that normalized value as `folderPath`, then issues all of the following in a single `Promise.all`:
+1. `getConversationMetadata(bucket, folderPath, { recursive: true, limit, token: userCursor })` — user's own conversations
+2. `getConversationMetadata('public', folderPath, { recursive: true, limit, token: publicCursor })` — organisation-published conversations
 3. `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })` — conversations shared directly with the user
 4. `UserConfigService.getPinnedIds(token, bucket)` — pinned conversation IDs
 
@@ -214,7 +214,7 @@ Items from all three sources are merged and sorted by `updatedAt` descending. `F
 
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
-**Resilience.** If the public bucket or shared resources call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources. If the user bucket call fails, the endpoint returns the error to the client.
+**Resilience.** If the public bucket or shared resources call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources. If the user bucket call fails, the endpoint returns the error to the client — **except** when a non-empty `path` was requested and the failure is a `404` from DIAL Core: DIAL Core folders are virtual/prefix-only, so scoping to a subfolder with no blobs under it yet legitimately 404s upstream. That specific case is treated as an empty user-bucket result (logged as a warning, not an error) rather than propagated to the client. A `404` on the bucket root (omitted/empty `path`) is not covered by this exception and still returns an error.
 
 `isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). Errors fall back to `[]`.
 
@@ -284,7 +284,12 @@ Error codes:
 #### Scenario: path scopes both metadata queries
 
 - **WHEN** `GET /api/v1/conversations/list?path=work%2Fproject-x` is called
-- **THEN** the service calls `getConversationMetadata(bucket, 'work/project-x', ...)` AND `getConversationMetadata('public', 'work/project-x', ...)` and returns only conversations under that path
+- **THEN** the service calls `getConversationMetadata(bucket, 'work/project-x/', ...)` AND `getConversationMetadata('public', 'work/project-x/', ...)` and returns only conversations under that path
+
+#### Scenario: Scoped path with no user-bucket blobs yet is non-fatal
+
+- **WHEN** `GET /api/v1/conversations/list?path=work%2Fempty-folder` is called and DIAL Core returns 404 for the user-bucket metadata call
+- **THEN** the response is 200 with an empty result for the user-bucket portion; the 404 is logged as a warning, not propagated as an error
 
 #### Scenario: Invalid limit returns 400
 
