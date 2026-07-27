@@ -1,6 +1,7 @@
 import {
   buildCssVars,
   Highlight,
+  MarkdownRenderer,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -117,15 +118,15 @@ const SourcesSection: FC<SourcesSectionProps> = ({
               />
             </div>
             {source.quote && (
-              <p
+              <div
                 className={mergeClasses(
                   quoteClassName,
                   styles.quote,
-                  'line-clamp-5 max-h-[80px] overflow-hidden',
+                  'line-clamp-5 [&>div>*+*]:mt-1',
                 )}
               >
-                {source.quote}
-              </p>
+                <MarkdownRenderer content={source.quote} />
+              </div>
             )}
           </li>
         ))}

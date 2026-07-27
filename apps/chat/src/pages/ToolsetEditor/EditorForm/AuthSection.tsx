@@ -140,6 +140,10 @@ const AuthSection: FC<Props> = ({
       const result = await waitForToolsetOAuthResult(
         initiation.popup,
         initiation.flowId,
+        {
+          toolsetId: savedToolsetId,
+          credentialsLevel: ToolsetCredentialsLevel.User,
+        },
       );
       setIsAuthBusy(false);
 
@@ -156,12 +160,10 @@ const AuthSection: FC<Props> = ({
         });
       } else if (result.type === ToolsetOAuthResultType.Cancelled) {
         /*
-         * The callback popup posts its result and closes itself back-to-back
-         * — under load the opener can observe `popup.closed` before the
-         * `BroadcastChannel` message arrives, so a login that actually
-         * succeeded server-side can still surface as Cancelled here.
-         * Re-checking the toolset's real status avoids leaving the form
-         * stuck showing "logged out" for a login that already went through.
+         * Treat the backend as the final authority if popup tracking or
+         * cross-process message delivery ever still reports a false cancel.
+         * This keeps the form from showing "logged out" after a login that
+         * actually completed server-side.
          */
         try {
           const refreshed = await getToolset(savedToolsetId);

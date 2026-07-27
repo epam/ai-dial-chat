@@ -390,6 +390,7 @@ const mapAuthSettings = (
 
   return {
     authenticationType,
+    dynamicallyRegistered: getBoolean(raw, 'dynamically_registered'),
     apiKeyHeader: getString(raw, 'api_key_header'),
     clientId: getString(raw, 'client_id'),
     redirectUri: getString(raw, 'redirect_uri'),
@@ -662,7 +663,6 @@ export class ToolsetsService {
       accessToken,
       toolsetName,
     );
-
     return mergeCustomToolsetDetails(
       result.data as unknown as RawDialToolset,
       toolsetName,

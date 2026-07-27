@@ -541,6 +541,12 @@ export class EnvironmentVariables {
   TRANSCRIBE_SIZE_LIMIT_BYTES?: number = 5 * 1024 * 1024;
 
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  CONVERSATION_BODY_SIZE_LIMIT_BYTES?: number = 10 * 1024 * 1024;
+
+  @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
     return String(value)
@@ -613,6 +619,16 @@ export class EnvironmentVariables {
   })
   @IsBoolean()
   OVERLAY_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  OVERLAY_SANDBOX_ENABLED?: boolean = false;
 
   @IsOptional()
   @Transform(({ value }) => {

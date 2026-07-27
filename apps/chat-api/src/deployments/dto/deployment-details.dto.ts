@@ -257,6 +257,13 @@ export class ToolsetAuthSettingsDto {
 
   @ApiPropertyOptional({
     description:
+      'Whether DIAL Core dynamically registered the OAuth client instead of using user-provided client configuration',
+    example: true,
+  })
+  dynamicallyRegistered?: boolean;
+
+  @ApiPropertyOptional({
+    description:
       'Whether the toolset has global (shared) credentials signed in',
     enum: ['SIGNED_IN', 'SIGNED_OUT'],
   })

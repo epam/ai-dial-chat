@@ -37,7 +37,7 @@ const FilesSection: FC<FilesSectionProps> = ({
       <h2 className={mergeClasses(titleClassName, 'mb-3')}>{title}</h2>
       <div
         role="list"
-        className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-3"
+        className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-3"
       >
         {attachments.map((att) => (
           <div
@@ -50,7 +50,6 @@ const FilesSection: FC<FilesSectionProps> = ({
             <AttachmentCard
               attachment={att}
               searchQuery={searchQuery}
-              styles={{ className: 'w-full' }}
               onClick={
                 onAttachmentClick ? () => onAttachmentClick(att) : undefined
               }

@@ -7,16 +7,12 @@ import {
   AppsEditorI18nKeys,
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
-import {
-  createApplication,
-  updateApplication,
-} from '../../../server-api/applications';
+import { createApplication } from '../../../server-api/applications';
 import type { GeneralFormHandle } from '../GeneralForm';
 import GeneralForm from '../GeneralForm';
 
 vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
-  updateApplication: vi.fn(),
 }));
 
 vi.mock('@epam/ai-dial-kit', () => ({
@@ -276,7 +272,6 @@ describe('GeneralForm', () => {
         undefined,
       ),
     );
-    expect(updateApplication).not.toHaveBeenCalled();
     expect(createApplication).not.toHaveBeenCalled();
   });
 
@@ -308,7 +303,6 @@ describe('GeneralForm', () => {
       await ref.current?.submit();
     });
 
-    expect(updateApplication).not.toHaveBeenCalled();
     expect(onCreated).toHaveBeenCalledWith(
       'users/u/apps/existing',
       'Renamed App',
@@ -317,8 +311,8 @@ describe('GeneralForm', () => {
     expect(createApplication).not.toHaveBeenCalled();
   });
 
-  describe('persist', () => {
-    it('does not call updateApplication when no field changed from the seeded initial values', async () => {
+  describe('getValues', () => {
+    it('returns the seeded initial values normalized, with no version field', () => {
       const ref = createRef<GeneralFormHandle>();
 
       renderForm(
@@ -329,29 +323,28 @@ describe('GeneralForm', () => {
         ref,
       );
 
-      await act(async () => {
-        await ref.current?.persist();
+      expect(ref.current?.getValues()).toEqual({
+        name: 'My App',
+        description: undefined,
+        iconUrl: undefined,
+        topics: ['a', 'b'],
+        intro: undefined,
       });
-
-      expect(updateApplication).not.toHaveBeenCalled();
     });
 
-    it('calls updateApplication with the current values when a field changed from the seeded initial values', async () => {
+    it('returns the current trimmed values after edits, excluding version', async () => {
       const ref = createRef<GeneralFormHandle>();
-      vi.mocked(updateApplication).mockResolvedValue({
-        id: 'users/u/apps/existing',
-      });
 
       renderForm(
         {
           appId: 'users/u/apps/existing',
-          initialValues: { name: 'My App' },
+          initialValues: { name: 'My App', version: '1.0.0' },
         },
         ref,
       );
 
       await user.clear(getNameInput());
-      await user.type(getNameInput(), 'Renamed App');
+      await user.type(getNameInput(), '  Renamed App  ');
       await user.type(
         screen.getByLabelText(EditorI18nKeys.DescriptionLabel),
         'New description',
@@ -361,42 +354,13 @@ describe('GeneralForm', () => {
         'New intro',
       );
 
-      await act(async () => {
-        await ref.current?.persist();
-      });
-
-      expect(updateApplication).toHaveBeenCalledWith('users/u/apps/existing', {
+      expect(ref.current?.getValues()).toEqual({
         name: 'Renamed App',
         description: 'New description',
         iconUrl: undefined,
         topics: undefined,
         intro: 'New intro',
       });
-    });
-
-    it('rejects and does not swallow the error when updateApplication fails', async () => {
-      const ref = createRef<GeneralFormHandle>();
-      vi.mocked(updateApplication).mockRejectedValue(
-        new Error('network error'),
-      );
-
-      renderForm(
-        {
-          appId: 'users/u/apps/existing',
-          initialValues: { name: 'My App' },
-        },
-        ref,
-      );
-
-      await user.clear(getNameInput());
-      await user.type(getNameInput(), 'Renamed App');
-
-      await expect(
-        act(async () => {
-          await ref.current?.persist();
-        }),
-      ).rejects.toThrow('network error');
-      expect(screen.queryByRole('alert')).toBeNull();
     });
   });
 

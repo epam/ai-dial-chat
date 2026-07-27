@@ -23,4 +23,21 @@ export class AuthCallbackQueryDto {
   @IsOptional()
   @IsString()
   error_description?: string;
+
+  /* Google's OAuth callback always appends these params on top of the standard OIDC code/state/iss */
+  @IsOptional()
+  @IsString()
+  scope?: string;
+
+  @IsOptional()
+  @IsString()
+  authuser?: string;
+
+  @IsOptional()
+  @IsString()
+  hd?: string;
+
+  @IsOptional()
+  @IsString()
+  prompt?: string;
 }

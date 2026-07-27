@@ -41,10 +41,7 @@ import useFavoriteApplications, {
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
-import {
-  getCatalogPublishHistory,
-  publishCatalogEntity,
-} from '../../server-api/publish.api';
+import { publishCatalogEntity } from '../../server-api/publish.api';
 import { deleteToolset, logoutToolset } from '../../server-api/toolsets';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { CatalogQuery } from '../../types/catalog';
@@ -62,10 +59,7 @@ import {
   mapEntityDetailsToCatalogDetails,
   mapToolsetCredentials,
 } from '../../utils/map-entity-details-to-catalog';
-import {
-  mapPublishHistoryEntryDto,
-  toPublishEntityType,
-} from '../../utils/publish';
+import { toPublishEntityType } from '../../utils/publish';
 import ConnectPopoverContainer from '../ConnectPopoverContainer/ConnectPopoverContainer';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 
@@ -458,14 +452,13 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [dialCoreExternalUrl],
   );
 
-  const getPublishHistory = useCallback(async (item: CatalogItem) => {
-    const entityType = toPublishEntityType(item.type);
-    if (!entityType) {
-      return [];
-    }
-    const entries = await getCatalogPublishHistory(entityType, item.id);
-    return entries.map(mapPublishHistoryEntryDto);
-  }, []);
+  /*
+   * Publish history is never fetched: the backend endpoint returns 503 for
+   * DIAL Core (see GH issue #7897), the same outage already worked around
+   * in `PublishConversationPanelContainer`. Restore the
+   * `getCatalogPublishHistory` call here once the backend is fixed.
+   */
+  const getPublishHistory = useCallback(async () => [], []);
 
   const handlePublish = useCallback(
     async (item: CatalogItem, folderPath: string[]) => {

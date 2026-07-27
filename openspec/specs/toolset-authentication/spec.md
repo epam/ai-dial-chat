@@ -44,6 +44,15 @@ and whether a login is triggered on save.
 - **THEN** the configuration can be saved without submitting credentials and without
   triggering a login
 
+#### Scenario: Reopen an OAuth toolset with dynamic client registration
+- **WHEN** the editor loads a saved OAuth toolset that Core marks as dynamically registered
+- **THEN** the login mode is restored as "with login", even though the returned OAuth settings
+  contain the dynamically assigned client ID and endpoints
+
+#### Scenario: Reopen an OAuth toolset with manual client configuration
+- **WHEN** the editor loads a saved OAuth toolset that Core marks as not dynamically registered
+- **THEN** the login mode is restored as "with login & config"
+
 ### Requirement: Persist unsaved changes before login
 Clicking "Log in" (API Key or OAuth) SHALL first persist any unsaved editor changes — creating
 the toolset if it has no id yet, or updating it if the form has changed since it was last
@@ -94,14 +103,20 @@ authorize URL SHALL include `code_challenge`/`code_challenge_method` query param
 toolset's stored OAuth configuration includes them. A shared callback route, loaded inside that
 new window, SHALL read the persisted state and complete login by submitting the authorization
 `code`, `redirectUri`, and the stored `credentialsLevel`, then post the outcome to the opener over
-the flow's `BroadcastChannel` and wait, without closing itself. The opener SHALL close the
-callback window itself immediately after receiving that message, so the window never closes
-before its result has been delivered. The callback window SHALL additionally carry its own
-bounded safety-net auto-close timer, started once the outcome has been posted, that closes the
-window if the opener has not already done so by the time it fires — covering the case where the
-opener tab was itself closed or navigated away before it could process the message. The page that
-initiated login (Toolset Editor or Catalog) is never navigated away and does not automatically
-refresh; the user reopens it to see updated status.
+the flow's `BroadcastChannel` and write the same non-secret outcome into the callback popup's
+same-origin URL. The callback SHALL remove the OAuth authorization code from its URL and remain
+open until the opener consumes the result. The opener SHALL poll the popup URL when the channel
+event is delayed or dropped and close the popup only after receiving either result, so a completed
+login cannot be mistaken for manual cancellation and the handoff requires no delay timer. The
+popup result URL SHALL NOT contain the OAuth authorization code or credentials. The environment
+SHALL serve Chat with
+`Cross-Origin-Opener-Policy: same-origin-allow-popups`, not Helmet's `same-origin` default, so
+navigation to an external OAuth provider does not sever the opener's popup reference and make an
+active login appear manually cancelled; the popup SHALL still clear its own `window.opener`
+before external navigation. The page that initiated login (Toolset Editor or Catalog) SHALL
+never be navigated away and, after receiving a successful result, SHALL show a success
+notification and refetch the shared toolset list so the updated authentication status is visible
+without a second login attempt or page reload.
 
 #### Scenario: Initiate OAuth login from the editor
 - **WHEN** a user saves an OAuth toolset in login-with-config mode from the Toolset Editor, or
@@ -130,19 +145,26 @@ refresh; the user reopens it to see updated status.
 - **WHEN** the provider redirects back to the callback route inside the window opened for
   login
 - **THEN** the system reads the stored redirect state, calls the login endpoint with the code,
-  redirect URI, and the stored `credentialsLevel`, and posts the outcome to the opener over the
-  flow's `BroadcastChannel` without closing itself
+  redirect URI, and the stored `credentialsLevel`, removes the authorization code from the popup
+  URL, writes the non-secret outcome into that URL, posts it over the flow's `BroadcastChannel`,
+  and leaves the callback window open for the opener to close
 
-#### Scenario: Opener closes the callback window on receiving the result
-- **WHEN** the opener's `BroadcastChannel` listener receives the callback window's posted result
-- **THEN** the opener resolves the login outcome and closes the callback window itself, so the
-  window is never observed closed before its message was delivered
+#### Scenario: External provider navigation preserves popup tracking
+- **WHEN** the OAuth popup navigates from Chat to a cross-origin identity provider
+- **THEN** Chat's `same-origin-allow-popups` COOP policy keeps the popup reference observable by
+  the opener, while the popup's cleared `window.opener` prevents the provider from navigating the
+  Chat tab
 
-#### Scenario: Callback window self-closes if the opener never does
-- **WHEN** the callback window has posted its result but the opener has not closed it before the
-  window's own safety-net timer elapses (e.g. because the opener tab was closed or navigated
-  away)
-- **THEN** the callback window closes itself
+#### Scenario: Opener recovers a result after the channel event is missed
+- **WHEN** the callback wrote its result into the popup URL, but the opener did not receive the
+  `BroadcastChannel` event
+- **THEN** the opener reads the result from the same-origin popup URL, closes the popup, resolves
+  the login outcome, and refreshes the toolset status
+
+#### Scenario: Successful OAuth login refreshes the initiating page
+- **WHEN** the opener receives a successful OAuth login result
+- **THEN** it shows a success notification and refetches the shared toolset list so the updated
+  authentication status is immediately available in the initiating tab
 
 #### Scenario: Callback without stored state
 - **WHEN** the callback route is reached with no valid stored redirect state
@@ -279,15 +301,14 @@ neither `API_KEY` nor `OAUTH`, the request SHALL fail with `400 Bad Request`.
 - **THEN** the server uses the supplied value directly and does not perform the stored-toolset
   lookup
 
-### Requirement: API-key login success notification
+### Requirement: API-key login success feedback and refresh
 
-When an API-key login succeeds, the system SHALL show a success notification, matching the
-notification already shown for a successful OAuth login, regardless of whether the login was
-initiated from the Toolset Editor's Auth section or the Catalog Details Panel.
+When an API-key login succeeds, the system SHALL show a success notification and refetch the
+shared toolset list, matching the behavior of a successful OAuth login, regardless of whether
+the login was initiated from the Toolset Editor's Auth section or the Catalog Details Panel.
 
 #### Scenario: API-key login success notification in the Toolset Editor
 - **WHEN** a user submits a valid API key in the Toolset Editor's Auth section and the login
   request succeeds
-- **THEN** the system shows a success notification in addition to marking the toolset as logged
-  in
-
+- **THEN** the system shows a success notification, marks the toolset as logged in, and refetches
+  the shared toolset list

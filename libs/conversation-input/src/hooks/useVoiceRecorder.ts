@@ -6,38 +6,36 @@ export enum VoiceRecorderState {
   Idle = 'idle',
   /** Microphone is open and audio is being captured. */
   Recording = 'recording',
-  /** Recording has ended; awaiting user confirmation or discard. */
-  Stopped = 'stopped',
-  /** Audio is being uploaded and transcribed. */
-  Uploading = 'uploading',
-  /** An error occurred during recording, upload, or transcription. */
+  /** An error occurred during microphone access (e.g. permission denied). */
   Error = 'error',
 }
 
 /** Options accepted by `useVoiceRecorder`. */
 export interface UseVoiceRecorderOptions {
-  /** Called when the user confirms the recording. Resolves with the DIAL storage URL. */
-  onUploadAudio?: (file: File, contentType: string) => Promise<string>;
-  /** Called after successful upload. Resolves with the transcript text. */
-  onTranscribeAudio?: (audioUrl: string) => Promise<string>;
-  /** Called when transcription completes successfully. */
-  onTranscript?: (transcript: string) => void;
+  /** Called when the user stops recording. Receives a ready-to-attach `File` with a timestamped name. */
+  onAttachAudio: (file: File) => void;
 }
 
 /** Return value of `useVoiceRecorder`. */
 export interface UseVoiceRecorderResult {
   /** Current recorder state. */
   state: VoiceRecorderState;
-  /** Accumulated RMS amplitude history (one value per ~30 fps frame). `null` when idle. Frozen on stop. */
-  waveformData: Float32Array | null;
+  /**
+   * Stable ref to the live `AnalyserNode` during recording; `.current` is `null` when idle.
+   * Passed to `VoiceBar` for waveform rendering.
+   */
+  analyserNodeRef: React.RefObject<AnalyserNode | null>;
+  /** Elapsed recording time in whole seconds. Resets to `0` when transitioning to `idle`. */
+  elapsedSeconds: number;
   /** Human-readable error message in `error` state, otherwise `null`. */
   errorMessage: string | null;
   /** Requests microphone access and starts recording. No-op unless `state === 'idle'`. */
   startRecording: () => void;
-  /** Stops the active recording. No-op unless `state === 'recording'`. */
+  /**
+   * Stops the active recording, calls `onAttachAudio` with the blob, and resets to `idle`.
+   * No-op unless `state === 'recording'`.
+   */
   stopRecording: () => void;
-  /** Uploads and transcribes the recorded audio. No-op unless `state === 'stopped' | 'error'`. */
-  confirmRecording: () => void;
   /** Discards the current recording and resets to `idle`. Works from any non-idle state. */
   discardRecording: () => void;
 }
@@ -53,22 +51,20 @@ const detectMimeType = (): string =>
   MIME_CANDIDATES.find((t) => MediaRecorder.isTypeSupported(t)) ?? '';
 
 /**
- * Manages the five-state voice recording lifecycle:
- * `idle` → `recording` → `stopped` → `uploading` → `idle` (success) | `error` (failure)
+ * Manages the three-state voice recording lifecycle:
+ * `idle` → `recording` → `idle` (blob attached on stop) | `error` (permission denied)
  *
- * Waveform data is sampled via `AnalyserNode` at ~30 fps during recording and
- * frozen on stop. Media resources are released on discard and on unmount.
+ * On stop the recorded blob is passed to `onAttachAudio` and the state resets to `idle`.
+ * Media resources are released on discard and on unmount.
  */
 export const useVoiceRecorder = ({
-  onUploadAudio,
-  onTranscribeAudio,
-  onTranscript,
+  onAttachAudio,
 }: UseVoiceRecorderOptions): UseVoiceRecorderResult => {
   const [state, setState] = useState<VoiceRecorderState>(
     VoiceRecorderState.Idle,
   );
-  const [waveformData, setWaveformData] = useState<Float32Array | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -76,21 +72,20 @@ export const useVoiceRecorder = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const mimeTypeRef = useRef<string>('');
-  const rafIdRef = useRef<number | null>(null);
-  const recordedFileRef = useRef<File | null>(null);
-  const waveformHistoryRef = useRef<number[]>([]);
-  /** Set to `true` when a confirm/discard races with an in-flight upload/transcribe. */
-  const cancelledRef = useRef<boolean>(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /* Stable ref so the onstop closure always calls the latest callback. */
+  const onAttachAudioRef = useRef(onAttachAudio);
+  onAttachAudioRef.current = onAttachAudio;
 
-  const stopWaveformSampling = useCallback(() => {
-    if (rafIdRef.current != null) {
-      cancelAnimationFrame(rafIdRef.current);
-      rafIdRef.current = null;
+  const stopTimer = useCallback(() => {
+    if (intervalRef.current != null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
   }, []);
 
   const cleanupMedia = useCallback(() => {
-    stopWaveformSampling();
+    stopTimer();
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
@@ -101,7 +96,7 @@ export const useVoiceRecorder = ({
     }
     analyserRef.current = null;
     mediaRecorderRef.current = null;
-  }, [stopWaveformSampling]);
+  }, [stopTimer]);
 
   const startRecording = useCallback(() => {
     const run = async () => {
@@ -121,7 +116,6 @@ export const useVoiceRecorder = ({
         const mimeType = detectMimeType();
         mimeTypeRef.current = mimeType;
         chunksRef.current = [];
-        waveformHistoryRef.current = [];
 
         const recorder = new MediaRecorder(
           stream,
@@ -136,23 +130,9 @@ export const useVoiceRecorder = ({
         recorder.start();
         setState(VoiceRecorderState.Recording);
 
-        // Start waveform sampling loop
-        const sample = () => {
-          const node = analyserRef.current;
-          if (!node) return;
-          const buf = new Uint8Array(node.frequencyBinCount);
-          node.getByteTimeDomainData(buf);
-          // Compute RMS amplitude (0–1)
-          let sum = 0;
-          for (let j = 0; j < buf.length; j++) {
-            const s = (buf[j] - 128) / 128;
-            sum += s * s;
-          }
-          waveformHistoryRef.current.push(Math.sqrt(sum / buf.length));
-          setWaveformData(new Float32Array(waveformHistoryRef.current));
-          rafIdRef.current = requestAnimationFrame(sample);
-        };
-        rafIdRef.current = requestAnimationFrame(sample);
+        intervalRef.current = setInterval(() => {
+          setElapsedSeconds((prev) => prev + 1);
+        }, 1000);
       } catch (err) {
         const msg =
           err instanceof Error ? err.message : 'Microphone access denied';
@@ -167,79 +147,51 @@ export const useVoiceRecorder = ({
     const recorder = mediaRecorderRef.current;
     if (!recorder || recorder.state !== 'recording') return;
 
-    stopWaveformSampling();
-    // The last frame captured by the RAF loop remains in waveformData — keep it as the frozen histogram.
+    stopTimer();
 
-    // Build the file only after all chunks are flushed (onstop fires after stop())
     recorder.onstop = () => {
       const effectiveMime = mimeTypeRef.current || 'audio/webm';
       const blob = new Blob(chunksRef.current, { type: effectiveMime });
-      const ext = effectiveMime.split(';')[0].split('/')[1] ?? 'webm';
-      recordedFileRef.current = new File([blob], `recording.${ext}`, {
-        type: effectiveMime,
-      });
-      setState(VoiceRecorderState.Stopped);
+      const baseMime = effectiveMime.split(';')[0];
+      const ext = baseMime.split('/')[1] ?? 'webm';
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -1);
+      const file = new File([blob], `voice-${ts}.${ext}`, { type: baseMime });
+      onAttachAudioRef.current(file);
+      cleanupMedia();
+      setElapsedSeconds(0);
+      setErrorMessage(null);
+      setState(VoiceRecorderState.Idle);
     };
 
     recorder.stop();
-  }, [stopWaveformSampling]);
-
-  const confirmRecording = useCallback(() => {
-    const file = recordedFileRef.current;
-    if (!file || !onUploadAudio || !onTranscribeAudio) return;
-
-    cancelledRef.current = false;
-    setState(VoiceRecorderState.Uploading);
-
-    const run = async () => {
-      try {
-        const contentType = mimeTypeRef.current || 'audio/webm';
-        const url = await onUploadAudio(file, contentType);
-        if (cancelledRef.current) return;
-
-        const transcript = await onTranscribeAudio(url);
-        if (cancelledRef.current) return;
-
-        cleanupMedia();
-        recordedFileRef.current = null;
-        setWaveformData(null);
-        setErrorMessage(null);
-        setState(VoiceRecorderState.Idle);
-        onTranscript?.(transcript);
-      } catch (err) {
-        if (cancelledRef.current) return;
-        const msg = err instanceof Error ? err.message : 'Transcription failed';
-        setErrorMessage(msg);
-        setState(VoiceRecorderState.Error);
-      }
-    };
-    void run();
-  }, [onUploadAudio, onTranscribeAudio, onTranscript, cleanupMedia]);
+  }, [stopTimer, cleanupMedia]);
 
   const discardRecording = useCallback(() => {
-    cancelledRef.current = true;
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state === 'recording') {
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      recorder.stop();
+    }
     cleanupMedia();
-    recordedFileRef.current = null;
-    setWaveformData(null);
+    setElapsedSeconds(0);
     setErrorMessage(null);
     setState(VoiceRecorderState.Idle);
   }, [cleanupMedia]);
 
-  // Release media resources if the component unmounts mid-recording or mid-upload
   useEffect(() => {
     return () => {
-      cancelledRef.current = true;
       cleanupMedia();
     };
   }, [cleanupMedia]);
 
   return {
     state,
-    waveformData,
+    analyserNodeRef: analyserRef,
+    elapsedSeconds,
     errorMessage,
     startRecording,
     stopRecording,
-    confirmRecording,
     discardRecording,
   };
 };

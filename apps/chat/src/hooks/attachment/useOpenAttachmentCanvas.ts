@@ -1,4 +1,5 @@
 import {
+  AttachmentContentType,
   createUnsupportedCanvasContent,
   isTextPreviewable,
   useAttachmentCanvas,
@@ -131,6 +132,19 @@ export const useOpenAttachmentCanvas = () => {
           const content = await resolveImageCanvasContent(attachment);
           if (content == null) return false;
           openCanvas(content, attachment.name);
+          return true;
+        }
+        case AttachmentType.Audio: {
+          const url = attachment.playUrl ?? attachment.url;
+          if (url == null) return false;
+          openCanvas(
+            {
+              type: AttachmentContentType.Audio,
+              url,
+              mimeType: attachment.contentType || undefined,
+            },
+            attachment.name,
+          );
           return true;
         }
         case AttachmentType.File:

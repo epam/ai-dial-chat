@@ -155,6 +155,16 @@ _Source: [`auth-diagrams/08-toolset-signin-interrupt.mmd`](./auth-diagrams/08-to
 - The assigned channel id travels with subsequent completion requests (`X-DIAL-CLIENT-CHANNEL-ID`), so Core can correlate a `toolset/signin` event back to the specific blocked tool call.
 - A `toolset/signin` event surfaces a global dialog; the user logs in with the existing toolset API-key/OAuth mechanics (unchanged from the Catalog/Toolset-Editor flows), and the result is reported back on the same channel (`POST /api/v1/client-channel/report`) so Core can resume or terminate the tool call.
 - Gated behind the `liveChatInteraction` feature flag (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`); unsubscribes on logout, tab close, or the flag flipping off.
+- Toolset OAuth opens an external-provider popup and tracks it from the initiating Chat tab. The
+  Chat response therefore uses `Cross-Origin-Opener-Policy: same-origin-allow-popups` (rather
+  than Helmet's `same-origin` default), preventing provider navigation from severing the
+  opener's `WindowProxy` and producing a false `popup.closed` cancellation. Before navigating
+  externally, the popup still sets its own `window.opener` to `null` to prevent reverse tabnabbing.
+  After completing login, the callback removes the authorization code from its address bar,
+  writes a non-secret completion marker into its own same-origin URL, posts the result through
+  `BroadcastChannel`, and remains open. The initiating tab polls the popup URL and closes it only
+  after consuming the marker, so a dropped channel event cannot lose the completed login or
+  prevent status refresh. OAuth codes and credentials are never persisted by this handoff.
 
 ---
 
@@ -173,7 +183,7 @@ apps/chat-api/src/auth/
 │   └── csrf.guard.ts                   # double-submit CSRF guard (Origin check + X-CSRF-Token header)
 ├── dto/
 │   ├── provider-id-param.dto.ts        # :providerId with @Matches allowlist
-│   ├── auth-callback.query.dto.ts      # code, state, iss, session_state, error, error_description
+│   ├── auth-callback.query.dto.ts      # code, state, iss, session_state, error, error_description, scope, authuser, hd, prompt (Google appends these)
 │   └── login-query.dto.ts              # callbackUrl for app return after login
 ├── keys/
 │   └── keys.service.ts                 # active + previous keys from env (hex, validated on init)

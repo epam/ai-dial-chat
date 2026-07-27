@@ -465,4 +465,194 @@ describe('ChatOverlay', () => {
     overlay.destroy();
     expect(() => overlay.destroy()).not.toThrow();
   });
+
+  describe('conversation-list methods', () => {
+    const readyOverlay = (): TestHandle => {
+      const handle = setup();
+      advanceHandshakeToReadyToInteract(handle.iframe, 'irrelevant');
+      return handle;
+    };
+
+    const captureRequest = (
+      iframe: HTMLIFrameElement,
+    ): { spy: ReturnType<typeof vi.spyOn> } => {
+      const spy = vi.spyOn(iframe.contentWindow as Window, 'postMessage');
+      return { spy };
+    };
+
+    it('dispatches GET_CONVERSATIONS and resolves with the response payload', async () => {
+      const { overlay, iframe } = readyOverlay();
+      await overlay.ready();
+      const { spy } = captureRequest(iframe);
+
+      const responsePromise = overlay.getConversations();
+      await Promise.resolve();
+      const sent = spy.mock.calls[0][0] as OverlayMessageRequest;
+      expect(sent.type).toBe(OverlayRequestType.GetConversations);
+
+      dispatchFromApp(iframe, {
+        type: `${OverlayRequestType.GetConversations}/RESPONSE`,
+        requestId: sent.requestId,
+        payload: { conversations: [] },
+      });
+      await expect(responsePromise).resolves.toEqual({ conversations: [] });
+    });
+
+    it('dispatches GET_SELECTED_CONVERSATIONS and resolves with the response payload', async () => {
+      const { overlay, iframe } = readyOverlay();
+      await overlay.ready();
+      const { spy } = captureRequest(iframe);
+
+      const responsePromise = overlay.getSelectedConversations();
+      await Promise.resolve();
+      const sent = spy.mock.calls[0][0] as OverlayMessageRequest;
+      expect(sent.type).toBe(OverlayRequestType.GetSelectedConversations);
+
+      dispatchFromApp(iframe, {
+        type: `${OverlayRequestType.GetSelectedConversations}/RESPONSE`,
+        requestId: sent.requestId,
+        payload: { conversations: [] },
+      });
+      await expect(responsePromise).resolves.toEqual({ conversations: [] });
+    });
+
+    it('dispatches SELECT_CONVERSATION with the given id', async () => {
+      const { overlay, iframe } = readyOverlay();
+      await overlay.ready();
+      const { spy } = captureRequest(iframe);
+
+      const responsePromise = overlay.selectConversation('conv-1');
+      await Promise.resolve();
+      const sent = spy.mock.calls[0][0] as OverlayMessageRequest;
+      expect(sent.type).toBe(OverlayRequestType.SelectConversation);
+      expect(sent.payload).toEqual({ id: 'conv-1' });
+
+      dispatchFromApp(iframe, {
+        type: `${OverlayRequestType.SelectConversation}/RESPONSE`,
+        requestId: sent.requestId,
+        payload: { conversation: { id: 'conv-1' } },
+      });
+      await expect(responsePromise).resolves.toEqual({
+        conversation: { id: 'conv-1' },
+      });
+    });
+
+    it('dispatches DELETE_CONVERSATION with the given id', async () => {
+      const { overlay, iframe } = readyOverlay();
+      await overlay.ready();
+      const { spy } = captureRequest(iframe);
+
+      const responsePromise = overlay.deleteConversation('conv-1');
+      await Promise.resolve();
+      const sent = spy.mock.calls[0][0] as OverlayMessageRequest;
+      expect(sent.type).toBe(OverlayRequestType.DeleteConversation);
+      expect(sent.payload).toEqual({ id: 'conv-1' });
+
+      dispatchFromApp(iframe, {
+        type: `${OverlayRequestType.DeleteConversation}/RESPONSE`,
+        requestId: sent.requestId,
+        payload: {},
+      });
+      await expect(responsePromise).resolves.toEqual({});
+    });
+
+    it('dispatches RENAME_CONVERSATION with the given id and newName', async () => {
+      const { overlay, iframe } = readyOverlay();
+      await overlay.ready();
+      const { spy } = captureRequest(iframe);
+
+      const responsePromise = overlay.renameConversation('conv-1', 'New name');
+      await Promise.resolve();
+      const sent = spy.mock.calls[0][0] as OverlayMessageRequest;
+      expect(sent.type).toBe(OverlayRequestType.RenameConversation);
+      expect(sent.payload).toEqual({ id: 'conv-1', newName: 'New name' });
+
+      dispatchFromApp(iframe, {
+        type: `${OverlayRequestType.RenameConversation}/RESPONSE`,
+        requestId: sent.requestId,
+        payload: { conversation: { id: 'conv-1', title: 'New name' } },
+      });
+      await expect(responsePromise).resolves.toEqual({
+        conversation: { id: 'conv-1', title: 'New name' },
+      });
+    });
+
+    it('dispatches CREATE_CONVERSATION with deploymentId and firstMessage', async () => {
+      const { overlay, iframe } = readyOverlay();
+      await overlay.ready();
+      const { spy } = captureRequest(iframe);
+
+      const responsePromise = overlay.createConversation({
+        deploymentId: 'gpt-4o',
+        firstMessage: 'Hello',
+      });
+      await Promise.resolve();
+      const sent = spy.mock.calls[0][0] as OverlayMessageRequest;
+      expect(sent.type).toBe(OverlayRequestType.CreateConversation);
+      expect(sent.payload).toEqual({
+        deploymentId: 'gpt-4o',
+        firstMessage: 'Hello',
+      });
+
+      dispatchFromApp(iframe, {
+        type: `${OverlayRequestType.CreateConversation}/RESPONSE`,
+        requestId: sent.requestId,
+        payload: { conversation: { id: 'conv-2' } },
+      });
+      await expect(responsePromise).resolves.toEqual({
+        conversation: { id: 'conv-2' },
+      });
+    });
+
+    it('posts a payload with no firstMessage for createConversation() and createLocalConversation()', async () => {
+      const { overlay, iframe } = readyOverlay();
+      await overlay.ready();
+      const { spy } = captureRequest(iframe);
+
+      const createPromise = overlay.createConversation();
+      await Promise.resolve();
+      const createSent = spy.mock.calls[0][0] as OverlayMessageRequest;
+      expect(createSent.type).toBe(OverlayRequestType.CreateConversation);
+      expect(createSent.payload).toEqual({});
+      dispatchFromApp(iframe, {
+        type: `${OverlayRequestType.CreateConversation}/RESPONSE`,
+        requestId: createSent.requestId,
+        payload: { conversation: null },
+      });
+      await createPromise;
+
+      const localPromise = overlay.createLocalConversation();
+      await Promise.resolve();
+      const localSent = spy.mock.calls[1][0] as OverlayMessageRequest;
+      expect(localSent.type).toBe(OverlayRequestType.CreateLocalConversation);
+      expect(localSent.payload).toBeUndefined();
+      dispatchFromApp(iframe, {
+        type: `${OverlayRequestType.CreateLocalConversation}/RESPONSE`,
+        requestId: localSent.requestId,
+        payload: { conversation: null },
+      });
+
+      await expect(createPromise).resolves.toEqual({ conversation: null });
+      await expect(localPromise).resolves.toEqual({ conversation: null });
+    });
+
+    it('waits for ready() before sending getConversations', () => {
+      const { overlay, iframe } = setup();
+      const postMessageSpy = vi.spyOn(
+        iframe.contentWindow as Window,
+        'postMessage',
+      );
+      void overlay.getConversations().catch(() => undefined);
+      expect(postMessageSpy).not.toHaveBeenCalled();
+    });
+
+    it('rejects createConversation with a timeout error naming the type and timeout', async () => {
+      const { overlay, iframe } = setup({ requestTimeout: 50 });
+      advanceHandshakeToReadyToInteract(iframe, 'irrelevant');
+
+      await expect(
+        overlay.createConversation({ firstMessage: 'Hi' }),
+      ).rejects.toThrow(/CREATE_CONVERSATION.*50/);
+    });
+  });
 });

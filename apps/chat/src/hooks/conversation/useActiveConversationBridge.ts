@@ -33,45 +33,50 @@ export const useActiveConversationBridge = ({
   useEffect(() => {
     if (!overlay) return;
 
-    overlay.registerActiveConversationBridge({
-      getMessages: () => ({
-        messages: toOverlayMessages(conversationRef.current?.messages ?? []),
-      }),
-      sendMessage: async (content) => {
-        await handleSend(content, []);
-        return {
+    overlay.registerActiveConversationBridge(
+      {
+        getMessages: () => ({
           messages: toOverlayMessages(conversationRef.current?.messages ?? []),
-        };
+        }),
+        sendMessage: async (content) => {
+          await handleSend(content, []);
+          return {
+            messages: toOverlayMessages(
+              conversationRef.current?.messages ?? [],
+            ),
+          };
+        },
+        setInputContent: (content) => {
+          setOverlayInputContent(content);
+        },
+        setSystemPrompt: async (systemPrompt) => {
+          const current = conversationRef.current;
+          if (!current || !conversationId) return { systemPrompt };
+          const updated = { ...current, prompt: systemPrompt };
+          setConversation(updated);
+          conversationRef.current = updated;
+          await saveConversation(
+            getConversationPath(conversationId),
+            updated as ConversationResponseDto,
+          );
+          return { systemPrompt };
+        },
+        setTemperature: async (temperature) => {
+          const current = conversationRef.current;
+          if (!current || !conversationId) return { temperature };
+          const updated = { ...current, temperature };
+          setConversation(updated);
+          conversationRef.current = updated;
+          await saveConversation(
+            getConversationPath(conversationId),
+            updated as ConversationResponseDto,
+          );
+          return { temperature };
+        },
       },
-      setInputContent: (content) => {
-        setOverlayInputContent(content);
-      },
-      setSystemPrompt: async (systemPrompt) => {
-        const current = conversationRef.current;
-        if (!current || !conversationId) return { systemPrompt };
-        const updated = { ...current, prompt: systemPrompt };
-        setConversation(updated);
-        conversationRef.current = updated;
-        await saveConversation(
-          getConversationPath(conversationId),
-          updated as ConversationResponseDto,
-        );
-        return { systemPrompt };
-      },
-      setTemperature: async (temperature) => {
-        const current = conversationRef.current;
-        if (!current || !conversationId) return { temperature };
-        const updated = { ...current, temperature };
-        setConversation(updated);
-        conversationRef.current = updated;
-        await saveConversation(
-          getConversationPath(conversationId),
-          updated as ConversationResponseDto,
-        );
-        return { temperature };
-      },
-    });
-    return () => overlay.registerActiveConversationBridge(null);
+      conversationId ?? null,
+    );
+    return () => overlay.registerActiveConversationBridge(null, null);
     // conversationRef is a stable ref — intentionally omitted
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

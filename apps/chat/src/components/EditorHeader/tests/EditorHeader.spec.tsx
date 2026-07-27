@@ -62,7 +62,7 @@ describe('EditorHeader', () => {
     expect(onPreview).toHaveBeenCalledOnce();
   });
 
-  it('disables Cancel and Save while previewing', () => {
+  it('hides Cancel and Save while previewing', () => {
     renderHeader({
       onPreview: vi.fn(),
       previewButtonLabel: 'Preview',
@@ -70,14 +70,8 @@ describe('EditorHeader', () => {
       isPreviewing: true,
     });
 
-    expect(
-      (screen.getByRole('button', { name: 'Cancel' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
-    expect(
-      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull();
   });
 
   it('disables Save when requested by the caller', () => {

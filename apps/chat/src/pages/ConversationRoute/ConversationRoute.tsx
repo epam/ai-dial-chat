@@ -15,7 +15,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useDeploymentSelectorOverlay } from '../../components/DeploymentSelector/useDeploymentSelectorOverlay';
 import NewConversationComposer, {
   type NewConversationChatSettings,
@@ -49,6 +49,9 @@ import {
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const routeDeploymentId = (state as { deploymentId?: string } | null)
+    ?.deploymentId;
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const { showNotification } = useNotification();
   const overlay = useOptionalOverlay();
@@ -56,10 +59,22 @@ const ConversationRoute: FC = () => {
     items,
     selectedItemId,
     setSelectedItemId,
+    restoreSelectedItemId,
     selectedDeploymentConfiguration,
     isLoading,
     error,
   } = useDeployments();
+
+  /*
+   * Honors a deploymentId passed as router state (e.g. by the overlay's
+   * conversation-list bridge opening the composer with a pre-selected
+   * deployment) without persisting it as the user's own preference.
+   */
+  useEffect(() => {
+    if (routeDeploymentId) {
+      restoreSelectedItemId(routeDeploymentId);
+    }
+  }, [restoreSelectedItemId, routeDeploymentId]);
 
   /*
    * This is the "no conversation selected" empty state. Overlay mode must

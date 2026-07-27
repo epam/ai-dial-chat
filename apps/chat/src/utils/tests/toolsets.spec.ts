@@ -1,6 +1,8 @@
 import type { DialToolsetDto } from '@epam/chat-api-client';
 import { ResponseError } from '@epam/chat-api-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ToolsetOAuthCallbackQuery } from '../../constants/toolsets';
+import { ROUTES } from '../../types/routes';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
@@ -522,6 +524,7 @@ describe('toolsetDtoToForm', () => {
       allowedTools: ['tool1'],
       authSettings: {
         authenticationType: 'OAUTH',
+        dynamicallyRegistered: false,
         clientId: 'client',
         authorizationEndpoint: 'https://auth.example.com/authorize',
         tokenEndpoint: 'https://auth.example.com/token',
@@ -551,6 +554,27 @@ describe('toolsetDtoToForm', () => {
       codeChallengeMethod: 'S256',
     });
     expect(form.auth.clientSecret).toBeUndefined();
+  });
+
+  it('restores WithLogin for a dynamically registered OAuth client', () => {
+    const dto: DialToolsetDto = {
+      id: 'toolsets/b/My%20toolset__0.0.1',
+      toolset: 'toolsets/b/My%20toolset__0.0.1',
+      displayName: 'My toolset',
+      endpoint: 'https://my-toolset.example.com/mcp',
+      authSettings: {
+        authenticationType: 'OAUTH',
+        dynamicallyRegistered: true,
+        clientId: 'dynamically-registered-client',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+        tokenEndpoint: 'https://auth.example.com/token',
+      },
+    };
+
+    const form = toolsetDtoToForm(dto);
+
+    expect(form.auth.withLogin).toBe(WithLogin.WithLogin);
+    expect(form.auth.clientId).toBe('dynamically-registered-client');
   });
 
   it('repairs encoded endpoint URLs returned from the API before showing them in the editor', () => {
@@ -830,6 +854,10 @@ describe('openToolsetOAuthPopup / navigateToolsetOAuthPopup', () => {
 
 describe('waitForToolsetOAuthResult', () => {
   const flowId = 'flow-123';
+  const defaultWaitOptions = {
+    toolsetId: 'toolsets/b/my-toolset__1',
+    credentialsLevel: ToolsetCredentialsLevel.User,
+  };
 
   const postMessage = (message: unknown) => {
     const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
@@ -839,7 +867,11 @@ describe('waitForToolsetOAuthResult', () => {
 
   it('resolves with the success message posted on the flow channel', async () => {
     const popup = { closed: false, close: vi.fn() } as unknown as Window;
-    const resultPromise = waitForToolsetOAuthResult(popup, flowId);
+    const resultPromise = waitForToolsetOAuthResult(
+      popup,
+      flowId,
+      defaultWaitOptions,
+    );
 
     postMessage({
       type: ToolsetOAuthResultType.Success,
@@ -856,7 +888,11 @@ describe('waitForToolsetOAuthResult', () => {
 
   it('resolves with the failure message posted on the flow channel', async () => {
     const popup = { closed: false, close: vi.fn() } as unknown as Window;
-    const resultPromise = waitForToolsetOAuthResult(popup, flowId);
+    const resultPromise = waitForToolsetOAuthResult(
+      popup,
+      flowId,
+      defaultWaitOptions,
+    );
 
     postMessage({
       type: ToolsetOAuthResultType.Failure,
@@ -872,7 +908,11 @@ describe('waitForToolsetOAuthResult', () => {
   it('closes the popup itself as soon as a result message arrives', async () => {
     const close = vi.fn();
     const popup = { closed: false, close } as unknown as Window;
-    const resultPromise = waitForToolsetOAuthResult(popup, flowId);
+    const resultPromise = waitForToolsetOAuthResult(
+      popup,
+      flowId,
+      defaultWaitOptions,
+    );
 
     postMessage({
       type: ToolsetOAuthResultType.Success,
@@ -890,6 +930,7 @@ describe('waitForToolsetOAuthResult', () => {
       popup as unknown as Window,
       flowId,
       {
+        ...defaultWaitOptions,
         pollIntervalMs: 5,
         timeoutMs: 10_000,
       },
@@ -902,12 +943,76 @@ describe('waitForToolsetOAuthResult', () => {
     });
   });
 
+  it('recovers the first successful login from the callback URL when the channel event is missed', async () => {
+    const close = vi.fn();
+    const popup = {
+      closed: false,
+      close,
+      location: { href: 'https://provider.example.com/authorize' },
+    } as {
+      closed: boolean;
+      close: ReturnType<typeof vi.fn>;
+      location: { href: string };
+    };
+    const resultPromise = waitForToolsetOAuthResult(
+      popup as unknown as Window,
+      flowId,
+      {
+        ...defaultWaitOptions,
+        pollIntervalMs: 5,
+        timeoutMs: 10_000,
+      },
+    );
+    const callbackUrl = new URL(ROUTES.ToolsetSignIn, window.location.origin);
+    callbackUrl.searchParams.set(
+      ToolsetOAuthCallbackQuery.Result,
+      ToolsetOAuthResultType.Success,
+    );
+    popup.location.href = callbackUrl.toString();
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Success,
+      ...defaultWaitOptions,
+    });
+    expect(close).toHaveBeenCalledOnce();
+  });
+
+  it('recovers a failed login and its reason from the callback URL', async () => {
+    const close = vi.fn();
+    const callbackUrl = new URL(
+      ROUTES.ToolsetEditorCallback,
+      window.location.origin,
+    );
+    callbackUrl.searchParams.set(
+      ToolsetOAuthCallbackQuery.Result,
+      ToolsetOAuthResultType.Failure,
+    );
+    callbackUrl.searchParams.set(
+      ToolsetOAuthCallbackQuery.FailureReason,
+      ToolsetOAuthFailureReason.StateMismatch,
+    );
+    const popup = {
+      closed: false,
+      close,
+      location: { href: callbackUrl.toString() },
+    } as unknown as Window;
+
+    await expect(
+      waitForToolsetOAuthResult(popup, flowId, defaultWaitOptions),
+    ).resolves.toEqual({
+      type: ToolsetOAuthResultType.Failure,
+      reason: ToolsetOAuthFailureReason.StateMismatch,
+    });
+    expect(close).toHaveBeenCalledOnce();
+  });
+
   it('resolves as Cancelled when the pending timeout elapses with no result', async () => {
     const close = vi.fn();
     const popup = { closed: false, close } as unknown as Window;
 
     await expect(
       waitForToolsetOAuthResult(popup, flowId, {
+        ...defaultWaitOptions,
         pollIntervalMs: 5,
         timeoutMs: 20,
       }),
@@ -924,6 +1029,7 @@ describe('waitForToolsetOAuthResult', () => {
       popup as unknown as Window,
       flowId,
       {
+        ...defaultWaitOptions,
         pollIntervalMs: 5,
         timeoutMs: 50,
       },
