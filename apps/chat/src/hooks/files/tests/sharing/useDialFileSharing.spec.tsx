@@ -8,25 +8,11 @@ import { useDialFileSharing } from '../../useDialFileSharing';
 
 vi.mock('../../../../server-api/files.api');
 
-const mockShareFiles = vi.mocked(filesApi.shareFiles);
 const mockDiscardShared = vi.mocked(filesApi.discardShared);
 const mockRevokeAccess = vi.mocked(filesApi.revokeAccess);
 
 const BUCKET = 'test-bucket';
 const OWNER_BUCKET = 'owner-bucket';
-
-const buildItems = (children: DialFile[]): DialFile[] => [
-  {
-    id: BUCKET,
-    name: 'My files',
-    path: '/My files',
-    parentPath: '',
-    nodeType: DialFileNodeType.FOLDER,
-    folderId: BUCKET,
-    bucket: BUCKET,
-    items: children,
-  },
-];
 
 const renderSharing = (overrides: Partial<UseDialFileSharingOptions> = {}) => {
   const bumpRetry = vi.fn();
@@ -35,7 +21,6 @@ const renderSharing = (overrides: Partial<UseDialFileSharingOptions> = {}) => {
     useDialFileSharing({
       bucket: BUCKET,
       rootLabel: 'My files',
-      items: [],
       bumpRetry,
       onNotification,
       ...overrides,
@@ -49,109 +34,6 @@ afterEach(() => {
 });
 
 describe('useDialFileSharing', () => {
-  describe('onManagePermissions', () => {
-    const reportItem: DialFile = {
-      id: `files/${BUCKET}/report.pdf`,
-      name: 'report.pdf',
-      path: `files/${BUCKET}/report.pdf`,
-      parentPath: '/My files',
-      nodeType: DialFileNodeType.ITEM,
-      folderId: `${BUCKET}:`,
-      bucket: BUCKET,
-    };
-
-    it('resolves the correct item and opens the share modal target', () => {
-      const { result } = renderSharing({ items: buildItems([reportItem]) });
-
-      expect(result.current.shareTarget).toBeNull();
-
-      act(() =>
-        result.current.onManagePermissions(`files/${BUCKET}/report.pdf`),
-      );
-
-      expect(result.current.shareTarget).toEqual({
-        bucket: BUCKET,
-        path: 'report.pdf',
-        name: 'report.pdf',
-      });
-    });
-
-    it('does nothing when path does not resolve to a loaded item', () => {
-      const { result } = renderSharing({ items: buildItems([reportItem]) });
-
-      act(() => result.current.onManagePermissions('unknown-path'));
-
-      expect(result.current.shareTarget).toBeNull();
-    });
-
-    it('onCloseShareModal clears the share target', () => {
-      const { result } = renderSharing({ items: buildItems([reportItem]) });
-
-      act(() =>
-        result.current.onManagePermissions(`files/${BUCKET}/report.pdf`),
-      );
-      expect(result.current.shareTarget).not.toBeNull();
-
-      act(() => result.current.onCloseShareModal());
-      expect(result.current.shareTarget).toBeNull();
-    });
-
-    it('onCreateShareLink calls shareFiles with the resolved target and permission', async () => {
-      mockShareFiles.mockResolvedValue({
-        invitationLink: 'https://chat.example.com/share/abc',
-      });
-
-      const { result } = renderSharing({ items: buildItems([reportItem]) });
-
-      act(() =>
-        result.current.onManagePermissions(`files/${BUCKET}/report.pdf`),
-      );
-
-      let link: string | undefined;
-      await act(async () => {
-        link = await result.current.onCreateShareLink('read');
-      });
-
-      expect(mockShareFiles).toHaveBeenCalledWith(
-        [{ bucket: BUCKET, path: 'report.pdf' }],
-        'read',
-        expect.any(AbortSignal),
-      );
-      expect(link).toBe('https://chat.example.com/share/abc');
-    });
-
-    it('clears isSharing immediately when the modal is closed on a pending request', async () => {
-      mockShareFiles.mockImplementation(
-        (_items, _permission, signal) =>
-          new Promise((_resolve, reject) => {
-            signal?.addEventListener('abort', () => {
-              reject(new DOMException('Aborted', 'AbortError'));
-            });
-          }),
-      );
-
-      const { result } = renderSharing({ items: buildItems([reportItem]) });
-
-      act(() =>
-        result.current.onManagePermissions(`files/${BUCKET}/report.pdf`),
-      );
-
-      let pendingRejection: Promise<string> | undefined;
-      act(() => {
-        pendingRejection = result.current.onCreateShareLink('read');
-        pendingRejection.catch(() => undefined);
-      });
-
-      await waitFor(() => expect(result.current.isSharing).toBe(true));
-
-      act(() => result.current.onCloseShareModal());
-
-      expect(result.current.isSharing).toBe(false);
-      expect(result.current.shareTarget).toBeNull();
-      await expect(pendingRejection).rejects.toThrow('Aborted');
-    });
-  });
-
   describe('onUnshareFiles and onRemoveFilesAccess', () => {
     const sharedWithMeFile: DialFile = {
       id: `files/${OWNER_BUCKET}/team-docs/`,

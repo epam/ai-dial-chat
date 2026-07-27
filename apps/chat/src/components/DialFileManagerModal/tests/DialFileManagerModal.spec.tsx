@@ -394,11 +394,6 @@ const defaultHookResult: UseDialFileManagerResult = {
   },
   sharedWithMeIds: undefined,
   sharedByMePaths: new Set<string>(),
-  shareTarget: null,
-  onManagePermissions: vi.fn(),
-  onCloseShareModal: vi.fn(),
-  onCreateShareLink: vi.fn(),
-  isSharing: false,
   onUnshareFiles: vi.fn(),
   isUnsharing: false,
   onRemoveFilesAccess: vi.fn(),
@@ -1134,5 +1129,18 @@ describe('DialFileManagerModal — tab-specific empty states', () => {
     expect(manager.getAttribute('data-empty-state-description')).toBe(
       'dialFileManager.organization.emptyStateDescription',
     );
+  });
+
+  it('shows "This folder is empty" with empty description when inside a subfolder', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      path: '/My files/reports/',
+    });
+    render(<DialFileManagerModal {...defaultProps} />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-empty-state-title')).toBe(
+      'dialFileManager.empty',
+    );
+    expect(manager.getAttribute('data-empty-state-description')).toBe('');
   });
 });

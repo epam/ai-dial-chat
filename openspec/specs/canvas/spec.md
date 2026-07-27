@@ -39,9 +39,10 @@ The canvas closes when the URL `pathname` changes (conversation switch, catalog 
 - **Download button**: shown only when `onDownload` is provided **and** `isDownloadable(content)` is `true`. `isDownloadable` returns `false` for `content.type === Unsupported` when `url` is `null`, `true` when `url` is present; and always `false` for `content.type === Error` with `errorType === Forbidden` (see "Error rendering" below).
 - **Close button**: calls `onClose` (`closeCanvas`).
 - **Resizability**: enabled on desktop, disabled on mobile (`isMobile` prop from `useIsMobile()`).
-- **Width defaults**: 560 px default, 320 px min, 960 px max. Width is not persisted between sessions.
-- **Both panels**: `ConversationSourcesPanel` and `AttachmentCanvas` cannot be open simultaneously. Opening the canvas from the source panel closes the source panel first (calls `closeSourcesPanel()` before `openCanvas()`). Opening the canvas from any other surface does not affect the source panel state.
-- **Conversation panel**: The conversation history panel (`isHistoryPanelOpen`) is automatically closed when the canvas opens. Implemented via a `useEffect` in `apps/chat/src/app/app.tsx` that watches `isCanvasOpen` and calls `closeHistoryPanel()` whenever it becomes `true`.
+- **Width defaults**: ~50% of viewport on desktop (capped at `canvasMaxWidth`; see below), full viewport on mobile. 600 px min. Max is `usePanelMaxWidth()` — `Math.max(0, viewportWidth − 400)`, reactive to window resize — so the chat area retains at least 400 px at all times. Width is not persisted between sessions.
+- **Resize constraint shared with sidebar**: both `AttachmentCanvas` and `ConversationSourcesPanel` derive their `maxWidth` from the shared `usePanelMaxWidth` hook (`apps/chat/src/hooks/usePanelMaxWidth.ts`), which guarantees `MIN_CONTENT_AREA_WIDTH = 400 px` of remaining chat space. The sidebar has its own `minWidth` of 312 px; the canvas has a separate `minWidth` of 600 px.
+- **Both panels**: `ConversationSourcesPanel` and `AttachmentCanvas` are mutually exclusive — opening either one closes the other. The primary path is synchronous: `useOpenAttachmentCanvas` calls `closePanel()` and `closeSourcesPanel()` at the start of `openAttachmentCanvas`, before any async content resolution, so panels disappear on click rather than after the file fetch completes. `SourcesSidebarToggle` calls `closeCanvas()` synchronously before `handleOpen()` for the reverse direction. A `useEffect` in `app.tsx` that watches `isCanvasOpen` acts as a safety net for the few call sites that call `openCanvas` directly (citation preview, collapsed stage attachments).
+- **Conversation panel**: The conversation history panel (`isPanelOpen`, managed by `ConversationPanelContext`) and `AttachmentCanvas` are mutually exclusive — opening either one closes the other. `useOpenAttachmentCanvas` calls `closePanel()` synchronously before async content resolution; `togglePanel` in `app.tsx` calls `closeCanvas()` before opening the panel. The `isCanvasOpen` safety-net effect in `app.tsx` covers direct `openCanvas` call sites.
 
 #### i18n
 
@@ -80,7 +81,14 @@ None. The canvas is always available to authenticated users.
 
 ### Content type routing
 
-`useOpenAttachmentCanvas` maps a `DisplayAttachment` to a content payload. For `AttachmentType.File` attachments, `openFileCanvas` (`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`) first checks whether the attachment is reference-only (`attachment.url == null && attachment.referenceUrl != null` — a RAG/search-grounding chunk). When true, it calls `referenceAttachmentToPdfCanvasContent({ type: attachment.contentType, url: attachment.referenceUrl, title: attachment.name })`; if that returns a non-`null` `PdfCanvasContent` (the `referenceUrl` targets a `.pdf`, optionally with a `#page=N` fragment), the canvas opens with it immediately and no further routing runs. If it returns `null`, routing falls through unchanged — this applies uniformly to `CollapsedGroup` stage attachments and the plain attachment tray, so a reference-only PDF-page chunk (e.g. `reference_url: 'files/{bucket}/report.pdf#page=81'`) opens the actual referenced PDF at the referenced page instead of rendering its own `data`/`contentType` as Markdown or plain text. Otherwise, it checks for a missing `contentType` with inline data (see "No-type inline-data fallback" below), then runs MIME-type routing (for stage attachments that carry a `contentType` but no file extension), then extension-based routing (lowercased):
+`useOpenAttachmentCanvas` maps a `DisplayAttachment` to a content payload. The top-level `switch` on `attachment.type` handles `Image`, `Audio`, `File`, `Pasted`, and `Prompt` before any extension/MIME routing runs:
+
+- **`Image`** — `resolveImageCanvasContent` (synchronous); closes panels before calling `openCanvas`.
+- **`Audio`** — uses `attachment.playUrl ?? attachment.url`; if neither is present returns `false`. Calls `openCanvas` directly with `{ type: AttachmentContentType.Audio, url, mimeType: attachment.contentType || undefined }`. Does not close other panels (audio canvas is additive).
+- **`File`** — calls `closePanel()`, `closeSourcesPanel()`, and `openCanvasLoading(attachment.name)` synchronously, then delegates to `openFileCanvas` (async). If `openFileCanvas` returns `false` the loading state is cleared by calling `closeCanvas()`.
+- **`Pasted` / `Prompt`** — same synchronous close+loading pattern, then `resolveTextCanvasContent`.
+
+For `AttachmentType.File` attachments, `openFileCanvas` (`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`) first checks whether the attachment is reference-only (`attachment.url == null && attachment.referenceUrl != null` — a RAG/search-grounding chunk). When true, it calls `referenceAttachmentToPdfCanvasContent({ type: attachment.contentType, url: attachment.referenceUrl, title: attachment.name })`; if that returns a non-`null` `PdfCanvasContent` (the `referenceUrl` targets a `.pdf`, optionally with a `#page=N` fragment), the canvas opens with it immediately and no further routing runs. If it returns `null`, routing falls through unchanged — this applies uniformly to `CollapsedGroup` stage attachments and the plain attachment tray, so a reference-only PDF-page chunk (e.g. `reference_url: 'files/{bucket}/report.pdf#page=81'`) opens the actual referenced PDF at the referenced page instead of rendering its own `data`/`contentType` as Markdown or plain text. Otherwise, it checks for a missing `contentType` with inline data (see "No-type inline-data fallback" below), then runs MIME-type routing (for stage attachments that carry a `contentType` but no file extension), then extension-based routing (lowercased):
 
 | MIME type / Extension(s) | Resolver | Content type returned |
 |---|---|---|
@@ -122,7 +130,9 @@ case AttachmentContentType.Error:
 
 #### Where errors are produced
 
-The app-level resolvers in `apps/chat/src/utils/attachment-canvas.ts` (`resolveAttachmentText`, `resolveAttachmentBlobUrl` — see "Shared content resolution helpers" below) classify a failed fetch by HTTP status and return an `ErrorCanvasContent` instead of `undefined`. Every `resolveXCanvasContent` function propagates that `ErrorCanvasContent` unchanged instead of wrapping it in its own content type. `useOpenAttachmentCanvas` (`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`) treats a resolver's `ErrorCanvasContent` result the same as any other non-`null` content — it opens the canvas with it directly. `undefined`/`null` (no data source at all — no `url`, no inline `data`, no local `file`) still means "not previewable" and continues to route to `Unsupported` or `false`, unchanged from prior behavior.
+The app-level resolvers in `apps/chat/src/utils/attachment-canvas.ts` (`resolveAttachmentText`, `resolveAttachmentBlobUrl` — see "Shared content resolution helpers" below) classify a failed fetch by HTTP status and return an `ErrorCanvasContent` instead of `undefined`. Every `resolveXCanvasContent` function propagates that `ErrorCanvasContent` unchanged instead of wrapping it in its own content type. `useOpenAttachmentCanvas` treats a resolver's `ErrorCanvasContent` result the same as any other non-`null` content — it opens the canvas with it directly. `undefined`/`null` (no data source at all) still means "not previewable" and routes to `Unsupported` or `false`, unchanged.
+
+**Images are excluded from this path.** `resolveImageCanvasContent` is synchronous and never fetches, so it cannot return `ErrorCanvasContent`. Image load failures (network error, 403, CORS) surface as an inline error state in the `ImageContent` renderer via `<img onError>` (see "Image rendering" above).
 
 `libs/attachment-canvas/src/utils/content.ts` exports `createLoadErrorCanvasContent(url?)` and `createForbiddenCanvasContent(url?)` helpers, mirroring `createUnsupportedCanvasContent(url?)`.
 
@@ -137,6 +147,7 @@ Some attachments (e.g. an LLM-revised image prompt saved back onto the conversat
 | `AttachmentContentType` | Payload field | Renderer |
 |---|---|---|
 | `Image` | `url: string` | `<img>` centered, `max-h-full max-w-full object-contain` |
+| `Audio` | `url: string; mimeType?: string` | Native `<audio controls>` with optional `<source type>` child; centered, `w-full max-w-sm` |
 | `PlainText` | `text: string` | `<pre>` with `whitespace-pre-wrap break-words` |
 | `Markdown` | `text: string` | `MarkdownRenderer` from `@epam/ai-dial-chat-shared`, neutral defaults |
 | `Json` | `value: unknown` | `react-json-view-lite` `JsonView`, container has `dir="ltr"` |
@@ -225,11 +236,11 @@ The reload is guarded by `!abortRef.current` to skip if the user has already sta
 
 - **`resolveAttachmentBlobUrl(attachment): Promise<string | ErrorCanvasContent | undefined>`** — resolves a displayable URL for an attachment's binary content, in this precedence order:
   1. Local `attachment.file` (locally-picked, not-yet-uploaded) → `URL.createObjectURL(attachment.file)`.
-  2. `resolveDialUrl(attachment)` — an already-uploaded DIAL `files/` URL (checks `attachment.url` then `attachment.referenceUrl`). The URL is fetched immediately (`fetch(dialUrl)`): on success the response body is turned into a `Blob` and returned as an object URL (`URL.createObjectURL`); on a non-OK response or a thrown network error, an `ErrorCanvasContent` is returned instead (see "Where errors are produced" above) — `errorType: Forbidden` for HTTP `403`, `errorType: LoadFailed` otherwise.
-  3. `attachment.previewUrl` — set for `AttachmentType.Image` attachments; already a `data:` URL when the source was inline base64 (see `message-attachment-to-display.ts`).
+  2. `resolveDialUrl(attachment)` — an already-uploaded DIAL `files/` URL. The URL is fetched via the module-level `fetchDialBlob` helper (LRU-cached — see "LRU fetch cache" below): on success the `Blob` is turned into an object URL (`URL.createObjectURL`); on a non-OK response or a thrown network error, an `ErrorCanvasContent` is returned instead (see "Where errors are produced" above) — `errorType: Forbidden` for HTTP `403`, `errorType: LoadFailed` otherwise.
+  3. `attachment.previewUrl` — a `data:` URL when the source was inline base64 (see `message-attachment-to-display.ts`).
   4. Inline `attachment.data`, passed to `base64ToBlobUrl(data, attachment.contentType)`, which builds a `Blob` (`type: attachment.contentType`) from the decoded bytes and returns an object URL via `URL.createObjectURL`.
   5. Otherwise `undefined`.
-  Used by `resolveImageCanvasContent` and `resolvePdfCanvasContent`. Fetching the DIAL URL eagerly (rather than handing the raw URL to `<img src>` or the PDF viewer) is what lets the canvas detect a `403` before rendering — the resulting `blob:` object URL is then consumed by `<img>` / `DocumentPreview` exactly as before, with no extra network round-trip (blob URLs resolve from the in-memory blob store).
+  Used by `resolvePdfCanvasContent` only. Images skip this helper entirely (see "Image rendering" above). Fetching the DIAL URL eagerly (rather than handing the raw URL to the PDF viewer) lets the canvas detect a `403` before rendering — the resulting `blob:` object URL is then consumed by `DocumentPreview` from the in-memory blob store, so this does not add a second network round-trip.
 - **`resolveAttachmentText(attachment): Promise<string | ErrorCanvasContent | undefined>`** — resolves an attachment's textual content, in this precedence order:
   1. Inline `attachment.data`, passed to `base64ToText(data)`.
   2. `resolveDialUrl(attachment)` fetched via `fetch(...)`; returns the response text on success, or an `ErrorCanvasContent` on a non-OK response or thrown network error (same classification as above).
@@ -238,6 +249,21 @@ The reload is guarded by `!abortRef.current` to skip if the user has already sta
   Used by `resolveTextCanvasContent`, `resolveMarkdownCanvasContent`, and `resolveJsonCanvasContent`.
 
 Every `resolveXCanvasContent` wrapper checks its helper's result: an `ErrorCanvasContent` is returned as-is (unwrapped further), `undefined` becomes `null` (no source — "not previewable"), and any other value is wrapped in that resolver's own content type as before.
+
+#### LRU fetch cache
+
+`apps/chat/src/utils/attachment-canvas.ts` maintains two module-level LRU caches (from the `lru-cache` package, v10+) keyed by DIAL download URL:
+
+- **`blobCache`** — `LRUCache<string, Promise<Blob>>`, max 10 entries. Used by `resolvePdfCanvasContent` via `resolveAttachmentBlobUrl`. Each canvas open creates a fresh `URL.createObjectURL(blob)` from the cached `Blob` (zero network, trivial memory).
+- **`textCache`** — `LRUCache<string, Promise<string>>`, max 50 entries. Used by `resolveMarkdownCanvasContent`, `resolveJsonCanvasContent`, and `resolveTextCanvasContent` via `resolveAttachmentText`.
+
+Both caches store the `Promise` itself so that concurrent opens of the same URL share one in-flight fetch rather than issuing duplicate requests. A rejected promise is removed from the cache immediately, allowing the next open to retry the network.
+
+`clearAttachmentCache()` (exported from `attachment-canvas.ts`) clears both caches. It is called in the `pathname` `useEffect` in `apps/chat/src/app/app.tsx` on every navigation (conversation switch, catalog, new chat), bounding cached data to the current conversation session.
+
+Images do **not** use these caches — `resolveImageCanvasContent` is synchronous and returns the BFF URL directly (see "Image rendering" above). The browser's own HTTP cache deduplicates the `<img src>` request made by the canvas with the identical `<img>` element already rendered in the conversation view.
+
+---
 
 Both helpers build on a shared primitive, **`tryBase64ToBytes(base64): Uint8Array | undefined`**, which calls `atob` and returns the decoded bytes, or `undefined` if `atob` throws (e.g. `InvalidCharacterError` for a string containing characters outside the Latin1 range — a sign that `data` was not actually base64-encoded).
 
@@ -256,13 +282,19 @@ This graceful fallback is required because some backends put already-decoded pla
 
 #### Content resolution
 
-`resolveImageCanvasContent` in `apps/chat/src/utils/attachment-canvas.ts` resolves `url` via the shared `resolveAttachmentBlobUrl` helper. A resolved `ErrorCanvasContent` is returned as-is; a resolved string is wrapped as `{ type: AttachmentContentType.Image, url }`; `undefined` returns `null`.
+`resolveImageCanvasContent` in `apps/chat/src/utils/attachment-canvas.ts` is **synchronous** (`ImageCanvasContent | null`) and never issues a `fetch`. Resolution priority:
 
-This covers stage attachments (e.g. annotated PDF page thumbnails from the DIAL Annotation API) that carry the image as inline base64 `data` with no `url` — `message-attachment-to-display.ts` already synthesizes a `data:image/...;base64,...` `previewUrl` for such attachments, which `resolveAttachmentBlobUrl` picks up directly.
+1. Local `attachment.file` → `URL.createObjectURL(file)` (locally-picked, not yet uploaded).
+2. `resolveDialUrl(attachment)` → the BFF download URL is passed to `<img src>` directly. The browser's HTTP cache deduplicates it with the `<img>` already rendered in the conversation view. Load failures are detected via `<img onError>` in the renderer (see "Rendering" below).
+3. `attachment.previewUrl` — typically a `data:image/...;base64,...` URL synthesized by `message-attachment-to-display.ts` for stage attachments that carry inline base64 content and no `url`.
+4. Inline `attachment.data` decoded via `base64ToBlobUrl(data, contentType)`.
+5. `null` if no source is available ("not previewable").
+
+Because images skip `fetch()`, `resolveImageCanvasContent` never returns `ErrorCanvasContent`. Load failures surface as an inline error state in the renderer instead (see "Rendering" below).
 
 #### Rendering
 
-`<img>` centered, `max-h-full max-w-full object-contain` (see "Content renderers" table above).
+Images are rendered by the `ImageContent` sub-component (`libs/attachment-canvas/src/components/AttachmentCanvas/AttachmentCanvas.tsx`). It renders `<img src={url} alt={fileName} className="max-h-full max-w-full object-contain" onError>` centered in the canvas body. When `onError` fires (network failure, HTTP 4xx/5xx, CORS), the component switches to a centered `<IconAlertTriangle>` + `loadErrorLabel` message — the same visual slot used by `UnsupportedCanvasContent`. The error state resets automatically when `url` changes (a `useEffect` keyed on `url` calls `setHasError(false)`).
 
 ---
 
@@ -276,7 +308,7 @@ This covers stage attachments (e.g. annotated PDF page thumbnails from the DIAL 
 
 `resolvePdfCanvasContent` in `apps/chat/src/utils/attachment-canvas.ts` is `async` and resolves `url` via the shared `resolveAttachmentBlobUrl` helper (see "Shared content resolution helpers" below). A resolved `ErrorCanvasContent` is returned as-is; a resolved string is wrapped as `{ type: AttachmentContentType.Pdf, url }`; `undefined` returns `null`.
 
-Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` (`URL.createObjectURL`) → `resolveDialUrl(attachment)` (fetched eagerly; a non-OK response or network error yields `ErrorCanvasContent` instead) → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL`.
+Precedence (via `resolveAttachmentBlobUrl`): local `attachment.file` (`URL.createObjectURL`) → `resolveDialUrl(attachment)` fetched via `fetchDialBlob` (LRU-cached; a non-OK response or network error yields `ErrorCanvasContent` instead) → `attachment.previewUrl` → inline base64 `attachment.data` decoded into a `Blob` (`type: attachment.contentType`) and turned into an object URL via `URL.createObjectURL`.
 
 This covers stage attachments (e.g. from the DIAL Annotation API) that carry the PDF as inline base64 `data` with no `url` — `DocumentPreview` receives a `blob:` object URL and loads it the same way it would a remote URL. A DIAL-hosted PDF is fetched once at resolution time (to classify load/permission failures before rendering); `DocumentPreview`'s own `loadFileCb` then resolves that `blob:` URL from the in-memory blob store, so this does not add a second network round-trip.
 

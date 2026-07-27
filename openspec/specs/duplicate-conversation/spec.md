@@ -75,15 +75,25 @@ The frontend server-api module SHALL expose `duplicateConversation(conversationP
 - **THEN** it resolves with `{ newPath: string }` matching the backend response
 
 ### Requirement: Conversations context exposes duplicate
-`ConversationsContext` SHALL expose `duplicateConversation(id: string): Promise<string>` that calls the server-api, refreshes the conversation list on success, and returns the new conversation ID.
+`ConversationsContext` SHALL expose `duplicateConversation(id: string): Promise<string>` that performs an optimistic update, calls the server-api, and returns the new conversation ID.
 
-#### Scenario: Success path
-- **WHEN** `duplicateConversation(id)` is called with a valid conversation id
-- **THEN** the new conversation appears in the list and the returned string is the new conversation's id
+The optimistic lifecycle is:
+1. Before the API call, a placeholder `ConversationListItemDto` is prepended to the list. The placeholder carries a client-generated UUID as its `id`, the source conversation's `title`, `updatedAt: Date.now()`, and `sharedWithMe: false`, `publishedWithMe: false`, `isPinned: false`, `isReadonly: false`.
+2. Once the API call resolves, the placeholder's `id` is replaced in-place with the returned `newPath`.
+3. `silentRefreshConversations` is fired in the background to reconcile with the server without showing a loading state.
+4. On API failure, the placeholder is removed and the error is re-thrown.
 
-#### Scenario: Error propagation
+#### Scenario: Optimistic item appears immediately
+- **WHEN** `duplicateConversation(id)` is called
+- **THEN** a new entry with the source conversation's title appears at the top of the list before the API call resolves
+
+#### Scenario: Placeholder replaced with real id on success
+- **WHEN** the API call resolves with `newPath`
+- **THEN** the placeholder entry's id is updated to `newPath` and the returned string is `newPath`
+
+#### Scenario: Error propagation removes placeholder
 - **WHEN** the backend returns an error
-- **THEN** the error is re-thrown so callers can handle it
+- **THEN** the placeholder is removed from the list and the error is re-thrown so callers can handle it
 
 ### Requirement: Duplicate action in conversation row dropdown
 The conversation row three-dot dropdown SHALL include a Duplicate item (icon + translated label) for all conversations regardless of source.
@@ -117,11 +127,11 @@ After duplicating a read-only conversation the conversation panel filter tab MUS
 - **THEN** the panel remains on the My chats filter
 
 ### Requirement: Duplicate appears at the top of the conversation list
-After a successful duplication the duplicated conversation SHALL appear as the first (topmost) item in the My chats group in the sidebar, regardless of the original conversation's position or the timestamp DIAL Core assigns to the copied resource.
+The duplicated conversation SHALL appear as the first (topmost) item in the My chats group in the sidebar immediately when the duplicate action is triggered — before the API call resolves — regardless of the original conversation's position or the timestamp DIAL Core assigns to the copied resource. This is achieved by prepending the optimistic placeholder described in the "Conversations context exposes duplicate" requirement.
 
-#### Scenario: Duplicate is at the top after duplication
-- **WHEN** the user duplicates any conversation
-- **THEN** the new conversation is immediately visible at the top of the My chats group in the sidebar
+#### Scenario: Duplicate is at the top immediately on action trigger
+- **WHEN** the user triggers the duplicate action
+- **THEN** the new conversation is visible at the top of the My chats group in the sidebar without waiting for the API response
 
 #### Scenario: Order of other conversations is preserved
 - **WHEN** the user duplicates a conversation
