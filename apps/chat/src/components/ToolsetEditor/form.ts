@@ -58,14 +58,14 @@ export const ToolsetLoginFormSchema = zodValidation
       data.authenticationType === ToolsetAuthTypes.OAUTH &&
       data.withLogin === WithLogin.WithConfig
     ) {
-      if (!data.clientId) {
+      if (!data.clientId?.trim()) {
         ctx.addIssue({
           code: 'custom',
           path: ['clientId'],
           message: 'Client ID is required',
         });
       }
-      if (!data.clientSecret) {
+      if (!data.clientSecret?.trim()) {
         ctx.addIssue({
           code: 'custom',
           path: ['clientSecret'],
