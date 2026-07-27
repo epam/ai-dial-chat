@@ -11,7 +11,7 @@ import {
 } from '@/src/utils/marketplace';
 
 import { ApplicationType } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
+import { ApiKeys, EntityType } from '@/src/types/common';
 import { DetailsEntity } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
@@ -238,9 +238,11 @@ describe('doesMarketplaceEntityMatchFilters', () => {
       authenticationType: ToolsetAuthTypes,
       globalStatus: ToolsetAuthStatus,
       userStatus: ToolsetAuthStatus,
+      id?: string,
     ) =>
       ({
         ...mockToolset,
+        ...(id && { id }),
         authSettings: {
           authenticationType,
           authStatus: {
@@ -264,11 +266,13 @@ describe('doesMarketplaceEntityMatchFilters', () => {
       expect(doesMarketplaceEntityMatchFilters(toolset, filters)).toBe(true);
     });
 
-    it('matches "Org creds" when signed in at global level', () => {
+    it('matches "Org creds" when public toolset signed in at global level', () => {
+      vi.mocked(isMarketplaceEntityPublic).mockReturnValue(true);
       const toolset = buildToolset(
         ToolsetAuthTypes.OAUTH,
         ToolsetAuthStatus.SIGNED_IN,
         ToolsetAuthStatus.SIGNED_OUT,
+        `${ApiKeys.Toolsets}/public/public_toolset_name`,
       );
       expect(
         doesMarketplaceEntityMatchFilters(toolset, {
