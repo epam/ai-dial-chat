@@ -1,4 +1,3 @@
-import { EntityType } from '@/chat/types/common';
 import { Publication } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
@@ -279,11 +278,8 @@ dialTest(
     await dialTest.step(
       'Precondition: create a Quick app 2.0 via API with a tool-supporting orchestrator and both toolsets attached',
       async () => {
-        const allEntities = await modelApiHelper.getModels();
-        const toolSupportingModel = allEntities.find(
-          (entity) =>
-            entity.type === EntityType.Model && entity.features?.tools,
-        )!;
+        const toolSupportingModel =
+          await modelApiHelper.getToolSupportingModel();
         await applicationApiHelper.createApplication(
           quickApp2Builder
             .withDisplayName(quickAppName)
@@ -487,11 +483,8 @@ dialTest(
     await dialTest.step(
       'Precondition: create a Quick app 2.0 with a tool-supporting orchestrator and both toolsets',
       async () => {
-        const allEntities = await modelApiHelper.getModels();
-        const toolSupportingModel = allEntities.find(
-          (entity) =>
-            entity.type === EntityType.Model && entity.features?.tools,
-        )!;
+        const toolSupportingModel =
+          await modelApiHelper.getToolSupportingModel();
         await applicationApiHelper.createApplication(
           quickApp2Builder
             .withDisplayName(quickAppName)

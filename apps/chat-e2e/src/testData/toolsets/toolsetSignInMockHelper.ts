@@ -1,4 +1,5 @@
 import { API } from '@/src/testData';
+import { OAuthMockConfig } from '@/src/testData/toolsets/authMockConfig';
 import {
   Toolset,
   ToolsetAuthStatus,
@@ -8,12 +9,13 @@ import { Page } from '@playwright/test';
 
 type AuthSettings = NonNullable<Toolset['auth_settings']>;
 
-interface OAuthEndpoints {
-  authorization_endpoint: string;
-  token_endpoint: string;
-  scopes_supported?: string[];
-  code_challenge_method?: string;
-}
+// Only the endpoint part of the OAuth config is needed to render a toolset as
+// logged out; the rest (client id/secret) matters for the login flow itself.
+type OAuthEndpoints = Pick<
+  OAuthMockConfig,
+  'authorization_endpoint' | 'token_endpoint'
+> &
+  Partial<Pick<OAuthMockConfig, 'scopes_supported' | 'code_challenge_method'>>;
 
 // A toolset that must appear as login-requiring in the preview sign-in modal.
 export interface SignInMockToolset {
