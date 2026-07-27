@@ -19,9 +19,6 @@ import type {
   RenameItemDto,
   RevokeAccessItemDto,
   RevokeAccessResponseDto,
-  ShareFilesDtoPermissionEnum,
-  ShareFilesResponseDto,
-  ShareItemDto,
   UploadArchiveResponseDto,
 } from '@epam/chat-api-client';
 import { filesApi } from './api-client';
@@ -151,16 +148,6 @@ export const downloadArchive = async (
   });
   return raw.raw;
 };
-
-export const shareFiles = (
-  items: ShareItemDto[],
-  permission: ShareFilesDtoPermissionEnum,
-  signal?: AbortSignal,
-): Promise<ShareFilesResponseDto> =>
-  filesApi.shareFiles(
-    { shareFilesDto: { items, permission } },
-    signal ? { signal } : undefined,
-  );
 
 export const revokeAccess = (
   items: RevokeAccessItemDto[],

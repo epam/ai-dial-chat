@@ -11,6 +11,8 @@ import {
   type DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
+import { useConversationPanel } from '../../context/ConversationPanelContext';
+import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import {
   referenceAttachmentToPdfCanvasContent,
   resolveImageCanvasContent,
@@ -123,14 +125,18 @@ async function openFileCanvas(
  * downloading).
  */
 export const useOpenAttachmentCanvas = () => {
-  const { openCanvas } = useAttachmentCanvas();
+  const { openCanvas, openCanvasLoading, closeCanvas } = useAttachmentCanvas();
+  const { closePanel } = useConversationPanel();
+  const { handleClose: closeSourcesPanel } = useSourcesSidebar();
 
   const openAttachmentCanvas = useCallback(
     async (attachment: DisplayAttachment): Promise<boolean> => {
       switch (attachment.type) {
         case AttachmentType.Image: {
-          const content = await resolveImageCanvasContent(attachment);
+          const content = resolveImageCanvasContent(attachment);
           if (content == null) return false;
+          closePanel();
+          closeSourcesPanel();
           openCanvas(content, attachment.name);
           return true;
         }
@@ -147,12 +153,24 @@ export const useOpenAttachmentCanvas = () => {
           );
           return true;
         }
-        case AttachmentType.File:
-          return openFileCanvas(attachment, openCanvas);
+        case AttachmentType.File: {
+          closePanel();
+          closeSourcesPanel();
+          openCanvasLoading(attachment.name);
+          const opened = await openFileCanvas(attachment, openCanvas);
+          if (!opened) closeCanvas();
+          return opened;
+        }
         case AttachmentType.Pasted:
         case AttachmentType.Prompt: {
+          closePanel();
+          closeSourcesPanel();
+          openCanvasLoading(attachment.name);
           const content = await resolveTextCanvasContent(attachment);
-          if (content == null) return false;
+          if (content == null) {
+            closeCanvas();
+            return false;
+          }
           openCanvas(content, attachment.name);
           return true;
         }
@@ -160,7 +178,7 @@ export const useOpenAttachmentCanvas = () => {
           return false;
       }
     },
-    [openCanvas],
+    [openCanvas, openCanvasLoading, closeCanvas, closePanel, closeSourcesPanel],
   );
 
   return { openAttachmentCanvas };

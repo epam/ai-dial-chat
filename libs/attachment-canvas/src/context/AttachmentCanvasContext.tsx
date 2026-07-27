@@ -38,10 +38,14 @@ const getRevocableObjectUrl = (
 export interface AttachmentCanvasContextValue {
   /** Whether the canvas panel is currently open. */
   isOpen: boolean;
+  /** Whether the panel is open but content is still being resolved (shows a spinner). */
+  isLoading: boolean;
   /** Content currently displayed in the canvas. */
   content: AttachmentCanvasContent;
   /** File name shown in the canvas header. */
   fileName: string | undefined;
+  /** Open the canvas immediately in a loading state before content has resolved. */
+  openCanvasLoading: (fileName?: string) => void;
   /** Open the canvas with the given content and optional file name. */
   openCanvas: (content: AttachmentCanvasContent, fileName?: string) => void;
   /** Close the canvas. */
@@ -60,20 +64,31 @@ export const AttachmentCanvasProvider = ({
   children: ReactNode;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [content, setContent] =
     useState<AttachmentCanvasContent>(EMPTY_CONTENT);
   const [fileName, setFileName] = useState<string | undefined>(undefined);
+
+  const openCanvasLoading = useCallback((newFileName?: string) => {
+    setFileName(newFileName);
+    setIsLoading(true);
+    setIsOpen(true);
+  }, []);
 
   const openCanvas = useCallback(
     (newContent: AttachmentCanvasContent, newFileName?: string) => {
       setContent(newContent);
       setFileName(newFileName);
+      setIsLoading(false);
       setIsOpen(true);
     },
     [],
   );
 
-  const closeCanvas = useCallback(() => setIsOpen(false), []);
+  const closeCanvas = useCallback(() => {
+    setIsOpen(false);
+    setIsLoading(false);
+  }, []);
 
   /* Revokes the outgoing content's object URL whenever it is replaced by new
    * content, and on unmount — otherwise every opened image/PDF blob URL leaks
@@ -88,8 +103,24 @@ export const AttachmentCanvasProvider = ({
   return (
     <AttachmentCanvasContext.Provider
       value={useMemo(
-        () => ({ isOpen, content, fileName, openCanvas, closeCanvas }),
-        [isOpen, content, fileName, openCanvas, closeCanvas],
+        () => ({
+          isOpen,
+          isLoading,
+          content,
+          fileName,
+          openCanvasLoading,
+          openCanvas,
+          closeCanvas,
+        }),
+        [
+          isOpen,
+          isLoading,
+          content,
+          fileName,
+          openCanvasLoading,
+          openCanvas,
+          closeCanvas,
+        ],
       )}
     >
       {children}

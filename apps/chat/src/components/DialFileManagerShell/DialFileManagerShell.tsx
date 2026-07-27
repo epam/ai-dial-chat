@@ -12,7 +12,6 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
-import ShareFileModal from '../../components/DialFileManagerModal/ShareFileModal';
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
 import type { UseDialFileManagerResult } from '../../hooks/files/useDialFileManager';
@@ -171,11 +170,6 @@ const DialFileManagerShell: FC<Props> = ({
     actionLabels: tabActionLabels,
     sharedWithMeIds,
     sharedByMePaths,
-    shareTarget,
-    onManagePermissions,
-    onCloseShareModal,
-    onCreateShareLink,
-    isSharing,
     onUnshareFiles,
     isUnsharing,
     onRemoveFilesAccess,
@@ -217,9 +211,6 @@ const DialFileManagerShell: FC<Props> = ({
     if (DialFileManagerActions.Duplicate in tabActionLabels) {
       result[DialFileManagerActions.Duplicate] = labels.duplicateLabel;
     }
-    if (DialFileManagerActions.ManagePermissions in tabActionLabels) {
-      result[DialFileManagerActions.ManagePermissions] = labels.shareLabel;
-    }
     if (DialFileManagerActions.Unshare in tabActionLabels) {
       result[DialFileManagerActions.Unshare] = labels.unshareLabel;
     }
@@ -235,7 +226,6 @@ const DialFileManagerShell: FC<Props> = ({
     labels.copyLabel,
     labels.moveLabel,
     labels.duplicateLabel,
-    labels.shareLabel,
     labels.unshareLabel,
     labels.removeAccessLabel,
   ]);
@@ -265,17 +255,13 @@ const DialFileManagerShell: FC<Props> = ({
   }, [selectedPaths, sharedByMePaths]);
 
   const bulkActionLabels = useMemo(() => {
-    const {
-      [DialFileManagerActions.ManagePermissions]: _managePermissions,
-      ...rest
-    } = actionLabels;
     if (allSelectedItemsSharedByMe) {
-      return rest;
+      return actionLabels;
     }
     const {
       [DialFileManagerActions.RemoveAccess]: _removeAccess,
       ...withoutRemoveAccess
-    } = rest;
+    } = actionLabels;
     return withoutRemoveAccess;
   }, [actionLabels, allSelectedItemsSharedByMe]);
 
@@ -559,7 +545,6 @@ const DialFileManagerShell: FC<Props> = ({
             uploadEnabled={uploadEnabled}
             sharedWithMeIds={sharedWithMeIds}
             sharedByMePaths={sharedByMePaths}
-            onManagePermissions={onManagePermissions}
             onUnshareFiles={onUnshareFiles}
             onRemoveFilesAccess={onRemoveFilesAccess}
             fileMetadataPopupOptions={fileMetadataPopupOptions}
@@ -621,23 +606,6 @@ const DialFileManagerShell: FC<Props> = ({
           text={isMoving ? labels.movingLabel : labels.copyingLabel}
           cancelLabel={labels.operationLoaderCancelLabel}
           onCancel={cancelCopyMove}
-        />
-      )}
-
-      {shareTarget != null && (
-        <ShareFileModal
-          targetName={shareTarget.name}
-          isSubmitting={isSharing}
-          getTitle={labels.getShareModalTitle}
-          readPermissionLabel={labels.shareModalReadPermissionLabel}
-          readWritePermissionLabel={labels.shareModalReadWritePermissionLabel}
-          createLinkButtonLabel={labels.shareModalCreateLinkButtonLabel}
-          copyLinkButtonLabel={labels.shareModalCopyLinkButtonLabel}
-          linkCopiedConfirmation={labels.shareModalLinkCopiedConfirmation}
-          cancelLabel={labels.shareModalCancelLabel}
-          errorMessage={labels.shareErrorMessage}
-          onCreateLink={onCreateShareLink}
-          onClose={onCloseShareModal}
         />
       )}
     </>
