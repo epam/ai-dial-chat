@@ -2987,57 +2987,6 @@
         "tags": ["files"]
       }
     },
-    "/api/v1/files/share": {
-      "post": {
-        "operationId": "shareFiles",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShareFilesDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ShareFilesResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "403": {
-            "description": "Caller lacks SHARE permission on one or more resources"
-          },
-          "404": {
-            "description": "A resource does not exist"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
-          },
-          "502": {
-            "description": "DIAL Core returned an error"
-          },
-          "503": {
-            "description": "DIAL Core unreachable or timed out"
-          }
-        },
-        "summary": "Create a share invitation link for files and folders",
-        "tags": ["files"]
-      }
-    },
     "/api/v1/files/revoke-access": {
       "post": {
         "operationId": "revokeAccess",
@@ -7112,48 +7061,6 @@
           }
         },
         "required": ["results"]
-      },
-      "ShareItemDto": {
-        "type": "object",
-        "properties": {
-          "bucket": {
-            "type": "string",
-            "description": "DIAL Core bucket name",
-            "example": "my-bucket"
-          },
-          "path": {
-            "type": "string",
-            "description": "Relative path within bucket",
-            "example": "reports/q1.pdf"
-          }
-        },
-        "required": ["bucket", "path"]
-      },
-      "ShareFilesDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ShareItemDto"
-            }
-          },
-          "permission": {
-            "type": "string",
-            "enum": ["read", "readWrite"]
-          }
-        },
-        "required": ["items", "permission"]
-      },
-      "ShareFilesResponseDto": {
-        "type": "object",
-        "properties": {
-          "invitationLink": {
-            "type": "string",
-            "description": "Invitation link covering all shared resources"
-          }
-        },
-        "required": ["invitationLink"]
       },
       "RevokeAccessItemDto": {
         "type": "object",

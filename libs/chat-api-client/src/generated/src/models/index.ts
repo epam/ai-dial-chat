@@ -4322,68 +4322,6 @@ export type SendCompletionDtoModeEnum =
 /**
  *
  * @export
- * @interface ShareFilesDto
- */
-export interface ShareFilesDto {
-  /**
-   *
-   * @type {Array<ShareItemDto>}
-   * @memberof ShareFilesDto
-   */
-  items: Array<ShareItemDto>;
-  /**
-   *
-   * @type {string}
-   * @memberof ShareFilesDto
-   */
-  permission: ShareFilesDtoPermissionEnum;
-}
-
-/**
- * @export
- */
-export const ShareFilesDtoPermissionEnum = {
-  Read: 'read',
-  ReadWrite: 'readWrite',
-} as const;
-export type ShareFilesDtoPermissionEnum =
-  (typeof ShareFilesDtoPermissionEnum)[keyof typeof ShareFilesDtoPermissionEnum];
-
-/**
- *
- * @export
- * @interface ShareFilesResponseDto
- */
-export interface ShareFilesResponseDto {
-  /**
-   * Invitation link covering all shared resources
-   * @type {string}
-   * @memberof ShareFilesResponseDto
-   */
-  invitationLink: string;
-}
-/**
- *
- * @export
- * @interface ShareItemDto
- */
-export interface ShareItemDto {
-  /**
-   * DIAL Core bucket name
-   * @type {string}
-   * @memberof ShareItemDto
-   */
-  bucket: string;
-  /**
-   * Relative path within bucket
-   * @type {string}
-   * @memberof ShareItemDto
-   */
-  path: string;
-}
-/**
- *
- * @export
  * @interface ShareLinkResponseDto
  */
 export interface ShareLinkResponseDto {

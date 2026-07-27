@@ -5,7 +5,11 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialGhostIconButton,
+  DialSpinner,
+} from '@epam/ai-dial-ui-kit';
 import {
   IconAlertTriangle,
   IconCheck,
@@ -14,7 +18,15 @@ import {
   IconLock,
   IconMarkdown,
 } from '@tabler/icons-react';
-import { type FC, memo, useCallback, useMemo, useRef, useState } from 'react';
+import {
+  type FC,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { defaultStyles, JsonView } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
@@ -28,8 +40,53 @@ import styles from './AttachmentCanvas.module.scss';
 
 const COPY_RESET_MS = 2000;
 
+interface ImageContentProps {
+  url: string;
+  fileName?: string;
+  loadErrorLabel: string;
+}
+
+/* Renders an image with inline error handling so the canvas avoids a fetch. */
+const ImageContent: FC<ImageContentProps> = ({
+  url,
+  fileName,
+  loadErrorLabel,
+}) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [url]);
+
+  if (hasError) {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <IconAlertTriangle
+          size={60}
+          stroke={1.5}
+          className={styles.errorIcon}
+        />
+        <p className={mergeClasses('text-center', styles.statusLabel)}>
+          {loadErrorLabel}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    <img
+      src={url}
+      alt={fileName ?? ''}
+      className="max-h-full max-w-full object-contain"
+      onError={() => setHasError(true)}
+    />
+  );
+};
+
 const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   isOpen,
+  isLoading = false,
   onClose,
   content,
   fileName,
@@ -53,7 +110,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   onCopyJson,
   isMobile = false,
   defaultWidth,
-  minWidth = 320,
+  minWidth = 600,
   maxWidth = 1500,
   onResizeStop,
   styles: stylesProp,
@@ -123,12 +180,19 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   );
 
   const showCopyText =
-    onCopyText != null && content.type === AttachmentContentType.PlainText;
+    !isLoading &&
+    onCopyText != null &&
+    content.type === AttachmentContentType.PlainText;
   const showCopyMarkdown =
-    onCopyMarkdown != null && content.type === AttachmentContentType.Markdown;
+    !isLoading &&
+    onCopyMarkdown != null &&
+    content.type === AttachmentContentType.Markdown;
   const showCopyJson =
-    onCopyJson != null && content.type === AttachmentContentType.Json;
-  const showDownload = onDownload != null && isDownloadable(content);
+    !isLoading &&
+    onCopyJson != null &&
+    content.type === AttachmentContentType.Json;
+  const showDownload =
+    !isLoading && onDownload != null && isDownloadable(content);
 
   const bodyContainerClassName = useMemo(() => {
     switch (content.type) {
@@ -162,10 +226,10 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         );
       case AttachmentContentType.Image:
         return (
-          <img
-            src={content.url}
-            alt={fileName ?? ''}
-            className="max-h-full max-w-full object-contain"
+          <ImageContent
+            url={content.url}
+            fileName={fileName}
+            loadErrorLabel={loadErrorLabel}
           />
         );
       case AttachmentContentType.Audio:
@@ -375,11 +439,18 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     >
       <div
         style={
-          content.type === AttachmentContentType.PlainText ? cssVars : undefined
+          !isLoading && content.type === AttachmentContentType.PlainText
+            ? cssVars
+            : undefined
         }
-        className={mergeClasses(bodyContainerClassName, bodyClassName)}
+        className={mergeClasses(
+          isLoading
+            ? 'flex h-full items-center justify-center'
+            : bodyContainerClassName,
+          bodyClassName,
+        )}
       >
-        {renderedContent}
+        {isLoading ? <DialSpinner /> : renderedContent}
       </div>
     </SidebarPanel>
   );

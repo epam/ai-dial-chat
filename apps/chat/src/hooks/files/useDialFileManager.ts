@@ -38,7 +38,6 @@ export type {
   UseDialFileManagerOptions,
   UseDialFileManagerResult,
 } from './dial-file-manager.types';
-export type { ShareTarget } from './useDialFileSharing';
 
 /**
  * Composes the five file-manager sub-hooks — listing/navigation, upload
@@ -98,7 +97,6 @@ export const useDialFileManager = ({
   const sharing = useDialFileSharing({
     bucket,
     rootLabel,
-    items: listing.items,
     bumpRetry: listing.bumpRetry,
     onNotification,
   });
@@ -148,9 +146,6 @@ export const useDialFileManager = ({
         }
       }
       if (isShareActionsAllowed(actionProfile)) {
-        labels[DialFileManagerActions.ManagePermissions] = t(
-          DialFileManagerI18nKeys.ShareAction,
-        );
         labels[DialFileManagerActions.RemoveAccess] = t(
           DialFileManagerI18nKeys.RemoveAccessAction,
         );
@@ -243,11 +238,6 @@ export const useDialFileManager = ({
     actionLabels,
     sharedWithMeIds: listing.sharedWithMeIds,
     sharedByMePaths: listing.sharedByMePaths,
-    shareTarget: sharing.shareTarget,
-    onManagePermissions: sharing.onManagePermissions,
-    onCloseShareModal: sharing.onCloseShareModal,
-    onCreateShareLink: sharing.onCreateShareLink,
-    isSharing: sharing.isSharing,
     onUnshareFiles: sharing.onUnshareFiles,
     isUnsharing: sharing.isUnsharing,
     onRemoveFilesAccess: sharing.onRemoveFilesAccess,

@@ -151,11 +151,6 @@ const baseHookResult: UseDialFileManagerResult = {
   actionLabels: { [DialFileManagerActions.Download]: 'Download' },
   sharedWithMeIds: undefined,
   sharedByMePaths: new Set(),
-  shareTarget: null,
-  onManagePermissions: vi.fn(),
-  onCloseShareModal: vi.fn(),
-  onCreateShareLink: vi.fn(),
-  isSharing: false,
   onUnshareFiles: vi.fn(),
   isUnsharing: false,
   onRemoveFilesAccess: vi.fn(),
@@ -211,6 +206,7 @@ const baseLabels: DialFileManagerShellLabels = {
   cancelLabel: 'Cancel',
   getUploadProgressText: (done, total) => `${done} of ${total}`,
   searchEmptyStateTitle: 'No results',
+  folderEmptyStateTitle: 'This folder is empty',
   forbiddenSymbolsTooltip: 'Forbidden symbols',
   emptyStateByTab: {
     [DialFileManagerTabs.MyFiles]: emptyStateCopy,
@@ -241,19 +237,10 @@ const baseLabels: DialFileManagerShellLabels = {
     confirmLabel: 'Confirm',
     cancelLabel: 'Cancel',
   },
-  shareLabel: 'Share',
   unshareLabel: 'Unshare',
   unsharingLabel: 'Unsharing…',
   removeAccessLabel: 'Remove access',
   removingAccessLabel: 'Removing access…',
-  getShareModalTitle: (name) => `Share "${name}"`,
-  shareModalReadPermissionLabel: 'Can view',
-  shareModalReadWritePermissionLabel: 'Can edit',
-  shareModalCreateLinkButtonLabel: 'Create link',
-  shareModalCopyLinkButtonLabel: 'Copy link',
-  shareModalLinkCopiedConfirmation: 'Link copied',
-  shareModalCancelLabel: 'Cancel',
-  shareErrorMessage: 'Failed to create the share link',
   infoLabel: 'Info',
   metadataHeader: 'Information',
   metadataNameLabel: 'Name:',
@@ -302,6 +289,13 @@ describe('DialFileManagerShell', () => {
   it('shows the empty-state title from the current tab when items are empty', () => {
     renderShell();
     expect(screen.getByText(emptyStateCopy.title)).toBeTruthy();
+  });
+
+  it('shows folderEmptyStateTitle when navigated into a subfolder', () => {
+    renderShell({ path: '/My files/reports/' });
+    expect(
+      screen.getByText(baseLabels.folderEmptyStateTitle),
+    ).toBeTruthy();
   });
 
   it('shows the error/retry panel and calls retry on click', async () => {
@@ -606,18 +600,6 @@ describe('DialFileManagerShell', () => {
         },
       });
       expect(screen.getByText(baseLabels.uploadProgressTitle)).toBeTruthy();
-      expectNoConsolidatedOverlay();
-    });
-
-    it('does not render the overlay while isSharing is true, showing ShareFileModal instead', () => {
-      renderShell({
-        isSharing: true,
-        shareTarget: {
-          bucket: 'test-bucket',
-          path: 'report.pdf',
-          name: 'report.pdf',
-        },
-      });
       expectNoConsolidatedOverlay();
     });
 

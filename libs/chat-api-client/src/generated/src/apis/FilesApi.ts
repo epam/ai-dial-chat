@@ -32,8 +32,6 @@ import type {
   RenameFilesResponseDto,
   RevokeAccessDto,
   RevokeAccessResponseDto,
-  ShareFilesDto,
-  ShareFilesResponseDto,
   UploadArchiveResponseDto,
 } from '../models/index';
 
@@ -103,10 +101,6 @@ export interface RenameFilesRequest {
 
 export interface RevokeAccessRequest {
   revokeAccessDto: RevokeAccessDto;
-}
-
-export interface ShareFilesRequest {
-  shareFilesDto: ShareFilesDto;
 }
 
 export interface UploadArchiveRequest {
@@ -874,53 +868,6 @@ export class FilesApi extends runtime.BaseAPI {
       requestParameters,
       initOverrides,
     );
-    return await response.value();
-  }
-
-  /**
-   * Create a share invitation link for files and folders
-   */
-  async shareFilesRaw(
-    requestParameters: ShareFilesRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<ShareFilesResponseDto>> {
-    if (requestParameters['shareFilesDto'] == null) {
-      throw new runtime.RequiredError(
-        'shareFilesDto',
-        'Required parameter "shareFilesDto" was null or undefined when calling shareFiles().',
-      );
-    }
-
-    const queryParameters: runtime.HTTPQuery = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    let urlPath = `/api/v1/files/share`;
-
-    const response = await this.request(
-      {
-        path: urlPath,
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: requestParameters['shareFilesDto'],
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse<ShareFilesResponseDto>(response);
-  }
-
-  /**
-   * Create a share invitation link for files and folders
-   */
-  async shareFiles(
-    requestParameters: ShareFilesRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<ShareFilesResponseDto> {
-    const response = await this.shareFilesRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
