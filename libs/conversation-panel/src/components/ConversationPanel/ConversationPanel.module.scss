@@ -6,11 +6,11 @@
   color: var(--cp-text, var(--text-primary, #161b2d));
 
   &:hover {
-    background: var(--cp-item-hover, var(--bg-layer-2, #eef1f7));
+    background: var(--cp-item-hover, var(--bg-layer-sunken, #eef1f7));
   }
 
   &.itemActive {
-    background: var(--cp-item-active, var(--bg-layer-2, #eef1f7));
+    background: var(--cp-item-active, var(--bg-layer-sunken, #eef1f7));
     color: var(--cp-text, var(--text-primary, #161b2d));
   }
 }

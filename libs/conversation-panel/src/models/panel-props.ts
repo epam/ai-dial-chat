@@ -48,6 +48,30 @@ export interface ConversationPanelTypography {
   tabClassName?: string;
 }
 
+/** CSS custom-property overrides for the New chat button. */
+export interface NewChatButtonColors {
+  /** Default background. */
+  background?: string;
+  /** Hover background. */
+  hoverBackground?: string;
+  /** Active/pressed background. */
+  activeBackground?: string;
+  /** Label and icon color. */
+  text?: string;
+  /** Blue shadow in the default state. */
+  shadowBlue?: string;
+  /** Blue shadow on hover. */
+  shadowBlueHover?: string;
+  /** Blue shadow while active/pressed. */
+  shadowBlueActive?: string;
+  /** Purple shadow in the default state. */
+  shadowPurple?: string;
+  /** Purple shadow on hover. */
+  shadowPurpleHover?: string;
+  /** Purple shadow while active/pressed. */
+  shadowPurpleActive?: string;
+}
+
 /** CSS custom-property overrides for `ConversationPanel`. */
 export interface ConversationColors {
   /** Panel background color. */
@@ -62,26 +86,6 @@ export interface ConversationColors {
   text?: string;
   /** Secondary text color (dates, metadata). */
   textSecondary?: string;
-  /** Hover background of the New chat button. */
-  newChatHoverBackground?: string;
-  /** Active/pressed background of the New chat button. */
-  newChatActiveBackground?: string;
-  /** Background of the New chat button. */
-  newChatBackground?: string;
-  /** Label/icon text color of the New chat button. */
-  newChatText?: string;
-  /** Blue shadow color of the New chat button in the default state. */
-  newChatShadowBlue?: string;
-  /** Blue shadow color of the New chat button on hover. */
-  newChatShadowBlueHover?: string;
-  /** Blue shadow color of the New chat button while active/pressed. */
-  newChatShadowBlueActive?: string;
-  /** Purple shadow color of the New chat button in the default state. */
-  newChatShadowPurple?: string;
-  /** Purple shadow color of the New chat button on hover. */
-  newChatShadowPurpleHover?: string;
-  /** Purple shadow color of the New chat button while active/pressed. */
-  newChatShadowPurpleActive?: string;
   /** Ring color shown around a group header acting as a drag-and-drop target. */
   dropZoneRing?: string;
   /** Background color of the active row actions trigger button. */
@@ -98,6 +102,8 @@ export interface ConversationColors {
 export interface ConversationPanelStyles {
   /** Color overrides applied as CSS custom properties. */
   colors?: ConversationColors;
+  /** Color overrides forwarded to the New chat button. */
+  newChatButton?: NewChatButtonColors;
   /** Typography overrides for the panel and its children. */
   typography?: ConversationPanelTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */

@@ -1,4 +1,4 @@
-/** CSS custom-property overrides for the `MessageSource` component. */
+/** CSS custom-property overrides for `MessageSource`. */
 export interface MessageSourceColors {
   /** Button background color in the default state. */
   background?: string;
@@ -12,33 +12,32 @@ export interface MessageSourceColors {
   borderHover?: string;
 }
 
-/** Typography overrides for the `MessageSource` component. */
+/** Typography overrides for `MessageSource`. */
 export interface MessageSourceTypography {
   /** Tailwind (or custom) class applied to the button. */
   fontClassName?: string;
 }
 
-/** Combined style overrides (colors and typography) for the `MessageSource` component. */
+/** Color and typography overrides for `MessageSource`. */
 export interface MessageSourceStyles {
   /** Color overrides applied as CSS custom properties. */
   colors?: MessageSourceColors;
   /** Typography overrides applied via CSS custom properties. */
   typography?: MessageSourceTypography;
-  /** Extra class name(s) merged onto the button element. */
+  /** Extra class(es) on the button. */
   className?: string;
 }
 
-/** User-visible strings for the `MessageSource` component. */
+/** Localised strings for `MessageSource`. */
 export interface MessageSourceLabels {
-  /** Text label displayed inside the button. */
+  /** Button label text. */
   label: string;
 }
 
-/** Props accepted by the `MessageSource` component. */
 export interface MessageSourceProps {
   /** User-visible strings. */
   labels: MessageSourceLabels;
-  /** Called when the user clicks the source button. */
+  /** Fires on click. */
   onClick?: () => void;
   /** Color and typography overrides applied as CSS custom properties. */
   styles?: MessageSourceStyles;
