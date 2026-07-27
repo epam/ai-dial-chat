@@ -24,7 +24,8 @@
     "@epam/ai-dial-kit": "*",
     "@epam/ai-dial-sidebar": "*",
     "@epam/ai-dial-chat-shared": "*",
-    "ag-grid-community": "35.3.0"
+    "ag-grid-community": "35.3.0",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.12"
   },
   "nx": {
     "tags": [

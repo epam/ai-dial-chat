@@ -23,7 +23,8 @@
     "@tabler/icons-react": "^3.0.0",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-conversation-input": "*",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.12"
   },
   "nx": {
     "tags": [
