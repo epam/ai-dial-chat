@@ -90,6 +90,14 @@ describe('ChatOverlay', () => {
     expect(iframe.getAttribute('aria-label')).toBeTruthy();
   });
 
+  it('allows auth popups to open outside the iframe sandbox', () => {
+    const { iframe } = setup();
+    const sandbox = iframe.getAttribute('sandbox') ?? '';
+
+    expect(sandbox).toContain('allow-popups');
+    expect(sandbox).toContain('allow-popups-to-escape-sandbox');
+  });
+
   it('keeps the loader positioned over the iframe without contributing layout height', () => {
     const { root, iframe } = setup();
     const loader = root.querySelector(

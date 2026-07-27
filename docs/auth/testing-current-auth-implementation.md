@@ -93,7 +93,7 @@ Use a normal browser session and DevTools. All steps go through the **SPA origin
 5. Complete login at the IdP.
 6. Confirm the callback redirects back to `http://localhost:4207/` (the SPA).
 7. In DevTools → Application → Cookies, inspect cookies for `localhost`.
-8. Confirm the session cookie exists. With secure defaults it is either `__Host-chat.sess` or chunked cookies like `__Host-chat.sess.0`, `__Host-chat.sess.1`; all have `HttpOnly`, `Secure`, `SameSite=Lax`, and `Path=/`. With local `AUTH_COOKIE_SECURE=false`, names become `chat.sess` / `chat.sess.0` and do not have `Secure`.
+8. Confirm the session cookie exists. With secure defaults it is either `__Host-chat.sess` or chunked cookies like `__Host-chat.sess.0`, `__Host-chat.sess.1`; all have `HttpOnly`, `Secure`, resolved `SameSite`, and `Path=/`. Normal app auth uses `SameSite=Lax`; secure overlay embedding uses `SameSite=None; Secure`. With local `AUTH_COOKIE_SECURE=false`, names become `chat.sess` / `chat.sess.0` and do not have `Secure`.
 9. Confirm the tx cookie (`__Host-chat.tx`, or `chat.tx` when `AUTH_COOKIE_SECURE=false`) is cleared after callback.
 10. In the browser console, run `document.cookie` and confirm it does not expose tokens.
 11. Open `http://localhost:4207/api/v1/auth/me`.

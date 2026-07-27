@@ -19,8 +19,12 @@ import { AuthStatus } from '../../types/auth-status';
 interface UserContextType {
   status: AuthStatus;
   user: UserProfile | null;
-  refresh: () => Promise<void>;
+  refresh: (options?: UserRefreshOptions) => Promise<AuthStatus>;
   reset: () => void;
+}
+
+interface UserRefreshOptions {
+  setLoading?: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -29,16 +33,23 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [status, setStatus] = useState<AuthStatus>(AuthStatus.Loading);
   const [user, setUser] = useState<UserProfile | null>(null);
 
-  const bootstrap = useCallback(async (signal: { isCancelled: boolean }) => {
-    setStatus(AuthStatus.Loading);
-    try {
-      const profile = await getMe();
-      if (!signal.isCancelled) {
+  const bootstrap = useCallback(
+    async (signal: { isCancelled: boolean }, options?: UserRefreshOptions) => {
+      if (options?.setLoading !== false) {
+        setStatus(AuthStatus.Loading);
+      }
+      try {
+        const profile = await getMe();
+        if (signal.isCancelled) {
+          return AuthStatus.Loading;
+        }
         setUser(profile);
         setStatus(AuthStatus.Authenticated);
-      }
-    } catch (err) {
-      if (!signal.isCancelled) {
+        return AuthStatus.Authenticated;
+      } catch (err) {
+        if (signal.isCancelled) {
+          return AuthStatus.Loading;
+        }
         if (!(err instanceof UnauthorizedError)) {
           /*
            * Keep CSRF across transient bootstrap failures; mutating requests
@@ -50,9 +61,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
         setUser(null);
         setStatus(AuthStatus.Unauthenticated);
+        return AuthStatus.Unauthenticated;
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     const signal = { isCancelled: false };
@@ -76,9 +89,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setStatus(AuthStatus.Unauthenticated);
   }, []);
 
-  const refresh = useCallback(async () => {
-    await bootstrap({ isCancelled: false });
-  }, [bootstrap]);
+  const refresh = useCallback(
+    (options?: UserRefreshOptions): Promise<AuthStatus> =>
+      bootstrap({ isCancelled: false }, options),
+    [bootstrap],
+  );
 
   return (
     <UserContext.Provider

@@ -70,6 +70,15 @@ describe('validate', () => {
     ).not.toThrow();
   });
 
+  it('parses AUTH_COOKIE_SECURE=false as false', () => {
+    const config = validate({
+      ...baseConfig,
+      AUTH_COOKIE_SECURE: 'false',
+    });
+
+    expect(config.AUTH_COOKIE_SECURE).toBe(false);
+  });
+
   it('defaults OVERLAY_ENABLED to false when unset', () => {
     const config = validate({ ...baseConfig });
     expect(config.OVERLAY_ENABLED).toBe(false);

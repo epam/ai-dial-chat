@@ -117,13 +117,13 @@ This document defines functional and non-functional requirements for the initial
 
 ### NFR-2 — Security
 
-| ID      | Requirement                                                                                |
-| ------- | ------------------------------------------------------------------------------------------ |
-| NFR-2.1 | All state-changing API calls include a `X-CSRF-Token` header validated against the session |
-| NFR-2.2 | Session cookies are `HttpOnly`, `Secure`, `SameSite=Strict`                                |
-| NFR-2.3 | `helmet` enforces CSP, HSTS, and standard security headers on all responses                |
-| NFR-2.4 | No auth tokens or user credentials are ever passed to or stored by UI libraries            |
-| NFR-2.5 | Conversation completions endpoint is rate-limited to 10 req/min per session                |
+| ID      | Requirement                                                                                                                                                    |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NFR-2.1 | All state-changing API calls include a `X-CSRF-Token` header validated against the session                                                                     |
+| NFR-2.2 | Session cookies are `HttpOnly`, `Secure` by default, `SameSite=Lax` normally, and `SameSite=None; Secure` only for overlay embedding that must work cross-site |
+| NFR-2.3 | `helmet` enforces CSP, HSTS, and standard security headers on all responses                                                                                    |
+| NFR-2.4 | No auth tokens or user credentials are ever passed to or stored by UI libraries                                                                                |
+| NFR-2.5 | Conversation completions endpoint is rate-limited to 10 req/min per session                                                                                    |
 
 ### NFR-3 — Accessibility
 

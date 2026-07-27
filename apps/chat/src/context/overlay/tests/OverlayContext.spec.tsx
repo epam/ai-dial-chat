@@ -6,9 +6,11 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthStatus } from '../../../types/auth-status';
+import { UserConfigStatus } from '../../../types/user-config-status';
 import {
   type ConversationListBridge,
   OverlayProvider,
+  shouldDeferOverlayModeUntilConfigReady,
   useOptionalOverlay,
   useOverlay,
 } from '../OverlayContext';
@@ -66,6 +68,29 @@ describe('OverlayContext', () => {
       expect(() => renderHook(() => useOverlay())).toThrow(
         'useOverlay must be used within an OverlayProvider',
       );
+    });
+  });
+
+  describe('OverlayModeGate config loading', () => {
+    it('defers framed rendering until config can decide overlay eligibility', () => {
+      expect(
+        shouldDeferOverlayModeUntilConfigReady(UserConfigStatus.Loading, true),
+      ).toBe(true);
+    });
+
+    it('does not defer top-level rendering while config is loading', () => {
+      expect(
+        shouldDeferOverlayModeUntilConfigReady(UserConfigStatus.Loading, false),
+      ).toBe(false);
+    });
+
+    it('does not defer framed rendering after config leaves loading', () => {
+      expect(
+        shouldDeferOverlayModeUntilConfigReady(UserConfigStatus.Ready, true),
+      ).toBe(false);
+      expect(
+        shouldDeferOverlayModeUntilConfigReady(UserConfigStatus.Error, true),
+      ).toBe(false);
     });
   });
 

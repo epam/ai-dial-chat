@@ -103,13 +103,47 @@ describe('UserContext', () => {
       expect(result.current.status).toBe(AuthStatus.Unauthenticated),
     );
 
+    let refreshedStatus: AuthStatus | undefined;
     await act(async () => {
-      await result.current.refresh();
+      refreshedStatus = await result.current.refresh();
+    });
+
+    expect(result.current.status).toBe(AuthStatus.Authenticated);
+    expect(refreshedStatus).toBe(AuthStatus.Authenticated);
+    expect(result.current.user).toEqual(mockProfile);
+    expect(getMeSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('refresh({ setLoading: false }) keeps the previous status while the fetch is pending', async () => {
+    let resolveRefresh: (profile: UserProfileDto) => void = () => undefined;
+    vi.spyOn(authApi, 'getMe')
+      .mockRejectedValueOnce(new UnauthorizedError('/api/v1/auth/me'))
+      .mockImplementationOnce(
+        () =>
+          new Promise<UserProfileDto>((resolve) => {
+            resolveRefresh = resolve;
+          }),
+      );
+
+    const { result } = renderHook(() => useUser(), { wrapper });
+    await waitFor(() =>
+      expect(result.current.status).toBe(AuthStatus.Unauthenticated),
+    );
+
+    let refreshPromise = Promise.resolve(AuthStatus.Loading);
+    act(() => {
+      refreshPromise = result.current.refresh({ setLoading: false });
+    });
+
+    expect(result.current.status).toBe(AuthStatus.Unauthenticated);
+
+    await act(async () => {
+      resolveRefresh(mockProfile);
+      await expect(refreshPromise).resolves.toBe(AuthStatus.Authenticated);
     });
 
     expect(result.current.status).toBe(AuthStatus.Authenticated);
     expect(result.current.user).toEqual(mockProfile);
-    expect(getMeSpy).toHaveBeenCalledTimes(2);
   });
 
   it('useUser() outside UserProvider throws a descriptive Error', () => {

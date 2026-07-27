@@ -4,6 +4,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { AuthStatus } from '../../types/auth-status';
+import OverlayLoginGate from '../OverlayLoginGate/OverlayLoginGate';
 
 interface Props {
   children: ReactNode;
@@ -11,12 +12,12 @@ interface Props {
 
 const RequireAuth: FC<Props> = ({ children }) => {
   const { status } = useUser();
-  useAuthRedirect();
   /*
    * Presence (not a boolean field) is the overlay-mode signal: OverlayProvider
    * only mounts when overlay mode is eligible (see OverlayModeGate).
    */
   const overlay = useOptionalOverlay();
+  useAuthRedirect({ disabled: Boolean(overlay) });
 
   if (status === AuthStatus.Loading) {
     if (overlay) {
@@ -32,6 +33,10 @@ const RequireAuth: FC<Props> = ({ children }) => {
         <DialSpinner />
       </div>
     );
+  }
+
+  if (status === AuthStatus.Unauthenticated && overlay) {
+    return <OverlayLoginGate />;
   }
 
   if (status !== AuthStatus.Authenticated) {
