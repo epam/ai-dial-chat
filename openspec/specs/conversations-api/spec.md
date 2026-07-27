@@ -179,7 +179,6 @@ The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/
 
 - `limit` — integer, default 100, max 1000 (`@IsInt @Min(1) @Max(1000) @IsOptional`)
 - `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(512) @IsOptional`)
-- `path` — string subfolder path to scope the listing, default `''` (bucket root = "My Files"); callers may include or omit the trailing slash (`@IsString @MaxLength(512) @IsOptional`)
 
 On success the endpoint returns HTTP 200 with `ConversationListResponseDto`:
 
@@ -200,9 +199,9 @@ class ConversationListResponseDto {
 }
 ```
 
-**Three-way parallel fetch.** Before issuing metadata requests, the service normalizes `path` to a DIAL Core folder path: `''` for an omitted/empty query and a trailing slash for every non-empty path, without adding a second slash when one is already present. It segment-encodes that normalized value as `folderPath`, then issues all of the following in a single `Promise.all`:
-1. `getConversationMetadata(bucket, folderPath, { recursive: true, limit, token: userCursor })` — user's own conversations
-2. `getConversationMetadata('public', folderPath, { recursive: true, limit, token: publicCursor })` — organisation-published conversations
+**Three-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
+1. `getConversationMetadata(bucket, '', { recursive: true, limit, token: userCursor })` — user's own conversations
+2. `getConversationMetadata('public', '', { recursive: true, limit, token: publicCursor })` — organisation-published conversations
 3. `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })` — conversations shared directly with the user
 4. `UserConfigService.getPinnedIds(token, bucket)` — pinned conversation IDs
 
@@ -214,7 +213,7 @@ Items from all three sources are merged and sorted by `updatedAt` descending. `F
 
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
-**Resilience.** If the public bucket or shared resources call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources. If the user bucket call fails, the endpoint returns the error to the client — **except** when a non-empty `path` was requested and the failure is a `404` from DIAL Core: DIAL Core folders are virtual/prefix-only, so scoping to a subfolder with no blobs under it yet legitimately 404s upstream. That specific case is treated as an empty user-bucket result (logged as a warning, not an error) rather than propagated to the client. A `404` on the bucket root (omitted/empty `path`) is not covered by this exception and still returns an error.
+**Resilience.** If the public bucket or shared resources call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources. If the user bucket call fails, the endpoint returns the error to the client.
 
 `isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). Errors fall back to `[]`.
 
@@ -222,12 +221,12 @@ Rate limiting: global default applies (no handler-level `@Throttle` override).
 
 Generated-client impact:
 - OpenAPI operationId: `listConversations`
-- SDK method: `ConversationsApi.listConversations({ limit?, nextToken?, path? })`
+- SDK method: `ConversationsApi.listConversations({ limit?, nextToken? })`
 - Response type: `ConversationListResponseDto`
 - Frontend callers use the normal (non-Raw) generated method via `apps/chat/src/server-api/conversations.api.ts`
 
 Error codes:
-- `400 Bad Request` — invalid `limit` (out of range [1–1000] or non-integer), `nextToken` or `path` exceeds 512 chars
+- `400 Bad Request` — invalid `limit` (out of range [1–1000] or non-integer) or `nextToken` exceeds 512 chars
 - `401 Unauthorized` — missing or invalid bearer token
 - `502 Bad Gateway` — user bucket DIAL Core returned an error response
 
@@ -281,16 +280,6 @@ Error codes:
 - **WHEN** DIAL Core returns a mix of file items and items with `nodeType === 'FOLDER'` from either bucket
 - **THEN** only file items appear in the response `items` array
 
-#### Scenario: path scopes both metadata queries
-
-- **WHEN** `GET /api/v1/conversations/list?path=work%2Fproject-x` is called
-- **THEN** the service calls `getConversationMetadata(bucket, 'work/project-x/', ...)` AND `getConversationMetadata('public', 'work/project-x/', ...)` and returns only conversations under that path
-
-#### Scenario: Scoped path with no user-bucket blobs yet is non-fatal
-
-- **WHEN** `GET /api/v1/conversations/list?path=work%2Fempty-folder` is called and DIAL Core returns 404 for the user-bucket metadata call
-- **THEN** the response is 200 with an empty result for the user-bucket portion; the 404 is logged as a warning, not propagated as an error
-
 #### Scenario: Invalid limit returns 400
 
 - **WHEN** `GET /api/v1/conversations/list?limit=1001` is called (exceeds max 1000)
@@ -318,11 +307,6 @@ Integration tests SHALL cover key endpoints using supertest in `apps/chat-api/sr
 
 - **WHEN** the integration test suite for `ConversationController` runs
 - **THEN** it covers: 201 with valid body, 400 with empty `firstMessage`, 400 with missing body
-
-#### Scenario: Integration test covers GET /list path parameter
-
-- **WHEN** `GET /api/v1/conversations/list?path=work` is called
-- **THEN** the service is called with `path: 'work'` forwarded as the DIAL Core folder argument
 
 ---
 

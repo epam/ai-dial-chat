@@ -1700,16 +1700,6 @@
               "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
               "type": "string"
             }
-          },
-          {
-            "name": "path",
-            "required": false,
-            "in": "query",
-            "description": "DIAL Core subfolder path to scope the listing. Omit or pass an empty string to list all conversations from the bucket root (\"My Files\").",
-            "schema": {
-              "example": "work/project-x",
-              "type": "string"
-            }
           }
         ],
         "responses": {
