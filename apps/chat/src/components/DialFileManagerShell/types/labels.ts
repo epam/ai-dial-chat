@@ -66,6 +66,7 @@ export interface DialFileManagerShellLabels {
   cancelLabel: string;
   getUploadProgressText: (done: number, total: number) => string;
   searchEmptyStateTitle: string;
+  folderEmptyStateTitle: string;
   forbiddenSymbolsTooltip: string;
   emptyStateByTab: Record<DialFileManagerTabs, EmptyStateCopy>;
   treeHeaderByTab: Record<DialFileManagerTabs, string>;

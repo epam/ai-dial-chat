@@ -575,6 +575,7 @@ const DialFileManagerModal: FC<Props> = ({
       cancelLabel,
       getUploadProgressText,
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
+      folderEmptyStateTitle: t(DialFileManagerI18nKeys.Empty),
       forbiddenSymbolsTooltip: t(
         DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
         { notAllowedSymbols: NOT_ALLOWED_SYMBOLS },

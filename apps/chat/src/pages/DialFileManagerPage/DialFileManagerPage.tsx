@@ -222,6 +222,7 @@ const DialFileManagerPage: FC = () => {
       getUploadProgressText: (done, total) =>
         t(DialFileManagerI18nKeys.UploadProgressSummary, { done, total }),
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
+      folderEmptyStateTitle: t(DialFileManagerI18nKeys.Empty),
       forbiddenSymbolsTooltip: t(
         DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
         { notAllowedSymbols: NOT_ALLOWED_SYMBOLS },

@@ -25,6 +25,7 @@ import { getParentFolderPath } from '../../utils/resolve-dial-file-api-path';
 import type {
   DialFileManagerDestinationFolderPopupOptions,
   DialFileManagerShellLabels,
+  EmptyStateCopy,
 } from './types/labels';
 
 type DestinationFolderPopupOptions =
@@ -499,6 +500,25 @@ const DialFileManagerShell: FC<Props> = ({
     return labels.getUploadProgressText(done, uploadBatchState.files.length);
   }, [uploadBatchState, labels]);
 
+  const emptyStateCopy = useMemo((): EmptyStateCopy => {
+    if (searchResults != null && !isSearching) {
+      return { title: labels.searchEmptyStateTitle, description: '' };
+    }
+    const isInSubfolder = path.split('/').filter(Boolean).length > 1;
+    if (isInSubfolder) {
+      return { title: labels.folderEmptyStateTitle, description: '' };
+    }
+    return labels.emptyStateByTab[activeTab];
+  }, [
+    searchResults,
+    isSearching,
+    path,
+    labels.searchEmptyStateTitle,
+    labels.folderEmptyStateTitle,
+    labels.emptyStateByTab,
+    activeTab,
+  ]);
+
   return (
     <>
       {error != null ? (
@@ -534,16 +554,8 @@ const DialFileManagerShell: FC<Props> = ({
             toolbarOptions={toolbarOptions}
             bulkActionsToolbarOptions={bulkActionsToolbarOptions}
             autoSelectUploadedItems={autoSelectUploadedItems}
-            emptyStateTitle={
-              searchResults != null && !isSearching
-                ? labels.searchEmptyStateTitle
-                : labels.emptyStateByTab[activeTab].title
-            }
-            emptyStateDescription={
-              searchResults != null && !isSearching
-                ? ''
-                : labels.emptyStateByTab[activeTab].description
-            }
+            emptyStateTitle={emptyStateCopy.title}
+            emptyStateDescription={emptyStateCopy.description}
             uploadEnabled={uploadEnabled}
             sharedWithMeIds={sharedWithMeIds}
             sharedByMePaths={sharedByMePaths}
