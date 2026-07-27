@@ -206,6 +206,7 @@ const baseLabels: DialFileManagerShellLabels = {
   cancelLabel: 'Cancel',
   getUploadProgressText: (done, total) => `${done} of ${total}`,
   searchEmptyStateTitle: 'No results',
+  folderEmptyStateTitle: 'This folder is empty',
   forbiddenSymbolsTooltip: 'Forbidden symbols',
   emptyStateByTab: {
     [DialFileManagerTabs.MyFiles]: emptyStateCopy,
@@ -288,6 +289,13 @@ describe('DialFileManagerShell', () => {
   it('shows the empty-state title from the current tab when items are empty', () => {
     renderShell();
     expect(screen.getByText(emptyStateCopy.title)).toBeTruthy();
+  });
+
+  it('shows folderEmptyStateTitle when navigated into a subfolder', () => {
+    renderShell({ path: '/My files/reports/' });
+    expect(
+      screen.getByText(baseLabels.folderEmptyStateTitle),
+    ).toBeTruthy();
   });
 
   it('shows the error/retry panel and calls retry on click', async () => {
