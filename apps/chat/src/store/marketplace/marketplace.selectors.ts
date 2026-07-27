@@ -7,7 +7,10 @@ import {
 } from '@/src/utils/app/application';
 import { pluralizeDisplayName } from '@/src/utils/app/application-type-schema';
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
-import { getToolsetAuthFilterValues, isPersonalSourceType } from '@/src/utils/marketplace';
+import {
+  getToolsetAuthFilterValues,
+  isPersonalSourceType,
+} from '@/src/utils/marketplace';
 
 import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { MarketplaceFilters } from '@/src/types/marketplace';
