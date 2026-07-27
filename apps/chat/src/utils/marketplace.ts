@@ -114,6 +114,16 @@ export const getEntityStatus = (
   };
 };
 
+const PERSONAL_SOURCE_TYPES = new Set<SourceType>([
+  SourceType.SharedWithMe,
+  SourceType.MyCustomApps,
+  SourceType.MyCodeApps,
+  SourceType.MyToolsets,
+]);
+
+export const isPersonalSourceType = (source: string) =>
+  PERSONAL_SOURCE_TYPES.has(source as SourceType) || source.startsWith('My ');
+
 // Filter checkers
 const checkEntityTypeFilter = (
   marketplaceEntity: MarketplaceEntity,

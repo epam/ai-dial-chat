@@ -80,13 +80,34 @@ const PermissionMap: Record<SharePermission, DialFilePermission> = {
   [SharePermission.WRITE]: DialFilePermission.WRITE,
 };
 
+const uiKitFileCache = new Map<
+  string,
+  { source: DialFile; result: UIKitDialFile }
+>();
+
+const isSameForUIKitFile = (a: DialFile, b: DialFile): boolean =>
+  a.id === b.id &&
+  a.name === b.name &&
+  a.folderId === b.folderId &&
+  a.isRootSharedItem === b.isRootSharedItem &&
+  a.contentLength === b.contentLength &&
+  a.contentType === b.contentType &&
+  a.updatedAt === b.updatedAt &&
+  a.author === b.author &&
+  a.permissions === b.permissions;
+
 export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
+  const cached = uiKitFileCache.get(file.id);
+  if (cached && isSameForUIKitFile(cached.source, file)) {
+    return cached.result;
+  }
+
   const fullPath = file.id;
   const folderId = file.isRootSharedItem ? '' : file.folderId;
 
   const parentPath = file.folderId || null;
 
-  return {
+  const result: UIKitDialFile = {
     id: file.id,
     name: file.name,
     path: fullPath,
@@ -101,6 +122,9 @@ export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
     extension: file.name.includes('.') ? file.name.split('.').pop() : undefined,
     permissions: file.permissions?.map((p) => PermissionMap[p]),
   };
+
+  uiKitFileCache.set(file.id, { source: file, result });
+  return result;
 };
 
 export const convertToUIKitFolder = (

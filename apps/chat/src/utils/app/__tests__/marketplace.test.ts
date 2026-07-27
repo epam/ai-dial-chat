@@ -7,6 +7,7 @@ import {
   getLinkErrorMessage,
   getTableSort,
   getTabs,
+  isPersonalSourceType,
 } from '@/src/utils/marketplace';
 
 import { ApplicationType } from '@/src/types/applications';
@@ -313,6 +314,23 @@ describe('doesMarketplaceEntityMatchFilters', () => {
       };
       expect(doesMarketplaceEntityMatchFilters(mockModel, filters)).toBe(false);
     });
+  });
+});
+
+describe('isPersonalSourceType', () => {
+  it('returns true for known personal source types', () => {
+    expect(isPersonalSourceType(SourceType.SharedWithMe)).toBe(true);
+    expect(isPersonalSourceType(SourceType.MyCustomApps)).toBe(true);
+    expect(isPersonalSourceType(SourceType.MyCodeApps)).toBe(true);
+    expect(isPersonalSourceType(SourceType.MyToolsets)).toBe(true);
+  });
+
+  it('returns true for dynamic custom application-type source names starting with "My "', () => {
+    expect(isPersonalSourceType('My Custom Schema apps')).toBe(true);
+  });
+
+  it('returns false for the public source type', () => {
+    expect(isPersonalSourceType(SourceType.Public)).toBe(false);
   });
 });
 
