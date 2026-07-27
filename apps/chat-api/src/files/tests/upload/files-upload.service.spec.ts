@@ -453,7 +453,7 @@ describe('FilesUploadService', () => {
       });
     });
 
-    it('aborts once the entry-count limit is exceeded, with zero uploads attempted after the limit', async () => {
+    it('rejects with 422 and zero uploads when the archive exceeds the file-count limit', async () => {
       const { service } = makeService({
         ARCHIVE_UPLOAD_MAX_FILES: 1,
       });
@@ -470,7 +470,7 @@ describe('FilesUploadService', () => {
           service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
         ).rejects.toThrow(UnprocessableEntityException);
       });
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchSpy).toHaveBeenCalledTimes(0);
     });
 
     it('aborts mid-extraction once cumulative uncompressed bytes exceed the limit, retaining prior successful uploads', async () => {

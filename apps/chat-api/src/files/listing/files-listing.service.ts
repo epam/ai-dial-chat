@@ -305,7 +305,7 @@ export class FilesListingService {
           },
         );
 
-      if (error != null) {
+      if (error != null || data == null) {
         this.logger.warn(
           `DIAL Core getFileMetadata returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
         );
