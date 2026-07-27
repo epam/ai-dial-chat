@@ -43,6 +43,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   dialFileSystemLabel,
   pendingAttachments,
   onPendingAttachmentsConsumed,
+  onAttachmentClick,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDropFiles, setPendingDropFiles] = useState<File[]>([]);
@@ -139,6 +140,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
         pendingAttachments={pendingAttachments}
         onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
+        onAttachmentClick={onAttachmentClick}
       />
 
       {/* Action row — outside the bordered box */}

@@ -36,7 +36,7 @@ The canvas closes when the URL `pathname` changes (conversation switch, catalog 
 
 - **Position**: right edge of the conversation layout (`apps/chat/src/app/app.tsx`). Always on the physical right regardless of text direction — a viewer panel is not a directional element.
 - **Header**: file name (truncated) on the start side; action buttons + close icon button on the end side.
-- **Download button**: shown only when `onDownload` is provided **and** `isDownloadable(content)` is `true`. `isDownloadable` returns `false` for `content.type === Unsupported` (no `url`) and for `content.type === Error` with `errorType === Forbidden` (see "Error rendering" below) — the download button is disabled/hidden in both cases.
+- **Download button**: shown only when `onDownload` is provided **and** `isDownloadable(content)` is `true`. `isDownloadable` returns `false` for `content.type === Unsupported` when `url` is `null`, `true` when `url` is present; and always `false` for `content.type === Error` with `errorType === Forbidden` (see "Error rendering" below).
 - **Close button**: calls `onClose` (`closeCanvas`).
 - **Resizability**: enabled on desktop, disabled on mobile (`isMobile` prop from `useIsMobile()`).
 - **Width defaults**: 560 px default, 320 px min, 960 px max. Width is not persisted between sessions.
@@ -55,7 +55,7 @@ All app-level strings are in `AttachmentCanvasI18nKeys` (`apps/chat/src/constant
 | `UnsupportedLabel` | `"Preview is not supported for this file"` |
 | `LoadErrorLabel` | `"Failed to load file"` |
 | `ForbiddenErrorLabel` | `"You don't have permission to access this file"` |
-| `CopyAsMarkdown` | `"Copy as Markdown"` |
+| `CopyAsMarkdown` | `"Copy markdown"` |
 | `Copied` | `"Copied!"` |
 
 Lib-level string props use English defaults and are overridden by the app via `AttachmentCanvasContainer`.
@@ -109,14 +109,16 @@ The canvas distinguishes two failure states, both represented by `ErrorCanvasCon
 | `LoadFailed` | Fetch threw (network error) or returned a non-`403` non-OK status | `loadErrorLabel`, default `"Failed to load file"` | Shown when `url` is present (retry via re-download is still possible) |
 | `Forbidden` | Fetch returned HTTP `403` | `forbiddenErrorLabel`, default `"You don't have permission to access this file"` | **Always hidden** — `isDownloadable` returns `false` for `Forbidden` regardless of `url` |
 
-Both messages render centered in the body, the same layout slot as the `Unsupported` message. `isDownloadable(content)` (`libs/attachment-canvas/src/utils/download.ts`) drives the download button's visibility for all content types, including `Error`:
+Both messages render centered in the body, the same layout slot as the `Unsupported` message. `isDownloadable(content)` (`libs/attachment-canvas/src/utils/download.ts`) drives the download button's visibility for all content types, including `Error` and `Unsupported`:
 
 ```ts
+case AttachmentContentType.Unsupported:
+  return content.url != null;
 case AttachmentContentType.Error:
   return content.errorType !== AttachmentErrorType.Forbidden && content.url != null;
 ```
 
-This is distinct from `Unsupported`: an unsupported file format is a client-side routing decision (the file loaded fine, previewing it just isn't implemented), while `Error` means the fetch itself failed — the panel never received usable bytes.
+`Unsupported` (file loaded fine but previewing is not implemented) shows the download button when a `url` is available so the user can still retrieve the file. `Error` (the fetch itself failed) shows the download button only when `url` is present and the failure was not `Forbidden` — a `403` means the user cannot access the file at all, so offering a download would fail identically.
 
 #### Where errors are produced
 
@@ -163,7 +165,7 @@ Precedence (via `resolveAttachmentText`): inline base64 `attachment.data` (decod
 - Code blocks use the app's current theme (`codeBlockTheme` prop on `AttachmentCanvasContainer` → forwarded to `MarkdownRenderer`).
 - `MarkdownRenderer` uses logical Tailwind classes (`ps/pe`, `ms/me`, `border-s/e`) internally; no extra RTL handling needed at the canvas layer.
 
-#### Copy as Markdown button
+#### Copy markdown button
 
 - An `IconMarkdown` button is shown to the **left** of the download button in `rightActions` when `content.type === Markdown`.
 - After a successful click the icon switches to `IconCheck` for 2 s, then reverts. The toggle state is managed inside `AttachmentCanvas` (same pattern as `MessageActions`).

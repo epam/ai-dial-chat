@@ -5,6 +5,7 @@ import {
   DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,
   TOOLSET_REDIRECT_STATE_KEY,
+  ToolsetOAuthCallbackQuery,
 } from '../constants/toolsets';
 import { ROUTES } from '../types/routes';
 import type {
@@ -19,6 +20,7 @@ import {
   ToolsetAuthStatus,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
+  ToolsetOAuthFailureReason,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
   ToolsetTransportType,
@@ -251,60 +253,117 @@ export const getToolsetOAuthChannelName = (flowId: string): string =>
 
 const DEFAULT_OAUTH_RESULT_TIMEOUT_MS = 5 * 60 * 1000;
 const DEFAULT_OAUTH_POPUP_POLL_INTERVAL_MS = 500;
-const DEFAULT_OAUTH_CLOSE_GRACE_MS = 300;
+
+const getOAuthFailureReason = (
+  value: string | null,
+): ToolsetOAuthFailureReason => {
+  switch (value) {
+    case ToolsetOAuthFailureReason.MissingCode:
+    case ToolsetOAuthFailureReason.MissingRedirectState:
+    case ToolsetOAuthFailureReason.StateMismatch:
+    case ToolsetOAuthFailureReason.LoginRequestFailed:
+      return value;
+    default:
+      return ToolsetOAuthFailureReason.LoginRequestFailed;
+  }
+};
 
 /**
- * Waits for the OAuth callback popup to report a result over the flow's
- * `BroadcastChannel`, resolving with `Cancelled` if the popup is closed
- * manually (with no result ever posted) or no result arrives before the
- * timeout elapses.
- *
- * The callback popup does not close itself after posting a result — this
- * function closes it as soon as the message is received, so the popup can
- * never be observed closed before its message has arrived. `closeGraceMs`
- * therefore only matters for a genuine manual cancellation (the user closes
- * the popup before it ever posts anything), where there is no message to
- * race against.
+ * Waits for the OAuth callback popup to report a result over BroadcastChannel
+ * or through the completion marker in its same-origin URL. The callback keeps
+ * the popup open after writing the marker; the opener closes it only after
+ * consuming a result, so popup closure cannot race result delivery.
  */
 export const waitForToolsetOAuthResult = (
   popup: Window,
   flowId: string,
   {
+    toolsetId,
+    credentialsLevel,
     timeoutMs = DEFAULT_OAUTH_RESULT_TIMEOUT_MS,
     pollIntervalMs = DEFAULT_OAUTH_POPUP_POLL_INTERVAL_MS,
-    closeGraceMs = DEFAULT_OAUTH_CLOSE_GRACE_MS,
   }: {
+    toolsetId: string;
+    credentialsLevel: ToolsetCredentialsLevel;
     timeoutMs?: number;
     pollIntervalMs?: number;
-    closeGraceMs?: number;
-  } = {},
+  },
 ): Promise<ToolsetOAuthResult> =>
   new Promise((resolve) => {
-    const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+    let channel: BroadcastChannel | undefined;
     let settled = false;
-    let closeGraceTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const finish = (outcome: ToolsetOAuthResult) => {
       if (settled) return;
       settled = true;
       clearInterval(pollId);
       clearTimeout(timeoutId);
-      if (closeGraceTimeoutId != null) clearTimeout(closeGraceTimeoutId);
-      channel.close();
+      channel?.close();
       resolve(outcome);
     };
 
-    channel.onmessage = (event: MessageEvent<ToolsetOAuthChannelMessage>) => {
-      popup.close();
-      finish(event.data);
+    const finishReportedResult = (result: ToolsetOAuthChannelMessage) => {
+      try {
+        popup.close();
+      } catch {
+        // The result is already consumed; popup cleanup is best-effort.
+      }
+      finish(result);
     };
 
-    const pollId = setInterval(() => {
-      if (popup.closed && closeGraceTimeoutId == null) {
-        closeGraceTimeoutId = setTimeout(
-          () => finish({ type: ToolsetOAuthResultType.Cancelled }),
-          closeGraceMs,
+    const readResultFromPopupUrl = (): ToolsetOAuthChannelMessage | null => {
+      try {
+        const popupUrl = new URL(popup.location.href);
+        const isCallbackRoute =
+          popupUrl.pathname === ROUTES.ToolsetSignIn ||
+          popupUrl.pathname === ROUTES.ToolsetEditorCallback;
+        if (popupUrl.origin !== window.location.origin || !isCallbackRoute) {
+          return null;
+        }
+
+        const result = popupUrl.searchParams.get(
+          ToolsetOAuthCallbackQuery.Result,
         );
+        if (result === ToolsetOAuthResultType.Success) {
+          return {
+            type: ToolsetOAuthResultType.Success,
+            toolsetId,
+            credentialsLevel,
+          };
+        }
+        if (result === ToolsetOAuthResultType.Failure) {
+          return {
+            type: ToolsetOAuthResultType.Failure,
+            reason: getOAuthFailureReason(
+              popupUrl.searchParams.get(
+                ToolsetOAuthCallbackQuery.FailureReason,
+              ),
+            ),
+          };
+        }
+      } catch {
+        // Cross-origin popup URLs are unreadable until the provider returns.
+      }
+      return null;
+    };
+
+    try {
+      channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+      channel.onmessage = (event: MessageEvent<ToolsetOAuthChannelMessage>) => {
+        finishReportedResult(event.data);
+      };
+    } catch {
+      // URL polling is the deterministic fallback when channels are unavailable.
+    }
+
+    const pollId = setInterval(() => {
+      const reportedResult = readResultFromPopupUrl();
+      if (reportedResult != null) {
+        finishReportedResult(reportedResult);
+        return;
+      }
+      if (popup.closed) {
+        finish({ type: ToolsetOAuthResultType.Cancelled });
       }
     }, pollIntervalMs);
 
@@ -312,6 +371,9 @@ export const waitForToolsetOAuthResult = (
       popup.close();
       finish({ type: ToolsetOAuthResultType.Cancelled });
     }, timeoutMs);
+
+    const reportedResult = readResultFromPopupUrl();
+    if (reportedResult != null) finishReportedResult(reportedResult);
   });
 
 /**
