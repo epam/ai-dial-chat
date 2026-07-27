@@ -1,3 +1,4 @@
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { Attachment, ExpectedMessages } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { FileUtil } from '@/src/utils';
@@ -14,7 +15,7 @@ export enum FileType {
 }
 type FileReader = (path: string) => string | Buffer | object | undefined;
 
-export class DownloadAssertion {
+export class DownloadAssertion extends BaseAssertion {
   private static fileReaders: Record<FileType, FileReader> = {
     [FileType.JSON]: FileUtil.readJsonFileData,
     [FileType.PLAIN]: FileUtil.readPlainFileData,
@@ -31,6 +32,17 @@ export class DownloadAssertion {
     expect(downloadedData.path).toMatch(new RegExp(`${expectedExtension}$`));
   }
 
+  public assertDownloadFilename(
+    downloadedData: UploadDownloadData,
+    expectedFilename: string,
+  ) {
+    this.assertBooleanCondition(
+      (downloadedData.path as string).endsWith(expectedFilename),
+      true,
+      ExpectedMessages.downloadedFileNameIsValid,
+    );
+  }
+
   public async assertFileIsDownloaded(
     downloadedData: UploadDownloadData,
     fileType: FileType,
@@ -40,12 +52,12 @@ export class DownloadAssertion {
     let fileContent;
     const downloadedFiles = FileUtil.getExportedFiles();
     const fileExists = downloadedFiles?.some((file) =>
-      file.includes(downloadedData.path),
+      file.includes(downloadedData.path as string),
     );
     expect.soft(fileExists, ExpectedMessages.dataIsExported).toBeTruthy();
     if (fileExists) {
       fileReader = DownloadAssertion.fileReaders[fileType];
-      fileContent = fileReader(downloadedData.path);
+      fileContent = fileReader(downloadedData.path as string);
       expect.soft(fileContent, ExpectedMessages.dataIsExported).toBeDefined();
     }
     //verify downloaded file equals existing attachment
@@ -120,7 +132,7 @@ export class DownloadAssertion {
     ...excludedEntityIds: string[]
   ) {
     const fileData = FileUtil.readJsonFileData(
-      downloadedData.path,
+      downloadedData.path as string,
     ) as LatestExportFormat;
     for (const excludedEntityId of excludedEntityIds) {
       expect

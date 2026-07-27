@@ -4,7 +4,7 @@ import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { FileUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Role } from '@epam/ai-dial-shared';
 import { Locator, expect } from '@playwright/test';
@@ -255,6 +255,148 @@ dialTest.fixme(
             ExpectedMessages.tableControlIconsNotVisible,
           )
           .toBeHidden();
+      },
+    );
+  },
+);
+
+dialTest(
+  'Download md table as CSV.\n' + 'Download renamed csv file',
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatMessages,
+    chatMessagesAssertion,
+    tooltipAssertion,
+    localStorageManager,
+    conversationData,
+    dataInjector,
+    conversations,
+    downloadTableCsvModal,
+    baseAssertion,
+    downloadAssertion,
+  }) => {
+    setTestIds('EPMRTC-9686', 'EPMRTC-9687');
+
+    let tableConversation: Conversation;
+    const expectedDownloadIconTooltip =
+      ExpectedConstants.downloadTableAsCsvTooltip;
+    const expectedFilename = `${new Date().toISOString().slice(0, 10)}_table.csv`;
+    const expectedCsvContent =
+      '"Country","Capital"\n' +
+      '"Canada","Ottawa"\n' +
+      '"United States","Washington, D.C."';
+    let downloadIcon: Locator;
+
+    const stripBom = (content: string) =>
+      content.charCodeAt(0) === 0xfeff ? content.slice(1) : content;
+
+    await dialTest.step(
+      'Prepare conversation with table response',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        tableConversation =
+          conversationData.prepareConversationWithMdTableContent();
+        await dataInjector.createConversations([tableConversation]);
+      },
+    );
+
+    await dialTest.step(
+      'Hover over Download button and verify tooltip is shown, button is highlighted',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(tableConversation.name);
+        downloadIcon = chatMessages.getChatMessageTableDownloadIcon(
+          expectedChatMessageIndex,
+        );
+        await chatMessagesAssertion.assertElementState(
+          downloadIcon,
+          'visible',
+          ExpectedMessages.tableDownloadIconIsVisible,
+        );
+        await downloadIcon.hover();
+        await tooltipAssertion.assertTooltipContent(
+          expectedDownloadIconTooltip,
+        );
+        await chatMessagesAssertion.assertElementColor(
+          downloadIcon,
+          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Download button and verify "Download table as CSV" pop-up is shown with suggested file name',
+      async () => {
+        await downloadIcon.click();
+        await baseAssertion.assertElementState(
+          downloadTableCsvModal,
+          'visible',
+          ExpectedMessages.downloadTableCsvModalIsVisible,
+        );
+        await baseAssertion.assertElementText(
+          downloadTableCsvModal.title,
+          ExpectedConstants.downloadTableAsCsvModalHeading,
+        );
+        await baseAssertion.assertElementState(
+          downloadTableCsvModal.getCancelButton(),
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          downloadTableCsvModal.confirmButton,
+          'visible',
+        );
+        await baseAssertion.assertInputValue(
+          downloadTableCsvModal.filenameInput,
+          expectedFilename,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Download button in the pop-up and verify the downloaded file contains the whole md table',
+      async () => {
+        const downloadedData = await dialHomePage.downloadData(() =>
+          downloadTableCsvModal.confirmButton.click(),
+        );
+        await downloadAssertion.assertPlainFileIsDownloaded(downloadedData);
+        const downloadedContent = stripBom(
+          FileUtil.readPlainFileData(downloadedData.path as string).toString(
+            'utf-8',
+          ),
+        );
+        baseAssertion.assertValue(
+          downloadedContent,
+          expectedCsvContent,
+          ExpectedMessages.downloadedFileContentIsValid,
+        );
+        downloadAssertion.assertDownloadFilename(
+          downloadedData,
+          expectedFilename,
+        );
+      },
+    );
+
+    const updatedFilename = `${GeneratorUtil.randomString(7)}.csv`;
+
+    await dialTest.step(
+      'Click on Download button again, update the file name leaving the extension and click Download',
+      async () => {
+        await downloadIcon.click();
+        await baseAssertion.assertElementState(
+          downloadTableCsvModal,
+          'visible',
+          ExpectedMessages.downloadTableCsvModalIsVisible,
+        );
+        await downloadTableCsvModal.filenameInput.fillInInput(updatedFilename);
+        const renamedDownloadedData = await dialHomePage.downloadData(() =>
+          downloadTableCsvModal.confirmButton.click(),
+        );
+        downloadAssertion.assertDownloadFilename(
+          renamedDownloadedData,
+          updatedFilename,
+        );
       },
     );
   },
