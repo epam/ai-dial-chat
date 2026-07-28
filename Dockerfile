@@ -63,6 +63,6 @@ COPY --from=builder /workspace/apps/chat-overlay-sandbox/dist /app/apps/chat-ove
 
 WORKDIR /app
 
-EXPOSE 3005
+EXPOSE 5000
 
 CMD ["node", "apps/chat-api/dist/main.js"]

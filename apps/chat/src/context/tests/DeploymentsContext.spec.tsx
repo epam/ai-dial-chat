@@ -12,11 +12,17 @@ const contextMocks = vi.hoisted(() => ({
   selectedDeploymentId: null as string | null,
   setSelectedDeployment: vi.fn(),
   showNotification: vi.fn(),
+  userSub: 'user-1' as string | undefined,
 }));
 
 vi.mock('../../server-api/deployments.api');
 vi.mock('../../server-api/application-schemas');
 vi.mock('../../server-api/toolsets');
+vi.mock('../auth/UserContext', () => ({
+  useUser: () => ({
+    user: contextMocks.userSub ? { sub: contextMocks.userSub } : null,
+  }),
+}));
 vi.mock('../AppConfigContext', () => ({
   useAppConfig: () => ({
     config: {
@@ -63,9 +69,85 @@ describe('DeploymentsContext', () => {
     contextMocks.defaultDeploymentId = null;
     contextMocks.selectedDeploymentId = null;
     contextMocks.setSelectedDeployment.mockResolvedValue(undefined);
+    contextMocks.userSub = 'user-1';
     mockGetDeployments.mockResolvedValue(mockResponse);
     mockGetApplicationSchemas.mockResolvedValue(emptySchemas);
     mockListToolsets.mockResolvedValue({ data: [] });
+  });
+
+  describe('identity-keyed refetch', () => {
+    it('refetches deployments/schemas/toolsets when the authenticated identity changes', async () => {
+      const { result, rerender } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(mockGetDeployments).toHaveBeenCalledOnce();
+      expect(mockListToolsets).toHaveBeenCalledOnce();
+      expect(mockGetApplicationSchemas).toHaveBeenCalledOnce();
+
+      mockGetDeployments.mockResolvedValueOnce({ deployments: [mockItem1] });
+      contextMocks.userSub = 'user-2';
+      rerender();
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(mockGetDeployments).toHaveBeenCalledTimes(2);
+      expect(mockListToolsets).toHaveBeenCalledTimes(2);
+      expect(mockGetApplicationSchemas).toHaveBeenCalledTimes(2);
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        mockItem1.id,
+      ]);
+    });
+
+    it('does not refetch when the identity object changes but sub stays the same', async () => {
+      const { result, rerender } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(mockGetDeployments).toHaveBeenCalledOnce();
+
+      // Same sub value, simulating an in-place UserContext profile refresh.
+      contextMocks.userSub = 'user-1';
+      rerender();
+
+      expect(mockGetDeployments).toHaveBeenCalledOnce();
+      expect(mockListToolsets).toHaveBeenCalledOnce();
+      expect(mockGetApplicationSchemas).toHaveBeenCalledOnce();
+    });
+
+    it('clears items while an identity-triggered refetch is in flight, instead of serving the previous identity snapshot', async () => {
+      const { result, rerender } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.items).toEqual(mockResponse.deployments);
+
+      let resolveRefetch: (value: typeof mockResponse) => void;
+      const refetchPromise = new Promise<typeof mockResponse>((resolve) => {
+        resolveRefetch = resolve;
+      });
+      mockGetDeployments.mockReturnValueOnce(refetchPromise);
+      contextMocks.userSub = 'user-2';
+
+      act(() => {
+        rerender();
+      });
+
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.items).toEqual([]);
+
+      await act(async () => {
+        resolveRefetch({ deployments: [mockItem1] });
+        await refetchPromise;
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        mockItem1.id,
+      ]);
+    });
   });
 
   it('loads items on mount and sets isLoading false on completion', async () => {

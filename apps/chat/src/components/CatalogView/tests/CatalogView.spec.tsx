@@ -1621,6 +1621,7 @@ describe('CatalogView', () => {
       );
 
       if (capturedPopup) capturedPopup.closed = true;
+      window.dispatchEvent(new Event('focus'));
 
       await waitFor(() =>
         expect(showNotification).toHaveBeenCalledWith(

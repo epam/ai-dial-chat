@@ -33,14 +33,4 @@ export class ListConversationsQueryDto {
   @IsString()
   @MaxLength(512)
   nextToken?: string;
-
-  @ApiPropertyOptional({
-    description:
-      'DIAL Core subfolder path to scope the listing. Omit or pass an empty string to list all conversations from the bucket root ("My Files").',
-    example: 'work/project-x',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(512)
-  path?: string;
 }

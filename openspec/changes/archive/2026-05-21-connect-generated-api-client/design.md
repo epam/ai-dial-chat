@@ -31,9 +31,9 @@
 
 ### D2 — `basePath` defaults to `''` (empty string, same-origin)
 
-**Decision**: Pass `basePath: ''` so all requests are relative (e.g. `/api/v1/models`). The Vite dev proxy forwards `/api/**` to `localhost:3005`.
+**Decision**: Pass `basePath: ''` so all requests are relative (e.g. `/api/v1/models`). The Vite dev proxy forwards `/api/**` to `localhost:5000`.
 
-**Rationale**: The generated `DEFAULT_CONFIG` hardcodes `http://localhost:3005` — unusable in production. An empty basePath makes requests same-origin in all environments without any runtime config.
+**Rationale**: The generated `DEFAULT_CONFIG` hardcodes `http://localhost:5000` — unusable in production. An empty basePath makes requests same-origin in all environments without any runtime config.
 
 **Alternative considered**: Reading `window.location.origin`. Unnecessary — relative paths already resolve to the same origin.
 

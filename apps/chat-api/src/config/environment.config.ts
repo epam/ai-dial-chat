@@ -28,7 +28,7 @@ export class EnvironmentVariables {
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
-  PORT?: number = 3005;
+  PORT?: number = 5000;
 
   @IsOptional()
   @IsString()

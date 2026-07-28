@@ -18,6 +18,7 @@ import {
   updateSelectedDeployment as apiUpdateSelectedDeployment,
 } from '../server-api/user-config.api';
 import { UserConfigStatus } from '../types/user-config-status';
+import { useUser } from './auth/UserContext';
 import { useNotification } from './NotificationContext';
 
 interface UserConfigContextType {
@@ -39,6 +40,8 @@ const UserConfigContext = createContext<UserConfigContextType | undefined>(
 export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
+  const { user } = useUser();
+  const userSub = user?.sub;
 
   const [status, setStatus] = useState<UserConfigStatus>(
     UserConfigStatus.Loading,
@@ -54,10 +57,22 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
     string | null
   >(null);
 
+  /*
+   * userSub is included so that if the authenticated identity changes while
+   * this provider stays mounted (an in-place identity adoption — see
+   * spa-auth-session's identity revalidation requirement), the user config
+   * is reset and refetched instead of continuing to serve the previous
+   * identity's snapshot.
+   */
   useEffect(() => {
     const guard = { isCancelled: false };
 
     const load = async () => {
+      setStatus(UserConfigStatus.Loading);
+      setPinnedConversationIds([]);
+      setInstalledToolsetIds([]);
+      setInstalledDeploymentIds([]);
+      setSelectedDeploymentId(null);
       try {
         const config = await getUserConfig();
         if (guard.isCancelled) return;
@@ -83,7 +98,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
       guard.isCancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userSub]);
 
   const setPinnedConversation = useCallback(
     async (id: string, isPinned: boolean) => {

@@ -5,7 +5,7 @@
 
 #### Scenario: Same-origin requests
 - **WHEN** a generated API class is instantiated via the factory
-- **THEN** all requests it makes SHALL be relative URLs (no hardcoded host), compatible with the Vite dev proxy (`/api/**` → `localhost:3005`) and production same-origin deployment
+- **THEN** all requests it makes SHALL be relative URLs (no hardcoded host), compatible with the Vite dev proxy (`/api/**` → `localhost:5000`) and production same-origin deployment
 
 #### Scenario: Cookies forwarded
 - **WHEN** the factory-created client sends any request

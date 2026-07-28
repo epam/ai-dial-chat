@@ -10,6 +10,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { normalizeConversationId } from '../constants/routes';
@@ -26,6 +27,7 @@ import {
 import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { getConversationPath } from '../utils/conversation-path';
 import { safeDecodeURIComponent } from '../utils/string-utils';
+import { useUser } from './auth/UserContext';
 import { useOptionalOverlay } from './overlay/OverlayContext';
 import { useUserConfig } from './UserConfigContext';
 
@@ -84,9 +86,12 @@ export const ConversationsProvider = ({
   children: ReactNode;
 }) => {
   const { setPinnedConversation } = useUserConfig();
+  const { user } = useUser();
+  const userSub = user?.sub;
   const [conversations, setConversations] = useState<ConversationListItemDto[]>(
     [],
   );
+  const conversationsRef = useRef<ConversationListItemDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const overlay = useOptionalOverlay();
@@ -94,6 +99,10 @@ export const ConversationsProvider = ({
   useEffect(() => {
     overlay?.notifyConversationsUpdated();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversations]);
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
   }, [conversations]);
 
   const refreshConversations = useCallback(async () => {
@@ -222,12 +231,20 @@ export const ConversationsProvider = ({
     [silentRefreshConversations, updateConversationTitle],
   );
 
+  /*
+   * userSub is included so that if the authenticated identity changes while
+   * this provider stays mounted (an in-place identity adoption — see
+   * spa-auth-session's identity revalidation requirement), the conversation
+   * list is refetched instead of continuing to serve the previous identity's
+   * snapshot.
+   */
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
       setIsLoading(true);
       setError(null);
+      setConversations([]);
       try {
         const response = await listConversations();
         if (!cancelled) setConversations(response.items);
@@ -244,7 +261,7 @@ export const ConversationsProvider = ({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userSub]);
 
   const pinConversation = useCallback(
     async (id: string, isPinned: boolean) => {
@@ -320,12 +337,34 @@ export const ConversationsProvider = ({
 
   const duplicateConversation = useCallback(
     async (id: string) => {
-      const conversationPath = normalizeConversationId(id);
-      const { newPath } = await apiDuplicateConversation(conversationPath);
-      await refreshConversations();
-      return newPath;
+      const source = conversationsRef.current.find((c) => c.id === id);
+      const tempId = crypto.randomUUID();
+      setConversations((prev) => [
+        {
+          id: tempId,
+          title: source?.title ?? '',
+          updatedAt: Date.now(),
+          sharedWithMe: false,
+          publishedWithMe: false,
+          isPinned: false,
+          isReadonly: false,
+        },
+        ...prev,
+      ]);
+      try {
+        const conversationPath = normalizeConversationId(id);
+        const { newPath } = await apiDuplicateConversation(conversationPath);
+        setConversations((prev) =>
+          prev.map((c) => (c.id === tempId ? { ...c, id: newPath } : c)),
+        );
+        void silentRefreshConversations();
+        return newPath;
+      } catch (err) {
+        setConversations((prev) => prev.filter((c) => c.id !== tempId));
+        throw err;
+      }
     },
-    [refreshConversations],
+    [silentRefreshConversations],
   );
 
   const deleteAllConversations =

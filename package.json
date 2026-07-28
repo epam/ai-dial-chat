@@ -119,6 +119,7 @@
     "helmet": "^8.1.0",
     "i18next": "^26.2.0",
     "i18next-browser-languagedetector": "^8.2.1",
+    "lru-cache": "^10.4.3",
     "mime-types": "^3.0.2",
     "pdfjs-dist": "5.4.149",
     "polished": "^4.3.1",
