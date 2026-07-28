@@ -109,7 +109,7 @@
 #### Scenario: Copy URL copies the correct endpoint and shows feedback
 
 - **WHEN** the user clicks `Copy URL` in the popover for a toolset item with id `toolsets/public/search-tool`
-- **THEN** the clipboard receives `{dialCoreExternalUrl}/v1/toolset/toolsets%2Fpublic%2Fsearch-tool/mcp` (per the URL-helper requirement's encoding rules)
+- **THEN** the clipboard receives `{dialCoreExternalUrl}/v1/toolset/toolsets/public/search-tool/mcp` (per the URL-helper requirement's encoding rules)
 - **AND** the button shows transient copied feedback announced via an `aria-live="polite"` region
 
 ---
