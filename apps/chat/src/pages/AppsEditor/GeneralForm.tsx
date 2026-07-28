@@ -32,8 +32,8 @@ import { isQuickAppSchema } from '../../utils/application-schema';
 export interface GeneralFormHandle {
   submit: () => Promise<void>;
   /**
-   * Current in-memory General-step values, normalized the same way values used to be
-   * trimmed before being sent to `update-application`. Excludes `version`.
+   * Current in-memory General-step values, normalized (trimmed). Includes
+   * `display_version`; excludes the backend `version` field.
    */
   getValues: () => TriggerSaveGeneralPayload;
 }
@@ -210,6 +210,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       iconUrl: values.iconUrl.trim() || undefined,
       topics: values.topics.length > 0 ? values.topics : undefined,
       intro: values.intro.trim() || undefined,
+      display_version: values.version.trim() || undefined,
     }),
     [values],
   );
