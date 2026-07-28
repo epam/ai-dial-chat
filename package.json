@@ -112,6 +112,8 @@
     "@nestjs/throttler": "^6.5.0",
     "@tabler/icons-react": "^3.44.0",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@uiw/react-markdown-preview": "^5.2.1",
+    "@uiw/react-md-editor": "^4.1.1",
     "cache-manager": "^7.2.8",
     "dompurify": "3.4.11",
     "express": "^5.2.1",

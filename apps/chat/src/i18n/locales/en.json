@@ -473,7 +473,12 @@
       "scheduleRecurringFallback": "Recurring schedule"
     },
     "create": {
-      "pageTitle": "New scheduled task",
+      "pageTitle": "New task",
+      "backButtonLabel": "Back",
+      "detailsSectionTitle": "Details",
+      "detailsSectionSubtitle": "Basic info about this scheduled task",
+      "configurationSectionTitle": "Configuration",
+      "configurationSectionSubtitle": "Write custom instructions for this task",
       "scheduleSectionLabel": "Schedule",
       "scheduleTypeOnce": "Once",
       "scheduleTypeRecurring": "Recurring",
@@ -490,14 +495,13 @@
       "dayOfWeekRequired": "Day of week is required",
       "dayOfMonthLabel": "Day of month",
       "dayOfMonthRequired": "Day of month is required",
-      "modelLabel": "Model",
+      "modelOrAgentLabel": "Model or Agent",
       "modelPlaceholder": "Select a model",
       "modelRequired": "Model is required",
       "descriptionLabel": "Description",
       "descriptionMaxLengthError": "Description must be 500 characters or fewer",
-      "promptLabel": "Prompt",
-      "promptRequired": "Prompt is required",
-      "streamLabel": "Stream response",
+      "instructionsLabel": "Instructions",
+      "promptRequired": "Instructions are required",
       "successNotification": "Scheduled task created",
       "errorNotification": "Failed to create the scheduled task"
     }

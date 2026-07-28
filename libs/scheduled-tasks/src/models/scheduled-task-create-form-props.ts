@@ -78,8 +78,18 @@ export interface ScheduledTaskCreateFormErrors {
 
 /** Localized labels used by the {@link ScheduledTaskCreateForm} component. */
 export interface ScheduledTaskCreateFormLabels {
-  /** Page/header title, e.g. "New scheduled task". */
+  /** Page/header title, e.g. "New task". */
   pageTitle: string;
+  /** Accessible label for the header's back control. */
+  backButtonLabel: string;
+  /** Section heading for the Details column. */
+  detailsSectionTitle: string;
+  /** Section subtitle for the Details column. */
+  detailsSectionSubtitle: string;
+  /** Section heading for the Configuration column. */
+  configurationSectionTitle: string;
+  /** Section subtitle for the Configuration column. */
+  configurationSectionSubtitle: string;
   /** Display name field label. */
   displayNameLabel: string;
   /** Display name required-field validation message. */
@@ -105,18 +115,16 @@ export interface ScheduledTaskCreateFormLabels {
   /** Day-of-month field label (shown when frequency is "monthly"). */
   dayOfMonthLabel: string;
   /** Accessible label for the model dropdown. */
-  modelLabel: string;
+  modelOrAgentLabel: string;
   /** Placeholder shown in the model dropdown trigger when no model is selected. */
   modelPlaceholder: string;
   /** Description textarea label. */
   descriptionLabel: string;
-  /** Prompt textarea label. */
-  promptLabel: string;
-  /** Stream toggle label. */
-  streamLabel: string;
+  /** Accessible label for the Instructions markdown editor. */
+  instructionsLabel: string;
   /** Label for the Cancel action. */
   cancelButtonLabel: string;
-  /** Label for the Create action. */
+  /** Label for the Save action (submits the create form). */
   createButtonLabel: string;
 }
 
@@ -126,8 +134,18 @@ export interface ScheduledTaskCreateFormStyles {
   containerClassName?: string;
   /** CSS class applied to the title. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
+  /** CSS class applied to the header row's bottom border. Defaults to `'border-b border-tertiary'`. */
+  headerClassName?: string;
+  /** CSS class applied to the Details column's end-edge divider. Defaults to `'border-e border-e-tertiary'`. */
+  detailsColumnClassName?: string;
+  /** CSS class applied to a section heading. Defaults to `'dial-body-semi-text'`. */
+  sectionTitleClassName?: string;
+  /** CSS class applied to a section subtitle. Defaults to `'dial-tiny-text text-secondary'`. */
+  sectionSubtitleClassName?: string;
   /** CSS class applied to the schedule section's legend. Defaults to `'dial-body-semi-text mb-1'`. */
   scheduleSectionLabelClassName?: string;
+  /** CSS class applied to the Instructions editor's validation error text. Defaults to `'dial-small-text text-error'`. */
+  instructionsErrorClassName?: string;
 }
 
 /** Props for the {@link ScheduledTaskCreateForm} component. */
@@ -145,12 +163,16 @@ export interface ScheduledTaskCreateFormProps {
     field: K,
     value: ScheduledTaskCreateFormValues[K],
   ) => void;
+  /** Called when the user activates the header's back control. */
+  onBack: () => void;
   /** Called when the user activates the Cancel action. */
   onCancel: () => void;
-  /** Called when the user activates the Create action. */
+  /** Called when the user activates the Save action. */
   onSubmit: () => void;
-  /** When `true`, the Create action is disabled and shows a busy affordance. Defaults to `false`. */
+  /** When `true`, the Save action is disabled and shows a busy affordance. Defaults to `false`. */
   isSubmitting?: boolean;
+  /** Color theme applied to the Instructions markdown editor. Defaults to the editor's own default (`'dark'`). */
+  markdownEditorTheme?: 'light' | 'dark';
   /** Style overrides. */
   styles?: ScheduledTaskCreateFormStyles;
 }

@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  GhostButton,
+  GhostIconButton,
   Input,
   NeutralButton,
   PrimaryButton,
@@ -8,12 +8,12 @@ import {
 } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
-  DialDropdown,
-  DialSegmentedControl,
-  DialSwitch,
+  DialSelectField,
+  DialSpinner,
+  LazyDialMarkdownEditor,
 } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconChevronDown } from '@tabler/icons-react';
-import { type FC } from 'react';
+import { IconArrowLeft } from '@tabler/icons-react';
+import { lazy, Suspense, type ComponentProps, type FC } from 'react';
 import {
   DESCRIPTION_MAX_LENGTH,
   ScheduledTaskCreateFormProps,
@@ -21,12 +21,23 @@ import {
   ScheduledTaskScheduleType,
 } from '../../models/scheduled-task-create-form-props';
 
+const DialMarkdownEditor = lazy(async () => {
+  const module = await LazyDialMarkdownEditor();
+  return { default: module.DialMarkdownEditor };
+});
+
+type DialMarkdownEditorTheme = ComponentProps<
+  typeof DialMarkdownEditor
+>['theme'];
+
 /**
- * Presentational create-task form: display name, a one-shot/recurring
- * schedule section, a model picker, a prompt textarea, a stream toggle, and
- * Cancel/Create actions. Field values, validation errors, and model options
- * are all supplied by the host app; this component holds no state of its
- * own and performs no routing, i18n, or network calls.
+ * Presentational create-task form: a back-navigable header (Cancel/Save
+ * actions) and a two-column Details/Configuration body. Details holds
+ * display name, description, the schedule fields, and the model picker;
+ * Configuration holds the markdown Instructions editor and the stream
+ * toggle. Field values, validation errors, and model options are all
+ * supplied by the host app; this component holds no state of its own and
+ * performs no routing, i18n, or network calls.
  */
 export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   labels,
@@ -34,15 +45,27 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   errors,
   modelOptions,
   onFieldChange,
+  onBack,
   onCancel,
   onSubmit,
   isSubmitting = false,
+  markdownEditorTheme,
   styles: formStyles,
 }) => {
   const containerClassName = formStyles?.containerClassName ?? 'bg-layer-5';
   const titleClassName = formStyles?.titleClassName ?? 'dial-h1-text';
+  const headerClassName =
+    formStyles?.headerClassName ?? 'border-b border-tertiary';
+  const detailsColumnClassName =
+    formStyles?.detailsColumnClassName ?? 'border-e border-e-tertiary';
+  const sectionTitleClassName =
+    formStyles?.sectionTitleClassName ?? 'dial-body-semi-text';
+  const sectionSubtitleClassName =
+    formStyles?.sectionSubtitleClassName ?? 'dial-tiny-text text-secondary';
   const scheduleSectionLabelClassName =
     formStyles?.scheduleSectionLabelClassName ?? 'dial-body-semi-text mb-1';
+  const instructionsErrorClassName =
+    formStyles?.instructionsErrorClassName ?? 'dial-small-text text-error';
 
   const isCreateDisabled =
     isSubmitting ||
@@ -50,24 +73,35 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     !values.modelId ||
     !values.prompt.trim();
 
-  const selectedModelLabel =
-    modelOptions.find((option) => option.id === values.modelId)?.label ??
-    labels.modelPlaceholder;
-  const selectedFrequencyLabel =
-    labels.frequencyOptions.find((option) => option.key === values.frequency)
-      ?.label ?? labels.frequencyLabel;
-
   return (
     <div
       className={mergeClasses(
-        'flex h-full w-full flex-col gap-6 overflow-y-auto px-8 py-4',
+        'flex h-full w-full flex-col overflow-y-auto',
         containerClassName,
       )}
     >
-      <div className="flex items-center justify-between gap-4">
-        <h1 className={mergeClasses('truncate', titleClassName)}>
-          {labels.pageTitle}
-        </h1>
+      <div
+        className={mergeClasses(
+          'flex h-16 items-center justify-between gap-6 px-8',
+          headerClassName,
+        )}
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <GhostIconButton
+            icon={
+              <IconArrowLeft
+                size={DIAL_ICON_SIZE.LG}
+                className="rtl:scale-x-[-1]"
+                aria-hidden
+              />
+            }
+            aria-label={labels.backButtonLabel}
+            onClick={onBack}
+          />
+          <h1 className={mergeClasses('truncate', titleClassName)}>
+            {labels.pageTitle}
+          </h1>
+        </div>
         <div className="flex items-center gap-2">
           <NeutralButton
             type="button"
@@ -84,165 +118,195 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
         </div>
       </div>
 
-      <div className="flex max-w-xl flex-col gap-4">
-        <Input
-          id="scheduled-task-display-name"
-          value={values.displayName}
-          onChange={(value) => onFieldChange('displayName', value ?? '')}
-          labelProps={{ label: labels.displayNameLabel, required: true }}
-          invalid={Boolean(errors.displayName)}
-          error={errors.displayName}
-        />
-
-        <Textarea
-          id="scheduled-task-description"
-          value={values.description ?? ''}
-          onChange={(value) => onFieldChange('description', value)}
-          labelProps={{ label: labels.descriptionLabel }}
-          maxLength={DESCRIPTION_MAX_LENGTH}
-          invalid={Boolean(errors.description)}
-          error={errors.description}
-          caption={
-            values.description
-              ? `${values.description.length}/${DESCRIPTION_MAX_LENGTH}`
-              : undefined
-          }
-        />
-
-        <fieldset className="flex flex-col gap-3">
-          <legend className={scheduleSectionLabelClassName}>
-            {labels.scheduleSectionLabel}
-          </legend>
-
-          <DialSegmentedControl
-            ariaLabel={labels.scheduleTypeAriaLabel}
-            value={values.scheduleType}
-            onChange={(value) => onFieldChange('scheduleType', value)}
-            options={[
-              {
-                value: ScheduledTaskScheduleType.Once,
-                label: labels.scheduleTypeOnceLabel,
-              },
-              {
-                value: ScheduledTaskScheduleType.Recurring,
-                label: labels.scheduleTypeRecurringLabel,
-              },
-            ]}
-          />
-
-          {values.scheduleType === ScheduledTaskScheduleType.Once && (
-            <Input
-              id="scheduled-task-run-at"
-              type="datetime-local"
-              value={values.runAt ?? ''}
-              onChange={(value) => onFieldChange('runAt', value ?? '')}
-              labelProps={{ label: labels.runAtLabel, required: true }}
-              invalid={Boolean(errors.runAt)}
-              error={errors.runAt}
-            />
+      <div className="flex flex-1 flex-col desktop:flex-row">
+        <div
+          role="group"
+          aria-label={labels.detailsSectionTitle}
+          className={mergeClasses(
+            'flex w-full flex-col gap-5 px-8 py-6 desktop:w-[360px] desktop:shrink-0',
+            detailsColumnClassName,
           )}
-
-          {values.scheduleType === ScheduledTaskScheduleType.Recurring && (
-            <>
-              <DialDropdown
-                matchReferenceWidth={false}
-                placement="bottom-start"
-                items={labels.frequencyOptions.map((option) => ({
-                  key: option.key,
-                  label: (
-                    <span className="flex w-full items-center justify-between gap-2">
-                      {option.label}
-                      {option.key === values.frequency && (
-                        <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-                      )}
-                    </span>
-                  ),
-                  onClick: () => onFieldChange('frequency', option.key),
-                }))}
-              >
-                <GhostButton
-                  type="button"
-                  label={selectedFrequencyLabel}
-                  aria-label={labels.frequencyLabel}
-                  iconAfter={
-                    <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
-                  }
-                />
-              </DialDropdown>
-
-              <Input
-                id="scheduled-task-time"
-                type="time"
-                value={values.time}
-                onChange={(value) => onFieldChange('time', value ?? '')}
-                labelProps={{ label: labels.timeLabel, required: true }}
-                invalid={Boolean(errors.time)}
-                error={errors.time}
-              />
-
-              {values.frequency === ScheduledTaskFrequency.Weekly && (
-                <Input
-                  id="scheduled-task-day-of-week"
-                  value={values.dayOfWeek ?? ''}
-                  onChange={(value) => onFieldChange('dayOfWeek', value ?? '')}
-                  labelProps={{ label: labels.dayOfWeekLabel, required: true }}
-                  invalid={Boolean(errors.dayOfWeek)}
-                  error={errors.dayOfWeek}
-                />
-              )}
-
-              {values.frequency === ScheduledTaskFrequency.Monthly && (
-                <Input
-                  id="scheduled-task-day-of-month"
-                  value={values.dayOfMonth ?? ''}
-                  onChange={(value) => onFieldChange('dayOfMonth', value ?? '')}
-                  labelProps={{ label: labels.dayOfMonthLabel, required: true }}
-                  invalid={Boolean(errors.dayOfMonth)}
-                  error={errors.dayOfMonth}
-                />
-              )}
-            </>
-          )}
-        </fieldset>
-
-        <DialDropdown
-          matchReferenceWidth={false}
-          placement="bottom-start"
-          items={modelOptions.map((option) => ({
-            key: option.id,
-            label: (
-              <span className="flex w-full items-center justify-between gap-2">
-                {option.label}
-                {option.id === values.modelId && (
-                  <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
-                )}
-              </span>
-            ),
-            onClick: () => onFieldChange('modelId', option.id),
-          }))}
         >
-          <GhostButton
-            type="button"
-            label={selectedModelLabel}
-            aria-label={labels.modelLabel}
-            iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />}
+          <div className="flex flex-col gap-1">
+            <h2 className={sectionTitleClassName}>
+              {labels.detailsSectionTitle}
+            </h2>
+            <p className={sectionSubtitleClassName}>
+              {labels.detailsSectionSubtitle}
+            </p>
+          </div>
+
+          <Input
+            id="scheduled-task-display-name"
+            value={values.displayName}
+            onChange={(value) => onFieldChange('displayName', value ?? '')}
+            labelProps={{ label: labels.displayNameLabel, required: true }}
+            invalid={Boolean(errors.displayName)}
+            error={errors.displayName}
           />
-        </DialDropdown>
 
-        <Textarea
-          id="scheduled-task-prompt"
-          value={values.prompt}
-          onChange={(value) => onFieldChange('prompt', value)}
-          labelProps={{ label: labels.promptLabel, required: true }}
-          invalid={Boolean(errors.prompt)}
-          error={errors.prompt}
-        />
+          <Textarea
+            id="scheduled-task-description"
+            value={values.description ?? ''}
+            onChange={(value) => onFieldChange('description', value)}
+            labelProps={{ label: labels.descriptionLabel }}
+            maxLength={DESCRIPTION_MAX_LENGTH}
+            invalid={Boolean(errors.description)}
+            error={errors.description}
+            caption={
+              values.description
+                ? `${values.description.length}/${DESCRIPTION_MAX_LENGTH}`
+                : undefined
+            }
+          />
 
-        <DialSwitch
-          switchId="scheduled-task-stream"
-          label={labels.streamLabel}
-          isOn={values.stream}
-          onChange={(value) => onFieldChange('stream', value)}
+          <DialSelectField
+            label={labels.modelOrAgentLabel}
+            required
+            value={values.modelId}
+            placeholder={labels.modelPlaceholder}
+            onChange={(next) => onFieldChange('modelId', next as string)}
+            error={errors.modelId}
+            options={modelOptions.map((option) => ({
+              value: option.id,
+              label: option.label,
+            }))}
+          />
+
+          <fieldset className="flex flex-col gap-3">
+            <legend className={scheduleSectionLabelClassName}>
+              {labels.scheduleSectionLabel}
+            </legend>
+
+            <DialSelectField
+              label={labels.scheduleTypeAriaLabel}
+              value={values.scheduleType}
+              onChange={(next) =>
+                onFieldChange('scheduleType', next as ScheduledTaskScheduleType)
+              }
+              options={[
+                {
+                  value: ScheduledTaskScheduleType.Once,
+                  label: labels.scheduleTypeOnceLabel,
+                },
+                {
+                  value: ScheduledTaskScheduleType.Recurring,
+                  label: labels.scheduleTypeRecurringLabel,
+                },
+              ]}
+            />
+
+            {values.scheduleType === ScheduledTaskScheduleType.Once && (
+              <Input
+                id="scheduled-task-run-at"
+                type="datetime-local"
+                value={values.runAt ?? ''}
+                onChange={(value) => onFieldChange('runAt', value ?? '')}
+                labelProps={{ label: labels.runAtLabel, required: true }}
+                invalid={Boolean(errors.runAt)}
+                error={errors.runAt}
+              />
+            )}
+
+            {values.scheduleType === ScheduledTaskScheduleType.Recurring && (
+              <>
+                <DialSelectField
+                  label={labels.frequencyLabel}
+                  value={values.frequency}
+                  onChange={(next) =>
+                    onFieldChange('frequency', next as ScheduledTaskFrequency)
+                  }
+                  options={labels.frequencyOptions.map((option) => ({
+                    value: option.key,
+                    label: option.label,
+                  }))}
+                />
+
+                <Input
+                  id="scheduled-task-time"
+                  type="time"
+                  value={values.time}
+                  onChange={(value) => onFieldChange('time', value ?? '')}
+                  labelProps={{ label: labels.timeLabel, required: true }}
+                  invalid={Boolean(errors.time)}
+                  error={errors.time}
+                />
+
+                {values.frequency === ScheduledTaskFrequency.Weekly && (
+                  <Input
+                    id="scheduled-task-day-of-week"
+                    value={values.dayOfWeek ?? ''}
+                    onChange={(value) =>
+                      onFieldChange('dayOfWeek', value ?? '')
+                    }
+                    labelProps={{
+                      label: labels.dayOfWeekLabel,
+                      required: true,
+                    }}
+                    invalid={Boolean(errors.dayOfWeek)}
+                    error={errors.dayOfWeek}
+                  />
+                )}
+
+                {values.frequency === ScheduledTaskFrequency.Monthly && (
+                  <Input
+                    id="scheduled-task-day-of-month"
+                    value={values.dayOfMonth ?? ''}
+                    onChange={(value) =>
+                      onFieldChange('dayOfMonth', value ?? '')
+                    }
+                    labelProps={{
+                      label: labels.dayOfMonthLabel,
+                      required: true,
+                    }}
+                    invalid={Boolean(errors.dayOfMonth)}
+                    error={errors.dayOfMonth}
+                  />
+                )}
+              </>
+            )}
+          </fieldset>
+        </div>
+
+        <div
+          role="group"
+          aria-label={labels.configurationSectionTitle}
+          className="flex w-full min-w-0 flex-1 flex-col gap-5 px-8 py-6"
+        >
+          <div className="flex flex-col gap-1">
+            <h2 className={sectionTitleClassName}>
+              {labels.configurationSectionTitle}
+            </h2>
+            <p className={sectionSubtitleClassName}>
+              {labels.configurationSectionSubtitle}
+            </p>
+          </div>
+
+          <div
+            role="group"
+            aria-label={labels.instructionsLabel}
+            className="flex flex-1 flex-col gap-1"
+          >
+            <span className={scheduleSectionLabelClassName}>
+              {labels.instructionsLabel}
+            </span>
+            <Suspense fallback={<DialSpinner />}>
+              <DialMarkdownEditor
+                value={values.prompt}
+                onChange={(value) => onFieldChange('prompt', value)}
+                height={480}
+                theme={markdownEditorTheme as DialMarkdownEditorTheme}
+              />
+            </Suspense>
+            {errors.prompt && (
+              <p className={instructionsErrorClassName}>{errors.prompt}</p>
+            )}
+          </div>
+        </div>
+
+        <div
+          aria-hidden
+          className="hidden desktop:block desktop:w-[360px] desktop:shrink-0"
         />
       </div>
     </div>

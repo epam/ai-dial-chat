@@ -21,6 +21,11 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => ({ showNotification: showNotificationMock }),
 }));
 
+const useThemeMock = vi.fn();
+vi.mock('../../../context/ThemeContext', () => ({
+  useTheme: () => useThemeMock(),
+}));
+
 const createScheduledTaskMock = vi.fn();
 vi.mock('../../../server-api/scheduled-tasks.api', () => ({
   createScheduledTask: (...args: unknown[]) => createScheduledTaskMock(...args),
@@ -38,6 +43,7 @@ interface FormProps {
   errors: Record<string, string | undefined>;
   modelOptions: { id: string; label: string }[];
   onFieldChange: (field: string, value: unknown) => void;
+  onBack: () => void;
   onCancel: () => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
@@ -57,11 +63,13 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     errors,
     modelOptions,
     onFieldChange,
+    onBack,
     onCancel,
     onSubmit,
     isSubmitting,
   }: FormProps): ReactNode => (
     <div>
+      <button onClick={onBack}>back</button>
       <input
         aria-label="displayName"
         value={values.displayName}
@@ -137,6 +145,7 @@ describe('ScheduledTaskCreatePage', () => {
     useDeploymentsMock.mockReturnValue({
       items: [{ id: 'gpt-4o', displayName: 'GPT-4o' }],
     });
+    useThemeMock.mockReturnValue({ currentTheme: 'light' });
   });
 
   it('renders the NotFound page when scheduledTasksEnabled is false', () => {
@@ -169,6 +178,15 @@ describe('ScheduledTaskCreatePage', () => {
     expect(screen.getByText('custom return page')).toBeTruthy();
   });
 
+  it('navigates to the returnUrl on back without a network call', async () => {
+    renderAtRoute('/scheduled-tasks/new?returnUrl=%2Fcustom');
+
+    await userEvent.click(screen.getByRole('button', { name: 'back' }));
+
+    expect(screen.getByText('custom return page')).toBeTruthy();
+    expect(createScheduledTaskMock).not.toHaveBeenCalled();
+  });
+
   it.each([
     '/scheduled-tasks/new?returnUrl=',
     '/scheduled-tasks/new?returnUrl=https%3A%2F%2Fevil.example',
@@ -191,9 +209,7 @@ describe('ScheduledTaskCreatePage', () => {
   it('does not submit when required fields are missing', async () => {
     renderAtRoute('/scheduled-tasks/new');
 
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.create' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
     expect(screen.getByText('editor.nameRequired')).toBeTruthy();
@@ -204,9 +220,7 @@ describe('ScheduledTaskCreatePage', () => {
     renderAtRoute('/scheduled-tasks/new?returnUrl=%2Fcustom');
 
     await fillValidForm();
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.create' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(createScheduledTaskMock).toHaveBeenCalledOnce();
     const body = createScheduledTaskMock.mock.calls[0][0];
@@ -228,9 +242,7 @@ describe('ScheduledTaskCreatePage', () => {
       screen.getByRole('textbox', { name: 'description' }),
       '  Summarizes unread inbox items  ',
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.create' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(createScheduledTaskMock).toHaveBeenCalledOnce();
     const body = createScheduledTaskMock.mock.calls[0][0];
@@ -242,9 +254,7 @@ describe('ScheduledTaskCreatePage', () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.create' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(createScheduledTaskMock).toHaveBeenCalledOnce();
     const body = createScheduledTaskMock.mock.calls[0][0];
@@ -259,9 +269,7 @@ describe('ScheduledTaskCreatePage', () => {
       screen.getByRole('textbox', { name: 'description' }),
       'a'.repeat(501),
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.create' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
     expect(
@@ -274,9 +282,7 @@ describe('ScheduledTaskCreatePage', () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.create' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     await vi.waitFor(() => {
       expect(showNotificationMock).toHaveBeenCalledOnce();

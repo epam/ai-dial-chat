@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -37,7 +37,14 @@ vi.mock('@epam/ai-dial-kit', () => ({
       {label}
     </button>
   ),
-  GhostButton: ({ label }: { label: string }) => <button>{label}</button>,
+  GhostIconButton: ({
+    onClick,
+    'aria-label': ariaLabel,
+  }: {
+    onClick: () => void;
+    icon?: ReactNode;
+    'aria-label'?: string;
+  }) => <button onClick={onClick} aria-label={ariaLabel} />,
   Input: ({
     labelProps,
     value,
@@ -85,56 +92,53 @@ vi.mock('@epam/ai-dial-kit', () => ({
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialDropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
-  DialSegmentedControl: ({
-    options,
+  DialSelectField: ({
+    label,
     value,
     onChange,
-    ariaLabel,
+    options,
+    error,
+    placeholder,
   }: {
-    options: { value: string; label: string }[];
-    value: string;
+    label?: ReactNode;
+    value?: string;
     onChange: (value: string) => void;
-    ariaLabel: string;
+    options: { value: string; label: string }[];
+    error?: ReactNode;
+    placeholder?: string;
   }) => (
-    <div role="radiogroup" aria-label={ariaLabel}>
-      {options.map((option) => (
-        <button
-          key={option.value}
-          aria-pressed={option.value === value}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  ),
-  DialSwitch: ({
-    label,
-    isOn,
-    onChange,
-    switchId,
-  }: {
-    label: ReactNode;
-    isOn: boolean;
-    onChange: (value: boolean) => void;
-    switchId: string;
-  }) => (
-    <label htmlFor={switchId}>
+    <label>
       {label}
-      <input
-        id={switchId}
-        type="checkbox"
-        checked={isOn}
-        onChange={(e) => onChange(e.target.checked)}
-      />
+      <select value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
+        <option value="" disabled hidden>
+          {placeholder}
+        </option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {error && <span>{error}</span>}
     </label>
   ),
+  DialSpinner: () => <div>Loading</div>,
+  LazyDialMarkdownEditor: () =>
+    Promise.resolve({
+      DialMarkdownEditor: ({
+        value,
+        onChange,
+      }: {
+        value: string;
+        onChange: (value: string) => void;
+      }) => (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} />
+      ),
+    }),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconCheck: () => <svg />,
-  IconChevronDown: () => <svg />,
+  IconArrowLeft: () => <svg />,
 }));
 
 const baseValues: ScheduledTaskCreateFormValues = {
@@ -147,11 +151,18 @@ const baseValues: ScheduledTaskCreateFormValues = {
   stream: true,
 };
 
-const renderForm = (overrides?: Partial<ScheduledTaskCreateFormProps>) =>
-  render(
+const renderForm = async (
+  overrides?: Partial<ScheduledTaskCreateFormProps>,
+) => {
+  const result = render(
     <ScheduledTaskCreateForm
       labels={{
-        pageTitle: 'New scheduled task',
+        pageTitle: 'New task',
+        backButtonLabel: 'Back',
+        detailsSectionTitle: 'Details',
+        detailsSectionSubtitle: 'Basic info about this scheduled task',
+        configurationSectionTitle: 'Configuration',
+        configurationSectionSubtitle: 'Write custom instructions',
         displayNameLabel: 'Name',
         displayNameRequired: 'Name is required',
         scheduleSectionLabel: 'Schedule',
@@ -168,41 +179,42 @@ const renderForm = (overrides?: Partial<ScheduledTaskCreateFormProps>) =>
         timeLabel: 'Time',
         dayOfWeekLabel: 'Day of week',
         dayOfMonthLabel: 'Day of month',
-        modelLabel: 'Model',
+        modelOrAgentLabel: 'Model or Agent',
         modelPlaceholder: 'Select a model',
         descriptionLabel: 'Description',
-        promptLabel: 'Prompt',
-        streamLabel: 'Stream',
+        instructionsLabel: 'Instructions',
         cancelButtonLabel: 'Cancel',
-        createButtonLabel: 'Create',
+        createButtonLabel: 'Save',
       }}
       values={baseValues}
       errors={{}}
       modelOptions={[{ id: 'gpt-4o', label: 'GPT-4o' }]}
       onFieldChange={vi.fn()}
+      onBack={vi.fn()}
       onCancel={vi.fn()}
       onSubmit={vi.fn()}
       {...overrides}
     />,
   );
+  await screen.findAllByRole('textbox');
+  return result;
+};
 
 describe('ScheduledTaskCreateForm', () => {
-  it('renders display name, prompt, and stream fields with labels', () => {
-    renderForm();
+  it('renders display name field with label', async () => {
+    await renderForm();
 
     expect(screen.getByText('Name')).toBeTruthy();
-    expect(screen.getByText('Prompt')).toBeTruthy();
-    expect(screen.getByText('Stream')).toBeTruthy();
   });
 
-  it('renders an optional description field', () => {
-    renderForm();
+  it('renders an optional description field', async () => {
+    await renderForm();
 
     expect(screen.getByText('Description')).toBeTruthy();
   });
 
-  it('does not block Create when description is empty', () => {
-    renderForm({
+  it('does not block Save when description is empty', async () => {
+    await renderForm({
       values: {
         ...baseValues,
         displayName: 'Daily summary',
@@ -212,13 +224,13 @@ describe('ScheduledTaskCreateForm', () => {
     });
 
     expect(
-      (screen.getByRole('button', { name: 'Create' }) as HTMLButtonElement)
+      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
         .disabled,
     ).toBe(false);
   });
 
-  it('respects the 500-character limit on the description field', () => {
-    renderForm();
+  it('respects the 500-character limit on the description field', async () => {
+    await renderForm();
 
     expect(
       (screen.getByLabelText('Description') as HTMLTextAreaElement).maxLength,
@@ -227,35 +239,37 @@ describe('ScheduledTaskCreateForm', () => {
 
   it('calls onFieldChange when the description changes', async () => {
     const onFieldChange = vi.fn();
-    renderForm({ onFieldChange });
+    await renderForm({ onFieldChange });
 
     await userEvent.type(screen.getByLabelText('Description'), 'x');
 
     expect(onFieldChange).toHaveBeenCalledWith('description', 'x');
   });
 
-  it('disables Create when displayName is empty', () => {
-    renderForm({
+  it('disables Save when displayName is empty', async () => {
+    await renderForm({
       values: { ...baseValues, modelId: 'gpt-4o', prompt: 'Summarize' },
     });
 
     expect(
-      (screen.getByRole('button', { name: 'Create' }) as HTMLButtonElement)
+      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
   });
 
-  it('disables Create when modelId is empty', () => {
-    renderForm({ values: { ...baseValues, displayName: 'Daily summary' } });
+  it('disables Save when modelId is empty', async () => {
+    await renderForm({
+      values: { ...baseValues, displayName: 'Daily summary' },
+    });
 
     expect(
-      (screen.getByRole('button', { name: 'Create' }) as HTMLButtonElement)
+      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
   });
 
-  it('enables Create when all required fields are filled', () => {
-    renderForm({
+  it('enables Save when all required fields are filled', async () => {
+    await renderForm({
       values: {
         ...baseValues,
         displayName: 'Daily summary',
@@ -265,13 +279,13 @@ describe('ScheduledTaskCreateForm', () => {
     });
 
     expect(
-      (screen.getByRole('button', { name: 'Create' }) as HTMLButtonElement)
+      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
         .disabled,
     ).toBe(false);
   });
 
-  it('disables Create while isSubmitting', () => {
-    renderForm({
+  it('disables Save while isSubmitting', async () => {
+    await renderForm({
       values: {
         ...baseValues,
         displayName: 'Daily summary',
@@ -282,24 +296,55 @@ describe('ScheduledTaskCreateForm', () => {
     });
 
     expect(
-      (screen.getByRole('button', { name: 'Create' }) as HTMLButtonElement)
+      (screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement)
         .disabled,
     ).toBe(true);
   });
 
-  it('calls onFieldChange when the prompt changes', async () => {
-    const onFieldChange = vi.fn();
-    renderForm({ onFieldChange });
+  it('renders Details and Configuration as two distinct regions', async () => {
+    await renderForm();
 
-    await userEvent.type(screen.getByLabelText('Prompt'), 'x');
+    expect(screen.getByRole('group', { name: 'Details' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Configuration' })).toBeTruthy();
+  });
+
+  it('calls onFieldChange when the instructions editor changes', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({ onFieldChange });
+
+    const configuration = screen.getByRole('group', {
+      name: 'Configuration',
+    });
+    const editor = within(configuration).getByRole('textbox');
+    await userEvent.type(editor, 'x');
 
     expect(onFieldChange).toHaveBeenCalledWith('prompt', 'x');
+  });
+
+  it('calls onBack without calling onSubmit', async () => {
+    const onBack = vi.fn();
+    const onSubmit = vi.fn();
+    await renderForm({
+      onBack,
+      onSubmit,
+      values: {
+        ...baseValues,
+        displayName: 'Daily summary',
+        modelId: 'gpt-4o',
+        prompt: 'Summarize my inbox',
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it('calls onCancel and onSubmit', async () => {
     const onCancel = vi.fn();
     const onSubmit = vi.fn();
-    renderForm({
+    await renderForm({
       onCancel,
       onSubmit,
       values: {
@@ -311,14 +356,14 @@ describe('ScheduledTaskCreateForm', () => {
     });
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(onCancel).toHaveBeenCalledOnce();
     expect(onSubmit).toHaveBeenCalledOnce();
   });
 
-  it('renders run-at instead of frequency/time when scheduleType is once', () => {
-    renderForm({
+  it('renders run-at instead of frequency/time when scheduleType is once', async () => {
+    await renderForm({
       values: { ...baseValues, scheduleType: ScheduledTaskScheduleType.Once },
     });
 
@@ -326,8 +371,8 @@ describe('ScheduledTaskCreateForm', () => {
     expect(screen.queryByText('Time')).toBeNull();
   });
 
-  it('renders day-of-week only when frequency is weekly', () => {
-    renderForm({
+  it('renders day-of-week only when frequency is weekly', async () => {
+    await renderForm({
       values: { ...baseValues, frequency: ScheduledTaskFrequency.Weekly },
     });
 

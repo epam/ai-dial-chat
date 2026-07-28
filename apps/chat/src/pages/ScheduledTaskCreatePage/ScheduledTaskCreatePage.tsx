@@ -19,8 +19,10 @@ import {
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useTheme } from '../../context/ThemeContext';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
+import { ThemeId } from '../../types/theme-id';
 import { mapFormValuesToCreateBody } from '../../utils/scheduled-task-trigger';
 import NotFoundPage from '../NotFound/NotFound';
 
@@ -68,6 +70,10 @@ const ScheduledTaskCreatePage: FC = () => {
   const [searchParams] = useSearchParams();
   const { items: deploymentItems } = useDeployments();
   const { showNotification } = useNotification();
+  const { currentTheme } = useTheme();
+
+  const markdownEditorTheme: 'light' | 'dark' =
+    currentTheme === ThemeId.Dark ? 'dark' : 'light';
 
   const [values, setValues] =
     useState<ScheduledTaskCreateFormValues>(DEFAULT_VALUES);
@@ -92,6 +98,17 @@ const ScheduledTaskCreatePage: FC = () => {
   const labels = useMemo(
     () => ({
       pageTitle: t(ScheduledTasksI18nKeys.CreatePageTitle),
+      backButtonLabel: t(ScheduledTasksI18nKeys.CreateBackButtonLabel),
+      detailsSectionTitle: t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle),
+      detailsSectionSubtitle: t(
+        ScheduledTasksI18nKeys.CreateDetailsSectionSubtitle,
+      ),
+      configurationSectionTitle: t(
+        ScheduledTasksI18nKeys.CreateConfigurationSectionTitle,
+      ),
+      configurationSectionSubtitle: t(
+        ScheduledTasksI18nKeys.CreateConfigurationSectionSubtitle,
+      ),
       displayNameLabel: t(EditorI18nKeys.NameLabel),
       displayNameRequired: t(EditorI18nKeys.NameRequired),
       scheduleSectionLabel: t(
@@ -123,13 +140,12 @@ const ScheduledTaskCreatePage: FC = () => {
       timeLabel: t(ScheduledTasksI18nKeys.CreateTimeLabel),
       dayOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDayOfWeekLabel),
       dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
-      modelLabel: t(ScheduledTasksI18nKeys.CreateModelLabel),
+      modelOrAgentLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
       modelPlaceholder: t(ScheduledTasksI18nKeys.CreateModelPlaceholder),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),
-      promptLabel: t(ScheduledTasksI18nKeys.CreatePromptLabel),
-      streamLabel: t(ScheduledTasksI18nKeys.CreateStreamLabel),
+      instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
       cancelButtonLabel: t(ButtonsI18nKeys.Cancel),
-      createButtonLabel: t(ButtonsI18nKeys.Create),
+      createButtonLabel: t(ButtonsI18nKeys.Save),
     }),
     [t],
   );
@@ -151,6 +167,10 @@ const ScheduledTaskCreatePage: FC = () => {
   );
 
   const handleCancel = useCallback(() => {
+    navigate(returnUrl);
+  }, [navigate, returnUrl]);
+
+  const handleBack = useCallback(() => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
 
@@ -244,9 +264,11 @@ const ScheduledTaskCreatePage: FC = () => {
       errors={errors}
       modelOptions={modelOptions}
       onFieldChange={handleFieldChange}
+      onBack={handleBack}
       onCancel={handleCancel}
       onSubmit={() => void handleSubmit()}
       isSubmitting={isSubmitting}
+      markdownEditorTheme={markdownEditorTheme}
     />
   );
 };
