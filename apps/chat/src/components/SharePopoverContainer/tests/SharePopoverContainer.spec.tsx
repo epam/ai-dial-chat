@@ -60,7 +60,7 @@ describe('SharePopoverContainer', () => {
 
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Application)}
+        item={makeItem(CatalogEntityType.Agent)}
         onClose={vi.fn()}
       />,
     );
@@ -85,7 +85,7 @@ describe('SharePopoverContainer', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Application)}
+        item={makeItem(CatalogEntityType.Agent)}
         onClose={vi.fn()}
       />,
     );

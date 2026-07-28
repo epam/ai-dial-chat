@@ -19,12 +19,13 @@ import { DEFAULT_ENABLED_UI_FEATURES } from '../../../constants/ui-features';
 import { useAppConfig } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
+import {
+  FavoriteEntityType,
+  useFavoriteApplications,
+} from '../../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
-import useFavoriteApplications, {
-  FavoriteEntityType,
-} from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
@@ -356,6 +357,13 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
 
+vi.mock('../../../context/FavoriteApplicationsContext', () => ({
+  FavoriteEntityType: {
+    Deployment: 'deployment',
+    Toolset: 'toolset',
+  },
+  useFavoriteApplications: vi.fn(),
+}));
 vi.mock('../../../hooks/useUiFeature', async () => {
   const { DEFAULT_ENABLED_UI_FEATURES } =
     await import('../../../constants/ui-features');
@@ -601,18 +609,6 @@ describe('CatalogView', () => {
       );
     });
 
-    it('rejects when the entity type is not publishable', async () => {
-      render(<CatalogView />);
-
-      await expect(
-        capturedPublishProps.current?.onPublish?.(
-          makeCatalogItem({ type: CatalogEntityType.Agent }),
-          ['Organization'],
-        ),
-      ).rejects.toThrow();
-      expect(publishCatalogEntity).not.toHaveBeenCalled();
-    });
-
     it('propagates a publish API failure (e.g. 403) to the caller', async () => {
       vi.mocked(publishCatalogEntity).mockRejectedValue(new Error('Forbidden'));
 
@@ -646,11 +642,6 @@ describe('CatalogView', () => {
           makeCatalogItem({ isMyApp: false }),
         ),
       ).toBe(false);
-      expect(
-        capturedPublishProps.current?.isPublishVisible?.(
-          makeCatalogItem({ type: CatalogEntityType.Agent }),
-        ),
-      ).toBe(false);
     });
   });
 
@@ -671,7 +662,7 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isConnectVisible?.(
           makeCatalogItem({
-            type: CatalogEntityType.Application,
+            type: CatalogEntityType.Agent,
             supportsMcp: true,
           }),
         ),
@@ -684,7 +675,7 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isConnectVisible?.(
           makeCatalogItem({
-            type: CatalogEntityType.Application,
+            type: CatalogEntityType.Agent,
             supportsMcp: false,
           }),
         ),
@@ -728,7 +719,7 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isConnectVisible?.(
           makeCatalogItem({
-            type: CatalogEntityType.Application,
+            type: CatalogEntityType.Agent,
             supportsMcp: true,
           }),
         ),
@@ -769,7 +760,7 @@ describe('CatalogView', () => {
 
       expect(
         capturedPublishProps.current?.isShareVisible?.(
-          makeCatalogItem({ type: CatalogEntityType.Application }),
+          makeCatalogItem({ type: CatalogEntityType.Agent }),
         ),
       ).toBe(false);
       expect(

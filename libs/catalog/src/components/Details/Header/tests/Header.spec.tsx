@@ -98,17 +98,12 @@ describe('Header', () => {
   });
 
   it('renders Use in chat for an Application item', () => {
-    render(<Header item={makeItem(CatalogEntityType.Application)} />);
+    render(<Header item={makeItem(CatalogEntityType.Agent)} />);
     expect(screen.getByRole('button', { name: 'Use in chat' })).toBeTruthy();
   });
 
   it('does not render Use in chat for a Toolset item', () => {
     render(<Header item={makeItem(CatalogEntityType.Toolset)} />);
-    expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
-  });
-
-  it('does not render Use in chat for non-selectable entity types by default', () => {
-    render(<Header item={makeItem(CatalogEntityType.Agent)} />);
     expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
   });
 
@@ -202,7 +197,7 @@ describe('Header', () => {
   it('does not render Edit when onEdit is not supplied', () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Application), isEditable: true }}
+        item={{ ...makeItem(CatalogEntityType.Agent), isEditable: true }}
       />,
     );
     expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
@@ -211,7 +206,7 @@ describe('Header', () => {
   it('does not render Edit when the item is not editable', () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Application), isEditable: false }}
+        item={{ ...makeItem(CatalogEntityType.Agent), isEditable: false }}
         onEdit={vi.fn()}
       />,
     );
@@ -221,7 +216,7 @@ describe('Header', () => {
   it('renders Edit when onEdit is supplied and the item is editable', () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Application), isEditable: true }}
+        item={{ ...makeItem(CatalogEntityType.Agent), isEditable: true }}
         onEdit={vi.fn()}
       />,
     );
@@ -231,7 +226,7 @@ describe('Header', () => {
   it('uses editActionLabel for the Edit button label', () => {
     render(
       <Header
-        item={{ ...makeItem(CatalogEntityType.Application), isEditable: true }}
+        item={{ ...makeItem(CatalogEntityType.Agent), isEditable: true }}
         onEdit={vi.fn()}
         texts={{ editActionLabel: 'Modify' }}
       />,
@@ -242,7 +237,7 @@ describe('Header', () => {
   it('calls onEdit with the item when Edit is clicked', async () => {
     const onEdit = vi.fn();
     const item = {
-      ...makeItem(CatalogEntityType.Application),
+      ...makeItem(CatalogEntityType.Agent),
       isEditable: true,
     };
     render(<Header item={item} onEdit={onEdit} />);
