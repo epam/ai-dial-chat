@@ -451,6 +451,7 @@ export enum SideBarI18nKeys {
   Models = 'Models',
   Topics = 'Topics',
   Sources = 'Sources',
+  Authentication = 'Authentication',
   FiltersSideBar = 'Filters',
   NoFiltersAgents = 'No filters as you currently have no agents',
   NoFiltersToolsets = 'No filters as you currently have no toolsets',

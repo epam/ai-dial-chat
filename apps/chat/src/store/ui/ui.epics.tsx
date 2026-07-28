@@ -78,6 +78,7 @@ const initEpic: AppEpic = (action$, state$) =>
           [FilterTypes.ENTITY_TYPE]: true,
           [FilterTypes.TOPICS]: true,
           [FilterTypes.SOURCES]: true,
+          [FilterTypes.AUTH]: true,
         }),
 
         toolsetFilterPanelState: DataService.getToolsetFilterPanelCollapseState(
@@ -85,6 +86,7 @@ const initEpic: AppEpic = (action$, state$) =>
             [FilterTypes.ENTITY_TYPE]: false,
             [FilterTypes.TOPICS]: true,
             [FilterTypes.SOURCES]: true,
+            [FilterTypes.AUTH]: true,
           },
         ),
       });
