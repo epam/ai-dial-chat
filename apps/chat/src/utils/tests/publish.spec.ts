@@ -18,7 +18,7 @@ describe('toPublishEntityType', () => {
   });
 
   it('maps Application to the publish API application enum value', () => {
-    expect(toPublishEntityType(CatalogEntityType.Application)).toBe(
+    expect(toPublishEntityType(CatalogEntityType.Agent)).toBe(
       CatalogPublishEntityType.Application,
     );
   });

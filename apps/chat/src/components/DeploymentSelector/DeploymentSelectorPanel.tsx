@@ -121,7 +121,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
         (f) =>
           f.type === CatalogEntityType.Model ||
           f.type === CatalogEntityType.Agent ||
-          f.type === CatalogEntityType.Application,
+          f.type === CatalogEntityType.Agent,
       ),
     [favorites],
   );

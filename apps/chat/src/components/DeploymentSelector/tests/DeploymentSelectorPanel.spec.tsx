@@ -36,7 +36,7 @@ const renderPanel = (
 
 describe('DeploymentSelectorPanel', () => {
   it('shows a favorited Application in the list', () => {
-    renderPanel([makeItem('app-1', CatalogEntityType.Application)]);
+    renderPanel([makeItem('app-1', CatalogEntityType.Agent)]);
 
     expect(screen.getByRole('button', { name: /app-1/ })).toBeTruthy();
   });
@@ -67,7 +67,7 @@ describe('DeploymentSelectorPanel', () => {
   it('shows Models and Applications together', () => {
     renderPanel([
       makeItem('model-1', CatalogEntityType.Model),
-      makeItem('app-1', CatalogEntityType.Application),
+      makeItem('app-1', CatalogEntityType.Agent),
       makeItem('toolset-1', CatalogEntityType.Toolset),
     ]);
 

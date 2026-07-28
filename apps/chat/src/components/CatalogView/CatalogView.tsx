@@ -66,7 +66,6 @@ import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContaine
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
   CatalogEntityType.Model,
-  CatalogEntityType.Application,
   CatalogEntityType.Agent,
 ]);
 
@@ -431,7 +430,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const isPrimaryActionVisible = useCallback(
     (item: CatalogItem) =>
       item.type === CatalogEntityType.Model ||
-      item.type === CatalogEntityType.Application,
+      item.type === CatalogEntityType.Agent,
     [],
   );
 
@@ -445,9 +444,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     (item: CatalogItem) => {
       if (!dialCoreExternalUrl) return false;
       if (item.type === CatalogEntityType.Toolset) return true;
-      return (
-        item.type === CatalogEntityType.Application && item.supportsMcp === true
-      );
+      return item.type === CatalogEntityType.Agent && item.supportsMcp === true;
     },
     [dialCoreExternalUrl],
   );
@@ -663,7 +660,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         ariaLabel: t(NavigationI18nKeys.Catalog),
         tabLabels: {
           [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
-          [CatalogEntityType.Application]: t(CatalogI18nKeys.TabApplications),
+          [CatalogEntityType.Agent]: t(CatalogI18nKeys.TabApplications),
           [CatalogEntityType.Toolset]: t(CatalogI18nKeys.TabToolsets),
         },
       }}

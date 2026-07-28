@@ -649,7 +649,7 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isConnectVisible?.(
           makeCatalogItem({
-            type: CatalogEntityType.Application,
+            type: CatalogEntityType.Agent,
             supportsMcp: true,
           }),
         ),
@@ -662,7 +662,7 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isConnectVisible?.(
           makeCatalogItem({
-            type: CatalogEntityType.Application,
+            type: CatalogEntityType.Agent,
             supportsMcp: false,
           }),
         ),
@@ -705,7 +705,7 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isConnectVisible?.(
           makeCatalogItem({
-            type: CatalogEntityType.Application,
+            type: CatalogEntityType.Agent,
             supportsMcp: true,
           }),
         ),
