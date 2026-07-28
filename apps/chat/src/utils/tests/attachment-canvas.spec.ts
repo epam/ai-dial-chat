@@ -1,18 +1,26 @@
 import {
   AttachmentContentType,
   AttachmentErrorType,
+  isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearAttachmentCache,
+  isExternalSourcePreviewable,
   referenceAttachmentToPdfCanvasContent,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
   resolvePdfCanvasContent,
 } from '../attachment-canvas';
+
+vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
+  return { ...actual, isTextPreviewable: vi.fn() };
+});
 
 vi.mock('../dial-file', () => {
   const resolveDialFileDownloadUrl = (url: string) =>
@@ -583,5 +591,69 @@ describe('resolvePdfCanvasContent', () => {
       status: RequestStatus.Idle,
     });
     expect(result).toBeNull();
+  });
+});
+
+describe('isExternalSourcePreviewable', () => {
+  beforeEach(() => {
+    vi.mocked(isTextPreviewable).mockReturnValue(false);
+  });
+
+  it('returns true for an image/* content type regardless of url', () => {
+    expect(
+      isExternalSourcePreviewable('image/jpeg', 'https://example.com/photo'),
+    ).toBe(true);
+  });
+
+  it('returns true for an audio/* content type regardless of url', () => {
+    expect(
+      isExternalSourcePreviewable(
+        'audio/mpeg',
+        'https://example.com/track.mp3',
+      ),
+    ).toBe(true);
+  });
+
+  it('returns true for a url whose path ends with .pdf', () => {
+    expect(
+      isExternalSourcePreviewable(
+        'application/octet-stream',
+        'https://example.com/files/report.pdf',
+      ),
+    ).toBe(true);
+  });
+
+  it('returns true when isTextPreviewable reports the filename is previewable', () => {
+    vi.mocked(isTextPreviewable).mockReturnValue(true);
+    expect(
+      isExternalSourcePreviewable(
+        'text/markdown',
+        'https://example.com/files/readme.md',
+      ),
+    ).toBe(true);
+  });
+
+  it('returns false when the url path has no file extension', () => {
+    expect(
+      isExternalSourcePreviewable(
+        'text/html',
+        'https://example.com/page/about',
+      ),
+    ).toBe(false);
+  });
+
+  it('returns false for a url that cannot be parsed', () => {
+    expect(isExternalSourcePreviewable('text/html', 'not a valid url')).toBe(
+      false,
+    );
+  });
+
+  it('returns false when the extension is not previewable and content type is not image or audio', () => {
+    expect(
+      isExternalSourcePreviewable(
+        'application/zip',
+        'https://example.com/archive.zip',
+      ),
+    ).toBe(false);
   });
 });

@@ -2,7 +2,7 @@ import {
   AttachmentCanvasContainer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
+import { CodeBlockTheme, OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
 import {
   lazy,
@@ -49,6 +49,7 @@ import { useConversationListBridge } from '../hooks/conversation/useConversation
 import usePanelMaxWidth, {
   MIN_CONTENT_AREA_WIDTH,
 } from '../hooks/usePanelMaxWidth';
+import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
@@ -141,6 +142,13 @@ const App: FC = () => {
   const closeNav = useCallback(() => setIsNavOpen(false), []);
   const toggleNav = useCallback(() => setIsNavOpen((prev) => !prev), []);
 
+  const isConversationsSectionOpenByDefault = useUiFeature(
+    OverlayFeature.ShowConversationsSectionByDefault,
+  );
+  const isAttachmentsManagerEnabled = useUiFeature(
+    OverlayFeature.AttachmentsManager,
+  );
+
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
   const { isPanelOpen, openPanel, closePanel } = useConversationPanel();
@@ -165,9 +173,9 @@ const App: FC = () => {
     ) {
       closePanel();
     } else if (!isMobile && !isCanvasOpen) {
-      openPanel();
+      isConversationsSectionOpenByDefault ? openPanel() : closePanel();
     }
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pathname, isConversationsSectionOpenByDefault]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Safety net for openCanvas call sites that bypass useOpenAttachmentCanvas
      (e.g. citation preview, collapsed stage attachments). */
@@ -379,7 +387,7 @@ const App: FC = () => {
           </Routes>
         </main>
         {isConversationRoute && <ConversationSourcesPanel />}
-        {isConversationRoute && (
+        {isConversationRoute && isAttachmentsManagerEnabled && (
           <AttachmentCanvasContainer
             labels={{
               ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),

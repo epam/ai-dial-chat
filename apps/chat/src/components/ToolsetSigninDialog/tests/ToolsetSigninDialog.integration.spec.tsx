@@ -13,6 +13,7 @@ import {
 } from '../../../context/ClientChannelContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useToolsetLogin } from '../../../hooks/toolsets/useToolsetLogin';
+import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
   reportClientChannel,
   subscribeClientChannel,
@@ -28,6 +29,7 @@ vi.mock('../../../context/AppConfigContext', () => ({
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
 }));
+vi.mock('../../../hooks/useUiFeature');
 vi.mock('../../../hooks/toolsets/useToolsetLogin', async (importOriginal) => {
   const actual =
     await importOriginal<
@@ -46,6 +48,7 @@ vi.mock('../../../server-api/client-channel', () => ({
 }));
 
 const mockUseFeatureFlag = vi.mocked(useFeatureFlag);
+const mockUseUiFeature = vi.mocked(useUiFeature);
 const mockUseDeployments = vi.mocked(useDeployments);
 const mockUseToolsetLogin = vi.mocked(useToolsetLogin);
 const mockGetToolset = vi.mocked(getToolset);
@@ -114,6 +117,7 @@ describe('ToolsetSigninDialog — integration with the real ClientChannelProvide
     vi.clearAllMocks();
     mockGetToolset.mockRejectedValue(new Error('not found'));
     mockUseFeatureFlag.mockReturnValue(true);
+    mockUseUiFeature.mockReturnValue(true);
     mockUnsubscribe.mockResolvedValue(undefined);
     mockReport.mockResolvedValue(undefined);
     mockUseDeployments.mockReturnValue(

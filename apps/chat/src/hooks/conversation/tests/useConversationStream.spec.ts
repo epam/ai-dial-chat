@@ -50,6 +50,14 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ setTheme: vi.fn() }),
 }));
 
+vi.mock('../../../context/UiFeaturesContext', () => ({
+  useUiFeatures: () => ({
+    isEnabled: () => true,
+    enabledFeatures: new Set(),
+    applyOverlayOverride: vi.fn(),
+  }),
+}));
+
 vi.mock('../../../server-api/chat-stream.api', () => ({
   streamCompletion: vi.fn(),
   stopCompletion: vi.fn().mockResolvedValue(undefined),

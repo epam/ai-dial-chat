@@ -8,7 +8,7 @@ Specifies the "Network unavailable" notification shown when attachment uploads f
 
 ### Requirement: Show "Network unavailable" notification when uploads fail offline
 
-When one or more attachment uploads fail and `navigator.onLine` is `false` at the time of failure, the app SHALL show a single top-center `DialNotification` (variant `Error`) listing all filenames that failed in the same burst (debounced within 100 ms).
+When one or more attachment uploads fail and `navigator.onLine` is `false` at the time of failure, the app SHALL show a single top-center `Notification` (variant `Error`) listing all filenames that failed in the same burst (debounced within 100 ms).
 
 The notification SHALL have:
 - **title**: i18n key `attachments.networkError.title` → "Network unavailable"
@@ -28,13 +28,13 @@ The network error path covers both the existing-conversation page (`Conversation
 
 **RTL**: the notification renders inside the existing `NotificationContainer` (top-center portal with `start-1/2 -translate-x-1/2`); no directional changes needed.
 
-**Accessibility**: `DialNotification` already carries `role="alert"` / `aria-live`; no additional ARIA required.
+**Accessibility**: `Notification` already carries `role="alert"` / `aria-live`; no additional ARIA required.
 
 #### Scenario: Single upload fails while offline
 
 - **WHEN** `onUploadAttachment` rejects for one attachment AND `navigator.onLine` is `false`
 - **THEN** the attachment card enters `status: RequestStatus.Error` with `errorReason: AttachmentErrorReason.Network`
-- **AND** a "Network unavailable" `DialNotification` appears listing that attachment's filename
+- **AND** a "Network unavailable" `Notification` appears listing that attachment's filename
 
 #### Scenario: Multiple simultaneous uploads fail while offline
 

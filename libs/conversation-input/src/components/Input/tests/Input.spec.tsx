@@ -622,6 +622,88 @@ describe('Input — isModelSelectorDisabled', () => {
   });
 });
 
+describe('Input — isSendDisabled', () => {
+  it('disables the send button without disabling typing', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input
+        message="Hello"
+        onSend={handleSend}
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        isSendDisabled
+      />,
+    );
+    expect(screen.getByLabelText('Send message').hasAttribute('disabled')).toBe(
+      true,
+    );
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.disabled).toBe(false);
+  });
+
+  it('does not fire onSend on Enter when send is disabled', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input
+        message="Hello"
+        onSend={handleSend}
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        isSendDisabled
+      />,
+    );
+    const textarea = container.querySelector('textarea');
+
+    if (textarea) {
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
+  it('passes canSend false to custom footer actions and blocks their onSend helper', () => {
+    const handleSend = vi.fn();
+    let footerCanSend: boolean | undefined;
+
+    render(
+      <Input
+        message="Hello"
+        onSend={handleSend}
+        isSendDisabled
+        renderFooterActions={({ canSend, onSend }) => {
+          footerCanSend = canSend;
+          return (
+            <button type="button" onClick={onSend}>
+              Custom send
+            </button>
+          );
+        }}
+      />,
+    );
+
+    expect(footerCanSend).toBe(false);
+    fireEvent.click(screen.getByText('Custom send'));
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
+  it('does not disable the send button when isSendDisabled is false', () => {
+    render(
+      <Input
+        message="Hello"
+        deployments={mockItems}
+        selectedDeploymentId="gpt-4o"
+        onDeploymentChange={vi.fn()}
+        isSendDisabled={false}
+      />,
+    );
+    expect(screen.getByLabelText('Send message').hasAttribute('disabled')).toBe(
+      false,
+    );
+  });
+});
+
 describe('Input — isInputDisabled', () => {
   it('textarea has disabled attribute when isInputDisabled is true', () => {
     const { container } = render(<Input isInputDisabled />);

@@ -20,8 +20,12 @@ import { AuthStatus } from '../../types/auth-status';
 interface UserContextType {
   status: AuthStatus;
   user: UserProfile | null;
-  refresh: () => Promise<void>;
+  refresh: (options?: UserRefreshOptions) => Promise<AuthStatus>;
   reset: () => void;
+}
+
+interface UserRefreshOptions {
+  setLoading?: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -45,28 +49,34 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const bootstrap = useCallback(
-    async (signal: { isCancelled: boolean }) => {
-      setStatus(AuthStatus.Loading);
+    async (signal: { isCancelled: boolean }, options?: UserRefreshOptions) => {
+      if (options?.setLoading !== false) {
+        setStatus(AuthStatus.Loading);
+      }
       try {
         const profile = await getMe();
-        if (!signal.isCancelled) {
-          setUser(profile);
-          setStatus(AuthStatus.Authenticated);
+        if (signal.isCancelled) {
+          return AuthStatus.Loading;
         }
+        setUser(profile);
+        setStatus(AuthStatus.Authenticated);
+        return AuthStatus.Authenticated;
       } catch (err) {
-        if (!signal.isCancelled) {
-          if (!(err instanceof UnauthorizedError)) {
-            /*
-             * Keep CSRF across transient bootstrap failures; mutating requests
-             * re-prime it through the invalid-CSRF retry path if it became stale.
-             */
-            console.error('UserContext bootstrap failed', err);
-            setUser(null);
-            setStatus(AuthStatus.Unauthenticated);
-          } else {
-            invalidateSession();
-          }
+        if (signal.isCancelled) {
+          return AuthStatus.Loading;
         }
+        if (!(err instanceof UnauthorizedError)) {
+          /*
+           * Keep CSRF across transient bootstrap failures; mutating requests
+           * re-prime it through the invalid-CSRF retry path if it became stale.
+           */
+          console.error('UserContext bootstrap failed', err);
+          setUser(null);
+          setStatus(AuthStatus.Unauthenticated);
+        } else {
+          invalidateSession();
+        }
+        return AuthStatus.Unauthenticated;
       }
     },
     [invalidateSession],
@@ -90,9 +100,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     invalidateSession();
   }, [invalidateSession]);
 
-  const refresh = useCallback(async () => {
-    await bootstrap({ isCancelled: false });
-  }, [bootstrap]);
+  const refresh = useCallback(
+    (options?: UserRefreshOptions): Promise<AuthStatus> =>
+      bootstrap({ isCancelled: false }, options),
+    [bootstrap],
+  );
 
   /*
    * Read through refs inside the focus/visibility handler so the listeners

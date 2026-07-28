@@ -43,6 +43,14 @@ vi.mock('../../context/overlay/OverlayContext', () => ({
   useOptionalOverlay: () => overlayMocks.current,
 }));
 vi.mock('../../hooks/keyboard-shortcut/useKeyboardShortcutPreference');
+vi.mock('../../hooks/useUiFeature', async () => {
+  const { DEFAULT_ENABLED_UI_FEATURES } =
+    await import('../../constants/ui-features');
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useUiFeature: (feature: any) => DEFAULT_ENABLED_UI_FEATURES.has(feature),
+  };
+});
 vi.mock('../../hooks/conversation/useToolsMenu', () => ({
   useToolsMenu: vi.fn(),
 }));

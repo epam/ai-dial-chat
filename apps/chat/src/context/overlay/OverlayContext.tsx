@@ -11,6 +11,7 @@ import {
   type OverlayMessageRequest,
   type OverlayMessageResponse,
   OverlayEventType,
+  OverlayFeature,
   OverlayRequestType,
   type RenameConversationPayload,
   type RenameConversationResponse,
@@ -39,10 +40,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getConversationRoute } from '../../constants/routes';
 import { AuthStatus } from '../../types/auth-status';
+import { UserConfigStatus } from '../../types/user-config-status';
 import { conversationIdsMatch } from '../../utils/conversation-id-match';
 import { useAppConfig } from '../AppConfigContext';
 import { useUser } from '../auth/UserContext';
 import { useTheme } from '../ThemeContext';
+import { useUiFeatures } from '../UiFeaturesContext';
 
 /**
  * Read/write surface backed by whichever conversation `ConversationPage`
@@ -141,6 +144,7 @@ const CONVERSATION_LIST_REQUEST_TYPES: ReadonlySet<OverlayRequestType> =
   ]);
 
 const DEFAULT_PENDING_BRIDGE_REQUEST_TIMEOUT_MS = 10000;
+const KNOWN_OVERLAY_FEATURES = new Set<string>(Object.values(OverlayFeature));
 
 interface PendingBridgeRequest {
   request: OverlayMessageRequest;
@@ -222,6 +226,15 @@ const hasOptionalStringField = (
 ): boolean =>
   !(key in payload) || payload[key] == null || typeof payload[key] === 'string';
 
+const hasOptionalStringArrayField = (
+  payload: Record<string, unknown>,
+  key: keyof SetOverlayOptionsPayload,
+): boolean =>
+  !(key in payload) ||
+  payload[key] == null ||
+  (Array.isArray(payload[key]) &&
+    (payload[key] as unknown[]).every((entry) => typeof entry === 'string'));
+
 const hasSetOverlayOptionsPayload = (
   payload: unknown,
 ): payload is Partial<SetOverlayOptionsPayload> | null | undefined => {
@@ -235,7 +248,8 @@ const hasSetOverlayOptionsPayload = (
     hasOptionalStringField(payload, 'hostDomain') &&
     hasOptionalStringField(payload, 'theme') &&
     hasOptionalStringField(payload, 'modelId') &&
-    hasOptionalStringField(payload, 'overlayConversationId')
+    hasOptionalStringField(payload, 'overlayConversationId') &&
+    hasOptionalStringArrayField(payload, 'enabledFeatures')
   );
 };
 
@@ -279,14 +293,33 @@ const logOverlayWarning = (message: string, error?: unknown): void => {
   console.warn(`Overlay: ${message}`);
 };
 
+const logUnknownEnabledFeatures = (features: readonly string[]): void => {
+  const warnedFeatures = new Set<string>();
+  features.forEach((feature) => {
+    if (KNOWN_OVERLAY_FEATURES.has(feature) || warnedFeatures.has(feature)) {
+      return;
+    }
+    warnedFeatures.add(feature);
+    logOverlayWarning(`ignored unknown enabledFeatures entry: "${feature}"`);
+  });
+};
+
 /**
  * Detects whether overlay mode is reachable: the runtime config flag is on
  * and the app is actually framed. Does not validate the framing origin —
  * that happens server-side (CSP `frame-ancestors`) and again on the
  * `SET_OVERLAY_OPTIONS` handshake message.
  */
+const isWindowFramed = (): boolean =>
+  typeof window !== 'undefined' && window.self !== window.top;
+
 export const isOverlayModeEligible = (overlayEnabled: boolean): boolean =>
-  overlayEnabled && typeof window !== 'undefined' && window.self !== window.top;
+  overlayEnabled && isWindowFramed();
+
+export const shouldDeferOverlayModeUntilConfigReady = (
+  status: UserConfigStatus,
+  isFramed = isWindowFramed(),
+): boolean => status === UserConfigStatus.Loading && isFramed;
 
 /**
  * Owns overlay-mode state: the `window` `message` listener, the handshake
@@ -300,6 +333,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
   } = useAppConfig();
   const { status: authStatus } = useUser();
   const { setTheme } = useTheme();
+  const { applyOverlayOverride } = useUiFeatures();
   const navigate = useNavigate();
 
   const hostDomainRef = useRef<string | null>(null);
@@ -713,6 +747,13 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       if (payload?.overlayConversationId) {
         navigate(getConversationRoute(payload.overlayConversationId));
       }
+      if (payload?.enabledFeatures !== undefined) {
+        const enabledFeatures = payload.enabledFeatures;
+        if (enabledFeatures != null) {
+          logUnknownEnabledFeatures(enabledFeatures);
+        }
+        applyOverlayOverride(enabledFeatures);
+      }
 
       const responsePayload: SetOverlayOptionsResponse = { applied: true };
       postToHost({
@@ -725,6 +766,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
     [
       overlayAllowedOrigins,
       setTheme,
+      applyOverlayOverride,
       navigate,
       postToHost,
       flushConversationLoadedEvent,
@@ -863,8 +905,13 @@ export const useOptionalOverlay = (): OverlayContextType | undefined =>
  */
 export const OverlayModeGate: FC<{ children: ReactNode }> = ({ children }) => {
   const {
+    status,
     config: { overlayEnabled },
   } = useAppConfig();
+
+  if (shouldDeferOverlayModeUntilConfigReady(status)) {
+    return null;
+  }
 
   if (!isOverlayModeEligible(overlayEnabled)) {
     return children;

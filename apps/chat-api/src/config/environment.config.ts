@@ -92,10 +92,11 @@ export class EnvironmentVariables {
   AUTH_TRANSACTION_COOKIE_NAME?: string = '__Host-chat.tx';
 
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
   })
   @IsBoolean()
   AUTH_COOKIE_SECURE?: boolean = true;
@@ -648,6 +649,18 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   FILE_MANAGER_AVAILABLE_TABS?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return null;
+    const parts = String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+    return parts.length > 0 ? parts : null;
+  })
+  @IsString({ each: true })
+  ENABLED_UI_FEATURES?: string[] | null = null;
 
   @IsOptional()
   @Transform(({ value }) => {

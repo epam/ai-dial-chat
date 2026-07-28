@@ -11,7 +11,9 @@ const Logo: FC = () => {
   const { t } = useTranslation();
   const { currentThemeLogo, currentThemeFavicon } = useTheme();
 
-  if (!currentThemeLogo && !currentThemeFavicon) return null;
+  if (!currentThemeLogo && !currentThemeFavicon) {
+    return null;
+  }
 
   return (
     <a href="/" aria-label={t(ChatI18nKeys.Logo)} className="flex items-center">

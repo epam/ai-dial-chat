@@ -482,6 +482,27 @@ describe('AppsEditor', () => {
       });
     });
 
+    it('includes display_version in triggerSave when the version field is set', async () => {
+      generalFormGetValues.mockReturnValue({
+        name: 'App',
+        display_version: '2.0',
+      });
+      renderEditor('step=general&schema=quickapps2-schema&appId=existing-app');
+
+      act(() => {
+        latestGeneralFormProps?.onCreated('existing-app', 'App', undefined);
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: EditorI18nKeys.SaveButton }),
+      );
+
+      expect(settingsStepTriggerSave).toHaveBeenCalledWith({
+        name: 'App',
+        display_version: '2.0',
+      });
+    });
+
     it('does not include a general payload when saving a brand-new app created in this session', async () => {
       renderEditor('step=general&schema=quickapps2-schema');
 

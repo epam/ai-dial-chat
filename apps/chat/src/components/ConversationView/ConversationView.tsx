@@ -3,6 +3,7 @@ import {
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
+  OverlayFeature,
   StatusEvent,
   type Annotation,
   type Attachment,
@@ -22,10 +23,10 @@ import type {
 } from '@epam/ai-dial-conversation-messages';
 import { NeutralButton } from '@epam/ai-dial-kit';
 import {
-  DialFabButton,
-  DialNotification,
-  NotificationVariant,
   DIAL_ICON_SIZE,
+  DialFabButton,
+  ErrorMessageNotification,
+  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -61,6 +62,7 @@ import { useConversationScroll } from '../../hooks/conversation/useConversationS
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import {
   dialFilesToAttachments,
@@ -181,6 +183,14 @@ const ConversationView: FC<Props> = ({
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
+  const isDisallowChangeAgentEnabled = useUiFeature(
+    OverlayFeature.DisallowChangeAgent,
+  );
+  const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
+  const isSkipFocusChatInputOnloadEnabled = useUiFeature(
+    OverlayFeature.SkipFocusChatInputOnload,
+  );
+  const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -596,7 +606,9 @@ const ConversationView: FC<Props> = ({
                       selectedDeployment?.maxInputAttachments
                     }
                     onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
-                    hideAttachFile={!isAttachmentsAllowed}
+                    hideAttachFile={
+                      !isAttachmentsAllowed || !isInputFilesEnabled
+                    }
                     fileAccept={fileAccept}
                     onAttachmentClick={handleMessageAttachmentClick}
                     onDialFileSystemClick={
@@ -647,10 +659,7 @@ const ConversationView: FC<Props> = ({
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
             {duplicateError && (
-              <DialNotification
-                variant={NotificationVariant.Error}
-                message={duplicateError}
-              />
+              <ErrorMessageNotification message={duplicateError} />
             )}
             <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
@@ -678,7 +687,11 @@ const ConversationView: FC<Props> = ({
                   fixedModel ? fixedModel.id : selectedItemId
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
-                isModelSelectorDisabled={isModelFixed}
+                isModelSelectorDisabled={
+                  isModelFixed || isDisallowChangeAgentEnabled
+                }
+                isSendDisabled={isDisabledSendEnabled}
+                inputClassName="border-2 border-accent-primary"
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
@@ -713,7 +726,7 @@ const ConversationView: FC<Props> = ({
                     ? () => setPendingDialAttachments([])
                     : undefined
                 }
-                autoFocus={!isMobile}
+                autoFocus={!isMobile && !isSkipFocusChatInputOnloadEnabled}
                 onDialFileSystemClick={
                   isAttachmentsAllowed
                     ? () => setIsDialFileManagerOpen(true)
@@ -729,7 +742,7 @@ const ConversationView: FC<Props> = ({
                   selectedDeployment?.maxInputAttachments
                 }
                 onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
-                hideAttachFile={!isAttachmentsAllowed}
+                hideAttachFile={!isAttachmentsAllowed || !isInputFilesEnabled}
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
