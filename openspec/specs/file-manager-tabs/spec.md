@@ -327,7 +327,20 @@ When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWi
 
 When `activeTab` changes, the set of `selectedPaths` SHALL be cleared (reset to an empty `Set`).
 
-#### Scenario: Selection cleared after tab switch
+> **Implementation note:** on the standalone page the tab strip is replaced by the bulk-actions toolbar as soon as any item is selected, so `activeTab` cannot change while a non-empty selection is held. The requirement is trivially satisfied in that path; its primary purpose is to guard against programmatic tab changes (e.g. the active tab becomes unavailable and resets automatically) that could otherwise leave stale paths from the previous tab in `selectedPaths`.
 
-- **WHEN** the user selects files on My files tab and switches to Shared
-- **THEN** `selectedPaths` is empty on the Shared tab
+#### Scenario: Selection cleared after programmatic tab reset
+
+- **WHEN** the active tab is reset programmatically (e.g. the previously active tab is removed from `fileManagerTabs`) while files from the old tab were selected
+- **THEN** `selectedPaths` is empty on the new active tab
+
+#### Scenario: Selection cleared on tab switch from Shared to My files
+
+- **WHEN** the user selects a file on the Shared tab and then switches to My files
+- **THEN** `selectedPaths` is empty on the My files tab
+
+---
+
+### Requirement: Tab button accessibility
+
+Each rendered tab button SHALL carry `role="tab"` and `aria-selected` (per ARIA spec). `aria-selected` SHALL be `true` for the currently active tab and `false` for all others. This requirement mirrors the pattern established in the `file-manager-toolbar` spec (#7932).

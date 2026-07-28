@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { resolveCallbackUrl } from './callback-url.util';
 
 const OPTIONS = {
-  authCallbackBaseUrl: 'http://localhost:3005',
+  authCallbackBaseUrl: 'http://localhost:5000',
   corsOrigin: 'http://localhost:4207',
 };
 
@@ -26,8 +26,8 @@ describe('resolveCallbackUrl', () => {
   });
 
   it('accepts an absolute callbackUrl from the callback base origin', () => {
-    expect(resolveCallbackUrl('http://localhost:3005/', OPTIONS)).toBe(
-      'http://localhost:3005/',
+    expect(resolveCallbackUrl('http://localhost:5000/', OPTIONS)).toBe(
+      'http://localhost:5000/',
     );
   });
 
