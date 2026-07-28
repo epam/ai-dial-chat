@@ -12,9 +12,18 @@ import * as userConfigApi from '../../server-api/user-config.api';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { UserConfigProvider, useUserConfig } from '../UserConfigContext';
 
+const contextMocks = vi.hoisted(() => ({
+  userSub: 'user-1' as string | undefined,
+}));
+
 vi.mock('../../server-api/user-config.api');
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+}));
+vi.mock('../auth/UserContext', () => ({
+  useUser: () => ({
+    user: contextMocks.userSub ? { sub: contextMocks.userSub } : null,
+  }),
 }));
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
@@ -54,6 +63,7 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 
 beforeEach(() => {
   vi.clearAllMocks();
+  contextMocks.userSub = 'user-1';
   mockGetUserConfig.mockResolvedValue(fullConfig as never);
   mockPinConversation.mockResolvedValue(undefined);
   mockUpdateInstalledToolset.mockResolvedValue(undefined);
@@ -152,6 +162,73 @@ describe('UserConfigContext', () => {
       const { rerender } = renderHook(() => useUserConfig(), { wrapper });
       await waitFor(() => expect(mockGetUserConfig).toHaveBeenCalledOnce());
       rerender();
+      expect(mockGetUserConfig).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('identity-keyed refetch', () => {
+    const Consumer = () => {
+      const { pinnedConversationIds } = useUserConfig();
+      return <div data-testid="child">{pinnedConversationIds.join(',')}</div>;
+    };
+
+    it('resets and refetches user config when the authenticated identity changes', async () => {
+      const { rerender } = render(
+        <UserConfigProvider>
+          <Consumer />
+        </UserConfigProvider>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByTestId('child').textContent).toBe('conv-1'),
+      );
+
+      let resolveRefetch: (value: typeof fullConfig) => void;
+      const refetchPromise = new Promise<typeof fullConfig>((resolve) => {
+        resolveRefetch = resolve;
+      });
+      mockGetUserConfig.mockReturnValueOnce(refetchPromise);
+      contextMocks.userSub = 'user-2';
+
+      act(() => {
+        rerender(
+          <UserConfigProvider>
+            <Consumer />
+          </UserConfigProvider>,
+        );
+      });
+
+      // While the identity-triggered refetch is in flight, UserConfigProvider
+      // shows its loading spinner (per the existing "loading spinner"
+      // requirement) instead of rendering the previous identity's data.
+      expect(mockGetUserConfig).toHaveBeenCalledTimes(2);
+      expect(screen.getByTestId('dial-spinner')).toBeTruthy();
+      expect(screen.queryByTestId('child')).toBeNull();
+
+      await act(async () => {
+        resolveRefetch({
+          version: 2,
+          conversations: { pinnedIds: ['conv-2'] },
+          toolsets: { installed: [] },
+          deployments: { installed: [] },
+        });
+        await refetchPromise;
+      });
+
+      await waitFor(() =>
+        expect(screen.getByTestId('child').textContent).toBe('conv-2'),
+      );
+      expect(mockGetUserConfig).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not refetch when the identity object changes but sub stays the same', async () => {
+      const { rerender } = renderHook(() => useUserConfig(), { wrapper });
+      await waitFor(() => expect(mockGetUserConfig).toHaveBeenCalledOnce());
+
+      // Same sub value, simulating an in-place UserContext profile refresh.
+      contextMocks.userSub = 'user-1';
+      rerender();
+
       expect(mockGetUserConfig).toHaveBeenCalledOnce();
     });
   });
