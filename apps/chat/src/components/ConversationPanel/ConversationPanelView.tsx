@@ -429,10 +429,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                     className="text-secondary"
                   />
                 ),
-                // Unlike Share's itemId (which wants the full `conversations/{bucket}/{name}`
-                // resource path), the publish endpoint's `path` query param follows the
-                // rename/delete/duplicate convention — bucket-relative, no `conversations/`
-                // prefix — so it must be stripped here (see conversation-publish.service.ts).
+                /*
+                 * Unlike Share's itemId (which wants the full `conversations/{bucket}/{name}`
+                 * resource path), the publish endpoint's `path` query param follows the
+                 * rename/delete/duplicate convention — bucket-relative, no `conversations/`
+                 * prefix — so it must be stripped here (see conversation-publish.service.ts).
+                 */
                 onClick: () =>
                   setPendingPublishConversation({
                     path: getConversationPath(
