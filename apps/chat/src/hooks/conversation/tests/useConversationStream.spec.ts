@@ -666,7 +666,6 @@ describe('useConversationStream', () => {
 
     await waitFor(() => {
       expect(onStopError).toHaveBeenCalledWith(stopError);
-      expect(result.current.hasStreamError).toBe(true);
     });
   });
 

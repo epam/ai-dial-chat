@@ -145,7 +145,6 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     handleStop,
     isStreaming,
     canStopStreaming,
-    hasStreamError,
   } = useConversationStream({
     conversationId: conversationId ?? undefined,
     setConversation,

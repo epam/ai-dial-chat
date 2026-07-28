@@ -122,7 +122,7 @@ export const rebaseConversationId = (
   );
   const deploymentPrefixSegments = pathSegmentsAfterFolder.slice(0, -1);
   const oldFileName =
-    pathSegmentsAfterFolder[pathSegmentsAfterFolder.length - 1] ?? rawId;
+    pathSegmentsAfterFolder.at(-1) ?? idSegments.at(-1) ?? rawId;
 
   const newFileName = `${stripTrailingUuid(oldFileName)}__${crypto.randomUUID()}`;
   const subPath = [

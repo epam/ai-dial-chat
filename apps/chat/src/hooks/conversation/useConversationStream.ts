@@ -61,8 +61,6 @@ interface Result {
   ) => void;
   isStreaming: boolean;
   canStopStreaming: boolean;
-  hasStreamError: boolean;
-  setHasStreamError: Dispatch<SetStateAction<boolean>>;
 }
 
 export const useConversationStream = ({
@@ -79,7 +77,6 @@ export const useConversationStream = ({
     () => new Set(),
   );
   const [stoppablePath, setStoppablePath] = useState<string | null>(null);
-  const [hasStreamError, setHasStreamError] = useState(false);
   const activeGenerationIdRef = useRef<string | null>(null);
   const activeGenerationPathRef = useRef<string | null>(null);
   const resumingPathsRef = useRef<Set<string>>(new Set());
@@ -247,7 +244,6 @@ export const useConversationStream = ({
             }
             // Surface the error only on the conversation the user is viewing.
             if (!isPathDisplayed(conversationPath)) return;
-            setHasStreamError(true);
             setConversation((prev) => {
               if (!prev) return prev;
               const updated = {
@@ -302,7 +298,6 @@ export const useConversationStream = ({
     void stopCompletion({ generationId: genId, path: conversationPath }).catch(
       (err: unknown) => {
         const error = err instanceof Error ? err : new Error(String(err));
-        setHasStreamError(true);
         onStopError?.(error);
       },
     );
@@ -448,7 +443,5 @@ export const useConversationStream = ({
     resumeIfAwaitingGeneration,
     isStreaming,
     canStopStreaming,
-    hasStreamError,
-    setHasStreamError,
   };
 };

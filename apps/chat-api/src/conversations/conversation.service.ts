@@ -65,6 +65,14 @@ import {
   prepareEntityName,
 } from './utils/conversation.utils';
 
+interface DialErrorBody {
+  error?: { display_message?: string; message?: string };
+  message?: string;
+}
+
+const extractDialErrorMessage = (obj: DialErrorBody): string =>
+  obj?.error?.display_message ?? obj?.error?.message ?? obj?.message ?? '';
+
 const getValidAttachments = (
   customContent?: ConversationMessageDto['custom_content'],
 ) =>
@@ -1216,30 +1224,18 @@ export class ConversationService {
 
         /* 1. SDK-parsed error — most reliable, SDK reads body before us */
         if (dialResult.error != null) {
-          const sdkError = dialResult.error as {
-            error?: { display_message?: string; message?: string };
-            message?: string;
-          };
-          errorMessage =
-            sdkError?.error?.display_message ??
-            sdkError?.error?.message ??
-            sdkError?.message ??
-            '';
+          errorMessage = extractDialErrorMessage(
+            dialResult.error as DialErrorBody,
+          );
         }
 
         /* 2. Raw body — for cases where SDK didn't parse it */
         if (!errorMessage) {
           try {
             const rawBody = await dialResult.response.text();
-            const parsed = JSON.parse(rawBody) as {
-              error?: { display_message?: string; message?: string };
-              message?: string;
-            };
-            errorMessage =
-              parsed?.error?.display_message ??
-              parsed?.error?.message ??
-              parsed?.message ??
-              '';
+            errorMessage = extractDialErrorMessage(
+              JSON.parse(rawBody) as DialErrorBody,
+            );
           } catch {
             /* non-JSON or empty body */
           }
