@@ -46,17 +46,17 @@ npm exec nx run @epam/chat:build
 Start both the API and the SPA dev server in separate terminals:
 
 ```bash
-# Terminal 1 — API (port 3005)
+# Terminal 1 — API (port 5000)
 npm exec nx run @epam/chat-api:serve
 
-# Terminal 2 — SPA dev server (port 4207, proxies /api → localhost:3005)
+# Terminal 2 — SPA dev server (port 4207, proxies /api → localhost:5000)
 npm exec nx run @epam/chat:serve
 ```
 
 Create or update `apps/chat-api/.env.local` (or the workspace-root `.env.local`) with:
 
 ```bash
-PORT=3005
+PORT=5000
 API_PREFIX=api
 CORS_ORIGIN=http://localhost:4207
 

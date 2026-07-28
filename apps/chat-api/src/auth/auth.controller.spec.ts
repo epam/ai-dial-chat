@@ -29,7 +29,7 @@ const ACTIVE_HEX = 'a'.repeat(64);
 const ACTIVE_KEY = new Uint8Array(Buffer.from(ACTIVE_HEX, 'hex'));
 const COOKIE_NAME = '__Host-chat.sess';
 const TX_COOKIE = '__Host-chat.tx';
-const CALLBACK_BASE = 'http://localhost:3005';
+const CALLBACK_BASE = 'http://localhost:5000';
 const APP_BASE = 'http://localhost:4207';
 
 const MOCK_CLIENT = {
