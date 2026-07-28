@@ -12,6 +12,7 @@ import type {
 } from '../../../types/toolsets';
 import {
   ToolsetAuthTypes,
+  ToolsetOAuthChannelControlType,
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
@@ -22,11 +23,14 @@ import ToolsetAuthCallback from '../ToolsetAuthCallback';
 const setRedirectState = (state: ToolsetRedirectState) =>
   sessionStorage.setItem(TOOLSET_REDIRECT_STATE_KEY, JSON.stringify(state));
 
-/** Listens on the flow's channel and resolves with the first message posted to it. */
+/** Consumes the first result and acknowledges it so the callback can close. */
 const listenForResult = (flowId: string): Promise<ToolsetOAuthChannelMessage> =>
   new Promise((resolve) => {
     const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
     channel.onmessage = (event) => {
+      channel.postMessage({
+        type: ToolsetOAuthChannelControlType.ResultAcknowledged,
+      });
       resolve(event.data as ToolsetOAuthChannelMessage);
       channel.close();
     };
@@ -149,7 +153,7 @@ describe('ToolsetAuthCallback', () => {
     });
   });
 
-  it('writes the result into the popup URL and leaves it open for the opener', async () => {
+  it('writes the result into the popup URL and closes after opener acknowledgement', async () => {
     setRedirectState({
       toolsetId: 'toolsets/b/my__1.0.0',
       credentialsLevel: ToolsetCredentialsLevel.User,
@@ -161,7 +165,7 @@ describe('ToolsetAuthCallback', () => {
     renderCallback('?code=auth-code-xyz&state=flow-1');
 
     await resultPromise;
-    expect(mockClose).not.toHaveBeenCalled();
+    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
     const lastUrl = new URL(
       String(mockReplaceState.mock.calls.at(-1)?.[2]),
       window.location.origin,
@@ -172,7 +176,63 @@ describe('ToolsetAuthCallback', () => {
     expect(lastUrl.searchParams.has('code')).toBe(false);
   });
 
-  it('closes its sending channel after queuing the result', async () => {
+  it('ignores malformed acknowledgement messages', async () => {
+    setRedirectState({
+      toolsetId: 'toolsets/b/my__1.0.0',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+      state: 'flow-1',
+    });
+    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+    const channel = new BroadcastChannel(getToolsetOAuthChannelName('flow-1'));
+    const resultPromise = new Promise<ToolsetOAuthChannelMessage>((resolve) => {
+      channel.onmessage = (event) => {
+        resolve(event.data as ToolsetOAuthChannelMessage);
+      };
+    });
+
+    try {
+      renderCallback('?code=auth-code-xyz&state=flow-1');
+      await expect(resultPromise).resolves.toMatchObject({
+        type: ToolsetOAuthResultType.Success,
+      });
+
+      channel.postMessage(null);
+      channel.postMessage({
+        type: ToolsetOAuthChannelControlType.ResultAcknowledged,
+      });
+
+      await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
+    } finally {
+      channel.close();
+    }
+  });
+
+  it('retries the result when the opener missed the first channel event', async () => {
+    setRedirectState({
+      toolsetId: 'toolsets/b/my__1.0.0',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+      state: 'flow-1',
+    });
+    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+
+    renderCallback('?code=auth-code-xyz&state=flow-1');
+    await waitFor(() =>
+      expect(mockReplaceState).toHaveBeenCalledWith(
+        {},
+        document.title,
+        expect.stringContaining(
+          `${ToolsetOAuthCallbackQuery.Result}=${ToolsetOAuthResultType.Success}`,
+        ),
+      ),
+    );
+
+    await expect(listenForResult('flow-1')).resolves.toMatchObject({
+      type: ToolsetOAuthResultType.Success,
+    });
+    await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
+  });
+
+  it('closes its sending channel after opener acknowledgement', async () => {
     const closeChannelSpy = vi.spyOn(BroadcastChannel.prototype, 'close');
     try {
       setRedirectState({
@@ -186,7 +246,7 @@ describe('ToolsetAuthCallback', () => {
       renderCallback('?code=auth-code-xyz&state=flow-1');
 
       await resultPromise;
-      expect(mockClose).not.toHaveBeenCalled();
+      await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
       expect(closeChannelSpy).toHaveBeenCalledTimes(2);
     } finally {
       closeChannelSpy.mockRestore();

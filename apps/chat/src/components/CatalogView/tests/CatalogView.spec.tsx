@@ -454,6 +454,7 @@ describe('CatalogView', () => {
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],
+        announcementHtml: null,
       },
     });
   });
@@ -690,6 +691,7 @@ describe('CatalogView', () => {
           fileManagerTabs: ['my_files', 'shared', 'organization'],
           overlayEnabled: false,
           overlayAllowedOrigins: [],
+          announcementHtml: null,
         },
       });
 
@@ -1619,6 +1621,7 @@ describe('CatalogView', () => {
       );
 
       if (capturedPopup) capturedPopup.closed = true;
+      window.dispatchEvent(new Event('focus'));
 
       await waitFor(() =>
         expect(showNotification).toHaveBeenCalledWith(

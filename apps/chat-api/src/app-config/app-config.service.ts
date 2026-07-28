@@ -54,6 +54,7 @@ export class AppConfigService {
     let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
+    let announcementHtml: string | null = null;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -82,6 +83,8 @@ export class AppConfigService {
         overlayEnabled = resolved === true;
       } else if (def.key === 'overlay.allowedOrigins') {
         overlayAllowedOrigins = Array.isArray(resolved) ? resolved : [];
+      } else if (def.key === 'announcement.html') {
+        announcementHtml = typeof resolved === 'string' ? resolved : null;
       }
     }
 
@@ -96,6 +99,7 @@ export class AppConfigService {
         fileManagerTabs,
         overlayEnabled,
         overlayAllowedOrigins,
+        announcementHtml,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

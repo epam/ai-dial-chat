@@ -104,12 +104,15 @@ toolset's stored OAuth configuration includes them. A shared callback route, loa
 new window, SHALL read the persisted state and complete login by submitting the authorization
 `code`, `redirectUri`, and the stored `credentialsLevel`, then post the outcome to the opener over
 the flow's `BroadcastChannel` and write the same non-secret outcome into the callback popup's
-same-origin URL. The callback SHALL remove the OAuth authorization code from its URL and remain
-open until the opener consumes the result. The opener SHALL poll the popup URL when the channel
-event is delayed or dropped and close the popup only after receiving either result, so a completed
-login cannot be mistaken for manual cancellation and the handoff requires no delay timer. The
-popup result URL SHALL NOT contain the OAuth authorization code or credentials. The environment
-SHALL serve Chat with
+same-origin URL. The callback SHALL remove the OAuth authorization code from its URL, repeat the
+channel result until the opener acknowledges it, and close itself after acknowledgement. The
+opener SHALL continue listening when cross-origin navigation makes its retained `WindowProxy`
+appear closed while the opener is in the background, consume either the channel result or the
+popup URL marker, and acknowledge the result before refreshing status. A popup SHALL be treated
+as manually cancelled only after focus returns to the opener and the popup reference remains
+closed, or after the pending flow timeout. Therefore, a completed login cannot be mistaken for
+manual cancellation and the handoff requires no delay timer. The popup result URL SHALL NOT
+contain the OAuth authorization code or credentials. The environment SHALL serve Chat with
 `Cross-Origin-Opener-Policy: same-origin-allow-popups`, not Helmet's `same-origin` default, so
 navigation to an external OAuth provider does not sever the opener's popup reference and make an
 active login appear manually cancelled; the popup SHALL still clear its own `window.opener`
@@ -146,8 +149,9 @@ without a second login attempt or page reload.
   login
 - **THEN** the system reads the stored redirect state, calls the login endpoint with the code,
   redirect URI, and the stored `credentialsLevel`, removes the authorization code from the popup
-  URL, writes the non-secret outcome into that URL, posts it over the flow's `BroadcastChannel`,
-  and leaves the callback window open for the opener to close
+  URL, writes the non-secret outcome into that URL, and repeats it over the flow's
+  `BroadcastChannel` until the opener acknowledges consumption, after which the callback closes
+  itself
 
 #### Scenario: External provider navigation preserves popup tracking
 - **WHEN** the OAuth popup navigates from Chat to a cross-origin identity provider
@@ -157,9 +161,20 @@ without a second login attempt or page reload.
 
 #### Scenario: Opener recovers a result after the channel event is missed
 - **WHEN** the callback wrote its result into the popup URL, but the opener did not receive the
-  `BroadcastChannel` event
-- **THEN** the opener reads the result from the same-origin popup URL, closes the popup, resolves
-  the login outcome, and refreshes the toolset status
+  first `BroadcastChannel` event
+- **THEN** the callback repeats the result, while the opener can also read it from the same-origin
+  popup URL; after consuming either copy, the opener acknowledges the result, resolves the login
+  outcome, and refreshes the toolset status
+
+#### Scenario: Popup reference is severed during cross-origin navigation
+- **WHEN** the OAuth provider navigation makes the opener's retained popup reference report
+  `closed` while the OAuth window remains open
+- **THEN** the opener keeps the flow channel active, consumes and acknowledges the callback
+  result, and the callback closes its own window
+
+#### Scenario: User manually closes the OAuth popup
+- **WHEN** the popup is closed without a result and focus returns to the initiating tab
+- **THEN** the system resolves the login flow as cancelled without showing an error notification
 
 #### Scenario: Successful OAuth login refreshes the initiating page
 - **WHEN** the opener receives a successful OAuth login result

@@ -113,6 +113,7 @@
     "@tabler/icons-react": "^3.44.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "cache-manager": "^7.2.8",
+    "dompurify": "3.4.11",
     "express": "^5.2.1",
     "fflate": "^0.8.3",
     "helmet": "^8.1.0",
