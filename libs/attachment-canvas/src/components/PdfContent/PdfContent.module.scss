@@ -1,0 +1,8 @@
+.viewer {
+  /* pdf-container has contain: paint which clips children overflow.
+     min-width: max-content makes the container expand to the full page width
+     so it overflows pdf-highlight-viewer, which then shows a horizontal scrollbar. */
+  :global(.pdf-container) {
+    min-width: max-content;
+  }
+}

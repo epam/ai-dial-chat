@@ -1,7 +1,7 @@
 # Chat API Postman collection
 
 Import `chat-api.postman_collection.json` into Postman and start the backend at
-`http://localhost:3005`.
+`http://localhost:5000`.
 
 The collection uses Postman's cookie jar for the authenticated session. Start
 the OIDC flow from the `auth` folder, then run **Get current user**. The
