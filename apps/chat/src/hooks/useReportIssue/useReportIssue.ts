@@ -26,8 +26,7 @@ export const useReportIssue = (): UseReportIssueResult => {
           title: t(FooterReportIssueI18nKeys.SuccessTitle),
         });
         return true;
-      } catch (error) {
-        console.error(error);
+      } catch {
         showNotification({
           variant: NotificationVariant.Error,
           title: t(FooterReportIssueI18nKeys.ErrorTitle),

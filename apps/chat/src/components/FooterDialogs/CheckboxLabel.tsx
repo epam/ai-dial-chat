@@ -7,7 +7,7 @@ interface Props {
 }
 
 const CheckboxLabel: FC<Props> = ({ children }) => (
-  <span className="dial-small-text pl-2 text-primary">
+  <span className="dial-small-text ps-2 text-primary">
     {children}
     <RequiredMark />
   </span>

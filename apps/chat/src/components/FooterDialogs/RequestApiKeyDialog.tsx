@@ -108,7 +108,11 @@ const RequestApiKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     } else if (fields.business_reason.trim().length > 4000) {
       errors.business_reason = tooLong(4000);
     }
-    if (!fields.project_end.trim()) errors.project_end = req;
+    if (!fields.project_end.trim()) {
+      errors.project_end = req;
+    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(fields.project_end)) {
+      errors.project_end = t(FooterRequestApiKeyI18nKeys.DateInvalid);
+    }
     if (!fields.access_scenario.trim()) {
       errors.access_scenario = req;
     } else if (fields.access_scenario.trim().length > 4000) {

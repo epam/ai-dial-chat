@@ -7,7 +7,7 @@ const { mockFlags } = vi.hoisted(() => ({
   mockFlags: { requestApiKey: true, reportAnIssue: true },
 }));
 
-vi.mock('../../context/AppConfigContext', () => ({
+vi.mock('../../../context/AppConfigContext', () => ({
   useFeatureFlag: (key: string): boolean => {
     if (key === 'requestApiKey') return mockFlags.requestApiKey;
     if (key === 'reportAnIssue') return mockFlags.reportAnIssue;
@@ -15,7 +15,7 @@ vi.mock('../../context/AppConfigContext', () => ({
   },
 }));
 
-vi.mock('../FooterMessage/FooterMessage', () => ({
+vi.mock('../../FooterMessage/FooterMessage', () => ({
   default: ({ onDialAction }: { onDialAction: (action: string) => void }) => (
     <div>
       <button type="button" onClick={() => onDialAction('requestApiKey')}>

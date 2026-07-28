@@ -135,7 +135,7 @@ vi.mock('@epam/ai-dial-kit', () => ({
 const renderDialog = (onClose = vi.fn()) =>
   render(<RequestApiKeyDialog isOpen onClose={onClose} />);
 
-const fillAllFields = () => {
+const fillAllFields = async () => {
   fireEvent.change(
     screen.getByLabelText('footer.requestApiKey.projectNameLabel'),
     { target: { value: 'My Project' } },
@@ -164,9 +164,9 @@ const fillAllFields = () => {
     screen.getByLabelText('footer.requestApiKey.workloadPatternLabel'),
     { target: { value: 'Batch processing' } },
   );
-  screen
-    .getAllByRole('checkbox')
-    .forEach((cb) => fireEvent.change(cb, { target: { checked: true } }));
+  for (const cb of screen.getAllByRole('checkbox')) {
+    await userEvent.click(cb);
+  }
 };
 
 describe('RequestApiKeyDialog', () => {
@@ -196,7 +196,7 @@ describe('RequestApiKeyDialog', () => {
   it('shows an email validation error when project lead email is invalid', async () => {
     renderDialog();
 
-    fillAllFields();
+    await fillAllFields();
     fireEvent.change(
       screen.getByLabelText('footer.requestApiKey.projectLeadLabel'),
       { target: { value: 'notanemail' } },
@@ -212,7 +212,7 @@ describe('RequestApiKeyDialog', () => {
     mockSubmit.mockResolvedValue(true);
     render(<RequestApiKeyDialog isOpen onClose={onClose} />);
 
-    fillAllFields();
+    await fillAllFields();
 
     await userEvent.click(screen.getByText('buttons.send'));
 

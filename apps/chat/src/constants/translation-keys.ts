@@ -568,6 +568,7 @@ export enum FooterRequestApiKeyI18nKeys {
   FieldRequired = 'footer.requestApiKey.fieldRequired',
   FieldTooLong = 'footer.requestApiKey.fieldTooLong',
   EmailInvalid = 'footer.requestApiKey.emailInvalid',
+  DateInvalid = 'footer.requestApiKey.dateInvalid',
   SuccessTitle = 'footer.requestApiKey.successTitle',
   ErrorTitle = 'footer.requestApiKey.errorTitle',
 }
