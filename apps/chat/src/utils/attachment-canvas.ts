@@ -111,6 +111,7 @@ export const isExternalSourcePreviewable = (
     const dot = fileName.lastIndexOf('.');
     if (dot === -1) return false;
     const ext = fileName.slice(dot + 1).toLowerCase();
+    // 'pdf' is not in isTextPreviewable's TEXT_EXTENSIONS, so it must be checked explicitly.
     return ext === FileExtension.PDF || isTextPreviewable(fileName);
   } catch {
     return false;
