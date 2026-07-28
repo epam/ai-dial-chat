@@ -1,4 +1,5 @@
-import { mergeClasses, DialGrid } from '@epam/ai-dial-ui-kit';
+import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
+import { DialGrid, mergeClasses } from '@epam/ai-dial-ui-kit';
 import type { GridApi } from 'ag-grid-community';
 import {
   type CSSProperties,
@@ -48,6 +49,14 @@ export const ListView: FC<ListViewProps> = ({
   selectedItemId,
   credentialsBadgeLoggedOutLabel,
 }) => {
+  if (items.length === 0) {
+    return (
+      <div className="flex size-full flex-col items-center justify-center">
+        <PanelEmptyState label={emptyStateTitle ?? 'No results'} />
+      </div>
+    );
+  }
+
   const typography = listStyles?.typography ?? {};
   const colors = listStyles?.colors;
   const cssVars = {
@@ -132,7 +141,11 @@ export const ListView: FC<ListViewProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses('w-full rounded-xl border', styles.listContainer)}
+      className={mergeClasses(
+        'w-full rounded-xl border',
+        styles.listContainer,
+        items.length === 0 && 'h-full',
+      )}
     >
       <div className={mergeClasses('rounded-xl', styles.gridClip)}>
         <DialGrid<CatalogItem>
