@@ -52,7 +52,6 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import {
-  ApplicationActions,
   ChatEventsActions,
   ConversationsActions,
   MarketplaceActions,
@@ -737,25 +736,17 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
             : of(undefined),
       }).pipe(
         switchMap(() => {
-          const autoUpdateAction$ =
-            window.location.pathname === Routes.AppsEditor
-              ? of(ApplicationActions.setShouldTriggerEditorAutoUpdate(true))
-              : EMPTY;
-
           if (
             authSettings?.authenticationType === ToolsetAuthTypes.API_KEY &&
             payload.apiKey
           ) {
-            return concat(
-              autoUpdateAction$,
-              of(
-                ToolsetActions.logInToolset({
-                  toolsetId: payload.toolset.id,
-                  authLevel: payload.authLevel,
-                  authType: ToolsetAuthTypes.API_KEY,
-                  apiKey: payload.apiKey,
-                }),
-              ),
+            return of(
+              ToolsetActions.logInToolset({
+                toolsetId: payload.toolset.id,
+                authLevel: payload.authLevel,
+                authType: ToolsetAuthTypes.API_KEY,
+                apiKey: payload.apiKey,
+              }),
             );
           }
           if (
@@ -796,27 +787,24 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
               );
             }
 
-            return concat(
-              autoUpdateAction$,
-              defer(() =>
-                from(signInToolset(url.href)).pipe(
-                  switchMap((isPopup) =>
-                    !isPopup
-                      ? of(ToolsetActions.logInToolsetFail())
-                      : refreshToolset$(payload.toolset.id, state$.value).pipe(
-                          mergeMap((actions) =>
-                            concat(
-                              of(actions),
-                              of(
-                                ToolsetActions.logInToolsetSuccess({
-                                  toolsetId: payload.toolset.id,
-                                  authLevel: payload.authLevel,
-                                }),
-                              ),
+            return defer(() =>
+              from(signInToolset(url.href)).pipe(
+                switchMap((isPopup) =>
+                  !isPopup
+                    ? of(ToolsetActions.logInToolsetFail())
+                    : refreshToolset$(payload.toolset.id, state$.value).pipe(
+                        mergeMap((actions) =>
+                          concat(
+                            of(actions),
+                            of(
+                              ToolsetActions.logInToolsetSuccess({
+                                toolsetId: payload.toolset.id,
+                                authLevel: payload.authLevel,
+                              }),
                             ),
                           ),
                         ),
-                  ),
+                      ),
                 ),
               ),
             );

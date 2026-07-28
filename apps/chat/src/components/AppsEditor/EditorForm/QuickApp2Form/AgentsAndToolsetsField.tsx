@@ -16,7 +16,6 @@ import {
 } from '@/src/utils/app/application';
 import { isApplicationId } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
-import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { AnyToolset, DialAppToolset } from '@/src/types/quick-apps';
@@ -31,6 +30,7 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
 import { ToolsetTypes } from '@/src/constants/quick-apps';
 
 import { DialAppConfigurationModal } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/DialAppConfigurationModal';
@@ -46,10 +46,6 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
-import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
-import { SimpleApplicationDetailsFooter } from '@/src/components/Marketplace/ApplicationDetails/SimpleApplicationDetailsFooter';
-import { SimpleToolsetDetailsFooter } from '@/src/components/Marketplace/ToolsetsDetails/SimpleToolsetDetailsFooter';
-import { ToolsetDetails } from '@/src/components/Marketplace/ToolsetsDetails/ToolsetDetails';
 
 import { Feature } from '@epam/ai-dial-shared';
 import {
@@ -82,17 +78,13 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
-  const allModels = useAppSelector(ModelsSelectors.selectModels);
-  const allToolsets = useAppSelector((state) =>
-    ToolsetSelectors.selectToolsets(state, true),
-  );
+
   const editorError = useAppSelector(ApplicationSelectors.selectEditorError);
   const isLoading = useAppSelector(
     ApplicationSelectors.selectIsApplicationLoading,
   );
   const isAppPublic = !!appDetails && isEntityIdPublic(appDetails);
 
-  const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [isDiscardingJson, setIsDiscardingJson] = useState(false);
   const [configuredToolset, setConfiguredToolset] = useState<
     DialAppToolset | undefined
@@ -150,11 +142,6 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
     return sortedItems.map((item) => item.id);
   }, [agentsAndToolsetsOptions, allEntitiesMap]);
-
-  const detailedViewEntity = useMemo(
-    () => (selectedEntityId ? allEntitiesMap[selectedEntityId] : null),
-    [selectedEntityId, allEntitiesMap],
-  );
 
   const switchToSimpleView = useCallback(() => {
     const toolsets = JSON.parse(agentsAndToolsetsJson) as AnyToolset[];
@@ -252,19 +239,18 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     [allEntitiesMap, dispatch, getValues, resetField, setValue],
   );
 
-  const handleOpenDetails = useCallback((entity: MarketplaceEntity) => {
-    setSelectedEntityId(entity.id);
-  }, []);
-
-  const handleCloseDetails = useCallback(() => {
-    setSelectedEntityId(null);
-  }, []);
-
-  const handleChangeVersionInDetails = useCallback(
+  const handleOpenDetails = useCallback(
     (entity: MarketplaceEntity) => {
-      setSelectedEntityId(entity.id);
+      dispatch(
+        ApplicationActions.setEditorSelectedEntity({
+          reference: entity.reference,
+          type: isDialAiEntityModel(entity)
+            ? MarketplaceEntitiesTabs.AGENTS
+            : MarketplaceEntitiesTabs.TOOLSETS,
+        }),
+      );
     },
-    [],
+    [dispatch],
   );
 
   const handleItemClick = useCallback(
@@ -275,15 +261,6 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
       }
     },
     [allEntitiesMap, handleOpenDetails],
-  );
-
-  const commonDetailsProps = useMemo(
-    () => ({
-      onClose: handleCloseDetails,
-      onChangeVersion: handleChangeVersionInDetails,
-      isPreview: true,
-    }),
-    [handleCloseDetails, handleChangeVersionInDetails],
   );
 
   const shortEditorError = editorError
@@ -446,27 +423,6 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
           );
         }}
       />
-
-      {detailedViewEntity && (
-        <div data-qa="entity-details-panel">
-          {isDialAiEntityModel(detailedViewEntity) && (
-            <ApplicationDetails
-              entity={detailedViewEntity}
-              allEntities={allModels}
-              FooterComponent={SimpleApplicationDetailsFooter}
-              {...commonDetailsProps}
-            />
-          )}
-          {isToolsetEntityModel(detailedViewEntity) && (
-            <ToolsetDetails
-              entity={detailedViewEntity}
-              allEntities={allToolsets}
-              FooterComponent={SimpleToolsetDetailsFooter}
-              {...commonDetailsProps}
-            />
-          )}
-        </div>
-      )}
 
       <DialConfirmationPopup
         variant={ConfirmationPopupVariant.Danger}
