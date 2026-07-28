@@ -128,6 +128,8 @@ export interface Message {
    * Used to render the deployment icon next to assistant responses.
    */
   deploymentId?: string;
+  /* Human-readable error text from a failed stream. Present when generation ended in error — absence means generation succeeded or is still in progress. Used for both resume detection and UI error display. */
+  streamErrorMessage?: string;
   /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
   [key: string]: unknown;
 }

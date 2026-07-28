@@ -115,6 +115,11 @@ The system SHALL rebase each imported conversation's id/path to the current user
 - **WHEN** an imported conversation's id contains folder path segments
 - **THEN** those segments are preserved (rebased to the user's bucket) in the saved id/`folderId`, and the conversation is displayed at the root while no folder UI exists
 
+#### Scenario: Multi-segment deployment id preserved
+
+- **WHEN** an imported conversation's id was built from a deployment with a path-like id (e.g. `anthropic/claude-3`), so the id/`folderId` contain intermediate segments belonging to the deployment id rather than a folder
+- **THEN** those deployment-id segments are preserved in the rebased id/path exactly as they were, alongside any real folder segments
+
 #### Scenario: List refresh
 
 - **WHEN** an import completes successfully

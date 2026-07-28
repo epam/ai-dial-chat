@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import {
   AttachmentsI18nKeys,
   ButtonsI18nKeys,
+  ChatI18nKeys,
 } from '../../constants/translation-keys';
 import { CitationCardProvider } from '../../context/CitationCardContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -103,7 +104,6 @@ interface Props {
   showLessUserMessageAriaLabel: string;
   statusModelChangedTitle: string;
   formatStatusModelChangedBody: (from: string, to: string) => string;
-  streamErrorText: string;
   stoppedGeneratingText: string;
   thinkingLabel: string;
   executedLabel: string;
@@ -161,7 +161,6 @@ const ConversationMessageItem: FC<Props> = ({
   showLessUserMessageAriaLabel,
   statusModelChangedTitle,
   formatStatusModelChangedBody,
-  streamErrorText,
   stoppedGeneratingText,
   thinkingLabel,
   executedLabel,
@@ -342,7 +341,7 @@ const ConversationMessageItem: FC<Props> = ({
           ...(msg.role === MessageRole.User ? USER_MESSAGE_TEXT_STYLES : {}),
           className: isUserMessage ? 'justify-end' : 'justify-start',
           bubbleClassName: mergeClasses(
-            msg.hasStreamError ? 'w-full' : undefined,
+            msg.streamErrorMessage != null ? 'w-full' : undefined,
           ),
         }}
         markdownComponents={
@@ -366,7 +365,7 @@ const ConversationMessageItem: FC<Props> = ({
           ariaLabels,
         )}
         afterContent={
-          referenceGroups.length > 0 || hasStages || msg.hasStreamError ? (
+          referenceGroups.length > 0 || hasStages || msg.streamErrorMessage != null ? (
             <>
               {referenceGroups.length > 0 && (
                 <div className="flex w-full flex-wrap gap-2">
@@ -398,11 +397,13 @@ const ConversationMessageItem: FC<Props> = ({
                   labels={{ executedLabel, stepsLabel }}
                 />
               )}
-              {msg.hasStreamError && (
+              {msg.streamErrorMessage != null && (
                 <div className="w-full">
                   <DialNotification
                     variant={NotificationVariant.Error}
-                    message={streamErrorText}
+                    message={
+                      msg.streamErrorMessage || t(ChatI18nKeys.StreamError)
+                    }
                   />
                 </div>
               )}

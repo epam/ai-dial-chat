@@ -156,7 +156,7 @@ export const useConversationHandlers = ({
           custom_content: undefined,
           wasStoppedByUser: undefined,
           stoppedWithoutContent: undefined,
-          hasStreamError: undefined,
+          streamErrorMessage: undefined,
         };
         const next = {
           ...prev,

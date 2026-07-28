@@ -238,7 +238,7 @@ export const useConversationStream = ({
               // Non-fatal: keep local state if reload fails
             }
           },
-          onError: () => {
+          onError: (error: Error) => {
             removeStreamingPath(conversationPath);
             if (activeGenerationIdRef.current === genId) {
               activeGenerationIdRef.current = null;
@@ -253,7 +253,9 @@ export const useConversationStream = ({
               const updated = {
                 ...prev,
                 messages: prev.messages.map((m, index) =>
-                  index === messageIndex ? { ...m, hasStreamError: true } : m,
+                  index === messageIndex
+                    ? { ...m, streamErrorMessage: error.message }
+                    : m,
                 ),
               };
               conversationRef.current = updated;

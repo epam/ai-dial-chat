@@ -107,7 +107,6 @@ interface Props {
   isAssistantTyping?: boolean;
   canStopAssistant?: boolean;
   initialModelId: string;
-  streamErrorText: string;
   stoppedGeneratingText: string;
   isReadOnly?: boolean;
   onDuplicateConversation?: () => void;
@@ -150,7 +149,6 @@ const ConversationView: FC<Props> = ({
   isAssistantTyping = false,
   canStopAssistant = false,
   initialModelId,
-  streamErrorText,
   stoppedGeneratingText,
   isReadOnly = false,
   onDuplicateConversation,
@@ -559,7 +557,6 @@ const ConversationView: FC<Props> = ({
                       ConversationI18nKeys.StatusModelChangedTitle,
                     )}
                     formatStatusModelChangedBody={formatStatusModelChangedBody}
-                    streamErrorText={streamErrorText}
                     stoppedGeneratingText={stoppedGeneratingText}
                     thinkingLabel={t(ChatI18nKeys.Thinking)}
                     executedLabel={t(ConversationI18nKeys.StagesExecuted)}

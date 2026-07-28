@@ -356,7 +356,6 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         isAssistantTyping={isStreaming}
         canStopAssistant={canStopStreaming}
         placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
-        streamErrorText={hasStreamError ? t(ChatI18nKeys.StreamError) : ''}
         stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
         isAudioMessageSupported={isAudioMessageSupported}
         conversation={conversation}
