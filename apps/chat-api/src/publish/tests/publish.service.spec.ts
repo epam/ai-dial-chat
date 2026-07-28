@@ -87,7 +87,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
-        CatalogEntityType.Application,
+        CatalogEntityType.Agent,
         'applications/bucket-123/My App Name__0.0.1',
         'DK Test with nested/Level 1',
         '0.0.1',
@@ -121,7 +121,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
-        CatalogEntityType.Application,
+        CatalogEntityType.Agent,
         'applications/bucket-123/My App Name__0.0.1',
         '',
         '0.0.1',
@@ -150,7 +150,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
-        CatalogEntityType.Application,
+        CatalogEntityType.Agent,
         'applications/bucket-123/Untitled%20app123123123123__0.0.1',
         'test 14.04',
         '0.0.1',
@@ -206,7 +206,7 @@ describe('PublishService', () => {
 
       await service.publish(
         'token-abc',
-        CatalogEntityType.Application,
+        CatalogEntityType.Agent,
         'applications/bucket-123/Untitled%20app%202222232__0.0.1',
         'folder02',
         '0.0.1',

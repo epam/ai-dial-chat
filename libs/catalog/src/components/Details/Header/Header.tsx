@@ -119,13 +119,13 @@ export const Header: FC<HeaderProps> = ({
     texts?.hasPrimaryAction !== false &&
     (isPrimaryActionVisible?.(item) ??
       (item.type === CatalogEntityType.Model ||
-        item.type === CatalogEntityType.Application));
+        item.type === CatalogEntityType.Agent));
 
   const shouldShowPublish =
     isPublishVisible?.(item) ??
     (item.type === CatalogEntityType.Model ||
       item.type === CatalogEntityType.Toolset ||
-      item.type === CatalogEntityType.Application);
+      item.type === CatalogEntityType.Agent);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
 

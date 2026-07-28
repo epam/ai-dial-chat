@@ -60,7 +60,7 @@
 
 ## 9. apps/chat: CatalogView wiring
 
-- [x] 9.1 In `apps/chat/src/components/CatalogView/CatalogView.tsx`, add an `isConnectVisible` callback: `false` when `useAppConfig().config.dialCoreExternalUrl` is falsy; otherwise `true` for `CatalogEntityType.Toolset`, and for `CatalogEntityType.Application` gated on `item.supportsMcp === true`; `false` for every other type.
+- [x] 9.1 In `apps/chat/src/components/CatalogView/CatalogView.tsx`, add an `isConnectVisible` callback: `false` when `useAppConfig().config.dialCoreExternalUrl` is falsy; otherwise `true` for `CatalogEntityType.Toolset`, and for `CatalogEntityType.Agent` gated on `item.supportsMcp === true`; `false` for every other type.
 - [x] 9.2 Pass `connectOverlay={(item, onClose) => <ConnectPopoverContainer item={item} onClose={onClose} />}` and `isConnectVisible` to the `Catalog` component, alongside `detailsTexts.connectLabel` sourced from the new i18n key (reusing an existing shared `Connect` key if one already exists under `ButtonsI18nKeys`, per the project's duplicate-i18n-value convention — otherwise add one).
 - [x] 9.3 Add/update `CatalogView` tests: toolset item shows Connect when the external URL is configured, MCP-capable application shows Connect, non-MCP application does not, and no item shows Connect when the external URL is unconfigured.
 - [x] 9.4 Run `npm exec nx test chat` and `npm exec nx lint chat` for this slice.
