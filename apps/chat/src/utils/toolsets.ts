@@ -19,6 +19,7 @@ import type {
 import {
   ToolsetAuthStatus,
   ToolsetAuthTypes,
+  ToolsetOAuthChannelControlType,
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthInitiationResultType,
@@ -270,9 +271,11 @@ const getOAuthFailureReason = (
 
 /**
  * Waits for the OAuth callback popup to report a result over BroadcastChannel
- * or through the completion marker in its same-origin URL. The callback keeps
- * the popup open after writing the marker; the opener closes it only after
- * consuming a result, so popup closure cannot race result delivery.
+ * or through the completion marker in its same-origin URL. A cross-origin
+ * provider can make the retained WindowProxy look closed even while the popup
+ * remains open, so cancellation is confirmed only when the initiating window
+ * regains focus. Reported results are acknowledged so the callback can close
+ * itself even when the retained WindowProxy was severed.
  */
 export const waitForToolsetOAuthResult = (
   popup: Window,
@@ -298,11 +301,15 @@ export const waitForToolsetOAuthResult = (
       settled = true;
       clearInterval(pollId);
       clearTimeout(timeoutId);
+      window.removeEventListener('focus', handleOpenerFocus);
       channel?.close();
       resolve(outcome);
     };
 
     const finishReportedResult = (result: ToolsetOAuthChannelMessage) => {
+      channel?.postMessage({
+        type: ToolsetOAuthChannelControlType.ResultAcknowledged,
+      });
       try {
         popup.close();
       } catch {
@@ -347,6 +354,17 @@ export const waitForToolsetOAuthResult = (
       return null;
     };
 
+    const handleOpenerFocus = () => {
+      const reportedResult = readResultFromPopupUrl();
+      if (reportedResult != null) {
+        finishReportedResult(reportedResult);
+        return;
+      }
+      if (popup.closed) {
+        finish({ type: ToolsetOAuthResultType.Cancelled });
+      }
+    };
+
     try {
       channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
       channel.onmessage = (event: MessageEvent<ToolsetOAuthChannelMessage>) => {
@@ -355,15 +373,13 @@ export const waitForToolsetOAuthResult = (
     } catch {
       // URL polling is the deterministic fallback when channels are unavailable.
     }
+    window.addEventListener('focus', handleOpenerFocus);
 
     const pollId = setInterval(() => {
       const reportedResult = readResultFromPopupUrl();
       if (reportedResult != null) {
         finishReportedResult(reportedResult);
         return;
-      }
-      if (popup.closed) {
-        finish({ type: ToolsetOAuthResultType.Cancelled });
       }
     }, pollIntervalMs);
 
