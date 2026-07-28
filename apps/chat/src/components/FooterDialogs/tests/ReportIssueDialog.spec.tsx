@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ReportIssueDialog from '../ReportIssueDialog';
 
@@ -16,17 +17,47 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DialFormPopup: ({ open, header, children, onClose, onSubmit, submitLabel, cancelLabel, isLoading }) =>
+  DialFormPopup: ({
+    open,
+    header,
+    children,
+    onClose,
+    onSubmit,
+    submitLabel,
+    cancelLabel,
+    isLoading,
+  }: {
+    open?: boolean;
+    header?: string;
+    children?: ReactNode;
+    onClose?: () => void;
+    onSubmit?: () => void;
+    submitLabel?: string;
+    cancelLabel?: string;
+    isLoading?: boolean;
+  }) =>
     !open ? null : (
       <div role="dialog" aria-label={header}>
         {children}
-        <button type="button" onClick={onClose}>{cancelLabel}</button>
+        <button type="button" onClick={onClose}>
+          {cancelLabel}
+        </button>
         <button type="button" onClick={onSubmit} disabled={isLoading ?? false}>
           {submitLabel}
         </button>
       </div>
     ),
-  DialFormItem: ({ id, label, error, children }) => (
+  DialFormItem: ({
+    id,
+    label,
+    error,
+    children,
+  }: {
+    id?: string;
+    label?: ReactNode;
+    error?: string;
+    children?: ReactNode;
+  }) => (
     <div>
       <label htmlFor={id}>{label}</label>
       {children}
@@ -37,7 +68,17 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-kit', () => ({
-  Input: ({ id, value, placeholder, onChange }) => (
+  Input: ({
+    id,
+    value,
+    placeholder,
+    onChange,
+  }: {
+    id?: string;
+    value?: string;
+    placeholder?: string;
+    onChange?: (value?: string) => void;
+  }) => (
     <input
       id={id}
       value={value ?? ''}
@@ -45,7 +86,17 @@ vi.mock('@epam/ai-dial-kit', () => ({
       onChange={(e) => onChange?.(e.target.value)}
     />
   ),
-  Textarea: ({ id, value, placeholder, onChange }) => (
+  Textarea: ({
+    id,
+    value,
+    placeholder,
+    onChange,
+  }: {
+    id?: string;
+    value?: string;
+    placeholder?: string;
+    onChange?: (value: string) => void;
+  }) => (
     <textarea
       id={id}
       value={value ?? ''}
