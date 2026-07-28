@@ -1,4 +1,4 @@
-import { DialNotification } from '@epam/ai-dial-ui-kit';
+import { InfoMessageNotification } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 
 /** User-visible strings for {@link StatusMessageBubble}. */
@@ -24,12 +24,8 @@ export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
   labels: { titleText = 'Model switched.', bodyText },
 }) => {
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="dial-info-notification dial-notification"
-    >
-      <DialNotification
+    <div role="status" aria-live="polite">
+      <InfoMessageNotification
         title={titleText}
         message={bodyText}
         textClassName="flex-row flex-wrap gap-1"

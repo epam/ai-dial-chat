@@ -239,6 +239,65 @@ For both states:
 
 ---
 
+### Requirement: Source link clicks are routed by URL and content type
+
+`ConversationSourcesPanel` SHALL wire `handleSourceClick` as `onSourceClick` on `SourcesSection`. `handleSourceClick` SHALL route each click as follows:
+
+1. **External non-previewable URL** — if the URL is not a DIAL file ID and does not pass the previewability test (see below), open `window.open(url, '_blank', 'noopener,noreferrer')` immediately and return.
+2. **External previewable document or DIAL file** — build a `DisplayAttachment` from the `QuotationSource` and call `openAttachmentCanvas(attachment)`. If the canvas opens (`true`), close the sources sidebar. If the canvas does not open (`false`) and the URL is not a DIAL file ID, open `window.open(url, '_blank', 'noopener,noreferrer')`. If the canvas does not open and the URL is a DIAL file ID, trigger a download.
+
+**Previewability test** — `isExternalSourcePreviewable(contentType, url)` exported from `apps/chat/src/utils/attachment-canvas.ts`:
+
+- Returns `true` if `contentType` starts with `'image/'` or `'audio/'` (these content types are specific and unlikely to be mislabelled by web-search grounding APIs).
+- Otherwise, extracts the last path segment of `url` (ignoring query string and fragment) and finds the extension after the last `.`. Returns `true` when:
+  - the extension is `'pdf'` (`FileExtension.PDF`) — binary format rendered by the PDF canvas renderer; or
+  - `isTextPreviewable(fileName)` from `@epam/ai-dial-attachment-canvas` returns `true` — covers `.md`, `.markdown`, `.json`, `.txt`, `.xml`, `.csv`, and all other plain-text formats the canvas text renderer supports.
+- If there is no dot in the last path segment, returns `false`.
+- Returns `false` on invalid URLs.
+
+The rationale: some web-search grounding APIs (e.g. Google Vertex AI) label every web reference — YouTube, news articles, blog posts — with `content-type: text/markdown` regardless of actual content. Relying on the content type alone would route all web sources through the canvas pipeline and produce a "Preview not supported" error. The URL extension is the reliable signal; image and audio types are exempted because they are not mislabelled this way.
+
+#### Scenario: Web-search reference URL without a file extension opens in a new tab
+
+- **GIVEN** a `QuotationSource` with `contentType = 'text/markdown'` and a redirect URL containing no file extension (e.g. `https://vertexaisearch.cloud.google.com/grounding-api-redirect/...`)
+- **WHEN** the user clicks the source link
+- **THEN** `window.open` is called with the URL, `'_blank'`, and `'noopener,noreferrer'`
+- **AND** the canvas is not opened
+
+#### Scenario: External PDF URL opens in the canvas
+
+- **GIVEN** a `QuotationSource` with a URL whose last path segment ends in `.pdf`
+- **WHEN** the user clicks the source link
+- **THEN** `openAttachmentCanvas` is called with a `DisplayAttachment` built from the source
+- **AND** if the canvas opens, the sources sidebar is closed
+
+#### Scenario: External text-previewable URL opens in the canvas
+
+- **GIVEN** a `QuotationSource` with a URL whose last path segment has an extension recognised by `isTextPreviewable` (e.g. `.md`, `.markdown`, `.json`, `.txt`, `.csv`, `.xml`)
+- **WHEN** the user clicks the source link
+- **THEN** `openAttachmentCanvas` is called
+- **AND** if the canvas opens, the sources sidebar is closed
+
+#### Scenario: Image source opens in the canvas regardless of URL extension
+
+- **GIVEN** a `QuotationSource` with `contentType = 'image/png'` (or any `image/*` value)
+- **WHEN** the user clicks the source link
+- **THEN** `openAttachmentCanvas` is called
+
+#### Scenario: Canvas failure on external previewable URL falls back to new tab
+
+- **GIVEN** a `QuotationSource` with a previewable URL extension (e.g. `.pdf`) but where `openAttachmentCanvas` returns `false`
+- **WHEN** the user clicks the source link
+- **THEN** `window.open` is called with the source URL, `'_blank'`, and `'noopener,noreferrer'`
+
+#### Scenario: Canvas failure on DIAL file falls back to download
+
+- **GIVEN** a `QuotationSource` whose URL is a DIAL file ID and where `openAttachmentCanvas` returns `false`
+- **WHEN** the user clicks the source link
+- **THEN** the attachment download handler is invoked (not `window.open`)
+
+---
+
 ### Requirement: `useConversationSources` derives Uploaded, Generated, and Sources lists from messages
 
 `apps/chat/src/hooks/conversation-sources/useConversationSources.ts` SHALL export `useConversationSources(messages: Message[])` returning `{ uploaded: DisplayAttachment[]; generated: DisplayAttachment[]; sources: QuotationSource[] }`. The hook SHALL:
@@ -340,10 +399,10 @@ Both `UploadedFilesSection` and `GeneratedFilesSection` SHALL accept an optional
 
 For `SourcesSection`:
 
-- Accept `Props { title: string; sources: QuotationSource[]; copyLabel: string }`.
+- Accept `Props { title: string; sources: QuotationSource[]; copyLabel: string; onSourceClick?: (source: QuotationSource) => void }`.
 - When `sources.length === 0`: return `null` (no title or empty message rendered).
 - When `sources.length > 0`: render a `<ul>` where each `<li>` contains two rows:
-  - **Row 1** (flex, `items-center`, `justify-between`): an `<a href={source.url} target="_blank" rel="noopener noreferrer">` showing `source.title` with `truncate`; and a `DialGhostIconButton` with `IconCopy` that calls `navigator.clipboard.writeText(source.url)` on click, `aria-label={copyLabel}`.
+  - **Row 1** (flex, `items-center`, `justify-between`): an `<a href={source.url} target="_blank" rel="noopener noreferrer">` showing `source.title` with `truncate`; and a `DialGhostIconButton` with `IconCopy` that calls `navigator.clipboard.writeText(source.url)` on click, `aria-label={copyLabel}`. When `onSourceClick` is provided, clicking the `<a>` SHALL call `e.preventDefault()` and invoke `onSourceClick(source)` instead of following the `href`.
   - **Row 2** (only when `source.quote` is present): a `<div>` with `quoteClassName` (typography), `styles.quote` (color token), `line-clamp-5`, and `[&>div>*+*]:mt-1` (spacing between block elements), containing a `MarkdownRenderer` rendering `source.quote`. The `[&>div>*+*]:mt-1` selector targets the block-level children of `MarkdownRenderer`'s root `<div>` to add consistent vertical spacing between headings, paragraphs, and lists.
 
 `SourcesSection` is located at `libs/source-panel/src/components/SourcesSection/SourcesSection.tsx`.

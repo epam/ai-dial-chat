@@ -207,4 +207,64 @@ describe('useAuthRedirect', () => {
     expect(getProvidersSpy).not.toHaveBeenCalled();
     expect(assignSpy).not.toHaveBeenCalled();
   });
+
+  it('disabled: true suppresses every automatic side effect when unauthenticated', async () => {
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Unauthenticated,
+      user: null,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    const getProvidersSpy = vi.spyOn(authApi, 'getProviders');
+
+    renderHook(() => useAuthRedirect({ disabled: true }), {
+      wrapper: makeWrapper('/conversation'),
+    });
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(getProvidersSpy).not.toHaveBeenCalled();
+    expect(assignSpy).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(
+      window.sessionStorage.getItem(AUTH_REDIRECT_ATTEMPT_STORAGE_KEY),
+    ).toBeNull();
+  });
+
+  it('disabled: true suppresses the authenticated-on-/login redirect too', async () => {
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'u1', providerId: 'keycloak', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    renderHook(() => useAuthRedirect({ disabled: true }), {
+      wrapper: makeWrapper('/login'),
+    });
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('omitted options preserve default behavior (equivalent to disabled: false)', async () => {
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Unauthenticated,
+      user: null,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    vi.spyOn(authApi, 'getProviders').mockResolvedValue([
+      { id: 'keycloak', label: 'Keycloak' },
+    ]);
+
+    renderHook(() => useAuthRedirect({ disabled: false }), {
+      wrapper: makeWrapper('/conversation'),
+    });
+
+    await vi.waitFor(() => {
+      expect(assignSpy).toHaveBeenCalledWith(
+        '/api/v1/auth/login/keycloak?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation',
+      );
+    });
+  });
 });

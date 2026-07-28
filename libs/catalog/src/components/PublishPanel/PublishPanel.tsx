@@ -1,7 +1,8 @@
 import { SearchInput } from '@epam/ai-dial-sidebar';
 import {
-  DialNotification,
   DialTag,
+  Notification,
+  NotificationType,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useMemo, useState } from 'react';
@@ -258,7 +259,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
         {derived.calloutKind !== PublishCalloutKind.None &&
           derived.calloutKind !== PublishCalloutKind.Info && (
             <div className="mt-3">
-              <DialNotification
+              <Notification
+                type={NotificationType.SectionMessage}
                 variant={calloutVariant(derived.calloutKind)}
                 message={calloutMessage(derived.calloutKind, {
                   replaceWarning,
