@@ -25,6 +25,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       overlayEnabled: false,
       overlayAllowedOrigins: [],
       announcementHtml: null,
+      deepResearchToolId: null,
       enabledUiFeatures,
     },
   } satisfies AppConfigState);
