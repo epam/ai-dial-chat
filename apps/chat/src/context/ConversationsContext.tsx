@@ -10,6 +10,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { normalizeConversationId } from '../constants/routes';
@@ -87,6 +88,7 @@ export const ConversationsProvider = ({
   const [conversations, setConversations] = useState<ConversationListItemDto[]>(
     [],
   );
+  const conversationsRef = useRef<ConversationListItemDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const overlay = useOptionalOverlay();
@@ -94,6 +96,10 @@ export const ConversationsProvider = ({
   useEffect(() => {
     overlay?.notifyConversationsUpdated();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversations]);
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
   }, [conversations]);
 
   const refreshConversations = useCallback(async () => {
@@ -320,12 +326,34 @@ export const ConversationsProvider = ({
 
   const duplicateConversation = useCallback(
     async (id: string) => {
-      const conversationPath = normalizeConversationId(id);
-      const { newPath } = await apiDuplicateConversation(conversationPath);
-      await refreshConversations();
-      return newPath;
+      const source = conversationsRef.current.find((c) => c.id === id);
+      const tempId = crypto.randomUUID();
+      setConversations((prev) => [
+        {
+          id: tempId,
+          title: source?.title ?? '',
+          updatedAt: Date.now(),
+          sharedWithMe: false,
+          publishedWithMe: false,
+          isPinned: false,
+          isReadonly: false,
+        },
+        ...prev,
+      ]);
+      try {
+        const conversationPath = normalizeConversationId(id);
+        const { newPath } = await apiDuplicateConversation(conversationPath);
+        setConversations((prev) =>
+          prev.map((c) => (c.id === tempId ? { ...c, id: newPath } : c)),
+        );
+        void silentRefreshConversations();
+        return newPath;
+      } catch (err) {
+        setConversations((prev) => prev.filter((c) => c.id !== tempId));
+        throw err;
+      }
     },
-    [refreshConversations],
+    [silentRefreshConversations],
   );
 
   const deleteAllConversations =

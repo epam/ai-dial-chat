@@ -575,6 +575,7 @@ const DialFileManagerModal: FC<Props> = ({
       cancelLabel,
       getUploadProgressText,
       searchEmptyStateTitle: t(BasicI18nKeys.NoResults),
+      folderEmptyStateTitle: t(DialFileManagerI18nKeys.Empty),
       forbiddenSymbolsTooltip: t(
         DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
         { notAllowedSymbols: NOT_ALLOWED_SYMBOLS },
@@ -583,24 +584,10 @@ const DialFileManagerModal: FC<Props> = ({
       treeHeaderByTab,
       renameValidationMessages,
       conflictResolutionPopupOptions,
-      shareLabel: t(DialFileManagerI18nKeys.ShareAction),
       unshareLabel: t(DialFileManagerI18nKeys.UnshareAction),
       unsharingLabel: t(DialFileManagerI18nKeys.UnsharingLabel),
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
       removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel),
-      getShareModalTitle: (name: string) =>
-        t(DialFileManagerI18nKeys.ShareModalTitle, { name }),
-      shareModalReadPermissionLabel: t(BasicI18nKeys.CanView),
-      shareModalReadWritePermissionLabel: t(BasicI18nKeys.CanEdit),
-      shareModalCreateLinkButtonLabel: t(
-        DialFileManagerI18nKeys.ShareModalCreateLinkButton,
-      ),
-      shareModalCopyLinkButtonLabel: t(ButtonsI18nKeys.CopyLink),
-      shareModalLinkCopiedConfirmation: t(
-        DialFileManagerI18nKeys.ShareModalLinkCopiedConfirmation,
-      ),
-      shareModalCancelLabel: cancelLabel,
-      shareErrorMessage: t(DialFileManagerI18nKeys.ShareError),
       infoLabel: t(DialFileManagerI18nKeys.InfoAction),
       metadataHeader: t(DialFileManagerI18nKeys.MetadataHeader),
       metadataNameLabel: t(DialFileManagerI18nKeys.MetadataNameLabel),

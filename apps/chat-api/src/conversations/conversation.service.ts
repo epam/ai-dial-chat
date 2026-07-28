@@ -562,14 +562,8 @@ export class ConversationService {
     bucket: string,
     limit = 100,
     nextToken?: string,
-    path?: string,
   ): Promise<ConversationListResponseDto> {
     const { u: userNextToken, p: publicNextToken } = decodeNextToken(nextToken);
-    const metadataPath =
-      path != null && path !== '' && !path.endsWith('/')
-        ? `${path}/`
-        : (path ?? '');
-    const encodedMetadataPath = encodeDialResourcePath(metadataPath);
 
     const buildQuery = (cursor?: string) => ({
       recursive: true as const,
@@ -580,25 +574,17 @@ export class ConversationService {
     try {
       const [userResult, publicResult, sharedResult, pinnedIds] =
         await Promise.all([
-          this.dialClient.client.getConversationMetadata(
-            bucket,
-            encodedMetadataPath,
-            {
-              headers: getBearerAuthHeaders(token),
-              params: {
-                query: { ...buildQuery(userNextToken), permissions: true },
-              },
+          this.dialClient.client.getConversationMetadata(bucket, '', {
+            headers: getBearerAuthHeaders(token),
+            params: {
+              query: { ...buildQuery(userNextToken), permissions: true },
             },
-          ) as Promise<MetadataResult & { response: globalThis.Response }>,
+          }) as Promise<MetadataResult & { response: globalThis.Response }>,
           (
-            this.dialClient.client.getConversationMetadata(
-              PUBLIC_BUCKET,
-              encodedMetadataPath,
-              {
-                headers: getBearerAuthHeaders(token),
-                params: { query: buildQuery(publicNextToken) },
-              },
-            ) as Promise<MetadataResult>
+            this.dialClient.client.getConversationMetadata(PUBLIC_BUCKET, '', {
+              headers: getBearerAuthHeaders(token),
+              params: { query: buildQuery(publicNextToken) },
+            }) as Promise<MetadataResult>
           ).catch((err: unknown) => {
             this.logger.warn(
               'DIAL Core listConversations (public bucket) failed',
@@ -630,27 +616,7 @@ export class ConversationService {
         response: userResponse,
       } = userResult;
 
-      /*
-       * DIAL Core folders are virtual/prefix-only: scoping to a subfolder
-       * that has no blobs under it yet legitimately 404s upstream, unlike
-       * the bucket root (which always "exists"). Treat that case as an
-       * empty listing instead of a fatal error, mirroring how the
-       * public-bucket and shared-resources branches already tolerate
-       * failures below.
-       */
-      const isEmptyScopedFolder =
-        userError !== undefined &&
-        metadataPath !== '' &&
-        userResponse?.status === 404;
-
-      let resolvedUserData: { items?: MetadataItem[]; nextToken?: string };
-
-      if (isEmptyScopedFolder) {
-        this.logger.warn(
-          `DIAL Core returned 404 for listConversations (user bucket) scoped to path "${metadataPath}"; treating as an empty result`,
-        );
-        resolvedUserData = { items: [], nextToken: undefined };
-      } else if (userError !== undefined || !userData) {
+      if (userError !== undefined || !userData) {
         this.logger.error(
           'DIAL Core rejected listConversations (user bucket)',
           userError,
@@ -661,9 +627,10 @@ export class ConversationService {
           this.logger,
           userResponse,
         );
-      } else {
-        resolvedUserData = userData;
       }
+
+      const resolvedUserData: { items?: MetadataItem[]; nextToken?: string } =
+        userData;
 
       const { data: publicData, error: publicError } = publicResult;
       if (publicError !== undefined) {

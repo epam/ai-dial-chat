@@ -14,6 +14,7 @@ import RequireAuth from './components/RequireAuth/RequireAuth';
 import AppConfigProvider from './context/AppConfigContext';
 import { UserProvider } from './context/auth/UserContext';
 import { ClientChannelProvider } from './context/ClientChannelContext';
+import { ConversationPanelProvider } from './context/ConversationPanelContext';
 import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
 import { GenerationProvider } from './context/GenerationContext';
@@ -46,35 +47,37 @@ root.render(
               <AppConfigProvider>
                 <SourcesSidebarProvider>
                   <AttachmentCanvasProvider>
-                    <Suspense fallback={null}>
-                      <Routes>
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route
-                          path="/overlay-close"
+                    <ConversationPanelProvider>
+                      <Suspense fallback={null}>
+                        <Routes>
+                          <Route path="/login" element={<LoginPage />} />
+                          <Route
+                            path="/overlay-close"
                           element={<OverlayClose />}
                         />
                         <Route
                           path="*"
-                          element={
-                            <OverlayModeGate>
-                              <RequireAuth>
-                                <GenerationProvider>
-                                  <ClientChannelProvider>
-                                    <UserConfigProvider>
-                                      <DeploymentsProvider>
-                                        <ConversationsProvider>
-                                          <App />
-                                        </ConversationsProvider>
-                                      </DeploymentsProvider>
-                                    </UserConfigProvider>
-                                  </ClientChannelProvider>
-                                </GenerationProvider>
-                              </RequireAuth>
-                            </OverlayModeGate>
-                          }
-                        />
-                      </Routes>
-                    </Suspense>
+                            element={
+                              <OverlayModeGate>
+                                <RequireAuth>
+                                  <GenerationProvider>
+                                    <ClientChannelProvider>
+                                      <UserConfigProvider>
+                                        <DeploymentsProvider>
+                                          <ConversationsProvider>
+                                            <App />
+                                          </ConversationsProvider>
+                                        </DeploymentsProvider>
+                                      </UserConfigProvider>
+                                    </ClientChannelProvider>
+                                  </GenerationProvider>
+                                </RequireAuth>
+                              </OverlayModeGate>
+                            }
+                          />
+                        </Routes>
+                      </Suspense>
+                    </ConversationPanelProvider>
                   </AttachmentCanvasProvider>
                 </SourcesSidebarProvider>
               </AppConfigProvider>

@@ -6,6 +6,7 @@ import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  clearAttachmentCache,
   referenceAttachmentToPdfCanvasContent,
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
@@ -75,6 +76,7 @@ const makeReferenceUrlAttachment = (
 describe('resolveMarkdownCanvasContent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearAttachmentCache();
   });
 
   it('returns MarkdownCanvasContent from inline base64 data', async () => {
@@ -200,6 +202,7 @@ describe('resolveMarkdownCanvasContent', () => {
 describe('resolveJsonCanvasContent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearAttachmentCache();
   });
 
   it('returns JsonCanvasContent from inline base64 data', async () => {
@@ -371,11 +374,32 @@ describe('referenceAttachmentToPdfCanvasContent', () => {
 describe('resolveImageCanvasContent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearAttachmentCache();
     URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-image-url');
   });
 
-  it('returns ImageCanvasContent from a data: previewUrl', async () => {
-    const result = await resolveImageCanvasContent({
+  it('returns ImageCanvasContent with the BFF URL for a DIAL attachment (no fetch)', () => {
+    const mockFetch = vi.fn();
+    vi.stubGlobal('fetch', mockFetch);
+
+    const result = resolveImageCanvasContent({
+      id: 'photo.jpg',
+      name: 'photo.jpg',
+      contentType: 'image/jpeg',
+      type: AttachmentType.Image,
+      status: RequestStatus.Idle,
+      url: 'files/bucket/path/photo.jpg',
+    } as DisplayAttachment);
+
+    expect(result).toEqual({
+      type: AttachmentContentType.Image,
+      url: '/download?path=path/photo.jpg',
+    });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('returns ImageCanvasContent from a data: previewUrl', () => {
+    const result = resolveImageCanvasContent({
       id: 'stage-att',
       name: 'Annotated page #1',
       contentType: 'image/jpeg',
@@ -389,8 +413,8 @@ describe('resolveImageCanvasContent', () => {
     });
   });
 
-  it('returns ImageCanvasContent from inline base64 data via a Blob URL', async () => {
-    const result = await resolveImageCanvasContent({
+  it('returns ImageCanvasContent from inline base64 data via a Blob URL', () => {
+    const result = resolveImageCanvasContent({
       id: 'stage-att',
       name: 'Annotated page #1',
       contentType: 'image/jpeg',
@@ -404,8 +428,8 @@ describe('resolveImageCanvasContent', () => {
     });
   });
 
-  it('returns null when no source is available', async () => {
-    const result = await resolveImageCanvasContent({
+  it('returns null when no source is available', () => {
+    const result = resolveImageCanvasContent({
       id: 'stage-att',
       name: 'Annotated page #1',
       contentType: 'image/jpeg',
@@ -414,53 +438,92 @@ describe('resolveImageCanvasContent', () => {
     });
     expect(result).toBeNull();
   });
+});
 
-  it('returns ImageCanvasContent via a Blob URL for a successful DIAL fetch', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        blob: () => Promise.resolve(new Blob(['bytes'])),
-      }),
+describe('attachment cache deduplication', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearAttachmentCache();
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+  });
+
+  it('issues only one fetch when the same DIAL text URL is resolved twice concurrently', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve('# Hello'),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const att = makeRemoteAttachment(
+      'readme.md',
+      'files/bucket/path/readme.md',
     );
-    const result = await resolveImageCanvasContent({
-      id: 'photo.jpg',
-      name: 'photo.jpg',
-      contentType: 'image/jpeg',
-      type: AttachmentType.Image,
-      status: RequestStatus.Idle,
-      url: 'files/bucket/path/photo.jpg',
-    } as DisplayAttachment);
+    await Promise.all([
+      resolveMarkdownCanvasContent(att),
+      resolveMarkdownCanvasContent(att),
+    ]);
+
+    expect(mockFetch).toHaveBeenCalledOnce();
+  });
+
+  it('issues only one fetch when the same DIAL blob URL is resolved twice concurrently', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      blob: () => Promise.resolve(new Blob(['%PDF'])),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const att = makeRemoteAttachment('doc.pdf', 'files/bucket/path/doc.pdf');
+    await Promise.all([
+      resolvePdfCanvasContent(att),
+      resolvePdfCanvasContent(att),
+    ]);
+
+    expect(mockFetch).toHaveBeenCalledOnce();
+  });
+
+  it('retries a failed fetch on the next call', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve('# Retry'),
+      });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const att = makeRemoteAttachment('retry.md', 'files/bucket/path/retry.md');
+    await resolveMarkdownCanvasContent(att);
+    const result = await resolveMarkdownCanvasContent(att);
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
     expect(result).toEqual({
-      type: AttachmentContentType.Image,
-      url: 'blob:mock-image-url',
+      type: AttachmentContentType.Markdown,
+      text: '# Retry',
     });
   });
 
-  it('returns a Forbidden error content when the DIAL fetch is a 403', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
-    );
-    const result = await resolveImageCanvasContent({
-      id: 'photo.jpg',
-      name: 'photo.jpg',
-      contentType: 'image/jpeg',
-      type: AttachmentType.Image,
-      status: RequestStatus.Idle,
-      url: 'files/bucket/path/photo.jpg',
-    } as DisplayAttachment);
-    expect(result).toEqual({
-      type: AttachmentContentType.Error,
-      errorType: AttachmentErrorType.Forbidden,
-      url: '/download?path=path/photo.jpg',
+  it('clears cached entries so the next call re-fetches', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve('v1'),
     });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const att = makeRemoteAttachment('doc.md', 'files/bucket/path/doc.md');
+    await resolveMarkdownCanvasContent(att);
+
+    clearAttachmentCache();
+    await resolveMarkdownCanvasContent(att);
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 });
 
 describe('resolvePdfCanvasContent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearAttachmentCache();
     URL.createObjectURL = vi.fn().mockReturnValue('blob:mock-pdf-url');
   });
 

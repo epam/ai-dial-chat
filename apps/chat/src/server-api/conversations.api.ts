@@ -67,7 +67,6 @@ export const listConversations = (
   params?: {
     limit?: number;
     nextToken?: string;
-    path?: string;
   },
   signal?: AbortSignal,
 ) =>
@@ -75,7 +74,6 @@ export const listConversations = (
     {
       limit: params?.limit ?? 1000,
       nextToken: params?.nextToken,
-      path: params?.path,
     },
     ...(signal ? [{ signal }] : []),
   );
