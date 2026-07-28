@@ -60,6 +60,7 @@ describe('AppConfigContext', () => {
     ]);
     expect(result.current.config.overlayEnabled).toBe(false);
     expect(result.current.config.overlayAllowedOrigins).toEqual([]);
+    expect(result.current.config.enabledUiFeatures).toBeNull();
     expect(result.current.config.announcementHtml).toBeNull();
   });
 
@@ -201,6 +202,31 @@ describe('AppConfigContext', () => {
       'my_files',
       'shared',
       'organization',
+    ]);
+  });
+
+  it('populates enabledUiFeatures from a successful API call', async () => {
+    mockGetClientConfig.mockResolvedValue({
+      appId: 'chat-ui',
+      features: { asrEnabled: false },
+      config: {
+        asrModelId: null,
+        transcribeSizeLimitBytes: 5_242_880,
+        dialCoreExternalUrl: null,
+        enabledUiFeatures: ['header', 'likes', 'hide-new-conversation'],
+      },
+      metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+    } as unknown as ClientConfigResponseDto);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.config.enabledUiFeatures).toEqual([
+      'header',
+      'likes',
+      'hide-new-conversation',
     ]);
   });
 

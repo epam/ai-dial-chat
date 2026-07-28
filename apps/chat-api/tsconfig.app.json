@@ -19,5 +19,6 @@
     "src/**/*.spec.tsx",
     "src/**/*.test.ts",
     "src/**/*.test.tsx"
-  ]
+  ],
+  "references": []
 }

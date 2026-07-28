@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
@@ -11,6 +12,8 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';
+import { useUiFeature } from '../../hooks/useUiFeature';
+import { ROUTES } from '../../types/routes';
 import { getIconPath } from '../../utils/icon-path';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import NavPageContent from '../MobileNavBottomSheet/NavPageContent';
@@ -28,26 +31,28 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
   const { currentThemeFavicon } = useTheme();
+  const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
+  const isUserMenuHidden = useUiFeature(OverlayFeature.HideUserMenu);
 
-  const navItems = NAVIGATION_CONFIG.map(
-    ({ path, matchPaths, icon: Icon, labelKey }) => {
-      const isActive =
-        (path === '/' ? pathname === '/' : pathname.startsWith(path)) ||
-        (matchPaths?.some((p) => pathname.startsWith(p)) ?? false);
-      return (
-        <Link key={path} to={path} className="contents">
-          <DialGhostIconButton
-            icon={<Icon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-            aria-label={t(labelKey)}
-            aria-current={isActive ? 'page' : undefined}
-            tooltipProps={{ tooltip: t(labelKey) }}
-            tabIndex={-1}
-            className={isActive ? '!text-accent-primary' : undefined}
-          />
-        </Link>
-      );
-    },
-  );
+  const navItems = NAVIGATION_CONFIG.filter(
+    ({ path }) => path !== ROUTES.Catalog || isCatalogEnabled,
+  ).map(({ path, matchPaths, icon: Icon, labelKey }) => {
+    const isActive =
+      (path === '/' ? pathname === '/' : pathname.startsWith(path)) ||
+      (matchPaths?.some((p) => pathname.startsWith(p)) ?? false);
+    return (
+      <Link key={path} to={path} className="contents">
+        <DialGhostIconButton
+          icon={<Icon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+          aria-label={t(labelKey)}
+          aria-current={isActive ? 'page' : undefined}
+          tooltipProps={{ tooltip: t(labelKey) }}
+          tabIndex={-1}
+          className={isActive ? '!text-accent-primary' : undefined}
+        />
+      </Link>
+    );
+  });
 
   return (
     <>
@@ -76,7 +81,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
               {navItems}
             </div>
           </div>
-          <UserMenu />
+          {!isUserMenuHidden && <UserMenu />}
         </nav>
       )}
 

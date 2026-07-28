@@ -258,13 +258,18 @@ export class ChatOverlay {
    */
   setOverlayOptions(
     options: Partial<
-      Pick<ChatOverlayOptions, 'theme' | 'modelId' | 'overlayConversationId'>
+      Pick<
+        ChatOverlayOptions,
+        'theme' | 'modelId' | 'overlayConversationId' | 'enabledFeatures'
+      >
     >,
   ): Promise<SetOverlayOptionsResponse> {
     this.options.theme = options.theme ?? this.options.theme;
     this.options.modelId = options.modelId ?? this.options.modelId;
     this.options.overlayConversationId =
       options.overlayConversationId ?? this.options.overlayConversationId;
+    this.options.enabledFeatures =
+      options.enabledFeatures ?? this.options.enabledFeatures;
     return this.sendCurrentOverlayOptions();
   }
 
@@ -334,6 +339,9 @@ export class ChatOverlay {
     }
     if (this.options.overlayConversationId !== undefined) {
       payload.overlayConversationId = this.options.overlayConversationId;
+    }
+    if (this.options.enabledFeatures !== undefined) {
+      payload.enabledFeatures = this.options.enabledFeatures;
     }
     return this.send<SetOverlayOptionsResponse>(
       OverlayRequestType.SetOverlayOptions,

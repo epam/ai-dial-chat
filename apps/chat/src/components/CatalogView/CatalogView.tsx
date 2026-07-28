@@ -3,10 +3,12 @@ import {
   CatalogEntityType,
   CatalogItem,
   CatalogItemDetailsFetchResult,
+  CatalogViewMode,
+  CreateOption,
   CredentialsLevel,
   CredentialStatus,
-  CreateOption,
 } from '@epam/ai-dial-catalog';
+import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ToolsetLogoutBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
@@ -39,6 +41,7 @@ import {
   useToolsetLogin,
 } from '../../hooks/toolsets/useToolsetLogin';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../server-api/deployments';
@@ -144,6 +147,21 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [schemas],
   );
 
+  const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
+  const isCatalogTableViewEnabled = useUiFeature(
+    OverlayFeature.CatalogTableView,
+  );
+  const isCatalogHideMyAppsEnabled = useUiFeature(
+    OverlayFeature.CatalogHideMyApps,
+  );
+  const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
+  const isCustomApplicationsEnabled = useUiFeature(
+    OverlayFeature.CustomApplications,
+  );
+  const isHideCustomAppCreationEnabled = useUiFeature(
+    OverlayFeature.HideCustomAppCreation,
+  );
+
   const catalogItems = useMemo(
     () => [
       ...deployments.map((d) =>
@@ -155,20 +173,32 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           quickAppSchemaId,
         ),
       ),
-      ...toolsets.map((toolset) =>
-        mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
-      ),
+      ...(isToolsetsEnabled
+        ? toolsets.map((toolset) =>
+            mapToolsetToCatalogItem(toolset, favoriteIds, isAdmin, t),
+          )
+        : []),
     ],
-    [deployments, favoriteIds, t, toolsets, quickAppSchemaId, isAdmin],
+    [
+      deployments,
+      favoriteIds,
+      t,
+      toolsets,
+      quickAppSchemaId,
+      isAdmin,
+      isToolsetsEnabled,
+    ],
   );
 
-  const visibleCatalogItems = useMemo(
-    () =>
-      isSelectorMode
-        ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
-        : catalogItems,
-    [catalogItems, isSelectorMode],
-  );
+  const visibleCatalogItems = useMemo(() => {
+    let result = isSelectorMode
+      ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
+      : catalogItems;
+    if (isCatalogHideMyAppsEnabled) {
+      result = result.filter((item) => !item.isMyApp);
+    }
+    return result;
+  }, [catalogItems, isSelectorMode, isCatalogHideMyAppsEnabled]);
 
   const reconciledFilterTopics = useMemo(() => {
     const availableTopics = new Set(
@@ -450,6 +480,18 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [dialCoreExternalUrl],
   );
 
+  const isApplicationsSharingEnabled = useUiFeature(
+    OverlayFeature.ApplicationsSharing,
+  );
+  const isToolsetsSharingEnabled = useUiFeature(OverlayFeature.ToolsetsSharing);
+  const isShareVisible = useCallback(
+    (item: CatalogItem) =>
+      item.type === CatalogEntityType.Toolset
+        ? isToolsetsSharingEnabled
+        : isApplicationsSharingEnabled,
+    [isApplicationsSharingEnabled, isToolsetsSharingEnabled],
+  );
+
   /*
    * Publish history is never fetched: the backend endpoint returns 503 for
    * DIAL Core (see GH issue #7897), the same outage already worked around
@@ -563,7 +605,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const createOptions = useMemo<CreateOption[]>(() => {
     const options: CreateOption[] = [];
 
-    if (quickAppSchemaId) {
+    if (
+      quickAppSchemaId &&
+      isCustomApplicationsEnabled &&
+      !isHideCustomAppCreationEnabled
+    ) {
       options.push({
         label: t(CatalogI18nKeys.CreateQuickApp),
         onClick: () =>
@@ -577,18 +623,32 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       });
     }
 
-    options.push({
-      label: t(CatalogI18nKeys.CreateToolset),
-      onClick: () => {
-        const params = new URLSearchParams({
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        });
-        navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
-      },
-    });
+    if (isToolsetsEnabled) {
+      options.push({
+        label: t(CatalogI18nKeys.CreateToolset),
+        onClick: () => {
+          const params = new URLSearchParams({
+            [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          });
+          navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
+        },
+      });
+    }
 
     return options;
-  }, [quickAppSchemaId, navigate, t, buildEditorUrl]);
+  }, [
+    quickAppSchemaId,
+    navigate,
+    t,
+    buildEditorUrl,
+    isCustomApplicationsEnabled,
+    isHideCustomAppCreationEnabled,
+    isToolsetsEnabled,
+  ]);
+
+  if (!isCatalogEnabled && !isSelectorMode) {
+    return null;
+  }
 
   return (
     <Catalog
@@ -598,6 +658,9 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       createOptions={createOptions}
       hideCreateButton={isSelectorMode}
       hidePageTitle={isSelectorMode}
+      initialViewMode={
+        isCatalogTableViewEnabled ? CatalogViewMode.List : undefined
+      }
       selectedItemId={
         isSelectorMode ? (selectedItemId ?? undefined) : undefined
       }
@@ -638,6 +701,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       shareOverlay={(item, onClose) => (
         <SharePopoverContainer item={item} onClose={onClose} />
       )}
+      isShareVisible={isShareVisible}
       isConnectVisible={isConnectVisible}
       connectOverlay={(item, onClose) => (
         <ConnectPopoverContainer item={item} onClose={onClose} />

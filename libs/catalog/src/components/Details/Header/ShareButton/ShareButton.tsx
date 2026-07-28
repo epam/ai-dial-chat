@@ -15,6 +15,12 @@ interface ShareButtonProps {
    * provided, clicking Share opens this popover instead of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /**
+   * Additional caller-supplied rule for whether Share is shown, combined
+   * (AND) with the built-in ownership/type rule. Absent means the built-in
+   * rule alone decides.
+   */
+  isShareVisible?: (item: CatalogItem) => boolean;
   /** Share button label. Defaults to `'Share'`. */
   label?: string;
 }
@@ -37,6 +43,7 @@ export const ShareButton: FC<ShareButtonProps> = ({
   item,
   onShare,
   shareOverlay,
+  isShareVisible,
   label = 'Share',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,6 +57,7 @@ export const ShareButton: FC<ShareButtonProps> = ({
   }, [item, onShare, shareOverlay]);
 
   if (!shouldShowShare(item)) return null;
+  if (isShareVisible && !isShareVisible(item)) return null;
 
   const button = (
     <NeutralButton
