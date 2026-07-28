@@ -4,7 +4,7 @@
 
 `useDialFileManager` (`apps/chat/src/hooks/files/useDialFileManager.ts`) SHALL expose `isAnyOperationInProgress: boolean` on `UseDialFileManagerResult`, computed via `useMemo` as the logical OR of exactly: `isCreatingFolder`, `isDownloading`, `isDeleting`, `isRenaming`, `isCopying`, `isMoving`, `isUnsharing`, `isRemovingAccess`, and `uploadBatchState != null`.
 
-`isLoading`, `isSearching`, `isFileMetadataLoading`, and `isSharing` SHALL NOT be included in this composition. Each is already fully contained by its own scoped loading UI: `isLoading` represents a read (listing fetch), a distinct concept from a mutating operation; `isSearching` is scoped to ui-kit's own search-progress UI; `isFileMetadataLoading` has its own `loading` state in `fileMetadataPopupOptions`; `isSharing` is already blocked by `ShareFileModal`'s own foreground `DialPopup` dialog.
+`isLoading`, `isSearching`, and `isFileMetadataLoading` SHALL NOT be included in this composition. Each is already fully contained by its own scoped loading UI: `isLoading` represents a read (listing fetch), a distinct concept from a mutating operation; `isSearching` is scoped to ui-kit's own search-progress UI; `isFileMetadataLoading` has its own `loading` state in `fileMetadataPopupOptions`.
 
 **State ownership**: `useDialFileManager` owns `isAnyOperationInProgress`; no new context is introduced.
 
@@ -25,11 +25,6 @@
 - **WHEN** `isFileMetadataLoading` is `true` and every other covered flag is `false`
 - **THEN** `isAnyOperationInProgress` is `false`
 
-#### Scenario: Sharing alone does not set the flag
-
-- **WHEN** `isSharing` is `true` (a share link is being created inside `ShareFileModal`) and every other covered flag is `false`
-- **THEN** `isAnyOperationInProgress` is `false`, since `ShareFileModal`'s own `DialPopup` already blocks background interaction
-
 #### Scenario: Listing load alone does not set the flag
 
 - **WHEN** `isLoading` is `true` (a folder listing is being fetched) and every other covered flag is `false`
@@ -46,7 +41,7 @@
 
 The `ariaLabel` SHALL be resolved by a dedicated helper using an if/else chain (not nested ternary expressions, per this repo's TypeScript conventions), in this precedence order when more than one flag is unexpectedly `true` simultaneously: `isDownloading` → `isDeleting` → `isRenaming && !isMoving` → `isUnsharing` → `isRemovingAccess`, mapping to `labels.downloadingLabel` / `labels.deletingLabel` / `labels.renamingLabel` / `labels.unsharingLabel` / `labels.removingAccessLabel` respectively. The overlay SHALL NOT render when none of the five flags is `true`.
 
-This overlay SHALL NOT render simultaneously with `OperationLoaderModal` (copy/move), `UploadProgressModal` (upload), or `ShareFileModal` (share) — those retain their existing dedicated treatments unchanged, since all three render through ui-kit's portal-based `DialPopup` and never coincide with the five consolidated states in `useDialFileManager`'s existing per-action state model.
+This overlay SHALL NOT render simultaneously with `OperationLoaderModal` (copy/move) or `UploadProgressModal` (upload) — those retain their existing dedicated treatments unchanged, since both render through ui-kit's portal-based `DialPopup` and never coincide with the five consolidated states in `useDialFileManager`'s existing per-action state model.
 
 #### Scenario: Download shows the consolidated overlay
 
@@ -73,10 +68,10 @@ This overlay SHALL NOT render simultaneously with `OperationLoaderModal` (copy/m
 - **WHEN** `onRemoveFilesAccess` is in flight (`isRemovingAccess === true`)
 - **THEN** the consolidated overlay renders with `ariaLabel={labels.removingAccessLabel}`
 
-#### Scenario: Existing copy/move/upload/share treatments are unaffected
+#### Scenario: Existing copy/move/upload treatments are unaffected
 
-- **WHEN** `isCopying`, `isMoving`, `uploadBatchState`, or `isSharing` is active
-- **THEN** the consolidated overlay does not additionally render — `OperationLoaderModal`, `UploadProgressModal`, and `ShareFileModal` remain the sole indicator for those operations, exactly as before this change
+- **WHEN** `isCopying`, `isMoving`, or `uploadBatchState` is active
+- **THEN** the consolidated overlay does not additionally render — `OperationLoaderModal` and `UploadProgressModal` remain the sole indicator for those operations, exactly as before this change
 
 #### Scenario: No overlay when nothing is in flight
 
@@ -94,7 +89,7 @@ This overlay SHALL NOT render simultaneously with `OperationLoaderModal` (copy/m
 
 #### Scenario: Attach-gating behavior is unchanged for the attach profile
 
-- **WHEN** the modal renders with `actionProfile: Attach` (which cannot reach `isCopying`/`isMoving`/`isSharing`/`isUnsharing`/`isRemovingAccess` per `file-manager-tabs`)
+- **WHEN** the modal renders with `actionProfile: Attach` (which cannot reach `isCopying`/`isMoving`/`isUnsharing`/`isRemovingAccess` per `file-manager-tabs`)
 - **THEN** the Attach button's disabled state is identical to what the pre-change local `isOperationInProgress` calculation would have produced for every reachable state combination
 
 #### Scenario: Attach button still independently gated on isLoading

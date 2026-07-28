@@ -1,7 +1,10 @@
 import { render, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TOOLSET_REDIRECT_STATE_KEY } from '../../../constants/toolsets';
+import {
+  TOOLSET_REDIRECT_STATE_KEY,
+  ToolsetOAuthCallbackQuery,
+} from '../../../constants/toolsets';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import type {
   ToolsetOAuthChannelMessage,
@@ -13,10 +16,7 @@ import {
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
 } from '../../../types/toolsets';
-import {
-  getToolsetOAuthChannelName,
-  getToolsetOAuthResultStorageKey,
-} from '../../../utils/toolsets';
+import { getToolsetOAuthChannelName } from '../../../utils/toolsets';
 import ToolsetAuthCallback from '../ToolsetAuthCallback';
 
 const setRedirectState = (state: ToolsetRedirectState) =>
@@ -58,12 +58,15 @@ const renderCallback = (
 
 describe('ToolsetAuthCallback', () => {
   const mockClose = vi.fn();
+  const mockReplaceState = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
     sessionStorage.clear();
     vi.spyOn(window, 'close').mockImplementation(mockClose);
+    vi.spyOn(window.history, 'replaceState').mockImplementation(
+      mockReplaceState,
+    );
   });
 
   it('closes the window when sessionStorage state is missing', async () => {
@@ -146,7 +149,7 @@ describe('ToolsetAuthCallback', () => {
     });
   });
 
-  it('persists the result and closes after posting it on the flow channel', async () => {
+  it('writes the result into the popup URL and leaves it open for the opener', async () => {
     setRedirectState({
       toolsetId: 'toolsets/b/my__1.0.0',
       credentialsLevel: ToolsetCredentialsLevel.User,
@@ -157,13 +160,16 @@ describe('ToolsetAuthCallback', () => {
     const resultPromise = listenForResult('flow-1');
     renderCallback('?code=auth-code-xyz&state=flow-1');
 
-    const result = await resultPromise;
-    expect(mockClose).toHaveBeenCalledOnce();
-    expect(
-      JSON.parse(
-        localStorage.getItem(getToolsetOAuthResultStorageKey('flow-1')) ?? '',
-      ),
-    ).toMatchObject({ result });
+    await resultPromise;
+    expect(mockClose).not.toHaveBeenCalled();
+    const lastUrl = new URL(
+      String(mockReplaceState.mock.calls.at(-1)?.[2]),
+      window.location.origin,
+    );
+    expect(lastUrl.searchParams.get(ToolsetOAuthCallbackQuery.Result)).toBe(
+      ToolsetOAuthResultType.Success,
+    );
+    expect(lastUrl.searchParams.has('code')).toBe(false);
   });
 
   it('closes its sending channel after queuing the result', async () => {
@@ -180,7 +186,7 @@ describe('ToolsetAuthCallback', () => {
       renderCallback('?code=auth-code-xyz&state=flow-1');
 
       await resultPromise;
-      expect(mockClose).toHaveBeenCalledOnce();
+      expect(mockClose).not.toHaveBeenCalled();
       expect(closeChannelSpy).toHaveBeenCalledTimes(2);
     } finally {
       closeChannelSpy.mockRestore();
@@ -234,5 +240,15 @@ describe('ToolsetAuthCallback', () => {
       type: ToolsetOAuthResultType.Failure,
       reason: ToolsetOAuthFailureReason.LoginRequestFailed,
     });
+    const lastUrl = new URL(
+      String(mockReplaceState.mock.calls.at(-1)?.[2]),
+      window.location.origin,
+    );
+    expect(lastUrl.searchParams.get(ToolsetOAuthCallbackQuery.Result)).toBe(
+      ToolsetOAuthResultType.Failure,
+    );
+    expect(
+      lastUrl.searchParams.get(ToolsetOAuthCallbackQuery.FailureReason),
+    ).toBe(ToolsetOAuthFailureReason.LoginRequestFailed);
   });
 });

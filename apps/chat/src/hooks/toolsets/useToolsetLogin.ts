@@ -150,6 +150,10 @@ export const useToolsetLogin = (): {
       const result = await waitForToolsetOAuthResult(
         initiation.popup,
         initiation.flowId,
+        {
+          toolsetId,
+          credentialsLevel,
+        },
       );
 
       if (result.type === ToolsetOAuthResultType.Success) {

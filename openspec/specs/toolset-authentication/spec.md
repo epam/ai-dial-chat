@@ -103,11 +103,12 @@ authorize URL SHALL include `code_challenge`/`code_challenge_method` query param
 toolset's stored OAuth configuration includes them. A shared callback route, loaded inside that
 new window, SHALL read the persisted state and complete login by submitting the authorization
 `code`, `redirectUri`, and the stored `credentialsLevel`, then post the outcome to the opener over
-the flow's `BroadcastChannel` and persist the same non-secret outcome in a flow-scoped
-`localStorage` entry before closing itself. The opener SHALL consume and delete the persisted
-outcome through a storage event or popup poll when the channel event is delayed or dropped, so
-closing the popup cannot lose a completed result and the handoff requires no delay timer. The
-persisted outcome SHALL NOT contain the OAuth authorization code or credentials. The environment
+the flow's `BroadcastChannel` and write the same non-secret outcome into the callback popup's
+same-origin URL. The callback SHALL remove the OAuth authorization code from its URL and remain
+open until the opener consumes the result. The opener SHALL poll the popup URL when the channel
+event is delayed or dropped and close the popup only after receiving either result, so a completed
+login cannot be mistaken for manual cancellation and the handoff requires no delay timer. The
+popup result URL SHALL NOT contain the OAuth authorization code or credentials. The environment
 SHALL serve Chat with
 `Cross-Origin-Opener-Policy: same-origin-allow-popups`, not Helmet's `same-origin` default, so
 navigation to an external OAuth provider does not sever the opener's popup reference and make an
@@ -144,9 +145,9 @@ without a second login attempt or page reload.
 - **WHEN** the provider redirects back to the callback route inside the window opened for
   login
 - **THEN** the system reads the stored redirect state, calls the login endpoint with the code,
-  redirect URI, and the stored `credentialsLevel`, persists the non-secret outcome under the
-  flow-specific result key, posts it over the flow's `BroadcastChannel`, and closes the callback
-  window
+  redirect URI, and the stored `credentialsLevel`, removes the authorization code from the popup
+  URL, writes the non-secret outcome into that URL, posts it over the flow's `BroadcastChannel`,
+  and leaves the callback window open for the opener to close
 
 #### Scenario: External provider navigation preserves popup tracking
 - **WHEN** the OAuth popup navigates from Chat to a cross-origin identity provider
@@ -155,9 +156,9 @@ without a second login attempt or page reload.
   Chat tab
 
 #### Scenario: Opener recovers a result after the channel event is missed
-- **WHEN** the callback persisted its result and closed, but the opener did not receive the
+- **WHEN** the callback wrote its result into the popup URL, but the opener did not receive the
   `BroadcastChannel` event
-- **THEN** the opener consumes and deletes the flow-scoped result from `localStorage`, resolves
+- **THEN** the opener reads the result from the same-origin popup URL, closes the popup, resolves
   the login outcome, and refreshes the toolset status
 
 #### Scenario: Successful OAuth login refreshes the initiating page

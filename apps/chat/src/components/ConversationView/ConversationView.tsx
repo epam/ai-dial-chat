@@ -1,9 +1,11 @@
+import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import {
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
   OverlayFeature,
   StatusEvent,
+  type Annotation,
   type Attachment,
   type Conversation,
   type MessageRating,
@@ -57,6 +59,7 @@ import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelecto
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUiFeature } from '../../hooks/useUiFeature';
+import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import {
   dialFilesToAttachments,
   dialFolderPathToAttachment,
@@ -189,6 +192,23 @@ const ConversationView: FC<Props> = ({
   >([]);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+  const { openCanvas } = useAttachmentCanvas();
+
+  const handlePreviewReference = useCallback(
+    (annotation: Annotation) => {
+      const attachment = annotation.body?.source?.attachment;
+      if (!attachment) return;
+      const canvasContent = referenceAttachmentToPdfCanvasContent(attachment);
+      if (canvasContent) openCanvas(canvasContent, attachment.title);
+    },
+    [openCanvas],
+  );
+
+  const stepsLabel = useCallback(
+    (count: number) => t(ConversationI18nKeys.StagesStep, { count }),
+    [t],
+  );
+
   const isEditActive = !!editingMessageIndexes?.size;
   const {
     items,
@@ -558,9 +578,8 @@ const ConversationView: FC<Props> = ({
                     stoppedGeneratingText={stoppedGeneratingText}
                     thinkingLabel={t(ChatI18nKeys.Thinking)}
                     executedLabel={t(ConversationI18nKeys.StagesExecuted)}
-                    stepsLabel={(count) =>
-                      t(ConversationI18nKeys.StagesStep, { count })
-                    }
+                    stepsLabel={stepsLabel}
+                    onPreviewReference={handlePreviewReference}
                     pendingDropFiles={
                       isEditActive && isThisMessageEditing
                         ? pendingFiles

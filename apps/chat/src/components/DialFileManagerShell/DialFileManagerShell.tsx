@@ -12,7 +12,6 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { memo, useEffect, useMemo, useState, type FC } from 'react';
 import OperationLoaderModal from '../../components/DialFileManagerModal/OperationLoaderModal';
-import ShareFileModal from '../../components/DialFileManagerModal/ShareFileModal';
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import UploadProgressModal from '../../components/DialFileManagerModal/UploadProgressModal';
 import type { UseDialFileManagerResult } from '../../hooks/files/useDialFileManager';
@@ -25,6 +24,7 @@ import { getParentFolderPath } from '../../utils/resolve-dial-file-api-path';
 import type {
   DialFileManagerDestinationFolderPopupOptions,
   DialFileManagerShellLabels,
+  EmptyStateCopy,
 } from './types/labels';
 
 type DestinationFolderPopupOptions =
@@ -170,11 +170,6 @@ const DialFileManagerShell: FC<Props> = ({
     actionLabels: tabActionLabels,
     sharedWithMeIds,
     sharedByMePaths,
-    shareTarget,
-    onManagePermissions,
-    onCloseShareModal,
-    onCreateShareLink,
-    isSharing,
     onUnshareFiles,
     isUnsharing,
     onRemoveFilesAccess,
@@ -216,9 +211,6 @@ const DialFileManagerShell: FC<Props> = ({
     if (DialFileManagerActions.Duplicate in tabActionLabels) {
       result[DialFileManagerActions.Duplicate] = labels.duplicateLabel;
     }
-    if (DialFileManagerActions.ManagePermissions in tabActionLabels) {
-      result[DialFileManagerActions.ManagePermissions] = labels.shareLabel;
-    }
     if (DialFileManagerActions.Unshare in tabActionLabels) {
       result[DialFileManagerActions.Unshare] = labels.unshareLabel;
     }
@@ -234,7 +226,6 @@ const DialFileManagerShell: FC<Props> = ({
     labels.copyLabel,
     labels.moveLabel,
     labels.duplicateLabel,
-    labels.shareLabel,
     labels.unshareLabel,
     labels.removeAccessLabel,
   ]);
@@ -264,17 +255,13 @@ const DialFileManagerShell: FC<Props> = ({
   }, [selectedPaths, sharedByMePaths]);
 
   const bulkActionLabels = useMemo(() => {
-    const {
-      [DialFileManagerActions.ManagePermissions]: _managePermissions,
-      ...rest
-    } = actionLabels;
     if (allSelectedItemsSharedByMe) {
-      return rest;
+      return actionLabels;
     }
     const {
       [DialFileManagerActions.RemoveAccess]: _removeAccess,
       ...withoutRemoveAccess
-    } = rest;
+    } = actionLabels;
     return withoutRemoveAccess;
   }, [actionLabels, allSelectedItemsSharedByMe]);
 
@@ -499,6 +486,25 @@ const DialFileManagerShell: FC<Props> = ({
     return labels.getUploadProgressText(done, uploadBatchState.files.length);
   }, [uploadBatchState, labels]);
 
+  const emptyStateCopy = useMemo((): EmptyStateCopy => {
+    if (searchResults != null && !isSearching) {
+      return { title: labels.searchEmptyStateTitle, description: '' };
+    }
+    const isInSubfolder = path.split('/').filter(Boolean).length > 1;
+    if (isInSubfolder) {
+      return { title: labels.folderEmptyStateTitle, description: '' };
+    }
+    return labels.emptyStateByTab[activeTab];
+  }, [
+    searchResults,
+    isSearching,
+    path,
+    labels.searchEmptyStateTitle,
+    labels.folderEmptyStateTitle,
+    labels.emptyStateByTab,
+    activeTab,
+  ]);
+
   return (
     <>
       {error != null ? (
@@ -534,20 +540,11 @@ const DialFileManagerShell: FC<Props> = ({
             toolbarOptions={toolbarOptions}
             bulkActionsToolbarOptions={bulkActionsToolbarOptions}
             autoSelectUploadedItems={autoSelectUploadedItems}
-            emptyStateTitle={
-              searchResults != null && !isSearching
-                ? labels.searchEmptyStateTitle
-                : labels.emptyStateByTab[activeTab].title
-            }
-            emptyStateDescription={
-              searchResults != null && !isSearching
-                ? ''
-                : labels.emptyStateByTab[activeTab].description
-            }
+            emptyStateTitle={emptyStateCopy.title}
+            emptyStateDescription={emptyStateCopy.description}
             uploadEnabled={uploadEnabled}
             sharedWithMeIds={sharedWithMeIds}
             sharedByMePaths={sharedByMePaths}
-            onManagePermissions={onManagePermissions}
             onUnshareFiles={onUnshareFiles}
             onRemoveFilesAccess={onRemoveFilesAccess}
             fileMetadataPopupOptions={fileMetadataPopupOptions}
@@ -609,23 +606,6 @@ const DialFileManagerShell: FC<Props> = ({
           text={isMoving ? labels.movingLabel : labels.copyingLabel}
           cancelLabel={labels.operationLoaderCancelLabel}
           onCancel={cancelCopyMove}
-        />
-      )}
-
-      {shareTarget != null && (
-        <ShareFileModal
-          targetName={shareTarget.name}
-          isSubmitting={isSharing}
-          getTitle={labels.getShareModalTitle}
-          readPermissionLabel={labels.shareModalReadPermissionLabel}
-          readWritePermissionLabel={labels.shareModalReadWritePermissionLabel}
-          createLinkButtonLabel={labels.shareModalCreateLinkButtonLabel}
-          copyLinkButtonLabel={labels.shareModalCopyLinkButtonLabel}
-          linkCopiedConfirmation={labels.shareModalLinkCopiedConfirmation}
-          cancelLabel={labels.shareModalCancelLabel}
-          errorMessage={labels.shareErrorMessage}
-          onCreateLink={onCreateShareLink}
-          onClose={onCloseShareModal}
         />
       )}
     </>

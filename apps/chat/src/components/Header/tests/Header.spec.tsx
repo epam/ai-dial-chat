@@ -19,6 +19,9 @@ import Header from '../Header';
 vi.mock('../../../context/ThemeContext');
 vi.mock('../../../hooks/useUiFeature');
 vi.mock('../../../utils/icon-path');
+vi.mock('@epam/ai-dial-attachment-canvas', () => ({
+  useAttachmentCanvas: () => ({ closeCanvas: vi.fn() }),
+}));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { LG: 24 },
   DialGhostIconButton: ({

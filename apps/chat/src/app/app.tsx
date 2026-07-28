@@ -38,15 +38,21 @@ import {
   AttachmentCanvasI18nKeys,
   ButtonsI18nKeys,
 } from '../constants/translation-keys';
+import { useConversationPanel } from '../context/ConversationPanelContext';
 import { useDeployments } from '../context/DeploymentsContext';
 import { useOptionalOverlay } from '../context/overlay/OverlayContext';
+import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useUiFeature } from '../hooks/useUiFeature';
+import usePanelMaxWidth, {
+  MIN_CONTENT_AREA_WIDTH,
+} from '../hooks/usePanelMaxWidth';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
+import { clearAttachmentCache } from '../utils/attachment-canvas';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
@@ -84,10 +90,13 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
-  const [desktopCanvasWidth] = useState(() =>
-    Math.min(1500, Math.round(window.innerWidth * 0.5)),
-  );
-  const canvasDefaultWidth = isMobile ? window.innerWidth : desktopCanvasWidth;
+  const canvasMaxWidth = usePanelMaxWidth();
+  const canvasDefaultWidth = isMobile
+    ? window.innerWidth
+    : Math.min(
+        canvasMaxWidth,
+        Math.round((canvasMaxWidth + MIN_CONTENT_AREA_WIDTH) * 0.5),
+      );
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
@@ -139,23 +148,23 @@ const App: FC = () => {
     OverlayFeature.AttachmentsManager,
   );
 
-  const [isPanelOpen, setIsPanelOpen] = useState(
-    isConversationsSectionOpenByDefault,
-  );
-  const togglePanel = useCallback(
-    () => setIsPanelOpen(!isPanelOpen),
-    [isPanelOpen, setIsPanelOpen],
-  );
-  const closePanel = useCallback(() => setIsPanelOpen(false), [setIsPanelOpen]);
+  const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
+  const { handleClose: closeSourcesPanel } = useSourcesSidebar();
+  const { isPanelOpen, openPanel, closePanel } = useConversationPanel();
+
+  const togglePanel = useCallback(() => {
+    if (!isPanelOpen) closeCanvas();
+    isPanelOpen ? closePanel() : openPanel();
+  }, [isPanelOpen, closeCanvas, openPanel, closePanel]);
 
   // Always close the panel when switching to mobile so a stored desktop `true` doesn't bleed through
   useEffect(() => {
     if (isMobile) closePanel();
   }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   useEffect(() => {
     closeCanvas();
+    clearAttachmentCache();
     if (
       pathname !== ROUTES.Root &&
       pathname !== ROUTES.Conversations &&
@@ -163,12 +172,17 @@ const App: FC = () => {
     ) {
       closePanel();
     } else if (!isMobile && !isCanvasOpen) {
-      setIsPanelOpen(isConversationsSectionOpenByDefault);
+      isConversationsSectionOpenByDefault ? openPanel() : closePanel();
     }
   }, [pathname, isConversationsSectionOpenByDefault]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* Safety net for openCanvas call sites that bypass useOpenAttachmentCanvas
+     (e.g. citation preview, collapsed stage attachments). */
   useEffect(() => {
-    if (isCanvasOpen) closePanel();
+    if (isCanvasOpen) {
+      closePanel();
+      closeSourcesPanel();
+    }
   }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchRoot = useMatch(ROUTES.Root);
@@ -390,6 +404,7 @@ const App: FC = () => {
           }}
           isMobile={isMobile}
           defaultWidth={canvasDefaultWidth}
+          maxWidth={canvasMaxWidth}
           codeBlockTheme={codeBlockTheme}
         />
       )}
