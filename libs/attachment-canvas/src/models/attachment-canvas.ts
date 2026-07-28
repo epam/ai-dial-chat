@@ -167,6 +167,8 @@ export interface AttachmentCanvasLabels {
 export interface AttachmentCanvasProps {
   /** Controls visibility of the side panel. */
   isOpen: boolean;
+  /** When `true`, renders a loading spinner instead of content and hides action buttons. Defaults to `false`. */
+  isLoading?: boolean;
   /** Called when the user activates the built-in close button. */
   onClose: () => void;
   /** The attachment content to render inside the canvas. */

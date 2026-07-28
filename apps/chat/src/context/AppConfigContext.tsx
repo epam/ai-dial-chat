@@ -28,6 +28,7 @@ interface AppConfigState {
     fileManagerTabs: string[];
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
+    announcementHtml: string | null;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -43,6 +44,7 @@ const INITIAL_STATE: AppConfigState = {
     fileManagerTabs: DEFAULT_FILE_MANAGER_TABS,
     overlayEnabled: false,
     overlayAllowedOrigins: [],
+    announcementHtml: null,
   },
 };
 
@@ -75,6 +77,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               response.config?.fileManagerTabs ?? DEFAULT_FILE_MANAGER_TABS,
             overlayEnabled: response.config?.overlayEnabled ?? false,
             overlayAllowedOrigins: response.config?.overlayAllowedOrigins ?? [],
+            announcementHtml: response.config?.announcementHtml ?? null,
           },
           metadata: response.metadata,
         });

@@ -165,3 +165,19 @@ The old `GET /api/v1/config` endpoint SHALL be removed in the same PR that intro
 
 - **WHEN** `ALLOWED_IFRAME_ORIGINS` also happens to include an origin used for a purpose unrelated to overlay embedding
 - **THEN** the response still returns the same allowlist verbatim — this key is defined as client-visible by design (the host page must know it is on the allowlist to self-diagnose), matching the existing `frame-src`/`frame-ancestors` use of this same variable, which is already effectively public (observable via the CSP response header)
+
+---
+
+### Requirement: client-config response includes the announcement message
+
+`GET /api/v1/client-config` SHALL include an `announcementHtml` field of type `string | null` in the `config` object of its response, sourced from the `announcement.html` registry key. The field SHALL carry the operator-configured message when set and SHALL be `null` when `ANNOUNCEMENT_HTML_MESSAGE` is not configured. The `ClientConfigDto` response DTO SHALL declare this field with Swagger metadata so the generated `@epam/chat-api-client` exposes it.
+
+#### Scenario: Announcement message configured
+
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `ANNOUNCEMENT_HTML_MESSAGE` is set to `Welcome to DIAL!`
+- **THEN** the response is `200 OK` with `config.announcementHtml="Welcome to DIAL!"`
+
+#### Scenario: Announcement message not configured
+
+- **WHEN** `GET /api/v1/client-config?appId=chat-ui` is called and `ANNOUNCEMENT_HTML_MESSAGE` is not set
+- **THEN** the response is `200 OK` with `config.announcementHtml=null`

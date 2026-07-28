@@ -102,7 +102,7 @@ Items with a missing `updatedAt` SHALL display an empty cell; no error or fallba
 
 ### Requirement: Per-tab action labels
 
-`DialFileManagerShell` SHALL compute `actionLabels` for `gridOptions`, `treeOptions`, and `bulkActionsToolbarOptions` based on `activeTab` and, for Copy/Move/Duplicate/Share/Unshare/RemoveAccess/Info, `actionProfile`:
+`DialFileManagerShell` SHALL compute `actionLabels` for `gridOptions`, `treeOptions`, and `bulkActionsToolbarOptions` based on `activeTab` and, for Copy/Move/Duplicate/Unshare/RemoveAccess/Info, `actionProfile`:
 
 | Tab | Action | Gate |
 |-----|--------|-------------------|
@@ -112,7 +112,6 @@ Items with a missing `updatedAt` SHALL display an empty cell; no error or fallba
 | `my_files` | Copy | `uploadEnabled` AND `actionProfile !== Attach` |
 | `my_files` | Move | `uploadEnabled` AND `actionProfile !== Attach` |
 | `my_files` | Duplicate | `uploadEnabled` AND `actionProfile !== Attach` |
-| `my_files` | Share (`ManagePermissions`) | item has `SHARE` permission AND `actionProfile === Full`; grid/tree only, no bulk toolbar entry |
 | `my_files` | Remove access (`RemoveAccess`) | item path is in `sharedByMePaths` AND `actionProfile === Full`; available in grid, tree, and bulk toolbar |
 | `my_files` | Info | row is a file (not folder) AND `actionProfile === Full`; grid only, no tree or bulk entry |
 | `shared` | Download | always |
@@ -121,9 +120,9 @@ Items with a missing `updatedAt` SHALL display an empty cell; no error or fallba
 | `organization` | Download | always |
 | `organization` | Info | row is a file (not folder) AND `actionProfile === Full`; grid only |
 
-Delete SHALL NOT appear in `actionLabels` for `shared` or `organization` tabs even when the current folder has WRITE permission. Rename, Copy, Move, Duplicate, Share, and Remove access SHALL NOT appear in `actionLabels` for `shared` or `organization` tabs. Unshare SHALL NOT appear in `actionLabels` for `my_files` or `organization` tabs. Info is the only action in this table available on all three tabs, since it is read-only.
+Delete SHALL NOT appear in `actionLabels` for `shared` or `organization` tabs even when the current folder has WRITE permission. Rename, Copy, Move, Duplicate, and Remove access SHALL NOT appear in `actionLabels` for `shared` or `organization` tabs. Unshare SHALL NOT appear in `actionLabels` for `my_files` or `organization` tabs. Info is the only action in this table available on all three tabs, since it is read-only.
 
-Copy, Move, and Duplicate SHALL NOT appear in `actionLabels` when `actionProfile === DialFileManagerActionProfile.Attach`, regardless of tab or WRITE permission. Share, Unshare, Remove access, and Info SHALL NOT appear in `actionLabels` unless `actionProfile === DialFileManagerActionProfile.Full` — they are absent for both `Browse` and `Attach`. Rename and Delete remain profile-independent.
+Copy, Move, and Duplicate SHALL NOT appear in `actionLabels` when `actionProfile === DialFileManagerActionProfile.Attach`, regardless of tab or WRITE permission. Unshare, Remove access, and Info SHALL NOT appear in `actionLabels` unless `actionProfile === DialFileManagerActionProfile.Full` — they are absent for both `Browse` and `Attach`. Rename and Delete remain profile-independent.
 
 `isRenameFileAvailable` SHALL mirror `uploadEnabled` (unchanged; profile-independent).
 
@@ -189,16 +188,6 @@ Bulk toolbar `Remove access` visibility additionally requires every path in the 
 - **WHEN** the active tab is `organization`
 - **THEN** `gridOptions.actionLabels` does NOT include `DialFileManagerActions.Copy`, `DialFileManagerActions.Move`, or `DialFileManagerActions.Duplicate`
 
-#### Scenario: My files item with SHARE permission and Full profile shows Share action
-
-- **WHEN** the active tab is `my_files`, the item has `SHARE` permission, and `actionProfile` is `Full`
-- **THEN** `gridOptions.actionLabels` includes `DialFileManagerActions.ManagePermissions`
-
-#### Scenario: My files item with SHARE permission but Browse profile hides Share action
-
-- **WHEN** the active tab is `my_files`, the item has `SHARE` permission, and `actionProfile` is `Browse`
-- **THEN** `gridOptions.actionLabels` does NOT include `DialFileManagerActions.ManagePermissions`
-
 #### Scenario: My files item in sharedByMePaths and Full profile shows Remove access
 
 - **WHEN** the active tab is `my_files`, the item's path is in `sharedByMePaths`, and `actionProfile` is `Full`
@@ -243,17 +232,17 @@ Bulk toolbar `Remove access` visibility additionally requires every path in the 
 
 ### Requirement: Standalone page uses the Full action profile
 
-`DialFileManagerPage` SHALL pass `actionProfile: DialFileManagerActionProfile.Full` to `useDialFileManager`. This is the final step of the #7504 roadmap: `Full` was introduced as a reserved, unused profile, then progressively defined by `add-file-manager-sharing` (Share/Unshare/Remove access), `add-file-manager-metadata-ui` (Info), and this change (upload-archive) — each of those three changes' actions now has a working handler, so the standalone page adopts `Full` in full, superseding its prior `Browse` assignment. `Full` is a strict superset of `Browse`: every action `Browse` exposed (Download, Delete, Rename, Copy, Move, Duplicate) remains available, with Share, Unshare, Remove access, Info, and upload-archive added on top.
+`DialFileManagerPage` SHALL pass `actionProfile: DialFileManagerActionProfile.Full` to `useDialFileManager`. This is the final step of the #7504 roadmap: `Full` was introduced as a reserved, unused profile, then progressively defined by `add-file-manager-sharing` (Unshare/Remove access), `add-file-manager-metadata-ui` (Info), and this change (upload-archive) — each of those three changes' actions now has a working handler, so the standalone page adopts `Full` in full, superseding its prior `Browse` assignment. `Full` is a strict superset of `Browse`: every action `Browse` exposed (Download, Delete, Rename, Copy, Move, Duplicate) remains available, with Unshare, Remove access, Info, and upload-archive added on top.
 
 #### Scenario: Standalone page shows the complete my_files matrix
 
-- **WHEN** `DialFileManagerPage` renders `my_files` with WRITE permission and the item has `SHARE` permission
-- **THEN** `actionLabels` includes Download, Delete, Rename, Copy, Move, Duplicate, Share, Remove access (if the item is in `sharedByMePaths`), and Info, and `toolbarOptions.newActions.uploadArchive` is present
+- **WHEN** `DialFileManagerPage` renders `my_files` with WRITE permission
+- **THEN** `actionLabels` includes Download, Delete, Rename, Copy, Move, Duplicate, Remove access (if the item is in `sharedByMePaths`), and Info, and `toolbarOptions.newActions.uploadArchive` is present
 
 #### Scenario: Attach modal remains unaffected
 
 - **WHEN** `DialFileManagerModal` renders `my_files` with WRITE permission
-- **THEN** `actionLabels` includes Download, Delete, and Rename, and does NOT include Copy, Move, Duplicate, Share, Remove access, Info, or the upload-archive toolbar entry — the attach modal's `actionProfile` remains `Attach`, unaffected by the standalone page's switch to `Full`
+- **THEN** `actionLabels` includes Download, Delete, and Rename, and does NOT include Copy, Move, Duplicate, Remove access, Info, or the upload-archive toolbar entry — the attach modal's `actionProfile` remains `Attach`, unaffected by the standalone page's switch to `Full`
 
 ---
 
@@ -338,7 +327,20 @@ When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWi
 
 When `activeTab` changes, the set of `selectedPaths` SHALL be cleared (reset to an empty `Set`).
 
-#### Scenario: Selection cleared after tab switch
+> **Implementation note:** on the standalone page the tab strip is replaced by the bulk-actions toolbar as soon as any item is selected, so `activeTab` cannot change while a non-empty selection is held. The requirement is trivially satisfied in that path; its primary purpose is to guard against programmatic tab changes (e.g. the active tab becomes unavailable and resets automatically) that could otherwise leave stale paths from the previous tab in `selectedPaths`.
 
-- **WHEN** the user selects files on My files tab and switches to Shared
-- **THEN** `selectedPaths` is empty on the Shared tab
+#### Scenario: Selection cleared after programmatic tab reset
+
+- **WHEN** the active tab is reset programmatically (e.g. the previously active tab is removed from `fileManagerTabs`) while files from the old tab were selected
+- **THEN** `selectedPaths` is empty on the new active tab
+
+#### Scenario: Selection cleared on tab switch from Shared to My files
+
+- **WHEN** the user selects a file on the Shared tab and then switches to My files
+- **THEN** `selectedPaths` is empty on the My files tab
+
+---
+
+### Requirement: Tab button accessibility
+
+Each rendered tab button SHALL carry `role="tab"` and `aria-selected` (per ARIA spec). `aria-selected` SHALL be `true` for the currently active tab and `false` for all others. This requirement mirrors the pattern established in the `file-manager-toolbar` spec (#7932).

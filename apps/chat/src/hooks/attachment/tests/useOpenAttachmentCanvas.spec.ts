@@ -5,22 +5,46 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { annotationsToPdfHighlights } from '../../../utils/annotation';
 import { useOpenAttachmentCanvas } from '../useOpenAttachmentCanvas';
 
-const mockOpenCanvas = vi.fn();
+const {
+  mockOpenCanvas,
+  mockOpenCanvasLoading,
+  mockCloseCanvas,
+  mockResolveMarkdown,
+  mockResolveJson,
+  mockResolveText,
+  mockResolvePdf,
+  mockReferenceToPdf,
+} = vi.hoisted(() => ({
+  mockOpenCanvas: vi.fn(),
+  mockOpenCanvasLoading: vi.fn(),
+  mockCloseCanvas: vi.fn(),
+  mockResolveMarkdown: vi.fn(),
+  mockResolveJson: vi.fn(),
+  mockResolveText: vi.fn(),
+  mockResolvePdf: vi.fn(),
+  mockReferenceToPdf: vi.fn(),
+}));
 
 vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
   return {
     ...actual,
-    useAttachmentCanvas: () => ({ openCanvas: mockOpenCanvas }),
+    useAttachmentCanvas: () => ({
+      openCanvas: mockOpenCanvas,
+      openCanvasLoading: mockOpenCanvasLoading,
+      closeCanvas: mockCloseCanvas,
+    }),
   };
 });
 
-const mockResolveMarkdown = vi.fn();
-const mockResolveJson = vi.fn();
-const mockResolveText = vi.fn();
-const mockResolvePdf = vi.fn();
-const mockReferenceToPdf = vi.fn();
+vi.mock('../../../context/ConversationPanelContext', () => ({
+  useConversationPanel: () => ({ closePanel: vi.fn() }),
+}));
+
+vi.mock('../../../context/SourcesSidebarContext', () => ({
+  useSourcesSidebar: () => ({ handleClose: vi.fn() }),
+}));
 
 vi.mock('../../../utils/attachment-canvas', () => ({
   resolveImageCanvasContent: vi.fn(),

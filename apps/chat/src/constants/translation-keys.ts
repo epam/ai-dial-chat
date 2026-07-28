@@ -332,15 +332,10 @@ export enum DialFileManagerI18nKeys {
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
   UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
   PageNavLabel = 'dialFileManager.page.navLabel',
-  ShareAction = 'share.title',
   UnshareAction = 'dialFileManager.unshareAction',
   UnsharingLabel = 'dialFileManager.unsharingLabel',
   RemoveAccessAction = 'dialFileManager.removeAccessAction',
   RemovingAccessLabel = 'dialFileManager.removingAccessLabel',
-  ShareModalTitle = 'dialFileManager.shareModalTitle',
-  ShareModalCreateLinkButton = 'dialFileManager.shareModalCreateLinkButton',
-  ShareModalLinkCopiedConfirmation = 'dialFileManager.shareModalLinkCopiedConfirmation',
-  ShareError = 'dialFileManager.shareError',
   UnshareError = 'dialFileManager.unshareError',
   RemoveAccessError = 'dialFileManager.removeAccessError',
   InfoAction = 'dialFileManager.infoAction',
@@ -527,6 +522,11 @@ export enum AttachmentCanvasI18nKeys {
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
   LoadErrorLabel = 'attachmentCanvas.loadErrorLabel',
   ForbiddenErrorLabel = 'attachmentCanvas.forbiddenErrorLabel',
+}
+
+export enum AnnouncementBannerI18nKeys {
+  RegionAriaLabel = 'announcementBanner.regionAriaLabel',
+  CloseLabel = 'announcementBanner.closeLabel',
 }
 
 export enum EditorI18nKeys {

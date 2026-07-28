@@ -28,7 +28,25 @@ describe('UserContext', () => {
   beforeEach(() => {
     setCsrfToken(null);
     vi.restoreAllMocks();
+    localStorage.clear();
   });
+
+  const seedCatalogPreferences = () => {
+    localStorage.setItem('catalogFilterTopics', '["billing"]');
+    localStorage.setItem('catalogIsMyAppsActive', 'true');
+    localStorage.setItem('catalogSortKey', '"recentlyUpdated"');
+  };
+
+  /*
+   * Session invalidation/identity adoption no longer touches localStorage —
+   * Catalog filter preferences are plain UI state, not identity-scoped data,
+   * so they must survive every path exercised in this file unchanged.
+   */
+  const expectCatalogFilterPreferencesUntouched = () => {
+    expect(localStorage.getItem('catalogFilterTopics')).toBe('["billing"]');
+    expect(localStorage.getItem('catalogIsMyAppsActive')).toBe('true');
+    expect(localStorage.getItem('catalogSortKey')).toBe('"recentlyUpdated"');
+  };
 
   it('200 path: status becomes authenticated and user equals the mocked profile', async () => {
     vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
@@ -77,6 +95,7 @@ describe('UserContext', () => {
   it('reset() clears state without re-fetching', async () => {
     vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
     setCsrfToken('csrf-token');
+    seedCatalogPreferences();
 
     const { result } = renderHook(() => useUser(), { wrapper });
     await waitFor(() =>
@@ -90,6 +109,7 @@ describe('UserContext', () => {
     expect(result.current.status).toBe(AuthStatus.Unauthenticated);
     expect(result.current.user).toBeNull();
     expect(getCsrfToken()).toBeNull();
+    expectCatalogFilterPreferencesUntouched();
   });
 
   it('refresh() re-runs the fetch and updates state', async () => {
@@ -118,9 +138,167 @@ describe('UserContext', () => {
     );
   });
 
+  describe('identity revalidation on focus/visibility regain', () => {
+    const secondProfile: UserProfileDto = {
+      ...mockProfile,
+      sub: 'user-2',
+    };
+
+    it('updates user in place and keeps status authenticated when sub is unchanged', async () => {
+      const getMeSpy = vi
+        .spyOn(authApi, 'getMe')
+        .mockResolvedValue(mockProfile);
+
+      const { result } = renderHook(() => useUser(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(AuthStatus.Authenticated),
+      );
+
+      const refreshedProfile = {
+        ...mockProfile,
+        claims: { email: 'new@x.io' },
+      };
+      getMeSpy.mockResolvedValueOnce(refreshedProfile);
+
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'));
+      });
+
+      await waitFor(() =>
+        expect(result.current.user).toEqual(refreshedProfile),
+      );
+      expect(result.current.status).toBe(AuthStatus.Authenticated);
+    });
+
+    it('adopts the new identity in place when the revalidated sub differs from the held identity', async () => {
+      const getMeSpy = vi
+        .spyOn(authApi, 'getMe')
+        .mockResolvedValueOnce(mockProfile);
+
+      const { result } = renderHook(() => useUser(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(AuthStatus.Authenticated),
+      );
+
+      setCsrfToken('csrf-token');
+      seedCatalogPreferences();
+      getMeSpy.mockResolvedValueOnce(secondProfile);
+
+      await act(async () => {
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+
+      await waitFor(() => expect(result.current.user).toEqual(secondProfile));
+      // The browser session is already validly authenticated as the new
+      // identity — no forced logout/login screen, and the protected tree is
+      // never unmounted for this path.
+      expect(result.current.status).toBe(AuthStatus.Authenticated);
+      expect(getCsrfToken()).toBeNull();
+      expectCatalogFilterPreferencesUntouched();
+    });
+
+    it('invalidates the session when revalidation returns 401', async () => {
+      const getMeSpy = vi
+        .spyOn(authApi, 'getMe')
+        .mockResolvedValueOnce(mockProfile);
+
+      const { result } = renderHook(() => useUser(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(AuthStatus.Authenticated),
+      );
+
+      getMeSpy.mockRejectedValueOnce(new UnauthorizedError('/api/v1/auth/me'));
+
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'));
+      });
+
+      await waitFor(() =>
+        expect(result.current.status).toBe(AuthStatus.Unauthenticated),
+      );
+      expect(result.current.user).toBeNull();
+    });
+
+    it('does not issue a revalidation request while status is loading', async () => {
+      let resolveBootstrap: ((v: UserProfileDto) => void) | undefined;
+      const getMeSpy = vi.spyOn(authApi, 'getMe').mockReturnValue(
+        new Promise<UserProfileDto>((res) => {
+          resolveBootstrap = res;
+        }),
+      );
+
+      renderHook(() => useUser(), { wrapper });
+      await waitFor(() => expect(getMeSpy).toHaveBeenCalledOnce());
+      getMeSpy.mockClear();
+
+      act(() => {
+        window.dispatchEvent(new Event('focus'));
+      });
+
+      expect(getMeSpy).not.toHaveBeenCalled();
+
+      await act(async () => {
+        resolveBootstrap?.(mockProfile);
+      });
+    });
+
+    it('does not issue a revalidation request while unauthenticated', async () => {
+      const getMeSpy = vi
+        .spyOn(authApi, 'getMe')
+        .mockRejectedValue(new UnauthorizedError('/api/v1/auth/me'));
+
+      const { result } = renderHook(() => useUser(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(AuthStatus.Unauthenticated),
+      );
+
+      getMeSpy.mockClear();
+
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'));
+      });
+
+      expect(getMeSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not stack a second revalidation request while one is already in flight', async () => {
+      const getMeSpy = vi
+        .spyOn(authApi, 'getMe')
+        .mockResolvedValueOnce(mockProfile);
+
+      const { result } = renderHook(() => useUser(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(AuthStatus.Authenticated),
+      );
+
+      let resolveSecond: ((v: UserProfileDto) => void) | undefined;
+      getMeSpy.mockImplementationOnce(
+        () =>
+          new Promise<UserProfileDto>((res) => {
+            resolveSecond = res;
+          }),
+      );
+      getMeSpy.mockClear();
+
+      act(() => {
+        window.dispatchEvent(new Event('focus'));
+      });
+      act(() => {
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+
+      expect(getMeSpy).toHaveBeenCalledOnce();
+
+      await act(async () => {
+        resolveSecond?.(mockProfile);
+      });
+    });
+  });
+
   it('notifyUnauthorized from any subsequent call resets context', async () => {
     vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
     setCsrfToken('csrf-token');
+    seedCatalogPreferences();
 
     const { result } = renderHook(() => useUser(), { wrapper });
     await waitFor(() =>
@@ -135,5 +313,6 @@ describe('UserContext', () => {
     expect(result.current.status).toBe(AuthStatus.Unauthenticated);
     expect(result.current.user).toBeNull();
     expect(getCsrfToken()).toBeNull();
+    expectCatalogFilterPreferencesUntouched();
   });
 });

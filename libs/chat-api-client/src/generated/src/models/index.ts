@@ -474,6 +474,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   overlayAllowedOrigins: Array<string>;
+  /**
+   * Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  announcementHtml?: string | null;
 }
 /**
  *
@@ -4045,68 +4051,6 @@ export const SendCompletionDtoModeEnum = {
 export type SendCompletionDtoModeEnum =
   (typeof SendCompletionDtoModeEnum)[keyof typeof SendCompletionDtoModeEnum];
 
-/**
- *
- * @export
- * @interface ShareFilesDto
- */
-export interface ShareFilesDto {
-  /**
-   *
-   * @type {Array<ShareItemDto>}
-   * @memberof ShareFilesDto
-   */
-  items: Array<ShareItemDto>;
-  /**
-   *
-   * @type {string}
-   * @memberof ShareFilesDto
-   */
-  permission: ShareFilesDtoPermissionEnum;
-}
-
-/**
- * @export
- */
-export const ShareFilesDtoPermissionEnum = {
-  Read: 'read',
-  ReadWrite: 'readWrite',
-} as const;
-export type ShareFilesDtoPermissionEnum =
-  (typeof ShareFilesDtoPermissionEnum)[keyof typeof ShareFilesDtoPermissionEnum];
-
-/**
- *
- * @export
- * @interface ShareFilesResponseDto
- */
-export interface ShareFilesResponseDto {
-  /**
-   * Invitation link covering all shared resources
-   * @type {string}
-   * @memberof ShareFilesResponseDto
-   */
-  invitationLink: string;
-}
-/**
- *
- * @export
- * @interface ShareItemDto
- */
-export interface ShareItemDto {
-  /**
-   * DIAL Core bucket name
-   * @type {string}
-   * @memberof ShareItemDto
-   */
-  bucket: string;
-  /**
-   * Relative path within bucket
-   * @type {string}
-   * @memberof ShareItemDto
-   */
-  path: string;
-}
 /**
  *
  * @export

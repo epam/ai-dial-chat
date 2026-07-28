@@ -23,6 +23,7 @@ import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
 import { listToolsets } from '../server-api/toolsets';
 import { useAppConfig } from './AppConfigContext';
+import { useUser } from './auth/UserContext';
 import { useNotification } from './NotificationContext';
 import { useUserConfig } from './UserConfigContext';
 
@@ -136,6 +137,8 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const { selectedDeploymentId: userConfigSelectedId, setSelectedDeployment } =
     useUserConfig();
   const { config: appConfig } = useAppConfig();
+  const { user } = useUser();
+  const userSub = user?.sub;
 
   const [rawDeployments, setRawDeployments] = useState<DeploymentItemDto[]>([]);
   const [schemas, setSchemas] = useState<ApplicationSchemaSummaryDto[]>([]);
@@ -185,6 +188,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     async (signal: { isCancelled: boolean }) => {
       setIsLoading(true);
       setError(null);
+      setRawDeployments([]);
       setSchemas([]);
       setToolsets([]);
       const deploymentsRequestId = ++deploymentsRequestIdRef.current;
@@ -241,13 +245,19 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     [],
   );
 
+  /*
+   * userSub is included so that if the authenticated identity changes while
+   * this provider stays mounted, the deployments/toolsets snapshot (and its
+   * isMy ownership flags computed for the previous identity) is refetched
+   * instead of being served indefinitely.
+   */
   useEffect(() => {
     const signal = { isCancelled: false };
     loadDeployments(signal);
     return () => {
       signal.isCancelled = true;
     };
-  }, [loadDeployments]);
+  }, [loadDeployments, userSub]);
 
   /*
    * Handles the case where userConfigSelectedId/defaultDeploymentId only

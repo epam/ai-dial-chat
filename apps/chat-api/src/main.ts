@@ -58,7 +58,7 @@ async function bootstrap() {
     exposedHeaders: ['X-CSRF-Token', 'X-DIAL-CLIENT-CHANNEL-ID'],
   });
 
-  const port = process.env.PORT || 3005;
+  const port = process.env.PORT || 5000;
   await app.listen(port);
 
   Logger.log(

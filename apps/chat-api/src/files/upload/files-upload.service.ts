@@ -41,6 +41,12 @@ interface ArchiveEntryPathResult {
   safeRelativePath: string | null;
 }
 
+interface ArchiveFileEntry {
+  entry: yauzl.Entry;
+  fileName: string;
+  safeRelativePath: string | null;
+}
+
 export interface UploadedFile {
   buffer: Buffer;
   mimetype: string;
@@ -280,7 +286,6 @@ export class FilesUploadService {
       normalizedDestination = normalizedDestination.slice(0, -1);
     }
     const results: UploadArchiveEntryResultDto[] = [];
-    let entryCount = 0;
     let cumulativeBytes = 0;
     const tempDirectory = await mkdtemp(join(tmpdir(), 'dial-upload-archive-'));
 
@@ -290,11 +295,16 @@ export class FilesUploadService {
      * per-entry rejection (record a failed result, keep processing the
      * rest). Reading the raw name lets resolveArchiveEntryPath be the sole
      * zip-slip authority.
+     *
+     * autoClose: false — keep the file descriptor open after eachEntry()
+     * exhausts all central-directory records so the extraction pass can call
+     * openReadStreamPromise() on the pre-collected entries.
      */
     const zipfile = await yauzl
       .openPromise(archivePath, {
         lazyEntries: true,
         decodeStrings: false,
+        autoClose: false,
       })
       .catch(async (err: unknown) => {
         await this.removeArchiveUploadTempDirectory(tempDirectory);
@@ -306,23 +316,53 @@ export class FilesUploadService {
     );
 
     try {
-      for await (const entry of zipfile.eachEntry()) {
-        this.throwIfArchiveUploadAborted(signal);
+      /*
+       * Pass 1: read all central-directory metadata without opening any read
+       * streams. Enforcing the file-count limit here ensures no bytes are
+       * extracted before the check fires, as required by spec.
+       *
+       * Guard against directory-entry amplification: directory entries are
+       * skipped by the per-file counter below, so a crafted archive with many
+       * directory entries would iterate them all unchecked. The compressed-size
+       * pre-check already bounds the central-directory size; this caps the
+       * total iteration count (directories + files combined).
+       */
+      if (zipfile.entryCount > maxFiles * 10) {
+        throw new UnprocessableEntityException(
+          `Archive contains too many entries`,
+        );
+      }
 
+      const fileEntries: ArchiveFileEntry[] = [];
+      let fileEntryCount = 0;
+      for await (const entry of zipfile.eachEntry()) {
         const fileName = this.decodeArchiveEntryName(entry.fileName);
         const { isDirectory, safeRelativePath } =
           this.resolveArchiveEntryPath(fileName);
-
         if (isDirectory) {
           continue;
         }
 
-        entryCount += 1;
-        if (entryCount > maxFiles) {
+        fileEntryCount += 1;
+        if (fileEntryCount > maxFiles) {
           throw new UnprocessableEntityException(
             `Archive contains more than ${maxFiles} files`,
           );
         }
+
+        fileEntries.push({ entry, fileName, safeRelativePath });
+      }
+
+      /*
+       * Pass 2: extract and upload. The file-count limit has already been
+       * validated; the abort signal and uncompressed-bytes budget are still
+       * enforced per entry.
+       */
+      let entryIndex = 0;
+      for (const { entry, fileName, safeRelativePath } of fileEntries) {
+        this.throwIfArchiveUploadAborted(signal);
+
+        entryIndex += 1;
 
         if (safeRelativePath == null) {
           results.push({
@@ -338,7 +378,7 @@ export class FilesUploadService {
           : safeRelativePath;
         const entryTempPath = join(
           tempDirectory,
-          `${entryCount}-${randomUUID()}.entry`,
+          `${entryIndex}-${randomUUID()}.entry`,
         );
 
         const stream = await zipfile.openReadStreamPromise(entry);
@@ -498,6 +538,8 @@ export class FilesUploadService {
   ): Promise<void> {
     this.throwIfArchiveUploadAborted(signal);
 
+    /* boundary is UUIDv4 and cannot be influenced by user input — safe to
+       interpolate directly into Content-Type and the multipart preamble. */
     const boundary = `dial-upload-${randomUUID()}`;
     const multipartStream = this.createMultipartFileStream(
       fileStream,
@@ -619,7 +661,7 @@ export class FilesUploadService {
       entryFileName.startsWith('/') ||
       /^[a-zA-Z]:/.test(entryFileName) ||
       entryFileName.includes('\\') ||
-      entryFileName.split('/').includes('..');
+      entryFileName.split('/').some((seg) => seg === '..' || seg === '.');
 
     return {
       isDirectory: false,

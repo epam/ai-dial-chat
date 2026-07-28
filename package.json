@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "1.0.0-rc.1",
+  "version": "0.0.0",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
@@ -113,11 +113,13 @@
     "@tabler/icons-react": "^3.44.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "cache-manager": "^7.2.8",
+    "dompurify": "3.4.11",
     "express": "^5.2.1",
     "fflate": "^0.8.3",
     "helmet": "^8.1.0",
     "i18next": "^26.2.0",
     "i18next-browser-languagedetector": "^8.2.1",
+    "lru-cache": "^10.4.3",
     "mime-types": "^3.0.2",
     "pdfjs-dist": "5.4.149",
     "polished": "^4.3.1",

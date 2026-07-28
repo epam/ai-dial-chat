@@ -555,10 +555,6 @@
     "unsharingLabel": "Unsharing…",
     "removeAccessAction": "Remove access",
     "removingAccessLabel": "Removing access…",
-    "shareModalTitle": "Share \"{{name}}\"",
-    "shareModalCreateLinkButton": "Create link",
-    "shareModalLinkCopiedConfirmation": "Link copied",
-    "shareError": "Failed to create the share link",
     "unshareError": "Failed to remove the shared item",
     "removeAccessError": "Failed to remove access",
     "infoAction": "Info",
@@ -586,6 +582,10 @@
     "unsupportedLabel": "Preview is not supported for this file",
     "loadErrorLabel": "Failed to load file",
     "forbiddenErrorLabel": "You don't have permission to access this file"
+  },
+  "announcementBanner": {
+    "regionAriaLabel": "Announcement",
+    "closeLabel": "Close announcement"
   },
   "errorBoundary": {
     "heading": "Something went wrong",
