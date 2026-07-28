@@ -17,6 +17,23 @@ const isSecureCookieEnabled = (
   return secure !== false;
 };
 
+const isOverlayEmbeddingEnabled = (
+  config: ConfigService<EnvironmentVariables, true>,
+): boolean => {
+  const overlayEnabled = config.get('OVERLAY_ENABLED', { infer: true });
+  const allowedOrigins =
+    config.get('ALLOWED_IFRAME_ORIGINS', { infer: true }) ?? [];
+  return overlayEnabled === true && allowedOrigins.length > 0;
+};
+
+export const getCookieSameSite = (
+  config: ConfigService<EnvironmentVariables, true>,
+): CookieOptions['sameSite'] => {
+  return isSecureCookieEnabled(config) && isOverlayEmbeddingEnabled(config)
+    ? 'none'
+    : 'lax';
+};
+
 const COOKIE_NAME_DEFAULTS: Record<
   'AUTH_SESSION_COOKIE_NAME' | 'AUTH_TRANSACTION_COOKIE_NAME',
   string
@@ -45,7 +62,7 @@ export const getCookieOptions = (
 ): CookieOptions => ({
   httpOnly: true,
   secure: isSecureCookieEnabled(config),
-  sameSite: 'lax',
+  sameSite: getCookieSameSite(config),
   path: '/',
 });
 

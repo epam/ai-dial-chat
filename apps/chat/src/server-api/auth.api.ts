@@ -8,7 +8,7 @@ import {
 } from './base';
 
 export const getMe = async (): Promise<UserProfileDto> => {
-  const raw = await authApi.getCurrentUserRaw();
+  const raw = await authApi.getCurrentUserRaw({ cache: 'no-store' });
   const csrfToken = raw.raw.headers.get('x-csrf-token');
   if (csrfToken) setCsrfToken(csrfToken);
   return raw.value();

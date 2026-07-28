@@ -92,10 +92,11 @@ export class EnvironmentVariables {
   AUTH_TRANSACTION_COOKIE_NAME?: string = '__Host-chat.tx';
 
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value == null) return undefined;
-    if (typeof value === 'boolean') return value;
-    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
   })
   @IsBoolean()
   AUTH_COOKIE_SECURE?: boolean = true;
