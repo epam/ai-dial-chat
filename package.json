@@ -142,7 +142,8 @@
     "dompurify": "3.4.12",
     "tmp": "0.2.7",
     "form-data": "4.0.6",
-    "uuid": "14.0.0"
+    "uuid": "14.0.0",
+    "js-yaml": "4.3.0"
   },
   "workspaces": [
     "packages/*",
