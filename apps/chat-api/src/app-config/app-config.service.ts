@@ -11,6 +11,7 @@ import { CompositeConfigProvider } from './config-registry/composite-config.prov
 import { CONFIG_DEFINITIONS } from './config-registry/config-registry.constants';
 import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
 import { FeatureKey } from './feature-flags/feature-key.enum';
+import { KNOWN_UI_FEATURES } from './known-ui-features.constants';
 
 const CACHE_TTL_SECONDS = 60;
 const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
@@ -54,6 +55,7 @@ export class AppConfigService {
     let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
+    let enabledUiFeatures: string[] | null = null;
     let announcementHtml: string | null = null;
 
     for (const def of clientDefinitions) {
@@ -85,6 +87,26 @@ export class AppConfigService {
         overlayAllowedOrigins = Array.isArray(resolved) ? resolved : [];
       } else if (def.key === 'announcement.html') {
         announcementHtml = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'uiFeatures.enabledUiFeatures') {
+        const rawValue = Array.isArray(resolved) ? resolved : [];
+        if (rawValue.length > 0) {
+          const filtered = rawValue.filter((entry) => {
+            const isKnown = KNOWN_UI_FEATURES.has(entry);
+            if (!isKnown) {
+              this.logger.warn(
+                `Ignoring unrecognized ENABLED_UI_FEATURES entry: "${String(entry)}"`,
+              );
+            }
+            return isKnown;
+          });
+          if (filtered.length > 0) {
+            enabledUiFeatures = filtered;
+          } else {
+            this.logger.warn(
+              'ENABLED_UI_FEATURES contained only unrecognized entries; falling back to compiled-in defaults',
+            );
+          }
+        }
       }
     }
 
@@ -100,6 +122,7 @@ export class AppConfigService {
         overlayEnabled,
         overlayAllowedOrigins,
         announcementHtml,
+        enabledUiFeatures,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

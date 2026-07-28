@@ -82,6 +82,7 @@ export const Input: FC<InputProps> = ({
   renderFooterActions,
   isInputDisabled = false,
   isModelSelectorDisabled = false,
+  isSendDisabled = false,
   isAudioMessageSupported = false,
   sendOnEnter = SendOnEnter.Enter,
   prefixAttachments = [],
@@ -195,7 +196,8 @@ export const Input: FC<InputProps> = ({
 
   const hasSendableContent =
     message.trim().length > 0 || attachments.length > 0;
-  const canSend = hasSendableContent && !hasBlockedAttachments;
+  const canSend =
+    hasSendableContent && !hasBlockedAttachments && !isSendDisabled;
   /*
    * Keeps the send button mounted just long enough to play its exit
    * animation (`.sendButtonExiting` in Input.module.scss) after content is
@@ -223,6 +225,8 @@ export const Input: FC<InputProps> = ({
     deployments === undefined || selectedDeploymentId != null;
 
   const handleSend = async () => {
+    if (isSendDisabled) return;
+
     const currentMessage = message;
     const currentAttachments = attachments;
     setMessage('');
@@ -446,7 +450,11 @@ export const Input: FC<InputProps> = ({
                     <SendButton
                       key={sendButtonKey}
                       onSend={handleSend}
-                      isDisabled={!hasModelSelected || hasBlockedAttachments}
+                      isDisabled={
+                        !hasModelSelected ||
+                        hasBlockedAttachments ||
+                        isSendDisabled
+                      }
                       ariaLabel={sendLabel}
                       isExiting={isSendButtonExiting}
                     />

@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { BASE_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconUser } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { NAVIGATION_CONFIG } from '../../constants/navigation';
 import { NavigationI18nKeys } from '../../constants/translation-keys';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
+import { useUiFeature } from '../../hooks/useUiFeature';
+import { ROUTES } from '../../types/routes';
 import styles from './MobileNavBottomSheet.module.scss';
 import ProfilePageContent from './ProfilePageContent';
 
@@ -18,6 +20,7 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { push, close } = useSheetNavigation();
+  const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
 
   const handleNavItem = (path: string) => {
     close();
@@ -31,9 +34,13 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
     });
   };
 
+  const visibleNavItems = NAVIGATION_CONFIG.filter(
+    ({ path }) => path !== ROUTES.Catalog || isCatalogEnabled,
+  );
+
   return (
     <ul className="flex flex-col pb-4">
-      {NAVIGATION_CONFIG.map(({ path, icon: Icon, labelKey }) => (
+      {visibleNavItems.map(({ path, icon: Icon, labelKey }) => (
         <li key={path}>
           <button
             type="button"

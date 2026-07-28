@@ -12,6 +12,9 @@ vi.mock('../../cases/ManagerOverlayCase/ManagerOverlayCase', () => ({
 vi.mock('../../cases/ConversationListCase/ConversationListCase', () => ({
   default: () => <div>Conversation-list case content</div>,
 }));
+vi.mock('../../cases/EnabledFeaturesCase/EnabledFeaturesCase', () => ({
+  default: () => <div>Enabled-features case content</div>,
+}));
 
 describe('App', () => {
   it('lists the v1-scoped cases and the conversation-list case', () => {
@@ -27,6 +30,9 @@ describe('App', () => {
       screen.getByRole('button', {
         name: 'Conversation-list methods case',
       }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'enabledFeatures case' }),
     ).toBeTruthy();
   });
 
@@ -85,5 +91,15 @@ describe('App', () => {
       }),
     );
     expect(screen.getByText('Conversation-list case content')).toBeTruthy();
+  });
+
+  it('navigates to the enabledFeatures case', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(
+      screen.getByRole('button', { name: 'enabledFeatures case' }),
+    );
+    expect(screen.getByText('Enabled-features case content')).toBeTruthy();
   });
 });

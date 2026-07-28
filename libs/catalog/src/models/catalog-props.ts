@@ -4,6 +4,7 @@ import type { PublishPanelTexts } from '../components/PublishPanel/PublishPanel'
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
+import type { CatalogViewMode } from '../types/view-mode';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type { CatalogItemDetailsFetchResult } from './item-details-data';
@@ -134,6 +135,12 @@ export interface CatalogProps {
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   /**
+   * Additional caller-supplied rule for whether the "Share" action is shown
+   * for the item, combined (AND) with the built-in ownership/type rule.
+   * Absent means the built-in rule alone decides.
+   */
+  isShareVisible?: (item: CatalogItem) => boolean;
+  /**
    * Renders the Connect popover content anchored to the Connect button in the
    * details panel. When absent, the Connect button is never shown — there is
    * no non-overlay fallback action.
@@ -183,6 +190,8 @@ export interface CatalogProps {
   hideCreateButton?: boolean;
   /** Hides the page heading (title row), e.g. when the host renders its own title outside the catalog. Default: false. */
   hidePageTitle?: boolean;
+  /** Initial Browse view mode (grid or list). Default: `CatalogViewMode.Grid`. */
+  initialViewMode?: CatalogViewMode;
   /** ID of an item to visually mark as selected (border, tint, and checkmark) in the Browse grid. */
   selectedItemId?: string;
   /**

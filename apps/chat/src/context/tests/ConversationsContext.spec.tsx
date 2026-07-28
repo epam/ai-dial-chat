@@ -47,6 +47,13 @@ vi.mock('../auth/UserContext', () => ({
 vi.mock('../ThemeContext', () => ({
   useTheme: () => ({ setTheme: vi.fn() }),
 }));
+vi.mock('../UiFeaturesContext', () => ({
+  useUiFeatures: () => ({
+    isEnabled: () => true,
+    enabledFeatures: new Set(),
+    applyOverlayOverride: vi.fn(),
+  }),
+}));
 
 const mockListConversations = vi.mocked(conversationsApi.listConversations);
 const mockDeleteAllConversations = vi.mocked(
