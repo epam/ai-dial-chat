@@ -53,7 +53,6 @@ import {
   RevokeAccessDto,
   RevokeAccessResponseDto,
 } from './dto/revoke-access.dto';
-import { ShareFilesDto, ShareFilesResponseDto } from './dto/share-files.dto';
 import {
   UploadArchiveDto,
   UploadArchiveResponseDto,
@@ -521,35 +520,6 @@ export class FilesController {
   ): Promise<MoveFilesResponseDto> {
     const { at } = req.user as SessionUser;
     return this.filesService.moveFiles(body.items, at);
-  }
-
-  @Post('share')
-  @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
-  @ApiOperation({
-    summary: 'Create a share invitation link for files and folders',
-  })
-  @ApiBody({ type: ShareFilesDto })
-  @ApiResponse({ status: 200, type: ShareFilesResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid request body' })
-  @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({
-    status: 403,
-    description: 'Caller lacks SHARE permission on one or more resources',
-  })
-  @ApiResponse({ status: 404, description: 'A resource does not exist' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
-  @ApiResponse({
-    status: 503,
-    description: 'DIAL Core unreachable or timed out',
-  })
-  async shareFiles(
-    @Body() body: ShareFilesDto,
-    @Req() req: Request,
-  ): Promise<ShareFilesResponseDto> {
-    const { at } = req.user as SessionUser;
-    return this.filesService.shareFiles(body.items, body.permission, at);
   }
 
   @Post('revoke-access')

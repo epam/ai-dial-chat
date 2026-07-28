@@ -25,11 +25,6 @@ import type {
   RevokeAccessItemDto,
   RevokeAccessResponseDto,
 } from './dto/revoke-access.dto';
-import type {
-  ShareItemDto,
-  ShareFilesResponseDto,
-} from './dto/share-files.dto';
-import { SharePermission } from './dto/share-files.dto';
 import type { UploadArchiveResponseDto } from './dto/upload-archive.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import type { UploadMode } from './dto/upload-file.dto';
@@ -179,14 +174,6 @@ export class FilesService {
 
   moveFiles(items: MoveItemDto[], at: string): Promise<MoveFilesResponseDto> {
     return this.filesBatchOperationsService.moveFiles(items, at);
-  }
-
-  shareFiles(
-    items: ShareItemDto[],
-    permission: SharePermission,
-    at: string,
-  ): Promise<ShareFilesResponseDto> {
-    return this.filesSharingService.shareFiles(items, permission, at);
   }
 
   revokeAccess(
