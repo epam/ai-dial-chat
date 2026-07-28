@@ -1069,10 +1069,9 @@ dialTest(
         ))!.id!;
         // The orchestrator model must support tools, otherwise the form is
         // invalid and Save & Exit opens the "save only valid data" dialog.
-        toolSupportingModelId = allEntities.find(
-          (entity) =>
-            entity.type === EntityType.Model && entity.features?.tools,
-        )!.id;
+        toolSupportingModelId = (
+          await modelApiHelper.getToolSupportingModel(allEntities)
+        ).id;
       },
     );
 

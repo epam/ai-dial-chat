@@ -160,7 +160,10 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
             {t(ChatI18nKeys.ToolsetsRequireLogin)}
           </h2>
 
-          <div className="divide-y divide-tertiary rounded border border-secondary">
+          <div
+            className="divide-y divide-tertiary rounded border border-secondary"
+            data-qa="toolset-login-list"
+          >
             <div className={classNames(gridLayout, 'bg-layer-1')}>
               <div className="p-2 text-sm text-secondary md:p-3">
                 {t(ChatI18nKeys.Toolset)}
@@ -175,6 +178,7 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
               <div
                 key={event.id}
                 className={classNames(gridLayout, 'bg-layer-3')}
+                data-qa="toolset-login-row"
               >
                 <div className="flex items-center gap-2 overflow-hidden p-2 md:p-3">
                   <ModelIcon

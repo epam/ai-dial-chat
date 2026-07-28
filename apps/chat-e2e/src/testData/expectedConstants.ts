@@ -438,6 +438,15 @@ export const ExpectedConstants = {
   pdfAttachmentType: 'application/pdf',
   // template_name of the predefined Code Interpreter toolset.
   codeInterpreterTemplateName: 'py_interpreter',
+  // API key header name injected into the mocked API key toolset auth settings.
+  apiKeyHeaderName: 'api-key',
+  // "Toolset login required" modal shown in the App editor preview.
+  toolsetLoginRequiredTitle: 'Toolset login required',
+  toolsetsRequireLoginSubtitle:
+    'The toolsets that "Quick app" uses to generate a response require a login',
+  // Toasts shown after declining toolset sign-in requests.
+  toolsetSignInRequestDeclined: 'Toolset sign in request declined',
+  allToolsetSignInRequestsDeclined: 'All toolset sign in requests declined',
   // Confirmation dialog shown on Save & Exit when the config has invalid items.
   saveOnlyValidDataTitle: 'Only valid data will be saved',
   saveOnlyValidDataMessage:
@@ -666,7 +675,9 @@ export const API = {
   authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
   tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
   toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
+  subscribeHost: () => `${API.api}/client-channels/subscribe`,
   unsubscribeHost: () => `${API.api}/client-channels/unsubscribe`,
+  reportHost: () => `${API.api}/client-channels/report`,
   limitsHost: (id: string) => `/api/deployments/${id}/limits`,
   rateHost: () => `${API.api}/rate`,
 };
