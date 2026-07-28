@@ -10,6 +10,7 @@ export interface MarketplaceFilters {
   [FilterTypes.ENTITY_TYPE]: string[];
   [FilterTypes.TOPICS]: string[];
   [FilterTypes.SOURCES]: string[];
+  [FilterTypes.AUTH]: string[];
   // [FilterTypes.CAPABILITIES]: string[];
   // [FilterTypes.ENVIRONMENT]: string[];
 }

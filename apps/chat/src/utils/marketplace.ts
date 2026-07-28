@@ -32,7 +32,9 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
   SourceType,
+  TOOLSET_AUTH_FILTER_VALUES,
   TableColumnSortKeys,
+  ToolsetAuthFilter,
 } from '@/src/constants/marketplace';
 
 import { pluralizeDisplayName } from './app/application-type-schema';
@@ -153,6 +155,46 @@ const checkDialAiApplicationSources = (
   );
 };
 
+export const getToolsetAuthFilterValues = (
+  toolset: ToolsetModel,
+): ToolsetAuthFilter[] => {
+  if (toolset.authSettings?.authenticationType === ToolsetAuthTypes.NONE) {
+    return [ToolsetAuthFilter.WithoutAuth];
+  }
+
+  const values: ToolsetAuthFilter[] = [];
+  const isSignedInOrg =
+    isMarketplaceEntityPublic(toolset) && isToolsetSignedIn(toolset);
+  const isSignedInUser =
+    isToolsetSignedIn(toolset, ToolsetCredentialsLevel.USER) ||
+    (isMyToolset(toolset) && isToolsetSignedIn(toolset));
+
+  if (isSignedInOrg) {
+    values.push(ToolsetAuthFilter.OrgCreds);
+  }
+  if (isSignedInUser) {
+    values.push(ToolsetAuthFilter.MyCreds);
+  }
+  if (!isSignedInOrg && !isSignedInUser) {
+    values.push(ToolsetAuthFilter.LoggedOut);
+  }
+
+  return values;
+};
+
+const checkAuthFilter = (
+  marketplaceEntity: MarketplaceEntity,
+  authValues?: string[],
+) => {
+  if (!authValues?.length) return true;
+  if (!isToolsetEntityModel(marketplaceEntity)) return false;
+
+  return (
+    intersection(authValues, getToolsetAuthFilterValues(marketplaceEntity))
+      .length > 0
+  );
+};
+
 const checkSourcesFilter = (
   marketplaceEntity: MarketplaceEntity,
   sources?: string[],
@@ -193,7 +235,8 @@ export const doesMarketplaceEntityMatchFilters = (
       marketplaceEntity,
       selectedFilters[FilterTypes.SOURCES],
       applicationTypeSchemas,
-    )
+    ) &&
+    checkAuthFilter(marketplaceEntity, selectedFilters[FilterTypes.AUTH])
   );
 };
 
@@ -252,6 +295,7 @@ export const getFilters = (
   query: ParsedUrlQuery,
   existingTopics: string[],
   sourceTypes: SourceType[],
+  authFilters: ToolsetAuthFilter[] = [],
 ) => {
   const topics = parseCommaSeparatedList(
     query[MarketplaceQueryParams.topics] as string,
@@ -265,7 +309,21 @@ export const getFilters = (
     query[MarketplaceQueryParams.sources] as string,
   ).filter((type) => type && sourceTypes.includes(type as SourceType));
 
-  return { Type: types, Topics: topics, Sources: sources };
+  const auth = parseCommaSeparatedList(
+    query[MarketplaceQueryParams.auth] as string,
+  ).filter(
+    (value) =>
+      value &&
+      TOOLSET_AUTH_FILTER_VALUES.includes(value as ToolsetAuthFilter) &&
+      authFilters.includes(value as ToolsetAuthFilter),
+  );
+
+  return {
+    Type: types,
+    Topics: topics,
+    Sources: sources,
+    Authentication: auth,
+  };
 };
 
 export const getTableSort = (query: ParsedUrlQuery) => {

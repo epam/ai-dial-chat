@@ -34,6 +34,7 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
   SourceType,
+  ToolsetAuthFilter,
   ViewTypes,
 } from '@/src/constants/marketplace';
 
@@ -161,6 +162,13 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
         MarketplaceQueryParams.sources,
         filters.Sources.length ? filters.Sources.join(',') : undefined,
       );
+      addToQuery(
+        query,
+        MarketplaceQueryParams.auth,
+        !isAgentsTab && filters.Authentication.length
+          ? filters.Authentication.join(',')
+          : undefined,
+      );
       // search
       const searchTerm = MarketplaceSelectors.selectSearchTerm(state);
       addToQuery(
@@ -224,10 +232,12 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         [FilterTypes.ENTITY_TYPE]: string[];
         [FilterTypes.TOPICS]: string[];
         [FilterTypes.SOURCES]: string[];
+        [FilterTypes.AUTH]: string[];
       } = {
         Type: [],
         Topics: [],
         Sources: [],
+        Authentication: [],
       };
       let statePropertyName: keyof MarketplaceState = 'selectedAgentsFilters';
 
@@ -280,8 +290,15 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
           ToolsetSelectors.selectToolsetsTopics(state);
         const toolsetSourceTypes =
           MarketplaceSelectors.selectToolsetSourceTypes(state);
+        const toolsetAuthFilters =
+          MarketplaceSelectors.selectToolsetAuthFilters(state);
 
-        filters = getFilters(query, existingToolsetsTopics, toolsetSourceTypes);
+        filters = getFilters(
+          query,
+          existingToolsetsTopics,
+          toolsetSourceTypes,
+          toolsetAuthFilters,
+        );
       }
 
       const updatedMarketplaceState: Partial<MarketplaceState> = {
@@ -356,6 +373,7 @@ const updateToolsetsFiltersEpic: AppEpic = (action$, state$) =>
 
       const existingTopics = ToolsetSelectors.selectToolsetsTopics(state);
       const sourceTypes = MarketplaceSelectors.selectToolsetSourceTypes(state);
+      const authFilters = MarketplaceSelectors.selectToolsetAuthFilters(state);
       const filters = MarketplaceSelectors.selectSelectedToolsetsFilters(state);
       const updatedFilters = { ...filters };
       updatedFilters.Topics = filters.Topics.filter((topic) =>
@@ -364,9 +382,13 @@ const updateToolsetsFiltersEpic: AppEpic = (action$, state$) =>
       updatedFilters.Sources = filters.Sources.filter((source) =>
         sourceTypes.includes(source as SourceType),
       );
+      updatedFilters.Authentication = filters.Authentication.filter((auth) =>
+        authFilters.includes(auth as ToolsetAuthFilter),
+      );
       if (
         updatedFilters.Topics.length !== filters.Topics.length ||
-        updatedFilters.Sources.length !== filters.Sources.length
+        updatedFilters.Sources.length !== filters.Sources.length ||
+        updatedFilters.Authentication.length !== filters.Authentication.length
       ) {
         return of(
           MarketplaceActions.setState({

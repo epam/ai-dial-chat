@@ -11,10 +11,10 @@ import {
 } from '@/src/utils/marketplace';
 
 import { ApplicationType } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
+import { ApiKeys, EntityType } from '@/src/types/common';
 import { DetailsEntity } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 
 import {
   FilterTypes,
@@ -22,6 +22,7 @@ import {
   MarketplaceTabs,
   SourceType,
   TableColumnSortKeys,
+  ToolsetAuthFilter,
 } from '@/src/constants/marketplace';
 
 import {
@@ -33,6 +34,7 @@ import {
 import { pluralizeDisplayName } from '../application-type-schema';
 import { isMyApplication, isMyToolset } from '../id';
 
+import { ToolsetAuthStatus, ToolsetAuthTypes } from '@epam/ai-dial-shared';
 import { ParsedUrlQuery } from 'querystring';
 
 // Mock dependencies
@@ -228,6 +230,93 @@ describe('doesMarketplaceEntityMatchFilters', () => {
 
       const result = doesMarketplaceEntityMatchFilters(mockToolset, filters);
       expect(result).toBe(false);
+    });
+  });
+
+  describe('Authentication filtering for Toolsets entities', () => {
+    const buildToolset = (
+      authenticationType: ToolsetAuthTypes,
+      globalStatus: ToolsetAuthStatus,
+      userStatus: ToolsetAuthStatus,
+      id?: string,
+    ) =>
+      ({
+        ...mockToolset,
+        ...(id && { id }),
+        authSettings: {
+          authenticationType,
+          authStatus: {
+            [ToolsetCredentialsLevel.GLOBAL]: globalStatus,
+            [ToolsetCredentialsLevel.USER]: userStatus,
+            [ToolsetCredentialsLevel.APP]: ToolsetAuthStatus.SIGNED_OUT,
+          },
+        },
+      }) as ToolsetModel;
+
+    it('matches "Without Authentication" toolsets', () => {
+      const toolset = buildToolset(
+        ToolsetAuthTypes.NONE,
+        ToolsetAuthStatus.SIGNED_OUT,
+        ToolsetAuthStatus.SIGNED_OUT,
+      );
+      const filters = {
+        [FilterTypes.AUTH]: [ToolsetAuthFilter.WithoutAuth],
+      };
+
+      expect(doesMarketplaceEntityMatchFilters(toolset, filters)).toBe(true);
+    });
+
+    it('matches "Org creds" when public toolset signed in at global level', () => {
+      vi.mocked(isMarketplaceEntityPublic).mockReturnValue(true);
+      const toolset = buildToolset(
+        ToolsetAuthTypes.OAUTH,
+        ToolsetAuthStatus.SIGNED_IN,
+        ToolsetAuthStatus.SIGNED_OUT,
+        `${ApiKeys.Toolsets}/public/public_toolset_name`,
+      );
+      expect(
+        doesMarketplaceEntityMatchFilters(toolset, {
+          [FilterTypes.AUTH]: [ToolsetAuthFilter.OrgCreds],
+        }),
+      ).toBe(true);
+      expect(
+        doesMarketplaceEntityMatchFilters(toolset, {
+          [FilterTypes.AUTH]: [ToolsetAuthFilter.LoggedOut],
+        }),
+      ).toBe(false);
+    });
+
+    it('matches "My creds" when signed in at user level', () => {
+      const toolset = buildToolset(
+        ToolsetAuthTypes.API_KEY,
+        ToolsetAuthStatus.SIGNED_OUT,
+        ToolsetAuthStatus.SIGNED_IN,
+      );
+      expect(
+        doesMarketplaceEntityMatchFilters(toolset, {
+          [FilterTypes.AUTH]: [ToolsetAuthFilter.MyCreds],
+        }),
+      ).toBe(true);
+    });
+
+    it('matches "Logged out" when auth required but not signed in', () => {
+      const toolset = buildToolset(
+        ToolsetAuthTypes.OAUTH,
+        ToolsetAuthStatus.SIGNED_OUT,
+        ToolsetAuthStatus.SIGNED_OUT,
+      );
+      expect(
+        doesMarketplaceEntityMatchFilters(toolset, {
+          [FilterTypes.AUTH]: [ToolsetAuthFilter.LoggedOut],
+        }),
+      ).toBe(true);
+    });
+
+    it('returns false for non-toolset entities when auth filter applied', () => {
+      const filters = {
+        [FilterTypes.AUTH]: [ToolsetAuthFilter.WithoutAuth],
+      };
+      expect(doesMarketplaceEntityMatchFilters(mockModel, filters)).toBe(false);
     });
   });
 });
