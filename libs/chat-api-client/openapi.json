@@ -4000,6 +4000,20 @@
               "type": "string"
             }
           },
+          "enabledUiFeatures": {
+            "description": "When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.",
+            "nullable": true,
+            "example": [
+              "header",
+              "likes",
+              "conversations-sharing",
+              "hide-new-conversation"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "announcementHtml": {
             "type": "string",
             "description": "Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.",
@@ -4018,7 +4032,8 @@
           "fileManagerTabs",
           "overlayEnabled",
           "overlayAllowedOrigins",
-          "footerHtmlMessage"
+          "footerHtmlMessage",
+          "enabledUiFeatures"
         ]
       },
       "ClientConfigMetadataDto": {

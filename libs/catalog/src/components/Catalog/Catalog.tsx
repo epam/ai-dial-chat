@@ -49,6 +49,7 @@ export const Catalog: FC<CatalogProps> = ({
   onCreatePublishFolder,
   publishTexts,
   shareOverlay,
+  isShareVisible,
   connectOverlay,
   isConnectVisible,
   onFetchDetails,
@@ -60,6 +61,7 @@ export const Catalog: FC<CatalogProps> = ({
   createOptions,
   hideCreateButton = false,
   hidePageTitle = false,
+  initialViewMode = CatalogViewMode.Grid,
   selectedItemId,
   onCardClick,
   isLoading,
@@ -105,10 +107,10 @@ export const Catalog: FC<CatalogProps> = ({
   ];
 
   const [query, setQuery] = useState('');
-  const [viewMode, setViewMode] = useState<CatalogViewMode>(
-    CatalogViewMode.Grid,
+  const [viewMode, setViewMode] = useState<CatalogViewMode>(initialViewMode);
+  const [listEverShown, setListEverShown] = useState(
+    initialViewMode === CatalogViewMode.List,
   );
-  const [listEverShown, setListEverShown] = useState(false);
   const [internalSortKey, setInternalSortKey] = useState<CatalogSortKey>(
     CatalogSortKey.RecentlyUpdated,
   );
@@ -519,6 +521,7 @@ export const Catalog: FC<CatalogProps> = ({
           onCreatePublishFolder={onCreatePublishFolder}
           publishTexts={publishTexts}
           shareOverlay={shareOverlay}
+          isShareVisible={isShareVisible}
           connectOverlay={connectOverlay}
           isConnectVisible={isConnectVisible}
           onEdit={onEdit}

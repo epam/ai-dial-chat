@@ -18,7 +18,13 @@
 
 ### Requirement: Overlay mode is detected from runtime config, framing, and origin — not a build-time flag
 
-The app SHALL treat overlay mode as eligible only when all of: (a) `AppConfigContext.config` reports the overlay-enabled flag from `chat-overlay-security-config` as true, (b) `window.self !== window.top` (the app is actually framed), and (c) no origin check performed so far has failed. None of these alone is sufficient. `RequireAuth`'s current "render nothing while unauthenticated" behavior SHALL be replaced, in overlay-eligible mode only, with the library-visible loader staying up (no app-rendered content) until the handshake's `READY` event, matching non-overlay behavior of showing nothing meaningful until auth resolves — this is a presentation change scoped to overlay mode only, non-overlay behavior is unchanged.
+The app SHALL treat overlay mode as eligible only when all of: (a) `AppConfigContext.config` reports the overlay-enabled flag from `chat-overlay-security-config` as true, (b) `window.self !== window.top` (the app is actually framed), and (c) no origin check performed so far has failed. None of these alone is sufficient.
+
+While the app is framed and `AppConfigContext.status === 'loading'`, `OverlayModeGate` SHALL render `null` instead of rendering children without `OverlayProvider`. This prevents `RequireAuth` from mounting in a transient non-overlay state and starting the normal unauthenticated `/login` redirect inside the iframe before the runtime overlay flag is known. Top-level (not framed) rendering MUST NOT be delayed by this rule.
+
+`RequireAuth`'s presentation while `status === AuthStatus.Loading` is unchanged by this requirement: in overlay-eligible mode, the library-visible loader stays up (no app-rendered content) until the handshake's `READY` event, matching non-overlay behavior of showing nothing meaningful until auth resolves.
+
+`RequireAuth`'s presentation while `status === AuthStatus.Unauthenticated` in overlay-eligible mode is replaced by the overlay login gate defined in `overlay-external-login` (a focusable "Log in" affordance that opens the BFF login flow in an external tab/window) instead of the loader staying up indefinitely — because, unlike the `Loading` state (which always resolves once the session bootstrap completes), an `Unauthenticated` overlay session has no automatic path to `Authenticated` once the automatic redirect is disabled (see `spa-auth-session`), so a loader-only presentation would leave the user with no way to proceed. This is a presentation change scoped to overlay mode only; non-overlay behavior (automatic redirect, per `spa-auth-session`) is unchanged.
 
 #### Scenario: Not framed, config enabled → normal mode
 
@@ -34,6 +40,26 @@ The app SHALL treat overlay mode as eligible only when all of: (a) `AppConfigCon
 
 - **WHEN** the app is framed and overlay-enabled config is true
 - **THEN** the app enters overlay mode and mounts `OverlayProvider`
+
+#### Scenario: Framed, config still loading → no transient normal-mode redirect
+
+- **WHEN** the app is framed and `AppConfigContext.status === 'loading'`
+- **THEN** `OverlayModeGate` renders `null`, so `RequireAuth` is not mounted without overlay context and cannot start the normal iframe login redirect
+
+#### Scenario: Not framed, config still loading → normal top-level rendering
+
+- **WHEN** `AppConfigContext.status === 'loading'` and `window.self === window.top`
+- **THEN** `OverlayModeGate` does not delay rendering its children
+
+#### Scenario: Overlay mode, session loading → loader stays up
+
+- **WHEN** the app is in overlay mode and `status === AuthStatus.Loading`
+- **THEN** `RequireAuth` renders `null` and the library's own host-page loader remains the only visible loading indicator
+
+#### Scenario: Overlay mode, session unauthenticated → login gate, no automatic redirect
+
+- **WHEN** the app is in overlay mode and `status === AuthStatus.Unauthenticated`
+- **THEN** `RequireAuth` does not call `window.location.assign` or `navigate` to start the BFF login flow, and instead renders the overlay login gate described in `overlay-external-login`
 
 ### Requirement: Active-conversation bridge registration
 
@@ -76,7 +102,7 @@ Trusted-host and expiry rules: an active-conversation request SHALL be accepted 
 
 ### Requirement: SET_OVERLAY_OPTIONS applies to existing contexts
 
-On receiving `SET_OVERLAY_OPTIONS`, the app SHALL: set `hostDomain` from the payload (validated per `chat-overlay-protocol`); if `theme` is present, apply it via the existing `ThemeContext` setter; if `modelId` is present, apply it via `DeploymentsContext`'s `restoreSelectedItemId` (not `setSelectedItemId`, so the overlay-driven choice does not overwrite the end-user's persisted `UserConfig` preference); if `overlayConversationId` is present, navigate to that conversation using the existing route/`ConversationPage` loading path. The app SHALL respond `SET_OVERLAY_OPTIONS/RESPONSE` only after these have been applied (or determined inapplicable, e.g. an unknown `modelId`).
+On receiving `SET_OVERLAY_OPTIONS`, the app SHALL: set `hostDomain` from the payload (validated per `chat-overlay-protocol`); if `theme` is present, apply it via the existing `ThemeContext` setter; if `modelId` is present, apply it via `DeploymentsContext`'s `restoreSelectedItemId` (not `setSelectedItemId`, so the overlay-driven choice does not overwrite the end-user's persisted `UserConfig` preference); if `overlayConversationId` is present, navigate to that conversation using the existing route/`ConversationPage` loading path; if `enabledFeatures` is present, apply it via `UiFeaturesContext`'s `applyOverlayOverride` setter, which replaces (does not merge with) the app's current effective UI-feature set (see `ui-feature-toggles`). The app SHALL respond `SET_OVERLAY_OPTIONS/RESPONSE` only after these have been applied (or determined inapplicable, e.g. an unknown `modelId`, or filtered, e.g. unrecognized `enabledFeatures` entries per `ui-feature-toggles`).
 
 #### Scenario: modelId does not overwrite the user's persisted preference
 
@@ -93,6 +119,21 @@ On receiving `SET_OVERLAY_OPTIONS`, the app SHALL: set `hostDomain` from the pay
 
 - **WHEN** `SET_OVERLAY_OPTIONS` includes a `modelId` that does not match any available deployment
 - **THEN** the app still responds `SET_OVERLAY_OPTIONS/RESPONSE` and falls back to its normal default-deployment resolution
+
+#### Scenario: enabledFeatures is applied through UiFeaturesContext, replacing the current effective set
+
+- **WHEN** `SET_OVERLAY_OPTIONS` includes `enabledFeatures: ['header', 'likes']`
+- **THEN** `UiFeaturesContext.applyOverlayOverride(['header', 'likes'])` is called, and the app's effective UI-feature set becomes exactly `{header, likes}`
+
+#### Scenario: Absent enabledFeatures does not call applyOverlayOverride
+
+- **WHEN** `SET_OVERLAY_OPTIONS` omits `enabledFeatures` entirely
+- **THEN** `UiFeaturesContext.applyOverlayOverride` is not called, and the previously-active effective UI-feature set is unchanged
+
+#### Scenario: enabledFeatures is applied together with theme/modelId/overlayConversationId in one response
+
+- **WHEN** `SET_OVERLAY_OPTIONS` includes `theme: 'dark'`, `modelId: 'gpt-4o'`, and `enabledFeatures: ['header']` in a single payload
+- **THEN** all three are applied (theme changes, model selection restores, effective UI-feature set becomes `{header}`) before the single `SET_OVERLAY_OPTIONS/RESPONSE` is sent
 
 ### Requirement: Chat and generation events are emitted from existing hooks
 
