@@ -141,11 +141,7 @@ export const ListView: FC<ListViewProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses(
-        'w-full rounded-xl border',
-        styles.listContainer,
-        items.length === 0 && 'h-full',
-      )}
+      className={mergeClasses('w-full rounded-xl border', styles.listContainer)}
     >
       <div className={mergeClasses('rounded-xl', styles.gridClip)}>
         <DialGrid<CatalogItem>

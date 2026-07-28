@@ -18,7 +18,6 @@ import { useShareLink } from '../../hooks/useShareLink/useShareLink';
  */
 const EDITABLE_ACCESS_TYPES = new Set<CatalogEntityType>([
   CatalogEntityType.Agent,
-  CatalogEntityType.Agent,
   CatalogEntityType.Skill,
   CatalogEntityType.Toolset,
 ]);

@@ -42,23 +42,23 @@ export const PillTabs: FC<PillTabsProps> = memo(
       pillTabsStyles?.typography ?? {};
 
     return (
-      <div className="flex flex-nowrap gap-1">
+      <div className="flex flex-nowrap gap-1" role="tablist">
         {tabs.map((tab) => {
           const isActive = activeTabId === tab.id;
           return (
-            <DialTag
-              key={tab.id}
-              label={tab.label}
-              selected={isActive}
-              onClick={() => onTabChange(tab.id)}
-              aria-selected={isActive}
-              className={mergeClasses(
-                'box-border h-auto shrink-0 justify-center rounded-full p-2 text-center',
-                tabClassName,
-                styles.tabContainer,
-                isActive && styles.tabActive,
-              )}
-            />
+            <div key={tab.id} role="tab" aria-selected={isActive} className="contents">
+              <DialTag
+                label={tab.label}
+                selected={isActive}
+                onClick={() => onTabChange(tab.id)}
+                className={mergeClasses(
+                  'box-border h-auto shrink-0 justify-center rounded-full p-2 text-center',
+                  tabClassName,
+                  styles.tabContainer,
+                  isActive && styles.tabActive,
+                )}
+              />
+            </div>
           );
         })}
       </div>

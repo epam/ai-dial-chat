@@ -41,4 +41,18 @@ describe('FilterTabs', () => {
     renderTabs();
     expect(getTab('All').className).toContain('flex');
   });
+
+  it('exposes tablist/tab roles and marks the active tab as selected', () => {
+    renderTabs();
+    expect(screen.getByRole('tablist')).toBeTruthy();
+
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs).toHaveLength(4);
+
+    const activeTab = screen.getByText('All').closest('[role="tab"]');
+    expect(activeTab).toHaveAttribute('aria-selected', 'true');
+
+    const inactiveTab = screen.getByText('My chats').closest('[role="tab"]');
+    expect(inactiveTab).toHaveAttribute('aria-selected', 'false');
+  });
 });
