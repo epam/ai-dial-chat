@@ -17,12 +17,13 @@ import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { useAppConfig } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
+import {
+  FavoriteEntityType,
+  useFavoriteApplications,
+} from '../../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
-import useFavoriteApplications, {
-  FavoriteEntityType,
-} from '../../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { deleteApplication } from '../../../server-api/applications';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
@@ -349,16 +350,13 @@ vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
 }));
 
-vi.mock(
-  '../../../hooks/useFavoriteApplications/useFavoriteApplications',
-  () => ({
-    FavoriteEntityType: {
-      Deployment: 'deployment',
-      Toolset: 'toolset',
-    },
-    default: vi.fn(),
-  }),
-);
+vi.mock('../../../context/FavoriteApplicationsContext', () => ({
+  FavoriteEntityType: {
+    Deployment: 'deployment',
+    Toolset: 'toolset',
+  },
+  useFavoriteApplications: vi.fn(),
+}));
 
 vi.mock('../../../hooks/publish/usePublishFolders', () => ({
   usePublishFolders: vi.fn(),

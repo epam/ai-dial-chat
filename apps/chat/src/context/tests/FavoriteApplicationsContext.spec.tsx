@@ -4,18 +4,20 @@ import {
   getUserConfig,
   updateInstalledDeployment,
   updateInstalledToolset,
-} from '../../../server-api/user-config.api';
-import useFavoriteApplications, {
+} from '../../server-api/user-config.api';
+import {
+  FavoriteApplicationsProvider,
   FavoriteEntityType,
-} from '../useFavoriteApplications';
+  useFavoriteApplications,
+} from '../FavoriteApplicationsContext';
 
-vi.mock('../../../server-api/user-config.api', () => ({
+vi.mock('../../server-api/user-config.api', () => ({
   getUserConfig: vi.fn(),
   updateInstalledDeployment: vi.fn(),
   updateInstalledToolset: vi.fn(),
 }));
 
-describe('useFavoriteApplications', () => {
+describe('FavoriteApplicationsContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getUserConfig).mockResolvedValue({
@@ -28,8 +30,16 @@ describe('useFavoriteApplications', () => {
     vi.mocked(updateInstalledToolset).mockResolvedValue(undefined);
   });
 
+  it('throws when used outside a FavoriteApplicationsProvider', () => {
+    expect(() => renderHook(() => useFavoriteApplications())).toThrowError(
+      'useFavoriteApplications must be used within a FavoriteApplicationsProvider',
+    );
+  });
+
   it('loads installed deployments and toolsets as favorite ids', async () => {
-    const { result } = renderHook(() => useFavoriteApplications());
+    const { result } = renderHook(() => useFavoriteApplications(), {
+      wrapper: FavoriteApplicationsProvider,
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -40,7 +50,9 @@ describe('useFavoriteApplications', () => {
   });
 
   it('persists toolset favorite toggles via toolset user config', async () => {
-    const { result } = renderHook(() => useFavoriteApplications());
+    const { result } = renderHook(() => useFavoriteApplications(), {
+      wrapper: FavoriteApplicationsProvider,
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     await act(async () => {
@@ -63,7 +75,9 @@ describe('useFavoriteApplications', () => {
       new Error('API error'),
     );
 
-    const { result } = renderHook(() => useFavoriteApplications());
+    const { result } = renderHook(() => useFavoriteApplications(), {
+      wrapper: FavoriteApplicationsProvider,
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -76,5 +90,27 @@ describe('useFavoriteApplications', () => {
 
     /* State should be reverted after rejection */
     expect(result.current.favoriteIds.has('new-app')).toBe(false);
+  });
+
+  it('shares favorite state across consumers mounted under the same provider', async () => {
+    const { result } = renderHook(
+      () => ({
+        catalogConsumer: useFavoriteApplications(),
+        dropdownConsumer: useFavoriteApplications(),
+      }),
+      { wrapper: FavoriteApplicationsProvider },
+    );
+
+    await waitFor(() =>
+      expect(result.current.catalogConsumer.isLoading).toBe(false),
+    );
+
+    await act(async () => {
+      await result.current.catalogConsumer.toggleFavorite('claude-3', true);
+    });
+
+    expect(result.current.dropdownConsumer.favoriteIds.has('claude-3')).toBe(
+      true,
+    );
   });
 });
