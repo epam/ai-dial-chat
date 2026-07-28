@@ -105,6 +105,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
       placement="bottom-end"
       onOpenChange={setIsOpen}
       listClassName="z-[2000]"
+      enableAncestorScroll
       data-qa="model-version-select"
       trigger={
         <div
