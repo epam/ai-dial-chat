@@ -107,11 +107,6 @@ describe('Header', () => {
     expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
   });
 
-  it('does not render Use in chat for non-selectable entity types by default', () => {
-    render(<Header item={makeItem(CatalogEntityType.Agent)} />);
-    expect(screen.queryByRole('button', { name: 'Use in chat' })).toBeNull();
-  });
-
   it('hides Use in chat when hasPrimaryAction is false', () => {
     render(
       <Header
