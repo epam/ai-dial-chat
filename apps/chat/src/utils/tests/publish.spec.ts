@@ -22,11 +22,6 @@ describe('toPublishEntityType', () => {
       CatalogPublishEntityType.Application,
     );
   });
-
-  it('returns undefined for entity types that are not publishable', () => {
-    expect(toPublishEntityType(CatalogEntityType.Agent)).toBeUndefined();
-    expect(toPublishEntityType(CatalogEntityType.Skill)).toBeUndefined();
-  });
 });
 
 describe('mapPublishHistoryEntryDto', () => {

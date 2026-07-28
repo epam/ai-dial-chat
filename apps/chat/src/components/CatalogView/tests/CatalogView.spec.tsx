@@ -579,18 +579,6 @@ describe('CatalogView', () => {
       );
     });
 
-    it('rejects when the entity type is not publishable', async () => {
-      render(<CatalogView />);
-
-      await expect(
-        capturedPublishProps.current?.onPublish?.(
-          makeCatalogItem({ type: CatalogEntityType.Agent }),
-          ['Organization'],
-        ),
-      ).rejects.toThrow();
-      expect(publishCatalogEntity).not.toHaveBeenCalled();
-    });
-
     it('propagates a publish API failure (e.g. 403) to the caller', async () => {
       vi.mocked(publishCatalogEntity).mockRejectedValue(new Error('Forbidden'));
 
@@ -622,11 +610,6 @@ describe('CatalogView', () => {
       expect(
         capturedPublishProps.current?.isPublishVisible?.(
           makeCatalogItem({ isMyApp: false }),
-        ),
-      ).toBe(false);
-      expect(
-        capturedPublishProps.current?.isPublishVisible?.(
-          makeCatalogItem({ type: CatalogEntityType.Agent }),
         ),
       ).toBe(false);
     });

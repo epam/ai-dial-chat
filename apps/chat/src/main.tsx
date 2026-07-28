@@ -53,10 +53,10 @@ root.render(
                           <Route path="/login" element={<LoginPage />} />
                           <Route
                             path="/overlay-close"
-                          element={<OverlayClose />}
-                        />
-                        <Route
-                          path="*"
+                            element={<OverlayClose />}
+                          />
+                          <Route
+                            path="*"
                             element={
                               <OverlayModeGate>
                                 <RequireAuth>
