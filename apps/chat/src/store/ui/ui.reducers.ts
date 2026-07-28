@@ -54,11 +54,13 @@ const initialState: UIState = {
     [FilterTypes.ENTITY_TYPE]: true,
     [FilterTypes.TOPICS]: true,
     [FilterTypes.SOURCES]: true,
+    [FilterTypes.AUTH]: true,
   },
   toolsetFilterPanelCollapseState: {
     [FilterTypes.ENTITY_TYPE]: false,
     [FilterTypes.TOPICS]: true,
     [FilterTypes.SOURCES]: true,
+    [FilterTypes.AUTH]: true,
   },
 };
 
