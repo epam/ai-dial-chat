@@ -9,6 +9,15 @@ all inputs, and proxy the request to DIAL Core
 passing the path **without** appending `/`. The endpoint SHALL return `200 OK`
 with a `FileMetadataResponseDto` on success.
 
+DIAL Core HTTP status mapping SHALL be based on the SDK response status whenever
+the SDK provides a response object. A response-level `404` from DIAL Core,
+including an empty 404 response body where the SDK result has `data: undefined`,
+`error: undefined`, and `response.status === 404`, SHALL be returned to the
+caller as `404 Not Found`; it SHALL NOT be treated as a network failure or
+mapped to `503 Service Unavailable`. `503` is reserved for cases where no
+upstream HTTP status was received because DIAL Core was unreachable or the
+request timed out.
+
 **HTTP method / route**: `GET /api/v1/files/metadata`
 
 **operationId**: `getFileMetadata` → generated SDK method `filesApi.getFileMetadata(…)`
@@ -96,10 +105,10 @@ Authorization: (session cookie)
 | 400    | Missing/empty `bucket` or `path`; `path` contains `..`, starts with `/`, has trailing `/`, or has forbidden characters |
 | 401    | No valid session                                                |
 | 403    | DIAL Core returns 403 (user lacks READ permission on file)      |
-| 404    | DIAL Core returns 404 (file does not exist)                     |
+| 404    | DIAL Core returns 404, including an empty 404 response body (file does not exist) |
 | 429    | Rate limit exceeded                                             |
-| 502    | DIAL Core returns a non-OK, non-mapped status (4xx other than above, or 5xx) |
-| 503    | DIAL Core is unreachable or times out                           |
+| 502    | DIAL Core returns a non-OK, non-mapped HTTP status (4xx other than above, or 5xx) |
+| 503    | No HTTP response from DIAL Core: unreachable, connection failure, or timeout |
 
 ---
 
@@ -130,10 +139,12 @@ Authorization: (session cookie)
 - **WHEN** a request is sent with `path=../../etc/passwd`
 - **THEN** the server returns `400 Bad Request` (caught by `IsValidFilePath`)
 
-#### Scenario: DIAL Core returns 404
+#### Scenario: Missing file maps DIAL Core 404 to Not Found
 
-- **WHEN** the file does not exist in DIAL Core
+- **WHEN** an authenticated request with a syntactically valid `bucket` and `path=does-not-exist.pdf` reaches DIAL Core
+- **AND** DIAL Core responds with HTTP 404, including an empty response body where the SDK result has `response.status === 404`
 - **THEN** the server returns `404 Not Found`
+- **AND** the response is not `503 Service Unavailable` with `"DIAL Core is unreachable"`
 
 #### Scenario: DIAL Core returns 403
 

@@ -325,19 +325,24 @@ When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWi
 
 ### Requirement: Selection cleared on tab switch
 
-When `activeTab` changes, the set of `selectedPaths` SHALL be cleared (reset to an empty `Set`).
+When the tab-change handler changes `activeTab`, the set of `selectedPaths` SHALL be cleared (reset to an empty `Set`) before the new tab's listing is used.
 
-> **Implementation note:** on the standalone page the tab strip is replaced by the bulk-actions toolbar as soon as any item is selected, so `activeTab` cannot change while a non-empty selection is held. The requirement is trivially satisfied in that path; its primary purpose is to guard against programmatic tab changes (e.g. the active tab becomes unavailable and resets automatically) that could otherwise leave stale paths from the previous tab in `selectedPaths`.
+> **Implementation note:** on the standalone page the tab strip is replaced by the bulk-actions toolbar as soon as any item is selected, so a user cannot click another tab while a non-empty selection is held. Specs and tests SHALL NOT require a DOM flow that selects a file and then clicks a tab without first clearing the selection, because that tab control is not rendered in that state.
 
-#### Scenario: Selection cleared after programmatic tab reset
+#### Scenario: Selection cleared by the tab-change handler
 
-- **WHEN** the active tab is reset programmatically (e.g. the previously active tab is removed from `fileManagerTabs`) while files from the old tab were selected
-- **THEN** `selectedPaths` is empty on the new active tab
+- **GIVEN** `selectedPaths` contains paths from the current tab
+- **WHEN** `toolbarOptions.onTabChange` is invoked with a different tab
+- **THEN** the handler clears `selectedPaths` to an empty `Set`
+- **AND** the new active tab renders with no stale selected paths
 
-#### Scenario: Selection cleared on tab switch from Shared to My files
+#### Scenario: User tab switch is reachable only after selection is cleared
 
-- **WHEN** the user selects a file on the Shared tab and then switches to My files
-- **THEN** `selectedPaths` is empty on the My files tab
+- **GIVEN** the user has selected a file on the standalone My files tab
+- **WHEN** that selection is active
+- **THEN** the tab strip is not rendered because the bulk-actions toolbar is shown
+- **WHEN** the user clears the selection and then clicks Shared after the tab strip returns
+- **THEN** `selectedPaths` remains empty on the Shared tab
 
 ---
 
