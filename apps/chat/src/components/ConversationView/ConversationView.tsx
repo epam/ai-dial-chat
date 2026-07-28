@@ -67,6 +67,7 @@ import { isMessageChanged } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
+import FooterContainer from '../FooterDialogs/FooterContainer';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -630,7 +631,7 @@ const ConversationView: FC<Props> = ({
       <div
         role="region"
         aria-label={t(ChatI18nKeys.MessageInput)}
-        className="relative z-10 w-full px-6 pb-4"
+        className="relative z-10 w-full px-6"
       >
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
@@ -800,6 +801,7 @@ const ConversationView: FC<Props> = ({
           </>
         )}
       </div>
+      <FooterContainer />
       {catalogModal}
     </>
   );

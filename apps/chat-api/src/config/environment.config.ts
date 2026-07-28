@@ -517,6 +517,22 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  FOOTER_HTML_MESSAGE?: string;
+
+  @IsOptional()
+  @IsString()
+  AZURE_FUNCTIONS_API_HOST?: string;
+
+  @IsOptional()
+  @IsString()
+  REQUEST_API_KEY_CODE?: string;
+
+  @IsOptional()
+  @IsString()
+  REPORT_ISSUE_CODE?: string;
+
+  @IsOptional()
+  @IsString()
   ASR_MODEL?: string;
 
   @IsOptional()

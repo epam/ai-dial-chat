@@ -139,6 +139,7 @@
     "openid-client": "~5.7.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0",
+    "sanitize-html": "^2.15.0",
     "tslib": "^2.3.0",
     "yauzl": "^3.4.0"
   },
@@ -146,6 +147,7 @@
     "@nestjs/testing": "^11.0.0",
     "@types/archiver": "^6.0.3",
     "@types/cookie-parser": "^1.4.10",
+    "@types/sanitize-html": "^2.13.0",
     "@types/yauzl": "^3.4.0"
   },
   "overrides": {

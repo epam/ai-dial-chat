@@ -29,6 +29,7 @@ interface AppConfigState {
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
     announcementHtml: string | null;
+    footerHtmlMessage: string;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -45,6 +46,7 @@ const INITIAL_STATE: AppConfigState = {
     overlayEnabled: false,
     overlayAllowedOrigins: [],
     announcementHtml: null,
+    footerHtmlMessage: '',
   },
 };
 
@@ -78,6 +80,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             overlayEnabled: response.config?.overlayEnabled ?? false,
             overlayAllowedOrigins: response.config?.overlayAllowedOrigins ?? [],
             announcementHtml: response.config?.announcementHtml ?? null,
+            footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
           },
           metadata: response.metadata,
         });

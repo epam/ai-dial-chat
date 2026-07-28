@@ -39,6 +39,7 @@ import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
+import FooterContainer from '../FooterDialogs/FooterContainer';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -327,6 +328,7 @@ const NewConversationComposer: FC<Props> = ({
         )}
         {children}
       </div>
+      <FooterContainer />
       {isDialFileManagerOpen && (
         <DialFileManagerModal
           isOpen={isDialFileManagerOpen}
