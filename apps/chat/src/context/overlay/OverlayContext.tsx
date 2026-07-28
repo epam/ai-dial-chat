@@ -40,6 +40,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getConversationRoute } from '../../constants/routes';
 import { AuthStatus } from '../../types/auth-status';
+import { UserConfigStatus } from '../../types/user-config-status';
 import { conversationIdsMatch } from '../../utils/conversation-id-match';
 import { useAppConfig } from '../AppConfigContext';
 import { useUser } from '../auth/UserContext';
@@ -309,8 +310,16 @@ const logUnknownEnabledFeatures = (features: readonly string[]): void => {
  * that happens server-side (CSP `frame-ancestors`) and again on the
  * `SET_OVERLAY_OPTIONS` handshake message.
  */
+const isWindowFramed = (): boolean =>
+  typeof window !== 'undefined' && window.self !== window.top;
+
 export const isOverlayModeEligible = (overlayEnabled: boolean): boolean =>
-  overlayEnabled && typeof window !== 'undefined' && window.self !== window.top;
+  overlayEnabled && isWindowFramed();
+
+export const shouldDeferOverlayModeUntilConfigReady = (
+  status: UserConfigStatus,
+  isFramed = isWindowFramed(),
+): boolean => status === UserConfigStatus.Loading && isFramed;
 
 /**
  * Owns overlay-mode state: the `window` `message` listener, the handshake
@@ -896,8 +905,13 @@ export const useOptionalOverlay = (): OverlayContextType | undefined =>
  */
 export const OverlayModeGate: FC<{ children: ReactNode }> = ({ children }) => {
   const {
+    status,
     config: { overlayEnabled },
   } = useAppConfig();
+
+  if (shouldDeferOverlayModeUntilConfigReady(status)) {
+    return null;
+  }
 
   if (!isOverlayModeEligible(overlayEnabled)) {
     return children;

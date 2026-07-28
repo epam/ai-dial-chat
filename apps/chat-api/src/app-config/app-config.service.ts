@@ -56,6 +56,7 @@ export class AppConfigService {
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
     let enabledUiFeatures: string[] | null = null;
+    let announcementHtml: string | null = null;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -84,6 +85,8 @@ export class AppConfigService {
         overlayEnabled = resolved === true;
       } else if (def.key === 'overlay.allowedOrigins') {
         overlayAllowedOrigins = Array.isArray(resolved) ? resolved : [];
+      } else if (def.key === 'announcement.html') {
+        announcementHtml = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'uiFeatures.enabledUiFeatures') {
         const rawValue = Array.isArray(resolved) ? resolved : [];
         if (rawValue.length > 0) {
@@ -118,6 +121,7 @@ export class AppConfigService {
         fileManagerTabs,
         overlayEnabled,
         overlayAllowedOrigins,
+        announcementHtml,
         enabledUiFeatures,
       },
       metadata: {

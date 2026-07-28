@@ -156,11 +156,11 @@ When a conversation is duplicated the chat settings (temperature, response forma
 - **THEN** the duplicated conversation's chat settings show the same system prompt
 
 ### Requirement: Read-only conversation view shows centered duplicate action button
-When a conversation is read-only (source bucket differs from user bucket), the `ConversationView` SHALL render a centered action button instead of the `DialNotification` info banner. The button SHALL display a duplicate icon and the translated text "Duplicate the conversation to be able to edit it".
+When a conversation is read-only (source bucket differs from user bucket), the `ConversationView` SHALL render a centered action button instead of the `Notification` info banner. The button SHALL display a duplicate icon and the translated text "Duplicate the conversation to be able to edit it".
 
 #### Scenario: Centered button rendered for read-only conversation
 - **WHEN** `isReadOnly` is `true` and `onDuplicateConversation` is provided
-- **THEN** the centered duplicate button is shown and the `DialNotification` is not
+- **THEN** the centered duplicate button is shown and the `Notification` is not
 
 #### Scenario: Button invokes onDuplicateConversation
 - **WHEN** the user clicks the centered duplicate button

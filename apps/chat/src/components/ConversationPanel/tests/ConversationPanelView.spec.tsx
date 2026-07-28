@@ -175,7 +175,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         {icon}
       </button>
     ),
-    DialNotification: ({
+    ErrorMessageNotification: ({
       message,
       onClose,
       closable,

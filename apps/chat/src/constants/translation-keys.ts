@@ -358,6 +358,10 @@ export enum AuthI18nKeys {
   LoginTitle = 'auth.loginTitle',
   LoginDescription = 'auth.loginDescription',
   ProvidersError = 'auth.providersError',
+  OverlayLoginTitle = 'auth.overlayLoginTitle',
+  OverlayLoginDescription = 'auth.overlayLoginDescription',
+  OverlayExternalLoginBlocked = 'auth.overlayExternalLoginBlocked',
+  OverlayLoginTakingLonger = 'auth.overlayLoginTakingLonger',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
   UserAvatar = 'auth.userAvatar',
@@ -522,6 +526,11 @@ export enum AttachmentCanvasI18nKeys {
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
   LoadErrorLabel = 'attachmentCanvas.loadErrorLabel',
   ForbiddenErrorLabel = 'attachmentCanvas.forbiddenErrorLabel',
+}
+
+export enum AnnouncementBannerI18nKeys {
+  RegionAriaLabel = 'announcementBanner.regionAriaLabel',
+  CloseLabel = 'announcementBanner.closeLabel',
 }
 
 export enum EditorI18nKeys {

@@ -476,6 +476,7 @@ describe('CatalogView', () => {
         overlayEnabled: false,
         overlayAllowedOrigins: [],
         enabledUiFeatures: null,
+        announcementHtml: null,
       },
     });
   });
@@ -713,6 +714,7 @@ describe('CatalogView', () => {
           overlayEnabled: false,
           overlayAllowedOrigins: [],
           enabledUiFeatures: null,
+          announcementHtml: null,
         },
       });
 
@@ -1686,6 +1688,7 @@ describe('CatalogView', () => {
       );
 
       if (capturedPopup) capturedPopup.closed = true;
+      window.dispatchEvent(new Event('focus'));
 
       await waitFor(() =>
         expect(showNotification).toHaveBeenCalledWith(

@@ -30,7 +30,9 @@ The SPA SHALL load the current user session from the BFF on initial mount by iss
 
 ### Requirement: Automatic redirect to the BFF login flow when unauthenticated
 
-The SPA SHALL automatically initiate the BFF login flow when the user is unauthenticated. Before redirecting, it MUST compute an application `callbackUrl` from the current browser URL (`window.location.href`, including pathname, search, and hash) so the BFF can return the user to the same application origin/page after authentication. The redirect policy MUST depend on the number of registered providers reported by `GET /api/v1/auth/providers`:
+The SPA SHALL automatically initiate the BFF login flow when the user is unauthenticated, **unless the caller explicitly disables this behavior**. `useAuthRedirect` SHALL accept an optional `options: { disabled?: boolean }` argument. When `options.disabled` is `true`, the hook's effect MUST return before performing any of the following: fetching `GET /api/v1/auth/providers`, reading or writing the session-storage redirect-attempt guard, calling `navigate(...)`, or calling `window.location.assign(...)`. Omitting `options` or passing `{ disabled: false }` (or `{}`) MUST preserve the exact behavior below, unchanged.
+
+Before redirecting (when not disabled), it MUST compute an application `callbackUrl` from the current browser URL (`window.location.href`, including pathname, search, and hash) so the BFF can return the user to the same application origin/page after authentication. The redirect policy MUST depend on the number of registered providers reported by `GET /api/v1/auth/providers`:
 
 - Exactly one provider → top-level browser navigation to `/api/v1/auth/login/<providerId>?callbackUrl=<encoded-current-url>` via `window.location.assign`.
 - More than one provider → client-side navigation to `/login?callbackUrl=<encoded-current-url>` via React Router `navigate(..., { replace: true })`, where the user picks a provider.
@@ -39,12 +41,12 @@ The redirect MUST NOT fire while the bootstrap status is `loading`, MUST NOT per
 
 #### Scenario: Single provider auto-redirect
 
-- **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns one entry
+- **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns one entry, and the hook was not called with `disabled: true`
 - **THEN** the SPA performs `window.location.assign('/api/v1/auth/login/<id>?callbackUrl=<encoded-current-url>')` exactly once during that session
 
 #### Scenario: Multi-provider navigation to picker
 
-- **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns two or more entries
+- **WHEN** the bootstrap finishes with `status = 'unauthenticated'` and `GET /api/v1/auth/providers` returns two or more entries, and the hook was not called with `disabled: true`
 - **THEN** the SPA calls React Router `navigate('/login?callbackUrl=<encoded-current-url>', { replace: true })` exactly once and renders the lazy-loaded `<LoginPage />`
 
 #### Scenario: Already authenticated user lands on /login
@@ -56,6 +58,16 @@ The redirect MUST NOT fire while the bootstrap status is `loading`, MUST NOT per
 
 - **WHEN** the bootstrap status is `loading`
 - **THEN** no redirect is performed and the gate renders `null`
+
+#### Scenario: Disabled flag suppresses every automatic side effect
+
+- **WHEN** `useAuthRedirect({ disabled: true })` is called with `status = 'unauthenticated'` and `pathname !== '/login'`
+- **THEN** the SPA does NOT call `GET /api/v1/auth/providers`, does NOT call `navigate(...)`, and does NOT call `window.location.assign(...)`
+
+#### Scenario: Omitted options preserve existing behavior
+
+- **WHEN** `useAuthRedirect()` is called with no arguments (as `<LoginPage />` does today)
+- **THEN** its behavior is identical to every scenario above that does not mention the `disabled` flag
 
 ---
 
@@ -98,7 +110,10 @@ When the `request()` helper observes an HTTP `401` response, it SHALL throw an `
 
 ### Requirement: Routing gates protected UI behind a resolved session
 
-The SPA SHALL declare two top-level routes in `apps/chat/src/main.tsx`: `/login` (the provider picker) and `*` (everything else, wrapped in a `<RequireAuth>` gate). The `<RequireAuth>` component MUST render its `children` only when `status === 'authenticated'`, render `null` while `status === 'loading'`, and trigger the redirect policy (single-provider auto-redirect or `/login` navigation) while `status === 'unauthenticated'`.
+The SPA SHALL declare two top-level routes in `apps/chat/src/main.tsx`: `/login` (the provider picker) and `*` (everything else, wrapped in a `<RequireAuth>` gate). The `<RequireAuth>` component MUST render its `children` only when `status === 'authenticated'`, render `null` while `status === 'loading'` and overlay mode is not active (see `chat-overlay-app-mode` for the overlay-mode loading presentation), and, when `status === 'unauthenticated'`:
+
+- outside overlay mode (`useOptionalOverlay()` returns `undefined`): call `useAuthRedirect()` with no disabling options, triggering the existing automatic redirect policy;
+- inside overlay mode (`useOptionalOverlay()` returns a defined value): call `useAuthRedirect({ disabled: true })`, so no automatic redirect is attempted, and render the overlay login gate defined in `overlay-external-login` instead of `null`.
 
 #### Scenario: Authenticated user sees the chat
 
@@ -107,13 +122,23 @@ The SPA SHALL declare two top-level routes in `apps/chat/src/main.tsx`: `/login`
 
 #### Scenario: Loading user sees nothing
 
-- **WHEN** `<RequireAuth>` mounts with `status = 'loading'`
+- **WHEN** `<RequireAuth>` mounts with `status = 'loading'` outside overlay mode
 - **THEN** it renders `null` and does NOT trigger any redirect
 
 #### Scenario: Login route renders the picker
 
 - **WHEN** the URL pathname is `/login` and there are two or more registered providers
 - **THEN** the lazy-loaded `<LoginPage />` mounts and the `<RequireAuth>` gate is NOT mounted for the same render
+
+#### Scenario: Unauthenticated outside overlay mode still auto-redirects
+
+- **WHEN** `<RequireAuth>` mounts with `status = 'unauthenticated'` and `useOptionalOverlay()` returns `undefined`
+- **THEN** `useAuthRedirect()` is called without `disabled`, so the existing single-provider/multi-provider automatic redirect policy still applies
+
+#### Scenario: Unauthenticated inside overlay mode does not auto-redirect
+
+- **WHEN** `<RequireAuth>` mounts with `status = 'unauthenticated'` and `useOptionalOverlay()` returns a defined overlay context value
+- **THEN** `useAuthRedirect({ disabled: true })` is called, no `window.location.assign` or `navigate` call is made as a result, and the overlay login gate renders instead of `null`
 
 ---
 
@@ -226,7 +251,7 @@ The change SHALL ship co-located Vitest specs that cover every new module: `User
 
 While `UserContext.status === Authenticated`, the SPA SHALL re-validate the session by issuing `GET /api/v1/auth/me` whenever the tab regains visibility (`document.visibilitychange` firing with `document.visibilityState === 'visible'`) or the window regains focus (`window` `focus` event), so that an identity change made in another tab or another same-origin flow is detected without waiting for a `401` on some other request. The revalidation SHALL be skipped while a previous bootstrap/revalidation request for this provider instance is still in flight, and SHALL NOT be performed while `status` is `Loading` or `Unauthenticated`.
 
-The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not `providerId` or any other claim: if the newly fetched profile's `sub` differs from the currently held `user.sub`, or the revalidation request now returns `401`, the SPA SHALL treat this identically to the existing `onUnauthorized` invalidation path — clearing the CSRF token, setting `user` to `null`, and setting `status` to `Unauthenticated` — so `RequireAuth` unmounts the protected tree and the normal bootstrap/redirect policy re-authenticates and remounts it fresh. If the newly fetched profile's `sub` is unchanged, the SPA SHALL update `user` in place (to pick up any other changed claims) without altering `status`.
+The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not `providerId` or any other claim. If the newly fetched profile's `sub` differs from the currently held `user.sub`, the SPA SHALL clear the CSRF token and adopt the new profile in place by calling `setUser(newProfile)`, leaving `status` as `Authenticated`. The protected tree SHALL NOT be unmounted for this case — the session is already validly authenticated as the new identity, so there is nothing to redirect to a login screen for. Every identity-scoped context (see `conversations-context`, `user-config-frontend-init`, and `deployments-context`) is responsible for detecting the changed `sub` on its own and resetting/refetching accordingly. If the revalidation request itself returns `401` (the session was revoked, not merely switched), the SPA SHALL treat that identically to the existing `onUnauthorized` invalidation path — clearing the CSRF token, setting `user` to `null`, and setting `status` to `Unauthenticated` — so `RequireAuth` unmounts the protected tree and the normal bootstrap/redirect policy re-authenticates from scratch. If the newly fetched profile's `sub` is unchanged, the SPA SHALL update `user` in place (to pick up any other changed claims) without altering `status`.
 
 #### Scenario: Tab regains focus with an unchanged identity
 
@@ -236,7 +261,7 @@ The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not 
 #### Scenario: Tab regains focus after the underlying session identity changed
 
 - **WHEN** an authenticated tab's window regains focus and `GET /api/v1/auth/me` returns `200` with a `UserProfile` whose `sub` differs from the currently held `user.sub`
-- **THEN** the CSRF token is cleared, `user` becomes `null`, `status` becomes `Unauthenticated`, `RequireAuth` unmounts the protected tree (including `DeploymentsProvider`), and the existing bootstrap/redirect policy re-authenticates against the new identity
+- **THEN** the CSRF token is cleared, `user` is set to the newly-fetched profile, `status` remains `Authenticated`, and the protected tree (including `DeploymentsProvider`, `ConversationsProvider`, `UserConfigProvider`) is NOT unmounted
 
 #### Scenario: Tab regains visibility after the session was revoked
 
@@ -252,24 +277,3 @@ The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not 
 
 - **WHEN** `focus` and `visibilitychange` both fire in quick succession while a revalidation request triggered by the first event is still in flight
 - **THEN** only one `GET /api/v1/auth/me` request is in flight at a time for this mechanism; the second trigger does not issue a duplicate request
-
----
-
-### Requirement: Session invalidation clears identity-scoped Catalog preferences from localStorage
-
-Whenever `UserContext` invalidates the session — via `reset()`, the `onUnauthorized` listener, or the identity-revalidation mismatch/`401` branch above — it SHALL also remove the `localStorage` entries keyed `StorageKey.CatalogFilterTopics` and `StorageKey.CatalogIsMyAppsActive` (written by `useCatalogSortFilterPreference`), so a Catalog "From" topic filter or "My Apps" toggle selected by one identity does not carry over to the next identity that authenticates in the same browser. `StorageKey.CatalogSortKey` SHALL NOT be removed by this invalidation — it is a display preference with no ownership semantics.
-
-#### Scenario: Explicit logout clears the persisted Catalog filter preferences
-
-- **WHEN** the user confirms logout via `LogoutConfirmationModal`, which calls `useUser().reset()`
-- **THEN** `localStorage.getItem('catalogFilterTopics')` and `localStorage.getItem('catalogIsMyAppsActive')` both return `null` afterward, while `localStorage.getItem('catalogSortKey')` is unchanged
-
-#### Scenario: An identity mismatch detected on revalidation clears the persisted Catalog filter preferences
-
-- **WHEN** the focus/visibility revalidation checkpoint detects a `sub` mismatch (per the identity revalidation requirement above) and invalidates the session
-- **THEN** `catalogFilterTopics` and `catalogIsMyAppsActive` are removed from `localStorage` as part of that same invalidation
-
-#### Scenario: A 401 from any API call clears the persisted Catalog filter preferences
-
-- **WHEN** `onUnauthorized` fires from any non-bootstrap API call returning `401`
-- **THEN** `catalogFilterTopics` and `catalogIsMyAppsActive` are removed from `localStorage` in addition to the existing CSRF/user/status reset

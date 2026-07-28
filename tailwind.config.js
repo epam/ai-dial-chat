@@ -204,6 +204,10 @@ module.exports = {
         DEFAULT: '0 0 4px 0 var(--shadow-default, rgba(0, 0, 0, 0.30))',
         'main-inset': 'inset 1px 0 8px rgba(0, 0, 0, 0.04)',
         'main-inset-rtl': 'inset -1px 0 8px rgba(0, 0, 0, 0.04)',
+        xs: '0 1px 4px 0 var(--shadow-grey-1000, #161B2D08), 0 1px 2px 0 var(--shadow-blue-500, #2764D924)',
+        sm: '0 2px 12px 0 var(--shadow-grey-1000, #161B2D08), 0 2px 6px 0 var(--shadow-blue-500, #2764D924)',
+        md: '0 6px 24px 0 var(--shadow-grey-1000, #161B2D08), 0 6px 16px 0 var(--shadow-blue-500, #2764D924)',
+        lg: '0 10px 36px 0 var(--shadow-grey-1000, #161B2D08), 0 10px 24px 0 var(--shadow-blue-500, #2764D924)',
       },
       borderRadius: {
         DEFAULT: '4px',

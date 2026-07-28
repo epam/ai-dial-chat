@@ -63,6 +63,7 @@ describe('AppConfigService', () => {
       expect(result.config.overlayEnabled).toBe(false);
       expect(result.config.overlayAllowedOrigins).toEqual([]);
       expect(result.config.enabledUiFeatures).toBeNull();
+      expect(result.config.announcementHtml).toBeNull();
     });
 
     it('returns resolved values when providers succeed', async () => {
@@ -77,6 +78,7 @@ describe('AppConfigService', () => {
         if (key === 'overlay.allowedOrigins')
           return ['https://partner.example.com'];
         if (key === 'uiFeatures.enabledUiFeatures') return ['likes'];
+        if (key === 'announcement.html') return 'Welcome to <b>DIAL</b>!';
         return undefined;
       });
       const result = await service.getClientConfig(ctx);
@@ -140,6 +142,20 @@ describe('AppConfigService', () => {
       expect(result.config.dialCoreExternalUrl).toBeNull();
     });
 
+    it('returns null announcementHtml when ANNOUNCEMENT_HTML_MESSAGE is not set', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.announcementHtml).toBeNull();
+    });
+
+    it('returns the configured announcementHtml when ANNOUNCEMENT_HTML_MESSAGE is set', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.html' ? 'Welcome to <b>DIAL</b>!' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.announcementHtml).toBe('Welcome to <b>DIAL</b>!');
+    });
+
     it('never leaks the internal DIAL_CORE_URL value under any key', async () => {
       const { service } = makeService(async (key: string) => {
         if (key === 'dialCore.externalUrl') return undefined;
@@ -182,7 +198,7 @@ describe('AppConfigService', () => {
         first,
         60_000,
       );
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(10);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(11);
     });
 
     it('does not share cached config across role sets', async () => {
@@ -199,7 +215,7 @@ describe('AppConfigService', () => {
         roles: ['viewer'],
       });
 
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(20);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(22);
     });
   });
 

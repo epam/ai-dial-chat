@@ -28,6 +28,7 @@ import './i18n/config';
 import './styles.scss';
 
 const LoginPage = lazy(() => import('./pages/auth/Login'));
+const OverlayClose = lazy(() => import('./pages/auth/OverlayClose'));
 
 /* Override the CDN fallback set by @epam/pdf-highlighter-kit at module-load time. */
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -52,6 +53,10 @@ root.render(
                         <Suspense fallback={null}>
                           <Routes>
                             <Route path="/login" element={<LoginPage />} />
+                            <Route
+                              path="/overlay-close"
+                              element={<OverlayClose />}
+                            />
                             <Route
                               path="*"
                               element={

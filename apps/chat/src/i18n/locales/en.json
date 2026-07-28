@@ -367,6 +367,10 @@
     "loginTitle": "Welcome to DIAL Chat",
     "loginDescription": "Sign in with:",
     "providersError": "Could not load identity providers. Please retry.",
+    "overlayLoginTitle": "Sign in to continue",
+    "overlayLoginDescription": "Open a secure sign-in tab to use DIAL Chat in this embedded view.",
+    "overlayExternalLoginBlocked": "The sign-in tab was blocked. Allow popups for this site and try again.",
+    "overlayLoginTakingLonger": "Sign-in is taking longer than expected. Finish it in the opened tab, or try again.",
     "logOutConfirmTitle": "Log out?",
     "logOutConfirmDescription": "Are you sure you want to log out?",
     "userAvatar": "User avatar"
@@ -582,6 +586,10 @@
     "unsupportedLabel": "Preview is not supported for this file",
     "loadErrorLabel": "Failed to load file",
     "forbiddenErrorLabel": "You don't have permission to access this file"
+  },
+  "announcementBanner": {
+    "regionAriaLabel": "Announcement",
+    "closeLabel": "Close announcement"
   },
   "errorBoundary": {
     "heading": "Something went wrong",

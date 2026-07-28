@@ -18,6 +18,10 @@ import {
 } from '../ConversationsContext';
 import { OverlayProvider } from '../overlay/OverlayContext';
 
+const contextMocks = vi.hoisted(() => ({
+  userSub: 'user-1' as string | undefined,
+}));
+
 vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/user-config.api');
 vi.mock('../UserConfigContext', () => ({
@@ -35,7 +39,10 @@ vi.mock('../AppConfigContext', () => ({
   }),
 }));
 vi.mock('../auth/UserContext', () => ({
-  useUser: () => ({ status: AuthStatus.Authenticated }),
+  useUser: () => ({
+    status: AuthStatus.Authenticated,
+    user: contextMocks.userSub ? { sub: contextMocks.userSub } : null,
+  }),
 }));
 vi.mock('../ThemeContext', () => ({
   useTheme: () => ({ setTheme: vi.fn() }),
@@ -86,8 +93,61 @@ const seedConversations = [
 
 beforeEach(() => {
   vi.clearAllMocks();
+  contextMocks.userSub = 'user-1';
   vi.mocked(userConfigApi.pinConversation).mockResolvedValue(undefined);
   mockListConversations.mockResolvedValue({ items: seedConversations });
+});
+
+describe('ConversationsContext — identity-keyed refetch', () => {
+  it('resets and refetches conversations when the authenticated identity changes', async () => {
+    const { result, rerender } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.conversations).toHaveLength(3);
+    expect(mockListConversations).toHaveBeenCalledOnce();
+
+    let resolveRefetch: (value: { items: typeof seedConversations }) => void;
+    const refetchPromise = new Promise<{ items: typeof seedConversations }>(
+      (resolve) => {
+        resolveRefetch = resolve;
+      },
+    );
+    mockListConversations.mockReturnValueOnce(refetchPromise);
+    contextMocks.userSub = 'user-2';
+
+    act(() => {
+      rerender();
+    });
+
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.conversations).toEqual([]);
+
+    await act(async () => {
+      resolveRefetch({ items: [seedConversations[0]] });
+      await refetchPromise;
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(mockListConversations).toHaveBeenCalledTimes(2);
+    expect(result.current.conversations).toHaveLength(1);
+  });
+
+  it('does not refetch when the identity object changes but sub stays the same', async () => {
+    const { result, rerender } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(mockListConversations).toHaveBeenCalledOnce();
+
+    // Same sub value, simulating an in-place UserContext profile refresh.
+    contextMocks.userSub = 'user-1';
+    rerender();
+
+    expect(mockListConversations).toHaveBeenCalledOnce();
+  });
 });
 
 describe('ConversationsContext — deleteAllConversations', () => {

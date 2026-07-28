@@ -24,6 +24,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       fileManagerTabs: [],
       overlayEnabled: false,
       overlayAllowedOrigins: [],
+      announcementHtml: null,
       enabledUiFeatures,
     },
   } satisfies AppConfigState);
