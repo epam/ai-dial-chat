@@ -387,6 +387,18 @@ describe('FilesUploadService', () => {
         safeRelativePath: null,
       });
     });
+
+    it('rejects a single-dot segment (current-directory alias)', () => {
+      const { service } = makeService();
+      expect(service.resolveArchiveEntryPath('a/./b')).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+      expect(service.resolveArchiveEntryPath('.')).toEqual({
+        isDirectory: false,
+        safeRelativePath: null,
+      });
+    });
   });
 
   describe('uploadArchive', () => {

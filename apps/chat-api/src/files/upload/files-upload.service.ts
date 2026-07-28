@@ -647,7 +647,7 @@ export class FilesUploadService {
       entryFileName.startsWith('/') ||
       /^[a-zA-Z]:/.test(entryFileName) ||
       entryFileName.includes('\\') ||
-      entryFileName.split('/').includes('..');
+      entryFileName.split('/').some((seg) => seg === '..' || seg === '.');
 
     return {
       isDirectory: false,
