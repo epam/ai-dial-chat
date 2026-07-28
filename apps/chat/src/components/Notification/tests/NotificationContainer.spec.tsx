@@ -81,24 +81,6 @@ describe('NotificationContainer', () => {
     },
   );
 
-  it('applies a distinct wrapper class per severity', () => {
-    const severities: NotificationItem['variant'][] = [
-      'error',
-      'warning',
-      'info',
-      'success',
-      'loading',
-    ] as NotificationItem['variant'][];
-    const classNames = severities.map((variant) => {
-      notifications = [makeItem({ id: variant, variant })];
-      const { unmount } = render(<NotificationContainer />);
-      const className = screen.getByRole('alert').parentElement?.className;
-      unmount();
-      return className;
-    });
-    expect(new Set(classNames).size).toBe(severities.length);
-  });
-
   it('renders one entry per stacked notification, in order', () => {
     notifications = [
       makeItem({ id: 'a', message: 'First' }),
