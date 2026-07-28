@@ -86,6 +86,14 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
     computeVisibleCount(starters.length);
   });
 
+  const iconProps = useMemo(() => {
+    return {
+      ...BASE_MD_ICON_PROPS,
+      stroke: styles?.iconStrokeWidth ?? BASE_MD_ICON_PROPS.stroke,
+      size: styles?.iconSize ?? BASE_MD_ICON_PROPS.size,
+    };
+  }, [styles?.iconStrokeWidth, styles?.iconSize]);
+
   if (starters.length === 0) return null;
 
   const effectiveVisible = Math.min(visibleCount, MAX_VISIBLE);
@@ -99,14 +107,6 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
       onClick: () => onSelect(starter),
     }),
   );
-
-  const iconProps = useMemo(() => {
-    return {
-      ...BASE_MD_ICON_PROPS,
-      stroke: styles?.iconStrokeWidth ?? BASE_MD_ICON_PROPS.stroke,
-      size: styles?.iconSize ?? BASE_MD_ICON_PROPS.size,
-    };
-  }, [styles?.iconStrokeWidth, styles?.iconSize]);
 
   return (
     <div ref={containerRef} className="mb-4 w-full">
