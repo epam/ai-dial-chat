@@ -13,7 +13,7 @@ import {
   SourcesFilterOptions,
 } from '@/src/testData';
 import { BaseElement } from '@/src/ui/webElements';
-import { UserUtil } from '@/src/utils';
+import { GeneratorUtil, UserUtil } from '@/src/utils';
 import { CustomAppAttributes } from '@/src/utils/customApplicationPublishingUtil';
 import { Conversation } from '@epam/ai-dial-shared';
 
@@ -403,6 +403,7 @@ dialSharedWithMeTest(
     `[Custom app] App's card pop-up open when receive sharing link for app.\n` +
     '[Custom app]:Context menu for shared with me app with edit option.\n' +
     'Icons from shared app displayed in Manage attachments (sharing with edit permissions).\n' +
+    'Icon located in folder used in shared app is displayed in Shared with me root in File Manager.\n' +
     'Error message for chat when unshare custom app used in chat.\n' +
     'Icon file stay in Manage attachments if recipient Unshare app',
   async ({
@@ -447,6 +448,7 @@ dialSharedWithMeTest(
       'EPMRTC-5316',
       'EPMRTC-5198',
       'EPMRTC-5421',
+      'EPMRTC-9939',
       'EPMRTC-5280',
       'EPMRTC-5365',
     );
@@ -454,12 +456,15 @@ dialSharedWithMeTest(
     let conversation: Conversation;
     let notAvailableAgentElement: BaseElement;
     let iconName: string;
+    const iconFolder1 = GeneratorUtil.randomString(7);
+    const iconFolder2 = GeneratorUtil.randomString(7);
 
     await dialSharedWithMeTest.step(
       'Create a custom app with icon via API',
       async () => {
         appData = await customApplicationPublishingUtil.createCustomApp({
           hasIcon: true,
+          iconParentPath: `${iconFolder1}/${iconFolder2}`,
         });
         iconName = getIconName(appData.iconUrl!);
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();
@@ -578,7 +583,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Open "File manager" page and verify app icon is displayed on "Shared with me" tab',
+      'Open "File manager" page and verify app icon is displayed in "Shared with me" root, no icon folders are displayed',
       async () => {
         await additionalShareUserNavigationPanel.goToFileManager({
           isFilesListingTriggered: false,
@@ -587,6 +592,14 @@ dialSharedWithMeTest(
         await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
           iconName,
           'visible',
+        );
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          iconFolder1,
+          'hidden',
+        );
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          iconFolder2,
+          'hidden',
         );
       },
     );

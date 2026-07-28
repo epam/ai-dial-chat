@@ -210,6 +210,9 @@ export const ExpectedConstants = {
   allFilesRoot: 'My Files',
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
+  downloadTableAsCsvTooltip: 'Download as CSV',
+  downloadTableAsCsvModalHeading: 'Download table as CSV',
+  downloadedCsvTableDefaultName: `${new Date().toISOString().slice(0, 10)}_table.csv`,
   charsToEscape: ['\\', '"'],
   maxEntityNameLength: 255,
   selectAllTooltip: 'Select all',
