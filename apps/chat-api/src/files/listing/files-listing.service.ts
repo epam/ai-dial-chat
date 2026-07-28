@@ -74,7 +74,7 @@ export class FilesListingService {
         },
       );
 
-    if (error != null || data == null) {
+    if (error != null || (data == null && response.status >= 300)) {
       this.logger.warn(
         `DIAL Core listFiles returned error: status=${response.status}, bucket=${bucket}`,
       );
@@ -381,7 +381,7 @@ export class FilesListingService {
           },
         );
 
-      if (error != null || data == null) {
+      if (error != null || (data == null && response.status >= 300)) {
         this.logger.warn(
           `Archive folder metadata failed: bucket=${bucket}, path=${relFolderPath}, page=${page}, status=${response.status}`,
         );
