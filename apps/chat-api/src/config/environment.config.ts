@@ -521,7 +521,11 @@ export class EnvironmentVariables {
   FOOTER_HTML_MESSAGE?: string;
 
   @IsOptional()
-  @IsString()
+  @IsUrl({
+    require_tld: false,
+    require_protocol: true,
+    protocols: ['https', 'http'],
+  })
   AZURE_FUNCTIONS_API_HOST?: string;
 
   @IsOptional()

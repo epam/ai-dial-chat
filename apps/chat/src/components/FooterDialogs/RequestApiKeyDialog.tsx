@@ -83,18 +83,42 @@ const RequestApiKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
   const handleSubmit = useCallback(async () => {
     const errors: Record<string, string> = {};
     const req = t(FooterRequestApiKeyI18nKeys.FieldRequired);
+    const tooLong = (max: number) =>
+      t(FooterRequestApiKeyI18nKeys.FieldTooLong, { max });
 
-    if (!fields.project_id.trim()) errors.project_id = req;
-    if (!fields.project_stream.trim()) errors.project_stream = req;
+    if (!fields.project_id.trim()) {
+      errors.project_id = req;
+    } else if (fields.project_id.trim().length > 200) {
+      errors.project_id = tooLong(200);
+    }
+    if (!fields.project_stream.trim()) {
+      errors.project_stream = req;
+    } else if (fields.project_stream.trim().length > 200) {
+      errors.project_stream = tooLong(200);
+    }
     if (!fields.project_lead.trim()) {
       errors.project_lead = req;
     } else if (!EMAIL_REGEX.test(fields.project_lead.trim())) {
       errors.project_lead = t(FooterRequestApiKeyI18nKeys.EmailInvalid);
+    } else if (fields.project_lead.trim().length > 200) {
+      errors.project_lead = tooLong(200);
     }
-    if (!fields.business_reason.trim()) errors.business_reason = req;
+    if (!fields.business_reason.trim()) {
+      errors.business_reason = req;
+    } else if (fields.business_reason.trim().length > 4000) {
+      errors.business_reason = tooLong(4000);
+    }
     if (!fields.project_end.trim()) errors.project_end = req;
-    if (!fields.access_scenario.trim()) errors.access_scenario = req;
-    if (!fields.workload_pattern.trim()) errors.workload_pattern = req;
+    if (!fields.access_scenario.trim()) {
+      errors.access_scenario = req;
+    } else if (fields.access_scenario.trim().length > 4000) {
+      errors.access_scenario = tooLong(4000);
+    }
+    if (!fields.workload_pattern.trim()) {
+      errors.workload_pattern = req;
+    } else if (fields.workload_pattern.trim().length > 4000) {
+      errors.workload_pattern = tooLong(4000);
+    }
     const allChecked =
       checks.azure && checks.epam && checks.client && checks.local;
     if (!allChecked) {

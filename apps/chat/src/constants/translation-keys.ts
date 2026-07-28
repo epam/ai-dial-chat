@@ -566,6 +566,7 @@ export enum FooterRequestApiKeyI18nKeys {
   CheckboxLocalLabel = 'footer.requestApiKey.checkboxLocalLabel',
   CheckboxGroupRequired = 'footer.requestApiKey.checkboxGroupRequired',
   FieldRequired = 'footer.requestApiKey.fieldRequired',
+  FieldTooLong = 'footer.requestApiKey.fieldTooLong',
   EmailInvalid = 'footer.requestApiKey.emailInvalid',
   SuccessTitle = 'footer.requestApiKey.successTitle',
   ErrorTitle = 'footer.requestApiKey.errorTitle',
@@ -578,6 +579,7 @@ export enum FooterReportIssueI18nKeys {
   DescriptionLabel = 'footer.reportIssue.descriptionLabel',
   DescriptionPlaceholder = 'footer.reportIssue.descriptionPlaceholder',
   FieldRequired = 'footer.reportIssue.fieldRequired',
+  FieldTooLong = 'footer.reportIssue.fieldTooLong',
   SuccessTitle = 'footer.reportIssue.successTitle',
   ErrorTitle = 'footer.reportIssue.errorTitle',
 }

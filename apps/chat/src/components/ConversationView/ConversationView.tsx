@@ -814,6 +814,14 @@ const ConversationView: FC<Props> = ({
           </>
         )}
       </div>
+      {/*
+       * FooterContainer is intentionally co-located with each view that can
+       * render a footer message (ConversationView, NewConversationComposer,
+       * NavPageContent). Only one view is visible at a time, so at most one
+       * instance is active. If the footer feature grows to require shared
+       * dialog state across views, lift FooterContainer to a single top-level
+       * provider instead.
+       */}
       <FooterContainer />
       {catalogModal}
     </>

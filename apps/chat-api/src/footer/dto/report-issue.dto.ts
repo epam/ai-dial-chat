@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class ReportIssueDto {
   @ApiProperty({
@@ -8,6 +8,7 @@ export class ReportIssueDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(200)
   title!: string;
 
   @ApiProperty({
@@ -16,5 +17,6 @@ export class ReportIssueDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(4000)
   description!: string;
 }

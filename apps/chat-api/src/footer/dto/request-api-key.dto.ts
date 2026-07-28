@@ -1,15 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class RequestApiKeyDto {
   @ApiProperty({ description: 'Project name.', example: 'My AI Project' })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(200)
   project_id!: string;
 
   @ApiProperty({ description: 'Stream name.', example: 'Stream A' })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(200)
   project_stream!: string;
 
   @ApiProperty({
@@ -18,6 +20,7 @@ export class RequestApiKeyDto {
   })
   @IsEmail()
   @IsNotEmpty()
+  @MaxLength(200)
   project_lead!: string;
 
   @ApiProperty({
@@ -26,6 +29,7 @@ export class RequestApiKeyDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(4000)
   business_reason!: string;
 
   @ApiProperty({
@@ -34,6 +38,7 @@ export class RequestApiKeyDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(200)
   project_end!: string;
 
   @ApiProperty({
@@ -42,6 +47,7 @@ export class RequestApiKeyDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(4000)
   access_scenario!: string;
 
   @ApiProperty({
@@ -50,5 +56,6 @@ export class RequestApiKeyDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(4000)
   workload_pattern!: string;
 }

@@ -52,9 +52,19 @@ const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
   const handleSubmit = useCallback(async () => {
     const errors: Record<string, string> = {};
     const req = t(FooterReportIssueI18nKeys.FieldRequired);
+    const tooLong = (max: number) =>
+      t(FooterReportIssueI18nKeys.FieldTooLong, { max });
 
-    if (!fields.title.trim()) errors.title = req;
-    if (!fields.description.trim()) errors.description = req;
+    if (!fields.title.trim()) {
+      errors.title = req;
+    } else if (fields.title.trim().length > 200) {
+      errors.title = tooLong(200);
+    }
+    if (!fields.description.trim()) {
+      errors.description = req;
+    } else if (fields.description.trim().length > 4000) {
+      errors.description = tooLong(4000);
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);

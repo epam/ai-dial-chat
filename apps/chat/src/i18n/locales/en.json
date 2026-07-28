@@ -624,6 +624,7 @@
       "checkboxClientLabel": "This key will not be used for client project production load",
       "checkboxLocalLabel": "Local law regulations (if some)",
       "fieldRequired": "This field is required",
+      "fieldTooLong": "Must be {{max}} characters or fewer",
       "emailInvalid": "Please enter a valid email address",
       "successTitle": "API Key requested successfully",
       "errorTitle": "Failed to submit the request. Please try again."
@@ -635,6 +636,7 @@
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Provide details about the issue",
       "fieldRequired": "This field is required",
+      "fieldTooLong": "Must be {{max}} characters or fewer",
       "successTitle": "Issue reported successfully",
       "errorTitle": "Failed to report the issue. Please try again."
     }

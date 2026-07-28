@@ -46,7 +46,7 @@ export class FooterService implements OnModuleInit {
       );
     }
 
-    const url = `${host}/api/request?code=${code}`;
+    const url = `${host}/api/request?code=${encodeURIComponent(code)}`;
     const payload = { ...body, requester_email: requesterEmail };
 
     let response: Response;
@@ -83,7 +83,7 @@ export class FooterService implements OnModuleInit {
       );
     }
 
-    const url = `${host}/api/issue?code=${code}`;
+    const url = `${host}/api/issue?code=${encodeURIComponent(code)}`;
     const payload = { ...body, email };
 
     let response: Response;
