@@ -89,6 +89,7 @@ export interface TriggerSaveGeneralPayload {
   iconUrl?: string;
   topics?: string[];
   intro?: string;
+  display_version?: string;
 }
 
 /** Payload of a `TriggerSave` message posted to the embedded QuickApps iframe. */

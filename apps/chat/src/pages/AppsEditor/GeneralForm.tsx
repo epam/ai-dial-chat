@@ -210,6 +210,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
       iconUrl: values.iconUrl.trim() || undefined,
       topics: values.topics.length > 0 ? values.topics : undefined,
       intro: values.intro.trim() || undefined,
+      display_version: values.version.trim() || undefined,
     }),
     [values],
   );
