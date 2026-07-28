@@ -35,6 +35,14 @@ import { getToolsetOAuthChannelName } from '../../utils/toolsets';
 
 const TOOLSET_OAUTH_RESULT_RETRY_INTERVAL_MS = 500;
 
+const isToolsetOAuthResultAcknowledgement = (
+  value: unknown,
+): value is ToolsetOAuthResultAcknowledgement =>
+  typeof value === 'object' &&
+  value != null &&
+  'type' in value &&
+  value.type === ToolsetOAuthChannelControlType.ResultAcknowledged;
+
 const readRedirectState = (): ToolsetRedirectState | null => {
   const raw = sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY);
   if (!raw) return null;
@@ -89,14 +97,8 @@ const reportResult = (
       channel.postMessage(message);
     }, TOOLSET_OAUTH_RESULT_RETRY_INTERVAL_MS);
 
-    channel.onmessage = (
-      event: MessageEvent<ToolsetOAuthResultAcknowledgement>,
-    ) => {
-      if (
-        event.data.type !== ToolsetOAuthChannelControlType.ResultAcknowledged
-      ) {
-        return;
-      }
+    channel.onmessage = (event: MessageEvent<unknown>) => {
+      if (!isToolsetOAuthResultAcknowledgement(event.data)) return;
       clearInterval(retryId);
       channel.close();
       window.close();

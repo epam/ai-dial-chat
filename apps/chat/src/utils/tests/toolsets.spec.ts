@@ -859,14 +859,22 @@ describe('waitForToolsetOAuthResult', () => {
     toolsetId: 'toolsets/b/my-toolset__1',
     credentialsLevel: ToolsetCredentialsLevel.User,
   };
+  const openResultChannels = new Set<BroadcastChannel>();
+
+  afterEach(() => {
+    openResultChannels.forEach((channel) => channel.close());
+    openResultChannels.clear();
+  });
 
   const postMessage = (message: unknown): Promise<void> =>
     new Promise((resolve) => {
       const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+      openResultChannels.add(channel);
       channel.onmessage = (event) => {
         if (
           event.data?.type === ToolsetOAuthChannelControlType.ResultAcknowledged
         ) {
+          openResultChannels.delete(channel);
           channel.close();
           resolve();
         }

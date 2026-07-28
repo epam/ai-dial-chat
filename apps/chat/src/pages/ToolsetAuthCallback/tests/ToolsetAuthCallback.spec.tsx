@@ -176,6 +176,37 @@ describe('ToolsetAuthCallback', () => {
     expect(lastUrl.searchParams.has('code')).toBe(false);
   });
 
+  it('ignores malformed acknowledgement messages', async () => {
+    setRedirectState({
+      toolsetId: 'toolsets/b/my__1.0.0',
+      credentialsLevel: ToolsetCredentialsLevel.User,
+      state: 'flow-1',
+    });
+    vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+    const channel = new BroadcastChannel(getToolsetOAuthChannelName('flow-1'));
+    const resultPromise = new Promise<ToolsetOAuthChannelMessage>((resolve) => {
+      channel.onmessage = (event) => {
+        resolve(event.data as ToolsetOAuthChannelMessage);
+      };
+    });
+
+    try {
+      renderCallback('?code=auth-code-xyz&state=flow-1');
+      await expect(resultPromise).resolves.toMatchObject({
+        type: ToolsetOAuthResultType.Success,
+      });
+
+      channel.postMessage(null);
+      channel.postMessage({
+        type: ToolsetOAuthChannelControlType.ResultAcknowledged,
+      });
+
+      await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
+    } finally {
+      channel.close();
+    }
+  });
+
   it('retries the result when the opener missed the first channel event', async () => {
     setRedirectState({
       toolsetId: 'toolsets/b/my__1.0.0',
