@@ -66,7 +66,7 @@ export class ClientConfigDto {
   @ApiPropertyOptional({
     description:
       'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.',
-    example: 'Welcome to <a href="https://dialx.ai">DIAL</a>!',
+    example: 'Welcome to <a href="https://your-site.example.com">DIAL</a>!',
     nullable: true,
     type: String,
   })

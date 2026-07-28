@@ -16,6 +16,12 @@ const SANITIZE_OPTIONS = {
   ALLOWED_ATTR: ['href', 'target', 'rel'],
 };
 
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
+
 interface Props {
   className?: string;
 }
@@ -28,18 +34,20 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
   } = useAppConfig();
   const { dismissedText, dismiss } = useAnnouncementDismissal();
 
-  const sanitizedHtml = useMemo(
-    () =>
-      announcementHtml
-        ? DOMPurify.sanitize(announcementHtml, SANITIZE_OPTIONS)
-        : '',
-    [announcementHtml],
-  );
-
-  const isVisible =
+  const shouldRender =
     status === UserConfigStatus.Ready &&
     !!announcementHtml &&
     dismissedText !== announcementHtml;
+
+  const sanitizedHtml = useMemo(
+    () =>
+      shouldRender && announcementHtml
+        ? DOMPurify.sanitize(announcementHtml, SANITIZE_OPTIONS)
+        : '',
+    [shouldRender, announcementHtml],
+  );
+
+  const isVisible = shouldRender && !!sanitizedHtml;
 
   if (!isVisible) {
     return null;
