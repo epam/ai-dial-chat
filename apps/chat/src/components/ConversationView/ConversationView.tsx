@@ -18,10 +18,10 @@ import type {
 } from '@epam/ai-dial-conversation-messages';
 import { NeutralButton } from '@epam/ai-dial-kit';
 import {
-  DialFabButton,
-  DialNotification,
-  NotificationVariant,
   DIAL_ICON_SIZE,
+  DialFabButton,
+  ErrorMessageNotification,
+  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -632,10 +632,7 @@ const ConversationView: FC<Props> = ({
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
             {duplicateError && (
-              <DialNotification
-                variant={NotificationVariant.Error}
-                message={duplicateError}
-              />
+              <ErrorMessageNotification message={duplicateError} />
             )}
             <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
