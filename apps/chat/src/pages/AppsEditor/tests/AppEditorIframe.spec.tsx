@@ -710,6 +710,7 @@ describe('AppEditorIframe — toolset login request', () => {
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
     if (capturedPopup) capturedPopup.closed = true;
+    window.dispatchEvent(new Event('focus'));
 
     await waitFor(
       () =>
@@ -746,6 +747,7 @@ describe('AppEditorIframe — toolset login request', () => {
 
     await waitFor(() => expect(capturedPopup).toBeDefined());
     if (capturedPopup) capturedPopup.closed = true;
+    window.dispatchEvent(new Event('focus'));
 
     await waitFor(
       () =>
