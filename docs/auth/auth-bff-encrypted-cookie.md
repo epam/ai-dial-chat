@@ -161,10 +161,13 @@ _Source: [`auth-diagrams/08-toolset-signin-interrupt.mmd`](./auth-diagrams/08-to
   opener's `WindowProxy` and producing a false `popup.closed` cancellation. Before navigating
   externally, the popup still sets its own `window.opener` to `null` to prevent reverse tabnabbing.
   After completing login, the callback removes the authorization code from its address bar,
-  writes a non-secret completion marker into its own same-origin URL, posts the result through
-  `BroadcastChannel`, and remains open. The initiating tab polls the popup URL and closes it only
-  after consuming the marker, so a dropped channel event cannot lose the completed login or
-  prevent status refresh. OAuth codes and credentials are never persisted by this handoff.
+  writes a non-secret completion marker into its own same-origin URL, and repeats the result over
+  `BroadcastChannel` until the initiating tab acknowledges it. The initiating tab keeps listening
+  when a cross-origin navigation makes its retained `WindowProxy` appear closed, consumes either
+  the channel result or URL marker, and sends the acknowledgement before refreshing toolset
+  status. The callback then closes itself, which still works when the opener's stale
+  `WindowProxy` cannot close it. A real manual close is treated as cancellation when focus returns
+  to the initiating tab. OAuth codes and credentials are never persisted by this handoff.
 
 ---
 

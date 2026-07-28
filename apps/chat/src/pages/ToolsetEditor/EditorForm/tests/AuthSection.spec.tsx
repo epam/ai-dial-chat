@@ -587,6 +587,7 @@ describe('AuthSection', () => {
       );
 
       if (capturedPopup) capturedPopup.closed = true;
+      window.dispatchEvent(new Event('focus'));
 
       await waitFor(
         () =>
@@ -620,6 +621,7 @@ describe('AuthSection', () => {
       );
 
       if (capturedPopup) capturedPopup.closed = true;
+      window.dispatchEvent(new Event('focus'));
 
       await waitFor(() =>
         expect(onAuthChange).toHaveBeenCalledWith({ isLoggedIn: true }),

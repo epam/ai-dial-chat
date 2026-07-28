@@ -23,6 +23,7 @@ import {
   useMatch,
   useNavigate,
 } from 'react-router-dom';
+import AnnouncementBanner from '../components/AnnouncementBanner/AnnouncementBanner';
 import ChatLayout from '../components/ChatLayout/ChatLayout';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
@@ -230,176 +231,179 @@ const App: FC = () => {
   );
 
   return (
-    <div className="flex size-full flex-row">
-      <Suspense fallback={null}>
-        <ToolsetSigninDialog />
-      </Suspense>
-      <Navigation isOpen={isNavOpen} onClose={closeNav} />
+    <div className="flex size-full flex-col">
+      <AnnouncementBanner />
+      <div className="flex min-h-0 flex-1 flex-row">
+        <Suspense fallback={null}>
+          <ToolsetSigninDialog />
+        </Suspense>
+        <Navigation isOpen={isNavOpen} onClose={closeNav} />
 
-      <ConversationPanelView
-        isOpen={isPanelOpen}
-        activeConversationId={activeConversationId}
-        onClose={closePanel}
-        onSelectConversation={handleSelectConversation}
-        onNewChat={() => navigate(ROUTES.Root)}
-        requestedFilter={panelRequestedFilter}
-        onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
-        onActiveFilterChange={handlePanelActiveFilterChange}
-        onDuplicateReadonly={handleDuplicateReadonly}
-      />
-
-      <main
-        id="main-content"
-        role="main"
-        className="relative flex min-h-0 min-w-0 flex-1 flex-col shadow-main-inset"
-      >
-        <Header
-          onMenuToggle={toggleNav}
-          isConversationPanelOpen={isPanelOpen}
-          onConversationPanelToggle={togglePanel}
+        <ConversationPanelView
+          isOpen={isPanelOpen}
+          activeConversationId={activeConversationId}
+          onClose={closePanel}
+          onSelectConversation={handleSelectConversation}
           onNewChat={() => navigate(ROUTES.Root)}
+          requestedFilter={panelRequestedFilter}
+          onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
+          onActiveFilterChange={handlePanelActiveFilterChange}
+          onDuplicateReadonly={handleDuplicateReadonly}
         />
-        <Routes>
-          <Route
-            element={
-              <ChatLayout
-                isPanelOpen={isPanelOpen}
-                onTogglePanel={togglePanel}
-                onNewChat={() => navigate(ROUTES.Root)}
-              />
-            }
-          >
-            <Route path={ROUTES.Root} element={<ConversationRoute />} />
+
+        <main
+          id="main-content"
+          role="main"
+          className="relative flex min-h-0 min-w-0 flex-1 flex-col shadow-main-inset"
+        >
+          <Header
+            onMenuToggle={toggleNav}
+            isConversationPanelOpen={isPanelOpen}
+            onConversationPanelToggle={togglePanel}
+            onNewChat={() => navigate(ROUTES.Root)}
+          />
+          <Routes>
             <Route
-              path="/conversations/*"
+              element={
+                <ChatLayout
+                  isPanelOpen={isPanelOpen}
+                  onTogglePanel={togglePanel}
+                  onNewChat={() => navigate(ROUTES.Root)}
+                />
+              }
+            >
+              <Route path={ROUTES.Root} element={<ConversationRoute />} />
+              <Route
+                path="/conversations/*"
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ConversationPage
+                        onDuplicateReadonly={handleDuplicateReadonly}
+                      />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+            </Route>
+            <Route
+              path={ROUTES.Catalog}
               element={
                 <RouteErrorBoundary>
                   <Suspense fallback={<RouteFallback />}>
-                    <ConversationPage
-                      onDuplicateReadonly={handleDuplicateReadonly}
-                    />
+                    <CatalogView />
                   </Suspense>
                 </RouteErrorBoundary>
               }
             />
-          </Route>
-          <Route
-            path={ROUTES.Catalog}
-            element={
-              <RouteErrorBoundary>
-                <Suspense fallback={<RouteFallback />}>
-                  <CatalogView />
-                </Suspense>
-              </RouteErrorBoundary>
-            }
+            <Route
+              path={ROUTES.SharedInvitation}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <SharedInvitationPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.ConversationSharedInvitation}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ConversationSharedInvitationPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.FileManager}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <DialFileManagerPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.AppsEditor}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <AppsEditorPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.ToolsetEditorCallback}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ToolsetAuthCallbackPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.ToolsetSignIn}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ToolsetAuthCallbackPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.ToolsetEditor}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ToolsetEditorPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <NotFoundPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+          </Routes>
+        </main>
+        {isConversationRoute && <ConversationSourcesPanel />}
+        {isConversationRoute && (
+          <AttachmentCanvasContainer
+            labels={{
+              ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
+              closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
+              downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
+              unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
+              loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
+              forbiddenErrorLabel: t(
+                AttachmentCanvasI18nKeys.ForbiddenErrorLabel,
+              ),
+              copyTextLabel: t(ButtonsI18nKeys.CopyText),
+              copiedTextLabel: t(ButtonsI18nKeys.Copied),
+              copyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
+              copiedMarkdownLabel: t(ButtonsI18nKeys.Copied),
+              copyJsonLabel: t(ButtonsI18nKeys.CopyAsJson),
+              copiedJsonLabel: t(ButtonsI18nKeys.Copied),
+            }}
+            isMobile={isMobile}
+            defaultWidth={canvasDefaultWidth}
+            maxWidth={canvasMaxWidth}
+            codeBlockTheme={codeBlockTheme}
           />
-          <Route
-            path={ROUTES.SharedInvitation}
-            element={
-              <RouteErrorBoundary>
-                <Suspense fallback={<RouteFallback />}>
-                  <SharedInvitationPage />
-                </Suspense>
-              </RouteErrorBoundary>
-            }
-          />
-          <Route
-            path={ROUTES.ConversationSharedInvitation}
-            element={
-              <RouteErrorBoundary>
-                <Suspense fallback={<RouteFallback />}>
-                  <ConversationSharedInvitationPage />
-                </Suspense>
-              </RouteErrorBoundary>
-            }
-          />
-          <Route
-            path={ROUTES.FileManager}
-            element={
-              <RouteErrorBoundary>
-                <Suspense fallback={<RouteFallback />}>
-                  <DialFileManagerPage />
-                </Suspense>
-              </RouteErrorBoundary>
-            }
-          />
-          <Route
-            path={ROUTES.AppsEditor}
-            element={
-              <RouteErrorBoundary>
-                <Suspense fallback={<RouteFallback />}>
-                  <AppsEditorPage />
-                </Suspense>
-              </RouteErrorBoundary>
-            }
-          />
-          <Route
-            path={ROUTES.ToolsetEditorCallback}
-            element={
-              <RouteErrorBoundary>
-                <Suspense fallback={<RouteFallback />}>
-                  <ToolsetAuthCallbackPage />
-                </Suspense>
-              </RouteErrorBoundary>
-            }
-          />
-          <Route
-            path={ROUTES.ToolsetSignIn}
-            element={
-              <RouteErrorBoundary>
-                <Suspense fallback={<RouteFallback />}>
-                  <ToolsetAuthCallbackPage />
-                </Suspense>
-              </RouteErrorBoundary>
-            }
-          />
-          <Route
-            path={ROUTES.ToolsetEditor}
-            element={
-              <RouteErrorBoundary>
-                <Suspense fallback={<RouteFallback />}>
-                  <ToolsetEditorPage />
-                </Suspense>
-              </RouteErrorBoundary>
-            }
-          />
-          <Route
-            path="*"
-            element={
-              <RouteErrorBoundary>
-                <Suspense fallback={<RouteFallback />}>
-                  <NotFoundPage />
-                </Suspense>
-              </RouteErrorBoundary>
-            }
-          />
-        </Routes>
-      </main>
-      {isConversationRoute && <ConversationSourcesPanel />}
-      {isConversationRoute && (
-        <AttachmentCanvasContainer
-          labels={{
-            ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
-            closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
-            downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
-            unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
-            loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
-            forbiddenErrorLabel: t(
-              AttachmentCanvasI18nKeys.ForbiddenErrorLabel,
-            ),
-            copyTextLabel: t(ButtonsI18nKeys.CopyText),
-            copiedTextLabel: t(ButtonsI18nKeys.Copied),
-            copyMarkdownLabel: t(ButtonsI18nKeys.CopyAsMarkdown),
-            copiedMarkdownLabel: t(ButtonsI18nKeys.Copied),
-            copyJsonLabel: t(ButtonsI18nKeys.CopyAsJson),
-            copiedJsonLabel: t(ButtonsI18nKeys.Copied),
-          }}
-          isMobile={isMobile}
-          defaultWidth={canvasDefaultWidth}
-          maxWidth={canvasMaxWidth}
-          codeBlockTheme={codeBlockTheme}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 };

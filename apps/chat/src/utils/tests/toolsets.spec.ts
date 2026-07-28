@@ -5,6 +5,7 @@ import { ToolsetOAuthCallbackQuery } from '../../constants/toolsets';
 import { ROUTES } from '../../types/routes';
 import {
   ToolsetAuthTypes,
+  ToolsetOAuthChannelControlType,
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthInitiationResultType,
@@ -858,12 +859,28 @@ describe('waitForToolsetOAuthResult', () => {
     toolsetId: 'toolsets/b/my-toolset__1',
     credentialsLevel: ToolsetCredentialsLevel.User,
   };
+  const openResultChannels = new Set<BroadcastChannel>();
 
-  const postMessage = (message: unknown) => {
-    const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
-    channel.postMessage(message);
-    channel.close();
-  };
+  afterEach(() => {
+    openResultChannels.forEach((channel) => channel.close());
+    openResultChannels.clear();
+  });
+
+  const postMessage = (message: unknown): Promise<void> =>
+    new Promise((resolve) => {
+      const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+      openResultChannels.add(channel);
+      channel.onmessage = (event) => {
+        if (
+          event.data?.type === ToolsetOAuthChannelControlType.ResultAcknowledged
+        ) {
+          openResultChannels.delete(channel);
+          channel.close();
+          resolve();
+        }
+      };
+      channel.postMessage(message);
+    });
 
   it('resolves with the success message posted on the flow channel', async () => {
     const popup = { closed: false, close: vi.fn() } as unknown as Window;
@@ -873,7 +890,7 @@ describe('waitForToolsetOAuthResult', () => {
       defaultWaitOptions,
     );
 
-    postMessage({
+    const acknowledgementPromise = postMessage({
       type: ToolsetOAuthResultType.Success,
       toolsetId: 'toolsets/b/my-toolset__1',
       credentialsLevel: ToolsetCredentialsLevel.User,
@@ -884,6 +901,7 @@ describe('waitForToolsetOAuthResult', () => {
       toolsetId: 'toolsets/b/my-toolset__1',
       credentialsLevel: ToolsetCredentialsLevel.User,
     });
+    await expect(acknowledgementPromise).resolves.toBeUndefined();
   });
 
   it('resolves with the failure message posted on the flow channel', async () => {
@@ -894,7 +912,7 @@ describe('waitForToolsetOAuthResult', () => {
       defaultWaitOptions,
     );
 
-    postMessage({
+    const acknowledgementPromise = postMessage({
       type: ToolsetOAuthResultType.Failure,
       reason: ToolsetOAuthFailureReason.StateMismatch,
     });
@@ -903,6 +921,41 @@ describe('waitForToolsetOAuthResult', () => {
       type: ToolsetOAuthResultType.Failure,
       reason: ToolsetOAuthFailureReason.StateMismatch,
     });
+    await expect(acknowledgementPromise).resolves.toBeUndefined();
+  });
+
+  it('ignores control messages posted on the flow channel', async () => {
+    const popup = { closed: false, close: vi.fn() } as unknown as Window;
+    const resultPromise = waitForToolsetOAuthResult(
+      popup,
+      flowId,
+      defaultWaitOptions,
+    );
+    const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+    const acknowledgementPromise = new Promise<void>((resolve) => {
+      channel.onmessage = (event) => {
+        if (
+          event.data?.type === ToolsetOAuthChannelControlType.ResultAcknowledged
+        ) {
+          channel.close();
+          resolve();
+        }
+      };
+    });
+
+    channel.postMessage({
+      type: ToolsetOAuthChannelControlType.ResultAcknowledged,
+    });
+    channel.postMessage({
+      type: ToolsetOAuthResultType.Success,
+      ...defaultWaitOptions,
+    });
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Success,
+      ...defaultWaitOptions,
+    });
+    await expect(acknowledgementPromise).resolves.toBeUndefined();
   });
 
   it('closes the popup itself as soon as a result message arrives', async () => {
@@ -914,7 +967,7 @@ describe('waitForToolsetOAuthResult', () => {
       defaultWaitOptions,
     );
 
-    postMessage({
+    const acknowledgementPromise = postMessage({
       type: ToolsetOAuthResultType.Success,
       toolsetId: 'toolsets/b/my-toolset__1',
       credentialsLevel: ToolsetCredentialsLevel.User,
@@ -922,9 +975,10 @@ describe('waitForToolsetOAuthResult', () => {
 
     await resultPromise;
     expect(close).toHaveBeenCalledOnce();
+    await expect(acknowledgementPromise).resolves.toBeUndefined();
   });
 
-  it('resolves as Cancelled when the popup is closed manually', async () => {
+  it('resolves as Cancelled when the popup is closed and the opener regains focus', async () => {
     const popup = { closed: false } as { closed: boolean };
     const resultPromise = waitForToolsetOAuthResult(
       popup as unknown as Window,
@@ -937,10 +991,41 @@ describe('waitForToolsetOAuthResult', () => {
     );
 
     popup.closed = true;
+    window.dispatchEvent(new Event('focus'));
 
     await expect(resultPromise).resolves.toEqual({
       type: ToolsetOAuthResultType.Cancelled,
     });
+  });
+
+  it('keeps waiting when a COOP-severed popup reference looks closed', async () => {
+    const popup = {
+      closed: false,
+      close: vi.fn(),
+      location: {
+        get href(): string {
+          throw new DOMException('Blocked cross-origin access');
+        },
+      },
+    } as unknown as Window;
+    const resultPromise = waitForToolsetOAuthResult(popup, flowId, {
+      ...defaultWaitOptions,
+      pollIntervalMs: 5,
+      timeoutMs: 10_000,
+    });
+
+    Object.defineProperty(popup, 'closed', { value: true });
+    await new Promise((resolve) => window.setTimeout(resolve, 20));
+    const acknowledgementPromise = postMessage({
+      type: ToolsetOAuthResultType.Success,
+      ...defaultWaitOptions,
+    });
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Success,
+      ...defaultWaitOptions,
+    });
+    await expect(acknowledgementPromise).resolves.toBeUndefined();
   });
 
   it('recovers the first successful login from the callback URL when the channel event is missed', async () => {
