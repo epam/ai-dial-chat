@@ -269,6 +269,15 @@ const getOAuthFailureReason = (
   }
 };
 
+const isToolsetOAuthChannelMessage = (
+  value: unknown,
+): value is ToolsetOAuthChannelMessage =>
+  typeof value === 'object' &&
+  value != null &&
+  'type' in value &&
+  (value.type === ToolsetOAuthResultType.Success ||
+    value.type === ToolsetOAuthResultType.Failure);
+
 /**
  * Waits for the OAuth callback popup to report a result over BroadcastChannel
  * or through the completion marker in its same-origin URL. A cross-origin
@@ -367,7 +376,8 @@ export const waitForToolsetOAuthResult = (
 
     try {
       channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
-      channel.onmessage = (event: MessageEvent<ToolsetOAuthChannelMessage>) => {
+      channel.onmessage = (event: MessageEvent<unknown>) => {
+        if (!isToolsetOAuthChannelMessage(event.data)) return;
         finishReportedResult(event.data);
       };
     } catch {

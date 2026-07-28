@@ -916,6 +916,40 @@ describe('waitForToolsetOAuthResult', () => {
     await expect(acknowledgementPromise).resolves.toBeUndefined();
   });
 
+  it('ignores control messages posted on the flow channel', async () => {
+    const popup = { closed: false, close: vi.fn() } as unknown as Window;
+    const resultPromise = waitForToolsetOAuthResult(
+      popup,
+      flowId,
+      defaultWaitOptions,
+    );
+    const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+    const acknowledgementPromise = new Promise<void>((resolve) => {
+      channel.onmessage = (event) => {
+        if (
+          event.data?.type === ToolsetOAuthChannelControlType.ResultAcknowledged
+        ) {
+          channel.close();
+          resolve();
+        }
+      };
+    });
+
+    channel.postMessage({
+      type: ToolsetOAuthChannelControlType.ResultAcknowledged,
+    });
+    channel.postMessage({
+      type: ToolsetOAuthResultType.Success,
+      ...defaultWaitOptions,
+    });
+
+    await expect(resultPromise).resolves.toEqual({
+      type: ToolsetOAuthResultType.Success,
+      ...defaultWaitOptions,
+    });
+    await expect(acknowledgementPromise).resolves.toBeUndefined();
+  });
+
   it('closes the popup itself as soon as a result message arrives', async () => {
     const close = vi.fn();
     const popup = { closed: false, close } as unknown as Window;

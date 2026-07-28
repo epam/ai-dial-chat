@@ -84,6 +84,10 @@ const reportResult = (
 
   try {
     const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
+    channel.postMessage(message);
+    const retryId = setInterval(() => {
+      channel.postMessage(message);
+    }, TOOLSET_OAUTH_RESULT_RETRY_INTERVAL_MS);
 
     channel.onmessage = (
       event: MessageEvent<ToolsetOAuthResultAcknowledgement>,
@@ -93,15 +97,10 @@ const reportResult = (
       ) {
         return;
       }
-      if (retryId != null) window.clearInterval(retryId);
+      clearInterval(retryId);
       channel.close();
       window.close();
     };
-
-    channel.postMessage(message);
-    const retryId = window.setInterval(() => {
-      channel.postMessage(message);
-    }, TOOLSET_OAUTH_RESULT_RETRY_INTERVAL_MS);
   } catch {
     // The result remains available in the popup URL.
   }
