@@ -37,9 +37,14 @@ describe('UserContext', () => {
     localStorage.setItem('catalogSortKey', '"recentlyUpdated"');
   };
 
-  const expectCatalogFilterPreferencesCleared = () => {
-    expect(localStorage.getItem('catalogFilterTopics')).toBeNull();
-    expect(localStorage.getItem('catalogIsMyAppsActive')).toBeNull();
+  /*
+   * Session invalidation/identity adoption no longer touches localStorage —
+   * Catalog filter preferences are plain UI state, not identity-scoped data,
+   * so they must survive every path exercised in this file unchanged.
+   */
+  const expectCatalogFilterPreferencesUntouched = () => {
+    expect(localStorage.getItem('catalogFilterTopics')).toBe('["billing"]');
+    expect(localStorage.getItem('catalogIsMyAppsActive')).toBe('true');
     expect(localStorage.getItem('catalogSortKey')).toBe('"recentlyUpdated"');
   };
 
@@ -104,7 +109,7 @@ describe('UserContext', () => {
     expect(result.current.status).toBe(AuthStatus.Unauthenticated);
     expect(result.current.user).toBeNull();
     expect(getCsrfToken()).toBeNull();
-    expectCatalogFilterPreferencesCleared();
+    expectCatalogFilterPreferencesUntouched();
   });
 
   it('refresh() re-runs the fetch and updates state', async () => {
@@ -165,7 +170,7 @@ describe('UserContext', () => {
       expect(result.current.status).toBe(AuthStatus.Authenticated);
     });
 
-    it('invalidates the session when the revalidated sub differs from the held identity', async () => {
+    it('adopts the new identity in place when the revalidated sub differs from the held identity', async () => {
       const getMeSpy = vi
         .spyOn(authApi, 'getMe')
         .mockResolvedValueOnce(mockProfile);
@@ -183,12 +188,13 @@ describe('UserContext', () => {
         document.dispatchEvent(new Event('visibilitychange'));
       });
 
-      await waitFor(() =>
-        expect(result.current.status).toBe(AuthStatus.Unauthenticated),
-      );
-      expect(result.current.user).toBeNull();
+      await waitFor(() => expect(result.current.user).toEqual(secondProfile));
+      // The browser session is already validly authenticated as the new
+      // identity — no forced logout/login screen, and the protected tree is
+      // never unmounted for this path.
+      expect(result.current.status).toBe(AuthStatus.Authenticated);
       expect(getCsrfToken()).toBeNull();
-      expectCatalogFilterPreferencesCleared();
+      expectCatalogFilterPreferencesUntouched();
     });
 
     it('invalidates the session when revalidation returns 401', async () => {
@@ -307,6 +313,6 @@ describe('UserContext', () => {
     expect(result.current.status).toBe(AuthStatus.Unauthenticated);
     expect(result.current.user).toBeNull();
     expect(getCsrfToken()).toBeNull();
-    expectCatalogFilterPreferencesCleared();
+    expectCatalogFilterPreferencesUntouched();
   });
 });

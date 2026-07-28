@@ -226,7 +226,7 @@ The change SHALL ship co-located Vitest specs that cover every new module: `User
 
 While `UserContext.status === Authenticated`, the SPA SHALL re-validate the session by issuing `GET /api/v1/auth/me` whenever the tab regains visibility (`document.visibilitychange` firing with `document.visibilityState === 'visible'`) or the window regains focus (`window` `focus` event), so that an identity change made in another tab or another same-origin flow is detected without waiting for a `401` on some other request. The revalidation SHALL be skipped while a previous bootstrap/revalidation request for this provider instance is still in flight, and SHALL NOT be performed while `status` is `Loading` or `Unauthenticated`.
 
-The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not `providerId` or any other claim: if the newly fetched profile's `sub` differs from the currently held `user.sub`, or the revalidation request now returns `401`, the SPA SHALL treat this identically to the existing `onUnauthorized` invalidation path — clearing the CSRF token, setting `user` to `null`, and setting `status` to `Unauthenticated` — so `RequireAuth` unmounts the protected tree and the normal bootstrap/redirect policy re-authenticates and remounts it fresh. If the newly fetched profile's `sub` is unchanged, the SPA SHALL update `user` in place (to pick up any other changed claims) without altering `status`.
+The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not `providerId` or any other claim. If the newly fetched profile's `sub` differs from the currently held `user.sub`, the SPA SHALL clear the CSRF token and adopt the new profile in place by calling `setUser(newProfile)`, leaving `status` as `Authenticated`. The protected tree SHALL NOT be unmounted for this case — the session is already validly authenticated as the new identity, so there is nothing to redirect to a login screen for. Every identity-scoped context (see `conversations-context`, `user-config-frontend-init`, and `deployments-context`) is responsible for detecting the changed `sub` on its own and resetting/refetching accordingly. If the revalidation request itself returns `401` (the session was revoked, not merely switched), the SPA SHALL treat that identically to the existing `onUnauthorized` invalidation path — clearing the CSRF token, setting `user` to `null`, and setting `status` to `Unauthenticated` — so `RequireAuth` unmounts the protected tree and the normal bootstrap/redirect policy re-authenticates from scratch. If the newly fetched profile's `sub` is unchanged, the SPA SHALL update `user` in place (to pick up any other changed claims) without altering `status`.
 
 #### Scenario: Tab regains focus with an unchanged identity
 
@@ -236,7 +236,7 @@ The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not 
 #### Scenario: Tab regains focus after the underlying session identity changed
 
 - **WHEN** an authenticated tab's window regains focus and `GET /api/v1/auth/me` returns `200` with a `UserProfile` whose `sub` differs from the currently held `user.sub`
-- **THEN** the CSRF token is cleared, `user` becomes `null`, `status` becomes `Unauthenticated`, `RequireAuth` unmounts the protected tree (including `DeploymentsProvider`), and the existing bootstrap/redirect policy re-authenticates against the new identity
+- **THEN** the CSRF token is cleared, `user` is set to the newly-fetched profile, `status` remains `Authenticated`, and the protected tree (including `DeploymentsProvider`, `ConversationsProvider`, `UserConfigProvider`) is NOT unmounted
 
 #### Scenario: Tab regains visibility after the session was revoked
 
@@ -252,24 +252,3 @@ The comparison SHALL use `UserProfile.sub` (the stable subject identifier), not 
 
 - **WHEN** `focus` and `visibilitychange` both fire in quick succession while a revalidation request triggered by the first event is still in flight
 - **THEN** only one `GET /api/v1/auth/me` request is in flight at a time for this mechanism; the second trigger does not issue a duplicate request
-
----
-
-### Requirement: Session invalidation clears identity-scoped Catalog preferences from localStorage
-
-Whenever `UserContext` invalidates the session — via `reset()`, the `onUnauthorized` listener, or the identity-revalidation mismatch/`401` branch above — it SHALL also remove the `localStorage` entries keyed `StorageKey.CatalogFilterTopics` and `StorageKey.CatalogIsMyAppsActive` (written by `useCatalogSortFilterPreference`), so a Catalog "From" topic filter or "My Apps" toggle selected by one identity does not carry over to the next identity that authenticates in the same browser. `StorageKey.CatalogSortKey` SHALL NOT be removed by this invalidation — it is a display preference with no ownership semantics.
-
-#### Scenario: Explicit logout clears the persisted Catalog filter preferences
-
-- **WHEN** the user confirms logout via `LogoutConfirmationModal`, which calls `useUser().reset()`
-- **THEN** `localStorage.getItem('catalogFilterTopics')` and `localStorage.getItem('catalogIsMyAppsActive')` both return `null` afterward, while `localStorage.getItem('catalogSortKey')` is unchanged
-
-#### Scenario: An identity mismatch detected on revalidation clears the persisted Catalog filter preferences
-
-- **WHEN** the focus/visibility revalidation checkpoint detects a `sub` mismatch (per the identity revalidation requirement above) and invalidates the session
-- **THEN** `catalogFilterTopics` and `catalogIsMyAppsActive` are removed from `localStorage` as part of that same invalidation
-
-#### Scenario: A 401 from any API call clears the persisted Catalog filter preferences
-
-- **WHEN** `onUnauthorized` fires from any non-bootstrap API call returning `401`
-- **THEN** `catalogFilterTopics` and `catalogIsMyAppsActive` are removed from `localStorage` in addition to the existing CSRF/user/status reset

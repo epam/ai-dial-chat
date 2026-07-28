@@ -188,6 +188,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     async (signal: { isCancelled: boolean }) => {
       setIsLoading(true);
       setError(null);
+      setRawDeployments([]);
       setSchemas([]);
       setToolsets([]);
       const deploymentsRequestId = ++deploymentsRequestIdRef.current;
