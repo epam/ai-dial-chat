@@ -140,17 +140,13 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     });
   }, [showNotification, t]);
 
-  const {
-    startStream,
-    handleStop,
-    isStreaming,
-    canStopStreaming,
-  } = useConversationStream({
-    conversationId: conversationId ?? undefined,
-    setConversation,
-    conversationRef,
-    onStopError: handleStopError,
-  });
+  const { startStream, handleStop, isStreaming, canStopStreaming } =
+    useConversationStream({
+      conversationId: conversationId ?? undefined,
+      setConversation,
+      conversationRef,
+      onStopError: handleStopError,
+    });
 
   const handleCreateConversation = useCallback(
     async (

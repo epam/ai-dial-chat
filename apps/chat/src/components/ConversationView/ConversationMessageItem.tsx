@@ -365,7 +365,9 @@ const ConversationMessageItem: FC<Props> = ({
           ariaLabels,
         )}
         afterContent={
-          referenceGroups.length > 0 || hasStages || msg.streamErrorMessage != null ? (
+          referenceGroups.length > 0 ||
+          hasStages ||
+          msg.streamErrorMessage != null ? (
             <>
               {referenceGroups.length > 0 && (
                 <div className="flex w-full flex-wrap gap-2">
