@@ -39,15 +39,7 @@ export interface ScrollVirtualizerResult {
   totalHeight: number;
 }
 
-/**
- * Virtualizes a card grid whose scroll is driven by the nearest scrollable
- * ancestor rather than an internal scroll container.
- *
- * Attach `containerRef` to a `position: relative` wrapper that has
- * `height: totalHeight` so the page scroll height stays correct.
- * Only rows between `startRow` (inclusive) and `endRow` (exclusive)
- * need to be rendered.
- */
+/** Virtualizes a card grid driven by the nearest scrollable ancestor; returns row window, column count, and total height. */
 export const useScrollVirtualizer = (
   itemCount: number,
   overscan = 3,

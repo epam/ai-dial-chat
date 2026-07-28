@@ -49,16 +49,11 @@ import {
   type AttachmentTilesPlan,
 } from '../models/attachment-group';
 
-/**
- * Generates a unique identifier for an attachment, combining the current
- * timestamp with a random alphanumeric suffix.
- */
+/** Generates a unique identifier for an attachment. */
 export const generateAttachmentId = (): string =>
   `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-/**
- * Returns the provided name without its trailing file extension.
- */
+/** Returns the name without its trailing file extension. */
 export const getNameWithoutExtension = (name: string): string => {
   const dotIndex = name.lastIndexOf('.');
   return dotIndex > 0 ? name.slice(0, dotIndex) : name;

@@ -1,14 +1,7 @@
 import type { CatalogItem } from '../models/catalog-item';
 import { CatalogSortKey } from '../types/sort';
 
-/**
- * Returns a sorted copy of the items array.
- * Featured items always appear first in every sort mode.
- * Within each group the chosen key is applied:
- * 'recently-updated': no further ordering (original/API order).
- * 'newest': descending by updatedAt; items without a timestamp sort last.
- * 'name-az': alphabetical by name.
- */
+/** Returns a sorted copy of items; featured items always sort first, then by the given `sortKey`. */
 export const sortCatalogItems = (
   items: CatalogItem[],
   sortKey: string,

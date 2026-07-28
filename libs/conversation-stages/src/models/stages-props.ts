@@ -1,5 +1,6 @@
 import type { Stage } from '@epam/ai-dial-chat-shared';
 
+/** Typography class overrides for stage name and expanded content elements in `StagesPanel`. */
 export interface StageTypography {
   /** CSS utility class applied to the stage/step name. */
   fontClassName?: string;

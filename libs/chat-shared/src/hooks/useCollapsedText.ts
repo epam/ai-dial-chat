@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 const DEFAULT_LINE_HEIGHT_FALLBACK = 24;
 const OVERFLOW_TOLERANCE = 1;
 
+/** Options for `useCollapsedText`. */
 export interface UseCollapsedTextOptions {
   /** Content identity used to reset long text to the collapsed state when it changes. */
   text: string;
@@ -11,13 +12,7 @@ export interface UseCollapsedTextOptions {
 }
 
 export interface UseCollapsedTextResult<T extends HTMLElement> {
-  /**
-   * Ref callback attached to the text element whose rendered height should
-   * be measured. Using a callback (rather than a `RefObject`) ensures
-   * measurement re-runs as soon as the node mounts, even if the element is
-   * hidden behind a conditional (e.g. a loading skeleton) when `text` first
-   * becomes available.
-   */
+  /** Ref callback attached to the text element to measure its rendered height. */
   textRef: (node: T | null) => void;
   /** Whether the full text is currently hidden behind the collapsed viewport. */
   isTextCollapsed: boolean;

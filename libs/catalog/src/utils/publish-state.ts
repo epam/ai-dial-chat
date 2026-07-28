@@ -4,12 +4,7 @@ import {
   PublishDerivedState,
 } from '../models/publish';
 
-/**
- * Derives the publish panel's callout and submit-button state from the
- * current destination-folder context. Priority (highest first): a request
- * in flight, no folder selected yet, missing write access, a failed submit,
- * replacing an existing version, then the default informational callout.
- */
+/** Derives the callout kind and submit-button state for the publish panel from the current folder context. */
 export const derivePublishState = (
   input: PublishDerivationInput,
 ): PublishDerivedState => {

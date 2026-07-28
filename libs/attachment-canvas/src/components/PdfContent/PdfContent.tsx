@@ -15,6 +15,7 @@ import {
 } from 'react';
 import { fetchBlobFromUrl } from '../../utils/download';
 
+/** Props for the `PdfContent` component. */
 export interface PdfContentProps {
   url: string;
   highlights: InputHighlightData[];
@@ -23,6 +24,7 @@ export interface PdfContentProps {
   fileName?: string;
 }
 
+/** Renders a PDF with highlight annotations, a sidebar thumbnail strip, and page navigation. */
 export const PdfContent: FC<PdfContentProps> = ({
   url,
   highlights,
