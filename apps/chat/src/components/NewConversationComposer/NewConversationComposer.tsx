@@ -303,7 +303,6 @@ const NewConversationComposer: FC<Props> = ({
           isInputDisabled={isInputDisabled}
           isModelSelectorDisabled={isModelSelectorDisabled}
           isSendDisabled={isDisabledSendEnabled}
-          inputClassName="border-2 border-accent-primary"
           modelSelectorLabels={modelSelectorLabels}
           addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
           sendLabel={t(ChatI18nKeys.SendMessage)}

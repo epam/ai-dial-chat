@@ -679,7 +679,6 @@ const ConversationView: FC<Props> = ({
                   isModelFixed || isDisallowChangeAgentEnabled
                 }
                 isSendDisabled={isDisabledSendEnabled}
-                inputClassName="border-2 border-accent-primary"
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
