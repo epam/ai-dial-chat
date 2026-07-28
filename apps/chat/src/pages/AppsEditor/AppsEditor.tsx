@@ -1,7 +1,6 @@
 import {
-  DialNotification,
   DialSpinner,
-  NotificationVariant,
+  ErrorMessageNotification,
   StepStatus,
 } from '@epam/ai-dial-ui-kit';
 import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
@@ -381,10 +380,7 @@ const AppsEditor: FC = () => {
 
       {!isGeneralStep && saveError && (
         <div className="p-2">
-          <DialNotification
-            variant={NotificationVariant.Error}
-            message={saveError}
-          />
+          <ErrorMessageNotification message={saveError} />
         </div>
       )}
 
