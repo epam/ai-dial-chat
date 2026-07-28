@@ -58,10 +58,7 @@ export interface ChatSettingsBottomSheetProps {
   saveDisabledTooltip?: string;
 }
 
-/**
- * Mobile bottom sheet that renders the chat-settings form inline with a back
- * arrow to return to the preceding sheet.
- */
+/** Mobile bottom sheet for chat settings with a back button to return to the preceding sheet. */
 export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
   isOpen,
   onBack,

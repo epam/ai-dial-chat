@@ -24,11 +24,7 @@ import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
 import { CreateButton } from './CreateButton';
 
-/**
- * Root catalog component. Owns all filter/sort/tab/pagination state and wires
- * Favorites, Toolbar, CardGrid, and ListView.
- * All data arrives via props — no direct API or context access.
- */
+/** Root catalog component: entity browsing with tabs, search, sort, filter, favorites strip, and details panel. */
 export const Catalog: FC<CatalogProps> = ({
   items,
   favorites,

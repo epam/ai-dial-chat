@@ -77,26 +77,7 @@ export interface StandalonePublishPanelProps {
   texts?: StandalonePublishPanelTexts;
 }
 
-/**
- * Standalone end-edge slide-in panel for the Publish flow, sized and
- * animated like `DetailsPanel` but with no details view behind it: the
- * header shows a Close (X) button instead of `DetailsPanel`'s publish
- * sub-view Back (chevron) control, since there is nothing to go "back" to
- * (see design.md D4). Cancel (in the pinned footer) and Escape both invoke
- * the same `onClose` as the header's Close button.
- *
- * Backdrop/panel use `z-[51]`/`z-[52]` rather than `DetailsPanel`'s
- * `z-40`/`z-50` — unlike catalog details (opened from a view where no other
- * panel is open), this panel is opened while the conversation list's
- * `SidebarPanel` (`libs/sidebar`) is still mounted, which applies its own
- * `z-50` while open. Matching `z-40`/`z-50` here left that sidebar
- * un-dimmed and above the backdrop. Capped at `z-[52]` (not higher) so it
- * stays below `@epam/ai-dial-ui-kit`'s own `z-[53]` dropdown/context-menu
- * layer — `PublishFoldersTree`'s "Add sibling"/"Add child" context menu
- * (`getContextMenuItems`) portals to `document.body` as a sibling of this
- * panel, so a higher panel z-index would visually cover and block clicks on
- * that menu even though it "opens" correctly in the DOM.
- */
+/** Standalone end-edge slide-in panel for the Publish flow: full-screen backdrop, entity summary, folder picker, history list, and pinned footer. */
 export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   isOpen,
   item,

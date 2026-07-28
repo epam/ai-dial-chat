@@ -50,11 +50,7 @@ export interface VoiceBarProps {
   className?: string;
 }
 
-/**
- * Renders the voice recording bar: a live MM:SS timer, a scrolling waveform canvas
- * driven by a ring buffer, and state-based controls. Replaces the `Input` component
- * while voice state is not `idle`.
- */
+/** Voice recording bar: live timer, scrolling waveform, stop and discard controls. */
 export const VoiceBar: FC<VoiceBarProps> = ({
   state,
   analyserNodeRef,

@@ -42,11 +42,7 @@ export interface BottomSheetShellProps {
   children: ReactNode;
 }
 
-/**
- * Generic mobile bottom-sheet shell: renders a portal with a backdrop, a fixed
- * bottom-anchored panel, and an optional header. Handles Escape-to-close and
- * body scroll locking. Consumers supply the body.
- */
+/** Generic mobile bottom-sheet shell: backdrop, bottom-anchored panel, optional header, Escape-to-close, and body-scroll lock. */
 export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   isOpen,
   title,

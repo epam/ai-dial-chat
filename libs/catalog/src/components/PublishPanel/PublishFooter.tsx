@@ -33,12 +33,7 @@ export interface PublishFooterProps {
   texts?: PublishFooterTexts;
 }
 
-/**
- * Action row for the Publish flow: Cancel and Publish/Update buttons.
- * Rendered outside the scrollable body so it stays pinned to the bottom.
- * Both Publish and Cancel use secondary/neutral styling — neither is an
- * accented primary action.
- */
+/** Action row for the Publish flow: pinned Cancel and Publish/Update buttons. */
 export const PublishFooter: FC<PublishFooterProps> = ({
   version,
   hasExistingPublicationInFolder,

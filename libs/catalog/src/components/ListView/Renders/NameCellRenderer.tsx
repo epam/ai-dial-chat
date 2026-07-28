@@ -8,6 +8,7 @@ import { GridContext } from '../../../models/grid-context';
 import { CredentialsBadge } from '../../CredentialsBadge/CredentialsBadge';
 import { ItemHeader } from '../../ItemHeader/ItemHeader';
 
+/** ag-grid cell renderer for the name/identity column: icon, name, version, credentials badge, and selection checkmark. */
 export const NameCellRenderer: FC<
   ICellRendererParams<CatalogItem, unknown, GridContext>
 > = ({ data, context }) => {

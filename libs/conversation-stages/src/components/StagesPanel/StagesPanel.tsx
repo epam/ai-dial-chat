@@ -147,11 +147,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   );
 };
 
-/**
- * Displays an agent's accumulated stages as a flat, inline list of rows — no
- * card, border, or panel around it. Repeated identical stage names collapse
- * into one `×N` row that expands to the individual attempts.
- */
+/** Flat inline list of agent stages; repeated identical names collapse into a ×N group row. */
 export const StagesPanel: FC<StagesPanelProps> = ({
   stages,
   isStreaming,

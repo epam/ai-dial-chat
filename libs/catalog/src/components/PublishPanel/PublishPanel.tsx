@@ -117,12 +117,7 @@ export interface PublishPanelProps {
   texts?: PublishPanelTexts;
 }
 
-/**
- * Scrollable body of the Publish flow: entity summary, destination folder
- * picker (with a replace-warning or no-access callout when applicable), and
- * the publish history list. The action footer is a sibling rendered by the host (see
- * {@link PublishFooter}) so it can stay pinned outside this scroll area.
- */
+/** Scrollable body of the Publish flow: entity summary, destination folder picker with callout, and publish history. */
 export const PublishPanel: FC<PublishPanelProps> = ({
   item,
   resource,
