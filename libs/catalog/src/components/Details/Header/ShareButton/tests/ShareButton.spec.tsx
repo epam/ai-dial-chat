@@ -55,16 +55,6 @@ describe('ShareButton', () => {
     expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
   });
 
-  it('hides Share for a Guardrail item', () => {
-    render(<ShareButton item={makeItem(CatalogEntityType.Guardrail)} />);
-    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
-  });
-
-  it('hides Share for an MCP item', () => {
-    render(<ShareButton item={makeItem(CatalogEntityType.Mcp)} />);
-    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
-  });
-
   it('hides Share for an item not owned by the current user', () => {
     render(
       <ShareButton

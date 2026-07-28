@@ -53,16 +53,16 @@ describe('DeploymentSelectorPanel', () => {
     expect(screen.getByRole('button', { name: /agent-1/ })).toBeTruthy();
   });
 
-  it.each([
-    CatalogEntityType.Toolset,
-    CatalogEntityType.Skill,
-    CatalogEntityType.Guardrail,
-    CatalogEntityType.Mcp,
-  ])('excludes a favorited %s from the list', (type) => {
-    renderPanel([makeItem('non-talkable-1', type)]);
+  it.each([CatalogEntityType.Toolset, CatalogEntityType.Skill])(
+    'excludes a favorited %s from the list',
+    (type) => {
+      renderPanel([makeItem('non-talkable-1', type)]);
 
-    expect(screen.queryByRole('button', { name: /non-talkable-1/ })).toBeNull();
-  });
+      expect(
+        screen.queryByRole('button', { name: /non-talkable-1/ }),
+      ).toBeNull();
+    },
+  );
 
   it('shows Models and Applications together', () => {
     renderPanel([

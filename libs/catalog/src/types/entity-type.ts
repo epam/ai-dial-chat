@@ -3,7 +3,5 @@ export enum CatalogEntityType {
   Model = 'MODEL',
   Agent = 'AGENT',
   Toolset = 'TOOLSET',
-  Guardrail = 'GUARDRAIL',
   Skill = 'SKILL',
-  Mcp = 'MCP',
 }

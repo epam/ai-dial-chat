@@ -3,7 +3,6 @@ import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconShare } from '@tabler/icons-react';
 import { FC, type ReactNode, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../../models/catalog-item';
-import { CatalogEntityType } from '../../../../types/entity-type';
 
 /** Props for {@link ShareButton}. */
 interface ShareButtonProps {
@@ -26,10 +25,7 @@ interface ShareButtonProps {
  * Sharing is also limited to entities the current user owns (deployments
  * and toolsets in their personal space), not the whole catalog.
  */
-const shouldShowShare = (item: CatalogItem): boolean =>
-  item.isMyApp === true &&
-  item.type !== CatalogEntityType.Guardrail &&
-  item.type !== CatalogEntityType.Mcp;
+const shouldShowShare = (item: CatalogItem): boolean => item.isMyApp === true;
 
 /**
  * Share action button for the details header. Renders the Share action for

@@ -120,7 +120,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
       favorites.filter(
         (f) =>
           f.type === CatalogEntityType.Model ||
-          f.type === CatalogEntityType.Agent ||
           f.type === CatalogEntityType.Agent,
       ),
     [favorites],
