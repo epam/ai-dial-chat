@@ -334,10 +334,10 @@ When `activeTab` changes, the set of `selectedPaths` SHALL be cleared (reset to 
 - **WHEN** the active tab is reset programmatically (e.g. the previously active tab is removed from `fileManagerTabs`) while files from the old tab were selected
 - **THEN** `selectedPaths` is empty on the new active tab
 
-#### Scenario: Selection empty when tab strip becomes reachable
+#### Scenario: Selection cleared on tab switch from Shared to My files
 
-- **WHEN** the user had a non-empty selection, clears it (deselecting all items), and then switches to the Shared tab
-- **THEN** `selectedPaths` is empty on the Shared tab
+- **WHEN** the user selects a file on the Shared tab and then switches to My files
+- **THEN** `selectedPaths` is empty on the My files tab
 
 ---
 

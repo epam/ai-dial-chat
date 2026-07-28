@@ -320,7 +320,19 @@ export class FilesUploadService {
        * Pass 1: read all central-directory metadata without opening any read
        * streams. Enforcing the file-count limit here ensures no bytes are
        * extracted before the check fires, as required by spec.
+       *
+       * Guard against directory-entry amplification: directory entries are
+       * skipped by the per-file counter below, so a crafted archive with many
+       * directory entries would iterate them all unchecked. The compressed-size
+       * pre-check already bounds the central-directory size; this caps the
+       * total iteration count (directories + files combined).
        */
+      if (zipfile.entryCount > maxFiles * 10) {
+        throw new UnprocessableEntityException(
+          `Archive contains too many entries`,
+        );
+      }
+
       const fileEntries: ArchiveFileEntry[] = [];
       let fileEntryCount = 0;
       for await (const entry of zipfile.eachEntry()) {
@@ -526,6 +538,8 @@ export class FilesUploadService {
   ): Promise<void> {
     this.throwIfArchiveUploadAborted(signal);
 
+    /* boundary is UUIDv4 and cannot be influenced by user input — safe to
+       interpolate directly into Content-Type and the multipart preamble. */
     const boundary = `dial-upload-${randomUUID()}`;
     const multipartStream = this.createMultipartFileStream(
       fileStream,
