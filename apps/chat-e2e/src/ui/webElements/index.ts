@@ -34,6 +34,7 @@ export * from './toast';
 export * from './chatNotFound';
 export * from './inputAttachments';
 export * from './uploadFromDeviceModal';
+export * from './downloadTableCsvModal';
 export * from './fileManager/fileManagerModalHeader';
 export * from './selectFolderModal';
 export * from './editInputActions';

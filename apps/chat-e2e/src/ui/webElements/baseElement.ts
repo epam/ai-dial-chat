@@ -250,6 +250,14 @@ export class BaseElement {
     return ScrollState.middle;
   }
 
+  public async getElementCursorPosition(elements: BaseElement) {
+    return elements
+      .getElementLocator()
+      .evaluate(
+        (el: HTMLTextAreaElement) => el.selectionStart ?? el.value.length,
+      );
+  }
+
   public async getElementIcons(elements: BaseElement) {
     const allIcons: EntityIcon[] = [];
     const elementsCount = await elements.getElementsCount();

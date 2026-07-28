@@ -605,6 +605,19 @@ export class BaseAssertion {
       .toHaveJSProperty(scrollProperty, expectedValue);
   }
 
+  public async assertCursorPosition(
+    element: BaseElement | Locator,
+    expectedPosition: number,
+    expectedMessage?: string,
+  ) {
+    await expect
+      .soft(
+        BaseElement.getElementLocator(element),
+        expectedMessage ?? ExpectedMessages.cursorPositionIsValid,
+      )
+      .toHaveJSProperty(Properties.selectionStart, expectedPosition);
+  }
+
   public assertValueMatchObject(
     actualValue: unknown,
     expectedObject: Record<string, unknown> | Array<unknown>,

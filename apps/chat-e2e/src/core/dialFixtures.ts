@@ -22,6 +22,7 @@ import {
   CustomAppEditorAppSettingsPreviewBody,
   CustomAppEditorContainer,
   CustomAppEditorViewForm,
+  DownloadTableCsvModal,
   DragFile,
   Dropdown,
   EntityDetailsModal,
@@ -359,6 +360,7 @@ const dialTest = test.extend<{
   additionalSecondUserItemApiHelper: ItemApiHelper;
   chatNotFound: ChatNotFound;
   uploadFromDeviceModal: UploadFromDeviceModal;
+  downloadTableCsvModal: DownloadTableCsvModal;
   selectFolderModal: SelectFolderModal;
   selectFolderManagerModal: SelectFolderManagerModal;
   selectFolders: Folders;
@@ -1267,6 +1269,10 @@ const dialTest = test.extend<{
   uploadFromDeviceModal: async ({ page }, use) => {
     const uploadFromDeviceModal = new UploadFromDeviceModal(page);
     await use(uploadFromDeviceModal);
+  },
+  downloadTableCsvModal: async ({ page }, use) => {
+    const downloadTableCsvModal = new DownloadTableCsvModal(page);
+    await use(downloadTableCsvModal);
   },
   selectFolderModal: async ({ page }, use) => {
     const selectFolderModal = new SelectFolderModal(page);
