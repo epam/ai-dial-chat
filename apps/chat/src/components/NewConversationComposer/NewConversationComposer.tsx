@@ -183,7 +183,6 @@ const NewConversationComposer: FC<Props> = ({
   const isHideEmptyChatChangeAgentEnabled = useUiFeature(
     OverlayFeature.HideEmptyChatChangeAgent,
   );
-  const isChatInputBorderEnabled = useUiFeature(OverlayFeature.ChatInputBorder);
   const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
   const isSkipFocusChatInputOnloadEnabled = useUiFeature(
     OverlayFeature.SkipFocusChatInputOnload,
@@ -304,11 +303,7 @@ const NewConversationComposer: FC<Props> = ({
           isInputDisabled={isInputDisabled}
           isModelSelectorDisabled={isModelSelectorDisabled}
           isSendDisabled={isDisabledSendEnabled}
-          inputClassName={
-            isChatInputBorderEnabled
-              ? 'border-2 border-accent-primary'
-              : undefined
-          }
+          inputClassName="border-2 border-accent-primary"
           modelSelectorLabels={modelSelectorLabels}
           addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
           sendLabel={t(ChatI18nKeys.SendMessage)}

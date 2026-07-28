@@ -1,25 +1,19 @@
-import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatI18nKeys } from '../../../constants/translation-keys';
 import * as ThemeContext from '../../../context/ThemeContext';
-import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import * as iconPathUtils from '../../../utils/icon-path';
 import Logo from '../Logo';
 
-// Mock the modules
 vi.mock('../../../context/ThemeContext');
-vi.mock('../../../hooks/useUiFeature');
 vi.mock('../../../utils/icon-path');
 
 describe('Logo', () => {
   const mockGetIconPath = vi.mocked(iconPathUtils.getIconPath);
   const mockUseTheme = vi.mocked(ThemeContext.useTheme);
-  const mockUseUiFeature = vi.mocked(useUiFeatureModule.useUiFeature);
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseUiFeature.mockReturnValue(true);
   });
 
   it('should render logo with correct theme', () => {
@@ -134,22 +128,5 @@ describe('Logo', () => {
     expect((logoImage as HTMLElement).classList.contains('bg-no-repeat')).toBe(
       true,
     );
-  });
-
-  it('returns null when custom-logo is disabled, even with a theme logo available', () => {
-    mockUseTheme.mockReturnValue({
-      currentTheme: 'dark',
-      selectedTheme: 'dark',
-      currentThemeLogo: 'logo.svg',
-      themes: [],
-      setTheme: vi.fn(),
-      isLoading: false,
-    });
-    mockUseUiFeature.mockImplementation(
-      (feature) => feature !== OverlayFeature.CustomLogo,
-    );
-
-    const { container } = render(<Logo />);
-    expect(container.firstChild).toBeNull();
   });
 });

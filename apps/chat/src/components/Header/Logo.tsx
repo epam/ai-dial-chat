@@ -1,9 +1,7 @@
-import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
-import { useUiFeature } from '../../hooks/useUiFeature';
 import { getIconPath } from '../../utils/icon-path';
 
 /**
@@ -12,9 +10,8 @@ import { getIconPath } from '../../utils/icon-path';
 const Logo: FC = () => {
   const { t } = useTranslation();
   const { currentThemeLogo, currentThemeFavicon } = useTheme();
-  const isCustomLogoEnabled = useUiFeature(OverlayFeature.CustomLogo);
 
-  if (!isCustomLogoEnabled || (!currentThemeLogo && !currentThemeFavicon)) {
+  if (!currentThemeLogo && !currentThemeFavicon) {
     return null;
   }
 

@@ -1967,21 +1967,21 @@ describe('CatalogView', () => {
   });
 
   describe('UI feature gates', () => {
-    it('renders nothing when marketplace is disabled (non-selector mode)', () => {
+    it('renders nothing when catalog is disabled (non-selector mode)', () => {
       vi.mocked(useUiFeature).mockImplementation(
         (feature) =>
           DEFAULT_ENABLED_UI_FEATURES.has(feature) &&
-          feature !== OverlayFeature.Marketplace,
+          feature !== OverlayFeature.Catalog,
       );
       const { container } = render(<CatalogView />);
       expect(container.firstChild).toBeNull();
     });
 
-    it('still renders in selector mode when marketplace is disabled', () => {
+    it('still renders in selector mode when catalog is disabled', () => {
       vi.mocked(useUiFeature).mockImplementation(
         (feature) =>
           DEFAULT_ENABLED_UI_FEATURES.has(feature) &&
-          feature !== OverlayFeature.Marketplace,
+          feature !== OverlayFeature.Catalog,
       );
       render(<CatalogView isSelectorMode onClose={vi.fn()} />);
       expect(screen.getByLabelText('Catalog item ids')).toBeTruthy();
@@ -2104,7 +2104,7 @@ describe('CatalogView', () => {
       ).toBeNull();
     });
 
-    it('excludes the current user’s own items when marketplace-hide-my-apps is enabled', () => {
+    it("excludes the current user's own items when catalog-hide-my-apps is enabled", () => {
       vi.mocked(useDeployments).mockReturnValue({
         items: [],
         selectedItemId: null,
@@ -2129,7 +2129,7 @@ describe('CatalogView', () => {
       vi.mocked(useUiFeature).mockImplementation(
         (feature) =>
           DEFAULT_ENABLED_UI_FEATURES.has(feature) ||
-          feature === OverlayFeature.MarketplaceHideMyApps,
+          feature === OverlayFeature.CatalogHideMyApps,
       );
 
       render(<CatalogView />);

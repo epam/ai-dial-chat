@@ -1576,14 +1576,4 @@ describe('ConversationPanelView — UI feature gates', () => {
       screen.getByRole('region', { name: 'conversation panel' }),
     ).toBeTruthy();
   });
-
-  it('forces sidebar border CSS vars transparent when show-layout-dividers is disabled', () => {
-    vi.mocked(useUiFeature).mockImplementation(
-      (feature) => feature !== OverlayFeature.ShowLayoutDividers,
-    );
-    render(<ConversationPanelView {...defaultProps} />);
-    const panel = screen.getByRole('region', { name: 'conversation panel' });
-    expect(panel.className).toContain('[--sb-border:transparent]');
-    expect(panel.className).toContain('[--sb-border-inline-end:transparent]');
-  });
 });

@@ -31,11 +31,11 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
   const { currentThemeFavicon } = useTheme();
-  const isMarketplaceEnabled = useUiFeature(OverlayFeature.Marketplace);
+  const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
   const isUserMenuHidden = useUiFeature(OverlayFeature.HideUserMenu);
 
   const navItems = NAVIGATION_CONFIG.filter(
-    ({ path }) => path !== ROUTES.Catalog || isMarketplaceEnabled,
+    ({ path }) => path !== ROUTES.Catalog || isCatalogEnabled,
   ).map(({ path, matchPaths, icon: Icon, labelKey }) => {
     const isActive =
       (path === '/' ? pathname === '/' : pathname.startsWith(path)) ||

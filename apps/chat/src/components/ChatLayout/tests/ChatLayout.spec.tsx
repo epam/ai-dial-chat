@@ -59,9 +59,7 @@ describe('ChatLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseUiFeature.mockImplementation(
-      (feature) =>
-        feature !== OverlayFeature.HideNewConversation &&
-        feature !== OverlayFeature.ChatHeaderBorder,
+      (feature) => feature !== OverlayFeature.HideNewConversation,
     );
   });
 
@@ -103,16 +101,7 @@ describe('ChatLayout', () => {
     ).toBeNull();
   });
 
-  it('does not apply a bottom border by default', () => {
-    const { container } = renderChatLayout();
-    const bar = container.querySelector('.desktop\\:flex');
-    expect(bar?.className).not.toContain('border-b');
-  });
-
-  it('applies a bottom border when chat-header-border is enabled', () => {
-    mockUseUiFeature.mockImplementation(
-      (feature) => feature === OverlayFeature.ChatHeaderBorder,
-    );
+  it('always applies a bottom border', () => {
     const { container } = renderChatLayout();
     const bar = container.querySelector('.desktop\\:flex');
     expect(bar?.className).toContain('border-b');

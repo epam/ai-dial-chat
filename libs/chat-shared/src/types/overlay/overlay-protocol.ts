@@ -75,10 +75,6 @@ export enum OverlayFeature {
   CustomApplications = 'custom-applications',
   /** Hides the "Custom app" creation entry in the "Add app" menu. */
   HideCustomAppCreation = 'hide-custom-app-creation',
-  /** Renders an opt-in border embellishment on the chat header. */
-  ChatHeaderBorder = 'chat-header-border',
-  /** Renders an opt-in border embellishment on the chat input container. */
-  ChatInputBorder = 'chat-input-border',
   /** Disables the send action on the chat input without removing the button. */
   DisabledSend = 'disabled-send',
   /** Suppresses the chat input's auto-focus effect on load. */
@@ -95,10 +91,6 @@ export enum OverlayFeature {
   DisallowChangeAgent = 'disallow-change-agent',
   /** Hides the new-conversation controls in the header/layout. */
   HideNewConversation = 'hide-new-conversation',
-  /** Enables the model/deployment selector on the conversation top bar. */
-  TopChatModelSettings = 'top-chat-model-settings',
-  /** Enables the conversation top-bar settings panel. */
-  TopSettings = 'top-settings',
   /** Enables the empty-chat (new conversation composer) settings UI. */
   EmptyChatSettings = 'empty-chat-settings',
   /** Hides the model selector on the empty-chat composer screen. */
@@ -113,14 +105,12 @@ export enum OverlayFeature {
   Header = 'header',
   /** Makes the conversations sidebar section open by default. */
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault',
-  /** Renders the sidebar's layout divider borders. */
-  ShowLayoutDividers = 'show-layout-dividers',
-  /** Enables the marketplace (`/catalog`) route. */
-  Marketplace = 'marketplace',
-  /** Restricts the marketplace to hide the current user's own/shared-with-me apps. */
-  MarketplaceHideMyApps = 'marketplace-hide-my-apps',
-  /** Makes the marketplace's table view the initial default (instead of grid). */
-  MarketplaceTableView = 'marketplace-table-view',
+  /** Enables the catalog (`/catalog`) route. */
+  Catalog = 'catalog',
+  /** Restricts the catalog to hide the current user's own/shared-with-me apps. */
+  CatalogHideMyApps = 'catalog-hide-my-apps',
+  /** Makes the catalog's table view the initial default (instead of grid). */
+  CatalogTableView = 'catalog-table-view',
   /** Hides the delete action on a user's own messages. */
   HideDeleteUserMessage = 'hide-delete-user-message',
   /** Hides the edit action on a user's own messages. */
@@ -137,8 +127,6 @@ export enum OverlayFeature {
   ToolsetsSharing = 'toolsets-sharing',
   /** Enables toolsets functionality. */
   Toolsets = 'toolsets',
-  /** Enables the theme-driven custom logo/favicon. */
-  CustomLogo = 'custom-logo',
   /** Hides the user avatar/menu button in the header. */
   HideUserMenu = 'hide-user-menu',
   /** Hides the settings entry in the user menu. */

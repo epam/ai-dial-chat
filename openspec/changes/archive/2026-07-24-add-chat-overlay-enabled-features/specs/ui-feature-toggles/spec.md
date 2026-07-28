@@ -27,7 +27,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 23 default-on keys and exclude the 15 default-off keys enumerated in `design.md`'s classification table (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `show-layout-dividers`, `attachments-manager`, `top-settings`, `top-chat-model-settings`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `hide-edit-user-message`... — the full 38-key membership is defined in `design.md`, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 38 keys, matching each surface's current unconditional behavior.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 19 default-on keys and exclude the 13 default-off keys enumerated in `design.md`'s classification table (the full 32-key membership is defined in `design.md`, not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 32 keys, matching each surface's current unconditional behavior.
 
 **RTL impact:** None for this requirement itself — individual owning-surface gates state their own RTL impact where relevant (see per-surface requirements below).
 
@@ -39,7 +39,7 @@
 #### Scenario: Modifier features default off
 
 - **WHEN** no `enabledUiFeatures` and no overlay override are present
-- **THEN** `isEnabled('hide-new-conversation')`, `isEnabled('disabled-send')`, `isEnabled('hide-user-menu')`, and `isEnabled('chat-header-border')` all return `false`
+- **THEN** `isEnabled('hide-new-conversation')`, `isEnabled('disabled-send')`, `isEnabled('hide-user-menu')`, and `isEnabled('catalog-hide-my-apps')` all return `false`
 
 #### Scenario: Non-overlay app is unaffected by this change when nothing is configured
 
@@ -119,17 +119,17 @@ The effective visibility of the voice-input UI affordance SHALL be `isEnabled('v
 
 ### Requirement: Each transferable feature key gates exactly one owning surface
 
-Each of the 38 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
+Each of the 32 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
 
 **Accessibility:** Conditionally-unmounted controls remove themselves from both the accessibility tree and the tab order by not rendering — no `aria-hidden` container with focusable descendants is introduced by this change.
 
 **i18n impact:** None — no new user-visible strings are introduced; toggles hide/show or restrict already-translated existing UI.
 
-**RTL impact:** `chat-input-border`/`chat-header-border` SHALL use logical border utilities (`border-s`/`border-e` or the existing `--sb-border` pattern), not `border-l`/`border-r`. No other transferable key has a directional-layout impact.
+**RTL impact:** None — no transferable key introduces new directional layout; toggles hide/show or restrict already-rendered surfaces that carry their own RTL handling.
 
 #### Scenario: Gating one feature does not affect another
 
-- **WHEN** `enabledUiFeatures` omits `'top-settings'` but includes everything else
+- **WHEN** `enabledUiFeatures` omits `'catalog'` but includes everything else
 - **THEN** the new-conversation button's visibility (`hide-new-conversation`) is unaffected
 
 #### Scenario: hide-new-conversation hides only the new-conversation entry points

@@ -38,11 +38,11 @@ describe('UiFeaturesContext', () => {
   });
 
   describe('default baseline', () => {
-    it('enables exactly the 23 default-on features', () => {
+    it('enables exactly the 19 default-on features', () => {
       mockAppConfig();
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
-      expect(result.current.enabledFeatures.size).toBe(23);
+      expect(result.current.enabledFeatures.size).toBe(19);
       expect(result.current.isEnabled(OverlayFeature.Header)).toBe(true);
       expect(
         result.current.isEnabled(OverlayFeature.ConversationsSection),
@@ -53,7 +53,7 @@ describe('UiFeaturesContext', () => {
       ).toBe(true);
     });
 
-    it('leaves the 15 default-off (modifier) features disabled', () => {
+    it('leaves the 13 default-off (modifier) features disabled', () => {
       mockAppConfig();
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
@@ -62,9 +62,6 @@ describe('UiFeaturesContext', () => {
       );
       expect(result.current.isEnabled(OverlayFeature.DisabledSend)).toBe(false);
       expect(result.current.isEnabled(OverlayFeature.HideUserMenu)).toBe(false);
-      expect(result.current.isEnabled(OverlayFeature.ChatHeaderBorder)).toBe(
-        false,
-      );
     });
   });
 
@@ -94,7 +91,7 @@ describe('UiFeaturesContext', () => {
       mockAppConfig(null);
       const { result } = renderHook(() => useUiFeatures(), { wrapper });
 
-      expect(result.current.enabledFeatures.size).toBe(23);
+      expect(result.current.enabledFeatures.size).toBe(19);
       expect(result.current.isEnabled(OverlayFeature.Header)).toBe(true);
     });
   });

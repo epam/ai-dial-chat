@@ -258,10 +258,7 @@ describe('NewConversationComposer', () => {
     expect(screen.getByLabelText('send-disabled').textContent).toBe('true');
   });
 
-  it('applies inputClassName when chat-input-border is enabled', async () => {
-    mockUseUiFeature.mockImplementation(
-      (feature) => feature === OverlayFeature.ChatInputBorder,
-    );
+  it('always applies the accent border inputClassName', async () => {
     render(
       <Suspense fallback={null}>
         <NewConversationComposer

@@ -4,7 +4,7 @@
 
 `AppConfigContext` (`apps/chat/src/context/AppConfigContext.tsx:20-33`) already separates boolean `features` (backend capability flags such as `asrEnabled`, `liveChatInteraction`) from non-boolean `config` (e.g. `overlayEnabled`, `overlayAllowedOrigins`, `fileManagerTabs`), resolved server-side by `CONFIG_DEFINITIONS` (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`) through `AppConfigService.getClientConfig` (`app-config.service.ts:35-108`) and returned by `ClientConfigResponseDto` (`dto/client-config-response.dto.ts`). `environment.config.ts` already has an established comma-separated-list env pattern (`FILE_MANAGER_AVAILABLE_TABS`, `:633-642`) that trims/filters/defaults to `[]`.
 
-The prior chat implementation (behavioral reference only, not present in this codebase) exposed 59 `Feature` enum keys through `ChatOverlayOptions.enabledFeatures` plus a role-filtering layer (`ENABLED_FEATURES_ROLES`) and a server allow-list (`ENABLED_FEATURES`). Of the 59, this change ports 38 (`overlay-features-analysis.json`, `status: "transferable"` after removing two unwired candidates), records 19 keys as unavailable (`status: "missing"`), and explicitly does not port the role layer, playback methods, import/export, custom message buttons, or `enabledFeaturesData`.
+The prior chat implementation (behavioral reference only, not present in this codebase) exposed 59 `Feature` enum keys through `ChatOverlayOptions.enabledFeatures` plus a role-filtering layer (`ENABLED_FEATURES_ROLES`) and a server allow-list (`ENABLED_FEATURES`). Of the 59, this change ports 32 (`overlay-features-analysis.json`, `status: "transferable"` subset, after removing two unwired candidates and six flags with no meaningful overlay use case — see D5 known-gaps table), records 19 keys as unavailable (`status: "missing"`), and explicitly does not port the role layer, playback methods, import/export, custom message buttons, or `enabledFeaturesData`.
 
 ## Goals / Non-Goals
 
@@ -91,12 +91,8 @@ Every transferable key is classified as **Positive** (its presence in the effect
 | `conversations-section` | Positive | **on** | `libs/sidebar`, `ConversationPanel` | Sidebar always available today |
 | `conversations-panel-toggle` | Positive | **on** | `Header.tsx`, `ChatLayout.tsx` toggle button | Toggle button always present |
 | `showConversationsSectionByDefault` | Modifier (initial-state) | **on** | Sidebar open/closed initial state | Sidebar currently opens by default on desktop |
-| `show-layout-dividers` | Modifier (visual) | **on** | `SidebarPanel` `border-s`/`border-e` (`--sb-border`) | Dividers already render unconditionally via the existing CSS variable |
 | `attachments-manager` | Positive | **on** | `AttachmentCanvasProvider` mount in `app.tsx` | Always mounted today |
-| `chat-header-border` | Modifier (visual) | **off** | Chat header container | Border is a new opt-in embellishment, not currently rendered |
 | `hide-new-conversation` | Modifier (hide) | **off** | New-conversation button (`Header.tsx`/`ChatLayout.tsx`) | Button is visible today; hiding is opt-in |
-| `top-settings` | Positive | **on** | Conversation top-bar settings panel | Present today |
-| `top-chat-model-settings` | Positive | **on** | `ModelSelectorControl` + deployment selector | Present today |
 | `disallow-change-agent` | Modifier (restrict) | **off** | Same model-selector call site | Selector is changeable today; restricting is opt-in |
 | `likes` | Positive | **on** | `build-message-actions.ts` `onLike`/`onDislike` | Present today |
 | `dislike-comment` | Positive | **on** | `NegativeFeedbackModal.tsx` | Present today |
@@ -106,7 +102,6 @@ Every transferable key is classified as **Positive** (its presence in the effect
 | `hide-regenerate-assistant-message` | Modifier (hide) | **off** | `build-message-actions.ts` `onRegenerate` | Present today |
 | `hide-delete-user-message` | Modifier (hide) | **off** | `build-message-actions.ts` delete action | Present today |
 | `skip-focus-chat-input-onload` | Modifier (behavior) | **off** | Chat-input auto-focus effect | Auto-focus happens today; skipping is opt-in |
-| `chat-input-border` | Modifier (visual) | **off** | Chat input container | New opt-in embellishment |
 | `disabled-send` | Modifier (disable) | **off** | Send button | Enabled today; disabling is opt-in |
 | `empty-chat-settings` | Positive | **on** | `NewConversationComposer.tsx` | Present today |
 | `hide-empty-chat-change-agent` | Modifier (hide) | **off** | Model selector on the composer screen | Visible today |
@@ -115,24 +110,36 @@ Every transferable key is classified as **Positive** (its presence in the effect
 | `toolsets-sharing` | Positive | **on** | Toolsets sharing UI | Present today |
 | `conversations-publishing` | Positive | **on** | `PublishConversationPanelContainer.tsx` | Present today |
 | `hide-user-settings` | Modifier (hide) | **off** | `UserMenu.tsx` settings entry | Visible today |
-| `custom-logo` | Positive | **on** | `Logo.tsx` (`ThemeContext` logo/favicon) | Present today |
 | `hide-user-menu` | Modifier (hide) | **off** | User avatar/menu button in header | Visible today |
 | `custom-applications` | Positive | **on** | AppsEditor "Add app" menu | Present today |
 | `hide-custom-app-creation` | Modifier (hide) | **off** | "Custom app" entry in the Add-app menu | Visible today |
 | `code-apps` | Positive | **on** | AppsEditor Code Apps route | Present today |
-| `marketplace` | Positive | **on** | `CatalogView` at `/catalog` | Present today |
-| `marketplace-table-view` | Modifier (initial-state) | **off** | `CatalogViewMode` toggle default | Current default view is grid |
-| `marketplace-hide-my-apps` | Modifier (restrict) | **off** | CatalogView shared/created filter | Both shown today |
+| `catalog` | Positive | **on** | `CatalogView` at `/catalog` | Present today |
+| `catalog-table-view` | Modifier (initial-state) | **off** | `CatalogViewMode` toggle default | Current default view is grid |
+| `catalog-hide-my-apps` | Modifier (restrict) | **off** | CatalogView shared/created filter | Both shown today |
 | `toolsets` | Positive | **on** | Toolsets functionality | Present today |
 | `voice-input` | Positive | **on** | Voice input button + iframe `microphone` permission | Present today; the existing ASR-model/deployment-audio support path remains the independent capability gate (D8) |
-Total: 23 default-on, 15 default-off — 38 keys.
+Total: 19 default-on, 13 default-off — 32 keys.
 
-**Known gaps (removed from enum):** Two flags were defined in the original research input but cannot be wired without introducing new UI behaviour (which this change explicitly excludes), so they were removed from `OverlayFeature` and `KNOWN_UI_FEATURES` rather than left as dead members:
+**Known gaps and intentionally excluded flags:**
+
+*Excluded — require new UI behaviour (out of scope for this change):*
 
 | Value | Reason |
 |---|---|
 | `md-sidebar-overlay-breakpoint` | No "overlay" (fixed/backdrop) sidebar mode exists in this codebase — the sidebar only ever pushes content at a single breakpoint. Wiring this key would require building new overlay/backdrop UI. |
 | `user-message-align-end` | Both user-message render paths already hardcode `justify-end` unconditionally; there is no alternate start-aligned state to toggle, and inventing one risks changing default rendering. |
+
+*Excluded — behavior is unconditional; exposing a toggle adds complexity with no practical override use case:*
+
+| Value | Reason |
+|---|---|
+| `custom-logo` | Logo rendering from theme config is always active; overlay hosts control theming through the `theme` parameter. |
+| `show-layout-dividers` | Sidebar dividers are a fixed visual treatment with no meaningful override scenario. |
+| `top-settings` | Top-bar settings panel is always rendered; `disallow-change-agent` covers the meaningful agent-restriction case. |
+| `top-chat-model-settings` | Model selector is always rendered; `disallow-change-agent` covers agent-change restriction. |
+| `chat-header-border` | Header bottom border is rendered unconditionally; no overlay use case for suppressing it. |
+| `chat-input-border` | Accent border on the chat input is rendered unconditionally; no overlay use case for suppressing it. |
 
 **Alternative rejected:** default everything off ("safe by default") — rejected per the proposal's explicit instruction: this would hide/disable functionality (new-conversation button, message actions, sharing, etc.) that works unconditionally today, breaking the normal (non-overlay) app on day one of this change.
 
@@ -219,7 +226,7 @@ A host that explicitly lists `enabledFeatures: ['header', 'likes']` gets exactly
 - **[Risk] Per-component gating touches ~15 existing files across unrelated domains (header, sidebar, sharing, marketplace, message actions).** → Mitigation: each gate is a single `useUiFeature(...)`-guarded conditional at an existing render/behavior branch, no restructuring; tasks.md slices this by owning-component so each slice is independently testable and revertable.
 - **[Risk] A deployment that mistypes `ENABLED_UI_FEATURES` silently falls back to the compiled-in defaults when all entries are invalid.** → Mitigation: `warn`-level log per unrecognized entry (D7) is consistent with this repo's existing non-critical-config-error pattern; escalating to a hard failure was explicitly rejected (D7) to avoid coupling redeploys to enum growth.
 - **[Risk] Overlay replace bypassing the server baseline (D9) could surprise an operator who assumed `ENABLED_UI_FEATURES` was a hard ceiling.** → Mitigation: documented explicitly in the spec and this design; matches the proposal's own recommended direction, and no role-based hard ceiling exists in this system (out of scope) to contradict it.
-- **[Risk] 38 default classifications (D5) are a judgment call without a design mockup to verify against.** → Mitigation: every classification is anchored to "does this already happen unconditionally in the current code today" (traceable to the file/line notes in `overlay-features-analysis.json`), not to a guess about desired future behavior; any that reviewers disagree with is a one-line change to the table and the `DEFAULT_ENABLED_UI_FEATURES` set, not a structural rework.
+- **[Risk] 32 default classifications (D5) are a judgment call without a design mockup to verify against.** → Mitigation: every classification is anchored to "does this already happen unconditionally in the current code today" (traceable to the file/line notes in `overlay-features-analysis.json`), not to a guess about desired future behavior; any that reviewers disagree with is a one-line change to the table and the `DEFAULT_ENABLED_UI_FEATURES` set, not a structural rework.
 
 ## Migration Plan
 
@@ -228,3 +235,8 @@ Additive only — no data migration, no breaking wire changes. Rollout order (al
 ## Open Questions
 
 - None blocking implementation. If a future change wants a hard (non-overlay-overridable) ceiling on specific UI sections, that is the `ENABLED_FEATURES_ROLES`-equivalent layer explicitly deferred out of this change's scope.
+
+## Migration Notes (for hosts migrating from the old chat)
+
+- The six wire strings `custom-logo`, `show-layout-dividers`, `top-settings`, `top-chat-model-settings`, `chat-header-border`, and `chat-input-border` are not recognized `OverlayFeature` values in this codebase. Hosts that pass them in `enabledFeatures` will see them logged as unknown and silently dropped (per D11). No behavior change results — the functionality they guarded in the old chat is unconditional here.
+- The wire strings `marketplace`, `marketplace-hide-my-apps`, and `marketplace-table-view` from the old chat are named `catalog`, `catalog-hide-my-apps`, and `catalog-table-view` here, matching the `/catalog` route and `CatalogView` component naming used throughout this codebase. Replace the old strings with their `catalog-*` equivalents in any `enabledFeatures` array or `ENABLED_UI_FEATURES` config.

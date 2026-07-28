@@ -29,17 +29,13 @@ const ChatLayout: FC<Props> = ({ isPanelOpen, onTogglePanel, onNewChat }) => {
   const isNewConversationHidden = useUiFeature(
     OverlayFeature.HideNewConversation,
   );
-  const isChatHeaderBorderEnabled = useUiFeature(
-    OverlayFeature.ChatHeaderBorder,
-  );
-
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <div
         className={mergeClasses(
           'hidden items-center gap-2 px-2 desktop:flex',
           isRootRoute ? 'absolute inset-x-0 top-0 z-10 h-16' : 'h-16 shrink-0',
-          isChatHeaderBorderEnabled && 'border-b border-primary',
+          'border-b border-primary',
         )}
       >
         {isConversationsPanelToggleEnabled && (

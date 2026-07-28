@@ -20,7 +20,7 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { push, close } = useSheetNavigation();
-  const isMarketplaceEnabled = useUiFeature(OverlayFeature.Marketplace);
+  const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
 
   const handleNavItem = (path: string) => {
     close();
@@ -35,7 +35,7 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
   };
 
   const visibleNavItems = NAVIGATION_CONFIG.filter(
-    ({ path }) => path !== ROUTES.Catalog || isMarketplaceEnabled,
+    ({ path }) => path !== ROUTES.Catalog || isCatalogEnabled,
   );
 
   return (

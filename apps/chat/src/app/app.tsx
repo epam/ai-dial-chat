@@ -45,10 +45,10 @@ import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
-import { useUiFeature } from '../hooks/useUiFeature';
 import usePanelMaxWidth, {
   MIN_CONTENT_AREA_WIDTH,
 } from '../hooks/usePanelMaxWidth';
+import { useUiFeature } from '../hooks/useUiFeature';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';

@@ -107,9 +107,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const isConversationsSectionEnabled = useUiFeature(
     OverlayFeature.ConversationsSection,
   );
-  const isShowLayoutDividersEnabled = useUiFeature(
-    OverlayFeature.ShowLayoutDividers,
-  );
   const isConversationsSharingEnabled = useUiFeature(
     OverlayFeature.ConversationsSharing,
   );
@@ -637,14 +634,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       '[--sb-bg-resize-handler:transparent]',
     );
   }
-  if (!isShowLayoutDividersEnabled) {
-    panelClassName = mergeClasses(
-      panelClassName,
-      '[--sb-border:transparent]',
-      '[--sb-border-inline-end:transparent]',
-    );
-  }
-
   return (
     <>
       {isConversationsSectionEnabled && (

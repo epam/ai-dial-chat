@@ -147,12 +147,12 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [schemas],
   );
 
-  const isMarketplaceEnabled = useUiFeature(OverlayFeature.Marketplace);
-  const isMarketplaceTableViewEnabled = useUiFeature(
-    OverlayFeature.MarketplaceTableView,
+  const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
+  const isCatalogTableViewEnabled = useUiFeature(
+    OverlayFeature.CatalogTableView,
   );
-  const isMarketplaceHideMyAppsEnabled = useUiFeature(
-    OverlayFeature.MarketplaceHideMyApps,
+  const isCatalogHideMyAppsEnabled = useUiFeature(
+    OverlayFeature.CatalogHideMyApps,
   );
   const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
   const isCustomApplicationsEnabled = useUiFeature(
@@ -194,11 +194,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     let result = isSelectorMode
       ? catalogItems.filter((item) => PICKER_VISIBLE_TYPES.has(item.type))
       : catalogItems;
-    if (isMarketplaceHideMyAppsEnabled) {
+    if (isCatalogHideMyAppsEnabled) {
       result = result.filter((item) => !item.isMyApp);
     }
     return result;
-  }, [catalogItems, isSelectorMode, isMarketplaceHideMyAppsEnabled]);
+  }, [catalogItems, isSelectorMode, isCatalogHideMyAppsEnabled]);
 
   const reconciledFilterTopics = useMemo(() => {
     const availableTopics = new Set(
@@ -648,7 +648,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     isToolsetsEnabled,
   ]);
 
-  if (!isMarketplaceEnabled && !isSelectorMode) {
+  if (!isCatalogEnabled && !isSelectorMode) {
     return null;
   }
 
@@ -661,7 +661,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       hideCreateButton={isSelectorMode}
       hidePageTitle={isSelectorMode}
       initialViewMode={
-        isMarketplaceTableViewEnabled ? CatalogViewMode.List : undefined
+        isCatalogTableViewEnabled ? CatalogViewMode.List : undefined
       }
       selectedItemId={
         isSelectorMode ? (selectedItemId ?? undefined) : undefined

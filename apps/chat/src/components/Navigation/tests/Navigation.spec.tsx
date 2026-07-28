@@ -112,9 +112,9 @@ describe('Navigation', () => {
     expect(container.querySelector('a[href="/catalog"]')).toBeTruthy();
   });
 
-  it('hides the Catalog nav item when marketplace is disabled', () => {
+  it('hides the Catalog nav item when catalog is disabled', () => {
     mockUseUiFeature.mockImplementation(
-      (feature) => feature !== OverlayFeature.Marketplace,
+      (feature) => feature !== OverlayFeature.Catalog,
     );
     const { container } = renderNavigation();
     expect(container.querySelector('a[href="/catalog"]')).toBeNull();
@@ -123,9 +123,9 @@ describe('Navigation', () => {
     ).toBeNull();
   });
 
-  it('keeps other nav items when marketplace is disabled', () => {
+  it('keeps other nav items when catalog is disabled', () => {
     mockUseUiFeature.mockImplementation(
-      (feature) => feature !== OverlayFeature.Marketplace,
+      (feature) => feature !== OverlayFeature.Catalog,
     );
     renderNavigation();
     expect(

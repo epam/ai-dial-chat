@@ -171,14 +171,9 @@ const ConversationView: FC<Props> = ({
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
-  const isTopSettingsEnabled = useUiFeature(OverlayFeature.TopSettings);
-  const isTopChatModelSettingsEnabled = useUiFeature(
-    OverlayFeature.TopChatModelSettings,
-  );
   const isDisallowChangeAgentEnabled = useUiFeature(
     OverlayFeature.DisallowChangeAgent,
   );
-  const isChatInputBorderEnabled = useUiFeature(OverlayFeature.ChatInputBorder);
   const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
   const isSkipFocusChatInputOnloadEnabled = useUiFeature(
     OverlayFeature.SkipFocusChatInputOnload,
@@ -677,11 +672,7 @@ const ConversationView: FC<Props> = ({
                 onAttachmentsChange={handleAttachmentsChange}
                 placeholder={placeholder}
                 deployments={
-                  isTopChatModelSettingsEnabled
-                    ? fixedModel
-                      ? fixedDeploymentItems
-                      : deploymentItems
-                    : undefined
+                  fixedModel ? fixedDeploymentItems : deploymentItems
                 }
                 selectedDeploymentId={
                   fixedModel ? fixedModel.id : selectedItemId
@@ -691,11 +682,7 @@ const ConversationView: FC<Props> = ({
                   isModelFixed || isDisallowChangeAgentEnabled
                 }
                 isSendDisabled={isDisabledSendEnabled}
-                inputClassName={
-                  isChatInputBorderEnabled
-                    ? 'border-2 border-accent-primary'
-                    : undefined
-                }
+                inputClassName="border-2 border-accent-primary"
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
@@ -713,7 +700,7 @@ const ConversationView: FC<Props> = ({
                 timerAriaLabel={t(VoiceRecordingI18nKeys.TimerAriaLabel)}
                 messageHistory={messageHistory}
                 sendOnEnter={sendOnEnter}
-                chatSettings={isTopSettingsEnabled ? chatSettings : undefined}
+                chatSettings={chatSettings}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}
                 pendingAttachments={
                   !isEditActive ? pendingDialAttachments : undefined

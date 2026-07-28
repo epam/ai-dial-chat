@@ -1,10 +1,10 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 
 /**
- * The 23 `OverlayFeature` keys enabled by default, reflecting today's
+ * The 19 `OverlayFeature` keys enabled by default, reflecting today's
  * unconditional app behavior (see `design.md`'s classification table in the
  * `add-chat-overlay-enabled-features` change). Every other transferable key
- * (17 "modifier" keys) defaults off so a deployment that configures nothing
+ * (13 "modifier" keys) defaults off so a deployment that configures nothing
  * observes zero behavior change.
  */
 export const DEFAULT_ENABLED_UI_FEATURES: ReadonlySet<OverlayFeature> = new Set(
@@ -13,10 +13,7 @@ export const DEFAULT_ENABLED_UI_FEATURES: ReadonlySet<OverlayFeature> = new Set(
     OverlayFeature.ConversationsSection,
     OverlayFeature.ConversationsPanelToggle,
     OverlayFeature.ShowConversationsSectionByDefault,
-    OverlayFeature.ShowLayoutDividers,
     OverlayFeature.AttachmentsManager,
-    OverlayFeature.TopSettings,
-    OverlayFeature.TopChatModelSettings,
     OverlayFeature.Likes,
     OverlayFeature.DislikeComment,
     OverlayFeature.InputFiles,
@@ -26,10 +23,9 @@ export const DEFAULT_ENABLED_UI_FEATURES: ReadonlySet<OverlayFeature> = new Set(
     OverlayFeature.ApplicationsSharing,
     OverlayFeature.ToolsetsSharing,
     OverlayFeature.ConversationsPublishing,
-    OverlayFeature.CustomLogo,
     OverlayFeature.CustomApplications,
     OverlayFeature.CodeApps,
-    OverlayFeature.Marketplace,
+    OverlayFeature.Catalog,
     OverlayFeature.Toolsets,
     OverlayFeature.VoiceInput,
   ],

@@ -4,11 +4,11 @@ The chat-overlay protocol already types `ChatOverlayOptions.enabledFeatures?: Ov
 
 ## What Changes
 
-- Expand `OverlayFeature` (`libs/chat-shared`) from one member to the full set of 38 UI-section toggle keys carried over from the previous implementation's `Feature` enum, keeping the existing name/import path (no new parallel `UiFeature` type).
+- Expand `OverlayFeature` (`libs/chat-shared`) from one member to the full set of 32 UI-section toggle keys carried over from the previous implementation's `Feature` enum, keeping the existing name/import path (no new parallel `UiFeature` type).
 - Add `enabledFeatures?: string[]` to `SetOverlayOptionsPayload` and specify its replace (not merge) semantics, normalization, and handling of unsupported/unknown values.
 - Add a new app-owned `UiFeaturesContext` (`apps/chat/src/context/UiFeaturesContext.tsx`) that computes an effective UI-feature set from a compiled-in default baseline, an optional server allow-list replacement, and — in overlay mode only — a runtime replacement pushed through `SET_OVERLAY_OPTIONS`. Expose `useUiFeature(feature)` / `useUiFeatures()` for consumers.
 - Add an `ENABLED_UI_FEATURES` server environment variable (comma-separated `OverlayFeature` values), a new `config-registry` entry, and a new `config.enabledUiFeatures: string[] | null` field on the `GET /api/v1/client-config` response.
-- Wire each of the 38 transferable feature keys to the app component/container that already implements the corresponding surface (see `design.md` for the full ownership table), gating visibility/behavior without introducing new functionality.
+- Wire each of the 32 transferable feature keys to the app component/container that already implements the corresponding surface (see `design.md` for the full ownership table), gating visibility/behavior without introducing new functionality.
 - Update `ChatOverlay`/`ChatOverlayManager`'s `setOverlayOptions` signature and initial-options send to include `enabledFeatures`, and extend the sandbox with a case that exercises it.
 - Explicitly do **not** implement: the old `ENABLED_FEATURES_ROLES` role-filtering layer, the 19 `status: "missing"` keys as working toggles (recorded as unsupported instead — see `design.md`), playback methods, import/export, custom message buttons, or `enabledFeaturesData`.
 
