@@ -930,14 +930,18 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
                       />
                     ) : (
                       <>
-                        {shouldShowIntroText && (
-                          <IntroText
-                            isWideLayout={isWideLayout}
-                            modelId={selectedConversations[0].model.id}
-                          />
-                        )}
+                        {!isWideLayout && (
+                          <>
+                            {shouldShowIntroText && (
+                              <IntroText
+                                isWideLayout={isWideLayout}
+                                modelId={selectedConversations[0].model.id}
+                              />
+                            )}
 
-                        {!isWideLayout && <ChatStarters />}
+                            <ChatStarters />
+                          </>
+                        )}
 
                         {!isPlayback && (
                           <ChatInput
@@ -977,7 +981,18 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
                           />
                         )}
 
-                        {isWideLayout && <ChatStarters />}
+                        {isWideLayout && (
+                          <div className="flex flex-col gap-4">
+                            {shouldShowIntroText && (
+                              <IntroText
+                                isWideLayout={isWideLayout}
+                                modelId={selectedConversations[0].model.id}
+                              />
+                            )}
+
+                            <ChatStarters />
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
