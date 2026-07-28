@@ -27,6 +27,23 @@ const SECTION_ORDER: ScheduledTaskSectionKey[] = [
   ScheduledTaskSectionKey.MyTasks,
 ];
 
+const getStatusMessage = (
+  isLoading: boolean,
+  hasError: boolean,
+  totalCount: number,
+  visibleCount: number,
+  labels: Pick<
+    ScheduledTasksProps['labels'],
+    'errorLabel' | 'emptyStateLabel' | 'noResultsLabel'
+  >,
+): string | undefined => {
+  if (isLoading) return undefined;
+  if (hasError) return labels.errorLabel;
+  if (totalCount === 0) return labels.emptyStateLabel;
+  if (visibleCount === 0) return labels.noResultsLabel;
+  return `${visibleCount}`;
+};
+
 /**
  * Scheduled Tasks page shell: header with title/subtitle/create action, a
  * search + sort toolbar, and a content region that shows a loading spinner,
@@ -81,15 +98,13 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     })).filter((section) => section.items.length > 0);
   }, [visibleItems, labels.sharedSectionTitle]);
 
-  const statusMessage = isLoading
-    ? undefined
-    : error
-      ? labels.errorLabel
-      : items.length === 0
-        ? labels.emptyStateLabel
-        : visibleItems.length === 0
-          ? labels.noResultsLabel
-          : `${visibleItems.length}`;
+  const statusMessage = getStatusMessage(
+    isLoading,
+    Boolean(error),
+    items.length,
+    visibleItems.length,
+    labels,
+  );
 
   const renderContent = () => {
     if (isLoading) {

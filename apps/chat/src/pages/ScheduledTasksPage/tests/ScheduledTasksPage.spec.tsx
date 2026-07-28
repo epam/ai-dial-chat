@@ -12,8 +12,10 @@ import { NotFoundI18nKeys } from '../../../constants/translation-keys';
 import ScheduledTasksPage from '../ScheduledTasksPage';
 
 const useFeatureFlagMock = vi.fn();
+const useAppConfigMock = vi.fn();
 vi.mock('../../../context/AppConfigContext', () => ({
   useFeatureFlag: (key: string) => useFeatureFlagMock(key),
+  useAppConfig: () => useAppConfigMock(),
 }));
 
 const useUserMock = vi.fn();
@@ -99,6 +101,17 @@ describe('ScheduledTasksPage', () => {
       refetch: refetchMock,
     });
     useUserMock.mockReturnValue({ user: { sub: 'user-1' } });
+    useAppConfigMock.mockReturnValue({ status: 'ready' });
+  });
+
+  it('renders a fallback instead of NotFound while app config is still loading', () => {
+    useAppConfigMock.mockReturnValue({ status: 'loading' });
+    useFeatureFlagMock.mockReturnValue(false);
+    renderScheduledTasksPage();
+
+    expect(
+      screen.queryByRole('region', { name: NotFoundI18nKeys.Title }),
+    ).toBeNull();
   });
 
   it('renders the NotFound page when scheduledTasksEnabled is false', () => {

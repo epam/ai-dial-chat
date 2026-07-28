@@ -42,8 +42,8 @@
 
 ## 8. Manual verification
 
-- [ ] 8.1 Run the app (`npm start` + `npm run start:api`) and open `/scheduled-tasks/new`: verify desktop two-column layout and mobile stacked layout.
-- [ ] 8.2 Verify RTL: back chevron mirrors, layout mirrors with no broken offsets.
-- [ ] 8.3 Verify the markdown editor toolbar works and typing updates `prompt`.
-- [ ] 8.4 Verify Save still POSTs `{ displayName, description?, trigger, model, prompt, stream? }` unchanged, and Cancel/back both navigate to `returnUrl` without a network call.
-- [ ] 8.5 Verify the Schedule section behaves identically to before (once/recurring, frequency, time, day fields, validation).
+- [x] 8.1 Run the app (`npm start` + `npm run start:api`) and open `/scheduled-tasks/new`: verify desktop two-column layout and mobile stacked layout.
+- [x] 8.2 Verify RTL: back chevron mirrors, layout mirrors with no broken offsets.
+- [x] 8.3 Verify the markdown editor toolbar works and typing updates `prompt`.
+- [x] 8.4 Verify Save still POSTs `{ displayName, description?, trigger, model, prompt, stream? }` unchanged, and Cancel/back both navigate to `returnUrl` without a network call.
+- [x] 8.5 Verify the Schedule section behaves identically to before (once/recurring, frequency, time, day fields, validation).

@@ -7,8 +7,10 @@ import { NotFoundI18nKeys } from '../../../constants/translation-keys';
 import ScheduledTaskCreatePage from '../ScheduledTaskCreatePage';
 
 const useFeatureFlagMock = vi.fn();
+const useAppConfigMock = vi.fn();
 vi.mock('../../../context/AppConfigContext', () => ({
   useFeatureFlag: (key: string) => useFeatureFlagMock(key),
+  useAppConfig: () => useAppConfigMock(),
 }));
 
 const useDeploymentsMock = vi.fn();
@@ -146,6 +148,17 @@ describe('ScheduledTaskCreatePage', () => {
       items: [{ id: 'gpt-4o', displayName: 'GPT-4o' }],
     });
     useThemeMock.mockReturnValue({ currentTheme: 'light' });
+    useAppConfigMock.mockReturnValue({ status: 'ready' });
+  });
+
+  it('renders a fallback instead of NotFound while app config is still loading', () => {
+    useAppConfigMock.mockReturnValue({ status: 'loading' });
+    useFeatureFlagMock.mockReturnValue(false);
+    renderAtRoute('/scheduled-tasks/new');
+
+    expect(
+      screen.queryByRole('region', { name: NotFoundI18nKeys.Title }),
+    ).toBeNull();
   });
 
   it('renders the NotFound page when scheduledTasksEnabled is false', () => {

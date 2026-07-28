@@ -10,19 +10,21 @@ import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import {
   ButtonsI18nKeys,
   EditorI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
-import { useFeatureFlag } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { createScheduledTask } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
+import { UserConfigStatus } from '../../types/user-config-status';
 import { mapFormValuesToCreateBody } from '../../utils/scheduled-task-trigger';
 import NotFoundPage from '../NotFound/NotFound';
 
@@ -65,6 +67,7 @@ const resolveReturnUrl = (candidate: string | null): string => {
 
 const ScheduledTaskCreatePage: FC = () => {
   const { t } = useTranslation();
+  const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -252,6 +255,10 @@ const ScheduledTaskCreatePage: FC = () => {
       setIsSubmitting(false);
     }
   }, [values, validate, showNotification, t, navigate, returnUrl]);
+
+  if (appConfigStatus !== UserConfigStatus.Ready) {
+    return <RouteFallback />;
+  }
 
   if (!isEnabled) {
     return <NotFoundPage />;

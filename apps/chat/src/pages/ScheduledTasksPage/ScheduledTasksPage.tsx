@@ -12,12 +12,14 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
+import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ScheduledTaskCreateQuery } from '../../constants/scheduled-tasks';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
-import { useFeatureFlag } from '../../context/AppConfigContext';
+import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useScheduledTasks } from '../../hooks/scheduled-tasks/useScheduledTasks';
 import { ROUTES } from '../../types/routes';
+import { UserConfigStatus } from '../../types/user-config-status';
 import { mapScheduledTaskDtosToItems } from '../../utils/map-scheduled-task-dto';
 import NotFoundPage from '../NotFound/NotFound';
 
@@ -27,6 +29,7 @@ interface NavigationState {
 
 const ScheduledTasksPage: FC = () => {
   const { t } = useTranslation();
+  const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const location = useLocation();
@@ -107,11 +110,17 @@ const ScheduledTasksPage: FC = () => {
     [taskDtos, t, user?.sub],
   );
 
+  if (appConfigStatus !== UserConfigStatus.Ready) {
+    return <RouteFallback />;
+  }
+
   if (!isEnabled) {
     return <NotFoundPage />;
   }
 
   return (
+    // onEdit/onRunNow/onDelete are intentionally omitted: the overflow menu,
+    // edit flow, and run-now action are deferred to a future iteration.
     <ScheduledTasks
       labels={labels}
       onCreateClick={handleCreateClick}
