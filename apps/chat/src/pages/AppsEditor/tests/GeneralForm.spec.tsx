@@ -332,7 +332,7 @@ describe('GeneralForm', () => {
       });
     });
 
-    it('returns the current trimmed values after edits, excluding version', async () => {
+    it('returns the current trimmed values after edits, including display_version but excluding the backend version field', async () => {
       const ref = createRef<GeneralFormHandle>();
 
       renderForm(
@@ -357,6 +357,7 @@ describe('GeneralForm', () => {
       expect(ref.current?.getValues()).toEqual({
         name: 'Renamed App',
         description: 'New description',
+        display_version: '1.0.0',
         iconUrl: undefined,
         topics: undefined,
         intro: 'New intro',

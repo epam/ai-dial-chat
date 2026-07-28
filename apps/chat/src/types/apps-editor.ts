@@ -80,8 +80,9 @@ export interface ToolsetLogoutResultPayload {
 /**
  * Current General-step values carried on a `TriggerSave` message so the embedded
  * QuickApps editor can merge them into the single save it already performs, instead of
- * the host persisting them separately. Deliberately excludes `version` — Settings-step
- * save must not alter the application's version.
+ * the host persisting them separately. Includes `display_version` (the human-readable
+ * version label). Deliberately excludes the backend `version` field — Settings-step save
+ * must not alter the application's internal version.
  */
 export interface TriggerSaveGeneralPayload {
   name: string;
