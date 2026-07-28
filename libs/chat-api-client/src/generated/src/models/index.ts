@@ -474,6 +474,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   overlayAllowedOrigins: Array<string>;
+  /**
+   * Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  announcementHtml?: string | null;
 }
 /**
  *

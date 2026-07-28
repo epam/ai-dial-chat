@@ -88,7 +88,7 @@
 
 - [x] Add `.addTag('deployments', 'List and inspect available AI DIAL deployments')` to `DocumentBuilder`
 - [x] Add `.addTag('chat', 'Chat completion proxy to DIAL Core')` to `DocumentBuilder`
-- [ ] Verify Swagger UI renders the new tags at `http://localhost:3005/api/docs`
+- [ ] Verify Swagger UI renders the new tags at `http://localhost:5000/api/docs`
 
 ---
 

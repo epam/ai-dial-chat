@@ -19,7 +19,7 @@
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3005", "type": "string" },
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
     { "key": "origin", "value": "http://localhost:4207", "type": "string" },
     { "key": "csrfToken", "value": "", "type": "string" },
     { "key": "providerId", "value": "local", "type": "string" },

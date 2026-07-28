@@ -50,6 +50,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DIAL_CORE_EXTERNAL_URL',
   },
   {
+    key: 'announcement.html',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null/empty hides the banner. Sourced from ANNOUNCEMENT_HTML_MESSAGE.',
+    owner: 'chat-team',
+    envVar: 'ANNOUNCEMENT_HTML_MESSAGE',
+  },
+  {
     key: 'features.asrEnabled',
     type: 'feature',
     valueType: 'boolean',

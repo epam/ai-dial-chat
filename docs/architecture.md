@@ -40,7 +40,7 @@ Core principle: the chat application is assembled from a set of **independently 
 root/
 ├── apps/
 │   ├── chat/                  # React SPA — frontend chat application (port 4207)
-│   └── chat-api/              # NestJS — backend API server (port 3005)
+│   └── chat-api/              # NestJS — backend API server (port 5000)
 ├── libs/
 │   ├── chat-shared/           # @epam/ai-dial-chat-shared
 │   ├── conversation-input/    # @epam/ai-dial-conversation-input

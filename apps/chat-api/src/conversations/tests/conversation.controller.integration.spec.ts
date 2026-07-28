@@ -463,7 +463,7 @@ describe('ConversationController (integration)', () => {
   });
 
   describe('GET /conversations/list', () => {
-    it('returns 200 with items when path is omitted', async () => {
+    it('returns 200 with items', async () => {
       const response = { items: [], nextToken: undefined };
       service.listConversations.mockReturnValue(response);
 
@@ -474,24 +474,6 @@ describe('ConversationController (integration)', () => {
         TEST_USER.bucket,
         undefined,
         undefined,
-        undefined,
-      );
-    });
-
-    it('forwards non-empty path to the service', async () => {
-      const response = { items: [], nextToken: undefined };
-      service.listConversations.mockReturnValue(response);
-
-      await request(app.getHttpServer())
-        .get('/conversations/list?path=work%2Fproject-x')
-        .expect(200);
-
-      expect(service.listConversations).toHaveBeenCalledWith(
-        TEST_USER.at,
-        TEST_USER.bucket,
-        undefined,
-        undefined,
-        'work/project-x',
       );
     });
 
@@ -508,14 +490,7 @@ describe('ConversationController (integration)', () => {
         TEST_USER.bucket,
         50,
         'abc123',
-        undefined,
       );
-    });
-
-    it('returns 400 when path exceeds 512 characters', async () => {
-      await request(app.getHttpServer())
-        .get(`/conversations/list?path=${'a'.repeat(513)}`)
-        .expect(400);
     });
 
     it('accepts a limit of 1000', async () => {
@@ -530,7 +505,6 @@ describe('ConversationController (integration)', () => {
         TEST_USER.at,
         TEST_USER.bucket,
         1000,
-        undefined,
         undefined,
       );
     });

@@ -62,6 +62,7 @@ describe('AppConfigService', () => {
       ]);
       expect(result.config.overlayEnabled).toBe(false);
       expect(result.config.overlayAllowedOrigins).toEqual([]);
+      expect(result.config.announcementHtml).toBeNull();
     });
 
     it('returns resolved values when providers succeed', async () => {
@@ -75,6 +76,7 @@ describe('AppConfigService', () => {
         if (key === 'overlay.enabled') return true;
         if (key === 'overlay.allowedOrigins')
           return ['https://partner.example.com'];
+        if (key === 'announcement.html') return 'Welcome to <b>DIAL</b>!';
         return undefined;
       });
       const result = await service.getClientConfig(ctx);
@@ -91,6 +93,7 @@ describe('AppConfigService', () => {
       expect(result.config.overlayAllowedOrigins).toEqual([
         'https://partner.example.com',
       ]);
+      expect(result.config.announcementHtml).toBe('Welcome to <b>DIAL</b>!');
     });
 
     it('returns null defaultDeploymentId when DEFAULT_DEPLOYMENT is not set', async () => {
@@ -103,6 +106,20 @@ describe('AppConfigService', () => {
       const { service } = makeService(async () => undefined);
       const result = await service.getClientConfig(ctx);
       expect(result.config.dialCoreExternalUrl).toBeNull();
+    });
+
+    it('returns null announcementHtml when ANNOUNCEMENT_HTML_MESSAGE is not set', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.announcementHtml).toBeNull();
+    });
+
+    it('returns the configured announcementHtml when ANNOUNCEMENT_HTML_MESSAGE is set', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'announcement.html' ? 'Welcome to <b>DIAL</b>!' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.announcementHtml).toBe('Welcome to <b>DIAL</b>!');
     });
 
     it('never leaks the internal DIAL_CORE_URL value under any key', async () => {

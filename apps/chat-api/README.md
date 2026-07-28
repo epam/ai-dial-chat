@@ -45,7 +45,7 @@ Create a `.env.local` file in the project root:
 ```bash
 # Required
 AUTH_SESSION_SECRET=<64-character-hex-secret>
-AUTH_CALLBACK_BASE_URL=http://localhost:3005
+AUTH_CALLBACK_BASE_URL=http://localhost:5000
 AUTH_POST_LOGOUT_REDIRECT_URI=http://localhost:4207
 
 # At least one identity provider must be configured — example for Auth0:
@@ -54,7 +54,7 @@ AUTH_AUTH0_SECRET=<client-secret>
 AUTH_AUTH0_HOST=your-tenant.auth0.com
 
 # Optional
-PORT=3005
+PORT=5000
 API_PREFIX=api
 CORS_ORIGIN=http://localhost:4207
 DIAL_CORE_URL=https://your-dial-service.com
@@ -81,7 +81,7 @@ OVERLAY_SANDBOX_ENABLED=false
 | Variable                 | Description                                            | Example                     |
 | ------------------------ | ------------------------------------------------------ | --------------------------- |
 | `AUTH_SESSION_SECRET`    | 32-byte session encryption key encoded as 64 hex chars | `<64-character-hex-secret>` |
-| `AUTH_CALLBACK_BASE_URL` | Public API base URL used for OIDC redirect URIs        | `http://localhost:3005`     |
+| `AUTH_CALLBACK_BASE_URL` | Public API base URL used for OIDC redirect URIs        | `http://localhost:5000`     |
 
 At least one identity provider (see [Auth provider environment variables](#auth-provider-environment-variables) below) must also be configured for login to work; the application otherwise boots with no providers registered.
 
@@ -89,7 +89,7 @@ At least one identity provider (see [Auth provider environment variables](#auth-
 
 | Variable                                | Default                        | Description                                                                                                                                                                                                                                                                                                                                                                                                          |
 | --------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --- |
-| `PORT`                                  | `3005`                         | HTTP server port                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `PORT`                                  | `5000`                         | HTTP server port                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `API_PREFIX`                            | `api`                          | Global route prefix for all API endpoints                                                                                                                                                                                                                                                                                                                                                                            |
 | `CORS_ORIGIN`                           | `http://localhost:4207`        | Allowed CORS origin for frontend                                                                                                                                                                                                                                                                                                                                                                                     |
 | `LOG_LEVEL`                             | Environment-dependent          | Minimum NestJS log level: `debug`, `log`, `warn`, or `error`. Defaults to `log` in production and `debug` otherwise.                                                                                                                                                                                                                                                                                                 |
@@ -273,9 +273,9 @@ npm run start:all
 
 The API will be available at:
 
-- **API**: `http://localhost:3005/api`
-- **Swagger Docs**: `http://localhost:3005/api/docs`
-- **Health Check**: `http://localhost:3005/api/health`
+- **API**: `http://localhost:5000/api`
+- **Swagger Docs**: `http://localhost:5000/api/docs`
+- **Health Check**: `http://localhost:5000/api/health`
 
 ## API Documentation
 

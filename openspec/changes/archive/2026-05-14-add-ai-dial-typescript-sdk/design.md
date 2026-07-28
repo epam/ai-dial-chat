@@ -79,7 +79,7 @@ This avoids a global DI token for the SDK instance while keeping the client cons
 | --------------------------- | ------ | -------- | ----------------------- | --------------------------------------------- |
 | `DIAL_CORE_URL`             | string | **Yes**  | —                       | Base URL of the DIAL Core API                 |
 | `DIAL_API_KEY`              | string | **Yes**  | —                       | API key sent as `Api-Key` header to DIAL Core |
-| `PORT`                      | number | No       | `3005`                  | HTTP port the NestJS server listens on        |
+| `PORT`                      | number | No       | `5000`                  | HTTP port the NestJS server listens on        |
 | `API_PREFIX`                | string | No       | `api`                   | Global REST prefix                            |
 | `CORS_ORIGIN`               | string | No       | `http://localhost:4207` | Allowed CORS origin                           |
 | `THEMES_CONFIG_URL`         | string | No       | —                       | External themes service URL                   |

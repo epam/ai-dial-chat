@@ -37,5 +37,5 @@ The themes list is dynamic (loaded from the backend via `useTheme().themes`). `D
 ## Risks / Trade-offs
 
 - **Theme list loading race** → `useTheme().isLoading` is `true` while themes load. The `DialSelect` should be `disabled` when `isLoading` is true to prevent interaction before options are ready.
-- **Logout redirect in dev proxy** → In local dev, `window.location.href = '/api/v1/auth/logout'` proxies to `localhost:3005`. The redirect target (IdP or `/`) must be reachable from the browser; no special handling needed.
+- **Logout redirect in dev proxy** → In local dev, `window.location.href = '/api/v1/auth/logout'` proxies to `localhost:5000`. The redirect target (IdP or `/`) must be reachable from the browser; no special handling needed.
 - **`top-end` overflow on narrow viewports** → Floating UI (used by `DialDropdown`) has `flip` middleware by default, so the menu will reposition if there is not enough space above. Acceptable fallback.
