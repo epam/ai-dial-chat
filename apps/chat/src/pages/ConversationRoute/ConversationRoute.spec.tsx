@@ -9,12 +9,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
+import * as OverlayContextMock from '../../context/overlay/OverlayContext';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as filesApi from '../../server-api/files.api';
 import { AuthStatus } from '../../types/auth-status';
 import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
-import * as OverlayContextMock from '../../context/overlay/OverlayContext';
 import ConversationRoute from './ConversationRoute';
 
 const OverlayTestCtx = (
@@ -316,6 +316,7 @@ describe('ConversationRoute', () => {
       const [overlay, setO] = useState<
         { notifyConversationLoaded: () => void } | undefined
       >(undefined);
+      // eslint-disable-next-line react-hooks/globals
       setOverlay = setO;
       return (
         <OverlayTestCtx.Provider value={overlay}>
