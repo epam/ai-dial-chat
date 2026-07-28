@@ -47,12 +47,7 @@ export interface EditMessageInputProps {
   initialAttachments?: DisplayAttachment[];
   /** Called when the user clicks the Cancel button. */
   onCancel: () => void;
-  /**
-   * Called when the user clicks Save & Submit.
-   * @param message - The edited message text.
-   * @param keptAttachments - Pre-existing attachments the user did not remove.
-   * @param newAttachments - New attachments added during editing.
-   */
+  /** Called when the user clicks Save & Submit. */
   onSave: (
     message: string,
     keptAttachments: DisplayAttachment[],
@@ -92,19 +87,11 @@ export interface EditMessageInputProps {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
-  /**
-   * Maximum number of kept plus newly added attachments. Undefined, `0`, or
-   * non-finite values mean there is no count limit.
-   */
+  /** Maximum total kept-plus-new attachments; unlimited when `undefined`, `0`, or non-finite. */
   maximumAttachmentsAmount?: number;
-  /**
-   * Called when adding a file/drop batch would exceed
-   * `maximumAttachmentsAmount`.
-   */
+  /** Called when adding a batch would exceed `maximumAttachmentsAmount`. */
   onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
-  /**
-   * When `true`, the "Attach file" button is hidden.
-   */
+  /** When `true`, the "Attach file" button is hidden. */
   hideAttachFile?: boolean;
   /**
    * Value applied verbatim as the `accept` attribute on the native device

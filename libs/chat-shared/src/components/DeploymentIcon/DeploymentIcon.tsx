@@ -41,16 +41,7 @@ export interface DeploymentIconProps {
   styles?: DeploymentIconStyles;
 }
 
-/**
- * Renders a deployment icon inside a rounded badge.
- * The `size` prop is the outer badge dimension in pixels.
- * The icon image is inset by ~11 % (matching Figma) to leave a visible backdrop.
- * On image load error, or when `src` is absent, renders `InitialsAvatar` derived from
- * `initialsName` (or the custom `fallback` node when provided).
- * When `src` changes, the previous image stays visible until the new one has
- * finished preloading, avoiding the blank frame a browser shows while an
- * `<img>`'s `src` attribute is swapped in place.
- */
+/** Renders a deployment icon inside a rounded badge, falling back to initials or a custom node when no image is available. */
 export const DeploymentIcon: FC<DeploymentIconProps> = ({
   src,
   size,

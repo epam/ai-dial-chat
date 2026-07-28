@@ -67,10 +67,7 @@ const syntaxTheme = {
   light: restrainedSyntaxTheme,
 };
 
-/**
- * Renders a fenced or multiline code block with a sticky header (language label + copy button),
- * syntax highlighting via Prism, a height-constrained scrollable body, and always-LTR code direction.
- */
+/** Renders a fenced or multi-line code block with syntax highlighting and a copy button. */
 export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
   ({
     language,

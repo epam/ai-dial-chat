@@ -45,11 +45,7 @@ export const toFolderPathKey = (path: string[]): string => path.join('/');
 export const fromFolderPathKey = (pathKey: string): string[] =>
   pathKey.split('/').filter(Boolean);
 
-/**
- * Converts `PublishFolderNode[]` to the `DialFile[]` shape `DialFoldersTree`
- * requires. `folderId` is required by `DialFile` but unused for this
- * folder-only, context-menu-less tree, so it is set to the path key.
- */
+/** Converts `PublishFolderNode[]` to the `DialFile[]` shape `DialFoldersTree` requires. */
 export const toDialFileTree = (items: PublishFolderNode[]): DialFile[] =>
   items.map((node) => {
     const path = toFolderPathKey(node.path);
@@ -75,11 +71,7 @@ export interface FolderNameValidationMessages {
   duplicate: string;
 }
 
-/**
- * Validates a folder name entered in the publish destination tree. Returns an
- * error message from `messages`, or `null` when `rawValue` is a valid,
- * non-duplicate folder name.
- */
+/** Returns an error message from `messages`, or `null` when `rawValue` is a valid non-duplicate folder name for the publish destination tree. */
 export const validateFolderName = (
   rawValue: string,
   siblingNames: string[],
@@ -100,12 +92,7 @@ export const validateFolderName = (
   return null;
 };
 
-/**
- * Returns `baseName` if no sibling already has that name, otherwise
- * `"${baseName} 2"`, `"${baseName} 3"`, etc. — the first suffix that is
- * free. Used so the inline create-folder editor starts with a name that does
- * not duplicate an existing sibling folder.
- */
+/** Returns `baseName` if no sibling already has that name, otherwise appends a number suffix (`2`, `3`, …) until the name is free. */
 export const getUniqueFolderName = (
   baseName: string,
   siblingNames: string[],

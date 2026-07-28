@@ -3,6 +3,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 const OVERFLOW_TOLERANCE = 1;
 
+/** Return value of `useTableScroll`. */
 export interface UseTableScrollResult {
   /** Ref attached to the horizontally scrollable table container. */
   scrollContainerRef: RefObject<HTMLDivElement | null>;

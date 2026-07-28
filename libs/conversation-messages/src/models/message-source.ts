@@ -34,6 +34,7 @@ export interface MessageSourceLabels {
   label: string;
 }
 
+/** Props for the `MessageSource` component. */
 export interface MessageSourceProps {
   /** User-visible strings. */
   labels: MessageSourceLabels;

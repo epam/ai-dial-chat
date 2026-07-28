@@ -11,6 +11,7 @@ export interface UseCollapsedTextOptions {
   collapsedLineCount: number;
 }
 
+/** Return value of `useCollapsedText`. */
 export interface UseCollapsedTextResult<T extends HTMLElement> {
   /** Ref callback attached to the text element to measure its rendered height. */
   textRef: (node: T | null) => void;

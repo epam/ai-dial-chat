@@ -99,10 +99,7 @@ export interface MarkdownRendererProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Color overrides applied as CSS custom properties. */
   colors?: MarkdownRendererColors;
-  /**
-   * Accessible label announced for a table's horizontally scrollable region.
-   * Defaults to `'Scrollable table'`.
-   */
+  /** Accessible label for a table's horizontally scrollable region. Defaults to `'Scrollable table'`. */
   tableScrollRegionAriaLabel?: string;
 }
 

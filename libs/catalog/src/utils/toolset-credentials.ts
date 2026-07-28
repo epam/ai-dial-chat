@@ -10,13 +10,7 @@ import {
 const isSignedIn = (status: CredentialStatus | undefined): boolean =>
   status === CredentialStatus.SignedIn;
 
-/**
- * Resolves which credentials action/section the Details Panel should show,
- * mirroring the legacy Marketplace `getToolsetAuthAction` decision:
- * admin managing a public item always gets the two-level accordion; a
- * non-admin viewing a public item that they are not personally signed into
- * gets "Login with my creds"; otherwise it's a plain Log in / Log out.
- */
+/** Resolves which credentials action/section the Details Panel should show for the given item credentials. */
 export const getCredentialsUiState = (
   credentials: CatalogItemCredentials,
 ): CredentialsUiState => {
@@ -35,11 +29,7 @@ export const getCredentialsUiState = (
   return CredentialsUiState.LogOut;
 };
 
-/**
- * Resolves the card-grid credentials badge state: LOGGED OUT when signed out
- * at every applicable level. Returns `undefined` (no badge) when the item
- * requires no authentication, or when it is signed in at any level.
- */
+/** Returns `CredentialsBadgeState.LoggedOut` when signed out at every applicable level, or `undefined` when no authentication is required or signed in at any level. */
 export const getCredentialsBadgeState = (
   credentials: CatalogItemCredentials,
 ): CredentialsBadgeState | undefined => {
@@ -55,12 +45,7 @@ export const getCredentialsBadgeState = (
     : undefined;
 };
 
-/**
- * Resolves which level a direct (non-accordion) "Log out" action applies to:
- * prefers `USER` when signed in there, else falls back to `GLOBAL`. Only
- * meaningful when `getCredentialsUiState` returned `LogOut` (i.e. at least
- * one level is signed in).
- */
+/** Resolves which level a direct (non-accordion) "Log out" action applies to. */
 export const getSignedInLevel = (
   credentials: CatalogItemCredentials,
 ): CredentialsLevel =>

@@ -54,6 +54,7 @@ export interface MessageActionLabels {
   ariaLabels?: MessageActionAriaLabels;
 }
 
+/** Props for the `MessageActions` component. */
 export interface MessageActionsProps {
   /** Which actions are shown. `'User'` = Edit/Delete; `'Agent'` = Regenerate/Copy/Like/Dislike. Defaults to `'User'`. */
   role?: MessageRole;

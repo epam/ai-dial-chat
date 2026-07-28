@@ -27,10 +27,7 @@ export interface UseMessageStateResult {
   isMultiLine: boolean;
 }
 
-/**
- * Manages textarea message value, parent-prop sync, and multi-line detection
- * for the `Input` component.
- */
+/** Manages textarea value and multi-line state for the `Input` component. */
 export const useMessageState = ({
   messageProp,
   messageRevision,

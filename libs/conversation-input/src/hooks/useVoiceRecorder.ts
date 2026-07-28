@@ -50,13 +50,7 @@ const MIME_CANDIDATES = [
 const detectMimeType = (): string =>
   MIME_CANDIDATES.find((t) => MediaRecorder.isTypeSupported(t)) ?? '';
 
-/**
- * Manages the three-state voice recording lifecycle:
- * `idle` → `recording` → `idle` (blob attached on stop) | `error` (permission denied)
- *
- * On stop the recorded blob is passed to `onAttachAudio` and the state resets to `idle`.
- * Media resources are released on discard and on unmount.
- */
+/** Manages voice recording state and media resources. */
 export const useVoiceRecorder = ({
   onAttachAudio,
 }: UseVoiceRecorderOptions): UseVoiceRecorderResult => {

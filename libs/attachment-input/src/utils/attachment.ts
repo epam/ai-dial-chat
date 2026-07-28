@@ -66,18 +66,7 @@ const WILDCARD_TYPE_LABELS: Record<string, string> = {
   text: 'Text files',
 };
 
-/**
- * Converts an array of MIME type strings (including wildcards) into a
- * comma-separated human-readable label string.
- *
- * Examples:
- *   `['application/pdf', 'image/jpeg']` → `'PDF, JPEG'`
- *   `['image/*', 'text/csv']` → `'Image files, CSV'`
- *
- * @param wildcardLabels - Optional overrides for the wildcard category labels
- *   (`image`, `audio`, `video`, `text`), keyed by MIME major type. Defaults
- *   to the built-in English labels.
- */
+/** Converts an array of MIME type strings (including wildcards) into a comma-separated human-readable label string. */
 export const mimeTypesToExtensionLabels = (
   types: string[],
   wildcardLabels: Record<string, string> = WILDCARD_TYPE_LABELS,
@@ -117,11 +106,7 @@ export const isMimeTypeAllowed = (
   });
 };
 
-/**
- * Returns the appropriate Tabler icon component for a given MIME content type.
- * Broad category checks (`startsWith`) run first; then a specific MIME switch
- * covers as many known file types as possible. Falls back to `IconFile`.
- */
+/** Returns the Tabler icon component for a given MIME content type, or `IconFile` for unknown types. */
 export const getAttachmentIcon = (contentType: string): Icon => {
   if (!contentType) return IconFile;
   // Broad category checks first
