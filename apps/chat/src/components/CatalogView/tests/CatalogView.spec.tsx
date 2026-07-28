@@ -760,7 +760,7 @@ describe('CatalogView', () => {
 
       expect(
         capturedPublishProps.current?.isShareVisible?.(
-          makeCatalogItem({ type: CatalogEntityType.Application }),
+          makeCatalogItem({ type: CatalogEntityType.Agent }),
         ),
       ).toBe(false);
       expect(
