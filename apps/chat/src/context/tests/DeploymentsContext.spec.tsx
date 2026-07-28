@@ -115,6 +115,39 @@ describe('DeploymentsContext', () => {
       expect(mockListToolsets).toHaveBeenCalledOnce();
       expect(mockGetApplicationSchemas).toHaveBeenCalledOnce();
     });
+
+    it('clears items while an identity-triggered refetch is in flight, instead of serving the previous identity snapshot', async () => {
+      const { result, rerender } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.items).toEqual(mockResponse.deployments);
+
+      let resolveRefetch: (value: typeof mockResponse) => void;
+      const refetchPromise = new Promise<typeof mockResponse>((resolve) => {
+        resolveRefetch = resolve;
+      });
+      mockGetDeployments.mockReturnValueOnce(refetchPromise);
+      contextMocks.userSub = 'user-2';
+
+      act(() => {
+        rerender();
+      });
+
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.items).toEqual([]);
+
+      await act(async () => {
+        resolveRefetch({ deployments: [mockItem1] });
+        await refetchPromise;
+      });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        mockItem1.id,
+      ]);
+    });
   });
 
   it('loads items on mount and sets isLoading false on completion', async () => {

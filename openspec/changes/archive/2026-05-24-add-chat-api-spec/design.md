@@ -35,7 +35,7 @@ apps/chat-api/src/
 ### Base Configuration
 
 - **Global Prefix**: `/api` (configurable via `API_PREFIX` env var)
-- **Port**: `3005` (configurable via `PORT` env var)
+- **Port**: `5000` (configurable via `PORT` env var)
 - **CORS Origin**: `http://localhost:4207` (configurable via `CORS_ORIGIN` env var)
 - **CORS Credentials**: Enabled
 
@@ -155,7 +155,7 @@ Currently empty. The controller exists as a placeholder under the `/api/apps` pa
 
 | Variable            | Required | Default                 | Description                                |
 | ------------------- | -------- | ----------------------- | ------------------------------------------ |
-| `PORT`              | No       | `3005`                  | HTTP server port                           |
+| `PORT`              | No       | `5000`                  | HTTP server port                           |
 | `API_PREFIX`        | No       | `api`                   | Global route prefix                        |
 | `CORS_ORIGIN`       | No       | `http://localhost:4207` | Allowed CORS origin                        |
 | `DIAL_CORE_URL`     | Yes      | -                       | AI DIAL core service URL                   |
@@ -363,7 +363,7 @@ nx build chat              # Build frontend
 
 - All required environment variables set
 - Network access to external services
-- Port 3005 (or configured PORT) available
+- Port 5000 (or configured PORT) available
 
 ### Health Check
 

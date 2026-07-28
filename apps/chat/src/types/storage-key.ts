@@ -6,4 +6,5 @@ export enum StorageKey {
   CatalogSortKey = 'catalogSortKey',
   CatalogFilterTopics = 'catalogFilterTopics',
   CatalogIsMyAppsActive = 'catalogIsMyAppsActive',
+  TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
 }

@@ -234,6 +234,14 @@ describe('handleDialSdkError', () => {
       BadGatewayException,
     );
   });
+
+  it('maps correctly when error is undefined and response carries the status', () => {
+    /* Covers the data==null branch in files-listing.service where openapi-fetch
+       returns {error:undefined, data:undefined} on a 404 with an empty body. */
+    expect(() =>
+      handleDialSdkError(undefined, 'ctx', undefined, { status: 404 }),
+    ).toThrow(NotFoundException);
+  });
 });
 
 describe('handleDialFetchError', () => {

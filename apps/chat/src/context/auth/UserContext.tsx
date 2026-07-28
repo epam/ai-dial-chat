@@ -16,8 +16,6 @@ import {
   UnauthorizedError,
 } from '../../server-api/base';
 import { AuthStatus } from '../../types/auth-status';
-import { StorageKey } from '../../types/storage-key';
-import { removeFromLocalStorage } from '../../utils/local-storage';
 
 interface UserContextType {
   status: AuthStatus;
@@ -33,17 +31,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
 
   /*
-   * Shared by every path that invalidates the session (explicit logout, a
-   * 401 from any API call, and an identity mismatch caught by the
-   * revalidation checkpoint below) so identity-scoped Catalog preferences
-   * never leak from one authenticated identity to the next on the same
-   * browser. CatalogSortKey is a display preference with no ownership
-   * semantics and is deliberately left untouched.
+   * Shared by every path that genuinely invalidates the session (explicit
+   * logout, a 401 from any API call, and a 401 from the revalidation
+   * checkpoint below). An identity mismatch on that same checkpoint is
+   * handled separately in revalidate() — the session is still valid there,
+   * just for a different identity, so it adopts the new profile in place
+   * instead of invalidating.
    */
   const invalidateSession = useCallback(() => {
     clearCsrfToken();
-    removeFromLocalStorage(StorageKey.CatalogFilterTopics);
-    removeFromLocalStorage(StorageKey.CatalogIsMyAppsActive);
     setUser(null);
     setStatus(AuthStatus.Unauthenticated);
   }, []);
@@ -129,7 +125,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           setUser(profile);
           return;
         }
-        invalidateSession();
+        /*
+         * The session is already validly authenticated as this new
+         * identity — adopt it in place rather than forcing a logout/login
+         * screen. Downstream identity-scoped contexts (conversations-context,
+         * user-config-frontend-init, deployments-context) each key their own
+         * load effect to this sub and reset/refetch on their own.
+         */
+        clearCsrfToken();
+        setUser(profile);
       } catch (err) {
         if (err instanceof UnauthorizedError) {
           invalidateSession();
