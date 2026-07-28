@@ -317,7 +317,7 @@ for (const [path, pathItem] of Object.entries(openApi.paths ?? {})) {
 }
 
 const variables = [
-  ['baseUrl', openApi.servers?.[0]?.url ?? 'http://localhost:3005'],
+  ['baseUrl', openApi.servers?.[0]?.url ?? 'http://localhost:5000'],
   ['origin', 'http://localhost:4207'],
   ['csrfToken', ''],
   ['providerId', 'local'],

@@ -17,11 +17,11 @@ const ensureOpenApiEnv = () => {
   process.env['DIAL_CORE_URL'] ??= 'http://localhost:8080';
   process.env['AUTH_SESSION_SECRET'] ??=
     '0000000000000000000000000000000000000000000000000000000000000000';
-  process.env['AUTH_CALLBACK_BASE_URL'] ??= 'http://localhost:3005';
-  process.env['AUTH_POST_LOGOUT_REDIRECT_URI'] ??= 'http://localhost:3005';
+  process.env['AUTH_CALLBACK_BASE_URL'] ??= 'http://localhost:5000';
+  process.env['AUTH_POST_LOGOUT_REDIRECT_URI'] ??= 'http://localhost:5000';
   process.env['AUTH_OKTA_CLIENT_ID'] ??= 'openapi-generator';
   process.env['AUTH_OKTA_CLIENT_SECRET'] ??= 'openapi-generator';
-  process.env['AUTH_OKTA_ISSUER'] ??= 'http://localhost:3005';
+  process.env['AUTH_OKTA_ISSUER'] ??= 'http://localhost:5000';
   process.env['AUTH_OKTA_NAME'] ??= 'Local';
 };
 
@@ -30,7 +30,7 @@ const generateOpenApiSpec = async () => {
 
   const app = await NestFactory.create(AppModule, { logger: false });
   const globalPrefix = process.env['API_PREFIX'] || 'api';
-  const port = process.env['PORT'] || 3005;
+  const port = process.env['PORT'] || 5000;
 
   app.setGlobalPrefix(globalPrefix);
   app.enableVersioning({ type: VersioningType.URI });

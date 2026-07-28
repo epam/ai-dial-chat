@@ -233,7 +233,7 @@ Key format follows the project rule `auth.<element>`.
 
 ### D10 — Vite proxy and `credentials: 'include'`
 
-The Vite proxy in `apps/chat/vite.config.mts` already forwards `/api → http://localhost:3005`. From the browser's perspective every API call is same-origin (`http://localhost:4207`), so cookies are sent regardless of `credentials`. We still set `credentials: 'include'` explicitly in `request()` so:
+The Vite proxy in `apps/chat/vite.config.mts` already forwards `/api → http://localhost:5000`. From the browser's perspective every API call is same-origin (`http://localhost:4207`), so cookies are sent regardless of `credentials`. We still set `credentials: 'include'` explicitly in `request()` so:
 
 - Cross-origin prod deployments (where the API may live at `api.example.com`) work without further code changes — only `CORS_ORIGIN` + `Access-Control-Allow-Credentials: true` on the BFF (already configured in `apps/chat-api/src/main.ts`).
 - The intent is documented in code, not hidden in dev-proxy magic.
