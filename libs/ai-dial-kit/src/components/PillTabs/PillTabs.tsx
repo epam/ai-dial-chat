@@ -46,7 +46,12 @@ export const PillTabs: FC<PillTabsProps> = memo(
         {tabs.map((tab) => {
           const isActive = activeTabId === tab.id;
           return (
-            <div key={tab.id} role="tab" aria-selected={isActive} className="contents">
+            <div
+              key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              className="contents"
+            >
               <DialTag
                 label={tab.label}
                 selected={isActive}
