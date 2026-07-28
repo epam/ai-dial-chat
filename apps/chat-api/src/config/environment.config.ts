@@ -613,10 +613,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @Transform(({ obj, key }) => {
-    // Reads the raw source value (not `value`, which class-transformer's
-    // `enableImplicitConversion` may have already coerced to `true` for any
-    // non-empty string, including the literal string "false") so an env var
-    // explicitly set to "false"/"0"/"no" parses to `false` as intended.
+    /* Reads the raw source value (not `value`, which class-transformer's
+     * `enableImplicitConversion` may have already coerced to `true` for any
+     * non-empty string, including the literal string "false") so an env var
+     * explicitly set to "false"/"0"/"no" parses to `false` as intended. */
     const raw = (obj as Record<string, unknown>)[key];
     if (raw == null) return undefined;
     if (typeof raw === 'boolean') return raw;

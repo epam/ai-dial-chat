@@ -18,10 +18,7 @@ const PALETTE: readonly AvatarColorEntry[] = [
   { background: '#dde3f9', foreground: '#3730a3' }, // indigo
 ];
 
-/**
- * Deterministically maps a display name to a palette entry using a
- * char-code-sum hash. The same name always returns the same colours.
- */
+/** Returns a deterministic colour-pair for the given display name. */
 export const pickAvatarColor = (name: string): AvatarColorEntry => {
   let sum = 0;
   for (let i = 0; i < name.length; i++) {

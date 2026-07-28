@@ -426,9 +426,9 @@ export class FilesController {
       }
     });
 
-    // pipeline() (not .pipe()) so a stream error also destroys the response,
-    // matching the downloadFile route below instead of leaving the client
-    // connection hanging on an archive-generation failure.
+    /* pipeline() (not .pipe()) so a stream error also destroys the response,
+     * matching the downloadFile route below instead of leaving the client
+     * connection hanging on an archive-generation failure. */
     await pipeline(stream, res).catch(() => {
       res.destroy();
     });

@@ -61,8 +61,8 @@ interface Props {
   labels?: DeploymentSelectorLabels;
 }
 
-// Matches the conversation panel's group-header color (.groupHeader in
-// ConversationPanel.module.scss: text-tertiary at 55% opacity).
+/* Matches the conversation panel's group-header color (.groupHeader in
+ * ConversationPanel.module.scss: text-tertiary at 55% opacity). */
 const SECTION_HEADING_CLASS_NAME =
   'dial-tiny-semi-text px-3 pb-0.5 pt-2 uppercase text-tertiary opacity-[0.55]';
 
