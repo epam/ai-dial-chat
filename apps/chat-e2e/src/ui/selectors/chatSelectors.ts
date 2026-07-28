@@ -182,6 +182,7 @@ export const TableSelectors = {
   copyAsCsvIcon: '[data-qa="copy-csv-icon"]',
   copyAsTxtIcon: '[data-qa="copy-txt-icon"]',
   copyAsMdIcon: '[data-qa="copy-md-icon"]',
+  downloadCsvIcon: '[data-qa="download-csv"]',
 };
 
 export const PublicationReviewControls = {

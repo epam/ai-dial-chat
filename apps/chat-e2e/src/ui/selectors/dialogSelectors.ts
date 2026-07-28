@@ -13,6 +13,12 @@ export const Popup = {
   errorPopup: '[style*="animation"]',
 };
 
+export const DownloadTableCsvModalSelectors = {
+  modalContainer: '[data-qa="download-csv-modal"]',
+  title: '[data-qa="modal-entity-name"]',
+  filenameInput: '[data-qa="download-filename-input"]',
+};
+
 export const PromptModal = {
   title: '[data-qa="modal-entity-name"]',
   promptModalDialog: '[data-qa="prompt-modal"]',

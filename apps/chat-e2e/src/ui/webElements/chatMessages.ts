@@ -218,6 +218,12 @@ export class ChatMessages extends BaseElement {
     );
   }
 
+  public getChatMessageTableDownloadIcon(message: string | number) {
+    return this.getChatMessageTableControls(message).locator(
+      TableSelectors.downloadCsvIcon,
+    );
+  }
+
   public getChatMessageTableHeaderColumns(message: string | number) {
     return this.getChatMessageTable(message)
       .locator(Tags.table)

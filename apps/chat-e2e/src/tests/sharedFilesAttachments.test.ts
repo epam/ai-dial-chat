@@ -590,9 +590,11 @@ dialSharedWithMeTest(
 
         user1ImageUrlInResponse1 = await fileApiHelper.putFile(
           user1ImageInResponse1,
+          { parentPath: API.modelFilePath(attachmentModel.id) },
         );
         user1ImageUrlInResponse2 = await fileApiHelper.putFile(
           user1ImageInResponse2,
+          { parentPath: API.modelFilePath(attachmentModel.id) },
         );
 
         user1ConversationInFolderImageUrlInResponse1 =
@@ -758,12 +760,12 @@ dialSharedWithMeTest(
           await additionalShareUserChatMessages.getChatMessageAttachmentUrl(4);
         baseAssertion.assertStringIncludes(
           attachmentInResponseUrl1!,
-          `${API.importFileRootPath(BucketUtil.getBucket())}/${user1ImageInResponse1}`,
+          `${API.importFilePath(BucketUtil.getBucket(), attachmentModel.id)}/${user1ImageInResponse1}`,
           ExpectedMessages.attachmentUrlIsValid,
         );
         baseAssertion.assertStringIncludes(
           attachmentInResponseUrl2!,
-          `${API.importFileRootPath(BucketUtil.getBucket())}/${user1ImageInResponse2}`,
+          `${API.importFilePath(BucketUtil.getBucket(), attachmentModel.id)}/${user1ImageInResponse2}`,
           ExpectedMessages.attachmentUrlIsValid,
         );
       },
@@ -869,6 +871,10 @@ dialSharedWithMeTest(
           'visible',
         );
       }
+      await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+        AttachFilesFolders.appdata,
+        'hidden',
+      );
     });
 
     await dialSharedWithMeTest.step(
