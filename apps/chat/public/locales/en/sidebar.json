@@ -68,6 +68,7 @@
   "Type": "Type",
   "Topics": "Topics",
   "Sources": "Sources",
+  "Authentication": "Authentication",
   "Filters": "Filters",
   "No filters as you currently have no agents": "No filters as you currently have no agents",
   "No filters as you currently have no toolsets": "No filters as you currently have no toolsets",

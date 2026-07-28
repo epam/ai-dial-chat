@@ -24,6 +24,7 @@ export enum MarketplaceQueryParams {
   topics = 'topics',
   search = 'search',
   sources = 'sources',
+  auth = 'auth',
   viewType = 'viewType',
   tableSort = 'tableSort',
 }
@@ -32,9 +33,24 @@ export enum FilterTypes {
   ENTITY_TYPE = 'Type',
   TOPICS = 'Topics',
   SOURCES = 'Sources',
+  AUTH = 'Authentication',
   // CAPABILITIES = 'Capabilities',
   // ENVIRONMENT = 'Environment',
 }
+
+export enum ToolsetAuthFilter {
+  LoggedOut = 'Logged out',
+  MyCreds = 'My creds',
+  OrgCreds = 'Org creds',
+  WithoutAuth = 'Without Authentication',
+}
+
+export const TOOLSET_AUTH_FILTER_VALUES = [
+  ToolsetAuthFilter.LoggedOut,
+  ToolsetAuthFilter.MyCreds,
+  ToolsetAuthFilter.OrgCreds,
+  ToolsetAuthFilter.WithoutAuth,
+];
 
 export enum MarketplaceTabs {
   HOME = 'marketplace',

@@ -49,7 +49,9 @@ export function ToolsTabRenderer() {
   );
 
   const areAllFiltersEmpty =
-    !searchTerm.length && !selectedFilters[FilterTypes.TOPICS].length;
+    !searchTerm.length &&
+    !selectedFilters[FilterTypes.TOPICS].length &&
+    !selectedFilters[FilterTypes.AUTH].length;
   const selectedToolset = detailsToolset
     ? toolsetsMap[detailsToolset.reference]
     : undefined;
