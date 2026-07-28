@@ -3,6 +3,7 @@ import type {
   AttachmentErrorReason,
   DeploymentItem,
   DisplayAttachment,
+  ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type {
@@ -11,6 +12,7 @@ import type {
   InputTypography,
   ModelSelectorLabels,
   SendOnEnter,
+  ToolsChipLabels,
 } from './Input';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
@@ -282,4 +284,12 @@ export interface ConversationInputProps {
    */
   // TODO: review usage
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
+  /** Resolved tool toggle items rendered in a "Tools" submenu. When empty or absent, no Tools item is shown. */
+  toolsMenuItems?: ToolMenuItem[];
+  /** Called when a tool row is toggled. Receives the tool id. */
+  onToolToggle?: (toolId: string) => void;
+  /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
+  toolsMenuTitle?: string;
+  /** Labels for the selected-tools chip row shown in the input when tools are active. */
+  toolsChipLabels?: ToolsChipLabels;
 }

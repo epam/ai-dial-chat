@@ -29,6 +29,7 @@ interface AppConfigState {
     overlayEnabled: boolean;
     overlayAllowedOrigins: string[];
     announcementHtml: string | null;
+    deepResearchToolId: string | null;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -45,6 +46,7 @@ const INITIAL_STATE: AppConfigState = {
     overlayEnabled: false,
     overlayAllowedOrigins: [],
     announcementHtml: null,
+    deepResearchToolId: null,
   },
 };
 
@@ -78,6 +80,9 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             overlayEnabled: response.config?.overlayEnabled ?? false,
             overlayAllowedOrigins: response.config?.overlayAllowedOrigins ?? [],
             announcementHtml: response.config?.announcementHtml ?? null,
+            deepResearchToolId:
+              (response.config as { deepResearchToolId?: string })
+                ?.deepResearchToolId ?? null,
           },
           metadata: response.metadata,
         });

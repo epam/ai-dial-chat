@@ -23,6 +23,7 @@ import {
   ChatI18nKeys,
   ConversationPanelI18nKeys,
   RateI18nKeys,
+  ToolsI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
@@ -38,6 +39,7 @@ import { useActiveConversationBridge } from '../../hooks/conversation/useActiveC
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
+import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
@@ -425,6 +427,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     navigate(`${pathname}${search}`, { replace: true, state: null });
   }, [conversationId, prefetchedConversation, navigate, pathname, search]);
 
+  const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
+    useToolsMenu();
+
   const {
     handleSend,
     handleUploadAttachment,
@@ -452,6 +457,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     setConversation,
     navigate,
     showNetworkError: handleNetworkUploadError,
+    toolConfigurationValue,
   });
 
   useEffect(() => {
@@ -566,6 +572,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           inputContentRevision={
             overlay ? overlayInputContent.revision : undefined
           }
+          toolsMenuItems={toolsMenuItems}
+          onToolToggle={onToolToggle}
+          toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
+          toolsChipLabels={{
+            countLabel: (count) => t(ToolsI18nKeys.SelectedCount, { count }),
+            removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
+          }}
         />
       </div>
 

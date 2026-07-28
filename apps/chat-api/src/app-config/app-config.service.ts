@@ -55,6 +55,7 @@ export class AppConfigService {
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
     let announcementHtml: string | null = null;
+    let deepResearchToolId: string | null = null;
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -73,6 +74,8 @@ export class AppConfigService {
           typeof resolved === 'number' ? resolved : 5 * 1024 * 1024;
       } else if (def.key === 'deployments.defaultDeploymentId') {
         defaultDeploymentId = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'deployments.deepResearchToolId') {
+        deepResearchToolId = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'dialCore.externalUrl') {
         dialCoreExternalUrl = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'fileManager.availableTabs') {
@@ -100,6 +103,7 @@ export class AppConfigService {
         overlayEnabled,
         overlayAllowedOrigins,
         announcementHtml,
+        deepResearchToolId,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

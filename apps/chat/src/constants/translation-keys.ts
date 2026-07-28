@@ -654,3 +654,10 @@ export enum VoiceRecordingI18nKeys {
   DiscardRecordingLabel = 'voiceRecording.discardRecordingLabel',
   TimerAriaLabel = 'voiceRecording.timerAriaLabel',
 }
+
+export enum ToolsI18nKeys {
+  MenuTitle = 'tools.menuTitle',
+  DeepResearchFallback = 'tools.deepResearchFallback',
+  SelectedCount = 'tools.selectedCount',
+  RemoveTool = 'tools.removeTool',
+}

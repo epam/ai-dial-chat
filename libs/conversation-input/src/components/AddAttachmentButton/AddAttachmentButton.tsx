@@ -1,6 +1,7 @@
 import {
   mergeClasses,
   ResponseFormat,
+  type ToolMenuItem,
   useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -10,10 +11,12 @@ import {
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
+  IconCheck,
+  IconChevronRight,
   IconPaperclip,
   IconPlus,
   IconSettings,
-  IconChevronRight,
+  IconTool,
 } from '@tabler/icons-react';
 import {
   CSSProperties,
@@ -26,6 +29,7 @@ import type { ChatSettingsConfig } from '../../models/Input';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { ChatSettingsBottomSheet } from '../ChatSettingsBottomSheet/ChatSettingsBottomSheet';
 import { ChatSettingsModal } from '../ChatSettingsModal/ChatSettingsModal';
+import { ToolsBottomSheet } from '../ToolsBottomSheet/ToolsBottomSheet';
 
 /** A single item injected into the attachment menu by the host app. */
 export interface ExtraMenuItem {
@@ -61,6 +65,14 @@ interface AddAttachmentButtonProps {
   chatSettings?: ChatSettingsConfig;
   /** Additional menu items appended after "Attach file". */
   extraMenuItems?: ExtraMenuItem[];
+  /** Resolved tool toggle items to render in a "Tools" submenu. When empty or absent, no Tools item is shown. */
+  toolsMenuItems?: ToolMenuItem[];
+  /** Called when a tool row is toggled. Receives the tool id. */
+  onToolToggle?: (toolId: string) => void;
+  /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
+  toolsMenuTitle?: string;
+  /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
+  toolsBackLabel?: string;
 }
 
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
@@ -74,10 +86,41 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   isDisabled = false,
   chatSettings,
   extraMenuItems,
+  toolsMenuItems = [],
+  onToolToggle,
+  toolsMenuTitle = 'Tools',
+  toolsBackLabel = 'Back',
 }) => {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
+  const [isToolsSheetOpen, setIsToolsSheetOpen] = useState(false);
+
+  const hasTools = toolsMenuItems.length > 0 && onToolToggle != null;
+
+  const toolsSubmenuChildren = useMemo(
+    () =>
+      toolsMenuItems.map((item) => ({
+        key: item.id,
+        label: (
+          <span className="flex flex-1 items-center gap-2">
+            <span className="flex-1">{item.label}</span>
+            {item.isSelected && (
+              <IconCheck
+                size={BASE_ICON_SIZE}
+                className="text-accent-primary"
+                aria-hidden
+              />
+            )}
+          </span>
+        ),
+        icon: (
+          <span className="flex items-center text-secondary">{item.icon}</span>
+        ),
+        onClick: () => onToolToggle?.(item.id),
+      })),
+    [toolsMenuItems, onToolToggle],
+  );
 
   const menuItems = useMemo(
     () => [
@@ -92,6 +135,35 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
           ]
         : []),
       ...(extraMenuItems ?? []),
+      ...(hasTools
+        ? [
+            {
+              key: 'tools',
+              label: toolsMenuTitle,
+              icon: <IconTool size={BASE_ICON_SIZE} aria-hidden />,
+              onClick: isMobile
+                ? () => {
+                    setIsToolsSheetOpen(true);
+                    setIsSheetOpen(false);
+                  }
+                : () => undefined,
+              ...(isMobile
+                ? {
+                    iconAfter: (
+                      <IconChevronRight
+                        size={BASE_ICON_SIZE}
+                        stroke={1.5}
+                        className="text-secondary rtl:scale-x-[-1]"
+                        aria-hidden
+                      />
+                    ),
+                  }
+                : {
+                    children: toolsSubmenuChildren,
+                  }),
+            },
+          ]
+        : []),
       ...(chatSettings != null
         ? [
             {
@@ -111,7 +183,16 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
           ]
         : []),
     ],
-    [attachLabel, onAttachClick, chatSettings, extraMenuItems, isMobile],
+    [
+      attachLabel,
+      onAttachClick,
+      chatSettings,
+      extraMenuItems,
+      isMobile,
+      hasTools,
+      toolsMenuTitle,
+      toolsSubmenuChildren,
+    ],
   );
 
   if (menuItems.length === 0) return null;
@@ -140,6 +221,22 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             className="pb-4"
             btnTextClassName="flex-1"
           />
+          {hasTools && (
+            <ToolsBottomSheet
+              isOpen={isToolsSheetOpen}
+              onBack={() => {
+                setIsToolsSheetOpen(false);
+                setIsSheetOpen(true);
+              }}
+              backLabel={toolsBackLabel}
+              onClose={() => setIsToolsSheetOpen(false)}
+              closeLabel={menuCloseLabel}
+              style={style}
+              title={toolsMenuTitle}
+              items={toolsMenuItems}
+              onToolToggle={onToolToggle}
+            />
+          )}
           {chatSettings != null && (
             <ChatSettingsBottomSheet
               isOpen={isChatSettingsOpen}

@@ -513,6 +513,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  DEEP_RESEARCH_TOOL_ID?: string;
+
+  @IsOptional()
+  @IsString()
   ANNOUNCEMENT_HTML_MESSAGE?: string;
 
   @IsOptional()

@@ -53,6 +53,8 @@ interface Params {
   navigate: NavigateFunction;
   /** Called with batched filenames after a burst of network-error upload failures. */
   showNetworkError?: (filenames: string[]) => void;
+  /** Tool toggle configuration values merged into every outgoing completion request. */
+  toolConfigurationValue?: Record<string, boolean>;
   /**
    * When provided, overrides the globally-selected deployment for every
    * message sent through this hook. Used by callers that pin the
@@ -72,6 +74,7 @@ export const useConversationHandlers = ({
   setConversation,
   navigate,
   showNetworkError,
+  toolConfigurationValue,
   fixedModelId,
 }: Params) => {
   const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(
@@ -115,12 +118,21 @@ export const useConversationHandlers = ({
         return next;
       });
 
+      const hasToolConfig =
+        toolConfigurationValue != null &&
+        Object.keys(toolConfigurationValue).length > 0;
+
       startStream(
         conversationId,
         message,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
-        { attachments: attachmentDtos },
+        {
+          attachments: attachmentDtos,
+          ...(hasToolConfig
+            ? { configuration_value: toolConfigurationValue }
+            : {}),
+        },
         crypto.randomUUID(),
         CompletionMode.Append,
       );
@@ -132,6 +144,7 @@ export const useConversationHandlers = ({
       selectedItemId,
       setConversation,
       startStream,
+      toolConfigurationValue,
     ],
   );
 
@@ -327,6 +340,15 @@ export const useConversationHandlers = ({
       const configurationValue = propertyKey
         ? { [propertyKey]: starter.const }
         : undefined;
+      const hasToolConfig =
+        toolConfigurationValue != null &&
+        Object.keys(toolConfigurationValue).length > 0;
+      const mergedConfigurationValue = {
+        ...(configurationValue ?? {}),
+        ...(hasToolConfig ? toolConfigurationValue : {}),
+      };
+      const hasConfigurationValue =
+        Object.keys(mergedConfigurationValue).length > 0;
 
       const { userMessage, assistantMessage } = createMessagePair(
         displayText,
@@ -349,7 +371,14 @@ export const useConversationHandlers = ({
         submitText,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
-        configurationValue ? { form_value: configurationValue } : undefined,
+        configurationValue || hasConfigurationValue
+          ? {
+              ...(configurationValue ? { form_value: configurationValue } : {}),
+              ...(hasConfigurationValue
+                ? { configuration_value: mergedConfigurationValue }
+                : {}),
+            }
+          : undefined,
         crypto.randomUUID(),
         CompletionMode.Append,
       );
@@ -361,6 +390,7 @@ export const useConversationHandlers = ({
       selectedItemId,
       setConversation,
       startStream,
+      toolConfigurationValue,
     ],
   );
 

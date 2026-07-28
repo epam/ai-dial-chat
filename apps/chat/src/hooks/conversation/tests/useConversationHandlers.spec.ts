@@ -1,4 +1,8 @@
-import type { Attachment, Conversation } from '@epam/ai-dial-chat-shared';
+import type {
+  Attachment,
+  Conversation,
+  StarterOption,
+} from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
   MessageRole,
@@ -254,6 +258,45 @@ describe('useConversationHandlers — handleUploadAttachment (network error batc
 
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+});
+
+describe('useConversationHandlers — handleButtonSelect', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('sends submitted starter configuration and tool overrides in configuration_value', () => {
+    const starter = {
+      const: 0,
+      title: 'Starter',
+      'dial:widgetOptions': {
+        populateText: 'Run starter',
+        submit: true,
+        confirmationMessage: null,
+      },
+    } as StarterOption;
+    const params = makeParams({
+      toolConfigurationValue: { starter: true, deep_research: true },
+    });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    act(() => {
+      result.current.handleButtonSelect(starter, 'starter');
+    });
+
+    expect(params.startStream).toHaveBeenCalledWith(
+      'conv-1',
+      'Run starter',
+      1,
+      'selected-deployment',
+      {
+        form_value: { starter: 0 },
+        configuration_value: { starter: true, deep_research: true },
+      },
+      expect.any(String),
+      'append',
+    );
   });
 });
 

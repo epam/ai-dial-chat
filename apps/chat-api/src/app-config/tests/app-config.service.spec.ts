@@ -122,6 +122,20 @@ describe('AppConfigService', () => {
       expect(result.config.announcementHtml).toBe('Welcome to <b>DIAL</b>!');
     });
 
+    it('returns null deepResearchToolId when DEEP_RESEARCH_TOOL_ID is not set', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.deepResearchToolId).toBeNull();
+    });
+
+    it('returns the configured deepResearchToolId when DEEP_RESEARCH_TOOL_ID is set', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'deployments.deepResearchToolId' ? 'deep_research' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.deepResearchToolId).toBe('deep_research');
+    });
+
     it('never leaks the internal DIAL_CORE_URL value under any key', async () => {
       const { service } = makeService(async (key: string) => {
         if (key === 'dialCore.externalUrl') return undefined;
@@ -164,7 +178,7 @@ describe('AppConfigService', () => {
         first,
         60_000,
       );
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(10);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(11);
     });
 
     it('does not share cached config across role sets', async () => {
@@ -181,7 +195,7 @@ describe('AppConfigService', () => {
         roles: ['viewer'],
       });
 
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(20);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(22);
     });
   });
 

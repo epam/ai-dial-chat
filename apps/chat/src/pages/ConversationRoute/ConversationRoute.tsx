@@ -24,10 +24,11 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
-import { ChatI18nKeys } from '../../constants/translation-keys';
+import { ChatI18nKeys, ToolsI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
+import { useToolsMenu } from '../../hooks/conversation/useToolsMenu';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   createConversation as apiCreateConversation,
@@ -86,6 +87,9 @@ const ConversationRoute: FC = () => {
     overlay?.notifyConversationLoaded();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Boolean(overlay)]);
+
+  const { toolsMenuItems, onToolToggle, toolConfigurationValue } =
+    useToolsMenu();
 
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),
@@ -147,10 +151,12 @@ const ConversationRoute: FC = () => {
     ) => {
       if (!selectedItemId) return;
       const attachmentDtos = attachmentsToDtos(attachments || []);
+      const hasToolConfig = Object.keys(toolConfigurationValue).length > 0;
       const conversation = await apiCreateConversation(
         message,
         selectedItemId,
         attachmentDtos,
+        hasToolConfig ? toolConfigurationValue : undefined,
       );
       const savedConversation = {
         ...conversation,
@@ -166,7 +172,7 @@ const ConversationRoute: FC = () => {
         state: { conversation: savedConversation },
       });
     },
-    [navigate, selectedItemId],
+    [navigate, selectedItemId, toolConfigurationValue],
   );
 
   const handleStarterSelect = useCallback(
@@ -177,16 +183,21 @@ const ConversationRoute: FC = () => {
           return;
         }
 
-        const configurationValue = propertyKey
+        const starterConfig = propertyKey
           ? { [propertyKey]: starter.const }
           : undefined;
+        const mergedConfigurationValue = {
+          ...starterConfig,
+          ...toolConfigurationValue,
+        };
+        const hasConfig = Object.keys(mergedConfigurationValue).length > 0;
         const createAndNavigate = async () => {
           try {
             const conversation = await apiCreateConversation(
               text,
               selectedItemId,
               [],
-              configurationValue,
+              hasConfig ? mergedConfigurationValue : undefined,
             );
             navigate(getConversationRoute(conversation.id));
           } catch (err) {
@@ -204,7 +215,15 @@ const ConversationRoute: FC = () => {
         setInputMessage(text);
       }
     },
-    [description, propertyKey, selectedItemId, navigate, showNotification, t],
+    [
+      description,
+      propertyKey,
+      selectedItemId,
+      navigate,
+      showNotification,
+      t,
+      toolConfigurationValue,
+    ],
   );
 
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
@@ -225,6 +244,13 @@ const ConversationRoute: FC = () => {
         inputStyles={CONVERSATION_ROUTE_INPUT_STYLES}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
+        toolsMenuItems={toolsMenuItems}
+        onToolToggle={onToolToggle}
+        toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
+        toolsChipLabels={{
+          countLabel: (count) => t(ToolsI18nKeys.SelectedCount, { count }),
+          removeLabel: (label) => t(ToolsI18nKeys.RemoveTool, { label }),
+        }}
       >
         <StarterButtons
           starters={activeStarters}

@@ -455,6 +455,7 @@ describe('CatalogView', () => {
         overlayEnabled: false,
         overlayAllowedOrigins: [],
         announcementHtml: null,
+        deepResearchToolId: null,
       },
     });
   });
@@ -692,6 +693,7 @@ describe('CatalogView', () => {
           overlayEnabled: false,
           overlayAllowedOrigins: [],
           announcementHtml: null,
+          deepResearchToolId: null,
         },
       });
 
