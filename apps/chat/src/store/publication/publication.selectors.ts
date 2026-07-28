@@ -40,6 +40,39 @@ const selectFilteredPublications = (
     );
   });
 
+const selectFilteredPublicationsWithSearch = (
+  featureTypes: FeatureType[],
+  includeEmptyResourceTypes?: boolean,
+  searchTerm?: string,
+) =>
+  createSelector([selectPublications], (publications) => {
+    return publications.filter((publication) => {
+      const matchesFeatureType =
+        publication.resourceTypes.some((resourceType) =>
+          featureTypes
+            .map((featureType) =>
+              EnumMapper.getBackendResourceTypeByFeatureType(featureType),
+            )
+            .includes(resourceType),
+        ) ||
+        (includeEmptyResourceTypes && !publication.resourceTypes.length);
+
+      if (!matchesFeatureType) {
+        return false;
+      }
+
+      if (!searchTerm) {
+        return true;
+      }
+
+      if (!publication.name) {
+        return false;
+      }
+
+      return publication.name.toLowerCase().trim().includes(searchTerm.toLowerCase().trim());
+    });
+  });
+
 const selectFilteredPublicationResources = (featureTypes: FeatureType[]) =>
   createSelector(
     [selectFilteredPublications(featureTypes)],
@@ -347,6 +380,7 @@ const selectCurrentPublicationInvalidEntities = (state: RootState) =>
 export const PublicationSelectors = {
   selectPublications,
   selectFilteredPublications,
+  selectFilteredPublicationsWithSearch,
   selectFilteredPublicationResources,
   selectSelectedPublicationUrl,
   selectSelectedPublicationPanel,
