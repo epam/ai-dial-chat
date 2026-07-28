@@ -6,7 +6,7 @@ context: |
   ## Tech Stack
   - Monorepo: Nx 22
   - Frontend: React 19, Vite 8 (apps/chat, port 4207)
-  - Backend: NestJS 11 (apps/chat-api, port 3005)
+  - Backend: NestJS 11 (apps/chat-api, port 5000)
   - Language: TypeScript 5.9 (strict mode, noUnusedLocals, noUnusedParameters)
   - Frontend module resolution: Vite-built apps and libs use `module: esnext` with
     `moduleResolution: bundler`; relative TypeScript source imports omit `.js`/`.ts` extensions
@@ -39,8 +39,8 @@ context: |
   - @epam/ai-dial-chat-shared/*        → libs/chat-shared/*
 
   ## Commands
-  - Frontend dev: `npm start` (localhost:4207, proxies /api → localhost:3005)
-  - Backend dev:  `npm run start:api` (localhost:3005)
+  - Frontend dev: `npm start` (localhost:4207, proxies /api → localhost:5000)
+  - Backend dev:  `npm run start:api` (localhost:5000)
   - Both:         `npm run start:all`
   - Affected build / lint / typecheck / test: `npm exec nx affected --target=<t> --base=origin/development-1.0`
   - Single-project (preferred for slice verification, see CLAUDE.md per project):
