@@ -1,5 +1,4 @@
 import { PublicationFunctions } from '@/chat/types/publication';
-import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   API,
@@ -36,7 +35,7 @@ dialSharedWithMeTest(
     const filterValue = 'age';
     let additionalUserConversation: Conversation;
 
-    await dialTest.step(
+    await dialSharedWithMeTest.step(
       'Publish org folder with filter via API, available for AdditionalUser',
       async () => {
         const conversation = conversationData.prepareDefaultConversation();
@@ -57,7 +56,7 @@ dialSharedWithMeTest(
       },
     );
 
-    await dialTest.step(
+    await dialSharedWithMeTest.step(
       'AdditionalUser creates a new chat via API',
       async () => {
         additionalUserConversation =
@@ -68,7 +67,7 @@ dialSharedWithMeTest(
       },
     );
 
-    await dialTest.step(
+    await dialSharedWithMeTest.step(
       'AdditionalUser opens Publish request for the created chat, selects the already published folder in "Change path" form and verifies the filter section',
       async () => {
         await additionalShareUserLocalStorageManager.setShowSideBarPanels();

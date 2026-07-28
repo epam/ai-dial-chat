@@ -608,11 +608,12 @@ export class BaseAssertion {
   public async assertCursorPosition(
     element: BaseElement | Locator,
     expectedPosition: number,
+    expectedMessage?: string,
   ) {
     await expect
       .soft(
         BaseElement.getElementLocator(element),
-        ExpectedMessages.cursorPositionIsValid,
+        expectedMessage ?? ExpectedMessages.cursorPositionIsValid,
       )
       .toHaveJSProperty(Properties.selectionStart, expectedPosition);
   }

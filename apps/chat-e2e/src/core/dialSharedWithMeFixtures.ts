@@ -31,7 +31,6 @@ import {
   ModelInfoTooltip,
   PromptBar,
   PromptModalDialog,
-  PublishingFilter,
   PublishingRequestDialog,
   PublishingRules,
   SelectFolderManagerModal,
@@ -218,7 +217,6 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSelectFolderManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
   additionalShareUserSelectFolderManagerModalFoldersTree: FoldersTree;
   additionalShareUserPublishingRules: PublishingRules;
-  additionalShareUserPublishingFilter: PublishingFilter;
   additionalShareUserPublishingRulesAssertion: PublishingRulesAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
@@ -1183,14 +1181,6 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserPublishingRules =
       additionalShareUserPublishingRequestDialog.getPublishingRules();
     await use(additionalShareUserPublishingRules);
-  },
-  additionalShareUserPublishingFilter: async (
-    { additionalShareUserPublishingRules },
-    use,
-  ) => {
-    const additionalShareUserPublishingFilter =
-      additionalShareUserPublishingRules.gePublishingFilter();
-    await use(additionalShareUserPublishingFilter);
   },
   additionalShareUserPublishingRulesAssertion: async (
     { additionalShareUserPublishingRules },

@@ -4,7 +4,7 @@ import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { FileUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Role } from '@epam/ai-dial-shared';
 import { Locator, expect } from '@playwright/test';
@@ -281,15 +281,11 @@ dialTest(
     let tableConversation: Conversation;
     const expectedDownloadIconTooltip =
       ExpectedConstants.downloadTableAsCsvTooltip;
-    const expectedFilename = `${new Date().toISOString().slice(0, 10)}_table.csv`;
     const expectedCsvContent =
       '"Country","Capital"\n' +
       '"Canada","Ottawa"\n' +
       '"United States","Washington, D.C."';
     let downloadIcon: Locator;
-
-    const stripBom = (content: string) =>
-      content.charCodeAt(0) === 0xfeff ? content.slice(1) : content;
 
     await dialTest.step(
       'Prepare conversation with table response',
@@ -349,7 +345,7 @@ dialTest(
         );
         await baseAssertion.assertInputValue(
           downloadTableCsvModal.filenameInput,
-          expectedFilename,
+          ExpectedConstants.downloadedCsvTableDefaultName,
         );
       },
     );
@@ -361,19 +357,13 @@ dialTest(
           downloadTableCsvModal.confirmButton.click(),
         );
         await downloadAssertion.assertPlainFileIsDownloaded(downloadedData);
-        const downloadedContent = stripBom(
-          FileUtil.readPlainFileData(downloadedData.path as string).toString(
-            'utf-8',
-          ),
-        );
-        baseAssertion.assertValue(
-          downloadedContent,
+        downloadAssertion.assertDownloadedFileContent(
+          downloadedData,
           expectedCsvContent,
-          ExpectedMessages.downloadedFileContentIsValid,
         );
         downloadAssertion.assertDownloadFilename(
           downloadedData,
-          expectedFilename,
+          ExpectedConstants.downloadedCsvTableDefaultName,
         );
       },
     );

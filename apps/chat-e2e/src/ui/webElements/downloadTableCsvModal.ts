@@ -1,4 +1,7 @@
-import { DownloadTableCsvModalSelectors } from '@/src/ui/selectors';
+import {
+  ConfirmationDialogSelectors,
+  DownloadTableCsvModalSelectors,
+} from '@/src/ui/selectors';
 import { Popup } from '@/src/ui/webElements/common/popup';
 import { Page } from '@playwright/test';
 
@@ -14,10 +17,6 @@ export class DownloadTableCsvModal extends Popup {
     DownloadTableCsvModalSelectors.filenameInput,
   );
   public confirmButton = this.getChildElementBySelector(
-    DownloadTableCsvModalSelectors.confirmButton,
+    ConfirmationDialogSelectors.confirm,
   );
-
-  public async getFilename() {
-    return this.filenameInput.getAttribute('value');
-  }
 }

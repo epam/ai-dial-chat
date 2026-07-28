@@ -35,11 +35,12 @@ export class DownloadAssertion extends BaseAssertion {
   public assertDownloadFilename(
     downloadedData: UploadDownloadData,
     expectedFilename: string,
+    expectedMessage?: string,
   ) {
     this.assertBooleanCondition(
       (downloadedData.path as string).endsWith(expectedFilename),
       true,
-      ExpectedMessages.downloadedFileNameIsValid,
+      expectedMessage ?? ExpectedMessages.downloadedFileNameIsValid,
     );
   }
 
@@ -142,5 +143,24 @@ export class DownloadAssertion extends BaseAssertion {
         )
         .toBeUndefined();
     }
+  }
+
+  public assertDownloadedFileContent(
+    downloadedData: UploadDownloadData,
+    expectedContent: string,
+  ) {
+    const stringContent = FileUtil.readPlainFileData(
+      downloadedData.path as string,
+    ).toString('utf-8');
+    //remove initial BOM character (zero-width no-break space)
+    const actualContent =
+      stringContent.charCodeAt(0) === 0xfeff
+        ? stringContent.slice(1)
+        : stringContent;
+    this.assertValue(
+      actualContent,
+      expectedContent,
+      ExpectedMessages.downloadedFileContentIsValid,
+    );
   }
 }

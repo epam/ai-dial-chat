@@ -1075,11 +1075,9 @@ dialTest(
     await dialTest.step(
       'Leave the cursor in the prompt body, switch to a new browser tab and back',
       async () => {
-        cursorPosition = await promptModalDialog.prompt
-          .getElementLocator()
-          .evaluate(
-            (el: HTMLTextAreaElement) => el.selectionStart ?? el.value.length,
-          );
+        cursorPosition = await promptModalDialog.getElementCursorPosition(
+          promptModalDialog.prompt,
+        );
         await context.newPage();
         await dialHomePage.bringPageToFront();
       },

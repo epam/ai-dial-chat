@@ -17,7 +17,6 @@ export const DownloadTableCsvModalSelectors = {
   modalContainer: '[data-qa="download-csv-modal"]',
   title: '[data-qa="modal-entity-name"]',
   filenameInput: '[data-qa="download-filename-input"]',
-  confirmButton: '[data-qa="confirm"]',
 };
 
 export const PromptModal = {
