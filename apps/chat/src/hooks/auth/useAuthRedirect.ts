@@ -42,6 +42,16 @@ const clearAuthRedirectAttempt = (): void => {
   window.sessionStorage.removeItem(AUTH_REDIRECT_ATTEMPT_STORAGE_KEY);
 };
 
+interface UseAuthRedirectOptions {
+  /*
+   * When true, suppresses every automatic side effect below (provider
+   * fetch, sessionStorage read/write, navigate, window.location.assign) —
+   * used by overlay mode, where an automatic iframe redirect to the IdP
+   * cannot succeed (Microsoft sends X-Frame-Options: deny).
+   */
+  disabled?: boolean;
+}
+
 /**
  * Centralises the unauthenticated redirect policy (design doc D3).
  * - Single provider → full browser navigation to the BFF login endpoint.
@@ -51,12 +61,14 @@ const clearAuthRedirectAttempt = (): void => {
  * Must NOT fetch providers or redirect when the current path is /login
  * (LoginPage owns its own provider fetch on that route).
  */
-export const useAuthRedirect = () => {
+export const useAuthRedirect = (options?: UseAuthRedirectOptions) => {
   const { status } = useUser();
   const navigate = useNavigate();
   const { pathname, search, hash } = useLocation();
+  const disabled = options?.disabled ?? false;
 
   useEffect(() => {
+    if (disabled) return;
     if (status === AuthStatus.Loading) return;
 
     if (status === AuthStatus.Authenticated) {
@@ -119,5 +131,5 @@ export const useAuthRedirect = () => {
     }
     // unauthenticated on /login — LoginPage handles its own state, nothing to do
     return undefined;
-  }, [status, pathname, search, hash, navigate]);
+  }, [status, pathname, search, hash, navigate, disabled]);
 };

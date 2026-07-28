@@ -1,4 +1,4 @@
-import { useIsMobile } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, useIsMobile } from '@epam/ai-dial-chat-shared';
 import type { PdfViewerApi } from '@epam/ai-dial-react-pdf-highlighter';
 import {
   DocumentPreview,
@@ -14,6 +14,7 @@ import {
   useState,
 } from 'react';
 import { fetchBlobFromUrl } from '../../utils/download';
+import styles from './PdfContent.module.scss';
 
 /** Props for the `PdfContent` component. */
 export interface PdfContentProps {
@@ -97,7 +98,9 @@ export const PdfContent: FC<PdfContentProps> = ({
           ))}
         </div>
       )}
-      <div className="min-w-0 flex-1 overflow-hidden">
+      <div
+        className={mergeClasses('min-w-0 flex-1 overflow-auto', styles.viewer)}
+      >
         <DocumentPreview
           fileUrl={url}
           loadFileCb={loadPdf ?? fetchBlobFromUrl}

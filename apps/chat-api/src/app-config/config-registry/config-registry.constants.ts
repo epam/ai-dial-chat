@@ -50,6 +50,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DIAL_CORE_EXTERNAL_URL',
   },
   {
+    key: 'announcement.html',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null/empty hides the banner. Sourced from ANNOUNCEMENT_HTML_MESSAGE.',
+    owner: 'chat-team',
+    envVar: 'ANNOUNCEMENT_HTML_MESSAGE',
+  },
+  {
     key: 'features.asrEnabled',
     type: 'feature',
     valueType: 'boolean',
@@ -134,5 +146,17 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'LIVE_CHAT_INTERACTION_ENABLED',
     allowedRolesEnvVar: 'LIVE_CHAT_INTERACTION_ENABLED_ROLES',
+  },
+  {
+    key: 'uiFeatures.enabledUiFeatures',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'When set, the complete list of OverlayFeature values that are enabled (replace semantics). Replaces DEFAULT_ENABLED_UI_FEATURES entirely — includes both positive and Hide* modifier flags. When not set (null), the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures — that replaces the active set entirely.',
+    owner: 'chat-team',
+    envVar: 'ENABLED_UI_FEATURES',
   },
 ];

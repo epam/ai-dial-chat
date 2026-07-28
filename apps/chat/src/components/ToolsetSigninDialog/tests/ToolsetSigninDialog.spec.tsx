@@ -5,22 +5,28 @@ import {
   ButtonsI18nKeys,
   ToolsetSigninI18nKeys,
 } from '../../../constants/translation-keys';
+import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useClientChannel } from '../../../context/ClientChannelContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import {
   ToolsetLoginOutcomeType,
   useToolsetLogin,
 } from '../../../hooks/toolsets/useToolsetLogin';
+import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getToolset } from '../../../server-api/toolsets';
 import { ToolsetAuthTypes } from '../../../types/toolsets';
 import ToolsetSigninDialog from '../ToolsetSigninDialog';
 
+vi.mock('../../../context/AppConfigContext', () => ({
+  useFeatureFlag: vi.fn(),
+}));
 vi.mock('../../../context/ClientChannelContext', () => ({
   useClientChannel: vi.fn(),
 }));
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
 }));
+vi.mock('../../../hooks/useUiFeature');
 vi.mock('../../../hooks/toolsets/useToolsetLogin', async (importOriginal) => {
   const actual =
     await importOriginal<
@@ -33,6 +39,8 @@ vi.mock('../../../server-api/toolsets', () => ({
 }));
 
 const mockUseClientChannel = vi.mocked(useClientChannel);
+const mockUseFeatureFlag = vi.mocked(useFeatureFlag);
+const mockUseUiFeature = vi.mocked(useUiFeature);
 const mockUseDeployments = vi.mocked(useDeployments);
 const mockUseToolsetLogin = vi.mocked(useToolsetLogin);
 const mockGetToolset = vi.mocked(getToolset);
@@ -64,6 +72,8 @@ describe('ToolsetSigninDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetToolset.mockRejectedValue(new Error('not found'));
+    mockUseFeatureFlag.mockReturnValue(true);
+    mockUseUiFeature.mockReturnValue(true);
   });
 
   it('renders nothing when there are no pending events', () => {
@@ -95,6 +105,40 @@ describe('ToolsetSigninDialog', () => {
     render(<ToolsetSigninDialog />);
 
     expect(screen.getByText('My Toolset (1.0)')).toBeTruthy();
+  });
+
+  it('renders nothing when live-chat-interaction UI toggle is disabled, even with pending events', () => {
+    mockUseUiFeature.mockReturnValue(false);
+    mockUseClientChannel.mockReturnValue({
+      channelId: 'channel-1',
+      pendingEvents: [{ id: 'evt-1', toolsetId: apiKeyToolset.id }],
+      reportEvent: vi.fn(),
+      ensureConnected: vi.fn(),
+    });
+    mockUseDeployments.mockReturnValue(
+      makeDeploymentsValue([apiKeyToolset]) as never,
+    );
+    mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
+
+    const { container } = render(<ToolsetSigninDialog />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('renders nothing when the liveChatInteraction capability flag is off, even with pending events', () => {
+    mockUseFeatureFlag.mockReturnValue(false);
+    mockUseClientChannel.mockReturnValue({
+      channelId: 'channel-1',
+      pendingEvents: [{ id: 'evt-1', toolsetId: apiKeyToolset.id }],
+      reportEvent: vi.fn(),
+      ensureConnected: vi.fn(),
+    });
+    mockUseDeployments.mockReturnValue(
+      makeDeploymentsValue([apiKeyToolset]) as never,
+    );
+    mockUseToolsetLogin.mockReturnValue({ login: vi.fn() });
+
+    const { container } = render(<ToolsetSigninDialog />);
+    expect(container.firstChild).toBeNull();
   });
 
   it('renders a fallback name derived from the id when the toolset is unknown', () => {

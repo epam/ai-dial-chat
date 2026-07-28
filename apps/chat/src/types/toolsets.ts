@@ -113,7 +113,7 @@ export type ToolsetOAuthInitiationResult =
 export enum ToolsetOAuthResultType {
   Success = 'success',
   Failure = 'failure',
-  /** The popup was closed manually, or the flow exceeded its pending timeout. */
+  /** The popup was closed and focus returned to its opener, or the flow timed out. */
   Cancelled = 'cancelled',
 }
 
@@ -134,6 +134,16 @@ export interface ToolsetOAuthSuccessMessage {
 export interface ToolsetOAuthFailureMessage {
   type: ToolsetOAuthResultType.Failure;
   reason: ToolsetOAuthFailureReason;
+}
+
+/** Control messages exchanged over a flow-scoped OAuth channel. */
+export enum ToolsetOAuthChannelControlType {
+  ResultAcknowledged = 'result-acknowledged',
+}
+
+/** Confirms that the initiating tab consumed the callback result. */
+export interface ToolsetOAuthResultAcknowledgement {
+  type: ToolsetOAuthChannelControlType.ResultAcknowledged;
 }
 
 /** Non-secret result reported by the OAuth callback popup for one flow. */

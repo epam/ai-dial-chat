@@ -27,6 +27,7 @@ import {
 import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { getConversationPath } from '../utils/conversation-path';
 import { safeDecodeURIComponent } from '../utils/string-utils';
+import { useUser } from './auth/UserContext';
 import { useOptionalOverlay } from './overlay/OverlayContext';
 import { useUserConfig } from './UserConfigContext';
 
@@ -85,6 +86,8 @@ export const ConversationsProvider = ({
   children: ReactNode;
 }) => {
   const { setPinnedConversation } = useUserConfig();
+  const { user } = useUser();
+  const userSub = user?.sub;
   const [conversations, setConversations] = useState<ConversationListItemDto[]>(
     [],
   );
@@ -228,12 +231,20 @@ export const ConversationsProvider = ({
     [silentRefreshConversations, updateConversationTitle],
   );
 
+  /*
+   * userSub is included so that if the authenticated identity changes while
+   * this provider stays mounted (an in-place identity adoption — see
+   * spa-auth-session's identity revalidation requirement), the conversation
+   * list is refetched instead of continuing to serve the previous identity's
+   * snapshot.
+   */
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
       setIsLoading(true);
       setError(null);
+      setConversations([]);
       try {
         const response = await listConversations();
         if (!cancelled) setConversations(response.items);
@@ -250,7 +261,7 @@ export const ConversationsProvider = ({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userSub]);
 
   const pinConversation = useCallback(
     async (id: string, isPinned: boolean) => {

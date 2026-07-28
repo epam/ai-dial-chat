@@ -4,7 +4,7 @@
 
 flowchart TB
     subgraph Browser["Browser cookie jar"]
-        COOKIE["__Host-chat.sess<br/>HttpOnly · Secure · SameSite=Lax<br/>Max-Age = rt_exp"]
+        COOKIE["__Host-chat.sess<br/>HttpOnly · Secure · SameSite=Lax/None<br/>Max-Age = rt_exp"]
     end
 
     subgraph Wire["Cookie value on the wire"]

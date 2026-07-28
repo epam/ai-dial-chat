@@ -1,6 +1,6 @@
 %% Login flow: Authorization Code + PKCE through the BFF.
 %% Transient tx cookie holds state/nonce/code_verifier during redirect.
-%% Final session cookie is JWE-encrypted with HttpOnly + Secure + SameSite=Lax.
+%% Final session cookie is JWE-encrypted with HttpOnly + Secure + SameSite=Lax/None.
 
 sequenceDiagram
     autonumber

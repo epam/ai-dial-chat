@@ -65,7 +65,7 @@ describe('DeleteButton', () => {
       <DeleteButton
         item={makeItem({
           isMyApp: true,
-          type: CatalogEntityType.Application,
+          type: CatalogEntityType.Agent,
         })}
       />,
     );

@@ -9,6 +9,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   mergeClasses: (...args: (string | undefined)[]) =>
     args.filter(Boolean).join(' '),
+  DialNoDataContent: ({ title }: { title?: string }) => <span>{title}</span>,
   DialGrid: ({
     rowData,
     emptyStateTitle,
@@ -151,14 +152,26 @@ describe('ListView', () => {
   });
 
   it('uses a fixed dense row height — constant across every row regardless of content', () => {
-    render(<ListView items={[]} query="" ariaLabel="Catalog" />);
+    render(
+      <ListView
+        items={[makeItem({ id: 'x', name: 'x' })]}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
     expect(
       screen.getByLabelText('Catalog').getAttribute('data-row-height'),
     ).toBe('60');
   });
 
   it('removes ag-grid header column dividers (no vertical dividers in this view)', () => {
-    render(<ListView items={[]} query="" ariaLabel="Catalog" />);
+    render(
+      <ListView
+        items={[makeItem({ id: 'x', name: 'x' })]}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
     expect(
       screen
         .getByLabelText('Catalog')
@@ -167,7 +180,13 @@ describe('ListView', () => {
   });
 
   it("does not enable ag-grid's built-in alternating row colors (zebra striping is done via CSS override instead, to avoid stacking with it)", () => {
-    render(<ListView items={[]} query="" ariaLabel="Catalog" />);
+    render(
+      <ListView
+        items={[makeItem({ id: 'x', name: 'x' })]}
+        query=""
+        ariaLabel="Catalog"
+      />,
+    );
     expect(
       screen
         .getByLabelText('Catalog')

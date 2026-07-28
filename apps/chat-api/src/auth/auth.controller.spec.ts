@@ -29,7 +29,7 @@ const ACTIVE_HEX = 'a'.repeat(64);
 const ACTIVE_KEY = new Uint8Array(Buffer.from(ACTIVE_HEX, 'hex'));
 const COOKIE_NAME = '__Host-chat.sess';
 const TX_COOKIE = '__Host-chat.tx';
-const CALLBACK_BASE = 'http://localhost:3005';
+const CALLBACK_BASE = 'http://localhost:5000';
 const APP_BASE = 'http://localhost:4207';
 
 const MOCK_CLIENT = {
@@ -56,6 +56,7 @@ const MOCK_BUCKET_SERVICE = {
 };
 
 let providerConfigOverride: Record<string, unknown> = {};
+let configOverride: Partial<EnvironmentVariables> = {};
 
 async function buildApp(): Promise<INestApplication> {
   const keysServiceMock: Partial<KeysService> = {
@@ -100,12 +101,13 @@ async function buildApp(): Promise<INestApplication> {
 
   const configMock = {
     get: (key: string) => {
-      const map: Record<string, string> = {
+      const map: Partial<EnvironmentVariables> = {
         AUTH_CALLBACK_BASE_URL: CALLBACK_BASE,
         AUTH_SESSION_COOKIE_NAME: COOKIE_NAME,
         CORS_ORIGIN: APP_BASE,
+        ...configOverride,
       };
-      return map[key];
+      return map[key as keyof EnvironmentVariables];
     },
   };
 
@@ -182,6 +184,7 @@ describe('AuthController (integration)', () => {
 
   beforeEach(async () => {
     providerConfigOverride = {};
+    configOverride = {};
     app = await buildApp();
   });
 
@@ -296,6 +299,48 @@ describe('AuthController (integration)', () => {
         : [res.headers['set-cookie'] as string];
       const sessCookie = cookies.find((c) => c.startsWith(COOKIE_NAME));
       expect(sessCookie).toBeDefined();
+    });
+
+    it('sets SameSite=None session cookies for secure overlay embedding', async () => {
+      await app?.close();
+      configOverride = {
+        AUTH_COOKIE_SECURE: true,
+        OVERLAY_ENABLED: true,
+        ALLOWED_IFRAME_ORIGINS: ['https://host.example.com'],
+      };
+      app = await buildApp();
+
+      const state = 'valid-state';
+      const txCookieValue = await makeTxCookie({
+        state,
+        nonce: 'nonce',
+        codeVerifier: 'verifier',
+        providerId: 'keycloak',
+        callbackUrl: `${APP_BASE}/auth/popup-callback?channel=flow-1`,
+      });
+
+      MOCK_CLIENT.callbackParams.mockReturnValue({ code: 'code', state });
+      MOCK_CLIENT.callback.mockResolvedValue({
+        access_token: 'at',
+        refresh_token: 'rt',
+        expires_at: 9999999999,
+        claims: () => ({
+          sub: 'user-1',
+          email: 'u@example.com',
+        }),
+      });
+
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/auth/callback/keycloak?code=code&state=${state}`)
+        .set('Cookie', `${TX_COOKIE}=${txCookieValue}`)
+        .expect(302);
+
+      const cookies: string[] = Array.isArray(res.headers['set-cookie'])
+        ? (res.headers['set-cookie'] as string[])
+        : [res.headers['set-cookie'] as string];
+      const sessCookie = cookies.find((c) => c.startsWith(COOKIE_NAME));
+      expect(sessCookie).toContain('SameSite=None');
+      expect(sessCookie).toContain('Secure');
     });
 
     it('splits a large session cookie into chunks', async () => {

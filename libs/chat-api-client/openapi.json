@@ -3630,7 +3630,7 @@
   ],
   "servers": [
     {
-      "url": "http://localhost:3005",
+      "url": "http://localhost:5000",
       "description": "Local development"
     }
   ],
@@ -3731,6 +3731,26 @@
             "items": {
               "type": "string"
             }
+          },
+          "enabledUiFeatures": {
+            "description": "When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.",
+            "nullable": true,
+            "example": [
+              "header",
+              "likes",
+              "conversations-sharing",
+              "hide-new-conversation"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "announcementHtml": {
+            "type": "string",
+            "description": "Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.",
+            "example": "Welcome to <a href=\"https://dialx.ai\">DIAL</a>!",
+            "nullable": true
           }
         },
         "required": [
@@ -3738,7 +3758,8 @@
           "transcribeSizeLimitBytes",
           "fileManagerTabs",
           "overlayEnabled",
-          "overlayAllowedOrigins"
+          "overlayAllowedOrigins",
+          "enabledUiFeatures"
         ]
       },
       "ClientConfigMetadataDto": {

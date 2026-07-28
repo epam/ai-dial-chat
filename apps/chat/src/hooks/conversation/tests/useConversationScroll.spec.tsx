@@ -158,7 +158,7 @@ const getScrollContainer = (container: HTMLElement) =>
 const getSpacer = (container: HTMLElement) =>
   getScrollContainer(container).lastElementChild as HTMLDivElement;
 
-const renderCompletedShortReply = () => {
+const renderStreamingReply = (contentHeight = 650) => {
   const harnessRef = createRef<ScrollHarnessHandle>();
   const initialMessages = makeMessages(4);
   const replyMessages = makeMessages(6);
@@ -182,10 +182,22 @@ const renderCompletedShortReply = () => {
       ref={harnessRef}
       conversationId="conversation-a"
       messages={replyMessages}
-      contentHeight={650}
+      contentHeight={contentHeight}
       isAssistantTyping
     />,
   );
+
+  return {
+    ...result,
+    harnessRef,
+    replyMessages,
+    scrollContainer: getScrollContainer(result.container),
+    spacer: getSpacer(result.container),
+  };
+};
+
+const renderCompletedShortReply = () => {
+  const { harnessRef, replyMessages, ...result } = renderStreamingReply();
 
   scrollToMock.mockClear();
 
@@ -276,9 +288,50 @@ describe('useConversationScroll', () => {
   it('keeps reserved spacer after streaming stops while the reply is above the viewport bottom', () => {
     const { scrollContainer, spacer } = renderCompletedShortReply();
 
-    expect(spacer.style.height).toBe(`${CONTAINER_HEIGHT}px`);
+    expect(spacer.style.height).toBe('150px');
     expect(scrollContainer.scrollTop).toBe(400);
     expect(scrollToMock).not.toHaveBeenCalled();
+  });
+
+  it('clamps manual downward scrolling before the active reserved spacer is exposed', () => {
+    const { scrollContainer, spacer } = renderStreamingReply();
+    expect(spacer.style.height).toBe('150px');
+
+    act(() => {
+      scrollContainer.scrollTop = 500;
+      fireEvent.scroll(scrollContainer);
+    });
+
+    expect(scrollContainer.scrollTop).toBe(400);
+  });
+
+  it('allows scrolling to streamed content but not past its real bottom', () => {
+    const { rerender, harnessRef, replyMessages, scrollContainer } =
+      renderStreamingReply();
+
+    rerender(
+      <ScrollHarness
+        ref={harnessRef}
+        conversationId="conversation-a"
+        messages={replyMessages}
+        contentHeight={1_000}
+        isAssistantTyping
+      />,
+    );
+
+    act(() => {
+      scrollContainer.scrollTop = 650;
+      fireEvent.scroll(scrollContainer);
+    });
+
+    expect(scrollContainer.scrollTop).toBe(600);
+
+    act(() => {
+      scrollContainer.scrollTop = 550;
+      fireEvent.scroll(scrollContainer);
+    });
+
+    expect(scrollContainer.scrollTop).toBe(550);
   });
 
   it('clears completed reserved spacer when the user scrolls to the real content bottom', () => {

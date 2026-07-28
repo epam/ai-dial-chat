@@ -206,6 +206,12 @@ export interface DetailsPanelProps {
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   /**
+   * Additional caller-supplied rule for whether the "Share" action is shown
+   * for the item, combined (AND) with the built-in ownership/type rule.
+   * Absent means the built-in rule alone decides.
+   */
+  isShareVisible?: (item: CatalogItem) => boolean;
+  /**
    * Renders the Connect popover content anchored to the Connect button. When
    * absent, the Connect button is never shown — there is no non-overlay
    * fallback action.

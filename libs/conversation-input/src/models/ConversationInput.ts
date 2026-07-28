@@ -197,6 +197,17 @@ export interface ConversationInputProps {
    */
   isModelSelectorDisabled?: boolean;
   /**
+   * When `true`, disables the send action without removing or dimming the
+   * send button itself. Independent of `isInputDisabled`. Defaults to `false`.
+   */
+  isSendDisabled?: boolean;
+  /**
+   * Extra class name(s) merged onto the inner `Input` wrapper element (the
+   * bordered container around the textarea/model-selector/send-button row),
+   * distinct from `className` which styles this component's own outer root.
+   */
+  inputClassName?: string;
+  /**
    * When `true`, the mic button is rendered and voice recording is enabled.
    * The host app derives this from the selected deployment's `inputAttachmentTypes`.
    * When `false` or absent, the mic button is hidden and the voice bar is never shown.

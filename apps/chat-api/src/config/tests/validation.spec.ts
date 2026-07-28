@@ -3,7 +3,7 @@ import { validate } from '../validation';
 const baseConfig: Record<string, unknown> = {
   DIAL_CORE_URL: 'https://dial-core.example.com',
   AUTH_SESSION_SECRET: 'a'.repeat(64),
-  AUTH_CALLBACK_BASE_URL: 'http://localhost:3005',
+  AUTH_CALLBACK_BASE_URL: 'http://localhost:5000',
 };
 
 describe('validate', () => {
@@ -68,6 +68,15 @@ describe('validate', () => {
         AUTH_POST_LOGOUT_REDIRECT_URI: 'https://chat.example.com',
       }),
     ).not.toThrow();
+  });
+
+  it('parses AUTH_COOKIE_SECURE=false as false', () => {
+    const config = validate({
+      ...baseConfig,
+      AUTH_COOKIE_SECURE: 'false',
+    });
+
+    expect(config.AUTH_COOKIE_SECURE).toBe(false);
   });
 
   it('defaults OVERLAY_ENABLED to false when unset', () => {

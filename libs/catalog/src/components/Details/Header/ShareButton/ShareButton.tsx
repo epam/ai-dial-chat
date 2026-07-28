@@ -3,7 +3,6 @@ import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconShare } from '@tabler/icons-react';
 import { FC, type ReactNode, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../../models/catalog-item';
-import { CatalogEntityType } from '../../../../types/entity-type';
 
 /** Props for {@link ShareButton}. */
 interface ShareButtonProps {
@@ -16,6 +15,12 @@ interface ShareButtonProps {
    * provided, clicking Share opens this popover instead of calling `onShare`.
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
+  /**
+   * Additional caller-supplied rule for whether Share is shown, combined
+   * (AND) with the built-in ownership/type rule. Absent means the built-in
+   * rule alone decides.
+   */
+  isShareVisible?: (item: CatalogItem) => boolean;
   /** Share button label. Defaults to `'Share'`. */
   label?: string;
 }
@@ -26,10 +31,7 @@ interface ShareButtonProps {
  * Sharing is also limited to entities the current user owns (deployments
  * and toolsets in their personal space), not the whole catalog.
  */
-const shouldShowShare = (item: CatalogItem): boolean =>
-  item.isMyApp === true &&
-  item.type !== CatalogEntityType.Guardrail &&
-  item.type !== CatalogEntityType.Mcp;
+const shouldShowShare = (item: CatalogItem): boolean => item.isMyApp === true;
 
 /**
  * Share action button for the details header. Renders the Share action for
@@ -41,6 +43,7 @@ export const ShareButton: FC<ShareButtonProps> = ({
   item,
   onShare,
   shareOverlay,
+  isShareVisible,
   label = 'Share',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,6 +57,7 @@ export const ShareButton: FC<ShareButtonProps> = ({
   }, [item, onShare, shareOverlay]);
 
   if (!shouldShowShare(item)) return null;
+  if (isShareVisible && !isShareVisible(item)) return null;
 
   const button = (
     <NeutralButton

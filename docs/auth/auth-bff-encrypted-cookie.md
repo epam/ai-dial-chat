@@ -61,14 +61,14 @@ The session is a JWE (`alg: dir`, `enc: A256GCM`) whose plaintext payload is:
 
 ### 3.2 Cookie Attributes
 
-| Attribute  | Value              | Reason                                                                                      |
-| ---------- | ------------------ | ------------------------------------------------------------------------------------------- |
-| `HttpOnly` | `true`             | JS cannot read or write                                                                     |
-| `Secure`   | `true` by default  | HTTPS only; may be disabled only for local HTTP smoke testing                               |
-| `SameSite` | `Lax`              | Blocks most CSRF, allows top-level OIDC redirect                                            |
-| `Path`     | `/`                | One cookie for whole app                                                                    |
-| `Max-Age`  | `rt_exp`           | Lives as long as the refresh token                                                          |
-| `Name`     | `__Host-chat.sess` | `__Host-` prefix locks host/path; runtime drops this prefix when `AUTH_COOKIE_SECURE=false` |
+| Attribute  | Value                                                 | Reason                                                                                                       |
+| ---------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `HttpOnly` | `true`                                                | JS cannot read or write                                                                                      |
+| `Secure`   | `true` by default                                     | HTTPS only; may be disabled only for local HTTP smoke testing                                                |
+| `SameSite` | `Lax` by default; `None` for secure overlay embedding | Blocks most CSRF in the normal app; allows cross-site iframe requests only when overlay embedding is enabled |
+| `Path`     | `/`                                                   | One cookie for whole app                                                                                     |
+| `Max-Age`  | `rt_exp`                                              | Lives as long as the refresh token                                                                           |
+| `Name`     | `__Host-chat.sess`                                    | `__Host-` prefix locks host/path; runtime drops this prefix when `AUTH_COOKIE_SECURE=false`                  |
 
 ### 3.3 Size Considerations
 
@@ -77,7 +77,7 @@ Browsers cap individual cookies at ~4 KB. Entra ID access tokens can be large, s
 - `__Host-chat.sess` — single-cookie mode
 - `__Host-chat.sess.0`, `__Host-chat.sess.1`, ... — chunked mode
 
-Each chunk uses the same `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/`, and `Max-Age` attributes as the single cookie. When local `AUTH_COOKIE_SECURE=false` is enabled, the runtime names are `chat.sess`, `chat.sess.0`, `chat.sess.1`, and so on.
+Each chunk uses the same `HttpOnly`, `Secure`, resolved `SameSite`, `Path=/`, and `Max-Age` attributes as the single cookie. When local `AUTH_COOKIE_SECURE=false` is enabled, the runtime names are `chat.sess`, `chat.sess.0`, `chat.sess.1`, and so on.
 
 ### 3.4 Encryption Keys
 
@@ -123,6 +123,21 @@ _Source: [`auth-diagrams/03-login-flow.mmd`](./auth-diagrams/03-login-flow.mmd)_
 
 The transient `tx` cookie holds only `{ state, nonce, code_verifier, providerId }`, lives 5–10 minutes, and is deleted immediately after callback.
 
+#### 5.1.1 Overlay External Login
+
+When Chat runs inside an overlay iframe and the session bootstrap resolves as unauthenticated, the SPA does not start the normal automatic redirect inside the iframe. While app config is still loading in a framed window, the protected route tree is not rendered yet, so the normal redirect cannot race ahead before overlay eligibility is known. External IdP pages can block iframe rendering with `X-Frame-Options` or `frame-ancestors`, so the overlay instead renders a login gate with a user-triggered "Log in" action.
+
+Clicking the action opens the existing BFF login flow in a new browser tab/window:
+
+1. The overlay opens `/login?callbackUrl=<encoded-overlay-close-url>` with `window.open(..., '_blank')`, so browser settings decide whether this is a tab or a separate window. The callback URL points to the same-origin `/overlay-close` route.
+2. The provider picker still uses `GET /api/v1/auth/login/:providerId`, so the backend OIDC transaction and encrypted session cookie handling remain unchanged.
+3. After `GET /api/v1/auth/callback/:providerId` sets the session cookie, the BFF redirects the external auth tab/window to `/overlay-close`; that route calls `window.close()` and renders no UI.
+4. The iframe polls through `UserContext.refresh({ setLoading: false })`, whose frontend API path calls `GET /api/v1/auth/me`, until the newly established cookie is observable from the iframe context. That authenticated current-user response is the completion signal, matching the old chat's reliable overlay auth behavior. Polling starts after one full 5 second interval, each next poll is scheduled only after the previous one settles, and the successful refresh updates `UserContext` without reloading the iframe. The login attempt has no hard polling timeout: after 2 minutes the gate shows a retryable long-wait message and later polls run every 15 seconds until success, retry, or unmount.
+
+For cross-site overlay hosts, the session cookie must be sent from a third-party iframe after being set in the top-level external auth tab/window. When `OVERLAY_ENABLED=true`, `ALLOWED_IFRAME_ORIGINS` is non-empty, and secure cookies are enabled, the backend therefore emits auth cookies with `SameSite=None; Secure`. Local insecure cookies keep `SameSite=Lax`; cross-site overlay authentication should be tested over HTTPS.
+
+The external auth window receives no token, session id, or credential material from the iframe; it receives only the same-origin `callbackUrl`. Popup/tab blocked paths leave the login gate visible with a retry option; otherwise unfinished paths continue polling and become retryable after the long-wait threshold. Popup `closed` observations are not used as completion signals because IdP COOP headers can make opener-window signals unreliable after provider navigation. No backend endpoint or cookie payload change is required for this flow.
+
 ### 5.2 Authenticated API Request with Transparent Refresh
 
 ![Authenticated API request with refresh](./auth-diagrams/04-api-request-refresh.svg)
@@ -161,10 +176,13 @@ _Source: [`auth-diagrams/08-toolset-signin-interrupt.mmd`](./auth-diagrams/08-to
   opener's `WindowProxy` and producing a false `popup.closed` cancellation. Before navigating
   externally, the popup still sets its own `window.opener` to `null` to prevent reverse tabnabbing.
   After completing login, the callback removes the authorization code from its address bar,
-  writes a non-secret completion marker into its own same-origin URL, posts the result through
-  `BroadcastChannel`, and remains open. The initiating tab polls the popup URL and closes it only
-  after consuming the marker, so a dropped channel event cannot lose the completed login or
-  prevent status refresh. OAuth codes and credentials are never persisted by this handoff.
+  writes a non-secret completion marker into its own same-origin URL, and repeats the result over
+  `BroadcastChannel` until the initiating tab acknowledges it. The initiating tab keeps listening
+  when a cross-origin navigation makes its retained `WindowProxy` appear closed, consumes either
+  the channel result or URL marker, and sends the acknowledgement before refreshing toolset
+  status. The callback then closes itself, which still works when the opener's stale
+  `WindowProxy` cannot close it. A real manual close is treated as cancellation when focus returns
+  to the initiating tab. OAuth codes and credentials are never persisted by this handoff.
 
 ---
 
@@ -230,18 +248,18 @@ The session guard is applied globally to `/api/*` routes; everything except `/au
 Testing instructions for the currently implemented slices live in
 [`testing-current-auth-implementation.md`](./testing-current-auth-implementation.md).
 
-| Risk                         | Mitigation                                                                                                      |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| XSS reads tokens             | `HttpOnly` cookie + AEAD encryption; tokens never in JS                                                         |
-| CSRF on mutating endpoints   | Double-submit CSRF token + `SameSite=Lax` + `Origin/Sec-Fetch-Site` checks                                      |
-| Refresh token replay         | Refresh token rotation; `sid`/`jti` in payload; reject reused token                                             |
-| Cookie tampering             | AES-GCM authenticated tag; decryption fails on any byte change                                                  |
-| Key compromise               | Key rotation with `kid` header; previous keys for grace period                                                  |
-| Session fixation             | New `sid` generated on every login                                                                              |
-| Open redirect on callback    | Strict IdP `redirect_uri` allow-list plus BFF-side `callbackUrl` validation against allowed application origins |
-| Token in URL fragment        | Not used — Authorization Code only, never implicit                                                              |
-| Cookie size overflow (Entra) | Split encrypted session value across numbered cookie chunks                                                     |
-| Multi-tab refresh race       | Per-pod in-memory mutex on `sid`; idempotent refresh                                                            |
+| Risk                         | Mitigation                                                                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| XSS reads tokens             | `HttpOnly` cookie + AEAD encryption; tokens never in JS                                                                                    |
+| CSRF on mutating endpoints   | Double-submit CSRF token + default `SameSite=Lax` + `Origin/Sec-Fetch-Site` checks; overlay `SameSite=None` still requires CSRF validation |
+| Refresh token replay         | Refresh token rotation; `sid`/`jti` in payload; reject reused token                                                                        |
+| Cookie tampering             | AES-GCM authenticated tag; decryption fails on any byte change                                                                             |
+| Key compromise               | Key rotation with `kid` header; previous keys for grace period                                                                             |
+| Session fixation             | New `sid` generated on every login                                                                                                         |
+| Open redirect on callback    | Strict IdP `redirect_uri` allow-list plus BFF-side `callbackUrl` validation against allowed application origins                            |
+| Token in URL fragment        | Not used — Authorization Code only, never implicit                                                                                         |
+| Cookie size overflow (Entra) | Split encrypted session value across numbered cookie chunks                                                                                |
+| Multi-tab refresh race       | Per-pod in-memory mutex on `sid`; idempotent refresh                                                                                       |
 
 Mandatory transport: HTTPS everywhere, HSTS, `Secure` cookies, strict CSP (`script-src 'self'`).
 

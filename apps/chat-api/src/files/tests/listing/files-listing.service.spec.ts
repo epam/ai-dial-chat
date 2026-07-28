@@ -114,6 +114,20 @@ describe('FilesListingService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
+    /* openapi-fetch returns { error: undefined, data: undefined, response } when
+       DIAL Core responds with Content-Length: 0 — the error branch must still fire. */
+    it('throws NotFoundException when SDK returns 404 with empty body', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue({
+        error: undefined,
+        data: undefined,
+        response: { status: 404 },
+      });
+      await expect(
+        service.getFileMetadata('b', 'file.pdf', 't'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
     it('throws ForbiddenException when SDK returns 403', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getFileMetadata.mockResolvedValue(errResponse(403));

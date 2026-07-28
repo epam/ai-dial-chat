@@ -347,6 +347,25 @@ describe('SharePopover', () => {
     expect(document.activeElement).toBe(copyButton);
   });
 
+  it('moves Tab focus explicitly through every interior control, reaching Copy', async () => {
+    render(<SharePopover {...makeProps({ onClose })} />);
+
+    const qrButton = screen.getByRole('button', { name: 'QR' });
+    const accessTrigger = screen.getByRole('button', { name: 'Can view' });
+    const linkInput = screen.getByRole('textbox', { name: 'Share link' });
+    const copyButton = screen.getByRole('button', { name: 'Copy' });
+
+    qrButton.focus();
+    await user.tab();
+    expect(document.activeElement).toBe(accessTrigger);
+
+    await user.tab();
+    expect(document.activeElement).toBe(linkInput);
+
+    await user.tab();
+    expect(document.activeElement).toBe(copyButton);
+  });
+
   it('moves focus into the popover when it mounts', () => {
     render(<SharePopover {...makeProps({ onClose })} />);
 

@@ -65,12 +65,12 @@
 
 `isConnectVisible` SHALL return `true` only when a client-safe DIAL Core external URL is configured (see the `app-config-context` and `client-config-endpoint` capabilities) AND:
 - the item's `type` is `CatalogEntityType.Toolset`, OR
-- the item's `type` is `CatalogEntityType.Application` AND its `supportsMcp` field is `true`.
+- the item's `type` is `CatalogEntityType.Agent` AND its `supportsMcp` field is `true`.
 
 `isConnectVisible` SHALL return `false` for `CatalogEntityType.Model`, `CatalogEntityType.Guardrail`, `CatalogEntityType.Skill`, `CatalogEntityType.Mcp`, `CatalogEntityType.Agent`, and non-MCP applications, and for every item when the DIAL Core external URL is not configured.
 
 `connectOverlay` SHALL render a new `ConnectPopoverContainer` component (`apps/chat/src/components/ConnectPopoverContainer/ConnectPopoverContainer.tsx`), which:
-- Shows the title `Connect toolset` when `item.type === CatalogEntityType.Toolset`, or `Connect Application` when `item.type === CatalogEntityType.Application`.
+- Shows the title `Connect toolset` when `item.type === CatalogEntityType.Toolset`, or `Connect Application` when `item.type === CatalogEntityType.Agent`.
 - Shows the description `Copy endpoint URL to easily integrate toolset into your workflows` for toolsets, or `Copy endpoint URL to easily integrate application into your workflows` for applications.
 - Renders one `Copy URL` button. Clicking it copies the MCP endpoint URL (built per the URL-helper requirement below) to the clipboard via the browser clipboard API and shows the same transient "copied" feedback convention already used by the Catalog's API-tab copy button (temporary label swap or icon swap plus an `aria-live="polite"` status region; the button's own `aria-label` stays stable).
 - Renders no URL input, read-only text field, or any other visible rendering of the raw URL string.
@@ -88,12 +88,12 @@
 
 #### Scenario: MCP-capable application with configured external URL shows Connect
 
-- **WHEN** an item has `type: CatalogEntityType.Application` and `supportsMcp: true`, and the DIAL Core external URL is configured
+- **WHEN** an item has `type: CatalogEntityType.Agent` and `supportsMcp: true`, and the DIAL Core external URL is configured
 - **THEN** `isConnectVisible(item)` returns `true`
 
 #### Scenario: Non-MCP application never shows Connect
 
-- **WHEN** an item has `type: CatalogEntityType.Application` and `supportsMcp: false` (or `undefined`)
+- **WHEN** an item has `type: CatalogEntityType.Agent` and `supportsMcp: false` (or `undefined`)
 - **THEN** `isConnectVisible(item)` returns `false`, regardless of the DIAL Core external URL configuration
 
 #### Scenario: Model, Guardrail, Skill, Agent, and Mcp items never show Connect
@@ -109,7 +109,7 @@
 #### Scenario: Copy URL copies the correct endpoint and shows feedback
 
 - **WHEN** the user clicks `Copy URL` in the popover for a toolset item with id `toolsets/public/search-tool`
-- **THEN** the clipboard receives `{dialCoreExternalUrl}/v1/toolset/toolsets%2Fpublic%2Fsearch-tool/mcp` (per the URL-helper requirement's encoding rules)
+- **THEN** the clipboard receives `{dialCoreExternalUrl}/v1/toolset/toolsets/public/search-tool/mcp` (per the URL-helper requirement's encoding rules)
 - **AND** the button shows transient copied feedback announced via an `aria-live="polite"` region
 
 ---

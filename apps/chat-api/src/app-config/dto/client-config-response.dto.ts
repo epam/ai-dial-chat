@@ -62,6 +62,31 @@ export class ClientConfigDto {
     example: ['https://partner.example.com'],
   })
   overlayAllowedOrigins!: string[];
+
+  @ApiProperty({
+    description:
+      'When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.',
+    type: [String],
+    nullable: true,
+    example: [
+      'header',
+      'likes',
+      'conversations-sharing',
+      'hide-new-conversation',
+    ],
+  })
+  enabledUiFeatures!: string[] | null;
+
+  @ApiPropertyOptional({
+    description:
+      'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.',
+    example: 'Welcome to <a href="https://your-site.example.com">DIAL</a>!',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  announcementHtml!: string | null;
 }
 
 export class ClientConfigMetadataDto {

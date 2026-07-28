@@ -21,15 +21,27 @@ import { loginToolset } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
 import type {
   ToolsetOAuthChannelMessage,
+  ToolsetOAuthResultAcknowledgement,
   ToolsetRedirectState,
 } from '../../types/toolsets';
 import {
   ToolsetAuthTypes,
+  ToolsetOAuthChannelControlType,
   ToolsetCredentialsLevel,
   ToolsetOAuthFailureReason,
   ToolsetOAuthResultType,
 } from '../../types/toolsets';
 import { getToolsetOAuthChannelName } from '../../utils/toolsets';
+
+const TOOLSET_OAUTH_RESULT_RETRY_INTERVAL_MS = 500;
+
+const isToolsetOAuthResultAcknowledgement = (
+  value: unknown,
+): value is ToolsetOAuthResultAcknowledgement =>
+  typeof value === 'object' &&
+  value != null &&
+  'type' in value &&
+  value.type === ToolsetOAuthChannelControlType.ResultAcknowledged;
 
 const readRedirectState = (): ToolsetRedirectState | null => {
   const raw = sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY);
@@ -54,9 +66,10 @@ const replacePopupUrl = (url: URL): void => {
 };
 
 /**
- * Writes the result into this same-origin popup's URL before broadcasting it.
- * The opener polls that URL and closes the popup after consuming the result,
- * so a dropped BroadcastChannel event cannot lose the completed login.
+ * Writes the result into this same-origin popup's URL and repeats it over the
+ * flow channel until the opener confirms consumption. The callback closes
+ * itself after that acknowledgement, so a COOP-severed WindowProxy does not
+ * leave a successfully completed popup open.
  */
 const reportResult = (
   flowId: string | undefined,
@@ -80,7 +93,16 @@ const reportResult = (
   try {
     const channel = new BroadcastChannel(getToolsetOAuthChannelName(flowId));
     channel.postMessage(message);
-    channel.close();
+    const retryId = setInterval(() => {
+      channel.postMessage(message);
+    }, TOOLSET_OAUTH_RESULT_RETRY_INTERVAL_MS);
+
+    channel.onmessage = (event: MessageEvent<unknown>) => {
+      if (!isToolsetOAuthResultAcknowledgement(event.data)) return;
+      clearInterval(retryId);
+      channel.close();
+      window.close();
+    };
   } catch {
     // The result remains available in the popup URL.
   }
@@ -90,8 +112,8 @@ const reportResult = (
  * This route only ever runs inside the popup window opened by
  * `initiateOAuthLogin` — it never navigates, since the editor/Catalog tab
  * that opened it never navigated away either. It reports success/failure
- * over a `BroadcastChannel` plus its own same-origin URL so the initiating
- * tab can refresh even if the channel event is unavailable.
+ * over an acknowledged `BroadcastChannel` plus its own same-origin URL so
+ * the initiating tab can refresh even if the first channel event is missed.
  */
 const ToolsetAuthCallback: FC = () => {
   const [searchParams] = useSearchParams();

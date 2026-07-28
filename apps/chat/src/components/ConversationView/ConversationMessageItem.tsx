@@ -3,6 +3,7 @@ import {
   isStatusMessage,
   mergeClasses,
   MessageRole,
+  OverlayFeature,
   type Annotation,
   type Attachment,
   type AttachmentErrorReason,
@@ -17,7 +18,7 @@ import {
   type MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
 import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
-import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +32,7 @@ import { useAnnotations } from '../../hooks/annotations/useAnnotations';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
 import { useCitationCard } from '../../hooks/citations/useCitationCard';
 import { useCitationMarkdownComponents } from '../../hooks/citations/useCitationMarkdownComponents';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
 import { openAnnotationAttachment } from '../../utils/annotation';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
@@ -180,6 +182,16 @@ const ConversationMessageItem: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
+  const isLikesEnabled = useUiFeature(OverlayFeature.Likes);
+  const isEditUserMessageHidden = useUiFeature(
+    OverlayFeature.HideEditUserMessage,
+  );
+  const isRegenerateAssistantMessageHidden = useUiFeature(
+    OverlayFeature.HideRegenerateAssistantMessage,
+  );
+  const isDeleteUserMessageHidden = useUiFeature(
+    OverlayFeature.HideDeleteUserMessage,
+  );
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
   const { handleAttachmentClick: handleDownload } = useAttachmentAction();
@@ -355,12 +367,17 @@ const ConversationMessageItem: FC<Props> = ({
           msg,
           index,
           {
-            onEdit: !isAssistantTyping ? onStartEdit : undefined,
+            onEdit:
+              !isAssistantTyping && !isEditUserMessageHidden
+                ? onStartEdit
+                : undefined,
             onHoverEdit: preloadEditInput,
-            onDelete: onDeleteMessage,
-            onRegenerate: onRegenerateMessage,
-            onRate: onRateMessage,
-            onDislike: onDislikeMessage,
+            onDelete: isDeleteUserMessageHidden ? undefined : onDeleteMessage,
+            onRegenerate: isRegenerateAssistantMessageHidden
+              ? undefined
+              : onRegenerateMessage,
+            onRate: isLikesEnabled ? onRateMessage : undefined,
+            onDislike: isLikesEnabled ? onDislikeMessage : undefined,
           },
           tooltips,
           ariaLabels,
@@ -400,10 +417,7 @@ const ConversationMessageItem: FC<Props> = ({
               )}
               {msg.hasStreamError && (
                 <div className="w-full">
-                  <DialNotification
-                    variant={NotificationVariant.Error}
-                    message={streamErrorText}
-                  />
+                  <ErrorMessageNotification message={streamErrorText} />
                 </div>
               )}
             </>
