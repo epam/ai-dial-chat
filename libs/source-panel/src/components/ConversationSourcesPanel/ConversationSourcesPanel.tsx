@@ -91,7 +91,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       isOpen={isOpen}
       orientation={SidebarOrientation.Right}
       styles={{
-        className: isOpen ? 'mobile:w-full' : 'w-0',
+        className: isMobile && isOpen ? 'w-full' : undefined,
         bodyClassName: 'flex flex-col overflow-hidden p-0',
       }}
       labels={labels}

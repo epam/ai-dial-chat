@@ -115,6 +115,12 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
 
   const panelWidth = isOpen ? animationMaxWidth || currentWidthRef.current : 0;
 
+  /*
+   * Check if the className contains w-full to allow full-width override.
+   * When w-full is present, don't set inline width so the class takes effect.
+   */
+  const hasFullWidthClass = className?.includes('w-full');
+
   const dividerClass =
     orientation === SidebarOrientation.Right ? 'border-s' : 'border-e';
   const resizableSide =
@@ -133,9 +139,13 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
 
   return (
     <div
-      style={{
-        width: panelWidth,
-      }}
+      style={
+        hasFullWidthClass
+          ? undefined
+          : {
+              width: panelWidth,
+            }
+      }
       className={mergeClasses(
         'h-full flex-shrink-0 overflow-hidden',
         !isResizing && 'transition-[width] duration-200 ease-in-out',
