@@ -6,9 +6,11 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { NAVIGATION_CONFIG } from '../../constants/navigation';
 import { NavigationI18nKeys } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useSheetNavigation } from '../../hooks/useSheetNavigation';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ROUTES } from '../../types/routes';
+import { UserConfigStatus } from '../../types/user-config-status';
 import FooterContainer from '../FooterDialogs/FooterContainer';
 import styles from './MobileNavBottomSheet.module.scss';
 import ProfilePageContent from './ProfilePageContent';
@@ -21,7 +23,15 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { push, close } = useSheetNavigation();
+  const { status, features } = useAppConfig();
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
+
+  const visibleNavItems = NAVIGATION_CONFIG.filter(
+    ({ path, featureFlag }) =>
+      (path !== ROUTES.Catalog || isCatalogEnabled) &&
+      (featureFlag == null ||
+        (status === UserConfigStatus.Ready && features[featureFlag] === true)),
+  );
 
   const handleNavItem = (path: string) => {
     close();
@@ -34,10 +44,6 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
       content: <ProfilePageContent onLogoutRequest={onLogoutRequest} />,
     });
   };
-
-  const visibleNavItems = NAVIGATION_CONFIG.filter(
-    ({ path }) => path !== ROUTES.Catalog || isCatalogEnabled,
-  );
 
   return (
     <>

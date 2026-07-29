@@ -1,0 +1,39 @@
+{
+  "name": "@epam/ai-dial-publish-panel",
+  "description": "Publish-to-folder UI and state flow shared by catalog entity publish and conversation publish",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    "./styles.css": "./dist/style.css",
+    ".": {
+      "@epam/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "@tabler/icons-react": "^3.0.0",
+    "@epam/ai-dial-kit": "*",
+    "@epam/ai-dial-sidebar": "*",
+    "@epam/ai-dial-chat-shared": "*",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.17"
+  },
+  "nx": {
+    "tags": [
+      "publishable"
+    ],
+    "targets": {
+      "publish": {
+        "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      }
+    }
+  }
+}

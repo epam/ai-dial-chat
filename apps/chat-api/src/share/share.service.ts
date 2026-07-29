@@ -1,5 +1,11 @@
 import type { components } from '@epam/ai-dial-typescript-sdk';
-import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadGatewayException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   handleDialFetchError,
@@ -16,6 +22,22 @@ import { DiscardSharedCatalogItemResponseDto } from './dto/discard-shared-catalo
 import { ShareLinkResponseDto } from './dto/share-link-response.dto';
 
 type ResourceAccessType = components['schemas']['ResourceAccessType'];
+type ResourceKind = components['schemas']['ResourceTypes'];
+
+/*
+ * `DiscardSharedCatalogItemDto` only accepts an `itemId` starting with one of
+ * these three prefixes, so `resolveResourceKind` below always finds a match —
+ * this table exists purely to translate that prefix into the `resourceTypes`
+ * filter `getSharedResources` expects.
+ */
+const RESOURCE_KIND_BY_PREFIX: [prefix: string, kind: ResourceKind][] = [
+  ['applications/', 'APPLICATION'],
+  ['toolsets/', 'TOOL_SET'],
+  ['conversations/', 'CONVERSATION'],
+];
+
+const resolveResourceKind = (itemId: string): ResourceKind =>
+  RESOURCE_KIND_BY_PREFIX.find(([prefix]) => itemId.startsWith(prefix))![1];
 
 /*
  * DIAL Core's `shareResource` endpoint does not return an expiry; the link
@@ -332,6 +354,49 @@ export class ShareService {
     }
   }
 
+  /*
+   * DIAL Core's `discardSharedResources` treats a resource that was never
+   * shared with the caller as an idempotent no-op — it answers `200` rather
+   * than `403` — so a blind pass-through of its response would silently
+   * report success without actually removing (or ever having granted) any
+   * access. `discardShared` below cross-checks this against
+   * `getSharedResources` (the same call the deployments/toolsets list
+   * endpoints use to derive `sharedWithMe`), taken *before* calling discard,
+   * to tell a genuine discard apart from that silent no-op.
+   */
+  private async isSharedWithCaller(
+    itemId: string,
+    accessToken: string,
+  ): Promise<boolean> {
+    let result;
+    try {
+      result = await this.dialClient.client.getSharedResources({
+        headers: getBearerAuthHeaders(accessToken),
+        body: { resourceTypes: [resolveResourceKind(itemId)], with: 'me' },
+      });
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        'share.discardShared (verify shared)',
+        this.logger,
+        0,
+      );
+    }
+
+    if (result.error) {
+      return mapDialHttpStatus(
+        result.response.status,
+        'share.discardShared (verify shared)',
+        this.logger,
+        result.error,
+      );
+    }
+
+    return (result.data?.resources ?? []).some(
+      (resource) => resource.url === itemId,
+    );
+  }
+
   /**
    * Discards the calling user's own access to a catalog resource shared with
    * them, via DIAL Core `discardSharedResources`. This only affects the
@@ -339,6 +404,7 @@ export class ShareService {
    * `revokeSharedResources` operation.
    *
    * @throws {ForbiddenException} When the resource is not shared with the caller
+   * @throws {NotFoundException} When the resource does not exist
    * @throws {BadGatewayException} When DIAL Core returns an error response
    * @throws {ServiceUnavailableException} When DIAL Core is unreachable or times out
    */
@@ -348,6 +414,17 @@ export class ShareService {
     userSub: string,
   ): Promise<DiscardSharedCatalogItemResponseDto> {
     this.logger.log('Discard shared resource started');
+
+    /*
+     * Read before calling discard, not after: once discard runs, a resource
+     * that really was shared is no longer shared either, so checking
+     * afterwards can't tell a genuine discard apart from the no-op case this
+     * is meant to catch.
+     */
+    const wasSharedWithCaller = await this.isSharedWithCaller(
+      itemId,
+      accessToken,
+    );
 
     let result;
     try {
@@ -360,12 +437,31 @@ export class ShareService {
     }
 
     if (result.error) {
+      /*
+       * DIAL Core has no dedicated status for "itemId is well-formed but
+       * doesn't resolve to any resource" — it answers a generic `400` here,
+       * indistinguishable at the wire level from a truly malformed request.
+       * `DiscardSharedCatalogItemDto` already rejects malformed itemIds
+       * before this method runs, so any `400` reaching this point can only
+       * be DIAL Core's not-found case; map it to the `404` the
+       * `catalog-unshare` spec requires.
+       */
+      if (result.response.status === 400) {
+        throw new NotFoundException('Resource does not exist');
+      }
       return mapDialHttpStatus(
         result.response.status,
         'share.discardShared',
         this.logger,
         result.error,
       );
+    }
+
+    if (!wasSharedWithCaller) {
+      this.logger.warn(
+        `Discard shared resource rejected: itemId=${itemId} is not shared with the caller`,
+      );
+      throw new ForbiddenException('Resource is not shared with the caller');
     }
 
     await Promise.all([

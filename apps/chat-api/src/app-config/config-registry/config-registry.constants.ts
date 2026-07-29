@@ -205,6 +205,21 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     allowedRolesEnvVar: 'LIVE_CHAT_INTERACTION_ENABLED_ROLES',
   },
   {
+    key: 'features.scheduledTasksEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Scheduled Tasks feature is enabled, including the DIAL Scheduler ' +
+      'proxy endpoints, the Scheduled Tasks page, and its sidebar navigation entry. ' +
+      'Set SCHEDULED_TASKS_ENABLED_ROLES to restrict to specific roles.',
+    owner: 'chat-team',
+    envVar: 'SCHEDULED_TASKS_ENABLED',
+    allowedRolesEnvVar: 'SCHEDULED_TASKS_ENABLED_ROLES',
+  },
+  {
     key: 'uiFeatures.enabledUiFeatures',
     type: 'config',
     valueType: 'json',

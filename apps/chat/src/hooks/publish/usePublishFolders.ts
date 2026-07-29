@@ -1,4 +1,4 @@
-import { PublishFolderNode } from '@epam/ai-dial-catalog';
+import { PublishFolderNode } from '@epam/ai-dial-publish-panel';
 import type { ListFilesItemDto } from '@epam/chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { useCallback, useEffect, useMemo, useState } from 'react';

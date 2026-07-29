@@ -27,10 +27,10 @@
       "path": "../chat-shared/tsconfig.lib.json"
     },
     {
-      "path": "../sidebar/tsconfig.lib.json"
+      "path": "../ai-dial-kit/tsconfig.lib.json"
     },
     {
-      "path": "../ai-dial-kit/tsconfig.lib.json"
+      "path": "../publish-panel/tsconfig.lib.json"
     }
   ]
 }

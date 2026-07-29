@@ -21,7 +21,7 @@ The backend owns conversation persistence across the generation lifecycle — sa
 #### Scenario: Partial state saved on error
 
 - **WHEN** the upstream stream fails before `[DONE]`
-- **THEN** the backend saves the partial assistant message flagged `hasStreamError: true`
+- **THEN** the backend saves the partial assistant message with `streamErrorMessage` set — carrying the DIAL Core error text when one is available, or an empty string when no upstream text exists (empty body, non-user abort). The presence of the field (even `''`) is the terminal-error signal; the frontend localizes a generic fallback when the value is empty.
 
 ### Requirement: Generation finalizes on `[DONE]`, not on socket close
 

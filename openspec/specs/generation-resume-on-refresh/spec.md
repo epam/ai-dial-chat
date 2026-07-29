@@ -8,16 +8,16 @@ Frontend behavior that detects an in-progress generation on conversation load (i
 
 ### Requirement: Detect an unresolved generation placeholder on conversation load
 
-`apps/chat/src/utils/generation-resume.ts` SHALL export a pure predicate `isAwaitingGenerationResume(conversation)` that returns `true` when the conversation's last message has `role: assistant`, empty `content`, and neither `hasStreamError` nor `wasStoppedByUser` set. `Conversation.tsx`'s `loadConversation` SHALL call this predicate for the non-user-last-message branch (the branch that currently just calls `setConversation(result)`) and treat a `true` result as "a generation was still active elsewhere when this page loaded," distinct from a normally finished conversation.
+`apps/chat/src/utils/generation-resume.ts` SHALL export a pure predicate `isAwaitingGenerationResume(conversation)` that returns `true` when the conversation's last message has `role: assistant`, empty `content`, and neither `streamErrorMessage` nor `wasStoppedByUser` set. `Conversation.tsx`'s `loadConversation` SHALL call this predicate for the non-user-last-message branch (the branch that currently just calls `setConversation(result)`) and treat a `true` result as "a generation was still active elsewhere when this page loaded," distinct from a normally finished conversation.
 
 #### Scenario: Refresh mid-generation loads an unresolved placeholder
 
-- **WHEN** `loadConversation` fetches a conversation whose last message is `{ role: assistant, content: '' }` with no `hasStreamError` and no `wasStoppedByUser`
+- **WHEN** `loadConversation` fetches a conversation whose last message is `{ role: assistant, content: '' }` with no `streamErrorMessage` and no `wasStoppedByUser`
 - **THEN** `isAwaitingGenerationResume` returns `true` and the page treats the conversation as awaiting generation resume instead of rendering it as a finished, empty response
 
 #### Scenario: Finished or terminally-stopped conversation is not treated as awaiting resume
 
-- **WHEN** the last message has non-empty `content`, or has `hasStreamError: true`, or has `wasStoppedByUser: true`
+- **WHEN** the last message has non-empty `content`, or has a `streamErrorMessage`, or has `wasStoppedByUser: true`
 - **THEN** `isAwaitingGenerationResume` returns `false` and the conversation renders normally
 
 ### Requirement: Awaiting-resume state reuses the existing streaming state
@@ -50,7 +50,7 @@ Frontend behavior that detects an in-progress generation on conversation load (i
 
 #### Scenario: Backend finishes generation while the resume watch is open
 
-- **WHEN** `/watch` emits an `UPDATE` event for the awaiting-resume conversation's path and the subsequent `getConversation` result is no longer awaiting resume (has content, or `hasStreamError`, or `wasStoppedByUser`)
+- **WHEN** `/watch` emits an `UPDATE` event for the awaiting-resume conversation's path and the subsequent `getConversation` result is no longer awaiting resume (has content, or `streamErrorMessage`, or `wasStoppedByUser`)
 - **THEN** the page replaces its local conversation state with the fetched result, removes the path from `streamingPaths`, and closes the watch connection
 
 #### Scenario: Non-qualifying UPDATE event keeps watching

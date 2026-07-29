@@ -112,6 +112,8 @@ export interface Message {
   rating?: MessageRating;
   /** Deployment ID on `MessageRole.Assistant` and `MessageRole.Status` messages. */
   deploymentId?: string;
+  /* Human-readable error text from a failed stream. Present when generation ended in error — absence means generation succeeded or is still in progress. Used for both resume detection and UI error display. */
+  streamErrorMessage?: string;
   /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
   [key: string]: unknown;
 }

@@ -51,30 +51,10 @@ export type {
   OverviewSection,
   OverviewSpec,
 } from './models/item-overview';
-export { PublishCalloutKind } from './models/publish';
-export type {
-  PublishDerivationInput,
-  PublishDerivedState,
-  PublishFolderNode,
-  PublishHistoryEntry,
-  PublishResourceSummary,
-} from './models/publish';
 // Utils
 export { filterCatalogItems } from './utils/catalog-filter';
 export { sortCatalogItems } from './utils/catalog-sort';
 export { useFavColumns } from './utils/use-fav-columns';
-export { derivePublishState } from './utils/publish-state';
-export { formatPublishedDate } from './utils/format-published-date';
-export { usePublishFlow } from './utils/use-publish-flow';
-export type {
-  PublishFlowItem,
-  UsePublishFlowOptions,
-  UsePublishFlowResult,
-} from './utils/use-publish-flow';
-export {
-  collectFolderKeys,
-  filterFolderTree,
-} from './utils/publish-folder-tree';
 export {
   getCredentialsBadgeState,
   getCredentialsUiState,
@@ -115,38 +95,14 @@ export type { EntityTypeLabelProps } from './components/EntityTypeLabel/EntityTy
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 
-export { FolderPath } from './components/FolderPath/FolderPath';
-export type { FolderPathProps } from './components/FolderPath/FolderPath';
+export { FolderPath } from '@epam/ai-dial-ui-kit';
+export type { FolderPathProps } from '@epam/ai-dial-ui-kit';
 
 export { Filter } from './components/Filter/Filter';
 export type { FilterProps } from './components/Filter/Filter';
 
 export { TopicTag } from './components/TopicTag/TopicTag';
 export type { TopicTagProps } from './components/TopicTag/TopicTag';
-
-export { PublishHistoryList } from './components/PublishHistoryList/PublishHistoryList';
-export type { PublishHistoryListProps } from './components/PublishHistoryList/PublishHistoryList';
-
-export { PublishFoldersTree } from './components/PublishFoldersTree/PublishFoldersTree';
-export type { PublishFoldersTreeProps } from './components/PublishFoldersTree/PublishFoldersTree';
-
-export { PublishPanel } from './components/PublishPanel/PublishPanel';
-export type {
-  PublishPanelProps,
-  PublishPanelTexts,
-} from './components/PublishPanel/PublishPanel';
-
-export { PublishFooter } from './components/PublishPanel/PublishFooter';
-export type {
-  PublishFooterProps,
-  PublishFooterTexts,
-} from './components/PublishPanel/PublishFooter';
-
-export { StandalonePublishPanel } from './components/PublishPanel/StandalonePublishPanel';
-export type {
-  StandalonePublishPanelProps,
-  StandalonePublishPanelTexts,
-} from './components/PublishPanel/StandalonePublishPanel';
 
 export { CredentialsBadge } from './components/CredentialsBadge/CredentialsBadge';
 export type { CredentialsBadgeProps } from './components/CredentialsBadge/CredentialsBadge';

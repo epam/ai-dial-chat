@@ -26,6 +26,16 @@ This package is an internal workspace library. Add it as a dependency in your `p
 
 ## Components
 
+### FolderPath
+
+Read-only, non-clickable breadcrumb for folder-style path segments: a leading folder icon, a chevron separator mirrored in RTL, and the last segment styled as the current/leaf item. Scrolls horizontally on overflow rather than truncating.
+
+```tsx
+import { FolderPath } from '@epam/ai-dial-kit';
+
+<FolderPath segments={['Public', 'Project folder']} />;
+```
+
 ### SearchBar
 
 Search input field with a leading search icon.

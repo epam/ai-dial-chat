@@ -1422,7 +1422,7 @@ describe('ConversationService', () => {
       });
     });
 
-    it('saves partial message with hasStreamError when DIAL Core returns non-ok response', async () => {
+    it('saves partial message with streamErrorMessage when DIAL Core returns non-ok response', async () => {
       vi.spyOn(
         service['dialClient'].client,
         'getConversation',
@@ -1457,18 +1457,17 @@ describe('ConversationService', () => {
         res as never,
       );
 
-      // Should have saved at start (placeholder) + at error (partial with hasStreamError)
+      // Should have saved at start (placeholder) + at error (partial with streamErrorMessage)
       expect(saveConversationSpy).toHaveBeenCalledTimes(2);
       const errorSave = saveConversationSpy.mock.calls[1][2].body as {
-        messages: { hasStreamError?: boolean }[];
+        messages: { streamErrorMessage?: string }[];
       };
-      const assistantMsg = errorSave.messages.at(-1);
-      expect((assistantMsg as Record<string, unknown>).hasStreamError).toBe(
-        true,
-      );
+      const assistantMsg = errorSave.messages.at(-1) as Record<string, unknown>;
+      /* 400 response has no JSON body in this mock — streamErrorMessage is '' (error with no specific text) */
+      expect(assistantMsg.streamErrorMessage).toBe('');
     });
 
-    it('saves partial message with hasStreamError for an in-band DIAL error chunk (no choices)', async () => {
+    it('saves partial message with streamErrorMessage for an in-band DIAL error chunk (no choices)', async () => {
       vi.spyOn(
         service['dialClient'].client,
         'getConversation',
@@ -1523,10 +1522,12 @@ describe('ConversationService', () => {
 
       expect(saveConversationSpy).toHaveBeenCalledTimes(2);
       const errorSave = saveConversationSpy.mock.calls[1][2].body as {
-        messages: { content?: string; hasStreamError?: boolean }[];
+        messages: { content?: string; streamErrorMessage?: string }[];
       };
       const assistantMsg = errorSave.messages.at(-1) as Record<string, unknown>;
-      expect(assistantMsg.hasStreamError).toBe(true);
+      expect(assistantMsg.streamErrorMessage).toBe(
+        'Failed to connect to upstream server',
+      );
       expect(assistantMsg.content).toBe('');
     });
 

@@ -2,6 +2,8 @@ import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import '@epam/ai-dial-ui-kit/styles.css';
 import '@epam/ai-dial-react-pdf-highlighter/styles.css';
 import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css';
+import '@uiw/react-markdown-preview/markdown.css';
+import '@uiw/react-md-editor/markdown-editor.css';
 import { GlobalWorkerOptions } from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { lazy, StrictMode, Suspense } from 'react';

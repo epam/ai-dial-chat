@@ -40,7 +40,6 @@ vi.mock('../../../hooks/conversation/useConversationStream', () => ({
     handleStop: vi.fn(),
     isStreaming: false,
     canStopStreaming: false,
-    hasStreamError: false,
   }),
 }));
 

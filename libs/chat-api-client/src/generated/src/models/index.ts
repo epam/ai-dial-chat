@@ -1289,6 +1289,49 @@ export interface CreateFolderResponseDto {
 /**
  *
  * @export
+ * @interface CreateScheduledTaskBodyDto
+ */
+export interface CreateScheduledTaskBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  model: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  prompt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  stream?: boolean;
+}
+/**
+ *
+ * @export
  * @interface CreateShareLinkDto
  */
 export interface CreateShareLinkDto {
@@ -1341,6 +1384,84 @@ export interface CreatedApplicationDto {
    */
   object?: string;
 }
+/**
+ *
+ * @export
+ * @interface CreatedScheduledTaskDto
+ */
+export interface CreatedScheduledTaskDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof CreatedScheduledTaskDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  nextRunTime?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  createdAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  updatedAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  triggerType?: CreatedScheduledTaskDtoTriggerTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  serviceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  createdBy?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedScheduledTaskDto
+   */
+  description?: string;
+}
+
+/**
+ * @export
+ */
+export const CreatedScheduledTaskDtoTriggerTypeEnum = {
+  Cron: 'cron',
+  Date: 'date',
+} as const;
+export type CreatedScheduledTaskDtoTriggerTypeEnum =
+  (typeof CreatedScheduledTaskDtoTriggerTypeEnum)[keyof typeof CreatedScheduledTaskDtoTriggerTypeEnum];
+
 /**
  *
  * @export
@@ -3187,6 +3308,49 @@ export interface ListFilesResponseDto {
 /**
  *
  * @export
+ * @interface ListScheduledTasksResponseDto
+ */
+export interface ListScheduledTasksResponseDto {
+  /**
+   *
+   * @type {Array<ScheduledTaskDto>}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  items: Array<ScheduledTaskDto>;
+  /**
+   * Total number of schedules upstream, across all pages.
+   * @type {number}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  count?: number;
+  /**
+   * Page size used by the upstream DIAL Scheduler response.
+   * @type {number}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  limit?: number;
+  /**
+   * Offset of `items` within the full upstream result set.
+   * @type {number}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  offset?: number;
+  /**
+   * Upstream URL for the next page, or null if this is the last page.
+   * @type {object}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  next?: object | null;
+  /**
+   * Upstream URL for the previous page, or null if this is the first page.
+   * @type {object}
+   * @memberof ListScheduledTasksResponseDto
+   */
+  previous?: object | null;
+}
+/**
+ *
+ * @export
  * @interface MessageCustomContentDto
  */
 export interface MessageCustomContentDto {
@@ -4072,6 +4236,116 @@ export interface SaveConversationBodyDto {
 /**
  *
  * @export
+ * @interface ScheduleCronDto
+ */
+export interface ScheduleCronDto {
+  /**
+   * Cron field map using supported Scheduler keys (year, month, day, week, day_of_week, hour, minute, second).
+   * @type {{ [key: string]: string; }}
+   * @memberof ScheduleCronDto
+   */
+  fields: { [key: string]: string };
+}
+/**
+ *
+ * @export
+ * @interface ScheduleTriggerDto
+ */
+export interface ScheduleTriggerDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduleTriggerDto
+   */
+  date?: string;
+  /**
+   *
+   * @type {ScheduleCronDto}
+   * @memberof ScheduleTriggerDto
+   */
+  cron?: ScheduleCronDto;
+}
+/**
+ *
+ * @export
+ * @interface ScheduledTaskDto
+ */
+export interface ScheduledTaskDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof ScheduledTaskDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  nextRunTime?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  createdAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  updatedAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  triggerType?: ScheduledTaskDtoTriggerTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  serviceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  createdBy?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ScheduledTaskDto
+   */
+  description?: string;
+}
+
+/**
+ * @export
+ */
+export const ScheduledTaskDtoTriggerTypeEnum = {
+  Cron: 'cron',
+  Date: 'date',
+} as const;
+export type ScheduledTaskDtoTriggerTypeEnum =
+  (typeof ScheduledTaskDtoTriggerTypeEnum)[keyof typeof ScheduledTaskDtoTriggerTypeEnum];
+
+/**
+ *
+ * @export
  * @interface SendCompletionDto
  */
 export interface SendCompletionDto {
@@ -4880,6 +5154,49 @@ export interface UpdatePinsDto {
 /**
  *
  * @export
+ * @interface UpdateScheduledTaskBodyDto
+ */
+export interface UpdateScheduledTaskBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  model: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  prompt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdateScheduledTaskBodyDto
+   */
+  stream?: boolean;
+}
+/**
+ *
+ * @export
  * @interface UpdateSelectedDeploymentDto
  */
 export interface UpdateSelectedDeploymentDto {
@@ -4915,6 +5232,84 @@ export interface UpdatedApplicationDto {
    */
   object?: string;
 }
+/**
+ *
+ * @export
+ * @interface UpdatedScheduledTaskDto
+ */
+export interface UpdatedScheduledTaskDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  nextRunTime?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  createdAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  updatedAt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  triggerType?: UpdatedScheduledTaskDtoTriggerTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  serviceId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  createdBy?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdatedScheduledTaskDto
+   */
+  description?: string;
+}
+
+/**
+ * @export
+ */
+export const UpdatedScheduledTaskDtoTriggerTypeEnum = {
+  Cron: 'cron',
+  Date: 'date',
+} as const;
+export type UpdatedScheduledTaskDtoTriggerTypeEnum =
+  (typeof UpdatedScheduledTaskDtoTriggerTypeEnum)[keyof typeof UpdatedScheduledTaskDtoTriggerTypeEnum];
+
 /**
  *
  * @export

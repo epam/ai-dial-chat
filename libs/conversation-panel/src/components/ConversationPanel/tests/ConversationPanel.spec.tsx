@@ -92,6 +92,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DialSkeleton: () => null,
+  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', () => ({

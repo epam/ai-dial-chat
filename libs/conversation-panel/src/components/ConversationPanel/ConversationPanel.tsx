@@ -298,14 +298,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     useEffect(() => {
       if (!activeConversationId) return;
 
-      const groupKey = groups.find((group) =>
-        group.items.some((item) => item.id === activeConversationId),
-      )?.key;
-      if (groupKey && !expandedGroups.has(groupKey)) {
-        setExpandedGroups((prev) => new Set(prev).add(groupKey));
-        return;
-      }
-
       if (lastScrolledIdRef.current === activeConversationId) return;
 
       const index = virtualRows.findIndex(

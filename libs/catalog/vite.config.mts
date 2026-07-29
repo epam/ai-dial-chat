@@ -20,9 +20,9 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../ai-dial-kit/src/index.ts',
       ),
-      '@epam/ai-dial-sidebar': path.resolve(
+      '@epam/ai-dial-publish-panel': path.resolve(
         import.meta.dirname,
-        '../sidebar/src/index.ts',
+        '../publish-panel/src/index.ts',
       ),
     },
   },

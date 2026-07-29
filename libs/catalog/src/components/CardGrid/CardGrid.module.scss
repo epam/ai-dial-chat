@@ -1,32 +1,16 @@
+/*
+ * The base elevated-card shadow/hover/reduced-motion treatment now lives in
+ * `CardShell` (@epam/ai-dial-kit). This block only adds the star-button
+ * hover reveal and reduced-motion overrides that are specific to this card.
+ */
 .card {
-  background: var(--bg-layer-0, #fcfcfc);
-  box-shadow:
-    0 1px 3px rgba(16, 24, 40, 0.04),
-    0 6px 20px rgba(16, 24, 40, 0.05);
-  transition:
-    transform 200ms ease-out,
-    box-shadow 200ms ease-out;
-
   @media (hover: hover) {
-    &:hover {
-      transform: translateY(-3px);
-      box-shadow:
-        0 4px 10px rgba(16, 24, 40, 0.06),
-        0 18px 44px rgba(16, 24, 40, 0.1);
-    }
-
     &:hover .emptyStarHidden {
       opacity: 1;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    transition: none;
-
-    &:hover {
-      transform: none;
-    }
-
     .starBtn {
       transition: none !important;
     }

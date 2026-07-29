@@ -316,7 +316,7 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
           custom_content: { stages: [] },
           wasStoppedByUser: true,
           stoppedWithoutContent: true,
-          hasStreamError: true,
+          streamErrorMessage: 'Generation failed',
         },
         { role: MessageRole.User, content: 'Follow-up question' },
         { role: MessageRole.Assistant, content: 'Follow-up answer' },
@@ -341,7 +341,7 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
         custom_content: undefined,
         wasStoppedByUser: undefined,
         stoppedWithoutContent: undefined,
-        hasStreamError: undefined,
+        streamErrorMessage: undefined,
       },
     ]);
     expect(conversationRef.current).toBe(updated);

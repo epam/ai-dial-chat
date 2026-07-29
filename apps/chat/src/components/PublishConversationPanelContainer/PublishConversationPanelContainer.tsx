@@ -3,7 +3,7 @@ import {
   PublishResourceSummary,
   StandalonePublishPanel,
   usePublishFlow,
-} from '@epam/ai-dial-catalog';
+} from '@epam/ai-dial-publish-panel';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC, RefObject } from 'react';
 import { memo, useEffect, useState } from 'react';
@@ -124,11 +124,11 @@ const PublishConversationPanelContainer: FC<Props> = ({
       onClose={onClose}
       returnFocusRef={returnFocusRef}
       onSubmit={handleSubmit}
-      footerTexts={{
+      footerLabels={{
         cancelLabel: t(ButtonsI18nKeys.Cancel),
         publishDefaultLabel: t(ButtonsI18nKeys.Publish),
       }}
-      panelTexts={{
+      panelLabels={{
         replaceWarning: t(ConversationPublishI18nKeys.AlreadyPublishedWarning),
         createFolderEmptyNameError: t(
           ConversationPublishI18nKeys.EmptyFolderNameError,
@@ -140,7 +140,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
           ConversationPublishI18nKeys.DuplicateFolderNameError,
         ),
       }}
-      texts={{
+      labels={{
         title: t(ButtonsI18nKeys.Publish),
         ariaLabel: t(ConversationPublishI18nKeys.PanelAriaLabel),
         closeAriaLabel: t(ButtonsI18nKeys.Close),

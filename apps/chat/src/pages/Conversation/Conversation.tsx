@@ -560,7 +560,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           canStopAssistant={canStopStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
-          streamErrorText={t(ChatI18nKeys.StreamError)}
           stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}

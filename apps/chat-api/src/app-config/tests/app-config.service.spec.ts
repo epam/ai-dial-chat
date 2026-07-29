@@ -3,9 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppConfigService } from '../app-config.service';
 import type { AppConfigEvalContext } from '../app-config.types';
 import type { CompositeConfigProvider } from '../config-registry/composite-config.provider';
+import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants';
 import { FeatureKey } from '../feature-flags/feature-key.enum';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
+
+// getClientConfig resolves exactly one definition per client-visible config key.
+const CLIENT_DEFINITIONS_COUNT = CONFIG_DEFINITIONS.filter(
+  (def) => def.visibility === 'client',
+).length;
 
 function makeService(
   resolveImpl: (key: string) => Promise<unknown | undefined>,
@@ -277,7 +283,9 @@ describe('AppConfigService', () => {
         first,
         60_000,
       );
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(16);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(
+        CLIENT_DEFINITIONS_COUNT,
+      );
     });
 
     it('does not share cached config across role sets', async () => {
@@ -294,7 +302,9 @@ describe('AppConfigService', () => {
         roles: ['viewer'],
       });
 
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(32);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(
+        CLIENT_DEFINITIONS_COUNT * 2,
+      );
     });
   });
 
