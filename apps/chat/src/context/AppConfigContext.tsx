@@ -85,9 +85,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             overlayAllowedOrigins: response.config?.overlayAllowedOrigins ?? [],
             enabledUiFeatures: response.config?.enabledUiFeatures ?? null,
             announcementHtml: response.config?.announcementHtml ?? null,
-            deepResearchToolId:
-              (response.config as { deepResearchToolId?: string })
-                ?.deepResearchToolId ?? null,
+            deepResearchToolId: response.config?.deepResearchToolId ?? null,
             footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
           },
           metadata: response.metadata,

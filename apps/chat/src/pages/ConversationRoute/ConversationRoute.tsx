@@ -37,6 +37,7 @@ import {
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { hasActiveToolConfig } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import {
   getStarterConversationText,
@@ -151,7 +152,7 @@ const ConversationRoute: FC = () => {
     ) => {
       if (!selectedItemId) return;
       const attachmentDtos = attachmentsToDtos(attachments || []);
-      const hasToolConfig = Object.keys(toolConfigurationValue).length > 0;
+      const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
       const conversation = await apiCreateConversation(
         message,
         selectedItemId,

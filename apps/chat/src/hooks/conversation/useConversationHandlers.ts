@@ -30,7 +30,10 @@ import { ROUTES } from '../../types/routes';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
 import { createMessagePair } from '../../utils/message-factory';
-import { isMessageChanged } from '../../utils/message-utils';
+import {
+  hasActiveToolConfig,
+  isMessageChanged,
+} from '../../utils/message-utils';
 import { getStarterSubmitText } from '../../utils/starter-option';
 import { useAttachmentUpload } from './useAttachmentUpload';
 
@@ -118,9 +121,7 @@ export const useConversationHandlers = ({
         return next;
       });
 
-      const hasToolConfig =
-        toolConfigurationValue != null &&
-        Object.keys(toolConfigurationValue).length > 0;
+      const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
 
       startStream(
         conversationId,
@@ -340,9 +341,7 @@ export const useConversationHandlers = ({
       const configurationValue = propertyKey
         ? { [propertyKey]: starter.const }
         : undefined;
-      const hasToolConfig =
-        toolConfigurationValue != null &&
-        Object.keys(toolConfigurationValue).length > 0;
+      const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
       const mergedConfigurationValue = {
         ...(configurationValue ?? {}),
         ...(hasToolConfig ? toolConfigurationValue : {}),

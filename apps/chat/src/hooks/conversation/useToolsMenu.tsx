@@ -1,13 +1,7 @@
 import type { ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconTelescope } from '@tabler/icons-react';
-import {
-  createElement,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ToolsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -75,10 +69,7 @@ export const useToolsMenu = () => {
       {
         id: deepResearchToolId,
         label,
-        icon: createElement(IconTelescope, {
-          size: DIAL_ICON_SIZE.SM,
-          'aria-hidden': true,
-        }),
+        icon: <IconTelescope size={DIAL_ICON_SIZE.SM} aria-hidden />,
         isSelected,
       },
     ];
