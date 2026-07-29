@@ -38,7 +38,7 @@ const NotificationContainer: FC = () => {
   if (!notifications.length) return null;
 
   return createPortal(
-    <div className="fixed start-1/2 top-6 z-[70] flex -translate-x-1/2 flex-col gap-2">
+    <div className="fixed left-1/2 top-6 z-[70] flex -translate-x-1/2 flex-col gap-2">
       {notifications.map((item) => (
         <NotificationEntry
           key={item.id}

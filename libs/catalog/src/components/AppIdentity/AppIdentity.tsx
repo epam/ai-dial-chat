@@ -1,9 +1,5 @@
-import {
-  DeploymentIcon,
-  Highlight,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DialEllipsisTooltip, Highlight } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode } from 'react';
 import { CatalogEntityType } from '../../types/entity-type';
 import { EntityTypeLabel } from '../EntityTypeLabel/EntityTypeLabel';

@@ -1,13 +1,10 @@
-import {
-  type DeploymentItem,
-  Highlight,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
+import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialButton,
   DialSearch,
   ElementSize,
+  Highlight,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useEffect, useState } from 'react';

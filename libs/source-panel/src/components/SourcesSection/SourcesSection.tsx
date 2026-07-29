@@ -1,6 +1,5 @@
 import {
   buildCssVars,
-  Highlight,
   MarkdownRenderer,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
@@ -8,6 +7,7 @@ import {
   DIAL_ICON_SIZE,
   DialGhostIconButton,
   ElementSize,
+  Highlight,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import { memo, useMemo, useState, type FC, type ReactNode } from 'react';

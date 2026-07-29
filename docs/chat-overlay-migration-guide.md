@@ -139,9 +139,8 @@ const overlay = new ChatOverlay('#chat-root', {
 
 await overlay.ready();
 
-const unsubscribe = overlay.subscribe(
-  OverlayEventType.GptStartGenerating,
-  () => console.log('Generation started'),
+const unsubscribe = overlay.subscribe(OverlayEventType.GptStartGenerating, () =>
+  console.log('Generation started'),
 );
 
 await overlay.sendMessage('Hello!');
@@ -153,23 +152,23 @@ overlay.destroy();
 
 ### Changes to `ChatOverlayOptions`
 
-| Legacy option | New option or required action |
-| --- | --- |
-| `domain` | Preserved. The library now derives the target origin from this URL. |
-| `hostDomain` | Removed. The library automatically sends `window.location.origin`. |
-| `theme` | Preserved. |
-| `modelId` | Preserved. |
-| `overlayConversationId` | Preserved. |
-| `requestTimeout` | Preserved; defaults to `10000` ms. |
-| `loaderStyles` | Preserved as `Record<string, string>`. |
-| `loaderClass` | Preserved. |
-| `loaderInnerHTML` | Preserved. Pass trusted HTML only. |
-| `loaderHideEvent` | Preserved, but now use `OverlayEventType`. |
-| `enabledFeatures` | Accepts only `OverlayFeature[]`. |
-| `newConversationsFolderId` | Removed because the new chat does not have conversation folders. |
-| `enabledFeaturesData` | Not supported. |
-| `messageButtons` | Not supported. |
-| `signInOptions`, `signInInSameWindow` | Removed; see the authentication section. |
+| Legacy option                         | New option or required action                                       |
+| ------------------------------------- | ------------------------------------------------------------------- |
+| `domain`                              | Preserved. The library now derives the target origin from this URL. |
+| `hostDomain`                          | Removed. The library automatically sends `window.location.origin`.  |
+| `theme`                               | Preserved.                                                          |
+| `modelId`                             | Preserved.                                                          |
+| `overlayConversationId`               | Preserved.                                                          |
+| `requestTimeout`                      | Preserved; defaults to `10000` ms.                                  |
+| `loaderStyles`                        | Preserved as `Record<string, string>`.                              |
+| `loaderClass`                         | Preserved.                                                          |
+| `loaderInnerHTML`                     | Preserved. Pass trusted HTML only.                                  |
+| `loaderHideEvent`                     | Preserved, but now use `OverlayEventType`.                          |
+| `enabledFeatures`                     | Accepts only `OverlayFeature[]`.                                    |
+| `newConversationsFolderId`            | Removed because the new chat does not have conversation folders.    |
+| `enabledFeaturesData`                 | Not supported.                                                      |
+| `messageButtons`                      | Not supported.                                                      |
+| `signInOptions`, `signInInSameWindow` | Removed; see the authentication section.                            |
 
 `setOverlayOptions()` now accepts only fields that can be changed dynamically:
 `theme`, `modelId`, `overlayConversationId`, and `enabledFeatures`. Do not pass
@@ -206,7 +205,7 @@ Practical implications:
 To keep the loader visible until the overlay is fully ready, set:
 
 ```ts
-loaderHideEvent: OverlayEventType.ReadyToInteract
+loaderHideEvent: OverlayEventType.ReadyToInteract;
 ```
 
 The default `loaderHideEvent` is `OverlayEventType.Ready`.
@@ -217,25 +216,25 @@ The default `loaderHideEvent` is `OverlayEventType.Ready`.
 
 The following methods are available on the new `ChatOverlay`:
 
-| Method | Important notes |
-| --- | --- |
-| `ready()` | Waits for `READY_TO_INTERACT`. |
-| `getMessages()` | Returns messages from the active conversation. |
-| `sendMessage(content)` | Sends a message to the active conversation. |
-| `setInputContent(content)` | Changes the composer content. |
-| `setSystemPrompt(prompt)` | Applies to the next message, not an in-progress generation. |
-| `setTemperature(value)` | Applies to the next message. |
-| `getConversations()` | Returns the current in-memory snapshot; it does not force a refresh. |
-| `getSelectedConversations()` | Returns one active conversation or an empty array when the composer is open. |
-| `selectConversation(id)` | Waits for the selected conversation to load. |
-| `createConversation(options?)` | Its signature has changed; see below. |
-| `createLocalConversation()` | Opens the composer without immediately persisting a conversation. |
-| `deleteConversation(id)` | Now returns a payload that may contain an error. |
-| `renameConversation(id, newName)` | Now returns a payload that may contain an error. |
-| `setOverlayOptions(options)` | Accepts only the mutable subset of options. |
-| `subscribe(eventType, callback)` | Uses `OverlayEventType` and returns an unsubscribe function. |
-| `allowFullscreen()`, `openFullscreen()` | Preserved. |
-| `destroy()` | Idempotently releases resources. |
+| Method                                  | Important notes                                                              |
+| --------------------------------------- | ---------------------------------------------------------------------------- |
+| `ready()`                               | Waits for `READY_TO_INTERACT`.                                               |
+| `getMessages()`                         | Returns messages from the active conversation.                               |
+| `sendMessage(content)`                  | Sends a message to the active conversation.                                  |
+| `setInputContent(content)`              | Changes the composer content.                                                |
+| `setSystemPrompt(prompt)`               | Applies to the next message, not an in-progress generation.                  |
+| `setTemperature(value)`                 | Applies to the next message.                                                 |
+| `getConversations()`                    | Returns the current in-memory snapshot; it does not force a refresh.         |
+| `getSelectedConversations()`            | Returns one active conversation or an empty array when the composer is open. |
+| `selectConversation(id)`                | Waits for the selected conversation to load.                                 |
+| `createConversation(options?)`          | Its signature has changed; see below.                                        |
+| `createLocalConversation()`             | Opens the composer without immediately persisting a conversation.            |
+| `deleteConversation(id)`                | Now returns a payload that may contain an error.                             |
+| `renameConversation(id, newName)`       | Now returns a payload that may contain an error.                             |
+| `setOverlayOptions(options)`            | Accepts only the mutable subset of options.                                  |
+| `subscribe(eventType, callback)`        | Uses `OverlayEventType` and returns an unsubscribe function.                 |
+| `allowFullscreen()`, `openFullscreen()` | Preserved.                                                                   |
+| `destroy()`                             | Idempotently releases resources.                                             |
 
 ### New `createConversation` signature
 
@@ -350,10 +349,7 @@ your own guard.
 In the new API, `enabledFeatures` is an `OverlayFeature` array, not a string:
 
 ```ts
-enabledFeatures: [
-  OverlayFeature.Header,
-  OverlayFeature.ConversationsSection,
-]
+enabledFeatures: [OverlayFeature.Header, OverlayFeature.ConversationsSection];
 ```
 
 It uses **replace**, not merge, semantics:
@@ -371,53 +367,53 @@ Do not send a partial diff. Always send the complete desired set.
 
 ### Renamed flags
 
-| Legacy flag | New flag |
-| --- | --- |
-| `marketplace` | `catalog` (`OverlayFeature.Catalog`) |
+| Legacy flag                | New flag                                                    |
+| -------------------------- | ----------------------------------------------------------- |
+| `marketplace`              | `catalog` (`OverlayFeature.Catalog`)                        |
 | `marketplace-hide-my-apps` | `catalog-hide-my-apps` (`OverlayFeature.CatalogHideMyApps`) |
-| `marketplace-table-view` | `catalog-table-view` (`OverlayFeature.CatalogTableView`) |
+| `marketplace-table-view`   | `catalog-table-view` (`OverlayFeature.CatalogTableView`)    |
 
 ### Flags replaced by unconditional behavior
 
 The following legacy strings are no longer recognized. Their corresponding
 behavior is unconditional in the new chat, so you can normally remove them:
 
-| Legacy flag | New chat behavior |
-| --- | --- |
-| `custom-logo` | The logo always comes from theme configuration; use `theme` to select the theme. |
-| `show-layout-dividers` | Dividers are a permanent part of the UI. |
-| `top-settings` | The top settings panel is always rendered. |
-| `top-chat-model-settings` | The model selector is rendered; use `disallow-change-agent` to restrict it. |
-| `chat-header-border` | The header bottom border is always rendered. |
-| `chat-input-border` | The input border is always rendered. |
+| Legacy flag               | New chat behavior                                                                |
+| ------------------------- | -------------------------------------------------------------------------------- |
+| `custom-logo`             | The logo always comes from theme configuration; use `theme` to select the theme. |
+| `show-layout-dividers`    | Dividers are a permanent part of the UI.                                         |
+| `top-settings`            | The top settings panel is always rendered.                                       |
+| `top-chat-model-settings` | The model selector is rendered; use `disallow-change-agent` to restrict it.      |
+| `chat-header-border`      | The header bottom border is always rendered.                                     |
+| `chat-input-border`       | The input border is always rendered.                                             |
 
 ### UI flags not supported yet
 
 The following legacy chat flags are not included in the new `OverlayFeature`:
 
-| Flag | Status |
-| --- | --- |
-| `code-interpreter` | The corresponding toggle integration is absent. |
-| `compare-mode-disabled` | Compare mode has not been migrated as an overlay toggle. |
-| `input-links` | Link attachments have not been migrated as an overlay toggle. |
-| `message-templates` | Message templates have not been migrated. |
-| `hide-top-context-menu` | No equivalent toggle is available. |
-| `top-chat-info` | No equivalent toggle is available. |
-| `top-clear-conversation` | No equivalent toggle is available. |
-| `chat-full-width-by-default` | No equivalent toggle is available. |
-| `footer` | The new UI has no transferable footer section. |
-| `prompts-panel-toggle` | The legacy prompts UI has not been migrated. |
-| `prompts-section` | The legacy prompts UI has not been migrated. |
-| `showPromptsSectionByDefault` | The legacy prompts UI has not been migrated. |
-| `edit-all-assistant-message` | Editing assistant messages has not been migrated as a toggle. |
-| `edit-last-assistant-message` | Editing assistant messages has not been migrated as a toggle. |
-| `disabled-playback-controls` | The playback API and UI are not supported yet. |
-| `prompts-publishing` | The legacy prompts UI has not been migrated. |
-| `prompts-sharing` | The legacy prompts UI has not been migrated. |
-| `report-an-issue` | No equivalent toggle is available. |
-| `request-api-key` | No equivalent toggle is available. |
+| Flag                            | Status                                                                        |
+| ------------------------------- | ----------------------------------------------------------------------------- |
+| `code-interpreter`              | The corresponding toggle integration is absent.                               |
+| `compare-mode-disabled`         | Compare mode has not been migrated as an overlay toggle.                      |
+| `input-links`                   | Link attachments have not been migrated as an overlay toggle.                 |
+| `message-templates`             | Message templates have not been migrated.                                     |
+| `hide-top-context-menu`         | No equivalent toggle is available.                                            |
+| `top-chat-info`                 | No equivalent toggle is available.                                            |
+| `top-clear-conversation`        | No equivalent toggle is available.                                            |
+| `chat-full-width-by-default`    | No equivalent toggle is available.                                            |
+| `footer`                        | The new UI has no transferable footer section.                                |
+| `prompts-panel-toggle`          | The legacy prompts UI has not been migrated.                                  |
+| `prompts-section`               | The legacy prompts UI has not been migrated.                                  |
+| `showPromptsSectionByDefault`   | The legacy prompts UI has not been migrated.                                  |
+| `edit-all-assistant-message`    | Editing assistant messages has not been migrated as a toggle.                 |
+| `edit-last-assistant-message`   | Editing assistant messages has not been migrated as a toggle.                 |
+| `disabled-playback-controls`    | The playback API and UI are not supported yet.                                |
+| `prompts-publishing`            | The legacy prompts UI has not been migrated.                                  |
+| `prompts-sharing`               | The legacy prompts UI has not been migrated.                                  |
+| `report-an-issue`               | No equivalent toggle is available.                                            |
+| `request-api-key`               | No equivalent toggle is available.                                            |
 | `md-sidebar-overlay-breakpoint` | Requires a sidebar overlay/backdrop mode that does not exist in the new chat. |
-| `user-message-align-end` | Inline-end alignment is already unconditional. |
+| `user-message-align-end`        | Inline-end alignment is already unconditional.                                |
 
 Pass only values exported by `OverlayFeature`. This also protects TypeScript
 integrations from typos and removed keys.

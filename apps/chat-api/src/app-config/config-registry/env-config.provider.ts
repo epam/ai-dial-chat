@@ -54,14 +54,18 @@ export class EnvConfigProvider implements ConfigProvider {
 
     // features.footer is derived from FOOTER_HTML_MESSAGE presence
     if (key === 'features.footer') {
-      const footerHtml = this.configService.get('FOOTER_HTML_MESSAGE', { infer: true });
+      const footerHtml = this.configService.get('FOOTER_HTML_MESSAGE', {
+        infer: true,
+      });
       if (footerHtml == null) return undefined;
       return true;
     }
 
     // features.requestApiKey is derived from REQUEST_API_KEY_CODE presence
     if (key === 'features.requestApiKey') {
-      const code = this.configService.get('REQUEST_API_KEY_CODE', { infer: true });
+      const code = this.configService.get('REQUEST_API_KEY_CODE', {
+        infer: true,
+      });
       if (code == null) return undefined;
       return true;
     }
