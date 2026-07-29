@@ -1,5 +1,6 @@
 import type { CatalogItem } from '../models/catalog-item';
 
+/** Returns the filter label for the From dropdown: the default label when nothing (or everything) is selected, or a compact summary otherwise. */
 export const getFromLabel = (
   checked: Set<string>,
   allIds: Set<string> | undefined,

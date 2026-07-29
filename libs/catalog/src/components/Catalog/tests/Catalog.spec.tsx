@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { CatalogEntityType } from '../../../types/entity-type';
 import { CatalogSortKey } from '../../../types/sort';
+import { CatalogViewMode } from '../../../types/view-mode';
 import { Catalog } from '../Catalog';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -247,6 +248,22 @@ describe('Catalog', () => {
   it('renders Create button', () => {
     render(<Catalog items={[]} favorites={[]} />);
     expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
+  });
+
+  it('defaults to the grid view', () => {
+    render(<Catalog items={[]} favorites={[]} />);
+    expect(screen.queryByLabelText('catalog list')).toBeNull();
+  });
+
+  it('starts in the list view when initialViewMode is List', () => {
+    render(
+      <Catalog
+        items={[]}
+        favorites={[]}
+        initialViewMode={CatalogViewMode.List}
+      />,
+    );
+    expect(screen.getByLabelText('catalog list')).toBeTruthy();
   });
 
   it('calls onCreateClick when Create is clicked', async () => {

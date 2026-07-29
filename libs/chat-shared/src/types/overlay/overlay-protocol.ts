@@ -1,14 +1,7 @@
-/**
- * Namespace prefix shared by every `@DIAL_OVERLAY` postMessage type string
- * exchanged between a `ChatOverlay`/`ChatOverlayManager` host page and an
- * embedded chat app instance.
- */
+/** Namespace prefix for every `@DIAL_OVERLAY` postMessage type string. */
 export const DIAL_OVERLAY_NAMESPACE = '@DIAL_OVERLAY';
 
-/**
- * Request message types the host (library) can send to the embedded app.
- * Each value is the full wire `type` string sent over `postMessage`.
- */
+/** Request message types the host can send to the embedded app. */
 export enum OverlayRequestType {
   /** Fetch the active conversation's messages. */
   GetMessages = '@DIAL_OVERLAY/GET_MESSAGES',
@@ -38,11 +31,7 @@ export enum OverlayRequestType {
   RenameConversation = '@DIAL_OVERLAY/RENAME_CONVERSATION',
 }
 
-/**
- * Event message types the embedded app can send to the host (library),
- * without an accompanying request. Each value is the full wire `type`
- * string sent over `postMessage`.
- */
+/** Event message types the embedded app sends to the host. */
 export enum OverlayEventType {
   /** Sent once, immediately, before any host identity is known. */
   InitReady = '@DIAL_OVERLAY/INIT_READY',
@@ -62,20 +51,75 @@ export enum OverlayEventType {
   ConversationsUpdated = '@DIAL_OVERLAY/CONVERSATIONS_UPDATED',
 }
 
-/**
- * Optional embed-time features a host can opt into via
- * `ChatOverlayOptions.enabledFeatures`.
- */
+/** Optional embed-time features a host can opt into via `ChatOverlayOptions.enabledFeatures`. */
 export enum OverlayFeature {
+  /** Enables the "Add app" menu's Code Apps entry. */
+  CodeApps = 'code-apps',
+  /** Enables the "Add app" menu's custom-application creation entry point. */
+  CustomApplications = 'custom-applications',
+  /** Hides the "Custom app" creation entry in the "Add app" menu. */
+  HideCustomAppCreation = 'hide-custom-app-creation',
+  /** Disables the send action on the chat input without removing the button. */
+  DisabledSend = 'disabled-send',
+  /** Suppresses the chat input's auto-focus effect on load. */
+  SkipFocusChatInputOnload = 'skip-focus-chat-input-onload',
+  /** Enables the comment field in the negative-feedback (dislike) modal. */
+  DislikeComment = 'dislike-comment',
+  /** Enables attaching files to a message via the conversation input. */
+  InputFiles = 'input-files',
+  /** Enables like/dislike actions on assistant messages. */
+  Likes = 'likes',
+  /** Enables the live-chat-interaction sign-in UI affordance. */
+  LiveChatInteraction = 'live-chat-interaction',
+  /** Restricts (disables) changing the selected agent/model on the conversation top bar. */
+  DisallowChangeAgent = 'disallow-change-agent',
+  /** Hides the new-conversation controls in the header/layout. */
+  HideNewConversation = 'hide-new-conversation',
+  /** Enables the empty-chat (new conversation composer) settings UI. */
+  EmptyChatSettings = 'empty-chat-settings',
+  /** Hides the model selector on the empty-chat composer screen. */
+  HideEmptyChatChangeAgent = 'hide-empty-chat-change-agent',
+  /** Enables the attachments-manager (`AttachmentCanvasProvider`) mount. */
+  AttachmentsManager = 'attachments-manager',
+  /** Enables the conversations-panel toggle button. */
+  ConversationsPanelToggle = 'conversations-panel-toggle',
+  /** Enables the conversations sidebar section. */
+  ConversationsSection = 'conversations-section',
+  /** Enables the app header. */
+  Header = 'header',
+  /** Makes the conversations sidebar section open by default. */
+  ShowConversationsSectionByDefault = 'showConversationsSectionByDefault',
+  /** Enables the catalog (`/catalog`) route. */
+  Catalog = 'catalog',
+  /** Restricts the catalog to hide the current user's own/shared-with-me apps. */
+  CatalogHideMyApps = 'catalog-hide-my-apps',
+  /** Makes the catalog's table view the initial default (instead of grid). */
+  CatalogTableView = 'catalog-table-view',
+  /** Hides the delete action on a user's own messages. */
+  HideDeleteUserMessage = 'hide-delete-user-message',
+  /** Hides the edit action on a user's own messages. */
+  HideEditUserMessage = 'hide-edit-user-message',
+  /** Hides the regenerate action on assistant messages. */
+  HideRegenerateAssistantMessage = 'hide-regenerate-assistant-message',
+  /** Enables the conversation-publishing entry point. */
+  ConversationsPublishing = 'conversations-publishing',
+  /** Enables the application-sharing entry point. */
+  ApplicationsSharing = 'applications-sharing',
+  /** Enables the conversation-sharing entry point. */
+  ConversationsSharing = 'conversations-sharing',
+  /** Enables the toolset-sharing entry point. */
+  ToolsetsSharing = 'toolsets-sharing',
+  /** Enables toolsets functionality. */
+  Toolsets = 'toolsets',
+  /** Hides the user avatar/menu button in the header. */
+  HideUserMenu = 'hide-user-menu',
+  /** Hides the settings entry in the user menu. */
+  HideUserSettings = 'hide-user-settings',
   /** Enables the `microphone` permission on the iframe's `allow` attribute for voice input. */
   VoiceInput = 'voice-input',
 }
 
-/**
- * Minimal message shape carried in overlay protocol payloads. A narrowed
- * projection of the app's full message model, kept local to this module so
- * the overlay protocol has no dependency on `libs/chat-shared`'s domain models.
- */
+/** Minimal message shape carried in overlay protocol payloads. */
 export interface OverlayChatMessage {
   /** Message id. */
   id: string;
@@ -85,11 +129,7 @@ export interface OverlayChatMessage {
   content: string;
 }
 
-/**
- * Host-agnostic projection of a conversation, exposed by the conversation-list
- * methods. Declared independently of `@epam/chat-api-client` or any app-owned
- * type so this module keeps no dependency on generated/app code.
- */
+/** Host-agnostic conversation projection for the overlay protocol. */
 export interface OverlayConversation {
   /** Conversation id. */
   id: string;
@@ -107,12 +147,7 @@ export interface OverlayConversation {
   publishedWithMe: boolean;
 }
 
-/**
- * Explicit error signal carried by conversation-list method responses
- * (`SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `DELETE_CONVERSATION`,
- * `RENAME_CONVERSATION`) so invalid ids/values/forbidden actions reject with
- * a clear reason instead of the request silently timing out.
- */
+/** Error signal carried by conversation-list method responses. */
 export interface OverlayConversationError {
   /** `NOT_FOUND` for an unknown/inaccessible id, `FORBIDDEN` for a read-only/shared-without-write-access conversation, `INVALID_ARGUMENT` for a rejected value (e.g. blank rename). */
   code: 'NOT_FOUND' | 'FORBIDDEN' | 'INVALID_ARGUMENT';
@@ -120,10 +155,7 @@ export interface OverlayConversationError {
   message: string;
 }
 
-/**
- * Options a host page passes to `ChatOverlay`'s constructor, and the subset
- * of them re-sent to the embedded app via `SET_OVERLAY_OPTIONS`.
- */
+/** Options passed to `ChatOverlay`'s constructor. */
 export interface ChatOverlayOptions {
   /** Full URL of the chat app instance to embed (origin + optional path). */
   domain: string;
@@ -157,6 +189,11 @@ export interface SetOverlayOptionsPayload {
   modelId?: string;
   /** Conversation id to navigate to and load, if provided. */
   overlayConversationId?: string;
+  /**
+   * UI-feature keys that replace (not merge with) the app's current effective
+   * UI-feature set, if provided. Array only — no comma-separated-string form.
+   */
+  enabledFeatures?: string[];
 }
 
 /** Payload of a `SEND_MESSAGE` request. */

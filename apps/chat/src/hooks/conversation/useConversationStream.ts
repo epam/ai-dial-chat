@@ -335,8 +335,8 @@ export const useConversationStream = ({
 
       const finalCheck = async () => {
         try {
-          // `getConversation` needs the full bucket-qualified path — see the
-          // comment on the other `getConversation` call in this file.
+          /* `getConversation` needs the full bucket-qualified path — see the
+           * comment on the other `getConversation` call in this file. */
           const result = (await getConversation(
             safeDecodeURIComponent(currentConversationId),
           )) as Conversation;

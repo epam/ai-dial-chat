@@ -253,11 +253,11 @@ export const useConversationImport = (): UseConversationImportResult => {
         if (isUnauthorized) break;
 
         try {
-          // TODO: a normalizeImportedConversation(conversation) step may be
-          // needed here before upload/rebase, for old-chat-shaped files —
-          // deferred per design.md until real-world testing shows which gaps
-          // (missing lastActivityDate/assistantModelId/etc.) actually need
-          // filling in.
+          /* TODO: a normalizeImportedConversation(conversation) step may be
+           * needed here before upload/rebase, for old-chat-shaped files —
+           * deferred per design.md until real-world testing shows which gaps
+           * (missing lastActivityDate/assistantModelId/etc.) actually need
+           * filling in. */
           let urlMap = new Map<string, string>();
           if (parsed.isArchive) {
             const result = await uploadConversationAttachments(

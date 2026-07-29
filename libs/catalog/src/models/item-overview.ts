@@ -19,13 +19,7 @@ export interface OverviewSection {
   specs: OverviewSpec[];
 }
 
-/**
- * Structured data powering the Overview tab of `DetailsPanel`.
- *
- * Recommended source format: a TypeScript file per entity type (or per provider)
- * exporting a `Record<string, CatalogItemOverview>` keyed by item id.
- * Example: `export const MODEL_OVERVIEWS: Record<string, CatalogItemOverview> = { 'gpt-4o': { sections: [...] } }`.
- */
+/** Structured data powering the Overview tab of `DetailsPanel`. */
 export interface CatalogItemOverview {
   /** Ordered list of spec sections shown in the Overview tab. */
   sections: OverviewSection[];

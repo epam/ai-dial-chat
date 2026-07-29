@@ -16,6 +16,7 @@ import type { EditMessageInputProps } from '../../models/ConversationInput';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { Input } from '../Input/Input';
 
+/** Inline edit-message form: pre-populated textarea, existing attachment tray, and Save/Cancel actions. */
 export const EditMessageInput: FC<EditMessageInputProps> = ({
   message,
   initialAttachments = [],

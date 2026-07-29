@@ -5,7 +5,6 @@ import * as ThemeContext from '../../../context/ThemeContext';
 import * as iconPathUtils from '../../../utils/icon-path';
 import Logo from '../Logo';
 
-// Mock the modules
 vi.mock('../../../context/ThemeContext');
 vi.mock('../../../utils/icon-path');
 

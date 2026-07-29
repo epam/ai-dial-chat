@@ -1,8 +1,4 @@
-/**
- * Runs `fn` over every item in `items` with at most `concurrency` calls in flight
- * at a time. Items are consumed from a shared queue by N concurrent workers, so
- * faster tasks don't leave workers idle waiting for a slow sibling.
- */
+/** Runs `fn` over every item in `items` with at most `concurrency` calls in flight at a time. */
 export const runConcurrent = async <T>(
   items: T[],
   concurrency: number,
@@ -22,13 +18,8 @@ export const runConcurrent = async <T>(
 };
 
 /**
- * Runs `fn` over every item in `items` at a steady rate of `maxPerMinute` calls
- * per minute. All calls run concurrently — the rate limit controls when each
- * call starts, not how many are in flight. This prevents bursting past a
- * server-side throttle window while still parallelising the work.
- *
- * Example: 200 items at 100/min → one call every 600 ms, all overlapping,
- * never more than 100 starts within any 60-second window.
+ * Runs `fn` over every item in `items` at a steady rate of `maxPerMinute` calls per minute.
+ * All calls run concurrently — the rate limit controls when each call starts, not how many are in flight.
  */
 export const runAtRate = async <T>(
   items: T[],

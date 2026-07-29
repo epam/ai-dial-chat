@@ -5,15 +5,9 @@ import styles from '../SidebarPanel/SidebarPanel.module.scss';
 
 /** Props for the `Header` component. */
 export interface HeaderProps {
-  /**
-   * Title text rendered between the two action groups.
-   * Truncated with an ellipsis when the panel is too narrow.
-   */
+  /** Title rendered between the start and end action slots. */
   title?: ReactNode;
-  /**
-   * CSS class applied to the title element.
-   * Defaults to `'dial-h1-text'`.
-   */
+  /** CSS class applied to the title element. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
   /** CSS class applied to the root element. */
   className?: string;

@@ -128,13 +128,7 @@ export interface UsePublishFlowResult {
   reset: () => void;
 }
 
-/**
- * Drives the Publish flow's state: destination-folder selection, optimistic
- * local folder creation, existing-publication detection, and submit
- * handling. Framework for both in-place (DetailsPanel) and popup/standalone
- * presentations, and for both versioned (`CatalogItem`) and unversioned
- * (e.g. conversation) items.
- */
+/** Manages all state for the Publish flow: folder selection, local folder creation, existing-publication detection, and submit handling. */
 export const usePublishFlow = <TItem extends PublishFlowItem = CatalogItem>({
   item,
   history,

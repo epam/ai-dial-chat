@@ -1,6 +1,6 @@
 import { MessageRating, MessageRole } from '@epam/ai-dial-chat-shared';
 
-/** Tooltip labels for each message action button. All fields are optional; omitting a field falls back to the built-in default. */
+/** Tooltip overrides for each action button. Omitted fields fall back to built-in defaults. */
 export interface MessageActionTooltips {
   /** Tooltip for the Edit button. */
   edit?: string;
@@ -22,7 +22,7 @@ export interface MessageActionTooltips {
   dislike?: string;
 }
 
-/** Accessible labels for each message action button. All fields are optional; omitting a field falls back to the built-in English default. */
+/** aria-label overrides for each action button. Omitted fields fall back to built-in English defaults. */
 export interface MessageActionAriaLabels {
   /** aria-label for the Edit button. */
   editMessage?: string;
@@ -38,48 +38,48 @@ export interface MessageActionAriaLabels {
   likeResponse?: string;
   /** aria-label for the Dislike button. */
   dislikeResponse?: string;
-  /** Accessible name for the action bar as a whole, exposed via `role="toolbar"`. */
+  /** aria-label for the toolbar container. */
   actionsGroup?: string;
-  /** Status message announced to assistive tech after copying the response text. */
+  /** Announced after copying the response text. */
   copiedStatus?: string;
-  /** Status message announced to assistive tech after copying the response as Markdown. */
+  /** Announced after copying the response as Markdown. */
   copiedMarkdownStatus?: string;
 }
 
-/** Tooltip and accessible label overrides for the `MessageActions` component. */
+/** Tooltip and aria-label overrides for `MessageActions`. */
 export interface MessageActionLabels {
-  /** Override tooltip labels for individual action buttons. */
+  /** Tooltip overrides per button. */
   tooltips?: MessageActionTooltips;
-  /** Override accessible labels (aria-label) for individual action buttons. */
+  /** aria-label overrides per button. */
   ariaLabels?: MessageActionAriaLabels;
 }
 
-/** Props accepted by the `MessageActions` component. */
+/** Props for the `MessageActions` component. */
 export interface MessageActionsProps {
-  /** Which action set to render — `'User'` shows Edit/Delete, `'Agent'` shows Regenerate/Copy/Markdown/Like/Dislike. Defaults to `'User'`. */
+  /** Which actions are shown. `'User'` = Edit/Delete; `'Agent'` = Regenerate/Copy/Like/Dislike. Defaults to `'User'`. */
   role?: MessageRole;
-  /** Extra class name(s) merged onto the root wrapper element. */
+  /** Extra class(es) on the root element. */
   className?: string;
-  /** When `true`, actions are always visible instead of appearing only on group hover. */
+  /** Shows actions permanently instead of on group hover only. */
   isAlwaysVisible?: boolean;
-  /** Override tooltip and accessible labels for individual action buttons. */
+  /** Tooltip and aria-label overrides. */
   labels?: MessageActionLabels;
-  /** Called when the user clicks the Edit button (User source only). */
+  /** Fires on Edit click. User role only. */
   onEdit?: () => void;
-  /** Called when the user hovers over the Edit button (User source only). Useful for preloading the edit UI. */
+  /** Fires on Edit hover; useful for preloading the edit UI. User role only. */
   onEditHover?: () => void;
-  /** Called when the user clicks the Delete button (User source only). */
+  /** Fires on Delete click. User role only. */
   onDelete?: () => void;
-  /** Called when the user clicks the Regenerate button (Agent source only). */
+  /** Fires on Regenerate click. Agent role only. */
   onRegenerate?: () => void;
-  /** Called when the user clicks the Copy button (Agent source only). */
+  /** Fires on Copy click. Agent role only. */
   onCopy?: () => void;
-  /** Called when the user clicks the Copy Markdown button (Agent source only). */
+  /** Fires on Copy Markdown click. Agent role only. */
   onCopyMarkdown?: () => void;
-  /** Called when the user clicks the Like button (Agent source only). */
+  /** Fires on Like click. Agent role only. */
   onLike?: () => void;
-  /** Called when the user clicks the Dislike button (Agent source only). */
+  /** Fires on Dislike click. Agent role only. */
   onDislike?: () => void;
-  /** Currently active rating for this message, if any. When set, the matching button is visually highlighted. */
+  /** Active rating; highlights the matching Like/Dislike button when set. */
   activeRating?: MessageRating;
 }

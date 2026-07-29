@@ -62,6 +62,51 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'ANNOUNCEMENT_HTML_MESSAGE',
   },
   {
+    key: 'footer.html',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Null/empty hides the footer. Sourced from FOOTER_HTML_MESSAGE. Supports %%VERSION%% token substitution.',
+    owner: 'chat-team',
+    envVar: 'FOOTER_HTML_MESSAGE',
+  },
+  {
+    key: 'features.footer',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the footer HTML message area is shown. Automatically enabled when FOOTER_HTML_MESSAGE is set.',
+    owner: 'chat-team',
+  },
+  {
+    key: 'features.requestApiKey',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Request API Key dialog is available via the footer data-dial-action trigger. Automatically enabled when REQUEST_API_KEY_CODE is set.',
+    owner: 'chat-team',
+  },
+  {
+    key: 'features.reportAnIssue',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Report an Issue dialog is available via the footer data-dial-action trigger. Automatically enabled when REPORT_ISSUE_CODE is set.',
+    owner: 'chat-team',
+  },
+  {
     key: 'features.asrEnabled',
     type: 'feature',
     valueType: 'boolean',
@@ -146,5 +191,17 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'LIVE_CHAT_INTERACTION_ENABLED',
     allowedRolesEnvVar: 'LIVE_CHAT_INTERACTION_ENABLED_ROLES',
+  },
+  {
+    key: 'uiFeatures.enabledUiFeatures',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'When set, the complete list of OverlayFeature values that are enabled (replace semantics). Replaces DEFAULT_ENABLED_UI_FEATURES entirely — includes both positive and Hide* modifier flags. When not set (null), the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures — that replaces the active set entirely.',
+    owner: 'chat-team',
+    envVar: 'ENABLED_UI_FEATURES',
   },
 ];

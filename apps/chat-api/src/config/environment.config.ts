@@ -518,6 +518,26 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  FOOTER_HTML_MESSAGE?: string;
+
+  @IsOptional()
+  @IsUrl({
+    require_tld: false,
+    require_protocol: true,
+    protocols: ['https', 'http'],
+  })
+  AZURE_FUNCTIONS_API_HOST?: string;
+
+  @IsOptional()
+  @IsString()
+  REQUEST_API_KEY_CODE?: string;
+
+  @IsOptional()
+  @IsString()
+  REPORT_ISSUE_CODE?: string;
+
+  @IsOptional()
+  @IsString()
   ASR_MODEL?: string;
 
   @IsOptional()
@@ -613,10 +633,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @Transform(({ obj, key }) => {
-    // Reads the raw source value (not `value`, which class-transformer's
-    // `enableImplicitConversion` may have already coerced to `true` for any
-    // non-empty string, including the literal string "false") so an env var
-    // explicitly set to "false"/"0"/"no" parses to `false` as intended.
+    /* Reads the raw source value (not `value`, which class-transformer's
+     * `enableImplicitConversion` may have already coerced to `true` for any
+     * non-empty string, including the literal string "false") so an env var
+     * explicitly set to "false"/"0"/"no" parses to `false` as intended. */
     const raw = (obj as Record<string, unknown>)[key];
     if (raw == null) return undefined;
     if (typeof raw === 'boolean') return raw;
@@ -645,6 +665,18 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   FILE_MANAGER_AVAILABLE_TABS?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return null;
+    const parts = String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+    return parts.length > 0 ? parts : null;
+  })
+  @IsString({ each: true })
+  ENABLED_UI_FEATURES?: string[] | null = null;
 
   @IsOptional()
   @Transform(({ value }) => {

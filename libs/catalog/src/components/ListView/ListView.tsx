@@ -1,4 +1,5 @@
-import { mergeClasses, DialGrid } from '@epam/ai-dial-ui-kit';
+import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
+import { DialGrid, mergeClasses } from '@epam/ai-dial-ui-kit';
 import type { GridApi } from 'ag-grid-community';
 import {
   type CSSProperties,
@@ -31,11 +32,7 @@ const findScrollParent = (el: Element | null): Element | null => {
   return findScrollParent(el.parentElement);
 };
 
-/**
- * ag-grid table view of catalog items.
- * Rows are windowed: starts at PAGE_SIZE and grows in PAGE_SIZE increments as
- * the user scrolls near the bottom, avoiding a costly full-list DOM render.
- */
+/** ag-grid table view of catalog items with infinite-scroll windowing. */
 export const ListView: FC<ListViewProps> = ({
   items,
   query = '',
@@ -48,6 +45,14 @@ export const ListView: FC<ListViewProps> = ({
   selectedItemId,
   credentialsBadgeLoggedOutLabel,
 }) => {
+  if (items.length === 0) {
+    return (
+      <div className="flex size-full flex-col items-center justify-center">
+        <PanelEmptyState label={emptyStateTitle ?? 'No results'} />
+      </div>
+    );
+  }
+
   const typography = listStyles?.typography ?? {};
   const colors = listStyles?.colors;
   const cssVars = {

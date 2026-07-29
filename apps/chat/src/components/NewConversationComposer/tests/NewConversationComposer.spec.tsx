@@ -1,12 +1,38 @@
-import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
+import { OverlayFeature, type DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { Suspense } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import NewConversationComposer from '../NewConversationComposer';
 
+vi.mock('../../../hooks/useUiFeature');
+
 vi.mock('@epam/ai-dial-conversation-input', () => ({
-  ConversationInput: () => (
-    <div data-testid="conversation-input">Conversation input</div>
+  ConversationInput: ({
+    deployments,
+    chatSettings,
+    isSendDisabled,
+    inputClassName,
+    autoFocus,
+  }: {
+    deployments?: unknown[];
+    chatSettings?: unknown;
+    isSendDisabled?: boolean;
+    inputClassName?: string;
+    autoFocus?: boolean;
+  }) => (
+    <div data-testid="conversation-input">
+      Conversation input
+      <output aria-label="deployments">
+        {deployments === undefined ? 'undefined' : JSON.stringify(deployments)}
+      </output>
+      <output aria-label="chat-settings">
+        {chatSettings === undefined ? 'undefined' : 'defined'}
+      </output>
+      <output aria-label="send-disabled">{String(!!isSendDisabled)}</output>
+      <output aria-label="input-class-name">{inputClassName ?? ''}</output>
+      <output aria-label="auto-focus">{String(!!autoFocus)}</output>
+    </div>
   ),
   FileDndOverlay: () => null,
 }));
@@ -15,6 +41,7 @@ vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => ({
     config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
   }),
+  useFeatureFlag: () => false,
 }));
 
 vi.mock('../../../context/auth/UserContext', () => ({
@@ -109,6 +136,14 @@ const deployments: DeploymentItem[] = [
 ];
 
 describe('NewConversationComposer', () => {
+  const mockUseUiFeature = vi.mocked(useUiFeatureModule.useUiFeature);
+
+  beforeEach(() => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.EmptyChatSettings,
+    );
+  });
+
   it('renders intro text and starter content below the conversation input', async () => {
     render(
       <Suspense fallback={null}>
@@ -136,5 +171,124 @@ describe('NewConversationComposer', () => {
       introText.compareDocumentPosition(starterButton) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('passes chatSettings through by default (empty-chat-settings enabled)', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(screen.getByLabelText('chat-settings').textContent).toBe('defined');
+  });
+
+  it('omits chatSettings when empty-chat-settings is disabled', async () => {
+    mockUseUiFeature.mockReturnValue(false);
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(screen.getByLabelText('chat-settings').textContent).toBe(
+      'undefined',
+    );
+  });
+
+  it('hides the model selector (omits deployments) when hide-empty-chat-change-agent is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideEmptyChatChangeAgent,
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(screen.getByLabelText('deployments').textContent).toBe('undefined');
+  });
+
+  it('forwards deployments when hide-empty-chat-change-agent is disabled', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(screen.getByLabelText('deployments').textContent).toBe(
+      JSON.stringify(deployments),
+    );
+  });
+
+  it('disables send when disabled-send is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.DisabledSend,
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(screen.getByLabelText('send-disabled').textContent).toBe('true');
+  });
+
+  it('suppresses autoFocus when skip-focus-chat-input-onload is enabled', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.SkipFocusChatInputOnload,
+    );
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(screen.getByLabelText('auto-focus').textContent).toBe('false');
+  });
+
+  it('auto-focuses by default (not mobile, skip-focus disabled)', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+    );
+    await screen.findByTestId('conversation-input');
+    expect(screen.getByLabelText('auto-focus').textContent).toBe('true');
   });
 });

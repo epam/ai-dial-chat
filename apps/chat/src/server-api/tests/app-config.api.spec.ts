@@ -24,6 +24,8 @@ describe('app-config API', () => {
         fileManagerTabs: ['my_files', 'shared', 'organization'],
         overlayEnabled: false,
         overlayAllowedOrigins: [],
+        enabledUiFeatures: null,
+        footerHtmlMessage: '',
       },
     });
 

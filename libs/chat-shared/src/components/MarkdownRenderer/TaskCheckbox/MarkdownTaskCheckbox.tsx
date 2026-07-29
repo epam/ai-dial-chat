@@ -7,11 +7,7 @@ export interface MarkdownTaskCheckboxProps {
   checked?: boolean;
 }
 
-/**
- * Read-only checkbox rendered for GFM task-list items (`- [ ]` / `- [x]`),
- * styled with the design-system {@link DialCheckbox}. The wrapping span keeps the
- * control inline with the surrounding list-item text regardless of the checkbox layout.
- */
+/** Read-only checkbox for GFM task-list items (`- [ ]` / `- [x]`). */
 export const MarkdownTaskCheckbox: FC<MarkdownTaskCheckboxProps> = ({
   checked = false,
 }) => {

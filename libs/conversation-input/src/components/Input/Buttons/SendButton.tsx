@@ -16,6 +16,7 @@ export interface SendButtonProps {
   isExiting?: boolean;
 }
 
+/** Animated circular send button with tooltip and disabled state. */
 export const SendButton: FC<SendButtonProps> = ({
   onSend,
   isDisabled = false,

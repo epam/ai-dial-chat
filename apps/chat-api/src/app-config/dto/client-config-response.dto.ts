@@ -63,6 +63,20 @@ export class ClientConfigDto {
   })
   overlayAllowedOrigins!: string[];
 
+  @ApiProperty({
+    description:
+      'When set, the complete list of OverlayFeature values that are enabled (replace semantics). Sourced from ENABLED_UI_FEATURES, filtered to recognized values. When null, the compiled-in DEFAULT_ENABLED_UI_FEATURES baseline is used. Does not affect an overlay host that supplies its own enabledFeatures.',
+    type: [String],
+    nullable: true,
+    example: [
+      'header',
+      'likes',
+      'conversations-sharing',
+      'hide-new-conversation',
+    ],
+  })
+  enabledUiFeatures!: string[] | null;
+
   @ApiPropertyOptional({
     description:
       'Operator-authored HTML announcement message shown in a dismissible top-of-app banner. Null when ANNOUNCEMENT_HTML_MESSAGE is not configured.',
@@ -73,6 +87,15 @@ export class ClientConfigDto {
   @IsOptional()
   @IsString()
   announcementHtml!: string | null;
+
+  @ApiProperty({
+    description:
+      'Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.',
+    example:
+      'v%%VERSION%% — <a href="#" data-dial-action="requestApiKey">Request API Key</a>',
+    type: String,
+  })
+  footerHtmlMessage!: string;
 }
 
 export class ClientConfigMetadataDto {

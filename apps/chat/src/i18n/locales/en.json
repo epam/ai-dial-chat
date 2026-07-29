@@ -591,6 +591,57 @@
     "regionAriaLabel": "Announcement",
     "closeLabel": "Close announcement"
   },
+  "footerMessage": {
+    "regionAriaLabel": "Footer"
+  },
+  "footer": {
+    "requestApiKey": {
+      "title": "Request API Key",
+      "descriptionPrefix": "We are glad to provide API access for PoC, research, accelerators development purposes, and internal projects. It is also possible to use this as a very short-term solution for early development stages while you are spinning up your dedicated environment. Any kind of client external must use their own dedicated infrastructure, not this API - you can install DIAL there, see instructions at ",
+      "projectNameLabel": "Project name",
+      "projectNamePlaceholder": "Enter project name",
+      "projectNameDescription": "Use one from Delivery Central",
+      "streamNameLabel": "Stream Name",
+      "streamNamePlaceholder": "Enter stream name",
+      "streamNameDescription": "Use one from Delivery Central. Must be unique per key request.",
+      "projectLeadLabel": "Project Tech Lead responsible for API token usage",
+      "projectLeadPlaceholder": "lead@example.com",
+      "projectLeadDescription": "Please provide email",
+      "businessReasonLabel": "Business justification",
+      "businessReasonPlaceholder": "Describe the business justification",
+      "projectEndLabel": "End date of the project",
+      "accessScenarioLabel": "Access scenario description",
+      "accessScenarioPlaceholder": "Describe the access scenario",
+      "accessScenarioDescription": "By default, access to the model is available from EPAM VPN only. If you want to deploy your solution anywhere beyond your personal laptop, please describe your scenario.",
+      "workloadPatternLabel": "Cost and workload description",
+      "workloadPatternPlaceholder": "Describe the expected costs and workload",
+      "workloadPatternDescriptionPrefix": "We need to understand how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this.",
+      "workloadPatternCaptionPrefix": "Ensure you provided a \"max X USD/month\" metric. More information is available at ",
+      "checkboxGroupTitle": "Please acknowledge that your API usage should comply with:",
+      "checkboxGroupRequired": "Please acknowledge all items above",
+      "checkboxAzureLabel": "Azure Cognitive Service Terms and Conditions",
+      "checkboxEpamLabel": "Usage is compliant to EPAM company policies",
+      "checkboxClientLabel": "This key will not be used for client project production load",
+      "checkboxLocalLabel": "Local law regulations (if some)",
+      "fieldRequired": "This field is required",
+      "fieldTooLong": "Must be {{max}} characters or fewer",
+      "emailInvalid": "Please enter a valid email address",
+      "dateInvalid": "Must be a valid date",
+      "successTitle": "API Key requested successfully",
+      "errorTitle": "Failed to submit the request. Please try again."
+    },
+    "reportIssue": {
+      "title": "Report an Issue",
+      "issueTitleLabel": "Title",
+      "issueTitlePlaceholder": "Briefly describe the issue",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Provide details about the issue",
+      "fieldRequired": "This field is required",
+      "fieldTooLong": "Must be {{max}} characters or fewer",
+      "successTitle": "Issue reported successfully",
+      "errorTitle": "Failed to report the issue. Please try again."
+    }
+  },
   "errorBoundary": {
     "heading": "Something went wrong",
     "description": "An unexpected error occurred. You can try again or reload the page.",

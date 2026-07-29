@@ -63,6 +63,7 @@ interface AddAttachmentButtonProps {
   extraMenuItems?: ExtraMenuItem[];
 }
 
+/** "+" trigger button that opens an attachment/settings menu (desktop dropdown or mobile bottom sheet). */
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   onAttachClick,
   attachLabel,

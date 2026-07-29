@@ -46,10 +46,7 @@ export interface DeploymentCreationFormLabels {
   topics: DeploymentCreationFormFieldLabels;
   /** Labels for the intro field. */
   intro: DeploymentCreationFormFieldLabels;
-  /**
-   * Accessible name for the field set as a whole, exposed via `role="group"`.
-   * Supply the host app's translated section title (e.g. `'General'`).
-   */
+  /** Accessible name for the field set group. */
   ariaLabel?: string;
 }
 

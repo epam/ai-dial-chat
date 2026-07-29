@@ -1,9 +1,4 @@
-/**
- * Converts a timestamp to a human-readable "last used" string,
- * e.g. "just now", "5 min ago", "3 hours ago", "2 days ago".
- *
- * Returns an empty string when the input is falsy or not a valid date.
- */
+/** Converts a timestamp to a relative time string (e.g. `'5 min ago'`, `'2 days ago'`); returns an empty string when the input is falsy or invalid. */
 export const formatLastUsed = (timestamp?: number): string => {
   if (!timestamp) return '';
 

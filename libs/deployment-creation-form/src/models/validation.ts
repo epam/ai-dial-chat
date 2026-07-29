@@ -18,12 +18,7 @@ export interface DeploymentCreationFormErrorCodes {
   intro?: DeploymentCreationFieldErrorCode;
 }
 
-/**
- * Toggles for pattern checks that differ between Quick App and Toolset creation today.
- * Required-name and intro-length checks always run; pattern checks are opt-in so
- * extracting the shared field set does not silently add new validation to a flow
- * that did not previously enforce it.
- */
+/** Optional pattern-check toggles for field validation. */
 export interface DeploymentCreationFormValidationOptions {
   /** Whether to reject a name containing characters outside `NAME_PATTERN`. */
   validateNamePattern?: boolean;

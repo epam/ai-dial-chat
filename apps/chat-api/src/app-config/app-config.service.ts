@@ -6,15 +6,50 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
+import sanitizeHtml from 'sanitize-html';
+import packageJson from '../../package.json';
 import type { AppConfigEvalContext } from './app-config.types';
 import { CompositeConfigProvider } from './config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from './config-registry/config-registry.constants';
 import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
 import { FeatureKey } from './feature-flags/feature-key.enum';
+import { KNOWN_UI_FEATURES } from './known-ui-features.constants';
 
 const CACHE_TTL_SECONDS = 60;
 const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
 const DEFAULT_FILE_MANAGER_TABS = ['my_files', 'shared', 'organization'];
+
+const APP_VERSION: string = packageJson.version;
+
+const FOOTER_ALLOWED_TAGS = ['a', 'span', 'strong', 'u', 'em', 'br', 'p'];
+const FOOTER_ALLOWED_ATTRS: sanitizeHtml.IOptions['allowedAttributes'] = {
+  a: ['href', 'target', 'rel', 'data-dial-action'],
+};
+
+const sanitizeFooterHtml = (raw: string): string => {
+  const withVersion = raw.replace(/%%VERSION%%/g, APP_VERSION);
+  return sanitizeHtml(withVersion, {
+    allowedTags: FOOTER_ALLOWED_TAGS,
+    allowedAttributes: FOOTER_ALLOWED_ATTRS,
+    transformTags: {
+      a: (tagName, attribs) => {
+        const href = attribs.href ?? '';
+        /* Hash links and data-dial-action links are handled client-side; don't force external navigation on them. */
+        if (attribs['data-dial-action'] != null || href.startsWith('#')) {
+          return { tagName, attribs };
+        }
+        return {
+          tagName,
+          attribs: {
+            ...attribs,
+            target: '_blank',
+            rel: 'noopener noreferrer',
+          },
+        };
+      },
+    },
+  });
+};
 
 @Injectable()
 export class AppConfigService {
@@ -54,7 +89,9 @@ export class AppConfigService {
     let fileManagerTabs: string[] = DEFAULT_FILE_MANAGER_TABS;
     let overlayEnabled = false;
     let overlayAllowedOrigins: string[] = [];
+    let enabledUiFeatures: string[] | null = null;
     let announcementHtml: string | null = null;
+    let footerHtmlMessage = '';
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -85,6 +122,29 @@ export class AppConfigService {
         overlayAllowedOrigins = Array.isArray(resolved) ? resolved : [];
       } else if (def.key === 'announcement.html') {
         announcementHtml = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'footer.html') {
+        footerHtmlMessage =
+          typeof resolved === 'string' ? sanitizeFooterHtml(resolved) : '';
+      } else if (def.key === 'uiFeatures.enabledUiFeatures') {
+        const rawValue = Array.isArray(resolved) ? resolved : [];
+        if (rawValue.length > 0) {
+          const filtered = rawValue.filter((entry) => {
+            const isKnown = KNOWN_UI_FEATURES.has(entry);
+            if (!isKnown) {
+              this.logger.warn(
+                `Ignoring unrecognized ENABLED_UI_FEATURES entry: "${String(entry)}"`,
+              );
+            }
+            return isKnown;
+          });
+          if (filtered.length > 0) {
+            enabledUiFeatures = filtered;
+          } else {
+            this.logger.warn(
+              'ENABLED_UI_FEATURES contained only unrecognized entries; falling back to compiled-in defaults',
+            );
+          }
+        }
       }
     }
 
@@ -100,6 +160,8 @@ export class AppConfigService {
         overlayEnabled,
         overlayAllowedOrigins,
         announcementHtml,
+        footerHtmlMessage,
+        enabledUiFeatures,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

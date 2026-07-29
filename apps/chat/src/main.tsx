@@ -17,11 +17,13 @@ import { ClientChannelProvider } from './context/ClientChannelContext';
 import { ConversationPanelProvider } from './context/ConversationPanelContext';
 import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
+import { FavoriteApplicationsProvider } from './context/FavoriteApplicationsContext';
 import { GenerationProvider } from './context/GenerationContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { OverlayModeGate } from './context/overlay/OverlayContext';
 import { SourcesSidebarProvider } from './context/SourcesSidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { UiFeaturesProvider } from './context/UiFeaturesContext';
 import { UserConfigProvider } from './context/UserConfigContext';
 import './i18n/config';
 import './styles.scss';
@@ -45,41 +47,45 @@ root.render(
           <UserProvider>
             <ThemeProvider>
               <AppConfigProvider>
-                <SourcesSidebarProvider>
-                  <AttachmentCanvasProvider>
-                    <ConversationPanelProvider>
-                      <Suspense fallback={null}>
-                        <Routes>
-                          <Route path="/login" element={<LoginPage />} />
-                          <Route
-                            path="/overlay-close"
-                            element={<OverlayClose />}
-                          />
-                          <Route
-                            path="*"
-                            element={
-                              <OverlayModeGate>
-                                <RequireAuth>
-                                  <GenerationProvider>
-                                    <ClientChannelProvider>
-                                      <UserConfigProvider>
-                                        <DeploymentsProvider>
-                                          <ConversationsProvider>
-                                            <App />
-                                          </ConversationsProvider>
-                                        </DeploymentsProvider>
-                                      </UserConfigProvider>
-                                    </ClientChannelProvider>
-                                  </GenerationProvider>
-                                </RequireAuth>
-                              </OverlayModeGate>
-                            }
-                          />
-                        </Routes>
-                      </Suspense>
-                    </ConversationPanelProvider>
-                  </AttachmentCanvasProvider>
-                </SourcesSidebarProvider>
+                <UiFeaturesProvider>
+                  <SourcesSidebarProvider>
+                    <AttachmentCanvasProvider>
+                      <ConversationPanelProvider>
+                        <Suspense fallback={null}>
+                          <Routes>
+                            <Route path="/login" element={<LoginPage />} />
+                            <Route
+                              path="/overlay-close"
+                              element={<OverlayClose />}
+                            />
+                            <Route
+                              path="*"
+                              element={
+                                <OverlayModeGate>
+                                  <RequireAuth>
+                                    <GenerationProvider>
+                                      <ClientChannelProvider>
+                                        <UserConfigProvider>
+                                          <DeploymentsProvider>
+                                            <FavoriteApplicationsProvider>
+                                              <ConversationsProvider>
+                                                <App />
+                                              </ConversationsProvider>
+                                            </FavoriteApplicationsProvider>
+                                          </DeploymentsProvider>
+                                        </UserConfigProvider>
+                                      </ClientChannelProvider>
+                                    </GenerationProvider>
+                                  </RequireAuth>
+                                </OverlayModeGate>
+                              }
+                            />
+                          </Routes>
+                        </Suspense>
+                      </ConversationPanelProvider>
+                    </AttachmentCanvasProvider>
+                  </SourcesSidebarProvider>
+                </UiFeaturesProvider>
               </AppConfigProvider>
             </ThemeProvider>
           </UserProvider>

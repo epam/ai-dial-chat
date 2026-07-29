@@ -14,27 +14,15 @@ const DURATION_INNER_RE = /(\d+(?:\.\d+)?)\s*s\b/;
 const TRAILING_COLON_RE = /:\s*$/;
 
 /** Result of cleaning a raw backend stage name for display. */
-export interface CleanedStageName {
-  /** Display name with any duration/timestamp group and trailing colon removed. Casing is preserved as given — never title-cased. */
+interface CleanedStageName {
+  /** Display name with any duration/timestamp bracket group and trailing colon removed. */
   name: string;
   /** Extracted duration label (e.g. `'3.99s'`), or `undefined` if the raw name carried none. */
   durationLabel?: string;
 }
 
-/**
- * Cleans a raw backend stage name for display: extracts an embedded
- * duration (discarding any accompanying timestamps, which have no
- * structured home in the UI today) and strips a single trailing colon.
- * Never re-cases or rewrites the remaining text.
- */
+/** Strips an embedded duration bracket group (e.g. `(7.18s, ...)`) and a trailing colon from a raw backend stage name. */
 export const cleanStageName = (rawName: string): CleanedStageName => {
-  /*
-   * Defensive: a stage's first streamed chunk can carry `name: null`
-   * (DIAL Core's "stage opened, name pending" signal). Callers are expected
-   * to normalize this before it reaches here, but guard anyway since this
-   * is a shared lib function and a `null`/`undefined` value would otherwise
-   * throw on `.replace()` below.
-   */
   const safeRawName = rawName ?? '';
   BRACKET_GROUP_RE.lastIndex = 0;
   let groupMatch: RegExpExecArray | null;
@@ -70,12 +58,7 @@ export const cleanStageName = (rawName: string): CleanedStageName => {
   };
 };
 
-/**
- * Heuristic for "this cleaned name is a raw identifier, not prose":
- * no whitespace and at least one underscore (e.g. `My_OMDB_Agent__0_0_1_tool`).
- * Prose with an embedded identifier substring (e.g. `Call My_OMDB_Agent_tool`)
- * still contains a space and is left as normal text.
- */
+/** Returns true if the name looks like a raw identifier: no whitespace and contains an underscore. */
 export const isIdentifierLike = (name: string): boolean =>
   name.length > 0 && !/\s/.test(name) && name.includes('_');
 

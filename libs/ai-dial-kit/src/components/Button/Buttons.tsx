@@ -18,9 +18,7 @@ type DialButtonProps = ComponentPropsWithoutRef<typeof DialButton>;
 export type PrimaryButtonProps = DialPrimaryButtonProps;
 
 /**
- * Gradient pill primary action button (`dial-primary-solid-button`).
- *
- * Visual style is applied by the app via `.dial-primary-solid-button` CSS overrides.
+ * Gradient pill primary action button.
  *
  * @example
  * ```tsx
@@ -38,9 +36,7 @@ export type NeutralButtonProps = Omit<
 >;
 
 /**
- * Soft blue outlined pill neutral action button (`dial-neutral-outlined-button`).
- *
- * Visual style is applied by the app via `.dial-neutral-outlined-button` CSS overrides.
+ * Soft blue outlined pill neutral action button.
  *
  * @example
  * ```tsx
@@ -59,9 +55,7 @@ export const NeutralButton: FC<NeutralButtonProps> = (props) => (
 export type GhostButtonProps = DialGhostButtonProps;
 
 /**
- * Ghost pill tertiary action button with no border (`dial-primary-ghost-button`).
- *
- * Visual style is applied by the app via `.dial-primary-ghost-button` CSS overrides.
+ * Ghost pill tertiary action button with no border.
  *
  * @example
  * ```tsx

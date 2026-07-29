@@ -3,6 +3,7 @@ import {
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
+  OverlayFeature,
   StatusEvent,
   type Annotation,
   type Attachment,
@@ -57,6 +58,7 @@ import { useConversationScroll } from '../../hooks/conversation/useConversationS
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { referenceAttachmentToPdfCanvasContent } from '../../utils/attachment-canvas';
 import {
   dialFilesToAttachments,
@@ -67,6 +69,7 @@ import { isMessageChanged } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
+import FooterContainer from '../FooterDialogs/FooterContainer';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -167,6 +170,14 @@ const ConversationView: FC<Props> = ({
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
+  const isDisallowChangeAgentEnabled = useUiFeature(
+    OverlayFeature.DisallowChangeAgent,
+  );
+  const isDisabledSendEnabled = useUiFeature(OverlayFeature.DisabledSend);
+  const isSkipFocusChatInputOnloadEnabled = useUiFeature(
+    OverlayFeature.SkipFocusChatInputOnload,
+  );
+  const isInputFilesEnabled = useUiFeature(OverlayFeature.InputFiles);
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
   const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
@@ -378,8 +389,8 @@ const ConversationView: FC<Props> = ({
   const handleSendWithAnchor = useCallback(
     async (message: string, attachments: Attachment[]) => {
       armAnchor(messages.length);
-      // ConversationInput awaits this to know whether to restore the draft
-      // on failure — forward onSend's result rather than discarding it.
+      /* ConversationInput awaits this to know whether to restore the draft
+       * on failure — forward onSend's result rather than discarding it. */
       await onSend(message, attachments);
     },
     [onSend, messages.length, armAnchor],
@@ -581,7 +592,9 @@ const ConversationView: FC<Props> = ({
                       selectedDeployment?.maxInputAttachments
                     }
                     onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
-                    hideAttachFile={!isAttachmentsAllowed}
+                    hideAttachFile={
+                      !isAttachmentsAllowed || !isInputFilesEnabled
+                    }
                     fileAccept={fileAccept}
                     onAttachmentClick={handleMessageAttachmentClick}
                     onDialFileSystemClick={
@@ -627,7 +640,7 @@ const ConversationView: FC<Props> = ({
       <div
         role="region"
         aria-label={t(ChatI18nKeys.MessageInput)}
-        className="relative z-10 w-full px-6 pb-4"
+        className="relative z-10 w-full px-6"
       >
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
@@ -660,7 +673,10 @@ const ConversationView: FC<Props> = ({
                   fixedModel ? fixedModel.id : selectedItemId
                 }
                 onDeploymentChange={fixedModel ? undefined : setSelectedItemId}
-                isModelSelectorDisabled={isModelFixed}
+                isModelSelectorDisabled={
+                  isModelFixed || isDisallowChangeAgentEnabled
+                }
+                isSendDisabled={isDisabledSendEnabled}
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
@@ -691,7 +707,7 @@ const ConversationView: FC<Props> = ({
                     ? () => setPendingDialAttachments([])
                     : undefined
                 }
-                autoFocus={!isMobile}
+                autoFocus={!isMobile && !isSkipFocusChatInputOnloadEnabled}
                 onDialFileSystemClick={
                   isAttachmentsAllowed
                     ? () => setIsDialFileManagerOpen(true)
@@ -707,7 +723,7 @@ const ConversationView: FC<Props> = ({
                   selectedDeployment?.maxInputAttachments
                 }
                 onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
-                hideAttachFile={!isAttachmentsAllowed}
+                hideAttachFile={!isAttachmentsAllowed || !isInputFilesEnabled}
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
@@ -794,6 +810,15 @@ const ConversationView: FC<Props> = ({
           </>
         )}
       </div>
+      {/*
+       * FooterContainer is intentionally co-located with each view that can
+       * render a footer message (ConversationView, NewConversationComposer,
+       * NavPageContent). Only one view is visible at a time, so at most one
+       * instance is active. If the footer feature grows to require shared
+       * dialog state across views, lift FooterContainer to a single top-level
+       * provider instead.
+       */}
+      <FooterContainer />
       {catalogModal}
     </>
   );

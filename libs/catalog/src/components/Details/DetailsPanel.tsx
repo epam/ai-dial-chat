@@ -56,6 +56,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onCreatePublishFolder,
   publishTexts,
   shareOverlay,
+  isShareVisible,
   connectOverlay,
   isConnectVisible,
   onEdit,
@@ -348,6 +349,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 isPrimaryActionVisible={isPrimaryActionVisible}
                 onShare={onShare}
                 shareOverlay={shareOverlay}
+                isShareVisible={isShareVisible}
                 connectOverlay={connectOverlay}
                 isConnectVisible={isConnectVisible}
                 isPublishVisible={isPublishVisible}

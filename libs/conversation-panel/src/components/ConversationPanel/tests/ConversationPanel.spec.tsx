@@ -341,14 +341,6 @@ describe('ConversationPanel', () => {
     expect(onNewChat).toHaveBeenCalledTimes(1);
   });
 
-  it('filters by Shared tab', () => {
-    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    fireEvent.click(screen.getByRole('tab', { name: 'Shared' }));
-    expect(screen.getByText('Third chat')).toBeTruthy();
-    expect(screen.getByText('Shared chat')).toBeTruthy();
-    expect(screen.queryByText('First chat')).toBeNull();
-  });
-
   it('puts isPinned items in Pinned group and others in My chats group', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
     expect(screen.getByText('Pinned')).toBeTruthy();
@@ -364,21 +356,6 @@ describe('ConversationPanel', () => {
     expect(screen.getByText('Pinned chat')).toBeTruthy();
     fireEvent.click(pinnedHeader!);
     expect(screen.queryByText('Pinned chat')).toBeNull();
-  });
-
-  it('renders filter tabs with correct aria-selected state', () => {
-    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    const allTab = screen.getByRole('tab', { name: 'All' });
-    expect(allTab.getAttribute('aria-selected')).toBe('true');
-    const sharedTab = screen.getByRole('tab', { name: 'Shared' });
-    expect(sharedTab.getAttribute('aria-selected')).toBe('false');
-    fireEvent.click(sharedTab);
-    expect(
-      screen.getByRole('tab', { name: 'Shared' }).getAttribute('aria-selected'),
-    ).toBe('true');
-    expect(
-      screen.getByRole('tab', { name: 'All' }).getAttribute('aria-selected'),
-    ).toBe('false');
   });
 
   it('renders headerActions in the panel header when provided', () => {

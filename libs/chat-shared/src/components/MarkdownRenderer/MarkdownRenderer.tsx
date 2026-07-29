@@ -99,10 +99,7 @@ export interface MarkdownRendererProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Color overrides applied as CSS custom properties. */
   colors?: MarkdownRendererColors;
-  /**
-   * Accessible label announced for a table's horizontally scrollable region.
-   * Defaults to `'Scrollable table'`.
-   */
+  /** Accessible label for a table's horizontally scrollable region. Defaults to `'Scrollable table'`. */
   tableScrollRegionAriaLabel?: string;
 }
 
@@ -122,11 +119,7 @@ const remarkPlugins = [remarkGfm];
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
 
-/**
- * Shared component definitions for elements whose rendering is identical across
- * all consumers. These are merged after `classNames`-built components and before
- * explicit `components` overrides, so consumers can still override them.
- */
+/** Default react-markdown component overrides shared across all consumers. */
 export const defaultMarkdownComponents: Components = {
   li: ({ children }) => <li className="mb-1.5 last:mb-0">{children}</li>,
 };

@@ -28,7 +28,7 @@ interface DeleteButtonProps {
  */
 const shouldShowDelete = (item: CatalogItem): boolean =>
   item.isMyApp === true &&
-  (item.type === CatalogEntityType.Application ||
+  (item.type === CatalogEntityType.Agent ||
     item.type === CatalogEntityType.Toolset);
 
 /**
