@@ -14,6 +14,7 @@ interface ItemHeaderProps {
   trailing?: ReactNode;
 }
 
+/** Item title header with optional numeric or string postfix and trailing slot. */
 export const ItemHeader: FC<ItemHeaderProps> = ({
   title,
   postfix,

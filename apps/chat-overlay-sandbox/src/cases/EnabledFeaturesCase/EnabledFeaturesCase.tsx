@@ -23,8 +23,8 @@ const PRESETS: Record<string, OverlayFeature[]> = {
     OverlayFeature.ConversationsSharing,
   ],
   'Empty set': [],
-  // Intentionally includes an unrecognized value to demonstrate the
-  // "filtered with a warning, still applied" behavior from ui-feature-toggles.
+  /* Intentionally includes an unrecognized value to demonstrate the
+   * "filtered with a warning, still applied" behavior from ui-feature-toggles. */
   'Header + invalid value (demo)': [
     OverlayFeature.Header,
     'not-a-real-feature' as OverlayFeature,

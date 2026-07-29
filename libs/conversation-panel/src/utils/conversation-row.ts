@@ -21,13 +21,7 @@ export const getButtonPaddingEnd = (
   return 'pe-2 group-hover/conversation:pe-9';
 };
 
-/**
- * Returns the pixel height for a virtual list row.
- *
- * Items use `ITEM_ROW_HEIGHT` (32px content + 4px top gap).
- * The first group header uses `FIRST_GROUP_HEADER_ROW_HEIGHT` (24px, no gap above).
- * Subsequent group headers use `GROUP_HEADER_ROW_HEIGHT` (24px + 8px top gap).
- */
+/** Returns the pixel height for a virtual list row (item, first group header, or subsequent group header). */
 export const getRowHeight = (
   index: number,
   rowProps: RowRendererData,

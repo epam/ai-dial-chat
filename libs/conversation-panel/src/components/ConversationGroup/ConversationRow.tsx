@@ -33,11 +33,7 @@ export interface ConversationRowProps {
   onSelectConversation: (id: string) => void;
   /** Current search query — matched text in the title is highlighted. */
   searchQuery?: string;
-  /**
-   * Builds the dropdown menu items for this row.
-   * Receives the item so actions can reflect per-item state (e.g. pin toggle).
-   * When omitted or returns an empty array, the actions trigger is not rendered.
-   */
+  /** Builds dropdown actions for this row. When absent or empty, the action trigger is not rendered. */
   getActions?: (item: ConversationItem) => DropdownItem[];
   /** Called when this row's action menu opens. */
   onActionMenuOpen?: (
@@ -50,10 +46,7 @@ export interface ConversationRowProps {
   itemTitleClassName?: string;
   /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
-  /**
-   * The group this row belongs to — required to enable drag-and-drop.
-   * When absent the row is not draggable (used by `ConversationGroup`).
-   */
+  /** Group this row belongs to — required to enable drag-and-drop. */
   rowGroupKey?: FilterTab;
   /** The full virtual rows array — used to compute drop position. */
   rows?: VirtualRow[];

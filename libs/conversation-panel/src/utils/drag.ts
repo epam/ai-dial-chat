@@ -32,14 +32,7 @@ export const findGroupKeyForItem = (
   return null;
 };
 
-/**
- * Returns the set of groups that are valid drop targets for the given dragged item.
- *
- * Rules:
- * - Same group as the drag source is always allowed (reorder).
- * - Any non-Pinned group → Pinned is allowed (pin action).
- * - Pinned → non-Pinned is allowed only when the item's `source` matches the target group (unpin action).
- */
+/** Returns the set of groups that are valid drop targets for the given dragged item. */
 export const computeAllowedDropGroups = (
   draggedId: string,
   draggingGroupKey: FilterTab | null,
@@ -63,12 +56,7 @@ export const computeAllowedDropGroups = (
   return allowed;
 };
 
-/**
- * Computes the `afterId` for a drop based on cursor vertical position within a row.
- *
- * - Bottom half of the row → insert after the item (`afterId = itemId`).
- * - Top half → insert before the item (`afterId` = id of the preceding item in the group, or `null` for first).
- */
+/** Returns the `afterId` for a drop based on cursor vertical position within a row. */
 export const getDropAfterId = (
   e: Pick<DragEvent, 'currentTarget' | 'clientY'>,
   itemId: string,

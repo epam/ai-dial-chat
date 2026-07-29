@@ -32,11 +32,7 @@ const findScrollParent = (el: Element | null): Element | null => {
   return findScrollParent(el.parentElement);
 };
 
-/**
- * ag-grid table view of catalog items.
- * Rows are windowed: starts at PAGE_SIZE and grows in PAGE_SIZE increments as
- * the user scrolls near the bottom, avoiding a costly full-list DOM render.
- */
+/** ag-grid table view of catalog items with infinite-scroll windowing. */
 export const ListView: FC<ListViewProps> = ({
   items,
   query = '',

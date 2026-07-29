@@ -5,11 +5,7 @@ const generateRequestId = (): string => {
   return `dial-overlay-${Date.now()}-${requestSequence}`;
 };
 
-/**
- * A single outstanding request: owns its `requestId`, races its response
- * promise against a per-request timeout, and rejects with a descriptive
- * error naming the request type and timeout when unanswered in time.
- */
+/** A single outstanding overlay request: owns its `requestId` and resolves/rejects when the matching response arrives or the timeout elapses. */
 export class DeferredRequest<T = unknown> {
   /** Unique id used to match this request to its response message. */
   readonly requestId: string;

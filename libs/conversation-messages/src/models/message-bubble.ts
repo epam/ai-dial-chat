@@ -15,11 +15,11 @@ export interface MessageBubbleColors {
   userBackground?: string;
   /** Border color of the user message bubble. */
   userBorder?: string;
-  /** Starting color of the fade-out gradient shown over a collapsed user message. Defaults to transparent. */
+  /** Gradient start color for a collapsed user message fade-out. Defaults to transparent. */
   fadeStart?: string;
   /** Text color applied to all message bubbles. */
   text?: string;
-  /** Border color of the divider line above quick-reply starter buttons. Falls back to `--color-secondary` when omitted. */
+  /** Divider color above quick-reply buttons. Falls back to `--color-secondary`. */
   startersDivider?: string;
 }
 
@@ -29,67 +29,55 @@ export interface MessageBubbleTypography {
   fontClassName?: string;
 }
 
-/** Combined style overrides (colors and typography) for message bubble components. */
+/** Color and typography overrides for message bubble components. */
 export interface MessageBubbleStyles {
   /** Color overrides applied as CSS custom properties. */
   colors?: MessageBubbleColors;
   /** Typography overrides applied via CSS custom properties. */
   typography?: MessageBubbleTypography;
-  /** Extra class name(s) merged onto the outer row wrapper. */
+  /** Extra class(es) on the row wrapper. */
   className?: string;
-  /** Extra class name(s) merged onto the bubble element itself. */
+  /** Extra class(es) on the bubble element. */
   bubbleClassName?: string;
 }
 
 /** Localised labels for message bubble components. */
 export interface MessageBubbleLabels {
-  /** Button label shown when a collapsed user message can be expanded. Defaults to `"Show more"`. */
+  /** Expand button label. Defaults to `"Show more"`. */
   showMoreLabel?: string;
-  /** Button label shown when an expanded user message can be collapsed. Defaults to `"Show less"`. */
+  /** Collapse button label. Defaults to `"Show less"`. */
   showLessLabel?: string;
-  /** Accessible label for the expand button. Defaults to the `showMoreLabel` value. */
+  /** aria-label for the expand button. Defaults to `showMoreLabel`. */
   showMoreAriaLabel?: string;
-  /** Accessible label for the collapse button. Defaults to the `showLessLabel` value. */
+  /** aria-label for the collapse button. Defaults to `showLessLabel`. */
   showLessAriaLabel?: string;
-  /** Accessible name for the message region, exposed via `role="group"`. Defaults to `"User message"`. */
+  /** aria-label for the user message group. Defaults to `"User message"`. */
   userMessageAriaLabel?: string;
-  /** Accessible name for the message region, exposed via `role="group"`. Defaults to `"Assistant message"`. */
+  /** aria-label for the assistant message group. Defaults to `"Assistant message"`. */
   assistantMessageAriaLabel?: string;
-  /** Accessible label forwarded to each attachment tile/row when it is interactive. */
+  /** aria-label for interactive attachment tiles. */
   attachmentClickLabel?: string;
-  /** Accessible label for each attachment row's retry action. */
+  /** aria-label for the attachment retry button. */
   attachmentRetryLabel?: string;
-  /** Accessible label for each attachment tile's open-in-new-tab button. */
+  /** aria-label for the attachment open-in-new-tab button. */
   attachmentOpenInNewTabLabel?: string;
-  /**
-   * Bold prefix text for the status message banner.
-   * Only used when `role === MessageRole.Status`. Defaults to `"Model switched."`.
-   */
+  /** Bold prefix for the status banner. Used when `role === MessageRole.Status`. Defaults to `"Model switched."`. */
   statusTitleText?: string;
-  /**
-   * Full description text for the status message banner, e.g. "The model has been switched from GPT to Imagen."
-   * Required when `role === MessageRole.Status`.
-   */
+  /** Body text for the status banner. Required when `role === MessageRole.Status`. */
   statusBodyText?: string;
 }
 
 /** Localised labels for the `AssistantMessageBubble` component. */
 export interface AssistantMessageBubbleLabels extends MessageBubbleLabels {
-  /** Accessible label for the quick-reply buttons list. Defaults to `"Quick reply buttons"`. */
+  /** aria-label for the quick-reply list. Defaults to `"Quick reply buttons"`. */
   startersAriaLabel?: string;
-  /**
-   * Label shown with a shimmer animation while `isStreaming` is true and the message text is still empty.
-   * Pass a translated string from the consuming app. Defaults to `'Thinking'`.
-   */
+  /** Shimmer placeholder shown while streaming and message text is empty. Defaults to `'Thinking'`. */
   thinkingLabel?: string;
-  /** Accessible label for the copy button in code blocks. Forwarded to `MDMessageViewer`. */
+  /** aria-label for the code block copy button. */
   codeBlockCopyLabel?: string;
-  /** Accessible label for the copy button after copying. Forwarded to `MDMessageViewer`. */
+  /** aria-label for the code block copy button after copying. */
   codeBlockCopiedLabel?: string;
-  /**
-   * Fallback accessible name for the deployment icon when `deploymentDisplayName`
-   * is not supplied. Defaults to `'AI'`.
-   */
+  /** Fallback aria-label for the deployment icon. Defaults to `'AI'`. */
   deploymentIconFallbackLabel?: string;
 }
 
@@ -99,73 +87,55 @@ interface BaseMessageBubbleProps {
   text: string;
   /** Color and typography overrides applied as CSS custom properties. */
   styles?: MessageBubbleStyles;
-  /** Props forwarded to the `MessageActions` bar rendered below the bubble. */
+  /** Props for the `MessageActions` bar below the bubble. */
   actions?: MessageActionsProps;
-  /** When `true`, the actions bar is always visible instead of appearing only on group hover. */
+  /** Shows the actions bar permanently instead of on group hover only. */
   hasAlwaysVisibleActions?: boolean;
   /** When `true`, assistant markdown text reveals newly appended content smoothly. */
   isStreaming?: boolean;
-  /** Display attachments associated with the message. Rendered above text for user messages and below text for assistant messages. */
+  /** Attachments shown above (user) or below (assistant) the message text. */
   attachments?: DisplayAttachment[];
-  /** Localised labels for the bubble's toggle button and attachment rows. */
+  /** Localised labels for the toggle button and attachment rows. */
   labels?: MessageBubbleLabels;
-  /** Called when the user clicks an attachment tile/row. Passed through to `AttachmentGroup`. */
+  /** Fires when an attachment is clicked. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
-  /**
-   * Called with every currently downloadable attachment when the user
-   * activates the group's "download all" action. Passed through to
-   * `AttachmentGroup`.
-   */
+  /** Fires with all downloadable attachments when "download all" is triggered. */
   onDownloadAll?: (attachments: DisplayAttachment[]) => void;
-  /** Called when the user retries a failed attachment upload. */
+  /** Fires when a failed attachment upload is retried. */
   onAttachmentRetry?: (id: string) => void;
 }
 
-/** Props accepted by the `UserMessageBubble` component. */
+/** Props for `UserMessageBubble`. */
 export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
-  /** Position within a message group — controls which corner is rounded. Defaults to `BubblePosition.Bottom`. */
+  /** Corner rounding position within a message group. Defaults to `BubblePosition.Bottom`. */
   position?: BubblePosition;
   /** Maximum number of text lines shown while a long user message is collapsed. Defaults to `10`. */
   collapsedLineCount?: number;
 }
 
-/** Props accepted by the `AssistantMessageBubble` component. */
+/** Props for `AssistantMessageBubble`. */
 export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
-  /**
-   * react-markdown component overrides merged on top of the built-in map.
-   * Pass a custom `p` (or other element) renderer here to inject React nodes
-   * — such as citation markers — into specific markdown elements.
-   */
+  /** react-markdown component overrides. Use to inject custom renderers (e.g. citation markers) into markdown elements. */
   markdownComponents?: Components;
-  /**
-   * Quick-reply buttons derived from the assistant message's `form_schema`.
-   * Rendered below the message text when the array is non-empty.
-   */
+  /** Quick-reply buttons rendered below the message text when non-empty. */
   starters?: StarterOption[];
-  /** Called with the selected `StarterOption` when a quick-reply button is clicked. */
+  /** Fires with the clicked `StarterOption`. */
   onSelectStarter?: (starter: StarterOption) => void;
   /** Content rendered between the message body and the actions bar (e.g. a stages panel). */
   afterContent?: ReactNode;
-  /**
-   * Resolved URL for the deployment icon shown in the message header.
-   * When absent (e.g. legacy messages without a stored `deploymentId`), no icon is rendered.
-   */
+  /** Deployment icon URL. When absent, no icon is rendered. */
   deploymentIconUrl?: string;
-  /** Human-readable deployment name shown as the icon's accessible label. */
+  /** Deployment name used as the icon's accessible label. */
   deploymentDisplayName?: string;
-  /** Syntax highlight color theme for code blocks. Forwarded to `MDMessageViewer`, which defaults to `'dark'` when omitted. */
+  /** Syntax highlight theme for code blocks. Defaults to `'dark'`. */
   codeBlockTheme?: CodeBlockTheme;
   /** Localised labels for quick replies, the thinking indicator, and code block copy actions. */
   labels?: AssistantMessageBubbleLabels;
 }
 
-/**
- * Props accepted by the `MessageBubble` role-switching wrapper — the union of
- * `AssistantMessageBubbleProps` (the richer variant) with the user-only
- * `position`/`collapsedLineCount` fields, plus the discriminant `role`.
- */
+/** Props for `MessageBubble` — `AssistantMessageBubbleProps` plus user-only fields and `role`. */
 export type MessageBubbleProps = AssistantMessageBubbleProps &
   Pick<UserMessageBubbleProps, 'position' | 'collapsedLineCount'> & {
-    /** Whether the message was authored by the user, the assistant, or is a status banner. */
+    /** Message author/type: user, assistant, or status banner. */
     role: MessageRole;
   };

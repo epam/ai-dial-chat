@@ -1,44 +1,45 @@
 import type { Stage } from '@epam/ai-dial-chat-shared';
+import type { StagesPanelColors } from './stages-props';
 
 /** Color overrides for the `CollapsedGroup` component applied as CSS custom properties. */
 export interface CollapsedGroupColors {
-  /** Color of the toggle button label and icon. Defaults to `var(--text-secondary, #575F73)`. */
+  /** Color of the toggle button label and icon. */
   labelColor?: string;
-  /** Color of the toggle button label and icon on hover. Defaults to `var(--text-primary, #161B2D)`. */
+  /** Color of the toggle button label and icon on hover. */
   labelHoverColor?: string;
-  /** Color of the execution time. Defaults to `var(--text-tertiary, #808898)` — muted, matching the row-level duration's tone. */
+  /** Color of the execution time. */
   stepsCountColor?: string;
-  /** Color of the leading check icon in the finished-and-successful summary. Defaults to `var(--text-success, #007274)`. */
+  /** Color of the leading check icon in the finished-and-successful summary. */
   doneColor?: string;
-  /** Color of the "N failed" text in the failed summary. Defaults to `var(--text-warning, #7f6300)`. */
+  /** Color of the "N failed" text in the failed summary. */
   failedColor?: string;
 }
 
 /** Typography configuration for the toggle button label text. */
 export interface CollapsedGroupTypography {
-  /** CSS utility class applied to the toggle button label. Defaults to `'dial-small-text'` — matches the size of the step rows it summarizes, since a group header should never render smaller than its contents. */
+  /** CSS utility class applied to the toggle button label. */
   fontClassName?: string;
-  /** Font family applied to the panel root via CSS custom property. */
-  fontFamily?: string;
 }
 
 /** Combined style overrides (colors and typography) for the `CollapsedGroup` component. */
 export interface CollapsedGroupStyles {
   /** Color overrides applied as CSS custom properties. */
   colors?: CollapsedGroupColors;
-  /** Typography for the toggle button label. Defaults to `{ fontClassName: 'dial-small-text' }`. */
+  /** Typography for the toggle button label. */
   typography?: CollapsedGroupTypography;
+  /** Color overrides forwarded to the inner `StagesPanel`. */
+  panel?: StagesPanelColors;
 }
 
 /** User-visible strings for the `CollapsedGroup` component. */
 export interface CollapsedGroupLabels {
   /** Label shown before the steps count on the toggle button. Defaults to `'Executed'`. */
   executedLabel?: string;
-  /** Returns the pluralized label for the steps count. Receives the count so callers can handle any plural rule. Defaults to `() => 'steps'`. */
+  /** Returns the pluralized steps label. Defaults to `() => 'steps'`. */
   stepsLabel?: (count: number) => string;
-  /** Returns the "N failed" fragment shown in the failed summary. Defaults to `(n) => \`${n} failed\``. */
+  /** Returns the "N failed" text in the failed summary. Defaults to `(n) => \`${n} failed\``. */
   failedCountLabel?: (failedCount: number) => string;
-  /** Returns the "Step X of Y" fragment shown in the running summary. Defaults to `(current, total) => \`Step ${current} of ${total}\``. */
+  /** Returns the "Step X of Y" text in the running summary. Defaults to `(current, total) => \`Step ${current} of ${total}\``. */
   runningStepLabel?: (current: number, total: number) => string;
   /** Accessible label announced for the running summary's spinner. Defaults to `'Running'`. */
   runningAriaLabel?: string;
@@ -54,11 +55,7 @@ export interface CollapsedGroupLabels {
 export interface CollapsedGroupProps {
   /** Ordered list of stages to display. */
   stages: Stage[];
-  /**
-   * Whether the run is still streaming. Drives the summary line's state
-   * (running vs. finished vs. failed) and its default open/closed state —
-   * expanded while running, collapsed once finished.
-   */
+  /** When true, expands to a live progress line; collapses to a summary once streaming ends. */
   isStreaming: boolean;
   /** User-visible strings for the toggle button. */
   labels?: CollapsedGroupLabels;

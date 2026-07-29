@@ -2,7 +2,7 @@ import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import { FilterTab } from '../types/conversation-classification';
 
-/** Labels for each filter tab — provided as props so the app supplies i18n strings. */
+/** Labels for each filter tab. */
 export interface FilterLabels {
   /** Label for the "All" tab. */
   all: string;
@@ -18,7 +18,7 @@ export interface FilterLabels {
 export interface ConversationItem {
   /** Unique conversation identifier (path or UUID). */
   id: string;
-  /** Human-readable title — typically the first user message. */
+  /** Human-readable conversation title. */
   title: string;
   /** When true the item is shown in the Pinned section. */
   isPinned?: boolean;
@@ -26,15 +26,11 @@ export interface ConversationItem {
   source?: FilterTab;
   /** URL of the model or conversation icon. When absent a default icon is shown. */
   iconUrl?: string;
-  /** Tooltip text shown on the deployment icon. Typically the agent or model display name. */
+  /** Tooltip text shown on the deployment icon. */
   iconTooltip?: string;
   /** When `true`, a skeleton placeholder is shown instead of the deployment icon. */
   isIconLoading?: boolean;
-  /**
-   * Browser-navigable URL for the conversation (e.g. `/conversations/<id>`).
-   * When provided, a middle mouse button click on the row opens this URL in a new tab,
-   * matching standard browser link behaviour.
-   */
+  /** Conversation URL. When provided, middle-click opens it in a new tab. */
   href?: string;
 }
 
@@ -52,6 +48,30 @@ export interface ConversationPanelTypography {
   tabClassName?: string;
 }
 
+/** CSS custom-property overrides for the New chat button. */
+export interface NewChatButtonColors {
+  /** Default background. */
+  background?: string;
+  /** Hover background. */
+  hoverBackground?: string;
+  /** Active/pressed background. */
+  activeBackground?: string;
+  /** Label and icon color. */
+  text?: string;
+  /** Blue shadow in the default state. */
+  shadowBlue?: string;
+  /** Blue shadow on hover. */
+  shadowBlueHover?: string;
+  /** Blue shadow while active/pressed. */
+  shadowBlueActive?: string;
+  /** Purple shadow in the default state. */
+  shadowPurple?: string;
+  /** Purple shadow on hover. */
+  shadowPurpleHover?: string;
+  /** Purple shadow while active/pressed. */
+  shadowPurpleActive?: string;
+}
+
 /** CSS custom-property overrides for `ConversationPanel`. */
 export interface ConversationColors {
   /** Panel background color. */
@@ -66,26 +86,6 @@ export interface ConversationColors {
   text?: string;
   /** Secondary text color (dates, metadata). */
   textSecondary?: string;
-  /** Hover background of the New chat button. */
-  newChatHoverBackground?: string;
-  /** Active/pressed background of the New chat button. */
-  newChatActiveBackground?: string;
-  /** Background of the New chat button. */
-  newChatBackground?: string;
-  /** Label/icon text color of the New chat button. */
-  newChatText?: string;
-  /** Blue shadow color of the New chat button in the default state. */
-  newChatShadowBlue?: string;
-  /** Blue shadow color of the New chat button on hover. */
-  newChatShadowBlueHover?: string;
-  /** Blue shadow color of the New chat button while active/pressed. */
-  newChatShadowBlueActive?: string;
-  /** Purple shadow color of the New chat button in the default state. */
-  newChatShadowPurple?: string;
-  /** Purple shadow color of the New chat button on hover. */
-  newChatShadowPurpleHover?: string;
-  /** Purple shadow color of the New chat button while active/pressed. */
-  newChatShadowPurpleActive?: string;
   /** Ring color shown around a group header acting as a drag-and-drop target. */
   dropZoneRing?: string;
   /** Background color of the active row actions trigger button. */
@@ -102,6 +102,8 @@ export interface ConversationColors {
 export interface ConversationPanelStyles {
   /** Color overrides applied as CSS custom properties. */
   colors?: ConversationColors;
+  /** Color overrides forwarded to the New chat button. */
+  newChatButton?: NewChatButtonColors;
   /** Typography overrides for the panel and its children. */
   typography?: ConversationPanelTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
@@ -163,51 +165,25 @@ export interface ConversationPanelProps {
   styles?: ConversationPanelStyles;
   /** Extra class name(s) merged onto the panel root element. */
   className?: string;
-  /**
-   * Builds the dropdown menu items for a conversation row.
-   * Receives the full item so actions can reflect per-item state (e.g. `isPinned` toggle).
-   * When omitted or returns an empty array, no actions trigger is rendered on rows.
-   */
+  /** Builds dropdown actions for a row. When absent or empty, no action trigger is rendered. */
   getActions?: (item: ConversationItem) => DropdownItem[];
-  /** Called when a row action menu opens, exposing its trigger for host-owned focus restoration. */
+  /** Called when a row action menu opens; receives the trigger button. */
   onActionMenuOpen?: (
     item: ConversationItem,
     trigger: HTMLButtonElement,
   ) => void;
-  /**
-   * Called when the mobile sidebar toggle icon in the panel header is clicked.
-   * When provided, the toggle button becomes visible on mobile screens.
-   * The parent is responsible for managing `isOpen` state in response to this callback.
-   */
+  /** Called when the panel header toggle button is clicked. When provided, the toggle is visible on mobile. */
   onToggle?: () => void;
-  /**
-   * Content rendered in the end action group of the panel header bar.
-   * The app supplies any ReactNode — the library does not prescribe its content.
-   */
+  /** Extra content rendered in the panel header action area. */
   headerActions?: ReactNode;
   /**
-   * Called when the user completes a valid drag-and-drop move.
-   * `draggedId` is the conversation that was moved.
-   * `targetGroupKey` is the group it was dropped into.
-   * `afterId` is the id of the item the dragged conversation should be placed after,
-   * or `null` when dropped at the top of the target group.
-   *
-   * The app derives the action type from `targetGroupKey`:
-   * - dropping into `Pinned` → pin the conversation
-   * - dragging from `Pinned` into another group → unpin
-   * - same-group drop → reorder
+   * Called when the user completes a drag-and-drop move.
+   * See `ConversationMove` for the payload shape.
    */
   onMoveConversation?: (move: ConversationMove) => void;
-  /**
-   * Imperatively sets the active filter tab. When provided the panel switches
-   * to this tab; the user can still change it afterwards. Pass `undefined` to
-   * leave the current tab unchanged.
-   */
+  /** Programmatically sets the active filter tab. Pass `undefined` to leave the tab unchanged. */
   activeFilter?: FilterTab;
-  /**
-   * Called whenever the active filter tab changes — either because the user
-   * clicked a tab or because `activeFilter` drove a programmatic switch.
-   */
+  /** Called when the active filter tab changes. */
   onActiveFilterChange?: (tab: FilterTab) => void;
 }
 
@@ -217,9 +193,6 @@ export interface ConversationMove {
   draggedId: string;
   /** The group the item was dropped into. */
   targetGroupKey: FilterTab;
-  /**
-   * Id of the item the dragged conversation should be placed after.
-   * `null` means the item was dropped at the top of the target group.
-   */
+  /** Item to insert after; `null` means top of the target group. */
   afterId: string | null;
 }

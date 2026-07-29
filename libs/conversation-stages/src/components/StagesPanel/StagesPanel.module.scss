@@ -6,7 +6,7 @@
   border-radius: 8px;
 
   &:hover {
-    background: var(--cs-row-hover, var(--bg-layer-2, #eef1f7));
+    background: var(--cs-row-hover, var(--bg-layer-sunken, #eef1f7));
   }
 }
 
@@ -63,13 +63,13 @@
 }
 
 .codeBlock {
-  background: var(--cs-code-bg, var(--bg-layer-0, #fcfcfc));
+  background: var(--cs-code-bg, var(--bg-layer-raised, #fcfcfc));
   border-color: var(--cs-code-border, var(--stroke-secondary, #d1dbea));
   color: var(--cs-code-text, var(--text-primary, #161b2d));
 }
 
 .codeInline {
-  background: var(--cs-code-bg, var(--bg-layer-0, #fcfcfc));
+  background: var(--cs-code-bg, var(--bg-layer-raised, #fcfcfc));
   border: 1px solid var(--cs-code-border, var(--stroke-secondary, #d1dbea));
   color: var(--cs-code-text, var(--text-primary, #161b2d));
 }

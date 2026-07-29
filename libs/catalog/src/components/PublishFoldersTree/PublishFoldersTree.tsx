@@ -79,16 +79,7 @@ export interface PublishFoldersTreeProps {
   loadingPaths?: Set<string>;
 }
 
-/**
- * Destination folder tree for the Publish flow, built on ui-kit's
- * `DialFoldersTree` (`showFiles={false}`). Search filters `items` before
- * conversion to `DialFile[]` since `DialFoldersTree` has no built-in search.
- * Folder creation can be triggered either by the trailing "Create new
- * folder" button (creates under the currently selected folder) or by each
- * row's "Add sibling"/"Add child" context menu actions. Both pass the target
- * parent path to `DialFoldersTree`, which owns the temporary inline row; only
- * the confirmed name is reported via `onCreateFolder`.
- */
+/** Destination folder tree for the Publish flow with search, folder creation (trailing button and context menu), and a disabled state. */
 export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   items,
   selectedPath,

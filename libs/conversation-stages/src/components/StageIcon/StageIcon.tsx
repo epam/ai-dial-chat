@@ -16,21 +16,7 @@ export interface StageIconProps {
   failedLabel?: string;
 }
 
-/**
- * The row's single icon slot, filled by priority: exception (failed, or
- * running via a spinner) always wins; everything else — completed, or a
- * settled-but-unresolved stage from an aborted stream — falls back to one
- * uniform check glyph, the same `IconCheck` glyph and size as the
- * `CollapsedGroup` summary's own "Executed N steps" check, but in a quiet
- * grey ink rather than the summary's success color — the summary is the one
- * place that should read as a vivid confirmation, not every row. There is
- * no separate "pending" glyph: the quiet tier is intentionally a single
- * glyph, not a per-state icon set.
- *
- * The icon itself is `aria-hidden` (decorative) — status is also carried by
- * text: failed stages get a visually-hidden label here, and their row name
- * gets the warning ink color at the call site.
- */
+/** Renders the icon for a stage, based on its status and whether it's currently executing. */
 export const StageIcon: FC<StageIconProps> = ({
   status,
   isLive,

@@ -448,8 +448,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [setSelectedItemId, navigate],
   );
 
-  // Picker mode: a card click selects it and closes the modal immediately,
-  // without opening its details.
+  /* Picker mode: a card click selects it and closes the modal immediately,
+   * without opening its details. */
   const handleCardSelect = useCallback(
     (item: CatalogItem) => {
       setSelectedItemId(item.id);

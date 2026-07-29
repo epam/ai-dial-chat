@@ -485,6 +485,7 @@ describe('CatalogView', () => {
         overlayAllowedOrigins: [],
         enabledUiFeatures: null,
         announcementHtml: null,
+        footerHtmlMessage: '',
       },
     });
   });
@@ -706,6 +707,7 @@ describe('CatalogView', () => {
           overlayAllowedOrigins: [],
           enabledUiFeatures: null,
           announcementHtml: null,
+          footerHtmlMessage: '',
         },
       });
 

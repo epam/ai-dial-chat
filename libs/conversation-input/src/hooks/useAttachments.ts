@@ -67,11 +67,7 @@ export interface UseAttachmentsResult {
   hasBlockedAttachments: boolean;
 }
 
-/**
- * Manages all attachment state and side-effects for the `Input` component:
- * building, uploading, adding, removing, retrying, expanding, and consuming
- * pending drop/attachment queues.
- */
+/** Manages attachment state and lifecycle for the `Input` component. */
 export const useAttachments = ({
   initialAttachments,
   onUploadAttachment,
