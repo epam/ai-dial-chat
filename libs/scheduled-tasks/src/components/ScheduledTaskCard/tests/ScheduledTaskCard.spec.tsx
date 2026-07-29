@@ -8,12 +8,6 @@ import {
 } from '../../../models/scheduled-task-item';
 import { ScheduledTaskCard } from '../ScheduledTaskCard';
 
-interface MockPathItem {
-  label: ReactNode;
-  disabled?: boolean;
-  iconBefore?: ReactNode;
-}
-
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   CardShell: ({
     children,
@@ -22,24 +16,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <article {...rest}>{children}</article>
   ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialIcon: ({ icon, className }: { icon: ReactNode; className?: string }) => (
-    <span className={className}>{icon}</span>
-  ),
-  DialBreadcrumb: ({
-    pathItems,
-    labelClassName,
+  FolderPath: ({
+    segments,
     className,
   }: {
-    pathItems: MockPathItem[];
-    labelClassName?: string;
+    segments: string[];
     className?: string;
   }) => (
     <div className={className}>
-      {pathItems.map((item, i) => (
-        <span key={i} className={labelClassName}>
-          {item.iconBefore}
-          {item.label}
-        </span>
+      {segments.map((segment, i) => (
+        <span key={i}>{segment}</span>
       ))}
     </div>
   ),
@@ -81,10 +67,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconChevronRight: () => <svg />,
   IconDotsVertical: () => <svg />,
   IconEdit: () => <svg />,
-  IconFolder: () => <svg />,
   IconPlayerPlay: () => <svg />,
   IconTrash: () => <svg />,
 }));

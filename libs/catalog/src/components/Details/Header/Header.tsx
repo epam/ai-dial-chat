@@ -1,5 +1,5 @@
-import { FolderPath, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { DIAL_ICON_SIZE, FolderPath } from '@epam/ai-dial-ui-kit';
 import {
   IconKey,
   IconLogin,

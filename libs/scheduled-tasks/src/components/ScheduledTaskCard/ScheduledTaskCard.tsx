@@ -3,13 +3,13 @@ import {
   Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { FolderPath } from '@epam/ai-dial-kit';
 import {
   CardShell,
   DIAL_ICON_SIZE,
   DialDropdown,
   DialIconButton,
   type DropdownItem,
+  FolderPath,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconDotsVertical,

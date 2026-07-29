@@ -24,7 +24,7 @@
     "react-syntax-highlighter": "^16.1.1",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.12"
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.17"
   },
   "dependencies": {
     "classnames": "2.5.1",
