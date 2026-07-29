@@ -1,0 +1,36 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class PromptResponseDto {
+  @ApiProperty({
+    description: 'Prompt path within the prompts namespace (used as stable ID)',
+    example: 'Work/AI/my-prompt',
+  })
+  id!: string;
+
+  @ApiProperty({ description: 'Display name', example: 'My Prompt' })
+  name!: string;
+
+  @ApiPropertyOptional({ description: 'Optional description', maxLength: 2000 })
+  description?: string;
+
+  @ApiProperty({ description: 'Prompt text content', maxLength: 50000 })
+  content!: string;
+
+  @ApiProperty({
+    description: 'Parent folder path; empty string means root',
+    example: 'Work/AI',
+  })
+  folderId!: string;
+
+  @ApiProperty({
+    description: 'Creation timestamp (Unix ms)',
+    example: 1700000000000,
+  })
+  createdAt!: number;
+
+  @ApiProperty({
+    description: 'Last update timestamp (Unix ms)',
+    example: 1700000001000,
+  })
+  updatedAt!: number;
+}

@@ -20,6 +20,7 @@ import { FilesModule } from '../files/files.module';
 import { FooterModule } from '../footer/footer.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
+import { PromptModule } from '../prompts/prompt.module';
 import { PublishModule } from '../publish/publish.module';
 import { RateModule } from '../rate/rate.module';
 import { ShareModule } from '../share/share.module';
@@ -68,6 +69,7 @@ import { createServeStaticOptions } from './static-assets';
     ChatModule,
     ClientChannelModule,
     ConversationModule,
+    PromptModule,
     UserConfigModule,
     FilesModule,
     RateModule,

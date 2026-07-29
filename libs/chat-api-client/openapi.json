@@ -2305,6 +2305,488 @@
         ]
       }
     },
+    "/api/v1/prompts": {
+      "get": {
+        "description": "Returns all personal prompts and the folder hierarchy.",
+        "operationId": "listPrompts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Prompts returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "List personal prompts",
+        "tags": [
+          "prompts"
+        ]
+      },
+      "post": {
+        "operationId": "createPrompt",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Prompt created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "Prompt already exists at that path"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Create a personal prompt",
+        "tags": [
+          "prompts"
+        ]
+      },
+      "put": {
+        "operationId": "updatePrompt",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Prompt path to update",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prompt updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Prompt not found"
+          },
+          "409": {
+            "description": "Rename target already exists"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Update a personal prompt",
+        "tags": [
+          "prompts"
+        ]
+      },
+      "delete": {
+        "operationId": "deletePrompt",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Prompt path to delete",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Prompt deleted"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Prompt not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Delete a personal prompt",
+        "tags": [
+          "prompts"
+        ]
+      }
+    },
+    "/api/v1/prompts/item": {
+      "get": {
+        "operationId": "getPrompt",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Prompt path within the prompts namespace",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prompt returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Prompt not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Get a personal prompt",
+        "tags": [
+          "prompts"
+        ]
+      }
+    },
+    "/api/v1/prompts/public": {
+      "get": {
+        "operationId": "listPublicPrompts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Prompts returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicPromptListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "List organisation prompts",
+        "tags": [
+          "prompts"
+        ]
+      }
+    },
+    "/api/v1/prompts/public/item": {
+      "get": {
+        "operationId": "getPublicPrompt",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Prompt path within the prompts namespace",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prompt returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Prompt not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Get an organisation prompt",
+        "tags": [
+          "prompts"
+        ]
+      }
+    },
+    "/api/v1/prompts/folders": {
+      "post": {
+        "operationId": "createPromptFolder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromptFolderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Folder created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptFolderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "Folder already exists"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Create a prompt folder",
+        "tags": [
+          "prompts"
+        ]
+      },
+      "put": {
+        "operationId": "renamePromptFolder",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Folder path to rename",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenamePromptFolderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Folder renamed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptFolderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Folder not found"
+          },
+          "409": {
+            "description": "Target folder already exists"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Rename a prompt folder",
+        "tags": [
+          "prompts"
+        ]
+      },
+      "delete": {
+        "operationId": "deletePromptFolder",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Folder path to delete",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Folder deleted"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Folder not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Delete a prompt folder",
+        "tags": [
+          "prompts"
+        ]
+      }
+    },
+    "/api/v1/prompts/move": {
+      "post": {
+        "operationId": "movePrompt",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Prompt path to move",
+            "schema": {
+              "maxLength": 2048,
+              "example": "Work/AI/my-prompt",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovePromptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prompt moved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Prompt not found"
+          },
+          "409": {
+            "description": "Target path already exists"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          }
+        },
+        "summary": "Move a personal prompt to a different folder",
+        "tags": [
+          "prompts"
+        ]
+      }
+    },
     "/api/v1/files": {
       "post": {
         "operationId": "uploadFile",
@@ -3475,7 +3957,7 @@
     },
     "/api/v1/share": {
       "post": {
-        "description": "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — or conversation) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
+        "description": "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — conversation, or prompt) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
         "operationId": "createShareLink",
         "parameters": [],
         "requestBody": {
@@ -4032,8 +4514,8 @@
           "fileManagerTabs",
           "overlayEnabled",
           "overlayAllowedOrigins",
-          "footerHtmlMessage",
-          "enabledUiFeatures"
+          "enabledUiFeatures",
+          "footerHtmlMessage"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -6336,6 +6818,11 @@
           },
           "custom_content": {
             "$ref": "#/components/schemas/ConversationMessageCustomContentDto"
+          },
+          "streamErrorMessage": {
+            "type": "string",
+            "description": "Error message when the generation ended in error. Presence signals a terminal error state; absence means the generation succeeded or is still in progress.",
+            "example": "You have exceeded your daily token limit."
           }
         },
         "required": [
@@ -6838,6 +7325,218 @@
           "folderPath",
           "publishedAt",
           "publishedBy"
+        ]
+      },
+      "PromptResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Prompt path within the prompts namespace (used as stable ID)",
+            "example": "Work/AI/my-prompt"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name",
+            "example": "My Prompt"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description",
+            "maxLength": 2000
+          },
+          "content": {
+            "type": "string",
+            "description": "Prompt text content",
+            "maxLength": 50000
+          },
+          "folderId": {
+            "type": "string",
+            "description": "Parent folder path; empty string means root",
+            "example": "Work/AI"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Creation timestamp (Unix ms)",
+            "example": 1700000000000
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Last update timestamp (Unix ms)",
+            "example": 1700000001000
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "content",
+          "folderId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PromptFolderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Folder path within the prompts namespace",
+            "example": "Work/AI"
+          },
+          "name": {
+            "type": "string",
+            "description": "Last path segment (display name)",
+            "example": "AI"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "PromptListResponseDto": {
+        "type": "object",
+        "properties": {
+          "prompts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptResponseDto"
+            }
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptFolderResponseDto"
+            }
+          },
+          "sharedWithMe": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptResponseDto"
+            }
+          }
+        },
+        "required": [
+          "prompts",
+          "folders",
+          "sharedWithMe"
+        ]
+      },
+      "CreatePromptDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Prompt name. Must not contain a forward slash.",
+            "example": "My Prompt",
+            "maxLength": 256
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description",
+            "maxLength": 2000
+          },
+          "content": {
+            "type": "string",
+            "description": "Prompt text. May contain {{variableName}} placeholders.",
+            "maxLength": 50000
+          },
+          "folderId": {
+            "type": "string",
+            "description": "Parent folder path. Empty string or omit for root.",
+            "example": "Work/AI"
+          }
+        },
+        "required": [
+          "name",
+          "content"
+        ]
+      },
+      "UpdatePromptDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New display name. Must not contain a forward slash.",
+            "maxLength": 256
+          },
+          "description": {
+            "type": "string",
+            "description": "Updated description",
+            "maxLength": 2000
+          },
+          "content": {
+            "type": "string",
+            "description": "Updated prompt text",
+            "maxLength": 50000
+          }
+        }
+      },
+      "PublicPromptListResponseDto": {
+        "type": "object",
+        "properties": {
+          "prompts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptResponseDto"
+            }
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromptFolderResponseDto"
+            }
+          }
+        },
+        "required": [
+          "prompts",
+          "folders"
+        ]
+      },
+      "CreatePromptFolderDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Folder name. Must not contain a forward slash.",
+            "example": "AI",
+            "maxLength": 256
+          },
+          "parentId": {
+            "type": "string",
+            "description": "Parent folder path. Omit or leave empty to create at root.",
+            "example": "Work"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "RenamePromptFolderDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New folder name. Must not contain a forward slash.",
+            "example": "Machine Learning",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "MovePromptDto": {
+        "type": "object",
+        "properties": {
+          "targetFolderId": {
+            "type": "string",
+            "description": "Target folder path. Empty string to move to root.",
+            "example": "Work/AI"
+          }
+        },
+        "required": [
+          "targetFolderId"
         ]
       },
       "FileUploadResponseDto": {

@@ -13,6 +13,7 @@ src/apis/FilesApi.ts
 src/apis/FooterApi.ts
 src/apis/HealthApi.ts
 src/apis/ModelsApi.ts
+src/apis/PromptsApi.ts
 src/apis/PublishApi.ts
 src/apis/RateApi.ts
 src/apis/ShareApi.ts

@@ -11,6 +11,7 @@ export * from './FilesApi';
 export * from './FooterApi';
 export * from './HealthApi';
 export * from './ModelsApi';
+export * from './PromptsApi';
 export * from './PublishApi';
 export * from './RateApi';
 export * from './ShareApi';
