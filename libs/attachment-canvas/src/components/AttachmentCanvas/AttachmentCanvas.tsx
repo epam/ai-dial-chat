@@ -159,6 +159,15 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       COPY_RESET_MS,
     );
   }, [onCopyJson]);
+
+  useEffect(() => {
+    return () => {
+      if (copyTextResetRef.current != null) clearTimeout(copyTextResetRef.current);
+      if (copyResetRef.current != null) clearTimeout(copyResetRef.current);
+      if (copyJsonResetRef.current != null) clearTimeout(copyJsonResetRef.current);
+    };
+  }, []);
+
   const {
     colors,
     typography,

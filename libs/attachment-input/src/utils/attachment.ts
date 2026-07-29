@@ -55,6 +55,7 @@ export const generateAttachmentId = (): string =>
 
 /** Returns the name without its trailing file extension. */
 export const getNameWithoutExtension = (name: string): string => {
+  if (name == null) return '';
   const dotIndex = name.lastIndexOf('.');
   return dotIndex > 0 ? name.slice(0, dotIndex) : name;
 };

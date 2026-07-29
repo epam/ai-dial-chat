@@ -151,8 +151,8 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
             : 'flex flex-wrap',
         )}
       >
-        {visibleAttachments.map((attachment) => (
-          <div key={attachment.id} role="listitem">
+        {visibleAttachments.map((attachment, index) => (
+          <div key={`${attachment.id}-${index}`} role="listitem">
             <AttachmentCard
               attachment={attachment}
               onClick={onAttachmentClick}
