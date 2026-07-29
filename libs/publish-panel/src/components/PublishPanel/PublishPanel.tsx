@@ -25,9 +25,9 @@ export interface PublishPanelLabels {
   clearSearchAriaLabel?: string;
   /** Label above the publish history list. Default: `'Versions history'`. */
   historyLabel?: string;
-  /** Warning callout body shown when the folder already has this version; `{version}` is replaced. */
+  /** Warning callout body shown when the folder already has this version; `{version}` and `{folder}` are replaced, with the folder name rendered bold. */
   replaceWarning?: string;
-  /** Error callout body shown when the user lacks write access. */
+  /** Error callout body shown when the user lacks write access; `{folder}` is replaced, with the folder name rendered bold. */
   noAccessError?: string;
   /** Error callout body shown when the most recent submit attempt failed. */
   submitError?: string;

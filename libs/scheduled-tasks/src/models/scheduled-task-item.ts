@@ -1,6 +1,8 @@
 /** Section a {@link ScheduledTaskItem} is grouped under in the card grid. */
 export enum ScheduledTaskSectionKey {
+  /** Tasks shared from another user or accessible at the organization level. */
   Shared = 'shared',
+  /** Tasks owned by the current user. */
   MyTasks = 'myTasks',
 }
 
