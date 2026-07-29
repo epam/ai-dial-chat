@@ -183,6 +183,7 @@ export function PublicVersionSelector({
       disabled={mappedAllVersions.length <= 1}
       placement="bottom-end"
       strategy="fixed"
+      enableAncestorScroll
       trigger={
         <DialLinkButton
           onClick={stopBubbling}

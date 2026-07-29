@@ -449,14 +449,16 @@ export function PromptFolders() {
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
+  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
 
   const publicationItemsSelector = useMemo(
     () =>
-      PublicationSelectors.selectFilteredPublications(
+      PublicationSelectors.selectFilteredPublicationsWithSearch(
         publicationFeatureTypes,
         true,
+        searchTerm,
       ),
-    [],
+    [searchTerm],
   );
 
   const publicationItems = useAppSelector(publicationItemsSelector);

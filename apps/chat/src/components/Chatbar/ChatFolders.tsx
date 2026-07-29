@@ -470,14 +470,16 @@ export function ChatFolders() {
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
+  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
 
   const publicationItemsSelector = useMemo(
     () =>
-      PublicationSelectors.selectFilteredPublications(
+      PublicationSelectors.selectFilteredPublicationsWithSearch(
         publicationFeatureTypes,
         true,
+        searchTerm,
       ),
-    [],
+    [searchTerm],
   );
 
   const publicationItems = useAppSelector(publicationItemsSelector);
