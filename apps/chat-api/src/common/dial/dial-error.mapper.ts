@@ -65,6 +65,28 @@ export const mapDialHttpStatus = (
   );
 };
 
+interface DialErrorBody {
+  error?: { display_message?: string; message?: string };
+  message?: string;
+}
+
+// TODO: try to move this into @epam/ai-dial-typescript-sdk later.
+/**
+ * Extracts a human-readable message from an untyped DIAL Core error payload.
+ * The body may be a plain string (e.g. an endpoint-reachability failure) or
+ * an object carrying `error.display_message`, `error.message`, or `message`.
+ */
+export const extractDialErrorMessage = (error: unknown): string | undefined => {
+  if (typeof error === 'string') return error;
+  if (error != null && typeof error === 'object') {
+    const body = error as DialErrorBody;
+    const message =
+      body.error?.display_message ?? body.error?.message ?? body.message;
+    if (typeof message === 'string') return message;
+  }
+  return undefined;
+};
+
 const isTimeoutError = (error: unknown): boolean =>
   error instanceof Error && error.name === 'TimeoutError';
 

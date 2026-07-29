@@ -8,7 +8,10 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { handleDialSdkError } from '../common/dial/dial-error.mapper';
+import {
+  extractDialErrorMessage,
+  handleDialSdkError,
+} from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
@@ -64,14 +67,6 @@ import {
   getConversationTitleFromName,
   prepareEntityName,
 } from './utils/conversation.utils';
-
-interface DialErrorBody {
-  error?: { display_message?: string; message?: string };
-  message?: string;
-}
-
-const extractDialErrorMessage = (obj: DialErrorBody): string =>
-  obj?.error?.display_message ?? obj?.error?.message ?? obj?.message ?? '';
 
 const getValidAttachments = (
   customContent?: ConversationMessageDto['custom_content'],
@@ -1224,18 +1219,14 @@ export class ConversationService {
 
         /* 1. SDK-parsed error — most reliable, SDK reads body before us */
         if (dialResult.error != null) {
-          errorMessage = extractDialErrorMessage(
-            dialResult.error as DialErrorBody,
-          );
+          errorMessage = extractDialErrorMessage(dialResult.error) ?? '';
         }
 
         /* 2. Raw body — for cases where SDK didn't parse it */
         if (!errorMessage) {
           try {
             const rawBody = await dialResult.response.text();
-            errorMessage = extractDialErrorMessage(
-              JSON.parse(rawBody) as DialErrorBody,
-            );
+            errorMessage = extractDialErrorMessage(JSON.parse(rawBody)) ?? '';
           } catch {
             /* non-JSON or empty body */
           }
