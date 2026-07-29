@@ -906,9 +906,7 @@ describe('DialFileManagerModal — tab navigation', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
     expect(screen.getByText('1 item selected')).toBeTruthy();
-    expect(
-      screen.queryByRole('button', { name: 'Shared with Me' }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Shared with Me' })).toBeNull();
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Invoke tab-change handler' }),

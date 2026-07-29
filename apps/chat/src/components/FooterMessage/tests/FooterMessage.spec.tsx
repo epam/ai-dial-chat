@@ -62,8 +62,9 @@ describe('FooterMessage', () => {
     mockState.footerHtmlMessage = 'Version <strong>1.0</strong>';
     renderFooter();
 
-    expect(screen.getByRole('region', { name: 'footerMessage.regionAriaLabel' }))
-      .toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: 'footerMessage.regionAriaLabel' }),
+    ).toBeTruthy();
     expect(screen.getByText('1.0').tagName).toBe('STRONG');
   });
 
@@ -98,7 +99,8 @@ describe('FooterMessage', () => {
 
   it('does not call onDialAction when a plain link without data-dial-action is clicked', async () => {
     const onDialAction = vi.fn();
-    mockState.footerHtmlMessage = '<a href="https://example.com">Plain link</a>';
+    mockState.footerHtmlMessage =
+      '<a href="https://example.com">Plain link</a>';
     render(<FooterMessage onDialAction={onDialAction} />);
 
     await userEvent.click(screen.getByText('Plain link'));

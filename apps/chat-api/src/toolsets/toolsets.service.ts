@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
 import {
+  extractDialErrorMessage,
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../common/dial/dial-error.mapper';
@@ -52,21 +53,6 @@ const toDialCredentialsLevel = (
   level: ToolsetCredentialsLevel,
 ): DialCredentialsLevel =>
   level === ToolsetCredentialsLevel.App ? 'APPLICATION' : level;
-
-/*
- * saveToolSet's non-2xx responses aren't part of its documented response
- * schema, so the SDK surfaces the raw DIAL Core error body untyped — it may
- * be a plain string (e.g. an endpoint-reachability failure) or an object
- * carrying a `message` field.
- */
-const extractDialErrorMessage = (error: unknown): string | undefined => {
-  if (typeof error === 'string') return error;
-  if (error != null && typeof error === 'object') {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === 'string') return message;
-  }
-  return undefined;
-};
 
 interface DialToolsetResource {
   bucket: string;

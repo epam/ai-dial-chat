@@ -100,7 +100,6 @@ export const rebaseConversationId = (
 ): RebasedConversationId => {
   const rawId = stripRawResourcePrefix(conversation.id);
   const idSegments = rawId.split('/');
-  const oldFileName = idSegments[idSegments.length - 1] ?? rawId;
   const oldFolderId = stripRawResourcePrefix(conversation.folderId);
   const oldBucket = idSegments[0];
 
@@ -111,8 +110,26 @@ export const rebaseConversationId = (
         .filter(Boolean)
     : [];
 
+  /*
+   * Segments after the bucket and any folder sub-paths. For deployments with
+   * a path-like id (e.g. `anthropic/claude-3`), the intermediate segments
+   * belong to the deployment id prefix and must be preserved in the new path,
+   * not dropped as if they were folder segments (issue #7931).
+   */
+  const pathSegmentsAfterBucket = idSegments.slice(1);
+  const pathSegmentsAfterFolder = pathSegmentsAfterBucket.slice(
+    folderSegments.length,
+  );
+  const deploymentPrefixSegments = pathSegmentsAfterFolder.slice(0, -1);
+  const oldFileName =
+    pathSegmentsAfterFolder.at(-1) ?? idSegments.at(-1) ?? rawId;
+
   const newFileName = `${stripTrailingUuid(oldFileName)}__${crypto.randomUUID()}`;
-  const subPath = [...folderSegments, newFileName].join('/');
+  const subPath = [
+    ...folderSegments,
+    ...deploymentPrefixSegments,
+    newFileName,
+  ].join('/');
   const newFolderId = folderSegments.length
     ? `${bucket}/${folderSegments.join('/')}`
     : bucket;

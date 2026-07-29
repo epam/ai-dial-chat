@@ -179,6 +179,44 @@ describe('rebaseConversationId', () => {
     expect(first.conversation.id).not.toBe(second.conversation.id);
   });
 
+  it('preserves multi-segment deployment id path components (e.g. anthropic/claude-3)', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/anthropic/claude-3__My Chat__550e8400-e29b-41d4-a716-446655440000',
+      folderId: 'old-bucket',
+      model: { id: 'anthropic/claude-3' },
+    });
+    const { conversation: result, subPath } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(result.folderId).toBe('new-bucket');
+    expect(result.id).toMatch(
+      /^new-bucket\/anthropic\/claude-3__My Chat__[0-9a-f-]{36}$/,
+    );
+    expect(subPath).toMatch(/^anthropic\/claude-3__My Chat__[0-9a-f-]{36}$/);
+  });
+
+  it('preserves multi-segment deployment id together with folder segments', () => {
+    const conversation = makeConversation({
+      id: 'old-bucket/Folder 1/anthropic/claude-3__My Chat__550e8400-e29b-41d4-a716-446655440000',
+      folderId: 'old-bucket/Folder 1',
+      model: { id: 'anthropic/claude-3' },
+    });
+    const { conversation: result, subPath } = rebaseConversationId(
+      conversation,
+      'new-bucket',
+    );
+
+    expect(result.folderId).toBe('new-bucket/Folder 1');
+    expect(result.id).toMatch(
+      /^new-bucket\/Folder 1\/anthropic\/claude-3__My Chat__[0-9a-f-]{36}$/,
+    );
+    expect(subPath).toMatch(
+      /^Folder 1\/anthropic\/claude-3__My Chat__[0-9a-f-]{36}$/,
+    );
+  });
+
   it('strips old chat\'s raw "conversations/" resource prefix before rebasing', () => {
     const conversation = makeConversation({
       id: 'conversations/59CAnBu6LZrtfagTrHaP2rJhuMLT3rYQS7UkWevuqKXu1dB4gL6cYw6Msobg7Kqs9j/chathub-claude4__requirements.txt',
