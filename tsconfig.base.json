@@ -38,7 +38,8 @@
       "@epam/ai-dial-deployment-creation-form/*": [
         "./libs/deployment-creation-form/*"
       ],
-      "@epam/ai-dial-chat-overlay/*": ["./libs/chat-overlay/*"]
+      "@epam/ai-dial-chat-overlay/*": ["./libs/chat-overlay/*"],
+      "@epam/ai-dial-scheduled-tasks/*": ["./libs/scheduled-tasks/*"]
     }
   }
 }

@@ -95,8 +95,8 @@ export type { EntityTypeLabelProps } from './components/EntityTypeLabel/EntityTy
 export { FavoriteCard } from './components/Favorites/FavoriteCard';
 export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 
-export { FolderPath } from './components/FolderPath/FolderPath';
-export type { FolderPathProps } from './components/FolderPath/FolderPath';
+export { FolderPath } from '@epam/ai-dial-ui-kit';
+export type { FolderPathProps } from '@epam/ai-dial-ui-kit';
 
 export { Filter } from './components/Filter/Filter';
 export type { FilterProps } from './components/Filter/Filter';

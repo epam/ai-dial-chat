@@ -45,6 +45,9 @@
   ],
   "references": [
     {
+      "path": "../../libs/scheduled-tasks/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/deployment-creation-form/tsconfig.lib.json"
     },
     {

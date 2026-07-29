@@ -22,6 +22,7 @@ import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
 import { PublishModule } from '../publish/publish.module';
 import { RateModule } from '../rate/rate.module';
+import { ScheduledTasksModule } from '../scheduled-tasks/scheduled-tasks.module';
 import { ShareModule } from '../share/share.module';
 import { ThemesModule } from '../themes/themes.module';
 import { ToolsetsModule } from '../toolsets/toolsets.module';
@@ -76,6 +77,7 @@ import { createServeStaticOptions } from './static-assets';
     ShareModule,
     FooterModule,
     PublishModule,
+    ScheduledTasksModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

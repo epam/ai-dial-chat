@@ -30,6 +30,9 @@ vi.mock('@epam/ai-dial-kit', () => ({
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  FolderPath: ({ segments }: { segments: string[] }) => (
+    <>{segments.join(' / ')}</>
+  ),
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconKey: () => <svg />,
@@ -40,9 +43,6 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 vi.mock('../../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
-}));
-vi.mock('../../../FolderPath/FolderPath', () => ({
-  FolderPath: () => <div />,
 }));
 vi.mock('../ShareButton/ShareButton', () => ({
   ShareButton: ({ label }: { label?: string }) => (

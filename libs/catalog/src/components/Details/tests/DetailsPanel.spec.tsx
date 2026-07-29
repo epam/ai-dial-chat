@@ -102,9 +102,6 @@ vi.mock('@tabler/icons-react', () => ({
 vi.mock('../../EntityHeader/EntityHeader', () => ({
   EntityHeader: ({ item }: { item: CatalogItem }) => <div>{item.name}</div>,
 }));
-vi.mock('../../FolderPath/FolderPath', () => ({
-  FolderPath: () => <div />,
-}));
 vi.mock('../../StarToggleButton/StarToggleButton', () => ({
   StarToggleButton: () => <div>Star</div>,
 }));

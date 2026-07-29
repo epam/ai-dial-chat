@@ -11,6 +11,7 @@ import {
   ModelsApi,
   PublishApi,
   RateApi,
+  ScheduledTasksApi,
   ShareApi,
   ToolsetsApi,
   UserConfigApi,
@@ -179,3 +180,4 @@ export const toolsetsApi = new ToolsetsApi(config);
 export const shareApi = new ShareApi(config);
 export const publishApi = new PublishApi(config);
 export const clientChannelApi = new ClientChannelApi(config);
+export const scheduledTasksApi = new ScheduledTasksApi(config);
