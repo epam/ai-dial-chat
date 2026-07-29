@@ -1,8 +1,8 @@
 import type { RowComponentProps } from 'react-window';
 import { type RowRendererData, VirtualRowKind } from '../../models/virtual-row';
 import { FilterTab } from '../../types/conversation-classification';
-import { ConversationRow } from '../ConversationGroup/ConversationRow';
 import { ConversationGroupHeader } from '../ConversationGroupHeader/ConversationGroupHeader';
+import { ConversationRow } from '../ConversationRow/ConversationRow';
 
 /** Renders a single virtual row — either a collapsible group header or a conversation item. */
 export const RowRenderer = ({

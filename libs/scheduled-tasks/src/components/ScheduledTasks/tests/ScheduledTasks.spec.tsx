@@ -56,6 +56,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   FolderPath: ({ segments }: { segments: string[] }) => (
     <>{segments.join(' / ')}</>
   ),
+  Highlight: ({ text }: { text: string }) => <>{text}</>,
   CardShell: ({
     children,
     ...rest

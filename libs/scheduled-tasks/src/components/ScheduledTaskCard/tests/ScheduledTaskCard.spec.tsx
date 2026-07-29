@@ -16,6 +16,26 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <article {...rest}>{children}</article>
   ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  Highlight: ({
+    text,
+    query,
+    className,
+  }: {
+    text: string;
+    query?: string;
+    className?: string;
+  }) => {
+    if (!query) return <span className={className}>{text}</span>;
+    const index = text.toLowerCase().indexOf(query.toLowerCase());
+    if (index === -1) return <span className={className}>{text}</span>;
+    return (
+      <span className={className}>
+        {text.slice(0, index)}
+        <mark>{text.slice(index, index + query.length)}</mark>
+        {text.slice(index + query.length)}
+      </span>
+    );
+  },
   FolderPath: ({
     segments,
     className,

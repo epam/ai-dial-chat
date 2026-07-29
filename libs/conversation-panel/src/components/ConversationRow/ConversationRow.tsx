@@ -1,8 +1,4 @@
-import {
-  DeploymentIcon,
-  Highlight,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
+import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
@@ -12,6 +8,7 @@ import {
   DialSkeleton,
   DialSkeletonVariant,
   ElementSize,
+  Highlight,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';

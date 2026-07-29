@@ -1,22 +1,22 @@
 import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
-import {
-  DeploymentIcon,
-  Highlight,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
+import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GhostButton, GhostIconButton, SearchBar } from '@epam/ai-dial-kit';
-import { DialEllipsisTooltip, DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialEllipsisTooltip,
+  Highlight,
+} from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconStar, IconStarFilled } from '@tabler/icons-react';
 import {
   memo,
-  type FC,
-  type KeyboardEvent,
-  type ReactNode,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  type FC,
+  type KeyboardEvent,
+  type ReactNode,
 } from 'react';
 import styles from './DeploymentSelectorPanel.module.scss';
 

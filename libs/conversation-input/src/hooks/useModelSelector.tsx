@@ -1,14 +1,11 @@
-import {
-  type DeploymentItem,
-  Highlight,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
+import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GradientCheckIcon } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialSearch,
   DropdownItem,
   ElementSize,
+  Highlight,
 } from '@epam/ai-dial-ui-kit';
 import { type ReactNode, useMemo, useState } from 'react';
 import {

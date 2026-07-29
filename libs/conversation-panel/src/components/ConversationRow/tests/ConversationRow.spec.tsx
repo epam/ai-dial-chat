@@ -28,6 +28,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       aria-hidden={ariaHidden ? 'true' : undefined}
     />
   ),
+  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
   DialButton: ({
     iconBefore,
     label,
@@ -74,7 +75,6 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
       alt={tooltip ?? 'deployment-icon'}
     />
   ),
-  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({

@@ -29,7 +29,6 @@ export * from './components/DeploymentIcon/DeploymentIcon';
 export * from './components/InitialsAvatar/InitialsAvatar';
 export * from './utils/initials';
 export * from './utils/avatar-color';
-export * from './components/Highlight/Highlight';
 export * from './components/PanelEmptyState/PanelEmptyState';
 export * from './components/MarkdownRenderer/MarkdownRenderer';
 export * from './components/MarkdownRenderer/MDMessageViewer';

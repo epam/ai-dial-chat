@@ -1,8 +1,4 @@
-import {
-  buildCssVars,
-  Highlight,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   CardShell,
   DIAL_ICON_SIZE,
@@ -10,6 +6,7 @@ import {
   DialIconButton,
   type DropdownItem,
   FolderPath,
+  Highlight,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconDotsVertical,
