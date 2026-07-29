@@ -69,6 +69,7 @@ import { isMessageChanged } from '../../utils/message-utils';
 import { getQuickAppConversationStarters } from '../../utils/quick-app-conversation-starters';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
+import FooterContainer from '../FooterDialogs/FooterContainer';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -109,7 +110,6 @@ interface Props {
   isAssistantTyping?: boolean;
   canStopAssistant?: boolean;
   initialModelId: string;
-  streamErrorText: string;
   stoppedGeneratingText: string;
   isReadOnly?: boolean;
   onDuplicateConversation?: () => void;
@@ -152,7 +152,6 @@ const ConversationView: FC<Props> = ({
   isAssistantTyping = false,
   canStopAssistant = false,
   initialModelId,
-  streamErrorText,
   stoppedGeneratingText,
   isReadOnly = false,
   onDuplicateConversation,
@@ -390,8 +389,8 @@ const ConversationView: FC<Props> = ({
   const handleSendWithAnchor = useCallback(
     async (message: string, attachments: Attachment[]) => {
       armAnchor(messages.length);
-      // ConversationInput awaits this to know whether to restore the draft
-      // on failure — forward onSend's result rather than discarding it.
+      /* ConversationInput awaits this to know whether to restore the draft
+       * on failure — forward onSend's result rather than discarding it. */
       await onSend(message, attachments);
     },
     [onSend, messages.length, armAnchor],
@@ -569,7 +568,6 @@ const ConversationView: FC<Props> = ({
                       ConversationI18nKeys.StatusModelChangedTitle,
                     )}
                     formatStatusModelChangedBody={formatStatusModelChangedBody}
-                    streamErrorText={streamErrorText}
                     stoppedGeneratingText={stoppedGeneratingText}
                     thinkingLabel={t(ChatI18nKeys.Thinking)}
                     executedLabel={t(ConversationI18nKeys.StagesExecuted)}
@@ -642,7 +640,7 @@ const ConversationView: FC<Props> = ({
       <div
         role="region"
         aria-label={t(ChatI18nKeys.MessageInput)}
-        className="relative z-10 w-full px-6 pb-4"
+        className="relative z-10 w-full px-6"
       >
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
@@ -679,7 +677,6 @@ const ConversationView: FC<Props> = ({
                   isModelFixed || isDisallowChangeAgentEnabled
                 }
                 isSendDisabled={isDisabledSendEnabled}
-                inputClassName="border-2 border-accent-primary"
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
@@ -813,6 +810,15 @@ const ConversationView: FC<Props> = ({
           </>
         )}
       </div>
+      {/*
+       * FooterContainer is intentionally co-located with each view that can
+       * render a footer message (ConversationView, NewConversationComposer,
+       * NavPageContent). Only one view is visible at a time, so at most one
+       * instance is active. If the footer feature grows to require shared
+       * dialog state across views, lift FooterContainer to a single top-level
+       * provider instead.
+       */}
+      <FooterContainer />
       {catalogModal}
     </>
   );

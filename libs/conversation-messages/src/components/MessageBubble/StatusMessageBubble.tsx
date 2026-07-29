@@ -15,11 +15,7 @@ export interface StatusMessageBubbleProps {
   labels: StatusMessageBubbleLabels;
 }
 
-/**
- * Full-width info banner rendered in the conversation timeline when the active
- * deployment changes. Matches Figma node 613:8730 (`section-message`).
- * Does not render message actions, ratings, or a copy button.
- */
+/** Full-width info banner shown in the conversation timeline when the active deployment changes. */
 export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
   labels: { titleText = 'Model switched.', bodyText },
 }) => {

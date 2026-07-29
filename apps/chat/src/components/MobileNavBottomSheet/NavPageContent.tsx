@@ -11,6 +11,7 @@ import { useSheetNavigation } from '../../hooks/useSheetNavigation';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
+import FooterContainer from '../FooterDialogs/FooterContainer';
 import styles from './MobileNavBottomSheet.module.scss';
 import ProfilePageContent from './ProfilePageContent';
 
@@ -45,42 +46,45 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
   };
 
   return (
-    <ul className="flex flex-col pb-4">
-      {visibleNavItems.map(({ path, icon: Icon, labelKey }) => (
-        <li key={path}>
+    <>
+      <ul className="flex flex-col pb-4">
+        {visibleNavItems.map(({ path, icon: Icon, labelKey }) => (
+          <li key={path}>
+            <button
+              type="button"
+              className={mergeClasses(
+                styles.item,
+                'flex w-full items-center gap-3 px-4 py-[10px] text-start',
+              )}
+              onClick={() => handleNavItem(path)}
+            >
+              <span className={styles.itemIcon}>
+                <Icon size={BASE_ICON_SIZE} stroke={1.5} aria-hidden />
+              </span>
+              <span className="dial-small-text">{t(labelKey)}</span>
+            </button>
+          </li>
+        ))}
+        <li>
           <button
             type="button"
             className={mergeClasses(
               styles.item,
               'flex w-full items-center gap-3 px-4 py-[10px] text-start',
             )}
-            onClick={() => handleNavItem(path)}
+            onClick={handleProfile}
           >
             <span className={styles.itemIcon}>
-              <Icon size={BASE_ICON_SIZE} stroke={1.5} aria-hidden />
+              <IconUser size={BASE_ICON_SIZE} stroke={1.5} aria-hidden />
             </span>
-            <span className="dial-small-text">{t(labelKey)}</span>
+            <span className="dial-small-text">
+              {t(NavigationI18nKeys.Profile)}
+            </span>
           </button>
         </li>
-      ))}
-      <li>
-        <button
-          type="button"
-          className={mergeClasses(
-            styles.item,
-            'flex w-full items-center gap-3 px-4 py-[10px] text-start',
-          )}
-          onClick={handleProfile}
-        >
-          <span className={styles.itemIcon}>
-            <IconUser size={BASE_ICON_SIZE} stroke={1.5} aria-hidden />
-          </span>
-          <span className="dial-small-text">
-            {t(NavigationI18nKeys.Profile)}
-          </span>
-        </button>
-      </li>
-    </ul>
+      </ul>
+      <FooterContainer />
+    </>
   );
 };
 

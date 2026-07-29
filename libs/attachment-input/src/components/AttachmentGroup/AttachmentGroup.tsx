@@ -26,14 +26,7 @@ import styles from './AttachmentGroup.module.scss';
 const pluralize = (count: number, noun: string): string =>
   `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-/**
- * Adaptive attachment group for an already-sent message: every attachment —
- * image or file — renders as one uniform 84x84 rounded-square tile, wrapped
- * in a single grid. 5+ attachments collapse behind a "+N" tile; expanding
- * reveals a same-shaped collapse tile to show less again. Type is
- * communicated by glyph + extension text only; color is reserved for
- * upload state. Download actions are icon-only, matching the rest of the app.
- */
+/** Adaptive grid of attachment tiles for a sent message; collapses behind a "+N" tile when 5 or more attachments are present. */
 export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   attachments,
   onAttachmentClick,

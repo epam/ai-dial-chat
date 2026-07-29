@@ -12,7 +12,7 @@ export interface NotificationItem {
   id: string;
   variant: NotificationVariant;
   title?: string;
-  message: ReactNode;
+  message?: ReactNode;
 }
 
 export type ShowNotificationOptions = Omit<NotificationItem, 'id'>;

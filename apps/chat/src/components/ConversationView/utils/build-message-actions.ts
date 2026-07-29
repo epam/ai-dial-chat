@@ -43,7 +43,7 @@ export const buildMessageActions = (
     ? () => handlers.onRegenerate?.(index)
     : void 0;
 
-  if (msg.wasStoppedByUser || msg.hasStreamError) {
+  if (msg.wasStoppedByUser || msg.streamErrorMessage != null) {
     return { onRegenerate, labels: { tooltips, ariaLabels } };
   }
 

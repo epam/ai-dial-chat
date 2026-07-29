@@ -456,4 +456,5 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   );
 };
 
+/** Sidebar canvas panel for previewing attachment content (text, image, audio, PDF, markdown, JSON). */
 export const AttachmentCanvas = memo(AttachmentCanvasBase);

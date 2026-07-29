@@ -1,12 +1,14 @@
 import { DialSkeleton, DialSkeletonVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 
+/** Number of skeleton rows rendered while deployments are loading. */
 export const MODEL_SELECTOR_SKELETON_ROW_COUNT = 7;
 
 interface ModelSelectorSkeletonIconProps {
   size?: number;
 }
 
+/** Circular skeleton placeholder for a deployment icon. */
 export const ModelSelectorSkeletonIcon: FC<ModelSelectorSkeletonIconProps> = ({
   size = 20,
 }) => (
@@ -22,6 +24,7 @@ interface ModelSelectorSkeletonLabelProps {
   loadingLabel?: string;
 }
 
+/** Text skeleton placeholder for a deployment label. */
 export const ModelSelectorSkeletonLabel: FC<
   ModelSelectorSkeletonLabelProps
 > = ({ loadingLabel }) => (
@@ -40,6 +43,7 @@ interface ModelSelectorSkeletonRowsProps {
   loadingLabel?: string;
 }
 
+/** Stacked skeleton rows shown while the model selector is loading. */
 export const ModelSelectorSkeletonRows: FC<ModelSelectorSkeletonRowsProps> = ({
   loadingLabel,
 }) => (

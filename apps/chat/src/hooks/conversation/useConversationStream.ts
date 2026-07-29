@@ -61,8 +61,6 @@ interface Result {
   ) => void;
   isStreaming: boolean;
   canStopStreaming: boolean;
-  hasStreamError: boolean;
-  setHasStreamError: Dispatch<SetStateAction<boolean>>;
 }
 
 export const useConversationStream = ({
@@ -79,7 +77,6 @@ export const useConversationStream = ({
     () => new Set(),
   );
   const [stoppablePath, setStoppablePath] = useState<string | null>(null);
-  const [hasStreamError, setHasStreamError] = useState(false);
   const activeGenerationIdRef = useRef<string | null>(null);
   const activeGenerationPathRef = useRef<string | null>(null);
   const resumingPathsRef = useRef<Set<string>>(new Set());
@@ -238,7 +235,7 @@ export const useConversationStream = ({
               // Non-fatal: keep local state if reload fails
             }
           },
-          onError: () => {
+          onError: (error: Error) => {
             removeStreamingPath(conversationPath);
             if (activeGenerationIdRef.current === genId) {
               activeGenerationIdRef.current = null;
@@ -247,13 +244,14 @@ export const useConversationStream = ({
             }
             // Surface the error only on the conversation the user is viewing.
             if (!isPathDisplayed(conversationPath)) return;
-            setHasStreamError(true);
             setConversation((prev) => {
               if (!prev) return prev;
               const updated = {
                 ...prev,
                 messages: prev.messages.map((m, index) =>
-                  index === messageIndex ? { ...m, hasStreamError: true } : m,
+                  index === messageIndex
+                    ? { ...m, streamErrorMessage: error.message }
+                    : m,
                 ),
               };
               conversationRef.current = updated;
@@ -300,7 +298,6 @@ export const useConversationStream = ({
     void stopCompletion({ generationId: genId, path: conversationPath }).catch(
       (err: unknown) => {
         const error = err instanceof Error ? err : new Error(String(err));
-        setHasStreamError(true);
         onStopError?.(error);
       },
     );
@@ -338,8 +335,8 @@ export const useConversationStream = ({
 
       const finalCheck = async () => {
         try {
-          // `getConversation` needs the full bucket-qualified path — see the
-          // comment on the other `getConversation` call in this file.
+          /* `getConversation` needs the full bucket-qualified path — see the
+           * comment on the other `getConversation` call in this file. */
           const result = (await getConversation(
             safeDecodeURIComponent(currentConversationId),
           )) as Conversation;
@@ -446,7 +443,5 @@ export const useConversationStream = ({
     resumeIfAwaitingGeneration,
     isStreaming,
     canStopStreaming,
-    hasStreamError,
-    setHasStreamError,
   };
 };

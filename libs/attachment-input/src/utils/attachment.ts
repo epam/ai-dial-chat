@@ -49,16 +49,11 @@ import {
   type AttachmentTilesPlan,
 } from '../models/attachment-group';
 
-/**
- * Generates a unique identifier for an attachment, combining the current
- * timestamp with a random alphanumeric suffix.
- */
+/** Generates a unique identifier for an attachment. */
 export const generateAttachmentId = (): string =>
   `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-/**
- * Returns the provided name without its trailing file extension.
- */
+/** Returns the name without its trailing file extension. */
 export const getNameWithoutExtension = (name: string): string => {
   const dotIndex = name.lastIndexOf('.');
   return dotIndex > 0 ? name.slice(0, dotIndex) : name;
@@ -71,18 +66,7 @@ const WILDCARD_TYPE_LABELS: Record<string, string> = {
   text: 'Text files',
 };
 
-/**
- * Converts an array of MIME type strings (including wildcards) into a
- * comma-separated human-readable label string.
- *
- * Examples:
- *   `['application/pdf', 'image/jpeg']` → `'PDF, JPEG'`
- *   `['image/*', 'text/csv']` → `'Image files, CSV'`
- *
- * @param wildcardLabels - Optional overrides for the wildcard category labels
- *   (`image`, `audio`, `video`, `text`), keyed by MIME major type. Defaults
- *   to the built-in English labels.
- */
+/** Converts an array of MIME type strings (including wildcards) into a comma-separated human-readable label string. */
 export const mimeTypesToExtensionLabels = (
   types: string[],
   wildcardLabels: Record<string, string> = WILDCARD_TYPE_LABELS,
@@ -122,11 +106,7 @@ export const isMimeTypeAllowed = (
   });
 };
 
-/**
- * Returns the appropriate Tabler icon component for a given MIME content type.
- * Broad category checks (`startsWith`) run first; then a specific MIME switch
- * covers as many known file types as possible. Falls back to `IconFile`.
- */
+/** Returns the Tabler icon component for a given MIME content type, or `IconFile` for unknown types. */
 export const getAttachmentIcon = (contentType: string): Icon => {
   if (!contentType) return IconFile;
   // Broad category checks first

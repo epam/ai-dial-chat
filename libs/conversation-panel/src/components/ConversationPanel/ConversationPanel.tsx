@@ -38,6 +38,7 @@ import {
 import { FilterTabs } from '../FilterTabs/FilterTabs';
 import { NewChatButton } from '../NewChatButton/NewChatButton';
 import { RowRenderer } from '../RowRenderer/RowRenderer';
+import styles from './ConversationPanel.module.scss';
 import { matchesSearch, matchesTab } from './utils';
 
 const ALL_GROUP_KEYS = new Set<string>([
@@ -67,7 +68,12 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     activeFilter,
     onActiveFilterChange,
   }) => {
-    const { colors, typography } = panelStyles ?? {};
+    const {
+      colors,
+      typography,
+      newChatButton: newChatButtonColors,
+    } = panelStyles ?? {};
+
     const {
       title,
       emptyLabel,
@@ -89,6 +95,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       setActiveTab(activeFilter);
       onActiveFilterChange?.(activeFilter);
     }, [activeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
       () => ALL_GROUP_KEYS,
     );
@@ -184,16 +191,18 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-item-active': colors?.itemActive,
       '--cp-text': colors?.text,
       '--cp-text-secondary': colors?.textSecondary,
-      '--cp-new-chat-hover': colors?.newChatHoverBackground,
-      '--cp-new-chat-active': colors?.newChatActiveBackground,
-      '--cp-new-chat-bg': colors?.newChatBackground,
-      '--cp-new-chat-text': colors?.newChatText,
-      '--cp-new-chat-shadow-blue': colors?.newChatShadowBlue,
-      '--cp-new-chat-shadow-blue-hover': colors?.newChatShadowBlueHover,
-      '--cp-new-chat-shadow-blue-active': colors?.newChatShadowBlueActive,
-      '--cp-new-chat-shadow-purple': colors?.newChatShadowPurple,
-      '--cp-new-chat-shadow-purple-hover': colors?.newChatShadowPurpleHover,
-      '--cp-new-chat-shadow-purple-active': colors?.newChatShadowPurpleActive,
+      '--cp-new-chat-bg': newChatButtonColors?.background,
+      '--cp-new-chat-hover': newChatButtonColors?.hoverBackground,
+      '--cp-new-chat-active': newChatButtonColors?.activeBackground,
+      '--cp-new-chat-text': newChatButtonColors?.text,
+      '--cp-new-chat-shadow-blue': newChatButtonColors?.shadowBlue,
+      '--cp-new-chat-shadow-blue-hover': newChatButtonColors?.shadowBlueHover,
+      '--cp-new-chat-shadow-blue-active': newChatButtonColors?.shadowBlueActive,
+      '--cp-new-chat-shadow-purple': newChatButtonColors?.shadowPurple,
+      '--cp-new-chat-shadow-purple-hover':
+        newChatButtonColors?.shadowPurpleHover,
+      '--cp-new-chat-shadow-purple-active':
+        newChatButtonColors?.shadowPurpleActive,
       '--cp-drop-zone-ring': colors?.dropZoneRing,
       '--cp-trigger-bg': colors?.triggerBackground,
       '--cp-trigger-icon': colors?.triggerIcon,
@@ -398,6 +407,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           label={newChatLabel}
           onClick={onNewChat}
           labelClassName={typography?.newChatLabelClassName}
+          colors={newChatButtonColors}
         />
 
         <SearchInput
@@ -439,7 +449,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
                   showTitle={{ width: getSkeletonWidth(i) }}
                   paragraph={false}
                   active
-                  color="var(--bg-layer-4)"
+                  color={styles.skeletonColor}
                 />
               ))}
             </div>

@@ -30,13 +30,7 @@ export interface TopicsLineProps {
   className?: string;
 }
 
-/**
- * Renders topics on a single line, collapsing whatever doesn't fit into a
- * "+N" overflow badge. The row never wraps — this is measured by horizontal
- * overflow (each tag's right edge vs. the container width), not by row
- * position, so it works the same whether the container is loosely sized
- * (card grid) or a fixed-width table cell (list view).
- */
+/** Renders topics on a single line, collapsing overflow into a "+N" badge. */
 export const TopicsLine: FC<TopicsLineProps> = ({
   topics,
   overflowAriaLabel,

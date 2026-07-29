@@ -79,12 +79,7 @@ export interface RowRendererData {
   onDragOver: (id: string) => void;
   /** Called when the drag cursor leaves a row. */
   onDragLeave: () => void;
-  /**
-   * Called when the user drops onto a target row or group header.
-   * `targetId` is the item id or `FilterTab` sentinel for header drops.
-   * `targetGroupKey` is the group the item was dropped into.
-   * `afterId` is the id of the item to insert after, or `null` for top of group.
-   */
+  /** Called when the user drops a conversation row onto a target position. */
   onDrop: (
     targetId: string,
     targetGroupKey: FilterTab,

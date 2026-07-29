@@ -64,6 +64,7 @@ describe('AppConfigService', () => {
       expect(result.config.overlayAllowedOrigins).toEqual([]);
       expect(result.config.enabledUiFeatures).toBeNull();
       expect(result.config.announcementHtml).toBeNull();
+      expect(result.config.footerHtmlMessage).toBe('');
     });
 
     it('returns resolved values when providers succeed', async () => {
@@ -156,6 +157,68 @@ describe('AppConfigService', () => {
       expect(result.config.announcementHtml).toBe('Welcome to <b>DIAL</b>!');
     });
 
+    it('returns empty string for footerHtmlMessage when FOOTER_HTML_MESSAGE is not set', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).toBe('');
+    });
+
+    it('sanitizes footerHtmlMessage and strips disallowed tags', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'footer.html'
+          ? '<p>Hello <script>alert(1)</script><span>world</span></p>'
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).not.toContain('<script>');
+      expect(result.config.footerHtmlMessage).toContain('<span>world</span>');
+    });
+
+    it('strips onclick and other event-handler attributes from footerHtmlMessage', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'footer.html'
+          ? '<span onclick="evil()">Click me</span>'
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).not.toContain('onclick');
+      expect(result.config.footerHtmlMessage).toContain('Click me');
+    });
+
+    it('injects target="_blank" and rel="noopener noreferrer" on anchor tags in footerHtmlMessage', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'footer.html'
+          ? '<a href="https://example.com">Link</a>'
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).toContain('target="_blank"');
+      expect(result.config.footerHtmlMessage).toContain(
+        'rel="noopener noreferrer"',
+      );
+    });
+
+    it('preserves data-dial-action attribute on anchors in footerHtmlMessage', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'footer.html'
+          ? '<a href="#" data-dial-action="requestApiKey">Request</a>'
+          : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).toContain(
+        'data-dial-action="requestApiKey"',
+      );
+    });
+
+    it('substitutes %%VERSION%% token in footerHtmlMessage', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'footer.html' ? 'Version: %%VERSION%%' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.footerHtmlMessage).toMatch(/Version: \S+/);
+      expect(result.config.footerHtmlMessage).not.toContain('%%VERSION%%');
+    });
+
     it('never leaks the internal DIAL_CORE_URL value under any key', async () => {
       const { service } = makeService(async (key: string) => {
         if (key === 'dialCore.externalUrl') return undefined;
@@ -198,7 +261,7 @@ describe('AppConfigService', () => {
         first,
         60_000,
       );
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(11);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(15);
     });
 
     it('does not share cached config across role sets', async () => {
@@ -215,7 +278,7 @@ describe('AppConfigService', () => {
         roles: ['viewer'],
       });
 
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(22);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(30);
     });
   });
 

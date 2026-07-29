@@ -24,13 +24,7 @@ import { findLiveStage, stagePosition } from '../../utils/stage-progress';
 import { StagesPanel } from '../StagesPanel/StagesPanel';
 import styles from './CollapsedGroup.module.scss';
 
-/**
- * Wraps `StagesPanel` with a single summary line whose text and default
- * open/closed state track the run: expanded with a live progress line while
- * streaming, then collapsed to one line — finished or failed — the moment
- * it ends. A lone stage skips the summary line entirely and renders
- * directly; an empty list renders nothing.
- */
+/** Wraps `StagesPanel` with a collapsible summary line that tracks run state: live progress while streaming, one-line summary once finished. */
 export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   stages,
   isStreaming,
@@ -60,7 +54,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     wasStreamingRef.current = isStreaming;
   }, [isStreaming]);
 
-  const { colors } = groupStyles ?? {};
+  const { colors, panel: panelColors } = groupStyles ?? {};
 
   const summaryTypography = groupStyles?.typography ?? {
     fontClassName: 'dial-small-text',
@@ -71,6 +65,21 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     '--cs-cg-steps-count': colors?.stepsCountColor,
     '--cs-cg-done': colors?.doneColor,
     '--cs-cg-failed': colors?.failedColor,
+    '--cs-text': panelColors?.text,
+    '--cs-row-hover': panelColors?.rowHoverColor,
+    '--cs-button-bg': panelColors?.collapsedButtonBg,
+    '--cs-stage-text': panelColors?.stageTextColor,
+    '--cs-failed-text': panelColors?.failedColor,
+    '--cs-tag-text': panelColors?.tagTextColor,
+    '--cs-count-text': panelColors?.countTextColor,
+    '--cs-duration-text': panelColors?.durationTextColor,
+    '--cs-icon-secondary': panelColors?.iconSecondaryColor,
+    '--cs-icon-completed': panelColors?.iconCompletedColor,
+    '--cs-icon-error': panelColors?.iconErrorColor,
+    '--cs-code-bg': panelColors?.codeBg,
+    '--cs-code-border': panelColors?.codeBorderColor,
+    '--cs-code-text': panelColors?.codeTextColor,
+    '--cs-border': panelColors?.borderColor,
   });
 
   if (stages.length === 0) return null;
@@ -88,7 +97,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         stages={stages}
         isStreaming={isStreaming}
         className={className}
-        styles={{ typography: groupStyles?.typography }}
+        styles={{ colors: panelColors, typography: groupStyles?.typography }}
         labels={panelLabels}
       />
     );
@@ -233,7 +242,10 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
           <StagesPanel
             stages={stages}
             isStreaming={isStreaming}
-            styles={{ typography: groupStyles?.typography }}
+            styles={{
+              colors: panelColors,
+              typography: groupStyles?.typography,
+            }}
             labels={panelLabels}
             className="pt-1"
           />

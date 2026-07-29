@@ -486,6 +486,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   announcementHtml?: string | null;
+  /**
+   * Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  footerHtmlMessage: string;
 }
 /**
  *
@@ -4095,6 +4101,74 @@ export const ReportClientChannelDtoResultEnum = {
 export type ReportClientChannelDtoResultEnum =
   (typeof ReportClientChannelDtoResultEnum)[keyof typeof ReportClientChannelDtoResultEnum];
 
+/**
+ *
+ * @export
+ * @interface ReportIssueDto
+ */
+export interface ReportIssueDto {
+  /**
+   * Short title describing the issue.
+   * @type {string}
+   * @memberof ReportIssueDto
+   */
+  title: string;
+  /**
+   * Detailed description of the issue.
+   * @type {string}
+   * @memberof ReportIssueDto
+   */
+  description: string;
+}
+/**
+ *
+ * @export
+ * @interface RequestApiKeyDto
+ */
+export interface RequestApiKeyDto {
+  /**
+   * Project name.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  projectId: string;
+  /**
+   * Stream name.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  projectStream: string;
+  /**
+   * Email of the project tech lead.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  projectLead: string;
+  /**
+   * Business justification for the access request.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  businessReason: string;
+  /**
+   * Project end date in DD/MM/YYYY format.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  projectEnd: string;
+  /**
+   * Description of the access scenario.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  accessScenario: string;
+  /**
+   * Cost and workload description.
+   * @type {string}
+   * @memberof RequestApiKeyDto
+   */
+  workloadPattern: string;
+}
 /**
  *
  * @export

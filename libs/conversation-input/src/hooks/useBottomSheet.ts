@@ -1,9 +1,6 @@
 import { useEffect } from 'react';
 
-/**
- * Shared behavior for bottom-sheet overlays: closes the sheet on `Escape`
- * and locks body scrolling while the sheet is open. No-op while closed.
- */
+/** Handles Escape-to-close and body-scroll-locking for a bottom-sheet overlay. */
 export const useBottomSheet = (isOpen: boolean, onClose: () => void): void => {
   useEffect(() => {
     if (!isOpen) return;

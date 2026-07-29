@@ -16,12 +16,9 @@ export interface ConversationGroupProps {
   activeConversationId?: string;
   /** Called when the user selects a conversation row. */
   onSelectConversation: (id: string) => void;
-  /**
-   * Builds the dropdown menu items for a row.
-   * Receives the item so actions can reflect per-item state (e.g. pin toggle).
-   * When omitted or returns an empty array, no action trigger is rendered.
-   */
+  /** Builds dropdown actions for a row. When absent or empty, no action trigger is rendered. */
   getActions?: (item: ConversationItem) => DropdownItem[];
+
   /** Called when a row action menu opens. */
   onActionMenuOpen?: (
     item: ConversationItem,

@@ -10,6 +10,7 @@ src/apis/ClientChannelApi.ts
 src/apis/ConversationsApi.ts
 src/apis/DeploymentsApi.ts
 src/apis/FilesApi.ts
+src/apis/FooterApi.ts
 src/apis/HealthApi.ts
 src/apis/ModelsApi.ts
 src/apis/PublishApi.ts

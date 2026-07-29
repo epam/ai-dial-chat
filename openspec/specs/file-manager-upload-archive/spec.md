@@ -4,6 +4,8 @@
 
 The BFF SHALL expose `POST /api/v1/files/upload-archive` (multipart/form-data) that accepts a ZIP archive and a destination, streams-extracts its entries via `yauzl`, and uploads each valid entry to DIAL Core using the create-only contract. If DIAL Core reports a name collision for an entry, the service SHALL retry that same entry with a deduplicated sibling name (`name (1).ext`, `name (2).ext`, etc.) until the upload succeeds or the retry limit is reached. The endpoint returns a per-entry result array with the final uploaded path for successful entries.
 
+The file-count limit SHALL be enforced before extraction/upload starts. `FilesUploadService` SHALL enumerate ZIP central-directory metadata and count non-directory entries before opening any entry read stream, staging entry bytes, or calling DIAL Core upload. If the count exceeds `ARCHIVE_UPLOAD_MAX_FILES`, the endpoint SHALL fail with `422 Unprocessable Entity`, return the message `Archive contains more than {maxFiles} files`, and attempt zero entry uploads. This all-or-nothing rule applies only to the file-count limit; the uncompressed-size limit remains a mid-extraction guard and may leave entries uploaded before the abort.
+
 **State ownership**: `FilesUploadService` (`apps/chat-api/src/files/upload/files-upload.service.ts`) owns all extraction/upload logic, including single-file upload (`uploadFile`, `uploadFileStream`) and archive extraction (`extractAndUploadArchive` and its temp-file staging helpers); `FilesController` delegates through the `FilesService` facade (thin-controller pattern).
 
 **Authorization**: session cookie → `req.user.at`, identical to `POST /api/v1/files`. Core enforces WRITE permission on the destination per entry, surfaced as a per-entry `"Forbidden"` result (matching how `/copy`/`/move` surface per-item Core-side authorization failures).
@@ -109,6 +111,8 @@ uploadArchive(
 
 - **WHEN** the archive contains more non-directory entries than `ARCHIVE_UPLOAD_MAX_FILES`
 - **THEN** the endpoint returns `422 Unprocessable Entity` and no entries are uploaded
+- **AND** extraction/upload does not start for any entry: no entry read stream is opened and no DIAL Core create-only upload is attempted
+- **AND** the response message names the file-count check, e.g. `Archive contains more than 1000 files` when the default limit is used
 
 #### Scenario: Archive exceeding the uncompressed-size limit is rejected mid-extraction
 

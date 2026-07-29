@@ -58,7 +58,7 @@ describe('isAwaitingGenerationResume', () => {
     ).toBe(false);
   });
 
-  it('returns false when the placeholder is flagged hasStreamError', () => {
+  it('returns false when the placeholder has a streamErrorMessage (empty string — error with no specific text)', () => {
     expect(
       isAwaitingGenerationResume(
         makeConversation({
@@ -72,7 +72,29 @@ describe('isAwaitingGenerationResume', () => {
               role: MessageRole.Assistant,
               content: '',
               timestamp: new Date().toISOString(),
-              hasStreamError: true,
+              streamErrorMessage: '',
+            },
+          ],
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it('returns false when the placeholder has a streamErrorMessage', () => {
+    expect(
+      isAwaitingGenerationResume(
+        makeConversation({
+          messages: [
+            {
+              role: MessageRole.User,
+              content: 'Hello',
+              timestamp: new Date().toISOString(),
+            },
+            {
+              role: MessageRole.Assistant,
+              content: '',
+              timestamp: new Date().toISOString(),
+              streamErrorMessage: 'Generation failed',
             },
           ],
         }),

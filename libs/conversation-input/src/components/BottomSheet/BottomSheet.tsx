@@ -44,10 +44,7 @@ export interface BottomSheetProps {
   btnTextClassName?: string;
 }
 
-/**
- * A generic bottom-sheet overlay for mobile viewports.
- * Renders the shared {@link BottomSheetShell} with a list of tappable actions.
- */
+/** Generic mobile bottom-sheet overlay with a list of tappable action items. */
 export const BottomSheet: FC<BottomSheetProps> = ({
   isOpen,
   title,

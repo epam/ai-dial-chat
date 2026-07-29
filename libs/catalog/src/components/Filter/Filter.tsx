@@ -67,10 +67,7 @@ const toggleTopic = (topic: string, checked: Set<string>): Set<string> => {
   return next;
 };
 
-/**
- * Source-filter dropdown with checkbox list, keyboard navigation, and a
- * footer with Clear + Apply buttons (buffered — changes are committed on Apply).
- */
+/** Source-filter dropdown: checkbox list for topics and My Apps toggle, with buffered Clear/Apply controls. */
 export const Filter: FC<FilterProps> = ({
   checked,
   onChange,

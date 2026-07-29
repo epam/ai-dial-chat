@@ -14,10 +14,7 @@ import styles from './BottomSheetShell.module.scss';
 export interface BottomSheetShellProps {
   /** Controls sheet visibility. */
   isOpen: boolean;
-  /**
-   * Heading text rendered in the sheet header and used as the dialog
-   * accessible name. When omitted the header is hidden entirely.
-   */
+  /** Heading text for the sheet header and dialog accessible name; header hidden when omitted. */
   title?: string;
   /** Accessible label for the close (×) button. Required when `title` is provided. */
   closeLabel?: string;
@@ -27,10 +24,7 @@ export interface BottomSheetShellProps {
   onBack?: () => void;
   /** Accessible label for the back button. Required when `onBack` is provided. */
   backLabel?: string;
-  /**
-   * Accessible name for the dialog when no `title` is shown.
-   * Ignored when `title` is present (title doubles as the accessible name).
-   */
+  /** Dialog accessible name used when `title` is omitted. */
   'aria-label'?: string;
   /** Inline CSS custom properties forwarded to the sheet root for theming. */
   style?: CSSProperties;
@@ -42,11 +36,7 @@ export interface BottomSheetShellProps {
   children: ReactNode;
 }
 
-/**
- * Generic mobile bottom-sheet shell: renders a portal with a backdrop, a fixed
- * bottom-anchored panel, and an optional header. Handles Escape-to-close and
- * body scroll locking. Consumers supply the body.
- */
+/** Generic mobile bottom-sheet shell: backdrop, bottom-anchored panel, optional header, Escape-to-close, and body-scroll lock. */
 export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   isOpen,
   title,

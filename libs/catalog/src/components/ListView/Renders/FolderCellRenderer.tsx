@@ -4,6 +4,7 @@ import { FC } from 'react';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
 
+/** ag-grid cell renderer for the folder-path column. */
 export const FolderCellRenderer: FC<
   ICellRendererParams<CatalogItem, unknown, GridContext>
 > = ({ data, context }) => {

@@ -38,9 +38,7 @@ interface Props {
   onPickerOpenChange?: (open: boolean) => void;
 }
 
-/**
- * Renders model selection control as a dropdown on desktop and as a bottom sheet on mobile.
- */
+/** Model-selector control: desktop dropdown or mobile bottom sheet, depending on viewport. */
 export const ModelSelectorControl: FC<Props> = ({
   deployments,
   selectedDeploymentId,

@@ -154,7 +154,7 @@ const SettingsForm: FC<Props> = ({
           entityType={CatalogEntityType.Toolset}
           url={mcpUrl}
           copyLabelKey={ButtonsI18nKeys.CopyUrl}
-          className="border-primary/10 border-t pt-4"
+          className="border-t border-tertiary pt-4"
         />
       )}
     </div>

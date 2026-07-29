@@ -23,13 +23,7 @@ export interface FolderPathProps {
   className?: string;
 }
 
-/**
- * Renders folder-style path segments (e.g. a location or ownership
- * breadcrumb on a browse-grid card) as a read-only, non-clickable
- * `DialBreadcrumb`: a leading folder icon, a chevron separator mirrored in
- * RTL, and the last segment styled as the current/leaf item. `DialBreadcrumb`
- * scrolls horizontally on overflow rather than truncating.
- */
+/** Renders folder path segments as a read-only horizontal breadcrumb. */
 export const FolderPath: FC<FolderPathProps> = ({
   segments,
   labelClassName = 'dial-small-text',

@@ -16,6 +16,7 @@ import {
 import { fetchBlobFromUrl } from '../../utils/download';
 import styles from './PdfContent.module.scss';
 
+/** Props for the `PdfContent` component. */
 export interface PdfContentProps {
   url: string;
   highlights: InputHighlightData[];
@@ -24,6 +25,7 @@ export interface PdfContentProps {
   fileName?: string;
 }
 
+/** Renders a PDF with highlight annotations, a sidebar thumbnail strip, and page navigation. */
 export const PdfContent: FC<PdfContentProps> = ({
   url,
   highlights,
