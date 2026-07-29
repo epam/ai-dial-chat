@@ -1,8 +1,5 @@
-import {
-  DisplayAttachment,
-  Highlight,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
+import { DisplayAttachment, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { Highlight } from '@epam/ai-dial-ui-kit';
 import { CSSProperties, type FC, type KeyboardEvent } from 'react';
 import {
   AttachmentCardLabels,

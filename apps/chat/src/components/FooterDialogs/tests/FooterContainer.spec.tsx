@@ -29,13 +29,7 @@ vi.mock('../../FooterMessage/FooterMessage', () => ({
 }));
 
 vi.mock('../RequestApiKeyDialog', () => ({
-  default: ({
-    isOpen,
-    onClose,
-  }: {
-    isOpen: boolean;
-    onClose: () => void;
-  }) =>
+  default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
     !isOpen ? null : (
       <div role="dialog" aria-label="RequestApiKeyDialog">
         <button type="button" onClick={onClose}>
@@ -46,13 +40,7 @@ vi.mock('../RequestApiKeyDialog', () => ({
 }));
 
 vi.mock('../ReportIssueDialog', () => ({
-  default: ({
-    isOpen,
-    onClose,
-  }: {
-    isOpen: boolean;
-    onClose: () => void;
-  }) =>
+  default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
     !isOpen ? null : (
       <div role="dialog" aria-label="ReportIssueDialog">
         <button type="button" onClick={onClose}>
