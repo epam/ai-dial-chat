@@ -250,8 +250,18 @@ export class BaseElement {
     return ScrollState.middle;
   }
 
-  public async getElementCursorPosition(elements: BaseElement) {
-    return elements
+  public async scrollToTheEnd() {
+    await this.getElementLocator().evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }
+
+  public async getScrollTop() {
+    return this.getElementLocator().evaluate((el) => el.scrollTop);
+  }
+
+  public async getElementCursorPosition(element: BaseElement) {
+    return element
       .getElementLocator()
       .evaluate(
         (el: HTMLTextAreaElement) => el.selectionStart ?? el.value.length,

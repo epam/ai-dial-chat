@@ -224,6 +224,30 @@ export class ChatMessages extends BaseElement {
     );
   }
 
+  public getChatMessageTableHeaderScrollContainer(message: string | number) {
+    return this.createElementFromLocator(
+      this.getChatMessageTable(message).locator(
+        TableSelectors.headerScrollContainer,
+      ),
+    );
+  }
+
+  public getChatMessageTableBodyScrollContainer(message: string | number) {
+    return this.createElementFromLocator(
+      this.getChatMessageTable(message).locator(
+        TableSelectors.bodyScrollContainer,
+      ),
+    );
+  }
+
+  public getChatMessageDetailsSection(message: string | number) {
+    return this.getChatMessageContent(message).locator(Tags.details);
+  }
+
+  public getChatMessageSectionSummary(message: string | number) {
+    return this.getChatMessageContent(message).locator(Tags.summary);
+  }
+
   public getChatMessageTableHeaderColumns(message: string | number) {
     return this.getChatMessageTable(message)
       .locator(Tags.table)

@@ -4,6 +4,8 @@ import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
+import { keys } from '@/src/ui/keyboard';
+import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Role } from '@epam/ai-dial-shared';
@@ -23,10 +25,12 @@ dialTest(
     'Copy md table as TXT.\n' +
     'Copy md table as MD.\n' +
     `[Markdown] Copy the whole MD answer using 'Copy text' button.\n` +
-    `[Markdown] Copy the whole MD answer using 'Copy markdown' button`,
+    `[Markdown] Copy the whole MD answer using 'Copy markdown' button.\n` +
+    `[Markdown] Copy the whole MD answer using Hotkeys`,
   async ({
     dialHomePage,
     setTestIds,
+    page,
     chatMessages,
     tooltipAssertion,
     localStorageManager,
@@ -42,6 +46,7 @@ dialTest(
       'EPMRTC-3126',
       'EPMRTC-8314',
       'EPMRTC-8315',
+      'EPMRTC-8316',
     );
     let theme: string;
     let tableConversation: Conversation;
@@ -49,6 +54,7 @@ dialTest(
     let copyAsTxtIcon: Locator;
     let copyAsMdIcon: Locator;
     let copyIcons: Locator[] = [];
+    let tableElement: Locator;
 
     const expectedTableDimensions = 2;
     const expectedCopyIconTooltips = [
@@ -94,8 +100,11 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(tableConversation.name);
+        tableElement = chatMessages.getChatMessageTable(
+          expectedChatMessageIndex,
+        );
         await chatMessagesAssertion.assertElementState(
-          chatMessages.getChatMessageTable(expectedChatMessageIndex),
+          tableElement,
           'visible',
           ExpectedMessages.tableIsVisible,
         );
@@ -177,6 +186,19 @@ dialTest(
             expectedCopiedTableContent[i],
           );
         }
+      },
+    );
+
+    await dialTest.step(
+      'Select the table, copy it with Ctrl+C, paste with Ctrl+V and verify it is copied as text',
+      async () => {
+        await tableElement.selectText();
+        await page.keyboard.press(keys.ctrlPlusC);
+        const copiedText = await dialHomePage.readTextFromClipboard();
+        chatMessagesAssertion.assertCopiedMessage(
+          copiedText.trim(),
+          expectedCopiedTableContent[1],
+        );
       },
     );
 
@@ -386,6 +408,115 @@ dialTest(
         downloadAssertion.assertDownloadFilename(
           renamedDownloadedData,
           updatedFilename,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'MD table body scroll appears below the header when table height exceeds 68vh',
+  async ({
+    dialHomePage,
+    setTestIds,
+    page,
+    chatMessages,
+    chatMessagesAssertion,
+    localStorageManager,
+    conversationData,
+    dataInjector,
+    conversations,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-9394');
+    const rowsCount = 50;
+    const tableRows = Array.from(
+      { length: rowsCount },
+      (_, i) => `| Row ${i + 1} | Value ${i + 1} |`,
+    ).join('\n');
+    const largeTableContent =
+      '| Column1 | Column2 |\n| ------------- | ------------- |\n' +
+      `${tableRows}\n`;
+    let tableConversation: Conversation;
+    let bodyScrollContainer: BaseElement;
+    let headerScrollContainer: BaseElement;
+    const maxTableHeight = 0.68;
+    const roundingTolerance = 2;
+
+    await dialTest.step(
+      'Prepare conversation with a table tall enough to exceed 68% of the viewport height',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        tableConversation =
+          conversationData.prepareConversationWithTextContent(
+            largeTableContent,
+          );
+        await dataInjector.createConversations([tableConversation]);
+      },
+    );
+
+    await dialTest.step(
+      'Open conversation and verify the table body height is capped at 68% of the current viewport and becomes scrollable',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(tableConversation.name);
+        bodyScrollContainer =
+          chatMessages.getChatMessageTableBodyScrollContainer(
+            expectedChatMessageIndex,
+          );
+        headerScrollContainer =
+          chatMessages.getChatMessageTableHeaderScrollContainer(
+            expectedChatMessageIndex,
+          );
+        await chatMessagesAssertion.assertElementState(
+          bodyScrollContainer,
+          'visible',
+        );
+
+        const viewportSize = page.viewportSize();
+        const expectedMaxBodyHeight = viewportSize!.height * maxTableHeight;
+
+        const bodyBoundingBox =
+          await bodyScrollContainer.getElementBoundingBox();
+        baseAssertion.assertNumberIsLessThanOrEqual(
+          bodyBoundingBox!.height,
+          expectedMaxBodyHeight + roundingTolerance,
+          ExpectedMessages.tableBodyHeightNotExceedViewportHeight,
+        );
+        baseAssertion.assertNumberIsGreaterThan(
+          bodyBoundingBox!.height,
+          expectedMaxBodyHeight - roundingTolerance,
+          ExpectedMessages.tableBodyHeightIsClosedToMaxCap,
+        );
+        baseAssertion.assertBooleanCondition(
+          await bodyScrollContainer.isElementScrollableVertically(),
+          true,
+          ExpectedMessages.tableBodyIsVerticallyScrollable,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Scroll the table body and verify the header stays fixed above the scrollable area',
+      async () => {
+        const headerBoundingBoxBefore =
+          await headerScrollContainer.getElementBoundingBox();
+
+        await bodyScrollContainer.scrollToTheEnd();
+        const headerScrollTop = await headerScrollContainer.getScrollTop();
+        baseAssertion.assertValue(
+          headerScrollTop,
+          0,
+          ExpectedMessages.tableHeaderNotScrollableVertically,
+        );
+
+        const headerBoundingBoxAfter =
+          await headerScrollContainer.getElementBoundingBox();
+        baseAssertion.assertValue(
+          headerBoundingBoxAfter!.y,
+          headerBoundingBoxBefore!.y,
+          ExpectedMessages.tableHeaderPositionNotChanged,
         );
       },
     );
