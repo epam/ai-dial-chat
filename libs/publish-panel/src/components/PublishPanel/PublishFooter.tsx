@@ -61,7 +61,7 @@ export const PublishFooter: FC<PublishFooterProps> = ({
   })();
 
   return (
-    <div className="flex items-center justify-end gap-2 border-t border-tertiary px-3.5 py-4">
+    <div className="flex items-center justify-end gap-2 border-t border-tertiary px-3.5 py-4 rtl:flex-row-reverse rtl:justify-start">
       <GhostButton
         label={cancelLabel}
         disabled={isSubmitLoading}

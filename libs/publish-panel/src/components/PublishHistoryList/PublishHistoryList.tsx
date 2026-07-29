@@ -21,7 +21,7 @@ export interface PublishHistoryListProps {
   versionPrefix?: string;
   /** Label for the badge on the entry matching `currentVersion`. Default: `'Current'`. */
   currentBadgeLabel?: string;
-  /** Message shown when `entries` is empty. Default: see implementation. */
+  /** Message shown when `entries` is empty. Default: `'Not published to this folder yet — this will be the first version here.'`. */
   emptyStateLabel?: string;
   /** Message shown while history is loading. Default: `'Loading history…'`. */
   loadingLabel?: string;

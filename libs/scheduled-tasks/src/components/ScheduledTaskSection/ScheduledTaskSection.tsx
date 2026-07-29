@@ -26,7 +26,7 @@ export const ScheduledTaskSection: FC<ScheduledTaskSectionProps> = ({
       className="flex flex-col gap-3"
     >
       {title && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 rtl:flex-row-reverse">
           <h2 className={titleClassName}>{title}</h2>
           <span
             className={mergeClasses(
