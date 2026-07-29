@@ -140,18 +140,13 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
     });
   }, [showNotification, t]);
 
-  const {
-    startStream,
-    handleStop,
-    isStreaming,
-    canStopStreaming,
-    hasStreamError,
-  } = useConversationStream({
-    conversationId: conversationId ?? undefined,
-    setConversation,
-    conversationRef,
-    onStopError: handleStopError,
-  });
+  const { startStream, handleStop, isStreaming, canStopStreaming } =
+    useConversationStream({
+      conversationId: conversationId ?? undefined,
+      setConversation,
+      conversationRef,
+      onStopError: handleStopError,
+    });
 
   const handleCreateConversation = useCallback(
     async (
@@ -356,7 +351,6 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
         isAssistantTyping={isStreaming}
         canStopAssistant={canStopStreaming}
         placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
-        streamErrorText={hasStreamError ? t(ChatI18nKeys.StreamError) : ''}
         stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
         isAudioMessageSupported={isAudioMessageSupported}
         conversation={conversation}

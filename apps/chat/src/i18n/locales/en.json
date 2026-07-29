@@ -747,7 +747,8 @@
       "updateFailed": "Failed to update toolset. Please try again.",
       "loginFailed": "Failed to log in. Please check your credentials and try again.",
       "logoutFailed": "Failed to log out. Please try again.",
-      "popupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again."
+      "popupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again.",
+      "oauthConfigMissing": "The OAuth provider did not return a valid client configuration. Please check the endpoint or contact your administrator."
     },
     "success": {
       "login": "Successfully logged in.",

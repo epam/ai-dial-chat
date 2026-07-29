@@ -7,6 +7,7 @@ import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
 } from '../constants/toolsets';
+import { getToolset } from '../server-api/toolsets';
 import { ROUTES } from '../types/routes';
 import type {
   ToolsetAuthFormData,
@@ -465,9 +466,10 @@ const normalizeReturnedEndpointUrl = (value?: string): string => {
   return trimmed;
 };
 
-/** Maps a loaded toolset DTO (snake_case) into editor form state. */
-export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => {
-  const authSettings = dto.authSettings;
+/** Maps a loaded toolset DTO's `authSettings` (snake_case) into auth form state. */
+const authSettingsDtoToForm = (
+  authSettings: DialToolsetDto['authSettings'],
+): ToolsetAuthFormData => {
   const authenticationType =
     (authSettings?.authenticationType as ToolsetAuthTypes) ??
     ToolsetAuthTypes.None;
@@ -497,32 +499,50 @@ export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => {
   }
 
   return {
-    name: dto.displayName ?? '',
-    version: dto.displayVersion ?? DEFAULT_TOOLSET_VERSION,
-    iconUrl: dto.iconUrl ?? '',
-    description: dto.description ?? '',
-    topics: dto.descriptionKeywords ?? [],
-    intro: dto.intro ?? '',
-    endpoint: normalizeReturnedEndpointUrl(dto.endpoint),
-    protocol:
-      (dto.transport as ToolsetTransportType) ?? ToolsetTransportType.Http,
-    allowedTools: dto.allowedTools ?? [],
-    reference: dto.reference,
-    auth: {
-      authenticationType,
-      withLogin,
-      isLoggedIn,
-      keyHeader: authSettings?.apiKeyHeader ?? '',
-      clientId: authSettings?.clientId ?? '',
-      authorizationEndpoint: normalizeReturnedEndpointUrl(
-        authSettings?.authorizationEndpoint,
-      ),
-      tokenEndpoint: normalizeReturnedEndpointUrl(authSettings?.tokenEndpoint),
-      scopes: authSettings?.scopesSupported ?? [],
-      codeChallenge: authSettings?.codeChallenge,
-      codeChallengeMethod: authSettings?.codeChallengeMethod,
-    },
+    authenticationType,
+    withLogin,
+    isLoggedIn,
+    keyHeader: authSettings?.apiKeyHeader ?? '',
+    clientId: authSettings?.clientId ?? '',
+    authorizationEndpoint: normalizeReturnedEndpointUrl(
+      authSettings?.authorizationEndpoint,
+    ),
+    tokenEndpoint: normalizeReturnedEndpointUrl(authSettings?.tokenEndpoint),
+    scopes: authSettings?.scopesSupported ?? [],
+    codeChallenge: authSettings?.codeChallenge,
+    codeChallengeMethod: authSettings?.codeChallengeMethod,
   };
+};
+
+/** Maps a loaded toolset DTO (snake_case) into editor form state. */
+export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => ({
+  name: dto.displayName ?? '',
+  version: dto.displayVersion ?? DEFAULT_TOOLSET_VERSION,
+  iconUrl: dto.iconUrl ?? '',
+  description: dto.description ?? '',
+  topics: dto.descriptionKeywords ?? [],
+  intro: dto.intro ?? '',
+  endpoint: normalizeReturnedEndpointUrl(dto.endpoint),
+  protocol:
+    (dto.transport as ToolsetTransportType) ?? ToolsetTransportType.Http,
+  allowedTools: dto.allowedTools ?? [],
+  reference: dto.reference,
+  auth: authSettingsDtoToForm(dto.authSettings),
+});
+
+/**
+ * Fetches a toolset by id and maps its stored `authSettings` into an auth
+ * form-state patch, reusing `authSettingsDtoToForm`'s mapping directly rather
+ * than building and discarding a full `ToolsetFormData`. Shared by the OAuth
+ * `Cancelled`-result reconciliation and the dynamic-client-registration login
+ * path, both of which need the server's current auth config rather than
+ * stale pre-save form state.
+ */
+export const fetchToolsetAuthSettings = async (
+  toolsetId: string,
+): Promise<ToolsetAuthFormData> => {
+  const dto = await getToolset(toolsetId);
+  return authSettingsDtoToForm(dto.authSettings);
 };
 
 /** Maps editor form state into the create/update request body. */
