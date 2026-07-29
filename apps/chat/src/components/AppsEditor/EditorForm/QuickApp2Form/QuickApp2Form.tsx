@@ -307,6 +307,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 )}
                 info={t(MarketplaceI18nKeys.ProcessFilesDescription)}
                 className="flex items-center gap-2"
+                disabled={isAppPublic}
+                tooltip={isAppPublicTooltip}
               />
             )}
           />
@@ -377,6 +379,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               )}
               info={t(MarketplaceI18nKeys.FileToolsDescription)}
               className="flex items-center gap-2"
+              disabled={isAppPublic}
+              tooltip={isAppPublicTooltip}
             />
           )}
         />
@@ -555,6 +559,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               switchOFFText="OFF"
               additionalText={t(MarketplaceI18nKeys.TimeAwareness)}
               className="flex items-center gap-2"
+              disabled={isAppPublic}
+              tooltip={isAppPublicTooltip}
             />
           )}
         />
