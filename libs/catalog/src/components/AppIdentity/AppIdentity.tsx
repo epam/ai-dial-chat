@@ -106,10 +106,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
           {/* Name + version: version sits immediately after name text */}
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
             <span
-              className={mergeClasses(
-                'flex-3 min-w-0 shrink truncate',
-                nameClassName,
-              )}
+              className={mergeClasses('flex-3 min-w-0 truncate', nameClassName)}
             >
               {query ? <Highlight text={name} query={query} /> : name}
             </span>
@@ -117,7 +114,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
               <DialEllipsisTooltip
                 text={version}
                 className={mergeClasses(
-                  'flex-1',
+                  'flex-2',
                   styles.numericText,
                   versionClassName,
                 )}

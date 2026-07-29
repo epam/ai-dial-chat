@@ -125,7 +125,7 @@ If the details server-api call rejects (network error or a mapped HTTP exception
 
 #### Scenario: Applications and toolset-created catalog items both dispatch through the same wrapper
 
-- **WHEN** the opened item's `type` is `CatalogEntityType.Model`, `CatalogEntityType.Application`, or `CatalogEntityType.Toolset`
+- **WHEN** the opened item's `type` is `CatalogEntityType.Model`, `CatalogEntityType.Agent`, or `CatalogEntityType.Toolset`
 - **AND** the additional `getDeploymentLimits(item.id)` call is made only for `CatalogEntityType.Model`
 - **THEN** `onFetchDetails` calls the same `getDeploymentDetails(item.id)` wrapper regardless of type, and only the DTO → `EntitySpecificDetails` mapping branches on type
 

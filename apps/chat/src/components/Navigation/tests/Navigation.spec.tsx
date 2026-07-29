@@ -1,11 +1,15 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import type { AriaAttributes } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NAVIGATION_CONFIG } from '../../../constants/navigation';
 import { NavigationI18nKeys } from '../../../constants/translation-keys';
+import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import { UserConfigStatus } from '../../../types/user-config-status';
 import Navigation from '../Navigation';
+
+vi.mock('../../../hooks/useUiFeature');
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: {
@@ -47,11 +51,16 @@ const renderNavigation = (initialPath = '/') =>
   );
 
 describe('Navigation', () => {
+  const mockUseUiFeature = vi.mocked(useUiFeatureModule.useUiFeature);
+
   beforeEach(() => {
     useAppConfigMock.mockReturnValue({
       status: UserConfigStatus.Ready,
       features: { scheduledTasksEnabled: true },
     });
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.HideUserMenu,
+    );
   });
 
   it('renders the nav landmark with aria-label', () => {
@@ -149,5 +158,39 @@ describe('Navigation', () => {
     expect(
       screen.getByRole('button', { name: NavigationI18nKeys.Catalog }),
     ).toBeTruthy();
+  });
+
+  it('hides the Catalog nav item when catalog is disabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.Catalog,
+    );
+    const { container } = renderNavigation();
+    expect(container.querySelector('a[href="/catalog"]')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: NavigationI18nKeys.Catalog }),
+    ).toBeNull();
+  });
+
+  it('keeps other nav items when catalog is disabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature !== OverlayFeature.Catalog,
+    );
+    renderNavigation();
+    expect(
+      screen.getByRole('button', { name: NavigationI18nKeys.Home }),
+    ).toBeTruthy();
+  });
+
+  it('hides the user menu when hide-user-menu is enabled', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideUserMenu,
+    );
+    renderNavigation();
+    expect(screen.queryByText('User menu')).toBeNull();
+  });
+
+  it('shows the user menu by default', () => {
+    renderNavigation();
+    expect(screen.getByText('User menu')).toBeTruthy();
   });
 });

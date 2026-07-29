@@ -371,7 +371,10 @@ export class ChatOverlayManager {
   setOverlayOptions(
     overlayId: string,
     options: Partial<
-      Pick<ChatOverlayOptions, 'theme' | 'modelId' | 'overlayConversationId'>
+      Pick<
+        ChatOverlayOptions,
+        'theme' | 'modelId' | 'overlayConversationId' | 'enabledFeatures'
+      >
     >,
   ): Promise<SetOverlayOptionsResponse> {
     return this.getEntry(overlayId).overlay.setOverlayOptions(options);

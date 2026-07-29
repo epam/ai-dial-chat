@@ -317,6 +317,89 @@ describe('ChatOverlay', () => {
     expect(
       Object.hasOwn(sentMessage?.payload as object, 'overlayConversationId'),
     ).toBe(false);
+    expect(
+      Object.hasOwn(sentMessage?.payload as object, 'enabledFeatures'),
+    ).toBe(false);
+  });
+
+  it('includes enabledFeatures from constructor options in the initial handshake send', () => {
+    const { iframe } = setup({
+      enabledFeatures: [OverlayFeature.VoiceInput, OverlayFeature.Header],
+    });
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    dispatchFromApp(iframe, { type: OverlayEventType.Ready });
+
+    const sentMessage = postMessageSpy.mock
+      .calls[0][0] as OverlayMessageRequest<{
+      enabledFeatures?: string[];
+    }>;
+    expect(sentMessage.payload?.enabledFeatures).toEqual([
+      'voice-input',
+      'header',
+    ]);
+  });
+
+  it('replaces enabledFeatures and resends when setOverlayOptions is called', async () => {
+    const { overlay, iframe } = setup();
+    advanceHandshakeToReadyToInteract(iframe, 'irrelevant');
+    await overlay.ready();
+
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+    void overlay
+      .setOverlayOptions({
+        enabledFeatures: [OverlayFeature.Header, OverlayFeature.Likes],
+      })
+      .catch(() => undefined);
+
+    const sentMessage = postMessageSpy.mock
+      .calls[0][0] as OverlayMessageRequest<{
+      enabledFeatures?: string[];
+    }>;
+    expect(sentMessage.payload?.enabledFeatures).toEqual(['header', 'likes']);
+  });
+
+  it('preserves the previous enabledFeatures value when a later call omits it', async () => {
+    const { overlay, iframe } = setup();
+    advanceHandshakeToReadyToInteract(iframe, 'irrelevant');
+    await overlay.ready();
+
+    void overlay
+      .setOverlayOptions({ enabledFeatures: [OverlayFeature.Header] })
+      .catch(() => undefined);
+
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+    void overlay.setOverlayOptions({ theme: 'dark' }).catch(() => undefined);
+
+    const sentMessage = postMessageSpy.mock
+      .calls[0][0] as OverlayMessageRequest<{
+      theme?: string;
+      enabledFeatures?: string[];
+    }>;
+    expect(sentMessage.payload?.theme).toBe('dark');
+    expect(sentMessage.payload?.enabledFeatures).toEqual(['header']);
+  });
+
+  it('does not retroactively change iframe allow permissions when enabledFeatures is set later', async () => {
+    const { overlay, iframe } = setup();
+    advanceHandshakeToReadyToInteract(iframe, 'irrelevant');
+    await overlay.ready();
+    expect(iframe.getAttribute('allow')).not.toContain('microphone');
+
+    void overlay
+      .setOverlayOptions({ enabledFeatures: [OverlayFeature.VoiceInput] })
+      .catch(() => undefined);
+
+    expect(iframe.getAttribute('allow')).not.toContain('microphone');
   });
 
   it('rejects a timed-out request with an error naming the type and timeout', async () => {

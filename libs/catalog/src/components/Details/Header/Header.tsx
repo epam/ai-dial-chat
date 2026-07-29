@@ -36,6 +36,11 @@ interface HeaderProps {
    */
   shareOverlay?: (item: CatalogItem, onClose: () => void) => ReactNode;
   /**
+   * Additional caller-supplied rule for whether Share is shown, combined
+   * (AND) with the built-in ownership/type rule.
+   */
+  isShareVisible?: (item: CatalogItem) => boolean;
+  /**
    * Renders the Connect popover content anchored to the Connect button. When
    * absent, the Connect button is never shown.
    */
@@ -80,6 +85,7 @@ export const Header: FC<HeaderProps> = ({
   isPrimaryActionVisible,
   onShare,
   shareOverlay,
+  isShareVisible,
   connectOverlay,
   isConnectVisible,
   onEdit,
@@ -112,13 +118,13 @@ export const Header: FC<HeaderProps> = ({
     texts?.hasPrimaryAction !== false &&
     (isPrimaryActionVisible?.(item) ??
       (item.type === CatalogEntityType.Model ||
-        item.type === CatalogEntityType.Application));
+        item.type === CatalogEntityType.Agent));
 
   const shouldShowPublish =
     isPublishVisible?.(item) ??
     (item.type === CatalogEntityType.Model ||
       item.type === CatalogEntityType.Toolset ||
-      item.type === CatalogEntityType.Application);
+      item.type === CatalogEntityType.Agent);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
 
@@ -194,6 +200,7 @@ export const Header: FC<HeaderProps> = ({
           item={item}
           onShare={onShare}
           shareOverlay={shareOverlay}
+          isShareVisible={isShareVisible}
           label={texts?.shareLabel}
         />
         <DeleteButton

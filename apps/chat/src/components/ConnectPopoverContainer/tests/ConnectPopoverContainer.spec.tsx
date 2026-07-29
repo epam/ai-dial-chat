@@ -62,7 +62,7 @@ describe('ConnectPopoverContainer', () => {
   it('shows the application title and description for an application item', () => {
     render(
       <ConnectPopoverContainer
-        item={makeItem(CatalogEntityType.Application)}
+        item={makeItem(CatalogEntityType.Agent)}
         onClose={vi.fn()}
       />,
     );
@@ -105,10 +105,7 @@ describe('ConnectPopoverContainer', () => {
   it('copies the application MCP URL to the clipboard for a multi-segment id', async () => {
     render(
       <ConnectPopoverContainer
-        item={makeItem(
-          CatalogEntityType.Application,
-          'applications/public/my app',
-        )}
+        item={makeItem(CatalogEntityType.Agent, 'applications/public/my app')}
         onClose={vi.fn()}
       />,
     );

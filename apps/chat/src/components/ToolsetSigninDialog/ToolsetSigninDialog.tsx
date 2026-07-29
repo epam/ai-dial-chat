@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import {
   GhostButton,
   Input,
@@ -26,12 +27,14 @@ import {
   ButtonsI18nKeys,
   ToolsetSigninI18nKeys,
 } from '../../constants/translation-keys';
+import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useClientChannel } from '../../context/ClientChannelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import {
   ToolsetLoginOutcomeType,
   useToolsetLogin,
 } from '../../hooks/toolsets/useToolsetLogin';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { ClientChannelReportResult } from '../../server-api/client-channel';
 import { getToolset } from '../../server-api/toolsets';
 import type { PendingSigninEvent } from '../../types/client-channel';
@@ -168,6 +171,10 @@ const ToolsetSigninDialog: FC = () => {
   const { pendingEvents, reportEvent } = useClientChannel();
   const { toolsets, refetchToolsets } = useDeployments();
   const { login } = useToolsetLogin();
+  const isLiveChatInteractionUiEnabled = useUiFeature(
+    OverlayFeature.LiveChatInteraction,
+  );
+  const isLiveChatInteractionCapable = useFeatureFlag('liveChatInteraction');
 
   const [rowStates, setRowStates] = useState<Record<string, RowState>>({});
   const [resolvedToolsets, setResolvedToolsets] = useState<
@@ -381,7 +388,13 @@ const ToolsetSigninDialog: FC = () => {
     ],
   );
 
-  if (pendingEvents.length === 0) return null;
+  if (
+    pendingEvents.length === 0 ||
+    !isLiveChatInteractionUiEnabled ||
+    !isLiveChatInteractionCapable
+  ) {
+    return null;
+  }
 
   /* With a single pending event, the row's own Decline button already
    * covers it — showing "Decline all" too is a redundant duplicate action. */
