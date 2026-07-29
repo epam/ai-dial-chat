@@ -53,7 +53,7 @@ import {
 export const generateAttachmentId = (): string =>
   `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-/** Returns the name without its trailing file extension. */
+/** Returns the name without its trailing file extension. Returns an empty string when `name` is nullish. */
 export const getNameWithoutExtension = (name: string): string => {
   if (name == null) return '';
   const dotIndex = name.lastIndexOf('.');
