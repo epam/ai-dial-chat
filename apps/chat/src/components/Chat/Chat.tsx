@@ -140,6 +140,9 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const isOptimisticDefaultModelLoad = useAppSelector(
     SettingsSelectors.selectIsOptimisticDefaultModelLoad,
   );
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
+  );
   const isRegenerateAssistantMessageHided = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(
       state,
@@ -611,10 +614,12 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const isSchemaCompareWarningVisible =
     isSomeConversationWithSchema && selectedConversations.length > 1;
 
+  const isOptimisticReadyBeforeInstalledModelsLoaded =
+    !isInstalledModelsInitialized && isOptimisticDefaultModelLoad;
   const isChatReadyForInput =
     !isMarketplaceEnabled ||
     areModelsInstalled ||
-    isOptimisticDefaultModelLoad ||
+    isOptimisticReadyBeforeInstalledModelsLoaded ||
     isIsolatedView ||
     isAdminPreview ||
     isApproveRequiredEntity;
@@ -623,7 +628,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
       !isReadOnly &&
       !isApproveRequiredEntity &&
       (areModelsInstalled ||
-        isOptimisticDefaultModelLoad ||
+        isOptimisticReadyBeforeInstalledModelsLoaded ||
         isAdminPreview ||
         isReplay ||
         isIsolatedView ||
