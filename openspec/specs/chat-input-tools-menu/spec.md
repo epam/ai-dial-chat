@@ -148,6 +148,11 @@ The tool configuration values SHALL be merged with any existing `configuration_v
 - **WHEN** the backend processes a message with `custom_content.configuration_value: { "deep_research": true }`
 - **THEN** the DIAL Core completion request body contains `custom_fields: { configuration: { "deep_research": true } }`
 
+#### Scenario: Tool configuration preserves message content
+- **WHEN** the backend processes a non-empty user message with `custom_content.configuration_value`
+- **THEN** the DIAL Core completion request contains the original non-empty `messages[].content`
+- **AND** the configuration is additionally sent through `custom_fields.configuration`
+
 ---
 
 ### Requirement: App-config pipeline for DEEP_RESEARCH_TOOL_ID

@@ -1291,7 +1291,7 @@ describe('ConversationService', () => {
       });
     });
 
-    it('sends current starter configuration only as top-level custom_fields', async () => {
+    it('moves current starter configuration to top-level custom_fields without clearing message content', async () => {
       const conversation = {
         ...baseConversation,
         messages: [
@@ -1315,7 +1315,12 @@ describe('ConversationService', () => {
       );
 
       expect(sendSpy.mock.calls[0][1].body).toMatchObject({
-        messages: [{ role: ConversationMessageRole.User, content: '' }],
+        messages: [
+          {
+            role: ConversationMessageRole.User,
+            content: 'Pick a number',
+          },
+        ],
         stream: true,
         custom_fields: { configuration: { button: 1 } },
       });
@@ -1346,11 +1351,17 @@ describe('ConversationService', () => {
       );
 
       expect(sendSpy.mock.calls[0][1].body).toMatchObject({
+        messages: expect.arrayContaining([
+          {
+            role: ConversationMessageRole.User,
+            content: 'Research this topic',
+          },
+        ]),
         custom_fields: { configuration: { deep_research: true } },
       });
     });
 
-    it('moves persisted form configuration to custom_fields and submits form_value messages', async () => {
+    it('moves persisted form configuration to custom_fields without clearing message content', async () => {
       const conversation = {
         ...baseConversation,
         messages: [
@@ -1400,7 +1411,10 @@ describe('ConversationService', () => {
       });
 
       expect(sendSpy.mock.calls[0][1].body.messages).toEqual([
-        { role: ConversationMessageRole.User, content: '' },
+        {
+          role: ConversationMessageRole.User,
+          content: 'Pick a number',
+        },
         {
           role: ConversationMessageRole.Assistant,
           content: 'Pick a number',
