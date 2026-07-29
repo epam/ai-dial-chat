@@ -288,6 +288,8 @@ export interface ConversationInputProps {
   onToolToggle?: (toolId: string) => void;
   /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
   toolsMenuTitle?: string;
+  /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
+  toolsBackLabel?: string;
   /** Labels for the selected-tools chip row shown in the input when tools are active. */
   toolsChipLabels?: ToolsChipLabels;
 }

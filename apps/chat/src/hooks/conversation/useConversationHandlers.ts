@@ -365,6 +365,12 @@ export const useConversationHandlers = ({
         return next;
       });
 
+      /* `configuration_value` is sent even when `configurationValue` (the
+       * form-based starter value) is absent but a tool toggle is active.
+       * Unlike the previous code that omitted customContent entirely for
+       * non-form starters, active tool config must always be forwarded so
+       * the completion endpoint can apply it regardless of how the starter
+       * was triggered. */
       startStream(
         conversationId,
         submitText,
