@@ -659,6 +659,7 @@ export enum ToolsetEditorI18nKeys {
   ErrorLoginFailed = 'toolsetEditor.error.loginFailed',
   ErrorLogoutFailed = 'toolsetEditor.error.logoutFailed',
   ErrorPopupBlocked = 'toolsetEditor.error.popupBlocked',
+  ErrorOAuthConfigMissing = 'toolsetEditor.error.oauthConfigMissing',
   LoginSuccess = 'toolsetEditor.success.login',
   LogoutSuccess = 'toolsetEditor.success.logout',
 }

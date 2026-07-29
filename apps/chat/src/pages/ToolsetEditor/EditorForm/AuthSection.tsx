@@ -127,13 +127,20 @@ const AuthSection: FC<Props> = ({
     savedToolsetId: string,
   ) => {
     if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
+      /*
+       * `InvalidConfig` means the authorize URL couldn't be built from a
+       * known-good client (e.g. Core's dynamic client registration didn't
+       * return a usable clientId/authorizationEndpoint) — distinct from a
+       * browser-blocked popup, and from a generic post-redirect login
+       * failure, so it gets its own actionable message.
+       */
+      const errorKey =
+        initiation.type === ToolsetOAuthInitiationResultType.Blocked
+          ? ToolsetEditorI18nKeys.ErrorPopupBlocked
+          : ToolsetEditorI18nKeys.ErrorOAuthConfigMissing;
       showNotification({
         variant: NotificationVariant.Error,
-        message: t(
-          initiation.type === ToolsetOAuthInitiationResultType.Blocked
-            ? ToolsetEditorI18nKeys.ErrorPopupBlocked
-            : ToolsetEditorI18nKeys.ErrorLoginFailed,
-        ),
+        message: t(errorKey),
       });
       return;
     }
@@ -208,32 +215,49 @@ const AuthSection: FC<Props> = ({
           return;
         }
 
-        const savedToolsetId = await onEnsureSaved();
-        if (!savedToolsetId) {
-          popup.close();
-          return;
-        }
-
-        let resolvedAuth: ToolsetAuthFormData;
+        /*
+         * Set busy immediately once the popup is open — this branch has two
+         * awaits (persist, then fetch) before `handleOAuthInitiation` would
+         * otherwise set it, and `onEnsureSaved` resolves in a single
+         * microtask when the form is already saved and unchanged (it never
+         * flips `isSaving`). Without this, a second click during that window
+         * would open a second popup and start a second concurrent login.
+         * The `finally` covers every exit from this branch — the two early
+         * returns below, and both the Started and non-Started outcomes of
+         * `handleOAuthInitiation` (which already clears busy itself for the
+         * Started case, making this a harmless redundant reset).
+         */
+        setIsAuthBusy(true);
         try {
-          resolvedAuth = await fetchToolsetAuthSettings(savedToolsetId);
-        } catch {
-          popup.close();
-          showNotification({
-            variant: NotificationVariant.Error,
-            message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
-          });
-          return;
-        }
-        onAuthChange(resolvedAuth);
+          const savedToolsetId = await onEnsureSaved();
+          if (!savedToolsetId) {
+            popup.close();
+            return;
+          }
 
-        const initiation = navigateToolsetOAuthPopup(
-          popup,
-          resolvedAuth,
-          savedToolsetId,
-          ToolsetCredentialsLevel.User,
-        );
-        await handleOAuthInitiation(initiation, savedToolsetId);
+          let resolvedAuth: ToolsetAuthFormData;
+          try {
+            resolvedAuth = await fetchToolsetAuthSettings(savedToolsetId);
+          } catch {
+            popup.close();
+            showNotification({
+              variant: NotificationVariant.Error,
+              message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+            });
+            return;
+          }
+          onAuthChange(resolvedAuth);
+
+          const initiation = navigateToolsetOAuthPopup(
+            popup,
+            resolvedAuth,
+            savedToolsetId,
+            ToolsetCredentialsLevel.User,
+          );
+          await handleOAuthInitiation(initiation, savedToolsetId);
+        } finally {
+          setIsAuthBusy(false);
+        }
         return;
       }
 

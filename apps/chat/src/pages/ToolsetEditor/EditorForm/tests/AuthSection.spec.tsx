@@ -672,7 +672,7 @@ describe('AuthSection', () => {
   });
 
   describe('OAuth dynamic client registration login', () => {
-    it('opens the popup synchronously, before the persist call resolves, for a brand-new dynamically-registered toolset', async () => {
+    it('opens the popup synchronously, before the persist call resolves, then completes the login for a brand-new dynamically-registered toolset', async () => {
       let resolveEnsureSaved: (value: string | false) => void = () => {
         /* assigned before use */
       };
@@ -682,10 +682,21 @@ describe('AuthSection', () => {
             resolveEnsureSaved = resolve;
           }),
       );
+      const onAuthChange = vi.fn();
+      vi.mocked(toolsetsApi.getToolset).mockResolvedValue({
+        id: 'toolsets/b/newly-created',
+        toolset: 'toolsets/b/newly-created',
+        authSettings: {
+          authenticationType: 'OAUTH',
+          dynamicallyRegistered: true,
+          clientId: 'dcr-client-id',
+          authorizationEndpoint: 'https://auth.example.com/authorize',
+        },
+      } as never);
       renderSection(
         oauthWithLoginDynamicAuth(),
         '',
-        vi.fn(),
+        onAuthChange,
         VALID_ENDPOINT,
         {},
         onEnsureSaved,
@@ -695,14 +706,25 @@ describe('AuthSection', () => {
         screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
       );
 
+      // Popup opens immediately, before the persist call resolves.
       expect(capturedPopup).toBeDefined();
       expect(toolsetsApi.getToolset).not.toHaveBeenCalled();
+      expect(capturedPopup?.location.href).toBe('');
 
       resolveEnsureSaved('toolsets/b/newly-created');
+
+      // The popup is then navigated to the authorize URL built from the
+      // fetched Core-issued client — the happy path this timing enables.
       await waitFor(() =>
-        expect(toolsetsApi.getToolset).toHaveBeenCalledWith(
-          'toolsets/b/newly-created',
+        expect(capturedPopup?.location.href).toContain(
+          'https://auth.example.com/authorize',
         ),
+      );
+      expect(toolsetsApi.getToolset).toHaveBeenCalledWith(
+        'toolsets/b/newly-created',
+      );
+      expect(onAuthChange).toHaveBeenCalledWith(
+        expect.objectContaining({ clientId: 'dcr-client-id' }),
       );
     });
 
