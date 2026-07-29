@@ -5,6 +5,8 @@ import {
 import { FolderInterface } from '@/src/types/folder';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 
+import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 export interface ApplicationState {
@@ -20,6 +22,7 @@ export interface ApplicationState {
 
   logsEntityId: string | undefined;
   editorStep: MarketplaceEditorSteps;
+  editorSelectedEntity?: { reference: string; type: MarketplaceEntitiesTabs };
   shouldTriggerEditorAutoUpdate: boolean;
   editorError?: string;
 }

@@ -69,6 +69,9 @@ export const AppsEditorView = ({
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
+  const editorSelectedEntity = useAppSelector(
+    ApplicationSelectors.selectEditorSelectedEntity,
+  );
 
   const screenState = useScreenState();
   const { control } = useFormContext<AppsEditorFormType>();
@@ -127,10 +130,10 @@ export const AppsEditorView = ({
   const handlePureAutoSave = useCallback(
     (e?: MouseEvent<HTMLDivElement>) => {
       const target = e?.relatedTarget as HTMLDivElement | undefined;
-      if (target?.dataset?.floatingOverlay) return;
+      if (target?.dataset?.floatingOverlay || editorSelectedEntity) return;
       onAutoSave();
     },
-    [onAutoSave],
+    [onAutoSave, editorSelectedEntity],
   );
 
   useEffect(() => {

@@ -59,6 +59,9 @@ const selectShouldTriggerEditorAutoUpdate = (state: RootState) =>
 
 const selectEditorError = (state: RootState) => rootSelector(state).editorError;
 
+const selectEditorSelectedEntity = (state: RootState) =>
+  rootSelector(state).editorSelectedEntity;
+
 export const ApplicationSelectors = {
   selectAppLoading,
   selectIsApplicationLoading,
@@ -73,4 +76,5 @@ export const ApplicationSelectors = {
   selectEditorStep,
   selectShouldTriggerEditorAutoUpdate,
   selectEditorError,
+  selectEditorSelectedEntity,
 };

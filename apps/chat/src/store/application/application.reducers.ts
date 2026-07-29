@@ -273,6 +273,12 @@ export const applicationSlice = createSlice({
     setEditorError: (state, { payload }: PayloadAction<string | undefined>) => {
       state.editorError = payload;
     },
+    setEditorSelectedEntity: (
+      state,
+      { payload }: PayloadAction<ApplicationState['editorSelectedEntity']>,
+    ) => {
+      state.editorSelectedEntity = payload;
+    },
   },
 });
 
