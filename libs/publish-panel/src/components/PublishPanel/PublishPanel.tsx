@@ -1,12 +1,10 @@
 import { SearchInput } from '@epam/ai-dial-sidebar';
 import {
-  DialTag,
   Notification,
   NotificationType,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { FC, ReactNode, useMemo, useState } from 'react';
-import { CatalogItem } from '../../models/catalog-item';
 import {
   PublishCalloutKind,
   PublishFolderNode,
@@ -14,14 +12,11 @@ import {
   PublishResourceSummary,
 } from '../../models/publish';
 import { derivePublishState } from '../../utils/publish-state';
-import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { PublishFoldersTree } from '../PublishFoldersTree/PublishFoldersTree';
 import { PublishHistoryList } from '../PublishHistoryList/PublishHistoryList';
 
 /** Text overrides for all user-visible strings in {@link PublishPanel}. */
-export interface PublishPanelTexts {
-  /** Suffix on the version pill, e.g. "Version 4.0.1 · current". Default: `'current'`. */
-  currentVersionSuffix?: string;
+export interface PublishPanelLabels {
   /** Label above the destination folder picker. Default: `'Publish to folder'`. */
   folderLabel?: string;
   /** Placeholder for the folder search input. Default: `'Search folders'`. */
@@ -37,7 +32,7 @@ export interface PublishPanelTexts {
   /** Error callout body shown when the most recent submit attempt failed. */
   submitError?: string;
   /** Message shown when a folder search query matches no folders; `{query}` is replaced. */
-  folderEmptyStateText?: string;
+  folderEmptyStateLabel?: string;
   /** Label for the per-row context menu action that creates a folder alongside the clicked folder. */
   addSiblingFolderLabel?: string;
   /** Label for the per-row context menu action that creates a folder inside the clicked folder. */
@@ -49,9 +44,9 @@ export interface PublishPanelTexts {
   /** Inline error shown while creating a folder whose name duplicates a sibling. */
   createFolderDuplicateNameError?: string;
   /** Message shown while publish history is loading. */
-  historyLoadingText?: string;
+  historyLoadingLabel?: string;
   /** Message shown when publish history failed to load. */
-  historyErrorText?: string;
+  historyErrorLabel?: string;
   /** Label used for the bucket root as a destination and as `{folder}` in callouts when it is selected. Default: `'Organization'`. */
   rootFolderLabel?: string;
 }
@@ -59,15 +54,19 @@ export interface PublishPanelTexts {
 /** Props for {@link PublishPanel}. */
 export interface PublishPanelProps {
   /**
-   * The catalog entity being published. Mutually exclusive with `resource`
-   * — pass this for versioned catalog entities (renders the full
-   * `EntityHeader` + version pill); pass `resource` instead for an
-   * unversioned resource (e.g. a conversation), which renders a simpler
-   * title-only summary row.
+   * Display metadata for the summary row and for version-derived behavior:
+   * the replace-warning callout's version substitution, and whether the
+   * publish-history section is shown at all (only when `version` is set).
+   * Title-only rendering applies when `renderSummary` is absent.
    */
-  item?: CatalogItem;
-  /** Title-only summary for an unversioned resource (e.g. a conversation). Mutually exclusive with `item`. */
   resource?: PublishResourceSummary;
+  /**
+   * Renders a custom summary row (e.g. a full entity header with icon and
+   * type badge) in place of the default title-only row built from
+   * `resource.title`. Pass `resource` alongside this so version-derived
+   * behavior (callout, history section) keeps working.
+   */
+  renderSummary?: () => ReactNode;
   /** Previously published entries for this item. */
   history: PublishHistoryEntry[];
   /** Whether `history` is currently being fetched. Default: `false`. */
@@ -98,8 +97,8 @@ export interface PublishPanelProps {
   loadingPaths?: Set<string>;
   /**
    * Whether `selectedFolderPath` already has this publication — this exact
-   * version, for `item`, or any prior entry at all, for `resource` (which
-   * has no version dimension).
+   * version, for a versioned `resource`, or any prior entry at all, for an
+   * unversioned one.
    */
   hasExistingPublicationInFolder: boolean;
   /** Whether the current user can publish to `selectedFolderPath`. */
@@ -115,13 +114,13 @@ export interface PublishPanelProps {
    */
   allowReplace?: boolean;
   /** Text overrides for all user-visible strings. */
-  texts?: PublishPanelTexts;
+  labels?: PublishPanelLabels;
 }
 
 /** Scrollable body of the Publish flow: entity summary, destination folder picker with callout, and publish history. */
 export const PublishPanel: FC<PublishPanelProps> = ({
-  item,
   resource,
+  renderSummary,
   history,
   isHistoryLoading = false,
   hasHistoryError = false,
@@ -137,10 +136,9 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   isSubmitting,
   hasSubmitError = false,
   allowReplace = true,
-  texts = {},
+  labels = {},
 }) => {
   const {
-    currentVersionSuffix = 'current',
     folderLabel = 'Publish to folder',
     searchPlaceholder = 'Search folders',
     clearSearchAriaLabel = 'Clear search',
@@ -148,16 +146,16 @@ export const PublishPanel: FC<PublishPanelProps> = ({
     replaceWarning = 'Version {version} is already published in {folder}. Publishing will replace it.',
     noAccessError = "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
     submitError = 'Publishing failed. Please try again.',
-    folderEmptyStateText,
+    folderEmptyStateLabel,
     addSiblingFolderLabel,
     addChildFolderLabel,
     createFolderEmptyNameError,
     createFolderInvalidNameError,
     createFolderDuplicateNameError,
-    historyLoadingText,
-    historyErrorText,
+    historyLoadingLabel,
+    historyErrorLabel,
     rootFolderLabel = 'Organization',
-  } = texts;
+  } = labels;
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -198,19 +196,8 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3 rounded-xl border border-tertiary bg-layer-2 px-3.5 py-3">
-        {item ? (
-          <>
-            <EntityHeader
-              item={item}
-              iconSize={40}
-              hasFeaturedTag={false}
-              showVersion={false}
-            />
-            <DialTag
-              label={`Version ${item.version} · ${currentVersionSuffix}`}
-              className="shrink-0 whitespace-nowrap !border-tertiary !bg-accent-primary-alpha !text-accent-primary"
-            />
-          </>
+        {renderSummary ? (
+          renderSummary()
         ) : (
           <span className="dial-body-semi-text truncate text-primary">
             {resource?.title}
@@ -243,7 +230,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
           loadingPaths={loadingPaths}
           searchQuery={searchQuery}
           disabled={isSubmitting}
-          noResultsText={folderEmptyStateText}
+          noResultsLabel={folderEmptyStateLabel}
           addSiblingFolderLabel={addSiblingFolderLabel}
           addChildFolderLabel={addChildFolderLabel}
           emptyFolderNameError={createFolderEmptyNameError}
@@ -262,14 +249,14 @@ export const PublishPanel: FC<PublishPanelProps> = ({
                   noAccessError,
                   submitError,
                   folderName,
-                  version: item?.version ?? resource?.version,
+                  version: resource?.version,
                 })}
               />
             </div>
           )}
       </div>
 
-      {isFolderSelected && item && (
+      {isFolderSelected && resource?.version != null && (
         <div>
           <div className="dial-body-semi-text mb-2 text-primary">
             {historyLabel}
@@ -278,9 +265,9 @@ export const PublishPanel: FC<PublishPanelProps> = ({
             entries={folderHistory}
             isLoading={isHistoryLoading}
             hasError={hasHistoryError}
-            currentVersion={item.version}
-            loadingText={historyLoadingText}
-            errorText={historyErrorText}
+            currentVersion={resource.version}
+            loadingLabel={historyLoadingLabel}
+            errorLabel={historyErrorLabel}
           />
         </div>
       )}

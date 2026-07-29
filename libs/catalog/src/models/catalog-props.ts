@@ -1,6 +1,10 @@
+import type {
+  PublishFolderNode,
+  PublishFooterLabels,
+  PublishHistoryEntry,
+  PublishPanelLabels,
+} from '@epam/ai-dial-publish-panel';
 import type { ReactNode } from 'react';
-import type { PublishFooterTexts } from '../components/PublishPanel/PublishFooter';
-import type { PublishPanelTexts } from '../components/PublishPanel/PublishPanel';
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogSortKey } from '../types/sort';
 import type { CredentialsLevel } from '../types/toolset-auth';
@@ -9,7 +13,6 @@ import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type { CatalogItemDetailsFetchResult } from './item-details-data';
 import type { ItemDetailsTexts } from './item-details-props';
-import type { PublishFolderNode, PublishHistoryEntry } from './publish';
 
 /** A single option in the Create dropdown. */
 export interface CreateOption {
@@ -118,7 +121,7 @@ export interface CatalogProps {
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */
-  publishTexts?: PublishPanelTexts & PublishFooterTexts;
+  publishLabels?: PublishPanelLabels & PublishFooterLabels;
   /** Called when the "Edit" button is clicked in the details panel. Shown only when the item's `isEditable` is `true`. */
   onEdit?: (item: CatalogItem) => void;
   /**

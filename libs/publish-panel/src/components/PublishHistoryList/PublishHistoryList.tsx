@@ -22,11 +22,11 @@ export interface PublishHistoryListProps {
   /** Label for the badge on the entry matching `currentVersion`. Default: `'Current'`. */
   currentBadgeLabel?: string;
   /** Message shown when `entries` is empty. Default: see implementation. */
-  emptyStateText?: string;
+  emptyStateLabel?: string;
   /** Message shown while history is loading. Default: `'Loading history…'`. */
-  loadingText?: string;
+  loadingLabel?: string;
   /** Message shown when history failed to load. Default: `'Failed to load publish history.'`. */
-  errorText?: string;
+  errorLabel?: string;
   /** Typography class for each entry's version line. Default: `'dial-small-text text-primary'`. */
   versionClassName?: string;
   /** Typography class for each entry's publish date. Default: `'dial-small-text text-secondary'`. */
@@ -43,27 +43,27 @@ export const PublishHistoryList: FC<PublishHistoryListProps> = ({
   hasError = false,
   versionPrefix = 'Version',
   currentBadgeLabel = 'Current',
-  emptyStateText = 'Not published to this folder yet — this will be the first version here.',
-  loadingText = 'Loading history…',
-  errorText = 'Failed to load publish history.',
+  emptyStateLabel = 'Not published to this folder yet — this will be the first version here.',
+  loadingLabel = 'Loading history…',
+  errorLabel = 'Failed to load publish history.',
   versionClassName = 'dial-small-text text-primary',
   dateClassName = 'dial-small-text text-secondary',
   emptyStateClassName = 'dial-small-text text-secondary',
 }) => {
   if (isLoading) {
-    return <p className={emptyStateClassName}>{loadingText}</p>;
+    return <p className={emptyStateClassName}>{loadingLabel}</p>;
   }
 
   if (hasError) {
     return (
       <p className={emptyStateClassName} role="alert">
-        {errorText}
+        {errorLabel}
       </p>
     );
   }
 
   if (entries.length === 0) {
-    return <p className={emptyStateClassName}>{emptyStateText}</p>;
+    return <p className={emptyStateClassName}>{emptyStateLabel}</p>;
   }
 
   return (

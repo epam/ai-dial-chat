@@ -1,19 +1,18 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialCloseButton } from '@epam/ai-dial-ui-kit';
-import { FC, RefObject, useEffect, useMemo, useRef } from 'react';
-import { CatalogItem } from '../../models/catalog-item';
+import { FC, ReactNode, RefObject, useEffect, useMemo, useRef } from 'react';
 import {
   PublishFolderNode,
   PublishHistoryEntry,
   PublishResourceSummary,
 } from '../../models/publish';
 import { derivePublishState } from '../../utils/publish-state';
-import { PublishFooter, PublishFooterTexts } from './PublishFooter';
-import { PublishPanel, PublishPanelTexts } from './PublishPanel';
+import { PublishFooter, PublishFooterLabels } from './PublishFooter';
+import { PublishPanel, PublishPanelLabels } from './PublishPanel';
 import styles from './StandalonePublishPanel.module.scss';
 
-/** Text overrides for all user-visible strings in {@link StandalonePublishPanel} not already covered by `PublishPanelTexts`/`PublishFooterTexts`. */
-export interface StandalonePublishPanelTexts {
+/** Text overrides for all user-visible strings in {@link StandalonePublishPanel} not already covered by `PublishPanelLabels`/`PublishFooterLabels`. */
+export interface StandalonePublishPanelLabels {
   /** Header title. Default: `'Publish'`. */
   title?: string;
   /** Accessible label for the panel's `role="dialog"`. Default: `'Publish'`. */
@@ -26,10 +25,17 @@ export interface StandalonePublishPanelTexts {
 export interface StandalonePublishPanelProps {
   /** Whether the panel is open (controls the slide-in animation and backdrop). */
   isOpen: boolean;
-  /** The catalog entity being published. Mutually exclusive with `resource`. */
-  item?: CatalogItem;
-  /** Title-only summary for an unversioned resource (e.g. a conversation). Mutually exclusive with `item`. */
+  /**
+   * Display metadata for the summary row and for version-derived behavior.
+   * Title-only rendering applies when `renderSummary` is absent.
+   */
   resource?: PublishResourceSummary;
+  /**
+   * Renders a custom summary row in place of the default title-only row.
+   * Pass `resource` alongside this so version-derived behavior keeps working.
+   * See `PublishPanel`'s `renderSummary` prop.
+   */
+  renderSummary?: () => ReactNode;
   /** Previously published entries for this item. */
   history: PublishHistoryEntry[];
   /** Whether `history` is currently being fetched. Default: `false`. */
@@ -70,18 +76,18 @@ export interface StandalonePublishPanelProps {
   /** Called when the user confirms the publish action. */
   onSubmit: () => void;
   /** Text overrides for the panel body. */
-  panelTexts?: PublishPanelTexts;
+  panelLabels?: PublishPanelLabels;
   /** Text overrides for the pinned footer. */
-  footerTexts?: PublishFooterTexts;
+  footerLabels?: PublishFooterLabels;
   /** Text overrides for the header/shell. */
-  texts?: StandalonePublishPanelTexts;
+  labels?: StandalonePublishPanelLabels;
 }
 
 /** Standalone end-edge slide-in panel for the Publish flow: full-screen backdrop, entity summary, folder picker, history list, and pinned footer. */
 export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   isOpen,
-  item,
   resource,
+  renderSummary,
   history,
   isHistoryLoading = false,
   hasHistoryError = false,
@@ -100,16 +106,16 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   onClose,
   returnFocusRef,
   onSubmit,
-  panelTexts,
-  footerTexts,
-  texts = {},
+  panelLabels,
+  footerLabels,
+  labels = {},
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const {
     title = 'Publish',
     ariaLabel = 'Publish',
     closeAriaLabel = 'Close',
-  } = texts;
+  } = labels;
 
   const derived = useMemo(
     () =>
@@ -211,8 +217,8 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
         >
           <div className="p-[22px]">
             <PublishPanel
-              item={item}
               resource={resource}
+              renderSummary={renderSummary}
               history={history}
               isHistoryLoading={isHistoryLoading}
               hasHistoryError={hasHistoryError}
@@ -228,19 +234,19 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
               isSubmitting={isSubmitting}
               hasSubmitError={hasSubmitError}
               allowReplace={allowReplace}
-              texts={panelTexts}
+              labels={panelLabels}
             />
           </div>
         </div>
 
         <PublishFooter
-          version={item?.version ?? resource?.version}
+          version={resource?.version}
           hasExistingPublicationInFolder={hasExistingPublicationInFolder}
           isSubmitDisabled={derived.isSubmitDisabled}
           isSubmitLoading={derived.isSubmitLoading}
           onCancel={onClose}
           onSubmit={onSubmit}
-          texts={footerTexts}
+          labels={footerLabels}
         />
       </div>
     </>

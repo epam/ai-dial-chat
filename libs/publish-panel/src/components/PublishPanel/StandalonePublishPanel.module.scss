@@ -5,7 +5,7 @@
 // no other coupling to DetailsPanel (see design.md D4).
 
 .backdrop {
-  background: rgba(12, 16, 29, 0.7);
+  background: var(--bg-blackout, #0c101d4d);
 }
 
 .panel {

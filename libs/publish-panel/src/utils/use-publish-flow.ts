@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CatalogItem } from '../models/catalog-item';
 import { PublishFolderNode, PublishHistoryEntry } from '../models/publish';
 
-/** An item publishable through {@link usePublishFlow} — versioned (`CatalogItem`) or not (e.g. a conversation). */
+/** An item publishable through {@link usePublishFlow} — versioned or not (e.g. a conversation). */
 export interface PublishFlowItem {
   /** Version, when the item is versioned. `undefined` for unversioned resources. */
   version?: string;
@@ -67,7 +66,7 @@ const removeFolder = (
 
 /** Options for {@link usePublishFlow}. */
 export interface UsePublishFlowOptions<TItem extends PublishFlowItem> {
-  /** The item being published — a `CatalogItem` (versioned) or an unversioned resource (e.g. a conversation). */
+  /** The item being published — versioned, or an unversioned resource (e.g. a conversation). */
   item: TItem;
   /** Previously published entries for this item. */
   history: PublishHistoryEntry[];
@@ -129,7 +128,9 @@ export interface UsePublishFlowResult {
 }
 
 /** Manages all state for the Publish flow: folder selection, local folder creation, existing-publication detection, and submit handling. */
-export const usePublishFlow = <TItem extends PublishFlowItem = CatalogItem>({
+export const usePublishFlow = <
+  TItem extends PublishFlowItem = PublishFlowItem,
+>({
   item,
   history,
   folderItems: initialFolderItems,

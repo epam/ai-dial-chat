@@ -1,9 +1,9 @@
+import { PublishFolderNode } from '@epam/ai-dial-publish-panel';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import { PublishFolderNode } from '../../../models/publish';
 import { CatalogEntityType } from '../../../types/entity-type';
 import { DetailsPanel } from '../DetailsPanel';
 
@@ -130,39 +130,42 @@ vi.mock('../TabsContent/Tools/Tools', () => ({
   Tools: () => <div>Tools</div>,
 }));
 vi.mock('../ApiDetails', () => ({ ApiDetails: () => <div>Api</div> }));
-vi.mock('../../PublishPanel/PublishPanel', () => ({
-  PublishPanel: ({
-    onSelectedFolderPathChange,
-    onCreateFolder,
-  }: {
-    onSelectedFolderPathChange: (path: string[]) => void;
-    onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
-  }) => (
-    <div>
-      <span>Publish panel</span>
-      <button onClick={() => onSelectedFolderPathChange(['Shared'])}>
-        Select Shared
-      </button>
-      <button onClick={() => void onCreateFolder(['Shared'], 'New')}>
-        Create folder
-      </button>
-    </div>
-  ),
-}));
-vi.mock('../../PublishPanel/PublishFooter', () => ({
-  PublishFooter: ({
-    onCancel,
-    onSubmit,
-  }: {
-    onCancel: () => void;
-    onSubmit: () => void;
-  }) => (
-    <div>
-      <button onClick={onCancel}>Cancel</button>
-      <button onClick={onSubmit}>Submit</button>
-    </div>
-  ),
-}));
+vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-publish-panel')>();
+  return {
+    ...actual,
+    PublishPanel: ({
+      onSelectedFolderPathChange,
+      onCreateFolder,
+    }: {
+      onSelectedFolderPathChange: (path: string[]) => void;
+      onCreateFolder: (parentPath: string[], name: string) => Promise<void>;
+    }) => (
+      <div>
+        <span>Publish panel</span>
+        <button onClick={() => onSelectedFolderPathChange(['Shared'])}>
+          Select Shared
+        </button>
+        <button onClick={() => void onCreateFolder(['Shared'], 'New')}>
+          Create folder
+        </button>
+      </div>
+    ),
+    PublishFooter: ({
+      onCancel,
+      onSubmit,
+    }: {
+      onCancel: () => void;
+      onSubmit: () => void;
+    }) => (
+      <div>
+        <button onClick={onCancel}>Cancel</button>
+        <button onClick={onSubmit}>Submit</button>
+      </div>
+    ),
+  };
+});
 
 const item: CatalogItem = {
   id: '1',

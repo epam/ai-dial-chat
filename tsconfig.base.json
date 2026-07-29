@@ -29,6 +29,7 @@
       "@epam/ai-dial-conversation-panel/*": ["./libs/conversation-panel/*"],
       "@epam/ai-dial-starter-buttons/*": ["./libs/starter-buttons/*"],
       "@epam/ai-dial-catalog/*": ["./libs/catalog/*"],
+      "@epam/ai-dial-publish-panel/*": ["./libs/publish-panel/*"],
       "@epam/ai-dial-share/*": ["./libs/share/*"],
       "@epam/ai-dial-source-panel/*": ["./libs/source-panel/*"],
       "@epam/ai-dial-attachment-canvas/*": ["./libs/attachment-canvas/*"],

@@ -6,7 +6,7 @@ import * as path from 'path';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
-  cacheDir: '../../node_modules/.vite/libs/catalog',
+  cacheDir: '../../node_modules/.vite/libs/publish-panel',
   plugins: [
     react(),
     dts({
@@ -20,9 +20,9 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../ai-dial-kit/src/index.ts',
       ),
-      '@epam/ai-dial-publish-panel': path.resolve(
+      '@epam/ai-dial-sidebar': path.resolve(
         import.meta.dirname,
-        '../publish-panel/src/index.ts',
+        '../sidebar/src/index.ts',
       ),
     },
   },
@@ -35,7 +35,7 @@ export default defineConfig(() => ({
     },
     lib: {
       entry: 'src/index.ts',
-      name: '@epam/ai-dial-catalog',
+      name: '@epam/ai-dial-publish-panel',
       fileName: 'index',
       formats: ['es' as const],
     },
@@ -50,7 +50,7 @@ export default defineConfig(() => ({
     },
   },
   test: {
-    name: '@epam/ai-dial-catalog',
+    name: '@epam/ai-dial-publish-panel',
     watch: false,
     globals: true,
     environment: 'jsdom',

@@ -1,12 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { ComponentProps, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { CatalogItem } from '../../../models/catalog-item';
 import {
   PublishFolderNode,
   PublishHistoryEntry,
+  PublishResourceSummary,
 } from '../../../models/publish';
-import { CatalogEntityType } from '../../../types/entity-type';
 import { PublishPanel } from '../PublishPanel';
 
 interface MockDropdownItem {
@@ -54,15 +53,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   };
 });
 
-const item: CatalogItem = {
-  id: '1',
-  type: CatalogEntityType.Model,
-  name: 'ali.deepseek-v4-flash',
+const resource: PublishResourceSummary = {
+  title: 'ali.deepseek-v4-flash',
   version: '4.0.1',
-  lastUsed: 'now',
-  description: '',
-  folder: [],
-  topics: [],
 };
 
 const folderItems: PublishFolderNode[] = [
@@ -96,7 +89,7 @@ const history: PublishHistoryEntry[] = [
 const renderPanel = (props?: Partial<ComponentProps<typeof PublishPanel>>) =>
   render(
     <PublishPanel
-      item={item}
+      resource={resource}
       history={history}
       folderItems={folderItems}
       onSelectedFolderPathChange={vi.fn()}
@@ -109,10 +102,17 @@ const renderPanel = (props?: Partial<ComponentProps<typeof PublishPanel>>) =>
   );
 
 describe('PublishPanel', () => {
-  it('renders the entity name and current version pill', () => {
+  it('renders the resource title when no renderSummary is provided', () => {
     renderPanel();
     expect(screen.getByText('ali.deepseek-v4-flash')).toBeTruthy();
-    expect(screen.getByText('Version 4.0.1 · current')).toBeTruthy();
+  });
+
+  it('renders the renderSummary slot in place of the default title row', () => {
+    renderPanel({
+      renderSummary: () => <div>Custom entity header</div>,
+    });
+    expect(screen.getByText('Custom entity header')).toBeTruthy();
+    expect(screen.queryByText('ali.deepseek-v4-flash')).toBeNull();
   });
 
   it('renders the folder section title', () => {
@@ -224,7 +224,7 @@ describe('PublishPanel', () => {
       const { container } = renderPanel({
         selectedFolderPath: [],
         hasWriteAccess: false,
-        texts: { rootFolderLabel: 'Public bucket' },
+        labels: { rootFolderLabel: 'Public bucket' },
       });
       expect(container.textContent).toContain(
         "You don't have permission to publish to Public bucket.",
