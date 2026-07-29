@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "../../dist/libs/catalog",
-    "tsBuildInfoFile": "../../dist/libs/catalog/tsconfig.lib.tsbuildinfo",
+    "outDir": "../../dist/libs/publish-panel",
+    "tsBuildInfoFile": "../../dist/libs/publish-panel/tsconfig.lib.tsbuildinfo",
     "jsx": "react-jsx",
     "declaration": true,
     "sourceMap": true,
@@ -27,10 +27,10 @@
       "path": "../chat-shared/tsconfig.lib.json"
     },
     {
-      "path": "../ai-dial-kit/tsconfig.lib.json"
+      "path": "../sidebar/tsconfig.lib.json"
     },
     {
-      "path": "../publish-panel/tsconfig.lib.json"
+      "path": "../ai-dial-kit/tsconfig.lib.json"
     }
   ]
 }

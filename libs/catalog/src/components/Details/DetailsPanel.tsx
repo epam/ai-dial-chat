@@ -1,23 +1,28 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GhostIconButton, TabRow } from '@epam/ai-dial-kit';
 import {
-  DialCloseButton,
-  DialConfirmationPopup,
-  DialSkeleton,
-} from '@epam/ai-dial-ui-kit';
-import { IconChevronLeft } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import type { DetailsPanelProps } from '../../models/item-details-props';
+  derivePublishState,
+  PublishFooter,
+  PublishPanel,
+  usePublishFlow,
+} from '@epam/ai-dial-publish-panel';
 import type {
   PublishFolderNode,
   PublishHistoryEntry,
-} from '../../models/publish';
+} from '@epam/ai-dial-publish-panel';
+import {
+  DialCloseButton,
+  DialConfirmationPopup,
+  DialSkeleton,
+  DialTag,
+} from '@epam/ai-dial-ui-kit';
+import { IconChevronLeft } from '@tabler/icons-react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import type { CatalogItem } from '../../models/catalog-item';
+import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogDetailsTab } from '../../types/detail-tab';
-import { derivePublishState } from '../../utils/publish-state';
 import { getSignedInLevel } from '../../utils/toolset-credentials';
-import { usePublishFlow } from '../../utils/use-publish-flow';
-import { PublishFooter } from '../PublishPanel/PublishFooter';
-import { PublishPanel } from '../PublishPanel/PublishPanel';
+import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { ApiDetails } from './ApiDetails';
 import { CredentialsSection } from './Credentials/CredentialsSection';
@@ -54,7 +59,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
   onPublish,
   onPublishSuccess,
   onCreatePublishFolder,
-  publishTexts,
+  publishLabels,
   shareOverlay,
   isShareVisible,
   connectOverlay,
@@ -105,7 +110,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     };
   }, [isPublishOpen, getPublishHistory, item]);
 
-  const publishFlow = usePublishFlow({
+  const publishFlow = usePublishFlow<CatalogItem>({
     item,
     history: publishHistory,
     folderItems: publishFolderItems,
@@ -321,7 +326,25 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           {isPublishOpen ? (
             <div className="p-[22px]">
               <PublishPanel
-                item={item}
+                resource={{
+                  title: item.name,
+                  version: item.version,
+                  iconUrl: item.iconUrl,
+                }}
+                renderSummary={() => (
+                  <>
+                    <EntityHeader
+                      item={item}
+                      iconSize={40}
+                      hasFeaturedTag={false}
+                      showVersion={false}
+                    />
+                    <DialTag
+                      label={`Version ${item.version} · current`}
+                      className="shrink-0 whitespace-nowrap !border-tertiary !bg-accent-primary-alpha !text-accent-primary"
+                    />
+                  </>
+                )}
                 history={publishHistory}
                 isHistoryLoading={isPublishHistoryLoading}
                 hasHistoryError={hasPublishHistoryError}
@@ -338,7 +361,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 hasWriteAccess={publishFlow.hasWriteAccess}
                 isSubmitting={publishFlow.isSubmitting}
                 hasSubmitError={publishFlow.hasSubmitError}
-                texts={publishTexts}
+                labels={publishLabels}
               />
             </div>
           ) : (
@@ -490,7 +513,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             isSubmitLoading={publishDerived.isSubmitLoading}
             onCancel={handleClosePublish}
             onSubmit={handleSubmitPublish}
-            texts={publishTexts}
+            labels={publishLabels}
           />
         )}
       </div>

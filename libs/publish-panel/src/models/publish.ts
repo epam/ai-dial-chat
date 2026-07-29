@@ -28,11 +28,12 @@ export interface PublishHistoryEntry {
 }
 
 /**
- * Minimal display data for the Publish flow's entity-summary row, covering
- * both versioned catalog entities and unversioned resources (e.g. a
- * conversation). `PublishPanel` renders the full `EntityHeader`+version-pill
- * summary only when a `CatalogItem` is supplied; a title-only resource
- * (`version` and `iconUrl` both absent) renders a simpler row instead.
+ * Minimal display data for the Publish flow's entity-summary row and for
+ * version-derived behavior (the replace-warning callout, the publish-history
+ * section's visibility), covering both versioned entities and unversioned
+ * resources (e.g. a conversation). `PublishPanel` renders a title-only row
+ * from this by default; a host needing a richer summary (icon, type badge)
+ * passes `renderSummary` alongside this instead.
  */
 export interface PublishResourceSummary {
   /** Display title/name shown in the summary row. */

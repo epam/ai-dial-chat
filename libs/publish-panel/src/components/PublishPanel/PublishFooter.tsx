@@ -4,7 +4,7 @@ import { FC } from 'react';
 import styles from './PublishFooter.module.scss';
 
 /** Text overrides for all user-visible strings in {@link PublishFooter}. */
-export interface PublishFooterTexts {
+export interface PublishFooterLabels {
   /** Cancel button label. Default: `'Cancel'`. */
   cancelLabel?: string;
   /** Submit button label when publishing a new version. Default: `'Publish'`. */
@@ -30,7 +30,7 @@ export interface PublishFooterProps {
   /** Called when the user confirms the publish/update action. */
   onSubmit: () => void;
   /** Text overrides for all user-visible strings. */
-  texts?: PublishFooterTexts;
+  labels?: PublishFooterLabels;
 }
 
 /** Action row for the Publish flow: pinned Cancel and Publish/Update buttons. */
@@ -41,14 +41,14 @@ export const PublishFooter: FC<PublishFooterProps> = ({
   isSubmitLoading,
   onCancel,
   onSubmit,
-  texts = {},
+  labels = {},
 }) => {
   const {
     cancelLabel = 'Cancel',
     publishDefaultLabel = 'Publish',
     updateLabel = 'Update version {version}',
     publishingInProgressLabel = 'Publishing…',
-  } = texts;
+  } = labels;
 
   const submitLabel = (() => {
     if (isSubmitLoading) {

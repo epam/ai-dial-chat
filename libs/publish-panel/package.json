@@ -1,6 +1,6 @@
 {
-  "name": "@epam/ai-dial-catalog",
-  "description": "Marketplace catalog component for browsing models, tools, and assistants with search, filter, and sort",
+  "name": "@epam/ai-dial-publish-panel",
+  "description": "Publish-to-folder UI and state flow shared by catalog entity publish and conversation publish",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
@@ -22,9 +22,8 @@
     "react": "^19.0.0",
     "@tabler/icons-react": "^3.0.0",
     "@epam/ai-dial-kit": "*",
+    "@epam/ai-dial-sidebar": "*",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-publish-panel": "*",
-    "ag-grid-community": "35.3.0",
     "@epam/ai-dial-ui-kit": "^0.13.0-dev.12"
   },
   "nx": {

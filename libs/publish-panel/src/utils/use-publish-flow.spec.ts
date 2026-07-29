@@ -1,19 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { CatalogItem } from '../models/catalog-item';
 import { PublishFolderNode, PublishHistoryEntry } from '../models/publish';
-import { CatalogEntityType } from '../types/entity-type';
-import { usePublishFlow } from './use-publish-flow';
+import { PublishFlowItem, usePublishFlow } from './use-publish-flow';
 
-const item: CatalogItem = {
-  id: '1',
-  type: CatalogEntityType.Model,
-  name: 'ali.deepseek-v4-flash',
+const item: PublishFlowItem = {
   version: '4.0.1',
-  lastUsed: 'now',
-  description: '',
-  folder: [],
-  topics: [],
 };
 
 const folderItems: PublishFolderNode[] = [
