@@ -82,12 +82,15 @@ RTL: tab bar direction is handled by the ui-kit; no physical direction classes o
 
 ### Requirement: Selection cleared on tab change
 
-`DialFileManagerModal` SHALL reset `selectedPaths` to an empty `Set` whenever `activeTab` changes. This prevents stale selections from one tab's file tree being carried over to another tab's tree.
+`DialFileManagerModal` SHALL reset `selectedPaths` to an empty `Set` when its tab-change handler changes `activeTab`. This prevents stale selections from one tab's file tree being carried over to another tab's tree.
 
-#### Scenario: selectedPaths empty after tab switch
+> **Implementation note:** the ui-kit may replace the tab strip with the bulk-actions toolbar while a selection is active. Specs and tests SHALL NOT require a user to click a tab while selected files hide the tab controls.
 
-- **WHEN** files are selected on My files and the user switches to Shared
-- **THEN** `selectedPaths` is `new Set()` on the Shared tab
+#### Scenario: selectedPaths empty after tab-change handler runs
+
+- **GIVEN** `selectedPaths` contains files from My files
+- **WHEN** the modal's tab-change handler is invoked with Shared
+- **THEN** `selectedPaths` is reset to `new Set()` before the Shared tab listing is used
 
 ---
 

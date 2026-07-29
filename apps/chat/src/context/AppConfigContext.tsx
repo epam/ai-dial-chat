@@ -31,6 +31,7 @@ export interface AppConfigState {
     enabledUiFeatures: string[] | null;
     announcementHtml: string | null;
     deepResearchToolId: string | null;
+    footerHtmlMessage: string;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -49,6 +50,7 @@ const INITIAL_STATE: AppConfigState = {
     enabledUiFeatures: null,
     announcementHtml: null,
     deepResearchToolId: null,
+    footerHtmlMessage: '',
   },
 };
 
@@ -86,6 +88,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             deepResearchToolId:
               (response.config as { deepResearchToolId?: string })
                 ?.deepResearchToolId ?? null,
+            footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
           },
           metadata: response.metadata,
         });

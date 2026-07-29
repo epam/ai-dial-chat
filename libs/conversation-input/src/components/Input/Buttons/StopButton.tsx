@@ -10,6 +10,7 @@ interface Props {
   ariaLabel?: string;
 }
 
+/** Square stop-streaming button. */
 export const StopButton: FC<Props> = ({
   onStop,
   ariaLabel = 'Stop streaming',

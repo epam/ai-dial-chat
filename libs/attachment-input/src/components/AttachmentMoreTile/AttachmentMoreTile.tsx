@@ -4,11 +4,7 @@ import { ATTACHMENT_TILE_BASE_CLASS } from '../../constants/attachment-group';
 import type { AttachmentMoreTileProps } from '../../models/attachment-more-tile';
 import styles from './AttachmentMoreTile.module.scss';
 
-/**
- * Square placeholder tile shown in the attachment grid: a "+N" tile when
- * collapsed (activating it expands the group), or — via `children` — a
- * collapse-icon tile in the same tile form for "show less".
- */
+/** Square placeholder tile shown in the attachment grid: a "+N" overflow tile when collapsed, or a collapse-icon tile when expanded. */
 export const AttachmentMoreTile: FC<AttachmentMoreTileProps> = ({
   count,
   onClick,

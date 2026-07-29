@@ -79,7 +79,7 @@ interface HeaderProps {
   /** Called when the "Publish" button is clicked; the host swaps this panel's content to the publish view. */
   onOpenPublish?: () => void;
 }
-/** Right-side slide-in panel displaying full details for a catalog item. */
+/** Details panel header bar: entity identity (icon + name + version), action buttons (Share, Connect, Edit, Delete, Publish), and inline credentials section. */
 export const Header: FC<HeaderProps> = ({
   item,
   onUseInChat,
@@ -119,13 +119,13 @@ export const Header: FC<HeaderProps> = ({
     texts?.hasPrimaryAction !== false &&
     (isPrimaryActionVisible?.(item) ??
       (item.type === CatalogEntityType.Model ||
-        item.type === CatalogEntityType.Application));
+        item.type === CatalogEntityType.Agent));
 
   const shouldShowPublish =
     isPublishVisible?.(item) ??
     (item.type === CatalogEntityType.Model ||
       item.type === CatalogEntityType.Toolset ||
-      item.type === CatalogEntityType.Application);
+      item.type === CatalogEntityType.Agent);
 
   const shouldShowEditAction = !!onEdit && !!item.isEditable;
 

@@ -27,6 +27,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       announcementHtml: null,
       deepResearchToolId: null,
       enabledUiFeatures,
+      footerHtmlMessage: '',
     },
   } satisfies AppConfigState);
 

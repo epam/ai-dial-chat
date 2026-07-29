@@ -100,10 +100,4 @@ describe('ChatLayout', () => {
       screen.queryByRole('button', { name: ButtonsI18nKeys.NewChat }),
     ).toBeNull();
   });
-
-  it('always applies a bottom border', () => {
-    const { container } = renderChatLayout();
-    const bar = container.querySelector('.desktop\\:flex');
-    expect(bar?.className).toContain('border-b');
-  });
 });

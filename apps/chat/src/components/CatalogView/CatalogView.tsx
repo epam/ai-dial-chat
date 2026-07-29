@@ -4,9 +4,9 @@ import {
   CatalogItem,
   CatalogItemDetailsFetchResult,
   CatalogViewMode,
+  CreateOption,
   CredentialsLevel,
   CredentialStatus,
-  CreateOption,
 } from '@epam/ai-dial-catalog';
 import { OverlayFeature } from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
@@ -30,6 +30,10 @@ import {
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import {
+  FavoriteEntityType,
+  useFavoriteApplications,
+} from '../../context/FavoriteApplicationsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
 import {
@@ -37,9 +41,6 @@ import {
   useToolsetLogin,
 } from '../../hooks/toolsets/useToolsetLogin';
 import { useCatalogSortFilterPreference } from '../../hooks/useCatalogSortFilterPreference/useCatalogSortFilterPreference';
-import useFavoriteApplications, {
-  FavoriteEntityType,
-} from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { deleteApplication } from '../../server-api/applications';
 import { getDeploymentLimits } from '../../server-api/deployment-limits';
@@ -69,7 +70,6 @@ import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContaine
 /** Entity types shown in the catalog picker modal: models and agents only. */
 const PICKER_VISIBLE_TYPES = new Set<CatalogEntityType>([
   CatalogEntityType.Model,
-  CatalogEntityType.Application,
   CatalogEntityType.Agent,
 ]);
 
@@ -448,8 +448,8 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [setSelectedItemId, navigate],
   );
 
-  // Picker mode: a card click selects it and closes the modal immediately,
-  // without opening its details.
+  /* Picker mode: a card click selects it and closes the modal immediately,
+   * without opening its details. */
   const handleCardSelect = useCallback(
     (item: CatalogItem) => {
       setSelectedItemId(item.id);
@@ -461,7 +461,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
   const isPrimaryActionVisible = useCallback(
     (item: CatalogItem) =>
       item.type === CatalogEntityType.Model ||
-      item.type === CatalogEntityType.Application,
+      item.type === CatalogEntityType.Agent,
     [],
   );
 
@@ -475,9 +475,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     (item: CatalogItem) => {
       if (!dialCoreExternalUrl) return false;
       if (item.type === CatalogEntityType.Toolset) return true;
-      return (
-        item.type === CatalogEntityType.Application && item.supportsMcp === true
-      );
+      return item.type === CatalogEntityType.Agent && item.supportsMcp === true;
     },
     [dialCoreExternalUrl],
   );
@@ -727,7 +725,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         ariaLabel: t(NavigationI18nKeys.Catalog),
         tabLabels: {
           [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
-          [CatalogEntityType.Application]: t(CatalogI18nKeys.TabApplications),
+          [CatalogEntityType.Agent]: t(CatalogI18nKeys.TabApplications),
           [CatalogEntityType.Toolset]: t(CatalogI18nKeys.TabToolsets),
         },
       }}

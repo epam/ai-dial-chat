@@ -45,10 +45,7 @@ interface AccessControlProps {
   accessTriggerLabelClassName?: string;
 }
 
-/**
- * "Anyone with the link" row: an icon, title/subtitle, and either an
- * interactive Can view/Can edit dropdown or a static "Can view" label.
- */
+/** "Anyone with the link" row: icon, title/subtitle, and an optional Can view/Can edit access-level control. */
 export const AccessControl: FC<AccessControlProps> = ({
   anyoneWithLinkTitle,
   anyoneWithLinkSubtitle,

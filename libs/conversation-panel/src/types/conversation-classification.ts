@@ -1,7 +1,4 @@
-/**
- * Active filter tab value; also used as the source/ownership of a conversation
- * and to identify one of the collapsible groups in the conversation panel.
- */
+/** Filter tab identifier; also used as conversation source and group key. */
 export enum FilterTab {
   All = 'all',
   Pinned = 'pinned',

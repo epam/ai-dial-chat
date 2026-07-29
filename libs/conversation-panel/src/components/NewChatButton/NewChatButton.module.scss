@@ -1,5 +1,5 @@
 .button {
-  background: var(--cp-new-chat-bg, var(--bg-layer-0, #fcfcfc));
+  background: var(--cp-new-chat-bg, var(--bg-layer-raised, #fcfcfc));
 
   box-shadow:
     0 1px 3px
@@ -15,7 +15,7 @@
     background-color 150ms ease;
 
   &:hover {
-    background: var(--cp-new-chat-hover, var(--bg-layer-0, #fcfcfc));
+    background: var(--cp-new-chat-hover, var(--bg-layer-raised, #fcfcfc));
     box-shadow:
       0 2px 6px
         var(

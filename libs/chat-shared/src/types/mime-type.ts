@@ -1,7 +1,4 @@
-/**
- * Well-known MIME type constants used in DIAL API attachments.
- * For arbitrary subtypes, pass a plain `string` alongside this enum.
- */
+/** Well-known MIME type constants used in DIAL API attachments. */
 export enum MIMEType {
   // Text / markup
   /** GitHub-flavoured Markdown. */
@@ -48,10 +45,7 @@ export enum MIMEType {
   SVG = 'image/svg+xml',
 }
 
-/**
- * Well-known file extension constants used as fallback when a MIME type is
- * unavailable or unreliable.
- */
+/** Well-known file extension constants used as fallback when a MIME type is unavailable. */
 export enum FileExtension {
   /** PDF document. */
   PDF = 'pdf',

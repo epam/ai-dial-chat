@@ -13,10 +13,7 @@ export interface AboutTextRun {
 /** A single content run — either a list of bullets or a paragraph of text. */
 export type AboutRun = AboutBulletRun | AboutTextRun;
 
-/**
- * A parsed section of about content.
- * Sections with a `heading` start with a short non-bullet label line.
- */
+/** A parsed section of an item's about-page content. */
 export interface AboutBlock {
   /** Optional section heading (e.g. "Capabilities", "Pricing"). */
   heading?: string;
@@ -24,14 +21,7 @@ export interface AboutBlock {
   runs: AboutRun[];
 }
 
-/**
- * Parses a plain-text about description into structured blocks for rendering.
- *
- * Splits on blank lines. Within each chunk the first line becomes a section
- * heading when it is ≤ 60 chars, does not start with `•`, and is followed by
- * more lines. Content lines starting with `•` are grouped into bullet runs;
- * other lines become text paragraph runs.
- */
+/** Parses a plain-text about description into structured `AboutBlock[]` for rendering. */
 export const parseAboutContent = (content: string): AboutBlock[] =>
   content
     .trim()

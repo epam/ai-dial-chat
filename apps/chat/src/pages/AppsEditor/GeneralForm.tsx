@@ -223,7 +223,7 @@ const GeneralForm = forwardRef<GeneralFormHandle, Props>(function GeneralForm(
   const previewItem = useMemo<CatalogItem>(
     () => ({
       id: 'preview',
-      type: CatalogEntityType.Application,
+      type: CatalogEntityType.Agent,
       name: values.name,
       version: values.version,
       lastUsed: '',

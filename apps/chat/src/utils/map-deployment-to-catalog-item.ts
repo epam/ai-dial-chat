@@ -84,7 +84,7 @@ export const mapToolsetCredentials = (
 const TYPE_MAP: Record<string, CatalogEntityType> = {
   model: CatalogEntityType.Model,
   toolset: CatalogEntityType.Toolset,
-  application: CatalogEntityType.Application,
+  application: CatalogEntityType.Agent,
 };
 
 const APPLICATIONS_PREFIX = 'applications/';

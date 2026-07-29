@@ -1,9 +1,6 @@
 import type { CSSProperties } from 'react';
 
-/**
- * Builds a `CSSProperties` object from a record mapping CSS custom property
- * names to values. Entries with `undefined` or empty-string values are omitted.
- */
+/** Builds a `CSSProperties` object from a record of CSS custom property names to values, omitting entries with `undefined` or empty-string values. */
 export const buildCssVars = (
   vars: Record<string, string | number | undefined>,
 ): CSSProperties => {

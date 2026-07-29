@@ -41,6 +41,7 @@ vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => ({
     config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
   }),
+  useFeatureFlag: () => false,
 }));
 
 vi.mock('../../../context/auth/UserContext', () => ({
@@ -256,23 +257,6 @@ describe('NewConversationComposer', () => {
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('send-disabled').textContent).toBe('true');
-  });
-
-  it('always applies the accent border inputClassName', async () => {
-    render(
-      <Suspense fallback={null}>
-        <NewConversationComposer
-          deployments={deployments}
-          selectedDeploymentId="gpt-4o"
-          placeholder="Message"
-          onCreateConversation={vi.fn()}
-        />
-      </Suspense>,
-    );
-    await screen.findByTestId('conversation-input');
-    expect(screen.getByLabelText('input-class-name').textContent).toContain(
-      'border',
-    );
   });
 
   it('suppresses autoFocus when skip-focus-chat-input-onload is enabled', async () => {

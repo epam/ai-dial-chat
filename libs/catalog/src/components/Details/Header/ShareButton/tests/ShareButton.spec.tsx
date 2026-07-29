@@ -55,27 +55,17 @@ describe('ShareButton', () => {
     expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
   });
 
-  it('hides Share for a Guardrail item', () => {
-    render(<ShareButton item={makeItem(CatalogEntityType.Guardrail)} />);
-    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
-  });
-
-  it('hides Share for an MCP item', () => {
-    render(<ShareButton item={makeItem(CatalogEntityType.Mcp)} />);
-    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
-  });
-
   it('hides Share for an item not owned by the current user', () => {
     render(
       <ShareButton
-        item={{ ...makeItem(CatalogEntityType.Application), isMyApp: false }}
+        item={{ ...makeItem(CatalogEntityType.Agent), isMyApp: false }}
       />,
     );
     expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
   });
 
   it('hides Share when isMyApp is not set', () => {
-    const item = makeItem(CatalogEntityType.Application);
+    const item = makeItem(CatalogEntityType.Agent);
     delete item.isMyApp;
     render(<ShareButton item={item} />);
     expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();

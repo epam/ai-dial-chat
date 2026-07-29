@@ -3,12 +3,13 @@ import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { DeploymentItemDto, DialToolsetDto } from '@epam/chat-api-client';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState, type Context } from 'react';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
+import * as OverlayContextMock from '../../context/overlay/OverlayContext';
 import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as conversationsApi from '../../server-api/conversations.api';
@@ -16,6 +17,14 @@ import * as filesApi from '../../server-api/files.api';
 import { AuthStatus } from '../../types/auth-status';
 import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
 import ConversationRoute from './ConversationRoute';
+
+const OverlayTestCtx = (
+  OverlayContextMock as unknown as {
+    _OverlayTestCtx: Context<
+      { notifyConversationLoaded: () => void } | undefined
+    >;
+  }
+)._OverlayTestCtx;
 
 const overlayMocks = vi.hoisted(() => ({
   current: undefined as
@@ -27,6 +36,15 @@ const overlayMocks = vi.hoisted(() => ({
 vi.mock('../../hooks/attachment/useOpenAttachmentCanvas', () => ({
   useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
 }));
+vi.mock(
+  '../../components/DeploymentSelector/useDeploymentSelectorOverlay',
+  () => ({
+    useDeploymentSelectorOverlay: () => ({
+      renderOverlay: vi.fn(),
+      catalogModal: null,
+    }),
+  }),
+);
 vi.mock('../../context/AppConfigContext', () => ({
   default: ({ children }: { children: ReactNode }) => children,
   useAppConfig: () => ({
@@ -39,9 +57,16 @@ vi.mock('../../context/AppConfigContext', () => ({
 vi.mock('../../context/DeploymentsContext');
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../context/NotificationContext');
-vi.mock('../../context/overlay/OverlayContext', () => ({
-  useOptionalOverlay: () => overlayMocks.current,
-}));
+vi.mock('../../context/overlay/OverlayContext', async () => {
+  const { createContext, useContext } = await import('react');
+  const _OverlayTestCtx = createContext<
+    { notifyConversationLoaded: () => void } | undefined
+  >(undefined);
+  return {
+    useOptionalOverlay: () => useContext(_OverlayTestCtx),
+    _OverlayTestCtx,
+  };
+});
 vi.mock('../../hooks/keyboard-shortcut/useKeyboardShortcutPreference');
 vi.mock('../../hooks/useUiFeature', async () => {
   const { DEFAULT_ENABLED_UI_FEATURES } =
@@ -215,7 +240,6 @@ describe('ConversationRoute', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    overlayMocks.current = undefined;
     mockUseDeployments.mockReturnValue({
       items: mockItems,
       selectedItemId: 'gpt-4o',
@@ -295,22 +319,39 @@ describe('ConversationRoute', () => {
   });
 
   it('notifies overlay when overlay context becomes available after initial render', async () => {
-    const view = renderRoute();
-
-    expect(overlayMocks.notifyConversationLoaded).not.toHaveBeenCalled();
-
-    overlayMocks.current = {
-      notifyConversationLoaded: overlayMocks.notifyConversationLoaded,
+    let setOverlay!: (
+      v: { notifyConversationLoaded: () => void } | undefined,
+    ) => void;
+    const OverlayDriver = ({ children }: { children: ReactNode }) => {
+      const [overlay, setO] = useState<
+        { notifyConversationLoaded: () => void } | undefined
+      >(undefined);
+      // eslint-disable-next-line react-hooks/globals
+      setOverlay = setO;
+      return (
+        <OverlayTestCtx.Provider value={overlay}>
+          {children}
+        </OverlayTestCtx.Provider>
+      );
     };
-    view.rerender(
+
+    render(
       <MemoryRouter>
-        <ConversationRoute />
+        <OverlayDriver>
+          <ConversationRoute />
+        </OverlayDriver>
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(overlayMocks.notifyConversationLoaded).toHaveBeenCalledOnce();
+    expect(overlayMocks.notifyConversationLoaded).not.toHaveBeenCalled();
+
+    await act(async () => {
+      setOverlay({
+        notifyConversationLoaded: overlayMocks.notifyConversationLoaded,
+      });
     });
+
+    expect(overlayMocks.notifyConversationLoaded).toHaveBeenCalledOnce();
   });
 
   it('calls apiCreateConversation with selectedItemId when send fires', async () => {

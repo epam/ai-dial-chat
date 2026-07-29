@@ -30,10 +30,7 @@ export interface MarkdownTableProps {
   classNames: MarkdownTableClassNames;
   /** Color overrides applied as CSS custom properties. */
   colors?: MarkdownTableColors;
-  /**
-   * Accessible label announced for the horizontally scrollable region.
-   * Defaults to `'Scrollable table'`.
-   */
+  /** Accessible label for the horizontally scrollable region. Defaults to `'Scrollable table'`. */
   scrollRegionAriaLabel?: string;
 }
 

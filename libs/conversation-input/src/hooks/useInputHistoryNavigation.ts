@@ -8,18 +8,7 @@ const isOnFirstLine = (value: string, cursorPos: number): boolean =>
 const isOnLastLine = (value: string, cursorPos: number): boolean =>
   !value.slice(cursorPos).includes('\n');
 
-/**
- * Manages keyboard-driven Up/Down navigation through a list of previously
- * sent messages from a chat input textarea.
- *
- * The hook tracks the current history index (-1 = draft mode) and saves the
- * unsent draft when the user first enters history mode. The returned object
- * reference is stable across renders so it does not cause unnecessary
- * re-renders when passed as a dependency.
- *
- * @param messageHistory - Ordered list of previously sent message strings
- *   (oldest first). Pass `undefined` or an empty array to disable navigation.
- */
+/** Manages keyboard-driven Up/Down navigation through a list of previously sent messages from a chat input textarea. */
 export const useInputHistoryNavigation = (
   messageHistory: readonly string[] | undefined,
 ) => {

@@ -13,10 +13,7 @@ export interface InitialsAvatarProps {
   className?: string;
 }
 
-/**
- * A square badge showing 1–2 initials derived from `name` on a deterministic
- * colour background. Used as the fallback when a deployment has no icon image.
- */
+/** A square badge showing 1–2 initials derived from `name` on a deterministic colour background. */
 export const InitialsAvatar: FC<InitialsAvatarProps> = ({
   name,
   size,

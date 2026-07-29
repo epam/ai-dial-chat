@@ -29,7 +29,6 @@ export interface CatalogColors {
 
 /**
  * Typography overrides for the Catalog component.
- * Pass single Tailwind utility classes (e.g. `'dial-h2-text'`, `'dial-body-semi-text'`).
  * When a `fontClassName` is provided, individual font properties are ignored.
  */
 export interface CatalogTypography {
@@ -50,11 +49,7 @@ export interface CatalogTypography {
   tabClassName?: string;
 }
 
-/**
- * Combined style overrides (colors and typography) for the Catalog component.
- * Lib applies these as CSS custom properties via inline styles, allowing the consuming
- * app to customize colors and typography while maintaining layout consistency.
- */
+/** Combined style overrides (colors and typography) for the Catalog component. */
 export interface CatalogStyles {
   /** Color customizations applied as CSS custom properties. */
   colors?: CatalogColors;

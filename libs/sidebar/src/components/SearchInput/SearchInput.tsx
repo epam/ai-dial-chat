@@ -26,9 +26,9 @@ export interface SearchInputStyles {
   colors?: SearchInputColors;
   /** CSS class applied to the search icon. Defaults to the module's `.icon` class (`--text-secondary`). */
   iconClassName?: string;
-  /** CSS class applied to the outer wrapper, merged over the default `'px-2 py-1'`. Override to change the pill's horizontal inset. */
+  /** CSS class applied to the outer wrapper. Defaults to `'px-2 py-1'`. */
   wrapperClassName?: string;
-  /** CSS class applied to the search row, merged after its own border/radius defaults. Use an important-modifier class (e.g. `'!rounded-lg'`) to override the default pill shape. */
+  /** CSS class applied to the search row, merged after its own border and radius defaults. */
   rowClassName?: string;
 }
 
@@ -44,11 +44,7 @@ export interface SearchInputProps {
   styles?: SearchInputStyles;
 }
 
-/**
- * Minimal search input with icon positioned to align with sibling action buttons.
- * Reuses the shared {@link SearchBar} default colors (border, hover/focus, icon
- * and text colors) and only adjusts shape (pill) and background for the sidebar.
- */
+/** Search input styled to align with sidebar action buttons. */
 export const SearchInput: FC<SearchInputProps> = memo(
   ({ value, onChange, labels, styles: stylesProp }) => {
     const {

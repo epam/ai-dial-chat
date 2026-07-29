@@ -23,10 +23,7 @@ export interface FolderPathProps {
   className?: string;
 }
 
-/**
- * Renders folder segments as a read-only (non-clickable) DialBreadcrumb.
- * DialBreadcrumb scrolls horizontally on overflow rather than truncating.
- */
+/** Renders folder path segments as a read-only horizontal breadcrumb. */
 export const FolderPath: FC<FolderPathProps> = ({
   segments,
   labelClassName = 'dial-small-text',

@@ -3,7 +3,6 @@ export { UserMessageBubble } from './components/MessageBubble/UserMessageBubble'
 export { AssistantMessageBubble } from './components/MessageBubble/AssistantMessageBubble';
 export { StatusMessageBubble } from './components/MessageBubble/StatusMessageBubble';
 export { MessageActions } from './components/MessageActions/MessageActions';
-export { MessageSource } from './components/MessageSource/MessageSource';
 export { BubblePosition } from './types/bubble-position';
 export type {
   MessageBubbleProps,

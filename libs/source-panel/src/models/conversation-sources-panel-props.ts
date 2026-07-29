@@ -51,7 +51,7 @@ export interface ConversationSourcesPanelTypography {
 export interface ConversationSourcesPanelStyles {
   /** Color overrides applied as CSS custom properties to the sources section. */
   colors?: ConversationSourcesPanelColors;
-  /** Typography (font utility class) overrides for section headings and source text. */
+  /** Typography overrides for section headings and source text. */
   typography?: ConversationSourcesPanelTypography;
 }
 
@@ -71,11 +71,7 @@ export interface ConversationSourcesPanelProps {
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /** Called when the user clicks a source link. When omitted, the link navigates normally. */
   onSourceClick?: (source: QuotationSource) => void;
-  /**
-   * Called when the user activates the download-all button. Omit this prop
-   * (leave it `undefined`) when there is nothing downloadable — the button
-   * renders disabled whenever this is not provided.
-   */
+  /** Called when the user activates the download-all button; omit to disable the button. */
   onDownloadAll?: () => void;
   /** Whether the viewport is in mobile breakpoint (disables resizing). */
   isMobile: boolean;

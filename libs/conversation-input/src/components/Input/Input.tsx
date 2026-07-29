@@ -39,6 +39,7 @@ import { ModelSelectorControl } from './ModelSelectorControl';
 
 const SEND_BUTTON_EXIT_MS = 160;
 
+/** Full conversation input field: textarea, send/stop, model selector, attachment menu, voice recording, and chat-settings controls. */
 export const Input: FC<InputProps> = ({
   message: messageProp = '',
   messageRevision,

@@ -8,6 +8,7 @@ export * from './ClientChannelApi';
 export * from './ConversationsApi';
 export * from './DeploymentsApi';
 export * from './FilesApi';
+export * from './FooterApi';
 export * from './HealthApi';
 export * from './ModelsApi';
 export * from './PublishApi';
