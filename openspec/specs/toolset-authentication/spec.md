@@ -121,30 +121,47 @@ never be navigated away and, after receiving a successful result, SHALL show a s
 notification and refetch the shared toolset list so the updated authentication status is visible
 without a second login attempt or page reload.
 
+For the Toolset Editor's "With Login" OAuth mode specifically (no manually configured client),
+where the `clientId`/`authorizationEndpoint` are assigned by DIAL Core's dynamic client
+registration during create/update rather than entered by the user, the system SHALL open the
+same-origin placeholder popup synchronously in the click handler (before any asynchronous work),
+then, after the persist-before-login step resolves the toolset id, fetch that toolset's current
+`authSettings` and use the Core-issued `clientId`/`authorizationEndpoint` from that fetch — not
+the pre-save form state, which does not carry them — to build the authorize URL and navigate the
+already-open popup. If the manually configured client fields are already present in the editor's
+form state (the "with login & config" mode, or an already-saved toolset being re-logged-in),
+the system SHALL continue to build the authorize URL directly from that form state without an
+extra fetch.
+
 #### Scenario: Initiate OAuth login from the editor
+
 - **WHEN** a user saves an OAuth toolset in login-with-config mode from the Toolset Editor, or
   clicks "Log in" on an already-configured OAuth toolset
 - **THEN** the system stores redirect state with `credentialsLevel: USER`, opens the provider
   authorization URL in a new window/tab, and the editor tab remains on its current page
 
 #### Scenario: Initiate OAuth login from the Catalog at USER level
+
 - **WHEN** a user clicks "Log in" for an OAuth toolset in the Catalog Details Panel in a section
   scoped to `USER`
 - **THEN** the system stores redirect state with `credentialsLevel: USER`, opens the provider
   authorization URL in a new window/tab, and the Catalog tab remains on its current page
 
 #### Scenario: Initiate OAuth login from the Catalog at GLOBAL level
+
 - **WHEN** an admin clicks "Log in" in the "Entire organization credentials" section of an OAuth
   toolset in the Catalog Details Panel
 - **THEN** the system stores redirect state with `credentialsLevel: GLOBAL`, opens the provider
   authorization URL in a new window/tab, and the Catalog tab remains on its current page
 
 #### Scenario: Authorize URL includes PKCE parameters when configured
+
 - **WHEN** the toolset's stored OAuth configuration includes a `code_challenge` and
   `code_challenge_method`
 - **THEN** the authorize URL includes both as query parameters
 
 #### Scenario: Complete OAuth callback and report the result
+
 - **WHEN** the provider redirects back to the callback route inside the window opened for
   login
 - **THEN** the system reads the stored redirect state, calls the login endpoint with the code,
@@ -154,12 +171,14 @@ without a second login attempt or page reload.
   itself
 
 #### Scenario: External provider navigation preserves popup tracking
+
 - **WHEN** the OAuth popup navigates from Chat to a cross-origin identity provider
 - **THEN** Chat's `same-origin-allow-popups` COOP policy keeps the popup reference observable by
   the opener, while the popup's cleared `window.opener` prevents the provider from navigating the
   Chat tab
 
 #### Scenario: Opener recovers a result after the channel event is missed
+
 - **WHEN** the callback wrote its result into the popup URL, but the opener did not receive the
   first `BroadcastChannel` event
 - **THEN** the callback repeats the result, while the opener can also read it from the same-origin
@@ -167,23 +186,43 @@ without a second login attempt or page reload.
   outcome, and refreshes the toolset status
 
 #### Scenario: Popup reference is severed during cross-origin navigation
+
 - **WHEN** the OAuth provider navigation makes the opener's retained popup reference report
   `closed` while the OAuth window remains open
 - **THEN** the opener keeps the flow channel active, consumes and acknowledges the callback
   result, and the callback closes its own window
 
 #### Scenario: User manually closes the OAuth popup
+
 - **WHEN** the popup is closed without a result and focus returns to the initiating tab
 - **THEN** the system resolves the login flow as cancelled without showing an error notification
 
 #### Scenario: Successful OAuth login refreshes the initiating page
+
 - **WHEN** the opener receives a successful OAuth login result
 - **THEN** it shows a success notification and refetches the shared toolset list so the updated
   authentication status is immediately available in the initiating tab
 
 #### Scenario: Callback without stored state
+
 - **WHEN** the callback route is reached with no valid stored redirect state
 - **THEN** the system does not attempt a login and closes the window
+
+#### Scenario: First login for a brand-new dynamically-registered toolset succeeds
+
+- **WHEN** a user creates a new toolset, selects OAuth "With Login" (no manually configured
+  client), and clicks "Log in" for the very first time
+- **THEN** the system opens a placeholder popup synchronously, persists the new toolset, fetches
+  its Core-issued `authSettings`, builds the authorize URL from the fetched `clientId`/
+  `authorizationEndpoint`, and navigates the already-open popup to it instead of showing "Failed
+  to log in"
+
+#### Scenario: Manually configured OAuth client skips the extra fetch
+
+- **WHEN** a user logs in via OAuth "With Login & Config" (client id/secret entered manually), or
+  clicks "Log in" again on an already-saved OAuth toolset
+- **THEN** the system builds the authorize URL directly from the editor's current form state
+  without fetching the toolset again first
 
 ### Requirement: Logged-in state and logout
 When a toolset is logged in at a credentials level, the system SHALL disable the

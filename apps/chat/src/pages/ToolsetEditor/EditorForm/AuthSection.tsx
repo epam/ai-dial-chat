@@ -25,14 +25,11 @@ import {
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
-import {
-  getToolset,
-  loginToolset,
-  logoutToolset,
-} from '../../../server-api/toolsets';
+import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
+  ToolsetOAuthInitiationResult,
 } from '../../../types/toolsets';
 import {
   ToolsetAuthTypes,
@@ -42,9 +39,12 @@ import {
   WithLogin,
 } from '../../../types/toolsets';
 import {
+  fetchToolsetAuthSettings,
   initiateOAuthLogin,
   isToolsetAuthValid,
   isValidEndpointUrl,
+  navigateToolsetOAuthPopup,
+  openToolsetOAuthPopup,
   waitForToolsetOAuthResult,
 } from '../../../utils/toolsets';
 
@@ -116,70 +116,137 @@ const AuthSection: FC<Props> = ({
     onAuthChange({ withLogin: value as WithLogin });
   };
 
+  /*
+   * Shared by both OAuth initiation paths below: waits for the popup result
+   * and applies the same success/failure/cancelled handling regardless of
+   * whether the authorize URL was built from already-known form state or
+   * from settings freshly fetched after dynamic client registration.
+   */
+  const handleOAuthInitiation = async (
+    initiation: ToolsetOAuthInitiationResult,
+    savedToolsetId: string,
+  ) => {
+    if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(
+          initiation.type === ToolsetOAuthInitiationResultType.Blocked
+            ? ToolsetEditorI18nKeys.ErrorPopupBlocked
+            : ToolsetEditorI18nKeys.ErrorLoginFailed,
+        ),
+      });
+      return;
+    }
+
+    setIsAuthBusy(true);
+    const result = await waitForToolsetOAuthResult(
+      initiation.popup,
+      initiation.flowId,
+      {
+        toolsetId: savedToolsetId,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+      },
+    );
+    setIsAuthBusy(false);
+
+    if (result.type === ToolsetOAuthResultType.Success) {
+      onAuthChange({ isLoggedIn: true });
+      showNotification({
+        variant: NotificationVariant.Success,
+        message: t(ToolsetEditorI18nKeys.LoginSuccess),
+      });
+    } else if (result.type === ToolsetOAuthResultType.Failure) {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+      });
+    } else if (result.type === ToolsetOAuthResultType.Cancelled) {
+      /*
+       * Treat the backend as the final authority if popup tracking or
+       * cross-process message delivery ever still reports a false cancel.
+       * This keeps the form from showing "logged out" after a login that
+       * actually completed server-side.
+       */
+      try {
+        const refreshedAuth = await fetchToolsetAuthSettings(savedToolsetId);
+        if (refreshedAuth.isLoggedIn) {
+          onAuthChange({ isLoggedIn: true });
+          showNotification({
+            variant: NotificationVariant.Success,
+            message: t(ToolsetEditorI18nKeys.LoginSuccess),
+          });
+        }
+      } catch {
+        // Best-effort verification only — a genuine cancel stays silent.
+      }
+    }
+  };
+
   const handleLogIn = async () => {
     if (!canLogIn) return;
 
-    const savedToolsetId = await onEnsureSaved();
-    if (!savedToolsetId) return;
-
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
-      const initiation = initiateOAuthLogin(auth, savedToolsetId);
-      if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
-        showNotification({
-          variant: NotificationVariant.Error,
-          message: t(
-            initiation.type === ToolsetOAuthInitiationResultType.Blocked
-              ? ToolsetEditorI18nKeys.ErrorPopupBlocked
-              : ToolsetEditorI18nKeys.ErrorLoginFailed,
-          ),
-        });
+      /*
+       * "With Login" and no client id yet means this OAuth client relies on
+       * Core's dynamic client registration (RFC 7591), which only assigns
+       * `clientId`/`authorizationEndpoint` once the toolset is created — the
+       * pre-save `auth` form state never carries them (the fields aren't
+       * even rendered outside "With Login & Config"). Opening the popup
+       * synchronously here, before the persist/fetch awaits, keeps it a
+       * user-triggered popup rather than one browsers block as programmatic.
+       */
+      const needsDynamicRegistration =
+        auth.withLogin === WithLogin.WithLogin && !auth.clientId?.trim();
+
+      if (needsDynamicRegistration) {
+        const popup = openToolsetOAuthPopup();
+        if (!popup) {
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(ToolsetEditorI18nKeys.ErrorPopupBlocked),
+          });
+          return;
+        }
+
+        const savedToolsetId = await onEnsureSaved();
+        if (!savedToolsetId) {
+          popup.close();
+          return;
+        }
+
+        let resolvedAuth: ToolsetAuthFormData;
+        try {
+          resolvedAuth = await fetchToolsetAuthSettings(savedToolsetId);
+        } catch {
+          popup.close();
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+          });
+          return;
+        }
+        onAuthChange(resolvedAuth);
+
+        const initiation = navigateToolsetOAuthPopup(
+          popup,
+          resolvedAuth,
+          savedToolsetId,
+          ToolsetCredentialsLevel.User,
+        );
+        await handleOAuthInitiation(initiation, savedToolsetId);
         return;
       }
 
-      setIsAuthBusy(true);
-      const result = await waitForToolsetOAuthResult(
-        initiation.popup,
-        initiation.flowId,
-        {
-          toolsetId: savedToolsetId,
-          credentialsLevel: ToolsetCredentialsLevel.User,
-        },
-      );
-      setIsAuthBusy(false);
+      const savedToolsetId = await onEnsureSaved();
+      if (!savedToolsetId) return;
 
-      if (result.type === ToolsetOAuthResultType.Success) {
-        onAuthChange({ isLoggedIn: true });
-        showNotification({
-          variant: NotificationVariant.Success,
-          message: t(ToolsetEditorI18nKeys.LoginSuccess),
-        });
-      } else if (result.type === ToolsetOAuthResultType.Failure) {
-        showNotification({
-          variant: NotificationVariant.Error,
-          message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
-        });
-      } else if (result.type === ToolsetOAuthResultType.Cancelled) {
-        /*
-         * Treat the backend as the final authority if popup tracking or
-         * cross-process message delivery ever still reports a false cancel.
-         * This keeps the form from showing "logged out" after a login that
-         * actually completed server-side.
-         */
-        try {
-          const refreshed = await getToolset(savedToolsetId);
-          if (refreshed.authSettings?.userLevelAuthStatus === 'SIGNED_IN') {
-            onAuthChange({ isLoggedIn: true });
-            showNotification({
-              variant: NotificationVariant.Success,
-              message: t(ToolsetEditorI18nKeys.LoginSuccess),
-            });
-          }
-        } catch {
-          // Best-effort verification only — a genuine cancel stays silent.
-        }
-      }
+      const initiation = initiateOAuthLogin(auth, savedToolsetId);
+      await handleOAuthInitiation(initiation, savedToolsetId);
       return;
     }
+
+    const savedToolsetId = await onEnsureSaved();
+    if (!savedToolsetId) return;
 
     setIsAuthBusy(true);
     try {

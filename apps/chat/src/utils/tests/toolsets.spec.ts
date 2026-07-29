@@ -2,6 +2,7 @@ import type { DialToolsetDto } from '@epam/chat-api-client';
 import { ResponseError } from '@epam/chat-api-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToolsetOAuthCallbackQuery } from '../../constants/toolsets';
+import * as toolsetsApi from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
 import {
   ToolsetAuthTypes,
@@ -18,6 +19,7 @@ import {
   buildToolsetAuthorizeUrl,
   encodeToolsetId,
   extractToolsetApiErrorMessage,
+  fetchToolsetAuthSettings,
   formToToolsetBody,
   getStorageSafeUniqueToolsetName,
   getToolsetOAuthChannelName,
@@ -30,6 +32,10 @@ import {
   toolsetDtoToForm,
   waitForToolsetOAuthResult,
 } from '../toolsets';
+
+vi.mock('../../server-api/toolsets', () => ({
+  getToolset: vi.fn(),
+}));
 
 /** Minimal fake popup `Window` — enough surface for `initiateOAuthLogin`/`waitForToolsetOAuthResult`. */
 const makeFakePopup = () => ({
@@ -648,6 +654,47 @@ describe('toolsetDtoToForm', () => {
     expect(form.protocol).toBe(ToolsetTransportType.Http);
     expect(form.auth.authenticationType).toBe(ToolsetAuthTypes.None);
     expect(form.auth.isLoggedIn).toBe(false);
+  });
+});
+
+describe('fetchToolsetAuthSettings', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('fetches the toolset and maps its authSettings the same way toolsetDtoToForm does', async () => {
+    const dto: DialToolsetDto = {
+      id: 'toolsets/b/newly-created',
+      toolset: 'toolsets/b/newly-created',
+      displayName: 'My toolset',
+      endpoint: 'https://my-toolset.example.com/mcp',
+      authSettings: {
+        authenticationType: 'OAUTH',
+        dynamicallyRegistered: true,
+        clientId: 'dcr-client-id',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+      },
+    };
+    vi.mocked(toolsetsApi.getToolset).mockResolvedValue(dto);
+
+    const auth = await fetchToolsetAuthSettings('toolsets/b/newly-created');
+
+    expect(toolsetsApi.getToolset).toHaveBeenCalledWith(
+      'toolsets/b/newly-created',
+    );
+    expect(auth).toEqual(toolsetDtoToForm(dto).auth);
+    expect(auth.clientId).toBe('dcr-client-id');
+    expect(auth.authorizationEndpoint).toBe(
+      'https://auth.example.com/authorize',
+    );
+  });
+
+  it('propagates a fetch failure to the caller', async () => {
+    vi.mocked(toolsetsApi.getToolset).mockRejectedValue(new Error('fail'));
+
+    await expect(
+      fetchToolsetAuthSettings('toolsets/b/newly-created'),
+    ).rejects.toThrow('fail');
   });
 });
 

@@ -7,6 +7,7 @@ import {
   TOOLSET_REDIRECT_STATE_KEY,
   ToolsetOAuthCallbackQuery,
 } from '../constants/toolsets';
+import { getToolset } from '../server-api/toolsets';
 import { ROUTES } from '../types/routes';
 import type {
   ToolsetAuthFormData,
@@ -523,6 +524,20 @@ export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => {
       codeChallengeMethod: authSettings?.codeChallengeMethod,
     },
   };
+};
+
+/**
+ * Fetches a toolset by id and maps its stored `authSettings` into an auth
+ * form-state patch, reusing `toolsetDtoToForm`'s mapping. Shared by the OAuth
+ * `Cancelled`-result reconciliation and the dynamic-client-registration login
+ * path, both of which need the server's current auth config rather than
+ * stale pre-save form state.
+ */
+export const fetchToolsetAuthSettings = async (
+  toolsetId: string,
+): Promise<ToolsetAuthFormData> => {
+  const dto = await getToolset(toolsetId);
+  return toolsetDtoToForm(dto).auth;
 };
 
 /** Maps editor form state into the create/update request body. */
