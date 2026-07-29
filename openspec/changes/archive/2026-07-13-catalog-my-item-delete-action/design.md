@@ -25,7 +25,7 @@ On the backend, `apps/chat-api/src/toolsets/` already has a fully working, spec'
 
 ### 1. Gate Delete visibility on `isMyApp` + entity type, not a new `CatalogItem` field
 
-`ShareButton` already has this exact shape (`shouldShowShare` checks `item.isMyApp === true && type !== Guardrail && type !== Mcp`). Delete follows the same style: a local `shouldShowDelete(item)` helper in the new `DeleteButton` component checks `item.isMyApp === true && (item.type === CatalogEntityType.Application || item.type === CatalogEntityType.Toolset)`. No new `CatalogItem` field (e.g. `isDeletable`) is introduced — `isEditable` already diverges from plain ownership for QuickApps (schema match required), so reusing it for Delete would incorrectly hide Delete for a QuickApp built from a non-"editable" schema. Ownership (`isMyApp`) is the correct and sufficient signal for deletability.
+`ShareButton` already has this exact shape (`shouldShowShare` checks `item.isMyApp === true && type !== Guardrail && type !== Mcp`). Delete follows the same style: a local `shouldShowDelete(item)` helper in the new `DeleteButton` component checks `item.isMyApp === true && (item.type === CatalogEntityType.Agent || item.type === CatalogEntityType.Toolset)`. No new `CatalogItem` field (e.g. `isDeletable`) is introduced — `isEditable` already diverges from plain ownership for QuickApps (schema match required), so reusing it for Delete would incorrectly hide Delete for a QuickApp built from a non-"editable" schema. Ownership (`isMyApp`) is the correct and sufficient signal for deletability.
 
 **Alternative considered**: add `isDeletable?: boolean` to `CatalogItem`, computed by `apps/chat`'s mappers like `isEditable`. Rejected because the delete rule is a static function of `isMyApp` + `type` with no per-item exception, unlike `isEditable`; adding a field for a computable constant is unneeded surface area.
 
@@ -37,7 +37,7 @@ New `components/Details/Header/DeleteButton/DeleteButton.tsx` owns only the trig
 
 ### 3. `apps/chat` branches the actual delete call on `item.type`, mirroring `handleEdit`
 
-`CatalogView.tsx` already has a single `onEdit` handler that branches on `CatalogEntityType` (`catalog-quickapp-edit-action` capability). `onDelete` follows the same shape: `CatalogEntityType.Toolset` → `deleteToolset(item.id)`; `CatalogEntityType.Application` → the new `deleteApplication(item.id)`. No id-parsing is needed on the frontend — both `deleteToolset`/`deleteApplication` backend endpoints already accept either a full `toolsets/{bucket}/{path}` (or `applications/{bucket}/{path}`) id or a bare name, resolving the bucket/path themselves (mirroring how `updateToolset`/`getToolset` are already called elsewhere in the app with the full id).
+`CatalogView.tsx` already has a single `onEdit` handler that branches on `CatalogEntityType` (`catalog-quickapp-edit-action` capability). `onDelete` follows the same shape: `CatalogEntityType.Toolset` → `deleteToolset(item.id)`; `CatalogEntityType.Agent` → the new `deleteApplication(item.id)`. No id-parsing is needed on the frontend — both `deleteToolset`/`deleteApplication` backend endpoints already accept either a full `toolsets/{bucket}/{path}` (or `applications/{bucket}/{path}`) id or a bare name, resolving the bucket/path themselves (mirroring how `updateToolset`/`getToolset` are already called elsewhere in the app with the full id).
 
 ### 4. Post-delete: close panel, drop the item from the in-memory list, show a success notification
 

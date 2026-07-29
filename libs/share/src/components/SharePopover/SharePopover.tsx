@@ -144,15 +144,15 @@ const SharePopover: FC<SharePopoverProps> = ({
           ) ?? [],
         );
     if (scope.length === 0) return;
-    const first = scope[0];
-    const last = scope[scope.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
+
+    e.preventDefault();
+    const currentIndex = scope.indexOf(document.activeElement as HTMLElement);
+    const delta = e.shiftKey ? -1 : 1;
+    const nextIndex =
+      currentIndex === -1
+        ? 0
+        : (currentIndex + delta + scope.length) % scope.length;
+    scope[nextIndex]?.focus();
   };
 
   /*

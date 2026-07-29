@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   OverlayEventType,
+  OverlayFeature,
   OverlayRequestType,
   isOverlayMessageEvent,
   isOverlayMessageRequest,
@@ -75,6 +76,51 @@ describe('isOverlayMessageResponse', () => {
         requestId: 'abc',
       }),
     ).toBe(false);
+  });
+});
+
+describe('OverlayFeature', () => {
+  it('has exactly 32 unique members', () => {
+    const values = Object.values(OverlayFeature);
+    expect(values).toHaveLength(32);
+    expect(new Set(values).size).toBe(32);
+  });
+
+  it('includes the pre-existing and newly-added transferable keys', () => {
+    const values = Object.values(OverlayFeature);
+    expect(values).toContain('voice-input');
+    expect(values).toContain('header');
+    expect(values).toContain('likes');
+    expect(values).toContain('hide-new-conversation');
+    expect(values).toContain('live-chat-interaction');
+  });
+
+  it('does not include any of the 19 missing-status legacy keys', () => {
+    const values = Object.values(OverlayFeature) as string[];
+    const missingKeys = [
+      'code-interpreter',
+      'compare-mode-disabled',
+      'input-links',
+      'message-templates',
+      'hide-top-context-menu',
+      'top-chat-info',
+      'top-clear-conversation',
+      'chat-full-width-by-default',
+      'footer',
+      'prompts-panel-toggle',
+      'prompts-section',
+      'showPromptsSectionByDefault',
+      'edit-all-assistant-message',
+      'edit-last-assistant-message',
+      'disabled-playback-controls',
+      'prompts-publishing',
+      'prompts-sharing',
+      'report-an-issue',
+      'request-api-key',
+    ];
+    missingKeys.forEach((key) => {
+      expect(values).not.toContain(key);
+    });
   });
 });
 

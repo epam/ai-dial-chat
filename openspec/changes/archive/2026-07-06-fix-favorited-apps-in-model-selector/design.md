@@ -12,7 +12,7 @@ const talkableItems = useMemo(
 );
 ```
 
-`CatalogEntityType.Application` is missing from this allowlist, so favorited Applications never reach the dropdown. `CatalogEntityType.Agent` is a frontend-only display category (catalog tabs, badge colors in `libs/catalog`) — DIAL Core has no "agent" concept. `mapDeploymentToCatalogItem` only ever maps Core's `model`/`toolset`/`application` deployment types to `CatalogEntityType.Model`/`Toolset`/`Application`; it never produces `CatalogEntityType.Agent` for real data. So the current filter's `Agent` branch is effectively dead code and the filter passes through Models only. `CatalogView.tsx`'s own Favorites view has no type filter at all and correctly shows every favorited entity.
+`CatalogEntityType.Agent` is missing from this allowlist, so favorited Applications never reach the dropdown. `CatalogEntityType.Agent` is a frontend-only display category (catalog tabs, badge colors in `libs/catalog`) — DIAL Core has no "agent" concept. `mapDeploymentToCatalogItem` only ever maps Core's `model`/`toolset`/`application` deployment types to `CatalogEntityType.Model`/`Toolset`/`Application`; it never produces `CatalogEntityType.Agent` for real data. So the current filter's `Agent` branch is effectively dead code and the filter passes through Models only. `CatalogView.tsx`'s own Favorites view has no type filter at all and correctly shows every favorited entity.
 
 ## Goals / Non-Goals
 

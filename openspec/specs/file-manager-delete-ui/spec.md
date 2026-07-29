@@ -287,7 +287,7 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 ## Requirement: Accessibility
 
 - Delete loading overlay: `aria-live="polite"` — announces to screen readers that an operation is in progress.
-- Delete result toasts are rendered through `NotificationContainer` / `DialNotification`.
+- Delete result toasts are rendered through `NotificationContainer` / `Notification`.
 - Confirmation popup: handled by `DialFileManager` / ui-kit (focus trap, keyboard Escape = cancel, Enter = confirm).
 - Delete action items in grid/tree context menus: rendered by ui-kit; keyboard-accessible via existing grid/tree keyboard navigation.
 

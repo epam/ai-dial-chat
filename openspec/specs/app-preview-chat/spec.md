@@ -50,7 +50,7 @@ Clicking the preview button SHALL trigger the same save flow as the existing Sav
 #### Scenario: Preview save fails
 - **WHEN** the user clicks Preview and the iframe posts `AppsEditorEvent.SaveError`
 - **THEN** `AppsEditor` stays on the iframe (does not enter preview)
-- **AND** shows the existing `saveError` `DialNotification` with the error message
+- **AND** shows the existing `saveError` `Notification` with the error message
 - **AND** the preview button still reads "Preview" (not "Exit preview")
 
 #### Scenario: Normal Save button unaffected

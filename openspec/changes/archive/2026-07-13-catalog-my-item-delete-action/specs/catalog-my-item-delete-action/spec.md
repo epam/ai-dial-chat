@@ -7,7 +7,7 @@ The Catalog details panel (`Header.tsx`, via a new `DeleteButton` component in
 `onDelete?: (item: CatalogItem) => Promise<void> | void` prop (threaded through
 `DetailsPanelProps` and `CatalogProps`), plus an optional `deleteActionLabel` text override
 on `ItemDetailsTexts` (default `'Delete'`). When `onDelete` is supplied AND the currently
-displayed item's `isMyApp` is `true` AND its `type` is `CatalogEntityType.Application` or
+displayed item's `isMyApp` is `true` AND its `type` is `CatalogEntityType.Agent` or
 `CatalogEntityType.Toolset`, a `NeutralButton` labelled with `deleteActionLabel` and a
 leading trash icon SHALL render in the same action row as "Use in chat", "Edit", and
 "Share", immediately after the Share button. No new `CatalogItem` field is introduced for
@@ -29,7 +29,7 @@ this gating — it reuses the existing `isMyApp` and `type` fields.
 
 #### Scenario: Delete shown for an owned application
 - **WHEN** `onDelete` is supplied and the displayed item has `isMyApp: true` and
-  `type: CatalogEntityType.Application`
+  `type: CatalogEntityType.Agent`
 - **THEN** a "Delete" button (default label, trailing trash icon) renders in the action row,
   positioned immediately after the "Share" button
 
@@ -77,7 +77,7 @@ a notification) is the responsibility of the app supplying `onDelete`, not the l
 `deleteToolset(toolsetName)` server-api function
 (`apps/chat/src/server-api/toolsets.ts`), passing the item's `id` directly (the backend
 already resolves either a full `toolsets/{bucket}/{path}` id or a bare name via the
-caller's own bucket). For `CatalogEntityType.Application` items it SHALL call a new
+caller's own bucket). For `CatalogEntityType.Agent` items it SHALL call a new
 `deleteApplication(applicationName)` server-api function
 (`apps/chat/src/server-api/applications.ts`), passing the item's `id` directly using the
 same convention — this permanently deletes the application from DIAL Core, the same as

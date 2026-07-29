@@ -61,6 +61,14 @@ Notes:
 - `setOverlayOptions` bypasses the readiness gate: it is also how the initial handshake options exchange happens (the library sends it automatically right after receiving the app's `READY` event), so it can be called at any time, including before `ready()` resolves.
 - Deferred for a future change: `createPlaybackConversation`, `stopSelectedPlaybackConversation`, `exportConversation`, `importConversation`.
 
+```ts
+// Change which UI sections the embedded app shows, without reconstructing the iframe.
+// enabledFeatures REPLACES (does not merge with) any previously-sent enabledFeatures.
+await overlay.setOverlayOptions({
+  enabledFeatures: [OverlayFeature.Header, OverlayFeature.ConversationsSharing],
+});
+```
+
 #### Conversation-list methods
 
 ```ts
