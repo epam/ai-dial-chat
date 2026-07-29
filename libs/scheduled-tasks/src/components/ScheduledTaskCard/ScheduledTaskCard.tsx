@@ -1,4 +1,8 @@
-import { Highlight, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  Highlight,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { FolderPath } from '@epam/ai-dial-kit';
 import {
   CardShell,
@@ -15,6 +19,7 @@ import {
 } from '@tabler/icons-react';
 import { type FC } from 'react';
 import type { ScheduledTaskCardProps } from '../../models/scheduled-task-card-props';
+import styles from './ScheduledTaskCard.module.scss';
 
 /**
  * Single scheduled-task card: title, optional "new" badge and description,
@@ -42,21 +47,29 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   const runNowActionLabel = labels?.runNowActionLabel ?? 'Run now';
   const deleteActionLabel = labels?.deleteActionLabel ?? 'Delete';
 
-  const titleClassName =
-    cardStyles?.titleClassName ?? 'dial-body-semi-text text-primary';
+  const { colors, typography } = cardStyles ?? {};
+  const titleClassName = typography?.titleClassName ?? 'dial-body-semi-text';
   const descriptionClassName =
-    cardStyles?.descriptionClassName ?? 'dial-small-text text-control-disable';
-  const schedulePillClassName =
-    cardStyles?.schedulePillClassName ?? 'bg-layer-2 border border-tertiary';
+    typography?.descriptionClassName ?? 'dial-small-text';
   const scheduleLabelClassName =
-    cardStyles?.scheduleLabelClassName ?? 'dial-tiny-text text-control-disable';
+    typography?.scheduleLabelClassName ?? 'dial-tiny-text';
   const locationLabelClassName =
-    cardStyles?.locationLabelClassName ?? 'dial-tiny-text text-secondary';
+    typography?.locationLabelClassName ?? 'dial-tiny-text';
   const locationLeafClassName =
-    cardStyles?.locationLeafClassName ?? 'dial-tiny-semi-text text-secondary';
+    typography?.locationLeafClassName ?? 'dial-tiny-semi-text';
   const newBadgeClassName =
-    cardStyles?.newBadgeClassName ??
-    'bg-accent-primary text-controls-permanent';
+    typography?.newBadgeClassName ?? 'dial-tiny-semi-text';
+  const cssVars = buildCssVars({
+    '--stc-title-text': colors?.titleText,
+    '--stc-desc-text': colors?.descriptionText,
+    '--stc-pill-bg': colors?.schedulePillBackground,
+    '--stc-pill-border': colors?.schedulePillBorder,
+    '--stc-schedule-label-text': colors?.scheduleLabelText,
+    '--stc-location-label-text': colors?.locationLabelText,
+    '--stc-location-leaf-text': colors?.locationLeafText,
+    '--stc-new-badge-bg': colors?.newBadgeBackground,
+    '--stc-new-badge-text': colors?.newBadgeText,
+  });
 
   const menuItems: DropdownItem[] = [];
   if (onEdit) {
@@ -89,6 +102,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
     <CardShell
       role="group"
       aria-label={item.displayName}
+      style={cssVars}
       className={mergeClasses('h-[232px]', className)}
     >
       <div className="flex shrink-0 items-start justify-between gap-2">
@@ -97,13 +111,14 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
             text={item.displayName}
             query={searchQuery}
             maxLines={1}
-            className={titleClassName}
+            className={mergeClasses(titleClassName, styles.title)}
           />
           {item.isNew && (
             <span
               className={mergeClasses(
-                'dial-tiny-semi-text shrink-0 rounded-full px-2 py-0.5',
+                'shrink-0 rounded-full px-2 py-0.5',
                 newBadgeClassName,
+                styles.newBadge,
               )}
             >
               {newBadgeLabel}
@@ -131,6 +146,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
           className={mergeClasses(
             'line-clamp-4 min-h-0 flex-1 overflow-hidden !leading-[22px]',
             descriptionClassName,
+            styles.description,
           )}
         >
           {item.descriptionPreview}
@@ -141,9 +157,10 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
         <div className="flex min-h-[28px] items-center">
           <span
             className={mergeClasses(
-              'inline-block rounded-lg px-2 py-1',
-              schedulePillClassName,
+              'inline-block rounded-lg border px-2 py-1',
+              styles.schedulePill,
               scheduleLabelClassName,
+              styles.scheduleLabel,
             )}
           >
             {item.scheduleLabel}
@@ -153,8 +170,14 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
         {item.locationSegments && item.locationSegments.length > 0 && (
           <FolderPath
             segments={item.locationSegments}
-            labelClassName={locationLabelClassName}
-            leafClassName={locationLeafClassName}
+            labelClassName={mergeClasses(
+              locationLabelClassName,
+              styles.locationLabel,
+            )}
+            leafClassName={mergeClasses(
+              locationLeafClassName,
+              styles.locationLeaf,
+            )}
             className="border-t border-tertiary pt-3"
           />
         )}

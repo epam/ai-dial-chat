@@ -1,4 +1,8 @@
-import { mergeClasses, PanelEmptyState } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  PanelEmptyState,
+} from '@epam/ai-dial-chat-shared';
 import { GhostButton, PrimaryButton, SearchBar } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
@@ -21,6 +25,7 @@ import {
 } from '../../utils/filter-sort';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
 import { ScheduledTaskSection } from '../ScheduledTaskSection/ScheduledTaskSection';
+import styles from './ScheduledTasks.module.scss';
 
 const SECTION_ORDER: ScheduledTaskSectionKey[] = [
   ScheduledTaskSectionKey.Shared,
@@ -66,14 +71,18 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   onDelete,
   styles: scheduledTasksStyles,
 }) => {
-  const containerClassName =
-    scheduledTasksStyles?.containerClassName ?? 'bg-layer-5';
-  const titleClassName = scheduledTasksStyles?.titleClassName ?? 'dial-h1-text';
-  const subtitleClassName =
-    scheduledTasksStyles?.subtitleClassName ?? 'dial-body-text text-secondary';
-  const sortButtonClassName =
-    scheduledTasksStyles?.sortButtonClassName ?? 'text-accent-primary';
-  const emptyStateIconSize = scheduledTasksStyles?.emptyStateIconSize ?? 48;
+  const {
+    colors,
+    typography,
+    emptyStateIconSize = 48,
+  } = scheduledTasksStyles ?? {};
+  const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
+  const subtitleClassName = typography?.subtitleClassName ?? 'dial-body-text';
+  const cssVars = buildCssVars({
+    '--st-bg': colors?.background,
+    '--st-subtitle-text': colors?.subtitleText,
+    '--st-sort-text': colors?.sortButtonText,
+  });
 
   const activeSortLabel =
     labels.sortOptions.find((option) => option.key === sortKey)?.label ?? '';
@@ -114,7 +123,9 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     if (error) {
       return (
         <div className="flex flex-col items-center gap-3">
-          <p className={subtitleClassName}>{labels.errorLabel}</p>
+          <p className={mergeClasses(subtitleClassName, styles.subtitle)}>
+            {labels.errorLabel}
+          </p>
           <GhostButton label={labels.retryLabel} onClick={onRetry} />
         </div>
       );
@@ -136,7 +147,11 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     }
 
     if (visibleItems.length === 0) {
-      return <p className={subtitleClassName}>{labels.noResultsLabel}</p>;
+      return (
+        <p className={mergeClasses(subtitleClassName, styles.subtitle)}>
+          {labels.noResultsLabel}
+        </p>
+      );
     }
 
     return (
@@ -169,9 +184,10 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
 
   return (
     <div
+      style={cssVars}
       className={mergeClasses(
         'flex h-full w-full flex-col gap-6 overflow-y-auto px-8 py-4',
-        containerClassName,
+        styles.container,
       )}
     >
       <div className="flex items-start justify-between gap-4">
@@ -179,7 +195,9 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           <h1 className={mergeClasses('truncate', titleClassName)}>
             {labels.title}
           </h1>
-          <p className={mergeClasses('mt-1', subtitleClassName)}>
+          <p
+            className={mergeClasses('mt-1', subtitleClassName, styles.subtitle)}
+          >
             {labels.subtitle}
           </p>
         </div>
@@ -233,7 +251,7 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
             <GhostButton
               label={activeSortLabel}
               aria-label={labels.sortLabel}
-              className={mergeClasses('rounded-[4px]', sortButtonClassName)}
+              className={mergeClasses('rounded-[4px]', styles.sortButton)}
               iconBefore={<IconArrowsSort size={20} aria-hidden />}
               iconAfter={<IconChevronUp size={20} aria-hidden />}
             />

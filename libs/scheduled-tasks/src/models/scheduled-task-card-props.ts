@@ -14,22 +14,53 @@ export interface ScheduledTaskCardLabels {
   deleteActionLabel?: string;
 }
 
+/**
+ * Color overrides for the {@link ScheduledTaskCard} component, applied as CSS
+ * custom properties with app theme fallbacks.
+ */
+export interface ScheduledTaskCardColors {
+  /** Card title text color. Fallback: `--text-primary`. */
+  titleText?: string;
+  /** Description/prompt-preview text color. Fallback: `--text-control-disable`. */
+  descriptionText?: string;
+  /** Schedule pill background. Fallback: `--bg-layer-2`. */
+  schedulePillBackground?: string;
+  /** Schedule pill border color. Fallback: `--stroke-tertiary`. */
+  schedulePillBorder?: string;
+  /** Schedule pill label text color. Fallback: `--text-control-disable`. */
+  scheduleLabelText?: string;
+  /** Non-leaf location breadcrumb segment text color. Fallback: `--text-secondary`. */
+  locationLabelText?: string;
+  /** Leaf (last) location breadcrumb segment text color. Fallback: `--text-secondary`. */
+  locationLeafText?: string;
+  /** "New" badge background. Fallback: `--controls-bg-accent-primary`. */
+  newBadgeBackground?: string;
+  /** "New" badge text color. Fallback: `--controls-text-permanent`. */
+  newBadgeText?: string;
+}
+
+/** Typography overrides for the {@link ScheduledTaskCard} component. */
+export interface ScheduledTaskCardTypography {
+  /** CSS class applied to the card's title. Defaults to `'dial-body-semi-text'`. */
+  titleClassName?: string;
+  /** CSS class applied to the description/prompt-preview line. Defaults to `'dial-small-text'`. */
+  descriptionClassName?: string;
+  /** CSS class applied to the schedule pill's label text. Defaults to `'dial-tiny-text'`. */
+  scheduleLabelClassName?: string;
+  /** CSS class applied to non-leaf location breadcrumb segments. Defaults to `'dial-tiny-text'`. */
+  locationLabelClassName?: string;
+  /** CSS class applied to the leaf (last) location breadcrumb segment. Defaults to `'dial-tiny-semi-text'`. */
+  locationLeafClassName?: string;
+  /** CSS class applied to the "new" badge text. Defaults to `'dial-tiny-semi-text'`. */
+  newBadgeClassName?: string;
+}
+
 /** Style overrides for the {@link ScheduledTaskCard} component. */
 export interface ScheduledTaskCardStyles {
-  /** CSS class applied to the card's title. Defaults to `'dial-body-semi-text text-primary'`. */
-  titleClassName?: string;
-  /** CSS class applied to the description/prompt-preview line. Defaults to `'dial-small-text text-control-disable'`. */
-  descriptionClassName?: string;
-  /** CSS class applied to the schedule pill's background/border. Defaults to `'bg-layer-2 border border-tertiary'`. */
-  schedulePillClassName?: string;
-  /** CSS class applied to the schedule pill's label text. Defaults to `'dial-tiny-text text-control-disable'`. */
-  scheduleLabelClassName?: string;
-  /** CSS class applied to non-leaf location breadcrumb segments. Defaults to `'dial-tiny-text text-secondary'`. */
-  locationLabelClassName?: string;
-  /** CSS class applied to the leaf (last) location breadcrumb segment. Defaults to `'dial-tiny-semi-text text-secondary'`. */
-  locationLeafClassName?: string;
-  /** CSS class applied to the "new" badge. Defaults to `'bg-accent-primary text-controls-permanent'`. */
-  newBadgeClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ScheduledTaskCardColors;
+  /** Typography class overrides. */
+  typography?: ScheduledTaskCardTypography;
 }
 
 /** Props for the {@link ScheduledTaskCard} component. */

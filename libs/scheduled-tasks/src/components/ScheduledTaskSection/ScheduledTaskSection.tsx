@@ -1,6 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
 import type { ScheduledTaskSectionProps } from '../../models/scheduled-task-section-props';
+import moduleStyles from './ScheduledTaskSection.module.scss';
 
 /** Named group of scheduled-task cards (e.g. "Shared", "My tasks") with a title and a count badge. */
 export const ScheduledTaskSection: FC<ScheduledTaskSectionProps> = ({
@@ -10,13 +11,18 @@ export const ScheduledTaskSection: FC<ScheduledTaskSectionProps> = ({
   styles: sectionStyles,
 }) => {
   const titleClassName =
-    sectionStyles?.titleClassName ?? 'dial-small-semi-text';
+    sectionStyles?.typography?.titleClassName ?? 'dial-small-semi-text';
   const countBadgeClassName =
-    sectionStyles?.countBadgeClassName ?? 'bg-layer-3 text-secondary';
+    sectionStyles?.typography?.countBadgeClassName ?? 'dial-tiny-text';
+  const cssVars = buildCssVars({
+    '--sts-badge-bg': sectionStyles?.colors?.countBadgeBackground,
+    '--sts-badge-text': sectionStyles?.colors?.countBadgeText,
+  });
 
   return (
     <section
       {...(title ? { 'aria-label': title } : {})}
+      style={cssVars}
       className="flex flex-col gap-3"
     >
       {title && (
@@ -24,8 +30,9 @@ export const ScheduledTaskSection: FC<ScheduledTaskSectionProps> = ({
           <h2 className={titleClassName}>{title}</h2>
           <span
             className={mergeClasses(
-              'dial-tiny-text rounded-full px-2 py-0.5',
+              'rounded-full px-2 py-0.5',
               countBadgeClassName,
+              moduleStyles.countBadge,
             )}
           >
             {count}

@@ -1,12 +1,5 @@
 import type { ScheduledTaskItem } from '../models/scheduled-task-item';
-
-/** Sort keys supported by the Scheduled Tasks toolbar. */
-export enum ScheduledTasksSortKey {
-  FirstToRun = 'firstToRun',
-  LastToRun = 'lastToRun',
-  Newest = 'newest',
-  NameAZ = 'nameAZ',
-}
+import { ScheduledTasksSortKey } from '../types/scheduled-tasks-sort-key';
 
 /** Case-insensitive substring match against `displayName` and `descriptionPreview`. */
 export const filterScheduledTaskItems = (

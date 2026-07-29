@@ -1,4 +1,4 @@
-import type { ScheduledTasksSortKey } from '../utils/filter-sort';
+import type { ScheduledTasksSortKey } from '../types/scheduled-tasks-sort-key';
 import type { ScheduledTaskCardGridLabels } from './scheduled-task-card-grid-props';
 import type { ScheduledTaskItem } from './scheduled-task-item';
 
@@ -42,16 +42,33 @@ export interface ScheduledTasksLabels {
   cardLabels?: ScheduledTaskCardGridLabels;
 }
 
-/** Style overrides for the {@link ScheduledTasks} component. */
-export interface ScheduledTasksStyles {
-  /** CSS class applied to the root container's background. Defaults to `'bg-layer-5'`. */
-  containerClassName?: string;
+/**
+ * Color overrides for the {@link ScheduledTasks} component, applied as CSS
+ * custom properties with app theme fallbacks.
+ */
+export interface ScheduledTasksColors {
+  /** Root container background. Fallback: `--bg-layer-5`. */
+  background?: string;
+  /** Subtitle and status-message (empty/no-results/error) text color. Fallback: `--text-secondary`. */
+  subtitleText?: string;
+  /** Sort control label/icon color. Fallback: `--text-accent-primary`. */
+  sortButtonText?: string;
+}
+
+/** Typography overrides for the {@link ScheduledTasks} component. */
+export interface ScheduledTasksTypography {
   /** CSS class applied to the title. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
-  /** CSS class applied to the subtitle. Defaults to `'dial-body-text text-secondary'`. */
+  /** CSS class applied to the subtitle and status messages (empty/no-results/error). Defaults to `'dial-body-text'`. */
   subtitleClassName?: string;
-  /** CSS class applied to the sort control's label and icons. Defaults to `'text-accent-primary'`. */
-  sortButtonClassName?: string;
+}
+
+/** Style overrides for the {@link ScheduledTasks} component. */
+export interface ScheduledTasksStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ScheduledTasksColors;
+  /** Typography class overrides. */
+  typography?: ScheduledTasksTypography;
   /** Size (px) of the empty-state icon. Defaults to `48`. */
   emptyStateIconSize?: number;
 }

@@ -7,7 +7,7 @@ import {
   type ScheduledTaskItem,
 } from '../../../models/scheduled-task-item';
 import { ScheduledTasksProps } from '../../../models/scheduled-tasks-props';
-import { ScheduledTasksSortKey } from '../../../utils/filter-sort';
+import { ScheduledTasksSortKey } from '../../../types/scheduled-tasks-sort-key';
 import { ScheduledTasks } from '../ScheduledTasks';
 
 vi.mock('@epam/ai-dial-kit', () => ({

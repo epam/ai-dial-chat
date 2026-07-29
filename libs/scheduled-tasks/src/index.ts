@@ -4,17 +4,23 @@ export type {
   ScheduledTasksLabels,
   ScheduledTasksSortOption,
   ScheduledTasksStyles,
+  ScheduledTasksColors,
+  ScheduledTasksTypography,
 } from './models/scheduled-tasks-props';
 export { ScheduledTaskCard } from './components/ScheduledTaskCard/ScheduledTaskCard';
 export type {
   ScheduledTaskCardProps,
   ScheduledTaskCardLabels,
   ScheduledTaskCardStyles,
+  ScheduledTaskCardColors,
+  ScheduledTaskCardTypography,
 } from './models/scheduled-task-card-props';
 export { ScheduledTaskSection } from './components/ScheduledTaskSection/ScheduledTaskSection';
 export type {
   ScheduledTaskSectionProps,
   ScheduledTaskSectionStyles,
+  ScheduledTaskSectionColors,
+  ScheduledTaskSectionTypography,
 } from './models/scheduled-task-section-props';
 export { ScheduledTaskCardGrid } from './components/ScheduledTaskCardGrid/ScheduledTaskCardGrid';
 export type {
@@ -30,7 +36,7 @@ export {
   filterScheduledTaskItems,
   sortScheduledTaskItems,
 } from './utils/filter-sort';
-export { ScheduledTasksSortKey } from './utils/filter-sort';
+export { ScheduledTasksSortKey } from './types/scheduled-tasks-sort-key';
 export { ScheduledTaskCreateForm } from './components/ScheduledTaskCreateForm/ScheduledTaskCreateForm';
 export type {
   ScheduledTaskCreateFormProps,
@@ -38,11 +44,13 @@ export type {
   ScheduledTaskCreateFormValues,
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormStyles,
+  ScheduledTaskCreateFormColors,
+  ScheduledTaskCreateFormTypography,
   ScheduledTaskCreateFormModelOption,
   ScheduledTaskFrequencyOption,
 } from './models/scheduled-task-create-form-props';
+export { DESCRIPTION_MAX_LENGTH } from './constants/scheduled-task-create-form';
 export {
-  DESCRIPTION_MAX_LENGTH,
   ScheduledTaskFrequency,
   ScheduledTaskScheduleType,
-} from './models/scheduled-task-create-form-props';
+} from './types/scheduled-task-schedule';

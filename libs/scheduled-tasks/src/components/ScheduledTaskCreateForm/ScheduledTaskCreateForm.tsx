@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   GhostIconButton,
   Input,
@@ -14,12 +14,13 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { lazy, Suspense, type ComponentProps, type FC } from 'react';
+import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
+import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import {
-  DESCRIPTION_MAX_LENGTH,
-  ScheduledTaskCreateFormProps,
   ScheduledTaskFrequency,
   ScheduledTaskScheduleType,
-} from '../../models/scheduled-task-create-form-props';
+} from '../../types/scheduled-task-schedule';
+import styles from './ScheduledTaskCreateForm.module.scss';
 
 const DialMarkdownEditor = lazy(async () => {
   const module = await LazyDialMarkdownEditor();
@@ -52,20 +53,23 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   markdownEditorTheme,
   styles: formStyles,
 }) => {
-  const containerClassName = formStyles?.containerClassName ?? 'bg-layer-5';
-  const titleClassName = formStyles?.titleClassName ?? 'dial-h1-text';
-  const headerClassName =
-    formStyles?.headerClassName ?? 'border-b border-tertiary';
-  const detailsColumnClassName =
-    formStyles?.detailsColumnClassName ?? 'border-e border-e-tertiary';
+  const { colors, typography } = formStyles ?? {};
+  const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const sectionTitleClassName =
-    formStyles?.sectionTitleClassName ?? 'dial-body-semi-text';
+    typography?.sectionTitleClassName ?? 'dial-body-semi-text';
   const sectionSubtitleClassName =
-    formStyles?.sectionSubtitleClassName ?? 'dial-tiny-text text-secondary';
+    typography?.sectionSubtitleClassName ?? 'dial-tiny-text';
   const scheduleSectionLabelClassName =
-    formStyles?.scheduleSectionLabelClassName ?? 'dial-body-semi-text mb-1';
+    typography?.scheduleSectionLabelClassName ?? 'dial-body-semi-text mb-1';
   const instructionsErrorClassName =
-    formStyles?.instructionsErrorClassName ?? 'dial-small-text text-error';
+    typography?.instructionsErrorClassName ?? 'dial-small-text';
+  const cssVars = buildCssVars({
+    '--stcf-bg': colors?.background,
+    '--stcf-header-border': colors?.headerBorder,
+    '--stcf-details-border': colors?.detailsColumnBorder,
+    '--stcf-subtitle-text': colors?.sectionSubtitleText,
+    '--stcf-error-text': colors?.instructionsErrorText,
+  });
 
   const isCreateDisabled =
     isSubmitting ||
@@ -75,15 +79,16 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
   return (
     <div
+      style={cssVars}
       className={mergeClasses(
         'flex h-full w-full flex-col overflow-y-auto',
-        containerClassName,
+        styles.container,
       )}
     >
       <div
         className={mergeClasses(
-          'flex h-16 items-center justify-between gap-6 px-8',
-          headerClassName,
+          'flex h-16 items-center justify-between gap-6 border-b px-8',
+          styles.header,
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -123,15 +128,20 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           role="group"
           aria-label={labels.detailsSectionTitle}
           className={mergeClasses(
-            'flex w-full flex-col gap-5 px-8 py-6 desktop:w-[360px] desktop:shrink-0',
-            detailsColumnClassName,
+            'flex w-full flex-col gap-5 border-e px-8 py-6 desktop:w-[360px] desktop:shrink-0',
+            styles.detailsColumn,
           )}
         >
           <div className="flex flex-col gap-1">
             <h2 className={sectionTitleClassName}>
               {labels.detailsSectionTitle}
             </h2>
-            <p className={sectionSubtitleClassName}>
+            <p
+              className={mergeClasses(
+                sectionSubtitleClassName,
+                styles.sectionSubtitle,
+              )}
+            >
               {labels.detailsSectionSubtitle}
             </p>
           </div>
@@ -277,7 +287,12 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             <h2 className={sectionTitleClassName}>
               {labels.configurationSectionTitle}
             </h2>
-            <p className={sectionSubtitleClassName}>
+            <p
+              className={mergeClasses(
+                sectionSubtitleClassName,
+                styles.sectionSubtitle,
+              )}
+            >
               {labels.configurationSectionSubtitle}
             </p>
           </div>
@@ -299,7 +314,14 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               />
             </Suspense>
             {errors.prompt && (
-              <p className={instructionsErrorClassName}>{errors.prompt}</p>
+              <p
+                className={mergeClasses(
+                  instructionsErrorClassName,
+                  styles.instructionsError,
+                )}
+              >
+                {errors.prompt}
+              </p>
             )}
           </div>
         </div>

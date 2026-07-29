@@ -1,18 +1,7 @@
-/** Whether a scheduled task runs once at a specific time or repeats on a cadence. */
-export enum ScheduledTaskScheduleType {
-  Once = 'once',
-  Recurring = 'recurring',
-}
-
-/** Recurrence cadence for a {@link ScheduledTaskScheduleType.Recurring} schedule type. */
-export enum ScheduledTaskFrequency {
-  Daily = 'daily',
-  Weekly = 'weekly',
-  Monthly = 'monthly',
-}
-
-/** Maximum allowed length, in characters, of {@link ScheduledTaskCreateFormValues.description}. */
-export const DESCRIPTION_MAX_LENGTH = 500;
+import type {
+  ScheduledTaskFrequency,
+  ScheduledTaskScheduleType,
+} from '../types/scheduled-task-schedule';
 
 /** A single option rendered in the frequency dropdown. */
 export interface ScheduledTaskFrequencyOption {
@@ -128,24 +117,43 @@ export interface ScheduledTaskCreateFormLabels {
   createButtonLabel: string;
 }
 
-/** Style overrides for the {@link ScheduledTaskCreateForm} component. */
-export interface ScheduledTaskCreateFormStyles {
-  /** CSS class applied to the root container's background. Defaults to `'bg-layer-5'`. */
-  containerClassName?: string;
+/**
+ * Color overrides for the {@link ScheduledTaskCreateForm} component, applied
+ * as CSS custom properties with app theme fallbacks.
+ */
+export interface ScheduledTaskCreateFormColors {
+  /** Root container background. Fallback: `--bg-layer-5`. */
+  background?: string;
+  /** Header row's bottom border color. Fallback: `--stroke-tertiary`. */
+  headerBorder?: string;
+  /** Details column's end-edge divider color. Fallback: `--stroke-tertiary`. */
+  detailsColumnBorder?: string;
+  /** Section subtitle text color. Fallback: `--text-secondary`. */
+  sectionSubtitleText?: string;
+  /** Instructions editor's validation error text color. Fallback: `--text-error`. */
+  instructionsErrorText?: string;
+}
+
+/** Typography overrides for the {@link ScheduledTaskCreateForm} component. */
+export interface ScheduledTaskCreateFormTypography {
   /** CSS class applied to the title. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
-  /** CSS class applied to the header row's bottom border. Defaults to `'border-b border-tertiary'`. */
-  headerClassName?: string;
-  /** CSS class applied to the Details column's end-edge divider. Defaults to `'border-e border-e-tertiary'`. */
-  detailsColumnClassName?: string;
   /** CSS class applied to a section heading. Defaults to `'dial-body-semi-text'`. */
   sectionTitleClassName?: string;
-  /** CSS class applied to a section subtitle. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** CSS class applied to a section subtitle. Defaults to `'dial-tiny-text'`. */
   sectionSubtitleClassName?: string;
-  /** CSS class applied to the schedule section's legend. Defaults to `'dial-body-semi-text mb-1'`. */
+  /** CSS class applied to the schedule section's legend and the Instructions label. Defaults to `'dial-body-semi-text mb-1'`. */
   scheduleSectionLabelClassName?: string;
-  /** CSS class applied to the Instructions editor's validation error text. Defaults to `'dial-small-text text-error'`. */
+  /** CSS class applied to the Instructions editor's validation error text. Defaults to `'dial-small-text'`. */
   instructionsErrorClassName?: string;
+}
+
+/** Style overrides for the {@link ScheduledTaskCreateForm} component. */
+export interface ScheduledTaskCreateFormStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ScheduledTaskCreateFormColors;
+  /** Typography class overrides. */
+  typography?: ScheduledTaskCreateFormTypography;
 }
 
 /** Props for the {@link ScheduledTaskCreateForm} component. */

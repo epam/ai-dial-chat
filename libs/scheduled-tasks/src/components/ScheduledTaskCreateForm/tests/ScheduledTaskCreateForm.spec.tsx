@@ -5,9 +5,11 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ScheduledTaskCreateFormProps,
   ScheduledTaskCreateFormValues,
+} from '../../../models/scheduled-task-create-form-props';
+import {
   ScheduledTaskFrequency,
   ScheduledTaskScheduleType,
-} from '../../../models/scheduled-task-create-form-props';
+} from '../../../types/scheduled-task-schedule';
 import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
 
 vi.mock('@epam/ai-dial-kit', () => ({
