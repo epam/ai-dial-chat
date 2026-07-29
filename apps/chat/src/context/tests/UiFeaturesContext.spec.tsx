@@ -26,6 +26,7 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
       overlayAllowedOrigins: [],
       announcementHtml: null,
       enabledUiFeatures,
+      footerHtmlMessage: '',
     },
   } satisfies AppConfigState);
 

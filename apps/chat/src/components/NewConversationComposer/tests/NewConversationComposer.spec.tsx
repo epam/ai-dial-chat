@@ -41,6 +41,7 @@ vi.mock('../../../context/AppConfigContext', () => ({
   useAppConfig: () => ({
     config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
   }),
+  useFeatureFlag: () => false,
 }));
 
 vi.mock('../../../context/auth/UserContext', () => ({

@@ -17,6 +17,7 @@ import { ConversationModule } from '../conversations/conversation.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
 import { DialCoreModule } from '../dial/dial-core.module';
 import { FilesModule } from '../files/files.module';
+import { FooterModule } from '../footer/footer.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
 import { PublishModule } from '../publish/publish.module';
@@ -73,6 +74,7 @@ import { createServeStaticOptions } from './static-assets';
     TranscriptionModule,
     ThemesModule,
     ShareModule,
+    FooterModule,
     PublishModule,
   ],
   controllers: [AppController, HealthController],
