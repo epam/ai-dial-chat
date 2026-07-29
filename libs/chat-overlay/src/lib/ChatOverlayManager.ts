@@ -146,11 +146,7 @@ interface OverlayEntry {
   options: ChatOverlayManagerOptions;
 }
 
-/**
- * Creates and positions one or more `ChatOverlay` instances behind
- * fixed-position toggle/close/(optional) fullscreen chrome, keyed by
- * `overlayId`.
- */
+/** Creates and positions one or more `ChatOverlay` instances behind fixed-position toggle/close/fullscreen chrome, keyed by `overlayId`. */
 export class ChatOverlayManager {
   private readonly overlays = new Map<string, OverlayEntry>();
   private readonly abortController = new AbortController();

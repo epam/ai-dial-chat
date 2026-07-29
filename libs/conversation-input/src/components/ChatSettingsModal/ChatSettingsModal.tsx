@@ -47,6 +47,7 @@ export interface ChatSettingsModalProps {
   saveDisabledTooltip?: string;
 }
 
+/** Desktop modal for chat settings (system prompt, temperature, response format). */
 export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
   features,
   initialResponseFormat,

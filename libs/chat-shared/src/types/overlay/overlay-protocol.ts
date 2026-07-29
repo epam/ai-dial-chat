@@ -1,14 +1,7 @@
-/**
- * Namespace prefix shared by every `@DIAL_OVERLAY` postMessage type string
- * exchanged between a `ChatOverlay`/`ChatOverlayManager` host page and an
- * embedded chat app instance.
- */
+/** Namespace prefix for every `@DIAL_OVERLAY` postMessage type string. */
 export const DIAL_OVERLAY_NAMESPACE = '@DIAL_OVERLAY';
 
-/**
- * Request message types the host (library) can send to the embedded app.
- * Each value is the full wire `type` string sent over `postMessage`.
- */
+/** Request message types the host can send to the embedded app. */
 export enum OverlayRequestType {
   /** Fetch the active conversation's messages. */
   GetMessages = '@DIAL_OVERLAY/GET_MESSAGES',
@@ -38,11 +31,7 @@ export enum OverlayRequestType {
   RenameConversation = '@DIAL_OVERLAY/RENAME_CONVERSATION',
 }
 
-/**
- * Event message types the embedded app can send to the host (library),
- * without an accompanying request. Each value is the full wire `type`
- * string sent over `postMessage`.
- */
+/** Event message types the embedded app sends to the host. */
 export enum OverlayEventType {
   /** Sent once, immediately, before any host identity is known. */
   InitReady = '@DIAL_OVERLAY/INIT_READY',
@@ -62,12 +51,7 @@ export enum OverlayEventType {
   ConversationsUpdated = '@DIAL_OVERLAY/CONVERSATIONS_UPDATED',
 }
 
-/**
- * Optional embed-time features a host can opt into via
- * `ChatOverlayOptions.enabledFeatures`. Each member gates exactly one owning
- * UI surface in the embedded app; see `apps/chat`'s `UiFeaturesContext` for
- * the default-on/default-off classification of each value.
- */
+/** Optional embed-time features a host can opt into via `ChatOverlayOptions.enabledFeatures`. */
 export enum OverlayFeature {
   /** Enables the "Add app" menu's Code Apps entry. */
   CodeApps = 'code-apps',
@@ -135,11 +119,7 @@ export enum OverlayFeature {
   VoiceInput = 'voice-input',
 }
 
-/**
- * Minimal message shape carried in overlay protocol payloads. A narrowed
- * projection of the app's full message model, kept local to this module so
- * the overlay protocol has no dependency on `libs/chat-shared`'s domain models.
- */
+/** Minimal message shape carried in overlay protocol payloads. */
 export interface OverlayChatMessage {
   /** Message id. */
   id: string;
@@ -149,11 +129,7 @@ export interface OverlayChatMessage {
   content: string;
 }
 
-/**
- * Host-agnostic projection of a conversation, exposed by the conversation-list
- * methods. Declared independently of `@epam/chat-api-client` or any app-owned
- * type so this module keeps no dependency on generated/app code.
- */
+/** Host-agnostic conversation projection for the overlay protocol. */
 export interface OverlayConversation {
   /** Conversation id. */
   id: string;
@@ -171,12 +147,7 @@ export interface OverlayConversation {
   publishedWithMe: boolean;
 }
 
-/**
- * Explicit error signal carried by conversation-list method responses
- * (`SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `DELETE_CONVERSATION`,
- * `RENAME_CONVERSATION`) so invalid ids/values/forbidden actions reject with
- * a clear reason instead of the request silently timing out.
- */
+/** Error signal carried by conversation-list method responses. */
 export interface OverlayConversationError {
   /** `NOT_FOUND` for an unknown/inaccessible id, `FORBIDDEN` for a read-only/shared-without-write-access conversation, `INVALID_ARGUMENT` for a rejected value (e.g. blank rename). */
   code: 'NOT_FOUND' | 'FORBIDDEN' | 'INVALID_ARGUMENT';
@@ -184,10 +155,7 @@ export interface OverlayConversationError {
   message: string;
 }
 
-/**
- * Options a host page passes to `ChatOverlay`'s constructor, and the subset
- * of them re-sent to the embedded app via `SET_OVERLAY_OPTIONS`.
- */
+/** Options passed to `ChatOverlay`'s constructor. */
 export interface ChatOverlayOptions {
   /** Full URL of the chat app instance to embed (origin + optional path). */
   domain: string;

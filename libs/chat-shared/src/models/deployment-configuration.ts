@@ -8,10 +8,7 @@ export interface StarterWidgetOptions {
   confirmationMessage: string | null;
 }
 
-/**
- * A single entry in the `starter` property's `oneOf` array.
- * Represents one quick-start conversation button.
- */
+/** A quick-start conversation button entry in the `starter` property's `oneOf` array. */
 export interface StarterOption {
   /** Numeric index used as the schema `const` value. */
   const: number;
@@ -21,10 +18,7 @@ export interface StarterOption {
   'dial:widgetOptions': StarterWidgetOptions;
 }
 
-/**
- * A single property entry within a deployment's configuration JSON Schema.
- * Each key in `DeploymentConfigurationSchema.properties` maps to this shape.
- */
+/** A single property entry in a deployment's configuration JSON Schema. */
 export interface DeploymentConfigurationSchemaProperty {
   /** Default value for this property. */
   default?: unknown;

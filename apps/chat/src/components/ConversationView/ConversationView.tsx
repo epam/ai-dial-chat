@@ -390,8 +390,8 @@ const ConversationView: FC<Props> = ({
   const handleSendWithAnchor = useCallback(
     async (message: string, attachments: Attachment[]) => {
       armAnchor(messages.length);
-      // ConversationInput awaits this to know whether to restore the draft
-      // on failure — forward onSend's result rather than discarding it.
+      /* ConversationInput awaits this to know whether to restore the draft
+       * on failure — forward onSend's result rather than discarding it. */
       await onSend(message, attachments);
     },
     [onSend, messages.length, armAnchor],

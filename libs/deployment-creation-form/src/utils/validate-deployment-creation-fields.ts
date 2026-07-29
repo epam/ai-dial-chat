@@ -14,11 +14,7 @@ export const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/;
 /** Default maximum character length for the intro field. */
 export const DEFAULT_INTRO_MAX_LENGTH = 90;
 
-/**
- * Pure validation of the shared General-step fields. Returns untranslated error
- * codes only — the host app maps each code to a translated message. Has no side
- * effects and does not depend on i18n, routing, or network state.
- */
+/** Validates the General-step fields and returns untranslated error codes; has no side effects. */
 export const validateDeploymentCreationFields = (
   values: DeploymentCreationFormValues,
   options: DeploymentCreationFormValidationOptions = {},

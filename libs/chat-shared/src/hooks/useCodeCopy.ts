@@ -3,15 +3,7 @@ import { copyToClipboard } from '../utils/copy-to-clipboard';
 
 const DEFAULT_RESET_DELAY_MS = 2000;
 
-/**
- * Manages clipboard copy state for code blocks.
- *
- * Calls `copyToClipboard` synchronously within the user-gesture handler
- * (required by the Clipboard API). `isCopied` is set to `true` only when the
- * write succeeds; it stays `true` for `resetDelay` milliseconds (default 2 s)
- * then resets to `false`. The timeout is cleared on unmount to prevent
- * setState-on-unmount.
- */
+/** Returns `isCopied` state and a `copy` callback; `isCopied` resets to `false` after `resetDelay` ms. */
 export const useCodeCopy = (
   value: string,
   resetDelay = DEFAULT_RESET_DELAY_MS,

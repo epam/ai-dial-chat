@@ -4,11 +4,7 @@ import { useEffect, useRef, type FC } from 'react';
 import type { DeploymentCreationFormProps } from '../../models/deployment-creation-form';
 import { DEFAULT_INTRO_MAX_LENGTH } from '../../utils/validate-deployment-creation-fields';
 
-/**
- * Controlled presentation component for the field set shared by Quick App and Toolset creation (name, description, icon URL, version, topics, intro).
- *
- * Holds no field state of its own, performs no validation, and makes no network calls — the host app owns values, errors, and submission.
- */
+/** Controlled field set for deployment creation: name, description, icon URL, version, topics, and intro. */
 export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   values,
   errors,

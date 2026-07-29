@@ -532,8 +532,8 @@ export class AuthController {
     }
 
     const rolesClaim = config.rolesClaim ?? 'roles';
-    // `user.claims` stores the resolved roles claim under the flat
-    // `rolesClaim` key (see callback()) — not as a nested path.
+    /* `user.claims` stores the resolved roles claim under the flat
+     * `rolesClaim` key (see callback()) — not as a nested path. */
     const rolesValue = user.claims[rolesClaim];
     const roles = Array.isArray(rolesValue)
       ? rolesValue.map(String)

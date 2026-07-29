@@ -71,8 +71,8 @@ export class ConversationPublishService {
     const encodedPath = encodeDialResourcePath(path);
     const sourceUrl = `${CONVERSATION_RESOURCE_PREFIX}/${bucket}/${encodedPath}`;
 
-    // Re-fetches the conversation's current title server-side, scoped to the
-    // caller's own bucket only, rather than trusting a client-supplied value.
+    /* Re-fetches the conversation's current title server-side, scoped to the
+     * caller's own bucket only, rather than trusting a client-supplied value. */
     const {
       data: conversation,
       error: getError,

@@ -35,16 +35,7 @@ export interface PublishHistoryListProps {
   emptyStateClassName?: string;
 }
 
-/**
- * Read-only list of previously published versions for a catalog entity within
- * the currently selected destination folder. Renders an empty-state message
- * instead of a list when there is no history yet. Each row shows the version
- * and publish date; the destination folder is not repeated here since this
- * list is already scoped to the selected folder. The row matching
- * `currentVersion` gets a small "Current" badge rather than a filled/
- * selected-looking row, since blue selection styling is reserved for the
- * destination folder picker.
- */
+/** Read-only list of previously published versions for the currently selected destination folder, with loading and empty states. */
 export const PublishHistoryList: FC<PublishHistoryListProps> = ({
   entries,
   currentVersion,

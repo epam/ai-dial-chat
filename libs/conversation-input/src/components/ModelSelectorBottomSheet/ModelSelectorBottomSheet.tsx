@@ -123,11 +123,7 @@ export interface ModelSelectorBottomSheetProps {
   labelClassName?: string;
 }
 
-/**
- * A bottom-sheet overlay for the model/deployment selector on mobile viewports.
- * Renders the shared {@link BottomSheetShell} with a search input that filters
- * the deployment list (virtualized for large lists) as the user types.
- */
+/** Mobile bottom-sheet model selector with search and a virtualized deployment list. */
 export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
   isOpen,
   title,

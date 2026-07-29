@@ -4,6 +4,7 @@ export type {
   ConversationPanelProps,
   ConversationPanelStyles,
   ConversationColors,
+  NewChatButtonColors,
   ConversationPanelTypography,
   ConversationPanelLabels,
   ConversationItem,

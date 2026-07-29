@@ -1,7 +1,7 @@
-/** Controls which corners of the message bubble are rounded, allowing adjacent bubbles to visually group together. */
+/** Controls bubble corner rounding for grouping adjacent messages. */
 export enum BubblePosition {
-  /** First bubble in a group — rounds the bottom-right corner. */
+  /** First bubble in a group; bottom-start corner is squared. */
   Bottom = 'Bottom',
-  /** Subsequent bubble in a group — rounds the top-right corner. */
+  /** Subsequent bubble in a group; top-start corner is squared. */
   Top = 'Top',
 }

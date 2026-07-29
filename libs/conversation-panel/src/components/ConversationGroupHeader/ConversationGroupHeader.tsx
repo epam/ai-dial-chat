@@ -17,10 +17,7 @@ export interface ConversationGroupHeaderProps {
   listId: string;
   /** Typography class applied to the header button. Defaults to `'dial-tiny-semi-text uppercase'`. */
   className?: string;
-  /**
-   * When provided the header acts as a drop zone for drag-and-drop.
-   * Only the Pinned group header receives this prop.
-   */
+  /** When provided the header acts as a drag-and-drop drop zone. */
   dropZoneGroupKey?: FilterTab;
   /** Whether the drag cursor is currently over this header. */
   isDragOver?: boolean;

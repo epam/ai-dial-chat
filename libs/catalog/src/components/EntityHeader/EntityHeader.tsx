@@ -34,7 +34,7 @@ export interface EntityHeaderProps {
   featuredChipClassName?: string;
 }
 
-/** Compact card for the Favorites strip with hover lift and star toggle. */
+/** Reusable entity identity block: deployment icon, type label, name, version, and optional featured chip. */
 export const EntityHeader: FC<EntityHeaderProps> = ({
   item,
   nameClassName,

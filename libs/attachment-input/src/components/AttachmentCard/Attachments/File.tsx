@@ -30,14 +30,7 @@ const DEFAULT_ERROR_REASON_TEXT: Record<AttachmentErrorReason, string> = {
     'Upload failed · unsupported file type',
 };
 
-/**
- * Non-previewable attachment tile: a uniform neutral square holding the
- * glyph, extension label, and filename together (no external caption, no
- * per-type color). Type is communicated by glyph + extension text only;
- * color is reserved for upload state (failed = red tile + icon-only retry,
- * uploading = progress bar). Download/retry are icon-only, matching the
- * rest of the app.
- */
+/** Non-previewable attachment tile showing a file type glyph, extension label, and filename with upload-state feedback. */
 export const FileAttachment: FC<FileAttachmentProps> = ({
   attachment,
   onClick,
