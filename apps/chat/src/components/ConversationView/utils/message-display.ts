@@ -5,6 +5,7 @@ import {
   type StatusMessage,
 } from '@epam/ai-dial-chat-shared';
 import { getStartersFromSchema } from '../../../utils/starter-option';
+import { safeDecodeURIComponent } from '../../../utils/string-utils';
 
 /*
  * Extracts a human-readable name from a raw deployment ID.
@@ -18,7 +19,7 @@ import { getStartersFromSchema } from '../../../utils/starter-option';
  */
 const parseDeploymentDisplayName = (id: string): string => {
   const lastSegment = id.split('/').pop() ?? id;
-  const decoded = decodeURIComponent(lastSegment);
+  const decoded = safeDecodeURIComponent(lastSegment);
   const separatorIndex = decoded.lastIndexOf('__');
   if (separatorIndex === -1) return decoded;
   const name = decoded.slice(0, separatorIndex);
