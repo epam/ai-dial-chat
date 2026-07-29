@@ -98,6 +98,7 @@ export const Input: FC<InputProps> = ({
   modelPickerOverlay,
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
+  isAttachmentsEnabled = true,
 }) => {
   const isMobile = useIsMobile();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -193,7 +194,10 @@ export const Input: FC<InputProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
+  const { handlePaste } = useClipboardPaste(
+    addAttachments,
+    isAttachmentsEnabled ? pasteTextThreshold : Infinity,
+  );
 
   const hasSendableContent =
     message.trim().length > 0 || attachments.length > 0;

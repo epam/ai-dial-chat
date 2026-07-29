@@ -10,7 +10,7 @@ Specifies the validation and error notification flow when a user attaches a file
 
 Before calling `onUploadAttachment`, the app SHALL validate each attachment's MIME type against the selected deployment's `inputAttachmentTypes`. Validation uses the `validateAttachment` prop on `ConversationInput` / `Input`, which the app supplies.
 
-A file is invalid when none of the allowed MIME entries match: exact equality (`application/pdf`) OR wildcard prefix match (`image/*` matches `image/jpeg`). Global wildcards `*` and `*/*` match any MIME type. When `inputAttachmentTypes` is empty or undefined, the attachment button is already hidden and this path is unreachable.
+A file is invalid when none of the allowed MIME entries match: exact equality (`application/pdf`) OR wildcard prefix match (`image/*` matches `image/jpeg`). Global wildcards `*` and `*/*` match any MIME type. When `inputAttachmentTypes` is empty or undefined, the attachment button is hidden; however, clipboard paste of images can still add attachments and will reach this validation path. Long pasted plain text is handled separately — see the `isAttachmentsEnabled` requirement in `conversation-input-attachments`.
 
 Invalid files SHALL be placed immediately into `status: RequestStatus.Error` with `errorReason: AttachmentErrorReason.UnsupportedType` without calling `onUploadAttachment`.
 

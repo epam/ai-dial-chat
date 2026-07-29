@@ -87,6 +87,12 @@ export interface EditMessageInputProps {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
+  /**
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment. Set to `false` when the selected model
+   * does not support attachments. Defaults to `true`.
+   */
+  isAttachmentsEnabled?: boolean;
   /** Maximum total kept-plus-new attachments; unlimited when `undefined`, `0`, or non-finite. */
   maximumAttachmentsAmount?: number;
   /** Called when adding a batch would exceed `maximumAttachmentsAmount`. */
@@ -251,6 +257,12 @@ export interface ConversationInputProps {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
+  /**
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment. Set to `false` when the selected model
+   * does not support attachments. Defaults to `true`.
+   */
+  isAttachmentsEnabled?: boolean;
   /**
    * Maximum number of attachments allowed in the input tray. Undefined, `0`,
    * or non-finite values mean there is no count limit.

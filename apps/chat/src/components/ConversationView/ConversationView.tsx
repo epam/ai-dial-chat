@@ -588,6 +588,11 @@ const ConversationView: FC<Props> = ({
                         ? validateAttachment
                         : undefined
                     }
+                    isAttachmentsEnabled={
+                      selectedDeployment != null
+                        ? isAttachmentsAllowed
+                        : undefined
+                    }
                     maximumAttachmentsAmount={
                       selectedDeployment?.maxInputAttachments
                     }
@@ -718,6 +723,9 @@ const ConversationView: FC<Props> = ({
                 )}
                 validateAttachment={
                   selectedDeployment != null ? validateAttachment : undefined
+                }
+                isAttachmentsEnabled={
+                  selectedDeployment != null ? isAttachmentsAllowed : undefined
                 }
                 maximumAttachmentsAmount={
                   selectedDeployment?.maxInputAttachments

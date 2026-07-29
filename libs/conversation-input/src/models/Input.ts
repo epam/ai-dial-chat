@@ -131,6 +131,13 @@ export interface InputProps {
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
   /**
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment. Set to `false` when the selected model
+   * does not support attachments so that pasting a long prompt does not
+   * trigger an "Attachments not supported" error. Defaults to `true`.
+   */
+  isAttachmentsEnabled?: boolean;
+  /**
    * List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered.
    * `iconUrl` on each item must already be a fully resolved URL usable in `<img src>` — the host app
    * resolves DIAL file IDs, theme-relative names, etc. before passing the list.
