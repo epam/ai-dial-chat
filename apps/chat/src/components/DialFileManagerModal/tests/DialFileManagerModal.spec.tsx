@@ -239,17 +239,27 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
           }) ?? false,
         )}
       >
-        {toolbarOptions?.tabs?.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() =>
-              toolbarOptions.onTabChange?.(tab.id as DialFileManagerTabs)
-            }
-          >
-            {tab.name}
-          </button>
-        ))}
+        {selectedPaths?.size
+          ? null
+          : toolbarOptions?.tabs?.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() =>
+                  toolbarOptions.onTabChange?.(tab.id as DialFileManagerTabs)
+                }
+              >
+                {tab.name}
+              </button>
+            ))}
+        <button
+          type="button"
+          onClick={() =>
+            toolbarOptions?.onTabChange?.(DialFileManagerTabs.Shared)
+          }
+        >
+          Invoke tab-change handler
+        </button>
         {selectedPaths?.size ? (
           <>
             <span>
@@ -890,21 +900,23 @@ describe('DialFileManagerModal — tab navigation', () => {
     );
   });
 
-  it('calls handleTabChange and clears selectedPaths on tab switch', () => {
+  it('clears selectedPaths when the tab-change handler is invoked', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
 
-    // Select a file first
     fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
     expect(screen.getByText('1 item selected')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'Shared with Me' }),
+    ).toBeNull();
 
-    // Switch tab — this should clear selectedPaths and call handleTabChange
-    fireEvent.click(screen.getByRole('button', { name: 'Shared with Me' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Invoke tab-change handler' }),
+    );
 
     expect(mockHandleTabChange).toHaveBeenCalledWith(
       DialFileManagerTabs.Shared,
     );
-    // After tab switch, selection should be cleared (no "1 item selected" text)
     expect(screen.queryByText('1 item selected')).toBeNull();
   });
 });

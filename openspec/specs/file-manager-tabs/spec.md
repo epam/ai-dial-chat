@@ -323,26 +323,18 @@ When the active tab is `shared`, `DialFileManagerShell` SHALL pass the `sharedWi
 
 ---
 
-### Requirement: Selection cleared on tab switch
+### Requirement: Tab-change handler clears selection
 
-When the tab-change handler changes `activeTab`, the set of `selectedPaths` SHALL be cleared (reset to an empty `Set`) before the new tab's listing is used.
+Before changing `activeTab`, the tab-change handler SHALL reset `selectedPaths` to an empty `Set`, preventing stale paths from being carried into another tab's listing.
 
-> **Implementation note:** on the standalone page the tab strip is replaced by the bulk-actions toolbar as soon as any item is selected, so a user cannot click another tab while a non-empty selection is held. Specs and tests SHALL NOT require a DOM flow that selects a file and then clicks a tab without first clearing the selection, because that tab control is not rendered in that state.
+> **Implementation note:** on user-facing file-manager surfaces, the ui-kit replaces the tab strip with the bulk-actions toolbar while selection is non-empty. Therefore, this is a handler-level invariant and SHALL NOT be tested through a select-file → click-tab DOM flow.
 
-#### Scenario: Selection cleared by the tab-change handler
+#### Scenario: Handler clears stale selection
 
 - **GIVEN** `selectedPaths` contains paths from the current tab
-- **WHEN** `toolbarOptions.onTabChange` is invoked with a different tab
-- **THEN** the handler clears `selectedPaths` to an empty `Set`
-- **AND** the new active tab renders with no stale selected paths
-
-#### Scenario: User tab switch is reachable only after selection is cleared
-
-- **GIVEN** the user has selected a file on the standalone My files tab
-- **WHEN** that selection is active
-- **THEN** the tab strip is not rendered because the bulk-actions toolbar is shown
-- **WHEN** the user clears the selection and then clicks Shared after the tab strip returns
-- **THEN** `selectedPaths` remains empty on the Shared tab
+- **WHEN** the tab-change handler is invoked with a different tab
+- **THEN** `selectedPaths` is reset to an empty `Set`
+- **AND** the requested tab becomes active
 
 ---
 
