@@ -69,7 +69,10 @@ const selectFilteredPublicationsWithSearch = (
         return false;
       }
 
-      return publication.name.toLowerCase().trim().includes(searchTerm.toLowerCase().trim());
+      return publication.name
+        .toLowerCase()
+        .trim()
+        .includes(searchTerm.toLowerCase().trim());
     });
   });
 
