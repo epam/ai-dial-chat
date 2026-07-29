@@ -115,6 +115,7 @@ interface Props {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
+  isAttachmentsEnabled?: boolean;
   maximumAttachmentsAmount?: number;
   onAttachmentsLimitExceeded?: (count: number, limit: number) => void;
   hideAttachFile?: boolean;
@@ -169,6 +170,7 @@ const ConversationMessageItem: FC<Props> = ({
   stepsLabel,
   onPreviewReference,
   validateAttachment,
+  isAttachmentsEnabled,
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
   hideAttachFile,
@@ -284,6 +286,7 @@ const ConversationMessageItem: FC<Props> = ({
             pendingDropFiles={pendingDropFiles}
             onDropFilesConsumed={onDropFilesConsumed}
             validateAttachment={validateAttachment}
+            isAttachmentsEnabled={isAttachmentsEnabled}
             maximumAttachmentsAmount={maximumAttachmentsAmount}
             onAttachmentsLimitExceeded={onAttachmentsLimitExceeded}
             hideAttachFile={hideAttachFile}
