@@ -53,7 +53,7 @@ export interface PublishFoldersTreeProps {
   /** Default name pre-filled for a new folder before the user edits it. Default: `'New folder'`. */
   newFolderDefaultName?: string;
   /** Message shown when a search query matches no folders; `{query}` is replaced. Default: `'No folders match "{query}".'`. */
-  noResultsText?: string;
+  noResultsLabel?: string;
   /** Inline error shown while creating a folder with an empty name. Default: `'Folder name cannot be empty.'`. */
   emptyFolderNameError?: string;
   /** Inline error shown while creating a folder whose name contains `..` or a forbidden character. Default: `'Folder name contains invalid characters.'`. */
@@ -91,7 +91,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
   addSiblingFolderLabel = 'Add sibling',
   addChildFolderLabel = 'Add child',
   newFolderDefaultName = 'New folder',
-  noResultsText = 'No folders match "{query}".',
+  noResultsLabel = 'No folders match "{query}".',
   emptyFolderNameError = 'Folder name cannot be empty.',
   invalidFolderNameError = 'Folder name contains invalid characters.',
   duplicateFolderNameError = 'A folder with this name already exists.',
@@ -276,7 +276,7 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
         onRenameValidate={(value) => validateNewFolderName(value)}
         emptyStateTitle={
           isSearching
-            ? noResultsText.replace('{query}', searchQuery.trim())
+            ? noResultsLabel.replace('{query}', searchQuery.trim())
             : undefined
         }
       />

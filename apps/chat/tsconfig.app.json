@@ -57,6 +57,9 @@
       "path": "../../libs/share/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/publish-panel/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/attachment-input/tsconfig.lib.json"
     },
     {

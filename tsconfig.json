@@ -62,6 +62,9 @@
     },
     {
       "path": "./libs/scheduled-tasks"
+    },
+    {
+      "path": "./libs/publish-panel"
     }
   ]
 }

@@ -1,4 +1,5 @@
-import { CatalogEntityType, PublishHistoryEntry } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-catalog';
+import { PublishHistoryEntry } from '@epam/ai-dial-publish-panel';
 import type { PublishHistoryEntryDto } from '@epam/chat-api-client';
 import { CatalogPublishEntityType } from '../server-api/publish.api';
 

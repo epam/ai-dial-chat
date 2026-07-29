@@ -330,6 +330,9 @@ const NewConversationComposer: FC<Props> = ({
           validateAttachment={
             selectedDeployment != null ? validateAttachment : undefined
           }
+          isAttachmentsEnabled={
+            selectedDeployment != null ? isAttachmentsAllowed : undefined
+          }
           maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
           onAttachmentsLimitExceeded={handleAttachmentsLimitExceeded}
           hideAttachFile={!isAttachmentsAllowed || !isInputFilesEnabled}

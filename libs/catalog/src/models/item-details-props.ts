@@ -1,9 +1,12 @@
+import type {
+  PublishFolderNode,
+  PublishFooterLabels,
+  PublishHistoryEntry,
+  PublishPanelLabels,
+} from '@epam/ai-dial-publish-panel';
 import type { ReactNode } from 'react';
-import type { PublishFooterTexts } from '../components/PublishPanel/PublishFooter';
-import type { PublishPanelTexts } from '../components/PublishPanel/PublishPanel';
 import type { CredentialsLevel } from '../types/toolset-auth';
 import type { CatalogItem } from './catalog-item';
-import type { PublishFolderNode, PublishHistoryEntry } from './publish';
 
 /** Text overrides for all user-visible strings in `DetailsPanel`. */
 export interface ItemDetailsTexts {
@@ -199,7 +202,7 @@ export interface DetailsPanelProps {
   /** Called when the user confirms a new folder name in the publish flow. */
   onCreatePublishFolder?: (parentPath: string[], name: string) => void;
   /** Text overrides forwarded to the publish flow. */
-  publishTexts?: PublishPanelTexts & PublishFooterTexts;
+  publishLabels?: PublishPanelLabels & PublishFooterLabels;
   /**
    * Renders the Share popover content anchored to the Share button. When
    * provided, clicking Share opens this popover instead of calling `onShare`.

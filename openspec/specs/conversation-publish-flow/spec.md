@@ -63,7 +63,7 @@ The pinned footer's "Cancel" button SHALL call the same `onClose` handler as the
 
 ### Requirement: Panel body renders a title-only resource summary instead of the catalog version pill
 
-The scrollable body SHALL render the shared `PublishPanel` lib component (destination folder picker with search, inline folder creation, no-access/submit-error callouts, publish history list) configured with a `PublishResourceSummary` built from the conversation's title (no icon, no version) rather than a `CatalogItem`. The summary row SHALL show the conversation's title and SHALL NOT render a version pill or any `{name}__{version}`-style identifier, since conversations have no version.
+The scrollable body SHALL render the shared `PublishPanel` component (exported from `@epam/ai-dial-publish-panel`, not `@epam/ai-dial-catalog`) providing the destination folder picker with search, inline folder creation, no-access/submit-error callouts, and publish history list, configured with a `PublishResourceSummary` built from the conversation's title (no icon, no version) rather than a `CatalogItem`. The summary row SHALL show the conversation's title and SHALL NOT render a version pill or any `{name}__{version}`-style identifier, since conversations have no version.
 
 Destination folder picker, search, and inline folder creation SHALL behave identically to the catalog publish flow (folder tree via `PublishFoldersTree`, bucket root selectable as `[]`, lazy-loaded children, optimistic create with rollback on failure), reusing `usePublishFolders` (the renamed, shared `useCatalogPublishFolders`).
 
@@ -153,3 +153,10 @@ The panel root SHALL expose `role="dialog"`, `aria-modal="true"`, and `aria-labe
 #### Scenario: Focus returns to the triggering control on close
 - **WHEN** the panel closes via Cancel, Close, or Escape
 - **THEN** keyboard focus returns to the conversation row's "..." action-menu trigger
+
+### Requirement: Publish UI is imported from the shared publish-panel library, not the catalog library
+`PublishConversationPanelContainer` SHALL import `StandalonePublishPanel`, `usePublishFlow`, and all `Publish*` types from `@epam/ai-dial-publish-panel`. It SHALL NOT import any symbol from `@epam/ai-dial-catalog`, since conversation publish has no relationship to catalog browsing or catalog domain models.
+
+#### Scenario: Container imports only from the publish-panel library
+- **WHEN** `apps/chat/src/components/PublishConversationPanelContainer/PublishConversationPanelContainer.tsx` is inspected
+- **THEN** all publish-UI imports come from `@epam/ai-dial-publish-panel` and none come from `@epam/ai-dial-catalog`
