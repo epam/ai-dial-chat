@@ -6,6 +6,26 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { getStartersFromSchema } from '../../../utils/starter-option';
 
+/*
+ * Extracts a human-readable name from a raw deployment ID.
+ *
+ * IDs follow the pattern:
+ *   applications/<bucket>/<url-encoded-name>__<version>
+ *
+ * Examples:
+ *   "applications/.../My%20Agent__0.0.1" → "My Agent 0.0.1"
+ *   "gpt-4o"                                    → "gpt-4o"
+ */
+const parseDeploymentDisplayName = (id: string): string => {
+  const lastSegment = id.split('/').pop() ?? id;
+  const decoded = decodeURIComponent(lastSegment);
+  const separatorIndex = decoded.lastIndexOf('__');
+  if (separatorIndex === -1) return decoded;
+  const name = decoded.slice(0, separatorIndex);
+  const version = decoded.slice(separatorIndex + 2);
+  return version ? `${name} ${version}` : name;
+};
+
 /**
  * Resolves display props for a `MessageRole.Status` message.
  * Returns `undefined` for non-status messages.
@@ -20,12 +40,12 @@ export const getStatusMessageProps = (
   const customContent = msg.custom_content;
   const prevName = customContent?.previous_deployment_id
     ? (deploymentLookup[customContent.previous_deployment_id]?.displayName ??
-      customContent.previous_deployment_id)
+      parseDeploymentDisplayName(customContent.previous_deployment_id))
     : null;
-  const newName =
-    deploymentLookup[customContent?.new_deployment_id ?? '']?.displayName ??
-    customContent?.new_deployment_id ??
-    '';
+  const newName = customContent?.new_deployment_id
+    ? (deploymentLookup[customContent.new_deployment_id]?.displayName ??
+      parseDeploymentDisplayName(customContent.new_deployment_id))
+    : '';
   return {
     statusTitleText: titleText,
     statusBodyText: formatBodyText(prevName ?? '…', newName),
