@@ -33,7 +33,7 @@ import {
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
-import { DialAIEntityFeatures } from '@/src/types/models';
+import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import {
   AnyToolset,
   CodeInterpreterToolset,
@@ -974,11 +974,10 @@ export const getApplicationPayload = ({
       };
 
     case AppsEditorSchemaTypes.QuickApp2: {
-      const model = allEntitiesMap[data.model];
-      const temperatureToUse =
-        model && isDialAiEntityModel(model) && doesModelAllowTemperature(model)
-          ? data.temperature
-          : undefined;
+      const model = allEntitiesMap[data.model] as DialAIEntityModel | undefined;
+      const temperatureToUse = data.temperature;
+      const shouldSendTemperature = model && doesModelAllowTemperature(model);
+
       const starters = data.starters
         .filter((starter) => starter.text.trim() && starter.title.trim())
         .map(({ title, text }) => ({ title, text }));
@@ -996,7 +995,7 @@ export const getApplicationPayload = ({
           orchestrator: {
             deployment: {
               deployment_id: model?.id ?? data.model,
-              ...(temperatureToUse && {
+              ...(shouldSendTemperature && {
                 parameters: { temperature: temperatureToUse },
               }),
             },
