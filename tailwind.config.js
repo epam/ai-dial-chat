@@ -145,7 +145,7 @@ const borderColors = {
 };
 
 const controlsBorderColors = {
-   // REMOVED: old names, need to remove
+  // REMOVED: old names, need to remove
   'controls-focus': 'var(--controls-stroke-focus, #EEF1F7)',
 };
 

@@ -3,7 +3,10 @@
 }
 
 .header {
-  border-bottom-color: var(--stcf-header-border, var(--stroke-tertiary, #e0e6f0));
+  border-bottom-color: var(
+    --stcf-header-border,
+    var(--stroke-tertiary, #e0e6f0)
+  );
 }
 
 .detailsColumn {
@@ -14,7 +17,7 @@
 }
 
 .sectionSubtitle {
-  color: var(--stcf-subtitle-text, var(--text-secondary, #6B7280));
+  color: var(--stcf-subtitle-text, var(--text-secondary, #6b7280));
 }
 
 .instructionsError {
