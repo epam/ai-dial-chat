@@ -84,11 +84,11 @@
 
 /* Secondary text of the "Anyone with the link" row. */
 .anyoneWithLinkSubtitle {
-  color: var(--shp-anyone-subtitle, var(--text-secondary, #575f73));
+  color: var(--shp-anyone-subtitle, var(--text-secondary, #6B7280));
 }
 
 .accessTriggerChevron {
-  color: var(--shp-access-chevron, var(--text-tertiary, #808898));
+  color: var(--shp-access-chevron, var(--text-tertiary, #C7CBD4));
   transition: transform 150ms ease;
 
   @media (prefers-reduced-motion: reduce) {
@@ -138,9 +138,9 @@
 
 /* Section heading above the link input, e.g. "Link". */
 .sectionLabel {
-  color: var(--shp-section-label, var(--text-secondary, #575f73)) !important;
+  color: var(--shp-section-label, var(--text-secondary, #6B7280)) !important;
   input {
-    color: var(--shp-section-label, var(--text-secondary, #575f73)) !important;
+    color: var(--shp-section-label, var(--text-secondary, #6B7280)) !important;
   }
 }
 
@@ -151,7 +151,7 @@
 
 /* Visibility and expiry notes below the access control. */
 .note {
-  color: var(--shp-note-text, var(--text-secondary, #575f73));
+  color: var(--shp-note-text, var(--text-secondary, #6B7280));
 }
 
 .divider {

@@ -1,5 +1,5 @@
 .toggleButton {
-  color: var(--cs-cg-label, var(--text-secondary, #575f73));
+  color: var(--cs-cg-label, var(--text-secondary, #6B7280));
   width: 100%;
   justify-content: flex-start !important;
 
@@ -9,12 +9,12 @@
 }
 
 .executedLabel {
-  color: var(--cs-cg-label, var(--text-secondary, #575f73));
+  color: var(--cs-cg-label, var(--text-secondary, #6B7280));
 }
 
 /* Execution time — muted like the row-level duration (--text-tertiary), not the loud --text-primary ink used for the rest of the summary line. */
 .stepsCount {
-  color: var(--cs-cg-steps-count, var(--text-tertiary, #808898));
+  color: var(--cs-cg-steps-count, var(--text-tertiary, #C7CBD4));
   font-variant-numeric: tabular-nums;
 }
 

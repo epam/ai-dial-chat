@@ -28,7 +28,7 @@
   color: var(--ci-text, var(--text-primary, #161b2d));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #9fa6bd));
+    color: var(--ci-placeholder, var(--text-secondary, #6B7280));
   }
 
   &:disabled {
@@ -48,7 +48,7 @@
 }
 
 .stopIcon {
-  color: var(--ci-stop-color, var(--text-secondary, #575f73));
+  color: var(--ci-stop-color, var(--text-secondary, #6B7280));
 }
 
 .modelSelectorButton {
@@ -124,7 +124,7 @@
  * solid blue. No box-shadow glow (unlike the pill-shaped PrimaryButton):
  * on this small 32px circle, the same shadow blur radius rendered as a
  * visible square halo around the circle rather than a soft round glow.
- */
+ */dfdf
 .sendButton {
   background-color: transparent;
   background-image: var(

@@ -14,7 +14,7 @@
   }
   &--BY_REQUEST {
     background: var(--bg-layer-2, #1a2035) !important;
-    color: var(--text-secondary, #575f73) !important;
+    color: var(--text-secondary, #6B7280) !important;
     border-color: transparent !important;
   }
   &--BETA {
@@ -27,7 +27,7 @@
   }
   &--DEPRECATED {
     background: var(--bg-layer-2, #1a2035) !important;
-    color: var(--text-error, #f2655a) !important;
+    color: var(--text-error, #AE2F2F) !important;
     border-color: transparent !important;
   }
 }
@@ -41,5 +41,5 @@
 }
 
 .resetLabel {
-  color: var(--text-secondary, #575f73);
+  color: var(--text-secondary, #6B7280);
 }

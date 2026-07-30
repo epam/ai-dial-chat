@@ -31,7 +31,7 @@
 
   .nameText,
   .typeText {
-    color: var(--ci-tile-error-text, var(--text-error, #ae2f2f));
+    color: var(--ci-tile-error-text, var(--text-error, #AE2F2F));
   }
 }
 
@@ -40,11 +40,11 @@
 }
 
 .typeText {
-  color: var(--ci-tile-type-text, var(--text-secondary, #575f73));
+  color: var(--ci-tile-type-text, var(--text-secondary, #6B7280));
 }
 
 .retryIcon {
-  color: var(--ci-tile-error-text, var(--text-error, #ae2f2f));
+  color: var(--ci-tile-error-text, var(--text-error, #AE2F2F));
 }
 
 .hoverIcon {

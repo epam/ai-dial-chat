@@ -16,8 +16,7 @@
 }
 
 .groupHeader {
-  color: var(--cp-text-secondary, var(--text-tertiary, #808898));
-  opacity: 0.55;
+  color: var(--cp-text-secondary, var(--text-tertiary, #C7CBD4));
 }
 
 .dropZoneActive {
@@ -41,7 +40,7 @@
 }
 
 .triggerIcon {
-  color: var(--cp-trigger-icon-idle, var(--text-secondary, #575f73));
+  color: var(--cp-trigger-icon-idle, var(--text-secondary, #6B7280));
 }
 
 :export {

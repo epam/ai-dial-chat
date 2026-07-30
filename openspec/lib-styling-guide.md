@@ -74,7 +74,7 @@ Not allowed in SCSS (use Tailwind instead):
   color: var(--ci-text, var(--text-primary, #161B2D));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #575F73));
+    color: var(--ci-placeholder, var(--text-secondary, #6B7280));
   }
 }
 

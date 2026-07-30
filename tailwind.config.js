@@ -137,8 +137,6 @@ const borderColors = {
   // REMOVED: old names, need to remove
   'accent-primary': 'var(--stroke-accent-primary, #124ACE)',
   'accent-primary-hover': 'var(--stroke-accent-primary-hover, #7DA4FF)',
-  'accent-secondary': 'var(--stroke-accent-secondary, #007274)',
-  'accent-tertiary': 'var(--stroke-accent-tertiary, #7E39EC)',
   'hover-tint': 'var(--stroke-hover-tint, #0000001f)',
   hairline: 'var(--stroke-hairline, #0000000d)',
   'controls-accent': 'var(--controls-bg-accent, #5C8DEA)',
@@ -147,6 +145,7 @@ const borderColors = {
 };
 
 const controlsBorderColors = {
+   // REMOVED: old names, need to remove
   'controls-focus': 'var(--controls-stroke-focus, #EEF1F7)',
 };
 
@@ -167,7 +166,6 @@ const textColors = {
   'accent-primary': 'var(--text-accent-primary, #7DA4FF)',
   'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
   'accent-tertiary': 'var(--text-accent-tertiary, #A972FF)',
-  'controls-disable': 'var(--controls-text-disable, #0C101D)',
   // Catalog tab bar — override via CSS custom properties for dark-theme support
   'catalog-tab-active': 'var(--cat-tab-active-text, #111827)',
   'catalog-tab-inactive': 'var(--cat-tab-inactive-text, #6B7280)',
@@ -175,19 +173,16 @@ const textColors = {
   'catalog-badge-active': 'var(--cat-badge-active-text, #2764D9)',
   'catalog-badge-inactive': 'var(--cat-badge-inactive-text, #9CA3AF)',
   'accent-primary': 'var(--text-accent-primary, #124ACE)',
-  'accent-primary-hover': 'var(--text-accent-primary-hover, #2764D9)',
   'accent-secondary': 'var(--text-accent-secondary, #007274)',
   'accent-tertiary': 'var(--text-accent-tertiary, #7E39EC)',
-  white: 'var(--text-white, #FFFFFF)',
 };
 
+// NEW COLORS 2.0
 const placeholderColor = {
   primary: 'var(--text-primary, #161B2D)', // grey-1000
-  secondary: 'var(--controls-text-secondary-disable, #575F73)',
 };
 
 const controlsTextColors = {
-  // COLORS 2.0
   'control-permanent': 'var(--text-control-permanent, #FCFCFC)', // grey-100
   'control-disable': 'var(--text-control-disable, #6B7280)', // grey-800
   'control-blue-hover': 'var(--text-control-blue-hover, #5976E9)', // blue-300

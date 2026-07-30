@@ -43,11 +43,11 @@
 }
 
 .filterBtnFunnel {
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary, #6B7280);
 }
 
 .filterBtnChevron {
-  color: var(--text-tertiary, #98a2b3);
+  color: var(--text-tertiary, #C7CBD4);
   transition: transform 150ms ease;
 
   @media (prefers-reduced-motion: reduce) {
@@ -136,7 +136,7 @@
 }
 
 .sectionLabel {
-  color: var(--text-tertiary, #98a2b3);
+  color: var(--text-tertiary, #C7CBD4);
 }
 
 .footer {

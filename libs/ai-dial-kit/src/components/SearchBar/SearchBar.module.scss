@@ -22,7 +22,7 @@
 }
 
 .icon {
-  color: var(--text-tertiary, #98a2b3);
+  color: var(--text-tertiary, #C7CBD4);
 }
 
 .input {
@@ -30,6 +30,6 @@
   color: var(--text-primary, #161B2D);
 
   &::placeholder {
-    color: var(--text-tertiary, #98a2b3);
+    color: var(--text-tertiary, #C7CBD4);
   }
 }
