@@ -5,6 +5,7 @@ import {
 } from '../dto/external-service.dto';
 import {
   mapDialExternalServiceToDto,
+  toDialExternalServiceAppId,
   toDialExternalServiceSigninBody,
   toDialExternalServiceSignoutBody,
   toDialExternalServiceUrl,
@@ -17,6 +18,20 @@ describe('toDialExternalServiceUrl', () => {
   it('joins appId and serviceId with the external_services segment', () => {
     expect(toDialExternalServiceUrl(APP_ID, SERVICE_ID)).toBe(
       `${APP_ID}/external_services/${SERVICE_ID}`,
+    );
+  });
+});
+
+describe('toDialExternalServiceAppId', () => {
+  it('strips the leading applications/ segment for the SDK getExternalService call', () => {
+    expect(toDialExternalServiceAppId(APP_ID)).toBe(
+      'public/finhub-via-openapi__1.0.0',
+    );
+  });
+
+  it('returns the id unchanged when it has no applications/ prefix', () => {
+    expect(toDialExternalServiceAppId('public/finhub-via-openapi__1.0.0')).toBe(
+      'public/finhub-via-openapi__1.0.0',
     );
   });
 });

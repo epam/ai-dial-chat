@@ -64,7 +64,7 @@ describe('ExternalServicesService', () => {
         authenticationType: ExternalServiceAuthType.ApiKey,
       });
       expect(dialClient.client.getExternalService).toHaveBeenCalledWith(
-        APP_ID,
+        'public/finhub-via-openapi__1.0.0',
         SERVICE_ID,
         { headers: { Authorization: 'Bearer token' } },
       );

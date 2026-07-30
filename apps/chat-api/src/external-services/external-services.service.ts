@@ -13,6 +13,7 @@ import type {
 } from './dto/external-service.dto';
 import {
   mapDialExternalServiceToDto,
+  toDialExternalServiceAppId,
   toDialExternalServiceSigninBody,
   toDialExternalServiceSignoutBody,
 } from './external-services.mapper';
@@ -42,7 +43,7 @@ export class ExternalServicesService {
 
     try {
       const response = await this.dialClient.client.getExternalService(
-        appId,
+        toDialExternalServiceAppId(appId),
         serviceId,
         { headers: authHeaders },
       );

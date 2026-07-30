@@ -23,6 +23,25 @@ export const toDialExternalServiceUrl = (
   serviceId: string,
 ): string => `${appId}/${EXTERNAL_SERVICE_URL_SEGMENT}/${serviceId}`;
 
+/*
+ * The SDK's `getExternalService(appid, id)` builds
+ * `/v1/applications/${appid}/external-services/${id}` — the `applications/`
+ * segment is already literal in that URL template (matching
+ * `getCustomApplicationUrl(bucket, path)`'s `/v1/applications/${bucket}/${path}`
+ * convention). `appId` here is the app's full resource id
+ * (`applications/{bucket}/{app}`, as split from Core's pushed event url), so
+ * the leading `applications/` must be stripped before calling the SDK or
+ * Core 404s on the doubled path (confirmed: Core reported
+ * "Application not found: applications/{bucket}/{app}" when the prefix was
+ * sent unstripped).
+ */
+const APPLICATIONS_URL_PREFIX = 'applications/';
+
+export const toDialExternalServiceAppId = (appId: string): string =>
+  appId.startsWith(APPLICATIONS_URL_PREFIX)
+    ? appId.slice(APPLICATIONS_URL_PREFIX.length)
+    : appId;
+
 type DialExternalServiceData = components['schemas']['ExternalServiceData'];
 type DialExternalServiceSigninBody =
   operations['externalServiceSignIn']['requestBody']['content']['application/json'];
