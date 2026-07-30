@@ -175,4 +175,29 @@ describe('SidebarPanel', () => {
     const style = container.querySelector('aside')?.getAttribute('style') ?? '';
     expect(style).not.toContain('--sb-bg');
   });
+
+  it('w-full className overrides inline width', () => {
+    const { container } = render(
+      <SidebarPanel
+        {...defaultProps}
+        styles={{ className: 'w-full' }}
+        defaultWidth={360}
+      >
+        <span />
+      </SidebarPanel>,
+    );
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.classList.contains('w-full')).toBe(true);
+    expect(wrapper.style.width).toBe('');
+  });
+
+  it('applies inline width when w-full className is absent', () => {
+    const { container } = render(
+      <SidebarPanel {...defaultProps} defaultWidth={360}>
+        <span />
+      </SidebarPanel>,
+    );
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.style.width).toBe('360px');
+  });
 });

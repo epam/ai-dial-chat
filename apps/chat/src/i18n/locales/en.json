@@ -435,6 +435,81 @@
     "overlayDeniedTitle": "No attachments allowed",
     "overlayDeniedSubtitle": "Attachments can't be added to message"
   },
+  "scheduledTasks": {
+    "page": {
+      "navLabel": "Scheduled tasks",
+      "title": "Scheduled tasks",
+      "subtitle": "Automate recurring tasks with scheduled runs, or execute them on demand whenever you need."
+    },
+    "toolbar": {
+      "createButtonLabel": "New task",
+      "searchPlaceholder": "Search scheduled tasks...",
+      "searchAriaLabel": "Search scheduled tasks by name",
+      "clearSearchLabel": "Clear scheduled tasks search",
+      "sortLabel": "Sort",
+      "sortFirstToRun": "First to run",
+      "sortLastToRun": "Last to run",
+      "sortNewest": "Newest",
+      "sortNameAZ": "Name A-Z"
+    },
+    "emptyState": {
+      "label": "No scheduled tasks yet"
+    },
+    "list": {
+      "noResultsLabel": "No results",
+      "errorLabel": "Failed to load scheduled tasks",
+      "retryLabel": "Retry",
+      "sharedSectionTitle": "Shared"
+    },
+    "card": {
+      "newBadgeLabel": "NEW",
+      "actionsLabel": "More actions",
+      "editActionLabel": "Edit",
+      "runNowActionLabel": "Run now",
+      "deleteActionLabel": "Delete",
+      "scheduleDailyAt": "Every day at {{time}}",
+      "scheduleWeeklyAt": "Every {{day}} at {{time}}",
+      "scheduleMonthlyAt": "Monthly on day {{day}} at {{time}}",
+      "scheduleHourlyAt": "Hourly at :{{minute}}",
+      "scheduleEveryNMinutes_one": "Every minute",
+      "scheduleEveryNMinutes_other": "Every {{count}} minutes",
+      "scheduleOnceAt": "Once on {{date}}",
+      "scheduleRecurringFallback": "Recurring schedule"
+    },
+    "create": {
+      "pageTitle": "New task",
+      "backButtonLabel": "Back",
+      "detailsSectionTitle": "Details",
+      "detailsSectionSubtitle": "Basic info about this scheduled task",
+      "configurationSectionTitle": "Configuration",
+      "configurationSectionSubtitle": "Write custom instructions for this task",
+      "scheduleSectionLabel": "Schedule",
+      "scheduleTypeOnce": "Once",
+      "scheduleTypeRecurring": "Recurring",
+      "scheduleTypeAriaLabel": "Schedule type",
+      "runAtLabel": "Run at",
+      "runAtRequired": "Choose a future date and time",
+      "frequencyLabel": "Frequency",
+      "frequencyDaily": "Daily",
+      "frequencyWeekly": "Weekly",
+      "frequencyMonthly": "Monthly",
+      "timeLabel": "Time",
+      "timeInvalid": "Enter a valid time",
+      "dayOfWeekLabel": "Day of week",
+      "dayOfWeekRequired": "Day of week is required",
+      "dayOfMonthLabel": "Day of month",
+      "dayOfMonthRequired": "Day of month is required",
+      "modelOrAgentLabel": "Model or Agent",
+      "modelPlaceholder": "Select a model",
+      "modelRequired": "Model is required",
+      "descriptionLabel": "Description",
+      "descriptionMaxLengthError": "Description must be 500 characters or fewer",
+      "instructionsLabel": "Instructions",
+      "promptRequired": "Instructions are required",
+      "successNotification": "Scheduled task created",
+      "errorNotification": "Failed to create the scheduled task"
+    }
+  },
   "dialFileManager": {
     "attach": "Attach",
     "empty": "This folder is empty",
@@ -775,5 +850,12 @@
     "stopRecordingLabel": "Stop recording",
     "discardRecordingLabel": "Discard recording",
     "timerAriaLabel": "Recording time"
+  },
+  "tools": {
+    "menuTitle": "Tools",
+    "deepResearchFallback": "Deep research",
+    "selectedCount_one": "{{count}} tool",
+    "selectedCount_other": "{{count}} tools",
+    "removeTool": "Remove {{label}}"
   }
 }

@@ -10,5 +10,4 @@ export type {
   ConversationItem,
   FilterLabels,
 } from './models/panel-props';
-export type { ConversationGroupProps } from './components/ConversationGroup/ConversationGroup';
 export { FilterTab } from './types/conversation-classification';

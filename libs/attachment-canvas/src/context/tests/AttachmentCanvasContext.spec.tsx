@@ -72,6 +72,23 @@ describe('AttachmentCanvasProvider', () => {
     expect(URL.revokeObjectURL).not.toHaveBeenCalled();
   });
 
+  it('revokes the current blob URL when the canvas is closed', () => {
+    const { result } = renderCanvas();
+
+    act(() => {
+      result.current.openCanvas({
+        type: AttachmentContentType.Pdf,
+        url: 'blob:mock-close-url',
+      });
+    });
+
+    act(() => {
+      result.current.closeCanvas();
+    });
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-close-url');
+  });
+
   it('does not revoke content types with no url (e.g. PlainText)', () => {
     const { result, unmount } = renderCanvas();
 

@@ -26,6 +26,7 @@ function makeService(callbackBaseUrl = 'https://example.com/callback') {
       shareResource: vi.fn(),
       getInvitation: vi.fn(),
       discardSharedResources: vi.fn(),
+      getSharedResources: vi.fn(),
     },
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
@@ -395,8 +396,19 @@ describe('ShareService', () => {
   });
 
   describe('discardShared', () => {
+    const mockSharedResources = (
+      service: ShareService,
+      resources: { url: string }[],
+    ) =>
+      vi
+        .spyOn(service['dialClient'].client, 'getSharedResources')
+        .mockResolvedValue(okResponse({ resources }));
+
     it('calls DIAL Core discardSharedResources with the resource url and invalidates both caches on success', async () => {
       const { service, deploymentsService, toolsetsService } = makeService();
+      mockSharedResources(service, [
+        { url: 'applications/owner-bucket/my-app' },
+      ]);
       const spy = vi
         .spyOn(service['dialClient'].client, 'discardSharedResources')
         .mockResolvedValue(okResponse(undefined));
@@ -420,8 +432,33 @@ describe('ShareService', () => {
       );
     });
 
+    it('checks getSharedResources with the resource kind derived from a toolsets/ itemId', async () => {
+      const { service } = makeService();
+      const spy = mockSharedResources(service, [
+        { url: 'toolsets/b/search__0.0.1' },
+      ]);
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue(okResponse(undefined));
+
+      await service.discardShared(
+        'toolsets/b/search__0.0.1',
+        'token-abc',
+        'user-sub-1',
+      );
+
+      expect(spy).toHaveBeenCalledWith({
+        headers: { Authorization: 'Bearer token-abc' },
+        body: { resourceTypes: ['TOOL_SET'], with: 'me' },
+      });
+    });
+
     it('calls DIAL Core discardSharedResources with a conversation resource url unchanged', async () => {
       const { service } = makeService();
+      mockSharedResources(service, [
+        { url: 'conversations/owner-bucket/my-chat' },
+      ]);
       const spy = vi
         .spyOn(service['dialClient'].client, 'discardSharedResources')
         .mockResolvedValue(okResponse(undefined));
@@ -439,12 +476,13 @@ describe('ShareService', () => {
       expect(result).toEqual({ success: true });
     });
 
-    it('throws ForbiddenException and does not invalidate caches when the resource is not shared with the caller', async () => {
+    it('throws ForbiddenException and does not invalidate caches when DIAL Core silently no-ops a resource never shared with the caller', async () => {
       const { service, deploymentsService, toolsetsService } = makeService();
+      mockSharedResources(service, []);
       vi.spyOn(
         service['dialClient'].client,
         'discardSharedResources',
-      ).mockResolvedValue(errResponse(403));
+      ).mockResolvedValue(okResponse(undefined));
 
       await expect(
         service.discardShared('applications/x/y', 'token', 'user-sub-1'),
@@ -453,8 +491,35 @@ describe('ShareService', () => {
       expect(toolsetsService.invalidateListCache).not.toHaveBeenCalled();
     });
 
+    it('throws NotFoundException when DIAL Core returns 400 for a well-formed itemId that does not resolve to a resource', async () => {
+      const { service } = makeService();
+      mockSharedResources(service, []);
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue(errResponse(400));
+
+      await expect(
+        service.discardShared('applications/x/y', 'token', 'user-sub-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException on upstream 403', async () => {
+      const { service } = makeService();
+      mockSharedResources(service, []);
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue(errResponse(403));
+
+      await expect(
+        service.discardShared('applications/x/y', 'token', 'user-sub-1'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
     it('throws NotFoundException on upstream 404', async () => {
       const { service } = makeService();
+      mockSharedResources(service, [{ url: 'applications/x/y' }]);
       vi.spyOn(
         service['dialClient'].client,
         'discardSharedResources',
@@ -467,6 +532,7 @@ describe('ShareService', () => {
 
     it('throws BadGatewayException on upstream 5xx', async () => {
       const { service } = makeService();
+      mockSharedResources(service, [{ url: 'applications/x/y' }]);
       vi.spyOn(
         service['dialClient'].client,
         'discardSharedResources',
@@ -479,10 +545,43 @@ describe('ShareService', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeService();
+      mockSharedResources(service, [{ url: 'applications/x/y' }]);
       vi.spyOn(
         service['dialClient'].client,
         'discardSharedResources',
       ).mockRejectedValue(new TypeError('fetch failed'));
+
+      await expect(
+        service.discardShared('applications/x/y', 'token', 'user-sub-1'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('propagates a getSharedResources failure instead of treating it as not shared', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(errResponse(502));
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue(okResponse(undefined));
+
+      await expect(
+        service.discardShared('applications/x/y', 'token', 'user-sub-1'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('throws ServiceUnavailableException when getSharedResources is unreachable', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockRejectedValue(new TypeError('fetch failed'));
+      vi.spyOn(
+        service['dialClient'].client,
+        'discardSharedResources',
+      ).mockResolvedValue(okResponse(undefined));
 
       await expect(
         service.discardShared('applications/x/y', 'token', 'user-sub-1'),

@@ -690,13 +690,13 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       hasPublishWriteAccess={hasPublishWriteAccess}
       onPublish={handlePublish}
       onPublishSuccess={handlePublishSuccess}
-      publishTexts={{
+      publishLabels={{
         searchPlaceholder: t(CatalogI18nKeys.PublishFolderSearchPlaceholder),
-        folderEmptyStateText: t(CatalogI18nKeys.PublishFolderEmptyState, {
+        folderEmptyStateLabel: t(CatalogI18nKeys.PublishFolderEmptyState, {
           query: '{query}',
         }),
-        historyLoadingText: t(CatalogI18nKeys.PublishHistoryLoading),
-        historyErrorText: t(CatalogI18nKeys.PublishHistoryError),
+        historyLoadingLabel: t(CatalogI18nKeys.PublishHistoryLoading),
+        historyErrorLabel: t(CatalogI18nKeys.PublishHistoryError),
       }}
       shareOverlay={(item, onClose) => (
         <SharePopoverContainer item={item} onClose={onClose} />

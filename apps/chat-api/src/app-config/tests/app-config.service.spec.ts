@@ -3,9 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppConfigService } from '../app-config.service';
 import type { AppConfigEvalContext } from '../app-config.types';
 import type { CompositeConfigProvider } from '../config-registry/composite-config.provider';
+import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants';
 import { FeatureKey } from '../feature-flags/feature-key.enum';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
+
+// getClientConfig resolves exactly one definition per client-visible config key.
+const CLIENT_DEFINITIONS_COUNT = CONFIG_DEFINITIONS.filter(
+  (def) => def.visibility === 'client',
+).length;
 
 function makeService(
   resolveImpl: (key: string) => Promise<unknown | undefined>,
@@ -80,6 +86,7 @@ describe('AppConfigService', () => {
           return ['https://partner.example.com'];
         if (key === 'uiFeatures.enabledUiFeatures') return ['likes'];
         if (key === 'announcement.html') return 'Welcome to <b>DIAL</b>!';
+        if (key === 'deployments.deepResearchToolId') return 'deep_research';
         return undefined;
       });
       const result = await service.getClientConfig(ctx);
@@ -97,6 +104,7 @@ describe('AppConfigService', () => {
         'https://partner.example.com',
       ]);
       expect(result.config.enabledUiFeatures).toEqual(['likes']);
+      expect(result.config.deepResearchToolId).toBe('deep_research');
     });
 
     it('filters unrecognized enabledUiFeatures entries, keeps known ones, and logs a warning', async () => {
@@ -155,6 +163,20 @@ describe('AppConfigService', () => {
       );
       const result = await service.getClientConfig(ctx);
       expect(result.config.announcementHtml).toBe('Welcome to <b>DIAL</b>!');
+    });
+
+    it('returns null deepResearchToolId when DEEP_RESEARCH_TOOL_ID is not set', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.deepResearchToolId).toBeNull();
+    });
+
+    it('returns the configured deepResearchToolId when DEEP_RESEARCH_TOOL_ID is set', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'deployments.deepResearchToolId' ? 'deep_research' : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.deepResearchToolId).toBe('deep_research');
     });
 
     it('returns empty string for footerHtmlMessage when FOOTER_HTML_MESSAGE is not set', async () => {
@@ -261,7 +283,9 @@ describe('AppConfigService', () => {
         first,
         60_000,
       );
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(15);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(
+        CLIENT_DEFINITIONS_COUNT,
+      );
     });
 
     it('does not share cached config across role sets', async () => {
@@ -278,7 +302,9 @@ describe('AppConfigService', () => {
         roles: ['viewer'],
       });
 
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(30);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(
+        CLIENT_DEFINITIONS_COUNT * 2,
+      );
     });
   });
 

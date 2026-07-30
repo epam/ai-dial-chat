@@ -43,7 +43,7 @@ export const Catalog: FC<CatalogProps> = ({
   onPublish,
   onPublishSuccess,
   onCreatePublishFolder,
-  publishTexts,
+  publishLabels,
   shareOverlay,
   isShareVisible,
   connectOverlay,
@@ -515,7 +515,7 @@ export const Catalog: FC<CatalogProps> = ({
           onPublish={onPublish}
           onPublishSuccess={onPublishSuccess}
           onCreatePublishFolder={onCreatePublishFolder}
-          publishTexts={publishTexts}
+          publishLabels={publishLabels}
           shareOverlay={shareOverlay}
           isShareVisible={isShareVisible}
           connectOverlay={connectOverlay}

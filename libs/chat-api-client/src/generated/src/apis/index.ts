@@ -14,6 +14,7 @@ export * from './ModelsApi';
 export * from './PromptsApi';
 export * from './PublishApi';
 export * from './RateApi';
+export * from './ScheduledTasksApi';
 export * from './ShareApi';
 export * from './ThemesApi';
 export * from './ToolsetsApi';

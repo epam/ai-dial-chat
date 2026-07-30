@@ -47,16 +47,16 @@ describe('MessageBubble', () => {
     expect(getByText('Hello world')).toBeTruthy();
   });
 
-  it('applies rounded-se-[6px] with BubblePosition.Bottom (default)', () => {
+  it('applies rounded-se-md with BubblePosition.Bottom (default)', () => {
     const { container } = render(
       <MessageBubble text="msg" role={MessageRole.User} />,
     );
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
-      'rounded-se-[6px]',
+      'rounded-se-md',
     );
   });
 
-  it('applies rounded-ee-[6px] with BubblePosition.Top', () => {
+  it('applies rounded-ee-md with BubblePosition.Top', () => {
     const { container } = render(
       <MessageBubble
         text="msg"
@@ -65,7 +65,7 @@ describe('MessageBubble', () => {
       />,
     );
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
-      'rounded-ee-[6px]',
+      'rounded-ee-md',
     );
   });
 

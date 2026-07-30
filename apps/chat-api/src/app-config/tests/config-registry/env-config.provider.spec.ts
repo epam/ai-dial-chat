@@ -229,6 +229,63 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('features.scheduledTasksEnabled', () => {
+    it('returns true when SCHEDULED_TASKS_ENABLED is true', async () => {
+      const { provider } = makeProvider({
+        SCHEDULED_TASKS_ENABLED: true,
+      });
+      expect(
+        await provider.resolve('features.scheduledTasksEnabled', ctx),
+      ).toBe(true);
+    });
+
+    it('returns undefined when SCHEDULED_TASKS_ENABLED is absent', async () => {
+      const { provider } = makeProvider({
+        SCHEDULED_TASKS_ENABLED: undefined,
+      });
+      expect(
+        await provider.resolve('features.scheduledTasksEnabled', ctx),
+      ).toBeUndefined();
+    });
+
+    describe('role gating via SCHEDULED_TASKS_ENABLED_ROLES', () => {
+      it('returns true when the roles env var is empty (unrestricted)', async () => {
+        const { provider } = makeProvider({
+          SCHEDULED_TASKS_ENABLED: true,
+          SCHEDULED_TASKS_ENABLED_ROLES: [],
+        });
+        expect(
+          await provider.resolve('features.scheduledTasksEnabled', ctx),
+        ).toBe(true);
+      });
+
+      it('returns true when user has a matching role', async () => {
+        const { provider } = makeProvider({
+          SCHEDULED_TASKS_ENABLED: true,
+          SCHEDULED_TASKS_ENABLED_ROLES: ['admin'],
+        });
+        const ctxWithRole: AppConfigEvalContext = { ...ctx, roles: ['admin'] };
+        expect(
+          await provider.resolve('features.scheduledTasksEnabled', ctxWithRole),
+        ).toBe(true);
+      });
+
+      it('returns false when user roles do not intersect with the allowed roles', async () => {
+        const { provider } = makeProvider({
+          SCHEDULED_TASKS_ENABLED: true,
+          SCHEDULED_TASKS_ENABLED_ROLES: ['admin'],
+        });
+        const ctxWithRole: AppConfigEvalContext = {
+          ...ctx,
+          roles: ['viewer'],
+        };
+        expect(
+          await provider.resolve('features.scheduledTasksEnabled', ctxWithRole),
+        ).toBe(false);
+      });
+    });
+  });
+
   describe('dialCore.externalUrl', () => {
     it('returns the external URL when DIAL_CORE_EXTERNAL_URL is set', async () => {
       const { provider } = makeProvider({

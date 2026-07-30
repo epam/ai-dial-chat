@@ -91,6 +91,7 @@ export class AppConfigService {
     let overlayAllowedOrigins: string[] = [];
     let enabledUiFeatures: string[] | null = null;
     let announcementHtml: string | null = null;
+    let deepResearchToolId: string | null = null;
     let footerHtmlMessage = '';
 
     for (const def of clientDefinitions) {
@@ -110,6 +111,8 @@ export class AppConfigService {
           typeof resolved === 'number' ? resolved : 5 * 1024 * 1024;
       } else if (def.key === 'deployments.defaultDeploymentId') {
         defaultDeploymentId = typeof resolved === 'string' ? resolved : null;
+      } else if (def.key === 'deployments.deepResearchToolId') {
+        deepResearchToolId = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'dialCore.externalUrl') {
         dialCoreExternalUrl = typeof resolved === 'string' ? resolved : null;
       } else if (def.key === 'fileManager.availableTabs') {
@@ -162,6 +165,7 @@ export class AppConfigService {
         announcementHtml,
         footerHtmlMessage,
         enabledUiFeatures,
+        deepResearchToolId,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

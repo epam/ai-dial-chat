@@ -1444,18 +1444,10 @@ export class ConversationService {
         .filter((m) => m.custom_content?.configuration_value)
         .at(-1)?.custom_content?.configuration_value;
 
-    const lastUserMessage =
-      messagesForCompletion[messagesForCompletion.length - 1];
-    const shouldHideCurrentConfigurationContent =
-      customContent?.configuration_value !== undefined &&
-      lastUserMessage?.role === ConversationMessageRole.User;
-
     const dialMessages = messagesForCompletion
       .filter((m) => m.role !== ConversationMessageRole.Status)
-      .map((m, index, filteredMessages) => {
+      .map((m) => {
         const validAttachments = getValidAttachments(m.custom_content);
-        const hasConfigurationValue =
-          m.custom_content?.configuration_value !== undefined;
         const content = Object.fromEntries(
           Object.entries({
             ...m.custom_content,
@@ -1466,12 +1458,7 @@ export class ConversationService {
         );
         return {
           role: m.role,
-          content:
-            hasConfigurationValue ||
-            (shouldHideCurrentConfigurationContent &&
-              index === filteredMessages.length - 1)
-              ? ''
-              : m.content,
+          content: m.content,
           ...(Object.keys(content).length > 0
             ? { custom_content: content }
             : {}),

@@ -6,8 +6,9 @@ import { usePublishFolders } from '../../../hooks/publish/usePublishFolders';
 import { publishConversation } from '../../../server-api/conversation-publish.api';
 import PublishConversationPanelContainer from '../PublishConversationPanelContainer';
 
-vi.mock('@epam/ai-dial-catalog', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-catalog')>();
+vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-publish-panel')>();
   return {
     ...actual,
     StandalonePublishPanel: ({

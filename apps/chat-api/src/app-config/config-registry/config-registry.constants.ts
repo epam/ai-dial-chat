@@ -38,6 +38,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DEFAULT_DEPLOYMENT',
   },
   {
+    key: 'deployments.deepResearchToolId',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Tool ID for the Deep Research deployment-configuration property. When set, the frontend renders a Tools submenu with that tool toggle. Null when DEEP_RESEARCH_TOOL_ID is not set.',
+    owner: 'chat-team',
+    envVar: 'DEEP_RESEARCH_TOOL_ID',
+  },
+  {
     key: 'dialCore.externalUrl',
     type: 'config',
     valueType: 'string',
@@ -191,6 +203,21 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'LIVE_CHAT_INTERACTION_ENABLED',
     allowedRolesEnvVar: 'LIVE_CHAT_INTERACTION_ENABLED_ROLES',
+  },
+  {
+    key: 'features.scheduledTasksEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Scheduled Tasks feature is enabled, including the DIAL Scheduler ' +
+      'proxy endpoints, the Scheduled Tasks page, and its sidebar navigation entry. ' +
+      'Set SCHEDULED_TASKS_ENABLED_ROLES to restrict to specific roles.',
+    owner: 'chat-team',
+    envVar: 'SCHEDULED_TASKS_ENABLED',
+    allowedRolesEnvVar: 'SCHEDULED_TASKS_ENABLED_ROLES',
   },
   {
     key: 'uiFeatures.enabledUiFeatures',

@@ -9,11 +9,13 @@ import {
   ChatI18nKeys,
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ROUTES } from '../../types/routes';
+import { UserConfigStatus } from '../../types/user-config-status';
 import { getIconPath } from '../../utils/icon-path';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import NavPageContent from '../MobileNavBottomSheet/NavPageContent';
@@ -31,11 +33,15 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
   const { currentThemeFavicon } = useTheme();
+  const { status, features } = useAppConfig();
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
   const isUserMenuHidden = useUiFeature(OverlayFeature.HideUserMenu);
 
   const navItems = NAVIGATION_CONFIG.filter(
-    ({ path }) => path !== ROUTES.Catalog || isCatalogEnabled,
+    ({ path, featureFlag }) =>
+      (path !== ROUTES.Catalog || isCatalogEnabled) &&
+      (featureFlag == null ||
+        (status === UserConfigStatus.Ready && features[featureFlag] === true)),
   ).map(({ path, matchPaths, icon: Icon, labelKey }) => {
     const isActive =
       (path === '/' ? pathname === '/' : pathname.startsWith(path)) ||
@@ -48,7 +54,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           aria-current={isActive ? 'page' : undefined}
           tooltipProps={{ tooltip: t(labelKey) }}
           tabIndex={-1}
-          className={isActive ? '!text-accent-primary' : undefined}
+          className={isActive ? '!text-accent' : undefined}
         />
       </Link>
     );
@@ -60,7 +66,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
       {!isMobile && (
         <nav
           aria-label={t(NavigationI18nKeys.AriaLabel)}
-          className="relative z-10 flex h-full w-[60px] flex-col justify-between bg-layer-3 [box-shadow:2px_0_8px_rgba(0,0,0,0.04)] rtl:[box-shadow:-2px_0_8px_rgba(0,0,0,0.04)]"
+          className="relative z-10 flex h-full w-[60px] flex-col justify-between bg-layer-raised shadow-sm"
         >
           <div className="flex flex-col items-center">
             {currentThemeFavicon && (
@@ -85,7 +91,6 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
         </nav>
       )}
 
-      {/* Mobile bottom sheet — portal, zero layout impact */}
       <NavigableBottomSheet
         isOpen={isOpen}
         onClose={onClose ?? (() => undefined)}

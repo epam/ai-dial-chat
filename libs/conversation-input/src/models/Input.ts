@@ -5,6 +5,7 @@ import type {
   DeploymentItem,
   DisplayAttachment,
   ResponseFormat,
+  ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 
@@ -62,6 +63,14 @@ export interface ModelSelectorLabels {
   searchPlaceholder?: string;
   /** Accessible label for the close button in the mobile bottom-sheet. Defaults to `'Close'`. */
   closeLabel?: string;
+}
+
+/** Labels for the selected-tools chip row that appears in the input when tools are active. */
+export interface ToolsChipLabels {
+  /** Formats the consolidated count label for the mobile chip. Receives the number of selected tools. Defaults to English pluralization. */
+  countLabel?: (count: number) => string;
+  /** Returns the accessible label for the close button on a desktop chip. Receives the tool label. Defaults to `"Remove {toolLabel}"`. */
+  removeLabel?: (toolLabel: string) => string;
 }
 
 /** Props accepted by the `Input` component. */
@@ -130,6 +139,13 @@ export interface InputProps {
   onPendingAttachmentsConsumed?: () => void;
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
+  /**
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment. Set to `false` when the selected model
+   * does not support attachments so that pasting a long prompt does not
+   * trigger an "Attachments not supported" error. Defaults to `true`.
+   */
+  isAttachmentsEnabled?: boolean;
   /**
    * List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered.
    * `iconUrl` on each item must already be a fully resolved URL usable in `<img src>` — the host app
@@ -229,6 +245,16 @@ export interface InputProps {
    * Modal state is managed internally by the component.
    */
   chatSettings?: ChatSettingsConfig;
+  /** Resolved tool toggle items rendered in a "Tools" submenu. When empty or absent, no Tools item is shown. */
+  toolsMenuItems?: ToolMenuItem[];
+  /** Called when a tool row is toggled. Receives the tool id. */
+  onToolToggle?: (toolId: string) => void;
+  /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
+  toolsMenuTitle?: string;
+  /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
+  toolsBackLabel?: string;
+  /** Labels for the selected-tools chip row shown in the input when tools are active. */
+  toolsChipLabels?: ToolsChipLabels;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */
   autoFocus?: boolean;
   /**

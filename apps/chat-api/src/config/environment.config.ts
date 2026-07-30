@@ -514,6 +514,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  DEEP_RESEARCH_TOOL_ID?: string;
+
+  @IsOptional()
+  @IsString()
   ANNOUNCEMENT_HTML_MESSAGE?: string;
 
   @IsOptional()
@@ -697,4 +701,34 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   LIVE_CHAT_INTERACTION_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  SCHEDULED_TASKS_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  SCHEDULED_TASKS_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @IsString()
+  SCHEDULER_APP_ID?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  SCHEDULER_SERVICE_TIMEOUT_MS?: number = 10_000;
 }

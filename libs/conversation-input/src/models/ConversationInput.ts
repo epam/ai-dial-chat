@@ -3,6 +3,7 @@ import type {
   AttachmentErrorReason,
   DeploymentItem,
   DisplayAttachment,
+  ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type {
@@ -11,6 +12,7 @@ import type {
   InputTypography,
   ModelSelectorLabels,
   SendOnEnter,
+  ToolsChipLabels,
 } from './Input';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
@@ -87,6 +89,12 @@ export interface EditMessageInputProps {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
+  /**
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment. Set to `false` when the selected model
+   * does not support attachments. Defaults to `true`.
+   */
+  isAttachmentsEnabled?: boolean;
   /** Maximum total kept-plus-new attachments; unlimited when `undefined`, `0`, or non-finite. */
   maximumAttachmentsAmount?: number;
   /** Called when adding a batch would exceed `maximumAttachmentsAmount`. */
@@ -252,6 +260,12 @@ export interface ConversationInputProps {
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
   /**
+   * When `false`, long pasted plain text is inserted inline instead of being
+   * converted to a text attachment. Set to `false` when the selected model
+   * does not support attachments. Defaults to `true`.
+   */
+  isAttachmentsEnabled?: boolean;
+  /**
    * Maximum number of attachments allowed in the input tray. Undefined, `0`,
    * or non-finite values mean there is no count limit.
    */
@@ -280,4 +294,14 @@ export interface ConversationInputProps {
    */
   // TODO: review usage
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
+  /** Resolved tool toggle items rendered in a "Tools" submenu. When empty or absent, no Tools item is shown. */
+  toolsMenuItems?: ToolMenuItem[];
+  /** Called when a tool row is toggled. Receives the tool id. */
+  onToolToggle?: (toolId: string) => void;
+  /** Label for the "Tools" menu item and mobile sheet title. Defaults to `'Tools'`. */
+  toolsMenuTitle?: string;
+  /** Accessible label for the back arrow in the mobile tools bottom sheet. Defaults to `'Back'`. */
+  toolsBackLabel?: string;
+  /** Labels for the selected-tools chip row shown in the input when tools are active. */
+  toolsChipLabels?: ToolsChipLabels;
 }

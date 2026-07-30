@@ -101,7 +101,7 @@
   "dependencies": {
     "@epam/ai-dial-react-pdf-highlighter": "0.2.0-dev.22",
     "@epam/ai-dial-typescript-sdk": "0.1.0-dev.31",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.12",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.17",
     "@epam/pdf-highlighter-kit": "^0.0.18",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.0.0",
@@ -112,6 +112,8 @@
     "@nestjs/throttler": "^6.5.0",
     "@tabler/icons-react": "^3.44.0",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@uiw/react-markdown-preview": "^5.2.1",
+    "@uiw/react-md-editor": "^4.1.1",
     "cache-manager": "^7.2.8",
     "dompurify": "3.4.12",
     "express": "^5.2.1",
@@ -144,6 +146,12 @@
     "tmp": "0.2.7",
     "form-data": "4.0.6",
     "uuid": "14.0.0",
+    "shell-quote": "1.8.4",
+    "http-proxy-middleware": "3.0.7",
+    "undici": "7.28.0",
+    "brace-expansion@1.1.15": "1.1.16",
+    "brace-expansion@2.1.1": "2.1.2",
+    "brace-expansion@5.0.6": "5.0.8",
     "js-yaml": "4.3.0"
   },
   "workspaces": [

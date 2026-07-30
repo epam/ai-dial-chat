@@ -74,6 +74,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     />
   ),
   DialEllipsisTooltip: ({ text }: { text: ReactNode }) => <span>{text}</span>,
+  Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
