@@ -161,6 +161,7 @@ const SigninRow: FC<SigninRowProps> = ({
 }) => {
   const { t } = useTranslation();
   const isProcessing = rowState.status === RowStatus.Processing;
+  // ToolsetAuthTypes and ExternalServiceAuthType are string-identical; one enum covers both event kinds.
   const isApiKey = info.authenticationType === ToolsetAuthTypes.ApiKey;
   const isNoAuth = info.authenticationType === ToolsetAuthTypes.None;
   const canSubmitLogin = !isApiKey || rowState.apiKey.trim().length > 0;
@@ -236,7 +237,7 @@ const SigninRow: FC<SigninRowProps> = ({
 const getResourceKey = (event: PendingSigninEvent): string =>
   event.kind === PendingSigninEventKind.Toolset
     ? event.toolsetId
-    : `${event.appId}/external_services/${event.serviceName}`;
+    : buildExternalServiceScopeId(event.appId, event.serviceName);
 
 /**
  * Global, non-dismissible dialog that surfaces pending DIAL-Core-pushed

@@ -48,7 +48,7 @@ export class ExternalServicesService {
         { headers: authHeaders },
       );
       this.logger.debug(
-        `DIAL Core external service response for "${serviceId}" (app "${appId}"): ${JSON.stringify(response.data)}`,
+        `DIAL Core external service "${serviceId}" (app "${appId}"): display_name="${response.data?.display_name}" auth_type="${response.data?.auth_settings?.authentication_type}"`,
       );
       if (response.error) {
         return mapDialHttpStatus(
