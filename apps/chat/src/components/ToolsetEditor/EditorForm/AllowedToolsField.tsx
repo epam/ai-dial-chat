@@ -1,10 +1,11 @@
-import React, { FC, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { FC, useCallback, useMemo } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ToolsetActions } from '@/src/store/actions';
@@ -14,26 +15,29 @@ import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 import { CommonI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
+import { CreatableSelect } from '@/src/components/Common/CreatableSelect';
 import { withLabel } from '@/src/components/Common/Forms/Label';
-import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToolsetEditorForm } from '@/src/components/ToolsetEditor/form';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import uniq from 'lodash-es/uniq';
 
-const ComboBoxField = withLabel(MultipleComboBox);
+const AllowedToolsSelectField = withLabel(CreatableSelect, true);
+
+const toOption = (value: string): DropdownSelectorOption => ({
+  label: value,
+  value,
+});
+
 interface AllowedToolsFieldProps {
   isToolsetPublic?: boolean;
 }
-
-const getComboBoxLabel = (item: unknown): string => item as string;
 
 export const AllowedToolsField: FC<AllowedToolsFieldProps> = ({
   isToolsetPublic,
 }) => {
   const { t } = useTranslation(Translation.Common);
   const dispatch = useAppDispatch();
-
-  const selectRef = useRef<HTMLInputElement | null>(null);
 
   const toolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const allowedTools = useAppSelector(ToolsetSelectors.selectAllowedTools);
@@ -57,11 +61,9 @@ export const AllowedToolsField: FC<AllowedToolsFieldProps> = ({
     () =>
       endpointValue !== toolsEndpoint
         ? []
-        : allowedTools.map((tool) => tool.name),
+        : allowedTools.map((tool) => toOption(tool.name)),
     [allowedTools, endpointValue, toolsEndpoint],
   );
-
-  const isCreatable = allowedToolsStatus === UploadStatus.FAILED;
 
   const handleMenuOpen = useCallback(() => {
     if (isAllowedToolsLoading) return;
@@ -80,38 +82,28 @@ export const AllowedToolsField: FC<AllowedToolsFieldProps> = ({
     toolset?.id,
   ]);
 
-  useEffect(() => {
-    const selectInput = selectRef.current;
-    selectInput?.addEventListener('focus', handleMenuOpen);
-
-    return () => selectInput?.removeEventListener('focus', handleMenuOpen);
-  }, [handleMenuOpen]);
-
   return (
     <Controller
       name="allowedTools"
       control={control}
       render={({ field }) => (
-        <ComboBoxField
-          inputRef={selectRef}
-          initialSelectedItems={field.value}
-          getItemLabel={getComboBoxLabel}
-          getItemValue={getComboBoxLabel}
-          onChangeSelectedItems={field.onChange}
-          placeholder={t(CommonI18nKeys.EnterOneOrMoreTools)}
+        <AllowedToolsSelectField
           id="allowedTools"
-          disabled={isToolsetPublic}
-          className={classNames(
-            'input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full',
-            isToolsetPublic && 'hover:border-primary',
-          )}
-          hasDeleteAll
+          value={field.value.map(toOption)}
+          options={toolsOptions}
+          onChange={(value) =>
+            field.onChange(
+              uniq(value.map((option) => option.value.trim()).filter(Boolean)),
+            )
+          }
+          onFocus={handleMenuOpen}
+          placeholder={t(CommonI18nKeys.EnterOneOrMoreTools)}
+          isDisabled={isToolsetPublic}
           isLoading={isAllowedToolsLoading}
-          itemHeightClassName="h-[31px]"
           tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
+          className={classNames(isToolsetPublic && 'hover:border-primary')}
           dataQa="combobox"
-          items={isCreatable ? undefined : toolsOptions}
-          hideSuggestions={isCreatable}
+          label={t(CommonI18nKeys.AllowedToolsEditorDescription)}
         />
       )}
     />
