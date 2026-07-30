@@ -235,6 +235,27 @@ describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion',
       `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: 'Monday', time: '11:00' })}`,
     );
   });
+
+  it('shows the local day-of-month when the stored UTC day rolls forward a day', () => {
+    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer: local = UTC + 2h
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-05T12:00:00.000Z'));
+
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({
+        trigger: {
+          cron: { fields: { hour: '23', minute: '0', day: '14' } }, // UTC day 14
+        },
+      }),
+      fakeT,
+    );
+
+    expect(result.scheduleLabel).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleMonthlyAt}:${JSON.stringify({ day: '15', time: '01:00' })}`, // local day 15
+    );
+
+    vi.useRealTimers();
+  });
 });
 
 describe('mapScheduledTaskDtosToItems', () => {
