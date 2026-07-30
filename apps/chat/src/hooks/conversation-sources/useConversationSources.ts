@@ -22,16 +22,26 @@ export const useConversationSources = (
     const generated: DisplayAttachment[] = [];
     const sources: QuotationSource[] = [];
     const seenUrls = new Set<string>();
+    const seenUploadedIds = new Set<string | undefined>();
+    const seenGeneratedIds = new Set<string | undefined>();
 
     for (const msg of messages) {
       const dtos = msg.custom_content?.attachments;
       if (msg.role === MessageRole.User) {
-        uploaded.push(...attachmentDtosToDisplayAttachments(dtos));
+        for (const att of attachmentDtosToDisplayAttachments(dtos)) {
+          if (seenUploadedIds.has(att.id)) continue;
+          seenUploadedIds.add(att.id);
+          uploaded.push(att);
+        }
       } else if (msg.role === MessageRole.Assistant) {
         const regularDtos = dtos?.filter(
           (dto) => !isReferenceOnlyAttachment(dto),
         );
-        generated.push(...attachmentDtosToDisplayAttachments(regularDtos));
+        for (const att of attachmentDtosToDisplayAttachments(regularDtos)) {
+          if (seenGeneratedIds.has(att.id)) continue;
+          seenGeneratedIds.add(att.id);
+          generated.push(att);
+        }
 
         for (const dto of dtos ?? []) {
           if (!isReferenceOnlyAttachment(dto)) continue;
