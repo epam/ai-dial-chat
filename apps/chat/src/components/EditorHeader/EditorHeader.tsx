@@ -1,6 +1,6 @@
-import { GhostButton, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { DialSteps } from '@epam/ai-dial-ui-kit';
+import { GhostButton,  } from '@epam/ai-dial-kit';
 import type { Step } from '@epam/ai-dial-ui-kit';
+import { DialSteps, PrimaryButton ,NeutralButton} from '@epam/ai-dial-ui-kit';
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';

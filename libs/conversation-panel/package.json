@@ -21,7 +21,7 @@
   "dependencies": {
     "react-window": "^2.2.7",
     "@epam/ai-dial-kit": "0.0.1",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.17"
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.21"
   },
   "peerDependencies": {
     "react": "^19.0.0",

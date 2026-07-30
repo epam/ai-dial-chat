@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostButton, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { GhostButton } from '@epam/ai-dial-kit';
+import { DIAL_ICON_SIZE,NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import {
   IconArrowLeft,
   IconLayoutGrid,

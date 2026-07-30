@@ -1,4 +1,3 @@
-import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
@@ -9,6 +8,7 @@ import {
   ElementSize,
   NotificationVariant,
   mergeClasses,
+  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import type {
   ToolsetLoginBodyDto,

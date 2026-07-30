@@ -41,6 +41,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {renderOverlay?.()}
     </div>
   ),
+  PrimaryButton: ({
+    label,
+    className,
+    onClick,
+  }: {
+    label: string;
+    className?: string;
+    onClick?: () => void;
+  }) => (
+    <button className={className} onClick={onClick}>
+      {label}
+    </button>
+  ),
   DialCheckbox: ({
     id,
     label,
@@ -74,19 +87,6 @@ vi.mock('@epam/ai-dial-kit', () => ({
     iconBefore?: React.ReactNode;
     iconAfter?: React.ReactNode;
   }) => <button className={className}>{label}</button>,
-  PrimaryButton: ({
-    label,
-    className,
-    onClick,
-  }: {
-    label: string;
-    className?: string;
-    onClick?: () => void;
-  }) => (
-    <button className={className} onClick={onClick}>
-      {label}
-    </button>
-  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({

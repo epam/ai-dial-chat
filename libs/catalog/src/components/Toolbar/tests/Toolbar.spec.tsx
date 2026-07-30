@@ -31,13 +31,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label: string;
     onClick: () => void;
   }) => <button onClick={onClick}>{label}</button>,
-  DialPrimaryButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
   DialEllipsisTooltip: ({
     text,
     className,

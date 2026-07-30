@@ -2,15 +2,15 @@ import {
   isMimeTypeAllowed,
   mimeTypesToExtensionLabels,
 } from '@epam/ai-dial-attachment-input';
-import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialFileManagerTabs,
   DialFileNodeType,
   DialPopup,
-  NotificationVariant,
   NOT_ALLOWED_SYMBOLS,
   NOT_ALLOWED_SYMBOLS_REGEXP,
+  NotificationVariant,
   PopupSize,
+  PrimaryButton,
   useDialFileManagerTabs,
   type DialFile,
   type FileManagerGridRow,

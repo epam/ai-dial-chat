@@ -27,16 +27,8 @@ export type {
   PillTabsTypography,
   PillTabsStyles,
 } from './components/PillTabs/PillTabs';
-export {
-  PrimaryButton,
-  NeutralButton,
-  GhostButton,
-} from './components/Button/Buttons';
-export type {
-  PrimaryButtonProps,
-  NeutralButtonProps,
-  GhostButtonProps,
-} from './components/Button/Buttons';
+export { GhostButton } from './components/Button/Buttons';
+export type { GhostButtonProps } from './components/Button/Buttons';
 export { Input } from './components/Input/Input';
 export type { InputProps } from './components/Input/Input';
 export { Textarea } from './components/Textarea/Textarea';

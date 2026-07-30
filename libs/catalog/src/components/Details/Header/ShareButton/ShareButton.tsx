@@ -1,5 +1,8 @@
-import { NeutralButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  NeutralButton,
+  DialDropdown,
+} from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconShare } from '@tabler/icons-react';
 import { FC, type ReactNode, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../../models/catalog-item';
