@@ -35,7 +35,7 @@ export class ShareController {
     summary: 'Create a share link',
     description:
       'Creates a share link for a DIAL Core resource (catalog entity — agent, ' +
-      'application, skill, toolset, or model — or conversation) by proxying ' +
+      'application, skill, toolset, or model — conversation, or prompt) by proxying ' +
       "DIAL Core's resource-sharing API. Returns the share URL, access level, " +
       'and expiry.',
   })
