@@ -91,7 +91,7 @@ export const MarketplaceEntityBookmark = <T extends MarketplaceEntity>({
         isTriggerClickable
       >
         <div data-qa={dataQa}>
-          <DialGhostIconButton icon={Bookmark} />
+          <DialGhostIconButton icon={<Bookmark />} />
         </div>
       </Tooltip>
     </div>
