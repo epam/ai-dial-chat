@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
   EditorI18nKeys,
-  ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import type {
   ToolsetFormData,
@@ -19,21 +18,29 @@ import type {
 interface Props {
   form: ToolsetFormData;
   errors: ToolsetFormErrors;
+  namePlaceholder: string;
+  descriptionPlaceholder: string;
   onChange: (patch: Partial<ToolsetFormData>) => void;
 }
 
-const GeneralForm: FC<Props> = ({ form, errors, onChange }) => {
+const GeneralForm: FC<Props> = ({
+  form,
+  errors,
+  namePlaceholder,
+  descriptionPlaceholder,
+  onChange,
+}) => {
   const { t } = useTranslation();
 
   const labels: DeploymentCreationFormLabels = useMemo(
     () => ({
       name: {
         label: t(EditorI18nKeys.NameLabel),
-        placeholder: t(ToolsetEditorI18nKeys.NamePlaceholder),
+        placeholder: namePlaceholder,
       },
       description: {
         label: t(EditorI18nKeys.DescriptionLabel),
-        placeholder: t(ToolsetEditorI18nKeys.DescriptionPlaceholder),
+        placeholder: descriptionPlaceholder,
       },
       iconUrl: {
         label: t(EditorI18nKeys.IconUrlLabel),
@@ -53,7 +60,7 @@ const GeneralForm: FC<Props> = ({ form, errors, onChange }) => {
       },
       ariaLabel: t(EditorI18nKeys.StepGeneral),
     }),
-    [t],
+    [t, namePlaceholder, descriptionPlaceholder],
   );
 
   const values: DeploymentCreationFormValues = {

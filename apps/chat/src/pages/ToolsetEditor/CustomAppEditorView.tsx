@@ -1,45 +1,45 @@
-import { PrimaryButton, NeutralButton } from '@epam/ai-dial-ui-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
+  CustomAppI18nKeys,
   EditorI18nKeys,
-  ToolsetEditorI18nKeys,
 } from '../../constants/translation-keys';
 import type {
-  ToolsetAuthFormData,
-  ToolsetFormData,
-  ToolsetFormErrors,
-} from '../../types/toolsets';
+  CustomAppFormData,
+  CustomAppFormErrors,
+} from '../../types/custom-apps';
+import type { ToolsetFormData, ToolsetFormErrors } from '../../types/toolsets';
 import { ToolsetEditorSteps } from '../../types/toolsets';
+import CustomAppSettingsForm from './EditorForm/CustomAppSettingsForm';
 import GeneralForm from './EditorForm/GeneralForm';
-import SettingsForm from './EditorForm/SettingsForm';
 
 interface Props {
   step: ToolsetEditorSteps;
-  form: ToolsetFormData;
-  errors: ToolsetFormErrors;
+  generalForm: ToolsetFormData;
+  generalErrors: ToolsetFormErrors;
+  settingsForm: CustomAppFormData;
+  settingsErrors: CustomAppFormErrors;
   isSaving: boolean;
-  toolsetId: string;
   onNext: () => void;
   onCancel: () => void;
-  onEnsureSaved: () => Promise<string | false>;
-  onChange: (patch: Partial<ToolsetFormData>) => void;
-  onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
+  onGeneralChange: (patch: Partial<ToolsetFormData>) => void;
+  onSettingsChange: (patch: Partial<CustomAppFormData>) => void;
 }
 
-const ToolsetEditorView: FC<Props> = ({
+const CustomAppEditorView: FC<Props> = ({
   step,
-  form,
-  errors,
+  generalForm,
+  generalErrors,
+  settingsForm,
+  settingsErrors,
   isSaving,
-  toolsetId,
   onNext,
   onCancel,
-  onEnsureSaved,
-  onChange,
-  onAuthChange,
+  onGeneralChange,
+  onSettingsChange,
 }) => {
   const { t } = useTranslation();
   const isGeneralStep = step === ToolsetEditorSteps.General;
@@ -50,23 +50,19 @@ const ToolsetEditorView: FC<Props> = ({
         <div className="flex-1 overflow-y-auto p-6">
           {isGeneralStep ? (
             <GeneralForm
-              form={form}
-              errors={errors}
-              namePlaceholder={t(ToolsetEditorI18nKeys.NamePlaceholder)}
+              form={generalForm}
+              errors={generalErrors}
+              namePlaceholder={t(CustomAppI18nKeys.NamePlaceholder)}
               descriptionPlaceholder={t(
-                ToolsetEditorI18nKeys.DescriptionPlaceholder,
+                CustomAppI18nKeys.DescriptionPlaceholder,
               )}
-              onChange={onChange}
+              onChange={onGeneralChange}
             />
           ) : (
-            <SettingsForm
-              form={form}
-              errors={errors}
-              isSaving={isSaving}
-              toolsetId={toolsetId}
-              onChange={onChange}
-              onAuthChange={onAuthChange}
-              onEnsureSaved={onEnsureSaved}
+            <CustomAppSettingsForm
+              form={settingsForm}
+              errors={settingsErrors}
+              onChange={onSettingsChange}
             />
           )}
         </div>
@@ -92,4 +88,4 @@ const ToolsetEditorView: FC<Props> = ({
   );
 };
 
-export default memo(ToolsetEditorView);
+export default memo(CustomAppEditorView);

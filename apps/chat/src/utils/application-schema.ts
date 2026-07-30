@@ -11,3 +11,8 @@ export const isQuickAppSchema = (schema?: QuickAppSchemaLike): boolean =>
   !!schema &&
   (!!schema.id?.endsWith('quickapps2') ||
     schema.displayName === 'Quick app 2.0');
+
+export const CUSTOM_APP_SCHEMA_ID = 'custom_app';
+
+export const isCustomAppSchema = (schema?: QuickAppSchemaLike): boolean =>
+  !!schema && schema.id === CUSTOM_APP_SCHEMA_ID;

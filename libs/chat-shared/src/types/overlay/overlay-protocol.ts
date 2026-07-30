@@ -111,6 +111,8 @@ export enum OverlayFeature {
   ToolsetsSharing = 'toolsets-sharing',
   /** Enables toolsets functionality. */
   Toolsets = 'toolsets',
+  /** Enables the custom-app creation entry in the catalog. */
+  CustomApps = 'custom-apps',
   /** Hides the user avatar/menu button in the header. */
   HideUserMenu = 'hide-user-menu',
   /** Hides the settings entry in the user menu. */

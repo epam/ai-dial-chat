@@ -52,7 +52,10 @@ import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
 import type { ToolsetAuthTypes } from '../../types/toolsets';
 import { ToolsetCredentialsLevel } from '../../types/toolsets';
-import { isQuickAppSchema } from '../../utils/application-schema';
+import {
+  isQuickAppSchema,
+  isCustomAppSchema,
+} from '../../utils/application-schema';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   mapDeploymentToCatalogItem,
@@ -147,6 +150,11 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [schemas],
   );
 
+  const customAppSchemaId = useMemo(
+    () => schemas.find((s) => isCustomAppSchema(s))?.id,
+    [schemas],
+  );
+
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
   const isCatalogTableViewEnabled = useUiFeature(
     OverlayFeature.CatalogTableView,
@@ -155,6 +163,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     OverlayFeature.CatalogHideMyApps,
   );
   const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
+  const isCustomAppsEnabled = useUiFeature(OverlayFeature.CustomApps);
   const isCustomApplicationsEnabled = useUiFeature(
     OverlayFeature.CustomApplications,
   );
@@ -170,7 +179,10 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           favoriteIds,
           undefined,
           t,
-          quickAppSchemaId,
+          [quickAppSchemaId, customAppSchemaId].filter(
+            (id): id is string => id != null,
+          ),
+          isCustomAppsEnabled,
         ),
       ),
       ...(isToolsetsEnabled
@@ -185,8 +197,10 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       t,
       toolsets,
       quickAppSchemaId,
+      customAppSchemaId,
       isAdmin,
       isToolsetsEnabled,
+      isCustomAppsEnabled,
     ],
   );
 
@@ -563,6 +577,20 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         return;
       }
 
+      const deployment = deployments.find((d) => d.id === item.id);
+      if (
+        isCustomAppsEnabled &&
+        deployment != null &&
+        !deployment.applicationTypeSchemaId
+      ) {
+        const params = new URLSearchParams({
+          [ToolsetEditorQuery.Id]: item.id,
+          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        });
+        navigate(`${ROUTES.CustomAppEditor}?${params.toString()}`);
+        return;
+      }
+
       if (!quickAppSchemaId) return;
       navigate(
         buildEditorUrl({
@@ -572,7 +600,13 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
         }),
       );
     },
-    [quickAppSchemaId, navigate, buildEditorUrl],
+    [
+      deployments,
+      isCustomAppsEnabled,
+      quickAppSchemaId,
+      navigate,
+      buildEditorUrl,
+    ],
   );
 
   const handleDelete = useCallback(
@@ -635,6 +669,18 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       });
     }
 
+    if (isCustomAppsEnabled) {
+      options.push({
+        label: t(CatalogI18nKeys.CreateCustomApp),
+        onClick: () => {
+          const params = new URLSearchParams({
+            [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          });
+          navigate(`${ROUTES.CustomAppEditor}?${params.toString()}`);
+        },
+      });
+    }
+
     return options;
   }, [
     quickAppSchemaId,
@@ -644,6 +690,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     isCustomApplicationsEnabled,
     isHideCustomAppCreationEnabled,
     isToolsetsEnabled,
+    isCustomAppsEnabled,
   ]);
 
   if (!isCatalogEnabled && !isSelectorMode) {

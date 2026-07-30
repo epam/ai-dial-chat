@@ -69,6 +69,9 @@ const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 const ToolsetEditorPage = lazy(
   () => import('../pages/ToolsetEditor/ToolsetEditor'),
 );
+const CustomAppEditorPage = lazy(
+  () => import('../pages/ToolsetEditor/CustomAppEditor'),
+);
 const ToolsetAuthCallbackPage = lazy(
   () => import('../pages/ToolsetAuthCallback/ToolsetAuthCallback'),
 );
@@ -396,6 +399,16 @@ const App: FC = () => {
                 <RouteErrorBoundary>
                   <Suspense fallback={<RouteFallback />}>
                     <ToolsetEditorPage />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+            <Route
+              path={ROUTES.CustomAppEditor}
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <CustomAppEditorPage />
                   </Suspense>
                 </RouteErrorBoundary>
               }

@@ -80,6 +80,18 @@ export interface ApplicationDetailsDto {
    */
   applicationTypeSchemaId?: string;
   /**
+   * Chat completion endpoint URL for custom applications
+   * @type {string}
+   * @memberof ApplicationDetailsDto
+   */
+  endpoint?: string;
+  /**
+   * Maximum number of input attachments for custom applications
+   * @type {number}
+   * @memberof ApplicationDetailsDto
+   */
+  maxInputAttachments?: number;
+  /**
    * Timestamp of creation time from DIAL Core (e.g. 1714768496000)
    * @type {number}
    * @memberof ApplicationDetailsDto
@@ -1163,11 +1175,11 @@ export interface CreateApplicationBodyDto {
    */
   name: string;
   /**
-   *
+   * Omit for plain custom applications with no schema type
    * @type {string}
    * @memberof CreateApplicationBodyDto
    */
-  type: string;
+  type?: string;
   /**
    *
    * @type {string}
@@ -1301,49 +1313,6 @@ export interface CreateFolderResponseDto {
 /**
  *
  * @export
- * @interface CreateScheduledTaskBodyDto
- */
-export interface CreateScheduledTaskBodyDto {
-  /**
-   *
-   * @type {string}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  displayName: string;
-  /**
-   *
-   * @type {ScheduleTriggerDto}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  trigger: ScheduleTriggerDto;
-  /**
-   *
-   * @type {string}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  model: string;
-  /**
-   *
-   * @type {string}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  prompt: string;
-  /**
-   *
-   * @type {string}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  description?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  stream?: boolean;
-}
-/**
- *
- * @export
  * @interface CreatePromptDto
  */
 export interface CreatePromptDto {
@@ -1390,6 +1359,49 @@ export interface CreatePromptFolderDto {
    * @memberof CreatePromptFolderDto
    */
   parentId?: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateScheduledTaskBodyDto
+ */
+export interface CreateScheduledTaskBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  model: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  prompt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  stream?: boolean;
 }
 /**
  *
@@ -5385,6 +5397,36 @@ export interface UpdateApplicationBodyDto {
    * @memberof UpdateApplicationBodyDto
    */
   intro?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateApplicationBodyDto
+   */
+  endpoint?: string;
+  /**
+   *
+   * @type {object}
+   * @memberof UpdateApplicationBodyDto
+   */
+  features?: object;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof UpdateApplicationBodyDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof UpdateApplicationBodyDto
+   */
+  maxInputAttachments?: number;
 }
 /**
  *
@@ -5423,6 +5465,31 @@ export interface UpdatePinsDto {
    * @memberof UpdatePinsDto
    */
   isPinned: boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdatePromptDto
+ */
+export interface UpdatePromptDto {
+  /**
+   * New display name. Must not contain a forward slash.
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  name?: string;
+  /**
+   * Updated description
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  description?: string;
+  /**
+   * Updated prompt text
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  content?: string;
 }
 /**
  *
@@ -5466,31 +5533,6 @@ export interface UpdateScheduledTaskBodyDto {
    * @memberof UpdateScheduledTaskBodyDto
    */
   stream?: boolean;
-}
-/**
- *
- * @export
- * @interface UpdatePromptDto
- */
-export interface UpdatePromptDto {
-  /**
-   * New display name. Must not contain a forward slash.
-   * @type {string}
-   * @memberof UpdatePromptDto
-   */
-  name?: string;
-  /**
-   * Updated description
-   * @type {string}
-   * @memberof UpdatePromptDto
-   */
-  description?: string;
-  /**
-   * Updated prompt text
-   * @type {string}
-   * @memberof UpdatePromptDto
-   */
-  content?: string;
 }
 /**
  *

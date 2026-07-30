@@ -106,7 +106,13 @@ const renderForm = (
 ) => {
   const form = makeForm(overrides);
   return render(
-    <GeneralForm form={form} errors={errors} onChange={onChange} />,
+    <GeneralForm
+      form={form}
+      errors={errors}
+      onChange={onChange}
+      namePlaceholder={''}
+      descriptionPlaceholder={''}
+    />,
   );
 };
 
