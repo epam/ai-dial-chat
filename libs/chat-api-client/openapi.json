@@ -2221,9 +2221,7 @@
           }
         },
         "summary": "List personal prompts",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       },
       "post": {
         "operationId": "createPrompt",
@@ -2263,9 +2261,7 @@
           }
         },
         "summary": "Create a personal prompt",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       },
       "put": {
         "operationId": "updatePrompt",
@@ -2320,9 +2316,7 @@
           }
         },
         "summary": "Update a personal prompt",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       },
       "delete": {
         "operationId": "deletePrompt",
@@ -2357,9 +2351,7 @@
           }
         },
         "summary": "Delete a personal prompt",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/item": {
@@ -2403,9 +2395,7 @@
           }
         },
         "summary": "Get a personal prompt",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/public": {
@@ -2431,9 +2421,7 @@
           }
         },
         "summary": "List organisation prompts",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/public/item": {
@@ -2477,9 +2465,7 @@
           }
         },
         "summary": "Get an organisation prompt",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/folders": {
@@ -2521,9 +2507,7 @@
           }
         },
         "summary": "Create a prompt folder",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       },
       "put": {
         "operationId": "renamePromptFolder",
@@ -2578,9 +2562,7 @@
           }
         },
         "summary": "Rename a prompt folder",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       },
       "delete": {
         "operationId": "deletePromptFolder",
@@ -2615,9 +2597,7 @@
           }
         },
         "summary": "Delete a prompt folder",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/prompts/move": {
@@ -2674,9 +2654,7 @@
           }
         },
         "summary": "Move a personal prompt to a different folder",
-        "tags": [
-          "prompts"
-        ]
+        "tags": ["prompts"]
       }
     },
     "/api/v1/files": {
@@ -7112,10 +7090,7 @@
             "example": "AI"
           }
         },
-        "required": [
-          "id",
-          "name"
-        ]
+        "required": ["id", "name"]
       },
       "PromptListResponseDto": {
         "type": "object",
@@ -7139,11 +7114,7 @@
             }
           }
         },
-        "required": [
-          "prompts",
-          "folders",
-          "sharedWithMe"
-        ]
+        "required": ["prompts", "folders", "sharedWithMe"]
       },
       "CreatePromptDto": {
         "type": "object",
@@ -7170,10 +7141,7 @@
             "example": "Work/AI"
           }
         },
-        "required": [
-          "name",
-          "content"
-        ]
+        "required": ["name", "content"]
       },
       "UpdatePromptDto": {
         "type": "object",
@@ -7211,10 +7179,7 @@
             }
           }
         },
-        "required": [
-          "prompts",
-          "folders"
-        ]
+        "required": ["prompts", "folders"]
       },
       "CreatePromptFolderDto": {
         "type": "object",
@@ -7231,9 +7196,7 @@
             "example": "Work"
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "RenamePromptFolderDto": {
         "type": "object",
@@ -7245,9 +7208,7 @@
             "maxLength": 256
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "MovePromptDto": {
         "type": "object",
@@ -7258,9 +7219,7 @@
             "example": "Work/AI"
           }
         },
-        "required": [
-          "targetFolderId"
-        ]
+        "required": ["targetFolderId"]
       },
       "FileUploadResponseDto": {
         "type": "object",
