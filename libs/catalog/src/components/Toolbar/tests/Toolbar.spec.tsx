@@ -24,13 +24,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onChange={(e) => onChange(e.target.value)}
     />
   ),
-  DialGhostButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
   DialEllipsisTooltip: ({
     text,
     className,
@@ -52,24 +45,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </>
   ),
   DialCheckbox: ({ label }: { label: string }) => <span>{label}</span>,
-  DialLinkButton: ({
-    label,
-  }: {
-    label: string;
-    className?: string;
-    iconAfter?: React.ReactNode;
-  }) => <button>{label}</button>,
-  DialDangerButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-    iconBefore?: React.ReactNode;
-    className?: string;
-    size?: string;
-    appearance?: string;
-  }) => <button onClick={onClick}>{label}</button>,
   DialIcon: () => null,
   DialPrimaryIconButton: ({
     onClick,

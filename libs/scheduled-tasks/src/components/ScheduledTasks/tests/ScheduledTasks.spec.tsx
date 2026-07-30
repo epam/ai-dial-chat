@@ -11,13 +11,6 @@ import { ScheduledTasksSortKey } from '../../../types/scheduled-tasks-sort-key';
 import { ScheduledTasks } from '../ScheduledTasks';
 
 vi.mock('@epam/ai-dial-kit', () => ({
-  GhostButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick?: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
   SearchBar: ({
     value,
     onChange,
@@ -46,6 +39,13 @@ vi.mock('@epam/ai-dial-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  GhostButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
   PrimaryButton: ({
     label,
     onClick,

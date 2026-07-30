@@ -8,8 +8,8 @@ import {
 import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
 import {
   DIAL_ICON_SIZE,
-  DialLinkButton,
   ElementSize,
+  LinkButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { FC, useId } from 'react';
@@ -135,7 +135,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                 </p>
               </div>
               {isOverflowing && (
-                <DialLinkButton
+                <LinkButton
                   label={<>{toggleLabel}</>}
                   iconBefore={
                     <ToggleIcon size={DIAL_ICON_SIZE.SM} aria-hidden="true" />

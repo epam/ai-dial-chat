@@ -9,13 +9,10 @@ import {
 } from '../../../../types/toolset-auth';
 import { Header } from '../Header';
 
-vi.mock('@epam/ai-dial-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', () => ({
   GhostButton: ({ label, onClick }: { label: string; onClick: () => void }) => (
     <button onClick={onClick}>{label}</button>
   ),
-}));
-
-vi.mock('@epam/ai-dial-ui-kit', () => ({
   NeutralButton: ({
     label,
     onClick,

@@ -18,13 +18,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: unknown;
     className?: string;
   }) => <span className={className}>{text as string}</span>,
-  DialGhostButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
   DialButton: ({ label, onClick }: { label: string; onClick: () => void }) => (
     <button onClick={onClick}>{label}</button>
   ),

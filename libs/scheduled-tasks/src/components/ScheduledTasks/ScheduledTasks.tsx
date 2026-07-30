@@ -3,11 +3,12 @@ import {
   mergeClasses,
   PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
-import { GhostButton, SearchBar } from '@epam/ai-dial-kit';
+import { SearchBar } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
   DialSpinner,
+  GhostButton,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import {

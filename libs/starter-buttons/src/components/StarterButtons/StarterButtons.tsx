@@ -1,6 +1,6 @@
 import { BASE_MD_ICON_PROPS } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { DialDropdown, DialNeutralButton } from '@epam/ai-dial-ui-kit';
+import { DialDropdown, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { IconDots, IconDotsVertical } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { StarterButtonsProps } from '../../models/starter-props';
@@ -123,7 +123,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
               pillRefs.current[index] = el;
             }}
           >
-            <DialNeutralButton
+            <NeutralButton
               label={starter.title}
               onClick={() => onSelect(starter)}
             />
@@ -138,7 +138,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
               matchReferenceWidth={false}
               listClassName="cp-dropdown-overlay"
             >
-              <DialNeutralButton
+              <NeutralButton
                 iconAfter={
                   isMobile ? (
                     <IconDots {...iconProps} />

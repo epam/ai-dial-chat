@@ -1,8 +1,9 @@
 import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostButton, GhostIconButton, SearchBar } from '@epam/ai-dial-kit';
+import { GhostIconButton, SearchBar } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
+  GhostButton,
   DialEllipsisTooltip,
   Highlight,
 } from '@epam/ai-dial-ui-kit';

@@ -1,7 +1,7 @@
-import { GhostButton } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialSpinner,
+  GhostButton,
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';

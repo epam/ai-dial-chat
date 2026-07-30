@@ -75,9 +75,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </label>
   ),
-}));
-
-vi.mock('@epam/ai-dial-kit', () => ({
   GhostButton: ({
     label,
     className,
