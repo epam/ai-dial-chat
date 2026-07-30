@@ -95,7 +95,88 @@ describe('ClientChannelProvider', () => {
 
     await waitFor(() =>
       expect(result.current.pendingEvents).toEqual([
-        { id: 'evt-1', toolsetId: 'toolsets/b/my-toolset' },
+        { kind: 'toolset', id: 'evt-1', toolsetId: 'toolsets/b/my-toolset' },
+      ]),
+    );
+  });
+
+  it('parses an external-service/signin event, splitting url into appId and serviceName', async () => {
+    mockUseFeatureFlag.mockReturnValue(true);
+    const { stream, push } = makeControllableStream();
+    mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+    const { result } = renderHook(() => useClientChannel(), { wrapper });
+    await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+    const frame =
+      'data: {"id":"evt-2","method":"external-service/signin","params":{"url":"applications/public/finhub-via-openapi__1.0.0/external_services/finhub-api2"}}\n\n';
+    await act(async () => {
+      push(frame);
+      await Promise.resolve();
+    });
+
+    await waitFor(() =>
+      expect(result.current.pendingEvents).toEqual([
+        {
+          kind: 'external-service',
+          id: 'evt-2',
+          appId: 'applications/public/finhub-via-openapi__1.0.0',
+          serviceName: 'finhub-api2',
+        },
+      ]),
+    );
+  });
+
+  it('ignores an external-service/signin event whose url has no external_services segment', async () => {
+    mockUseFeatureFlag.mockReturnValue(true);
+    const { stream, push } = makeControllableStream();
+    mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+    const { result } = renderHook(() => useClientChannel(), { wrapper });
+    await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+    const frame =
+      'data: {"id":"evt-2","method":"external-service/signin","params":{"url":"applications/public/my-app__1.0"}}\n\n';
+    await act(async () => {
+      push(frame);
+      await Promise.resolve();
+    });
+
+    // Give any (incorrect) async handling a tick to run before asserting absence.
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.pendingEvents).toEqual([]);
+  });
+
+  it('keeps a toolset event and an external-service event addressable independently', async () => {
+    mockUseFeatureFlag.mockReturnValue(true);
+    const { stream, push } = makeControllableStream();
+    mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+    const { result } = renderHook(() => useClientChannel(), { wrapper });
+    await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+
+    await act(async () => {
+      push(
+        'data: {"id":"evt-1","method":"toolset/signin","params":{"toolsetId":"toolsets/b/my-toolset"}}\n\n',
+      );
+      push(
+        'data: {"id":"evt-2","method":"external-service/signin","params":{"url":"app/external_services/svc"}}\n\n',
+      );
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(result.current.pendingEvents).toHaveLength(2));
+    expect(result.current.pendingEvents).toEqual(
+      expect.arrayContaining([
+        { kind: 'toolset', id: 'evt-1', toolsetId: 'toolsets/b/my-toolset' },
+        {
+          kind: 'external-service',
+          id: 'evt-2',
+          appId: 'app',
+          serviceName: 'svc',
+        },
       ]),
     );
   });
@@ -211,7 +292,7 @@ describe('ClientChannelProvider', () => {
 
     await waitFor(() =>
       expect(result.current.pendingEvents).toEqual([
-        { id: 'evt-1', toolsetId: 'toolsets/b/my-toolset' },
+        { kind: 'toolset', id: 'evt-1', toolsetId: 'toolsets/b/my-toolset' },
       ]),
     );
   });
