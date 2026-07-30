@@ -192,6 +192,10 @@ remain disabled in this state, since `ReadyToSave` still gates them and will not
 - **WHEN** the Settings step's iframe has not yet sent `ReadyToInteract`
 - **THEN** the "Preview" button is disabled and cannot trigger a preview
 
+#### Scanario: Preview is reset when step is changed
+- **WHEN** current step is changed
+- **THEN** Preview state is reset and becomes false
+
 #### Scenario: Buttons re-enable once the Settings step becomes ready
 - **WHEN** the Settings step's iframe sends `ReadyToInteract` after the user has been
   waiting on the Settings step
