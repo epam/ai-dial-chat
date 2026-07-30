@@ -14,7 +14,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
 import { constructPath, getNextFileName } from '@/src/utils/app/file';
-import { getFileRootId, isMyEntity } from '@/src/utils/app/id';
+import { getEntityBucket, getFileRootId, isMyEntity } from '@/src/utils/app/id';
 import {
   doesAgentSupportMcp,
   doesModelAllowTemperature,
@@ -239,6 +239,37 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     }
   }, [dispatch, isPublicationReview, reviewBucket]);
 
+  const handleRemoveFile = useCallback(
+    (document: string) => {
+      const currentValue = documentRelativeUrls ?? [];
+      setValue(
+        'documentRelativeUrl',
+        currentValue.filter((url) => url !== document),
+        { shouldDirty: true },
+      );
+
+      if (
+        isPublicationReview &&
+        reviewBucket &&
+        getEntityBucket({ id: document }) === reviewBucket
+      ) {
+        dispatch(
+          FilesActions.deleteFiles({
+            files: [{ sourceUrl: document, nodeType: DialFileNodeType.ITEM }],
+            folderUrl: getFileRootId(reviewBucket),
+          }),
+        );
+      }
+    },
+    [
+      dispatch,
+      documentRelativeUrls,
+      isPublicationReview,
+      reviewBucket,
+      setValue,
+    ],
+  );
+
   return (
     <div
       className="flex size-full grow flex-col divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2"
@@ -307,6 +338,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 )}
                 info={t(MarketplaceI18nKeys.ProcessFilesDescription)}
                 className="flex items-center gap-2"
+                disabled={isAppPublic}
+                tooltip={isAppPublicTooltip}
               />
             )}
           />
@@ -332,11 +365,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 label={t(MarketplaceI18nKeys.ContextFiles)}
                 info={t(MarketplaceI18nKeys.ContextFilesInfo)}
                 onAddFiles={handleSelectFiles}
-                onRemoveFile={(document) =>
-                  field.onChange(
-                    field.value?.filter((field) => field !== document),
-                  )
-                }
+                onRemoveFile={handleRemoveFile}
                 readonly={isSharedWithMe || isAppPublic}
                 error={errors.documentRelativeUrl?.message}
                 fileManagerTitle={t(MarketplaceI18nKeys.SelectDocuments)}
@@ -377,6 +406,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               )}
               info={t(MarketplaceI18nKeys.FileToolsDescription)}
               className="flex items-center gap-2"
+              disabled={isAppPublic}
+              tooltip={isAppPublicTooltip}
             />
           )}
         />
@@ -555,6 +586,8 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               switchOFFText="OFF"
               additionalText={t(MarketplaceI18nKeys.TimeAwareness)}
               className="flex items-center gap-2"
+              disabled={isAppPublic}
+              tooltip={isAppPublicTooltip}
             />
           )}
         />
