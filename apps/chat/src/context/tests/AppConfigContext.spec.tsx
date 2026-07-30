@@ -62,6 +62,7 @@ describe('AppConfigContext', () => {
     expect(result.current.config.overlayAllowedOrigins).toEqual([]);
     expect(result.current.config.enabledUiFeatures).toBeNull();
     expect(result.current.config.announcementHtml).toBeNull();
+    expect(result.current.config.customVisualizers).toEqual([]);
   });
 
   it('transitions to ready after successful API call', async () => {
@@ -295,6 +296,44 @@ describe('AppConfigContext', () => {
 
       // Status should still be loading because the provider was unmounted.
       expect(result.current.status).toBe(UserConfigStatus.Loading);
+    });
+  });
+
+  describe('customVisualizers', () => {
+    it('defaults to [] before the config loads', () => {
+      mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      expect(result.current.config.customVisualizers).toEqual([]);
+    });
+
+    it('surfaces customVisualizers from the API response', async () => {
+      const entry = {
+        contentType: 'application/x-test',
+        url: 'https://viz.example.com',
+        title: 'my-viz',
+      };
+      mockGetClientConfig.mockResolvedValue({
+        ...READY_RESPONSE,
+        config: {
+          ...(READY_RESPONSE as { config: object }).config,
+          customVisualizers: [entry],
+        },
+      } as unknown as ClientConfigResponseDto);
+
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.customVisualizers).toEqual([entry]);
+    });
+
+    it('defaults to [] when customVisualizers is absent from the response', async () => {
+      mockGetClientConfig.mockResolvedValue(READY_RESPONSE);
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.config.customVisualizers).toEqual([]);
     });
   });
 });

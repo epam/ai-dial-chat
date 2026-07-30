@@ -65,6 +65,12 @@
     },
     {
       "path": "./libs/publish-panel"
+    },
+    {
+      "path": "./libs/visualizer-connector"
+    },
+    {
+      "path": "./libs/chat-visualizer-connector"
     }
   ]
 }

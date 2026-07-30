@@ -731,4 +731,8 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   SCHEDULER_SERVICE_TIMEOUT_MS?: number = 10_000;
+
+  @IsOptional()
+  @IsString()
+  CUSTOM_VISUALIZERS?: string;
 }

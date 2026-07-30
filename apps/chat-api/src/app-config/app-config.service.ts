@@ -12,6 +12,7 @@ import type { AppConfigEvalContext } from './app-config.types';
 import { CompositeConfigProvider } from './config-registry/composite-config.provider';
 import { CONFIG_DEFINITIONS } from './config-registry/config-registry.constants';
 import type { ClientConfigResponseDto } from './dto/client-config-response.dto';
+import type { CustomVisualizerDto } from './dto/custom-visualizer.dto';
 import { FeatureKey } from './feature-flags/feature-key.enum';
 import { KNOWN_UI_FEATURES } from './known-ui-features.constants';
 
@@ -93,6 +94,7 @@ export class AppConfigService {
     let announcementHtml: string | null = null;
     let deepResearchToolId: string | null = null;
     let footerHtmlMessage = '';
+    let customVisualizers: CustomVisualizerDto[] = [];
 
     for (const def of clientDefinitions) {
       const value = await this.compositeProvider.resolve(def.key, context);
@@ -148,6 +150,8 @@ export class AppConfigService {
             );
           }
         }
+      } else if (def.key === 'customVisualizers') {
+        customVisualizers = Array.isArray(resolved) ? resolved : [];
       }
     }
 
@@ -166,6 +170,7 @@ export class AppConfigService {
         footerHtmlMessage,
         enabledUiFeatures,
         deepResearchToolId,
+        customVisualizers,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

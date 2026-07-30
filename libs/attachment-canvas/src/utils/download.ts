@@ -19,6 +19,8 @@ export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
     case AttachmentContentType.Audio:
     case AttachmentContentType.Pdf:
       return true;
+    case AttachmentContentType.Visualizer:
+      return false;
     case AttachmentContentType.Unsupported:
       return content.url != null;
     case AttachmentContentType.Error:
@@ -70,13 +72,15 @@ export const downloadAttachmentContent = (
     case AttachmentContentType.Pdf:
       triggerAnchorDownload(content.url, name);
       return;
+    case AttachmentContentType.Visualizer:
+      return;
     case AttachmentContentType.Unsupported:
       if (content.url == null) return;
       triggerAnchorDownload(content.url, name);
       return;
     case AttachmentContentType.Error:
-      if (!isDownloadable(content)) return;
-      triggerAnchorDownload(content.url!, name);
+      if (!isDownloadable(content) || content.url == null) return;
+      triggerAnchorDownload(content.url, name);
       return;
   }
 };
