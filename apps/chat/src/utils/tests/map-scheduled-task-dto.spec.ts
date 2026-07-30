@@ -1,6 +1,6 @@
 import type { ScheduledTaskDto } from '@epam/chat-api-client';
 import type { TFunction } from 'i18next';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import {
   mapScheduledTaskDtoToItem,
@@ -18,6 +18,14 @@ const buildDto = (overrides?: Partial<ScheduledTaskDto>): ScheduledTaskDto => ({
 });
 
 describe('mapScheduledTaskDtoToItem', () => {
+  beforeEach(() => {
+    vi.stubEnv('TZ', 'UTC');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('formats a date trigger via the once translation key with a locale-formatted date', () => {
     const result = mapScheduledTaskDtoToItem(buildDto(), fakeT);
 
@@ -173,6 +181,59 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
 
     expect(result.sectionKey).toBe('myTasks');
+  });
+});
+
+describe('mapScheduledTaskDtoToItem — recurring schedule timezone conversion', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('shows the local equivalent of a stored UTC daily time', () => {
+    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer: local = UTC + 2h
+
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({ trigger: { cron: { fields: { hour: '7', minute: '0' } } } }),
+      fakeT,
+    );
+
+    expect(result.scheduleLabel).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleDailyAt}:${JSON.stringify({ time: '09:00' })}`,
+    );
+  });
+
+  it('shows the local weekday when the stored UTC day rolls back a day', () => {
+    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer: local = UTC + 2h
+
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({
+        trigger: {
+          cron: { fields: { hour: '23', minute: '0', day_of_week: '6' } }, // UTC Sunday
+        },
+      }),
+      fakeT,
+    );
+
+    expect(result.scheduleLabel).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: '0', time: '01:00' })}`, // local Monday 01:00
+    );
+  });
+
+  it('leaves a non-numeric day_of_week untouched', () => {
+    vi.stubEnv('TZ', 'Europe/Warsaw');
+
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({
+        trigger: {
+          cron: { fields: { hour: '9', minute: '0', day_of_week: 'Monday' } },
+        },
+      }),
+      fakeT,
+    );
+
+    expect(result.scheduleLabel).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleWeeklyAt}:${JSON.stringify({ day: 'Monday', time: '11:00' })}`,
+    );
   });
 });
 
