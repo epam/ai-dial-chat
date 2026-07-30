@@ -21,15 +21,22 @@ No new external dependencies are introduced — the existing DIAL Core SDK clien
 
 ## Decisions
 
-### 1. Storage: DIAL Core file storage with path-as-ID
+### 1. Storage: native DIAL Core prompt resources with path-as-ID
 
-**Decision:** Prompts are stored as JSON files in DIAL Core using the same bucket + path convention as conversations.
+**Decision:** Prompts use DIAL Core's prompt resource API. The resource type and bucket are
+already encoded by the SDK endpoint, so the SDK receives only the user-relative prompt path.
 
-Storage path: `{bucket}/prompts/{userPath}.json`
-- Personal: `{sessionBucket}/prompts/{path}.json`
-- Organisation: `public/prompts/{path}.json`
+Full DIAL resource URL: `prompts/{bucket}/{userPath}`
+- Personal: `prompts/{sessionBucket}/{path}`
+- Organisation: `prompts/public/{path}`
 
-The `path` field doubles as the prompt's stable identifier within the API (same as `id` for conversations). DIAL Core guarantees collision-free paths within a bucket.
+The BFF's `path` and response `id` contain only `{userPath}`. The full resource URL is used
+only at the DIAL integration boundary, including sharing. This matches the legacy chat's
+`getPromptRootId()` / `PromptApiStorage` convention; no `.json` suffix or extra nested
+`prompts/` segment is added.
+
+`description` and `content` are prompt payload fields. `createdAt` and `updatedAt` are sourced
+from DIAL Core resource metadata and are not written into the prompt payload.
 
 **Alternative considered:** Assign UUID identifiers and store path separately.
 **Rejected because:** Adds a secondary index that DIAL Core doesn't provide. All existing domain entities (conversations, files) use path-as-ID; diverging would be inconsistent and adds complexity.
@@ -37,7 +44,8 @@ The `path` field doubles as the prompt's stable identifier within the API (same 
 ### 2. Folder hierarchy: virtual path prefixes
 
 **Decision:** Folders are not first-class DIAL Core objects. They are implicit — a folder `Work/AI/` exists when at least one prompt lives at `Work/AI/{name}`. Explicit folder create/rename/delete operations are supported:
-- **Create**: a sentinel `.folder` file is written at `{bucket}/prompts/{folderPath}/.folder` to make empty folders listable (same pattern used by conversations folders)
+- **Create**: a sentinel prompt resource is written at
+  `prompts/{bucket}/{folderPath}/.folder` to make empty folders listable by this BFF
 - **Rename / delete**: all files with the given path prefix are moved / deleted in parallel using DIAL Core batch operations
 
 **Alternative considered:** Single flat namespace with `folderId` stored inside the JSON.
@@ -45,13 +53,19 @@ The `path` field doubles as the prompt's stable identifier within the API (same 
 
 ### 3. Organisation prompts: public bucket read-only
 
-**Decision:** `GET /api/v1/prompts/public` and `GET /api/v1/prompts/public?path=<p>` expose organisation prompts stored in DIAL Core's `public` bucket under `public/prompts/`. Regular users may only read; write operations are rejected with 403.
+**Decision:** `GET /api/v1/prompts/public` lists organisation prompts and
+`GET /api/v1/prompts/public/item?path=<p>` reads one organisation prompt. Both use the DIAL
+`public` bucket (`prompts/public/{path}`). Regular users may only read; no public write route is
+exposed.
 
 **Rationale:** Consistent with how conversations expose `PUBLIC_BUCKET` data (`GET /api/v1/conversations/public`). Organisation prompts are curated by admins through DIAL Admin or the file system, not through this API.
 
 ### 4. Sharing: reuse existing `/api/v1/share`
 
-**Decision:** No new share endpoint. Clients POST to the existing `POST /api/v1/share` with the prompt's DIAL Core resource path as `itemId`. The share service already accepts arbitrary DIAL Core resource paths and proxies to DIAL Core.
+**Decision:** No new share endpoint. Clients POST to the existing `POST /api/v1/share` with
+`itemId: "prompts/{bucket}/{path}"`. The existing BFF share service proxies that resource URL
+to DIAL Core and returns its established `ShareLinkResponseDto`
+(`url`, `expiresInDays`, `access`).
 
 **Rationale:** Adding a prompt-specific wrapper would be pure duplication. The `conversation-share` spec established this precedent — the existing endpoint accepts any DIAL Core path.
 

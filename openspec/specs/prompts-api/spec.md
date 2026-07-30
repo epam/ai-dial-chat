@@ -16,16 +16,19 @@ A **Prompt** SHALL be represented by the following shape in all API responses (`
 }
 ```
 
-`id` equals the full path of the prompt within the user's `prompts/` namespace (everything after `{bucket}/prompts/`). The `folderId` is derived from `id` by dropping the last path segment.
+`id` equals the user-relative path (everything after `prompts/{bucket}/` in the full DIAL
+resource URL). The `folderId` is derived from `id` by dropping the last path segment.
+`createdAt` and `updatedAt` come from DIAL Core resource metadata; they are not fields written
+into the prompt payload.
 
 #### Scenario: id encodes the folder hierarchy
 
-- **WHEN** a prompt is stored at `{bucket}/prompts/Work/AI/my-prompt.json`
+- **WHEN** a prompt has DIAL resource URL `prompts/{bucket}/Work/AI/my-prompt`
 - **THEN** the API response contains `id: "Work/AI/my-prompt"` and `folderId: "Work/AI"`
 
 #### Scenario: Root-level prompt has empty folderId
 
-- **WHEN** a prompt is stored at `{bucket}/prompts/my-prompt.json`
+- **WHEN** a prompt has DIAL resource URL `prompts/{bucket}/my-prompt`
 - **THEN** the API response contains `id: "my-prompt"` and `folderId: ""`
 
 ---
@@ -49,7 +52,10 @@ The backend SHALL expose `GET /api/v1/prompts` in `PromptController` (`version: 
 }
 ```
 
-The service lists all files under `{sessionBucket}/prompts/` from DIAL Core (recursive, all depths), filters out `.folder` sentinel files, maps each `.json` file to `PromptResponseDto`, and derives `PromptFolderResponseDto` entries from distinct path prefixes present in the result set.
+The service recursively lists prompt metadata from the root of the session bucket, filters out
+`.folder` sentinel resources, reads prompt payloads, and merges them with Core metadata into
+`PromptResponseDto`. It derives `PromptFolderResponseDto` entries from distinct relative path
+prefixes present in the result set.
 
 Additionally, prompts shared with the current user SHALL be included in a separate `sharedWithMe` field:
 
@@ -98,8 +104,9 @@ The backend SHALL expose `POST /api/v1/prompts`. The endpoint accepts `CreatePro
 On success, the service:
 1. Derives the storage path as `{folderId ? folderId + '/' : ''}{name}`.
 2. Rejects with 409 if a prompt at that path already exists.
-3. Sets `createdAt` and `updatedAt` to the current timestamp.
-4. Writes a JSON file at `{sessionBucket}/prompts/{path}.json` via the DIAL Core SDK.
+3. Creates the DIAL prompt resource `prompts/{sessionBucket}/{path}` via the SDK using a
+   create-only precondition.
+4. Reads the resulting Core metadata for `createdAt` and `updatedAt`.
 5. Returns HTTP 201 with `PromptResponseDto`.
 
 Rate limiting: `@Throttle({ default: { limit: 30, ttl: 60000 } })`.
@@ -142,7 +149,8 @@ Error codes:
 
 The backend SHALL expose `GET /api/v1/prompts/item` with a required `path` query parameter (`RequiredPromptPathDto: { path: string @IsString @MinLength(1) @MaxLength(2048) @Matches(safe path allowlist) }`). The endpoint returns the single prompt at that path. The path allowlist rejects traversal segments (`.` and `..`), backslashes, absolute paths, and empty segments.
 
-On success, the service reads `{sessionBucket}/prompts/{path}.json` from DIAL Core and returns HTTP 200 with `PromptResponseDto`.
+On success, the service reads DIAL resource `prompts/{sessionBucket}/{path}` and its metadata,
+then returns HTTP 200 with `PromptResponseDto`.
 
 Error codes:
 - `400 Bad Request` — `path` fails DTO validation
@@ -175,7 +183,11 @@ The backend SHALL expose `PUT /api/v1/prompts` with a required `path` query para
 }
 ```
 
-If `name` is provided and differs from the current path's last segment, the service writes to the new path and then deletes the old path. Any failed step is returned as an upstream error; the endpoint MUST NOT report success after a failed source deletion. `updatedAt` is updated to the current timestamp. `createdAt` is preserved. Returns HTTP 200 with updated `PromptResponseDto`.
+If `name` is provided and differs from the current path's last segment, the service writes to
+the new path and then deletes the old path. Any failed step is returned as an upstream error;
+the endpoint MUST NOT report success after a failed source deletion. The response uses
+`createdAt` and `updatedAt` from DIAL Core metadata. Returns HTTP 200 with updated
+`PromptResponseDto`.
 
 Error codes:
 - `400 Bad Request` — DTO validation fails
@@ -204,7 +216,9 @@ Error codes:
 
 ### Requirement: DELETE /api/v1/prompts?path= deletes a personal prompt
 
-The backend SHALL expose `DELETE /api/v1/prompts` with a required `path` query parameter. The service deletes `{sessionBucket}/prompts/{path}.json` from DIAL Core and returns HTTP 204 No Content. If the file does not exist, returns 404.
+The backend SHALL expose `DELETE /api/v1/prompts` with a required `path` query parameter. The
+service deletes DIAL resource `prompts/{sessionBucket}/{path}` and returns HTTP 204 No Content.
+If the resource does not exist, returns 404.
 
 Error codes:
 - `400 Bad Request` — `path` fails DTO validation
@@ -227,7 +241,10 @@ Error codes:
 
 ### Requirement: GET /api/v1/prompts/public lists organisation prompts
 
-The backend SHALL expose `GET /api/v1/prompts/public`. The endpoint reads from the `public` DIAL Core bucket (`public/prompts/`) and returns `PromptListResponseDto` (same shape as the personal list, without `sharedWithMe`). This endpoint is read-only; no create/update/delete is exposed on the public namespace.
+The backend SHALL expose `GET /api/v1/prompts/public`. The endpoint reads prompt resources
+from the root of the `public` DIAL Core bucket (`prompts/public/{path}`) and returns
+`PublicPromptListResponseDto` (without `sharedWithMe`). This endpoint is read-only; no
+create/update/delete is exposed on the public namespace.
 
 Rate limiting: inherits the global default.
 
@@ -239,7 +256,7 @@ Error codes:
 #### Scenario: Organisation prompts are returned
 
 - **WHEN** `GET /api/v1/prompts/public` is called by any authenticated user
-- **THEN** the response is 200 with prompts from the `public/prompts/` bucket prefix
+- **THEN** the response is 200 with prompts from the `prompts/public/` resource namespace
 
 #### Scenario: Empty organisation bucket returns empty lists
 
@@ -252,35 +269,12 @@ Error codes:
 
 The backend SHALL expose `GET /api/v1/prompts/public/item?path=<path>` as a distinct
 OpenAPI operation returning `PromptResponseDto`. The required path uses the same safe
-allowlist as personal prompt paths.
+allowlist as personal prompt paths. It reads DIAL resource `prompts/public/{path}`.
 
 #### Scenario: Existing organisation prompt is returned
 
 - **WHEN** `GET /api/v1/prompts/public/item?path=Work/org-prompt` is called
 - **THEN** the response is 200 with the matching `PromptResponseDto`
-
----
-
-### Requirement: GET /api/v1/prompts/public?path= retrieves a specific organisation prompt
-
-The backend SHALL expose `GET /api/v1/prompts/public` with a `path` query parameter. When provided, it reads `public/prompts/{path}.json` from DIAL Core and returns HTTP 200 with `PromptResponseDto`.
-
-Error codes:
-- `400 Bad Request` — invalid `path`
-- `401 Unauthorized`
-- `404 Not Found` — prompt not in public bucket
-- `502 Bad Gateway`
-- `500 Internal Server Error`
-
-#### Scenario: Existing org prompt is returned
-
-- **WHEN** `GET /api/v1/prompts/public?path=company/onboarding` is called and that prompt exists
-- **THEN** the response is 200 with the prompt
-
-#### Scenario: Non-existent org prompt returns 404
-
-- **WHEN** `GET /api/v1/prompts/public?path=nonexistent` is called
-- **THEN** the response is 404
 
 ---
 
@@ -297,6 +291,11 @@ After implementation the developer SHALL run `npm run openapi && npm run openapi
 | DELETE | /api/v1/prompts (+ path param) | `deletePrompt` | `deletePrompt` |
 | GET | /api/v1/prompts/public | `listPublicPrompts` | `listPublicPrompts` |
 | GET | /api/v1/prompts/public/item (+ path param) | `getPublicPrompt` | `getPublicPrompt` |
+
+#### Scenario: Prompt operations are available in the generated client
+
+- **WHEN** `npm run openapi && npm run openapi:check` completes from the implemented Swagger document
+- **THEN** `@epam/chat-api-client` exposes all seven SDK methods in the table above without schema drift
 
 Feature flag gating: none — the prompts API is always enabled once deployed.
 RTL / direction impact: none (backend only).

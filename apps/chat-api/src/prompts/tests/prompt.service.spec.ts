@@ -16,21 +16,23 @@ const okResponse = (data: unknown) =>
 const errResponse = (status: number) =>
   ({ error: {}, response: { status } as Response }) as never;
 
-const writeOk = () => ({ response: { status: 200 } as Response }) as never;
-
 const storedPrompt = {
   id: 'my-prompt',
   name: 'My Prompt',
   description: 'A description',
   content: 'Hello {{name}}',
   folderId: '',
-  createdAt: 1000,
-  updatedAt: 2000,
 };
 
-/* Build a metadata item URL in the format DIAL Core uses: prompts/{bucket}/{storagePath} */
-const metaUrl = (path: string) => `prompts/${BUCKET}/prompts/${path}`;
-const metaItem = (path: string) => ({ nodeType: 'ITEM', url: metaUrl(path) });
+const metaUrl = (path: string, bucket = BUCKET) => `prompts/${bucket}/${path}`;
+const metaItem = (path: string, bucket = BUCKET) => ({
+  nodeType: 'ITEM',
+  url: metaUrl(path, bucket),
+  createdAt: 1000,
+  updatedAt: 2000,
+});
+const writeOk = (path = 'my-prompt', bucket = BUCKET) =>
+  okResponse(metaItem(path, bucket));
 
 function makeService() {
   const dialClient = {
@@ -75,10 +77,9 @@ describe('PromptService', () => {
 
     it('returns mapped prompts and derives folder hierarchy from prompt ids', async () => {
       const { service } = makeService();
-      vi.spyOn(
-        service['dialClient'].client,
-        'getPromptMetadata',
-      ).mockResolvedValue(okResponse({ items: [metaItem('work/meeting')] }));
+      const metadataSpy = vi
+        .spyOn(service['dialClient'].client, 'getPromptMetadata')
+        .mockResolvedValue(okResponse({ items: [metaItem('work/meeting')] }));
       vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
         okResponse({
           ...storedPrompt,
@@ -101,6 +102,7 @@ describe('PromptService', () => {
       });
       expect(result.folders).toEqual([{ id: 'work', name: 'work' }]);
       expect(result.sharedWithMe).toEqual([]);
+      expect(metadataSpy).toHaveBeenCalledWith(BUCKET, '', expect.any(Object));
     });
 
     it('includes empty folders represented by sentinel files', async () => {
@@ -147,8 +149,44 @@ describe('PromptService', () => {
       expect(result.prompts.map(({ id }) => id)).toEqual(['first', 'second']);
       expect(metadataSpy).toHaveBeenCalledTimes(2);
       expect(metadataSpy.mock.calls[1][2]).toMatchObject({
-        params: { query: { nextToken: 'next-page' } },
+        params: { query: { token: 'next-page' } },
       });
+    });
+  });
+
+  describe('getSharedPrompts', () => {
+    it('reads a full shared prompt resource URL without adding a namespace segment', async () => {
+      const { service } = makeService();
+      vi.spyOn(
+        service['dialClient'].client,
+        'getSharedResources',
+      ).mockResolvedValue(
+        okResponse({
+          resources: [metaItem('Shared/greeting', 'owner-bucket')],
+        }),
+      );
+      const getPromptSpy = vi
+        .spyOn(service['dialClient'].client, 'getPrompt')
+        .mockResolvedValue(okResponse(storedPrompt));
+      vi.spyOn(
+        service['dialClient'].client,
+        'getPromptMetadata',
+      ).mockResolvedValue(
+        okResponse(metaItem('Shared/greeting', 'owner-bucket')),
+      );
+
+      const result = await service.getSharedPrompts(TOKEN, BUCKET);
+
+      expect(result[0]).toMatchObject({
+        id: 'Shared/greeting',
+        createdAt: 1000,
+        updatedAt: 2000,
+      });
+      expect(getPromptSpy).toHaveBeenCalledWith(
+        'owner-bucket',
+        'Shared/greeting',
+        expect.any(Object),
+      );
     });
   });
 
@@ -159,9 +197,13 @@ describe('PromptService', () => {
   describe('getPrompt', () => {
     it('returns the mapped PromptResponseDto when the prompt exists', async () => {
       const { service } = makeService();
-      vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
-        okResponse(storedPrompt),
-      );
+      const getPromptSpy = vi
+        .spyOn(service['dialClient'].client, 'getPrompt')
+        .mockResolvedValue(okResponse(storedPrompt));
+      vi.spyOn(
+        service['dialClient'].client,
+        'getPromptMetadata',
+      ).mockResolvedValue(okResponse(metaItem('my-prompt')));
 
       const result = await service.getPrompt(TOKEN, BUCKET, 'my-prompt');
 
@@ -170,7 +212,14 @@ describe('PromptService', () => {
         name: 'My Prompt',
         content: 'Hello {{name}}',
         folderId: '',
+        createdAt: 1000,
+        updatedAt: 2000,
       });
+      expect(getPromptSpy).toHaveBeenCalledWith(
+        BUCKET,
+        'my-prompt',
+        expect.any(Object),
+      );
     });
 
     it('throws NotFoundException when DIAL Core returns 404', async () => {
@@ -196,9 +245,9 @@ describe('PromptService', () => {
         service['dialClient'].client,
         'getPromptMetadata',
       ).mockResolvedValue(errResponse(404));
-      vi.spyOn(service['dialClient'].client, 'savePrompt').mockResolvedValue(
-        writeOk(),
-      );
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'savePrompt')
+        .mockResolvedValue(writeOk('My Prompt'));
 
       const result = await service.createPrompt(TOKEN, BUCKET, {
         name: 'My Prompt',
@@ -210,6 +259,15 @@ describe('PromptService', () => {
         name: 'My Prompt',
         content: 'Hello {{name}}',
       });
+      expect(saveSpy).toHaveBeenCalledWith(
+        BUCKET,
+        'My%20Prompt',
+        expect.objectContaining({
+          headers: expect.objectContaining({ 'If-None-Match': '*' }),
+        }),
+      );
+      expect(saveSpy.mock.calls[0][2].body).not.toHaveProperty('createdAt');
+      expect(saveSpy.mock.calls[0][2].body).not.toHaveProperty('updatedAt');
     });
 
     it('creates a prompt with a folderId path prefix', async () => {
@@ -219,7 +277,7 @@ describe('PromptService', () => {
         'getPromptMetadata',
       ).mockResolvedValue(errResponse(404));
       vi.spyOn(service['dialClient'].client, 'savePrompt').mockResolvedValue(
-        writeOk(),
+        writeOk('Work/AI/greeting'),
       );
 
       const result = await service.createPrompt(TOKEN, BUCKET, {
@@ -236,10 +294,9 @@ describe('PromptService', () => {
 
     it('throws ConflictException when a prompt already exists at that path', async () => {
       const { service } = makeService();
-      vi.spyOn(
-        service['dialClient'].client,
-        'getPromptMetadata',
-      ).mockResolvedValue(okResponse({ items: [] }));
+      vi.spyOn(service['dialClient'].client, 'savePrompt').mockResolvedValue(
+        errResponse(412),
+      );
 
       await expect(
         service.createPrompt(TOKEN, BUCKET, {
@@ -249,13 +306,11 @@ describe('PromptService', () => {
       ).rejects.toThrow(ConflictException);
     });
 
-    it('propagates an upstream existence-check failure without writing', async () => {
+    it('propagates an upstream create failure', async () => {
       const { service } = makeService();
-      vi.spyOn(
-        service['dialClient'].client,
-        'getPromptMetadata',
-      ).mockResolvedValue(errResponse(502));
-      const saveSpy = vi.spyOn(service['dialClient'].client, 'savePrompt');
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'savePrompt')
+        .mockResolvedValue(errResponse(502));
 
       await expect(
         service.createPrompt(TOKEN, BUCKET, {
@@ -263,7 +318,7 @@ describe('PromptService', () => {
           content: 'Hi',
         }),
       ).rejects.toThrow(BadGatewayException);
-      expect(saveSpy).not.toHaveBeenCalled();
+      expect(saveSpy).toHaveBeenCalledOnce();
     });
   });
 
@@ -278,7 +333,7 @@ describe('PromptService', () => {
         okResponse(storedPrompt),
       );
       vi.spyOn(service['dialClient'].client, 'savePrompt').mockResolvedValue(
-        writeOk(),
+        writeOk('my-prompt'),
       );
 
       const result = await service.updatePrompt(TOKEN, BUCKET, 'my-prompt', {
@@ -317,10 +372,9 @@ describe('PromptService', () => {
       vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
         okResponse(storedPrompt),
       );
-      vi.spyOn(
-        service['dialClient'].client,
-        'getPromptMetadata',
-      ).mockResolvedValue(okResponse({ items: [] }));
+      vi.spyOn(service['dialClient'].client, 'savePrompt').mockResolvedValue(
+        errResponse(412),
+      );
 
       await expect(
         service.updatePrompt(TOKEN, BUCKET, 'my-prompt', { name: 'other' }),
@@ -361,7 +415,7 @@ describe('PromptService', () => {
       vi.spyOn(
         service['dialClient'].client,
         'getPromptMetadata',
-      ).mockResolvedValue(okResponse({ items: [] }));
+      ).mockResolvedValue(okResponse(metaItem('my-prompt')));
       vi.spyOn(service['dialClient'].client, 'deletePrompt').mockResolvedValue(
         writeOk(),
       );
@@ -395,13 +449,20 @@ describe('PromptService', () => {
         service['dialClient'].client,
         'getPromptMetadata',
       ).mockResolvedValue(errResponse(404));
-      vi.spyOn(service['dialClient'].client, 'savePrompt').mockResolvedValue(
-        writeOk(),
-      );
+      const saveSpy = vi
+        .spyOn(service['dialClient'].client, 'savePrompt')
+        .mockResolvedValue(writeOk('AI/.folder'));
 
       const result = await service.createFolder(TOKEN, BUCKET, { name: 'AI' });
 
       expect(result).toEqual({ id: 'AI', name: 'AI' });
+      expect(saveSpy).toHaveBeenCalledWith(
+        BUCKET,
+        'AI/.folder',
+        expect.objectContaining({
+          headers: expect.objectContaining({ 'If-None-Match': '*' }),
+        }),
+      );
     });
 
     it('creates a nested folder when parentId is supplied', async () => {
@@ -424,10 +485,9 @@ describe('PromptService', () => {
 
     it('throws ConflictException when the folder sentinel already exists', async () => {
       const { service } = makeService();
-      vi.spyOn(
-        service['dialClient'].client,
-        'getPromptMetadata',
-      ).mockResolvedValue(okResponse({ items: [] }));
+      vi.spyOn(service['dialClient'].client, 'savePrompt').mockResolvedValue(
+        errResponse(412),
+      );
 
       await expect(
         service.createFolder(TOKEN, BUCKET, { name: 'AI' }),
@@ -569,6 +629,13 @@ describe('PromptService', () => {
 
       expect(result).toMatchObject({ id: 'work/my-prompt', folderId: 'work' });
       expect(deleteSpy).toHaveBeenCalledOnce();
+      expect(service['dialClient'].client.savePrompt).toHaveBeenCalledWith(
+        BUCKET,
+        'work/my-prompt',
+        expect.objectContaining({
+          headers: expect.objectContaining({ 'If-None-Match': '*' }),
+        }),
+      );
     });
 
     it('throws ConflictException when a prompt already exists at the target path', async () => {
@@ -576,10 +643,9 @@ describe('PromptService', () => {
       vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
         okResponse(storedPrompt),
       );
-      vi.spyOn(
-        service['dialClient'].client,
-        'getPromptMetadata',
-      ).mockResolvedValue(okResponse({ items: [] }));
+      vi.spyOn(service['dialClient'].client, 'savePrompt').mockResolvedValue(
+        errResponse(412),
+      );
 
       await expect(
         service.movePrompt(TOKEN, BUCKET, 'my-prompt', {
@@ -635,9 +701,7 @@ describe('PromptService', () => {
         'getPromptMetadata',
       ).mockResolvedValue(
         okResponse({
-          items: [
-            { nodeType: 'ITEM', url: 'prompts/public/prompts/org-prompt' },
-          ],
+          items: [{ ...metaItem('org-prompt', 'public') }],
         }),
       );
       vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
@@ -663,6 +727,10 @@ describe('PromptService', () => {
       vi.spyOn(service['dialClient'].client, 'getPrompt').mockResolvedValue(
         okResponse({ ...storedPrompt, id: 'org-prompt' }),
       );
+      vi.spyOn(
+        service['dialClient'].client,
+        'getPromptMetadata',
+      ).mockResolvedValue(okResponse(metaItem('org-prompt', 'public')));
 
       const result = await service.getPublicPrompt(TOKEN, 'org-prompt');
 

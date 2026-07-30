@@ -7,10 +7,12 @@ A user SHALL be able to share a personal prompt with another user by calling the
 The prompt's DIAL Core resource path follows the same conventions as other resources:
 
 ```
-{sessionBucket}/prompts/{path}.json
+prompts/{sessionBucket}/{path}
 ```
 
-A client constructs this path from the `PromptResponseDto.id` returned by the prompt CRUD endpoints and the user's session bucket.
+A client constructs this resource URL from the `PromptResponseDto.id` returned by the prompt
+CRUD endpoints and the user's session bucket. It MUST NOT append `.json` or another
+`prompts/` path segment.
 
 `POST /api/v1/share` body:
 ```
@@ -20,12 +22,21 @@ A client constructs this path from the `PromptResponseDto.id` returned by the pr
 }
 ```
 
-On success, `POST /api/v1/share` returns 201 with `{ "invitationLink": "<url>" }` — unchanged from the existing contract.
+On success, `POST /api/v1/share` returns HTTP 201 with the existing
+`ShareLinkResponseDto` contract:
+
+```
+{
+  "url": "<absolute frontend invitation URL>",
+  "expiresInDays": 3,
+  "access": ["view"]
+}
+```
 
 #### Scenario: Sharing a prompt produces an invitation link
 
-- **WHEN** `POST /api/v1/share` is called with `{ "itemId": "{bucket}/prompts/Work/greeting.json", "access": ["view"] }`
-- **THEN** the response is 201 with an `invitationLink`
+- **WHEN** `POST /api/v1/share` is called with `{ "itemId": "prompts/{bucket}/Work/greeting", "access": ["view"] }`
+- **THEN** the response is 201 with `url`, `expiresInDays`, and `access`
 - **AND** DIAL Core records the share for that resource path
 
 #### Scenario: Share endpoint accepts prompt paths without additional validation

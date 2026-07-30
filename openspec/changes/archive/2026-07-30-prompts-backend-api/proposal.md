@@ -6,7 +6,7 @@ The application currently has no saved-prompts library — "prompt" is only a fr
 
 - New NestJS domain `apps/chat-api/src/prompts/` with controller, service, module, and DTOs.
 - REST endpoints under `/api/v1/prompts` and `/api/v1/prompts/public` for full CRUD and listing.
-- Prompts are persisted as JSON files in DIAL Core file storage (user bucket for personal, `public` bucket for organisation prompts), following the same pattern as conversations.
+- Prompts are persisted as native DIAL Core prompt resources (`prompts/{bucket}/{path}`; user bucket for personal, `public` bucket for organisation prompts), following the resource-ID convention used by the legacy chat.
 - Folder hierarchy is represented as virtual path prefixes (same convention used by conversations and files), with dedicated list and move endpoints.
 - Sharing a prompt reuses the existing DIAL Core share mechanism (the same `share` service already used for conversations/files).
 - OpenAPI schema updated; `@epam/chat-api-client` regenerated.

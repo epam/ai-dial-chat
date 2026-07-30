@@ -1,6 +1,6 @@
 ## 1. Module scaffold
 
-- [x] 1.1 Create `apps/chat-api/src/prompts/` directory with `prompt.module.ts`, `prompt.controller.ts`, `prompt.service.ts`, and `constants/prompt.constants.ts` (define `PROMPTS_SUBFOLDER = 'prompts'` and sentinel filename `FOLDER_SENTINEL = '.folder'`)
+- [x] 1.1 Create `apps/chat-api/src/prompts/` directory with `prompt.module.ts`, `prompt.controller.ts`, `prompt.service.ts`, and `constants/prompt.constants.ts` (define sentinel filename `FOLDER_SENTINEL = '.folder'`)
 - [x] 1.2 Import `PromptModule` in `AppModule` (`apps/chat-api/src/app/app.module.ts`)
 
 ## 2. DTOs
@@ -17,24 +17,24 @@
 
 ## 3. Service — personal prompt CRUD
 
-- [x] 3.1 Implement `PromptService.listPrompts(token, bucket)` — lists all files under `{bucket}/prompts/`, filters sentinels, maps to `PromptResponseDto[]`, derives distinct folder paths into `PromptFolderResponseDto[]`
-- [x] 3.2 Implement `PromptService.getSharedPrompts(token, bucket)` — calls DIAL Core shared-resources API for prompt paths; returns `PromptResponseDto[]`, gracefully returns `[]` on non-fatal error
-- [x] 3.3 Implement `PromptService.getPrompt(token, bucket, path)` — reads `{bucket}/prompts/{path}.json`, returns `PromptResponseDto`, throws `NotFoundException` if absent
-- [x] 3.4 Implement `PromptService.createPrompt(token, bucket, dto)` — derives storage path from `folderId` + `name`, checks for existing file (throws `ConflictException`), writes JSON to DIAL Core, returns `PromptResponseDto` (201)
-- [x] 3.5 Implement `PromptService.updatePrompt(token, bucket, path, dto)` — merges fields, handles in-place rename (write new path + delete old, 409 if target exists), updates `updatedAt`, returns `PromptResponseDto`
-- [x] 3.6 Implement `PromptService.deletePrompt(token, bucket, path)` — deletes `{bucket}/prompts/{path}.json`, throws `NotFoundException` if absent
+- [x] 3.1 Implement `PromptService.listPrompts(token, bucket)` — lists prompt metadata from the bucket root, filters sentinels, merges payloads with Core timestamps into `PromptResponseDto[]`, and derives folders
+- [x] 3.2 Implement `PromptService.getSharedPrompts(token, bucket)` — consumes full shared resource URLs shaped `prompts/{ownerBucket}/{path}`; returns `PromptResponseDto[]`, gracefully returning `[]` on non-fatal error
+- [x] 3.3 Implement `PromptService.getPrompt(token, bucket, path)` — reads `prompts/{bucket}/{path}` plus Core metadata, returns `PromptResponseDto`, throws `NotFoundException` if absent
+- [x] 3.4 Implement `PromptService.createPrompt(token, bucket, dto)` — derives the relative path from `folderId` + `name`, creates `prompts/{bucket}/{path}` with a create-only precondition, and returns payload merged with Core metadata (201)
+- [x] 3.5 Implement `PromptService.updatePrompt(token, bucket, path, dto)` — merges payload fields, handles rename without overwriting an existing target, and returns timestamps from Core metadata
+- [x] 3.6 Implement `PromptService.deletePrompt(token, bucket, path)` — deletes `prompts/{bucket}/{path}`, throws `NotFoundException` if absent
 
 ## 4. Service — organisation prompts
 
-- [x] 4.1 Implement `PromptService.listPublicPrompts(token)` — lists `public/prompts/` from DIAL Core, returns `PromptListResponseDto` (without `sharedWithMe`)
-- [x] 4.2 Implement `PromptService.getPublicPrompt(token, path)` — reads `public/prompts/{path}.json`, throws `NotFoundException` if absent
+- [x] 4.1 Implement `PromptService.listPublicPrompts(token)` — lists the root of the DIAL `public` prompt bucket (`prompts/public/{path}`), returns `PublicPromptListResponseDto`
+- [x] 4.2 Implement `PromptService.getPublicPrompt(token, path)` — reads `prompts/public/{path}` plus Core metadata, throws `NotFoundException` if absent
 
 ## 5. Service — folder operations
 
-- [x] 5.1 Implement `PromptService.createFolder(token, bucket, dto)` — derives folder path, checks sentinel existence (throws `ConflictException`), writes sentinel file, returns `PromptFolderResponseDto`
-- [x] 5.2 Implement `PromptService.renameFolder(token, bucket, path, dto)` — verifies folder exists (files present or sentinel), checks target absence (throws `ConflictException`), moves all files under old prefix to new prefix in parallel (write+delete), returns updated `PromptFolderResponseDto`
-- [x] 5.3 Implement `PromptService.deleteFolder(token, bucket, path)` — lists all files under prefix, throws `NotFoundException` if none, deletes all in parallel
-- [x] 5.4 Implement `PromptService.movePrompt(token, bucket, path, dto)` — reads source, derives target path, checks for conflict, writes to target + deletes source, returns updated `PromptResponseDto`
+- [x] 5.1 Implement `PromptService.createFolder(token, bucket, dto)` using sentinel resource `prompts/{bucket}/{folderPath}/.folder`
+- [x] 5.2 Implement `PromptService.renameFolder(token, bucket, path, dto)` against `prompts/{bucket}/{path}/` without an extra namespace segment
+- [x] 5.3 Implement `PromptService.deleteFolder(token, bucket, path)` against `prompts/{bucket}/{path}/`
+- [x] 5.4 Implement `PromptService.movePrompt(token, bucket, path, dto)` using relative SDK paths and Core metadata timestamps
 
 ## 6. Controller
 
@@ -59,11 +59,11 @@
 - [x] 8.2 Write unit tests for folder operations: createFolder (success + conflict), renameFolder (success + conflict + not found), deleteFolder (success + not found), movePrompt (success + conflict + not found)
 - [x] 8.3 Write unit tests for public prompt methods: listPublicPrompts, getPublicPrompt (found + not found)
 - [x] 8.4 Write e2e / supertest tests for `PromptController`: happy-path for all 11 endpoints, 400 on invalid DTOs, 401 when unauthenticated
-- [x] 8.5 Add regression coverage for missing required paths, path traversal, metadata pagination, sentinel-only folders, upstream existence-check failures, and partial mutation failures
+- [x] 8.5 Add regression coverage for missing required paths, path traversal, SDK `token` metadata pagination, legacy-compatible resource URLs, sentinel-only folders, upstream metadata/write failures, create-only conflicts, and partial mutation failures
 
 ## 9. Generated client
 
-- [x] 9.1 Run `npm run openapi` to regenerate `libs/chat-api-client` from the updated Swagger spec
+- [x] 9.1 Run `npm run openapi` to regenerate `libs/chat-api-client` after the corrected prompt resource contract is implemented
 - [x] 9.2 Run `npm run openapi:check` and resolve any schema drift
 - [x] 9.3 Run `npm exec nx build chat-api` and `npm exec nx lint chat-api` — fix any TypeScript or lint errors
 - [x] 9.4 Run `npm exec nx test chat-api` — all tests pass

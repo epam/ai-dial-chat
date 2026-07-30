@@ -1,3 +1,4 @@
+import type { components } from '@epam/ai-dial-typescript-sdk';
 import {
   ConflictException,
   Injectable,
@@ -9,52 +10,42 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { DialClientService } from '../dial/dial-client.service';
-import {
-  FOLDER_SENTINEL,
-  PROMPTS_SUBFOLDER,
-} from './constants/prompt.constants';
+import { FOLDER_SENTINEL } from './constants/prompt.constants';
 import type { CreatePromptFolderDto } from './dto/create-prompt-folder.dto';
 import type { CreatePromptDto } from './dto/create-prompt.dto';
 import type { MovePromptDto } from './dto/move-prompt.dto';
 import type { PromptFolderResponseDto } from './dto/prompt-folder-response.dto';
 import type { PromptListResponseDto } from './dto/prompt-list-response.dto';
 import type { PromptResponseDto } from './dto/prompt-response.dto';
+import type { PublicPromptListResponseDto } from './dto/public-prompt-list-response.dto';
 import type { RenamePromptFolderDto } from './dto/rename-prompt-folder.dto';
 import type { UpdatePromptDto } from './dto/update-prompt.dto';
 
 const PUBLIC_BUCKET = 'public';
 
-/* Full JSON shape stored in DIAL Core — superset of the SDK Prompt schema. */
-interface StoredPromptData {
-  id: string;
-  name: string;
-  description?: string;
-  content: string;
-  folderId: string;
-  createdAt: number;
-  updatedAt: number;
-}
+/* Prompt payload stored in DIAL Core. Timestamps remain resource metadata. */
+type CorePrompt = components['schemas']['Prompt'];
+type PromptMetadataItem = components['schemas']['ResourceItemMetadata'];
+type PromptMetadataFolder = components['schemas']['ResourceFolderMetadata'];
 
-interface PromptMetadataItem {
-  nodeType?: string;
-  name?: string;
-  url?: string;
-  parentPath?: string;
-}
+type PromptPayload = CorePrompt & {
+  description?: string;
+};
 
 interface PromptMetadataListResult {
-  data?: { items?: PromptMetadataItem[]; nextToken?: string };
+  data?: PromptMetadataFolder;
   error?: unknown;
   response?: globalThis.Response;
 }
 
 interface PromptReadResult {
-  data?: StoredPromptData;
+  data?: PromptPayload;
   error?: unknown;
   response?: globalThis.Response;
 }
 
 interface PromptWriteResult {
+  data?: PromptMetadataItem;
   error?: unknown;
   response?: globalThis.Response;
 }
@@ -73,16 +64,6 @@ interface SharedResourcesResult {
 
 /* ---- path helpers ---- */
 
-const toStorageSubPath = (userFacingId: string): string =>
-  `${PROMPTS_SUBFOLDER}/${userFacingId}`;
-
-const toUserFacingId = (storageSubPath: string): string => {
-  const prefix = `${PROMPTS_SUBFOLDER}/`;
-  return storageSubPath.startsWith(prefix)
-    ? storageSubPath.slice(prefix.length)
-    : storageSubPath;
-};
-
 const folderIdFromId = (id: string): string => {
   const lastSlash = id.lastIndexOf('/');
   return lastSlash === -1 ? '' : id.slice(0, lastSlash);
@@ -93,19 +74,17 @@ const nameFromId = (id: string): string => {
   return lastSlash === -1 ? id : id.slice(lastSlash + 1);
 };
 
-const isSentinelStorageSubPath = (subPath: string): boolean =>
-  subPath === `${PROMPTS_SUBFOLDER}/${FOLDER_SENTINEL}` ||
-  subPath.endsWith(`/${FOLDER_SENTINEL}`);
+const isSentinelPath = (path: string): boolean =>
+  path === FOLDER_SENTINEL || path.endsWith(`/${FOLDER_SENTINEL}`);
 
-/* Parses a DIAL Core resource URL back to the storage sub-path.
-   URL format: 'prompts/{bucket}/{storageSubPath}' */
-const urlToStorageSubPath = (url: string, bucket: string): string | null => {
+/* Parses a full DIAL resource URL back to the SDK-relative prompt path. */
+const urlToPromptPath = (url: string, bucket: string): string | null => {
   const decoded = safeDecodeURIComponent(url);
   const prefix = `prompts/${bucket}/`;
   return decoded.startsWith(prefix) ? decoded.slice(prefix.length) : null;
 };
 
-const metadataItemToStorageSubPath = (
+const metadataItemToPromptPath = (
   item: PromptMetadataItem,
   bucket: string,
 ): string | null => {
@@ -114,20 +93,21 @@ const metadataItemToStorageSubPath = (
     (item.parentPath != null && item.name != null
       ? `${item.parentPath}/${item.name}`
       : null);
-  return raw != null ? urlToStorageSubPath(raw, bucket) : null;
+  return raw != null ? urlToPromptPath(raw, bucket) : null;
 };
 
-const mapStoredToResponse = (
-  stored: StoredPromptData,
+const mapPromptToResponse = (
+  prompt: PromptPayload,
   id: string,
+  metadata: PromptMetadataItem,
 ): PromptResponseDto => ({
   id,
-  name: stored.name ?? nameFromId(id),
-  description: stored.description,
-  content: stored.content ?? '',
-  folderId: stored.folderId ?? folderIdFromId(id),
-  createdAt: stored.createdAt ?? 0,
-  updatedAt: stored.updatedAt ?? 0,
+  name: prompt.name ?? nameFromId(id),
+  description: prompt.description,
+  content: prompt.content ?? '',
+  folderId: prompt.folderId ?? folderIdFromId(id),
+  createdAt: metadata.createdAt ?? 0,
+  updatedAt: metadata.updatedAt ?? 0,
 });
 
 const deriveFolders = (promptIds: string[]): PromptFolderResponseDto[] => {
@@ -153,45 +133,86 @@ export class PromptService {
 
   /* ---- private helpers ---- */
 
-  private async promptStoragePathExists(
+  private async getPromptMetadataItem(
     token: string,
     bucket: string,
-    storageSubPath: string,
-  ): Promise<boolean> {
+    path: string,
+  ): Promise<PromptMetadataItem | null> {
     try {
       const { data, error, response } =
         (await this.dialClient.client.getPromptMetadata(
           bucket,
-          encodeDialResourcePath(storageSubPath),
+          encodeDialResourcePath(path),
           { headers: getBearerAuthHeaders(token) },
-        )) as PromptMetadataListResult;
+        )) as PromptWriteResult;
 
       if (response?.status === 404) {
-        return false;
+        return null;
       }
-      if (error != null) {
+      if (error != null || data?.nodeType !== 'ITEM') {
         return handleDialSdkError(
-          error,
-          'prompts.checkPathExists',
+          error ?? new Error('DIAL Core returned invalid prompt metadata'),
+          'prompts.getMetadata',
           this.logger,
           response,
         );
       }
-      return data != null;
+      return data;
     } catch (err) {
-      return handleDialSdkError(err, 'prompts.checkPathExists', this.logger);
+      return handleDialSdkError(err, 'prompts.getMetadata', this.logger);
     }
   }
 
-  private async readPromptByStoragePath(
+  private async savePromptResource(
     token: string,
     bucket: string,
-    storageSubPath: string,
+    path: string,
+    prompt: PromptPayload,
+    context: string,
+    createOnly: boolean,
+  ): Promise<PromptMetadataItem> {
+    const headers = {
+      ...getBearerAuthHeaders(token),
+      ...(createOnly ? { 'If-None-Match': '*' } : {}),
+    };
+    const { data, error, response } = (await this.dialClient.client.savePrompt(
+      bucket,
+      encodeDialResourcePath(path),
+      { headers, body: prompt },
+    )) as PromptWriteResult;
+
+    if (response?.status === 412) {
+      throw new ConflictException(`Prompt resource already exists: ${path}`);
+    }
+    if (error != null) {
+      return handleDialSdkError(error, context, this.logger, response);
+    }
+
+    if (data?.nodeType === 'ITEM') {
+      return data;
+    }
+
+    const metadata = await this.getPromptMetadataItem(token, bucket, path);
+    if (metadata == null) {
+      return handleDialSdkError(
+        new Error('Saved prompt metadata is unavailable'),
+        context,
+        this.logger,
+      );
+    }
+    return metadata;
+  }
+
+  private async readPromptByPath(
+    token: string,
+    bucket: string,
+    path: string,
+    knownMetadata?: PromptMetadataItem,
   ): Promise<PromptResponseDto | null> {
     try {
       const { data, error, response } = (await this.dialClient.client.getPrompt(
         bucket,
-        encodeDialResourcePath(storageSubPath),
+        encodeDialResourcePath(path),
         { headers: getBearerAuthHeaders(token) },
       )) as PromptReadResult;
 
@@ -205,7 +226,18 @@ export class PromptService {
         );
       }
 
-      return mapStoredToResponse(data, toUserFacingId(storageSubPath));
+      const metadata =
+        knownMetadata ??
+        (await this.getPromptMetadataItem(token, bucket, path));
+      if (metadata == null) {
+        return handleDialSdkError(
+          new Error('Prompt metadata is unavailable'),
+          'prompts.readPrompt',
+          this.logger,
+        );
+      }
+
+      return mapPromptToResponse(data, path, metadata);
     } catch (err) {
       return handleDialSdkError(err, 'prompts.readPrompt', this.logger);
     }
@@ -220,7 +252,7 @@ export class PromptService {
   ): Promise<PromptMetadataItem[]> {
     const items: PromptMetadataItem[] = [];
     const visitedTokens = new Set<string>();
-    let nextToken: string | undefined;
+    let pageToken: string | undefined;
 
     do {
       const { data, error, response } =
@@ -229,7 +261,7 @@ export class PromptService {
           folderSubPath ? encodeDialResourcePath(folderSubPath) : '',
           {
             headers: getBearerAuthHeaders(token),
-            params: { query: { recursive: true, nextToken } },
+            params: { query: { recursive: true, token: pageToken } },
           },
         )) as PromptMetadataListResult;
 
@@ -247,20 +279,22 @@ export class PromptService {
       }
 
       items.push(
-        ...(data.items ?? []).filter((item) => item.nodeType === 'ITEM'),
+        ...(data.items ?? []).filter(
+          (item): item is PromptMetadataItem => item.nodeType === 'ITEM',
+        ),
       );
-      nextToken = data.nextToken;
-      if (nextToken != null) {
-        if (visitedTokens.has(nextToken)) {
+      pageToken = data.nextToken;
+      if (pageToken != null) {
+        if (visitedTokens.has(pageToken)) {
           return handleDialSdkError(
             new Error('DIAL Core returned a repeated metadata page token'),
             'prompts.listMetadata',
             this.logger,
           );
         }
-        visitedTokens.add(nextToken);
+        visitedTokens.add(pageToken);
       }
-    } while (nextToken != null);
+    } while (pageToken != null);
 
     return items;
   }
@@ -274,33 +308,27 @@ export class PromptService {
     bucket: string,
   ): Promise<PromptListResponseDto> {
     try {
-      const items = await this.listPromptMetadataItems(
-        token,
-        bucket,
-        PROMPTS_SUBFOLDER,
-      );
+      const items = await this.listPromptMetadataItems(token, bucket, '');
 
-      const promptStoragePaths = items
-        .map((item) => metadataItemToStorageSubPath(item, bucket))
+      const promptItems = items
+        .map((item) => ({
+          item,
+          path: metadataItemToPromptPath(item, bucket),
+        }))
         .filter(
-          (subPath): subPath is string =>
-            subPath != null && !isSentinelStorageSubPath(subPath),
+          (entry): entry is { item: PromptMetadataItem; path: string } =>
+            entry.path != null && !isSentinelPath(entry.path),
         );
       const sentinelFolderIds = items
-        .map((item) => metadataItemToStorageSubPath(item, bucket))
-        .filter(
-          (subPath): subPath is string =>
-            subPath != null && isSentinelStorageSubPath(subPath),
-        )
-        .map((subPath) =>
-          toUserFacingId(subPath).slice(0, -`/${FOLDER_SENTINEL}`.length),
-        )
+        .map((item) => metadataItemToPromptPath(item, bucket))
+        .filter((path): path is string => path != null && isSentinelPath(path))
+        .map((path) => path.slice(0, -`/${FOLDER_SENTINEL}`.length))
         .filter((folderId) => folderId !== '');
 
       const prompts = (
         await Promise.all(
-          promptStoragePaths.map((subPath) =>
-            this.readPromptByStoragePath(token, bucket, subPath),
+          promptItems.map(({ item, path }) =>
+            this.readPromptByPath(token, bucket, path, item),
           ),
         )
       ).filter((p): p is PromptResponseDto => p != null);
@@ -347,20 +375,16 @@ export class PromptService {
 
           if (raw == null) return Promise.resolve(null);
 
-          /* URL format: 'prompts/{ownerBucket}/{storageSubPath}' */
+          /* URL format: 'prompts/{ownerBucket}/{path}' */
           const decoded = safeDecodeURIComponent(raw);
           const parts = decoded.split('/');
           if (parts.length < 3 || parts[0] !== 'prompts')
             return Promise.resolve(null);
 
           const ownerBucket = parts[1];
-          const storageSubPath = parts.slice(2).join('/');
+          const path = parts.slice(2).join('/');
 
-          return this.readPromptByStoragePath(
-            token,
-            ownerBucket,
-            storageSubPath,
-          );
+          return this.readPromptByPath(token, ownerBucket, path);
         }),
       );
 
@@ -376,10 +400,9 @@ export class PromptService {
     bucket: string,
     path: string,
   ): Promise<PromptResponseDto> {
-    const storageSubPath = toStorageSubPath(path);
     const { data, error, response } = (await this.dialClient.client.getPrompt(
       bucket,
-      encodeDialResourcePath(storageSubPath),
+      encodeDialResourcePath(path),
       { headers: getBearerAuthHeaders(token) },
     )) as PromptReadResult;
 
@@ -395,7 +418,11 @@ export class PromptService {
       );
     }
 
-    return mapStoredToResponse(data, path);
+    const metadata = await this.getPromptMetadataItem(token, bucket, path);
+    if (metadata == null) {
+      throw new NotFoundException(`Prompt metadata not found: ${path}`);
+    }
+    return mapPromptToResponse(data, path, metadata);
   }
 
   async createPrompt(
@@ -404,48 +431,23 @@ export class PromptService {
     dto: CreatePromptDto,
   ): Promise<PromptResponseDto> {
     const id = dto.folderId ? `${dto.folderId}/${dto.name}` : dto.name;
-    const storageSubPath = toStorageSubPath(id);
-
-    const alreadyExists = await this.promptStoragePathExists(
-      token,
-      bucket,
-      storageSubPath,
-    );
-    if (alreadyExists) {
-      throw new ConflictException(`Prompt already exists: ${id}`);
-    }
-
-    const now = Date.now();
-    const storedData: StoredPromptData = {
+    const prompt: PromptPayload = {
       id,
       name: dto.name,
       description: dto.description,
       content: dto.content,
       folderId: dto.folderId ?? '',
-      createdAt: now,
-      updatedAt: now,
     };
 
-    const { error, response } = (await this.dialClient.client.savePrompt(
+    const metadata = await this.savePromptResource(
+      token,
       bucket,
-      encodeDialResourcePath(storageSubPath),
-      {
-        headers: getBearerAuthHeaders(token),
-        body: storedData as never,
-      },
-    )) as PromptWriteResult;
-
-    if (error != null) {
-      this.logger.error('DIAL Core rejected savePrompt (create)', error);
-      return handleDialSdkError(
-        error,
-        'prompts.createPrompt',
-        this.logger,
-        response,
-      );
-    }
-
-    return mapStoredToResponse(storedData, id);
+      id,
+      prompt,
+      'prompts.createPrompt',
+      true,
+    );
+    return mapPromptToResponse(prompt, id, metadata);
   }
 
   async updatePrompt(
@@ -454,15 +456,13 @@ export class PromptService {
     path: string,
     dto: UpdatePromptDto,
   ): Promise<PromptResponseDto> {
-    const storageSubPath = toStorageSubPath(path);
-
     const {
       data: existing,
       error: readError,
       response: readResponse,
     } = (await this.dialClient.client.getPrompt(
       bucket,
-      encodeDialResourcePath(storageSubPath),
+      encodeDialResourcePath(path),
       { headers: getBearerAuthHeaders(token) },
     )) as PromptReadResult;
 
@@ -488,22 +488,7 @@ export class PromptService {
         ? `${currentFolderId}/${newName}`
         : newName
       : path;
-    const targetStorageSubPath = toStorageSubPath(targetId);
-
-    if (isRename) {
-      const targetExists = await this.promptStoragePathExists(
-        token,
-        bucket,
-        targetStorageSubPath,
-      );
-      if (targetExists) {
-        throw new ConflictException(
-          `Prompt already exists at target path: ${targetId}`,
-        );
-      }
-    }
-
-    const updatedData: StoredPromptData = {
+    const updatedPrompt: PromptPayload = {
       ...existing,
       id: targetId,
       name: newName,
@@ -511,34 +496,22 @@ export class PromptService {
         dto.description !== undefined ? dto.description : existing.description,
       content: dto.content !== undefined ? dto.content : existing.content,
       folderId: folderIdFromId(targetId),
-      updatedAt: Date.now(),
     };
 
-    const { error: saveError, response: saveResponse } =
-      (await this.dialClient.client.savePrompt(
-        bucket,
-        encodeDialResourcePath(targetStorageSubPath),
-        {
-          headers: getBearerAuthHeaders(token),
-          body: updatedData as never,
-        },
-      )) as PromptWriteResult;
-
-    if (saveError != null) {
-      this.logger.error('DIAL Core rejected savePrompt (update)', saveError);
-      return handleDialSdkError(
-        saveError,
-        'prompts.updatePrompt',
-        this.logger,
-        saveResponse,
-      );
-    }
+    const metadata = await this.savePromptResource(
+      token,
+      bucket,
+      targetId,
+      updatedPrompt,
+      'prompts.updatePrompt',
+      isRename,
+    );
 
     if (isRename) {
       const { error: deleteError, response: deleteResponse } =
         (await this.dialClient.client.deletePrompt(
           bucket,
-          encodeDialResourcePath(storageSubPath),
+          encodeDialResourcePath(path),
           { headers: getBearerAuthHeaders(token) },
         )) as PromptWriteResult;
 
@@ -552,7 +525,7 @@ export class PromptService {
       }
     }
 
-    return mapStoredToResponse(updatedData, targetId);
+    return mapPromptToResponse(updatedPrompt, targetId, metadata);
   }
 
   async deletePrompt(
@@ -560,20 +533,14 @@ export class PromptService {
     bucket: string,
     path: string,
   ): Promise<void> {
-    const storageSubPath = toStorageSubPath(path);
-
-    const exists = await this.promptStoragePathExists(
-      token,
-      bucket,
-      storageSubPath,
-    );
-    if (!exists) {
+    const metadata = await this.getPromptMetadataItem(token, bucket, path);
+    if (metadata == null) {
       throw new NotFoundException(`Prompt not found: ${path}`);
     }
 
     const { error, response } = (await this.dialClient.client.deletePrompt(
       bucket,
-      encodeDialResourcePath(storageSubPath),
+      encodeDialResourcePath(path),
       { headers: getBearerAuthHeaders(token) },
     )) as PromptWriteResult;
 
@@ -587,37 +554,33 @@ export class PromptService {
   /* Organisation (public bucket) prompts                               */
   /* ------------------------------------------------------------------ */
 
-  async listPublicPrompts(
-    token: string,
-  ): Promise<Omit<PromptListResponseDto, 'sharedWithMe'>> {
+  async listPublicPrompts(token: string): Promise<PublicPromptListResponseDto> {
     try {
       const items = await this.listPromptMetadataItems(
         token,
         PUBLIC_BUCKET,
-        PROMPTS_SUBFOLDER,
+        '',
       );
 
-      const promptStoragePaths = items
-        .map((item) => metadataItemToStorageSubPath(item, PUBLIC_BUCKET))
+      const promptItems = items
+        .map((item) => ({
+          item,
+          path: metadataItemToPromptPath(item, PUBLIC_BUCKET),
+        }))
         .filter(
-          (subPath): subPath is string =>
-            subPath != null && !isSentinelStorageSubPath(subPath),
+          (entry): entry is { item: PromptMetadataItem; path: string } =>
+            entry.path != null && !isSentinelPath(entry.path),
         );
       const sentinelFolderIds = items
-        .map((item) => metadataItemToStorageSubPath(item, PUBLIC_BUCKET))
-        .filter(
-          (subPath): subPath is string =>
-            subPath != null && isSentinelStorageSubPath(subPath),
-        )
-        .map((subPath) =>
-          toUserFacingId(subPath).slice(0, -`/${FOLDER_SENTINEL}`.length),
-        )
+        .map((item) => metadataItemToPromptPath(item, PUBLIC_BUCKET))
+        .filter((path): path is string => path != null && isSentinelPath(path))
+        .map((path) => path.slice(0, -`/${FOLDER_SENTINEL}`.length))
         .filter((folderId) => folderId !== '');
 
       const prompts = (
         await Promise.all(
-          promptStoragePaths.map((subPath) =>
-            this.readPromptByStoragePath(token, PUBLIC_BUCKET, subPath),
+          promptItems.map(({ item, path }) =>
+            this.readPromptByPath(token, PUBLIC_BUCKET, path, item),
           ),
         )
       ).filter((p): p is PromptResponseDto => p != null);
@@ -638,10 +601,9 @@ export class PromptService {
     token: string,
     path: string,
   ): Promise<PromptResponseDto> {
-    const storageSubPath = toStorageSubPath(path);
     const { data, error, response } = (await this.dialClient.client.getPrompt(
       PUBLIC_BUCKET,
-      encodeDialResourcePath(storageSubPath),
+      encodeDialResourcePath(path),
       { headers: getBearerAuthHeaders(token) },
     )) as PromptReadResult;
 
@@ -657,7 +619,15 @@ export class PromptService {
       );
     }
 
-    return mapStoredToResponse(data, path);
+    const metadata = await this.getPromptMetadataItem(
+      token,
+      PUBLIC_BUCKET,
+      path,
+    );
+    if (metadata == null) {
+      throw new NotFoundException(`Public prompt metadata not found: ${path}`);
+    }
+    return mapPromptToResponse(data, path, metadata);
   }
 
   /* ------------------------------------------------------------------ */
@@ -670,32 +640,20 @@ export class PromptService {
     dto: CreatePromptFolderDto,
   ): Promise<PromptFolderResponseDto> {
     const folderPath = dto.parentId ? `${dto.parentId}/${dto.name}` : dto.name;
-    const sentinelSubPath = `${PROMPTS_SUBFOLDER}/${folderPath}/${FOLDER_SENTINEL}`;
-
-    const alreadyExists = await this.promptStoragePathExists(
+    const sentinelPath = `${folderPath}/${FOLDER_SENTINEL}`;
+    await this.savePromptResource(
       token,
       bucket,
-      sentinelSubPath,
+      sentinelPath,
+      {
+        id: sentinelPath,
+        name: FOLDER_SENTINEL,
+        content: '',
+        folderId: folderPath,
+      },
+      'prompts.createFolder',
+      true,
     );
-    if (alreadyExists) {
-      throw new ConflictException(`Folder already exists: ${folderPath}`);
-    }
-
-    const { error, response } = (await this.dialClient.client.savePrompt(
-      bucket,
-      encodeDialResourcePath(sentinelSubPath),
-      { headers: getBearerAuthHeaders(token), body: {} as never },
-    )) as PromptWriteResult;
-
-    if (error != null) {
-      this.logger.error('DIAL Core rejected savePrompt (createFolder)', error);
-      return handleDialSdkError(
-        error,
-        'prompts.createFolder',
-        this.logger,
-        response,
-      );
-    }
 
     return { id: folderPath, name: dto.name };
   }
@@ -706,7 +664,7 @@ export class PromptService {
     path: string,
     dto: RenamePromptFolderDto,
   ): Promise<PromptFolderResponseDto> {
-    const folderSubPath = `${PROMPTS_SUBFOLDER}/${path}`;
+    const folderSubPath = path;
     const allItems = await this.listPromptMetadataItems(
       token,
       bucket,
@@ -719,7 +677,7 @@ export class PromptService {
 
     const parentPath = folderIdFromId(path);
     const newPath = parentPath ? `${parentPath}/${dto.name}` : dto.name;
-    const newFolderSubPath = `${PROMPTS_SUBFOLDER}/${newPath}`;
+    const newFolderSubPath = newPath;
 
     const targetItems = await this.listPromptMetadataItems(
       token,
@@ -735,15 +693,20 @@ export class PromptService {
 
     await Promise.all(
       allItems.map(async (item) => {
-        const oldSubPath = metadataItemToStorageSubPath(item, bucket);
+        const oldSubPath = metadataItemToPromptPath(item, bucket);
         if (oldSubPath == null || !oldSubPath.startsWith(oldPrefix)) return;
 
         const relative = oldSubPath.slice(oldPrefix.length);
         const newSubPath = `${newPrefix}${relative}`;
 
-        let writeBody: Record<string, unknown> = {};
+        let prompt: PromptPayload = {
+          id: newSubPath,
+          name: FOLDER_SENTINEL,
+          content: '',
+          folderId: newPath,
+        };
 
-        if (!isSentinelStorageSubPath(oldSubPath)) {
+        if (!isSentinelPath(oldSubPath)) {
           const { data, error: readError } =
             (await this.dialClient.client.getPrompt(
               bucket,
@@ -759,30 +722,21 @@ export class PromptService {
             );
           }
 
-          const newId = toUserFacingId(newSubPath);
-          writeBody = {
+          prompt = {
             ...data,
-            id: newId,
-            folderId: folderIdFromId(newId),
-            updatedAt: Date.now(),
+            id: newSubPath,
+            folderId: folderIdFromId(newSubPath),
           };
         }
 
-        const { error: saveError, response: saveResponse } =
-          (await this.dialClient.client.savePrompt(
-            bucket,
-            encodeDialResourcePath(newSubPath),
-            { headers: getBearerAuthHeaders(token), body: writeBody as never },
-          )) as PromptWriteResult;
-
-        if (saveError != null) {
-          return handleDialSdkError(
-            saveError,
-            'prompts.renameFolder.writeTarget',
-            this.logger,
-            saveResponse,
-          );
-        }
+        await this.savePromptResource(
+          token,
+          bucket,
+          newSubPath,
+          prompt,
+          'prompts.renameFolder.writeTarget',
+          true,
+        );
 
         const { error: deleteError, response: deleteResponse } =
           (await this.dialClient.client.deletePrompt(
@@ -810,7 +764,7 @@ export class PromptService {
     bucket: string,
     path: string,
   ): Promise<void> {
-    const folderSubPath = `${PROMPTS_SUBFOLDER}/${path}`;
+    const folderSubPath = path;
     const items = await this.listPromptMetadataItems(
       token,
       bucket,
@@ -823,7 +777,7 @@ export class PromptService {
 
     await Promise.all(
       items.map(async (item) => {
-        const subPath = metadataItemToStorageSubPath(item, bucket);
+        const subPath = metadataItemToPromptPath(item, bucket);
         if (subPath == null) return;
 
         const { error, response } = (await this.dialClient.client.deletePrompt(
@@ -850,15 +804,13 @@ export class PromptService {
     path: string,
     dto: MovePromptDto,
   ): Promise<PromptResponseDto> {
-    const storageSubPath = toStorageSubPath(path);
-
     const {
       data: existing,
       error: readError,
       response: readResponse,
     } = (await this.dialClient.client.getPrompt(
       bucket,
-      encodeDialResourcePath(storageSubPath),
+      encodeDialResourcePath(path),
       { headers: getBearerAuthHeaders(token) },
     )) as PromptReadResult;
 
@@ -878,50 +830,25 @@ export class PromptService {
     const targetId = dto.targetFolderId
       ? `${dto.targetFolderId}/${lastName}`
       : lastName;
-    const targetStorageSubPath = toStorageSubPath(targetId);
-
-    const targetExists = await this.promptStoragePathExists(
-      token,
-      bucket,
-      targetStorageSubPath,
-    );
-    if (targetExists) {
-      throw new ConflictException(
-        `Prompt already exists at target path: ${targetId}`,
-      );
-    }
-
-    const updatedData: StoredPromptData = {
+    const movedPrompt: PromptPayload = {
       ...existing,
       id: targetId,
       folderId: folderIdFromId(targetId),
-      updatedAt: Date.now(),
     };
 
-    const { error: saveError, response: saveResponse } =
-      (await this.dialClient.client.savePrompt(
-        bucket,
-        encodeDialResourcePath(targetStorageSubPath),
-        { headers: getBearerAuthHeaders(token), body: updatedData as never },
-      )) as PromptWriteResult;
-
-    if (saveError != null) {
-      this.logger.error(
-        'DIAL Core rejected savePrompt (movePrompt)',
-        saveError,
-      );
-      return handleDialSdkError(
-        saveError,
-        'prompts.movePrompt',
-        this.logger,
-        saveResponse,
-      );
-    }
+    const metadata = await this.savePromptResource(
+      token,
+      bucket,
+      targetId,
+      movedPrompt,
+      'prompts.movePrompt',
+      true,
+    );
 
     const { error: deleteError, response: deleteResponse } =
       (await this.dialClient.client.deletePrompt(
         bucket,
-        encodeDialResourcePath(storageSubPath),
+        encodeDialResourcePath(path),
         { headers: getBearerAuthHeaders(token) },
       )) as PromptWriteResult;
 
@@ -934,6 +861,6 @@ export class PromptService {
       );
     }
 
-    return mapStoredToResponse(updatedData, targetId);
+    return mapPromptToResponse(movedPrompt, targetId, metadata);
   }
 }

@@ -2,11 +2,16 @@
 
 ### Requirement: Prompt folders are virtual path prefixes with sentinel files
 
-A prompt folder is not a first-class DIAL Core entity. It is represented as a path prefix shared by one or more prompts. To support empty folders and make them listable, the service writes a sentinel file `{bucket}/prompts/{folderPath}/.folder` when a folder is explicitly created and removes it when the folder is deleted. The `GET /api/v1/prompts` list endpoint filters out `.folder` files from the `prompts` array and synthesises `PromptFolderResponseDto` entries from the distinct path prefixes found in the listing.
+A prompt folder SHALL be represented as a path prefix rather than a first-class DIAL Core
+entity. Its path can be shared by one or more prompts. To support empty folders and make them listable, the service
+writes a sentinel prompt resource `prompts/{bucket}/{folderPath}/.folder` when a folder is
+explicitly created and removes it when the folder is deleted. The `GET /api/v1/prompts` list
+endpoint filters `.folder` resources from the `prompts` array and synthesises
+`PromptFolderResponseDto` entries from the distinct path prefixes found in the listing.
 
 #### Scenario: Sentinel file is excluded from prompt list
 
-- **WHEN** DIAL Core contains `{bucket}/prompts/Work/.folder`
+- **WHEN** DIAL Core contains resource `prompts/{bucket}/Work/.folder`
 - **THEN** `GET /api/v1/prompts` includes `Work` in `folders` but does NOT include a `PromptResponseDto` with name `.folder` in `prompts`
 
 #### Scenario: Folder appears in list without sentinel when non-empty
@@ -30,7 +35,7 @@ The backend SHALL expose `POST /api/v1/prompts/folders` in `PromptController` (`
 The service:
 1. Derives the full folder path: `{parentId ? parentId + '/' : ''}{name}`.
 2. Rejects with 409 if a sentinel already exists at that path.
-3. Writes the sentinel file `{sessionBucket}/prompts/{folderPath}/.folder` (empty content) to DIAL Core.
+3. Writes sentinel resource `prompts/{sessionBucket}/{folderPath}/.folder` (empty content) to DIAL Core.
 4. Returns HTTP 201 with `PromptFolderResponseDto`: `{ "id": "<folderPath>", "name": "<name>" }`.
 
 Rate limiting: `@Throttle({ default: { limit: 20, ttl: 60000 } })`.
@@ -46,7 +51,7 @@ Error codes:
 
 - **WHEN** `POST /api/v1/prompts/folders` is called with `{ "name": "Work" }`
 - **THEN** the response is 201 with `{ "id": "Work", "name": "Work" }`
-- **AND** a sentinel file `{bucket}/prompts/Work/.folder` exists in DIAL Core
+- **AND** sentinel resource `prompts/{bucket}/Work/.folder` exists in DIAL Core
 
 #### Scenario: Creating a nested folder returns 201
 
@@ -73,7 +78,7 @@ The backend SHALL expose `PUT /api/v1/prompts/folders` with a required `path` qu
 The service:
 1. Verifies the folder exists (at least one file with the given path prefix, or a sentinel at that path).
 2. Rejects with 409 if the new path (parent unchanged, new name) already exists.
-3. Moves all DIAL Core files under `{bucket}/prompts/{oldPath}/` to `{bucket}/prompts/{newPath}/` using parallel write + delete pairs.
+3. Moves all DIAL prompt resources under `prompts/{bucket}/{oldPath}/` to `prompts/{bucket}/{newPath}/` using parallel write + delete pairs.
 4. Updates sentinels accordingly.
 5. Returns HTTP 200 with `PromptFolderResponseDto` for the renamed folder.
 
@@ -103,7 +108,10 @@ Error codes:
 
 ### Requirement: DELETE /api/v1/prompts/folders?path= deletes a folder and its contents
 
-The backend SHALL expose `DELETE /api/v1/prompts/folders` with a required `path` query parameter. The service deletes all DIAL Core files under `{bucket}/prompts/{path}/` (including nested sub-folders and their sentinels) using parallel delete calls. Returns HTTP 204 No Content. If no files exist under the path, returns 404.
+The backend SHALL expose `DELETE /api/v1/prompts/folders` with a required `path` query
+parameter. The service deletes all DIAL prompt resources under
+`prompts/{bucket}/{path}/` (including nested sub-folders and their sentinels) using parallel
+delete calls. Returns HTTP 204 No Content. If no resources exist under the path, returns 404.
 
 Error codes:
 - `400 Bad Request` — `path` fails validation
@@ -140,10 +148,10 @@ The backend SHALL expose `POST /api/v1/prompts/move` with a required `path` quer
 `targetFolderId` may be an empty string (moves the prompt to root).
 
 The service:
-1. Reads the prompt at `{sessionBucket}/prompts/{path}.json`.
+1. Reads DIAL prompt resource `prompts/{sessionBucket}/{path}`.
 2. Derives the new path: `{targetFolderId ? targetFolderId + '/' : ''}{lastName}` where `lastName` is the last segment of the current path.
 3. Rejects with 409 if the new path already exists.
-4. Writes to the new path and deletes the old path. Updates `updatedAt`.
+4. Writes to the new path and deletes the old path; `updatedAt` is taken from resulting Core metadata.
 5. Returns HTTP 200 with `PromptResponseDto` reflecting the new path.
 
 Error codes:
@@ -183,6 +191,11 @@ After implementation `npm run openapi` SHALL produce these SDK methods:
 | PUT | /api/v1/prompts/folders | `renamePromptFolder` | `renamePromptFolder` |
 | DELETE | /api/v1/prompts/folders | `deletePromptFolder` | `deletePromptFolder` |
 | POST | /api/v1/prompts/move | `movePrompt` | `movePrompt` |
+
+#### Scenario: Folder operations are available in the generated client
+
+- **WHEN** `npm run openapi` completes from the implemented Swagger document
+- **THEN** `@epam/chat-api-client` exposes all four SDK methods in the table above
 
 RTL / direction impact: none (backend only).
 Feature flag gating: none.
