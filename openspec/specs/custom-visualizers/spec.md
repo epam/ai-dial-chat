@@ -312,6 +312,8 @@ The iframe SHALL additionally carry an `allow` attribute granting: `clipboard-wr
 
 The `sandbox` token set is hardcoded in the `VisualizerConnector` implementation and is not overridable via options.
 
+`allow-same-origin` and `allow-scripts` together remove the sandbox's isolation guarantee for a document that shares the host's origin (the framed document could then reach the host's storage/cookies/DOM via same-origin script access). This is accepted because `url` is expected to be a third-party origin distinct from the DIAL Chat host. Operators MUST NOT host a visualizer on the same origin as the DIAL Chat host.
+
 #### Scenario: sandbox tokens
 
 - **WHEN** the iframe is mounted

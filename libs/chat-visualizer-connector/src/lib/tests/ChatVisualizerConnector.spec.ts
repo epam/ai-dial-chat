@@ -16,7 +16,8 @@ const dispatchFromHost = (data: unknown, origin = HOST_ORIGIN): void => {
 /* Typed so it matches ChatVisualizerConnector's `dataCallback` overload — an
  * untyped `vi.fn()` infers `Mock<Procedure | Constructable>`, which TS
  * rejects at the call site. */
-const createDataCallback = () => vi.fn<(visualizerData: AttachmentData) => void>();
+const createDataCallback = () =>
+  vi.fn<(visualizerData: AttachmentData) => void>();
 
 describe('ChatVisualizerConnector', () => {
   let connectors: ChatVisualizerConnector[] = [];
@@ -150,6 +151,47 @@ describe('ChatVisualizerConnector', () => {
     );
 
     expect(onData).not.toHaveBeenCalled();
+  });
+
+  it('rejects a spoofed origin that is a leading substring of the configured host', () => {
+    /* Guards against a prefix-based origin check (`allowedHost.startsWith(origin)`)
+     * that would wrongly accept an attacker-controlled origin whose string is a
+     * prefix of the configured host, e.g. "https://chat.example.co" vs.
+     * configured "https://chat.example.com". */
+    const onData = vi.fn();
+    track(
+      new ChatVisualizerConnector('https://chat.example.com', APP_NAME, onData),
+    );
+
+    dispatchFromHost(
+      {
+        type: `${APP_NAME}/${VisualizerConnectorRequests.SendVisualizeData}`,
+        requestId: 'req-1',
+        payload: { mimeType: 'x', visualizerData: {} },
+      },
+      'https://chat.example.co',
+    );
+
+    expect(onData).not.toHaveBeenCalled();
+  });
+
+  it('accepts a configured host with a trailing slash via origin normalization', () => {
+    const onData = vi.fn();
+    track(
+      new ChatVisualizerConnector(
+        'https://chat.example.com/',
+        APP_NAME,
+        onData,
+      ),
+    );
+
+    dispatchFromHost({
+      type: `${APP_NAME}/${VisualizerConnectorRequests.SendVisualizeData}`,
+      requestId: 'req-1',
+      payload: { mimeType: 'x', visualizerData: {} },
+    });
+
+    expect(onData).toHaveBeenCalled();
   });
 
   it('does not invoke the callback for a malformed (non-object) payload', () => {

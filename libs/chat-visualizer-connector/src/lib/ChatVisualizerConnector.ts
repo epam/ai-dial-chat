@@ -141,7 +141,7 @@ export class ChatVisualizerConnector {
     if (
       this.dialHosts[0] !== '*' &&
       !this.dialHosts.some((allowedHost) =>
-        allowedHost.startsWith(event.origin),
+        ChatVisualizerConnector.isMatchingOrigin(allowedHost, event.origin),
       )
     ) {
       return;
@@ -197,6 +197,29 @@ export class ChatVisualizerConnector {
         dialHost: event.origin,
         requestId: event.data.requestId,
       });
+    }
+  }
+
+  /**
+   * Compares a configured host entry against an inbound `MessageEvent.origin`
+   * by exact origin equality (scheme + host + port), not string prefix.
+   * A prefix check (`allowedHost.startsWith(origin)`) would let an attacker
+   * origin that happens to be a leading substring of `allowedHost` — e.g.
+   * `https://chat.example.co` vs. configured `https://chat.example.com` —
+   * pass the check.
+   */
+  private static isMatchingOrigin(
+    allowedHost: string,
+    origin: string,
+  ): boolean {
+    if (allowedHost === origin) {
+      return true;
+    }
+
+    try {
+      return new URL(allowedHost).origin === origin;
+    } catch {
+      return false;
     }
   }
 

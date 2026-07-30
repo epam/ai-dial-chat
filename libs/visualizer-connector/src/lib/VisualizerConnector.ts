@@ -82,6 +82,17 @@ export class VisualizerConnector {
 
     iframe.src = this.options.domain;
 
+    /* `allow-same-origin` + `allow-scripts` together are what MDN/W3C call
+     * out as removing the sandbox's isolation guarantee: a same-origin
+     * framed document can use `document.domain`/direct DOM access to reach
+     * back into its own origin's storage, cookies, and (if that origin ever
+     * matches the host's) the parent frame. We accept this deliberately
+     * because `options.domain` is expected to be a third-party visualizer
+     * origin, distinct from the host — `allow-same-origin` is required so
+     * the visualizer app can use its own storage/cookies/fetch as a normal
+     * page would. If a visualizer is ever hosted on the same origin as the
+     * DIAL Chat host, this combination effectively disables the sandbox for
+     * it; do not colocate a visualizer's origin with the host's origin. */
     iframe.setAttribute(
       'sandbox',
       'allow-same-origin allow-scripts allow-modals allow-forms allow-downloads allow-popups allow-presentation',
