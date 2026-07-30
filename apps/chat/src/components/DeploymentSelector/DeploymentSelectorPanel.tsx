@@ -61,7 +61,6 @@ interface Props {
   labels?: DeploymentSelectorLabels;
 }
 
-
 const SECTION_HEADING_CLASS_NAME =
   'dial-tiny-semi-text px-3 pb-0.5 pt-2 uppercase text-tertiary';
 

@@ -1,4 +1,4 @@
-import { DialPopup, NeutralButton,DialSpinner } from '@epam/ai-dial-ui-kit';
+import { DialPopup, NeutralButton, DialSpinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 
 interface Props {

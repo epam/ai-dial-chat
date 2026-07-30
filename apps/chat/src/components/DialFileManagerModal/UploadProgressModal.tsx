@@ -1,4 +1,4 @@
-import { DialFileName, DialPopup ,NeutralButton} from '@epam/ai-dial-ui-kit';
+import { DialFileName, DialPopup, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, type FC, type ReactNode } from 'react';
 import type { FileUploadBatchState } from './types/upload';
 

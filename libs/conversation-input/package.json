@@ -25,7 +25,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.2.6",
     "@epam/ai-dial-kit": "0.0.1",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.22"
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.23"
   },
   "dependencies": {
     "react-window": "^2.2.7"

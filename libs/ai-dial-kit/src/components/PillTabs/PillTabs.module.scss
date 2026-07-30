@@ -2,10 +2,10 @@
   border-color: transparent !important;
   background-color: transparent;
 
-  color: var(--text-tertiary, #C7CBD4) !important;
+  color: var(--text-tertiary, #c7cbd4) !important;
 
   &:hover {
-    color: var(--text-secondary, #6B7280) !important;
+    color: var(--text-secondary, #6b7280) !important;
     background-color: rgba(92, 141, 234, 0.06);
   }
 
@@ -15,7 +15,7 @@
 
   &.tabActive {
     background-color: rgba(39, 100, 217, 0.07);
-    color: var(--text-secondary, #6B7280) !important;
+    color: var(--text-secondary, #6b7280) !important;
     &:hover {
       background-color: rgba(92, 141, 234, 0.06);
     }

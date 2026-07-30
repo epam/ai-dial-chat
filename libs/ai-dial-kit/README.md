@@ -55,9 +55,9 @@ import { SearchBar } from '@epam/ai-dial-kit';
 Three button variants for different visual emphasis levels.
 
 ```tsx
-import {  GhostButton } from '@epam/ai-dial-kit';
+import { GhostButton } from '@epam/ai-dial-kit';
 
-<GhostButton onClick={handleMore}>More</GhostButton>
+<GhostButton onClick={handleMore}>More</GhostButton>;
 ```
 
 ### GhostIconButton

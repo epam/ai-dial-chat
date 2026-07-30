@@ -416,7 +416,7 @@ Three-tier fallback pattern (defined in `openspec/lib-styling-guide.md`):
 ```scss
 // libs/conversation-input/src/components/ConversationInput/ConversationInput.module.scss
 .welcome {
-  color: var(--ci-welcome-color, var(--text-primary, #161B2D));
+  color: var(--ci-welcome-color, var(--text-primary, #161b2d));
   font-size: var(--ci-welcome-font-size, 24px);
 }
 ```

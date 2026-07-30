@@ -1,14 +1,10 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-shared';
-import {
-  GhostButton,
-  Input,
-
-} from '@epam/ai-dial-kit';
+import { GhostButton, Input } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialPopup,
   DialSpinner,
-    NeutralButton,
+  NeutralButton,
   PrimaryButton,
   PopupSize,
 } from '@epam/ai-dial-ui-kit';
