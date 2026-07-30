@@ -419,7 +419,8 @@ const clearInvalidSourceFiltersOnTabSwitchEpic: AppEpic = (action$, state$) =>
       const hasAgentsFiltersChanged =
         updatedAgentsFilters.Sources.length !== agentsFilters.Sources.length;
       const hasToolsetsFiltersChanged =
-        updatedToolsetsFilters.Sources.length !== toolsetsFilters.Sources.length;
+        updatedToolsetsFilters.Sources.length !==
+        toolsetsFilters.Sources.length;
 
       if (hasAgentsFiltersChanged || hasToolsetsFiltersChanged) {
         return of(
