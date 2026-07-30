@@ -1,11 +1,6 @@
 import { DialSkeleton, DialSkeletonVariant } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 
-/*
- * DialSkeleton's own default color resolves to `--bg-layer-3`, which is the
- * same white as this popover's `--bg-layer-0` background in this app's theme
- * (invisible white-on-white). Pass an explicit contrasting token.
- */
 const SKELETON_COLOR = 'var(--bg-layer-2, #EEF1F7)';
 
 /** Props for {@link LoadingSkeleton}. */

@@ -240,6 +240,7 @@ export const Input: FC<InputProps> = ({
       await onSend?.(currentMessage, currentAttachments);
       currentAttachments.forEach((a) => {
         if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+        if (a.playUrl) URL.revokeObjectURL(a.playUrl);
       });
       resetAttachments([]);
     } catch {

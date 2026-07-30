@@ -86,7 +86,7 @@ const Header: FC<Props> = ({
                 'overflow-hidden transition-all duration-200 ease-in-out',
                 isConversationPanelOpen
                   ? 'max-w-0 opacity-0'
-                  : 'max-w-[32px] opacity-100',
+                  : 'max-w-[40px] opacity-100',
               )}
             >
               <DialGhostIconButton
