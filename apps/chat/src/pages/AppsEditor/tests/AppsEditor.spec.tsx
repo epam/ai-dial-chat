@@ -328,7 +328,7 @@ describe('AppsEditor', () => {
   });
 
   describe('Settings step readiness gating', () => {
-    it('disables Save and hides Preview before the Settings step is ready', () => {
+    it('disables Save and disables Preview before the Settings step is ready', () => {
       shouldSettingsAutoReady = false;
       renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
