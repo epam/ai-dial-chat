@@ -65,6 +65,10 @@ export const messageHasStages = (message: Message): boolean =>
   message.role === MessageRole.Assistant &&
   (message.custom_content?.stages?.length ?? 0) > 0;
 
+export const hasActiveToolConfig = (
+  value: Record<string, boolean> | undefined,
+): boolean => value != null && Object.keys(value).length > 0;
+
 /** Normalises a stored response-format string to the current enum.
  * Legacy data may contain 'Markdown' or 'PlainText' (capital-first) instead
  * of the current enum values 'markdown' / 'plain_text'. */

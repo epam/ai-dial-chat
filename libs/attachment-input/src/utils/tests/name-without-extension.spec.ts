@@ -21,4 +21,12 @@ describe('getNameWithoutExtension', () => {
   it('removes trailing dot', () => {
     expect(getNameWithoutExtension('name.')).toBe('name');
   });
+
+  it('returns an empty string for null', () => {
+    expect(getNameWithoutExtension(null as unknown as string)).toBe('');
+  });
+
+  it('returns an empty string for undefined', () => {
+    expect(getNameWithoutExtension(undefined as unknown as string)).toBe('');
+  });
 });

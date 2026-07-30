@@ -7,6 +7,7 @@ export * from './models/deployment-configuration';
 export * from './models/deployment';
 export * from './models/deployment-features';
 export * from './models/import-export';
+export * from './models/tool-menu-item';
 export * from './types/attachment';
 export * from './types/mime-type';
 export * from './types/code-editor';

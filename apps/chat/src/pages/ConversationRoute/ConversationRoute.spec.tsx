@@ -10,6 +10,7 @@ import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../context/NotificationContext';
 import * as OverlayContextMock from '../../context/overlay/OverlayContext';
+import * as ToolsMenuModule from '../../hooks/conversation/useToolsMenu';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as filesApi from '../../server-api/files.api';
@@ -75,6 +76,9 @@ vi.mock('../../hooks/useUiFeature', async () => {
     useUiFeature: (feature: any) => DEFAULT_ENABLED_UI_FEATURES.has(feature),
   };
 });
+vi.mock('../../hooks/conversation/useToolsMenu', () => ({
+  useToolsMenu: vi.fn(),
+}));
 vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/files.api');
 vi.mock('../../utils/attachment-to-dto');
@@ -110,7 +114,7 @@ vi.mock('../../components/StarterButtons/StarterButtons', () => ({
     <div>
       {starters.map((starter) => (
         <button
-          key={starter.const}
+          key={String(starter.const)}
           type="button"
           onClick={() => onSelect(starter)}
         >
@@ -222,6 +226,7 @@ describe('ConversationRoute', () => {
   const mockUseKeyboardShortcutPreference = vi.mocked(
     KeyboardShortcutModule.useKeyboardShortcutPreference,
   );
+  const mockUseToolsMenu = vi.mocked(ToolsMenuModule.useToolsMenu);
   const mockUseNotification = vi.mocked(
     NotificationContextModule.useNotification,
   );
@@ -269,6 +274,11 @@ describe('ConversationRoute', () => {
     mockUseKeyboardShortcutPreference.mockReturnValue({
       preference: SendOnEnter.Enter,
       setPreference: vi.fn(),
+    });
+    mockUseToolsMenu.mockReturnValue({
+      toolsMenuItems: [],
+      onToolToggle: vi.fn(),
+      toolConfigurationValue: {},
     });
     mockUseNotification.mockReturnValue({
       notifications: [],
@@ -356,6 +366,7 @@ describe('ConversationRoute', () => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
         'Hello',
         'gpt-4o',
+        undefined,
         undefined,
       );
     });
@@ -684,6 +695,61 @@ describe('ConversationRoute', () => {
     });
   });
 
+  it('lets tool configuration override submit starter configuration on key conflict', async () => {
+    mockUseToolsMenu.mockReturnValue({
+      toolsMenuItems: [],
+      onToolToggle: vi.fn(),
+      toolConfigurationValue: { starter: true },
+    });
+    const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
+      type: 'object',
+      properties: {
+        starter: {
+          oneOf: [
+            {
+              const: 0,
+              title: 'Starter override',
+              'dial:widgetOptions': {
+                populateText: 'Run starter',
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    mockUseDeployments.mockReturnValue({
+      items: mockItems,
+      selectedItemId: 'deepseek-ocr-2',
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration,
+      isLoading: false,
+      error: null,
+      schemas: [],
+      toolsets: [],
+      refetchToolsets: vi.fn(),
+      refetchDeployments: vi.fn(),
+      mergeSharedItem: vi.fn(),
+    });
+
+    renderRoute();
+
+    await act(async () => {
+      screen.getByText('Starter override').click();
+    });
+
+    await waitFor(() => {
+      expect(mockCreateConversation).toHaveBeenCalledWith(
+        'Run starter',
+        'deepseek-ocr-2',
+        [],
+        { starter: true },
+      );
+    });
+  });
+
   it('uses each starter own prompt instead of the shared schema description', async () => {
     const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
       type: 'object',
@@ -932,6 +998,7 @@ describe('ConversationRoute', () => {
       expect(mockCreateConversation).toHaveBeenCalledWith(
         'Hello',
         'gpt-4o',
+        undefined,
         undefined,
       );
     });

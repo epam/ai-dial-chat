@@ -24,6 +24,18 @@ Accessibility: the "Log in" button is keyboard-focusable and reachable via Tab; 
 - **WHEN** `RequireAuth` is mounted with `useOptionalOverlay()` returning `undefined` and `status === AuthStatus.Unauthenticated`
 - **THEN** `RequireAuth` renders `null`, matching existing non-overlay behavior
 
+#### Scenario: Logout returns an overlay session to the external login gate
+
+- **WHEN** a user confirms logout while `useOptionalOverlay()` returns a defined value
+- **THEN** the SPA clears the current user state without navigating the iframe to `/login`
+- **AND** the iframe URL remains on the current protected route governed by `RequireAuth`
+- **AND** `RequireAuth` renders `OverlayLoginGate` after the user status becomes `AuthStatus.Unauthenticated`
+
+#### Scenario: Logout outside overlay mode keeps normal login navigation
+
+- **WHEN** a user confirms logout while `useOptionalOverlay()` returns `undefined`
+- **THEN** the SPA clears the current user state and navigates to `/login`, matching existing non-overlay behavior
+
 #### Scenario: Login button disabled while an auth attempt is starting or in the initial wait
 
 - **WHEN** the user has clicked "Log in" and the external auth state is `opening` or `waiting`

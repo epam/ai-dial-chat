@@ -39,9 +39,9 @@ const FilesSection: FC<FilesSectionProps> = ({
         role="list"
         className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-3"
       >
-        {attachments.map((att) => (
+        {attachments.map((att, index) => (
           <div
-            key={att.id}
+            key={`${att.id}-${index}`}
             role="listitem"
             className={
               att.type === AttachmentType.Audio ? 'col-span-full' : undefined

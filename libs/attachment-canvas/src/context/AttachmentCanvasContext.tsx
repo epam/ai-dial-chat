@@ -86,6 +86,7 @@ export const AttachmentCanvasProvider = ({
   );
 
   const closeCanvas = useCallback(() => {
+    setContent(EMPTY_CONTENT);
     setIsOpen(false);
     setIsLoading(false);
   }, []);

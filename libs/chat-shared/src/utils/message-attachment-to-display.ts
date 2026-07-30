@@ -112,10 +112,20 @@ export const messageAttachmentToDisplayAttachment = (
   };
 };
 
-/** Maps a list of {@link MessageAttachment} DTOs to display-only attachment models. */
+/** Maps a list of {@link MessageAttachment} DTOs to display-only attachment models. Entries with duplicate `id` values are deduplicated — first occurrence wins. */
 export const messageAttachmentsToDisplayAttachments = (
   dtos: MessageAttachment[] | undefined,
   resolvers: AttachmentDisplayResolvers = {},
-): DisplayAttachment[] =>
-  dtos?.map((dto) => messageAttachmentToDisplayAttachment(dto, resolvers)) ??
-  [];
+): DisplayAttachment[] => {
+  const seen = new Set<string | undefined>();
+  return (
+    dtos?.reduce<DisplayAttachment[]>((acc, dto) => {
+      const att = messageAttachmentToDisplayAttachment(dto, resolvers);
+      if (!seen.has(att.id)) {
+        seen.add(att.id);
+        acc.push(att);
+      }
+      return acc;
+    }, []) ?? []
+  );
+};
