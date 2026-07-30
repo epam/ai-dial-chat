@@ -41,6 +41,8 @@ export class VisualizerConnector {
 
   protected options: VisualizerConnectorOptions;
 
+  private isDestroyed = false;
+
   /**
    * Creates a VisualizerConnector
    * @param root {HTMLElement | string} reference or selector to parent container where the iframe should be placed
@@ -330,9 +332,14 @@ export class VisualizerConnector {
   }
 
   /**
-   * Destroys Visualizer
+   * Destroys Visualizer. Safe to call more than once — subsequent calls are a no-op.
    */
   destroy() {
+    if (this.isDestroyed) {
+      return;
+    }
+    this.isDestroyed = true;
+
     window.removeEventListener('message', this.process);
     /* So Task.fail() never surfaces as "unhandled" if nothing awaited ready() yet (e.g. Strict Mode). */
     void this.iframeInteraction.ready().catch(() => undefined);

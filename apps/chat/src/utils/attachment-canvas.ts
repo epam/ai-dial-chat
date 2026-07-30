@@ -398,6 +398,11 @@ export const resolveJsonCanvasContent = async (
  * Fetches the attachment payload and builds a `VisualizerCanvasContent` for the
  * given registry entry and theme. Returns `null` when the payload cannot be
  * fetched (caller should fall through to default content-type handling).
+ *
+ * Only JSON payloads are parsed into `data`. Non-JSON payloads (plain text,
+ * CSV, binary, …) resolve with `data: {}` — the visualizer still receives
+ * `mimeType` and `layout`, just no payload body. This is intentional: only
+ * JSON attachment content is forwarded to visualizers in this version.
  */
 export const resolveVisualizerCanvasContent = async (
   attachment: DisplayAttachment,

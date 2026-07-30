@@ -34,12 +34,14 @@ import {
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-visualizer-connector';
 
-const connector = new VisualizerConnector({
-  hostElement: document.getElementById('visualizer-root')!,
-  iframeUrl: 'https://viz.example.com',
-  visualizerName: 'my-viz', // must equal the visualizer app's `appName`
-  requestTimeout: 15000, // optional; bounds send(), not the handshake
-});
+const connector = new VisualizerConnector(
+  document.getElementById('visualizer-root')!,
+  {
+    domain: 'https://viz.example.com',
+    visualizerName: 'my-viz', // must equal the visualizer app's `appName`
+    requestTimeout: 15000, // optional; bounds send(), not the handshake
+  },
+);
 
 await connector.ready(); // resolves once the iframe posts READY_TO_INTERACT
 

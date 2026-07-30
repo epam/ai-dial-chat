@@ -476,5 +476,13 @@ describe('VisualizerConnector', () => {
 
       expect(handler).not.toHaveBeenCalled();
     });
+
+    it('is a no-op when called more than once', () => {
+      const { connector, host, iframe } = setup();
+      connector.destroy();
+      expect(host.contains(iframe)).toBe(false);
+
+      expect(() => connector.destroy()).not.toThrow();
+    });
   });
 });

@@ -614,6 +614,26 @@ describe('useOpenAttachmentCanvas — visualizer routing', () => {
     expect(mockResolvePdf).toHaveBeenCalled();
   });
 
+  it('falls through to Unsupported canvas when visualizer payload fetch returns an error (e.g. 403)', async () => {
+    /* resolveVisualizerCanvasContent maps ErrorCanvasContent (403/load
+     * failure) to null — same fallthrough as a missing payload. For a
+     * custom MIME that is not PDF/Markdown/JSON and not text-previewable,
+     * the hook must open Unsupported rather than leave the canvas empty. */
+    mockFindVisualizerForMime.mockReturnValue(visualizerEntry);
+    mockResolveVisualizer.mockResolvedValue(null);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('chart.viz', 'application/x-my-viz'),
+    );
+
+    expect(opened).toBe(true);
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'unsupported' }),
+      'chart.viz',
+    );
+  });
+
   it('does not call resolveVisualizerCanvasContent when registry is empty', async () => {
     mockFindVisualizerForMime.mockReturnValue(undefined);
     mockResolveMarkdown.mockResolvedValue({ type: 'markdown', text: '# H' });
