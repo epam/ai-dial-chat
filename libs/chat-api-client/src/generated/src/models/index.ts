@@ -1344,6 +1344,56 @@ export interface CreateScheduledTaskBodyDto {
 /**
  *
  * @export
+ * @interface CreatePromptDto
+ */
+export interface CreatePromptDto {
+  /**
+   * Prompt name. Must not contain a forward slash.
+   * @type {string}
+   * @memberof CreatePromptDto
+   */
+  name: string;
+  /**
+   * Optional description
+   * @type {string}
+   * @memberof CreatePromptDto
+   */
+  description?: string;
+  /**
+   * Prompt text. May contain {{variableName}} placeholders.
+   * @type {string}
+   * @memberof CreatePromptDto
+   */
+  content: string;
+  /**
+   * Parent folder path. Empty string or omit for root.
+   * @type {string}
+   * @memberof CreatePromptDto
+   */
+  folderId?: string;
+}
+/**
+ *
+ * @export
+ * @interface CreatePromptFolderDto
+ */
+export interface CreatePromptFolderDto {
+  /**
+   * Folder name. Must not contain a forward slash.
+   * @type {string}
+   * @memberof CreatePromptFolderDto
+   */
+  name: string;
+  /**
+   * Parent folder path. Omit or leave empty to create at root.
+   * @type {string}
+   * @memberof CreatePromptFolderDto
+   */
+  parentId?: string;
+}
+/**
+ *
+ * @export
  * @interface CreateShareLinkDto
  */
 export interface CreateShareLinkDto {
@@ -3781,6 +3831,19 @@ export interface MoveItemResultDto {
 /**
  *
  * @export
+ * @interface MovePromptDto
+ */
+export interface MovePromptDto {
+  /**
+   * Target folder path. Empty string to move to root.
+   * @type {string}
+   * @memberof MovePromptDto
+   */
+  targetFolderId: string;
+}
+/**
+ *
+ * @export
  * @interface MutatedToolsetDto
  */
 export interface MutatedToolsetDto {
@@ -3790,6 +3853,99 @@ export interface MutatedToolsetDto {
    * @memberof MutatedToolsetDto
    */
   id: string;
+}
+/**
+ *
+ * @export
+ * @interface PromptFolderResponseDto
+ */
+export interface PromptFolderResponseDto {
+  /**
+   * Folder path within the prompts namespace
+   * @type {string}
+   * @memberof PromptFolderResponseDto
+   */
+  id: string;
+  /**
+   * Last path segment (display name)
+   * @type {string}
+   * @memberof PromptFolderResponseDto
+   */
+  name: string;
+}
+/**
+ *
+ * @export
+ * @interface PromptListResponseDto
+ */
+export interface PromptListResponseDto {
+  /**
+   *
+   * @type {Array<PromptResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  prompts: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptFolderResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  folders: Array<PromptFolderResponseDto>;
+  /**
+   *
+   * @type {Array<PromptResponseDto>}
+   * @memberof PromptListResponseDto
+   */
+  sharedWithMe: Array<PromptResponseDto>;
+}
+/**
+ *
+ * @export
+ * @interface PromptResponseDto
+ */
+export interface PromptResponseDto {
+  /**
+   * Prompt path within the prompts namespace (used as stable ID)
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  id: string;
+  /**
+   * Display name
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  name: string;
+  /**
+   * Optional description
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  description?: string;
+  /**
+   * Prompt text content
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  content: string;
+  /**
+   * Parent folder path; empty string means root
+   * @type {string}
+   * @memberof PromptResponseDto
+   */
+  folderId: string;
+  /**
+   * Creation timestamp (Unix ms)
+   * @type {number}
+   * @memberof PromptResponseDto
+   */
+  createdAt: number;
+  /**
+   * Last update timestamp (Unix ms)
+   * @type {number}
+   * @memberof PromptResponseDto
+   */
+  updatedAt: number;
 }
 /**
  *
@@ -3809,6 +3965,25 @@ export interface ProviderInfoDto {
    * @memberof ProviderInfoDto
    */
   label: string;
+}
+/**
+ *
+ * @export
+ * @interface PublicPromptListResponseDto
+ */
+export interface PublicPromptListResponseDto {
+  /**
+   *
+   * @type {Array<PromptResponseDto>}
+   * @memberof PublicPromptListResponseDto
+   */
+  prompts: Array<PromptResponseDto>;
+  /**
+   *
+   * @type {Array<PromptFolderResponseDto>}
+   * @memberof PublicPromptListResponseDto
+   */
+  folders: Array<PromptFolderResponseDto>;
 }
 /**
  *
@@ -4161,6 +4336,19 @@ export interface RenameItemResultDto {
    * @memberof RenameItemResultDto
    */
   error?: string;
+}
+/**
+ *
+ * @export
+ * @interface RenamePromptFolderDto
+ */
+export interface RenamePromptFolderDto {
+  /**
+   * New folder name. Must not contain a forward slash.
+   * @type {string}
+   * @memberof RenamePromptFolderDto
+   */
+  name: string;
 }
 /**
  *
@@ -5278,6 +5466,31 @@ export interface UpdateScheduledTaskBodyDto {
    * @memberof UpdateScheduledTaskBodyDto
    */
   stream?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdatePromptDto
+ */
+export interface UpdatePromptDto {
+  /**
+   * New display name. Must not contain a forward slash.
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  name?: string;
+  /**
+   * Updated description
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  description?: string;
+  /**
+   * Updated prompt text
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  content?: string;
 }
 /**
  *
