@@ -14,7 +14,7 @@ import {
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { DeploymentItemDto } from '@epam/chat-api-client';
 import type { FC, ReactNode } from 'react';
-import { lazy, memo, useCallback, useState } from 'react';
+import { lazy, memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
@@ -22,6 +22,7 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
+  ConversationInputI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
   VoiceRecordingI18nKeys,
@@ -44,6 +45,7 @@ import { getApiErrorMessage } from '../../server-api/api-error';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
 import FooterContainer from '../FooterDialogs/FooterContainer';
+import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -203,6 +205,21 @@ const NewConversationComposer: FC<Props> = ({
   const firstName = displayName.split(' ')[0];
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
 
+  const usageLimitsLabels = useMemo(
+    () => ({
+      triggerAriaLabel: ({ value }: { value: string }) =>
+        t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
+      popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
+      unlimited: t(ConversationInputI18nKeys.Unlimited),
+      error: t(ConversationInputI18nKeys.Error),
+      tokensRemaining: ({ count }: { count: string }) =>
+        t(ConversationInputI18nKeys.TokensRemaining, { count }),
+      progressAriaLabel: ({ used, total }: { used: string; total: string }) =>
+        t(ConversationInputI18nKeys.ProgressAriaLabel, { used, total }),
+    }),
+    [t],
+  );
+
   const handleAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
       void openAttachmentCanvas(attachment);
@@ -353,6 +370,12 @@ const NewConversationComposer: FC<Props> = ({
           onToolToggle={onToolToggle}
           toolsMenuTitle={toolsMenuTitle}
           toolsChipLabels={toolsChipLabels}
+          usageLimitsSlot={
+            <UsageLimitsControl
+              deploymentId={selectedDeploymentId ?? undefined}
+              labels={usageLimitsLabels}
+            />
+          }
         />
         {introText && (
           <p className="dial-small-text mb-4 mt-4 max-w-3xl text-center text-secondary">

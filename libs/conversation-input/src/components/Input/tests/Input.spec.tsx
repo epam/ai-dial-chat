@@ -865,6 +865,36 @@ describe('Input — attachment status transitions', () => {
   });
 });
 
+describe('Input — usageLimitsSlot', () => {
+  it('renders slot content in the action row when usageLimitsSlot is provided', () => {
+    render(
+      <Input usageLimitsSlot={<button type="button">Usage limits</button>} />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Usage limits' })).toBeTruthy();
+  });
+
+  it('does not render any slot content when usageLimitsSlot is omitted', () => {
+    render(<Input />);
+
+    expect(
+      screen.queryByRole('button', { name: 'Usage limits' }),
+    ).toBeNull();
+  });
+
+  it('does not render slot when renderFooterActions is provided (custom footer replaces the slot area)', () => {
+    render(
+      <Input
+        usageLimitsSlot={<button type="button">Usage limits</button>}
+        renderFooterActions={() => <button type="button">Custom footer</button>}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Usage limits' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Custom footer' })).toBeTruthy();
+  });
+});
+
 describe('Input — pasted attachment expand', () => {
   beforeEach(() => {
     vi.stubGlobal('URL', {
