@@ -36,6 +36,7 @@ import {
 } from '../../types/attachment-canvas';
 import { isDownloadable } from '../../utils/download';
 import { PdfContent } from '../PdfContent/PdfContent';
+import { VisualizerCanvasRenderer } from '../VisualizerCanvasRenderer/VisualizerCanvasRenderer';
 import styles from './AttachmentCanvas.module.scss';
 
 const COPY_RESET_MS = 2000;
@@ -100,6 +101,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     copiedMarkdownLabel = 'Copied!',
     copyJsonLabel = 'Copy as JSON',
     copiedJsonLabel = 'Copied!',
+    visualizerErrorLabel,
     unsupportedLabel = 'Preview is not supported for this file',
     loadErrorLabel = 'Failed to load file',
     forbiddenErrorLabel = "You don't have permission to access this file",
@@ -162,9 +164,11 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
 
   useEffect(() => {
     return () => {
-      if (copyTextResetRef.current != null) clearTimeout(copyTextResetRef.current);
+      if (copyTextResetRef.current != null)
+        clearTimeout(copyTextResetRef.current);
       if (copyResetRef.current != null) clearTimeout(copyResetRef.current);
-      if (copyJsonResetRef.current != null) clearTimeout(copyJsonResetRef.current);
+      if (copyJsonResetRef.current != null)
+        clearTimeout(copyJsonResetRef.current);
     };
   }, []);
 
@@ -213,6 +217,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       case AttachmentContentType.Json:
         return 'h-full overflow-auto';
       case AttachmentContentType.Pdf:
+      case AttachmentContentType.Visualizer:
         return 'h-full overflow-hidden';
       default:
         return 'h-full overflow-auto p-4';
@@ -322,6 +327,13 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
             loadPdf={loadPdf}
           />
         );
+      case AttachmentContentType.Visualizer:
+        return (
+          <VisualizerCanvasRenderer
+            content={content}
+            errorLabel={visualizerErrorLabel}
+          />
+        );
       case AttachmentContentType.Unsupported:
         return (
           <p className={mergeClasses('text-center', styles.statusLabel)}>
@@ -356,6 +368,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     unsupportedLabel,
     loadErrorLabel,
     forbiddenErrorLabel,
+    visualizerErrorLabel,
     loadPdf,
   ]);
 

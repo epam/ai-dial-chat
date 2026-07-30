@@ -13,6 +13,7 @@ import {
 import { useCallback } from 'react';
 import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
+import { useTheme } from '../../context/ThemeContext';
 import {
   referenceAttachmentToPdfCanvasContent,
   resolveImageCanvasContent,
@@ -20,103 +21,11 @@ import {
   resolveMarkdownCanvasContent,
   resolvePdfCanvasContent,
   resolveTextCanvasContent,
+  resolveVisualizerCanvasContent,
 } from '../../utils/attachment-canvas';
+import { findVisualizerForMime } from '../../utils/attachment-visualizer';
 import { resolveDialUrl } from '../../utils/dial-file';
-
-type OpenCanvas = ReturnType<typeof useAttachmentCanvas>['openCanvas'];
-
-async function openFileCanvas(
-  attachment: DisplayAttachment,
-  openCanvas: OpenCanvas,
-): Promise<boolean> {
-  if (attachment.url == null && attachment.referenceUrl != null) {
-    const pdfContent = referenceAttachmentToPdfCanvasContent({
-      type: attachment.contentType,
-      url: attachment.referenceUrl,
-      title: attachment.name,
-    });
-    if (pdfContent != null) {
-      openCanvas(pdfContent, attachment.name);
-      return true;
-    }
-  }
-
-  const contentType = attachment.contentType.toLowerCase();
-
-  if (!contentType && attachment.data != null) {
-    const content = await resolveTextCanvasContent(attachment);
-    if (content != null) {
-      openCanvas(content, attachment.name);
-      return true;
-    }
-  }
-
-  switch (contentType) {
-    case MIMEType.PDF: {
-      const content = await resolvePdfCanvasContent(attachment);
-      openCanvas(
-        content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-        attachment.name,
-      );
-      return true;
-    }
-    case MIMEType.Markdown: {
-      const content = await resolveMarkdownCanvasContent(attachment);
-      openCanvas(
-        content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-        attachment.name,
-      );
-      return true;
-    }
-    case MIMEType.JSON: {
-      const content = await resolveJsonCanvasContent(attachment);
-      openCanvas(
-        content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-        attachment.name,
-      );
-      return true;
-    }
-  }
-
-  const fileName = attachment.name ?? '';
-  const dotIdx = fileName.lastIndexOf('.');
-  const ext = dotIdx !== -1 ? fileName.slice(dotIdx + 1).toLowerCase() : '';
-
-  switch (ext) {
-    case FileExtension.Markdown:
-    case FileExtension.MarkdownAlt: {
-      const content = await resolveMarkdownCanvasContent(attachment);
-      if (content == null) return false;
-      openCanvas(content, attachment.name);
-      return true;
-    }
-    case FileExtension.JSON: {
-      const content = await resolveJsonCanvasContent(attachment);
-      if (content == null) return false;
-      openCanvas(content, attachment.name);
-      return true;
-    }
-    case FileExtension.PDF: {
-      const content = await resolvePdfCanvasContent(attachment);
-      if (content == null) return false;
-      openCanvas(content, attachment.name);
-      return true;
-    }
-  }
-
-  if (attachment.name != null && !isTextPreviewable(attachment.name)) {
-    openCanvas(
-      createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-      attachment.name,
-    );
-    return true;
-  }
-
-  const content = await resolveTextCanvasContent(attachment);
-  if (content == null) return false;
-  openCanvas(content, attachment.name);
-  return true;
-}
+import { useCustomVisualizers } from './useCustomVisualizers';
 
 /**
  * Returns `openAttachmentCanvas`, an async function that opens the attachment
@@ -128,6 +37,120 @@ export const useOpenAttachmentCanvas = () => {
   const { openCanvas, openCanvasLoading, closeCanvas } = useAttachmentCanvas();
   const { closePanel } = useConversationPanel();
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
+  const customVisualizers = useCustomVisualizers();
+  const { currentTheme: themeId } = useTheme();
+
+  const openFileCanvas = useCallback(
+    async (attachment: DisplayAttachment): Promise<boolean> => {
+      if (attachment.url == null && attachment.referenceUrl != null) {
+        const pdfContent = referenceAttachmentToPdfCanvasContent({
+          type: attachment.contentType,
+          url: attachment.referenceUrl,
+          title: attachment.name,
+        });
+        if (pdfContent != null) {
+          openCanvas(pdfContent, attachment.name);
+          return true;
+        }
+      }
+
+      const contentType = attachment.contentType.toLowerCase();
+
+      const visualizerEntry = findVisualizerForMime(
+        contentType,
+        customVisualizers,
+      );
+      if (visualizerEntry != null) {
+        const content = await resolveVisualizerCanvasContent(
+          attachment,
+          visualizerEntry,
+          themeId,
+        );
+        if (content != null) {
+          openCanvas(content, attachment.name);
+          return true;
+        }
+      }
+
+      if (!contentType && attachment.data != null) {
+        const content = await resolveTextCanvasContent(attachment);
+        if (content != null) {
+          openCanvas(content, attachment.name);
+          return true;
+        }
+      }
+
+      switch (contentType) {
+        case MIMEType.PDF: {
+          const content = await resolvePdfCanvasContent(attachment);
+          openCanvas(
+            content ??
+              createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+            attachment.name,
+          );
+          return true;
+        }
+        case MIMEType.Markdown: {
+          const content = await resolveMarkdownCanvasContent(attachment);
+          openCanvas(
+            content ??
+              createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+            attachment.name,
+          );
+          return true;
+        }
+        case MIMEType.JSON: {
+          const content = await resolveJsonCanvasContent(attachment);
+          openCanvas(
+            content ??
+              createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+            attachment.name,
+          );
+          return true;
+        }
+      }
+
+      const fileName = attachment.name ?? '';
+      const dotIdx = fileName.lastIndexOf('.');
+      const ext = dotIdx !== -1 ? fileName.slice(dotIdx + 1).toLowerCase() : '';
+
+      switch (ext) {
+        case FileExtension.Markdown:
+        case FileExtension.MarkdownAlt: {
+          const content = await resolveMarkdownCanvasContent(attachment);
+          if (content == null) return false;
+          openCanvas(content, attachment.name);
+          return true;
+        }
+        case FileExtension.JSON: {
+          const content = await resolveJsonCanvasContent(attachment);
+          if (content == null) return false;
+          openCanvas(content, attachment.name);
+          return true;
+        }
+        case FileExtension.PDF: {
+          const content = await resolvePdfCanvasContent(attachment);
+          if (content == null) return false;
+          openCanvas(content, attachment.name);
+          return true;
+        }
+      }
+
+      if (attachment.name != null && !isTextPreviewable(attachment.name)) {
+        openCanvas(
+          createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+          attachment.name,
+        );
+        return true;
+      }
+
+      const content = await resolveTextCanvasContent(attachment);
+      if (content == null) return false;
+      openCanvas(content, attachment.name);
+      return true;
+    },
+    [openCanvas, customVisualizers, themeId],
+  );
 
   const openAttachmentCanvas = useCallback(
     async (attachment: DisplayAttachment): Promise<boolean> => {
@@ -157,7 +180,7 @@ export const useOpenAttachmentCanvas = () => {
           closePanel();
           closeSourcesPanel();
           openCanvasLoading(attachment.name);
-          const opened = await openFileCanvas(attachment, openCanvas);
+          const opened = await openFileCanvas(attachment);
           if (!opened) closeCanvas();
           return opened;
         }
@@ -178,7 +201,14 @@ export const useOpenAttachmentCanvas = () => {
           return false;
       }
     },
-    [openCanvas, openCanvasLoading, closeCanvas, closePanel, closeSourcesPanel],
+    [
+      openCanvas,
+      openCanvasLoading,
+      closeCanvas,
+      closePanel,
+      closeSourcesPanel,
+      openFileCanvas,
+    ],
   );
 
   return { openAttachmentCanvas };
