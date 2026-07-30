@@ -988,10 +988,9 @@ export const getApplicationPayload = ({
 
     case AppsEditorSchemaTypes.QuickApp2: {
       const model = allEntitiesMap[data.model] as DialAIEntityModel | undefined;
-      const temperatureToUse =
-        model && doesModelAllowTemperature(model)
-          ? data.temperature
-          : undefined;
+      const temperatureToUse = data.temperature;
+      const shouldSendTemperature = model && doesModelAllowTemperature(model);
+
       const starters = data.starters
         .filter((starter) => starter.text.trim() && starter.title.trim())
         .map(({ title, text }) => ({ title, text }));
@@ -1009,7 +1008,7 @@ export const getApplicationPayload = ({
           orchestrator: {
             deployment: {
               deployment_id: model?.id ?? data.model,
-              ...(temperatureToUse && {
+              ...(shouldSendTemperature && {
                 parameters: { temperature: temperatureToUse },
               }),
             },
