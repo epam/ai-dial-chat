@@ -21,7 +21,7 @@ import { MarketplaceEntitiesTabs } from '@/src/constants/marketplace';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface Props<T> {
   entity: T;
@@ -91,7 +91,10 @@ export const MarketplaceEntityBookmark = <T extends MarketplaceEntity>({
         isTriggerClickable
       >
         <div data-qa={dataQa}>
-          <DialGhostIconButton icon={<Bookmark />} />
+          <DialGhostIconButton
+            size={ElementSize.Small}
+            icon={<Bookmark size={size} />}
+          />
         </div>
       </Tooltip>
     </div>
