@@ -4,10 +4,12 @@ import {
   type Attachment,
   type DeploymentItem,
   type DisplayAttachment,
+  type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
 import {
   FileDndOverlay,
   type ConversationInputStyles,
+  type ToolsChipLabels,
 } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { DeploymentItemDto } from '@epam/chat-api-client';
@@ -85,6 +87,10 @@ interface Props {
     attachments: Attachment[],
     chatSettings: NewConversationChatSettings,
   ) => Promise<void>;
+  toolsMenuItems?: ToolMenuItem[];
+  onToolToggle?: (toolId: string) => void;
+  toolsMenuTitle?: string;
+  toolsChipLabels?: ToolsChipLabels;
   /** Rendered below the composer input (e.g. starter buttons). */
   children?: ReactNode;
 }
@@ -104,6 +110,10 @@ const NewConversationComposer: FC<Props> = ({
   message,
   inputStyles,
   onCreateConversation,
+  toolsMenuItems,
+  onToolToggle,
+  toolsMenuTitle,
+  toolsChipLabels,
   children,
 }) => {
   const { t } = useTranslation();
@@ -339,6 +349,10 @@ const NewConversationComposer: FC<Props> = ({
           fileAccept={fileAccept}
           onAttachmentClick={handleAttachmentClick}
           modelPickerOverlay={modelPickerOverlay}
+          toolsMenuItems={toolsMenuItems}
+          onToolToggle={onToolToggle}
+          toolsMenuTitle={toolsMenuTitle}
+          toolsChipLabels={toolsChipLabels}
         />
         {introText && (
           <p className="dial-small-text mb-4 mt-4 max-w-3xl text-center text-secondary">

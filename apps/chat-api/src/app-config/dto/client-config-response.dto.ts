@@ -88,6 +88,17 @@ export class ClientConfigDto {
   @IsString()
   announcementHtml!: string | null;
 
+  @ApiPropertyOptional({
+    description:
+      'Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.',
+    example: 'deep_research',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  deepResearchToolId!: string | null;
+
   @ApiProperty({
     description:
       'Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.',

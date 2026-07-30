@@ -492,6 +492,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   footerHtmlMessage: string;
+  /**
+   * Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  deepResearchToolId?: string | null;
 }
 /**
  *
