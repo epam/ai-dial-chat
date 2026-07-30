@@ -31,7 +31,10 @@ Use this lib when building a host app's Scheduled Tasks pages: wire up i18n, fea
 Page shell: header with title/subtitle/create action, a search + sort toolbar, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
 
 ```tsx
-import { ScheduledTasks, ScheduledTasksSortKey } from '@epam/ai-dial-scheduled-tasks';
+import {
+  ScheduledTasks,
+  ScheduledTasksSortKey,
+} from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTasks
   labels={{
@@ -99,9 +102,11 @@ import {
 } from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTaskCreateForm
-  labels={{
-    /* ... */
-  }}
+  labels={
+    {
+      /* ... */
+    }
+  }
   values={{
     displayName: '',
     scheduleType: ScheduledTaskScheduleType.Recurring,
