@@ -97,6 +97,7 @@ export const AllowedToolsField: FC<AllowedToolsFieldProps> = ({
             )
           }
           onFocus={handleMenuOpen}
+          formatCreateLabel={(value) => t(CommonI18nKeys.AddOption, { value })}
           placeholder={t(CommonI18nKeys.EnterOneOrMoreTools)}
           isDisabled={isToolsetPublic}
           isLoading={isAllowedToolsLoading}

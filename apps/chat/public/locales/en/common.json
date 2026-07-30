@@ -126,6 +126,7 @@
   "Select one of the methods below that will be used to authenticate": "Select one of the methods below that will be used to authenticate",
   "Allowed tools": "Allowed tools",
   "Enter one or more tools": "Enter one or more tools",
+  "Add \"{{value}}\"": "Add \"{{value}}\"",
   "Log out before changing authentication type": "Log out before changing authentication type",
   "Logging out": "Logging out",
   "Are you sure you want to log out?": "Are you sure you want to log out?",
