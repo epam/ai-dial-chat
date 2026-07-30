@@ -25,6 +25,7 @@ interface Props {
   isPreviewing?: boolean;
   /** Renders the preview/exit-preview button in the trailing action group, before Cancel/Save, only when provided. */
   onPreview?: () => void;
+  isPreviewDisabled?: boolean;
 }
 
 const EditorHeader: FC<Props> = ({
@@ -42,6 +43,7 @@ const EditorHeader: FC<Props> = ({
   previewButtonLabel,
   exitPreviewButtonLabel,
   isPreviewing = false,
+  isPreviewDisabled = false,
   onPreview,
 }) => (
   <header className="flex items-center justify-between gap-3 border-b border-b-tertiary bg-layer-2 px-4 py-1">
@@ -70,6 +72,7 @@ const EditorHeader: FC<Props> = ({
           label={isPreviewing ? exitPreviewButtonLabel : previewButtonLabel}
           iconBefore={isPreviewing ? <IconEyeOff /> : <IconEye />}
           onClick={onPreview}
+          disabled={isPreviewDisabled}
         />
       )}
       {!isPreviewing && (
