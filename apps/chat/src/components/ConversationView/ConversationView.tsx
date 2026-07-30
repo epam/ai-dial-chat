@@ -11,8 +11,12 @@ import {
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
+  type ToolMenuItem,
 } from '@epam/ai-dial-chat-shared';
-import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
+import {
+  FileDndOverlay,
+  type ToolsChipLabels,
+} from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
@@ -131,6 +135,10 @@ interface Props {
    * to be picked. The chip stays visible — it is not hidden.
    */
   fixedModel?: { id: string; displayName?: string; iconUrl?: string };
+  toolsMenuItems?: ToolMenuItem[];
+  onToolToggle?: (toolId: string) => void;
+  toolsMenuTitle?: string;
+  toolsChipLabels?: ToolsChipLabels;
 }
 
 const ConversationView: FC<Props> = ({
@@ -162,6 +170,10 @@ const ConversationView: FC<Props> = ({
   fixedModel,
   inputContent,
   inputContentRevision,
+  toolsMenuItems,
+  onToolToggle,
+  toolsMenuTitle,
+  toolsChipLabels,
 }) => {
   const isModelFixed = !!fixedModel;
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
@@ -700,6 +712,10 @@ const ConversationView: FC<Props> = ({
                 messageHistory={messageHistory}
                 sendOnEnter={sendOnEnter}
                 chatSettings={chatSettings}
+                toolsMenuItems={toolsMenuItems}
+                onToolToggle={onToolToggle}
+                toolsMenuTitle={toolsMenuTitle}
+                toolsChipLabels={toolsChipLabels}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}
                 pendingAttachments={
                   !isEditActive ? pendingDialAttachments : undefined

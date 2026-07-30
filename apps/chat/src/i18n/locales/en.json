@@ -850,5 +850,12 @@
     "stopRecordingLabel": "Stop recording",
     "discardRecordingLabel": "Discard recording",
     "timerAriaLabel": "Recording time"
+  },
+  "tools": {
+    "menuTitle": "Tools",
+    "deepResearchFallback": "Deep research",
+    "selectedCount_one": "{{count}} tool",
+    "selectedCount_other": "{{count}} tools",
+    "removeTool": "Remove {{label}}"
   }
 }

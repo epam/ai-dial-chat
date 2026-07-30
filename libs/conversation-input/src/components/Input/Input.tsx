@@ -30,6 +30,7 @@ import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
+import { SelectedToolsChips } from '../SelectedToolsChips/SelectedToolsChips';
 import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
 import { StopButton } from './Buttons/StopButton';
@@ -89,6 +90,11 @@ export const Input: FC<InputProps> = ({
   prefixAttachments = [],
   onRemovePrefixAttachment,
   chatSettings,
+  toolsMenuItems,
+  onToolToggle,
+  toolsMenuTitle,
+  toolsBackLabel,
+  toolsChipLabels,
   autoFocus = false,
   messageHistory,
   onDialFileSystemClick,
@@ -216,16 +222,21 @@ export const Input: FC<InputProps> = ({
     !isStreaming && hasSendableContent,
     SEND_BUTTON_EXIT_MS,
   );
+  const hasSelectedTools =
+    (toolsMenuItems?.some((t) => t.isSelected) ?? false) &&
+    onToolToggle != null;
   /*
    * Stacked layout: textarea on its own row above the action bar. Used when the
-   * caller opts in (edit mode), whenever attachments are present, or when the
-   * message spans multiple visual lines (either explicit newlines or word-wrap).
+   * caller opts in (edit mode), whenever attachments are present, when the
+   * message spans multiple visual lines, or when one or more tools are selected
+   * (chips need the row between textarea and buttons).
    */
   const isStackedLayout =
     isStacked ||
     attachments.length > 0 ||
     message.includes('\n') ||
-    isMultiLine;
+    isMultiLine ||
+    hasSelectedTools;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
 
@@ -382,7 +393,8 @@ export const Input: FC<InputProps> = ({
           {!hideAddButton && (
             <div
               className={mergeClasses(
-                'order-2 flex',
+                'flex',
+                'order-2',
                 !isStackedLayout && 'desktop:order-1',
               )}
             >
@@ -410,6 +422,21 @@ export const Input: FC<InputProps> = ({
                 isDisabled={isInputDisabled}
                 chatSettings={chatSettings}
                 extraMenuItems={dialFileSystemMenuItem}
+                toolsMenuItems={toolsMenuItems}
+                onToolToggle={onToolToggle}
+                toolsMenuTitle={toolsMenuTitle}
+                toolsBackLabel={toolsBackLabel}
+              />
+            </div>
+          )}
+          {isStackedLayout && hasSelectedTools && (
+            <div className="order-3 min-w-0 flex-1">
+              <SelectedToolsChips
+                items={toolsMenuItems ?? []}
+                onToolToggle={onToolToggle!}
+                isMobile={isMobile}
+                countLabel={toolsChipLabels?.countLabel}
+                removeLabel={toolsChipLabels?.removeLabel}
               />
             </div>
           )}
@@ -425,7 +452,8 @@ export const Input: FC<InputProps> = ({
           <div
             className={mergeClasses(
               'flex flex-shrink-0 items-center gap-2',
-              'order-3 ms-auto',
+              isStackedLayout && hasSelectedTools ? 'order-4' : 'order-3',
+              'ms-auto',
               !isStackedLayout && 'desktop:ms-0',
             )}
           >

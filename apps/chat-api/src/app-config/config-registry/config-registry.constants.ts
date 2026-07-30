@@ -38,6 +38,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'DEFAULT_DEPLOYMENT',
   },
   {
+    key: 'deployments.deepResearchToolId',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Tool ID for the Deep Research deployment-configuration property. When set, the frontend renders a Tools submenu with that tool toggle. Null when DEEP_RESEARCH_TOOL_ID is not set.',
+    owner: 'chat-team',
+    envVar: 'DEEP_RESEARCH_TOOL_ID',
+  },
+  {
     key: 'dialCore.externalUrl',
     type: 'config',
     valueType: 'string',

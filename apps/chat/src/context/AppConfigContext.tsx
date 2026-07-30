@@ -30,6 +30,7 @@ export interface AppConfigState {
     overlayAllowedOrigins: string[];
     enabledUiFeatures: string[] | null;
     announcementHtml: string | null;
+    deepResearchToolId: string | null;
     footerHtmlMessage: string;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
@@ -48,6 +49,7 @@ const INITIAL_STATE: AppConfigState = {
     overlayAllowedOrigins: [],
     enabledUiFeatures: null,
     announcementHtml: null,
+    deepResearchToolId: null,
     footerHtmlMessage: '',
   },
 };
@@ -83,6 +85,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             overlayAllowedOrigins: response.config?.overlayAllowedOrigins ?? [],
             enabledUiFeatures: response.config?.enabledUiFeatures ?? null,
             announcementHtml: response.config?.announcementHtml ?? null,
+            deepResearchToolId: response.config?.deepResearchToolId ?? null,
             footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
           },
           metadata: response.metadata,

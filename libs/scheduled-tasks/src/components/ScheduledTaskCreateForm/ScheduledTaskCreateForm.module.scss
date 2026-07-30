@@ -3,7 +3,10 @@
 }
 
 .header {
-  border-bottom-color: var(--stcf-header-border, var(--stroke-tertiary, #e0e6f0));
+  border-bottom-color: var(
+    --stcf-header-border,
+    var(--stroke-tertiary, #e0e6f0)
+  );
 }
 
 .detailsColumn {

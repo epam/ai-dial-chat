@@ -16,6 +16,7 @@ export type {
   InputColors,
   InputProps,
   InputTypography,
+  ToolsChipLabels,
 } from './models/Input';
 
 // Re-exports from @epam/ai-dial-attachment-input for backwards compatibility

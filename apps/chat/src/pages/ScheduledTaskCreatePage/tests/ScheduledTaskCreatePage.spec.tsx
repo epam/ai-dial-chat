@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -278,10 +278,9 @@ describe('ScheduledTaskCreatePage', () => {
     renderAtRoute('/scheduled-tasks/new');
 
     await fillValidForm();
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'description' }),
-      'a'.repeat(501),
-    );
+    fireEvent.change(screen.getByRole('textbox', { name: 'description' }), {
+      target: { value: 'a'.repeat(501) },
+    });
     await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
 
     expect(createScheduledTaskMock).not.toHaveBeenCalled();
