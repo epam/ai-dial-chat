@@ -257,6 +257,7 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{
         id: string;
+        errorMessage?: string;
       }>,
     ) => {
       const updatedFile = state.files.find((file) => file.id === payload.id);
