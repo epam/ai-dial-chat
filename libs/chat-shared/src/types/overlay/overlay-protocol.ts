@@ -119,6 +119,14 @@ export enum OverlayFeature {
   VoiceInput = 'voice-input',
 }
 
+/** Controls how an overlay starts authentication for a configured provider. */
+export enum OverlayAuthUiMode {
+  /** Opens authentication in a separate browser window or tab. */
+  External = 'external',
+  /** Navigates the embedded overlay window through authentication. */
+  SameWindow = 'sameWindow',
+}
+
 /** Minimal message shape carried in overlay protocol payloads. */
 export interface OverlayChatMessage {
   /** Message id. */
@@ -177,6 +185,10 @@ export interface ChatOverlayOptions {
   modelId?: string;
   /** Conversation id the embedded app should load and display. */
   overlayConversationId?: string;
+  /** Per-provider authentication UI behavior configured by the embedding host. */
+  auth?: {
+    providerUiModes?: Record<string, OverlayAuthUiMode>;
+  };
 }
 
 /** Payload of a `SET_OVERLAY_OPTIONS` request. */
@@ -194,6 +206,8 @@ export interface SetOverlayOptionsPayload {
    * UI-feature set, if provided. Array only — no comma-separated-string form.
    */
   enabledFeatures?: string[];
+  /** Opaque per-provider authentication UI modes supplied by the host. */
+  authProviderUiModes?: Record<string, string>;
 }
 
 /** Payload of a `SEND_MESSAGE` request. */

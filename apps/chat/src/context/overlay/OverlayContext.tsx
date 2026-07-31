@@ -107,6 +107,8 @@ export interface OverlayContextType {
   ) => void;
   /** Deployment id received via `SET_OVERLAY_OPTIONS`, awaiting application once deployments are available. */
   pendingModelId: string | null;
+  /** Trusted per-provider authentication UI modes received from the host. */
+  authProviderUiModes: Record<string, string> | undefined;
   /** Clears `pendingModelId` once a consumer has applied it. */
   clearPendingModelId: () => void;
   /** Emits `SELECTED_CONVERSATION_LOADED`, and `READY_TO_INTERACT` the first time it is called. */
@@ -207,6 +209,14 @@ const clearPendingRequests = (
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> => {
+  if (!isRecord(value) || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+};
+
 const hasStringPayload = <TKey extends string>(
   payload: unknown,
   key: TKey,
@@ -251,6 +261,19 @@ const hasSetOverlayOptionsPayload = (
     hasOptionalStringField(payload, 'overlayConversationId') &&
     hasOptionalStringArrayField(payload, 'enabledFeatures')
   );
+};
+
+const getAuthProviderUiModes = (
+  payload: Partial<SetOverlayOptionsPayload> | null | undefined,
+): Record<string, string> | undefined => {
+  const value = payload?.authProviderUiModes;
+  if (
+    !isPlainRecord(value) ||
+    !Object.values(value).every((entry) => typeof entry === 'string')
+  ) {
+    return undefined;
+  }
+  return value as Record<string, string>;
 };
 
 const hasSelectConversationPayload = (
@@ -350,6 +373,9 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
     PendingConversationSelection[]
   >([]);
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
+  const [authProviderUiModes, setAuthProviderUiModes] = useState<
+    Record<string, string> | undefined
+  >();
 
   const postBootstrapEvent = useCallback((type: OverlayEventType) => {
     window.parent.postMessage({ type }, '*');
@@ -754,6 +780,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
         }
         applyOverlayOverride(enabledFeatures);
       }
+      setAuthProviderUiModes(getAuthProviderUiModes(payload));
 
       const responsePayload: SetOverlayOptionsResponse = { applied: true };
       postToHost({
@@ -855,6 +882,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       registerActiveConversationBridge,
       registerConversationListBridge,
       pendingModelId,
+      authProviderUiModes,
       clearPendingModelId,
       notifyConversationLoaded,
       notifyConversationsUpdated,
@@ -866,6 +894,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       registerActiveConversationBridge,
       registerConversationListBridge,
       pendingModelId,
+      authProviderUiModes,
       clearPendingModelId,
       notifyConversationLoaded,
       notifyConversationsUpdated,

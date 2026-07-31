@@ -1,4 +1,5 @@
-import { FC, memo, useState } from 'react';
+import { FC, memo, ReactNode, useState } from 'react';
+import AuthUiModeCase from '../cases/AuthUiModeCase/AuthUiModeCase';
 import ConversationListCase from '../cases/ConversationListCase/ConversationListCase';
 import DirectOverlayCase from '../cases/DirectOverlayCase/DirectOverlayCase';
 import EnabledFeaturesCase from '../cases/EnabledFeaturesCase/EnabledFeaturesCase';
@@ -9,94 +10,135 @@ enum SandboxCase {
   Manager = 'manager',
   ConversationList = 'conversation-list',
   EnabledFeatures = 'enabled-features',
+  AuthUiMode = 'auth-ui-mode',
 }
+
+interface SandboxCaseDetails {
+  id: SandboxCase;
+  title: string;
+  description: string;
+}
+
+const SANDBOX_CASES: SandboxCaseDetails[] = [
+  {
+    id: SandboxCase.Direct,
+    title: 'Direct ChatOverlay case',
+    description:
+      'Mount a single overlay and exercise its core methods and lifecycle events.',
+  },
+  {
+    id: SandboxCase.Manager,
+    title: 'ChatOverlayManager case',
+    description:
+      'Try the floating manager, visibility controls, positioning, and fullscreen.',
+  },
+  {
+    id: SandboxCase.ConversationList,
+    title: 'Conversation-list methods case',
+    description:
+      'Explore conversation listing, selection, creation, renaming, and deletion.',
+  },
+  {
+    id: SandboxCase.EnabledFeatures,
+    title: 'enabledFeatures case',
+    description:
+      'Apply feature presets or a custom feature set to the overlay at runtime.',
+  },
+  {
+    id: SandboxCase.AuthUiMode,
+    title: 'Provider auth UI mode case',
+    description:
+      'Configure external or same-window authentication for individual providers.',
+  },
+];
 
 /** Case index/landing page listing only the v1-scoped `chat-overlay` sandbox cases. */
 const App: FC = () => {
   const [activeCase, setActiveCase] = useState<SandboxCase | null>(null);
 
+  const renderCasePage = (content: ReactNode) => (
+    <main className="sandbox-case-page">
+      <button
+        className="sandbox-back-button"
+        type="button"
+        onClick={() => setActiveCase(null)}
+      >
+        Back to case list
+      </button>
+      {content}
+    </main>
+  );
+
   if (activeCase === SandboxCase.Direct) {
-    return (
-      <div>
-        <button type="button" onClick={() => setActiveCase(null)}>
-          ← Back to case list
-        </button>
-        <DirectOverlayCase />
-      </div>
-    );
+    return renderCasePage(<DirectOverlayCase />);
   }
 
   if (activeCase === SandboxCase.Manager) {
-    return (
-      <div>
-        <button type="button" onClick={() => setActiveCase(null)}>
-          ← Back to case list
-        </button>
-        <ManagerOverlayCase />
-      </div>
-    );
+    return renderCasePage(<ManagerOverlayCase />);
   }
 
   if (activeCase === SandboxCase.ConversationList) {
-    return (
-      <div>
-        <button type="button" onClick={() => setActiveCase(null)}>
-          ← Back to case list
-        </button>
-        <ConversationListCase />
-      </div>
-    );
+    return renderCasePage(<ConversationListCase />);
   }
 
   if (activeCase === SandboxCase.EnabledFeatures) {
-    return (
-      <div>
-        <button type="button" onClick={() => setActiveCase(null)}>
-          ← Back to case list
-        </button>
-        <EnabledFeaturesCase />
-      </div>
-    );
+    return renderCasePage(<EnabledFeaturesCase />);
+  }
+
+  if (activeCase === SandboxCase.AuthUiMode) {
+    return renderCasePage(<AuthUiModeCase />);
   }
 
   return (
-    <div>
-      <h1>@epam/ai-dial-chat-overlay sandbox</h1>
-      <ul>
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveCase(SandboxCase.Direct)}
-          >
-            Direct ChatOverlay case
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveCase(SandboxCase.Manager)}
-          >
-            ChatOverlayManager case
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveCase(SandboxCase.ConversationList)}
-          >
-            Conversation-list methods case
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            onClick={() => setActiveCase(SandboxCase.EnabledFeatures)}
-          >
-            enabledFeatures case
-          </button>
-        </li>
-      </ul>
-    </div>
+    <main className="sandbox-home">
+      <header className="sandbox-home__hero">
+        <span className="sandbox-home__eyebrow">Developer playground</span>
+        <h1>Chat Overlay Sandbox</h1>
+        <p>
+          Choose a focused scenario to explore and verify the overlay API in
+          isolation.
+        </p>
+      </header>
+
+      <section aria-labelledby="sandbox-cases-heading">
+        <div className="sandbox-home__section-heading">
+          <h2 id="sandbox-cases-heading">Available cases</h2>
+          <span>{SANDBOX_CASES.length} scenarios</span>
+        </div>
+
+        <ul className="sandbox-case-grid">
+          {SANDBOX_CASES.map(({ id, title, description }, index) => {
+            const titleId = `sandbox-case-${id}-title`;
+
+            return (
+              <li key={id}>
+                <button
+                  className="sandbox-case-card"
+                  type="button"
+                  aria-labelledby={titleId}
+                  onClick={() => setActiveCase(id)}
+                >
+                  <span className="sandbox-case-card__number" aria-hidden>
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span className="sandbox-case-card__content">
+                    <span className="sandbox-case-card__title" id={titleId}>
+                      {title}
+                    </span>
+                    <span className="sandbox-case-card__description">
+                      {description}
+                    </span>
+                    <span className="sandbox-case-card__action" aria-hidden>
+                      Open case
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    </main>
   );
 };
 

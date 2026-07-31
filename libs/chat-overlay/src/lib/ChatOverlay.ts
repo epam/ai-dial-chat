@@ -260,7 +260,11 @@ export class ChatOverlay {
     options: Partial<
       Pick<
         ChatOverlayOptions,
-        'theme' | 'modelId' | 'overlayConversationId' | 'enabledFeatures'
+        | 'theme'
+        | 'modelId'
+        | 'overlayConversationId'
+        | 'enabledFeatures'
+        | 'auth'
       >
     >,
   ): Promise<SetOverlayOptionsResponse> {
@@ -270,6 +274,9 @@ export class ChatOverlay {
       options.overlayConversationId ?? this.options.overlayConversationId;
     this.options.enabledFeatures =
       options.enabledFeatures ?? this.options.enabledFeatures;
+    if (Object.hasOwn(options, 'auth')) {
+      this.options.auth = options.auth;
+    }
     return this.sendCurrentOverlayOptions();
   }
 
@@ -342,6 +349,13 @@ export class ChatOverlay {
     }
     if (this.options.enabledFeatures !== undefined) {
       payload.enabledFeatures = this.options.enabledFeatures;
+    }
+    const authProviderUiModes = this.options.auth?.providerUiModes;
+    if (
+      authProviderUiModes !== undefined &&
+      Object.keys(authProviderUiModes).length > 0
+    ) {
+      payload.authProviderUiModes = authProviderUiModes;
     }
     return this.send<SetOverlayOptionsResponse>(
       OverlayRequestType.SetOverlayOptions,

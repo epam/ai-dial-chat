@@ -174,6 +174,97 @@ describe('OverlayContext', () => {
   });
 
   describe('SET_OVERLAY_OPTIONS', () => {
+    it('accepts a missing auth provider mode map and exposes undefined', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-no-auth-modes',
+        payload: { hostDomain: 'https://partner.example.com' },
+      });
+
+      expect(result.current.authProviderUiModes).toBeUndefined();
+      await waitFor(() => {
+        expect(
+          postMessageSpy.mock.calls.some(
+            ([message]) =>
+              (message as { requestId?: string }).requestId ===
+              'req-no-auth-modes',
+          ),
+        ).toBe(true);
+      });
+    });
+
+    it('stores a valid auth provider mode map', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+
+      act(() => {
+        dispatchFromHost({
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-auth-modes',
+          payload: {
+            hostDomain: 'https://partner.example.com',
+            authProviderUiModes: { keycloak: 'sameWindow' },
+          },
+        });
+      });
+
+      await waitFor(() => {
+        expect(result.current.authProviderUiModes).toEqual({
+          keycloak: 'sameWindow',
+        });
+      });
+    });
+
+    it.each([
+      ['a non-object value', 'invalid'],
+      ['a map containing a non-string value', { keycloak: 42 }],
+    ])('treats %s for auth provider modes as absent', async (_, value) => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      act(() => {
+        dispatchFromHost({
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-invalid-auth-modes',
+          payload: {
+            hostDomain: 'https://partner.example.com',
+            authProviderUiModes: value,
+          },
+        });
+      });
+
+      expect(result.current.authProviderUiModes).toBeUndefined();
+      await waitFor(() => {
+        expect(
+          postMessageSpy.mock.calls.some(
+            ([message]) =>
+              (message as { requestId?: string }).requestId ===
+              'req-invalid-auth-modes',
+          ),
+        ).toBe(true);
+      });
+    });
+
+    it('rejects an auth provider mode map from an untrusted origin', () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+
+      dispatchFromHost(
+        {
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-untrusted-auth-modes',
+          payload: {
+            hostDomain: 'https://evil.example.com',
+            authProviderUiModes: { keycloak: 'sameWindow' },
+          },
+        },
+        'https://evil.example.com',
+      );
+
+      expect(result.current.authProviderUiModes).toBeUndefined();
+    });
+
     it('rejects an origin outside the allowlist: no theme change, no response', () => {
       mockOverlayAllowedOrigins = ['https://partner.example.com'];
       renderHook(() => useOverlay(), { wrapper });

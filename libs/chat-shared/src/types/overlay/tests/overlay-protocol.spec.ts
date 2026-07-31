@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  OverlayAuthUiMode,
   OverlayEventType,
   OverlayFeature,
   OverlayRequestType,
@@ -7,6 +8,15 @@ import {
   isOverlayMessageRequest,
   isOverlayMessageResponse,
 } from '../overlay-protocol';
+
+describe('OverlayAuthUiMode', () => {
+  it('contains exactly the external and same-window modes', () => {
+    expect(Object.values(OverlayAuthUiMode)).toEqual([
+      'external',
+      'sameWindow',
+    ]);
+  });
+});
 
 describe('isOverlayMessageRequest', () => {
   it('accepts a well-formed request', () => {

@@ -1,4 +1,5 @@
 import {
+  OverlayAuthUiMode,
   OverlayEventType,
   OverlayFeature,
   type OverlayMessageRequest,
@@ -320,6 +321,52 @@ describe('ChatOverlay', () => {
     expect(
       Object.hasOwn(sentMessage?.payload as object, 'enabledFeatures'),
     ).toBe(false);
+    expect(
+      Object.hasOwn(sentMessage?.payload as object, 'authProviderUiModes'),
+    ).toBe(false);
+  });
+
+  it('includes non-empty auth provider UI modes in the initial handshake', () => {
+    const { iframe } = setup({
+      auth: {
+        providerUiModes: {
+          keycloak: OverlayAuthUiMode.SameWindow,
+          entra: OverlayAuthUiMode.External,
+        },
+      },
+    });
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    dispatchFromApp(iframe, { type: OverlayEventType.Ready });
+
+    const sentMessage = postMessageSpy.mock
+      .calls[0][0] as OverlayMessageRequest<{
+      authProviderUiModes?: Record<string, string>;
+    }>;
+    expect(sentMessage.payload?.authProviderUiModes).toEqual({
+      keycloak: 'sameWindow',
+      entra: 'external',
+    });
+  });
+
+  it('omits an empty auth provider UI modes map from the handshake', () => {
+    const { iframe } = setup({ auth: { providerUiModes: {} } });
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    dispatchFromApp(iframe, { type: OverlayEventType.Ready });
+
+    const sentMessage = postMessageSpy.mock.calls[0][0] as
+      | OverlayMessageRequest
+      | undefined;
+    expect(
+      Object.hasOwn(sentMessage?.payload as object, 'authProviderUiModes'),
+    ).toBe(false);
   });
 
   it('includes enabledFeatures from constructor options in the initial handshake send', () => {
@@ -387,6 +434,60 @@ describe('ChatOverlay', () => {
     }>;
     expect(sentMessage.payload?.theme).toBe('dark');
     expect(sentMessage.payload?.enabledFeatures).toEqual(['header']);
+  });
+
+  it('replaces auth provider UI modes when auth is provided', async () => {
+    const { overlay, iframe } = setup({
+      auth: {
+        providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+      },
+    });
+    advanceHandshakeToReadyToInteract(iframe, 'irrelevant');
+    await overlay.ready();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    void overlay
+      .setOverlayOptions({
+        auth: {
+          providerUiModes: { entra: OverlayAuthUiMode.External },
+        },
+      })
+      .catch(() => undefined);
+
+    const sentMessage = postMessageSpy.mock
+      .calls[0][0] as OverlayMessageRequest<{
+      authProviderUiModes?: Record<string, string>;
+    }>;
+    expect(sentMessage.payload?.authProviderUiModes).toEqual({
+      entra: 'external',
+    });
+  });
+
+  it('preserves auth provider UI modes when an update omits auth', async () => {
+    const { overlay, iframe } = setup({
+      auth: {
+        providerUiModes: { keycloak: OverlayAuthUiMode.SameWindow },
+      },
+    });
+    advanceHandshakeToReadyToInteract(iframe, 'irrelevant');
+    await overlay.ready();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    void overlay.setOverlayOptions({ theme: 'dark' }).catch(() => undefined);
+
+    const sentMessage = postMessageSpy.mock
+      .calls[0][0] as OverlayMessageRequest<{
+      authProviderUiModes?: Record<string, string>;
+    }>;
+    expect(sentMessage.payload?.authProviderUiModes).toEqual({
+      keycloak: 'sameWindow',
+    });
   });
 
   it('does not retroactively change iframe allow permissions when enabledFeatures is set later', async () => {

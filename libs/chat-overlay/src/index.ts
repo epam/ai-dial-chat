@@ -25,6 +25,7 @@ export type {
   SetTemperatureResponse,
 } from '@epam/ai-dial-chat-shared';
 export {
+  OverlayAuthUiMode,
   OverlayEventType,
   OverlayFeature,
   OverlayRequestType,
