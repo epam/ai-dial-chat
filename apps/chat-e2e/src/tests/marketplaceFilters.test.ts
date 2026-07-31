@@ -133,7 +133,7 @@ dialTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMDIAL-2658', 'EPMDIAL-2652', 'EPMRTC-4333');
+    setTestIds('EPMDIAL-2658', 'EPMDIAL-2652', 'EPMDIAL-2653');
     const appName = GeneratorUtil.randomApplicationName();
     const firstTopic = GeneratorUtil.randomString(5);
     const secondTopic = GeneratorUtil.randomString(5);

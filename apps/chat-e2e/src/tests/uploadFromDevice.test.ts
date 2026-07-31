@@ -4,7 +4,6 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
   ExpectedMessages,
-  ThemeId,
   UploadMenuOptions,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
@@ -367,7 +366,7 @@ dialTest.skip(
     sendMessage,
     attachmentDropdownMenu,
   }) => {
-    setTestIds('EPMDIAL-6913', 'EPMDIAL-6915', 'EPMDIAL-6921', 'EPMRTC-2922');
+    setTestIds('EPMDIAL-6913', 'EPMDIAL-6915', 'EPMDIAL-6921', 'EPMDIAL-7317');
     const fileNameExtension = Attachment.sunImageName.split('.');
     const expectedName = `${fileNameExtension[0]}${'.'.repeat(2)}${fileNameExtension[1]}`;
     let conversation: Conversation;

@@ -496,8 +496,7 @@ dialTest(
 );
 
 dialTest(
-  '[Manage attachments] Download a file though context menu with special chars in a name.\n' +
-    'Allowed special chars in the file name while renaming on "Upload from device"',
+  '[Manage attachments] Download a file though context menu with special chars in a name',
   async ({
     fileApiHelper,
     fileManagerPage,
@@ -506,7 +505,7 @@ dialTest(
     downloadAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMDIAL-6580', 'EPMRTC-3187');
+    setTestIds('EPMDIAL-6580');
     const filename = `${filenamePrefix}${ExpectedConstants.allowedSpecialChars}.jpg`;
 
     await dialTest.step(

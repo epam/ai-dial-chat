@@ -13,8 +13,7 @@ const promptContent = `Calculate {{a}} + {{b}}`;
 const promptDescr = `line1\nline2`;
 
 dialTest(
-  'Duplicate prompt located in recent.\n' +
-    'Duplicate prompt located in recent several times to check postfixes',
+  'Duplicate prompt located in recent several times to check postfixes',
   async ({
     dialHomePage,
     promptData,
@@ -26,7 +25,7 @@ dialTest(
     promptAssertion,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-2998', 'EPMDIAL-3600');
+    setTestIds('EPMDIAL-3600');
     let prompt: Prompt;
 
     await dialTest.step('Prepare prompt', async () => {
