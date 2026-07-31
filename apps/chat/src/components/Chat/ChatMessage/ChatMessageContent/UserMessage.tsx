@@ -691,160 +691,162 @@ export const UserMessage = memo(function UserMessage({
         className="w-full"
       >
         <div className="flex w-full flex-col gap-3">
-        <UserSchema
-          messageIndex={messageIndex}
-          allMessages={allMessages}
-          isEditing={isEditing}
-          setInputValue={setMessageContent}
-          onSubmit={handleEditMessage}
-          disabled={isUploadingAttachmentPresent}
-          formValue={formValue}
-          setFormValue={setFormValue}
-        />
+          <UserSchema
+            messageIndex={messageIndex}
+            allMessages={allMessages}
+            isEditing={isEditing}
+            setInputValue={setMessageContent}
+            onSubmit={handleEditMessage}
+            disabled={isUploadingAttachmentPresent}
+            formValue={formValue}
+            setFormValue={setFormValue}
+          />
 
-        {!isInputHidden && (
-          <div
-            className={classNames(
-              'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
-              !isOverlay && 'text-base',
-            )}
-          >
-            <AdjustedTextarea
-              ref={textareaRef}
+          {!isInputHidden && (
+            <div
               className={classNames(
-                'w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none',
-                textareaRightPaddingClass,
+                'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
+                !isOverlay && 'text-base',
               )}
-              value={messageContent}
-              onChange={handleInputChange}
-              onKeyDown={handlePressEnter}
-              disabled={isInputDisabled}
-              onCompositionStart={() => setIsTyping(true)}
-              onCompositionEnd={() => setIsTyping(false)}
-              style={{
-                fontFamily: 'inherit',
-                fontSize: 'inherit',
-                lineHeight: 'inherit',
-                margin: '0',
-                overflow: 'hidden',
-              }}
-            />
-            {isRecording && (
-              <VoiceRecordingOverlay
-                analyserNode={analyserNode}
-                elapsedTime={elapsedTime}
-                isOverlay={isOverlay}
+            >
+              <AdjustedTextarea
+                ref={textareaRef}
+                className={classNames(
+                  'w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none',
+                  textareaRightPaddingClass,
+                )}
+                value={messageContent}
+                onChange={handleInputChange}
+                onKeyDown={handlePressEnter}
+                disabled={isInputDisabled}
+                onCompositionStart={() => setIsTyping(true)}
+                onCompositionEnd={() => setIsTyping(false)}
+                style={{
+                  fontFamily: 'inherit',
+                  fontSize: 'inherit',
+                  lineHeight: 'inherit',
+                  margin: '0',
+                  overflow: 'hidden',
+                }}
               />
-            )}
-            {isUserMessageTranscribing && (
-              <TranscribingOverlay text={t(ChatI18nKeys.TranscribingAudio)} />
-            )}
-            {canRecordAudio && (
-              <MicrophoneButton
-                ref={micButtonRef}
-                isRecording={isRecording}
-                onStartRecording={startRecording}
-                onStopRecording={handleStopRecording}
-                error={voiceError}
-                disabled={isMicDisabled}
-              />
-            )}
-
-            {(newEditableAttachments.length > 0 ||
-              selectedDialLinks.length > 0) && (
-              <div
-                className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
-                data-qa="attachment-container"
-              >
-                <ChatInputAttachments
-                  files={fileAttachments}
-                  folders={folderAttachments}
-                  links={selectedDialLinks}
-                  onUnselectFile={handleUnselectFile}
-                  onRetryFile={handleRetry}
-                  onUnselectLink={handleUnselectLink}
+              {isRecording && (
+                <VoiceRecordingOverlay
+                  analyserNode={analyserNode}
+                  elapsedTime={elapsedTime}
+                  isOverlay={isOverlay}
                 />
-              </div>
-            )}
-          </div>
-        )}
+              )}
+              {isUserMessageTranscribing && (
+                <TranscribingOverlay text={t(ChatI18nKeys.TranscribingAudio)} />
+              )}
+              {canRecordAudio && (
+                <MicrophoneButton
+                  ref={micButtonRef}
+                  isRecording={isRecording}
+                  onStartRecording={startRecording}
+                  onStopRecording={handleStopRecording}
+                  error={voiceError}
+                  disabled={isMicDisabled}
+                />
+              )}
 
-        <div
-          className={classNames(
-            'flex items-center',
-            !canAttachFiles && !canAttachFolders && !canAttachLinks
-              ? 'justify-end'
-              : 'justify-between',
-          )}
-        >
-          <div className="size-[34px]">
-            <AttachButton
-              contextMenuPlacement="bottom-start"
-              TriggerCustomRenderer={
-                <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
-                  <IconPaperclip
-                    strokeWidth="1.5"
-                    size={DEFAULT_ICON_SIZES.STANDARD}
-                    width={DEFAULT_ICON_SIZES.STANDARD}
-                    height={DEFAULT_ICON_SIZES.STANDARD}
+              {(newEditableAttachments.length > 0 ||
+                selectedDialLinks.length > 0) && (
+                <div
+                  className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
+                  data-qa="attachment-container"
+                >
+                  <ChatInputAttachments
+                    files={fileAttachments}
+                    folders={folderAttachments}
+                    links={selectedDialLinks}
+                    onUnselectFile={handleUnselectFile}
+                    onRetryFile={handleRetry}
+                    onUnselectLink={handleUnselectLink}
                   />
                 </div>
-              }
-              selectedFilesIds={selectedFileIds}
-              onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-              onAddLinkToMessage={handleAddLinkToMessage}
-            />
-          </div>
+              )}
+            </div>
+          )}
 
-          <div className="relative flex gap-3">
-            <DialNeutralButton
-              label={t(ChatI18nKeys.Cancel)}
-              onClick={() => {
-                setMessageContent(message.content);
-                setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
-                setSelectedDialLinks(
-                  getDialLinksFromAttachments(
-                    message.custom_content?.attachments,
-                  ),
-                );
-                if (isRecording) {
-                  stopRecording();
+          <div
+            className={classNames(
+              'flex items-center',
+              !canAttachFiles && !canAttachFolders && !canAttachLinks
+                ? 'justify-end'
+                : 'justify-between',
+            )}
+          >
+            <div className="size-[34px]">
+              <AttachButton
+                contextMenuPlacement="bottom-start"
+                TriggerCustomRenderer={
+                  <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
+                    <IconPaperclip
+                      strokeWidth="1.5"
+                      size={DEFAULT_ICON_SIZES.STANDARD}
+                      width={DEFAULT_ICON_SIZES.STANDARD}
+                      height={DEFAULT_ICON_SIZES.STANDARD}
+                    />
+                  </div>
                 }
-                handleToggleEditing(false);
-              }}
-              data-qa="cancel"
-            />
-            {!isInputHidden && (
-              <DialPrimaryButton
-                label={t(ChatI18nKeys.SaveAndSubmit)}
-                onClick={() => handleEditMessage(formValue, messageContent)}
-                disabled={
-                  isUploadingAttachmentPresent ||
-                  isContentEmptyAndNoAttachments ||
-                  isUserMessageTranscribing
-                }
-                tooltipProps={{
-                  hideTooltip: isSaveSubmitTooltipHidden({
-                    isUploadingAttachmentPresent,
-                    isContentEmptyAndNoAttachments,
-                    isTranscribing: isUserMessageTranscribing,
-                  }),
-                  tooltip: getSaveSubmitTooltipText(
-                    {
+                selectedFilesIds={selectedFileIds}
+                onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+                onAddLinkToMessage={handleAddLinkToMessage}
+              />
+            </div>
+
+            <div className="relative flex gap-3">
+              <DialNeutralButton
+                label={t(ChatI18nKeys.Cancel)}
+                onClick={() => {
+                  setMessageContent(message.content);
+                  setNewEditableAttachmentsIds(
+                    mappedUserEditableAttachmentsIds,
+                  );
+                  setSelectedDialLinks(
+                    getDialLinksFromAttachments(
+                      message.custom_content?.attachments,
+                    ),
+                  );
+                  if (isRecording) {
+                    stopRecording();
+                  }
+                  handleToggleEditing(false);
+                }}
+                data-qa="cancel"
+              />
+              {!isInputHidden && (
+                <DialPrimaryButton
+                  label={t(ChatI18nKeys.SaveAndSubmit)}
+                  onClick={() => handleEditMessage(formValue, messageContent)}
+                  disabled={
+                    isUploadingAttachmentPresent ||
+                    isContentEmptyAndNoAttachments ||
+                    isUserMessageTranscribing
+                  }
+                  tooltipProps={{
+                    hideTooltip: isSaveSubmitTooltipHidden({
                       isUploadingAttachmentPresent,
                       isContentEmptyAndNoAttachments,
                       isTranscribing: isUserMessageTranscribing,
-                    },
-                    t,
-                  ),
-                  isTriggerClickable: true,
-                }}
-                data-qa="save-and-submit"
-              />
-            )}
-            <div ref={anchorRef} className="absolute bottom-0"></div>
+                    }),
+                    tooltip: getSaveSubmitTooltipText(
+                      {
+                        isUploadingAttachmentPresent,
+                        isContentEmptyAndNoAttachments,
+                        isTranscribing: isUserMessageTranscribing,
+                      },
+                      t,
+                    ),
+                    isTriggerClickable: true,
+                  }}
+                  data-qa="save-and-submit"
+                />
+              )}
+              <div ref={anchorRef} className="absolute bottom-0"></div>
+            </div>
           </div>
-        </div>
         </div>
       </FileDropArea>
     );
