@@ -53,8 +53,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     variant?: string;
     appearance?: string;
     items?: unknown[];
-    }) => <button aria-label="sort">{label}</button>,
- GhostButton: ({
+  }) => <button aria-label="sort">{label}</button>,
+  GhostButton: ({
     icon,
     onClick,
   }: {

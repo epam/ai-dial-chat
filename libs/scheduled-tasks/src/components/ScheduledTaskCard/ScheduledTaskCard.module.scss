@@ -24,9 +24,6 @@
 }
 
 .newBadge {
-  background: var(
-    --stc-new-badge-bg,
-   var(--bg-control-accent, #124ACE)
-  );
+  background: var(--stc-new-badge-bg, var(--bg-control-accent, #124ace));
   color: var(--stc-new-badge-text, var(--controls-text-permanent, #fcfcfc));
 }

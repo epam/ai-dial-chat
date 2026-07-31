@@ -7,7 +7,7 @@ import { CatalogEntityType } from '../../../../../types/entity-type';
 import { ShareButton } from '../ShareButton';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-    NeutralButton: ({
+  NeutralButton: ({
     label,
     onClick,
   }: {

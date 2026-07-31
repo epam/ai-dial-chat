@@ -32,7 +32,6 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
   useCodeCopy: vi.fn(() => ({ isCopied: false, copy: vi.fn() })),
 }));
 
-
 vi.mock('../../../../utils/mcp-endpoint-url', () => ({
   buildToolsetMcpUrl: vi.fn(
     (base: string, id: string) => `${base}/v1/toolset/${id}/mcp`,
