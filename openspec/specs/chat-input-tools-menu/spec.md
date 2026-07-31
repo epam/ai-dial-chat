@@ -1,5 +1,9 @@
 # Spec: chat-input-tools-menu
 
+## Purpose
+
+Define how deployment-provided tool toggles are shown in the conversation input, sent to completions, and persisted per user message for regenerate and edit flows.
+
 ## Requirements
 
 ### Requirement: Tools menu item visibility
@@ -153,6 +157,23 @@ The tool configuration values SHALL be merged with any existing `configuration_v
 - **THEN** the DIAL Core completion request contains the original non-empty `messages[].content`
 - **AND** the configuration is additionally sent through `custom_fields.configuration`
 
+### Requirement: Tool choices persisted in conversation history
+
+Whenever a completion mode creates or replaces a user message, the backend SHALL persist the supplied `custom_content.configuration_value` on that user message alongside attachments and form values. Regenerate SHALL reuse the configuration stored on the user message preceding the regenerated assistant response. Edit SHALL preserve the edited message's existing configuration and form values while applying attachment changes.
+
+#### Scenario: Appended message retains tool state
+- **WHEN** the backend appends a user message with `custom_content.configuration_value: { "deep_research": true }`
+- **THEN** the persisted conversation user message contains the same `configuration_value`
+
+#### Scenario: Regenerate uses message-specific tool state
+- **WHEN** a conversation contains multiple user messages with different tool states AND the user regenerates an assistant response
+- **THEN** the completion uses the `configuration_value` stored on the user message immediately preceding that response
+- **AND** it does not fall back to a different earlier message while the target message has configuration
+
+#### Scenario: Edit preserves message custom content
+- **WHEN** the user edits a message that has `configuration_value` or `form_value`
+- **THEN** the replacement user message retains those values while its text and attachments are updated
+
 ---
 
 ### Requirement: App-config pipeline for DEEP_RESEARCH_TOOL_ID
@@ -256,7 +277,7 @@ This prevents unnecessary re-renders of `AddAttachmentButton` and its children o
 
 ### Requirement: Feature gating decision
 
-This feature is NOT gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. Visibility is controlled by:
+This feature SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. Visibility is controlled by:
 1. Operator setting `DEEP_RESEARCH_TOOL_ID` env var (presence = enabled).
 2. Deployment schema containing a matching boolean property (capability = supported).
 
@@ -270,7 +291,7 @@ No role-based restriction applies in this slice.
 
 ### Requirement: No new observability/telemetry
 
-This slice introduces no new analytics events, metrics, or telemetry for tool toggles or tool-inclusive completion requests. Existing request metrics continue to apply.
+The system SHALL NOT introduce new analytics events, metrics, or telemetry for tool toggles or tool-inclusive completion requests. Existing request metrics continue to apply.
 
 #### Scenario: No new events emitted
 - **WHEN** the user toggles a tool or sends a message with tool configuration
@@ -280,7 +301,7 @@ This slice introduces no new analytics events, metrics, or telemetry for tool to
 
 ### Requirement: No new caching or rate limiting
 
-No new backend endpoints are introduced. The existing deployment-configuration endpoint caching (60s TTL, key `deployments:configuration:<userSub>:<deploymentName>`) and app-config caching (60s TTL) apply unchanged.
+The feature SHALL NOT introduce new backend endpoints. The existing deployment-configuration endpoint caching (60s TTL, key `deployments:configuration:<userSub>:<deploymentName>`) and app-config caching (60s TTL) apply unchanged.
 
 #### Scenario: Config cache behavior unchanged
 - **WHEN** the frontend requests client config

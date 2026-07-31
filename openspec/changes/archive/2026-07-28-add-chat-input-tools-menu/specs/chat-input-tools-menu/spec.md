@@ -146,6 +146,23 @@ The tool configuration values SHALL be merged with any existing `configuration_v
 - **WHEN** the backend processes a message with `custom_content.configuration_value: { "deep_research": true }`
 - **THEN** the DIAL Core completion request body contains `custom_fields: { configuration: { "deep_research": true } }`
 
+### Requirement: Tool choices persisted in conversation history
+
+Whenever a completion mode creates or replaces a user message, the backend SHALL persist the supplied `custom_content.configuration_value` on that user message alongside attachments and form values. Regenerate SHALL reuse the configuration stored on the user message preceding the regenerated assistant response. Edit SHALL preserve the edited message's existing configuration and form values while applying attachment changes.
+
+#### Scenario: Appended message retains tool state
+- **WHEN** the backend appends a user message with `custom_content.configuration_value: { "deep_research": true }`
+- **THEN** the persisted conversation user message contains the same `configuration_value`
+
+#### Scenario: Regenerate uses message-specific tool state
+- **WHEN** a conversation contains multiple user messages with different tool states AND the user regenerates an assistant response
+- **THEN** the completion uses the `configuration_value` stored on the user message immediately preceding that response
+- **AND** it does not fall back to a different earlier message while the target message has configuration
+
+#### Scenario: Edit preserves message custom content
+- **WHEN** the user edits a message that has `configuration_value` or `form_value`
+- **THEN** the replacement user message retains those values while its text and attachments are updated
+
 ---
 
 ### Requirement: App-config pipeline for DEEP_RESEARCH_TOOL_ID

@@ -515,7 +515,7 @@ export const useConversationHandlers = ({
         text,
         updatedMessages.length - 1,
         selectedItemId ?? conversation.model.id,
-        allAttachments.length > 0 ? { attachments: allAttachments } : undefined,
+        updatedCustomContent,
         crypto.randomUUID(),
         CompletionMode.Edit,
       );

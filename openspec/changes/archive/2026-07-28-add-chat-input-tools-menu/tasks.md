@@ -67,3 +67,10 @@
 - [x] 10.3 Wire chips into `Input.tsx` layout. Selecting a tool forces stacked layout (`hasSelectedTools` added to `isStackedLayout`). Chips row renders at `order-2 basis-full` (forces its own row in `flex-wrap`); `+` button moves to `order-3`; right actions move to `order-4` when chips are present.
 - [x] 10.4 Add `toolsChipLabels?: ToolsChipLabels` to `ConversationInputProps` in `libs/conversation-input/src/models/ConversationInput.ts`; it auto-forwards to `Input` via the `{...inputProps}` spread in `ConversationInput.tsx`.
 - [x] 10.5 Thread `toolsChipLabels` through `ConversationView` → `NewConversationComposer` → `Conversation` → `ConversationRoute`. Add i18n keys `tools.selectedCount_one`, `tools.selectedCount_other`, `tools.removeTool` and `ToolsI18nKeys.SelectedCount`/`RemoveTool` enum members. App layer constructs `toolsChipLabels` with `t()` calls.
+
+## 11. Persist tool configuration for regenerate and edit
+
+- [x] 11.1 Update `apps/chat-api/src/conversations/utils/conversation-history-builder.ts` so every newly created user message retains `custom_content.configuration_value` alongside attachments and form values.
+- [x] 11.2 Add a regression test in `apps/chat-api/src/conversations/utils/conversation-history-builder.spec.ts` proving appended user messages persist their tool configuration.
+- [x] 11.3 Update `apps/chat/src/hooks/conversation/useConversationHandlers.ts` so edit mode forwards the edited message's complete preserved custom content, and add a hook regression test for configuration and form values.
+- [x] 11.4 Verify targeted backend/frontend tests and both lint targets through Nx. Full typecheck and dependency-inclusive frontend test remain blocked by pre-existing workspace errors, including outdated UI Kit button exports and unrelated backend TypeScript errors.

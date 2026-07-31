@@ -213,6 +213,52 @@ describe('useConversationHandlers — handleSend', () => {
   });
 });
 
+describe('useConversationHandlers - handleEditMessage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('preserves configuration and form values when editing a message', async () => {
+    mockAttachmentsToDtos.mockReturnValue(undefined);
+    const conversation = {
+      ...makeConversation(),
+      messages: [
+        {
+          role: MessageRole.User,
+          content: 'Original question',
+          custom_content: {
+            configuration_value: { deep_research: true },
+            form_value: { topic: 'testing' },
+          },
+        },
+        { role: MessageRole.Assistant, content: 'Original answer' },
+      ],
+    } as Conversation;
+    const params = makeParams({
+      conversation,
+      conversationRef: { current: conversation },
+    });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await act(async () => {
+      await result.current.handleEditMessage(0, 'Edited question', [], []);
+    });
+
+    expect(params.startStream).toHaveBeenCalledWith(
+      'conv-1',
+      'Edited question',
+      1,
+      'selected-deployment',
+      {
+        configuration_value: { deep_research: true },
+        form_value: { topic: 'testing' },
+      },
+      expect.any(String),
+      'edit',
+    );
+  });
+});
+
 describe('useConversationHandlers — handleUploadAttachment (network error batching)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -309,7 +355,13 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
     const conversation = {
       ...makeConversation(),
       messages: [
-        { role: MessageRole.User, content: 'First question' },
+        {
+          role: MessageRole.User,
+          content: 'First question',
+          custom_content: {
+            configuration_value: { deep_research: true },
+          },
+        },
         {
           role: MessageRole.Assistant,
           content: 'First answer',
@@ -350,7 +402,7 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
       'First question',
       1,
       'selected-deployment',
-      undefined,
+      { configuration_value: { deep_research: true } },
       expect.any(String),
       'regenerate',
     );
