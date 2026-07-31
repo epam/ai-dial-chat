@@ -6,7 +6,7 @@ import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 dialTest(
   'Another chat is not available while AI is generating a response.\n' +
-    'Chat menu is not available while AI is generating a response.\n' +
+    'Current chat menu is not available while AI is generating an answer in this chat.\n' +
     'Switching to another chat is not available while AI is replaying a chat\n' +
     'Switching to another chat is not available while AI is regenerating response in compare mode',
   async ({
@@ -27,7 +27,6 @@ dialTest(
   }) => {
     setTestIds(
       'EPMDIAL-2941',
-      'EPMRTC-599',
       'EPMDIAL-2942',
       'EPMDIAL-2943',
       'EPMDIAL-2944',

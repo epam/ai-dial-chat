@@ -118,10 +118,9 @@ dialTest(
   },
 );
 
+//TODO: update current test to correspond EPMDIAL-6905, EPMDIAL-6911
 dialTest(
-  '[Upload from device] Duplicate names in upload list are auto-renamed on upload.\n' +
-    '[Upload from device] Files with restricted chars in the name are sanitized and uploaded.\n' +
-    '[Upload from device] Upload succeeds when batch contains files that sanitize to the same name',
+  '[Upload from device] Upload succeeds when batch contains files that sanitize to the same name',
   async ({
     dialHomePage,
     setTestIds,
@@ -135,7 +134,7 @@ dialTest(
     fileConflictConfirmationPopupAssertion,
     sendMessageInputAttachmentsAssertions,
   }) => {
-    setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMDIAL-6911');
+    setTestIds('EPMDIAL-6911');
 
     const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
     const uploadFolder = `${ExpectedConstants.fileUploadFolder}/${yearMonthSubfolder}`;
