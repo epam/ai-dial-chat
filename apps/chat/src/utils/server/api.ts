@@ -235,7 +235,6 @@ export class ApiUtils {
       let aborted = false;
 
       xhr.open(method, url, async);
-      xhr.responseType = 'json';
 
       // Track upload progress
       xhr.upload.onprogress = (event) => {
@@ -245,20 +244,43 @@ export class ApiUtils {
         }
       };
 
+      const buildRequestError = () => {
+        const rawBody = xhr.responseText;
+        let serverMessage: string | undefined;
+        if (rawBody) {
+          try {
+            const parsed = JSON.parse(rawBody);
+            serverMessage =
+              typeof parsed === 'string' ? parsed : parsed?.message;
+          } catch {
+            serverMessage = rawBody;
+          }
+        }
+        const error = new Error(serverMessage || 'Request failed');
+        (error as HttpErrorStatus).status = xhr.status;
+        return error;
+      };
+
       // Handle response
       xhr.onload = () => {
         if (aborted) return;
         if (xhr.status === 200) {
-          observer.next({ result: xhr.response });
+          let result: unknown = xhr.responseText;
+          try {
+            result = JSON.parse(xhr.responseText);
+          } catch {
+            // Leave the raw text as the result if it is not JSON.
+          }
+          observer.next({ result });
           observer.complete();
         } else {
-          observer.error('Request failed');
+          observer.error(buildRequestError());
         }
       };
 
       xhr.onerror = () => {
         if (!aborted) {
-          observer.error('Request failed');
+          observer.error(buildRequestError());
         }
       };
 

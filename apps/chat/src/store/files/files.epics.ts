@@ -25,7 +25,10 @@ import { combineEpics, ofType } from 'redux-observable';
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { FileService } from '@/src/utils/app/data/file-service';
-import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
+import {
+  isResourcePathTooLongError,
+  parseApiError,
+} from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { getCurrentReviewBucket } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import {
   constructPath,
@@ -169,8 +172,14 @@ const uploadFileEpic: AppEpic = (action$) =>
             filter((action) => action.payload.id === payload.id),
           ),
         ),
-        catchError(() => {
-          return of(FilesActions.uploadFileFail({ id: payload.id }));
+        catchError((error) => {
+          const { message } = parseApiError(error);
+          return of(
+            FilesActions.uploadFileFail({
+              id: payload.id,
+              errorMessage: message,
+            }),
+          );
         }),
       );
     }),
@@ -653,7 +662,12 @@ const copyFilesEpic: AppEpic = (action$) =>
             if (error?.name === 'AbortError') {
               return EMPTY;
             }
-            const { traceId } = parseApiError(error);
+            const { message, traceId } = parseApiError(error);
+            // On full failure the core message is nested inside the serialized
+            // "errors" array, so also inspect the raw error message.
+            const isPathTooLong =
+              isResourcePathTooLongError(message) ||
+              isResourcePathTooLongError(error?.message);
 
             return of(
               FilesActions.copyFilesFail({
@@ -661,9 +675,13 @@ const copyFilesEpic: AppEpic = (action$) =>
                 destinationFolder: payload.destinationFolder,
               }),
               UIActions.showErrorToast({
-                message: translate(FilesI18nKeys.FailedToCopy, {
-                  ns: Translation.Files,
-                }),
+                message: isPathTooLong
+                  ? translate(CommonI18nKeys.ResourcePathTooLong, {
+                      ns: Translation.Common,
+                    })
+                  : translate(FilesI18nKeys.FailedToCopy, {
+                      ns: Translation.Files,
+                    }),
                 traceId,
               }),
             );
@@ -711,16 +729,25 @@ const moveFilesEpic: AppEpic = (action$) =>
             if (error?.name === 'AbortError') {
               return EMPTY;
             }
-            const { traceId } = parseApiError(error);
+            const { message, traceId } = parseApiError(error);
+            // On full failure the core message is nested inside the serialized
+            // "errors" array, so also inspect the raw error message.
+            const isPathTooLong =
+              isResourcePathTooLongError(message) ||
+              isResourcePathTooLongError(error?.message);
 
             return of(
               FilesActions.moveFilesFail({
                 files: payload.files,
               }),
               UIActions.showErrorToast({
-                message: translate(FilesI18nKeys.FailedToMove, {
-                  ns: Translation.Files,
-                }),
+                message: isPathTooLong
+                  ? translate(CommonI18nKeys.ResourcePathTooLong, {
+                      ns: Translation.Common,
+                    })
+                  : translate(FilesI18nKeys.FailedToMove, {
+                      ns: Translation.Files,
+                    }),
                 traceId,
               }),
             );
@@ -876,9 +903,18 @@ const uploadFilesEpic: AppEpic = (action$) =>
               percent: percent!,
             });
           }),
-          catchError(() =>
-            canceled ? EMPTY : of(FilesActions.uploadFileFail({ id: fileId })),
-          ),
+          catchError((error) => {
+            if (canceled) {
+              return EMPTY;
+            }
+            const { message } = parseApiError(error);
+            return of(
+              FilesActions.uploadFileFail({
+                id: fileId,
+                errorMessage: message,
+              }),
+            );
+          }),
         );
       });
 
@@ -900,6 +936,14 @@ const uploadFilesEpic: AppEpic = (action$) =>
             } else if (action.type === FilesActions.uploadFileFail.type) {
               acc.finished += 1;
               acc.failCount += 1;
+
+              if (
+                isResourcePathTooLongError(
+                  (action.payload as { errorMessage?: string })?.errorMessage,
+                )
+              ) {
+                acc.pathTooLong = true;
+              }
             }
 
             acc.lastAction = action;
@@ -910,45 +954,52 @@ const uploadFilesEpic: AppEpic = (action$) =>
             total: payload.files.length,
             successCount: 0,
             failCount: 0,
+            pathTooLong: false,
             lastAction: null as any,
           },
         ),
 
-        mergeMap(({ finished, total, successCount, lastAction }) => {
-          const actions: AppAction[] = [lastAction];
+        mergeMap(
+          ({ finished, total, successCount, pathTooLong, lastAction }) => {
+            const actions: AppAction[] = [lastAction];
 
-          if (canceled || finished !== total) {
-            return from(actions);
-          }
+            if (canceled || finished !== total) {
+              return from(actions);
+            }
 
-          const allFailed = successCount === 0;
+            const allFailed = successCount === 0;
 
-          if (allFailed) {
+            if (allFailed) {
+              actions.push(
+                UIActions.showToast({
+                  type: ToastType.Error,
+                  title: translate(CommonI18nKeys.UploadFailed, {
+                    ns: Translation.Common,
+                  }),
+                  message: pathTooLong
+                    ? translate(CommonI18nKeys.ResourcePathTooLong, {
+                        ns: Translation.Common,
+                      })
+                    : translate(CommonI18nKeys.CheckInternetConnection, {
+                        ns: Translation.Common,
+                      }),
+                }),
+                FilesActions.uploadFilesFail(),
+              );
+
+              return from(actions);
+            }
+
             actions.push(
-              UIActions.showToast({
-                type: ToastType.Error,
-                title: translate(CommonI18nKeys.UploadFailed, {
-                  ns: Translation.Common,
-                }),
-                message: translate(CommonI18nKeys.CheckInternetConnection, {
-                  ns: Translation.Common,
-                }),
+              FilesActions.uploadFilesSuccess(),
+              FilesActions.getFilesWithFolders({
+                id: payload.destinationUrl,
               }),
-              FilesActions.uploadFilesFail(),
             );
 
             return from(actions);
-          }
-
-          actions.push(
-            FilesActions.uploadFilesSuccess(),
-            FilesActions.getFilesWithFolders({
-              id: payload.destinationUrl,
-            }),
-          );
-
-          return from(actions);
-        }),
+          },
+        ),
         catchError(() =>
           canceled ? EMPTY : of(FilesActions.uploadFilesFail()),
         ),
