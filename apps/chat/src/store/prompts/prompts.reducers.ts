@@ -130,6 +130,7 @@ export const promptsSlice = createSlice({
         newPrompt: Prompt;
         oldPrompt: Prompt;
         traceId?: string;
+        message?: string;
       }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
