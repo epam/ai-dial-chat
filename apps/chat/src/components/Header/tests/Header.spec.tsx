@@ -42,12 +42,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialGhostIconButton: ({
     'aria-label': ariaLabel,
+    'aria-pressed': ariaPressed,
     onClick,
   }: {
     'aria-label': string;
+    'aria-pressed'?: AriaAttributes['aria-pressed'];
     onClick?: () => void;
   }) => (
-    <button type="button" aria-label={ariaLabel} onClick={onClick} />
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onClick={onClick}
+    />
   ),
 }));
 
