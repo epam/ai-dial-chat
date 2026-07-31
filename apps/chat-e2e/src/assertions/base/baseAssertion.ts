@@ -229,7 +229,7 @@ export class BaseAssertion {
     await expect
       .soft(
         elementLocator,
-        expectedMessage ?? ExpectedMessages.elementAttributeValueShouldNotBe,
+        expectedMessage ?? ExpectedMessages.elementAttributeIsAbsent,
       )
       .not.toHaveAttribute(attribute);
   }

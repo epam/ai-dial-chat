@@ -4,7 +4,6 @@ import dialTest from '@/src/core/dialFixtures';
 import { API, Attachment, ExpectedMessages } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { FileUtil } from '@/src/utils';
-import { Locator } from '@playwright/test';
 import { markdownToTxt } from 'markdown-to-txt';
 import path from 'path';
 
@@ -306,6 +305,7 @@ dialTest(
         await baseAssertion.assertElementText(
           chatMessages.getChatMessageContent(dollarMessageIndex),
           dollarResponse,
+          ExpectedMessages.messageContentIsValid,
         );
       },
     );
@@ -313,15 +313,10 @@ dialTest(
     await dialTest.step(
       'Verify the poem is rendered with each line preserved as a separate row',
       async () => {
-        const actualPoemRows = await chatMessages
-          .getChatMessageContent(poemMessageIndex)
-          .innerText();
         baseAssertion.assertValuesAreEqual(
-          actualPoemRows
-            .split('\n')
-            .map((row) => row.trim())
-            .filter((row) => row.length > 0),
+          await chatMessages.getChatMessageContentLines(poemMessageIndex),
           poemLines,
+          ExpectedMessages.messageContentIsValid,
         );
       },
     );
@@ -366,8 +361,6 @@ dialTest(
       `</details>`;
     const messageIndex = 2;
     let conversation: Conversation;
-    let sections: Locator;
-    let summaries: Locator;
 
     await dialTest.step(
       'Prepare conversation with a response containing root, first level and second level nested collapsed sections',
@@ -385,36 +378,37 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
-        sections = chatMessages.getChatMessageDetailsSection(messageIndex);
-        summaries = chatMessages.getChatMessageSectionSummary(messageIndex);
         await chatMessagesAssertion.assertElementsCount(
-          sections,
+          chatMessages.getChatMessageDetailsSection(messageIndex),
           expectedSummaries.length,
           ExpectedMessages.collapsedSectionsCountIsValid,
         );
-        for (let i = 0; i < expectedSummaries.length; i++) {
+        for (let i = 1; i <= expectedSummaries.length; i++) {
           await chatMessagesAssertion.assertElementText(
-            summaries.nth(i),
-            expectedSummaries[i],
+            chatMessages.getChatMessageDetailsSummary(messageIndex, i),
+            expectedSummaries[i - 1],
             ExpectedMessages.collapsedSectionSummaryIsValid,
           );
         }
         await chatMessagesAssertion.assertElementAttributeAbsence(
-          sections.nth(0),
+          chatMessages.getChatMessageDetailsSection(messageIndex, 1),
           Attributes.open,
           ExpectedMessages.collapsedSectionIsCollapsed,
         );
         await chatMessagesAssertion.assertElementState(
-          summaries.nth(0),
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 1),
           'visible',
+          ExpectedMessages.sectionIsVisible,
         );
         await chatMessagesAssertion.assertElementState(
-          summaries.nth(1),
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 2),
           'hidden',
+          ExpectedMessages.sectionIsNotVisible,
         );
         await chatMessagesAssertion.assertElementState(
-          summaries.nth(2),
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 3),
           'hidden',
+          ExpectedMessages.sectionIsNotVisible,
         );
       },
     );
@@ -422,25 +416,27 @@ dialTest(
     await dialTest.step(
       'Expand the root section and verify the first level section becomes visible, still collapsed',
       async () => {
-        await summaries.nth(0).click();
+        await chatMessages.expandDetailsSummary(messageIndex, 1);
         await chatMessagesAssertion.assertElementAttribute(
-          sections.nth(0),
+          chatMessages.getChatMessageDetailsSection(messageIndex, 1),
           Attributes.open,
           '',
           ExpectedMessages.collapsedSectionIsExpanded,
         );
         await chatMessagesAssertion.assertElementState(
-          summaries.nth(1),
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 1),
           'visible',
+          ExpectedMessages.sectionIsVisible,
         );
         await chatMessagesAssertion.assertElementAttributeAbsence(
-          sections.nth(1),
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 2),
           Attributes.open,
           ExpectedMessages.collapsedSectionIsCollapsed,
         );
         await chatMessagesAssertion.assertElementState(
-          summaries.nth(2),
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 3),
           'hidden',
+          ExpectedMessages.sectionIsNotVisible,
         );
       },
     );
@@ -448,19 +444,20 @@ dialTest(
     await dialTest.step(
       'Expand the first level section and verify the second level section becomes visible, still collapsed',
       async () => {
-        await summaries.nth(1).click();
+        await chatMessages.expandDetailsSummary(messageIndex, 2);
         await chatMessagesAssertion.assertElementAttribute(
-          sections.nth(1),
+          chatMessages.getChatMessageDetailsSection(messageIndex, 2),
           Attributes.open,
           '',
           ExpectedMessages.collapsedSectionIsExpanded,
         );
         await chatMessagesAssertion.assertElementState(
-          summaries.nth(2),
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 3),
           'visible',
+          ExpectedMessages.sectionIsVisible,
         );
         await chatMessagesAssertion.assertElementAttributeAbsence(
-          sections.nth(2),
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 3),
           Attributes.open,
           ExpectedMessages.collapsedSectionIsCollapsed,
         );
@@ -470,9 +467,9 @@ dialTest(
     await dialTest.step(
       'Expand the second level section and verify it becomes visible',
       async () => {
-        await summaries.nth(2).click();
+        await chatMessages.expandDetailsSummary(messageIndex, 3);
         await chatMessagesAssertion.assertElementAttribute(
-          sections.nth(2),
+          chatMessages.getChatMessageDetailsSection(messageIndex, 3),
           Attributes.open,
           '',
           ExpectedMessages.collapsedSectionIsExpanded,

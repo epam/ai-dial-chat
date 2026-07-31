@@ -320,6 +320,7 @@ export const ExpectedMessages = {
   elementAttributeValueIsValid: 'Element attribute value is valid',
   elementAttributeValueShouldBe: 'Element attribute value should be: ',
   elementAttributeValueShouldNotBe: 'Element attribute value should not be: ',
+  elementAttributeIsAbsent: 'Element attribute is absent',
   uploadedFilesAreaIsScrollable: 'Uploaded files area is scrollable vertically',
   elementIsInFocus: 'Element is in focus',
   elementIsNotInFocus: 'Element is not in focus',
@@ -354,9 +355,11 @@ export const ExpectedMessages = {
   collapsedSectionSummaryIsValid: 'Collapsed section summary is valid',
   collapsedSectionIsCollapsed: 'Collapsed section is collapsed',
   collapsedSectionIsExpanded: 'Collapsed section is expanded',
+  sectionIsVisible: 'Section is visible',
+  sectionIsNotVisible: 'Section is not visible',
   tableBodyHeightNotExceedViewportHeight:
     'Table body height does not exceed max percentage of the viewport height',
-  tableBodyHeightIsClosedToMaxCap:
+  tableBodyHeightIsCloseToMaxCap:
     'Table body height is close to the expected max cap',
   tableBodyIsVerticallyScrollable: 'Table body is vertically scrollable',
   tableHeaderNotScrollableVertically: 'Table header does not scroll vertically',

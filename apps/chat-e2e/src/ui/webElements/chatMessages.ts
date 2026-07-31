@@ -240,12 +240,37 @@ export class ChatMessages extends BaseElement {
     );
   }
 
-  public getChatMessageDetailsSection(message: string | number) {
-    return this.getChatMessageContent(message).locator(Tags.details);
+  public getChatMessageDetailsSection(
+    message: string | number,
+    index?: number,
+  ) {
+    const detailsSections = this.createElementFromLocator(
+      this.getChatMessageContent(message).locator(Tags.details),
+    );
+    return index ? detailsSections.getNthElement(index) : detailsSections;
   }
 
-  public getChatMessageSectionSummary(message: string | number) {
-    return this.getChatMessageContent(message).locator(Tags.summary);
+  public getChatMessageDetailsSummary(
+    message: string | number,
+    index?: number,
+  ) {
+    const detailsSummaries = this.createElementFromLocator(
+      this.getChatMessageContent(message).locator(Tags.summary),
+    );
+    return index ? detailsSummaries.getNthElement(index) : detailsSummaries;
+  }
+
+  public async expandDetailsSummary(message: string | number, index: number) {
+    await this.getChatMessageDetailsSummary(message, index).click();
+  }
+
+  public async getChatMessageContentLines(message: string | number) {
+    const messageContent =
+      await this.getChatMessageContent(message).innerText();
+    return messageContent
+      .split('\n')
+      .map((row) => row.trim())
+      .filter((row) => row.length > 0);
   }
 
   public getChatMessageTableHeaderColumns(message: string | number) {

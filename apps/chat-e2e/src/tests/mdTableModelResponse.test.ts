@@ -4,6 +4,7 @@ import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ThemeId } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
+import { Properties } from '@/src/ui/domData/properties';
 import { keys } from '@/src/ui/keyboard';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -432,13 +433,6 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-9394');
     const rowsCount = 50;
-    const tableRows = Array.from(
-      { length: rowsCount },
-      (_, i) => `| Row ${i + 1} | Value ${i + 1} |`,
-    ).join('\n');
-    const largeTableContent =
-      '| Column1 | Column2 |\n| ------------- | ------------- |\n' +
-      `${tableRows}\n`;
     let tableConversation: Conversation;
     let bodyScrollContainer: BaseElement;
     let headerScrollContainer: BaseElement;
@@ -450,8 +444,8 @@ dialTest(
       async () => {
         await localStorageManager.setShowSideBarPanels();
         tableConversation =
-          conversationData.prepareConversationWithTextContent(
-            largeTableContent,
+          conversationData.prepareConversationWithLargeMdTableContent(
+            rowsCount,
           );
         await dataInjector.createConversations([tableConversation]);
       },
@@ -489,7 +483,7 @@ dialTest(
         baseAssertion.assertNumberIsGreaterThan(
           bodyBoundingBox!.height,
           expectedMaxBodyHeight - roundingTolerance,
-          ExpectedMessages.tableBodyHeightIsClosedToMaxCap,
+          ExpectedMessages.tableBodyHeightIsCloseToMaxCap,
         );
         baseAssertion.assertBooleanCondition(
           await bodyScrollContainer.isElementScrollableVertically(),
@@ -506,11 +500,10 @@ dialTest(
           await headerScrollContainer.getElementBoundingBox();
 
         await bodyScrollContainer.scrollToTheEnd();
-        const headerScrollTop = await headerScrollContainer.getScrollTop();
-        baseAssertion.assertValue(
-          headerScrollTop,
+        await baseAssertion.assertScrollPosition(
+          headerScrollContainer,
+          Properties.scrollTop,
           0,
-          ExpectedMessages.tableHeaderNotScrollableVertically,
         );
 
         const headerBoundingBoxAfter =
