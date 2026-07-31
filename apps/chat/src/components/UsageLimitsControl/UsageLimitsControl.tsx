@@ -17,8 +17,6 @@ export interface UsageLimitsLabels {
   triggerAriaLabel: (params: { value: string }) => string;
   /** Popover title. */
   popoverTitle: string;
-  /** Display value for an unlimited monthly allowance. */
-  unlimited: string;
   /** Non-blocking request error. */
   error: string;
   /** Builds the remaining-token text from a locale-formatted number. */
