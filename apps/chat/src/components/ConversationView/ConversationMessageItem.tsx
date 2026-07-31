@@ -131,6 +131,8 @@ interface Props {
   pendingAttachments?: Attachment[];
   /** Called after `pendingAttachments` have been inserted into the edit-message tray. */
   onPendingAttachmentsConsumed?: () => void;
+  /** ID of the attachment currently open in the canvas panel, if any. Renders that tile's selected visual state. */
+  selectedAttachmentId?: string;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -180,6 +182,7 @@ const ConversationMessageItem: FC<Props> = ({
   dialFileSystemLabel,
   pendingAttachments,
   onPendingAttachmentsConsumed,
+  selectedAttachmentId,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
@@ -451,6 +454,7 @@ const ConversationMessageItem: FC<Props> = ({
         codeBlockTheme={codeBlockTheme}
         onAttachmentClick={handleAttachmentClick}
         onDownloadAll={handleDownloadAll}
+        selectedAttachmentId={selectedAttachmentId}
       />
     </CitationCardProvider>
   );

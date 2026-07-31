@@ -25,14 +25,7 @@ const backgroundsColors = {
   'layer-5': 'var(--bg-layer-5, #F5F7FA)',
   'layer-6': 'var(--bg-layer-6, #F8FAFC)',
   'layer-7': 'var(--bg-layer-7, #00000006)',
-  'layer-8': 'var(--bg-layer-8, #f0f2f5)',
-  blackout: 'var(--bg-blackout, #0C101D4D)',
   overlay: 'var(--bg-overlay, #FCFCFC80)',
-  error: 'var(--bg-error, #F3D6D8)',
-  warning: 'var(--bg-warning, #FAF0CF)',
-  info: 'var(--bg-info, #D6E2F9)',
-  success: 'var(--bg-success, #D9F0F1)',
-  neutral: 'var(--bg-neutral, #FCFCFC)',
   inverted: 'var(--bg-inverted, #161B2D)',
   'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
   // Catalog tab bar — override via CSS custom properties for dark-theme support
@@ -114,11 +107,6 @@ const borderColors = {
   hover: 'var(--stroke-hover, #EEF1F7)',
 };
 
-const controlsBorderColors = {
-  // REMOVED: old names, need to remove
-  'controls-focus': 'var(--controls-stroke-focus, #EEF1F7)',
-};
-
 const textColors = {
   // COLORS 2.0
   transparent: 'transparent',
@@ -147,7 +135,6 @@ const textColors = {
   'accent-tertiary': 'var(--text-accent-tertiary, #7E39EC)',
 };
 
-// NEW COLORS 2.0
 const placeholderColor = {
   primary: 'var(--text-primary, #161B2D)', // grey-1000
 };
@@ -168,9 +155,9 @@ module.exports = {
   ],
   theme: {
     backgroundColor: { ...backgroundsColors, ...controlsBgColors },
-    borderColor: { ...borderColors, ...controlsBorderColors },
-    stroke: { ...borderColors, ...controlsBorderColors },
-    divideColor: { ...borderColors, ...controlsBorderColors },
+    borderColor: borderColors,
+    stroke: borderColors,
+    divideColor: borderColors,
     placeholderColor: placeholderColor,
     textColor: { ...textColors, ...controlsTextColors },
     gradientColorStops: backgroundsColors,

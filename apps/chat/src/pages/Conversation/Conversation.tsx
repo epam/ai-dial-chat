@@ -18,7 +18,6 @@ import ConversationView from '../../components/ConversationView/ConversationView
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
 import { getConversationRoute } from '../../constants/routes';
 import {
-  AttachmentsI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationPanelI18nKeys,
@@ -47,11 +46,11 @@ import {
   saveConversation,
 } from '../../server-api/conversations.api';
 import { ROUTES } from '../../types/routes';
+import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getConversationPath } from '../../utils/conversation-path';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
 import { isAwaitingGenerationResume } from '../../utils/generation-resume';
 import { getLastDeploymentId } from '../../utils/message-utils';
-import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 
 interface Props {
   onDuplicateReadonly?: () => void;

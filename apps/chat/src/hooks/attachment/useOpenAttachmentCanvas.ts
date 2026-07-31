@@ -36,7 +36,7 @@ async function openFileCanvas(
       title: attachment.name,
     });
     if (pdfContent != null) {
-      openCanvas(pdfContent, attachment.name);
+      openCanvas(pdfContent, attachment.name, attachment.id);
       return true;
     }
   }
@@ -46,7 +46,7 @@ async function openFileCanvas(
   if (!contentType && attachment.data != null) {
     const content = await resolveTextCanvasContent(attachment);
     if (content != null) {
-      openCanvas(content, attachment.name);
+      openCanvas(content, attachment.name, attachment.id);
       return true;
     }
   }
@@ -57,6 +57,7 @@ async function openFileCanvas(
       openCanvas(
         content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
         attachment.name,
+        attachment.id,
       );
       return true;
     }
@@ -65,6 +66,7 @@ async function openFileCanvas(
       openCanvas(
         content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
         attachment.name,
+        attachment.id,
       );
       return true;
     }
@@ -73,6 +75,7 @@ async function openFileCanvas(
       openCanvas(
         content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
         attachment.name,
+        attachment.id,
       );
       return true;
     }
@@ -87,19 +90,19 @@ async function openFileCanvas(
     case FileExtension.MarkdownAlt: {
       const content = await resolveMarkdownCanvasContent(attachment);
       if (content == null) return false;
-      openCanvas(content, attachment.name);
+      openCanvas(content, attachment.name, attachment.id);
       return true;
     }
     case FileExtension.JSON: {
       const content = await resolveJsonCanvasContent(attachment);
       if (content == null) return false;
-      openCanvas(content, attachment.name);
+      openCanvas(content, attachment.name, attachment.id);
       return true;
     }
     case FileExtension.PDF: {
       const content = await resolvePdfCanvasContent(attachment);
       if (content == null) return false;
-      openCanvas(content, attachment.name);
+      openCanvas(content, attachment.name, attachment.id);
       return true;
     }
   }
@@ -108,13 +111,14 @@ async function openFileCanvas(
     openCanvas(
       createUnsupportedCanvasContent(resolveDialUrl(attachment)),
       attachment.name,
+      attachment.id,
     );
     return true;
   }
 
   const content = await resolveTextCanvasContent(attachment);
   if (content == null) return false;
-  openCanvas(content, attachment.name);
+  openCanvas(content, attachment.name, attachment.id);
   return true;
 }
 
@@ -137,7 +141,7 @@ export const useOpenAttachmentCanvas = () => {
           if (content == null) return false;
           closePanel();
           closeSourcesPanel();
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, attachment.id);
           return true;
         }
         case AttachmentType.Audio: {
@@ -150,13 +154,14 @@ export const useOpenAttachmentCanvas = () => {
               mimeType: attachment.contentType || undefined,
             },
             attachment.name,
+            attachment.id,
           );
           return true;
         }
         case AttachmentType.File: {
           closePanel();
           closeSourcesPanel();
-          openCanvasLoading(attachment.name);
+          openCanvasLoading(attachment.name, attachment.id);
           const opened = await openFileCanvas(attachment, openCanvas);
           if (!opened) closeCanvas();
           return opened;
@@ -165,13 +170,13 @@ export const useOpenAttachmentCanvas = () => {
         case AttachmentType.Prompt: {
           closePanel();
           closeSourcesPanel();
-          openCanvasLoading(attachment.name);
+          openCanvasLoading(attachment.name, attachment.id);
           const content = await resolveTextCanvasContent(attachment);
           if (content == null) {
             closeCanvas();
             return false;
           }
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, attachment.id);
           return true;
         }
         default:

@@ -197,7 +197,8 @@ const ConversationView: FC<Props> = ({
   >([]);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
-  const { openCanvas } = useAttachmentCanvas();
+  const { openCanvas, attachmentId: selectedAttachmentId } =
+    useAttachmentCanvas();
 
   const handlePreviewReference = useCallback(
     (annotation: Annotation) => {
@@ -613,6 +614,7 @@ const ConversationView: FC<Props> = ({
                     }
                     fileAccept={fileAccept}
                     onAttachmentClick={handleMessageAttachmentClick}
+                    selectedAttachmentId={selectedAttachmentId}
                     onDialFileSystemClick={
                       isAttachmentsAllowed
                         ? () => setIsDialFileManagerOpen(true)

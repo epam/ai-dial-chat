@@ -35,8 +35,14 @@ export interface AttachmentCardColors {
   background?: string;
   /** Tile border color in the default state. */
   border?: string;
+  /** Tile background color on hover. */
+  backgroundHover?: string;
   /** Tile border color on hover. */
   borderHover?: string;
+  /** Tile background color in the selected state. */
+  backgroundSelected?: string;
+  /** Tile border color in the selected state. */
+  borderSelected?: string;
   /** Tile focus outline color. */
   focusOutline?: string;
   /** Tile background color in the error state. */
@@ -65,8 +71,6 @@ export interface AttachmentCardTypography {
   fontClassName?: string;
   /** Utility class applied to the bottom meta label (file type / status). Defaults to `'dial-tiny-text'`. */
   metaClassName?: string;
-  /** Utility class applied to the placeholder icon shown while the image is loading. Defaults to `'text-secondary'`. */
-  placeholderIconClassName?: string;
 }
 
 /** Combined style overrides (colors, typography, and shape) for the `AttachmentCard` component. */
@@ -119,4 +123,6 @@ export interface AttachmentCardProps {
   styles?: AttachmentCardStyles;
   /** Called when the user activates the download button. Receives the attachment `id`. */
   onDownload?: (id: string) => void;
+  /** Whether this attachment is the one currently open in the canvas panel. Renders the tile's selected visual state. */
+  isSelected?: boolean;
 }
