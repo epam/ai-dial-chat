@@ -58,7 +58,10 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
-import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
+import {
+  isResourcePathTooLongError,
+  parseApiError,
+} from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
   isAllowedMimeType,
   notAllowedSymbolsRegex,
@@ -145,7 +148,7 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
-import { ChatI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { defaultReplay } from '@/src/constants/replay';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
@@ -3061,11 +3064,17 @@ const moveConversationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.moveConversationFail.type),
     switchMap(({ payload }) => {
+      const message = isResourcePathTooLongError(payload?.message)
+        ? translate(CommonI18nKeys.ResourcePathTooLong, {
+            ns: Translation.Common,
+          })
+        : translate(ChatI18nKeys.ConversationAlreadyExists, {
+            ns: Translation.Chat,
+          });
+
       return of(
         UIActions.showErrorToast({
-          message: translate(ChatI18nKeys.ConversationAlreadyExists, {
-            ns: Translation.Chat,
-          }),
+          message,
           traceId: payload?.traceId,
         }),
       );
