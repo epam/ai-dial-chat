@@ -11,6 +11,7 @@ import {
   getWebAPIToolsetStr,
   isDialAiEntityModel,
   migrateMCPToolsetIdName,
+  parseLocalizedDescription,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
 import { getDefaultSchemaModel } from '@/src/utils/app/application-type-schema';
@@ -397,9 +398,11 @@ export type AppsEditorFormType = (
 const getBaseFormData = ({
   app,
   models,
+  locale,
 }: {
   app?: CustomApplicationModel;
   models?: ShareEntity[];
+  locale: string;
 }): BaseAppForm => ({
   name:
     app?.name ??
@@ -416,7 +419,7 @@ const getBaseFormData = ({
     DEFAULT_APPLICATION_NAME,
   version: app ? (app.version ?? '') : DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
-  description: app?.description ?? '',
+  description: parseLocalizedDescription(locale, app?.description),
   topics: app?.topics ?? [],
 });
 
@@ -711,6 +714,7 @@ export const getDefaultFormData = ({
   type,
   toolSupportingModelIds,
   schema,
+  locale,
 }: {
   type: string;
   app?: CustomApplicationModel;
@@ -718,8 +722,9 @@ export const getDefaultFormData = ({
   runtime?: string;
   toolSupportingModelIds?: string[];
   schema?: ApiDetailedApplicationTypeSchema;
+  locale: string;
 }): AppsEditorFormType => ({
-  ...getBaseFormData({ app, models }),
+  ...getBaseFormData({ app, models, locale }),
   ...getSettingsFormData({
     app,
     runtime,
