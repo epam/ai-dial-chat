@@ -75,7 +75,7 @@ Use `@epam/ai-dial-ui-kit` and `@tabler/icons-react`:
 
 ### 7. `StageMarkdownContent`
 
-Stage bodies are raw markdown strings. A dedicated `StageMarkdownContent` component wraps `MarkdownRenderer` from `@epam/ai-dial-conversation-messages` and applies stage-specific class names. Code blocks get an inline copy button (`StageCodeBlock` sub-component) using `DialGhostIconButton`.
+Stage bodies are raw markdown strings. A dedicated `StageMarkdownContent` component wraps `MarkdownRenderer` from `@epam/ai-dial-conversation-messages` and applies stage-specific class names. Code blocks get an inline copy button (`StageCodeBlock` sub-component) using `GhostIconButton`.
 
 ## Risks / Trade-offs
 

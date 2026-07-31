@@ -17,8 +17,6 @@ import type {
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
 export interface ConversationInputColors {
-  /** Root container background color. */
-  background?: string;
   /** Welcome heading text color. */
   welcomeText?: string;
   /** Color overrides forwarded to the inner `Input` component. */

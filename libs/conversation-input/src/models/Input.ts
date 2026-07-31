@@ -25,22 +25,24 @@ export interface InputColors {
   text?: string;
   /** Border color in the default (unfocused) state. */
   border?: string;
-  /** Border color on hover (unfocused). */
-  borderHover?: string;
   /** Border color when the input is focused. */
   borderFocus?: string;
   /** Placeholder text color. */
   placeholder?: string;
-  /** Box-shadow in the default state (e.g. a subtle inset shadow). */
-  shadow?: string;
-  /** Box-shadow when the input is focused. Falls back to `shadow` when unset. */
-  shadowFocus?: string;
-  /** Background color of the send button. */
-  sendBackground?: string;
-  /** Icon/text color of the send button. */
-  sendText?: string;
-  /** Icon color of the stop button. Defaults to `--text-secondary` (`#9fa6bd`). */
-  stopColor?: string;
+  /** text disabled color. */
+  textDisabled?: string;
+  /** Model-selector chip caret icon color. Defaults to `--text-primary`. */
+  modelSelectorCaret?: string;
+  /** Model-selector chip hover/active background color. Defaults to `--bg-control-accent-alpha-hover`/`--bg-control-accent-alpha-active`. */
+  modelSelectorHoverBg?: string;
+  /** Model-selector chip caret color when disabled. Defaults to `--text-control-disable`. */
+  modelSelectorDisabled?: string;
+  /** Voice bar error border/icon color. Defaults to `--stroke-error`/`--text-error`. */
+  voiceError?: string;
+  /** Voice bar waveform and timer text color. Defaults to `--text-primary`. */
+  voiceWaveform?: string;
+  /** Voice bar stop button and recording-dot accent color. Defaults to `--text-error`. */
+  voiceAccent?: string;
 }
 
 /** Typography overrides for the `Input` component. */

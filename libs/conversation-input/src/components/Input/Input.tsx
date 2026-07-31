@@ -10,7 +10,7 @@ import {
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
-  DialGhostIconButton,
+  StaticIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
@@ -116,14 +116,15 @@ export const Input: FC<InputProps> = ({
         '--ci-bg': colors?.background,
         '--ci-text': colors?.text,
         '--ci-border': colors?.border,
-        '--ci-border-hover': colors?.borderHover,
         '--ci-border-focus': colors?.borderFocus,
         '--ci-placeholder': colors?.placeholder,
-        '--ci-shadow': colors?.shadow,
-        '--ci-shadow-focus': colors?.shadowFocus,
-        '--ci-send-bg': colors?.sendBackground,
-        '--ci-send-text': colors?.sendText,
-        '--ci-stop-color': colors?.stopColor,
+        '--ci-text-disabled': colors?.textDisabled,
+        '--ci-model-selector-caret-color': colors?.modelSelectorCaret,
+        '--ci-model-selector-hover-bg': colors?.modelSelectorHoverBg,
+        '--ci-model-selector-disabled-color': colors?.modelSelectorDisabled,
+        '--ci-voice-error': colors?.voiceError,
+        '--ci-voice-waveform': colors?.voiceWaveform,
+        '--ci-voice-accent': colors?.voiceAccent,
       }),
     [colors],
   );
@@ -235,6 +236,10 @@ export const Input: FC<InputProps> = ({
     isStacked || message.includes('\n') || isMultiLine || hasSelectedTools;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
+  const shouldShowMicButton = useMemo(
+    () => isAudioMessageSupported && !isSendButtonExiting && !isStreaming,
+    [isAudioMessageSupported, isSendButtonExiting, isStreaming],
+  );
 
   const handleSend = async () => {
     if (isSendDisabled) return;
@@ -320,7 +325,7 @@ export const Input: FC<InputProps> = ({
     <textarea
       className={mergeClasses(
         styles.textarea,
-        typography?.fontClassName,
+        typography?.fontClassName || 'dial-body-paragraph-text',
         'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
       )}
       ref={textareaRef}
@@ -340,14 +345,14 @@ export const Input: FC<InputProps> = ({
     />
   );
 
-  const inputBox = (
+  return (
     <div
       ref={containerRef}
       style={cssVars}
       className={mergeClasses(
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
-        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border',
+        'flex min-h-[64px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border shadow-md',
         attachments.length > 6 ? 'py-3 ps-3' : 'p-3',
         className,
       )}
@@ -492,8 +497,9 @@ export const Input: FC<InputProps> = ({
                 )}
               </>
             )}
-            {isAudioMessageSupported && !isSendButtonExiting && (
-              <DialGhostIconButton
+
+            {shouldShowMicButton && (
+              <StaticIconButton
                 icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
                 aria-label={micLabel}
                 className="size-8 flex-shrink-0"
@@ -506,6 +512,4 @@ export const Input: FC<InputProps> = ({
       )}
     </div>
   );
-
-  return inputBox;
 };

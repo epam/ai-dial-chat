@@ -1,5 +1,5 @@
 import { mergeClasses, OverlayFeature } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DialGhostIconButton, IconButton } from '@epam/ai-dial-ui-kit';
 import { IconLayoutSidebarRight, IconPlus } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
@@ -12,7 +12,6 @@ import {
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ROUTES } from '../../types/routes';
 import SourcesSidebarToggle from '../Header/SourcesSidebarToggle';
-import styles from './ChatLayout.module.scss';
 
 interface Props {
   isPanelOpen: boolean;
@@ -54,12 +53,12 @@ const ChatLayout: FC<Props> = ({ isPanelOpen, onTogglePanel, onNewChat }) => {
           />
         )}
         {!isPanelOpen && !isNewConversationHidden && (
-          <DialGhostIconButton
+          <IconButton
             icon={<IconPlus size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
             aria-label={t(ButtonsI18nKeys.NewChat)}
             tooltipProps={{ tooltip: t(ButtonsI18nKeys.NewChat) }}
             onClick={onNewChat}
-            className={styles.newChatButton}
+            className='hover:bg-control-accent-alpha-hover active:bg-control-accent-alpha-active'
           />
         )}
         <div className="ms-auto">

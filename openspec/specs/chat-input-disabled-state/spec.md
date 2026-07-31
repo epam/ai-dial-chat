@@ -67,7 +67,7 @@ The `Input` component's attach (`+`) button SHALL be rendered with `isDisabled={
 #### Scenario: Attach button is disabled
 
 - **WHEN** `Input` is rendered with `isInputDisabled={true}`
-- **THEN** the attach (`+`) `DialGhostIconButton` has `isDisabled={true}` and clicking it does not open the dropdown
+- **THEN** the attach (`+`) `GhostIconButton` has `isDisabled={true}` and clicking it does not open the dropdown
 
 ---
 

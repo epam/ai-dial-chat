@@ -57,7 +57,7 @@ const backgroundsColors = {
   'hover-alpha': 'var(--bg-hover-alpha, rgba(0, 0, 0, 0.04))',
   'focus-ring-alpha': 'var(--bg-focus-ring-alpha, rgba(125, 164, 255, 0.5))',
 };
-// TODO: check usage
+
 const controlsBgColors = {
   // COLORS 2.0
   'control-accent-alpha': 'var(--bg-control-accent-alpha, #2764D90F)', // blue-500 alpha-6
@@ -86,10 +86,6 @@ const controlsBgColors = {
     'var(--controls-bg-accent-primary-alpha-active, #7DA4FF5C)',
 
   'controls-error': 'var(--controls-bg-error, #AE2F2F)',
-  'controls-error-hover': 'var(--controls-bg-error-hover, #BF3939)',
-  'controls-error-active': 'var(--controls-bg-error-active, #CC4545)',
-  'controls-error-alpha-hover': 'var(--controls-bg-alpha-hover, #F764642E)',
-
   'controls-disable': 'var(--controls-bg-disable, #D1DBEA)',
 };
 

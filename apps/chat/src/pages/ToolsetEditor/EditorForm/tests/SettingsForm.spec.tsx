@@ -131,7 +131,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       />
     </label>
   ),
-  DialIconButton: ({
+  DialGhostIconButton: ({
     onClick,
     'aria-label': ariaLabel,
     icon,
@@ -144,7 +144,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {icon}
     </button>
   ),
-  ButtonAppearance: { Ghost: 'ghost' },
   ElementSize: { Standard: 'standard' },
   DIAL_ICON_SIZE: { SM: 16 },
 }));

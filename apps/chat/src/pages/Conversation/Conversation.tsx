@@ -51,6 +51,7 @@ import { getConversationPath } from '../../utils/conversation-path';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
 import { isAwaitingGenerationResume } from '../../utils/generation-resume';
 import { getLastDeploymentId } from '../../utils/message-utils';
+import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 
 interface Props {
   onDuplicateReadonly?: () => void;
@@ -106,24 +107,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     (filenames: string[]) => {
       showNotification({
         variant: NotificationVariant.Error,
-        title: t(AttachmentsI18nKeys.NetworkErrorTitle),
-        message: (
-          <div className="min-w-0 overflow-hidden">
-            <span className="whitespace-pre-line">
-              {t(AttachmentsI18nKeys.NetworkErrorMessage)}
-            </span>
-            <ul className="mt-1 max-w-[508px]">
-              {filenames.map((name, i) => (
-                <li key={i} className="flex items-center gap-1 overflow-hidden">
-                  <span className="shrink-0" aria-hidden>
-                    •
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{name}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ),
+        ...buildNetworkUploadErrorNotification(filenames, t),
       });
     },
     [showNotification, t],
