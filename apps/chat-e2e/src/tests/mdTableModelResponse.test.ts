@@ -62,13 +62,15 @@ dialTest(
       ExpectedConstants.copyTableTooltip(CopyTableType.TXT),
       ExpectedConstants.copyTableTooltip(CopyTableType.MD),
     ];
+    const txtContent =
+      'Country\tCapital\n' +
+      'Canada\tOttawa\n' +
+      'United States\tWashington, D.C.';
     const expectedCopiedTableContent = [
       '"Country","Capital"\n' +
         '"Canada","Ottawa"\n' +
         '"United States","Washington, D.C."',
-      'Country\tCapital\n' +
-        'Canada\tOttawa\n' +
-        'United States\tWashington, D.C.',
+      txtContent,
       '| Country | Capital |\n' +
         '| :-- | :-- |\n' +
         '| Canada | Ottawa |\n' +
@@ -190,14 +192,14 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select the table, copy it with Ctrl+C, paste with Ctrl+V and verify it is copied as text',
+      'Select the table, copy it with Ctrl+C and verify clipboard content',
       async () => {
         await tableElement.selectText();
         await page.keyboard.press(keys.ctrlPlusC);
         const copiedText = await dialHomePage.readTextFromClipboard();
         chatMessagesAssertion.assertCopiedMessage(
           copiedText.trim(),
-          expectedCopiedTableContent[1],
+          txtContent,
         );
       },
     );
