@@ -1,8 +1,8 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  Button,
   ButtonAppearance,
   DIAL_ICON_SIZE,
-  DialButton,
   DialDropdown,
   DialIconButton,
   DialSkeleton,
@@ -188,7 +188,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
           onSelectConversation(item.id);
         }}
       >
-        <DialButton
+        <Button
           iconBefore={avatar}
           label={
             <Highlight

@@ -46,14 +46,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialCheckbox: ({ label }: { label: string }) => <span>{label}</span>,
   DialIcon: () => null,
-  DialPrimaryIconButton: ({
-    onClick,
-  }: {
-    onClick: () => void;
-    icon?: React.ReactNode;
-    size?: string;
-    appearance?: string;
-  }) => <button aria-label="view-mode" onClick={onClick} />,
   DialButtonDropdown: ({
     label,
   }: {

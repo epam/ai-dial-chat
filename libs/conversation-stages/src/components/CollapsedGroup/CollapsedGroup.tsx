@@ -3,11 +3,7 @@ import {
   mergeClasses,
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  LinkButton,
-  DialSpinner,
-} from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, LinkButton, DialSpinner } from '@epam/ai-dial-ui-kit';
 import {
   IconCheck,
   IconChevronDown,

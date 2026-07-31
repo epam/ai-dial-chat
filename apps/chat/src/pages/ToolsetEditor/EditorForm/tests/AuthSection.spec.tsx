@@ -137,6 +137,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       />
     </label>
   ),
+  PrimaryButton: ({
+    label,
+    onClick,
+    disabled,
+  }: {
+    label?: string;
+    onClick?: () => void;
+    disabled?: boolean;
+  }) => (
+    <button type="button" onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  ),
   DialConfirmationPopup: ({
     open,
     confirmLabel,

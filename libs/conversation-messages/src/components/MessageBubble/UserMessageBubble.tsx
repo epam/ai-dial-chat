@@ -6,11 +6,7 @@ import {
   useCollapsedText,
 } from '@epam/ai-dial-chat-shared';
 import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
-import {
-  DIAL_ICON_SIZE,
-  ElementSize,
-  LinkButton,
-} from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, ElementSize, LinkButton } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { FC, useId } from 'react';
 import type { UserMessageBubbleProps } from '../../models/message-bubble';

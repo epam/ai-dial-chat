@@ -57,7 +57,7 @@ const backgroundsColors = {
   'hover-alpha': 'var(--bg-hover-alpha, rgba(0, 0, 0, 0.04))',
   'focus-ring-alpha': 'var(--bg-focus-ring-alpha, rgba(125, 164, 255, 0.5))',
 };
-
+// TODO: check usage
 const controlsBgColors = {
   // COLORS 2.0
   'control-accent-alpha': 'var(--bg-control-accent-alpha, #2764D90F)', // blue-500 alpha-6
@@ -82,41 +82,15 @@ const controlsBgColors = {
   'control-disable': 'var(--bg-control-disable, #C7CBD4)', // grey-700
 
   // REMOVED: old names, need to remove
-  'controls-accent-primary': 'var(--controls-bg-accent-primary, #124ACE)',
-  'controls-accent-primary-hover':
-    'var(--controls-bg-accent-primary-hover, #2656D9)',
-  'controls-accent-primary-active':
-    'var(--controls-bg-accent-primary-active, #3664E2)',
   'controls-accent-primary-alpha-active':
     'var(--controls-bg-accent-primary-alpha-active, #7DA4FF5C)',
-
-  'controls-accent-secondary-alpha-active':
-    'var(--controls-bg-accent-secondary-alpha-active, #37BABC5C)',
-
-  'controls-accent-tertiary-alpha-active':
-    'var(--controls-bg-accent-tertiary-alpha-active, #A972FF5C)',
 
   'controls-error': 'var(--controls-bg-error, #AE2F2F)',
   'controls-error-hover': 'var(--controls-bg-error-hover, #BF3939)',
   'controls-error-active': 'var(--controls-bg-error-active, #CC4545)',
   'controls-error-alpha-hover': 'var(--controls-bg-alpha-hover, #F764642E)',
-  'controls-error-alpha-active':
-    'var(--controls-bg-error-alpha-active, #F764645C)',
 
-  'controls-disable-accent': 'var(--controls-bg-disable-accent, #7C8293)',
   'controls-disable': 'var(--controls-bg-disable, #D1DBEA)',
-
-  'controls-neutral-hover': 'var(--controls-bg-neutral-hover, #D1DBEA)',
-  'controls-neutral-active': 'var(--controls-bg-neutral-active, #9FA6BD)',
-
-  'controls-accent-success-alpha-hover':
-    'var(--controls-bg-accent-success-alpha-hover, #37BABC2E)',
-  'controls-accent-success-alpha-active':
-    'var(--controls-bg-accent-success-alpha-active, #37BABC5C)',
-  'controls-accent': 'var(--controls-bg-accent, #5C8DEA)',
-  'controls-accent-hover': 'var(--controls-bg-accent-hover, #4878D2)',
-  'controls-accent-alpha': 'var(--controls-bg-accent-alpha, #5C8DEA2B)',
-  'controls-enable-primary': 'var(--controls-enable-primary, #FCFCFC)',
 };
 
 const borderColors = {

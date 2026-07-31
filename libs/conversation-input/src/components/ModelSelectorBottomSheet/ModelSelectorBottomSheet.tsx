@@ -1,7 +1,7 @@
 import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  Button,
   DIAL_ICON_SIZE,
-  DialButton,
   DialSearch,
   ElementSize,
   Highlight,
@@ -55,7 +55,7 @@ const ModelRow = ({
 
   return (
     <div style={style} {...ariaAttributes}>
-      <DialButton
+      <Button
         type="button"
         className={mergeClasses(
           styles.item,
