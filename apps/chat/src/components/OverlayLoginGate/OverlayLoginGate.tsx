@@ -1,4 +1,4 @@
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

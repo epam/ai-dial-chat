@@ -21,11 +21,11 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
-import { NeutralButton } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
-  DialFabButton,
   ErrorMessageNotification,
+  FabButton,
+  NeutralButton,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
@@ -46,6 +46,7 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
+  ConversationInputI18nKeys,
   ConversationPanelI18nKeys,
   DialFileManagerI18nKeys,
   FileDndI18nKeys,
@@ -74,6 +75,7 @@ import { getQuickAppConversationStarters } from '../../utils/quick-app-conversat
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import FooterContainer from '../FooterDialogs/FooterContainer';
+import UsageLimitsControl from '../UsageLimitsControl/UsageLimitsControl';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -375,6 +377,21 @@ const ConversationView: FC<Props> = ({
     itemCount: items.length,
   });
 
+  const usageLimitsLabels = useMemo(
+    () => ({
+      triggerAriaLabel: ({ value }: { value: string }) =>
+        t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
+      popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
+      unlimited: t(ConversationInputI18nKeys.Unlimited),
+      error: t(ConversationInputI18nKeys.Error),
+      tokensRemaining: ({ count }: { count: string }) =>
+        t(ConversationInputI18nKeys.TokensRemaining, { count }),
+      progressAriaLabel: ({ used, total }: { used: string; total: string }) =>
+        t(ConversationInputI18nKeys.ProgressAriaLabel, { used, total }),
+    }),
+    [t],
+  );
+
   const formatStatusModelChangedBody = useCallback(
     (from: string, to: string) =>
       t(ConversationI18nKeys.StatusModelChangedBody, {
@@ -646,7 +663,7 @@ const ConversationView: FC<Props> = ({
         </div>
 
         {isScrollButtonVisible && (
-          <DialFabButton
+          <FabButton
             aria-label={t(ChatI18nKeys.ScrollToBottom)}
             onClick={scrollToBottom}
             className="absolute bottom-0 left-1/2 -translate-x-1/2"
@@ -751,6 +768,14 @@ const ConversationView: FC<Props> = ({
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
+                usageLimitsSlot={
+                  <UsageLimitsControl
+                    deploymentId={
+                      fixedModel ? fixedModel.id : (selectedItemId ?? undefined)
+                    }
+                    labels={usageLimitsLabels}
+                  />
+                }
               />
             </Suspense>
             <Suspense fallback={null}>

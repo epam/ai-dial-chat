@@ -4,11 +4,11 @@ import {
   mergeClasses,
   MIMEType,
 } from '@epam/ai-dial-chat-shared';
-import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialEllipsisTooltip,
   DialGhostIconButton,
   ElementSize,
+  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { FC, memo } from 'react';

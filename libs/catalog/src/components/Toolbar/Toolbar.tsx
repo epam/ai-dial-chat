@@ -31,7 +31,6 @@ export const Toolbar: FC<ToolbarProps> = ({
     '--cat-browse-count-text': browseStyles?.colors?.countText,
     '--cat-browse-icon': browseStyles?.colors?.icon,
     '--cat-browse-divider': browseStyles?.colors?.divider,
-    '--cat-browse-clear-all': browseStyles?.colors?.clearAll,
   } as CSSProperties;
 
   return (

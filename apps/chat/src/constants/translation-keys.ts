@@ -785,3 +785,12 @@ export enum ToolsI18nKeys {
   SelectedCount = 'tools.selectedCount',
   RemoveTool = 'tools.removeTool',
 }
+
+export enum ConversationInputI18nKeys {
+  TriggerAriaLabel = 'conversationInput.usageLimits.triggerAriaLabel',
+  PopoverTitle = 'conversationInput.usageLimits.popoverTitle',
+  Unlimited = 'conversationInput.usageLimits.unlimited',
+  Error = 'conversationInput.usageLimits.error',
+  TokensRemaining = 'conversationInput.usageLimits.tokensRemaining',
+  ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
+}

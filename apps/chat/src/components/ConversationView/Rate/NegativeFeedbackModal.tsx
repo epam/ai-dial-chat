@@ -1,11 +1,11 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-shared';
-import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialFormItem,
   DialFormPopup,
   DialSelect,
   DialTextarea,
   PopupSize,
+  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';

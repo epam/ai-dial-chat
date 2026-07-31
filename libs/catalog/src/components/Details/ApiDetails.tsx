@@ -3,7 +3,7 @@ import {
   DIAL_ICON_SIZE,
   DialDropdown,
   DialGhostIconButton,
-  DialNeutralButton,
+  NeutralButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconChevronDown, IconCopy } from '@tabler/icons-react';
@@ -140,7 +140,7 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
             matchReferenceWidth={false}
             listClassName="cp-dropdown-overlay"
           >
-            <DialNeutralButton
+            <NeutralButton
               size={ElementSize.Small}
               label={activeLabel}
               iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
@@ -254,7 +254,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
               matchReferenceWidth={false}
               listClassName="cp-dropdown-overlay"
             >
-              <DialNeutralButton
+              <NeutralButton
                 size={ElementSize.Small}
                 label={activeEndpoint?.label}
                 iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}

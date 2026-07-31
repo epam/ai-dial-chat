@@ -1,5 +1,5 @@
 .sectionHeading {
-  color: var(--text-secondary, #575f73);
+  color: var(--text-secondary, #6b7280);
 }
 
 .urlBox {
@@ -24,14 +24,14 @@
 
 .copyButton {
   background: var(--bg-layer-2, #1a2035);
-  color: var(--text-secondary, #575f73);
+  color: var(--text-secondary, #6b7280);
 
   &:hover {
     background: var(--bg-layer-3, #242c42);
-    color: var(--text-primary, #e4e6f0);
+    color: var(--text-primary, #161b2d);
   }
 }
 
 .pre {
-  color: var(--text-primary, #e4e6f0);
+  color: var(--text-primary, #161b2d);
 }

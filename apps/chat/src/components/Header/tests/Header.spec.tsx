@@ -24,7 +24,7 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { LG: 24 },
-  DialGhostIconButton: ({
+  GhostIconButton: ({
     'aria-label': ariaLabel,
     'aria-pressed': ariaPressed,
     onClick,
@@ -32,6 +32,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-label': string;
     'aria-pressed'?: AriaAttributes['aria-pressed'];
     onClick: () => void;
+  }) => (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      onClick={onClick}
+    />
+  ),
+  DialGhostIconButton: ({
+    'aria-label': ariaLabel,
+    'aria-pressed': ariaPressed,
+    onClick,
+  }: {
+    'aria-label': string;
+    'aria-pressed'?: AriaAttributes['aria-pressed'];
+    onClick?: () => void;
   }) => (
     <button
       type="button"

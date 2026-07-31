@@ -66,7 +66,7 @@ describe('PublishFooter', () => {
   it('gives Publish the same secondary (neutral) style as Cancel, both non-primary', () => {
     renderFooter();
     const publishBtn = screen.getByRole('button', { name: 'Publish' });
-    expect(publishBtn.className).toContain('dial-neutral-outlined-button');
-    expect(publishBtn.className).not.toContain('dial-primary-solid-button');
+    expect(publishBtn.className).toContain('dial-kit-neutral-solid-button');
+    expect(publishBtn.className).not.toContain('dial-kit-primary-solid-button');
   });
 });

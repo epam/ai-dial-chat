@@ -24,20 +24,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onChange={(e) => onChange(e.target.value)}
     />
   ),
-  DialGhostButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
-  DialPrimaryButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
   DialEllipsisTooltip: ({
     text,
     className,
@@ -59,33 +45,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </>
   ),
   DialCheckbox: ({ label }: { label: string }) => <span>{label}</span>,
-  DialLinkButton: ({
-    label,
-  }: {
-    label: string;
-    className?: string;
-    iconAfter?: React.ReactNode;
-  }) => <button>{label}</button>,
-  DialDangerButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-    iconBefore?: React.ReactNode;
-    className?: string;
-    size?: string;
-    appearance?: string;
-  }) => <button onClick={onClick}>{label}</button>,
   DialIcon: () => null,
-  DialPrimaryIconButton: ({
-    onClick,
-  }: {
-    onClick: () => void;
-    icon?: React.ReactNode;
-    size?: string;
-    appearance?: string;
-  }) => <button aria-label="view-mode" onClick={onClick} />,
   DialButtonDropdown: ({
     label,
   }: {
@@ -94,6 +54,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     appearance?: string;
     items?: unknown[];
   }) => <button aria-label="sort">{label}</button>,
+  GhostButton: ({
+    icon,
+    onClick,
+  }: {
+    icon: React.ReactNode;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{icon}</button>,
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({

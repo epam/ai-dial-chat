@@ -69,6 +69,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialDropdown: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
+  DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DialSkeleton: () => null,
+  DialSkeletonVariant: { Circular: 'circular' },
   DialIconButton: ({
     onClick,
     'aria-label': ariaLabel,
@@ -76,7 +79,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClick?: () => void;
     'aria-label'?: string;
   }) => <button onClick={onClick} aria-label={ariaLabel} />,
-  DialButton: ({
+  Button: ({
     onClick,
     label,
     'aria-current': ariaCurrent,
@@ -84,14 +87,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClick?: () => void;
     label?: React.ReactNode;
     'aria-current'?: React.AriaAttributes['aria-current'];
-    [key: string]: unknown;
   }) => (
     <button onClick={onClick} aria-current={ariaCurrent}>
       {label}
     </button>
   ),
-  DialTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DialSkeleton: () => null,
   Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
@@ -102,27 +102,6 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
   buildCssVars: () => ({}),
   Highlight: ({ text }: { text: string }) => <span>{text}</span>,
 }));
-
-vi.mock('@epam/ai-dial-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@epam/ai-dial-kit')>();
-  return {
-    ...actual,
-    GhostButton: ({
-      onClick,
-      label,
-      'aria-current': ariaCurrent,
-    }: {
-      onClick: () => void;
-      label: React.ReactNode;
-      'aria-current'?: React.AriaAttributes['aria-current'];
-      [key: string]: unknown;
-    }) => (
-      <button onClick={onClick} aria-current={ariaCurrent}>
-        {label}
-      </button>
-    ),
-  };
-});
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,

@@ -487,6 +487,7 @@ describe('CatalogView', () => {
         announcementHtml: null,
         deepResearchToolId: null,
         footerHtmlMessage: '',
+        customVisualizers: [],
       },
     });
   });
@@ -710,6 +711,7 @@ describe('CatalogView', () => {
           announcementHtml: null,
           deepResearchToolId: null,
           footerHtmlMessage: '',
+          customVisualizers: [],
         },
       });
 
