@@ -33,6 +33,7 @@ export default defineConfig(() => ({
         'react-dom',
         'react/jsx-runtime',
         '@epam/ai-dial-chat-shared',
+        '@epam/ai-dial-shared',
         '@epam/ai-dial-sidebar',
         '@epam/ai-dial-ui-kit',
         '@epam/ai-dial-visualizer-connector',

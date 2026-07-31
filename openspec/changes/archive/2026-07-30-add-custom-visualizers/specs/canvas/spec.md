@@ -43,13 +43,13 @@ interface VisualizerCanvasContent {
 
 ### Requirement: `VisualizerCanvasRenderer` component
 
-`libs/attachment-canvas/src/components/VisualizerCanvasRenderer/VisualizerCanvasRenderer.tsx` SHALL render an iframe host and drive the visualizer handshake and data delivery. Behaviour:
+`libs/attachment-canvas/src/components/VisualizerCanvasRenderer/VisualizerCanvasRenderer.tsx` SHALL render an iframe host and drive the visualizer handshake and data delivery via the published npm package `@epam/ai-dial-visualizer-connector` (and `@epam/ai-dial-shared` for the request enum). Behaviour:
 
-- On mount, create a `VisualizerConnector` with `{ hostElement: <container>, iframeUrl: content.url, visualizerName: content.visualizerName, requestTimeout: content.requestTimeout }`.
-- Await `.ready()` and then call `.send(VisualizerConnectorRequests.SEND_VISUALIZE_DATA, { mimeType: content.mimeType, visualizerData: { layout: content.layout, ...content.data } })`.
-- On unmount, call `connector.destroy()`.
-- Display a loading state while `.ready()` is pending. Because `.ready()` never times out (see the `custom-visualizers` capability and `design.md` D7), a visualizer that never completes the handshake leaves the body in this loading state indefinitely — this is intended. Display an error state if the `SEND_VISUALIZE_DATA` `send()` rejects (its own timeout) or if `.ready()` rejects due to `destroy()`.
-- The component SHALL memoise the connector instance so a re-render of the parent does not tear down the iframe.
+- On mount, create a `VisualizerConnector` bound to the container element, passing `domain: content.url`, `hostDomain: window.location.origin` (required by the published options type; unused at runtime in the current package), `visualizerName: content.visualizerName`, and `requestTimeout: content.requestTimeout`.
+- Await `.ready()` and then call `.send(VisualizerConnectorRequests.sendVisualizeData, { mimeType: content.mimeType, visualizerData: { layout: content.layout, ...content.data } })`, where `VisualizerConnectorRequests` is imported from `@epam/ai-dial-shared` (camelCase member; wire value `SEND_VISUALIZE_DATA`).
+- On unmount, call `connector.destroy()` exactly once for that instance.
+- Display a loading state while `.ready()` is pending. Because `.ready()` never times out (see the `custom-visualizers` capability), a visualizer that never completes the handshake leaves the body in this loading state indefinitely — this is intended. Display an error state if the `SEND_VISUALIZE_DATA` `send()` rejects (its own timeout) or if `.ready()` rejects due to `destroy()`.
+- The component SHALL keep the connector instance stable across parent re-renders that do not change `url` / `visualizerName` / `requestTimeout`, so those re-renders do not tear down the iframe.
 
 The component MUST NOT read from any app-level context (auth, theme, i18n, feature flags) — all data required for the visualizer is passed in through `VisualizerCanvasContent`.
 
@@ -62,7 +62,7 @@ The component MUST NOT read from any app-level context (auth, theme, i18n, featu
 #### Scenario: SEND_VISUALIZE_DATA is dispatched after READY_TO_INTERACT
 
 - **WHEN** the iframe posts `${visualizerName}/READY_TO_INTERACT`
-- **THEN** the renderer calls `connector.send(SEND_VISUALIZE_DATA, ...)` exactly once
+- **THEN** the renderer calls `connector.send` with the published enum member whose wire value is `SEND_VISUALIZE_DATA` exactly once
 - **AND** the payload's `layout` equals `content.layout`
 
 #### Scenario: send failure surfaces error state

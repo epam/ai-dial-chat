@@ -1,8 +1,35 @@
 import {
   type CustomVisualizerData,
   mergeClasses,
-  VisualizerConnectorRequests,
 } from '@epam/ai-dial-chat-shared';
+/*
+ * Host drives the iframe via published `@epam/ai-dial-visualizer-connector`
+ * (+ `@epam/ai-dial-shared` for the request enum). A later follow-up may port
+ * those packages into this monorepo — see checklist below.
+ *
+ * Migration checklist:
+ * 1. Port `VisualizerConnector` into `libs/visualizer-connector` with
+ *    peerDep `@epam/ai-dial-chat-shared` (not `@epam/ai-dial-shared`).
+ * 2. Port `ChatVisualizerConnector` into `libs/chat-visualizer-connector`
+ *    for third-party authors; publish from this monorepo.
+ * 3. Keep wire values (`SEND_VISUALIZE_DATA`, `READY`, …) identical.
+ *    Align enum member names with host conventions (PascalCase
+ *    `SendVisualizeData`) — npm `@epam/ai-dial-shared` uses camelCase
+ *    (`sendVisualizeData`).
+ * 4. Drop `hostDomain` from the constructor call below if the ported
+ *    `VisualizerConnectorOptions` no longer requires it (npm type requires
+ *    it; runtime currently ignores it).
+ * 5. Carry forward security/hygiene fixes not present in the published package:
+ *    - idempotent `destroy()` (`isDestroyed` guard; README promises no-op)
+ *    - strict origin equality in `ChatVisualizerConnector` (not `startsWith`)
+ *    - sandbox `allow-same-origin`+`allow-scripts` rationale comment/spec
+ * 6. Remove root deps / attachment-canvas peers for
+ *    `@epam/ai-dial-visualizer-connector` and `@epam/ai-dial-shared`.
+ * 7. Point this file at workspace `@epam/ai-dial-visualizer-connector` and
+ *    `@epam/ai-dial-chat-shared` for the request enum.
+ * 8. Update `openspec/specs/custom-visualizers/spec.md` accordingly.
+ */
+import { VisualizerConnectorRequests } from '@epam/ai-dial-shared';
 import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 import { IconAlertTriangle } from '@tabler/icons-react';
@@ -20,7 +47,11 @@ export interface VisualizerCanvasRendererProps {
   errorLabel?: string;
 }
 
-type RendererStatus = 'loading' | 'ready' | 'error';
+enum RendererStatus {
+  Loading = 'loading',
+  Ready = 'ready',
+  Error = 'error',
+}
 
 /** Mounts a sandboxed visualizer iframe, drives the handshake, and delivers visualize data. */
 export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
@@ -29,13 +60,15 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
   errorLabel = 'Failed to load visualizer',
 }) => {
   const hostRef = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState<RendererStatus>('loading');
+  const [status, setStatus] = useState<RendererStatus>(RendererStatus.Loading);
 
   const { url, visualizerName, requestTimeout } = content;
 
-  // Read via a ref so a parent re-render that only recreates `mimeType`/
-  // `layout`/`data` object identity does not tear down and remount the
-  // iframe — only a change to `url`/`visualizerName`/`requestTimeout` does.
+  /*
+   * Read via a ref so a parent re-render that only recreates `mimeType`/
+   * `layout`/`data` object identity does not tear down and remount the
+   * iframe — only a change to `url`/`visualizerName`/`requestTimeout` does.
+   */
   const latestPayloadRef = useRef(content);
   latestPayloadRef.current = content;
 
@@ -45,10 +78,14 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
       return;
     }
 
-    setStatus('loading');
+    setStatus(RendererStatus.Loading);
 
+    /* `hostDomain` is required by the published VisualizerConnectorOptions
+     * type but unused at runtime in the current development package — pass
+     * the page origin for type compatibility. */
     const connector = new VisualizerConnector(hostElement, {
       domain: url,
+      hostDomain: window.location.origin,
       visualizerName,
       requestTimeout,
     });
@@ -67,18 +104,18 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
         ...(typeof data === 'object' && data !== null ? data : {}),
       };
 
-      await connector.send(VisualizerConnectorRequests.SendVisualizeData, {
+      await connector.send(VisualizerConnectorRequests.sendVisualizeData, {
         mimeType,
         visualizerData,
       });
       if (isActive) {
-        setStatus('ready');
+        setStatus(RendererStatus.Ready);
       }
     };
 
     run().catch(() => {
       if (isActive) {
-        setStatus('error');
+        setStatus(RendererStatus.Error);
       }
     });
 
@@ -91,7 +128,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
   return (
     <div className="relative h-full w-full">
       <div ref={hostRef} className="h-full w-full" />
-      {status === 'loading' && (
+      {status === RendererStatus.Loading && (
         <div
           className={mergeClasses(
             'absolute inset-0 flex flex-col items-center justify-center gap-2',
@@ -106,7 +143,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
           )}
         </div>
       )}
-      {status === 'error' && (
+      {status === RendererStatus.Error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <IconAlertTriangle
             size={60}

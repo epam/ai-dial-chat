@@ -1,4 +1,4 @@
-import { VisualizerConnectorRequests } from '@epam/ai-dial-chat-shared';
+import { VisualizerConnectorRequests } from '@epam/ai-dial-shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { VisualizerCanvasContent } from '../../../models/attachment-canvas';
@@ -55,6 +55,7 @@ describe('VisualizerCanvasRenderer', () => {
 
     expect(lastConstructorOptions).toMatchObject({
       domain: content.url,
+      hostDomain: window.location.origin,
       visualizerName: content.visualizerName,
       requestTimeout: content.requestTimeout,
     });
@@ -69,7 +70,7 @@ describe('VisualizerCanvasRenderer', () => {
 
     await waitFor(() => expect(sendMock).toHaveBeenCalledOnce());
     expect(sendMock).toHaveBeenCalledWith(
-      VisualizerConnectorRequests.SendVisualizeData,
+      VisualizerConnectorRequests.sendVisualizeData,
       {
         mimeType: content.mimeType,
         visualizerData: {

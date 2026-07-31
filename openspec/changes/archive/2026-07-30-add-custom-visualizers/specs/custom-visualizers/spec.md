@@ -2,7 +2,7 @@
 
 ### Requirement: CustomVisualizer registry entry shape
 
-The system SHALL define a `CustomVisualizer` type in `libs/chat-shared/src/types/visualizer-connector.ts` with the following fields:
+The system SHALL define a `CustomVisualizer` type in `libs/chat-shared/src/models/custom-visualizer.ts` with the following fields:
 
 - `contentType: string` — required, non-empty. A **comma-separated list of one or more MIME types** this entry matches (e.g. `"application/vnd.plotly.v1+json"` or `"application/vnd.plotly.v1+json, application/vnd.vega.v5+json"`). Preserved verbatim as the raw string on the type; splitting happens at lookup time (see "MIME → registry lookup").
 - `url: string` — absolute HTTP(S) URL of the visualizer iframe (required, must have `http:` or `https:` scheme).
@@ -102,28 +102,29 @@ Parsing behaviour:
 
 ### Requirement: postMessage protocol constants
 
-`libs/chat-shared/src/constants/visualizer-connector.ts` SHALL define:
+The **runtime** host path (`VisualizerCanvasRenderer`) SHALL import `VisualizerConnectorRequests` from the published `@epam/ai-dial-shared` package that accompanies `@epam/ai-dial-visualizer-connector`. That package uses camelCase members (`sendVisualizeData`, …). Wire string values remain `SEND_VISUALIZE_DATA`, `READY`, `READY_TO_INTERACT`, etc. This monorepo SHALL NOT duplicate those protocol enums in `libs/chat-shared` — host config/canvas types live in `models/custom-visualizer.ts` separately from the connector wire surface.
 
-- `visualizerConnectorLibName` — a fixed string constant (`'VisualizerConnector'`) identifying this class in error/log messages (e.g. `[VisualizerConnector] Request … timed out`). It is NOT part of the postMessage wire format — the wire prefix on every envelope is `visualizerName` (see the `VisualizerConnector` requirement below), which is per-instance and comes from the registry entry's `title`.
-- `VisualizerConnectorEvents` enum — includes `READY`, `READY_TO_INTERACT`, and `SEND_MESSAGE`.
-- `VisualizerConnectorRequests` enum — includes `SEND_VISUALIZE_DATA` and `SEND_GROUPED_VISUALIZE_DATA`. Values follow the `${eventName}` and `${eventName}/RESPONSE` naming convention required by the connector implementation.
+#### Scenario: runtime send uses the published enum
 
-#### Scenario: enum members
-
-- **WHEN** the enum sets are enumerated
-- **THEN** `VisualizerConnectorEvents` contains `READY`, `READY_TO_INTERACT`, and `SEND_MESSAGE`
-- **AND** `VisualizerConnectorRequests` contains `SEND_VISUALIZE_DATA` and `SEND_GROUPED_VISUALIZE_DATA`
+- **WHEN** `VisualizerCanvasRenderer` delivers visualize data
+- **THEN** it calls `connector.send(VisualizerConnectorRequests.sendVisualizeData, …)` where `VisualizerConnectorRequests` is imported from `@epam/ai-dial-shared`
+- **AND** the posted message type is still `${visualizerName}/SEND_VISUALIZE_DATA`
 
 ---
 
 ### Requirement: `VisualizerConnector` host-side manager class
 
-`libs/visualizer-connector/src/lib/VisualizerConnector.ts` SHALL export a `VisualizerConnector` class with the following contract:
+The host SHALL consume the published stable npm package `@epam/ai-dial-visualizer-connector` (pinned in the workspace root `package.json`, currently `0.48.0`) together with its dependency `@epam/ai-dial-shared`. This monorepo SHALL NOT vendor workspace copies of those connector packages.
+
+`VisualizerCanvasRenderer` in `libs/attachment-canvas` is the sole in-repo consumer. A follow-up MAY later port the connectors into this monorepo and rebind them to `@epam/ai-dial-chat-shared` (see the TODO on `VisualizerCanvasRenderer`).
+
+The published `VisualizerConnector` class (contract as shipped on npm) SHALL satisfy:
 
 Constructor: `new VisualizerConnector(root: HTMLElement | string, options: VisualizerConnectorOptions)`
 
 - `root` — the DOM container (or a CSS selector string) into which the iframe is mounted.
 - `options.domain` — the visualizer URL.
+- `options.hostDomain` — required by the published TypeScript type. The current npm runtime does not use this field for message filtering; `VisualizerCanvasRenderer` SHALL pass `window.location.origin` for type compatibility.
 - `options.visualizerName` — the type prefix used on outbound messages. Supplied by the app from the registry entry's `title`; the iframe-side app must be constructed with the identical string.
 - `options.requestTimeout?: number` — optional timeout in milliseconds applied to each `send()` request. Defaults to `10000`. Sourced from the registry entry's `requestTimeout` when set. It MUST NOT be applied to `ready()`.
 - `options.loaderStyles?: Record<string, string>` — CSS styles applied to the built-in loader overlay while the iframe is not yet ready.
@@ -133,9 +134,9 @@ Constructor: `new VisualizerConnector(root: HTMLElement | string, options: Visua
 Instance methods:
 
 - `ready(): Promise<boolean>` — resolves with `true` after the iframe posts `READY_TO_INTERACT`; rejects on `destroy()`. It SHALL NOT time out: if the iframe never posts `READY_TO_INTERACT` the promise stays pending indefinitely.
-- `send(type: VisualizerConnectorRequests, payload?: unknown, waitForReady = true): Promise<unknown>` — when `waitForReady` is set (the default) it first awaits the handshake; posts a message of type `${visualizerName}/${type}` with a unique `requestId`; resolves with the response payload when the iframe posts `${visualizerName}/${type}/RESPONSE` with the same `requestId`; rejects (with a string, see task 2.2a) when `requestTimeout` elapses first. If `destroy()` happens while the call is still awaiting the handshake, it resolves with `undefined` rather than rejecting; if the message was already posted, the request is left to time out (see the destroy note below).
+- `send(type: VisualizerConnectorRequests, payload?: unknown, waitForReady = true): Promise<unknown>` — when `waitForReady` is set (the default) it first awaits the handshake; posts a message of type `${visualizerName}/${type}` with a unique `requestId`; resolves with the response payload when the iframe posts `${visualizerName}/${type}/RESPONSE` with the same `requestId`; rejects (with a string) when `requestTimeout` elapses first. If `destroy()` happens while the call is still awaiting the handshake, it resolves with `undefined` rather than rejecting; if the message was already posted, the request is left to time out (see the destroy note below).
 - `subscribe(eventType: string, callback: (payload: unknown) => void): () => void` — registers an unsolicited-message listener for a specific event type; returns an unsubscribe function.
-- `destroy(): void` — removes the iframe, clears the loader, fails the handshake `Task` (so calls awaiting `ready()` reject with the string `'Chat Visualizer destroyed'`), and detaches the `message` listener. Matching `development`, it does **not** reach into `this.requests`: a request whose message was already posted is not cancelled and simply times out on its own deadline. This is the ported behaviour and is intentional in this change; the ported `DeferredRequest` exposes no cancellation method to build on (see task 2.2a and the follow-up recorded there).
+- `destroy(): void` — removes the iframe, clears the loader, fails the handshake `Task` (so calls awaiting `ready()` reject with the string `'Chat Visualizer destroyed'`), and detaches the `message` listener. Matching the published package, it does **not** reach into pending `requests`: a request whose message was already posted is not cancelled and simply times out on its own deadline. A second `destroy()` call is **not** guaranteed to be a no-op in the published package (calling `removeChild` twice may throw) — callers MUST avoid double-destroy.
 
 Message reception:
 
@@ -143,7 +144,7 @@ Message reception:
 - Inbound messages MUST be discarded when `event.source !== iframeElement.contentWindow`.
 - Inbound messages MUST be discarded when `event.data.type` is missing or does not start with `${visualizerName}/`.
 
-The class SHALL NOT import from `apps/**`, from any generated API client, from any Redux/context provider, or from any env/config source. Its only dependency SHALL be `@epam/ai-dial-chat-shared`.
+The published package's only runtime dependency is `@epam/ai-dial-shared`. The host app / canvas lib MUST NOT expect the connector to import `@epam/ai-dial-chat-shared`.
 
 **RTL impact:** None (the class does not render user-facing UI beyond the iframe container).
 
@@ -197,20 +198,18 @@ The host connector filters on the source-window reference only, matching `develo
 
 ### Requirement: `ChatVisualizerConnector` iframe-side receiver
 
-The iframe-side `ChatVisualizerConnector` lib (`libs/chat-visualizer-connector`, package `@epam/ai-dial-chat-visualizer-connector`) SHALL be delivered by this change and published for third-party visualizer authors.
+Third-party visualizer authors SHALL consume the published stable npm package `@epam/ai-dial-chat-visualizer-connector` (from the legacy Chat `development` release line). This monorepo does **not** vendor or publish that package; the host application MUST NOT import it.
 
-A `ChatVisualizerConnector` class used by third-party visualizer applications running inside the iframe SHALL:
+A `ChatVisualizerConnector` class used by third-party visualizer applications running inside the iframe SHALL (as shipped on npm):
 
 - Accept the visualizer's protocol name as a constructor argument (`appName`). This value MUST equal the `title` of the corresponding `CUSTOM_VISUALIZERS` entry on the host — a mismatch produces a silent failure in which the iframe loads but never receives data.
 - Post `${appName}/READY` when the consumer calls `sendReady()`. The constructor itself only attaches the `message` listener — it does NOT announce readiness, so a visualizer that never calls `sendReady()` never completes the handshake.
 - Post `${appName}/READY_TO_INTERACT` when the consumer calls `sendReadyToInteract()`.
 - Listen for `${appName}/SEND_VISUALIZE_DATA` inbound messages, invoke a consumer-supplied callback with the payload, and post `${appName}/SEND_VISUALIZE_DATA/RESPONSE` with the same `requestId`.
-- Accept one or more allowed host origins (`dialHost: string | string[]`) and discard any inbound `message` whose `event.origin` is not among them. Passing the wildcard `'*'` as the **first** entry disables the check entirely.
+- Accept one or more allowed host origins (`dialHost: string | string[]`) and discard any inbound `message` whose `event.origin` is not among them. Passing the wildcard `'*'` as the **first** entry disables the check entirely. The published package compares configured hosts with a string prefix check (`allowedHost.startsWith(event.origin)`).
 - Throw a descriptive error when constructed with an empty host list.
 
-For wire-format parity with `development` — already-deployed visualizer applications call these — the class additionally retains a `sendMessage(content)` method that posts `${appName}/SEND_MESSAGE`, and a handler for inbound `${appName}/SEND_GROUPED_VISUALIZE_DATA` that invokes an `onGroupedData` callback and posts the matching `/RESPONSE`. **Both are inert end-to-end in this change**: the host implements no counterpart for either (see the "Deferred features" requirement below), so a `SEND_MESSAGE` envelope is silently ignored and `SEND_GROUPED_VISUALIZE_DATA` is never sent. They exist so that an existing visualizer built against `development` compiles and runs against this package unchanged.
-
-This lib is intended for external consumers; it SHALL NOT be imported by the host application.
+For wire-format parity with already-deployed visualizers, the published class additionally retains a `sendMessage(content)` method that posts `${appName}/SEND_MESSAGE`, and a handler for inbound `${appName}/SEND_GROUPED_VISUALIZE_DATA` that invokes an `onGroupedData` callback and posts the matching `/RESPONSE`. **Both are inert end-to-end in the host**: this app implements no counterpart for either (see the "Deferred features" requirement below), so a `SEND_MESSAGE` envelope is silently ignored and `SEND_GROUPED_VISUALIZE_DATA` is never sent.
 
 #### Scenario: handshake is announced explicitly, not on construction
 
@@ -311,6 +310,8 @@ The iframe SHALL additionally carry an `allow` attribute granting: `clipboard-wr
 `allow-top-navigation` MUST NOT be granted — a visualizer must never be able to navigate the host page away.
 
 The `sandbox` token set is hardcoded in the `VisualizerConnector` implementation and is not overridable via options.
+
+`allow-same-origin` and `allow-scripts` together remove the sandbox's isolation guarantee for a document that shares the host's origin (the framed document could then reach the host's storage/cookies/DOM via same-origin script access). This is accepted because `url` is expected to be a third-party origin distinct from the DIAL Chat host. Operators MUST NOT host a visualizer on the same origin as the DIAL Chat host.
 
 #### Scenario: sandbox tokens
 

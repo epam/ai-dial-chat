@@ -36,20 +36,21 @@ Stakeholders:
 - Locale, language, or `dir` propagation into the iframe URL. Deferred.
 - Inline (in-message) iframe rendering. Deliberately excluded — canvas-only.
 - Registering visualizer URLs per-deployment via DIAL Core config. Only global env-driven registry.
-- Changes to the `chat-visualizer-connector` publish story or its consumer surface. It gets a scoped port with the deferred features removed.
+- Republishing `@epam/ai-dial-chat-visualizer-connector` from this monorepo. Third-party authors keep consuming the published package from the legacy Chat `development` line until that line is deprecated.
 
 ## Decisions
 
-### D1. Where do protocol types/enums live?
+### D1. Where do host visualizer models live?
 
-**Decision:** in `libs/chat-shared/src/{types,constants}/visualizer-connector.ts`, re-exported from `@epam/ai-dial-chat-shared`.
+**Decision:** in `libs/chat-shared/src/models/custom-visualizer.ts`, re-exported from `@epam/ai-dial-chat-shared`. This file owns host config/canvas shapes only (`CustomVisualizer`, `CustomVisualizerData`, `CustomVisualizerDataLayout`). Wire protocol enums come from published `@epam/ai-dial-shared` at the runtime call site — they are not mirrored in `chat-shared`.
 
 **Alternatives considered:**
 
 - **In a new `libs/visualizer-shared` package.** Rejected — one more Nx project to maintain for < 100 lines of types.
-- **Inline in `libs/visualizer-connector`.** Rejected — the iframe-side lib (`chat-visualizer-connector`) and the app both need these types; keeping them in `chat-shared` avoids a lib-to-lib type import edge case.
+- **Only use types from `@epam/ai-dial-shared`.** Rejected for config/API — `CustomVisualizer` and canvas payload shapes are owned by this monorepo and must not pull the legacy shared package into chat-api / client-config DTOs.
+- **Duplicate connector wire enums in `chat-shared`.** Rejected — the published package is the source of truth for those members while consuming npm.
 
-**Rationale:** `chat-shared` is the established home for cross-lib types with zero runtime deps. Aligns with the `AGENTS.md §Module boundary rules` (`type:shared libs (chat-shared) import nothing`).
+**Rationale:** keep host-owned models in `models/`; leave the connector wire surface to the npm packages.
 
 ### D2. How is the registry surfaced from server to client?
 
@@ -65,7 +66,7 @@ Stakeholders:
 
 ### D3. Where does the iframe actually mount — canvas lib or app?
 
-**Decision:** inside `libs/attachment-canvas` via a new `AttachmentContentType.Visualizer` variant, `VisualizerCanvasContent` payload, and `VisualizerCanvasRenderer` internal component. `libs/attachment-canvas` gets `@epam/ai-dial-visualizer-connector` as a dependency.
+**Decision:** inside `libs/attachment-canvas` via a new `AttachmentContentType.Visualizer` variant, `VisualizerCanvasContent` payload, and `VisualizerCanvasRenderer` internal component. `attachment-canvas` peers on the published `@epam/ai-dial-visualizer-connector` / `@epam/ai-dial-shared` packages (provided by the workspace root).
 
 **Alternatives considered:**
 
@@ -73,7 +74,18 @@ Stakeholders:
 - **App renders a portal-like overlay separate from the canvas.** Rejected — user explicitly wants "open the canvas."
 - **Keep the visualizer renderer app-side and have the canvas just hold a generic children slot for that content type.** Rejected — the canvas switch is the discriminator; a hybrid where one branch delegates to app is a leaky abstraction.
 
-**Rationale:** the canvas lib already owns the switch over `AttachmentContentType`. Adding one more variant with a self-contained renderer is the minimum-surface-area extension. The lib-to-lib dep on `visualizer-connector` is acceptable because both libs are pure (no app knowledge, no context reads, no env, no routing).
+**Rationale:** the canvas lib already owns the switch over `AttachmentContentType`. Adding one more variant with a self-contained renderer is the minimum-surface-area extension.
+
+### D3a. Where do the connector packages come from?
+
+**Decision:** consume the published stable npm packages `@epam/ai-dial-visualizer-connector` and `@epam/ai-dial-shared` (currently `0.48.0`). Do not vendor workspace copies. Third-party visualizer authors continue to use published `@epam/ai-dial-chat-visualizer-connector`. A later follow-up may port the connectors into this monorepo when the legacy Chat line is retired (checklist on `VisualizerCanvasRenderer`).
+
+**Alternatives considered:**
+
+- **Vendor / port both connector libs into this workspace.** Rejected — protocol fixes would have to be maintained in two Chat lines at once; the published packages already own that surface.
+- **Pin npm `development` / `-dev.*` tags.** Rejected for host stability — use the stable `latest` line.
+
+**Rationale:** host wiring (config, canvas, routing) is unique to this monorepo; the iframe manager is shared protocol code with a single published source of truth. Trade-off: the host depends on `@epam/ai-dial-shared` alongside `@epam/ai-dial-chat-shared`, confined to `VisualizerCanvasRenderer` / its tests.
 
 ### D4. What determines "should this attachment open in a visualizer"?
 
@@ -81,7 +93,7 @@ Stakeholders:
 
 **Alternatives considered:**
 
-- **Match inside `useAttachmentAction` (the original decision here — invalidated during exploration, before any code was written).** Rejected once checked against the real click-routing: `openspec/specs/canvas/spec.md`'s "Open triggers" table shows every documented entry point (message bubbles via `ConversationView.tsx` → `handleMessageAttachmentClick`, the sources panel, both attachment trays) calls `useOpenAttachmentCanvas.openAttachmentCanvas` FIRST. `useAttachmentAction.handleAttachmentClick` is only ever consulted as a fallback when `openAttachmentCanvas` returns `false`. For any *unmatched* MIME, `openFileCanvas` already returns `true` via its `Unsupported` branch (a download-capable canvas state) — so a visualizer check placed in `useAttachmentAction` is unreachable for the primary chip-click path this change exists to support. It would still pass its own unit tests in isolation, which is why this needed explicit verification against the real hook wiring rather than trusting the hook name in the original draft.
+- **Match inside `useAttachmentAction`.** Rejected once checked against the real click-routing: `openspec/specs/canvas/spec.md`'s "Open triggers" table shows every documented entry point (message bubbles via `ConversationView.tsx` → `handleMessageAttachmentClick`, the sources panel, both attachment trays) calls `useOpenAttachmentCanvas.openAttachmentCanvas` FIRST. `useAttachmentAction.handleAttachmentClick` is only ever consulted as a fallback when `openAttachmentCanvas` returns `false`. For any *unmatched* MIME, `openFileCanvas` already returns `true` via its `Unsupported` branch (a download-capable canvas state) — so a visualizer check placed in `useAttachmentAction` is unreachable for the primary chip-click path this change exists to support. It would still pass its own unit tests in isolation, which is why this needed explicit verification against the real hook wiring.
 - **Match by file extension.** Rejected — MIME is the canonical discriminator, and it is what the registry is already keyed on in existing operator configurations.
 - **Match by DIAL file custom metadata.** Rejected — no such metadata channel on 1.0 yet.
 
@@ -118,7 +130,7 @@ Stakeholders:
 - `ready()` waits **indefinitely** for `READY_TO_INTERACT`. It settles only on that event or on `destroy()`. There is no handshake timeout.
 - `requestTimeout` (per registry entry) bounds each `send()` request — one outbound message awaiting its matching `/RESPONSE` acknowledgement, which in this scope means `SEND_VISUALIZE_DATA`. Default when unset is `10000` ms. This bounds a round-trip we initiated, not the visualizer's startup.
 
-**Where the deferred-request primitive comes from:** it is a verbatim port of `development:libs/shared/src/utils/DeferredRequest.ts` into `libs/visualizer-connector/src/lib/internal/` (only the `DialLibRequest` import is dropped). Behaviour parity with `development` is the objective, so its conventions are kept as-is even where they are not what a greenfield implementation would choose: the timeout path rejects with a **string** rather than an `Error`, and the `Promise.race` timer is not cleared when the request is replied to. These are not oversights in the port — the string-rejection convention is shared with the sibling `Task` primitive (`fail(reason: string)`), which `send()` consumes via `catch (e) { if (e === 'Chat Visualizer destroyed') … }`; converting one primitive alone would break that pairing. The uncleared timer is harmless in practice because `Promise.race` has already subscribed to the inner promise before any late `reject` fires, so it cannot surface as an unhandled rejection — the only cost is a timer that lives until its deadline. Note that `libs/chat-overlay` contains an independently written primitive of the same shape (`src/lib/internal/deferred-request.ts`) that does use `Error` + `clearTimeout`; it is deliberately **not** the model for this port, and is not imported across libs (its `internal/` path is unexported) nor refactored as part of this change (task 2.2a). Recorded as a follow-up: converge `DeferredRequest` and `Task` in both connectors on `Error`-based rejection in `chat-shared`, as one coordinated change rather than a partial migration.
+**Deferred-request / Task behaviour** comes from the published `@epam/ai-dial-visualizer-connector` / `@epam/ai-dial-shared` packages (same conventions as legacy Chat: timeout rejects with a **string**, handshake unbounded). This monorepo does not own that primitive while consuming npm (see D3a).
 - While `ready()` is pending the renderer shows the loader. `send()` rejection (timeout) and `destroy()` surface the error state. The canvas header close button stays functional in every state.
 
 **Alternatives considered:**
@@ -167,14 +179,15 @@ Stakeholders:
 
 ## Risks / Trade-offs
 
-- **[Library isolation stress]** `libs/attachment-canvas` depends on `libs/visualizer-connector` — first lib-to-lib dep in the attachment stack → Both libs are isolation-clean and reviewed accordingly. Nx module-boundary rules enforce that neither lib reaches into `apps/` or generated clients.
+- **[Legacy shared dual-stack]** Host depends on `@epam/ai-dial-shared` (via the published connector) alongside `@epam/ai-dial-chat-shared` → Accepted (D3a). Confine `@epam/ai-dial-shared` imports to `VisualizerCanvasRenderer` / its tests; config and API types stay on `chat-shared`.
+- **[Published-package hygiene gaps]** The stable npm connector is not idempotent on `destroy()`, and the iframe-side package uses a prefix origin check → Documented as known published behaviour; address in a follow-up port if/when connectors move in-repo (see `VisualizerCanvasRenderer` TODO).
 - **[Silently ignored config fields]** Entries may legitimately carry fields this version does not implement (`description`, `icon`, `passAuthInfo`, `passExplicitToken`, `expanded`, `borderless`, `withoutTitle`). An operator setting one and seeing no effect has no obvious way to tell whether it was ignored or mis-set → the registry loader logs a warning naming each ignored field, and ignoring a field never drops the entry, so the visualizer still works. The fields that carry behaviour are all supported: comma-separated `contentType` (D10), `title` as protocol namespace (D9), `requestTimeout` (D7).
 - **[Silent handshake mismatch on `title`]** `title` is the postMessage namespace shared with the iframe app (D9). An operator who "cleans up" a `title` — translating it, changing capitalisation, or renaming it for readability — breaks the integration with no error on either side: the iframe loads, the host sends to a prefix nobody listens on, and the panel just shows the timeout error state → `title` is required and documented as a protocol identifier in both connector READMEs and in the env-var example; the timeout error state is the visible symptom, and the `.ready()` rejection message should name the expected prefix to make this diagnosable.
 - **[Third-party iframe stability]** A broken visualizer application that never posts `READY_TO_INTERACT` leaves the canvas in its loading state indefinitely, with no error state and no diagnostic → **accepted and unmitigated** (D7). The close button remains functional so the user is never trapped. Bounding the handshake was considered and rejected; it is the natural follow-up if this proves to bite in practice.
 - **[Broad iframe capability grant]** The sandbox permits downloads, popups, modals, forms, presentation, clipboard writes, and fullscreen (D6), so a malicious or compromised visualizer can do considerably more than render a chart → the mitigating control is the registry itself: a visualizer only loads if an operator explicitly listed its URL, so this is a vetted-integration surface rather than open user content. `allow-top-navigation` is withheld so a visualizer can never redirect the host page, and the `postMessage` origin/source checks below still apply regardless of sandbox tokens. Operators should treat adding a `CUSTOM_VISUALIZERS` entry as granting that origin in-app privileges, and the `.env.template` comment should say so.
 - **[postMessage spoofing]** Any origin can post to `window` → host connector enforces `event.source === iframe.contentWindow`; messages failing this check are silently dropped. Origin-based filtering is not applied — trust derives from the source-window reference, which is unforgeable.
 - **[Visualizers must tolerate the canvas viewport]** Visualizers render inside the side panel rather than inline in the message, so the width and height they get differ from an in-message embed. A visualizer with a hard-coded layout may look cramped → the panel is resizable and visualizers should use responsive layouts. `width`/`height`/`mobileHeight` from the registry entry are forwarded in the layout payload so the visualizer can adapt its initial render.
-- **[Published-package surface]** `@epam/ai-dial-chat-visualizer-connector` (iframe-side) is consumed by external authors, so its exported surface is a public contract. This change publishes a version whose protocol covers the base flow only — the deferred features (`SEND_MESSAGE`, grouped visualizers, auth forwarding) are absent from the exported API → publish under a new version and state the supported protocol scope in the README, so an author can tell from the package which capabilities they can rely on. Coordinate the version bump with release management.
+- **[Published-package surface]** `@epam/ai-dial-chat-visualizer-connector` (iframe-side) remains owned and published by the legacy Chat `development` line. This change does not republish it. Authors keep using the existing stable npm package; wire values for the base flow are unchanged.
 
 ## Migration Plan
 
@@ -184,9 +197,11 @@ Stakeholders:
 
 1. Merge the change with `CUSTOM_VISUALIZERS` unset in all environments → feature dark, no visible change.
 2. Rebuild `@epam/chat-api-client` (`npm run openapi && npm run openapi:check`) and commit the regenerated files as part of the PR.
-3. Publish `@epam/ai-dial-chat-visualizer-connector` (iframe-side lib) under a new version, and note the supported protocol scope in the release notes so external authors know which capabilities the package covers.
+3. Ensure workspace root pins stable `@epam/ai-dial-visualizer-connector` / `@epam/ai-dial-shared` and `npm install` has refreshed the lockfile.
 4. Ship the frontend + backend together (single artifact — the API is a BFF for this app).
 5. Per-environment enablement: set `CUSTOM_VISUALIZERS` env to the desired JSON on `chat-api`. Restart `chat-api`. No client cache invalidation required — client reads config on load.
+
+**Follow-up (optional, after the legacy Chat line is retired):** port the connector libs into this monorepo per the checklist on `VisualizerCanvasRenderer`, drop the npm deps on `@epam/ai-dial-visualizer-connector` / `@epam/ai-dial-shared`, and publish `@epam/ai-dial-chat-visualizer-connector` from this repo if needed.
 
 **Rollback:**
 
@@ -199,7 +214,8 @@ Stakeholders:
 2. ~~**`SEND_MESSAGE` demand.**~~ **Closed** — stays out of scope, per the "base rendering flow only" decision. Low-risk because the capability is opt-in: it is gated behind its own `ALLOW_VISUALIZER_SEND_MESSAGES` operator flag, off by default, and it is not part of the connector contract — the host application, not the connector, is what turns an inbound message into a chat message. Every visualizer needs `SEND_VISUALIZE_DATA` to render; only a deployment that had explicitly enabled the flag would notice the absence.
 3. ~~**Locale/`dir` forwarding.**~~ **Closed** — nothing to do. The iframe `src` is the configured URL verbatim, with no locale, `dir`, or token query parameters appended, and that is the intended contract (see the "iframe URL is unmodified" scenario). A visualizer that needs to localise reads its own locale; the host does not inject one.
 4. ~~**Timeout tuning — should `requestTimeout` be per-entry?**~~ **Closed** — resolved in D7: per-entry, default `10000` ms, bounding `send()` only.
-5. ~~**Naming of the iframe-side published package.**~~ **Closed** — keep `@epam/ai-dial-chat-visualizer-connector`. The base protocol its consumers depend on is unchanged, so a plain version bump is sufficient; no rename.
+5. ~~**Naming of the iframe-side published package.**~~ **Closed** — keep `@epam/ai-dial-chat-visualizer-connector`. This change does not republish it; authors use the existing stable npm package (D3a).
 6. ~~**What default should bound `ready()`?**~~ **Retired** — moot: D7 leaves the handshake unbounded.
+7. ~~**Where do the connector packages live?**~~ **Closed** — consume stable npm (D3a); optional later in-repo port tracked on `VisualizerCanvasRenderer`.
 
 _No open questions remain. The iframe capability grant is settled in D6, with its trade-off recorded in the risk list._
