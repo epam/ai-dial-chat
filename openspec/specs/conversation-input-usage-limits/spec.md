@@ -70,8 +70,8 @@ alone. The layout SHALL support LTR and RTL.
 
 #### Scenario: Unlimited allowance
 
-- **WHEN** the monthly allowance is unlimited
-- **THEN** the trigger renders and exposes `Unlimited` without an error state
+- **WHEN** the monthly allowance is unlimited (total ≥ `Number.MAX_SAFE_INTEGER`)
+- **THEN** `mapDeploymentLimitsToInput` returns `undefined` and no usage control is rendered
 
 #### Scenario: Popover remains open
 
@@ -98,11 +98,6 @@ new endpoint, cache, polling, or telemetry SHALL be introduced.
 - **WHEN** the user opens the monthly usage popover
 - **THEN** the popover shows `Usage Limit`, one progress bar, and the formatted
   remaining-token count
-
-#### Scenario: Unlimited popover
-
-- **WHEN** the user opens an unlimited monthly limit
-- **THEN** the popover shows one progress bar and `Unlimited`
 
 #### Scenario: Silent refresh
 
