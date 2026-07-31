@@ -1,7 +1,6 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import { mergeClasses, useCodeCopy } from '@epam/ai-dial-chat-shared';
-import { NeutralButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
@@ -10,7 +9,6 @@ import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
 } from '../../constants/translation-keys';
-
 interface Props {
   entityType: CatalogEntityType;
   url: string;

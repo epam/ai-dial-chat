@@ -78,7 +78,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       </ul>
     </div>
   ),
-  DialIconButton: ({
+  IconButton: ({
     icon,
     ...rest
   }: { icon: ReactNode } & Record<string, unknown>) => (

@@ -209,7 +209,8 @@ export const useAttachments = ({
           baseAttachmentsAmount + attachmentsRef.current.length + toAdd.length;
         if (count > maximumAttachmentsAmount) {
           toAdd.forEach((attachment) => {
-            if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
+            if (attachment.previewUrl)
+              URL.revokeObjectURL(attachment.previewUrl);
             if (attachment.playUrl) URL.revokeObjectURL(attachment.playUrl);
           });
           onAttachmentsLimitExceeded?.(count, maximumAttachmentsAmount);

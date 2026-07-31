@@ -18,23 +18,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: unknown;
     className?: string;
   }) => <span className={className}>{text as string}</span>,
-  DialPrimaryButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
-  DialGhostButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
-  DialButton: ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <button onClick={onClick}>{label}</button>
-  ),
   DialTabs: ({
     tabs,
     activeTab,
@@ -63,6 +46,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialCloseButton: ({ onClick }: { onClick: () => void }) => (
     <button aria-label="Close" onClick={onClick} />
   ),
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <svg />,

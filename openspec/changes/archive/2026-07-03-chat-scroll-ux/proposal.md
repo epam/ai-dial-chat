@@ -20,6 +20,6 @@ Today the chat view has no auto-scroll logic at all: when a user sends a message
 
 ## Impact
 
-- Affected code: `apps/chat/src/components/ConversationView/ConversationView.tsx` (existing scroll subsystem: `scrollToBottom`, `userScrolledRef`, the message-count/streaming effect, the `DialFabButton` scroll-to-bottom affordance) which now wraps `onSend`/`onRegenerateMessage`/`onEditMessage` to capture anchor intent before delegating to the handlers already owned by `apps/chat/src/hooks/conversation/useConversationHandlers.ts` (`handleSend`, `handleRegenerateMessage`, `handleEditMessage`).
+- Affected code: `apps/chat/src/components/ConversationView/ConversationView.tsx` (existing scroll subsystem: `scrollToBottom`, `userScrolledRef`, the message-count/streaming effect, the `FabButton` scroll-to-bottom affordance) which now wraps `onSend`/`onRegenerateMessage`/`onEditMessage` to capture anchor intent before delegating to the handlers already owned by `apps/chat/src/hooks/conversation/useConversationHandlers.ts` (`handleSend`, `handleRegenerateMessage`, `handleEditMessage`).
 - A scroll-to-bottom button and a pinned-to-bottom auto-follow during streaming already exist and already broadly match conventional chat UX; the actual defect is that sending a message scrolls to the container's bottom rather than positioning the new message near the top, which can leave the start of a new (especially longer) message scrolled out of view — matching the reported symptom.
 - No API or backend changes expected — this is a frontend-only UX change confined to `apps/chat`.

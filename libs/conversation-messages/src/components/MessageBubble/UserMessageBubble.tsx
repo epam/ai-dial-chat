@@ -6,11 +6,7 @@ import {
   useCollapsedText,
 } from '@epam/ai-dial-chat-shared';
 import { AttachmentGroup } from '@epam/ai-dial-conversation-input';
-import {
-  DIAL_ICON_SIZE,
-  DialLinkButton,
-  ElementSize,
-} from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, ElementSize, LinkButton } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { FC, useId } from 'react';
 import type { UserMessageBubbleProps } from '../../models/message-bubble';
@@ -135,7 +131,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                 </p>
               </div>
               {isOverflowing && (
-                <DialLinkButton
+                <LinkButton
                   label={<>{toggleLabel}</>}
                   iconBefore={
                     <ToggleIcon size={DIAL_ICON_SIZE.SM} aria-hidden="true" />

@@ -300,7 +300,7 @@ All `aria-label` values in `DialFileManagerModal` go through `t()`. No English s
 **Accessibility**:
 - `DialPopup` provides `role="dialog"` with `aria-labelledby` bound to the title. No extra ARIA needed on the container.
 - Error card: `role="alert"` so screen readers announce the failure.
-- Retry button: focusable `DialButton` with a visible text label.
+- Retry button: focusable `Button` with a visible text label.
 - Focus is trapped inside `DialPopup` while open (ui-kit built-in).
 - Keyboard navigation: `DialFileManager` provides built-in keyboard support for tree and grid navigation.
 

@@ -1,5 +1,10 @@
-import { Input, NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { DialAccordion, DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
+import { Input } from '@epam/ai-dial-kit';
+import {
+  DialAccordion,
+  DialConfirmationPopup,
+  NeutralButton,
+  PrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useState } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import type { ItemDetailsTexts } from '../../../models/item-details-props';
