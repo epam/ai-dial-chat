@@ -94,6 +94,32 @@ vi.mock('@epam/ai-dial-kit', () => ({
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  CalendarMode: {
+    Date: 'date',
+    DateTime: 'datetime',
+    Time: 'time',
+    Weekday: 'weekday',
+  },
+  Calendar: ({
+    id,
+    label,
+    value,
+    onChange,
+  }: {
+    id?: string;
+    label?: string;
+    value?: Date | string | null;
+    onChange: (value: string | null) => void;
+  }) => (
+    <label htmlFor={id}>
+      {label}
+      <input
+        id={id}
+        value={typeof value === 'string' ? value : (value?.toISOString() ?? '')}
+        onChange={(e) => onChange(e.target.value || null)}
+      />
+    </label>
+  ),
   DialSelectField: ({
     label,
     value,
@@ -369,8 +395,8 @@ describe('ScheduledTaskCreateForm', () => {
       values: { ...baseValues, scheduleType: ScheduledTaskScheduleType.Once },
     });
 
-    expect(screen.getByText('Run at')).toBeTruthy();
-    expect(screen.queryByText('Time')).toBeNull();
+    expect(screen.getByText('Run at *')).toBeTruthy();
+    expect(screen.queryByText('Time *')).toBeNull();
   });
 
   it('renders day-of-week only when frequency is weekly', async () => {
@@ -378,7 +404,40 @@ describe('ScheduledTaskCreateForm', () => {
       values: { ...baseValues, frequency: ScheduledTaskFrequency.Weekly },
     });
 
-    expect(screen.getByText('Day of week')).toBeTruthy();
+    expect(screen.getByText('Day of week *')).toBeTruthy();
     expect(screen.queryByText('Day of month')).toBeNull();
+  });
+
+  it('calls onFieldChange when the recurring Time calendar changes', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({ onFieldChange, values: { ...baseValues, time: '' } });
+
+    await userEvent.type(screen.getByLabelText('Time *'), '1');
+
+    expect(onFieldChange).toHaveBeenCalledWith('time', '1');
+  });
+
+  it('calls onFieldChange when the once Run at calendar changes', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({
+      onFieldChange,
+      values: { ...baseValues, scheduleType: ScheduledTaskScheduleType.Once },
+    });
+
+    await userEvent.type(screen.getByLabelText('Run at *'), 'x');
+
+    expect(onFieldChange).toHaveBeenCalledWith('runAt', '');
+  });
+
+  it('converts the selected weekday to values.dayOfWeek (APScheduler Monday=0) when the day-of-week calendar changes', async () => {
+    const onFieldChange = vi.fn();
+    await renderForm({
+      onFieldChange,
+      values: { ...baseValues, frequency: ScheduledTaskFrequency.Weekly },
+    });
+
+    await userEvent.type(screen.getByLabelText('Day of week *'), '1');
+
+    expect(onFieldChange).toHaveBeenCalledWith('dayOfWeek', '0');
   });
 });
