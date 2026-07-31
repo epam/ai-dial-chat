@@ -63,7 +63,7 @@
 
 - [x] 8.1 Run `npm exec nx test @epam/ai-dial-chat-shared` and `npm exec nx test @epam/ai-dial-chat-overlay`.
 - [x] 8.2 Run `npm exec nx test @epam/chat -- OverlayContext useOverlayProviderLogin OverlayLoginGate`.
-- [ ] 8.3 Run `npm exec nx affected --target=lint --base=origin/development-1.0`.
+- [x] 8.3 Run `npm exec nx affected --target=lint --base=origin/development-1.0`.
 - [x] 8.4 Run `npm exec nx affected --target=build --base=origin/development-1.0`.
 - [x] 8.5 Run `npm exec nx affected --target=test --base=origin/development-1.0`.
 

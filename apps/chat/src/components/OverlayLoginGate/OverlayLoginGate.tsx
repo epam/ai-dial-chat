@@ -1,5 +1,5 @@
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
-import { memo, type FC, type SyntheticEvent } from 'react';
+import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AuthI18nKeys,
@@ -7,15 +7,7 @@ import {
 } from '../../constants/translation-keys';
 import { OverlayExternalLoginStatus } from '../../hooks/auth/useOverlayExternalLogin';
 import { useOverlayProviderLogin } from '../../hooks/auth/useOverlayProviderLogin';
-
-const getProviderIconUrl = (providerId: string): string =>
-  `https://authjs.dev/img/providers/${providerId.replace(/[1-9]\d*$/, '')}.svg`;
-
-const handleProviderIconError = (
-  event: SyntheticEvent<HTMLImageElement>,
-): void => {
-  event.currentTarget.style.display = 'none';
-};
+import ProviderIcon from '../ProviderIcon/ProviderIcon';
 
 const OverlayLoginGate: FC = () => {
   const { t } = useTranslation();
@@ -93,15 +85,7 @@ const OverlayLoginGate: FC = () => {
                     className="min-h-11 w-full"
                     label={provider.label}
                     disabled={isLoginDisabled}
-                    iconBefore={
-                      <img
-                        src={getProviderIconUrl(provider.id)}
-                        alt=""
-                        aria-hidden="true"
-                        className="size-5 shrink-0"
-                        onError={handleProviderIconError}
-                      />
-                    }
+                    iconBefore={<ProviderIcon providerId={provider.id} />}
                     onClick={() => openProviderLogin(provider.id)}
                   />
                 </div>
