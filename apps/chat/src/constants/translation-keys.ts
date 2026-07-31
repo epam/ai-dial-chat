@@ -297,6 +297,7 @@ export enum ConversationI18nKeys {
   StagesStep = 'conversation.stages.step',
   AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
   AddMenuTitle = 'conversation.addMenuTitle',
+  MessageTooLong = 'conversation.messageTooLong',
 }
 
 export enum DialFileManagerI18nKeys {

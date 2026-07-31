@@ -131,6 +131,8 @@ interface Props {
   pendingAttachments?: Attachment[];
   /** Called after `pendingAttachments` have been inserted into the edit-message tray. */
   onPendingAttachmentsConsumed?: () => void;
+  /** Called when the user pastes text that exceeds the max length while attachments are disabled. */
+  onMessageTooLong?: (length: number, max: number) => void;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -180,6 +182,7 @@ const ConversationMessageItem: FC<Props> = ({
   dialFileSystemLabel,
   pendingAttachments,
   onPendingAttachmentsConsumed,
+  onMessageTooLong,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
@@ -296,6 +299,7 @@ const ConversationMessageItem: FC<Props> = ({
             pendingAttachments={pendingAttachments}
             onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
             onAttachmentClick={handleAttachmentClick}
+            onMessageTooLong={onMessageTooLong}
           />
         </Suspense>
       </div>

@@ -506,6 +506,16 @@ const ConversationView: FC<Props> = ({
     [showNotification, t],
   );
 
+  const handleMessageTooLong = useCallback(
+    (_length: number, max: number) => {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(ConversationI18nKeys.MessageTooLong, { max }),
+      });
+    },
+    [showNotification, t],
+  );
+
   const handleInputAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
       void openAttachmentCanvas(attachment);
@@ -649,6 +659,7 @@ const ConversationView: FC<Props> = ({
                         ? () => setPendingDialAttachments([])
                         : undefined
                     }
+                    onMessageTooLong={handleMessageTooLong}
                   />
                 </div>
               );
@@ -768,6 +779,7 @@ const ConversationView: FC<Props> = ({
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
+                onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
                   <UsageLimitsControl
                     deploymentId={

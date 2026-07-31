@@ -43,6 +43,11 @@ The inline edit area consists of two parts stacked vertically:
 - **WHEN** the user clears all text from the edit textarea
 - **THEN** the Save & Submit button is disabled
 
+#### Scenario: Save & Submit blocked when message exceeds limit
+- **GIVEN** the selected model does not support attachments (`isAttachmentsEnabled` is `false`)
+- **WHEN** the edit textarea contains text of length ≥ `pasteTextThreshold` (default `4000`) and the user clicks Save & Submit
+- **THEN** the edit is NOT submitted and `onMessageTooLong` is called for the host to surface the error
+
 ### Requirement: Managing attachments in edit mode
 While in edit mode, the user SHALL be able to remove existing attachments and add new ones, subject to the same restrictions as the conversation input.
 

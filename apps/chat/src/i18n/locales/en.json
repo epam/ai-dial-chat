@@ -267,7 +267,8 @@
       "step_other": "steps"
     },
     "attachMenuDialFileSystem": "DIAL file system",
-    "addMenuTitle": "Add files"
+    "addMenuTitle": "Add files",
+    "messageTooLong": "Max allowed message length is {{max}}"
   },
   "conversationPanel": {
     "title": "Chats",
