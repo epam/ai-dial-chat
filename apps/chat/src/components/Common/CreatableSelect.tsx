@@ -77,7 +77,13 @@ export const CreatableSelect: FC<CreatableSelectProps> = ({
 }) => {
   return (
     <Tooltip tooltip={tooltip}>
-      <div data-qa={dataQa}>
+      <div
+        data-qa={dataQa}
+        className={classNames(
+          'w-full',
+          props.isDisabled && 'cursor-not-allowed',
+        )}
+      >
         <RSCreatableSelect<DropdownSelectorOption, true>
           {...props}
           unstyled
