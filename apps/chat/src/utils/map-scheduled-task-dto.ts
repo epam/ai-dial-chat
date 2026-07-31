@@ -5,6 +5,7 @@ import {
 import type { ScheduledTaskDto } from '@epam/chat-api-client';
 import type { TFunction } from 'i18next';
 import { ScheduledTasksI18nKeys } from '../constants/translation-keys';
+import { apSchedulerDayToJsDay, jsDayToApSchedulerDay } from './cron-weekday';
 
 const padTwoDigits = (value: string): string => value.padStart(2, '0');
 
@@ -33,6 +34,46 @@ const formatSubHourlyScheduleLabel = (
   return t(ScheduledTasksI18nKeys.CardScheduleRecurringFallback);
 };
 
+/**
+ * Converts stored UTC `hour`/`minute`/`day_of_week`/`day` cron fields back to
+ * the browser's local time, mirroring `buildCronFields`'s local-to-UTC
+ * conversion (apps/chat/src/utils/scheduled-task-trigger.ts) in reverse, so
+ * the displayed schedule always matches what will actually execute.
+ */
+const convertCronFieldsToLocal = (
+  fields: Record<string, string>,
+): Record<string, string> => {
+  const reference = new Date();
+  reference.setUTCHours(Number(fields.hour), Number(fields.minute), 0, 0);
+
+  /* Only numeric APScheduler indices/day-of-month are convertible; legacy or
+   * malformed values (e.g. a raw weekday name) are left untouched. */
+  const hasDayOfWeek = !!fields.day_of_week && /^\d+$/.test(fields.day_of_week);
+  const hasDayOfMonth = !!fields.day && /^\d+$/.test(fields.day);
+
+  if (hasDayOfWeek) {
+    const targetUtcDay = apSchedulerDayToJsDay(Number(fields.day_of_week));
+    const diff = (targetUtcDay - reference.getUTCDay() + 7) % 7;
+    reference.setUTCDate(reference.getUTCDate() + diff);
+  } else if (hasDayOfMonth) {
+    reference.setUTCDate(Number(fields.day));
+  }
+
+  const localFields: Record<string, string> = {
+    ...fields,
+    hour: String(reference.getHours()),
+    minute: String(reference.getMinutes()),
+  };
+  if (hasDayOfWeek) {
+    localFields.day_of_week = String(jsDayToApSchedulerDay(reference.getDay()));
+  }
+  if (hasDayOfMonth) {
+    localFields.day = String(reference.getDate());
+  }
+
+  return localFields;
+};
+
 const formatCronScheduleLabel = (
   fields: Record<string, string> | undefined,
   t: TFunction,
@@ -43,17 +84,18 @@ const formatCronScheduleLabel = (
   if (!fields.hour || fields.hour === '*') {
     return formatSubHourlyScheduleLabel(fields.minute, t);
   }
-  const time = `${padTwoDigits(fields.hour)}:${padTwoDigits(fields.minute)}`;
+  const localFields = convertCronFieldsToLocal(fields);
+  const time = `${padTwoDigits(localFields.hour)}:${padTwoDigits(localFields.minute)}`;
 
-  if (fields.day_of_week) {
+  if (localFields.day_of_week) {
     return t(ScheduledTasksI18nKeys.CardScheduleWeeklyAt, {
-      day: fields.day_of_week,
+      day: localFields.day_of_week,
       time,
     });
   }
-  if (fields.day) {
+  if (localFields.day) {
     return t(ScheduledTasksI18nKeys.CardScheduleMonthlyAt, {
-      day: fields.day,
+      day: localFields.day,
       time,
     });
   }
