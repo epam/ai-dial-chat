@@ -34,7 +34,7 @@ dialTest(
     tooltipAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3667', 'EPMRTC-3669', 'EPMRTC-3666');
+    setTestIds('EPMDIAL-4057', 'EPMDIAL-4059', 'EPMDIAL-4056');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     let folderWithPrompts: FolderPrompt;
@@ -376,7 +376,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3670', 'EPMRTC-3671');
+    setTestIds('EPMDIAL-4060', 'EPMDIAL-4061');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     let rootFolder: FolderPrompt;
@@ -524,7 +524,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3675', 'EPMRTC-3676', 'EPMRTC-3672');
+    setTestIds('EPMDIAL-4065', 'EPMDIAL-4070', 'EPMDIAL-4062');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     let rootFolder: FolderPrompt;
@@ -691,7 +691,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3677');
+    setTestIds('EPMDIAL-4066');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     let secondLevelFolder: FolderPrompt;
@@ -886,7 +886,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3678', 'EPMRTC-3681');
+    setTestIds('EPMDIAL-4067', 'EPMDIAL-4071');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     let lowLevelFolderPrompt: Prompt;
@@ -1144,7 +1144,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3679', 'EPMRTC-3680', 'EPMRTC-3682');
+    setTestIds('EPMDIAL-4068', 'EPMDIAL-4069', 'EPMDIAL-4072');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     let lowLevelFolderPrompt: Prompt;
@@ -1347,7 +1347,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3684');
+    setTestIds('EPMDIAL-4074');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     let singlePrompt: Prompt;
@@ -1467,7 +1467,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3912');
+    setTestIds('EPMDIAL-4076');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     let lowLevelFolderPrompt: Prompt;

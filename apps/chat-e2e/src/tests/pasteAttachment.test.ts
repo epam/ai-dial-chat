@@ -51,18 +51,18 @@ dialTest(
     replaceConfirmationModal,
   }) => {
     setTestIds(
-      'EPMRTC-6227',
-      'EPMRTC-6226',
-      'EPMRTC-6229',
-      'EPMRTC-6365',
-      'EPMRTC-6352',
-      'EPMRTC-6228',
-      'EPMRTC-6363',
-      'EPMRTC-6232',
-      'EPMRTC-6239',
-      'EPMRTC-6230',
-      'EPMRTC-6231',
-      'EPMRTC-6225',
+      'EPMDIAL-6822',
+      'EPMDIAL-6804',
+      'EPMDIAL-6808',
+      'EPMDIAL-6813',
+      'EPMDIAL-6806',
+      'EPMDIAL-6805',
+      'EPMDIAL-6812',
+      'EPMDIAL-6818',
+      'EPMDIAL-6809',
+      'EPMDIAL-6810',
+      'EPMDIAL-6824',
+      'EPMDIAL-6847',
     );
     const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
     let responses: BackendDataEntity[] | undefined;
@@ -308,7 +308,7 @@ dialTest(
     editMessageInputAttachmentsAssertions,
     customApplicationPublishingUtil,
   }) => {
-    setTestIds('EPMRTC-6222', 'EPMRTC-6224');
+    setTestIds('EPMDIAL-6820', 'EPMDIAL-6846');
 
     await dialTest.step(
       'Create a custom app without allowed attachments via API',

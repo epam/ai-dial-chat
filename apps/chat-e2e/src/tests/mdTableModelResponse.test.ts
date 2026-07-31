@@ -36,12 +36,12 @@ dialTest(
     chatMessagesAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-1153',
-      'EPMRTC-3124',
-      'EPMRTC-3125',
-      'EPMRTC-3126',
-      'EPMRTC-8314',
-      'EPMRTC-8315',
+      'EPMDIAL-6086',
+      'EPMDIAL-6089',
+      'EPMDIAL-6090',
+      'EPMDIAL-6091',
+      'EPMDIAL-6099',
+      'EPMDIAL-6100',
     );
     let theme: string;
     let tableConversation: Conversation;
@@ -225,7 +225,7 @@ dialTest.fixme(
     localStorageManager,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
-    setTestIds('EPMRTC-3123');
+    setTestIds('EPMDIAL-6092');
     let tableConversation: Conversation;
 
     await dialTest.step('Prepare empty conversation', async () => {
@@ -276,7 +276,7 @@ dialTest(
     baseAssertion,
     downloadAssertion,
   }) => {
-    setTestIds('EPMRTC-9686', 'EPMRTC-9687');
+    setTestIds('EPMDIAL-6103', 'EPMDIAL-6104');
 
     let tableConversation: Conversation;
     const expectedDownloadIconTooltip =

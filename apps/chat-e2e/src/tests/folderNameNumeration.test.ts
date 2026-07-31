@@ -33,7 +33,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1628', 'EPMRTC-2948', 'EPMRTC-1629');
+    setTestIds('EPMDIAL-2863', 'EPMDIAL-2865', 'EPMDIAL-2864');
     let folderConversation: FolderConversation;
     let conversation: Conversation;
     const initFolderIndex = 999;
@@ -151,7 +151,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2949', 'EPMRTC-2952');
+    setTestIds('EPMDIAL-2866', 'EPMDIAL-2867');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
     const nestedFolderLevel = 2;
@@ -237,7 +237,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2950', 'EPMRTC-2951');
+    setTestIds('EPMDIAL-2868', 'EPMDIAL-2870');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
     let folderConversationToMove: FolderConversation;

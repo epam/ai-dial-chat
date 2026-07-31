@@ -52,11 +52,11 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-1891',
-      'EPMRTC-1892',
-      'EPMRTC-3282',
-      'EPMRTC-1639',
-      'EPMRTC-1536',
+      'EPMDIAL-6463',
+      'EPMDIAL-6618',
+      'EPMDIAL-6621',
+      'EPMDIAL-6469',
+      'EPMDIAL-6471',
     );
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments.filter(
@@ -174,7 +174,7 @@ dialTest(
     conversationAssertion,
     chatHeaderAssertion,
   }) => {
-    setTestIds('EPMRTC-1640');
+    setTestIds('EPMDIAL-6468');
     const request = 'Describe the picture';
 
     await dialTest.step('Upload file to app', async () => {
@@ -235,7 +235,7 @@ dialTest.skip(
     localStorageManager,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-1767', 'EPMRTC-1904');
+    setTestIds('EPMDIAL-6470', 'EPMDIAL-6485');
 
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device',
@@ -312,13 +312,13 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-1896',
-      'EPMRTC-1897',
-      'EPMRTC-3297',
-      'EPMRTC-8414',
-      'EPMRTC-1898',
-      'EPMRTC-8310',
-      'EPMRTC-1899',
+      'EPMDIAL-6475',
+      'EPMDIAL-6476',
+      'EPMDIAL-6517',
+      'EPMDIAL-6063',
+      'EPMDIAL-6479',
+      'EPMDIAL-6064',
+      'EPMDIAL-6478',
     );
     const request = 'Describe the picture';
     const attachmentIndex = 1;
@@ -558,7 +558,7 @@ dialTest.skip(
     localStorageManager,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-1905');
+    setTestIds('EPMDIAL-6486');
 
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device in offline mode',
@@ -654,7 +654,7 @@ dialTest(
     localStorageManager,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-3118', 'EPMRTC-3283');
+    setTestIds('EPMDIAL-6619', 'EPMDIAL-6620');
     let conversation: Conversation;
 
     await dialTest.step('Upload txt file to app', async () => {
@@ -746,7 +746,7 @@ dialTest(
     sendMessageInputAttachments,
     sendMessageAssertion,
   }) => {
-    setTestIds('EPMRTC-3243', 'EPMRTC-3127');
+    setTestIds('EPMDIAL-6660', 'EPMDIAL-6639');
 
     const randomModelWithoutFolderLinkAttachments =
       GeneratorUtil.randomArrayElement(

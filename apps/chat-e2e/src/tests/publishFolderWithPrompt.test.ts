@@ -60,7 +60,7 @@ dialAdminTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-4582', 'EPMRTC-5875', 'EPMRTC-6120', 'EPMRTC-6121');
+    setTestIds('EPMDIAL-3878', 'EPMDIAL-4037', 'EPMDIAL-4009', 'EPMDIAL-4010');
     let folderPrompt: FolderPrompt;
     const folderName = GeneratorUtil.randomString(10);
     const requestName = GeneratorUtil.randomPublicationRequestName();

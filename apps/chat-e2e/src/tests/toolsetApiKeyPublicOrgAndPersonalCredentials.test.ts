@@ -43,7 +43,7 @@ dialAdminTest(
     adminPage,
     page,
   }) => {
-    setTestIds('EPMRTC-8005', 'EPMRTC-7995', 'EPMRTC-8002');
+    setTestIds('EPMDIAL-5548', 'EPMDIAL-5554', 'EPMDIAL-5561');
 
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
@@ -346,7 +346,7 @@ dialSharedWithMeTest(
     additionalShareUserToolsetLoginModal,
     additionalShareUserToolsetLoginModalAssertion,
   }) => {
-    setTestIds('EPMRTC-9028');
+    setTestIds('EPMDIAL-5422');
 
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),

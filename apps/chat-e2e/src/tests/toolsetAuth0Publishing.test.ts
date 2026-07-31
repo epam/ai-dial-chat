@@ -87,18 +87,18 @@ dialAdminTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-7020',
-      'EPMRTC-7045',
-      'EPMRTC-7159',
-      'EPMRTC-7168',
-      'EPMRTC-7035',
-      'EPMRTC-7033',
-      'EPMRTC-7023',
-      'EPMRTC-7022',
-      'EPMRTC-7144',
-      'EPMRTC-7409',
-      'EPMRTC-7860',
-      'EPMRTC-8751',
+      'EPMDIAL-5473',
+      'EPMDIAL-5484',
+      'EPMDIAL-5475',
+      'EPMDIAL-5488',
+      'EPMDIAL-5512',
+      'EPMDIAL-5510',
+      'EPMDIAL-5508',
+      'EPMDIAL-5507',
+      'EPMDIAL-5530',
+      'EPMDIAL-5532',
+      'EPMDIAL-5533',
+      'EPMDIAL-5625',
     );
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
@@ -576,7 +576,7 @@ dialAdminTest(
     baseAssertion,
     page,
   }) => {
-    setTestIds('EPMRTC-7155');
+    setTestIds('EPMDIAL-5474');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
@@ -769,7 +769,7 @@ dialAdminTest(
     baseAssertion,
     page,
   }) => {
-    setTestIds('EPMRTC-7143', 'EPMRTC-7156');
+    setTestIds('EPMDIAL-5476', 'EPMDIAL-5477');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
@@ -1092,7 +1092,7 @@ dialAdminTest(
     adminPage,
     adminEntityDetailsModal,
   }) => {
-    setTestIds('EPMRTC-7158', 'EPMRTC-7040', 'EPMRTC-7191');
+    setTestIds('EPMDIAL-5529', 'EPMDIAL-5516', 'EPMDIAL-5528');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),

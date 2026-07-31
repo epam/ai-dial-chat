@@ -22,7 +22,7 @@ dialTest(
     fileDropArea,
     customApplicationPublishingUtil,
   }) => {
-    setTestIds('EPMRTC-6334', 'EPMRTC-6358', 'EPMRTC-6247');
+    setTestIds('EPMDIAL-6830', 'EPMDIAL-6831', 'EPMDIAL-6834');
     let yearMonthSubfolder: string;
 
     await dialTest.step(
@@ -137,7 +137,7 @@ dialTest(
     toast,
     customApplicationPublishingUtil,
   }) => {
-    setTestIds('EPMRTC-6247', 'EPMRTC-6360');
+    setTestIds('EPMDIAL-6834', 'EPMDIAL-6848');
     let conversation: Conversation;
     let replayConversation: Conversation;
 
@@ -235,7 +235,7 @@ dialTest(
     fileDropArea,
     customApplicationPublishingUtil,
   }) => {
-    setTestIds('EPMRTC-6252');
+    setTestIds('EPMDIAL-6839');
 
     await dialTest.step(
       'Create a custom app with not allowed attachments via API',
@@ -312,13 +312,13 @@ dialAdminTest(
     modelApiHelper,
   }) => {
     setTestIds(
-      'EPMRTC-6245',
-      'EPMRTC-6255',
-      'EPMRTC-6246',
-      'EPMRTC-6248',
-      'EPMRTC-6249',
-      'EPMRTC-6250',
-      'EPMRTC-6251',
+      'EPMDIAL-6837',
+      'EPMDIAL-6845',
+      'EPMDIAL-6840',
+      'EPMDIAL-6841',
+      'EPMDIAL-6842',
+      'EPMDIAL-6843',
+      'EPMDIAL-6844',
     );
     let conversation: Conversation;
     let replayConversation: Conversation;

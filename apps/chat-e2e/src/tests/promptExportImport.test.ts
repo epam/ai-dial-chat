@@ -46,7 +46,7 @@ dialTest(
     chat,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-883', 'EPMRTC-895', 'EPMRTC-3835', 'EPMRTC-3822');
+    setTestIds('EPMDIAL-7015', 'EPMDIAL-7025', 'EPMDIAL-3665', 'EPMDIAL-3675');
     let promptsInsideFolder: FolderPrompt;
     let promptOutsideFolder: Prompt;
     let nestedFolders: FolderInterface[];
@@ -193,7 +193,7 @@ dialTest(
     promptPreviewModalAssertion,
     promptPreviewModal,
   }) => {
-    setTestIds('EPMRTC-884', 'EPMRTC-885', 'EPMRTC-896');
+    setTestIds('EPMDIAL-7016', 'EPMDIAL-7017', 'EPMDIAL-7026');
     let promptInsideFolder: FolderPrompt;
     let promptOutsideFolder: Prompt;
     let exportedData: UploadDownloadData;
@@ -324,7 +324,7 @@ dialTest(
     confirmationDialog,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-886');
+    setTestIds('EPMDIAL-7018');
     let promptInsideFolder: FolderPrompt;
     let promptOutsideFolder: Prompt;
     let exportedData: UploadDownloadData;
@@ -398,7 +398,7 @@ dialTest(
     promptData,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-889');
+    setTestIds('EPMDIAL-7019');
     let promptsInsideFolder: FolderPrompt;
     let promptOutsideFolder: Prompt;
     let importedFolderPrompt: Prompt;
@@ -525,7 +525,7 @@ dialTest(
     localStorageManager,
     promptPreviewModal,
   }) => {
-    setTestIds('EPMRTC-1135');
+    setTestIds('EPMDIAL-7027');
     const aVariable = 'A';
     await dialTest.step(
       'Import prompt from 1.4 app version and verify folder with prompt is visible',
@@ -600,7 +600,7 @@ dialTest(
     folderDropdownMenu,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1375', 'EPMRTC-1376', 'EPMRTC-1377');
+    setTestIds('EPMDIAL-7031', 'EPMDIAL-7029', 'EPMDIAL-7030');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[];
     let exportedData: UploadDownloadData;
@@ -735,7 +735,7 @@ dialTest(
     promptDropdownMenu,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1378');
+    setTestIds('EPMDIAL-7032');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[];
     const updatedPromptNames: string[] = [];
@@ -853,7 +853,7 @@ dialTest(
     toast,
     promptBarFolderAssertion,
   }) => {
-    setTestIds('EPMRTC-1388');
+    setTestIds('EPMDIAL-7033');
     let nestedFolders: FolderInterface[];
     let thirdLevelFolderPrompt: Prompt;
     let exportedData: UploadDownloadData;

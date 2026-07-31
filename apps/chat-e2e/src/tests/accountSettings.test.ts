@@ -26,7 +26,7 @@ dialTest(
     accountSettingsAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-812');
+    setTestIds('EPMDIAL-2380');
 
     await dialTest.step(
       'Open account menu and verify menu options',
@@ -65,7 +65,7 @@ dialTest(
     settingsModal,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-360', 'EPMRTC-8041');
+    setTestIds('EPMDIAL-2423', 'EPMDIAL-2454');
 
     await dialTest.step(
       'Open account settings and verify "Theme" field has "Dark" value, "Save" button is available',
@@ -142,7 +142,7 @@ dialTest(
     conversations,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1704', 'EPMRTC-1705', 'EPMRTC-1708');
+    setTestIds('EPMDIAL-2432', 'EPMDIAL-2433', 'EPMDIAL-2436');
     let sendMessageInputInitWidth: number;
     let conversation: Conversation;
 
@@ -247,7 +247,7 @@ dialTest(
     setTestIds,
     page,
   }) => {
-    setTestIds('EPMRTC-8042', 'EPMRTC-8046');
+    setTestIds('EPMDIAL-2458', 'EPMDIAL-2461');
 
     const newLinesCount = 4;
     let conversation: Conversation;
@@ -346,7 +346,7 @@ dialTest(
     setTestIds,
     page,
   }) => {
-    setTestIds('EPMRTC-8044', 'EPMRTC-8045');
+    setTestIds('EPMDIAL-2459', 'EPMDIAL-2460');
 
     const newLinesCount = 4;
     const randomRequest = GeneratorUtil.randomString(5);
@@ -465,7 +465,7 @@ dialTest(
     setTestIds,
     page,
   }) => {
-    setTestIds('EPMRTC-8245');
+    setTestIds('EPMDIAL-2457');
     const randomRequest = GeneratorUtil.randomString(5);
 
     await dialTest.step(

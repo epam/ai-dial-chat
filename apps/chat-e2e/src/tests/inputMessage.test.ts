@@ -50,16 +50,16 @@ dialAdminTest(
     adminPublicationApiHelper,
   }) => {
     setTestIds(
-      'EPMRTC-5373',
-      'EPMRTC-5374',
-      'EPMRTC-5380',
-      'EPMRTC-5381',
-      'EPMRTC-5375',
-      'EPMRTC-5501',
-      'EPMRTC-5419',
-      'EPMRTC-5376',
-      'EPMRTC-5377',
-      'EPMRTC-6048',
+      'EPMDIAL-5754',
+      'EPMDIAL-5755',
+      'EPMDIAL-5761',
+      'EPMDIAL-5762',
+      'EPMDIAL-5756',
+      'EPMDIAL-5763',
+      'EPMDIAL-5759',
+      'EPMDIAL-5757',
+      'EPMDIAL-5758',
+      'EPMDIAL-5764',
     );
     const inputMessage = GeneratorUtil.randomString(5);
     let firstConversation: Conversation;

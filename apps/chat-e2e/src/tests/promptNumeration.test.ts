@@ -26,11 +26,11 @@ dialTest(
     promptAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-1619',
-      'EPMRTC-1620',
-      'EPMRTC-1566',
-      'EPMRTC-2983',
-      'EPMRTC-2986',
+      'EPMDIAL-3742',
+      'EPMDIAL-3743',
+      'EPMDIAL-3744',
+      'EPMDIAL-3745',
+      'EPMDIAL-3747',
     );
     const promptValue = 'That is just a test prompt';
     const renamedPrompt = 'renamed ';
@@ -213,11 +213,11 @@ dialTest(
     toastAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-2984',
-      'EPMRTC-2987',
-      'EPMRTC-2988',
-      'EPMRTC-2989',
-      'EPMRTC-2990',
+      'EPMDIAL-3746',
+      'EPMDIAL-3748',
+      'EPMDIAL-3749',
+      'EPMDIAL-3750',
+      'EPMDIAL-3751',
     );
     let nestedFolders: FolderInterface[];
     let nestedFolderPrompts: Prompt[];

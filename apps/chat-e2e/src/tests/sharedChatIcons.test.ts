@@ -61,20 +61,20 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-1502',
-      'EPMRTC-1503',
-      'EPMRTC-1508',
-      'EPMRTC-1509',
-      'EPMRTC-6053',
-      'EPMRTC-1512',
-      'EPMRTC-2745',
-      'EPMRTC-1820',
-      'EPMRTC-2747',
-      'EPMRTC-1505',
-      'EPMRTC-1601',
-      'EPMRTC-1811',
-      'EPMRTC-2810',
-      'EPMRTC-2747',
+      'EPMDIAL-2965',
+      'EPMDIAL-2964',
+      'EPMDIAL-2979',
+      'EPMDIAL-2982',
+      'EPMDIAL-3091',
+      'EPMDIAL-2983',
+      'EPMDIAL-2963',
+      'EPMDIAL-2988',
+      'EPMDIAL-2991',
+      'EPMDIAL-2966',
+      'EPMDIAL-2975',
+      'EPMDIAL-2985',
+      'EPMDIAL-3003',
+      'EPMDIAL-2991',
     );
     let conversation: Conversation;
     let firstShareLinkResponse: ShareByLinkResponseModel;
@@ -366,11 +366,11 @@ dialSharedWithMeTest(
     additionalShareUserSharedWithMeConversationAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-1514',
-      'EPMRTC-2750',
-      'EPMRTC-2815',
-      'EPMRTC-2751',
-      'EPMRTC-2774',
+      'EPMDIAL-2978',
+      'EPMDIAL-2976',
+      'EPMDIAL-3007',
+      'EPMDIAL-2977',
+      'EPMDIAL-3066',
     );
     let firstConversationToShare: Conversation;
     let secondConversationToShare: Conversation;
@@ -512,7 +512,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1510', 'EPMRTC-2002');
+    setTestIds('EPMDIAL-2972', 'EPMDIAL-2974');
     const defaultModel = ModelsUtil.getDefaultAgent()!;
     let conversation: Conversation;
     let replayConversation: Conversation;
@@ -611,7 +611,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1600', 'EPMRTC-1511');
+    setTestIds('EPMDIAL-2973', 'EPMDIAL-2984');
     let firstSharedConversation: Conversation;
     let secondSharedConversation: Conversation;
 
@@ -716,11 +716,11 @@ dialTest(
     sendMessageAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-1810',
-      'EPMRTC-2754',
-      'EPMRTC-2752',
-      'EPMRTC-2756',
-      'EPMRTC-2872',
+      'EPMDIAL-2993',
+      'EPMDIAL-2996',
+      'EPMDIAL-2997',
+      'EPMDIAL-2999',
+      'EPMDIAL-3006',
     );
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
@@ -862,13 +862,13 @@ dialTest(
     shareApiAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-2729',
-      'EPMRTC-1811',
-      'EPMRTC-6054',
-      'EPMRTC-2811',
-      'EPMRTC-2757',
-      'EPMRTC-1811',
-      'EPMRTC-2763',
+      'EPMDIAL-2962',
+      'EPMDIAL-2985',
+      'EPMDIAL-3092',
+      'EPMDIAL-3004',
+      'EPMDIAL-3000',
+      'EPMDIAL-2985',
+      'EPMDIAL-3059',
     );
     let folderConversation: FolderConversation;
     let shareLinkResponse: ShareByLinkResponseModel;
@@ -1017,12 +1017,12 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-1601',
-      'EPMRTC-2748',
-      'EPMRTC-2749',
-      'EPMRTC-2746',
-      'EPMRTC-2765',
-      'EPMRTC-2762',
+      'EPMDIAL-2975',
+      'EPMDIAL-2969',
+      'EPMDIAL-2970',
+      'EPMDIAL-2968',
+      'EPMDIAL-2989',
+      'EPMDIAL-3062',
     );
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -1183,7 +1183,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1507');
+    setTestIds('EPMDIAL-2967');
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
 
@@ -1254,7 +1254,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2755');
+    setTestIds('EPMDIAL-2998');
     let folderConversation: FolderConversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
 

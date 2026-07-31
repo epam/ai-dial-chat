@@ -41,14 +41,14 @@ dialTest(
     sendMessageAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-945',
-      'EPMRTC-956',
-      'EPMRTC-1452',
-      'EPMRTC-6141',
-      'EPMRTC-6113',
-      'EPMRTC-6114',
-      'EPMRTC-6043',
-      'EPMRTC-6044',
+      'EPMDIAL-3570',
+      'EPMDIAL-3571',
+      'EPMDIAL-3572',
+      'EPMDIAL-3638',
+      'EPMDIAL-3642',
+      'EPMDIAL-3643',
+      'EPMDIAL-3720',
+      'EPMDIAL-3721',
     );
     const expectedValidFieldBorderColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.textAccentPrimary,
@@ -285,7 +285,7 @@ dialTest(
     informationModalAssertion,
     promptDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-952', 'EPMRTC-5562', 'EPMRTC-5564', 'EPMRTC-5566');
+    setTestIds('EPMDIAL-3592', 'EPMDIAL-4090', 'EPMDIAL-4091', 'EPMDIAL-4093');
     const currentDate = DateUtil.getCurrentLocalDate();
     let prompt: Prompt;
 
@@ -350,7 +350,7 @@ dialTest(
     confirmationDialogAssertion,
     promptPreviewModalAssertion,
   }) => {
-    setTestIds('EPMRTC-953', 'EPMRTC-1272');
+    setTestIds('EPMDIAL-3593', 'EPMDIAL-3594');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
@@ -429,7 +429,7 @@ dialTest(
     promptPreviewModalAssertion,
     promptAssertion,
   }) => {
-    setTestIds('EPMRTC-954');
+    setTestIds('EPMDIAL-3595');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
@@ -481,7 +481,7 @@ dialTest(
     promptPreviewModalAssertion,
     promptAssertion,
   }) => {
-    setTestIds('EPMRTC-955', 'EPMRTC-1278');
+    setTestIds('EPMDIAL-3596', 'EPMDIAL-3754');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
@@ -533,7 +533,7 @@ dialTest(
     confirmationDialog,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-969');
+    setTestIds('EPMDIAL-3606');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
@@ -564,7 +564,7 @@ dialTest(
     confirmationDialog,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-970');
+    setTestIds('EPMDIAL-3608');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     await localStorageManager.setShowSideBarPanels();
@@ -599,7 +599,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-971');
+    setTestIds('EPMDIAL-3610');
     const singlePrompt = promptData.prepareDefaultPrompt();
     promptData.resetData();
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -689,7 +689,7 @@ dialTest(
     chatBar,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-972');
+    setTestIds('EPMDIAL-3609');
     let i = 2;
     const singlePrompt = promptData.prepareDefaultPrompt();
     promptData.resetData();
@@ -824,7 +824,7 @@ dialTest(
 dialTest(
   `[UI] Delete all prompts button doesn't exist if not prompts are created`,
   async ({ dialHomePage, promptBar, setTestIds, localStorageManager }) => {
-    setTestIds('EPMRTC-973');
+    setTestIds('EPMDIAL-4079');
     await localStorageManager.setShowSideBarPanels();
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -853,7 +853,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1012', 'EPMRTC-2007', 'EPMRTC-2911');
+    setTestIds('EPMDIAL-3677', 'EPMDIAL-3680', 'EPMDIAL-3681');
     const promptDescription = 'Prompt description';
     const aVariable = 'A';
     const bVariable = 'B';
@@ -905,7 +905,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1013');
+    setTestIds('EPMDIAL-3679');
     const promptContent = (first: string, second: string) =>
       `Calculate ${first} * ${second}`;
     const aVariable = 'A';
@@ -951,7 +951,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1173');
+    setTestIds('EPMDIAL-6446');
     let firstPrompt: Prompt;
     let secondPrompt: Prompt;
     let thirdPrompt: Prompt;
@@ -1047,7 +1047,7 @@ dialTest(
     context,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-9938');
+    setTestIds('EPMDIAL-3615');
     const promptName = GeneratorUtil.randomPromptName();
     const promptDescription = 'test description';
     const promptContent = 'what is {{A}}';

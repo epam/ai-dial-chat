@@ -26,7 +26,7 @@ dialTest(
     promptAssertion,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-2998', 'EPMRTC-3049');
+    setTestIds('EPMRTC-2998', 'EPMDIAL-3600');
     let prompt: Prompt;
 
     await dialTest.step('Prepare prompt', async () => {
@@ -81,7 +81,7 @@ dialTest(
     dataInjector,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2999');
+    setTestIds('EPMDIAL-3599');
     let folderPrompt: FolderPrompt;
 
     await dialTest.step('Prepare prompt inside folder', async () => {

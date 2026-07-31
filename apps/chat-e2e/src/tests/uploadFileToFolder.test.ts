@@ -19,7 +19,7 @@ dialTest(
     fileManagerGridAssertion,
     fileManagerFoldersTreeAssertion,
   }) => {
-    setTestIds('EPMRTC-3295', 'EPMRTC-3048');
+    setTestIds('EPMDIAL-6509', 'EPMDIAL-6512');
     const parentFolderName = GeneratorUtil.randomString(7);
     const childFolderName = GeneratorUtil.randomString(7);
 
@@ -111,7 +111,7 @@ dialTest(
     tooltipPortal,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-3022', 'EPMRTC-1615');
+    setTestIds('EPMDIAL-6518', 'EPMDIAL-6511');
     const folderName = GeneratorUtil.randomString(255);
     const imageName =
       filenamePrefix + GeneratorUtil.randomString(255 - filenamePrefix.length);

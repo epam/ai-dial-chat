@@ -63,12 +63,12 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-4251',
-      'EPMRTC-4271',
-      'EPMRTC-4268',
-      'EPMRTC-4272',
-      'EPMRTC-4269',
-      'EPMRTC-4274',
+      'EPMDIAL-6348',
+      'EPMDIAL-6342',
+      'EPMDIAL-6361',
+      'EPMDIAL-6343',
+      'EPMDIAL-6362',
+      'EPMDIAL-6365',
     );
     const requestContent = GeneratorUtil.randomString(40)
       .concat(' ')
@@ -232,7 +232,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-4270', 'EPMRTC-4276');
+    setTestIds('EPMDIAL-6345', 'EPMDIAL-6347');
     const updatedSecondRowContent = secondRowContent.substring(0, 3);
     const updatedSecondRowTemplate = `{{${secondRowContent.substring(0, 3)}}}`;
     let conversation: Conversation;
@@ -363,7 +363,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-4273');
+    setTestIds('EPMDIAL-6356');
     const request = requestContent.split('\n').slice(0, 2).join('\n');
     const rowsMap = new Map([
       [firstRowContent, firstRowTemplate],
@@ -461,14 +461,14 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-4297',
-      'EPMRTC-4260',
-      'EPMRTC-4262',
-      'EPMRTC-4304',
-      'EPMRTC-4264',
-      'EPMRTC-4265',
-      'EPMRTC-4263',
-      'EPMRTC-4266',
+      'EPMDIAL-6352',
+      'EPMDIAL-6353',
+      'EPMDIAL-6354',
+      'EPMDIAL-6346',
+      'EPMDIAL-6357',
+      'EPMDIAL-6358',
+      'EPMDIAL-6355',
+      'EPMDIAL-6359',
     );
     const request = requestContent.split('\n')[0];
     const mismatchWord = 'food';
@@ -788,7 +788,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-4298', 'EPMRTC-4372');
+    setTestIds('EPMDIAL-6349', 'EPMDIAL-6372');
     const aVar = 'A';
     const aVarPlaceholder = `{{${aVar}}}`;
     const aValue = '1';
@@ -938,7 +938,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-4277', 'EPMRTC-4283', 'EPMRTC-4287');
+    setTestIds('EPMDIAL-6363', 'EPMDIAL-6369', 'EPMDIAL-6370');
     let simpleConversationMessage: Conversation;
     let templateConversationMessage: Conversation;
     let conversation: Conversation;
@@ -1120,7 +1120,7 @@ dialSharedWithMeTest(
     additionalShareUserLocalStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4280');
+    setTestIds('EPMDIAL-6364');
     let simpleConversationMessage: Conversation;
     let templateConversationMessage: Conversation;
     let conversation: Conversation;
@@ -1206,7 +1206,7 @@ dialAdminTest(
     adminLocalStorageManager,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-4281', 'EPMRTC-4282');
+    setTestIds('EPMDIAL-6366', 'EPMDIAL-6368');
     let simpleConversationMessage: Conversation;
     let templateConversationMessage: Conversation;
     let conversation: Conversation;

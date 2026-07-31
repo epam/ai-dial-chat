@@ -28,15 +28,15 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-2975',
-      'EPMRTC-2976',
-      'EPMRTC-2977',
-      'EPMRTC-2978',
-      'EPMRTC-2979',
-      'EPMRTC-2980',
-      'EPMRTC-2981',
-      'EPMRTC-2982',
-      'EPMRTC-6716',
+      'EPMDIAL-3733',
+      'EPMDIAL-3735',
+      'EPMDIAL-3736',
+      'EPMDIAL-3737',
+      'EPMDIAL-3738',
+      'EPMDIAL-3739',
+      'EPMDIAL-3740',
+      'EPMDIAL-3741',
+      'EPMDIAL-3734',
     );
     const folderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const newNameWithEndDot = `${folderName}.`;

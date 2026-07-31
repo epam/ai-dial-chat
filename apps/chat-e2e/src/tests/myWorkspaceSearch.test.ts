@@ -44,12 +44,12 @@ dialTest(
     entityVersionsDropdownMenuAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-4424',
-      'EPMRTC-4614',
-      'EPMRTC-4616',
-      'EPMRTC-4502',
-      'EPMRTC-4659',
-      'EPMRTC-5275',
+      'EPMDIAL-2632',
+      'EPMDIAL-2631',
+      'EPMDIAL-2637',
+      'EPMDIAL-2638',
+      'EPMDIAL-2641',
+      'EPMDIAL-2580',
     );
     let installedAppVersion: string;
     let installedAppName: string;
@@ -378,7 +378,7 @@ dialTest(
     baseAssertion,
     entityVersionsDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-4627', 'EPMRTC-4319');
+    setTestIds('EPMDIAL-2642', 'EPMDIAL-2636');
     let recentNames: string[];
     let recentVersions: string[];
     let installedAppFirstVersion: string;
@@ -581,7 +581,7 @@ dialTest(
     adminPublicationApiHelper,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-5906');
+    setTestIds('EPMDIAL-2643');
     let appVersion: string;
     let firstAppName: string;
     let secondAppName: string;
@@ -749,7 +749,7 @@ dialTest(
     customApplicationBuilder,
     applicationApiHelper,
   }) => {
-    setTestIds('EPMRTC-6447');
+    setTestIds('EPMDIAL-2647');
 
     let searchInput: BaseElement;
 

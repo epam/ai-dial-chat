@@ -34,17 +34,17 @@ import { PublishActions } from '@epam/ai-dial-shared';
 let appEntityForCleanup: BackendEntity | undefined;
 
 dialTest(
-  'Create custom app with required fields only.\n' + // EPMRTC-5130
-    'Edit option for custom app is available from card pop-up form.\n' + // EPMRTC-5939
-    'Custom app with permitted spec symbols in Name.\n' + // EPMRTC-4838
-    'Delete custom app from context menu\n' + // EPMRTC-4094
-    'Custom app: Description field displayed in New conversation , card view, app view\n' + // EPMRTC-4099
-    'App Editor open and Exit of first step - app is not saved\n' + // EPMRTC-5746
-    "Preview: current agent stays in Preview after user clicks on 'Save and exit' button when there is any empty required field\n" + // EPMRTC-6452
-    'Stepper icons change\n' + //EPMRTC-5757
-    'Add custom app: Name and version are predefined\n' + //EPMRTC-5759
-    'Side panel with widgets is not displayed for app editor\n' + // EPMRTC-6049
-    '[UI][AppEditor]: Logo should be in center of header', // EPMRTC-6262
+  'Create custom app with required fields only.\n' + // EPMDIAL-4111
+    'Edit option for custom app is available from card pop-up form.\n' + // EPMDIAL-4196
+    'Custom app with permitted spec symbols in Name.\n' + // EPMDIAL-4112
+    'Delete custom app from context menu\n' + // EPMDIAL-4114
+    'Custom app: Description field displayed in New conversation , card view, app view\n' + // EPMDIAL-4117
+    'App Editor open and Exit of first step - app is not saved\n' + // EPMDIAL-4131
+    "Preview: current agent stays in Preview after user clicks on 'Save and exit' button when there is any empty required field\n" + // EPMDIAL-4157
+    'Stepper icons change\n' + //EPMDIAL-4133
+    'Add custom app: Name and version are predefined\n' + //EPMDIAL-4135
+    'Side panel with widgets is not displayed for app editor\n' + // EPMDIAL-4141
+    '[UI][AppEditor]: Logo should be in center of header', // EPMDIAL-4142
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -77,17 +77,17 @@ dialTest(
     page,
   }) => {
     setTestIds(
-      'EPMRTC-5130',
-      'EPMRTC-5939',
-      'EPMRTC-4838',
-      'EPMRTC-4094',
-      'EPMRTC-4099',
-      'EPMRTC-5746',
-      'EPMRTC-6452',
-      'EPMRTC-5757',
-      'EPMRTC-5759',
-      'EPMRTC-6049',
-      'EPMRTC-6262',
+      'EPMDIAL-4111',
+      'EPMDIAL-4196',
+      'EPMDIAL-4112',
+      'EPMDIAL-4114',
+      'EPMDIAL-4117',
+      'EPMDIAL-4131',
+      'EPMDIAL-4157',
+      'EPMDIAL-4133',
+      'EPMDIAL-4135',
+      'EPMDIAL-4141',
+      'EPMDIAL-4142',
     );
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
@@ -615,9 +615,9 @@ dialTest(
 );
 
 dialTest(
-  'Edit custom application\n' + //EPMRTC-5131
-    'Edit version for custom app\n' + //EPMRTC-4305
-    'DIAL logo click on second step in AppEditor saves app ( decided on daily to leave for now)', // EPMRTC-5747
+  'Edit custom application\n' + //EPMDIAL-4113
+    'Edit version for custom app\n' + //EPMDIAL-4198
+    'DIAL logo click on second step in AppEditor saves app ( decided on daily to leave for now)', // EPMDIAL-4132
   async ({
     marketplacePage,
     marketplaceEntitiesSection,
@@ -639,7 +639,7 @@ dialTest(
     entityEditorGeneralInfoPreview,
     entityEditorPage,
   }) => {
-    setTestIds('EPMRTC-5131', 'EPMRTC-4305', 'EPMRTC-5747');
+    setTestIds('EPMDIAL-4113', 'EPMDIAL-4198', 'EPMDIAL-4132');
     const updatedDescription = GeneratorUtil.randomString(25);
     const updatedCompletionUrl = `http://updated-${GeneratorUtil.randomString(6)}.com`;
     const appEntity = {
@@ -849,10 +849,10 @@ dialTest(
 );
 
 dialTest(
-  'Delete custom app from "Select an agent for conversation" form\n' + // EPMRTC-4105
-    'Delete custom app from application card pop-up\n' + // EPMRTC-4103
-    '[Custom app]: Delete specific not published version' + // EPMRTC-4285
-    '[Custom app]: add 2 applications with the same name and different versions - not published applications grouped by name\n', //EPMRTC-4279
+  'Delete custom app from "Select an agent for conversation" form\n' + // EPMDIAL-4323
+    'Delete custom app from application card pop-up\n' + // EPMDIAL-4116
+    '[Custom app]: Delete specific not published version' + // EPMDIAL-4119
+    '[Custom app]: add 2 applications with the same name and different versions - not published applications grouped by name\n', //EPMDIAL-4122
   async ({
     marketplacePage,
     marketplaceEntitiesSection,
@@ -873,7 +873,7 @@ dialTest(
     marketplaceEntities,
     entityVersionsDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-4105', 'EPMRTC-4103', 'EPMRTC-4285', 'EPMRTC-4279');
+    setTestIds('EPMDIAL-4323', 'EPMDIAL-4116', 'EPMDIAL-4119', 'EPMDIAL-4122');
     let agentElementInDialog: BaseElement;
     let agentElement1: BaseElement;
     let agentElement2: BaseElement;
@@ -1093,15 +1093,15 @@ dialTest(
 );
 
 dialTest(
-  'Custom app Topic dropdown select.\n' + // EPMRTC-4374
-    '[Custom app]: Hints on for fields\n' + // EPMRTC-4278
-    'Preview on step "General info"\n' + // EPMRTC-5749
-    'Preview on step "App settings"\n' + // EPMRTC-5750
-    'Chat created from preview form on step "App settings" is not available on DIAL home page\n' + // EPMRTC-5762
-    'Input on step "App settings" data saved when switch back to step "General info"\n' + // EPMRTC-5765
-    'Chat created from preview form on step "App settings" is not saved if switch to "General info" step and then back to "App settings".\n' + // EPMRTC-7868
-    'Input on step "General info" data saved when switch to step "App settings" using stepper (not Next button ).\n' + // EPMRTC-5928
-    'Custom app appears on the first screen (after the creation) if user types something in Preview', // EPMRTC-6671
+  'Custom app Topic dropdown select.\n' + // EPMDIAL-4118
+    '[Custom app]: Hints on for fields\n' + // EPMDIAL-4121
+    'Preview on step "General info"\n' + // EPMDIAL-4158
+    'Preview on step "App settings"\n' + // EPMDIAL-4160
+    'Chat created from preview form on step "App settings" is not available on DIAL home page\n' + // EPMDIAL-4162
+    'Input on step "App settings" data saved when switch back to step "General info"\n' + // EPMDIAL-4136
+    'Chat created from preview form on step "App settings" is not saved if switch to "General info" step and then back to "App settings".\n' + // EPMDIAL-4166
+    'Input on step "General info" data saved when switch to step "App settings" using stepper (not Next button ).\n' + // EPMDIAL-4137
+    'Custom app appears on the first screen (after the creation) if user types something in Preview', // EPMDIAL-4286
   async (
     {
       marketplacePage,
@@ -1135,15 +1135,15 @@ dialTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-4374',
-      'EPMRTC-4278',
-      'EPMRTC-5749',
-      'EPMRTC-5750',
-      'EPMRTC-5762',
-      'EPMRTC-5765',
-      'EPMRTC-7868',
-      'EPMRTC-5928',
-      'EPMRTC-6671',
+      'EPMDIAL-4118',
+      'EPMDIAL-4121',
+      'EPMDIAL-4158',
+      'EPMDIAL-4160',
+      'EPMDIAL-4162',
+      'EPMDIAL-4136',
+      'EPMDIAL-4166',
+      'EPMDIAL-4137',
+      'EPMDIAL-4286',
     );
     let numberOfTopicsToSelect: number;
     let allTopics: string[] = [];
@@ -1161,7 +1161,7 @@ dialTest(
     )}`;
     const previewChatMessage = 'Hello from preview';
     const attachmentTypeToSet = 'image/png';
-    const updatedAppNameForStepperTest = `${appEntity.name}-stepper-update`; // New name for EPMRTC-5928
+    const updatedAppNameForStepperTest = `${appEntity.name}-stepper-update`; // New name for EPMDIAL-4137
     await localStorageManager.setShowSideBarPanels();
     await localStorageManager.setRecentModelsIdsAndUseLastModel();
 
@@ -1689,9 +1689,9 @@ dialTest(
 );
 
 dialTest(
-  'Edit Custom app: Update icon of custom app\n' + //EPMRTC-4109
-    '[Custom app]: Icon is shown on the custom application card if the svg contains some special chars\n' + // EPMRTC-5538
-    '[App editor]: Release date displayed on detailed preview on "General info" step when edit custom app', //EPMRTC-5831
+  'Edit Custom app: Update icon of custom app\n' + //EPMDIAL-4197
+    '[Custom app]: Icon is shown on the custom application card if the svg contains some special chars\n' + // EPMDIAL-4128
+    '[App editor]: Release date displayed on detailed preview on "General info" step when edit custom app', //EPMDIAL-4164
   async ({
     marketplacePage,
     marketplaceEntitiesSection,
@@ -1712,7 +1712,7 @@ dialTest(
     setTestIds,
     fileApiHelper,
   }) => {
-    setTestIds('EPMRTC-4109', 'EPMRTC-5538', 'EPMRTC-5831');
+    setTestIds('EPMDIAL-4197', 'EPMDIAL-4128', 'EPMDIAL-4164');
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
       version: GeneratorUtil.randomEntityVersion(),
@@ -1871,8 +1871,8 @@ dialTest(
 );
 
 dialTest(
-  '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits.\n' + // EPMRTC-4131
-    '[Custom app + Marketplace]: tooltips for icons on application modal window', // EPMRTC-4290
+  '[Custom app]: Attachments type not empty and Max attachments empty then Max Attachments field treated as without limits.\n' + // EPMDIAL-4120
+    '[Custom app + Marketplace]: tooltips for icons on application modal window', // EPMDIAL-4124
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -1898,7 +1898,7 @@ dialTest(
     customAppEditorAppSettingsPreviewBody,
     fileManagerToolbar,
   }) => {
-    setTestIds('EPMRTC-4131', 'EPMRTC-4290');
+    setTestIds('EPMDIAL-4120', 'EPMDIAL-4124');
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomEntityVersion();
     const completionUrl = `http://${GeneratorUtil.randomString(6)}.com`;
@@ -2065,9 +2065,9 @@ dialTest(
 );
 
 dialAdminTest(
-  'Check icons of chats with published custom app.\n' + //EPMRTC-4303
-    'Check icons of chats with published custom app. icon has special symbols in name.\n' + //EPMRTC-6345
-    'Icon for custom app is displayed in publish request if file name for icon contain special symbols', //EPMRTC-4302
+  'Check icons of chats with published custom app.\n' + //EPMDIAL-4125
+    'Check icons of chats with published custom app. icon has special symbols in name.\n' + //EPMDIAL-4144
+    'Icon for custom app is displayed in publish request if file name for icon contain special symbols', //EPMDIAL-4129
   async ({
     dialHomePage,
     adminDialHomePage,
@@ -2093,7 +2093,7 @@ dialAdminTest(
     adminApproveRequiredPrompts,
     adminPublishedApplicationReviewModal,
   }) => {
-    setTestIds('EPMRTC-4303', 'EPMRTC-6345', 'EPMRTC-4302');
+    setTestIds('EPMDIAL-4125', 'EPMDIAL-4144', 'EPMDIAL-4129');
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomEntityVersion();
     let appEntity: DialAIEntityModel;
@@ -2226,8 +2226,8 @@ dialAdminTest(
 );
 
 dialTest(
-  'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation\n' + // EPMRTC-5945
-    'Create two custom apps consecutively.\n' + // EPMRTC-6263
+  'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation\n' + // EPMDIAL-4165
+    'Create two custom apps consecutively.\n' + // EPMDIAL-4143
     '[Select an agent for conversation] Tooltip appears on long name only',
   async ({
     marketplacePage,
@@ -2257,7 +2257,7 @@ dialTest(
     tooltip,
     tooltipAssertion,
   }) => {
-    setTestIds('EPMRTC-5945', 'EPMRTC-6263', 'EPMRTC-8693');
+    setTestIds('EPMDIAL-4165', 'EPMDIAL-4143', 'EPMDIAL-5849');
     const version = GeneratorUtil.randomEntityVersion();
     const maxRandomNameLength =
       ExpectedConstants.maxEntityNameLength -
@@ -2421,8 +2421,8 @@ dialTest(
 );
 
 dialTest(
-  "Tooltip for long app's name displayed in several lines\n" + // EPMRTC-5946
-    '[App editor]: Changes are saved if set focus to field and then move cursor to Save and exit or to step in header', // EPMRTC-6046
+  "Tooltip for long app's name displayed in several lines\n" + // EPMDIAL-4134
+    '[App editor]: Changes are saved if set focus to field and then move cursor to Save and exit or to step in header', // EPMDIAL-4140
   async ({
     customApplicationBuilder,
     applicationApiHelper,
@@ -2444,7 +2444,7 @@ dialTest(
     customAppEditorAppSettingsPreviewBody,
     entityEditorGeneralInfoPreview,
   }) => {
-    setTestIds('EPMRTC-5946', 'EPMRTC-6046');
+    setTestIds('EPMDIAL-4134', 'EPMDIAL-4140');
     const appNameWithSpaces = `${applicationNamePrefix}${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(70)} ${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength - 140 - 2 - 6)}`; // Ensure total length is 160 with spaces
     const appVersion = GeneratorUtil.randomEntityVersion();
     const appEntity = {

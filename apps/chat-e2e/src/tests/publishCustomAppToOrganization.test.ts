@@ -55,7 +55,7 @@ dialAdminTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-4450', 'EPMRTC-4496', 'EPMRTC-5858', 'EPMRTC-5736');
+    setTestIds('EPMDIAL-4208', 'EPMDIAL-4211', 'EPMDIAL-4314', 'EPMDIAL-4213');
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomEntityVersion();
     const orgFolder = GeneratorUtil.randomString(7);

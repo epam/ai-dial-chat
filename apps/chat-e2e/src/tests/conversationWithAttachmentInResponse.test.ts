@@ -30,7 +30,7 @@ dialTest(
     conversations,
     appContainer,
   }) => {
-    setTestIds('EPMRTC-3481', 'EPMRTC-8414', 'EPMRTC-8310');
+    setTestIds('EPMDIAL-6062', 'EPMDIAL-6063', 'EPMDIAL-6064');
     const defaultModel = ModelsUtil.getDefaultAgent()!;
     let responseImageConversation: Conversation;
     const imagePath = API.modelFilePath(defaultModel.id);

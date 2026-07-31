@@ -56,14 +56,14 @@ dialAdminTest(
   }) => {
     setIssueIds('3350');
     setTestIds(
-      'EPMRTC-3372',
-      'EPMRTC-3275',
-      'EPMRTC-3566',
-      'EPMRTC-3496',
-      'EPMRTC-3373',
-      'EPMRTC-3789',
-      'EPMRTC-3225',
-      'EPMRTC-3328',
+      'EPMDIAL-3162',
+      'EPMDIAL-3167',
+      'EPMDIAL-3169',
+      'EPMDIAL-3168',
+      'EPMDIAL-3238',
+      'EPMDIAL-3235',
+      'EPMDIAL-3227',
+      'EPMDIAL-3212',
     );
     let nestedFolders: FolderInterface[];
     let firstConversation: Conversation;
@@ -427,12 +427,12 @@ dialAdminTest(
     adminLocalStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-3613',
-      'EPMRTC-3456',
-      'EPMRTC-3460',
-      'EPMRTC-3204',
-      'EPMRTC-3457',
-      'EPMRTC-3943',
+      'EPMDIAL-3173',
+      'EPMDIAL-3097',
+      'EPMDIAL-3163',
+      'EPMDIAL-3165',
+      'EPMDIAL-3100',
+      'EPMDIAL-3242',
     );
     let publishedFolderConversation: FolderConversation;
     let folderConversationToPublish: FolderConversation;

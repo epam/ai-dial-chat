@@ -84,17 +84,17 @@ dialAdminTest(
   }) => {
     dialAdminTest.slow();
     setTestIds(
-      'EPMRTC-3463',
-      'EPMRTC-3213',
-      'EPMRTC-4189',
-      'EPMRTC-3421',
-      'EPMRTC-3793',
-      'EPMRTC-4080',
-      'EPMRTC-4704',
-      'EPMRTC-3457',
-      'EPMRTC-5652',
-      'EPMRTC-4124',
-      'EPMRTC-4169',
+      'EPMDIAL-3106',
+      'EPMDIAL-3109',
+      'EPMDIAL-3239',
+      'EPMDIAL-3241',
+      'EPMDIAL-3236',
+      'EPMDIAL-3134',
+      'EPMDIAL-3137',
+      'EPMDIAL-3100',
+      'EPMDIAL-3560',
+      'EPMDIAL-6764',
+      'EPMDIAL-6799',
     );
     let imageUrl: string;
     const filePath = API.modelFilePath(modelWithInputAttachments.id);
@@ -348,7 +348,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'EPMRTC-4169: search non-existent term in Organization tab and verify "No results found" is shown',
+      'EPMDIAL-6799: search non-existent term in Organization tab and verify "No results found" is shown',
       async () => {
         await fileManagerNavigationPanel
           .getSearch()
@@ -460,7 +460,7 @@ dialAdminTest(
     adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3625', 'EPMRTC-4740', 'EPMRTC-4125');
+    setTestIds('EPMDIAL-3131', 'EPMDIAL-5998', 'EPMDIAL-6701');
     let plotlyConversation: Conversation;
     let plotlyImageUrl: string;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -743,7 +743,7 @@ dialAdminTest(
     adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-4195', 'EPMRTC-4177');
+    setTestIds('EPMDIAL-6775', 'EPMDIAL-6797');
 
     const folderPath = GeneratorUtil.randomString(5);
     let imageInRootUrl: string;
@@ -878,7 +878,7 @@ dialTest(
     publishFileTreeAssertion,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-4183');
+    setTestIds('EPMDIAL-6762');
     let imageUrl: string;
     let conversation: Conversation;
     const filePath = API.modelFilePath(modelWithInputAttachments.id);
@@ -943,7 +943,7 @@ dialAdminTest(
     adminPublicationApiHelper,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-4199', 'EPMRTC-4200');
+    setTestIds('EPMDIAL-6778', 'EPMDIAL-6779');
 
     const imageInRoot = GeneratorUtil.randomFilename('jpg');
     const imageInFolder = GeneratorUtil.randomFilename('jpg');
@@ -979,7 +979,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'EPMRTC-4199: create publication request and admin rejects it',
+      'EPMDIAL-6778: create publication request and admin rejects it',
       async () => {
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
@@ -993,7 +993,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'EPMRTC-4199: open File Manager Organization tab and verify specific files are not present',
+      'EPMDIAL-6778: open File Manager Organization tab and verify specific files are not present',
       async () => {
         await fileManagerPage.openFileManagerPage();
         await fileManagerPage.waitForPageLoaded({ isGridVisible: undefined });
@@ -1008,7 +1008,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'EPMRTC-4200: publish images and approve, then create unpublish request and admin rejects it',
+      'EPMDIAL-6779: publish images and approve, then create unpublish request and admin rejects it',
       async () => {
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
@@ -1025,7 +1025,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'EPMRTC-4200: reload File Manager Organization tab and verify files are still present',
+      'EPMDIAL-6779: reload File Manager Organization tab and verify files are still present',
       async () => {
         await fileManagerPage.reloadPage();
         await fileManagerPage.waitForPageLoaded();

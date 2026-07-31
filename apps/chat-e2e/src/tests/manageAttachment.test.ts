@@ -39,7 +39,7 @@ dialTest(
     fileManagerDeleteItemConfirmationPopupAssertion,
     fileManagerGridAssertion,
   }) => {
-    setTestIds('EPMRTC-1884', 'EPMRTC-3296');
+    setTestIds('EPMDIAL-6582', 'EPMDIAL-6583');
 
     let fileDotsMenu: Locator;
     let fileRow: Locator;
@@ -144,7 +144,7 @@ dialTest(
     fileManagerToolbar,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-3298', 'EPMRTC-3299');
+    setTestIds('EPMDIAL-6584', 'EPMDIAL-6585');
     const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments.filter(
         (m) =>
@@ -259,7 +259,7 @@ dialTest(
     fileManagerToolbar,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-3302');
+    setTestIds('EPMDIAL-6586');
 
     await dialTest.step(
       'Open file manager page by direct URL navigation',
@@ -354,7 +354,7 @@ dialTest(
     fileManagerToolbar,
     fileManagerGridAssertion,
   }) => {
-    setTestIds('EPMRTC-3304');
+    setTestIds('EPMDIAL-6515');
     let client: CDPSession;
 
     await dialTest.step(
@@ -424,7 +424,7 @@ dialTest(
     fileManagerGridAssertion,
     toastAssertion,
   }) => {
-    setTestIds('EPMRTC-8176');
+    setTestIds('EPMDIAL-6587');
     let client: CDPSession;
 
     await dialTest.step('Upload file to app via API', async () => {
@@ -506,7 +506,7 @@ dialTest(
     downloadAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2015', 'EPMRTC-3187');
+    setTestIds('EPMDIAL-6580', 'EPMRTC-3187');
     const filename = `${filenamePrefix}${ExpectedConstants.allowedSpecialChars}.jpg`;
 
     await dialTest.step(
@@ -555,7 +555,7 @@ dialTest(
     fileManagerGridAssertion,
     downloadAssertion,
   }) => {
-    setTestIds('EPMRTC-3300');
+    setTestIds('EPMDIAL-6581');
 
     await dialTest.step('Upload 2 files to app', async () => {
       for (const file of attachedFiles) {
@@ -617,7 +617,7 @@ dialTest(
     fileManager,
     navigationPanel,
   }) => {
-    setTestIds('EPMRTC-5396', 'EPMRTC-5526');
+    setTestIds('EPMDIAL-6521', 'EPMDIAL-6522');
     const filesToTest = [
       {
         name: GeneratorUtil.randomFilename('txt'),
@@ -737,14 +737,14 @@ dialTest(
     fileManager,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-3301', 'EPMRTC-3306', 'EPMRTC-3307');
+    setTestIds('EPMDIAL-6592', 'EPMDIAL-6600', 'EPMDIAL-6601');
 
     const folder1 = GeneratorUtil.randomString(7);
     const folder2 = GeneratorUtil.randomString(7);
-    // EPMRTC-3301: files inside folders (case variants: lowercase 'n' and capital 'N')
+    // EPMDIAL-6592: files inside folders (case variants: lowercase 'n' and capital 'N')
     const folderFile1 = GeneratorUtil.filename(' File name', 'png');
     const folderFile2 = GeneratorUtil.filename(' File Name', 'txt');
-    // EPMRTC-3306 / EPMRTC-3307: files in root (three case variants)
+    // EPMDIAL-6600 / EPMDIAL-6601: files in root (three case variants)
     const rootFile1 = GeneratorUtil.filename(' File Name', 'png');
     const rootFile2 = GeneratorUtil.filename(' file name1 ', 'pdf');
     const rootFile3 = GeneratorUtil.filename(' file Name', 'txt');
@@ -784,7 +784,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'EPMRTC-3301: search "name" and verify files inside folders are found',
+      'EPMDIAL-6592: search "name" and verify files inside folders are found',
       async () => {
         await fileManagerNavigationPanel
           .getSearch()
@@ -801,7 +801,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-3306: search "File Name" and verify all root files are found regardless of case',
+      'EPMDIAL-6600: search "File Name" and verify all root files are found regardless of case',
       async () => {
         await fileManagerNavigationPanel
           .getSearch()
@@ -816,7 +816,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-3307: search non-existent term and verify "No results found" is shown',
+      'EPMDIAL-6601: search non-existent term and verify "No results found" is shown',
       async () => {
         await fileManagerNavigationPanel
           .getSearch()
@@ -859,7 +859,7 @@ dialTest(
     fileManagerNavigationPanel,
     fileManagerToolbar,
   }) => {
-    setTestIds('EPMRTC-8130');
+    setTestIds('EPMDIAL-6593');
 
     const visibleFolder = 'Folder1';
     const hiddenFolder = '.Folder2';
@@ -982,7 +982,7 @@ dialTest(
     fileApiHelper,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-6091', 'EPMRTC-6092');
+    setTestIds('EPMDIAL-6513', 'EPMDIAL-6514');
     const attachments = [Attachment.sunImageName, Attachment.flowerImageName];
     const expectedColor = ThemesUtil.getRgbColorByKey(
       ThemeColorAttributes.controlsBgAccent,
@@ -1137,7 +1137,7 @@ dialTest(
     toastAssertion,
     toast,
   }) => {
-    setTestIds('EPMRTC-8644', 'EPMRTC-8642');
+    setTestIds('EPMDIAL-6553', 'EPMDIAL-6552');
 
     const folderName = GeneratorUtil.randomString(7);
     const duplicatedFolderName = `${folderName} (1)`;
@@ -1158,7 +1158,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'EPMRTC-8644: open folder context menu and select Duplicate option',
+      'EPMDIAL-6553: open folder context menu and select Duplicate option',
       async () => {
         const folderRow = fileManagerGrid.gridRowByNameCell(folderName);
         const folderDotsMenu =
@@ -1173,7 +1173,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8644: verify success toast is shown and duplicated folder appears in grid',
+      'EPMDIAL-6553: verify success toast is shown and duplicated folder appears in grid',
       async () => {
         await toastAssertion.assertToastIsVisible();
         await toastAssertion.assertToastMessage(
@@ -1188,7 +1188,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8644: navigate into duplicated folder and verify content is copied',
+      'EPMDIAL-6553: navigate into duplicated folder and verify content is copied',
       async () => {
         await fileManagerGrid.openFolder(duplicatedFolderName);
         await fileManagerGridAssertion.assertGridRowByNameState(
@@ -1204,7 +1204,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8642: open file context menu and select Duplicate option',
+      'EPMDIAL-6552: open file context menu and select Duplicate option',
       async () => {
         const fileRow = fileManagerGrid.gridRowByNameCell(
           Attachment.flowerImageName,
@@ -1222,7 +1222,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8642: verify success toast is shown and duplicated file appears in grid',
+      'EPMDIAL-6552: verify success toast is shown and duplicated file appears in grid',
       async () => {
         await toastAssertion.assertToastIsVisible();
         await toastAssertion.assertToastMessage(
@@ -1246,7 +1246,7 @@ dialTest(
     fileManagerToolbar,
     fileManagerGridAssertion,
   }) => {
-    setTestIds('EPMRTC-8300');
+    setTestIds('EPMDIAL-6538');
 
     const expectedFilename = ExpectedConstants.replacedRestrictedCharsName(
       Attachment.restrictedCharsFilename.toLowerCase(),
@@ -1292,7 +1292,7 @@ dialTest(
     fileManagerPage,
     fileManagerGridAssertion,
   }) => {
-    setTestIds('EPMRTC-8158');
+    setTestIds('EPMDIAL-6526');
 
     const iconFiles = [
       { name: Attachment.sunImageName, extension: 'jpg' },
@@ -1345,11 +1345,11 @@ dialTest(
     fileManagerToolbar,
   }) => {
     setTestIds(
-      'EPMRTC-8360',
-      'EPMRTC-8596',
-      'EPMRTC-8389',
-      'EPMRTC-8363',
-      'EPMRTC-8362',
+      'EPMDIAL-6568',
+      'EPMDIAL-6569',
+      'EPMDIAL-6572',
+      'EPMDIAL-6571',
+      'EPMDIAL-6570',
     );
     const folderName = GeneratorUtil.randomString(7);
     const renamedBaseName = GeneratorUtil.randomFilename('jpg');
@@ -1370,7 +1370,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'EPMRTC-8360: Open rename for file, type dot at beginning and verify warning icon appears',
+      'EPMDIAL-6568: Open rename for file, type dot at beginning and verify warning icon appears',
       async () => {
         const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
           Attachment.textName,
@@ -1385,7 +1385,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8360: Remove dot from file name and verify warning icon disappears',
+      'EPMDIAL-6568: Remove dot from file name and verify warning icon disappears',
       async () => {
         await fileManagerGrid.getRenameInput().fillInInput(Attachment.textName);
         await fileManagerGridAssertion.assertInputWarning('hidden');
@@ -1394,7 +1394,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8596: Open rename for folder, type dot at beginning and verify warning icon appears',
+      'EPMDIAL-6569: Open rename for folder, type dot at beginning and verify warning icon appears',
       async () => {
         const dotsMenu =
           await fileManagerGrid.gridDotsMenuByNameCell(folderName);
@@ -1406,7 +1406,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8596: Remove dot from folder name and verify warning icon disappears',
+      'EPMDIAL-6569: Remove dot from folder name and verify warning icon disappears',
       async () => {
         await fileManagerGrid.getRenameInput().fillInInput(folderName);
         await fileManagerGridAssertion.assertInputWarning('hidden');
@@ -1415,7 +1415,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8389: Verify txt icon before rename; open rename, verify icon unchanged while editing; save and verify icon unchanged after',
+      'EPMDIAL-6572: Verify txt icon before rename; open rename, verify icon unchanged while editing; save and verify icon unchanged after',
       async () => {
         await fileManagerGridAssertion.assertGridFileIconClass(
           Attachment.textName,
@@ -1439,7 +1439,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8363: Rename file with dot prefix and verify it disappears from grid',
+      'EPMDIAL-6571: Rename file with dot prefix and verify it disappears from grid',
       async () => {
         await fileManagerGrid.renameFile(renamedFileName, hiddenFileName);
         await fileManagerGridAssertion.assertGridRowByNameState(
@@ -1450,7 +1450,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8362: Rename folder with dot prefix and verify it disappears from grid',
+      'EPMDIAL-6570: Rename folder with dot prefix and verify it disappears from grid',
       async () => {
         await fileManagerGrid.renameFile(folderName, hiddenFolderName);
         await fileManagerGridAssertion.assertGridRowByNameState(
@@ -1461,7 +1461,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8362, EPMRTC-8363: Turn on Hidden toggle and verify both hidden items become visible',
+      'EPMDIAL-6570, EPMDIAL-6571: Turn on Hidden toggle and verify both hidden items become visible',
       async () => {
         await fileManagerToolbar.getToolbarSwitcher().switcher.click();
         await fileManagerGridAssertion.assertGridRowByNameState(
@@ -1476,7 +1476,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8362, EPMRTC-8363: Turn off Hidden toggle and verify both items are hidden again',
+      'EPMDIAL-6570, EPMDIAL-6571: Turn off Hidden toggle and verify both items are hidden again',
       async () => {
         await fileManagerToolbar.getToolbarSwitcher().switcher.click();
         await fileManagerGridAssertion.assertGridRowByNameState(
@@ -1509,7 +1509,7 @@ dialTest(
     downloadAssertion,
     dialHomePage,
   }) => {
-    setTestIds('EPMRTC-8532', 'EPMRTC-8291', 'EPMRTC-8295');
+    setTestIds('EPMDIAL-6535', 'EPMDIAL-6529', 'EPMDIAL-6530');
 
     const duplicatedFilename = ExpectedConstants.duplicatedFileName(
       Attachment.sunImageName,
@@ -1536,7 +1536,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'EPMRTC-8532: Upload conflict — verify header and Replace is default, Cancel',
+      'EPMDIAL-6535: Upload conflict — verify header and Replace is default, Cancel',
       async () => {
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
@@ -1561,7 +1561,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8532 + EPMRTC-8291: Upload conflict — verify Replace is still default, confirm Replace and verify content',
+      'EPMDIAL-6535 + EPMDIAL-6529: Upload conflict — verify Replace is still default, confirm Replace and verify content',
       async () => {
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
@@ -1613,7 +1613,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8532 + EPMRTC-8295: Upload conflict — verify Replace is still default, select Duplicate and verify duplicate content',
+      'EPMDIAL-6535 + EPMDIAL-6530: Upload conflict — verify Replace is still default, select Duplicate and verify duplicate content',
       async () => {
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
@@ -1674,7 +1674,7 @@ dialTest(
     downloadAssertion,
     dialHomePage,
   }) => {
-    setTestIds('EPMRTC-8465', 'EPMRTC-8531', 'EPMRTC-8292');
+    setTestIds('EPMDIAL-6532', 'EPMDIAL-6534', 'EPMDIAL-6531');
 
     const radioDefaults: Array<['replace' | 'duplicate', CheckboxState]> = [
       ['replace', CheckboxState.checked],
@@ -1697,7 +1697,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'EPMRTC-8465: Upload group with one conflict, click Cancel — conflicting file stays, others are uploaded',
+      'EPMDIAL-6532: Upload group with one conflict, click Cancel — conflicting file stays, others are uploaded',
       async () => {
         await dialHomePage.uploadData(
           {
@@ -1745,7 +1745,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8531, EPMRTC-8292: Upload group with multiple conflicts — verify Replace all is default, confirm and verify files are replaced',
+      'EPMDIAL-6534, EPMDIAL-6531: Upload group with multiple conflicts — verify Replace all is default, confirm and verify files are replaced',
       async () => {
         await dialHomePage.uploadData(
           {
@@ -1822,7 +1822,7 @@ dialTest(
     fileManagerGridRowDropdownMenu,
     tooltipPortalAssertion,
   }) => {
-    setTestIds('EPMRTC-8184', 'EPMRTC-8183');
+    setTestIds('EPMDIAL-6567', 'EPMDIAL-6566');
 
     const folderName = GeneratorUtil.randomString(7);
 
@@ -1845,7 +1845,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'EPMRTC-8184: Rename folder, add dot at the end, verify error icon appears and tooltip shows correct message',
+      'EPMDIAL-6567: Rename folder, add dot at the end, verify error icon appears and tooltip shows correct message',
       async () => {
         const dotsMenu =
           await fileManagerGrid.gridDotsMenuByNameCell(folderName);
@@ -1862,7 +1862,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8183: Rename file without extension, add dot at the end, verify error icon appears and tooltip shows correct message',
+      'EPMDIAL-6566: Rename file without extension, add dot at the end, verify error icon appears and tooltip shows correct message',
       async () => {
         const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
           Attachment.fileWithoutExtension,
@@ -1896,7 +1896,7 @@ dialTest(
     fileManagerFoldersTree,
     fileManagerFoldersTreeAssertion,
   }) => {
-    setTestIds('EPMRTC-8175', 'EPMRTC-8173', 'EPMRTC-8174');
+    setTestIds('EPMDIAL-6577', 'EPMDIAL-6575', 'EPMDIAL-6576');
 
     const folderA = GeneratorUtil.randomString(7);
     const folderARenamedName = GeneratorUtil.randomString(7);
@@ -1922,7 +1922,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'EPMRTC-8175: Rename folder from grid context menu and verify updated name in grid and folder tree',
+      'EPMDIAL-6577: Rename folder from grid context menu and verify updated name in grid and folder tree',
       async () => {
         const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(folderA);
         await dotsMenu.click({ force: true });
@@ -1941,7 +1941,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8173: Select folderB in tree, rename it from tree context menu, verify updated name in grid and tree',
+      'EPMDIAL-6575: Select folderB in tree, rename it from tree context menu, verify updated name in grid and tree',
       async () => {
         await fileManagerFoldersTree.folderNameByPath(folderB).click();
         await fileManagerFoldersTree.openFolderDotsMenu(folderB);
@@ -1959,7 +1959,7 @@ dialTest(
 
     // TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/6483
     await dialTest.step.skip(
-      'EPMRTC-8173: After rename it from tree context menu folder stays selected',
+      'EPMDIAL-6575: After rename it from tree context menu folder stays selected',
       async () => {
         await fileManagerFoldersTreeAssertion.assertFolderSelectedState(
           true,
@@ -1969,7 +1969,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8174: Select folderC in tree, rename folderARenamedName from tree context menu, verify folderA renamed and folderC stays selected',
+      'EPMDIAL-6576: Select folderC in tree, rename folderARenamedName from tree context menu, verify folderA renamed and folderC stays selected',
       async () => {
         await fileManagerFoldersTree.folderNameByPath(folderC).click();
         const folderAFinalName = GeneratorUtil.randomString(7);

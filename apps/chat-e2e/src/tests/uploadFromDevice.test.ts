@@ -30,107 +30,6 @@ dialTest.beforeAll(async () => {
 
 //test-case is not relevant since no uploadFromDeviceModal is displayed anymore
 dialTest.skip(
-  '"Add more files..." on "Upload from device" opens system file manager.\n' +
-    '[Upload from device] is closed on X',
-  async ({
-    dialHomePage,
-    sendMessage,
-    attachmentDropdownMenu,
-    setTestIds,
-    localStorageManager,
-    uploadFromDeviceModal,
-    conversations,
-    baseAssertion,
-    conversationData,
-    dataInjector,
-  }) => {
-    setTestIds('EPMRTC-3197', 'EPMRTC-3233');
-    const attachments = [Attachment.sunImageName, Attachment.cloudImageName];
-    let theme: string;
-    let conversation: Conversation;
-
-    await dialTest.step(
-      'Prepare a conversation that allows attachments in the request',
-      async () => {
-        conversation = conversationData.prepareDefaultConversation(
-          randomModelWithImageAttachment,
-        );
-        await dataInjector.createConversations([conversation]);
-        await localStorageManager.setRecentModelsIdsAndUseLastModel(
-          randomModelWithImageAttachment,
-        );
-      },
-    );
-
-    await dialTest.step('Set random app theme', async () => {
-      theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
-      await localStorageManager.setSettings(theme);
-      await localStorageManager.setShowSideBarPanels();
-    });
-
-    await dialTest.step(
-      'Open created conversation, select "Upload from device" from Send message menu and verify "Upload" button is disabled by default, possibility to upload file through "Add more files..." link',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await conversations.selectEntity(conversation.name);
-        await sendMessage.attachmentMenuTrigger.click();
-        await attachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.uploadFromDevice,
-          {
-            isHttpMethodTriggered: true,
-            triggeredHttpMethod: 'GET',
-          },
-        );
-        await baseAssertion.assertElementActionabilityState(
-          uploadFromDeviceModal.uploadButton,
-          'disabled',
-        );
-        await baseAssertion.assertElementColor(
-          uploadFromDeviceModal.addMoreFiles,
-          ThemesUtil.getRgbColorByKey(
-            ThemeColorAttributes.textInfo,
-            theme as ThemeId,
-          ),
-        );
-
-        await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
-        for (const attachment of attachments) {
-          await baseAssertion.assertElementState(
-            uploadFromDeviceModal.getUploadedFile(attachment),
-            'visible',
-            ExpectedMessages.fileIsUploaded,
-          );
-        }
-      },
-    );
-
-    await dialTest.step(
-      'Close "Upload from device" modal, open again and verify no files are uploaded',
-      async () => {
-        await uploadFromDeviceModal.closeButton.click();
-        await sendMessage.attachmentMenuTrigger.click();
-        await attachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.uploadFromDevice,
-          {
-            isHttpMethodTriggered: true,
-            triggeredHttpMethod: 'GET',
-          },
-        );
-        for (const attachment of attachments) {
-          await baseAssertion.assertElementState(
-            uploadFromDeviceModal.getUploadedFile(attachment),
-            'hidden',
-            ExpectedMessages.fileIsNotUploaded,
-          );
-        }
-      },
-    );
-  },
-);
-
-//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
-dialTest.skip(
   'Delete a file from "Upload from device".\n' +
     'Three dots appear at the end of long file name on "Upload from device".\n' +
     '"Upload" button become disabled if to remove all files from "Upload from device"',
@@ -145,7 +44,7 @@ dialTest.skip(
     page,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3203', 'EPMRTC-3195', 'EPMRTC-3236');
+    setTestIds('EPMDIAL-6899', 'EPMDIAL-6910', 'EPMDIAL-6900');
     let deleteUploadedFileIcon: Locator;
     const attachments = [Attachment.longImageName, Attachment.cloudImageName];
     let uploadedFileInput: BaseElement;
@@ -278,7 +177,7 @@ dialTest.skip(
     baseAssertion,
     sendMessageInputAttachmentsAssertions,
   }) => {
-    setTestIds('EPMRTC-2043', 'EPMRTC-2044', 'EPMRTC-3284');
+    setTestIds('EPMDIAL-6902', 'EPMDIAL-6903', 'EPMDIAL-6923');
     const randomModelWithUnlimitedImageAttachment =
       GeneratorUtil.randomArrayElement(
         modelsWithAttachments.filter(
@@ -387,7 +286,7 @@ dialTest.skip(
     attachmentDropdownMenu,
     dataInjector,
   }) => {
-    setTestIds('EPMRTC-3196', 'EPMRTC-3235');
+    setTestIds('EPMDIAL-6909', 'EPMDIAL-6919');
     const attachments = [
       Attachment.incrementedImageName(1),
       Attachment.zeroSizeFileName,
@@ -468,7 +367,7 @@ dialTest.skip(
     sendMessage,
     attachmentDropdownMenu,
   }) => {
-    setTestIds('EPMRTC-1674', 'EPMRTC-3023', 'EPMRTC-3215', 'EPMRTC-2922');
+    setTestIds('EPMDIAL-6913', 'EPMDIAL-6915', 'EPMDIAL-6921', 'EPMRTC-2922');
     const fileNameExtension = Attachment.sunImageName.split('.');
     const expectedName = `${fileNameExtension[0]}${'.'.repeat(2)}${fileNameExtension[1]}`;
     let conversation: Conversation;

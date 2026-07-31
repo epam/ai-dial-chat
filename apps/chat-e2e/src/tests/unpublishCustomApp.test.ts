@@ -58,13 +58,13 @@ dialAdminTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-5941',
-      'EPMRTC-5855',
-      'EPMRTC-4831',
-      'EPMRTC-5859',
-      'EPMRTC-5861',
-      'EPMRTC-4825',
-      'EPMRTC-5827',
+      'EPMDIAL-4227',
+      'EPMDIAL-4311',
+      'EPMDIAL-4239',
+      'EPMDIAL-4315',
+      'EPMDIAL-4317',
+      'EPMDIAL-4271',
+      'EPMDIAL-4243',
     );
     const appName = GeneratorUtil.randomApplicationName();
     const appVersion = GeneratorUtil.randomEntityVersion();
@@ -447,7 +447,7 @@ dialAdminTest(
     chatMessagesAssertion,
     toastAssertion,
   }) => {
-    setTestIds('EPMRTC-5785', 'EPMRTC-5891');
+    setTestIds('EPMDIAL-4306', 'EPMDIAL-4284');
     const appName = GeneratorUtil.randomApplicationName();
     const sortedAppVersions = SortingUtil.sortVersionsArray([
       GeneratorUtil.randomEntityVersion(),
@@ -689,7 +689,7 @@ dialAdminTest(
     entityDetailsModalAssertion,
     adminCustomApplicationPublishingUtil,
   }) => {
-    setTestIds('EPMRTC-5786', 'EPMRTC-5942');
+    setTestIds('EPMDIAL-4307', 'EPMDIAL-4228');
     const appName = GeneratorUtil.randomApplicationName();
     let appFirstVersion: string;
     let appSecondVersion: string;
