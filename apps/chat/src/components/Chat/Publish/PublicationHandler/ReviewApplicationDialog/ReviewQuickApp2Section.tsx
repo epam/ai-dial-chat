@@ -181,7 +181,7 @@ const ReviewQuickApp2SectionView = ({
         value={orchestratorName}
         valueClassName="max-w-[414px] break-all text-primary"
       />
-      {config.orchestrator.deployment.parameters?.temperature && (
+      {config.orchestrator.deployment.parameters?.temperature !== undefined && (
         <MarketplaceEntityInfoRow
           label={t(ChatI18nKeys.Temperature)}
           value={config.orchestrator.deployment.parameters.temperature}
