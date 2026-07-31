@@ -254,6 +254,7 @@ export enum CommonI18nKeys {
   FailedToLoadFilesAndFolders = 'Failed to load files and folders',
   UploadFailed = 'Upload failed',
   CheckInternetConnection = 'Please check your internet connection and try again.',
+  ResourcePathTooLong = 'The name or folder path is too long. Please use a shorter name or move the item to a folder with a shorter path.',
   FolderUnsharedSuccessfully = 'Folder "{{itemName}}" has been unshared successfully',
   ItemUnsharedSuccessfully = '"{{itemName}}" has been unshared successfully',
   ItemsUnsharedSuccessfully = '"{{itemName}}" have been unshared successfully',

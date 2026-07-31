@@ -20,7 +20,10 @@ import { getDefaultEntityProps } from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { SkillValidationService } from '@/src/utils/app/data/skill-validation-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
-import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
+import {
+  isResourcePathTooLongError,
+  parseApiError,
+} from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
   addGeneratedFolderId,
   fitFolderNameToStorageLimits,
@@ -265,12 +268,18 @@ const movePromptFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PromptsActions.movePromptFail.type),
     switchMap(({ payload }) => {
+      const message = isResourcePathTooLongError(payload?.message)
+        ? translate(CommonI18nKeys.ResourcePathTooLong, {
+            ns: Translation.Common,
+          })
+        : translate(CommonI18nKeys.PromptAlreadyExists, {
+            ns: Translation.Common,
+          });
+
       return of(
         UIActions.showErrorToast({
           traceId: payload?.traceId,
-          message: translate(CommonI18nKeys.PromptAlreadyExists, {
-            ns: Translation.Common,
-          }),
+          message,
         }),
       );
     }),
