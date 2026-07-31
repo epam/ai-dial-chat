@@ -2,13 +2,10 @@ import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { BasicI18nKeys } from '../../../../constants/translation-keys';
-import { CitationCardProvider } from '../../../../context/CitationCardContext';
-import { useCitationCard } from '../../../../hooks/citations/useCitationCard';
-import type { AnnotationGroup } from '../../../../utils/group-annotations-by-source';
-import CitationDropdown from '../CitationDropdown';
-
-// react-i18next is globally mocked — t(key) returns the key string.
+import { CitationCardProvider } from '../../../context/CitationCardContext';
+import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
+import { useCitationCard } from '../../../utils/useCitationCard';
+import { CitationDropdown } from '../CitationDropdown';
 
 const makeGroup = (): AnnotationGroup => {
   const annotation: Annotation = {
@@ -29,6 +26,23 @@ const makeGroup = (): AnnotationGroup => {
   };
 };
 
+const cardLabels = {
+  ariaLabel: 'Citation from livescience.com',
+  previousCitation: 'Previous',
+  nextCitation: 'Next',
+  formatSwitcherText: (current: number, total: number) =>
+    `${current} / ${total}`,
+  preview: 'Preview',
+  openInBrowser: 'Open in browser',
+  download: 'Download',
+};
+
+const markerLabels = {
+  ariaLabel: 'Citation from livescience.com',
+  label: 'livescience.com',
+  labelWithOverflow: 'livescience.com +1',
+};
+
 const Wrapper = (props: {
   group: AnnotationGroup;
   onPreview?: (annotation: Annotation) => void;
@@ -37,7 +51,11 @@ const Wrapper = (props: {
   const citationCard = useCitationCard();
   return (
     <CitationCardProvider value={citationCard}>
-      <CitationDropdown {...props} />
+      <CitationDropdown
+        {...props}
+        cardLabels={cardLabels}
+        markerLabels={markerLabels}
+      />
     </CitationCardProvider>
   );
 };
@@ -52,16 +70,12 @@ describe('CitationDropdown', () => {
       />,
     );
     await userEvent.click(screen.getByRole('button'));
-    expect(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy();
   });
 
   it('opens the popup without a Preview button when onPreview is omitted', async () => {
     render(<Wrapper group={makeGroup()} onOpenInBrowser={vi.fn()} />);
     await userEvent.click(screen.getByRole('button'));
-    expect(
-      screen.queryByRole('button', { name: BasicI18nKeys.Preview }),
-    ).toBeFalsy();
+    expect(screen.queryByRole('button', { name: 'Preview' })).toBeFalsy();
   });
 });

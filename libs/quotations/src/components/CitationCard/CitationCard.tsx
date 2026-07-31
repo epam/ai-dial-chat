@@ -11,17 +11,41 @@ import {
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { FC, memo } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-  BasicI18nKeys,
-  ButtonsI18nKeys,
-  CitationsI18nKeys,
-} from '../../../constants/translation-keys';
-import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
-import FileTypeIcon from '../../FileTypeIcon/FileTypeIcon';
+import { FC, memo, ReactNode } from 'react';
+import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
 
-interface Props {
+/** User-visible strings for `CitationCard`. */
+export interface CitationCardLabels {
+  /** Dialog aria-label (already includes the source name). */
+  ariaLabel: string;
+  /** Accessible label for the "previous citation" button. */
+  previousCitation: string;
+  /** Accessible label for the "next citation" button. */
+  nextCitation: string;
+  /** Returns the switcher text given the 1-based current index and total count, e.g. `(1, 3) => "1 / 3"`. */
+  formatSwitcherText: (current: number, total: number) => string;
+  /** Label for the "Preview" button. */
+  preview: string;
+  /** Label for the "Open in browser" button. */
+  openInBrowser: string;
+  /** Label for the "Download" button. */
+  download: string;
+}
+
+/** Typography (font utility class) overrides for `CitationCard`. */
+export interface CitationCardTypography {
+  /** CSS class applied to the source name ellipsis. Defaults to `'dial-tiny-text'`. */
+  sourceNameClassName?: string;
+  /** CSS class applied to the annotation title. Defaults to `'dial-body-semi-text'`. */
+  titleClassName?: string;
+  /** CSS class applied to the quoted excerpt. Defaults to `'dial-small-text'`. */
+  quoteClassName?: string;
+  /** CSS class applied to the pagination switcher text. Defaults to `'dial-tiny-text'`. */
+  switcherClassName?: string;
+}
+
+/** Props for the `CitationCard` component. */
+export interface CitationCardProps {
   /** The annotation group whose citations are displayed in this popup. */
   group: AnnotationGroup;
   /** Zero-based index into `group.annotations` for the currently shown citation. */
@@ -36,16 +60,25 @@ interface Props {
   onPreview?: (annotation: Annotation) => void;
   /** Called when the user clicks the "Open in browser"/"Download" button. */
   onOpenInBrowser: (annotation: Annotation) => void;
+  /** Optional icon rendered before the source name in the card header. */
+  headerIcon?: ReactNode;
+  /** User-visible strings. */
+  labels: CitationCardLabels;
+  /** Optional typography class overrides. */
+  typography?: CitationCardTypography;
 }
 
-const CitationCard: FC<Props> = ({
+/** Popup card displaying a citation's title, quoted excerpt, and navigation controls. */
+export const CitationCard: FC<CitationCardProps> = ({
   group,
   activeIndex,
   onIndexChange,
   onPreview,
   onOpenInBrowser,
+  headerIcon,
+  labels,
+  typography,
 }) => {
-  const { t } = useTranslation();
   const total = group.annotations.length;
   const annotation = group.annotations[activeIndex] ?? group.primaryAnnotation;
   const hasSwitcher = total > 1;
@@ -57,28 +90,29 @@ const CitationCard: FC<Props> = ({
     sourceContentType === MIMEType.HTML ||
     sourceContentType === MIMEType.XHTML;
 
+  const sourceNameClassName =
+    typography?.sourceNameClassName ?? 'dial-tiny-text';
+  const titleClassName = typography?.titleClassName ?? 'dial-body-semi-text';
+  const quoteClassName = typography?.quoteClassName ?? 'dial-small-text';
+  const switcherClassName = typography?.switcherClassName ?? 'dial-tiny-text';
+
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={t(CitationsI18nKeys.MarkerAriaLabel, {
-        source: group.sourceName,
-      })}
+      aria-label={labels.ariaLabel}
       className="flex w-[400px] flex-col gap-3 rounded-lg border border-primary bg-layer-0 p-4 shadow-lg"
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1">
-          {sourceContentType && (
-            <FileTypeIcon
-              contentType={sourceContentType}
-              size={18}
-              className="text-secondary"
-            />
-          )}
+          {headerIcon}
           <DialEllipsisTooltip
             text={group.sourceName}
-            className="dial-tiny-text min-w-0 text-primary"
+            className={mergeClasses(
+              sourceNameClassName,
+              'min-w-0 text-primary',
+            )}
           />
         </div>
         {hasSwitcher && (
@@ -86,19 +120,16 @@ const CitationCard: FC<Props> = ({
             <DialGhostIconButton
               icon={<IconChevronLeft size={14} className="rtl:scale-x-[-1]" />}
               size={ElementSize.Small}
-              aria-label={t(CitationsI18nKeys.PopupPreviousCitation)}
+              aria-label={labels.previousCitation}
               onClick={() => onIndexChange((activeIndex - 1 + total) % total)}
             />
-            <span className="dial-tiny-text text-secondary">
-              {t(CitationsI18nKeys.PopupSwitcher, {
-                current: activeIndex + 1,
-                total,
-              })}
+            <span className={mergeClasses(switcherClassName, 'text-secondary')}>
+              {labels.formatSwitcherText(activeIndex + 1, total)}
             </span>
             <DialGhostIconButton
               icon={<IconChevronRight size={14} className="rtl:scale-x-[-1]" />}
               size={ElementSize.Small}
-              aria-label={t(CitationsI18nKeys.PopupNextCitation)}
+              aria-label={labels.nextCitation}
               onClick={() => onIndexChange((activeIndex + 1) % total)}
             />
           </div>
@@ -110,7 +141,8 @@ const CitationCard: FC<Props> = ({
           {(annotation.body?.title || (hasSwitcher && groupHasTitle)) && (
             <p
               className={mergeClasses(
-                'dial-body-semi-text text-primary',
+                titleClassName,
+                'text-primary',
                 hasSwitcher && groupHasTitle && 'min-h-[1lh]',
               )}
             >
@@ -123,7 +155,10 @@ const CitationCard: FC<Props> = ({
                 <MarkdownRenderer
                   content={annotation.body.quote}
                   classNames={{
-                    p: 'dial-small-text line-clamp-6 text-secondary',
+                    p: mergeClasses(
+                      quoteClassName,
+                      'line-clamp-6 text-secondary',
+                    ),
                   }}
                 />
               )}
@@ -136,17 +171,13 @@ const CitationCard: FC<Props> = ({
       <div className="flex justify-start gap-2">
         {onPreview && (
           <PrimaryButton
-            label={t(BasicI18nKeys.Preview)}
+            label={labels.preview}
             size={ElementSize.Small}
             onClick={() => onPreview(annotation)}
           />
         )}
         <PrimaryButton
-          label={t(
-            isWebLink
-              ? CitationsI18nKeys.PopupOpenInBrowser
-              : ButtonsI18nKeys.Download,
-          )}
+          label={isWebLink ? labels.openInBrowser : labels.download}
           size={ElementSize.Small}
           onClick={() => onOpenInBrowser(annotation)}
         />
