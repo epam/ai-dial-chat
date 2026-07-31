@@ -201,41 +201,43 @@ export const PdfContent: FC<PdfContentProps> = ({
           className="w-30 me-1 shrink-0 overflow-auto pe-0.5 mobile:hidden"
         >
           <div style={{ paddingTop, paddingBottom }}>
-            {allPageNumbers.slice(startIdx, endIdx + 1).map((pageNum, sliceIdx) => (
-              <div
-                key={pageNum}
-                data-page={pageNum}
-                ref={(el) => {
-                  if (el) {
-                    /* Measure real item height from the first rendered element so
-                     * the virtual window calculation stays accurate. */
-                    if (
-                      sliceIdx === 0 &&
-                      startIdx === 0 &&
-                      itemHeightRef.current === THUMBNAIL_HEIGHT_FALLBACK
-                    ) {
-                      const h = el.getBoundingClientRect().height;
-                      if (h > 0) {
-                        itemHeightRef.current = h;
-                        setItemHeight(h);
+            {allPageNumbers
+              .slice(startIdx, endIdx + 1)
+              .map((pageNum, sliceIdx) => (
+                <div
+                  key={pageNum}
+                  data-page={pageNum}
+                  ref={(el) => {
+                    if (el) {
+                      /* Measure real item height from the first rendered element so
+                       * the virtual window calculation stays accurate. */
+                      if (
+                        sliceIdx === 0 &&
+                        startIdx === 0 &&
+                        itemHeightRef.current === THUMBNAIL_HEIGHT_FALLBACK
+                      ) {
+                        const h = el.getBoundingClientRect().height;
+                        if (h > 0) {
+                          itemHeightRef.current = h;
+                          setItemHeight(h);
+                        }
                       }
+                      thumbnailNodeRefs.current.set(pageNum, el);
+                      thumbnailObserverRef.current?.observe(el);
+                    } else {
+                      thumbnailNodeRefs.current.delete(pageNum);
                     }
-                    thumbnailNodeRefs.current.set(pageNum, el);
-                    thumbnailObserverRef.current?.observe(el);
-                  } else {
-                    thumbnailNodeRefs.current.delete(pageNum);
-                  }
-                }}
-              >
-                <PageThumbnail
-                  pageNum={pageNum}
-                  onSelectPage={handleSelectPage}
-                  isSelected={selectedPage === pageNum}
-                  isLoading={!thumbnails.has(pageNum)}
-                  thumbnailUrl={thumbnails.get(pageNum) ?? null}
-                />
-              </div>
-            ))}
+                  }}
+                >
+                  <PageThumbnail
+                    pageNum={pageNum}
+                    onSelectPage={handleSelectPage}
+                    isSelected={selectedPage === pageNum}
+                    isLoading={!thumbnails.has(pageNum)}
+                    thumbnailUrl={thumbnails.get(pageNum) ?? null}
+                  />
+                </div>
+              ))}
           </div>
         </div>
       )}
