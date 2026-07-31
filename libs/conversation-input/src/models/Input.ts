@@ -298,6 +298,8 @@ export interface InputProps {
    * popover after a selection or an explicit dismiss.
    */
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
+  /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
+  usageLimitsSlot?: ReactNode;
 }
 
 /** Values emitted by the chat-settings modal when the user clicks Save. */
