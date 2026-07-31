@@ -1,11 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  GhostIconButton,
-  Input,
-  NeutralButton,
-  PrimaryButton,
-  Textarea,
-} from '@epam/ai-dial-kit';
+import { GhostIconButton, Input, Textarea } from '@epam/ai-dial-kit';
 import {
   Calendar,
   CalendarMode,
@@ -13,6 +7,8 @@ import {
   DialSelectField,
   DialSpinner,
   LazyDialMarkdownEditor,
+  NeutralButton,
+  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { lazy, Suspense, type ComponentProps, type FC } from 'react';

@@ -7,7 +7,7 @@
 // it, CSS Modules would hash `dial-primary-ghost-button` too, so the
 // compiled selector would never match the real (unscoped) DOM class.
 button.cancelButton:global(.dial-primary-ghost-button) {
-  color: var(--text-secondary, #575f73) !important;
+  color: var(--text-secondary, #6b7280) !important;
 
   @media (hover: hover) {
     &:hover:enabled {

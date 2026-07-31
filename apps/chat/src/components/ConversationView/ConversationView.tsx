@@ -21,11 +21,11 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
-import { NeutralButton } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
-  DialFabButton,
   ErrorMessageNotification,
+  FabButton,
+  NeutralButton,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
@@ -646,7 +646,7 @@ const ConversationView: FC<Props> = ({
         </div>
 
         {isScrollButtonVisible && (
-          <DialFabButton
+          <FabButton
             aria-label={t(ChatI18nKeys.ScrollToBottom)}
             onClick={scrollToBottom}
             className="absolute bottom-0 left-1/2 -translate-x-1/2"

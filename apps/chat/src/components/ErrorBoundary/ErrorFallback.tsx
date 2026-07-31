@@ -1,4 +1,4 @@
-import { PrimaryButton } from '@epam/ai-dial-kit';
+import { PrimaryButton } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import type { ParseKeys } from 'i18next';
 import { memo, type FC } from 'react';

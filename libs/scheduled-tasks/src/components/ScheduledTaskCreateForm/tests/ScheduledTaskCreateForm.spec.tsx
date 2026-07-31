@@ -13,32 +13,6 @@ import {
 import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
 
 vi.mock('@epam/ai-dial-kit', () => ({
-  PrimaryButton: ({
-    label,
-    onClick,
-    disabled,
-  }: {
-    label: string;
-    onClick: () => void;
-    disabled?: boolean;
-  }) => (
-    <button onClick={onClick} disabled={disabled} aria-busy={disabled}>
-      {label}
-    </button>
-  ),
-  NeutralButton: ({
-    label,
-    onClick,
-    disabled,
-  }: {
-    label: string;
-    onClick: () => void;
-    disabled?: boolean;
-  }) => (
-    <button onClick={onClick} disabled={disabled}>
-      {label}
-    </button>
-  ),
   GhostIconButton: ({
     onClick,
     'aria-label': ariaLabel,
@@ -94,6 +68,32 @@ vi.mock('@epam/ai-dial-kit', () => ({
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  NeutralButton: ({
+    label,
+    onClick,
+    disabled,
+  }: {
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+  }) => (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  ),
+  PrimaryButton: ({
+    label,
+    onClick,
+    disabled,
+  }: {
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+  }) => (
+    <button onClick={onClick} disabled={disabled} aria-busy={disabled}>
+      {label}
+    </button>
+  ),
   CalendarMode: {
     Date: 'date',
     DateTime: 'datetime',

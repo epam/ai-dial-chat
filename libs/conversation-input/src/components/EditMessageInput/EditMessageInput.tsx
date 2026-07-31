@@ -1,7 +1,10 @@
 import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { RequestStatus, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { BASE_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import {
+  BASE_ICON_SIZE,
+  NeutralButton,
+  PrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconFile } from '@tabler/icons-react';
 import {
   ChangeEvent,

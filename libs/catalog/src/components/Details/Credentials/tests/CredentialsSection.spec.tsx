@@ -11,26 +11,6 @@ import {
 import { CredentialsSection } from '../CredentialsSection';
 
 vi.mock('@epam/ai-dial-kit', () => ({
-  PrimaryButton: ({
-    label,
-    onClick,
-    disabled,
-  }: {
-    label: string;
-    onClick: () => void;
-    disabled?: boolean;
-  }) => (
-    <button onClick={onClick} disabled={disabled}>
-      {label}
-    </button>
-  ),
-  NeutralButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
   Input: ({
     onChange,
     labelProps,
@@ -50,6 +30,26 @@ vi.mock('@epam/ai-dial-kit', () => ({
   ),
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  NeutralButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
+  PrimaryButton: ({
+    label,
+    onClick,
+    disabled,
+  }: {
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+  }) => (
+    <button onClick={onClick} disabled={disabled}>
+      {label}
+    </button>
+  ),
   DialConfirmationPopup: ({
     open,
     onConfirm,

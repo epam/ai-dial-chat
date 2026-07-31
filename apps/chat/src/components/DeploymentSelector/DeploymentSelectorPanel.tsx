@@ -1,8 +1,9 @@
 import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostButton, GhostIconButton, SearchBar } from '@epam/ai-dial-kit';
+import { GhostIconButton, SearchBar } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
+  GhostButton,
   DialEllipsisTooltip,
   Highlight,
 } from '@epam/ai-dial-ui-kit';
@@ -61,10 +62,8 @@ interface Props {
   labels?: DeploymentSelectorLabels;
 }
 
-/* Matches the conversation panel's group-header color (.groupHeader in
- * ConversationPanel.module.scss: text-tertiary at 55% opacity). */
 const SECTION_HEADING_CLASS_NAME =
-  'dial-tiny-semi-text px-3 pb-0.5 pt-2 uppercase text-tertiary opacity-[0.55]';
+  'dial-tiny-semi-text px-3 pb-0.5 pt-2 uppercase text-tertiary';
 
 // Must match the .rowLeaving exit-animation duration in DeploymentSelectorPanel.module.scss.
 const ROW_LEAVE_ANIMATION_MS = 180;
