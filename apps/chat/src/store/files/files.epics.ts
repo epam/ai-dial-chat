@@ -36,6 +36,7 @@ import {
 } from '@/src/utils/app/file';
 import {
   getFolderFromId,
+  getFolderNestingLevel,
   getGeneratedFolderId,
   updateMovedEntityId,
 } from '@/src/utils/app/folders';
@@ -69,6 +70,7 @@ import {
 } from '@/src/store/selectors';
 
 import { MAX_VISIBLE_NOTIFICATION_ITEMS } from '@/src/constants/file';
+import { MAX_NESTED_FOLDERS } from '@/src/constants/folders';
 import {
   ChatI18nKeys,
   CommonI18nKeys,
@@ -76,7 +78,17 @@ import {
 } from '@/src/constants/i18n';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
+import { DialCopiedItem, DialFileNodeType } from '@epam/ai-dial-ui-kit';
+
+const exceedsMaxNesting = (folderId: string) =>
+  getFolderNestingLevel(folderId) > MAX_NESTED_FOLDERS;
+
+const maxNestingErrorToast = () =>
+  UIActions.showErrorToast({
+    message: translate(ChatI18nKeys.NotAllowedMoreNestedFolders, {
+      ns: Translation.Chat,
+    }),
+  });
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -678,6 +690,16 @@ const moveFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.moveFiles.type),
     switchMap(({ payload }) => {
+      const landsTooDeep = payload.files.some(
+        (file: DialCopiedItem) =>
+          file.nodeType === DialFileNodeType.FOLDER &&
+          exceedsMaxNesting(file.destinationUrl),
+      );
+
+      if (landsTooDeep) {
+        return of(FilesActions.moveFilesFail({ files: payload.files }));
+      }
+
       const abortController = new AbortController();
 
       return concat(
@@ -961,6 +983,11 @@ const uploadArchiveEpic: AppEpic = (action$) =>
     ofType(FilesActions.uploadArchive.type),
     switchMap(({ payload }) => {
       const destinationUrl = `${payload.destinationUrl}/${payload.name}`;
+
+      if (exceedsMaxNesting(destinationUrl)) {
+        return of(maxNestingErrorToast(), FilesActions.uploadArchiveFail());
+      }
+
       return FileService.uploadArchive({
         file: payload.archive,
         destinationUrl,
@@ -1214,6 +1241,10 @@ const createNewFolderEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(FilesActions.createNewFolder.type),
     mergeMap(({ payload }) => {
+      if (exceedsMaxNesting(payload.destinationUrl)) {
+        return of(maxNestingErrorToast());
+      }
+
       return concat(
         of(
           FilesActions.uploadFiles({

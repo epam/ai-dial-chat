@@ -33,7 +33,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { MAX_FOLDERS_DEPTH } from '@/src/constants/folders';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { CHAT_PANEL_PUBLICATION_FEATURE_TYPES } from '@/src/constants/publication';
 import {
@@ -292,7 +292,7 @@ const ChatFolderTemplate = ({
         denyDrop={shouldDenyDrop}
       />
       <Folder
-        maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
+        maxDepth={MAX_FOLDERS_DEPTH}
         readonly={readonly || isConversationsStreaming}
         searchTerm={searchTerm}
         currentFolder={folder}

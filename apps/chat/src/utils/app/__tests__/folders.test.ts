@@ -3,11 +3,18 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getEmptyLeafFolderIds,
+  getFolderNestingLevel,
+  getFoldersDepth,
   getPartialAndFullyChosenFolders,
   getSelectedEntitiesByFolderId,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
+
+import {
+  MAX_NESTED_FOLDERS,
+  MAX_NEW_FOLDER_PATH_SEGMENTS,
+} from '@/src/constants/folders';
 
 import { FeatureType } from '@epam/ai-dial-shared';
 import type { FolderInterface, ShareEntity } from '@epam/ai-dial-shared';
@@ -278,5 +285,68 @@ describe('getPartialAndFullyChosenFolders with folder/prompt id collision', () =
     );
 
     expect(fullyChosenFolderIds).toContain(`${folderPath}/`);
+  });
+});
+
+describe('getFolderNestingLevel', () => {
+  it.each([
+    [undefined, 0],
+    ['', 0],
+    ['files/bucket', 0],
+    ['files/bucket/folder1', 1],
+    ['files/bucket/folder1/folder2', 2],
+    ['files/bucket/folder1/folder2/folder3', 3],
+    ['files/bucket/folder1/folder2/folder3/folder4', 4],
+  ])('returns %s -> %s', (folderId, expected) => {
+    expect(getFolderNestingLevel(folderId)).toBe(expected);
+  });
+
+  it('ignores a trailing slash', () => {
+    expect(getFolderNestingLevel('files/bucket/folder1/')).toBe(1);
+  });
+
+  it.each([
+    ['files/bucket', true],
+    ['files/bucket/f1', true],
+    ['files/bucket/f1/f2', true],
+    ['files/bucket/f1/f2/f3', true],
+    ['files/bucket/f1/f2/f3/f4', false],
+  ])('allows creating inside %s -> %s', (parentId, allowed) => {
+    expect(getFolderNestingLevel(parentId) < MAX_NESTED_FOLDERS).toBe(allowed);
+  });
+});
+
+describe('getFoldersDepth', () => {
+  const bucket = 'files/bucket';
+  const folders = [
+    testFolder(`${bucket}/src`, bucket),
+    testFolder(`${bucket}/src/child`, `${bucket}/src`),
+    testFolder(`${bucket}/leaf`, bucket),
+  ];
+
+  it('counts the folder itself, so a leaf is 1', () => {
+    expect(getFoldersDepth(folders[2], folders)).toBe(1);
+  });
+
+  it('counts the deepest nested child', () => {
+    expect(getFoldersDepth(folders[0], folders)).toBe(2);
+  });
+});
+
+describe('MAX_NEW_FOLDER_PATH_SEGMENTS', () => {
+  it.each([
+    'files/bucket',
+    'files/bucket/f1',
+    'files/bucket/f1/f2',
+    'files/bucket/f1/f2/f3',
+    'files/bucket/f1/f2/f3/f4',
+  ])('matches the app-side check for %s', (parentId) => {
+    const vetoedByUiKit =
+      parentId.split('/').filter(Boolean).length >
+      MAX_NEW_FOLDER_PATH_SEGMENTS - 1;
+
+    expect(vetoedByUiKit).toBe(
+      getFolderNestingLevel(parentId) >= MAX_NESTED_FOLDERS,
+    );
   });
 });
