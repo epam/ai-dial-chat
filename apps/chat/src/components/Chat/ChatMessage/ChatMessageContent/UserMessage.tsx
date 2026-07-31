@@ -68,6 +68,7 @@ import { MessageUserButtons } from '@/src/components/Chat/ChatMessage/MessageBut
 import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { AttachButton } from '@/src/components/Files/AttachButton';
+import { FileDropArea } from '@/src/components/Files/FileDropArea';
 
 import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
 import {
@@ -678,9 +679,18 @@ export const UserMessage = memo(function UserMessage({
 
   useFilePaste(textareaRef, handleUploadPastedFiles);
 
+  const handleDropWhileEditing = useCallback(() => {
+    // Do nothing - prevent files from being dropped while editing
+  }, []);
+
   if (isEditing)
     return (
-      <div className="flex w-full flex-col gap-3">
+      <FileDropArea
+        droppable={false}
+        onDrop={handleDropWhileEditing}
+        className="w-full"
+      >
+        <div className="flex w-full flex-col gap-3">
         <UserSchema
           messageIndex={messageIndex}
           allMessages={allMessages}
@@ -835,7 +845,8 @@ export const UserMessage = memo(function UserMessage({
             <div ref={anchorRef} className="absolute bottom-0"></div>
           </div>
         </div>
-      </div>
+        </div>
+      </FileDropArea>
     );
 
   return (
