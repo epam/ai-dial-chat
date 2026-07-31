@@ -1,12 +1,11 @@
 import {
   Message,
-  MessageFormValue,
+  type MessageCustomContent,
   MessageRole,
   StatusEvent,
   StatusMessage,
   StatusMessageCustomContent,
 } from '@epam/ai-dial-chat-shared';
-import type { AttachmentDto } from '@epam/chat-api-client';
 
 interface MessagePair {
   userMessage: Message;
@@ -15,24 +14,18 @@ interface MessagePair {
 
 export const createMessagePair = (
   content: string,
-  attachments?: AttachmentDto[],
-  formValue?: MessageFormValue,
+  customContent?: MessageCustomContent,
   deploymentId?: string | null,
 ): MessagePair => {
   const now = Date.now();
   const timestamp = new Date(now).toISOString();
-
-  const customContent = {
-    ...(attachments?.length ? { attachments } : {}),
-    ...(formValue ? { form_value: formValue } : {}),
-  };
 
   return {
     userMessage: {
       role: MessageRole.User,
       content,
       timestamp,
-      ...(Object.keys(customContent).length
+      ...(customContent && Object.keys(customContent).length
         ? { custom_content: customContent }
         : {}),
     },

@@ -148,11 +148,15 @@ The tool configuration values SHALL be merged with any existing `configuration_v
 
 ### Requirement: Tool choices persisted in conversation history
 
-Whenever a completion mode creates or replaces a user message, the backend SHALL persist the supplied `custom_content.configuration_value` on that user message alongside attachments and form values. Regenerate SHALL reuse the configuration stored on the user message preceding the regenerated assistant response. Edit SHALL preserve the edited message's existing configuration and form values while applying attachment changes.
+Whenever a completion mode creates or replaces a user message, the backend SHALL persist the supplied `custom_content.configuration_value` on that user message alongside attachments and form values. The frontend SHALL store the same custom content on its optimistic user message before streaming begins. Regenerate SHALL reuse the configuration stored on the user message preceding the regenerated assistant response. Edit SHALL preserve the edited message's existing configuration and form values while applying attachment changes.
 
 #### Scenario: Appended message retains tool state
 - **WHEN** the backend appends a user message with `custom_content.configuration_value: { "deep_research": true }`
 - **THEN** the persisted conversation user message contains the same `configuration_value`
+
+#### Scenario: Optimistic message matches completion request
+- **WHEN** the frontend sends a regular message or submitted starter with tool configuration
+- **THEN** the optimistic user message and the completion request contain the same `custom_content`
 
 #### Scenario: Regenerate uses message-specific tool state
 - **WHEN** a conversation contains multiple user messages with different tool states AND the user regenerates an assistant response

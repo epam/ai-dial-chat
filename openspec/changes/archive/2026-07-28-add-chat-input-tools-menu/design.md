@@ -87,7 +87,7 @@ Then it constructs a single `ToolMenuItem` with:
 
 **Choice:** The `useToolsMenu` hook exposes `toolConfigurationValue: Record<string, boolean>` (e.g. `{ deep_research: true }`). The conversation handler merges this with any existing `configurationValue` (from starters/forms) before passing to `startStream` / `createConversation`.
 
-**Why:** Reuses the exact existing path: `custom_content.configuration_value` → backend → `custom_fields.configuration`. No new DTO field is needed. `makeUserMessage` copies the value into the persisted user message, and edit forwards the preserved custom content, so later regenerate/edit requests use the configuration associated with that message.
+**Why:** Reuses the exact existing path: `custom_content.configuration_value` → backend → `custom_fields.configuration`. No new DTO field is needed. The frontend builds its optimistic user message from the same `customContent` object passed to `startStream`, `makeUserMessage` copies the value into the backend-persisted user message, and edit forwards the preserved custom content. Local and persisted representations therefore remain aligned for later regenerate/edit requests.
 
 **Merge semantics:** Tool values are spread **after** starter/form values, so a tool toggle can override a starter's initial configuration choice. This is intentional — the user explicitly toggled the tool after the starter auto-submitted a default.
 

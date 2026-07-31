@@ -127,6 +127,31 @@ describe('useConversationHandlers — handleSend', () => {
     );
   });
 
+  it('stores tool configuration on the optimistic user message', async () => {
+    mockAttachmentsToDtos.mockReturnValue(undefined);
+    const params = makeParams({
+      toolConfigurationValue: { deep_research: true },
+    });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await result.current.handleSend('Research this', []);
+
+    const updateConversation = params.setConversation.mock.calls[0][0] as (
+      previous: Conversation,
+    ) => Conversation;
+    const updated = updateConversation(params.conversation);
+
+    expect(updated.messages[0].custom_content).toEqual({
+      configuration_value: { deep_research: true },
+    });
+    expect(params.startStream.mock.calls[0][4]).toEqual({
+      configuration_value: { deep_research: true },
+    });
+    expect(params.startStream.mock.calls[0][4]).toBe(
+      updated.messages[0].custom_content,
+    );
+  });
+
   it('calls startStream with the selected deployment', async () => {
     mockAttachmentsToDtos.mockReturnValue(undefined);
     const params = makeParams();
@@ -139,7 +164,7 @@ describe('useConversationHandlers — handleSend', () => {
       'hello',
       1,
       'selected-deployment',
-      { attachments: undefined },
+      undefined,
       expect.any(String),
       'append',
     );
@@ -160,7 +185,7 @@ describe('useConversationHandlers — handleSend', () => {
       'hello',
       1,
       'selected-deployment',
-      { attachments: undefined },
+      undefined,
       expect.any(String),
       'append',
     );
@@ -343,6 +368,18 @@ describe('useConversationHandlers — handleButtonSelect', () => {
       expect.any(String),
       'append',
     );
+
+    const updateConversation = params.setConversation.mock.calls[0][0] as (
+      previous: Conversation,
+    ) => Conversation;
+    const updated = updateConversation(params.conversation);
+    expect(updated.messages[0].custom_content).toEqual({
+      form_value: { starter: 0 },
+      configuration_value: { starter: true, deep_research: true },
+    });
+    expect(params.startStream.mock.calls[0][4]).toBe(
+      updated.messages[0].custom_content,
+    );
   });
 });
 
@@ -423,7 +460,7 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
       'hello',
       1,
       'selected-deployment',
-      { attachments: undefined },
+      undefined,
       expect.any(String),
       'append',
     );
