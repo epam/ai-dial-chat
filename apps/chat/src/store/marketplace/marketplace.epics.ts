@@ -10,6 +10,7 @@ import {
   getLinkErrorMessage,
   getTableSort,
   getTabs,
+  isPersonalSourceType,
 } from '@/src/utils/marketplace';
 
 import { DetailsEntity } from '@/src/types/marketplace';
@@ -24,6 +25,7 @@ import {
 import {
   MarketplaceSelectors,
   ModelsSelectors,
+  SettingsSelectors,
   ToolsetSelectors,
   UISelectors,
 } from '@/src/store/selectors';
@@ -40,6 +42,7 @@ import {
 
 import { MarketplaceState } from './marketplace.types';
 
+import { Feature } from '@epam/ai-dial-shared';
 import { ParsedUrlQueryInput, parse } from 'querystring';
 
 const addToQuery = (
@@ -401,6 +404,59 @@ const updateToolsetsFiltersEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const clearInvalidSourceFiltersOnTabSwitchEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(MarketplaceActions.setSelectedTab.type),
+    switchMap((action) => {
+      const state = state$.value;
+      const newTab = action.payload as MarketplaceTabs;
+      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(state);
+      const shouldHidePersonalSources =
+        newTab === MarketplaceTabs.HOME &&
+        enabledFeatures.has(Feature.MarketplaceHideMyApps);
+
+      if (!shouldHidePersonalSources) {
+        return EMPTY;
+      }
+
+      const agentsFilters =
+        MarketplaceSelectors.selectSelectedAgentsFilters(state);
+      const toolsetsFilters =
+        MarketplaceSelectors.selectSelectedToolsetsFilters(state);
+
+      const updatedAgentsFilters = {
+        ...agentsFilters,
+        Sources: agentsFilters.Sources.filter(
+          (source) => !isPersonalSourceType(source),
+        ),
+      };
+
+      const updatedToolsetsFilters = {
+        ...toolsetsFilters,
+        Sources: toolsetsFilters.Sources.filter(
+          (source) => !isPersonalSourceType(source),
+        ),
+      };
+
+      const hasAgentsFiltersChanged =
+        updatedAgentsFilters.Sources.length !== agentsFilters.Sources.length;
+      const hasToolsetsFiltersChanged =
+        updatedToolsetsFilters.Sources.length !==
+        toolsetsFilters.Sources.length;
+
+      if (hasAgentsFiltersChanged || hasToolsetsFiltersChanged) {
+        return of(
+          MarketplaceActions.setState({
+            selectedAgentsFilters: updatedAgentsFilters,
+            selectedToolsetsFilters: updatedToolsetsFilters,
+          }),
+        );
+      }
+
+      return EMPTY;
+    }),
+  );
+
 const showLoaderEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ModelsActions.getModels.type, ToolsetActions.getToolsets.type),
@@ -415,5 +471,6 @@ export const MarketplaceEpics = combineEpics(
   setQueryParamsEpic,
   updateAgentsFiltersEpic,
   updateToolsetsFiltersEpic,
+  clearInvalidSourceFiltersOnTabSwitchEpic,
   showLoaderEpic,
 );
