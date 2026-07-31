@@ -167,7 +167,7 @@ export interface InputProps {
   /**
    * When `true`, the textarea always renders on its own row above the action bar
    * (attach button at the start, footer actions at the end), instead of the
-   * compact single-row layout used when no attachments are present. Used by the
+   * compact single-row layout. Used by the
    * edit-message UI, which always wants the stacked layout.
    */
   isStacked?: boolean;
