@@ -46,16 +46,16 @@ dialTest(
     compare,
   }) => {
     setTestIds(
-      'EPMRTC-934',
-      'EPMRTC-935',
-      'EPMRTC-936',
-      'EPMRTC-937',
-      'EPMRTC-3058',
-      'EPMRTC-938',
-      'EPMRTC-939',
-      'EPMRTC-940',
-      'EPMRTC-3059',
-      'EPMRTC-3060',
+      'EPMDIAL-2946',
+      'EPMDIAL-2947',
+      'EPMDIAL-2948',
+      'EPMDIAL-2949',
+      'EPMDIAL-2950',
+      'EPMDIAL-2951',
+      'EPMDIAL-2952',
+      'EPMDIAL-2953',
+      'EPMDIAL-2954',
+      'EPMDIAL-2955',
     );
     let firstConversation: Conversation;
     let secondConversation: Conversation;

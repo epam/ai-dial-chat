@@ -20,7 +20,7 @@ dialTest(
     fileApiHelper,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1777', 'EPMRTC-1778');
+    setTestIds('EPMDIAL-6904', 'EPMDIAL-6906');
 
     await dialTest.step('Upload file with long name to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
@@ -74,7 +74,7 @@ dialTest(
     sendMessage,
     sendMessageInputAttachmentsAssertions,
   }) => {
-    setTestIds('EPMRTC-1802');
+    setTestIds('EPMDIAL-6499');
     const replacedSymbolsFilename =
       ExpectedConstants.replacedRestrictedCharsName(
         Attachment.restrictedCharsFilename,
@@ -135,7 +135,7 @@ dialTest(
     fileConflictConfirmationPopupAssertion,
     sendMessageInputAttachmentsAssertions,
   }) => {
-    setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
+    setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMDIAL-6911');
 
     const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
     const uploadFolder = `${ExpectedConstants.fileUploadFolder}/${yearMonthSubfolder}`;
@@ -252,7 +252,7 @@ dialTest(
     fileManagerModalGridAssertion,
     sendMessageInputAttachmentsAssertions,
   }) => {
-    setTestIds('EPMRTC-3113');
+    setTestIds('EPMDIAL-6917');
 
     await dialTest.step(
       'Upload file without extension through chat bar attachment menu',

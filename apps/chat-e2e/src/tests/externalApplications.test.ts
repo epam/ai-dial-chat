@@ -60,13 +60,13 @@ dialTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-6579',
-      'EPMRTC-6701',
-      'EPMRTC-6581',
-      'EPMRTC-6580',
-      'EPMRTC-6582',
-      'EPMRTC-6591',
-      'EPMRTC-6590',
+      'EPMDIAL-5305',
+      'EPMDIAL-5319',
+      'EPMDIAL-5308',
+      'EPMDIAL-5307',
+      'EPMDIAL-5309',
+      'EPMDIAL-5306',
+      'EPMDIAL-5317',
     );
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),

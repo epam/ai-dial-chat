@@ -47,12 +47,12 @@ dialTest(
     publishRequestBuilder,
   }) => {
     setTestIds(
-      'EPMRTC-4318',
-      'EPMRTC-4615',
-      'EPMRTC-4383',
-      'EPMRTC-4317',
-      'EPMRTC-5274',
-      'EPMRTC-5369',
+      'EPMDIAL-2633',
+      'EPMDIAL-2640',
+      'EPMDIAL-2630',
+      'EPMDIAL-2656',
+      'EPMDIAL-2660',
+      'EPMDIAL-2661',
     );
     let installedAppVersion: string;
     let installedAppName: string;
@@ -311,7 +311,7 @@ dialTest(
     entityDetailsModalAssertion,
     entityVersionsDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-4510');
+    setTestIds('EPMDIAL-2634');
     let appCommonVersion: string;
     let secondAppFirstVersion: string;
     let secondAppThirdVersion: string;
@@ -526,7 +526,7 @@ dialTest(
     setTestIds,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-4425', 'EPMRTC-4610', 'EPMRTC-4609');
+    setTestIds('EPMDIAL-2635', 'EPMDIAL-2571', 'EPMDIAL-2616');
     const firstAppName = GeneratorUtil.randomApplicationName();
     const secondAppName = GeneratorUtil.randomApplicationName();
     const thirdAppName = GeneratorUtil.randomApplicationName();
@@ -674,7 +674,7 @@ dialTest(
     setTestIds,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-6426', 'EPMRTC-6427');
+    setTestIds('EPMDIAL-2645', 'EPMDIAL-2646');
     const middleSpaceAppName = GeneratorUtil.randomApplicationName()
       .concat(' ')
       .concat(GeneratorUtil.randomString(5));
@@ -747,7 +747,7 @@ dialTest(
     customApplicationBuilder,
     applicationApiHelper,
   }) => {
-    setTestIds('EPMRTC-6448');
+    setTestIds('EPMDIAL-2648');
     const firstTerm = '71234.71234.9';
     const secondTerm = '36789.30123.4';
     const thirdTerm = '71234.71234.0';

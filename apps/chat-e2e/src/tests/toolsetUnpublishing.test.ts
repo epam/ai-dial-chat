@@ -70,7 +70,7 @@ dialAdminTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-7187', 'EPMRTC-7044', 'EPMRTC-7167', 'EPMRTC-7142');
+    setTestIds('EPMDIAL-5496', 'EPMDIAL-5493', 'EPMDIAL-5495', 'EPMDIAL-5498');
 
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
@@ -375,7 +375,7 @@ dialSharedWithMeTest(
     adminUserItemApiHelper,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-7037', 'EPMRTC-7872');
+    setTestIds('EPMDIAL-5492', 'EPMDIAL-5502');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
@@ -547,7 +547,7 @@ dialAdminTest(
     toastAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8440');
+    setTestIds('EPMDIAL-5504');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       endpoint: GeneratorUtil.randomUrl(),
@@ -764,7 +764,7 @@ dialAdminTest(
     toolsetsToPublishTree,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8441');
+    setTestIds('EPMDIAL-5505');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       endpoint: GeneratorUtil.randomUrl(),
@@ -1066,7 +1066,7 @@ dialAdminTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8454');
+    setTestIds('EPMDIAL-5525');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       endpoint: GeneratorUtil.randomUrl(),

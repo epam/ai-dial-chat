@@ -51,17 +51,17 @@ dialTest(
     chatBarFolderAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-4743',
-      'EPMRTC-4747',
-      'EPMRTC-4757',
-      'EPMRTC-4748',
-      'EPMRTC-4749',
-      'EPMRTC-4750',
-      'EPMRTC-4752',
-      'EPMRTC-4753',
-      'EPMRTC-4839',
-      'EPMRTC-4751',
-      'EPMRTC-4756',
+      'EPMDIAL-6002',
+      'EPMDIAL-6003',
+      'EPMDIAL-6004',
+      'EPMDIAL-6005',
+      'EPMDIAL-6006',
+      'EPMDIAL-6007',
+      'EPMDIAL-6009',
+      'EPMDIAL-6010',
+      'EPMDIAL-6012',
+      'EPMDIAL-6008',
+      'EPMDIAL-6011',
     );
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(),

@@ -54,11 +54,11 @@ dialAdminTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-6118',
-      'EPMRTC-5658',
-      'EPMRTC-6133',
-      'EPMRTC-6127',
-      'EPMRTC-3514',
+      'EPMDIAL-4007',
+      'EPMDIAL-3874',
+      'EPMDIAL-4018',
+      'EPMDIAL-4013',
+      'EPMDIAL-3935',
     );
     let prompt: Prompt;
     const firstRequestName = GeneratorUtil.randomUnpublishRequestName();

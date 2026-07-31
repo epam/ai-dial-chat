@@ -37,11 +37,11 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds(
-      'EPMRTC-1816',
-      'EPMRTC-2731',
-      'EPMRTC-6056',
-      'EPMRTC-1817',
-      'EPMRTC-2817',
+      'EPMDIAL-3778',
+      'EPMDIAL-3767',
+      'EPMDIAL-3850',
+      'EPMDIAL-3785',
+      'EPMDIAL-3779',
     );
     let nestedFolders: FolderInterface[];
     const sharedFolderIndex = 2;
@@ -212,7 +212,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3166', 'EPMRTC-3161');
+    setTestIds('EPMDIAL-3801', 'EPMDIAL-3790');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     const sharedFolderIndex = nestedLevels - 2;
@@ -340,7 +340,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3167');
+    setTestIds('EPMDIAL-3800');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
     const sharedPromptIndex = nestedLevels - 2;
@@ -414,7 +414,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3169', 'EPMRTC-2806');
+    setTestIds('EPMDIAL-3799', 'EPMDIAL-3828');
     let folderPrompt: FolderPrompt;
 
     await dialTest.step(

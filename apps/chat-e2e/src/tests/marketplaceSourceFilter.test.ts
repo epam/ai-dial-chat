@@ -47,7 +47,7 @@ dialTest(
     fileManagerModalGrid,
     entityEditorHeader,
   }) => {
-    setTestIds('EPMRTC-5234', 'EPMRTC-5239', 'EPMRTC-6045');
+    setTestIds('EPMDIAL-2697', 'EPMDIAL-2705', 'EPMDIAL-2644');
     const appName = GeneratorUtil.randomApplicationName();
     const appTopic = GeneratorUtil.randomString(7);
     let initIconUrl: string;
@@ -239,7 +239,7 @@ dialTest(
     baseAssertion,
     entityDetailsModal,
   }) => {
-    setTestIds('EPMRTC-5351', 'EPMRTC-5238', 'EPMRTC-7181');
+    setTestIds('EPMDIAL-2704', 'EPMDIAL-2703', 'EPMDIAL-2590');
     const firstAppName = GeneratorUtil.randomApplicationName();
     const secondAppName = GeneratorUtil.randomApplicationName();
     let myCustomAppsSourceFilterElement: Locator;
@@ -385,7 +385,7 @@ dialSharedWithMeTest(
     baseAssertion,
   }) => {
     dialSharedWithMeTest.slow();
-    setTestIds('EPMRTC-5237', 'EPMRTC-5233', 'EPMRTC-5276');
+    setTestIds('EPMDIAL-2701', 'EPMDIAL-2702', 'EPMDIAL-2581');
     const sharedAppName = GeneratorUtil.randomApplicationName();
     const publishedAppName = GeneratorUtil.randomApplicationName();
     const additionalUserAppName = GeneratorUtil.randomApplicationName();

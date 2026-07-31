@@ -11,7 +11,7 @@ dialTest(
     footer,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-361');
+    setTestIds('EPMDIAL-2464');
 
     await dialTest.step(
       'Open app and verify footer with configured content is displayed',

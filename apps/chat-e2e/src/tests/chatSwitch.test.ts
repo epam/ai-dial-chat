@@ -26,11 +26,11 @@ dialTest(
     sendMessageAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-598',
+      'EPMDIAL-2941',
       'EPMRTC-599',
-      'EPMRTC-600',
-      'EPMRTC-601',
-      'EPMRTC-602',
+      'EPMDIAL-2942',
+      'EPMDIAL-2943',
+      'EPMDIAL-2944',
     );
     const request =
       'give me a sci-fi story with a main topic of your choice. 200 tokens minimum';

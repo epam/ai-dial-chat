@@ -16,7 +16,7 @@ dialTest(
     conversations,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1757');
+    setTestIds('EPMDIAL-6044');
     let conversation: Conversation;
     const stagesCount = 5;
     const maxDisplayedStagesCount = 3;

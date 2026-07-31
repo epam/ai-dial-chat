@@ -31,7 +31,7 @@ dialSharedWithMeTest(
     additionalShareUserSendMessageAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1857', 'EPMRTC-2036', 'EPMRTC-1935', 'EPMRTC-3173');
+    setTestIds('EPMDIAL-3807', 'EPMDIAL-3813', 'EPMDIAL-3823', 'EPMDIAL-3818');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const promptTemplate = (param: string) => `Hi ${param}`;
@@ -157,7 +157,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3179');
+    setTestIds('EPMDIAL-3830');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
 
@@ -211,7 +211,7 @@ dialSharedWithMeTest(
     promptAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3162');
+    setTestIds('EPMDIAL-3795');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
 

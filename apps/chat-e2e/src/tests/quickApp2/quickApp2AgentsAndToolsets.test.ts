@@ -28,7 +28,7 @@ dialTest(
   '[Agents & Toolsets] Default view when nothing is added\n' +
     '[Quick app 2.0]: Select Agents & Toolsets form is NOT open when user switch between steps after adding any item to this field\n' +
     '[Agents & Toolsets] Sorting: the mix of agents and toolsets sorted according to ASCII sorting order\n' +
-    '[Quick app 2.0][UI] the page stays user-friendly while scrolling when Agents&Toolsets field has lots of items', // EPMRTC-7359 + EPMRTC-7398 + EPMRTC-7369 + EPMRTC-7284
+    '[Quick app 2.0][UI] the page stays user-friendly while scrolling when Agents&Toolsets field has lots of items', // EPMDIAL-4921 + EPMDIAL-4930 + EPMDIAL-4927 + EPMDIAL-4928
   async ({
     page,
     marketplacePage,
@@ -44,7 +44,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7359', 'EPMRTC-7398', 'EPMRTC-7369', 'EPMRTC-7284');
+    setTestIds('EPMDIAL-4921', 'EPMDIAL-4930', 'EPMDIAL-4927', 'EPMDIAL-4928');
     const appName = GeneratorUtil.randomApplicationName();
     const asciiSuffix = [
       '!abc',
@@ -245,7 +245,7 @@ dialTest(
 );
 
 dialTest(
-  '[Quick app 2.0]: Select Agents & Toolsets form is NOT open when login to selected toolset from card detailed view', // EPMRTC-7326
+  '[Quick app 2.0]: Select Agents & Toolsets form is NOT open when login to selected toolset from card detailed view', // EPMDIAL-4931
   async ({
     page,
     marketplacePage,
@@ -264,7 +264,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7326');
+    setTestIds('EPMDIAL-4931');
     dialTest.slow();
     const appName = GeneratorUtil.randomApplicationName();
     const toolsetName = GeneratorUtil.randomToolsetName();
@@ -449,7 +449,7 @@ dialTest(
 );
 
 dialTest(
-  "[Quick app 2.0]: Toolset's version is displayed on card on click on toolset's bar in Agents&toolsets field", // EPMRTC-7945
+  "[Quick app 2.0]: Toolset's version is displayed on card on click on toolset's bar in Agents&toolsets field", // EPMDIAL-4936
   async ({
     marketplacePage,
     entityEditorPage,
@@ -463,7 +463,7 @@ dialTest(
     setTestIds,
     setIssueIds,
   }) => {
-    setTestIds('EPMRTC-7945');
+    setTestIds('EPMDIAL-4936');
     setIssueIds('6530');
     const appName = GeneratorUtil.randomApplicationName();
     const toolsetName = GeneratorUtil.randomToolsetName();
@@ -516,7 +516,7 @@ dialTest(
 
 dialTest(
   "[Quick app 2.0]: Application's version is displayed on card on click on toolset's bar in Agents&toolsets field\n" +
-    "[Quick app 2.0]: Model's version is displayed on card on click on toolset's bar in Agents&toolsets field", // EPMRTC-7946 + EPMRTC-7947
+    "[Quick app 2.0]: Model's version is displayed on card on click on toolset's bar in Agents&toolsets field", // EPMDIAL-4937 + EPMDIAL-4938
   async (
     {
       marketplacePage,
@@ -533,7 +533,7 @@ dialTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-7946', 'EPMRTC-7947');
+    setTestIds('EPMDIAL-4937', 'EPMDIAL-4938');
     const appName = GeneratorUtil.randomApplicationName();
     const quickAppName = GeneratorUtil.randomApplicationName();
     let appId: string;
@@ -624,7 +624,7 @@ dialTest(
 
 dialTest(
   '[Agents & Toolsets] Not available agent and toolset stay selected on browser refresh and when user removes/adds new item\n' +
-    '[Quick app 2.0]: One version is displayed on click on bar inside Agents & Toolsets field', // EPMRTC-7972 + EPMRTC-7949
+    '[Quick app 2.0]: One version is displayed on click on bar inside Agents & Toolsets field', // EPMDIAL-4941 + EPMDIAL-4939
   async ({
     marketplacePage,
     entityEditorPage,
@@ -642,7 +642,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7972', 'EPMRTC-7949');
+    setTestIds('EPMDIAL-4941', 'EPMDIAL-4939');
     const appToDeleteName = GeneratorUtil.randomApplicationName();
     const appToKeepName = GeneratorUtil.randomApplicationName();
     const agentName = GeneratorUtil.randomApplicationName();
@@ -867,7 +867,7 @@ dialTest(
 );
 
 dialAdminTest(
-  "[Agents & Toolsets] In Published Quick App 2.0 '+Add' button is unavailable, specific tooltip is shown on hover over selected items", // EPMRTC-7896
+  "[Agents & Toolsets] In Published Quick App 2.0 '+Add' button is unavailable, specific tooltip is shown on hover over selected items", // EPMDIAL-4932
   async ({
     customApplicationBuilder,
     toolsetBuilder,
@@ -888,7 +888,7 @@ dialAdminTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7896');
+    setTestIds('EPMDIAL-4932');
     dialAdminTest.slow();
     const agentName = GeneratorUtil.randomApplicationName();
     const toolsetName = GeneratorUtil.randomToolsetName();

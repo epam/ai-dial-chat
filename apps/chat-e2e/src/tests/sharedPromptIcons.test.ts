@@ -31,15 +31,15 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-1517',
-      'EPMRTC-1817',
-      'EPMRTC-6055',
-      'EPMRTC-1520',
-      'EPMRTC-1521',
-      'EPMRTC-1518',
-      'EPMRTC-3156',
-      'EPMRTC-1523',
-      'EPMRTC-2812',
+      'EPMDIAL-3768',
+      'EPMDIAL-3785',
+      'EPMDIAL-3849',
+      'EPMDIAL-3773',
+      'EPMDIAL-3783',
+      'EPMDIAL-3771',
+      'EPMDIAL-3774',
+      'EPMDIAL-3775',
+      'EPMDIAL-3787',
     );
     let prompt: Prompt;
     let shareLinkResponse: ShareByLinkResponseModel;
@@ -187,7 +187,7 @@ dialTest(
     localStorageManager,
     promptPreviewModal,
   }) => {
-    setTestIds('EPMRTC-1524', 'EPMRTC-3157', 'EPMRTC-3180');
+    setTestIds('EPMDIAL-3777', 'EPMDIAL-3776', 'EPMDIAL-3831');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const newName = GeneratorUtil.randomString(10);
@@ -266,7 +266,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3158');
+    setTestIds('EPMDIAL-3791');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
 
@@ -339,7 +339,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3159', 'EPMRTC-3181');
+    setTestIds('EPMDIAL-3792', 'EPMDIAL-3832');
     let prompt: Prompt;
     let recreatedPrompt: Prompt;
 

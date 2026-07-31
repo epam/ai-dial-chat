@@ -36,7 +36,7 @@ dialTest(
     conversationAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-861');
+    setTestIds('EPMDIAL-2842');
     const conversationInFolder =
       conversationData.prepareDefaultConversationInFolder();
     await dataInjector.createConversations(
@@ -104,7 +104,7 @@ dialTest(
     setTestIds,
     page,
   }) => {
-    setTestIds('EPMRTC-1599', 'EPMRTC-591');
+    setTestIds('EPMDIAL-2838', 'EPMDIAL-2836');
     let conversationToDrop: Conversation;
     let conversation: Conversation;
 
@@ -199,7 +199,7 @@ dialTest(
     chatBarFolderAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-941');
+    setTestIds('EPMDIAL-2837');
     let folderConversation: FolderConversation;
     let conversationToDrop: Conversation;
 
@@ -261,7 +261,7 @@ dialTest(
     promptBarFolderAssertion,
     promptAssertion,
   }) => {
-    setTestIds('EPMRTC-961');
+    setTestIds('EPMDIAL-3618');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
     await dataInjector.createPrompts(
       promptInFolder.prompts,
@@ -306,7 +306,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-959');
+    setTestIds('EPMDIAL-3617');
     let prompt: Prompt;
 
     await dialTest.step(
@@ -380,7 +380,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-960');
+    setTestIds('EPMDIAL-3619');
     let promptInFolder: FolderPrompt;
     let prompt: Prompt;
 

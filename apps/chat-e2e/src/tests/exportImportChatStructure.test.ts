@@ -37,7 +37,7 @@ dialTest(
     iconApiHelper,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-3024');
+    setTestIds('EPMDIAL-7085');
     let exportedData: UploadDownloadData;
 
     // Folder entities

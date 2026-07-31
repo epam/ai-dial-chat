@@ -35,7 +35,7 @@ dialTest(
     marketplaceEntitiesSection,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-4498', 'EPMRTC-4494', 'EPMRTC-4490');
+    setTestIds('EPMDIAL-2681', 'EPMDIAL-2676', 'EPMDIAL-2683');
     const firstAppName = GeneratorUtil.randomApplicationName();
     const secondAppName = GeneratorUtil.randomApplicationName();
     const thirdAppName = GeneratorUtil.randomApplicationName();
@@ -236,7 +236,7 @@ dialTest(
     toast,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-4669', 'EPMRTC-4670', 'EPMRTC-4601');
+    setTestIds('EPMDIAL-2684', 'EPMDIAL-2685', 'EPMDIAL-2687');
     const marketplaceAppName = GeneratorUtil.randomApplicationName();
     const appTopic = GeneratorUtil.randomString(7).toUpperCase();
 
@@ -385,7 +385,7 @@ dialTest(
     setTestIds,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-5352');
+    setTestIds('EPMDIAL-2686');
     const firstAppName = GeneratorUtil.randomApplicationName();
     const secondAppName = GeneratorUtil.randomApplicationName();
     const appTopic = GeneratorUtil.randomString(5);
@@ -517,7 +517,7 @@ dialTest(
     marketplaceEntities,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-4475', 'EPMRTC-4671');
+    setTestIds('EPMDIAL-2688', 'EPMDIAL-2682');
     const appName = GeneratorUtil.randomApplicationName();
     const firstVersion = ExpectedConstants.defaultEntityVersion;
     const secondVersion = '0.0.2';

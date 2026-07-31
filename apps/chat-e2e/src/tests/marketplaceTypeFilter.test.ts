@@ -31,7 +31,7 @@ dialTest(
     baseAssertion,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-4435', 'EPMRTC-4620', 'EPMRTC-4439', 'EPMRTC-5363');
+    setTestIds('EPMDIAL-2666', 'EPMDIAL-2667', 'EPMDIAL-2668', 'EPMDIAL-2657');
     let allModels: DialAIEntityModel[];
     let groupedModelNames: string[];
     let randomModelNames: string[];
@@ -196,7 +196,7 @@ dialTest(
     baseAssertion,
     entityDetailsModal,
   }) => {
-    setTestIds('EPMRTC-4441', 'EPMRTC-5353');
+    setTestIds('EPMDIAL-2669', 'EPMDIAL-2670');
     const appName = GeneratorUtil.randomApplicationName();
     const addedAppName = GeneratorUtil.randomApplicationName();
     let addedAppElement: BaseElement;

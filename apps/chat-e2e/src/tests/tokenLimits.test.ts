@@ -20,7 +20,7 @@ dialTest(
     dataInjector,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1200', 'EPMRTC-3006');
+    setTestIds('EPMDIAL-6396', 'EPMDIAL-6397');
     let conversation: Conversation;
     const allModels = ModelsUtil.getModels();
     const randomModel = GeneratorUtil.randomArrayElement(

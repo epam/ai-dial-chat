@@ -64,7 +64,7 @@ dialTest(
     conversationDropdownMenuAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-501', 'EPMRTC-1264', 'EPMRTC-3452');
+    setTestIds('EPMDIAL-6295', 'EPMDIAL-6292', 'EPMDIAL-3104');
     let replayConversation: Conversation;
     const replayTemp = 0;
     const replayPrompt = 'replay prompt';
@@ -184,7 +184,7 @@ dialTest(
     conversationDropdownMenu,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-503');
+    setTestIds('EPMDIAL-6296');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     const nestedLevels = 4;
@@ -262,7 +262,7 @@ dialTest(
     chatHeaderAssertion,
     conversations,
   }) => {
-    setTestIds('EPMRTC-508');
+    setTestIds('EPMDIAL-6302');
     const replayTemp = 0;
     const replayPrompt = 'reply the same text';
     const replayModel = GeneratorUtil.randomArrayElement(
@@ -388,7 +388,7 @@ dialTest(
     baseAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1323');
+    setTestIds('EPMDIAL-6311');
     const replayTemp = 0.8;
     const replayPrompt = 'reply the same text';
     let conversation: Conversation;
@@ -480,7 +480,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1322', 'EPMRTC-388', 'EPMRTC-1466');
+    setTestIds('EPMDIAL-6294', 'EPMDIAL-7285', 'EPMDIAL-6318');
     let replayConversation: Conversation;
     let simpleFirstConversation: Conversation;
     let simpleSecondConversation: Conversation;
@@ -594,7 +594,7 @@ dialTest(
     renameConversationModal,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-505', 'EPMRTC-506', 'EPMRTC-515', 'EPMRTC-516');
+    setTestIds('EPMDIAL-6298', 'EPMDIAL-6299', 'EPMDIAL-6309', 'EPMDIAL-6310');
     let conversation: Conversation;
     let replayConversation: Conversation;
 
@@ -707,7 +707,7 @@ dialTest(
     sendMessageAssertion,
     talkToAgents,
   }) => {
-    setTestIds('EPMRTC-1328', 'EPMRTC-2839');
+    setTestIds('EPMDIAL-6376', 'EPMDIAL-6377');
     let notAllowedModelConversation: Conversation;
     let replayConversation: Conversation;
     const notAllowedModel = 'not_allowed_model';
@@ -818,7 +818,7 @@ dialTest(
       ),
       noImportModelsSkipReason,
     );
-    setTestIds('EPMRTC-1330', 'EPMRTC-1332');
+    setTestIds('EPMDIAL-6315', 'EPMDIAL-6316');
     const filename = GeneratorUtil.randomArrayElement([
       Import.v14AppImportedFilename,
       Import.v19AppImportedFilename,
@@ -902,7 +902,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-500');
+    setTestIds('EPMDIAL-6291');
     let conversation: Conversation;
 
     await dialTest.step('Prepare empty conversation', async () => {

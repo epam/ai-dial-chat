@@ -35,7 +35,7 @@ dialOverlayTest(
     overlayAppsDropdownMenuAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6031', 'EPMRTC-4447', 'EPMRTC-4712');
+    setTestIds('EPMDIAL-2241', 'EPMDIAL-2286', 'EPMDIAL-2293');
 
     let conversation: Conversation;
     const expectedColor = ThemesUtil.getRgbColorByKey(
@@ -177,7 +177,7 @@ dialOverlayTest(
     overlayBaseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4867');
+    setTestIds('EPMDIAL-2298');
 
     await dialOverlayTest.step(
       'Verify bottom navigation buttons are not available',
@@ -236,7 +236,7 @@ dialOverlayTest(
     overlayNavigationPanel,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-5782');
+    setTestIds('EPMDIAL-2297');
 
     await dialOverlayTest.step(
       'Go to "My Workspace" page and verify "Add App" button is not available',
@@ -266,7 +266,7 @@ dialOverlayTest(
     overlayAppsDropdownMenuAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6391', 'EPMRTC-6316');
+    setTestIds('EPMDIAL-2295', 'EPMDIAL-2307');
     let addAppBtn: BaseElement;
 
     await dialOverlayTest.step(
@@ -314,7 +314,7 @@ dialOverlayTest(
     overlayNavigationPanel,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6316');
+    setTestIds('EPMDIAL-2307');
 
     await dialOverlayTest.step(
       'Go to "My Workspace" page and verify card/table view toggles are visible',
@@ -358,7 +358,7 @@ dialOverlayTest(
     overlayAgentDropdownMenu,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6392');
+    setTestIds('EPMDIAL-2311');
     const sharedAppName = GeneratorUtil.randomApplicationName();
     const customAppName = GeneratorUtil.randomApplicationName();
 
@@ -446,7 +446,7 @@ dialOverlayTest(
     overlayAgentDropdownMenu,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6392');
+    setTestIds('EPMDIAL-2311');
     const customAppName = GeneratorUtil.randomApplicationName();
 
     await dialOverlayTest.step(

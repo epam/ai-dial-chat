@@ -38,11 +38,11 @@ dialTest(
     fileManagerModal,
   }) => {
     setTestIds(
-      'EPMRTC-5486',
-      'EPMRTC-5487',
-      'EPMRTC-5490',
-      'EPMRTC-5512',
-      'EPMRTC-5497',
+      'EPMDIAL-3698',
+      'EPMDIAL-3699',
+      'EPMDIAL-3702',
+      'EPMDIAL-3709',
+      'EPMDIAL-3712',
     );
     const modelWithAttachment = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(true, [
@@ -169,7 +169,7 @@ dialTest(
     variableModalDialog,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-5493');
+    setTestIds('EPMDIAL-3705');
     const promptParam = 'testParam';
     const promptContent = `This is a prompt with a parameter: {{${promptParam}}}`;
     const prompt = promptData.preparePrompt(promptContent);
@@ -226,7 +226,7 @@ dialTest(
     chat,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-5494', 'EPMRTC-5504', 'EPMRTC-5495');
+    setTestIds('EPMDIAL-3706', 'EPMDIAL-3707', 'EPMDIAL-3708');
     const conversation = conversationData.prepareDefaultConversation();
     conversationData.resetData();
     const conversation2 = conversationData.prepareDefaultConversation();
@@ -344,7 +344,7 @@ dialAdminTest(
     adminPrompts,
     adminPromptDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-5499', 'EPMRTC-5500', 'EPMRTC-5496', 'EPMRTC-6037');
+    setTestIds('EPMDIAL-3714', 'EPMDIAL-3715', 'EPMDIAL-3710', 'EPMDIAL-3711');
     const prompt = promptData.prepareDefaultPrompt();
     promptData.resetData();
     const adminPrompt = promptData.prepareDefaultPrompt();
@@ -482,7 +482,7 @@ dialTest(
     chatHeader,
     marketplaceEntitiesSection,
   }) => {
-    setTestIds('EPMRTC-5506', 'EPMRTC-5507');
+    setTestIds('EPMDIAL-3716', 'EPMDIAL-3717');
     const prompt = promptData.prepareDefaultPrompt();
     const nonExistentAppName = GeneratorUtil.randomApplicationName();
 
@@ -584,7 +584,7 @@ dialSharedWithMeTest(
     promptPreviewModal,
     promptPreviewModalAssertion,
   }) => {
-    setTestIds('EPMRTC-5498', 'EPMRTC-6042', 'EPMRTC-5488');
+    setTestIds('EPMDIAL-3713', 'EPMDIAL-3719', 'EPMDIAL-3700');
     const prompt = promptData.prepareDefaultPrompt();
     const model = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
@@ -677,7 +677,7 @@ dialTest(
     organizationPrompts,
     promptDropdownMenu,
   }) => {
-    setTestIds('EPMRTC-5489');
+    setTestIds('EPMDIAL-3701');
     let version = 1;
     const prompt1 = promptData.preparePrompt(GeneratorUtil.randomString(20));
     promptData.resetData();

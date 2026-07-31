@@ -32,7 +32,7 @@ dialTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-4485', 'EPMRTC-5241', 'EPMRTC-5242');
+    setTestIds('EPMDIAL-2659', 'EPMDIAL-2655', 'EPMDIAL-2654');
     let url: string;
 
     await dialTest.step(
@@ -133,7 +133,7 @@ dialTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-5272', 'EPMRTC-4314', 'EPMRTC-4333');
+    setTestIds('EPMDIAL-2658', 'EPMDIAL-2652', 'EPMRTC-4333');
     const appName = GeneratorUtil.randomApplicationName();
     const firstTopic = GeneratorUtil.randomString(5);
     const secondTopic = GeneratorUtil.randomString(5);
@@ -275,12 +275,12 @@ dialTest(
     page,
   }) => {
     setTestIds(
-      'EPMRTC-4430',
-      'EPMRTC-4483',
-      'EPMRTC-4431',
-      'EPMRTC-4486',
-      'EPMRTC-4432',
-      'EPMRTC-4484',
+      'EPMDIAL-2662',
+      'EPMDIAL-2677',
+      'EPMDIAL-2664',
+      'EPMDIAL-2679',
+      'EPMDIAL-2663',
+      'EPMDIAL-2678',
     );
     let filter: Locator;
     let filterOptions: Locator;

@@ -38,7 +38,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7879');
+    setTestIds('EPMDIAL-6192');
     let historyConversation: Conversation;
     const likedIndices = [2, 6, 10];
     const dislikedWithCommentIndices = [4, 8];
@@ -121,7 +121,7 @@ dialTest(
     page,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7876', 'EPMRTC-7892');
+    setTestIds('EPMDIAL-6189', 'EPMDIAL-6196');
     let historyConversation: Conversation;
     const firstMessageIndex = 2;
     const secondMessageIndex = 4;
@@ -246,7 +246,7 @@ dialTest(
     tooltipAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7859', 'EPMRTC-7877', 'EPMRTC-7412', 'EPMRTC-7878');
+    setTestIds('EPMDIAL-6190', 'EPMDIAL-6191', 'EPMDIAL-6188', 'EPMDIAL-6186');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let thirdConversation: Conversation;

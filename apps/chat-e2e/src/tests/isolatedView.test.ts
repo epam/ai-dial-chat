@@ -38,12 +38,12 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds(
-      'EPMRTC-2962',
-      'EPMRTC-2974',
-      'EPMRTC-6265',
-      'EPMRTC-6264',
-      'EPMRTC-2973',
-      'EPMRTC-4891',
+      'EPMDIAL-6400',
+      'EPMDIAL-6403',
+      'EPMDIAL-6414',
+      'EPMDIAL-6413',
+      'EPMDIAL-6401',
+      'EPMDIAL-6412',
     );
     //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
@@ -153,7 +153,7 @@ dialTest(
     baseAssertion,
     tooltipAssertion,
   }) => {
-    setTestIds('EPMRTC-2965');
+    setTestIds('EPMDIAL-6411');
     const attachmentName = Attachment.sunImageName;
     //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
@@ -255,7 +255,7 @@ dialTest(
 dialTest(
   'Isolate view: error message appears if URL is based on non-existed model id',
   async ({ dialHomePage, chatNotFound, setTestIds }) => {
-    setTestIds('EPMRTC-2963');
+    setTestIds('EPMDIAL-6404');
 
     await dialTest.step(
       'Open isolated view for a model that does not exist and verify error toast is shown',
@@ -305,11 +305,11 @@ dialTest(
     tooltipAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-4864',
-      'EPMRTC-4885',
-      'EPMRTC-4824',
-      'EPMRTC-4888',
-      'EPMRTC-4889',
+      'EPMDIAL-6406',
+      'EPMDIAL-6407',
+      'EPMDIAL-6408',
+      'EPMDIAL-6409',
+      'EPMDIAL-6410',
     );
     let nonWorkspaceModel: DialAIEntityModel;
     let models: DialAIEntityModel[];

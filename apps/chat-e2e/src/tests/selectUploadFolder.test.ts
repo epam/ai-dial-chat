@@ -32,13 +32,13 @@ dialTest.skip(
     baseAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-3253',
-      'EPMRTC-3268',
-      'EPMRTC-3247',
-      'EPMRTC-3250',
-      'EPMRTC-3237',
+      'EPMDIAL-6928',
+      'EPMDIAL-6934',
+      'EPMDIAL-6948',
+      'EPMDIAL-6949',
+      'EPMDIAL-6920',
       //TODO the case is not actual with the new select folder manager
-      // 'EPMRTC-3238',
+      // 'EPMDIAL-6922',
     );
     const updatedFolderName = `New folder 1    ${ExpectedConstants.allowedSpecialChars}`;
 
@@ -145,7 +145,7 @@ dialTest.skip(
     localStorageManager,
     selectFolderManagerModalGridAssertion,
   }) => {
-    setTestIds('EPMRTC-3248', 'EPMRTC-3249');
+    setTestIds('EPMDIAL-6950', 'EPMDIAL-6951');
     const nameWithRestrictedChars = `Folder${ExpectedConstants.restrictedNameChars}name`;
     let folderInput: BaseElement;
 
@@ -216,7 +216,7 @@ dialTest.skip(
     localStorageManager,
     selectFolderManagerModalManager,
   }) => {
-    setTestIds('EPMRTC-3271', 'EPMRTC-1801', 'EPMRTC-3245', 'EPMRTC-3255');
+    setTestIds('EPMDIAL-6953', 'EPMDIAL-6930', 'EPMDIAL-6945', 'EPMDIAL-6935');
     const longFolderName = GeneratorUtil.randomString(150);
 
     await dialTest.step(
@@ -304,7 +304,7 @@ dialTest.skip(
     page,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3269');
+    setTestIds('EPMDIAL-6929');
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
@@ -367,7 +367,7 @@ dialTest.skip(
     page,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3017', 'EPMRTC-3246', 'EPMRTC-6718', 'EPMRTC-3291');
+    setTestIds('EPMDIAL-6942', 'EPMDIAL-6947', 'EPMDIAL-6943', 'EPMDIAL-6510');
     const folder1Name = GeneratorUtil.randomString(7);
     const nameWithTrailingDot = `${GeneratorUtil.randomString(10)}.`;
     const nameWithLeadingDot = `.${GeneratorUtil.randomString(5)}`;
@@ -467,7 +467,7 @@ dialTest.skip(
     selectFolderManagerModalGridAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3251');
+    setTestIds('EPMDIAL-6952');
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',

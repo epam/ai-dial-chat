@@ -48,7 +48,7 @@ dialTest(
     fileApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1890');
+    setTestIds('EPMDIAL-2796', 'EPMDIAL-5697', 'EPMDIAL-6462');
     let modelWithoutAttachments: DialAIEntityModel;
 
     await dialTest.step(
@@ -170,7 +170,7 @@ dialTest(
     tooltipPortalAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817', 'EPMRTC-1568');
+    setTestIds('EPMDIAL-5809', 'EPMDIAL-5909', 'EPMDIAL-5932', 'EPMDIAL-5910');
     const request = 'test';
     await dialTest.step(
       'Verify Send button is disabled if no request message set and tooltip is shown on button hover',
@@ -291,7 +291,7 @@ dialTest(
     talkToAgentDialogAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-406');
+    setTestIds('EPMDIAL-5703');
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
     );
@@ -354,7 +354,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1044');
+    setTestIds('EPMDIAL-5699');
     const appName = GeneratorUtil.randomApplicationName();
     let configApp: DialAIEntityModel;
 
