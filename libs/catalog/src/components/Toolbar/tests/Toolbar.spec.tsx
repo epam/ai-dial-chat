@@ -53,7 +53,14 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     variant?: string;
     appearance?: string;
     items?: unknown[];
-  }) => <button aria-label="sort">{label}</button>,
+    }) => <button aria-label="sort">{label}</button>,
+ GhostButton: ({
+    icon,
+    onClick,
+  }: {
+    icon: React.ReactNode;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{icon}</button>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({
