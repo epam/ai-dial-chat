@@ -147,6 +147,7 @@
   "Failed to load files and folders": "Failed to load files and folders",
   "Upload failed": "Upload failed",
   "Please check your internet connection and try again.": "Please check your internet connection and try again.",
+  "The name or folder path is too long. Please use a shorter name or move the item to a folder with a shorter path.": "The name or folder path is too long. Please use a shorter name or move the item to a folder with a shorter path.",
   "Folder \"{{itemName}}\" has been unshared successfully": "Folder \"{{itemName}}\" has been unshared successfully",
   "\"{{itemName}}\" has been unshared successfully": "\"{{itemName}}\" has been unshared successfully",
   "\"{{itemName}}\" have been unshared successfully": "\"{{itemName}}\" have been unshared successfully",
