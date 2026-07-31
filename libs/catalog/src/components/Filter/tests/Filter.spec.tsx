@@ -28,7 +28,6 @@ vi.mock('../Filter.module.scss', () => ({
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16 },
-  PrimaryButton: ({ label }: { label: string }) => <button>{label}</button>,
   DialDropdown: ({
     children,
     renderOverlay,
