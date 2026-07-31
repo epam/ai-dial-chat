@@ -68,6 +68,11 @@ alone. The layout SHALL support LTR and RTL.
 - **WHEN** finite usage reaches 90%
 - **THEN** the trigger displays `90%` and uses the error state
 
+#### Scenario: Unlimited allowance
+
+- **WHEN** the monthly allowance is unlimited
+- **THEN** the trigger renders and exposes `Unlimited` without an error state
+
 #### Scenario: Popover remains open
 
 - **WHEN** focus moves from the trigger into the open popover
@@ -93,6 +98,11 @@ new endpoint, cache, polling, or telemetry SHALL be introduced.
 - **WHEN** the user opens the monthly usage popover
 - **THEN** the popover shows `Usage Limit`, one progress bar, and the formatted
   remaining-token count
+
+#### Scenario: Unlimited popover
+
+- **WHEN** the user opens an unlimited monthly limit
+- **THEN** the popover shows one progress bar and `Unlimited`
 
 #### Scenario: Silent refresh
 

@@ -228,16 +228,12 @@ export const Input: FC<InputProps> = ({
     onToolToggle != null;
   /*
    * Stacked layout: textarea on its own row above the action bar. Used when the
-   * caller opts in (edit mode), whenever attachments are present, when the
+   * caller opts in (edit mode), whenever the
    * message spans multiple visual lines, or when one or more tools are selected
    * (chips need the row between textarea and buttons).
    */
   const isStackedLayout =
-    isStacked ||
-    attachments.length > 0 ||
-    message.includes('\n') ||
-    isMultiLine ||
-    hasSelectedTools;
+    isStacked || message.includes('\n') || isMultiLine || hasSelectedTools;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
 

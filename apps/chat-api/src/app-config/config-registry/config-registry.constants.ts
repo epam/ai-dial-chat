@@ -231,4 +231,16 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     envVar: 'ENABLED_UI_FEATURES',
   },
+  {
+    key: 'customVisualizers',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      'Registry of MIME type → visualizer iframe URL mappings. An attachment whose MIME type matches an entry opens in the AttachmentCanvas rendered by that visualizer instead of the default preview. Empty (feature dark) when CUSTOM_VISUALIZERS is unset. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config.',
+    owner: 'chat-team',
+    envVar: 'CUSTOM_VISUALIZERS',
+  },
 ];

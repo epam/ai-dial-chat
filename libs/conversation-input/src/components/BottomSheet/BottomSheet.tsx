@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { Button } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC, ReactNode } from 'react';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import styles from './BottomSheet.module.scss';
@@ -75,7 +75,7 @@ export const BottomSheet: FC<BottomSheetProps> = ({
       <ul role="list" className="flex flex-col">
         {items.map(({ key, label, icon, iconAfter, onClick }) => (
           <li key={key}>
-            <DialButton
+            <Button
               type="button"
               className={mergeClasses(
                 styles.item,

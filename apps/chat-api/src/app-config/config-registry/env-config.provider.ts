@@ -1,11 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type {
   AppConfigEvalContext,
   ConfigDefinition,
   ConfigProvider,
 } from '../app-config.types';
+import { CustomVisualizerDto } from '../dto/custom-visualizer.dto';
 import { CONFIG_DEFINITIONS } from './config-registry.constants';
 
 const FILE_MANAGER_ALLOWED_TABS = ['my_files', 'shared', 'organization'];
@@ -91,6 +94,17 @@ export class EnvConfigProvider implements ConfigProvider {
       return filtered;
     }
 
+    // customVisualizers is a JSON array requiring full parse + per-entry validation
+    if (key === 'customVisualizers') {
+      const raw = this.configService.get('CUSTOM_VISUALIZERS', {
+        infer: true,
+      });
+      if (!raw) {
+        return undefined;
+      }
+      return this.parseCustomVisualizers(raw);
+    }
+
     if (!definition.envVar) {
       return undefined;
     }
@@ -159,5 +173,106 @@ export class EnvConfigProvider implements ConfigProvider {
       return typeof value === 'string';
     }
     return true;
+  }
+
+  /**
+   * Parses `CUSTOM_VISUALIZERS` fail-open: invalid JSON or a non-array
+   * yields `[]`; each entry is validated independently, so one malformed
+   * entry never drops the others. Unrecognized fields on an entry (e.g.
+   * deferred `development`-only fields) are logged and ignored, never
+   * causing the entry itself to be dropped.
+   */
+  private parseCustomVisualizers(raw: string): CustomVisualizerDto[] {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      this.logger.error(
+        'CUSTOM_VISUALIZERS is not valid JSON; resolving to an empty registry',
+      );
+      return [];
+    }
+
+    if (!Array.isArray(parsed)) {
+      this.logger.error(
+        'CUSTOM_VISUALIZERS must be a JSON array; resolving to an empty registry',
+      );
+      return [];
+    }
+
+    const entries: CustomVisualizerDto[] = [];
+
+    parsed.forEach((rawEntry: unknown, index: number) => {
+      if (typeof rawEntry !== 'object' || rawEntry === null) {
+        this.logger.error(
+          `CUSTOM_VISUALIZERS[${index}] is not an object; dropping entry`,
+        );
+        return;
+      }
+
+      const dto = plainToInstance(CustomVisualizerDto, rawEntry);
+      const errors = validateSync(dto);
+      if (errors.length > 0) {
+        this.logger.error(
+          `CUSTOM_VISUALIZERS[${index}] failed validation, dropping entry: ${errors
+            .map((error) => Object.values(error.constraints ?? {}).join(', '))
+            .join('; ')}`,
+        );
+        return;
+      }
+
+      if (
+        dto.contentType
+          .split(',')
+          .map((mime) => mime.trim())
+          .filter((mime) => mime.length > 0).length === 0
+      ) {
+        this.logger.error(
+          `CUSTOM_VISUALIZERS[${index}] has no usable MIME type in "contentType"; dropping entry`,
+        );
+        return;
+      }
+
+      // `title` needs no check beyond @IsNotEmpty() above: it is an opaque
+      // postMessage namespace, and a whitespace-only value is a legitimate
+      // `appName` for some deployed visualizers, so it is never trimmed.
+      const knownFields = new Set([
+        'title',
+        'description',
+        'icon',
+        'contentType',
+        'url',
+        'requestTimeout',
+        'width',
+        'height',
+        'mobileHeight',
+        'passAuthInfo',
+        'passExplicitToken',
+      ]);
+      const unknownKeys = Object.keys(rawEntry as object).filter(
+        (k) => !knownFields.has(k),
+      );
+      if (unknownKeys.length > 0) {
+        this.logger.warn(
+          `CUSTOM_VISUALIZERS[${index}] contains unrecognized fields that will be ignored: ${unknownKeys.join(', ')}`,
+        );
+      }
+
+      entries.push({
+        title: dto.title,
+        description: dto.description,
+        icon: dto.icon,
+        contentType: dto.contentType,
+        url: dto.url,
+        requestTimeout: dto.requestTimeout,
+        width: dto.width,
+        height: dto.height,
+        mobileHeight: dto.mobileHeight,
+        passAuthInfo: dto.passAuthInfo,
+        passExplicitToken: dto.passExplicitToken,
+      });
+    });
+
+    return entries;
   }
 }

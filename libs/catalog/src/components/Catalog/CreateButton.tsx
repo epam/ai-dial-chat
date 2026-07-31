@@ -1,6 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { PrimaryButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialDropdown,
+  PrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
 import { FC, KeyboardEvent, useCallback, useRef, useState } from 'react';
 import type { CreateOption } from '../../models/catalog-props';

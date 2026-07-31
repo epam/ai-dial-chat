@@ -1,7 +1,11 @@
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import { ResponseFormat } from '@epam/ai-dial-chat-shared';
-import { PrimaryButton } from '@epam/ai-dial-kit';
-import { DialPopup, DialTooltip, PopupSize } from '@epam/ai-dial-ui-kit';
+import {
+  DialPopup,
+  DialTooltip,
+  PrimaryButton,
+  PopupSize,
+} from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';

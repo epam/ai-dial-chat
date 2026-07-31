@@ -3,11 +3,7 @@ import {
   mergeClasses,
   StageStatus,
 } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DialLinkButton,
-  DialSpinner,
-} from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, LinkButton, DialSpinner } from '@epam/ai-dial-ui-kit';
 import {
   IconCheck,
   IconChevronDown,
@@ -215,7 +211,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
       style={cssVars}
       className={mergeClasses('flex w-full flex-col gap-1', className)}
     >
-      <DialLinkButton
+      <LinkButton
         className={styles.toggleButton}
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}

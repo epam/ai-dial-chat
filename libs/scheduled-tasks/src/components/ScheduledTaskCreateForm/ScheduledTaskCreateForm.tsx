@@ -1,16 +1,14 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GhostIconButton, Input, Textarea } from '@epam/ai-dial-kit';
 import {
-  GhostIconButton,
-  Input,
-  NeutralButton,
-  PrimaryButton,
-  Textarea,
-} from '@epam/ai-dial-kit';
-import {
+  Calendar,
+  CalendarMode,
   DIAL_ICON_SIZE,
   DialSelectField,
   DialSpinner,
   LazyDialMarkdownEditor,
+  NeutralButton,
+  PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { lazy, Suspense, type ComponentProps, type FC } from 'react';
@@ -20,7 +18,18 @@ import {
   ScheduledTaskFrequency,
   ScheduledTaskScheduleType,
 } from '../../types/scheduled-task-schedule';
+import {
+  calendarValueToDayOfWeek,
+  calendarValueToRunAt,
+  dayOfWeekToCalendarValue,
+  runAtToCalendarValue,
+} from '../../utils/calendar-value';
 import styles from './ScheduledTaskCreateForm.module.scss';
+
+/* `Calendar` has no built-in required-field indicator (unlike `Input`'s
+ * `labelProps.required`), so required Calendar fields get the marker
+ * appended to their label text directly. */
+const withRequiredMarker = (label: string): string => `${label} *`;
 
 const DialMarkdownEditor = lazy(async () => {
   const module = await LazyDialMarkdownEditor();
@@ -207,15 +216,28 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             />
 
             {values.scheduleType === ScheduledTaskScheduleType.Once && (
-              <Input
-                id="scheduled-task-run-at"
-                type="datetime-local"
-                value={values.runAt ?? ''}
-                onChange={(value) => onFieldChange('runAt', value ?? '')}
-                labelProps={{ label: labels.runAtLabel, required: true }}
-                invalid={Boolean(errors.runAt)}
-                error={errors.runAt}
-              />
+              <div className="flex flex-col gap-1">
+                <Calendar
+                  id="scheduled-task-run-at"
+                  mode={CalendarMode.DateTime}
+                  value={runAtToCalendarValue(values.runAt)}
+                  onChange={(value) =>
+                    onFieldChange('runAt', calendarValueToRunAt(value))
+                  }
+                  label={withRequiredMarker(labels.runAtLabel)}
+                  invalid={Boolean(errors.runAt)}
+                />
+                {errors.runAt && (
+                  <p
+                    className={mergeClasses(
+                      instructionsErrorClassName,
+                      styles.instructionsError,
+                    )}
+                  >
+                    {errors.runAt}
+                  </p>
+                )}
+              </div>
             )}
 
             {values.scheduleType === ScheduledTaskScheduleType.Recurring && (
@@ -232,30 +254,58 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   }))}
                 />
 
-                <Input
-                  id="scheduled-task-time"
-                  type="time"
-                  value={values.time}
-                  onChange={(value) => onFieldChange('time', value ?? '')}
-                  labelProps={{ label: labels.timeLabel, required: true }}
-                  invalid={Boolean(errors.time)}
-                  error={errors.time}
-                />
+                <div className="flex flex-col gap-1">
+                  <Calendar
+                    id="scheduled-task-time"
+                    mode={CalendarMode.Time}
+                    value={values.time}
+                    onChange={(value) =>
+                      onFieldChange(
+                        'time',
+                        typeof value === 'string' ? value : '',
+                      )
+                    }
+                    label={withRequiredMarker(labels.timeLabel)}
+                    invalid={Boolean(errors.time)}
+                  />
+                  {errors.time && (
+                    <p
+                      className={mergeClasses(
+                        instructionsErrorClassName,
+                        styles.instructionsError,
+                      )}
+                    >
+                      {errors.time}
+                    </p>
+                  )}
+                </div>
 
                 {values.frequency === ScheduledTaskFrequency.Weekly && (
-                  <Input
-                    id="scheduled-task-day-of-week"
-                    value={values.dayOfWeek ?? ''}
-                    onChange={(value) =>
-                      onFieldChange('dayOfWeek', value ?? '')
-                    }
-                    labelProps={{
-                      label: labels.dayOfWeekLabel,
-                      required: true,
-                    }}
-                    invalid={Boolean(errors.dayOfWeek)}
-                    error={errors.dayOfWeek}
-                  />
+                  <div className="flex flex-col gap-1">
+                    <Calendar
+                      id="scheduled-task-day-of-week"
+                      mode={CalendarMode.Weekday}
+                      value={dayOfWeekToCalendarValue(values.dayOfWeek)}
+                      onChange={(value) =>
+                        onFieldChange(
+                          'dayOfWeek',
+                          calendarValueToDayOfWeek(value),
+                        )
+                      }
+                      label={withRequiredMarker(labels.dayOfWeekLabel)}
+                      invalid={Boolean(errors.dayOfWeek)}
+                    />
+                    {errors.dayOfWeek && (
+                      <p
+                        className={mergeClasses(
+                          instructionsErrorClassName,
+                          styles.instructionsError,
+                        )}
+                      >
+                        {errors.dayOfWeek}
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {values.frequency === ScheduledTaskFrequency.Monthly && (

@@ -39,15 +39,15 @@
 
 /* Matches dial-small-semi-text (14px / 20px, semibold). */
 .filterBtnLabel {
-  color: var(--text-primary, #131a29);
+  color: var(--text-primary, #161b2d);
 }
 
 .filterBtnFunnel {
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary, #6b7280);
 }
 
 .filterBtnChevron {
-  color: var(--text-tertiary, #98a2b3);
+  color: var(--text-tertiary, #c7cbd4);
   transition: transform 150ms ease;
 
   @media (prefers-reduced-motion: reduce) {
@@ -93,7 +93,7 @@
 }
 
 .rowLabel {
-  color: var(--text-primary, #131a29);
+  color: var(--text-primary, #161b2d);
 }
 
 /* Custom 20 × 20 checkbox ------------------------------------ */
@@ -136,7 +136,7 @@
 }
 
 .sectionLabel {
-  color: var(--text-tertiary, #98a2b3);
+  color: var(--text-tertiary, #c7cbd4);
 }
 
 .footer {

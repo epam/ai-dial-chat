@@ -10,7 +10,11 @@ export interface MonthlyUsageLimit {
   remaining: number;
   /** Monthly utilization percentage, clamped to 0–100. */
   usedPercent: number;
+  /** Whether the upstream total represents an unlimited allowance. */
+  isUnlimited: boolean;
 }
+
+const UNLIMITED_TOTAL_THRESHOLD = Number.MAX_SAFE_INTEGER;
 
 /** Maps the monthly deployment token limit to a display-ready value. */
 export const mapDeploymentLimitsToInput = (
@@ -29,6 +33,7 @@ export const mapDeploymentLimitsToInput = (
   }
 
   const used = Math.max(0, stats.used);
+  const isUnlimited = stats.total >= UNLIMITED_TOTAL_THRESHOLD;
 
   return {
     used,

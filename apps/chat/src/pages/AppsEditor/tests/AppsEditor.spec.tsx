@@ -294,8 +294,41 @@ describe('AppsEditor', () => {
     ).toBeTruthy();
   });
 
+  describe('Preview is reset when step is changed', () => {
+    it('exits preview mode when the user navigates to a different step', async () => {
+      renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
+
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+      act(() => {
+        latestSettingsStepProps.onSaveSuccess?.(false);
+      });
+
+      expect(refetchDeployments).toHaveBeenCalledOnce();
+      await screen.findByRole('button', {
+        name: AppsEditorI18nKeys.ExitPreviewButton,
+      });
+      expect(screen.getByText('settings-step').dataset.previewing).toBe('true');
+
+      // Navigate to a different step
+      await userEvent.click(
+        screen.getByRole('button', { name: EditorI18nKeys.StepGeneral }),
+      );
+
+      // Navigate to a different step
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Settings }),
+      );
+
+      expect(screen.getByText('settings-step').dataset.previewing).toBe(
+        'false',
+      );
+    });
+  });
+
   describe('Settings step readiness gating', () => {
-    it('disables Save and hides Preview before the Settings step is ready', () => {
+    it('disables Save and disables Preview before the Settings step is ready', () => {
       shouldSettingsAutoReady = false;
       renderEditor('step=settings&schema=quickapps2-schema&appId=abc');
 
@@ -304,9 +337,11 @@ describe('AppsEditor', () => {
       }) as HTMLButtonElement;
 
       expect(saveButton.disabled).toBe(true);
-      expect(
-        screen.queryByRole('button', { name: BasicI18nKeys.Preview }),
-      ).toBeNull();
+      const previewButton = screen.queryByRole('button', {
+        name: BasicI18nKeys.Preview,
+      }) as HTMLButtonElement;
+
+      expect(previewButton?.disabled).toBe(true);
     });
 
     it('enables Save and shows Preview once the Settings step reports readiness', () => {

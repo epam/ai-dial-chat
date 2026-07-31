@@ -1,4 +1,4 @@
-import { NeutralButton } from '@epam/ai-dial-kit';
+import { NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { ProviderInfoDto } from '@epam/chat-api-client';
 import {
   memo,

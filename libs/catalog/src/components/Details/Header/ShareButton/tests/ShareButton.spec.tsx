@@ -6,7 +6,7 @@ import type { CatalogItem } from '../../../../../models/catalog-item';
 import { CatalogEntityType } from '../../../../../types/entity-type';
 import { ShareButton } from '../ShareButton';
 
-vi.mock('@epam/ai-dial-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', () => ({
   NeutralButton: ({
     label,
     onClick,
@@ -14,8 +14,6 @@ vi.mock('@epam/ai-dial-kit', () => ({
     label: string;
     onClick: () => void;
   }) => <button onClick={onClick}>{label}</button>,
-}));
-vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DialDropdown: ({
     children,

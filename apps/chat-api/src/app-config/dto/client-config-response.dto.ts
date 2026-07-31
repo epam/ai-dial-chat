@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
+import { CustomVisualizerDto } from './custom-visualizer.dto';
 
 export class ClientConfigDto {
   @ApiProperty({
@@ -107,6 +108,13 @@ export class ClientConfigDto {
     type: String,
   })
   footerHtmlMessage!: string;
+
+  @ApiProperty({
+    description:
+      'Registry of MIME → visualizer iframe mappings. Sourced from CUSTOM_VISUALIZERS. Empty when unset — the feature is dark by default.',
+    type: [CustomVisualizerDto],
+  })
+  customVisualizers!: CustomVisualizerDto[];
 }
 
 export class ClientConfigMetadataDto {

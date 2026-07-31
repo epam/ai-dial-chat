@@ -29,7 +29,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     />
   ),
   Highlight: ({ text }: { text: string }) => <span>{text}</span>,
-  DialButton: ({
+  Button: ({
     iconBefore,
     label,
     'aria-current': ariaCurrent,

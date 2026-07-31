@@ -28,6 +28,7 @@ describe('mapDeploymentLimitsToInput', () => {
       total: 10000,
       remaining: 7500,
       usedPercent: 25,
+      isUnlimited: false,
     });
   });
 
@@ -52,6 +53,7 @@ describe('mapDeploymentLimitsToInput', () => {
       total: 1000,
       remaining: 1000,
       usedPercent: 0,
+      isUnlimited: false,
     });
   });
 
@@ -76,6 +78,7 @@ describe('mapDeploymentLimitsToInput', () => {
       total: 10000,
       remaining: 0,
       usedPercent: 100,
+      isUnlimited: false,
     });
   });
 

@@ -1,7 +1,6 @@
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   TOOLSET_REDIRECT_STATE_KEY,
@@ -138,22 +137,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       />
     </label>
   ),
-  DialPrimaryButton: ({
+  PrimaryButton: ({
     label,
     onClick,
     disabled,
-    type,
   }: {
-    label?: ReactNode;
+    label?: string;
     onClick?: () => void;
     disabled?: boolean;
-    type?: string;
   }) => (
-    <button
-      type={type === 'submit' ? 'submit' : 'button'}
-      disabled={disabled}
-      onClick={onClick}
-    >
+    <button type="button" onClick={onClick} disabled={disabled}>
       {label}
     </button>
   ),

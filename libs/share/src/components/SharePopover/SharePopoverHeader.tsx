@@ -1,6 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, GhostButton } from '@epam/ai-dial-ui-kit';
 import { IconLink, IconQrcode } from '@tabler/icons-react';
 import { FC } from 'react';
 import { SharePopoverView } from '../../types/share';

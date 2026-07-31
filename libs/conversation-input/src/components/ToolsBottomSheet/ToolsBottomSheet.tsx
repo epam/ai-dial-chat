@@ -1,5 +1,5 @@
 import type { ToolMenuItem } from '@epam/ai-dial-chat-shared';
-import { BASE_ICON_SIZE, DialButton } from '@epam/ai-dial-ui-kit';
+import { BASE_ICON_SIZE, Button } from '@epam/ai-dial-ui-kit';
 import { IconCheck } from '@tabler/icons-react';
 import type { CSSProperties, FC } from 'react';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
@@ -53,7 +53,7 @@ export const ToolsBottomSheet: FC<ToolsBottomSheetProps> = ({
     <ul role="menu" className="flex flex-col pb-4">
       {items.map((item) => (
         <li key={item.id} role="none">
-          <DialButton
+          <Button
             type="button"
             role="menuitemcheckbox"
             aria-checked={item.isSelected}

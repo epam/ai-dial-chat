@@ -20,7 +20,7 @@ interface RenameConversationPopupProps {
 The component renders a `DialPopup` with:
 - `header` set to the i18n key `conversationHistory.renameTitle` ("Rename Chat")
 - A single `<input>` (plain text, no label) initialised to `currentTitle`, controlled via local state
-- A footer with two `DialButton`s: Cancel (`fill="none"`) and Save (`fill="solid"`, `color="primary"`)
+- A footer with two `Button`s: Cancel (`fill="none"`) and Save (`fill="solid"`, `color="primary"`)
 - Save is disabled when the trimmed input value is empty, equals the trimmed `currentTitle`, or `isSaving` is true
 - The input enforces a maximum of 255 characters via the native `maxLength` attribute (backend validates 255 UTF-8 bytes)
 - An inline error message rendered below the input when `error` is non-null (role="alert")
