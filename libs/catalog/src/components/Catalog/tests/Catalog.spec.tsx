@@ -46,6 +46,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialCloseButton: ({ onClick }: { onClick: () => void }) => (
     <button aria-label="Close" onClick={onClick} />
   ),
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <svg />,

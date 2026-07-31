@@ -61,6 +61,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     icon: React.ReactNode;
     onClick?: () => void;
   }) => <button onClick={onClick}>{icon}</button>,
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({
