@@ -328,7 +328,7 @@
   },
   "conversationExport": {
     "exportLabel": "Export",
-    "exportAllLabel": "Export conservations",
+    "exportAllLabel": "Export conversations",
     "withAttachmentsOption": "With attachments",
     "withoutAttachmentsOption": "Without attachments",
     "queueTitle": "Exporting",

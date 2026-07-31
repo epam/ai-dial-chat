@@ -1,4 +1,7 @@
-import type { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
+import type {
+  CodeBlockTheme,
+  CustomVisualizerDataLayout,
+} from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
 import type { CSSProperties } from 'react';
@@ -61,6 +64,24 @@ export interface AudioCanvasContent {
   mimeType?: string;
 }
 
+/** Content payload for a custom-visualizer attachment rendered inside a sandboxed iframe. */
+export interface VisualizerCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Visualizer;
+  /** Iframe `src`, resolved from the matching registry entry's `url`. */
+  url: string;
+  /** The attachment's own MIME type (not the registry entry's raw, possibly comma-separated, `contentType`). */
+  mimeType: string;
+  /** Opaque attachment payload consumed by the visualizer. */
+  data: unknown;
+  /** Presentation layout hints (`themeId`, `width`, `height`, `mobileHeight`). */
+  layout: CustomVisualizerDataLayout;
+  /** postMessage protocol namespace — MUST equal the registry entry's `title`, or the iframe never receives data. */
+  visualizerName: string;
+  /** Milliseconds to wait for a `send()` request's response before rejecting. From the registry entry; does NOT bound the handshake. */
+  requestTimeout?: number;
+}
+
 /** Content payload for attachments whose format cannot be previewed. */
 export interface UnsupportedCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -87,6 +108,7 @@ export type AttachmentCanvasContent =
   | MarkdownCanvasContent
   | JsonCanvasContent
   | PdfCanvasContent
+  | VisualizerCanvasContent
   | UnsupportedCanvasContent
   | ErrorCanvasContent;
 
@@ -161,6 +183,8 @@ export interface AttachmentCanvasLabels {
   copyJsonLabel?: string;
   /** Tooltip and accessible label for the copy-JSON button after a successful copy. Defaults to `'Copied!'`. */
   copiedJsonLabel?: string;
+  /** Message shown inside the visualizer canvas when the iframe handshake fails. Defaults to `'Failed to load visualizer'`. */
+  visualizerErrorLabel?: string;
 }
 
 /** Props for the AttachmentCanvas component. */
