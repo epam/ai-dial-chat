@@ -47,7 +47,7 @@ dialTest(
       'EPMRTC-3126',
       'EPMRTC-8314',
       'EPMRTC-8315',
-      'EPMRTC-8316',
+      'EPMDIAL-6101',
     );
     let theme: string;
     let tableConversation: Conversation;
@@ -418,7 +418,7 @@ dialTest(
 );
 
 dialTest(
-  'MD table body scroll appears below the header when table height exceeds 68vh',
+  `[MD table] Scroll inside the table appears when it's 68vh`,
   async ({
     dialHomePage,
     setTestIds,
@@ -431,7 +431,7 @@ dialTest(
     conversations,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-9394');
+    setTestIds('EPMDIAL-6102');
     const rowsCount = 50;
     let tableConversation: Conversation;
     let bodyScrollContainer: BaseElement;

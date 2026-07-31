@@ -28,7 +28,7 @@ dialTest(
     chatMessages,
     chatMessagesAssertion,
   }) => {
-    setTestIds('EPMRTC-8108');
+    setTestIds('EPMDIAL-6101');
     let imageConversations: Conversation[] = [];
 
     await dialTest.step(
@@ -265,7 +265,7 @@ dialTest(
     chatMessages,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-9233');
+    setTestIds('EPMDIAL-6107');
 
     const dollarResponse = '$2 + $3 is equal to $5.';
     const poemLines = [
@@ -335,7 +335,7 @@ dialTest(
     chatMessages,
     chatMessagesAssertion,
   }) => {
-    setTestIds('EPMRTC-7186');
+    setTestIds('EPMDIAL-6096');
 
     const codeBlock = '```ruby\nputs "Hello World"\n```';
     const expectedSummaries = [
