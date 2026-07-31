@@ -877,9 +877,7 @@ describe('Input — usageLimitsSlot', () => {
   it('does not render any slot content when usageLimitsSlot is omitted', () => {
     render(<Input />);
 
-    expect(
-      screen.queryByRole('button', { name: 'Usage limits' }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Usage limits' })).toBeNull();
   });
 
   it('does not render slot when renderFooterActions is provided (custom footer replaces the slot area)', () => {

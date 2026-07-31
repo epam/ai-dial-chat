@@ -1,9 +1,4 @@
 .percentageRing {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  border-radius: 9999px;
   background: conic-gradient(
     currentColor calc(var(--usage-percent, 0) * 1%),
     var(--stroke-primary, #d1dbea) 0

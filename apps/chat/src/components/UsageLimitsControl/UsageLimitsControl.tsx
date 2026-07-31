@@ -146,7 +146,15 @@ const UsageLimitsControl: FC<Props> = ({ deploymentId, labels }) => {
         >
           {triggerValue}
         </span>
-        <span aria-hidden className={styles.percentageRing} style={ringStyle} />
+        <span
+          aria-hidden
+          className={mergeClasses(
+            'inline-block size-3.5 shrink-0 rounded-full',
+            isThresholdReached ? 'text-error' : 'text-secondary',
+            styles.percentageRing,
+          )}
+          style={ringStyle}
+        />
       </button>
 
       {isOpen && (
@@ -156,7 +164,7 @@ const UsageLimitsControl: FC<Props> = ({ deploymentId, labels }) => {
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="absolute bottom-full end-0 z-50 mb-2 flex w-64 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg border border-primary bg-layer-0 p-4 shadow-lg focus:outline-none"
+          className="absolute bottom-full end-0 z-50 mb-2 flex w-64 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-0 p-4 shadow-lg focus:outline-none"
         >
           <p id={titleId} className="dial-small-semi-text text-primary">
             {labels.popoverTitle}
