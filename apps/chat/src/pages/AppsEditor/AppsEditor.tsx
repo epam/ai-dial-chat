@@ -132,6 +132,10 @@ const AppsEditor: FC = () => {
     [existingDeployment],
   );
 
+  useEffect(() => {
+    setIsPreviewing(false);
+  }, [step]);
+
   const handleCreated = useCallback(
     (appId: string, displayName?: string, iconUrl?: string) => {
       setCreatedAppId(appId);
@@ -375,7 +379,8 @@ const AppsEditor: FC = () => {
         previewButtonLabel={t(BasicI18nKeys.Preview)}
         exitPreviewButtonLabel={t(AppsEditorI18nKeys.ExitPreviewButton)}
         isPreviewing={isPreviewing}
-        onPreview={canPreview ? handlePreview : undefined}
+        onPreview={step === AppsEditorStep.Settings ? handlePreview : undefined}
+        isPreviewDisabled={!canPreview}
       />
 
       {!isGeneralStep && saveError && (
