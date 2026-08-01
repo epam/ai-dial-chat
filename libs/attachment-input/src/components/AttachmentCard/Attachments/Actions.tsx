@@ -30,7 +30,7 @@ interface ActionProps {
   id?: string;
 }
 
-/** Active button for completed uploads. */
+/** Action button for completed uploads. */
 export const ActionButton: FC<ActionProps> = ({
   ariaLabel,
   errorTitle,
