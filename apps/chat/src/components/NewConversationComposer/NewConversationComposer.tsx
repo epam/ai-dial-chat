@@ -245,6 +245,16 @@ const NewConversationComposer: FC<Props> = ({
     [showNotification, t],
   );
 
+  const handleMessageTooLong = useCallback(
+    (_length: number, max: number) => {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(ConversationI18nKeys.MessageTooLong, { max }),
+      });
+    },
+    [showNotification, t],
+  );
+
   const handleSend = useCallback(
     async (text: string, attachments: Attachment[]) => {
       if (isSending || !selectedDeploymentId) return;
@@ -365,6 +375,7 @@ const NewConversationComposer: FC<Props> = ({
           hideAttachFile={!isAttachmentsAllowed || !isInputFilesEnabled}
           fileAccept={fileAccept}
           onAttachmentClick={handleAttachmentClick}
+          onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}

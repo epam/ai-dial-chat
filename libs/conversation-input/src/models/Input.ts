@@ -300,6 +300,12 @@ export interface InputProps {
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
   /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
   usageLimitsSlot?: ReactNode;
+  /**
+   * Called when the user pastes text whose length is ≥ `pasteTextThreshold` while
+   * `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
+   * host is responsible for surfacing the error to the user.
+   */
+  onMessageTooLong?: (length: number, max: number) => void;
 }
 
 /** Values emitted by the chat-settings modal when the user clicks Save. */
