@@ -80,10 +80,7 @@ const ModelRow = ({
     <div style={style} {...ariaAttributes}>
       <Button
         type="button"
-        className={mergeClasses(
-          styles.item,
-          'flex h-full w-full items-center gap-3 px-4',
-        )}
+        className={mergeClasses(styles.item, 'h-full w-full gap-3 px-4')}
         iconBefore={<span className={styles.itemIcon}>{modelIcon}</span>}
         label={
           <span className="flex flex-1 items-center justify-between gap-2">

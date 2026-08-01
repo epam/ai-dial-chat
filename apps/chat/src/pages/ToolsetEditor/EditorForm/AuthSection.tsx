@@ -333,7 +333,6 @@ const AuthSection: FC<Props> = ({
             {t(ToolsetEditorI18nKeys.LoggedInLabel)}
           </span>
           <PrimaryButton
-            type="button"
             size={ElementSize.Small}
             label={t(ButtonsI18nKeys.LogOut)}
             onClick={() => setShowLogoutConfirm(true)}
@@ -345,7 +344,6 @@ const AuthSection: FC<Props> = ({
     return (
       <div className="flex">
         <PrimaryButton
-          type="button"
           size={ElementSize.Small}
           label={t(ButtonsI18nKeys.LogIn)}
           onClick={handleLogIn}

@@ -57,6 +57,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ElementSize: { Small: 'small' },
   mergeClasses: (...classes: (string | undefined)[]) =>
     classes.filter(Boolean).join(' '),
+  GhostIconButton: ({
+    'aria-label': ariaLabel,
+    disabled,
+    onClick,
+  }: {
+    'aria-label': string;
+    disabled?: boolean;
+    onClick?: () => void;
+  }) => (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={onClick}
+    />
+  ),
   DialGhostIconButton: ({
     'aria-label': ariaLabel,
     disabled,

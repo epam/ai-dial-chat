@@ -105,7 +105,7 @@ export const BottomSheet: FC<BottomSheetProps> = ({
               type="button"
               className={mergeClasses(
                 styles.item,
-                'flex w-full items-center gap-3 px-4 py-[10px] text-start',
+                'w-full gap-3 px-4 py-[10px] text-start',
               )}
               iconBefore={<span className={styles.itemIcon}>{icon}</span>}
               iconAfter={

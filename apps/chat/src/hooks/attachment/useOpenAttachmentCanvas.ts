@@ -27,106 +27,6 @@ import { findVisualizerForMime } from '../../utils/attachment-visualizer';
 import { resolveDialUrl } from '../../utils/dial-file';
 import { useCustomVisualizers } from './useCustomVisualizers';
 
-type OpenCanvas = ReturnType<typeof useAttachmentCanvas>['openCanvas'];
-
-async function openFileCanvas(
-  attachment: DisplayAttachment,
-  openCanvas: OpenCanvas,
-  canvasAttachmentId: string | undefined,
-): Promise<boolean> {
-  if (attachment.url == null && attachment.referenceUrl != null) {
-    const pdfContent = referenceAttachmentToPdfCanvasContent({
-      type: attachment.contentType,
-      url: attachment.referenceUrl,
-      title: attachment.name,
-    });
-    if (pdfContent != null) {
-      openCanvas(pdfContent, attachment.name, canvasAttachmentId);
-      return true;
-    }
-  }
-
-  const contentType = attachment.contentType.toLowerCase();
-
-  if (!contentType && attachment.data != null) {
-    const content = await resolveTextCanvasContent(attachment);
-    if (content != null) {
-      openCanvas(content, attachment.name, canvasAttachmentId);
-      return true;
-    }
-  }
-
-  switch (contentType) {
-    case MIMEType.PDF: {
-      const content = await resolvePdfCanvasContent(attachment);
-      openCanvas(
-        content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-        attachment.name,
-        canvasAttachmentId,
-      );
-      return true;
-    }
-    case MIMEType.Markdown: {
-      const content = await resolveMarkdownCanvasContent(attachment);
-      openCanvas(
-        content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-        attachment.name,
-        canvasAttachmentId,
-      );
-      return true;
-    }
-    case MIMEType.JSON: {
-      const content = await resolveJsonCanvasContent(attachment);
-      openCanvas(
-        content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-        attachment.name,
-        canvasAttachmentId,
-      );
-      return true;
-    }
-  }
-
-  const fileName = attachment.name ?? '';
-  const dotIdx = fileName.lastIndexOf('.');
-  const ext = dotIdx !== -1 ? fileName.slice(dotIdx + 1).toLowerCase() : '';
-
-  switch (ext) {
-    case FileExtension.Markdown:
-    case FileExtension.MarkdownAlt: {
-      const content = await resolveMarkdownCanvasContent(attachment);
-      if (content == null) return false;
-      openCanvas(content, attachment.name, canvasAttachmentId);
-      return true;
-    }
-    case FileExtension.JSON: {
-      const content = await resolveJsonCanvasContent(attachment);
-      if (content == null) return false;
-      openCanvas(content, attachment.name, canvasAttachmentId);
-      return true;
-    }
-    case FileExtension.PDF: {
-      const content = await resolvePdfCanvasContent(attachment);
-      if (content == null) return false;
-      openCanvas(content, attachment.name, canvasAttachmentId);
-      return true;
-    }
-  }
-
-  if (attachment.name != null && !isTextPreviewable(attachment.name)) {
-    openCanvas(
-      createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-      attachment.name,
-      canvasAttachmentId,
-    );
-    return true;
-  }
-
-  const content = await resolveTextCanvasContent(attachment);
-  if (content == null) return false;
-  openCanvas(content, attachment.name, canvasAttachmentId);
-  return true;
-}
-
 /**
  * Returns `openAttachmentCanvas`, an async function that opens the attachment
  * canvas for a given attachment. Returns `true` if the canvas was opened,
@@ -141,7 +41,10 @@ export const useOpenAttachmentCanvas = () => {
   const { currentTheme: themeId } = useTheme();
 
   const openFileCanvas = useCallback(
-    async (attachment: DisplayAttachment): Promise<boolean> => {
+    async (
+      attachment: DisplayAttachment,
+      canvasAttachmentId: string | undefined,
+    ): Promise<boolean> => {
       if (attachment.url == null && attachment.referenceUrl != null) {
         const pdfContent = referenceAttachmentToPdfCanvasContent({
           type: attachment.contentType,
@@ -149,7 +52,7 @@ export const useOpenAttachmentCanvas = () => {
           title: attachment.name,
         });
         if (pdfContent != null) {
-          openCanvas(pdfContent, attachment.name);
+          openCanvas(pdfContent, attachment.name, canvasAttachmentId);
           return true;
         }
       }
@@ -167,7 +70,7 @@ export const useOpenAttachmentCanvas = () => {
           themeId,
         );
         if (content != null) {
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
       }
@@ -175,7 +78,7 @@ export const useOpenAttachmentCanvas = () => {
       if (!contentType && attachment.data != null) {
         const content = await resolveTextCanvasContent(attachment);
         if (content != null) {
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
       }
@@ -187,6 +90,7 @@ export const useOpenAttachmentCanvas = () => {
             content ??
               createUnsupportedCanvasContent(resolveDialUrl(attachment)),
             attachment.name,
+            canvasAttachmentId,
           );
           return true;
         }
@@ -196,6 +100,7 @@ export const useOpenAttachmentCanvas = () => {
             content ??
               createUnsupportedCanvasContent(resolveDialUrl(attachment)),
             attachment.name,
+            canvasAttachmentId,
           );
           return true;
         }
@@ -205,6 +110,7 @@ export const useOpenAttachmentCanvas = () => {
             content ??
               createUnsupportedCanvasContent(resolveDialUrl(attachment)),
             attachment.name,
+            canvasAttachmentId,
           );
           return true;
         }
@@ -219,19 +125,19 @@ export const useOpenAttachmentCanvas = () => {
         case FileExtension.MarkdownAlt: {
           const content = await resolveMarkdownCanvasContent(attachment);
           if (content == null) return false;
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
         case FileExtension.JSON: {
           const content = await resolveJsonCanvasContent(attachment);
           if (content == null) return false;
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
         case FileExtension.PDF: {
           const content = await resolvePdfCanvasContent(attachment);
           if (content == null) return false;
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
       }
@@ -240,13 +146,14 @@ export const useOpenAttachmentCanvas = () => {
         openCanvas(
           createUnsupportedCanvasContent(resolveDialUrl(attachment)),
           attachment.name,
+          canvasAttachmentId,
         );
         return true;
       }
 
       const content = await resolveTextCanvasContent(attachment);
       if (content == null) return false;
-      openCanvas(content, attachment.name);
+      openCanvas(content, attachment.name, canvasAttachmentId);
       return true;
     },
     [openCanvas, customVisualizers, themeId],
@@ -291,7 +198,7 @@ export const useOpenAttachmentCanvas = () => {
           closePanel();
           closeSourcesPanel();
           openCanvasLoading(attachment.name, canvasAttachmentId);
-        const opened = await openFileCanvas(attachment);
+          const opened = await openFileCanvas(attachment, canvasAttachmentId);
           if (!opened) closeCanvas();
           return opened;
         }

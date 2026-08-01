@@ -104,7 +104,7 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
                 />
               }
               onClick={() => onRetry(job.id)}
-              className={STATUS_SLOT_CLASS}
+              className="size-7"
             />
             <span className={STATUS_SLOT_CLASS}>
               <IconAlertCircleFilled size={16} className="text-error" />

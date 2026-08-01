@@ -13,14 +13,6 @@ import {
 import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
 
 vi.mock('@epam/ai-dial-kit', () => ({
-  GhostIconButton: ({
-    onClick,
-    'aria-label': ariaLabel,
-  }: {
-    onClick: () => void;
-    icon?: ReactNode;
-    'aria-label'?: string;
-  }) => <button onClick={onClick} aria-label={ariaLabel} />,
   Input: ({
     labelProps,
     value,
@@ -68,6 +60,14 @@ vi.mock('@epam/ai-dial-kit', () => ({
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  GhostIconButton: ({
+    onClick,
+    'aria-label': ariaLabel,
+  }: {
+    onClick: () => void;
+    icon?: ReactNode;
+    'aria-label'?: string;
+  }) => <button onClick={onClick} aria-label={ariaLabel} />,
   NeutralButton: ({
     label,
     onClick,

@@ -23,21 +23,19 @@ vi.mock('@epam/ai-dial-kit', () => ({
       ))}
     </div>
   ),
-  GhostIconButton: ({
-    'aria-label': ariaLabel,
-    onClick,
-    disabled,
-  }: {
-    'aria-label': string;
-    onClick: () => void;
-    disabled?: boolean;
-  }) => (
-    <button disabled={disabled} onClick={onClick}>
-      {ariaLabel}
-    </button>
-  ),
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  GhostIconButton: ({
+    'aria-label': ariaLabel,
+    disabled,
+    onClick,
+  }: {
+    'aria-label': string;
+    disabled?: boolean;
+    onClick?: () => void;
+  }) => (
+    <button type="button" aria-label={ariaLabel} disabled={disabled} onClick={onClick} />
+  ),
   DialCloseButton: ({
     onClose,
     ariaLabel,

@@ -202,7 +202,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
           onClick={item.href ? undefined : () => onSelectConversation(item.id)}
           tabIndex={item.href ? -1 : undefined}
           className={mergeClasses(
-            'flex h-8 w-full items-center justify-start gap-2 rounded-xl py-2 ps-3',
+            'h-8 w-full justify-start gap-2 rounded-xl py-2 ps-3',
             buttonPaddingEnd,
             styles.item,
             isActive && styles.itemActive,
