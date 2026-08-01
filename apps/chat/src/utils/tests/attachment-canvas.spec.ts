@@ -4,7 +4,10 @@ import {
   isTextPreviewable,
 } from '@epam/ai-dial-attachment-canvas';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
-import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import type {
+  CustomVisualizer,
+  DisplayAttachment,
+} from '@epam/ai-dial-chat-shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearAttachmentCache,
@@ -14,6 +17,7 @@ import {
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
   resolvePdfCanvasContent,
+  resolveVisualizerCanvasContent,
 } from '../attachment-canvas';
 
 vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
@@ -591,6 +595,60 @@ describe('resolvePdfCanvasContent', () => {
       status: RequestStatus.Idle,
     });
     expect(result).toBeNull();
+  });
+});
+
+describe('resolveVisualizerCanvasContent', () => {
+  const visualizerEntry: CustomVisualizer = {
+    title: 'my-viz',
+    contentType: 'application/x-my-viz',
+    url: 'https://viz.example.com',
+  };
+
+  beforeEach(() => {
+    clearAttachmentCache();
+    vi.unstubAllGlobals();
+  });
+
+  it('returns null when the remote response is a 403 (ErrorCanvasContent is not forwarded)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 403 }),
+    );
+
+    const result = await resolveVisualizerCanvasContent(
+      makeRemoteAttachment('chart.viz', 'files/bucket/path/chart.viz'),
+      visualizerEntry,
+      'light',
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('returns VisualizerCanvasContent when the payload is valid JSON', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve('{"series":[1,2,3]}'),
+      }),
+    );
+
+    const result = await resolveVisualizerCanvasContent(
+      makeRemoteAttachment('chart.viz', 'files/bucket/path/chart.viz'),
+      visualizerEntry,
+      'light',
+    );
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        type: AttachmentContentType.Visualizer,
+        url: 'https://viz.example.com',
+        visualizerName: 'my-viz',
+        data: { series: [1, 2, 3] },
+        layout: expect.objectContaining({ themeId: 'light' }),
+      }),
+    );
   });
 });
 

@@ -1,3 +1,4 @@
+import type { CustomVisualizer } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
   FC,
@@ -32,6 +33,7 @@ export interface AppConfigState {
     announcementHtml: string | null;
     deepResearchToolId: string | null;
     footerHtmlMessage: string;
+    customVisualizers: CustomVisualizer[];
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -51,6 +53,7 @@ const INITIAL_STATE: AppConfigState = {
     announcementHtml: null,
     deepResearchToolId: null,
     footerHtmlMessage: '',
+    customVisualizers: [],
   },
 };
 
@@ -87,6 +90,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             announcementHtml: response.config?.announcementHtml ?? null,
             deepResearchToolId: response.config?.deepResearchToolId ?? null,
             footerHtmlMessage: response.config?.footerHtmlMessage ?? '',
+            customVisualizers: response.config?.customVisualizers ?? [],
           },
           metadata: response.metadata,
         });

@@ -302,4 +302,6 @@ export interface ConversationInputProps {
   toolsBackLabel?: string;
   /** Labels for the selected-tools chip row shown in the input when tools are active. */
   toolsChipLabels?: ToolsChipLabels;
+  /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
+  usageLimitsSlot?: ReactNode;
 }

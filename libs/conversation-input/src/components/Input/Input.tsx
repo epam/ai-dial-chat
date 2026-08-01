@@ -105,6 +105,7 @@ export const Input: FC<InputProps> = ({
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
   isAttachmentsEnabled = true,
+  usageLimitsSlot,
 }) => {
   const isMobile = useIsMobile();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -462,6 +463,7 @@ export const Input: FC<InputProps> = ({
               renderFooterActions({ canSend, onSend: handleSend })
             ) : (
               <>
+                {usageLimitsSlot}
                 <ModelSelectorControl
                   deployments={deployments}
                   selectedDeploymentId={selectedDeploymentId}
