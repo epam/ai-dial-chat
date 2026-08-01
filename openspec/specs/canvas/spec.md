@@ -24,9 +24,10 @@ The `AttachmentCanvas` side panel opens to the right of the main conversation ar
 
 1. User activates an attachment card.
 2. `useOpenAttachmentCanvas` (app hook at `apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`) resolves content from the `DisplayAttachment` (fetching file bytes if needed).
-3. Hook calls `openCanvas(content, fileName)` from `useAttachmentCanvas()`.
-4. `AttachmentCanvasContext` updates `isOpen = true`, `content`, and `fileName`.
+3. Hook calls `openCanvas(content, fileName, attachmentId)` from `useAttachmentCanvas()`. For message attachments, `attachmentId` is a message-scoped composite key (`` `${messageIndex}:${attachment.id}` ``, built by `ConversationView.tsx`) rather than the raw `DisplayAttachment.id` — `id` alone is derived from content and can recur across different messages. Other callers (edit-message tray, `ConversationSourcesPanel`) omit the override and get the raw `attachment.id` default.
+4. `AttachmentCanvasContext` updates `isOpen = true`, `content`, `fileName`, and `attachmentId`. The context treats `attachmentId` as an opaque key — it has no knowledge of the composite-key format.
 5. `AttachmentCanvasContainer` (rendered in `app.tsx`) re-renders the panel open.
+6. `ConversationView.tsx` reads `attachmentId` back from `useAttachmentCanvas()` and passes it to each `ConversationMessageItem` as `selectedAttachmentKey`. Each `ConversationMessageItem` strips its own `` `${index}:` `` prefix (or renders `undefined` if the key doesn't match its own message index) before forwarding a message-scoped `selectedAttachmentId` through `MessageBubble` → `AttachmentGroup`, so only the tile that actually opened the canvas renders selected, even if another message has an attachment with the same content-derived `id` (see `attachment-input-lib` spec, "AttachmentCard, AttachmentGroup, and MessageBubble support a selected-tile visual state").
 
 #### Auto-close
 

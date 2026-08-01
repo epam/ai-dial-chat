@@ -8,6 +8,7 @@ import {
   DialProgressBar,
   DialProgressBarSize,
   ElementSize,
+  IconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconAlertCircleFilled,
@@ -90,7 +91,7 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
         )}
         {job.status === ExportJobStatus.Failed && (
           <>
-            <DialIconButton
+            <IconButton
               aria-label={t(ConversationExportI18nKeys.RetryJobAriaLabel, {
                 title: job.label,
               })}
@@ -174,19 +175,19 @@ const ImportExportQueue: FC<Props> = ({
     <div
       role="status"
       aria-live="polite"
-      className="w-[320px] rounded-lg bg-layer-2 shadow-lg"
+      className="w-[320px] rounded-lg bg-layer-base shadow-lg"
     >
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="dial-small-semi-text text-primary">{title}</span>
           {failedCount > 0 && (
-            <span className="dial-small-semi-text text-white inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-controls-error px-1">
+            <span className="dial-small-semi-text inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-controls-error px-1 text-tertiary">
               {failedCount}
             </span>
           )}
         </div>
         <div className="flex items-center gap-1">
-          <DialIconButton
+          <IconButton
             aria-label={
               isCollapsed
                 ? t(ConversationExportI18nKeys.ExpandQueueAriaLabel)

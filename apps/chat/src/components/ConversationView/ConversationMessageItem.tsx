@@ -131,8 +131,14 @@ interface Props {
   pendingAttachments?: Attachment[];
   /** Called after `pendingAttachments` have been inserted into the edit-message tray. */
   onPendingAttachmentsConsumed?: () => void;
-  /** ID of the attachment currently open in the canvas panel, if any. Renders that tile's selected visual state. */
-  selectedAttachmentId?: string;
+  /**
+   * Message-scoped key (`${messageIndex}:${attachmentId}`) of the attachment
+   * currently open in the canvas panel, if any — set by `ConversationView`
+   * from the canvas context. Renders that tile's selected visual state only
+   * within the message that actually opened it, since `DisplayAttachment.id`
+   * alone can recur across different messages.
+   */
+  selectedAttachmentKey?: string;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -182,7 +188,7 @@ const ConversationMessageItem: FC<Props> = ({
   dialFileSystemLabel,
   pendingAttachments,
   onPendingAttachmentsConsumed,
-  selectedAttachmentId,
+  selectedAttachmentKey,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
@@ -248,6 +254,13 @@ const ConversationMessageItem: FC<Props> = ({
     const attachment = annotation.body?.source?.attachment;
     if (attachment) openAnnotationAttachment(attachment);
   }, []);
+
+  const selectedAttachmentKeyPrefix = `${index}:`;
+  const selectedAttachmentId = selectedAttachmentKey?.startsWith(
+    selectedAttachmentKeyPrefix,
+  )
+    ? selectedAttachmentKey.slice(selectedAttachmentKeyPrefix.length)
+    : undefined;
 
   if (isEditing) {
     return (

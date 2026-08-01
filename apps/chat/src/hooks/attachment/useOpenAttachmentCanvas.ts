@@ -28,6 +28,7 @@ type OpenCanvas = ReturnType<typeof useAttachmentCanvas>['openCanvas'];
 async function openFileCanvas(
   attachment: DisplayAttachment,
   openCanvas: OpenCanvas,
+  canvasAttachmentId: string | undefined,
 ): Promise<boolean> {
   if (attachment.url == null && attachment.referenceUrl != null) {
     const pdfContent = referenceAttachmentToPdfCanvasContent({
@@ -36,7 +37,7 @@ async function openFileCanvas(
       title: attachment.name,
     });
     if (pdfContent != null) {
-      openCanvas(pdfContent, attachment.name, attachment.id);
+      openCanvas(pdfContent, attachment.name, canvasAttachmentId);
       return true;
     }
   }
@@ -46,7 +47,7 @@ async function openFileCanvas(
   if (!contentType && attachment.data != null) {
     const content = await resolveTextCanvasContent(attachment);
     if (content != null) {
-      openCanvas(content, attachment.name, attachment.id);
+      openCanvas(content, attachment.name, canvasAttachmentId);
       return true;
     }
   }
@@ -57,7 +58,7 @@ async function openFileCanvas(
       openCanvas(
         content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
         attachment.name,
-        attachment.id,
+        canvasAttachmentId,
       );
       return true;
     }
@@ -66,7 +67,7 @@ async function openFileCanvas(
       openCanvas(
         content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
         attachment.name,
-        attachment.id,
+        canvasAttachmentId,
       );
       return true;
     }
@@ -75,7 +76,7 @@ async function openFileCanvas(
       openCanvas(
         content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
         attachment.name,
-        attachment.id,
+        canvasAttachmentId,
       );
       return true;
     }
@@ -90,19 +91,19 @@ async function openFileCanvas(
     case FileExtension.MarkdownAlt: {
       const content = await resolveMarkdownCanvasContent(attachment);
       if (content == null) return false;
-      openCanvas(content, attachment.name, attachment.id);
+      openCanvas(content, attachment.name, canvasAttachmentId);
       return true;
     }
     case FileExtension.JSON: {
       const content = await resolveJsonCanvasContent(attachment);
       if (content == null) return false;
-      openCanvas(content, attachment.name, attachment.id);
+      openCanvas(content, attachment.name, canvasAttachmentId);
       return true;
     }
     case FileExtension.PDF: {
       const content = await resolvePdfCanvasContent(attachment);
       if (content == null) return false;
-      openCanvas(content, attachment.name, attachment.id);
+      openCanvas(content, attachment.name, canvasAttachmentId);
       return true;
     }
   }
@@ -111,14 +112,14 @@ async function openFileCanvas(
     openCanvas(
       createUnsupportedCanvasContent(resolveDialUrl(attachment)),
       attachment.name,
-      attachment.id,
+      canvasAttachmentId,
     );
     return true;
   }
 
   const content = await resolveTextCanvasContent(attachment);
   if (content == null) return false;
-  openCanvas(content, attachment.name, attachment.id);
+  openCanvas(content, attachment.name, canvasAttachmentId);
   return true;
 }
 
@@ -134,14 +135,24 @@ export const useOpenAttachmentCanvas = () => {
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
 
   const openAttachmentCanvas = useCallback(
-    async (attachment: DisplayAttachment): Promise<boolean> => {
+    async (
+      attachment: DisplayAttachment,
+      /*
+       * DisplayAttachment.id is derived from content (url/data/title), so the
+       * same id can recur across different messages (e.g. the same file
+       * attached twice). Callers that need to track which specific tile
+       * opened the canvas (to highlight it as selected) pass a caller-scoped
+       * key here instead of relying on the content-derived id.
+       */
+      canvasAttachmentId: string | undefined = attachment.id,
+    ): Promise<boolean> => {
       switch (attachment.type) {
         case AttachmentType.Image: {
           const content = resolveImageCanvasContent(attachment);
           if (content == null) return false;
           closePanel();
           closeSourcesPanel();
-          openCanvas(content, attachment.name, attachment.id);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
         case AttachmentType.Audio: {
@@ -154,15 +165,19 @@ export const useOpenAttachmentCanvas = () => {
               mimeType: attachment.contentType || undefined,
             },
             attachment.name,
-            attachment.id,
+            canvasAttachmentId,
           );
           return true;
         }
         case AttachmentType.File: {
           closePanel();
           closeSourcesPanel();
-          openCanvasLoading(attachment.name, attachment.id);
-          const opened = await openFileCanvas(attachment, openCanvas);
+          openCanvasLoading(attachment.name, canvasAttachmentId);
+          const opened = await openFileCanvas(
+            attachment,
+            openCanvas,
+            canvasAttachmentId,
+          );
           if (!opened) closeCanvas();
           return opened;
         }
@@ -170,13 +185,13 @@ export const useOpenAttachmentCanvas = () => {
         case AttachmentType.Prompt: {
           closePanel();
           closeSourcesPanel();
-          openCanvasLoading(attachment.name, attachment.id);
+          openCanvasLoading(attachment.name, canvasAttachmentId);
           const content = await resolveTextCanvasContent(attachment);
           if (content == null) {
             closeCanvas();
             return false;
           }
-          openCanvas(content, attachment.name, attachment.id);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
         default:

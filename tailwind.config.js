@@ -104,7 +104,6 @@ const borderColors = {
   hairline: 'var(--stroke-hairline, #0000000d)',
   'controls-accent': 'var(--controls-bg-accent, #5C8DEA)',
   'accent-primary-hover': 'var(--stroke-accent-primary-hover, #4878d2)',
-  hover: 'var(--stroke-hover, #EEF1F7)',
 };
 
 const textColors = {
