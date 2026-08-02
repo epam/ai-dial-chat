@@ -5,6 +5,7 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import type { CatalogItemDetailsFetchResult } from '../../models/item-details-data';
+import { CatalogEntityType } from '../../types/entity-type';
 import { CatalogSortKey } from '../../types/sort';
 import type { CredentialsLevel } from '../../types/toolset-auth';
 import { CatalogViewMode } from '../../types/view-mode';
@@ -477,6 +478,7 @@ export const Catalog: FC<CatalogProps> = ({
               )}
             >
               <ListView
+                type={activeTab as CatalogEntityType}
                 items={tabFiltered}
                 query={query}
                 ariaLabel={resolvedAriaLabel}
