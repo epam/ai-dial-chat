@@ -210,7 +210,6 @@ const NewConversationComposer: FC<Props> = ({
       triggerAriaLabel: ({ value }: { value: string }) =>
         t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
       popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
-      unlimited: t(ConversationInputI18nKeys.Unlimited),
       error: t(ConversationInputI18nKeys.Error),
       tokensRemaining: ({ count }: { count: string }) =>
         t(ConversationInputI18nKeys.TokensRemaining, { count }),

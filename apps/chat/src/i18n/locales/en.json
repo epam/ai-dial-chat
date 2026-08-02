@@ -863,7 +863,6 @@
     "usageLimits": {
       "triggerAriaLabel": "Monthly token usage: {{value}}",
       "popoverTitle": "Usage Limit",
-      "unlimited": "Unlimited",
       "error": "Could not load usage limits",
       "tokensRemaining": "{{count}} tokens remaining",
       "progressAriaLabel": "Monthly token usage: {{used}} of {{total}} tokens used"
