@@ -109,9 +109,15 @@ const SharePopover: FC<SharePopoverProps> = ({
   }, [isAccessOpen]);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  /* Moves focus into the popover as soon as it opens. */
+
   useEffect(() => {
     containerRef.current?.focus();
+    const timeoutId = setTimeout(() => {
+      if (!containerRef.current?.contains(document.activeElement)) {
+        containerRef.current?.focus();
+      }
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const isFirstRenderRef = useRef(true);
