@@ -20,6 +20,8 @@ interface AudioAttachmentProps {
   labels?: AttachmentCardLabels;
   styles?: AttachmentCardStyles;
   cssVars?: CSSProperties;
+  /** Whether this attachment is the one currently open in the canvas panel. Renders the tile's selected visual state. */
+  isSelected?: boolean;
 }
 
 /** Widescreen tile for a single audio attachment inside the composer tray. */
@@ -32,6 +34,7 @@ export const AudioAttachment: FC<AudioAttachmentProps> = ({
   labels,
   styles: cardStyles,
   cssVars,
+  isSelected,
 }) => {
   const {
     clickLabel = 'Open attachment',
@@ -64,9 +67,10 @@ export const AudioAttachment: FC<AudioAttachmentProps> = ({
           }
         : {})}
       className={mergeClasses(
-        'group relative flex w-full min-w-[280px] max-w-[300px] flex-col gap-2 rounded-xl border p-3',
+        'group/attachment-tile relative flex w-full min-w-[280px] max-w-[300px] flex-col gap-2 rounded-xl border p-3',
         onClick && 'cursor-pointer',
         (onDownload || onRemove) && 'pe-8',
+        isSelected && styles.selected,
         className,
       )}
     >

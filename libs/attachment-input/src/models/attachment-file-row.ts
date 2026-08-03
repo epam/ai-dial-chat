@@ -63,4 +63,6 @@ export interface FileAttachmentProps {
   cssVars?: CSSProperties;
   /** Whether the attachment is expandable (vs. clickable). Defaults to `false`. */
   isExpandable?: boolean;
+  /** Whether this attachment is the one currently open in the canvas panel. Renders the tile's selected visual state. */
+  isSelected?: boolean;
 }

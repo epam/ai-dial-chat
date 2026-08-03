@@ -33,6 +33,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   onAttachmentRetry,
   codeBlockTheme,
   labels,
+  selectedAttachmentId,
 }) => {
   const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
   const {
@@ -116,6 +117,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               retryLabel: attachmentRetryLabel,
               openInNewTabLabel: attachmentOpenInNewTabLabel,
             }}
+            selectedAttachmentId={selectedAttachmentId}
           />
           {afterContent}
           <MessageActions

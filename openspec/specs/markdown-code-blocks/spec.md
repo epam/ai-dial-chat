@@ -72,7 +72,7 @@ Inline code (a `<code>` node whose children contain no `\n` and whose `className
 
 The system SHALL provide a copy icon button inside each `MarkdownCodeBlock` header. Activating the button SHALL copy the raw code string (with trailing newline stripped, no markdown fences) to the clipboard using the `copyToClipboard` utility from `@epam/ai-dial-chat-shared`.
 
-The copy button MUST be keyboard-focusable (rendered via `DialGhostIconButton`) and activatable via Enter and Space.
+The copy button MUST be keyboard-focusable (rendered via `GhostIconButton`) and activatable via Enter and Space.
 
 #### Scenario: Copy button copies raw code
 
@@ -169,7 +169,7 @@ No icon mirroring is required (`IconCopy` and `IconCheck` are symmetric).
 
 ### Requirement: Accessibility and keyboard support
 
-- The copy button MUST be rendered via `DialGhostIconButton`, which produces a `<button>` element that is keyboard-focusable and activatable via Enter and Space.
+- The copy button MUST be rendered via `GhostIconButton`, which produces a `<button>` element that is keyboard-focusable and activatable via Enter and Space.
 - The `aria-label` MUST reflect the current state: `copyLabel` when idle, `copiedLabel` after copy.
 - The code text MUST remain selectable by the user (no `user-select: none` override).
 - Focus MUST NOT be trapped inside the code block.

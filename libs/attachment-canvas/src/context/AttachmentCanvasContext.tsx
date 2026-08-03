@@ -44,10 +44,16 @@ export interface AttachmentCanvasContextValue {
   content: AttachmentCanvasContent;
   /** File name shown in the canvas header. */
   fileName: string | undefined;
+  /** ID of the attachment currently displayed in the canvas, if any. */
+  attachmentId: string | undefined;
   /** Open the canvas immediately in a loading state before content has resolved. */
-  openCanvasLoading: (fileName?: string) => void;
+  openCanvasLoading: (fileName?: string, attachmentId?: string) => void;
   /** Open the canvas with the given content and optional file name. */
-  openCanvas: (content: AttachmentCanvasContent, fileName?: string) => void;
+  openCanvas: (
+    content: AttachmentCanvasContent,
+    fileName?: string,
+    attachmentId?: string,
+  ) => void;
   /** Close the canvas. */
   closeCanvas: () => void;
 }
@@ -68,17 +74,29 @@ export const AttachmentCanvasProvider = ({
   const [content, setContent] =
     useState<AttachmentCanvasContent>(EMPTY_CONTENT);
   const [fileName, setFileName] = useState<string | undefined>(undefined);
+  const [attachmentId, setAttachmentId] = useState<string | undefined>(
+    undefined,
+  );
 
-  const openCanvasLoading = useCallback((newFileName?: string) => {
-    setFileName(newFileName);
-    setIsLoading(true);
-    setIsOpen(true);
-  }, []);
+  const openCanvasLoading = useCallback(
+    (newFileName?: string, newAttachmentId?: string) => {
+      setFileName(newFileName);
+      setAttachmentId(newAttachmentId);
+      setIsLoading(true);
+      setIsOpen(true);
+    },
+    [],
+  );
 
   const openCanvas = useCallback(
-    (newContent: AttachmentCanvasContent, newFileName?: string) => {
+    (
+      newContent: AttachmentCanvasContent,
+      newFileName?: string,
+      newAttachmentId?: string,
+    ) => {
       setContent(newContent);
       setFileName(newFileName);
+      setAttachmentId(newAttachmentId);
       setIsLoading(false);
       setIsOpen(true);
     },
@@ -89,6 +107,7 @@ export const AttachmentCanvasProvider = ({
     setContent(EMPTY_CONTENT);
     setIsOpen(false);
     setIsLoading(false);
+    setAttachmentId(undefined);
   }, []);
 
   /* Revokes the outgoing content's object URL whenever it is replaced by new
@@ -109,6 +128,7 @@ export const AttachmentCanvasProvider = ({
           isLoading,
           content,
           fileName,
+          attachmentId,
           openCanvasLoading,
           openCanvas,
           closeCanvas,
@@ -118,6 +138,7 @@ export const AttachmentCanvasProvider = ({
           isLoading,
           content,
           fileName,
+          attachmentId,
           openCanvasLoading,
           openCanvas,
           closeCanvas,

@@ -5,8 +5,8 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialGhostIconButton,
   ElementSize,
+  GhostIconButton,
   Highlight,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
@@ -109,7 +109,7 @@ const SourcesSection: FC<SourcesSectionProps> = ({
                   source.title
                 )}
               </a>
-              <DialGhostIconButton
+              <GhostIconButton
                 size={ElementSize.Small}
                 icon={
                   <IconCopy size={DIAL_ICON_SIZE.SM} stroke={1.5} aria-hidden />

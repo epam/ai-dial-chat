@@ -41,7 +41,7 @@
 - [x] 5.1 Add `onAttachmentsChange?: (attachments: Attachment[]) => void` prop to `InputProps` in `libs/conversation-input/src/models/Input.ts`
 - [x] 5.2 Add `useState<Attachment[]>([])` for the attachment list inside `Input.tsx`
 - [x] 5.3 Add a visually-hidden `<input type="file" multiple ref={fileInputRef}>` element to `Input.tsx`
-- [x] 5.4 Add a `+` button (`DialGhostIconButton` with `IconPlus`, 40×40, icon 18px `BASE_ICON_SIZE`) wrapped in `DialDropdown` with a single "Attach file" item; clicking the item calls `fileInputRef.current?.click()`. Trigger button aria-label from `conversationInput.addMenu.ariaLabel`; item label from `conversationInput.attach.label`.
+- [x] 5.4 Add a `+` button (`GhostIconButton` with `IconPlus`, 40×40, icon 18px `BASE_ICON_SIZE`) wrapped in `DialDropdown` with a single "Attach file" item; clicking the item calls `fileInputRef.current?.click()`. Trigger button aria-label from `conversationInput.addMenu.ariaLabel`; item label from `conversationInput.attach.label`.
 - [x] 5.5 Add i18n keys `conversationInput.addMenu.ariaLabel` and `conversationInput.attach.label` to `apps/chat/src/i18n/locales/en.json`
 - [x] 5.6 Implement `handleFileChange` — converts selected `File[]` to `Attachment[]` (generate uuid id, set `type` from MIME, `status: RequestStatus.Idle`, `previewUrl` for images via `URL.createObjectURL`)
 - [x] 5.7 Merge new attachments into state; call `onAttachmentsChange` with updated list

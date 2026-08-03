@@ -1,26 +1,5 @@
-.container {
-  background: var(--ci-bg, var(--bg-layer-0, #fcfcfc));
-  border-color: var(--ci-border, rgba(0, 0, 0, 0.05));
-  box-shadow: var(--ci-shadow, 0 8px 24px rgba(16, 24, 40, 0.08));
-  transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease;
-
-  &:hover:not(:focus-within) {
-    border-color: var(--ci-border-hover, rgba(0, 0, 0, 0.12));
-  }
-
-  &:focus-within {
-    border-color: var(
-      --ci-border-focus,
-      color-mix(in srgb, var(--stroke-accent-primary, #7da4ff) 50%, transparent)
-    );
-    box-shadow: var(--ci-shadow-focus, 0 8px 24px rgba(16, 24, 40, 0.08));
-  }
-
-  &.containerError {
-    border-color: var(--ci-voice-error, var(--stroke-error, #ae2f2f));
-  }
+.wrapperError {
+  border-color: var(--ci-voice-error, var(--stroke-error, #ae2f2f));
 }
 
 .waveformCanvas {
@@ -50,12 +29,6 @@
 }
 
 .recordingDot {
-  display: block;
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-  border-radius: 50%;
   background: var(--ci-voice-accent, var(--text-error, #ae2f2f));
   animation: recording-pulse 1.2s ease-in-out infinite;
-  pointer-events: none;
 }

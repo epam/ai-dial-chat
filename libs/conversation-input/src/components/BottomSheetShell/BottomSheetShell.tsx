@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialCloseButton,
@@ -9,6 +9,18 @@ import type { CSSProperties, FC, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useBottomSheet } from '../../hooks/useBottomSheet';
 import styles from './BottomSheetShell.module.scss';
+
+/** Color overrides for the `BottomSheetShell` component, applied as CSS custom properties. */
+export interface BottomSheetShellColors {
+  /** Backdrop background color. Defaults to `--bg-backdrop`. */
+  backdrop?: string;
+  /** Sheet panel background color. Defaults to `--bg-layer-0`. */
+  sheetBg?: string;
+  /** Sheet title text color. Defaults to `--text-primary`. */
+  sheetText?: string;
+  /** Divider line color below the header. Defaults to `--bg-layer-4`. */
+  divider?: string;
+}
 
 /** Props for the shared bottom-sheet overlay shell. */
 export interface BottomSheetShellProps {
@@ -32,6 +44,8 @@ export interface BottomSheetShellProps {
   titleClassName?: string;
   /** Extra classes appended to the sheet container (e.g. a max-height constraint). */
   className?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: BottomSheetShellColors;
   /** Sheet body rendered below the header divider. */
   children: ReactNode;
 }
@@ -48,17 +62,26 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   style,
   titleClassName = 'dial-body-semi-text',
   className,
+  colors,
   children,
 }) => {
   useBottomSheet(isOpen, onClose);
 
   if (!isOpen || typeof document === 'undefined') return null;
 
+  const cssVars = buildCssVars({
+    '--ci-backdrop': colors?.backdrop,
+    '--ci-sheet-bg': colors?.sheetBg,
+    '--ci-sheet-text': colors?.sheetText,
+    '--ci-sheet-divider': colors?.divider,
+  });
+
   return createPortal(
     <>
       {/* Backdrop — onPointerDown avoids the touch-synthesized ghost click */}
       <div
         className={mergeClasses(styles.backdrop, 'fixed inset-0 z-[55]')}
+        style={cssVars}
         onPointerDown={onClose}
         aria-hidden
       />
@@ -68,7 +91,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
         role="dialog"
         aria-modal
         aria-label={title ?? ariaLabel}
-        style={style}
+        style={{ ...cssVars, ...style }}
         className={mergeClasses(
           styles.sheet,
           'fixed inset-x-0 bottom-0 z-[60] flex max-h-[85dvh] flex-col',
@@ -105,7 +128,9 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
                 />
               </div>
             </div>
-            <div className="h-px flex-shrink-0" />
+            <div
+              className={mergeClasses(styles.divider, 'h-px flex-shrink-0')}
+            />
           </>
         )}
         <div className="overflow-y-auto">{children}</div>

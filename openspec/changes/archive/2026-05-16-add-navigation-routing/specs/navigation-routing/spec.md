@@ -25,7 +25,7 @@ The application SHALL declare two routes using React Router v6 `<Routes>` in `ap
 
 ### Requirement: Navigation sidebar reflects the active route via aria-current
 
-The `<Navigation>` component SHALL read `useLocation().pathname` from React Router and mark exactly one `DialGhostIconButton` with `aria-current="page"` — the one whose configured `path` matches the current pathname. No other button SHALL carry `aria-current` at the same time.
+The `<Navigation>` component SHALL read `useLocation().pathname` from React Router and mark exactly one `GhostIconButton` with `aria-current="page"` — the one whose configured `path` matches the current pathname. No other button SHALL carry `aria-current` at the same time.
 
 #### Scenario: Home button is active on /
 
@@ -46,7 +46,7 @@ The `<Navigation>` component SHALL read `useLocation().pathname` from React Rout
 
 ### Requirement: Navigation buttons perform client-side navigation
 
-Each `DialGhostIconButton` in the top section of `<Navigation>` MUST call `useNavigate()(path)` when clicked. Navigation MUST be client-side (no full page reload).
+Each `GhostIconButton` in the top section of `<Navigation>` MUST call `useNavigate()(path)` when clicked. Navigation MUST be client-side (no full page reload).
 
 #### Scenario: Clicking Home navigates to /
 
@@ -73,7 +73,7 @@ The `<Navigation>` component SHALL NOT hard-code route paths or icon components.
 
 ### Requirement: Navigation sidebar exposes accessible labels and tooltip
 
-Every `DialGhostIconButton` in the navigation top section MUST carry an `aria-label` derived from the `labelKey` field of its `NavigationItem` via `useTranslation().t()`. The same string MUST be passed to `tooltipProps.tooltip` so hover users see the label.
+Every `GhostIconButton` in the navigation top section MUST carry an `aria-label` derived from the `labelKey` field of its `NavigationItem` via `useTranslation().t()`. The same string MUST be passed to `tooltipProps.tooltip` so hover users see the label.
 
 #### Scenario: aria-label and tooltip match the i18n value
 

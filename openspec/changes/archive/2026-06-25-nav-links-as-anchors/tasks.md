@@ -1,9 +1,9 @@
 ## 1. Navigation component
 
 - [x] 1.1 In `apps/chat/src/components/Navigation/Navigation.tsx`, add `Link` to the `react-router-dom` import (alongside `useLocation`, `useNavigate`)
-- [x] 1.2 Wrap each `DialGhostIconButton` in a `<Link to={path} className="contents">` element
-- [x] 1.3 Remove `onClick={() => navigate(path)}` from each `DialGhostIconButton` (navigation is now handled by the `<Link>`)
-- [x] 1.4 Add `tabIndex={-1}` to each `DialGhostIconButton` so only the `<a>` is in the tab order
+- [x] 1.2 Wrap each `GhostIconButton` in a `<Link to={path} className="contents">` element
+- [x] 1.3 Remove `onClick={() => navigate(path)}` from each `GhostIconButton` (navigation is now handled by the `<Link>`)
+- [x] 1.4 Add `tabIndex={-1}` to each `GhostIconButton` so only the `<a>` is in the tab order
 - [x] 1.5 Remove the `useNavigate` import and the `navigate` variable if no longer used elsewhere in the file
 
 ## 2. Tests

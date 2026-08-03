@@ -72,7 +72,6 @@ const EditorHeader: FC<Props> = ({
     <div className="flex items-center gap-2">
       {onPreview && (
         <GhostButton
-          type="button"
           label={isPreviewing ? exitPreviewButtonLabel : previewButtonLabel}
           iconBefore={isPreviewing ? <IconEyeOff /> : <IconEye />}
           onClick={onPreview}
@@ -82,13 +81,11 @@ const EditorHeader: FC<Props> = ({
       {!isPreviewing && (
         <>
           <NeutralButton
-            type="button"
             label={cancelButtonLabel}
             onClick={onCancel}
             disabled={isSaving}
           />
           <PrimaryButton
-            type="button"
             label={saveButtonLabel}
             onClick={onSave}
             disabled={isSaving || isSaveDisabled}

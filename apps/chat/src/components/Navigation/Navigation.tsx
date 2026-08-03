@@ -1,5 +1,5 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, IconButton, mergeClasses } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,13 +48,16 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
       (matchPaths?.some((p) => pathname.startsWith(p)) ?? false);
     return (
       <Link key={path} to={path} className="contents">
-        <DialGhostIconButton
+        <IconButton
           icon={<Icon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
           aria-label={t(labelKey)}
           aria-current={isActive ? 'page' : undefined}
           tooltipProps={{ tooltip: t(labelKey) }}
           tabIndex={-1}
-          className={isActive ? '!text-accent' : undefined}
+          className={mergeClasses(
+            'rounded hover:bg-control-accent-alpha-hover active:bg-control-accent-alpha-active',
+            isActive ? 'text-accent' : undefined,
+          )}
         />
       </Link>
     );

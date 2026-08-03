@@ -76,7 +76,7 @@ const AnnouncementBanner: FC<Props> = ({ className }) => {
         ariaLabel={t(AnnouncementBannerI18nKeys.CloseLabel)}
         onClose={() => dismiss(announcementHtml ?? '')}
         size={16}
-        className="shrink-0 rounded bg-blackout p-[3px] !text-control-permanent"
+        className="bg-blackout shrink-0 rounded p-[3px] !text-control-permanent"
       />
     </div>
   );

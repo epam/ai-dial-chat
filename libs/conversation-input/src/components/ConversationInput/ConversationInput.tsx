@@ -18,7 +18,6 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   const { colors, typography } = stylesProp ?? {};
 
   const cssVars = buildCssVars({
-    '--ci-root-bg': colors?.background,
     '--ci-welcome-color': colors?.welcomeText,
   });
 
@@ -35,7 +34,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           className={mergeClasses(
             styles.welcome,
             'm-0 text-center',
-            typography?.welcomeClassName,
+            typography?.welcomeClassName || 'dial-display2-text',
           )}
         >
           {welcomeText}

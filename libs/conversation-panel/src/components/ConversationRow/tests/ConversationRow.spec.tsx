@@ -6,7 +6,6 @@ import { ConversationRow } from '../ConversationRow';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  ButtonAppearance: { Ghost: 'ghost' },
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   DialSkeletonVariant: { Circular: 'circular' },
   DialSkeleton: ({
@@ -57,7 +56,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     React.cloneElement(children, {
       onClick: () => onOpenChange?.(true),
     }),
-  DialIconButton: React.forwardRef<
+  DialGhostIconButton: React.forwardRef<
     HTMLButtonElement,
     { 'aria-label'?: string; onClick?: () => void }
   >(({ 'aria-label': ariaLabel, onClick }, ref) => (

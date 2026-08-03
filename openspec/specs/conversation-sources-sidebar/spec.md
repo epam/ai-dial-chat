@@ -51,7 +51,7 @@ Specifies the right-side conversation sources panel: the sidebar shell lib (`lib
 
 ### Requirement: Header toggles the right sidebar
 
-`apps/chat/src/components/Header/Header.tsx` SHALL render a right-aligned `DialGhostIconButton` (icon: `IconFile` from `@tabler/icons-react`) that calls `useRightSidebar().toggle()` on click. The header SHALL keep `<Logo />` horizontally centred when the toggle is present (e.g. via `grid-cols-[1fr_auto_1fr]`). The button SHALL set `aria-pressed` from `isOpen`. Its `aria-label` and tooltip text SHALL come from i18n keys `sidebar.sources.toggleOpen` (when closed) and `sidebar.sources.toggleClose` (when open).
+`apps/chat/src/components/Header/Header.tsx` SHALL render a right-aligned `GhostIconButton` (icon: `IconFile` from `@tabler/icons-react`) that calls `useRightSidebar().toggle()` on click. The header SHALL keep `<Logo />` horizontally centred when the toggle is present (e.g. via `grid-cols-[1fr_auto_1fr]`). The button SHALL set `aria-pressed` from `isOpen`. Its `aria-label` and tooltip text SHALL come from i18n keys `sidebar.sources.toggleOpen` (when closed) and `sidebar.sources.toggleClose` (when open).
 
 #### Scenario: Toggle button present in the header
 
@@ -89,7 +89,7 @@ The lib SHALL export `SidebarPanel: FC<SidebarPanelProps>` from `libs/sidebar/sr
 - `typography?: SidebarPanelTypography` — optional overrides (`fontClassName`, `fontFamily`, `fontSize`).
 - `className?: string` — extra class merged onto the root.
 
-The shell SHALL render an `<aside role="complementary" aria-label={ariaLabel}>` with a fixed `360 px` width, full height, a `48 px` header bar, and a vertically scrollable body. A close `DialGhostIconButton` (icon: `IconX`) SHALL always be present and SHALL call `onClose` when activated. Width, height, body scroll, and header-bar height SHALL be identical for both `side` values.
+The shell SHALL render an `<aside role="complementary" aria-label={ariaLabel}>` with a fixed `360 px` width, full height, a `48 px` header bar, and a vertically scrollable body. A close `GhostIconButton` (icon: `IconX`) SHALL always be present and SHALL call `onClose` when activated. Width, height, body scroll, and header-bar height SHALL be identical for both `side` values.
 
 Theming SHALL follow `openspec/lib-styling-guide.md`: the SCSS module `SidebarPanel.module.scss` contains only CSS-variable references with hex fallbacks (`--sb-bg`, `--sb-border`); layout, spacing, and border-radius live in Tailwind classes inside the TSX. The component SHALL apply `colors` / `typography` overrides via `buildCssVars` from `@epam/ai-dial-chat-shared`.
 
@@ -164,8 +164,8 @@ When the panel is empty:
 
 When the panel is not empty:
 
-- `leftActions` SHALL contain a disabled `DialGhostIconButton` with `IconSearch` and the i18n `aria-label` `sidebar.sources.search`.
-- `rightActions` SHALL contain a `DialGhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`. This button SHALL be enabled whenever at least one attachment in `uploaded` or `generated` is downloadable (i.e. has a DIAL-hosted file URL resolvable by the same mechanism `handleAttachmentClick` uses), and SHALL be disabled only when no attachment currently in `uploaded`/`generated` is downloadable.
+- `leftActions` SHALL contain a disabled `GhostIconButton` with `IconSearch` and the i18n `aria-label` `sidebar.sources.search`.
+- `rightActions` SHALL contain a `GhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`. This button SHALL be enabled whenever at least one attachment in `uploaded` or `generated` is downloadable (i.e. has a DIAL-hosted file URL resolvable by the same mechanism `handleAttachmentClick` uses), and SHALL be disabled only when no attachment currently in `uploaded`/`generated` is downloadable.
 - Activating the enabled download-all button SHALL trigger a download of every downloadable attachment in `uploaded` and `generated`, using the same URL-resolution and download-triggering mechanism as clicking an individual attachment card. Attachments that are not downloadable via that mechanism (e.g. reference-only attachments) SHALL be silently skipped, matching single-click behavior for those attachments.
 - The body SHALL render, in order: the Uploaded Files `FilesSection`, the Generated Files `FilesSection`, and `SourcesSection` (receiving `sources={filteredSources}`, `title`, and `copyLabel`).
 
@@ -402,7 +402,7 @@ For `SourcesSection`:
 - Accept `Props { title: string; sources: QuotationSource[]; copyLabel: string; onSourceClick?: (source: QuotationSource) => void }`.
 - When `sources.length === 0`: return `null` (no title or empty message rendered).
 - When `sources.length > 0`: render a `<ul>` where each `<li>` contains two rows:
-  - **Row 1** (flex, `items-center`, `justify-between`): an `<a href={source.url} target="_blank" rel="noopener noreferrer">` showing `source.title` with `truncate`; and a `DialGhostIconButton` with `IconCopy` that calls `navigator.clipboard.writeText(source.url)` on click, `aria-label={copyLabel}`. When `onSourceClick` is provided, clicking the `<a>` SHALL call `e.preventDefault()` and invoke `onSourceClick(source)` instead of following the `href`.
+  - **Row 1** (flex, `items-center`, `justify-between`): an `<a href={source.url} target="_blank" rel="noopener noreferrer">` showing `source.title` with `truncate`; and a `GhostIconButton` with `IconCopy` that calls `navigator.clipboard.writeText(source.url)` on click, `aria-label={copyLabel}`. When `onSourceClick` is provided, clicking the `<a>` SHALL call `e.preventDefault()` and invoke `onSourceClick(source)` instead of following the `href`.
   - **Row 2** (only when `source.quote` is present): a `<div>` with `quoteClassName` (typography), `styles.quote` (color token), `line-clamp-5`, and `[&>div>*+*]:mt-1` (spacing between block elements), containing a `MarkdownRenderer` rendering `source.quote`. The `[&>div>*+*]:mt-1` selector targets the block-level children of `MarkdownRenderer`'s root `<div>` to add consistent vertical spacing between headings, paragraphs, and lists.
 
 `SourcesSection` is located at `libs/source-panel/src/components/SourcesSection/SourcesSection.tsx`.

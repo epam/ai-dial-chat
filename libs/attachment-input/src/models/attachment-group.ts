@@ -87,4 +87,6 @@ export interface AttachmentGroupProps {
   labels?: AttachmentGroupLabels;
   /** Style overrides for the group. */
   styles?: AttachmentGroupStyles;
+  /** ID of the attachment currently open in the canvas panel, if any. Renders that tile's selected visual state. */
+  selectedAttachmentId?: string;
 }

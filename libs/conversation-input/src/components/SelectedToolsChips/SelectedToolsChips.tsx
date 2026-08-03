@@ -1,9 +1,31 @@
 import type { ToolMenuItem } from '@epam/ai-dial-chat-shared';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { BASE_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconTool, IconX } from '@tabler/icons-react';
 import type { FC } from 'react';
 import styles from './SelectedToolsChips.module.scss';
+
+/** Typography overrides for the `SelectedToolsChips` component. */
+export interface SelectedToolsChipsTypography {
+  /** Typography utility class applied to the chip text. Defaults to `'dial-small-paragraph-text'`. */
+  fontClassName?: string;
+}
+
+/** Color overrides for the `SelectedToolsChips` component, applied as CSS custom properties. */
+export interface SelectedToolsChipsColors {
+  /** Chip background color. Defaults to `--bg-layer-base`. */
+  chipBg?: string;
+  /** Chip border color. Defaults to `--stroke-secondary`. */
+  chipBorder?: string;
+  /** Chip leading-icon color. Defaults to `--text-secondary`. */
+  chipIcon?: string;
+  /** Chip label text color. Defaults to `--text-primary`. */
+  chipText?: string;
+  /** Close (×) button icon color. Defaults to `--text-secondary`. */
+  chipClose?: string;
+  /** Close (×) button icon color on hover/focus. Defaults to `--text-primary`. */
+  chipCloseHover?: string;
+}
 
 /** Props for the SelectedToolsChips component. */
 export interface SelectedToolsChipsProps {
@@ -17,6 +39,10 @@ export interface SelectedToolsChipsProps {
   countLabel?: (count: number) => string;
   /** Returns the accessible label for the close button on a desktop chip. Defaults to `"Remove {toolLabel}"`. */
   removeLabel?: (toolLabel: string) => string;
+  /** Typography overrides for the chip text. */
+  typography?: SelectedToolsChipsTypography;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: SelectedToolsChipsColors;
 }
 
 const defaultCountLabel = (n: number): string =>
@@ -31,10 +57,21 @@ export const SelectedToolsChips: FC<SelectedToolsChipsProps> = ({
   isMobile,
   countLabel = defaultCountLabel,
   removeLabel = defaultRemoveLabel,
+  typography,
+  colors,
 }) => {
   const selectedItems = items.filter((item) => item.isSelected);
 
   if (selectedItems.length === 0) return null;
+
+  const cssVars = buildCssVars({
+    '--ci-chip-bg': colors?.chipBg,
+    '--ci-chip-border': colors?.chipBorder,
+    '--ci-chip-icon': colors?.chipIcon,
+    '--ci-chip-text': colors?.chipText,
+    '--ci-chip-close': colors?.chipClose,
+    '--ci-chip-close-hover': colors?.chipCloseHover,
+  });
 
   if (isMobile) {
     const mobileIcon =
@@ -45,17 +82,22 @@ export const SelectedToolsChips: FC<SelectedToolsChipsProps> = ({
       );
 
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2" style={cssVars}>
         <div
           className={mergeClasses(
             styles.chip,
-            'flex items-center gap-1.5 rounded border px-2 py-1',
+            'flex items-center gap-1.5 rounded-full border px-2 py-1',
           )}
         >
           <span className={styles.chipIcon} aria-hidden>
             {mobileIcon}
           </span>
-          <span className={mergeClasses(styles.chipText, 'dial-small-text')}>
+          <span
+            className={mergeClasses(
+              styles.chipText,
+              typography?.fontClassName || 'dial-small-paragraph-text',
+            )}
+          >
             {countLabel(selectedItems.length)}
           </span>
         </div>
@@ -64,19 +106,24 @@ export const SelectedToolsChips: FC<SelectedToolsChipsProps> = ({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2" style={cssVars}>
       {selectedItems.map((item) => (
         <div
           key={item.id}
           className={mergeClasses(
             styles.chip,
-            'flex items-center gap-1.5 rounded border py-1 pe-1 ps-2',
+            'flex items-center gap-1.5 rounded-full border py-1 pe-1 ps-2',
           )}
         >
           <span className={styles.chipIcon} aria-hidden>
             {item.icon}
           </span>
-          <span className={mergeClasses(styles.chipText, 'dial-small-text')}>
+          <span
+            className={mergeClasses(
+              styles.chipText,
+              typography?.fontClassName || 'dial-small-paragraph-text',
+            )}
+          >
             {item.label}
           </span>
           <button

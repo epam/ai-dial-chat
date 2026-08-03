@@ -1,9 +1,10 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostIconButton, Input, Textarea } from '@epam/ai-dial-kit';
+import { Input, Textarea } from '@epam/ai-dial-kit';
 import {
   Calendar,
   CalendarMode,
   DIAL_ICON_SIZE,
+  GhostIconButton,
   DialSelectField,
   DialSpinner,
   LazyDialMarkdownEditor,
@@ -118,13 +119,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <NeutralButton
-            type="button"
             label={labels.cancelButtonLabel}
             onClick={onCancel}
             disabled={isSubmitting}
           />
           <PrimaryButton
-            type="button"
             label={labels.createButtonLabel}
             onClick={onSubmit}
             disabled={isCreateDisabled}

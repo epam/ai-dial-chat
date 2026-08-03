@@ -29,6 +29,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   onAttachmentClick,
   onDownloadAll,
   onAttachmentRetry,
+  selectedAttachmentId,
 }) => {
   const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
   const {
@@ -100,6 +101,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
             openInNewTabLabel: attachmentOpenInNewTabLabel,
           }}
           styles={{ className: 'max-w-[640px]' }}
+          selectedAttachmentId={selectedAttachmentId}
         />
         {text && (
           <div

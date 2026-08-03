@@ -13,7 +13,7 @@
 - [x] 3.2 Add `disabled={isInputDisabled}` to the `<textarea>` element
 - [x] 3.3 In `handleSend`, add an early return guard: `if (isInputDisabled) return;`
 - [x] 3.4 Update the send button's `isDisabled` prop: `isDisabled={isInputDisabled || !hasModelSelected}`
-- [x] 3.5 Update the attach (`+`) `DialGhostIconButton` `isDisabled` prop: `isDisabled={isInputDisabled}`
+- [x] 3.5 Update the attach (`+`) `GhostIconButton` `isDisabled` prop: `isDisabled={isInputDisabled}`
 - [x] 3.6 In the `dragover` handler, add early return: `if (isInputDisabled) return;`
 - [x] 3.7 In the `drop` handler, add early return: `if (isInputDisabled) return;`
 

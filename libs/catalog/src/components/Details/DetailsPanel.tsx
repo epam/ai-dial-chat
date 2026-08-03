@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostIconButton, TabRow } from '@epam/ai-dial-kit';
+import { TabRow } from '@epam/ai-dial-kit';
 import {
   derivePublishState,
   PublishFooter,
@@ -15,6 +15,7 @@ import {
   DialConfirmationPopup,
   DialSkeleton,
   DialTag,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
