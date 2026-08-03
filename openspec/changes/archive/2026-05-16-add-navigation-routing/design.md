@@ -54,13 +54,13 @@ export const NAVIGATION_CONFIG: NavigationItem[] = [
 
 ### `apps/chat/src/components/Navigation/Navigation.tsx`
 
-Map over `NAVIGATION_CONFIG` and render each item as a `DialGhostIconButton` from `@epam/ai-dial-ui-kit`. Use `useLocation` + `useNavigate` to determine active state and handle navigation — `NavLink` is avoided because nesting a `<button>` inside an `<a>` is invalid HTML. The first `<div>` holds these icon buttons; the second `<div>` is reserved for bottom actions (unchanged placeholder for now).
+Map over `NAVIGATION_CONFIG` and render each item as a `GhostIconButton` from `@epam/ai-dial-ui-kit`. Use `useLocation` + `useNavigate` to determine active state and handle navigation — `NavLink` is avoided because nesting a `<button>` inside an `<a>` is invalid HTML. The first `<div>` holds these icon buttons; the second `<div>` is reserved for bottom actions (unchanged placeholder for now).
 
 ```tsx
 import { memo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { GhostIconButton } from '@epam/ai-dial-ui-kit';
 import { NAVIGATION_CONFIG } from '../../constants/navigation';
 import { NavigationI18nKeys } from '../../constants/translation-keys';
 
@@ -79,7 +79,7 @@ const Navigation: FC = () => {
           const isActive =
             path === '/' ? pathname === '/' : pathname.startsWith(path);
           return (
-            <DialGhostIconButton
+            <GhostIconButton
               key={path}
               icon={<Icon size={20} stroke={1.5} />}
               aria-label={t(labelKey)}
@@ -99,7 +99,7 @@ export default memo(Navigation);
 
 Key decisions:
 
-- `DialGhostIconButton` from ui-kit — matches design system ghost icon button style.
+- `GhostIconButton` from ui-kit — matches design system ghost icon button style.
 - `useLocation` + `useNavigate` instead of `NavLink` — avoids invalid `<button>` inside `<a>` HTML.
 - Active route detected with exact match on `/` and `startsWith` for all other paths.
 - `aria-current="page"` on the active button preserves screen reader accessibility (equivalent to `NavLink`'s built-in behaviour).

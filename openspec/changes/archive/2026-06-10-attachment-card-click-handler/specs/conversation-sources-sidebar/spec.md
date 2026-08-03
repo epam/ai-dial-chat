@@ -66,8 +66,8 @@ When the panel is empty:
 
 When the panel is not empty:
 
-- `leftActions` SHALL contain a disabled `DialGhostIconButton` with `IconSearch` and the i18n `aria-label` `sidebar.sources.search`.
-- `rightActions` SHALL contain a disabled `DialGhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`.
+- `leftActions` SHALL contain a disabled `GhostIconButton` with `IconSearch` and the i18n `aria-label` `sidebar.sources.search`.
+- `rightActions` SHALL contain a disabled `GhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`.
 - The body SHALL render, in order: the Uploaded Files `FilesSection`, the Generated Files `FilesSection`, and `SourcesSection`.
 
 For both states:

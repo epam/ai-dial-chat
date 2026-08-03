@@ -15,7 +15,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: {
     LG: 24,
   },
-  DialGhostIconButton: ({
+  mergeClasses: (...classes: (string | undefined)[]) =>
+    classes.filter(Boolean).join(' '),
+  IconButton: ({
     'aria-label': ariaLabel,
     'aria-current': ariaCurrent,
   }: {

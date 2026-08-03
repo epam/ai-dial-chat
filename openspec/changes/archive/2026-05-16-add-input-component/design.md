@@ -33,8 +33,7 @@ The implementation is complete on branch `feat/input`. This document records the
 
 ### 2. CSS custom variables (`--ci-*`) for theming, not prop drilling into child
 
-`Input.module.scss` reads `--ci-bg`, `--ci-text`, `--ci-border`, etc., set on the wrapper `div`. `SendButton` reads `--ci-send-bg` / `--ci-send-text` from the same scope without receiving additional props.
-
+`Input.module.scss` reads `--ci-bg`, `--ci-text`, `--ci-border`, etc., set on the wrapper `div`. 
 **Why:** CSS variables cascade naturally — child elements inherit them without any extra prop interface. This avoids threading `colors.sendBackground` down into `SendButton`.
 
 **Alternative considered:** Pass color props explicitly to `SendButton`. Rejected — `SendButton` would need its own props interface and `Input` would become coupled to `SendButton`'s theming shape.

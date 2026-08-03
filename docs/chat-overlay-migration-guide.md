@@ -65,10 +65,9 @@ origin and does not send data with `postMessage(..., '*')`.
 
 ### Authentication in the embedded chat
 
-The new chat does not open the identity provider page inside the iframe. When
-there is no authenticated session, the user sees a **Log in** button. The
-login flow opens in a new tab or window, after which the iframe detects the
-new session without reloading.
+External login remains the safe default. When there is no authenticated
+session, the user sees a **Log in** button. The login flow opens in a new tab
+or window, after which the iframe detects the new session without reloading.
 
 For a cross-site iframe in an HTTPS deployment, use:
 
@@ -98,6 +97,60 @@ If the host application relied on automatic provider selection, a login hint,
 or an explicit token, that flow cannot currently be migrated one-to-one. The
 user now completes the new chat's standard login flow in an external tab or
 window.
+
+### Configure per-provider overlay login modes
+
+Hosts that have verified iframe compatibility for a specific provider
+configuration may opt that provider into same-window login:
+
+```ts
+import { ChatOverlay, OverlayAuthUiMode } from '@epam/ai-dial-chat-overlay';
+
+const overlay = new ChatOverlay('#chat-root', {
+  domain: 'https://chat.example.com',
+  auth: {
+    providerUiModes: {
+      'azure-ad': OverlayAuthUiMode.External,
+      keycloak: OverlayAuthUiMode.SameWindow,
+    },
+  },
+});
+```
+
+Map keys are exact provider IDs returned by `GET /api/v1/auth/providers`, not
+the provider labels shown in the login UI. The currently supported IDs are
+`auth0`, `azure-ad`, `azure-b2c`, `gitlab`, `google`, `keycloak`, `ping-id`,
+`cognito`, and `okta`. A provider is returned by the endpoint only when it is
+registered in the chat backend configuration.
+
+When `providerUiModes` contains at least one entry, the embedded login gate
+shows all providers registered by the backend. Providers mapped to
+`SameWindow` continue login inside the iframe. Explicitly `External`, omitted,
+or unrecognized entries open login in a separate browser tab or window.
+During an external attempt, selecting any provider again stops the previous
+session polling and replaces the current attempt with a new one.
+
+When `providerUiModes` is absent or empty, the overlay retains the original
+single **Log in** button. That button opens the standard login page externally,
+where the user can choose from all registered providers.
+
+`External` is the fallback for every omitted provider and for an unrecognized
+mode. `SameWindow` is an explicit per-provider opt-in: the host is responsible
+for verifying that the provider's authorization pages support iframe login
+for that exact tenant and configuration.
+
+There is no automatic recovery after a same-window attempt navigates the
+iframe away from the chat. If the provider blocks framing, the chat cannot
+inspect or replace the resulting cross-origin error page. Remove the
+`SameWindow` entry (or change it to `External`) to roll back that provider.
+
+The map can also be replaced or cleared at runtime:
+
+```ts
+await overlay.setOverlayOptions({
+  auth: { providerUiModes: {} },
+});
+```
 
 ## 2. Replace the library and configuration
 
@@ -159,6 +212,7 @@ overlay.destroy();
 | `theme`                               | Preserved.                                                          |
 | `modelId`                             | Preserved.                                                          |
 | `overlayConversationId`               | Preserved.                                                          |
+| `auth.providerUiModes`                | New optional per-provider login mode map; defaults to `External`.   |
 | `requestTimeout`                      | Preserved; defaults to `10000` ms.                                  |
 | `loaderStyles`                        | Preserved as `Record<string, string>`.                              |
 | `loaderClass`                         | Preserved.                                                          |
@@ -171,8 +225,8 @@ overlay.destroy();
 | `signInOptions`, `signInInSameWindow` | Removed; see the authentication section.                            |
 
 `setOverlayOptions()` now accepts only fields that can be changed dynamically:
-`theme`, `modelId`, `overlayConversationId`, and `enabledFeatures`. Do not pass
-`domain`, `hostDomain`, the request timeout, or loader settings to it.
+`theme`, `modelId`, `overlayConversationId`, `enabledFeatures`, and `auth`. Do
+not pass `domain`, `hostDomain`, the request timeout, or loader settings to it.
 
 ## 3. Account for the new handshake and error handling
 
@@ -197,6 +251,11 @@ Practical implications:
 - A queued call's timeout starts when the request is actually posted to the
   iframe, not when it enters the queue.
 - Every request receives a `requestId` and `expiresAt`.
+- A request the embedded chat cannot execute rejects immediately with
+  `ChatOverlayRequestError`; inspect its `code` and `requestType` fields.
+- Active-conversation methods called while the empty composer is open reject
+  with `OverlayRequestErrorCode.ActiveConversationUnavailable` rather than
+  waiting for the request timeout.
 - `setOverlayOptions()` may be called before `ready()` because it participates
   in the handshake.
 - `destroy()` rejects pending requests and removes the iframe, loader, and
@@ -282,8 +341,9 @@ if (result.error) {
 }
 ```
 
-`getConversations()` and `getSelectedConversations()` do not return an `error`
-field. A transport failure appears as a timeout or rejected promise.
+`getConversations()` and `getSelectedConversations()` do not return a domain
+`error` field. A request-level failure rejects with `ChatOverlayRequestError`;
+a missing protocol response still appears as a timeout.
 
 There is one known asymmetry: the overlay cannot always distinguish an
 inaccessible conversation from one that is still loading. In this case,

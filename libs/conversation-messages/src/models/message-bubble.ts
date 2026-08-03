@@ -103,6 +103,8 @@ interface BaseMessageBubbleProps {
   onDownloadAll?: (attachments: DisplayAttachment[]) => void;
   /** Fires when a failed attachment upload is retried. */
   onAttachmentRetry?: (id: string) => void;
+  /** ID of the attachment currently open in the canvas panel, if any. Renders that tile's selected visual state. */
+  selectedAttachmentId?: string;
 }
 
 /** Props for `UserMessageBubble`. */

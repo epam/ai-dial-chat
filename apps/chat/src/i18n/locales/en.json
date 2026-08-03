@@ -240,6 +240,7 @@
     "copyLink": "Copy link",
     "copyUrl": "Copy URL",
     "logIn": "Log in",
+    "retry": "Retry",
     "publish": "Publish"
   },
   "sidebar": {
@@ -369,9 +370,11 @@
     "loginDescription": "Sign in with:",
     "providersError": "Could not load identity providers. Please retry.",
     "overlayLoginTitle": "Sign in to continue",
-    "overlayLoginDescription": "Open a secure sign-in tab to use DIAL Chat in this embedded view.",
+    "overlayLoginDescription": "Choose a sign-in option to use DIAL Chat in this embedded view.",
     "overlayExternalLoginBlocked": "The sign-in tab was blocked. Allow popups for this site and try again.",
     "overlayLoginTakingLonger": "Sign-in is taking longer than expected. Finish it in the opened tab, or try again.",
+    "overlayProviderPickerLoading": "Loading sign-in providers\u2026",
+    "overlayProvidersError": "Could not load sign-in providers. Please try again.",
     "logOutConfirmTitle": "Log out?",
     "logOutConfirmDescription": "Are you sure you want to log out?",
     "userAvatar": "User avatar"

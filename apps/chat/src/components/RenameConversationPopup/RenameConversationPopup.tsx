@@ -1,9 +1,9 @@
 import {
   DIAL_ICON_SIZE,
   DialFormPopup,
-  DialGhostIconButton,
   DialInput,
   DialSpinner,
+  GhostIconButton,
   PopupSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconSparkles } from '@tabler/icons-react';
@@ -125,12 +125,11 @@ const RenameConversationPopup: FC<Props> = ({
             onKeyDown={handleKeyDown}
           />
         </div>
-        <DialGhostIconButton
+        <GhostIconButton
           aria-label={renameWithAiLabel}
           tooltipProps={{ tooltip: renameWithAiLabel }}
           disabled={isGenerating || isSaving}
           onClick={handleGenerateWithAi}
-          className="!text-accent-primary"
           icon={
             isGenerating ? (
               <DialSpinner size={DIAL_ICON_SIZE.MD} />

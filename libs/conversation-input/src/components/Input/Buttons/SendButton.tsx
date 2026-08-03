@@ -23,7 +23,6 @@ export const SendButton: FC<SendButtonProps> = ({
     <PrimaryIconButton
       aria-label={ariaLabel}
       onClick={() => onSend?.()}
-      type="button"
       disabled={isDisabled}
       aria-hidden={isExiting}
       icon={

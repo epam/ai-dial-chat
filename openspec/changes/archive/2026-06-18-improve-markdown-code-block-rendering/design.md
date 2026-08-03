@@ -39,7 +39,7 @@ From `apps/chat/src/components/Markdown/CodeBlock.tsx`:
 - Header bar: `flex items-center justify-between border-b p-3`; language label (start), copy + download buttons (end).
 - Copy with `useCopy` hook: `copied` state + `onCopy` callback.
 - Download button (not in this slice).
-- `DialGhostIconButton` with `tooltipProps` from `@epam/ai-dial-ui-kit`.
+- `GhostIconButton` with `tooltipProps` from `@epam/ai-dial-ui-kit`.
 - Copy button hidden while `isLastMessageStreaming`.
 - `SyntaxHighlighter` from `react-syntax-highlighter` (not introduced in this slice).
 - Code body: `max-h-[60vh] overflow-auto`.
@@ -129,7 +129,7 @@ MarkdownCodeBlockProps:
   <div class="flex items-center justify-between px-3 py-2 border-b border-white/10 [header]">
     <span class="text-xs opacity-60">{language || ''}</span>
     {!isStreaming && (
-      <DialGhostIconButton
+      <GhostIconButton
         icon={isCopied ? <IconCheck> : <IconCopy>}
         aria-label={isCopied ? copiedLabel : copyLabel}
         onClick={copy}
@@ -303,7 +303,7 @@ The button is NOT disabled while `isCopied` — repeated clicks restart the time
 ## Streaming Behaviour
 
 When `isStreaming={true}` (passed from `MDMessageViewer` → `MarkdownRenderer` → `MarkdownCodeBlock`):
-- The copy button is not rendered (`{!isStreaming && <DialGhostIconButton …/>}`).
+- The copy button is not rendered (`{!isStreaming && <GhostIconButton …/>}`).
 - The code content is still visible and updating.
 - Once `isStreaming` becomes `false` the copy button appears.
 
@@ -354,7 +354,7 @@ No Tailwind responsive breakpoints needed. The container is `max-w-full` (inheri
 
 ## Accessibility Requirements
 
-- The copy button is a `<button>` rendered via `DialGhostIconButton`.
+- The copy button is a `<button>` rendered via `GhostIconButton`.
 - `aria-label` switches between `copyLabel` and `copiedLabel` to communicate state to screen readers.
 - After copy, `aria-live="polite"` announcement is handled by the label change on the focused button; no additional live region needed in this slice.
 - The `<pre><code>` content is selectable (`user-select: text` is the browser default; do not override).

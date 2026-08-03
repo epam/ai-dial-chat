@@ -17,9 +17,9 @@ export const FileDndOverlay: FC<FileDndOverlayProps> = ({
   if (!isVisible) return null;
 
   const cssVars = buildCssVars({
-    '--fd-bg': colors?.background,
-    '--fd-icon': colors?.icon,
-    '--fd-denied-icon': colors?.deniedIcon,
+    '--ai-fd-bg': colors?.background,
+    '--ai-fd-icon': colors?.icon,
+    '--ai-fd-denied-icon': colors?.deniedIcon,
   });
 
   const resolvedTitle =

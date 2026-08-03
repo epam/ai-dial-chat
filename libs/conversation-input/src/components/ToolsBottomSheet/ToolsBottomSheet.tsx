@@ -57,7 +57,7 @@ export const ToolsBottomSheet: FC<ToolsBottomSheetProps> = ({
             type="button"
             role="menuitemcheckbox"
             aria-checked={item.isSelected}
-            className="flex w-full items-center gap-3 px-4 py-[10px] text-start"
+            className="w-full gap-3 px-4 py-[10px] text-start"
             iconBefore={
               <span className="flex items-center text-secondary">
                 {item.icon}

@@ -12,6 +12,7 @@ import {
   type OverlayMessageResponse,
   OverlayEventType,
   OverlayFeature,
+  OverlayRequestErrorCode,
   OverlayRequestType,
   type RenameConversationPayload,
   type RenameConversationResponse,
@@ -107,6 +108,8 @@ export interface OverlayContextType {
   ) => void;
   /** Deployment id received via `SET_OVERLAY_OPTIONS`, awaiting application once deployments are available. */
   pendingModelId: string | null;
+  /** Trusted per-provider authentication UI modes received from the host. */
+  authProviderUiModes: Record<string, string> | undefined;
   /** Clears `pendingModelId` once a consumer has applied it. */
   clearPendingModelId: () => void;
   /** Emits `SELECTED_CONVERSATION_LOADED`, and `READY_TO_INTERACT` the first time it is called. */
@@ -207,6 +210,14 @@ const clearPendingRequests = (
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> => {
+  if (!isRecord(value) || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+};
+
 const hasStringPayload = <TKey extends string>(
   payload: unknown,
   key: TKey,
@@ -253,6 +264,19 @@ const hasSetOverlayOptionsPayload = (
   );
 };
 
+const getAuthProviderUiModes = (
+  payload: Partial<SetOverlayOptionsPayload> | null | undefined,
+): Record<string, string> | undefined => {
+  const value = payload?.authProviderUiModes;
+  if (
+    !isPlainRecord(value) ||
+    !Object.values(value).every((entry) => typeof entry === 'string')
+  ) {
+    return undefined;
+  }
+  return value as Record<string, string>;
+};
+
 const hasSelectConversationPayload = (
   payload: unknown,
 ): payload is SelectConversationPayload => hasStringPayload(payload, 'id');
@@ -292,6 +316,9 @@ const logOverlayWarning = (message: string, error?: unknown): void => {
   }
   console.warn(`Overlay: ${message}`);
 };
+
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error && error.message ? error.message : String(error);
 
 const logUnknownEnabledFeatures = (features: readonly string[]): void => {
   const warnedFeatures = new Set<string>();
@@ -350,6 +377,9 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
     PendingConversationSelection[]
   >([]);
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
+  const [authProviderUiModes, setAuthProviderUiModes] = useState<
+    Record<string, string> | undefined
+  >();
 
   const postBootstrapEvent = useCallback((type: OverlayEventType) => {
     window.parent.postMessage({ type }, '*');
@@ -362,6 +392,23 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       return true;
     },
     [],
+  );
+
+  const postRequestError = useCallback(
+    (
+      request: OverlayMessageRequest,
+      code: OverlayRequestErrorCode,
+      message: string,
+      cause?: unknown,
+    ) => {
+      logOverlayWarning(`${request.type} failed [${code}]: ${message}`, cause);
+      postToHost({
+        type: `${request.type}/RESPONSE`,
+        requestId: request.requestId,
+        error: { code, message },
+      });
+    },
+    [postToHost],
   );
 
   const flushConversationLoadedEvent = useCallback(() => {
@@ -438,6 +485,14 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       }
       const bridge = activeBridgeRef.current;
       if (!bridge) {
+        if (hasEmittedReadyToInteractRef.current) {
+          postRequestError(
+            request,
+            OverlayRequestErrorCode.ActiveConversationUnavailable,
+            'No active conversation is open. Open or create a conversation before calling this method.',
+          );
+          return;
+        }
         queuePendingRequest(pendingBridgeRequestsRef, request);
         return;
       }
@@ -450,11 +505,20 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           request.payload,
         );
       } catch (error) {
-        logOverlayWarning(`failed to execute ${requestType}`, error);
+        postRequestError(
+          request,
+          OverlayRequestErrorCode.RequestExecutionFailed,
+          getErrorMessage(error),
+          error,
+        );
         return;
       }
       if (!responsePromise) {
-        logOverlayWarning(`rejected malformed ${requestType} payload`);
+        postRequestError(
+          request,
+          OverlayRequestErrorCode.InvalidPayload,
+          `The request payload does not match the ${requestType} contract.`,
+        );
         return;
       }
       void responsePromise
@@ -466,10 +530,15 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           });
         })
         .catch((error) => {
-          logOverlayWarning(`failed to execute ${requestType}`, error);
+          postRequestError(
+            request,
+            OverlayRequestErrorCode.RequestExecutionFailed,
+            getErrorMessage(error),
+            error,
+          );
         });
     },
-    [executeAgainstBridge, postToHost],
+    [executeAgainstBridge, postRequestError, postToHost],
   );
 
   const buildSelectedConversationProjection =
@@ -644,11 +713,23 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
       if (requestType === OverlayRequestType.SelectConversation) {
         if (!hasSelectConversationPayload(request.payload)) {
-          logOverlayWarning(`rejected malformed ${requestType} payload`);
+          postRequestError(
+            request,
+            OverlayRequestErrorCode.InvalidPayload,
+            `The request payload does not match the ${requestType} contract.`,
+          );
           return;
         }
         const bridge = conversationListBridgeRef.current;
         if (!bridge) {
+          if (hasEmittedReadyToInteractRef.current) {
+            postRequestError(
+              request,
+              OverlayRequestErrorCode.ConversationListUnavailable,
+              'The conversation list is not available yet.',
+            );
+            return;
+          }
           queuePendingRequest(pendingConversationListRequestsRef, request);
           return;
         }
@@ -662,6 +743,14 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
       const bridge = conversationListBridgeRef.current;
       if (!bridge) {
+        if (hasEmittedReadyToInteractRef.current) {
+          postRequestError(
+            request,
+            OverlayRequestErrorCode.ConversationListUnavailable,
+            'The conversation list is not available yet.',
+          );
+          return;
+        }
         queuePendingRequest(pendingConversationListRequestsRef, request);
         return;
       }
@@ -673,11 +762,20 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           request.payload,
         );
       } catch (error) {
-        logOverlayWarning(`failed to execute ${requestType}`, error);
+        postRequestError(
+          request,
+          OverlayRequestErrorCode.RequestExecutionFailed,
+          getErrorMessage(error),
+          error,
+        );
         return;
       }
       if (!responsePromise) {
-        logOverlayWarning(`rejected malformed ${requestType} payload`);
+        postRequestError(
+          request,
+          OverlayRequestErrorCode.InvalidPayload,
+          `The request payload does not match the ${requestType} contract.`,
+        );
         return;
       }
       void responsePromise
@@ -689,12 +787,18 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           });
         })
         .catch((error) => {
-          logOverlayWarning(`failed to execute ${requestType}`, error);
+          postRequestError(
+            request,
+            OverlayRequestErrorCode.RequestExecutionFailed,
+            getErrorMessage(error),
+            error,
+          );
         });
     },
     [
       buildSelectedConversationProjection,
       executeAgainstConversationListBridge,
+      postRequestError,
       postToHost,
       queueConversationSelectionWait,
     ],
@@ -754,6 +858,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
         }
         applyOverlayOverride(enabledFeatures);
       }
+      setAuthProviderUiModes(getAuthProviderUiModes(payload));
 
       const responsePayload: SetOverlayOptionsResponse = { applied: true };
       postToHost({
@@ -855,6 +960,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       registerActiveConversationBridge,
       registerConversationListBridge,
       pendingModelId,
+      authProviderUiModes,
       clearPendingModelId,
       notifyConversationLoaded,
       notifyConversationsUpdated,
@@ -866,6 +972,7 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       registerActiveConversationBridge,
       registerConversationListBridge,
       pendingModelId,
+      authProviderUiModes,
       clearPendingModelId,
       notifyConversationLoaded,
       notifyConversationsUpdated,

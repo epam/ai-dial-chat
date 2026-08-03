@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ConversationListCase from '../ConversationListCase';
@@ -96,19 +96,22 @@ describe('ConversationListCase', () => {
       }),
     );
 
-    const option = (await screen.findByRole('option', {
+    const selector = screen.getByRole('group', {
+      name: 'Conversation id',
+    });
+    await user.click(within(selector).getByRole('button'));
+
+    const option = await screen.findByRole('option', {
       name: 'Quarterly planning',
-    })) as HTMLOptionElement;
-    expect(option.value).toBe(longConversationId);
+    });
     expect(
       screen.queryByRole('option', { name: longConversationId }),
     ).toBeNull();
+    await user.click(option);
 
-    const selector = screen.getByRole('combobox', {
-      name: 'Conversation id',
-    }) as HTMLSelectElement;
-    await user.selectOptions(selector, longConversationId);
-    expect(selector.value).toBe(longConversationId);
+    expect(within(selector).getByRole('button').textContent).toContain(
+      'Quarterly planning',
+    );
 
     await user.click(
       screen.getByRole('button', {

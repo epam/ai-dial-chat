@@ -70,7 +70,7 @@ All changes are inside `libs/conversation-messages` and a single consuming app (
 
 - `libs/conversation-messages/src/components/Markdown/MarkdownTable.tsx` — pattern to follow: dedicated component with its own SCSS module, scrollable body, `classNames` prop forwarding.
 - `libs/conversation-messages/src/components/Markdown/MarkdownTable.module.scss` — scrollbar and fade styling pattern to reuse.
-- `libs/conversation-messages/src/components/Message/MessageActions.tsx` — existing usage of `DialGhostIconButton` from `@epam/ai-dial-ui-kit` inside `libs/conversation-messages`.
+- `libs/conversation-messages/src/components/Message/MessageActions.tsx` — existing usage of `GhostIconButton` from `@epam/ai-dial-ui-kit` inside `libs/conversation-messages`.
 - `libs/chat-shared/src/utils/copy-to-clipboard.ts` — shared clipboard utility to call from `useCodeCopy`.
 - Upstream reference (do not copy directly): `apps/chat/src/components/Markdown/CodeBlock.tsx` in the `development` branch.
 

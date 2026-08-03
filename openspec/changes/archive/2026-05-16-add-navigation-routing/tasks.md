@@ -14,11 +14,11 @@
 
 - [x] Rewrite `apps/chat/src/components/Navigation/Navigation.tsx`
   - Import `useLocation`, `useNavigate` from `react-router-dom`
-  - Import `DialGhostIconButton` from `@epam/ai-dial-ui-kit`
+  - Import `GhostIconButton` from `@epam/ai-dial-ui-kit`
   - Import `NAVIGATION_CONFIG` from `../../constants/navigation`
   - Import `NavigationI18nKeys` from `../../constants/translation-keys`
   - Add `aria-label={t(NavigationI18nKeys.AriaLabel)}` to `<nav>`
-  - In the first `<div>`: map `NAVIGATION_CONFIG` → `DialGhostIconButton` with icon, active detection, `aria-current`
+  - In the first `<div>`: map `NAVIGATION_CONFIG` → `GhostIconButton` with icon, active detection, `aria-current`
   - Keep second `<div>` empty (bottom reserved area)
   - Keep `export default memo(Navigation)`
 

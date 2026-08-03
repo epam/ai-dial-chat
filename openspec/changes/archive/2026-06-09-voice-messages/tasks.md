@@ -44,7 +44,7 @@
 - [x] 7.2 Implement mobile layout: waveform full-width on row 1, buttons right-aligned on row 2 (both during recording and after)
 - [x] 7.3 Implement error state: red border around bar, UI kit error text below
 - [x] 7.4 Implement the waveform `<canvas>` renderer: accumulate one RMS amplitude value per RAF frame into a history buffer; render full history as 3 px-wide vertical bars with 1 px gap, colour `--text-primary`, amplitude scaled ×6 (clamped to 1). Attach `ResizeObserver` so the canvas redraws at the correct width on every layout change. Canvas height: `h-8` mobile / `h-6` desktop.
-- [x] 7.5 Add mic ghost icon button (UI kit `DialGhostIconButton`, 40 px / 24 px icon) with red icon during recording
+- [x] 7.5 Add mic ghost icon button (UI kit `GhostIconButton`, 40 px / 24 px icon) with red icon during recording
 
 ## 8. lib/conversation-input — integrate into ConversationInput / Input
 

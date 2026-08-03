@@ -1,12 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import {
+  OverlayAuthUiMode,
   OverlayEventType,
   OverlayFeature,
+  OverlayRequestErrorCode,
   OverlayRequestType,
   isOverlayMessageEvent,
   isOverlayMessageRequest,
   isOverlayMessageResponse,
 } from '../overlay-protocol';
+
+describe('OverlayAuthUiMode', () => {
+  it('contains exactly the external and same-window modes', () => {
+    expect(Object.values(OverlayAuthUiMode)).toEqual([
+      'external',
+      'sameWindow',
+    ]);
+  });
+});
 
 describe('isOverlayMessageRequest', () => {
   it('accepts a well-formed request', () => {
@@ -74,6 +85,29 @@ describe('isOverlayMessageResponse', () => {
       isOverlayMessageResponse({
         type: '@DIAL_OVERLAY/NOT_A_REQUEST/RESPONSE',
         requestId: 'abc',
+      }),
+    ).toBe(false);
+  });
+
+  it('accepts a response with a structured request error', () => {
+    expect(
+      isOverlayMessageResponse({
+        type: `${OverlayRequestType.GetMessages}/RESPONSE`,
+        requestId: 'abc',
+        error: {
+          code: OverlayRequestErrorCode.ActiveConversationUnavailable,
+          message: 'No active conversation is open.',
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects a response with an unknown request error code', () => {
+    expect(
+      isOverlayMessageResponse({
+        type: `${OverlayRequestType.GetMessages}/RESPONSE`,
+        requestId: 'abc',
+        error: { code: 'UNKNOWN', message: 'No active conversation is open.' },
       }),
     ).toBe(false);
   });
