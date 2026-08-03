@@ -10,22 +10,23 @@ import {
 import type {
   CustomAppFormData,
   CustomAppFormErrors,
+  CustomAppGeneralFormData,
 } from '../../types/custom-apps';
-import type { ToolsetFormData, ToolsetFormErrors } from '../../types/toolsets';
+import type { ToolsetFormErrors } from '../../types/toolsets';
 import { ToolsetEditorSteps } from '../../types/toolsets';
 import CustomAppSettingsForm from './EditorForm/CustomAppSettingsForm';
 import GeneralForm from './EditorForm/GeneralForm';
 
 interface Props {
   step: ToolsetEditorSteps;
-  generalForm: ToolsetFormData;
+  generalForm: CustomAppGeneralFormData;
   generalErrors: ToolsetFormErrors;
   settingsForm: CustomAppFormData;
   settingsErrors: CustomAppFormErrors;
   isSaving: boolean;
   onNext: () => void;
   onCancel: () => void;
-  onGeneralChange: (patch: Partial<ToolsetFormData>) => void;
+  onGeneralChange: (patch: Partial<CustomAppGeneralFormData>) => void;
   onSettingsChange: (patch: Partial<CustomAppFormData>) => void;
 }
 

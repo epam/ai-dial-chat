@@ -24,17 +24,17 @@ import { getDeploymentDetails } from '../../server-api/deployments';
 import type {
   CustomAppFormData,
   CustomAppFormErrors,
+  CustomAppGeneralFormData,
 } from '../../types/custom-apps';
 import { ROUTES } from '../../types/routes';
-import type { ToolsetFormData } from '../../types/toolsets';
 import { ToolsetEditorSteps } from '../../types/toolsets';
 import {
+  DEFAULT_CUSTOM_APP_GENERAL_FORM,
   DEFAULT_CUSTOM_APP_SETTINGS_FORM,
   isValidAbsoluteUrl,
   isValidFeaturesData,
   MIME_TYPE_REGEX,
 } from '../../utils/custom-apps';
-import { DEFAULT_CUSTOM_APP_GENERAL_FORM } from '../../utils/toolsets';
 import CustomAppEditorView from './CustomAppEditorView';
 import ToolsetEditorHeader from './ToolsetEditorHeader';
 
@@ -55,7 +55,7 @@ const CustomAppEditor: FC = () => {
     return raw?.startsWith('/') && !raw.startsWith('//') ? raw : ROUTES.Catalog;
   }, [searchParams]);
 
-  const [generalForm, setGeneralForm] = useState<ToolsetFormData>(
+  const [generalForm, setGeneralForm] = useState<CustomAppGeneralFormData>(
     DEFAULT_CUSTOM_APP_GENERAL_FORM,
   );
   const [settingsForm, setSettingsForm] = useState<CustomAppFormData>(
@@ -135,14 +135,17 @@ const CustomAppEditor: FC = () => {
     [setSearchParams],
   );
 
-  const handleGeneralChange = useCallback((patch: Partial<ToolsetFormData>) => {
-    setGeneralForm((prev) => ({ ...prev, ...patch }));
-    setGeneralErrors((prev) => {
-      const next = { ...prev };
-      for (const key of Object.keys(patch)) delete next[key];
-      return next;
-    });
-  }, []);
+  const handleGeneralChange = useCallback(
+    (patch: Partial<CustomAppGeneralFormData>) => {
+      setGeneralForm((prev) => ({ ...prev, ...patch }));
+      setGeneralErrors((prev) => {
+        const next = { ...prev };
+        for (const key of Object.keys(patch)) delete next[key];
+        return next;
+      });
+    },
+    [],
+  );
 
   const handleSettingsChange = useCallback(
     (patch: Partial<CustomAppFormData>) => {

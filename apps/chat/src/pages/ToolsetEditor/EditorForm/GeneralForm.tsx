@@ -10,17 +10,15 @@ import {
   BasicI18nKeys,
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
-import type {
-  ToolsetFormData,
-  ToolsetFormErrors,
-} from '../../../types/toolsets';
+import type { CustomAppGeneralFormData } from '../../../types/custom-apps';
+import type { ToolsetFormErrors } from '../../../types/toolsets';
 
 interface Props {
-  form: ToolsetFormData;
+  form: CustomAppGeneralFormData;
   errors: ToolsetFormErrors;
   namePlaceholder: string;
   descriptionPlaceholder: string;
-  onChange: (patch: Partial<ToolsetFormData>) => void;
+  onChange: (patch: Partial<CustomAppGeneralFormData>) => void;
 }
 
 const GeneralForm: FC<Props> = ({

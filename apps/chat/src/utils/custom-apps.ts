@@ -1,4 +1,16 @@
-import type { CustomAppFormData } from '../types/custom-apps';
+import type {
+  CustomAppFormData,
+  CustomAppGeneralFormData,
+} from '../types/custom-apps';
+
+export const DEFAULT_CUSTOM_APP_GENERAL_FORM: CustomAppGeneralFormData = {
+  name: '',
+  version: '0.0.1',
+  iconUrl: '',
+  description: '',
+  topics: [],
+  intro: '',
+};
 
 export const MIME_TYPE_REGEX =
   /^([a-zA-Z0-9!*\-.+]+|\*)\/([a-zA-Z0-9!*\-.+]+|\*)$/;

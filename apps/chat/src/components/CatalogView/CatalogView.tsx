@@ -52,10 +52,7 @@ import { CatalogQuery } from '../../types/catalog';
 import { ROUTES } from '../../types/routes';
 import type { ToolsetAuthTypes } from '../../types/toolsets';
 import { ToolsetCredentialsLevel } from '../../types/toolsets';
-import {
-  isQuickAppSchema,
-  isCustomAppSchema,
-} from '../../utils/application-schema';
+import { isQuickAppSchema } from '../../utils/application-schema';
 import { mapDeploymentLimitsDtoToCatalogLimits } from '../../utils/map-deployment-limits-to-catalog';
 import {
   mapDeploymentToCatalogItem,
@@ -150,11 +147,6 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
     [schemas],
   );
 
-  const customAppSchemaId = useMemo(
-    () => schemas.find((s) => isCustomAppSchema(s))?.id,
-    [schemas],
-  );
-
   const isCatalogEnabled = useUiFeature(OverlayFeature.Catalog);
   const isCatalogTableViewEnabled = useUiFeature(
     OverlayFeature.CatalogTableView,
@@ -179,9 +171,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
           favoriteIds,
           undefined,
           t,
-          [quickAppSchemaId, customAppSchemaId].filter(
-            (id): id is string => id != null,
-          ),
+          quickAppSchemaId ? [quickAppSchemaId] : [],
           isCustomAppsEnabled,
         ),
       ),
@@ -197,7 +187,6 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       t,
       toolsets,
       quickAppSchemaId,
-      customAppSchemaId,
       isAdmin,
       isToolsetsEnabled,
       isCustomAppsEnabled,
