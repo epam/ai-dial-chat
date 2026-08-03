@@ -17,6 +17,7 @@ import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
 import type { ListScheduledTasksQueryDto } from './dto/list-scheduled-tasks-query.dto';
+import { ScheduledTasksSortKey } from './dto/list-scheduled-tasks-query.dto';
 import type { ListScheduledTasksResponseDto } from './dto/list-scheduled-tasks.dto';
 import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
 import type { UpdateScheduledTaskBodyDto } from './dto/update-scheduled-task.dto';
@@ -28,6 +29,28 @@ import {
 
 const LIST_CACHE_TTL_MS = 30 * 1000;
 const LIST_CACHE_EPOCH_TTL_MS = 24 * 60 * 60 * 1000;
+
+/*
+ * The BFF always sends an explicit order_by/order_dir pair upstream — even
+ * when the client omits `sort` — so the endpoint's documented default
+ * (firstToRun) is the one actually observed, instead of silently inheriting
+ * upstream's own default (created_at desc).
+ */
+const SORT_ORDER_MAP: Record<
+  ScheduledTasksSortKey,
+  { orderBy: string; orderDir: 'asc' | 'desc' }
+> = {
+  [ScheduledTasksSortKey.FirstToRun]: {
+    orderBy: 'next_run_time',
+    orderDir: 'asc',
+  },
+  [ScheduledTasksSortKey.LastToRun]: {
+    orderBy: 'next_run_time',
+    orderDir: 'desc',
+  },
+  [ScheduledTasksSortKey.Newest]: { orderBy: 'created_at', orderDir: 'desc' },
+  [ScheduledTasksSortKey.NameAZ]: { orderBy: 'name', orderDir: 'asc' },
+};
 
 @Injectable()
 export class ScheduledTasksService {
@@ -78,6 +101,10 @@ export class ScheduledTasksService {
     if (query.search) {
       searchParams.set('name', query.search);
     }
+    const { orderBy, orderDir } =
+      SORT_ORDER_MAP[query.sort ?? ScheduledTasksSortKey.FirstToRun];
+    searchParams.set('order_by', orderBy);
+    searchParams.set('order_dir', orderDir);
     const queryString = searchParams.toString();
     const url = this.buildSchedulesUrl();
     return queryString ? `${url}?${queryString}` : url;
@@ -104,8 +131,9 @@ export class ScheduledTasksService {
 
   /*
    * `limit`/`offset` are always validated, delimiter-free digit sequences
-   * (or the empty string), so the leading two `:`-separated fields can never
-   * be ambiguous with each other or with `search`. `search` is still
+   * (or the empty string), and `sort` is always one of the fixed enum
+   * values, so none of the leading `:`-separated fields can ever be
+   * ambiguous with each other or with `search`. `search` is still
    * percent-encoded before being embedded, purely so a colon in a search
    * term doesn't make the raw cache key/log line harder for a human to read.
    */
@@ -113,7 +141,8 @@ export class ScheduledTasksService {
     const limit = query.limit ?? '';
     const offset = query.offset ?? 0;
     const search = encodeURIComponent(query.search ?? '');
-    return `${limit}:${offset}:${search}`;
+    const sort = query.sort ?? ScheduledTasksSortKey.FirstToRun;
+    return `${limit}:${offset}:${search}:${sort}`;
   }
 
   private async buildListCacheKey(
