@@ -41,7 +41,7 @@ import {
   prepareEntityName,
   truncateToUtf8Bytes,
 } from './common';
-import { isRootEntity } from './id';
+import { getIdWithoutRootPathSegments, isRootEntity } from './id';
 import { hasWritePermission } from './share';
 import { isReplayConversation, splitEntityId } from './shared-utils';
 
@@ -73,6 +73,11 @@ export const getFoldersDepth = (
 
   return 1 + maxDepth;
 };
+
+export const getFolderNestingLevel = (folderId: string | undefined): number =>
+  folderId
+    ? getIdWithoutRootPathSegments(folderId).split('/').filter(Boolean).length
+    : 0;
 
 export const getParentAndCurrentFoldersById = (
   folders: FolderInterface[],

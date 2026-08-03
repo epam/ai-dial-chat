@@ -17,7 +17,7 @@ import { CodeEditorActions, FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { CodeEditorSelectors, FilesSelectors } from '@/src/store/selectors';
 
-import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { MAX_FOLDERS_DEPTH } from '@/src/constants/folders';
 
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Loader } from '@/src/components/Common/Loader';
@@ -148,7 +148,7 @@ export const CodeEditorFileTree = ({
     <>
       {rootFolders.map((folder) => (
         <Folder
-          maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
+          maxDepth={MAX_FOLDERS_DEPTH}
           key={folder.id}
           searchTerm=""
           onFileUpload={handleFileUpload}

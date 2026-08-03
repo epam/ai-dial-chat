@@ -12,7 +12,7 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 
-import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { MAX_FOLDERS_DEPTH } from '@/src/constants/folders';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 import { NoData } from '@/src/components/Common/NoData';
@@ -136,7 +136,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                               : FeatureType.Prompt
                         }
                         skipFolderRenameValidation
-                        maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
+                        maxDepth={MAX_FOLDERS_DEPTH}
                         currentFolder={folder}
                         highlightedFolders={highlightedFolders}
                         highlightTemporaryFolders={highlightTemporaryFolders}
