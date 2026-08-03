@@ -1,13 +1,12 @@
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
-import { GhostIconButton } from '@epam/ai-dial-ui-kit';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { QuotationSource } from '../../../models/quotation-source';
-import ConversationSourcesPanel from '../ConversationSourcesPanel';
 import type { ConversationSourcesPanelLabels } from '../ConversationSourcesPanel';
+import ConversationSourcesPanel from '../ConversationSourcesPanel';
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,

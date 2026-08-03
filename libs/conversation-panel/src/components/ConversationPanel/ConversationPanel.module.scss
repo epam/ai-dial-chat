@@ -28,14 +28,14 @@
 }
 
 .triggerActive {
-    background: var(
-      --cp-trigger-bg,
-      var(--controls-bg-accent-primary-alpha-active, #7da4ff5c)
-    );
-    .triggerIcon {
-      color: var(--cp-trigger-icon, var(--text-accent-primary, #124ace));
-    }
+  background: var(
+    --cp-trigger-bg,
+    var(--controls-bg-accent-primary-alpha-active, #7da4ff5c)
+  );
+  .triggerIcon {
+    color: var(--cp-trigger-icon, var(--text-accent-primary, #124ace));
   }
+}
 .triggerIcon {
   color: var(--cp-trigger-icon-idle, var(--text-secondary, #6b7280));
 }

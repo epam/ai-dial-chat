@@ -5,6 +5,7 @@ import {
   DialFileNodeType,
   DialFoldersTree,
   DropdownItem,
+  NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconFolderPlus, IconPlus } from '@tabler/icons-react';
 import { FC, useMemo, useState } from 'react';
@@ -280,15 +281,12 @@ export const PublishFoldersTree: FC<PublishFoldersTreeProps> = ({
             : undefined
         }
       />
-      <button
-        type="button"
-        disabled={disabled}
+
+      <NeutralButton
         onClick={startCreatingFolder}
-        className="dial-small-semi-text mt-2 flex w-full items-center gap-2 border-t border-tertiary px-3 py-3 text-accent-primary"
-      >
-        <IconPlus size={DIAL_ICON_SIZE.SM} />
-        {createFolderLabel}
-      </button>
+        label={createFolderLabel}
+        iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} aria-hidden />}
+      />
     </div>
   );
 };
