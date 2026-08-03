@@ -5,7 +5,7 @@ import {
   ExpectedMessages,
   MockedChatApiResponseBodies,
 } from '../testData';
-import { Cursors, Styles } from '../ui/domData';
+import { Cursors } from '../ui/domData';
 
 import { DialAIEntityModel } from '@/chat/types/models';
 import { keys } from '@/src/ui/keyboard';

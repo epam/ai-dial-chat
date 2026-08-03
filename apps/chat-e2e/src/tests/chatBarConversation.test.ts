@@ -863,6 +863,7 @@ dialTest(
     selectFoldersAssertion,
     selectFolderModalAssertion,
     chatBarFolderAssertion,
+    toastAssertion,
   }) => {
     setTestIds('EPMDIAL-2850');
     const folderName = GeneratorUtil.randomString(70);
@@ -917,6 +918,7 @@ dialTest(
           selectFolderModal,
           'hidden',
         );
+        await toastAssertion.assertToastIsHidden();
         await chatBarFolderAssertion.assertFolderEntityState(
           { name: folderName },
           { name: conversation.name },
