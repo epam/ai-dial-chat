@@ -4,6 +4,7 @@
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
-    "@epam/ai-dial-chat-overlay": "*"
+    "@epam/ai-dial-chat-overlay": "*",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.23"
   }
 }

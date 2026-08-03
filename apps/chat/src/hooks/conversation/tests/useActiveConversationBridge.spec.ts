@@ -43,6 +43,7 @@ const makeOverlay = (): OverlayContextType & {
   registerActiveConversationBridge: vi.fn(),
   registerConversationListBridge: vi.fn(),
   pendingModelId: null,
+  authProviderUiModes: undefined,
   clearPendingModelId: vi.fn(),
   notifyConversationLoaded: vi.fn(),
   notifyConversationsUpdated: vi.fn(),
@@ -139,6 +140,29 @@ describe('useActiveConversationBridge', () => {
 
     const bridge = getRegisteredBridge(overlay);
     expect(bridge.getMessages()).toEqual({
+      messages: [{ id: '0', role: 'user', content: 'Hi' }],
+    });
+  });
+
+  it('makes freshly loaded conversation history available before any user action', () => {
+    const overlay = makeOverlay();
+    mockUseOptionalOverlay.mockReturnValue(overlay);
+    const loadedConversation = makeConversation();
+    const conversationRef = { current: null as Conversation | null };
+
+    renderHook(() =>
+      useActiveConversationBridge({
+        conversation: loadedConversation,
+        conversationId: 'bucket/gpt-4o__Hello__uuid',
+        conversationRef,
+        setConversation: vi.fn(),
+        handleSend: vi.fn(),
+        setOverlayInputContent: vi.fn(),
+      }),
+    );
+
+    expect(conversationRef.current).toBe(loadedConversation);
+    expect(getRegisteredBridge(overlay).getMessages()).toEqual({
       messages: [{ id: '0', role: 'user', content: 'Hi' }],
     });
   });

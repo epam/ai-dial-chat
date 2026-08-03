@@ -55,6 +55,26 @@ unsubscribe();
 overlay.destroy();
 ```
 
+Provider-specific authentication behavior can be configured per overlay:
+
+```ts
+import { ChatOverlay, OverlayAuthUiMode } from '@epam/ai-dial-chat-overlay';
+
+const overlay = new ChatOverlay('#chat-root', {
+  domain: 'https://chat.example.com',
+  auth: {
+    providerUiModes: {
+      entra: OverlayAuthUiMode.External,
+      keycloak: OverlayAuthUiMode.SameWindow,
+    },
+  },
+});
+
+/* SameWindow is an explicit opt-in. The host must verify that each provider
+ * supports iframe login for its specific configuration before enabling it.
+ */
+```
+
 Notes:
 
 - `setSystemPrompt`/`setTemperature` persist onto the active conversation the same way the app's own UI does — the new value takes effect on the _next_ message sent, not retroactively on an in-flight generation.
@@ -94,6 +114,14 @@ await overlay.deleteConversation(conversation!.id);
 
 `selectConversation`, `createConversation`, `deleteConversation`, and `renameConversation` responses carry an optional `error: { code: 'NOT_FOUND' | 'FORBIDDEN' | 'INVALID_ARGUMENT'; message: string }` field for invalid ids/values/forbidden actions instead of the request silently timing out. `getConversations`/`getSelectedConversations` have no error field — they are snapshot reads with no failure mode beyond the request timeout. One documented asymmetry: `selectConversation`/a persisted `createConversation` for an inaccessible id has no way to distinguish "will never load" from "still loading", so it degrades to the request's ordinary timeout rather than an explicit error.
 
+Request-level failures reject immediately with `ChatOverlayRequestError`. Its
+`code` and `requestType` fields can be used for programmatic handling. For
+example, calling `getMessages()`, `sendMessage()`, `setInputContent()`,
+`setSystemPrompt()`, or `setTemperature()` while the composer is open rejects
+with `OverlayRequestErrorCode.ActiveConversationUnavailable` instead of waiting
+for the request timeout. Other request-level codes are
+`ConversationListUnavailable`, `InvalidPayload`, and `RequestExecutionFailed`.
+
 **Compatibility break:** `createConversation`'s signature replaces the historical positional `(parentPath?, local?)` shape used by pre-`@epam/ai-dial-chat-overlay` overlay integrations with `createConversation(options?: { deploymentId?: string; firstMessage?: string })`. `parentPath` has no replacement — this app has no folder concept for conversations. The old `local` boolean is replaced by omitting `firstMessage`: `createConversation()` called with no `firstMessage` behaves identically to `createLocalConversation()`.
 
 ### ChatOverlayManager
@@ -129,18 +157,19 @@ manager.destroy();
 
 ## Options (`ChatOverlayOptions`)
 
-| Option                  | Type                      | Description                                                                            |
-| ----------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
-| `domain`                | `string`                  | Full URL of the chat app instance to embed (origin + optional path).                   |
-| `requestTimeout`        | `number?`                 | Milliseconds to wait for a request's response before rejecting. Defaults to `10000`.   |
-| `loaderStyles`          | `Record<string, string>?` | Inline CSS properties applied to the loader element while visible.                     |
-| `loaderClass`           | `string?`                 | CSS class applied to the loader element.                                               |
-| `loaderInnerHTML`       | `string?`                 | Custom HTML rendered inside the loader, replacing the default spinner.                 |
-| `loaderHideEvent`       | `OverlayEventType?`       | Event whose receipt hides the loader. Defaults to `OverlayEventType.Ready`.            |
-| `enabledFeatures`       | `OverlayFeature[]?`       | Embed-time features to enable, e.g. `OverlayFeature.VoiceInput` for microphone access. |
-| `theme`                 | `string?`                 | Theme name applied to the embedded app.                                                |
-| `modelId`               | `string?`                 | Deployment/model id to select in the embedded app.                                     |
-| `overlayConversationId` | `string?`                 | Conversation id the embedded app should load and display.                              |
+| Option                  | Type                                                       | Description                                                                            |
+| ----------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `domain`                | `string`                                                   | Full URL of the chat app instance to embed (origin + optional path).                   |
+| `requestTimeout`        | `number?`                                                  | Milliseconds to wait for a request's response before rejecting. Defaults to `10000`.   |
+| `loaderStyles`          | `Record<string, string>?`                                  | Inline CSS properties applied to the loader element while visible.                     |
+| `loaderClass`           | `string?`                                                  | CSS class applied to the loader element.                                               |
+| `loaderInnerHTML`       | `string?`                                                  | Custom HTML rendered inside the loader, replacing the default spinner.                 |
+| `loaderHideEvent`       | `OverlayEventType?`                                        | Event whose receipt hides the loader. Defaults to `OverlayEventType.Ready`.            |
+| `enabledFeatures`       | `OverlayFeature[]?`                                        | Embed-time features to enable, e.g. `OverlayFeature.VoiceInput` for microphone access. |
+| `theme`                 | `string?`                                                  | Theme name applied to the embedded app.                                                |
+| `modelId`               | `string?`                                                  | Deployment/model id to select in the embedded app.                                     |
+| `overlayConversationId` | `string?`                                                  | Conversation id the embedded app should load and display.                              |
+| `auth`                  | `{ providerUiModes?: Record<string, OverlayAuthUiMode> }?` | Per-provider login UI modes; unconfigured providers default to external login.         |
 
 `ChatOverlayManagerOptions` extends `ChatOverlayOptions` with `overlayId` (required), `position` (`OverlayPosition`, default `RightBottom`), `width`/`height` (default `380`/`600`), `zIndex` (default `999999`), `allowFullscreen`, and `toggleButtonAriaLabel`/`closeButtonAriaLabel`/`fullscreenButtonAriaLabel`.
 

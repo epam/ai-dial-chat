@@ -33,6 +33,7 @@ interface Props {
   errors: ToolsetFormErrors;
   isSaving: boolean;
   toolsetId: string;
+  isEditMode: boolean;
   onChange: (patch: Partial<ToolsetFormData>) => void;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
   onEnsureSaved: () => Promise<string | false>;
@@ -43,6 +44,7 @@ const SettingsForm: FC<Props> = ({
   errors,
   isSaving,
   toolsetId,
+  isEditMode,
   onChange,
   onAuthChange,
   onEnsureSaved,
@@ -142,6 +144,7 @@ const SettingsForm: FC<Props> = ({
         errors={errors}
         isSaving={isSaving}
         toolsetId={toolsetId}
+        isEditMode={isEditMode}
         endpoint={form.endpoint}
         onAuthChange={onAuthChange}
         onEnsureSaved={onEnsureSaved}

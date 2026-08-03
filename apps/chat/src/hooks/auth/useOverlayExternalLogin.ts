@@ -43,7 +43,8 @@ const isAuthWindowClosed = (authWindow: Window): boolean => {
  */
 export const useOverlayExternalLogin = (): {
   status: OverlayExternalLoginStatus;
-  openLogin: () => void;
+  openLogin: (loginUrl?: string) => void;
+  cancelLogin: () => void;
 } => {
   const { refresh: userRefresh } = useUser();
   const [status, setStatus] = useState(OverlayExternalLoginStatus.Idle);
@@ -81,79 +82,90 @@ export const useOverlayExternalLogin = (): {
     [teardownCurrentAttempt],
   );
 
-  const openLogin = useCallback(() => {
-    teardownCurrentAttempt(true);
-    attemptIdRef.current += 1;
-    const attemptId = attemptIdRef.current;
-    setStatus(OverlayExternalLoginStatus.Opening);
+  const openLogin = useCallback(
+    (loginUrl?: string) => {
+      teardownCurrentAttempt(true);
+      attemptIdRef.current += 1;
+      const attemptId = attemptIdRef.current;
+      setStatus(OverlayExternalLoginStatus.Opening);
 
-    const target = new URL('/login', window.location.origin);
-    target.searchParams.set(
-      'callbackUrl',
-      `${window.location.origin}/overlay-close`,
-    );
+      const target = loginUrl
+        ? loginUrl
+        : `${window.location.origin}/login?callbackUrl=${encodeURIComponent(
+            `${window.location.origin}/overlay-close`,
+          )}`;
 
-    const authWindow = window.open(target.toString(), AUTH_WINDOW_TARGET);
-    if (!authWindow || isAuthWindowClosed(authWindow)) {
-      setStatus(OverlayExternalLoginStatus.Blocked);
-      return;
-    }
-
-    try {
-      authWindow.opener = null;
-    } catch {
-      /* Best-effort reverse-tabnabbing protection before provider navigation. */
-    }
-
-    const resources: AuthWindowAttemptResources = {
-      attemptId,
-      authWindow,
-      pollTimeoutId: null,
-      longWaitTimeoutId: 0,
-      isTakingLonger: false,
-    };
-    resources.longWaitTimeoutId = window.setTimeout(() => {
-      if (attemptResourcesRef.current?.attemptId !== attemptId) return;
-
-      resources.isTakingLonger = true;
-      if (isMountedRef.current) {
-        setStatus(OverlayExternalLoginStatus.TakingLonger);
+      const authWindow = window.open(target, AUTH_WINDOW_TARGET);
+      if (!authWindow || isAuthWindowClosed(authWindow)) {
+        setStatus(OverlayExternalLoginStatus.Blocked);
+        return;
       }
-    }, AUTH_WINDOW_LONG_WAIT_MS);
-    attemptResourcesRef.current = resources;
-
-    const scheduleNextPoll = () => {
-      if (attemptResourcesRef.current?.attemptId !== attemptId) return;
-
-      const interval = resources.isTakingLonger
-        ? AUTH_WINDOW_LONG_WAIT_POLL_INTERVAL_MS
-        : AUTH_WINDOW_POLL_INTERVAL_MS;
-      resources.pollTimeoutId = window.setTimeout(() => {
-        void pollAuthStatus();
-      }, interval);
-    };
-
-    const pollAuthStatus = async () => {
-      if (attemptResourcesRef.current?.attemptId !== attemptId) return;
 
       try {
-        const nextStatus = await userRefresh({ setLoading: false });
-        if (attemptResourcesRef.current?.attemptId !== attemptId) return;
-
-        if (nextStatus === AuthStatus.Authenticated) {
-          completeAttempt(attemptId);
-          return;
-        }
+        authWindow.opener = null;
       } catch {
-        /* Retry while the login gate is mounted or until a new attempt starts. */
+        /* Best-effort reverse-tabnabbing protection before provider navigation. */
       }
 
-      scheduleNextPoll();
-    };
+      const resources: AuthWindowAttemptResources = {
+        attemptId,
+        authWindow,
+        pollTimeoutId: null,
+        longWaitTimeoutId: 0,
+        isTakingLonger: false,
+      };
+      resources.longWaitTimeoutId = window.setTimeout(() => {
+        if (attemptResourcesRef.current?.attemptId !== attemptId) return;
 
-    scheduleNextPoll();
-    setStatus(OverlayExternalLoginStatus.Waiting);
-  }, [completeAttempt, teardownCurrentAttempt, userRefresh]);
+        resources.isTakingLonger = true;
+        if (isMountedRef.current) {
+          setStatus(OverlayExternalLoginStatus.TakingLonger);
+        }
+      }, AUTH_WINDOW_LONG_WAIT_MS);
+      attemptResourcesRef.current = resources;
+
+      const scheduleNextPoll = () => {
+        if (attemptResourcesRef.current?.attemptId !== attemptId) return;
+
+        const interval = resources.isTakingLonger
+          ? AUTH_WINDOW_LONG_WAIT_POLL_INTERVAL_MS
+          : AUTH_WINDOW_POLL_INTERVAL_MS;
+        resources.pollTimeoutId = window.setTimeout(() => {
+          void pollAuthStatus();
+        }, interval);
+      };
+
+      const pollAuthStatus = async () => {
+        if (attemptResourcesRef.current?.attemptId !== attemptId) return;
+
+        try {
+          const nextStatus = await userRefresh({ setLoading: false });
+          if (attemptResourcesRef.current?.attemptId !== attemptId) return;
+
+          if (nextStatus === AuthStatus.Authenticated) {
+            completeAttempt(attemptId);
+            return;
+          }
+        } catch {
+          /* Retry while the login gate is mounted or until a new attempt starts. */
+        }
+
+        scheduleNextPoll();
+      };
+
+      scheduleNextPoll();
+      setStatus(OverlayExternalLoginStatus.Waiting);
+    },
+    [completeAttempt, teardownCurrentAttempt, userRefresh],
+  );
+
+  const cancelLogin = useCallback(() => {
+    attemptIdRef.current += 1;
+    teardownCurrentAttempt(true);
+    if (isMountedRef.current) {
+      setStatus(OverlayExternalLoginStatus.Idle);
+    }
+  }, [teardownCurrentAttempt]);
 
   useEffect(() => {
     return () => {
@@ -163,5 +175,5 @@ export const useOverlayExternalLogin = (): {
     };
   }, [teardownCurrentAttempt]);
 
-  return { status, openLogin };
+  return { status, openLogin, cancelLogin };
 };

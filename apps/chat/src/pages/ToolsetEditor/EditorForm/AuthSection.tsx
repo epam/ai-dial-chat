@@ -53,6 +53,7 @@ interface Props {
   errors: ToolsetFormErrors;
   isSaving: boolean;
   toolsetId: string;
+  isEditMode: boolean;
   endpoint: string;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
   onEnsureSaved: () => Promise<string | false>;
@@ -87,6 +88,7 @@ const AuthSection: FC<Props> = ({
   errors,
   isSaving,
   toolsetId,
+  isEditMode,
   endpoint,
   onAuthChange,
   onEnsureSaved,
@@ -95,7 +97,6 @@ const AuthSection: FC<Props> = ({
   const { showNotification } = useNotification();
   const [isAuthBusy, setIsAuthBusy] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const isEditMode = Boolean(toolsetId);
 
   const isControlsDisabled = auth.isLoggedIn || isSaving || isAuthBusy;
 
