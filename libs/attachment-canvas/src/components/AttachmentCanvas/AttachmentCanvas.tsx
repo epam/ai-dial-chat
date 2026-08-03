@@ -162,9 +162,11 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
 
   useEffect(() => {
     return () => {
-      if (copyTextResetRef.current != null) clearTimeout(copyTextResetRef.current);
+      if (copyTextResetRef.current != null)
+        clearTimeout(copyTextResetRef.current);
       if (copyResetRef.current != null) clearTimeout(copyResetRef.current);
-      if (copyJsonResetRef.current != null) clearTimeout(copyJsonResetRef.current);
+      if (copyJsonResetRef.current != null)
+        clearTimeout(copyJsonResetRef.current);
     };
   }, []);
 

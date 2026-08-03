@@ -7,6 +7,7 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
     "target": "es2021",
     "composite": true,
     "resolveJsonModule": true

@@ -487,17 +487,17 @@ export interface ClientConfigDto {
    */
   announcementHtml?: string | null;
   /**
-   * Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.
-   * @type {string}
-   * @memberof ClientConfigDto
-   */
-  footerHtmlMessage: string;
-  /**
    * Tool ID for the Deep Research deployment-configuration property. Null when DEEP_RESEARCH_TOOL_ID is not set.
    * @type {string}
    * @memberof ClientConfigDto
    */
   deepResearchToolId?: string | null;
+  /**
+   * Operator-authored HTML footer message shown below the chat input (desktop) and in the mobile user panel. Empty string when FOOTER_HTML_MESSAGE is not configured. Sanitized server-side; supports %%VERSION%% token.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  footerHtmlMessage: string;
 }
 /**
  *
@@ -769,6 +769,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   customContent?: ConversationMessageCustomContentDto;
+  /**
+   * Error message when the generation ended in error. Presence signals a terminal error state; absence means the generation succeeded or is still in progress.
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  streamErrorMessage?: string;
 }
 
 /**
@@ -3337,16 +3343,16 @@ export interface ListScheduledTasksResponseDto {
   offset?: number;
   /**
    * Upstream URL for the next page, or null if this is the last page.
-   * @type {object}
+   * @type {string}
    * @memberof ListScheduledTasksResponseDto
    */
-  next?: object | null;
+  next?: string | null;
   /**
    * Upstream URL for the previous page, or null if this is the first page.
-   * @type {object}
+   * @type {string}
    * @memberof ListScheduledTasksResponseDto
    */
-  previous?: object | null;
+  previous?: string | null;
 }
 /**
  *

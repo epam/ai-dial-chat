@@ -34,8 +34,31 @@ describe('scheduled-tasks.api', () => {
 
     const result = await listScheduledTasks();
 
-    expect(spy).toHaveBeenCalledOnce();
+    expect(spy).toHaveBeenCalledWith(
+      { limit: undefined, offset: undefined, search: undefined },
+      undefined,
+    );
     expect(result).toEqual(mockResponse);
+  });
+
+  it('listScheduledTasks forwards limit/offset/search and an AbortSignal', async () => {
+    const mockResponse = { items: [mockSchedule] };
+    const spy = vi
+      .spyOn(scheduledTasksApi, 'listScheduledTasks')
+      .mockResolvedValue(mockResponse);
+    const controller = new AbortController();
+
+    await listScheduledTasks({
+      limit: 12,
+      offset: 24,
+      search: 'inbox',
+      signal: controller.signal,
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      { limit: 12, offset: 24, search: 'inbox' },
+      { signal: controller.signal },
+    );
   });
 
   it('createScheduledTask delegates with the request body wrapped', async () => {

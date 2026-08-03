@@ -16,13 +16,10 @@ import {
   IconChevronUp,
   IconPlus,
 } from '@tabler/icons-react';
-import { FC, useMemo } from 'react';
+import { FC, useEffect, useMemo, useRef } from 'react';
 import { ScheduledTaskSectionKey } from '../../models/scheduled-task-item';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
-import {
-  filterScheduledTaskItems,
-  sortScheduledTaskItems,
-} from '../../utils/filter-sort';
+import { sortScheduledTaskItems } from '../../utils/filter-sort';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
 import { ScheduledTaskSection } from '../ScheduledTaskSection/ScheduledTaskSection';
 import styles from './ScheduledTasks.module.scss';
@@ -34,19 +31,37 @@ const SECTION_ORDER: ScheduledTaskSectionKey[] = [
 
 const getStatusMessage = (
   isLoading: boolean,
+  isLoadingMore: boolean,
   hasError: boolean,
-  totalCount: number,
-  visibleCount: number,
+  itemCount: number,
+  hasSearchQuery: boolean,
   labels: Pick<
     ScheduledTasksProps['labels'],
-    'errorLabel' | 'emptyStateLabel' | 'noResultsLabel'
+    'errorLabel' | 'emptyStateLabel' | 'noResultsLabel' | 'loadingMoreLabel'
   >,
 ): string | undefined => {
   if (isLoading) return undefined;
+  if (isLoadingMore) return labels.loadingMoreLabel;
   if (hasError) return labels.errorLabel;
-  if (totalCount === 0) return labels.emptyStateLabel;
-  if (visibleCount === 0) return labels.noResultsLabel;
-  return `${visibleCount}`;
+  if (itemCount > 0) return `${itemCount}`;
+  return hasSearchQuery ? labels.noResultsLabel : labels.emptyStateLabel;
+};
+
+/* IntersectionObserver against a non-document scroll root is unreliable, so
+ * a plain scroll listener on the nearest scrollable ancestor is used instead
+ * (same approach as libs/catalog/src/components/ListView/ListView.tsx). */
+const findScrollParent = (el: Element | null): Element | null => {
+  if (!el || el === document.body) return null;
+  const { overflow, overflowY } = getComputedStyle(el);
+  if (
+    overflow === 'auto' ||
+    overflow === 'scroll' ||
+    overflowY === 'auto' ||
+    overflowY === 'scroll'
+  ) {
+    return el;
+  }
+  return findScrollParent(el.parentElement);
 };
 
 /**
@@ -66,6 +81,10 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   isLoading = false,
   error,
   onRetry,
+  hasMore = false,
+  isLoadingMore = false,
+  skeletonCount = 6,
+  onLoadMore,
   onEdit,
   onRunNow,
   onDelete,
@@ -87,13 +106,9 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
   const activeSortLabel =
     labels.sortOptions.find((option) => option.key === sortKey)?.label ?? '';
 
-  const visibleItems = useMemo(
-    () =>
-      sortScheduledTaskItems(
-        filterScheduledTaskItems(items, searchQuery),
-        sortKey,
-      ),
-    [items, searchQuery, sortKey],
+  const sortedItems = useMemo(
+    () => sortScheduledTaskItems(items, sortKey),
+    [items, sortKey],
   );
 
   const sections = useMemo(() => {
@@ -103,17 +118,44 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     return SECTION_ORDER.map((key) => ({
       key,
       title: sectionTitles[key],
-      items: visibleItems.filter((item) => item.sectionKey === key),
+      items: sortedItems.filter((item) => item.sectionKey === key),
     })).filter((section) => section.items.length > 0);
-  }, [visibleItems, labels.sharedSectionTitle]);
+  }, [sortedItems, labels.sharedSectionTitle]);
 
   const statusMessage = getStatusMessage(
     isLoading,
+    isLoadingMore,
     Boolean(error),
     items.length,
-    visibleItems.length,
+    searchQuery.trim().length > 0,
     labels,
   );
+
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !onLoadMore) return;
+
+    const scrollRoot = findScrollParent(sentinel.parentElement);
+    if (!scrollRoot) return;
+
+    const checkVisibility = () => {
+      if (isLoadingMore || isLoading || !hasMore) return;
+      const rootRect = scrollRoot.getBoundingClientRect();
+      const sentinelRect = sentinel.getBoundingClientRect();
+      if (
+        sentinelRect.top < rootRect.bottom &&
+        sentinelRect.bottom > rootRect.top
+      ) {
+        onLoadMore();
+      }
+    };
+
+    scrollRoot.addEventListener('scroll', checkVisibility, { passive: true });
+    checkVisibility();
+    return () => scrollRoot.removeEventListener('scroll', checkVisibility);
+  }, [hasMore, isLoadingMore, isLoading, onLoadMore, items.length]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -132,6 +174,13 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     }
 
     if (items.length === 0) {
+      if (searchQuery.trim()) {
+        return (
+          <p className={mergeClasses(subtitleClassName, styles.subtitle)}>
+            {labels.noResultsLabel}
+          </p>
+        );
+      }
       return (
         <PanelEmptyState
           icon={
@@ -146,17 +195,11 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
       );
     }
 
-    if (visibleItems.length === 0) {
-      return (
-        <p className={mergeClasses(subtitleClassName, styles.subtitle)}>
-          {labels.noResultsLabel}
-        </p>
-      );
-    }
+    const lastSectionIndex = sections.length - 1;
 
     return (
       <div className="flex w-full flex-col gap-6">
-        {sections.map((section) => (
+        {sections.map((section, index) => (
           <ScheduledTaskSection
             key={section.key}
             title={section.title}
@@ -169,18 +212,22 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
               onRunNow={onRunNow}
               onDelete={onDelete}
               labels={labels.cardLabels}
+              trailingSkeletonCount={
+                isLoadingMore && index === lastSectionIndex ? skeletonCount : 0
+              }
+              skeletonStyles={{
+                colors: { skeletonColor: colors?.skeletonColor },
+              }}
             />
           </ScheduledTaskSection>
         ))}
+
+        <div ref={sentinelRef} aria-hidden className="h-px w-full" />
       </div>
     );
   };
 
-  const isCentered =
-    isLoading ||
-    Boolean(error) ||
-    items.length === 0 ||
-    visibleItems.length === 0;
+  const isCentered = isLoading || Boolean(error) || items.length === 0;
 
   return (
     <div

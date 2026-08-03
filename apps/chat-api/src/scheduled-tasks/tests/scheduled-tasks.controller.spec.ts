@@ -105,7 +105,53 @@ describe('ScheduledTasksController (integration)', () => {
       expect(service.listScheduledTasks).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        {},
       );
+    });
+
+    it('tells the browser not to cache the response, so a just-created task is never served stale from the HTTP cache', async () => {
+      service.listScheduledTasks.mockResolvedValue({ items: [mockSchedule] });
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks')
+        .expect(200);
+
+      expect(res.headers['cache-control']).toBe('private, no-store');
+    });
+
+    it('forwards valid limit/offset/search query params to the service', async () => {
+      service.listScheduledTasks.mockResolvedValue({ items: [mockSchedule] });
+
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks?limit=12&offset=24&search=inbox')
+        .expect(200);
+
+      expect(service.listScheduledTasks).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        { limit: 12, offset: 24, search: 'inbox' },
+      );
+    });
+
+    it('returns 400 when limit is out of range', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks?limit=101')
+        .expect(400);
+      expect(service.listScheduledTasks).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when offset is negative', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks?offset=-1')
+        .expect(400);
+      expect(service.listScheduledTasks).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for an unrecognized sort query parameter', async () => {
+      await request(app.getHttpServer())
+        .get('/api/v1/scheduled-tasks?sort=nameAZ')
+        .expect(400);
+      expect(service.listScheduledTasks).not.toHaveBeenCalled();
     });
 
     it('returns 401 when the service reports the caller is not authenticated', async () => {
