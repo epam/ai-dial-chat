@@ -43,6 +43,7 @@ import {
 } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_LOCAL } from '@/src/constants/locale';
 import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -401,12 +402,26 @@ export const isExternalApp = (entity: DialAIEntityModel) =>
   entity.applicationTypeSchemaId ===
   DefaultsService.get('externalAppsSchemaId', DEFAULT_EXTERNAL_APPS_SCHEMA_ID);
 
-export const getModelDescription = (entity: { description?: string }) => {
-  return entity.description ?? '';
+export const parseLocalizedDescription = (
+  locale: string,
+  description?: string | Record<string, string>,
+): string => {
+  if (typeof description === 'string') return description;
+
+  return description?.[locale] ?? description?.[DEFAULT_LOCAL] ?? '';
 };
 
-export const getModelShortDescription = (entity: { description?: string }) =>
-  getModelDescription(entity).split(DESCRIPTION_DELIMITER_REGEX)[0];
+export const getModelDescription = (
+  entity: { description?: string | Record<string, string> },
+  locale: string,
+) => {
+  return parseLocalizedDescription(locale, entity.description);
+};
+
+export const getModelShortDescription = (
+  entity: { description?: string | Record<string, string> },
+  locale: string,
+) => getModelDescription(entity, locale).split(DESCRIPTION_DELIMITER_REGEX)[0];
 
 export const getQuickAppConfig = (
   entity: CustomApplicationModel,
