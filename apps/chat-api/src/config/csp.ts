@@ -37,6 +37,7 @@ export const createHelmetOptions = (
       scriptSrc: ["'self'"],
       workerSrc: ["'self'", 'blob:'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+      mediaSrc: ["'self'", 'blob:'],
       connectSrc: ["'self'", 'blob:'],
       frameSrc: buildFrameSrcDirective(allowedIframeOrigins),
       frameAncestors: buildFrameAncestorsDirective(allowedIframeOrigins),
