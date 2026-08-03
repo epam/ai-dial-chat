@@ -28,6 +28,7 @@ export interface ListViewStyles {
 
 /** Props for ListView. */
 export interface ListViewProps {
+  /** Type of catalog items being displayed. */
   type: CatalogEntityType;
   /** Items to display in the table. */
   items: CatalogItem[];

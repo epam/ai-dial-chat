@@ -1,1 +1,5 @@
-// No polyfills required for this lib yet.
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};

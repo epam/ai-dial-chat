@@ -80,7 +80,7 @@ describe('TopicsLine', () => {
 
     expect(screen.getByText('Alpha')).toBeTruthy();
     expect(screen.getByText('Beta')).toBeTruthy();
-    expect(screen.queryByText(/^\+/)).toBeNull();
+    expect(screen.queryByLabelText(/and \d+ more topics/)).toBeNull();
   });
 
   it('collapses overflowing tags into a "+N" badge instead of wrapping', () => {
