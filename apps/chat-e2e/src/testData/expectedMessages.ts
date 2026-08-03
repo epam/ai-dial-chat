@@ -320,6 +320,7 @@ export const ExpectedMessages = {
   elementAttributeValueIsValid: 'Element attribute value is valid',
   elementAttributeValueShouldBe: 'Element attribute value should be: ',
   elementAttributeValueShouldNotBe: 'Element attribute value should not be: ',
+  elementAttributeIsAbsent: 'Element attribute is absent',
   uploadedFilesAreaIsScrollable: 'Uploaded files area is scrollable vertically',
   elementIsInFocus: 'Element is in focus',
   elementIsNotInFocus: 'Element is not in focus',
@@ -350,6 +351,20 @@ export const ExpectedMessages = {
   downloadTableCsvModalIsVisible: 'Download table as CSV modal is visible',
   downloadedFileNameIsValid: 'Downloaded file name is valid',
   downloadedFileContentIsValid: 'Downloaded file content is valid',
+  collapsedSectionsCountIsValid: 'Collapsed sections count is valid',
+  collapsedSectionSummaryIsValid: 'Collapsed section summary is valid',
+  collapsedSectionIsCollapsed: 'Collapsed section is collapsed',
+  collapsedSectionIsExpanded: 'Collapsed section is expanded',
+  sectionIsVisible: 'Section is visible',
+  sectionIsNotVisible: 'Section is not visible',
+  tableBodyHeightNotExceedViewportHeight:
+    'Table body height does not exceed max percentage of the viewport height',
+  tableBodyHeightIsCloseToMaxCap:
+    'Table body height is close to the expected max cap',
+  tableBodyIsVerticallyScrollable: 'Table body is vertically scrollable',
+  tableHeaderNotScrollableVertically: 'Table header does not scroll vertically',
+  tableHeaderPositionNotChanged:
+    'Header position is unchanged after scrolling the body',
   tableColumnsCountIsValid: 'Table columns count is valid',
   tableRowsCountIsValid: 'Table rows count is valid',
   tableEntityBackgroundColorIsValid: 'Table entity background color is valid',
