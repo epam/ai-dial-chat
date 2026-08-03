@@ -6,6 +6,8 @@ import {
   Attachment,
   ConversationData,
   ExpectedConstants,
+  ImportResolutionOption,
+  MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
@@ -366,6 +368,425 @@ dialTest(
           'hidden',
         );
         await toastAssertion.assertToastIsHidden();
+      },
+    );
+  },
+);
+
+dialTest(
+  `Input field. Just Pasted file doesn't appear in Attach files if user deletes it on 'x', sent into chat stays`,
+  async ({
+    dialHomePage,
+    setTestIds,
+    localStorageManager,
+    customApplicationPublishingUtil,
+    fileApiHelper,
+    sendMessage,
+    sendMessageInputAttachmentsAssertions,
+    attachmentDropdownMenu,
+    fileManagerModal,
+    fileManagerModalCollapsibleSidebar,
+    fileManagerModalFoldersTree,
+    fileManagerModalGrid,
+    fileManagerGridAssertion,
+    fileDropArea,
+    chat,
+    toast,
+  }) => {
+    setTestIds('EPMDIAL-6816');
+    const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
+    const uploadFolderPath = `${ExpectedConstants.fileUploadFolder}/${yearMonthSubfolder}`;
+    const file0 = Attachment.heartImageName;
+    const file1 = Attachment.sunImageName;
+    const file2 = Attachment.cloudImageName;
+    const file3 = Attachment.flowerImageName;
+
+    await dialTest.step(
+      `Upload File0 into "uploads/year-month" folder via API as a precondition`,
+      async () => {
+        await fileApiHelper.putFile(file0, { parentPath: uploadFolderPath });
+      },
+    );
+
+    await dialTest.step(
+      'Create a custom app with attachments support and set it as recent model via API',
+      async () => {
+        const appData = await customApplicationPublishingUtil.createCustomApp({
+          inputAttachmentTypes: [Attachment.imageTypesExtension],
+        });
+        appEntity = {
+          name: appData.name,
+          version: appData.version,
+          reference: appData.reference,
+        } as DialAIEntityModel;
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open a new chat, upload File1 from device via clip icon and send it',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await sendMessage.attachmentMenuTrigger.click();
+        await dialHomePage.uploadData({ path: file1, dataType: 'upload' }, () =>
+          attachmentDropdownMenu.selectMenuOption(
+            UploadMenuOptions.uploadFromDevice,
+            { isHttpMethodTriggered: true, triggeredHttpMethod: 'GET' },
+          ),
+        );
+        await fileManagerModal.getAttachButton().click();
+        await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+          file1,
+          'visible',
+        );
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton('Describe the file');
+      },
+    );
+
+    await dialTest.step('Drag&Drop File2 into the input field', async () => {
+      const fileMetadata =
+        await dialHomePage.getAttachmentFileMetadataAndContent(file2);
+      await fileDropArea.dragAndDropFiles([fileMetadata], {
+        implementation: dialHomePage.executeReactOnDrop,
+      });
+      await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+        file2,
+        'visible',
+      );
+      await toast.closeToast();
+      await toast.waitForState({ state: 'hidden' });
+    });
+
+    await dialTest.step('Copy-paste File3 into the input field', async () => {
+      await dialHomePage.triggerPasteFilesEvent([file3], {
+        pasteToElement: sendMessage.messageInput,
+      });
+      await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+        file3,
+        'visible',
+      );
+      await toast.closeToast();
+      await toast.waitForState({ state: 'hidden' });
+    });
+
+    await dialTest.step(
+      'Via clip icon attach the already uploaded File1 and the precondition File0',
+      async () => {
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
+        );
+        await fileManagerModalCollapsibleSidebar.expandIfCollapsed();
+        await fileManagerModalFoldersTree.expandFolder(
+          { isFilesListingTriggered: true },
+          ExpectedConstants.fileUploadFolder,
+        );
+        await fileManagerModalFoldersTree.expandFolder(
+          { isFilesListingTriggered: false },
+          yearMonthSubfolder,
+        );
+        await (
+          await fileManagerModalGrid.gridCheckboxByNameCell(file1)
+        ).click();
+        await (
+          await fileManagerModalGrid.gridCheckboxByNameCell(file0)
+        ).click();
+        await fileManagerModal.getAttachButton().click();
+        await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+          file0,
+          'visible',
+        );
+        await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+          file1,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Click on 'x' buttons to remove all four files from the input without sending`,
+      async () => {
+        for (const file of [file0, file1, file2, file3]) {
+          const removeIcon = sendMessage
+            .getInputAttachments()
+            .removeInputAttachmentIcon(file);
+          await removeIcon.hoverOver();
+          await removeIcon.click();
+          await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
+            file,
+            'hidden',
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Open "Attach files" > "uploads/<year-month>" folder and verify File0 and File1 still exist, File2 and File3 do not',
+      async () => {
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
+        );
+        await fileManagerModalCollapsibleSidebar.expandIfCollapsed();
+        await fileManagerModalFoldersTree.expandFolder(
+          { isFilesListingTriggered: true },
+          ExpectedConstants.fileUploadFolder,
+        );
+        await fileManagerModalFoldersTree.expandFolder(
+          { isFilesListingTriggered: false },
+          yearMonthSubfolder,
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          file0,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          file1,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          file2,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          file3,
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  `Edit mode in chat history. Just Pasted file doesn't appear in Attach files if user deletes it on 'x'`,
+  async ({
+    dialHomePage,
+    setTestIds,
+    localStorageManager,
+    customApplicationPublishingUtil,
+    fileApiHelper,
+    conversationData,
+    dataInjector,
+    conversations,
+    chatMessages,
+    attachmentDropdownMenu,
+    fileManagerModal,
+    fileManagerModalCollapsibleSidebar,
+    fileManagerModalFoldersTree,
+    fileManagerModalGrid,
+    fileManagerGridAssertion,
+    editMessageInputAttachments,
+    editMessageInputAttachmentsAssertions,
+  }) => {
+    setTestIds('EPMDIAL-6817');
+    const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
+    const uploadFolderPath = `${ExpectedConstants.fileUploadFolder}/${yearMonthSubfolder}`;
+    const file1 = Attachment.sunImageName;
+    const file2 = Attachment.cloudImageName;
+
+    await dialTest.step(
+      `Upload File1 into "uploads/year-month" folder via API as a precondition`,
+      async () => {
+        await fileApiHelper.putFile(file1, { parentPath: uploadFolderPath });
+      },
+    );
+
+    await dialTest.step(
+      'Create a custom app with attachments support and a conversation with it via API',
+      async () => {
+        const appData = await customApplicationPublishingUtil.createCustomApp({
+          inputAttachmentTypes: [Attachment.imageTypesExtension],
+        });
+        appEntity = {
+          name: appData.name,
+          version: appData.version,
+          reference: appData.reference,
+        } as DialAIEntityModel;
+        await createConversation(conversationData, dataInjector);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open the chat and open user prompt in edit mode',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await chatMessages.openEditMessageMode(1);
+      },
+    );
+
+    await dialTest.step(
+      'Copy-paste File2 into the edit mode input field',
+      async () => {
+        await dialHomePage.triggerPasteFilesEvent([file2], {
+          pasteToElement: chatMessages.getChatMessageTextarea(1),
+        });
+        await editMessageInputAttachmentsAssertions.assertFileIsAttached(
+          file2,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Via Clip icon attach the already uploaded File1',
+      async () => {
+        await chatMessages.getChatMessageClipIcon(1).click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
+        );
+        await fileManagerModalCollapsibleSidebar.expandIfCollapsed();
+        await fileManagerModalFoldersTree.expandFolder(
+          { isFilesListingTriggered: true },
+          ExpectedConstants.fileUploadFolder,
+        );
+        await fileManagerModalFoldersTree.expandFolder(
+          { isFilesListingTriggered: false },
+          yearMonthSubfolder,
+        );
+        await (
+          await fileManagerModalGrid.gridCheckboxByNameCell(file1)
+        ).click();
+        await fileManagerModal.getAttachButton().click();
+        await editMessageInputAttachmentsAssertions.assertFileIsAttached(
+          file1,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Click on 'x' buttons to remove both files from the input without sending`,
+      async () => {
+        for (const file of [file1, file2]) {
+          const removeIcon =
+            editMessageInputAttachments.removeInputAttachmentIcon(file);
+          await removeIcon.hoverOver();
+          await removeIcon.click();
+          await editMessageInputAttachmentsAssertions.assertFileIsAttached(
+            file,
+            'hidden',
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      `Open "Attach files" > "uploads/year-month" folder and verify File1 still exists, File2 does not`,
+      async () => {
+        await chatMessages.getChatMessageClipIcon(1).click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+          { triggeredHttpMethod: 'GET', apiHost: API.filesListingHost() },
+        );
+        await fileManagerModalCollapsibleSidebar.expandIfCollapsed();
+        await fileManagerModalFoldersTree.expandFolder(
+          { isFilesListingTriggered: true },
+          ExpectedConstants.fileUploadFolder,
+        );
+        await fileManagerModalFoldersTree.expandFolder(
+          { isFilesListingTriggered: false },
+          yearMonthSubfolder,
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          file1,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          file2,
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Edit mode in chat history. The modal for duplicates appears if to paste the file with the name already exists in the uploads folder.',
+  async ({
+    dialHomePage,
+    setTestIds,
+    localStorageManager,
+    customApplicationPublishingUtil,
+    conversationData,
+    dataInjector,
+    conversations,
+    chatMessages,
+    editMessageInputAttachmentsAssertions,
+    replaceConfirmationModal,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMDIAL-6819');
+    const file = Attachment.textName;
+
+    await dialTest.step(
+      'Create a custom app that supports attachments and a conversation with it via API',
+      async () => {
+        const appData = await customApplicationPublishingUtil.createCustomApp({
+          inputAttachmentTypes: [Attachment.allTypesExtension],
+        });
+        appEntity = {
+          name: appData.name,
+          version: appData.version,
+          reference: appData.reference,
+        } as DialAIEntityModel;
+        await createConversation(conversationData, dataInjector);
+        await localStorageManager.setRecentModelsIdsAndUseLastModel(appEntity);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open the chat, open user prompt in edit mode and paste the file',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await chatMessages.openEditMessageMode(1);
+        await dialHomePage.triggerPasteFilesEvent([file], {
+          pasteToElement: chatMessages.getChatMessageTextarea(1),
+        });
+        await editMessageInputAttachmentsAssertions.assertFileIsAttached(
+          file,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Paste the same file again and verify the duplicate names pop-up appears with Postfix, Replace and Ignore options',
+      async () => {
+        await dialHomePage.triggerPasteFilesEvent([file], {
+          pasteToElement: chatMessages.getChatMessageTextarea(1),
+          isHttpMethodTriggered: false,
+        });
+        await baseAssertion.assertElementText(
+          replaceConfirmationModal.title,
+          ExpectedConstants.uploadDuplicateNamesModalTitle,
+        );
+        await baseAssertion.assertElementText(
+          replaceConfirmationModal.description,
+          ExpectedConstants.uploadDuplicateNamesModalDescription,
+        );
+        await replaceConfirmationModal.getAllItemsDropdown().click();
+        const dropdownMenu = replaceConfirmationModal.getDropdownMenu();
+        for (const option of Object.values(ImportResolutionOption)) {
+          await baseAssertion.assertElementState(
+            dropdownMenu.menuOption(option),
+            'visible',
+          );
+        }
       },
     );
   },

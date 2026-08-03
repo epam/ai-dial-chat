@@ -19,7 +19,10 @@ const publicationsToUnpublish: Publication[] = [];
 dialTest(
   'Topics: the filter is applied and search results are shown. Custom app. DIAL Marketplace.\n' +
     'Topics: topics set in custom app appear in Topics category. Sorting is alphabetical.\n' +
-    'Topics: the filter is applied and search results are shown. Models. Switch between DIAL Marketplace and My workspace. Suggested results.',
+    'Topics: the filter is applied and search results are shown. Models. Switch between DIAL Marketplace and My workspace. Suggested results.\n' +
+    'Topics: long name is cut with three dots at the end.\n' +
+    'Topics: on hover over the name tooltip with the full name is shown.\n' +
+    'Topics: topics section stays collapsed if user closes it',
   async ({
     setTestIds,
     customApplicationBuilder,
@@ -34,8 +37,17 @@ dialTest(
     navigationPanel,
     marketplaceEntitiesSection,
     baseAssertion,
+    tooltip,
+    tooltipAssertion,
   }) => {
-    setTestIds('EPMDIAL-2681', 'EPMDIAL-2676', 'EPMDIAL-2683');
+    setTestIds(
+      'EPMDIAL-2681',
+      'EPMDIAL-2676',
+      'EPMDIAL-2683',
+      'EPMDIAL-2689',
+      'EPMDIAL-5585',
+      'EPMDIAL-2691',
+    );
     const firstAppName = GeneratorUtil.randomApplicationName();
     const secondAppName = GeneratorUtil.randomApplicationName();
     const thirdAppName = GeneratorUtil.randomApplicationName();
@@ -44,6 +56,7 @@ dialTest(
     const secondTopic = GeneratorUtil.randomString(10);
     const underscoreTopic = '_' + GeneratorUtil.randomString(10);
     const numericTopic = GeneratorUtil.randomNumberInRange(5);
+    const longTopic = GeneratorUtil.randomString(80);
 
     await dialTest.step(
       'Prepare custom applications with combination of topics in the Marketplace, add three apps to "My Workspace"',
@@ -63,6 +76,10 @@ dialTest(
         const fourthApplicationModel = customApplicationBuilder
           .withDisplayName(fourthAppName)
           .build();
+        const longTopicApplicationModel = customApplicationBuilder
+          .withDisplayName(GeneratorUtil.randomApplicationName())
+          .withDescriptionKeywords(longTopic)
+          .build();
         const fifthApplicationModel = customApplicationBuilder
           .withDisplayName(GeneratorUtil.randomApplicationName())
           .withDescriptionKeywords(underscoreTopic)
@@ -76,6 +93,7 @@ dialTest(
           secondApplicationModel,
           thirdApplicationModel,
           fourthApplicationModel,
+          longTopicApplicationModel,
         ]) {
           const adminApp =
             await adminApplicationApiHelper.createApplication(app);
@@ -124,10 +142,52 @@ dialTest(
           );
         baseAssertion.assertArrayIncludesAll(
           actualTopicsFilterOptions,
-          [firstTopic, secondTopic],
+          [firstTopic, secondTopic, longTopic],
           MarketplaceExpectedMessages.filterOptionsAreValid,
         );
         baseAssertion.assertStringsSorting(actualTopicsFilterOptions, 'asc');
+      },
+    );
+
+    await dialTest.step(
+      'Hover over the long topic name and verify it is cut with three dots and a tooltip with the full name is shown, hover over a topic which is not cut and verify no tooltip is shown',
+      async () => {
+        const longTopicLabel = marketplaceFilter.filterByPropertyOptionLabel(
+          MarketplaceFilterTypes.topics,
+          longTopic,
+        );
+        await baseAssertion.assertElementTextIsTruncated(longTopicLabel);
+        await longTopicLabel.hover();
+        await tooltipAssertion.assertTooltipContent(longTopic);
+
+        const shortTopicLabel = marketplaceFilter.filterByPropertyOptionLabel(
+          MarketplaceFilterTypes.topics,
+          firstTopic,
+        );
+        await shortTopicLabel.hover();
+        await tooltipAssertion.assertElementState(tooltip, 'hidden');
+      },
+    );
+
+    await dialTest.step(
+      'Collapse Topics section, refresh the browser and verify the section stays collapsed',
+      async () => {
+        const topicsOptions = marketplaceFilter.filterByPropertyOptions(
+          MarketplaceFilterTypes.topics,
+        );
+        await marketplaceFilter
+          .filterByProperty(MarketplaceFilterTypes.topics)
+          .click();
+        await baseAssertion.assertElementState(topicsOptions, 'hidden');
+
+        await marketplacePage.reloadPage();
+        await marketplacePage.waitForPageLoaded();
+        await baseAssertion.assertElementState(topicsOptions, 'hidden');
+
+        await marketplaceFilter
+          .filterByProperty(MarketplaceFilterTypes.topics)
+          .click();
+        await baseAssertion.assertElementState(topicsOptions, 'visible');
       },
     );
 
@@ -749,10 +809,122 @@ dialTest(
   },
 );
 
-dialTest.afterAll(async ({ adminPublicationApiHelper }) => {
-  for (const publication of publicationsToUnpublish) {
-    const unpublishResponse =
-      await adminPublicationApiHelper.createUnpublishRequest(publication);
-    await adminPublicationApiHelper.approveRequest(unpublishResponse);
-  }
-});
+dialTest(
+  'Topics: indication when filter is applied.\n' +
+    'Topics: use comma in topic names.\n' +
+    'Topics/Types/Sources: indication on Filter panel icon',
+  async ({
+    setTestIds,
+    customApplicationBuilder,
+    applicationApiHelper,
+    marketplacePage,
+    header,
+    marketplaceFilter,
+    marketplaceEntitiesSection,
+    marketplaceHeader,
+    entityDetailsModal,
+    marketplaceEntities,
+    baseAssertion,
+    tooltipAssertion,
+  }) => {
+    setTestIds('EPMDIAL-2693', 'EPMDIAL-2692', 'EPMDIAL-5587');
+    const topicsToSelect = Array.from({ length: 10 }, () =>
+      GeneratorUtil.randomString(6),
+    );
+    const commaTopic = `${GeneratorUtil.randomString(5)}, ${GeneratorUtil.randomString(5)}`;
+    const applicationName = GeneratorUtil.randomApplicationName();
+    const allTopics = [...topicsToSelect, commaTopic];
+
+    const assertCommaTopicIsDisplayedAsSingleItem = async (
+      container: BaseElement,
+    ) => {
+      const visibleTopicsElement =
+        marketplaceEntities.getEntityVisibleTopics(container);
+      const visibleCount = await visibleTopicsElement.getElementsCount();
+      await baseAssertion.assertElementInnerText(
+        visibleTopicsElement,
+        allTopics.slice(0, visibleCount),
+      );
+      if (visibleCount < allTopics.length) {
+        const hiddenTopicsElement =
+          marketplaceEntities.getEntityHiddenTopics(container);
+        await hiddenTopicsElement.click();
+        await tooltipAssertion.assertTooltipContent(
+          allTopics.slice(visibleCount).join('\n'),
+        );
+        await hiddenTopicsElement.click();
+      }
+    };
+
+    await dialTest.step(
+      'Prepare a custom application with at least 10 topics and a topic containing a comma via API',
+      async () => {
+        const applicationModel = customApplicationBuilder
+          .withDisplayName(applicationName)
+          .withDescriptionKeywords(...topicsToSelect, commaTopic)
+          .build();
+        await applicationApiHelper.createApplication(applicationModel);
+      },
+    );
+
+    await dialTest.step(
+      'Open DIAL Marketplace, expand Filters panel, select at least 10 items in Topics section and verify the selected count indicator appears near the section name, no dot indicator is displayed on the panel toggle',
+      async () => {
+        await marketplacePage.openMarketplacePage();
+        await marketplacePage.waitForPageLoaded();
+        for (const topic of topicsToSelect) {
+          await marketplaceFilter
+            .filterByPropertyOptionInput(MarketplaceFilterTypes.topics, topic)
+            .click();
+        }
+        await baseAssertion.assertElementText(
+          marketplaceFilter.filterPropertySelectedCount(
+            MarketplaceFilterTypes.topics,
+          ),
+          topicsToSelect.length.toString(),
+        );
+        await baseAssertion.assertElementState(
+          header.leftPanelDotIndicator,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify the comma-containing topic is displayed as a single topic on the card, in the card detailed view and in the filter panel',
+      async () => {
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(applicationName);
+        const agentElement =
+          await marketplaceEntitiesSection.findEntityElement(applicationName);
+        await assertCommaTopicIsDisplayedAsSingleItem(agentElement);
+
+        await agentElement.click();
+        await assertCommaTopicIsDisplayedAsSingleItem(entityDetailsModal);
+        await entityDetailsModal.closeButton.click();
+
+        const actualTopicsFilterOptions =
+          await marketplaceFilter.filterByPropertyOptionLabels(
+            MarketplaceFilterTypes.topics,
+          );
+        baseAssertion.assertArrayIncludesAll(
+          actualTopicsFilterOptions,
+          [commaTopic],
+          MarketplaceExpectedMessages.filterOptionsAreValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Collapse left panel and verify dot indicator is displayed on the panel toggle',
+      async () => {
+        await header.leftPanelToggle.click();
+        await baseAssertion.assertElementState(
+          header.leftPanelDotIndicator,
+          'visible',
+        );
+      },
+    );
+  },
+);

@@ -47,6 +47,12 @@ export class MarketplaceFilter extends BaseElement {
       .allInnerTexts();
   }
 
+  public filterPropertySelectedCount = (property: string) => {
+    return this.filterByProperty(property).locator(
+      MarketplaceSideBarSelectors.filterSelectedCount,
+    );
+  };
+
   public async checkTypeFilterOption(option: string) {
     await this.filterByPropertyOptionInput(
       MarketplaceFilterTypes.type,
