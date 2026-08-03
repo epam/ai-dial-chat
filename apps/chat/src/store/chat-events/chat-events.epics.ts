@@ -156,6 +156,7 @@ const unsubscribeEpic: AppEpic = (action$, state$) =>
       const resetSubscription$ = concat(
         of(ChatEventsActions.setIsSubscribed(false)),
         of(ChatEventsActions.setChannelId()),
+        of(ChatEventsActions.clearEvents()),
       );
 
       return ChatEventsService.unsubscribe(channelId).pipe(

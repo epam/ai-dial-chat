@@ -131,6 +131,7 @@ export const conversationsSlice = createSlice({
         oldConversation: Conversation;
         newConversation: Conversation;
         traceId?: string;
+        message?: string;
       }>,
     ) => {
       state.conversations = state.conversations.map((conv) => {

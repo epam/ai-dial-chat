@@ -126,6 +126,7 @@
   "Select one of the methods below that will be used to authenticate": "Select one of the methods below that will be used to authenticate",
   "Allowed tools": "Allowed tools",
   "Enter one or more tools": "Enter one or more tools",
+  "Add \"{{value}}\"": "Add \"{{value}}\"",
   "Log out before changing authentication type": "Log out before changing authentication type",
   "Logging out": "Logging out",
   "Are you sure you want to log out?": "Are you sure you want to log out?",
@@ -147,6 +148,7 @@
   "Failed to load files and folders": "Failed to load files and folders",
   "Upload failed": "Upload failed",
   "Please check your internet connection and try again.": "Please check your internet connection and try again.",
+  "The name or folder path is too long. Please use a shorter name or move the item to a folder with a shorter path.": "The name or folder path is too long. Please use a shorter name or move the item to a folder with a shorter path.",
   "Folder \"{{itemName}}\" has been unshared successfully": "Folder \"{{itemName}}\" has been unshared successfully",
   "\"{{itemName}}\" has been unshared successfully": "\"{{itemName}}\" has been unshared successfully",
   "\"{{itemName}}\" have been unshared successfully": "\"{{itemName}}\" have been unshared successfully",
@@ -283,5 +285,6 @@
   "Repair will re-register this toolset with the Authorization Server. All users will need to sign in again once their current session expires. Continue?": "Repair will re-register this toolset with the Authorization Server. All users will need to sign in again once their current session expires. Continue?",
   "Toolset repaired. Users must re-authenticate.": "Toolset repaired. Users must re-authenticate.",
   "Authorization server is currently unavailable. Try again once the AS is back.": "Authorization server is currently unavailable. Try again once the AS is back.",
-  "Repair will re-register this toolset with the Authorization Server. Continue?": "Repair will re-register this toolset with the Authorization Server. Continue?"
+  "Repair will re-register this toolset with the Authorization Server. Continue?": "Repair will re-register this toolset with the Authorization Server. Continue?",
+  "The list of tools will be available after filling in the definition and authentication sections": "The list of tools will be available after filling in the definition and authentication sections"
 }

@@ -21,7 +21,7 @@ export class ToolsetEditorViewFormAssertion extends BaseAssertion {
       this.toolsetEditorViewForm.apiKeyContainer,
       this.toolsetEditorViewForm.withoutAuthContainer,
       this.toolsetEditorViewForm.loginButton,
-      this.toolsetEditorViewForm.allowedTools.comboboxInput,
+      this.toolsetEditorViewForm.allowedTools,
     ];
     for (const control of controls) {
       await this.assertElementCursor(control, Cursors.notAllowed);

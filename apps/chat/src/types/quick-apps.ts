@@ -1,6 +1,10 @@
 import {
   DialDeploymentToolsetToolTypes,
+  ORCHESTRATOR_ATTACHMENT_STRATEGY_VALUE,
+  REPRESENTATION_TOOLING_FEATURE_VALUE,
+  TIMESTAMP_FEATURE_VALUE,
   ToolsetTypes,
+  WEB_FETCH_FEATURE_VALUE,
 } from '@/src/constants/quick-apps';
 
 import { ToolsetTransportType } from '@epam/ai-dial-shared';
@@ -102,7 +106,7 @@ export interface QuickApp2Config {
       variables: object;
       content: string;
     };
-    attachment_strategy?: { type: 'lazy_on_demand' } | null;
+    attachment_strategy?: typeof ORCHESTRATOR_ATTACHMENT_STRATEGY_VALUE;
   };
   contexts: FileContext[];
   tool_sets: AnyToolset[];
@@ -111,10 +115,10 @@ export interface QuickApp2Config {
   max_input_attachments?: number;
   skills?: DialPromptSkill[];
   features?: {
-    timestamp?: {
-      injection_strategy: 'tool_call';
-    } | null;
+    timestamp?: typeof TIMESTAMP_FEATURE_VALUE;
     dial_files?: object | null;
+    representation_tooling?: typeof REPRESENTATION_TOOLING_FEATURE_VALUE;
+    web_fetch?: typeof WEB_FETCH_FEATURE_VALUE;
   };
 }
 
