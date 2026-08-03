@@ -74,20 +74,20 @@ dialSharedWithMeTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-5170',
-      'EPMRTC-6057',
-      'EPMRTC-5197',
-      'EPMRTC-5316',
-      'EPMRTC-5192',
-      'EPMRTC-5229',
-      'EPMRTC-5180',
-      'EPMRTC-5181',
-      'EPMRTC-5364',
-      'EPMRTC-6025',
-      'EPMRTC-5329',
-      'EPMRTC-5190',
-      'EPMRTC-5201',
-      'EPMRTC-5366',
+      'EPMDIAL-4354',
+      'EPMDIAL-4371',
+      'EPMDIAL-4343',
+      'EPMDIAL-4362',
+      'EPMDIAL-4342',
+      'EPMDIAL-4350',
+      'EPMDIAL-4340',
+      'EPMDIAL-4341',
+      'EPMDIAL-4378',
+      'EPMDIAL-4387',
+      'EPMDIAL-4383',
+      'EPMDIAL-4357',
+      'EPMDIAL-4344',
+      'EPMDIAL-4380',
     );
     let agentElement: BaseElement;
     let iconName: string;
@@ -442,15 +442,15 @@ dialSharedWithMeTest(
     additionalShareUserChatAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-5171',
-      'EPMRTC-6058',
-      'EPMRTC-5184',
-      'EPMRTC-5316',
-      'EPMRTC-5198',
-      'EPMRTC-5421',
-      'EPMRTC-9939',
-      'EPMRTC-5280',
-      'EPMRTC-5365',
+      'EPMDIAL-4356',
+      'EPMDIAL-4372',
+      'EPMDIAL-4355',
+      'EPMDIAL-4362',
+      'EPMDIAL-4360',
+      'EPMDIAL-4384',
+      'EPMDIAL-4385',
+      'EPMDIAL-4361',
+      'EPMDIAL-4379',
     );
     let agentElement: BaseElement;
     let conversation: Conversation;
@@ -715,7 +715,7 @@ dialSharedWithMeTest(
     additionalShareUserFileManagerToolbar,
     shareApiAssertion,
   }) => {
-    setTestIds('EPMRTC-5328', 'EPMRTC-5385', 'EPMRTC-5465');
+    setTestIds('EPMDIAL-4386', 'EPMDIAL-4381', 'EPMDIAL-4359');
     let iconName: string;
     let sharedAppElement: BaseElement;
 
@@ -863,7 +863,7 @@ dialSharedWithMeTest(
     additionalShareUserConfirmationDialogAssertion,
     shareApiAssertion,
   }) => {
-    setTestIds('EPMRTC-5173');
+    setTestIds('EPMDIAL-4358');
 
     await dialSharedWithMeTest.step('Share custom app via API', async () => {
       appData = await customApplicationPublishingUtil.createCustomApp();
@@ -947,7 +947,7 @@ dialTest(
     marketplaceFilter,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-8859');
+    setTestIds('EPMDIAL-4365');
 
     let shareByLinkResponse: ShareByLinkResponseModel;
 

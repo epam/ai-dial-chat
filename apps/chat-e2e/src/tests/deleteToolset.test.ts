@@ -23,7 +23,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6878');
+    setTestIds('EPMDIAL-5469');
     const toolsetName = GeneratorUtil.randomToolsetName();
     const toolsetVersion = GeneratorUtil.randomEntityVersion();
     let toolsetElement: BaseElement;
@@ -115,7 +115,7 @@ dialTest(
     setTestIds,
     page,
   }) => {
-    setTestIds('EPMRTC-7064', 'EPMRTC-6879');
+    setTestIds('EPMDIAL-5472', 'EPMDIAL-5470');
     const toolsetEntity = {
       name: toolsetNamePrefix + ExpectedConstants.allowedSpecialSymbolsInName(),
       version: GeneratorUtil.randomEntityVersion(),

@@ -26,13 +26,13 @@ dialTest(
     chatBarFolderAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-3047',
-      'EPMRTC-3080',
-      'EPMRTC-3087',
-      'EPMRTC-3090',
-      'EPMRTC-3086',
-      'EPMRTC-3089',
-      'EPMRTC-3091',
+      'EPMDIAL-7064',
+      'EPMDIAL-7066',
+      'EPMDIAL-7074',
+      'EPMDIAL-7075',
+      'EPMDIAL-7072',
+      'EPMDIAL-7078',
+      'EPMDIAL-7079',
     );
     const folderToExport = 'folderToExport';
     const conversationToExport = 'conversationToExport';
@@ -146,11 +146,11 @@ dialTest(
     promptBarFolderAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-3082',
-      'EPMRTC-3083',
-      'EPMRTC-3088',
-      'EPMRTC-3093',
-      'EPMRTC-3094',
+      'EPMDIAL-7068',
+      'EPMDIAL-7070',
+      'EPMDIAL-7073',
+      'EPMDIAL-7080',
+      'EPMDIAL-7081',
     );
     const promptFolderToExport = 'folderToExport';
     const promptToExport = 'promptToExport';

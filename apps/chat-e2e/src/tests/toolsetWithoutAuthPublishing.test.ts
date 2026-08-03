@@ -36,7 +36,7 @@ dialAdminTest(
     baseAssertion,
     adminEntityDetailsModal,
   }) => {
-    setTestIds('EPMRTC-7031', 'EPMRTC-7245', 'EPMRTC-7034');
+    setTestIds('EPMDIAL-5478', 'EPMDIAL-5527', 'EPMDIAL-5511');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),

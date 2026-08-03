@@ -4,14 +4,11 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MockedChatApiResponseBodies,
-  Types,
 } from '../testData';
 import { Cursors, Styles } from '../ui/domData';
 
-import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { keys } from '@/src/ui/keyboard';
-import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -48,7 +45,7 @@ dialTest(
     fileApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-1890');
+    setTestIds('EPMDIAL-2796', 'EPMDIAL-5697', 'EPMDIAL-6462');
     let modelWithoutAttachments: DialAIEntityModel;
 
     await dialTest.step(
@@ -170,7 +167,7 @@ dialTest(
     tooltipPortalAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817', 'EPMRTC-1568');
+    setTestIds('EPMDIAL-5809', 'EPMDIAL-5909', 'EPMDIAL-5932', 'EPMDIAL-5910');
     const request = 'test';
     await dialTest.step(
       'Verify Send button is disabled if no request message set and tooltip is shown on button hover',
@@ -291,7 +288,7 @@ dialTest(
     talkToAgentDialogAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-406');
+    setTestIds('EPMDIAL-5703');
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
     );
@@ -354,7 +351,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1044');
+    setTestIds('EPMDIAL-5699');
     const appName = GeneratorUtil.randomApplicationName();
     let configApp: DialAIEntityModel;
 
@@ -407,117 +404,6 @@ dialTest(
           recentTalkTo[1],
           ModelsUtil.getOpenAIEntity(recentModelIds[0])!.name,
         );
-      },
-    );
-  },
-);
-
-//TODO: need to update the test-case
-dialTest.skip(
-  'Search "Talk to" item in "See full list..."',
-  async ({
-    dialHomePage,
-    marketplaceContainer,
-    marketplaceFilter,
-    marketplaceEntities,
-    marketplaceHeader,
-    talkToAgentDialog,
-    chat,
-    modelApiHelper,
-    setTestIds,
-    localStorageManager,
-  }) => {
-    setTestIds('EPMRTC-408');
-    const randomEntity = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getOpenAIEntities().filter((m) => m.name.length >= 3),
-    );
-    const searchTerm = randomEntity.name.substring(0, 3);
-    let expectedMatchedModelsCount: number;
-    let expectedMatchedAppsCount: number;
-    let searchInput: BaseElement;
-
-    await dialTest.step(
-      'Create new conversation and click "Search on My workspace" link',
-      async () => {
-        await localStorageManager.setShowSideBarPanels();
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await chat.changeAgentButton.click();
-        await talkToAgentDialog.goToMyWorkspace();
-        await marketplaceContainer.goToMarketplaceHome();
-      },
-    );
-
-    await dialTest.step(
-      'Type first search term and verify search result is correct',
-      async () => {
-        searchInput = marketplaceHeader.getSearch().inputField;
-        await searchInput.fillInInput(searchTerm);
-        const entitiesCount =
-          await marketplaceEntities.entityNames.getElementsCount();
-
-        const configModels = await modelApiHelper.getModels();
-        const matchedModels = configModels.filter(
-          (m) =>
-            m.type === EntityType.Model &&
-            (m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              m.version?.toLowerCase().includes(searchTerm.toLowerCase())),
-        );
-        const matchedApplications = configModels.filter(
-          (a) =>
-            a.type === EntityType.Application &&
-            (a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              a.version?.toLowerCase().includes(searchTerm.toLowerCase())),
-        );
-        expectedMatchedModelsCount =
-          ModelsUtil.groupEntitiesByName(matchedModels).size;
-        expectedMatchedAppsCount =
-          ModelsUtil.groupEntitiesByName(matchedApplications).size;
-
-        expect
-          .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(expectedMatchedModelsCount + expectedMatchedAppsCount);
-      },
-    );
-
-    await dialTest.step(
-      'Click on entity tabs one by one and verify search results are correct',
-      async () => {
-        await marketplaceFilter.checkTypeFilterOption(Types.models);
-        let entitiesCount =
-          await marketplaceEntities.entityNames.getElementsCount();
-        expect
-          .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(expectedMatchedModelsCount);
-
-        await marketplaceFilter.checkTypeFilterOption(Types.assistants);
-        entitiesCount =
-          await marketplaceEntities.entityNames.getElementsCount();
-        expect
-          .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(expectedMatchedModelsCount);
-
-        await marketplaceFilter.checkTypeFilterOption(Types.applications);
-        entitiesCount =
-          await marketplaceEntities.entityNames.getElementsCount();
-        expect
-          .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(expectedMatchedModelsCount + expectedMatchedAppsCount);
-      },
-    );
-
-    await dialTest.step(
-      'Clear search input and verify all entities are displayed',
-      async () => {
-        await searchInput.fillInInput('');
-        const entitiesCount =
-          await marketplaceEntities.entityNames.getElementsCount();
-        expect
-          .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(
-            ModelsUtil.getLatestOpenAIEntities(await modelApiHelper.getModels())
-              .length,
-          );
       },
     );
   },

@@ -75,13 +75,13 @@ dialTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-6877',
-      'EPMRTC-7292',
-      'EPMRTC-6873',
-      'EPMRTC-6888',
-      'EPMRTC-6970',
-      'EPMRTC-7192',
-      'EPMRTC-8745',
+      'EPMDIAL-5355',
+      'EPMDIAL-5359',
+      'EPMDIAL-5352',
+      'EPMDIAL-5354',
+      'EPMDIAL-5416',
+      'EPMDIAL-5362',
+      'EPMDIAL-5622',
     );
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
@@ -487,7 +487,7 @@ dialTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-6874', 'EPMRTC-6870', 'EPMRTC-6889', 'EPMRTC-6886');
+    setTestIds('EPMDIAL-5357', 'EPMDIAL-5356', 'EPMDIAL-5360', 'EPMDIAL-5358');
     const toolsetEntity = {
       name: '',
       version: ExpectedConstants.defaultEntityVersion,
@@ -678,7 +678,7 @@ dialTest(
     marketplaceHeader,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6972');
+    setTestIds('EPMDIAL-5343');
 
     await dialTest.step(
       'Open My workspace directly, switch on "Toolsets" tab and verify "No toolset" label is displayed set some filters and search word',
@@ -733,7 +733,7 @@ dialTest(
     tooltipAssertion,
     page,
   }) => {
-    setTestIds('EPMRTC-7312', 'EPMRTC-6996', 'EPMRTC-6890');
+    setTestIds('EPMDIAL-5366', 'EPMDIAL-5361', 'EPMDIAL-5345');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: ExpectedConstants.defaultEntityVersion,

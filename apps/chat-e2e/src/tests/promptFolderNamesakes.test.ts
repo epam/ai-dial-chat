@@ -18,7 +18,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2969');
+    setTestIds('EPMDIAL-3729');
     const duplicatedFolderName = 'Folder prompt';
 
     await dialTest.step('Create 2 new prompt folders', async () => {
@@ -77,7 +77,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2970');
+    setTestIds('EPMDIAL-3730');
     const duplicatedFolderName = ExpectedConstants.newFolderWithIndexTitle(2);
 
     await dialTest.step(
@@ -159,7 +159,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2971');
+    setTestIds('EPMDIAL-3731');
     const duplicatedFolderName = 'New folder 2';
 
     await dialTest.step('Create 3 folders', async () => {
@@ -251,7 +251,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2972');
+    setTestIds('EPMDIAL-3732');
 
     await dialTest.step('Create 3 folders', async () => {
       await localStorageManager.setPromptCollapsedSection(

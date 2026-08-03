@@ -22,7 +22,7 @@ dialTest(
     localStorageManager,
     apiAssertion,
   }) => {
-    setTestIds('EPMRTC-473');
+    setTestIds('EPMDIAL-2456');
     let conversation: Conversation;
     const temp = 0;
     const request = 'This is a test request';
@@ -119,7 +119,7 @@ dialTest(
     conversations,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-490', 'EPMRTC-491');
+    setTestIds('EPMDIAL-5929', 'EPMDIAL-5930');
     let conversation: Conversation;
     await dialTest.step('Prepare conversation with history', async () => {
       conversation = conversationData.prepareModelConversationBasedOnRequests([

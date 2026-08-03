@@ -40,7 +40,7 @@ dialAdminTest(
     toolsetApiHelper,
     page,
   }) => {
-    setTestIds('EPMRTC-9026', 'EPMRTC-9027');
+    setTestIds('EPMDIAL-5479', 'EPMDIAL-5480');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),

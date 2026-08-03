@@ -33,7 +33,7 @@ dialAdminTest(
     adminPublishingRulesAssertion,
     toolsetApiHelper,
   }) => {
-    setTestIds('EPMRTC-7166');
+    setTestIds('EPMDIAL-5486');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
