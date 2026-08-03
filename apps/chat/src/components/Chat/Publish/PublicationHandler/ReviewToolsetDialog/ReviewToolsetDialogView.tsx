@@ -10,7 +10,11 @@ import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors, ToolsetSelectors } from '@/src/store/selectors';
+import {
+  PublicationSelectors,
+  ToolsetSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
@@ -32,6 +36,7 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
 })(({ toolset }: ReviewToolsetDialogContentProps) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const locale = useAppSelector(UISelectors.selectLocale);
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
@@ -51,7 +56,7 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
     }),
     [toolset.id, toolset.name],
   );
-  const description = getModelDescription(toolset);
+  const description = getModelDescription(toolset, locale);
 
   return (
     <>

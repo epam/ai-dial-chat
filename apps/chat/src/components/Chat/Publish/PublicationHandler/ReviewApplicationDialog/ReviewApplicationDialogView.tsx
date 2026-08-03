@@ -19,7 +19,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/selectors';
+import { PublicationSelectors, UISelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
@@ -47,6 +47,7 @@ export function ReviewApplicationDialogView({
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
+  const locale = useAppSelector(UISelectors.selectLocale);
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
@@ -60,7 +61,7 @@ export function ReviewApplicationDialogView({
 
   const isCodeApp = isExecutableApp(application);
   const isQuickAppTwo = isQuickApp2(application);
-  const description = getModelDescription(application);
+  const description = getModelDescription(application, locale);
 
   const controlsEntity = useMemo(
     () => ({
