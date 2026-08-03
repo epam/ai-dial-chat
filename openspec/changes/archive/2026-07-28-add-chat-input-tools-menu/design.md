@@ -6,7 +6,7 @@ The `+` menu in the conversation input (`AddAttachmentButton`) currently support
 
 Neither pattern supports toggle-state items in a submenu. The new Tools feature requires a third pattern: a submenu with stateful toggle rows whose selections persist across the input session and are sent as `configuration_value` on each completion request.
 
-The existing `configuration_value` → `custom_fields.configuration` pipeline in `conversation.service.ts` already handles arbitrary `Record<string, unknown>` payloads — no backend changes to the request flow are required. The only backend change is surfacing `DEEP_RESEARCH_TOOL_ID` through the app-config system so the frontend knows which deployment-configuration schema property to extract.
+The existing `configuration_value` → `custom_fields.configuration` pipeline in `conversation.service.ts` already handles arbitrary `Record<string, unknown>` payloads. The backend must also retain that value when `conversation-history-builder.ts` creates a user message; otherwise only the first message keeps its tool state and regenerate can fall back to stale configuration. The other backend change is surfacing `DEEP_RESEARCH_TOOL_ID` through the app-config system so the frontend knows which deployment-configuration schema property to extract.
 
 ## Goals / Non-Goals
 
@@ -14,12 +14,12 @@ The existing `configuration_value` → `custom_fields.configuration` pipeline in
 - Add a Tools submenu to the `+` menu that renders deployment-configuration tool toggles.
 - First slice: render only the configured Deep Research tool; ignore all other schema properties.
 - Send selected tool configuration alongside the completion request via `configuration_value`.
+- Persist selected tool configuration on every created user message so regenerate and edit reuse the message-specific state.
 - Keep `libs/conversation-input` host-agnostic: it renders tool items from resolved props and emits toggle callbacks.
 - Expose `DEEP_RESEARCH_TOOL_ID` through the app-config pipeline (visibility: `client`).
 
 **Non-Goals:**
 - Multi-tool support (arbitrary schema introspection, icon registry, tool categorization).
-- Persisting tool selections in conversation history for regenerate/edit flows (future enhancement).
 - Feature-flag gating via `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — presence of the env var is the gate.
 - New backend HTTP endpoints.
 - Observability/telemetry events for tool toggles (no new metrics in this slice).
@@ -87,7 +87,7 @@ Then it constructs a single `ToolMenuItem` with:
 
 **Choice:** The `useToolsMenu` hook exposes `toolConfigurationValue: Record<string, boolean>` (e.g. `{ deep_research: true }`). The conversation handler merges this with any existing `configurationValue` (from starters/forms) before passing to `startStream` / `createConversation`.
 
-**Why:** Reuses the exact existing path: `custom_content.configuration_value` → backend → `custom_fields.configuration`. No new DTO field, no backend change. The backend already handles arbitrary `Record<string, unknown>` for `configuration_value`.
+**Why:** Reuses the exact existing path: `custom_content.configuration_value` → backend → `custom_fields.configuration`. No new DTO field is needed. The frontend builds its optimistic user message from the same `customContent` object passed to `startStream`, `makeUserMessage` copies the value into the backend-persisted user message, and edit forwards the preserved custom content. Local and persisted representations therefore remain aligned for later regenerate/edit requests.
 
 **Merge semantics:** Tool values are spread **after** starter/form values, so a tool toggle can override a starter's initial configuration choice. This is intentional — the user explicitly toggled the tool after the starter auto-submitted a default.
 
@@ -117,7 +117,7 @@ Then it constructs a single `ToolMenuItem` with:
 
 ## Risks / Trade-offs
 
-- **[Risk] Tool toggle state not persisted in conversation history** → If the user regenerates a message, the tool choice from the original send is lost. Mitigation: documented as a future enhancement. Regenerate uses whatever `configuration_value` was stored on the original message's `custom_content` — which the backend already extracts from history (line 1413-1417 fallback logic). So if the original send included `{ deep_research: true }`, regenerate will reuse it. New risk only if the user changes the toggle between sends in the same conversation — the new toggle state won't apply to regenerated older messages.
+- **[Compatibility] Historical messages without persisted tool configuration** → Conversations created before this fix may still lack per-message `configuration_value`; regenerate retains the existing fallback to the most recent configuration available in history. Newly sent or edited messages persist their own value.
 - **[Risk] Hard-coded Telescope icon for Deep Research** → future tools need an icon resolution strategy. Mitigation: the `ToolMenuItem.icon` prop is `ReactNode`, so the app-level hook can provide any icon. A future icon map or backend-provided icon metadata can be added without lib changes.
 - **[Risk] `configuration_value` merge conflicts with starters** → A starter that sets `{ deep_research: false }` could be overridden by the tool toggle. Mitigation: tool values spread after starter values is documented as intentional; tools represent explicit user intent.
 - **[Risk] Config cache staleness** → `deepResearchToolId` is cached for 60s by `AppConfigService`. If an operator changes the env var, users see the old value for up to 60s. Mitigation: acceptable; matches behavior of all other client config values.

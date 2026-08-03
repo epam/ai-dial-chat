@@ -268,7 +268,8 @@
       "step_other": "steps"
     },
     "attachMenuDialFileSystem": "DIAL file system",
-    "addMenuTitle": "Add files"
+    "addMenuTitle": "Add files",
+    "messageTooLong": "Max allowed message length is {{max}}"
   },
   "conversationPanel": {
     "title": "Chats",
@@ -865,7 +866,6 @@
     "usageLimits": {
       "triggerAriaLabel": "Monthly token usage: {{value}}",
       "popoverTitle": "Usage Limit",
-      "unlimited": "Unlimited",
       "error": "Could not load usage limits",
       "tokensRemaining": "{{count}} tokens remaining",
       "progressAriaLabel": "Monthly token usage: {{used}} of {{total}} tokens used"

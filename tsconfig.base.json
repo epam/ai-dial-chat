@@ -39,7 +39,8 @@
         "./libs/deployment-creation-form/*"
       ],
       "@epam/ai-dial-chat-overlay/*": ["./libs/chat-overlay/*"],
-      "@epam/ai-dial-scheduled-tasks/*": ["./libs/scheduled-tasks/*"]
+      "@epam/ai-dial-scheduled-tasks/*": ["./libs/scheduled-tasks/*"],
+      "@epam/ai-dial-quotations/*": ["./libs/quotations/*"]
     }
   }
 }

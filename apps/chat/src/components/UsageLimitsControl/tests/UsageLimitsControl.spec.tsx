@@ -41,7 +41,6 @@ const mockUseDeploymentUsageLimits = vi.mocked(useDeploymentUsageLimits);
 const labels: UsageLimitsLabels = {
   triggerAriaLabel: ({ value }) => `Monthly token usage: ${value}`,
   popoverTitle: 'Usage Limit',
-  unlimited: 'Unlimited',
   error: 'Could not load usage limits',
   tokensRemaining: ({ count }) => `${count} tokens remaining`,
   progressAriaLabel: ({ used, total }) =>
@@ -53,7 +52,6 @@ const defaultLimit: MonthlyUsageLimit = {
   total: 10000,
   remaining: 7500,
   usedPercent: 25,
-  isUnlimited: false,
 };
 
 const defaultHookResult: UseDeploymentUsageLimitsResult = {
@@ -79,7 +77,7 @@ describe('UsageLimitsControl', () => {
     vi.clearAllMocks();
   });
 
-  it('renders nothing without a deployment or finite monthly limit', () => {
+  it('renders nothing without a deployment or monthly limit', () => {
     const { container, rerender } = renderControl(undefined);
     expect(container.firstChild).toBeNull();
 
@@ -89,41 +87,6 @@ describe('UsageLimitsControl', () => {
     });
     rerender(<UsageLimitsControl deploymentId="gpt-4o" labels={labels} />);
     expect(container.firstChild).toBeNull();
-  });
-
-  it('renders an unlimited monthly limit like Catalog', async () => {
-    const unlimitedTotal = Number.MAX_SAFE_INTEGER;
-    mockUseDeploymentUsageLimits.mockReturnValue({
-      ...defaultHookResult,
-      limit: {
-        ...defaultLimit,
-        total: unlimitedTotal,
-        isUnlimited: true,
-      },
-    });
-
-    renderControl('gpt-4o');
-
-    const trigger = screen.getByRole('button', {
-      name: 'Monthly token usage: Unlimited',
-    });
-    expect(trigger.className).not.toContain('text-error');
-    expect(screen.getByText('Unlimited').className).toContain('opacity-0');
-
-    await userEvent.click(trigger);
-
-    expect(screen.getAllByText('Unlimited')).toHaveLength(2);
-    expect(
-      screen.getByRole('progressbar', {
-        name: 'Monthly token usage: 2,500 of Unlimited tokens used',
-      }),
-    ).toBeTruthy();
-    expect(screen.getByRole('progressbar').getAttribute('aria-valuemax')).toBe(
-      String(unlimitedTotal),
-    );
-    expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBe(
-      String(defaultLimit.used),
-    );
   });
 
   it('shows a ring-only trigger at rest with an accessible percentage', () => {

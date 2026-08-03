@@ -210,7 +210,6 @@ const NewConversationComposer: FC<Props> = ({
       triggerAriaLabel: ({ value }: { value: string }) =>
         t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
       popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
-      unlimited: t(ConversationInputI18nKeys.Unlimited),
       error: t(ConversationInputI18nKeys.Error),
       tokensRemaining: ({ count }: { count: string }) =>
         t(ConversationInputI18nKeys.TokensRemaining, { count }),
@@ -240,6 +239,16 @@ const NewConversationComposer: FC<Props> = ({
           count,
           limit,
         }),
+      });
+    },
+    [showNotification, t],
+  );
+
+  const handleMessageTooLong = useCallback(
+    (_length: number, max: number) => {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(ConversationI18nKeys.MessageTooLong, { max }),
       });
     },
     [showNotification, t],
@@ -365,6 +374,7 @@ const NewConversationComposer: FC<Props> = ({
           hideAttachFile={!isAttachmentsAllowed || !isInputFilesEnabled}
           fileAccept={fileAccept}
           onAttachmentClick={handleAttachmentClick}
+          onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
           toolsMenuItems={toolsMenuItems}
           onToolToggle={onToolToggle}

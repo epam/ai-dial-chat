@@ -1,12 +1,20 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, memo, ReactNode, useCallback, useMemo } from 'react';
-import { useCitationCardContext } from '../../../context/CitationCardContext';
-import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
-import CitationCard from '../CitationCard/CitationCard';
-import CitationMarker from '../CitationMarker/CitationMarker';
+import { useCitationCardContext } from '../../context/CitationCardContext';
+import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
+import {
+  CitationCard,
+  type CitationCardLabels,
+  type CitationCardTypography,
+} from '../CitationCard/CitationCard';
+import {
+  CitationMarker,
+  type CitationMarkerLabels,
+} from '../CitationMarker/CitationMarker';
 
-interface Props {
+/** Props for the `CitationDropdown` component. */
+export interface CitationDropdownProps {
   /** The annotation group represented by this marker+popup pair. */
   group: AnnotationGroup;
   /**
@@ -18,13 +26,26 @@ interface Props {
   onOpenInBrowser: (annotation: Annotation) => void;
   /** Optional icon rendered before the marker's label. */
   icon?: ReactNode;
+  /** Optional icon rendered in the card header. When absent, no header icon is shown. */
+  headerIcon?: ReactNode;
+  /** User-visible strings for the card popup. */
+  cardLabels: CitationCardLabels;
+  /** User-visible strings for the inline marker button. */
+  markerLabels: CitationMarkerLabels;
+  /** Optional typography overrides forwarded to the card. */
+  cardTypography?: CitationCardTypography;
 }
 
-const CitationDropdown: FC<Props> = ({
+/** Combines `CitationMarker` and `CitationCard` into a tooltip-based dropdown. Requires a `CitationCardProvider` ancestor. */
+export const CitationDropdown: FC<CitationDropdownProps> = ({
   group,
   onPreview,
   onOpenInBrowser,
   icon,
+  headerIcon,
+  cardLabels,
+  markerLabels,
+  cardTypography,
 }) => {
   const citationCard = useCitationCardContext();
   const isOpen = citationCard.isOpen(group.sourceUrl);
@@ -62,6 +83,9 @@ const CitationDropdown: FC<Props> = ({
           onIndexChange={(i) => citationCard.setActiveIndex(group.sourceUrl, i)}
           onPreview={handlePreview}
           onOpenInBrowser={onOpenInBrowser}
+          headerIcon={headerIcon}
+          labels={cardLabels}
+          typography={cardTypography}
         />
       }
     >
@@ -70,6 +94,7 @@ const CitationDropdown: FC<Props> = ({
         annotationCount={group.annotations.length}
         onOpen={() => citationCard.openPopup(group.sourceUrl)}
         icon={icon}
+        labels={markerLabels}
       />
     </DialTooltip>
   );
