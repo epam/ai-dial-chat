@@ -24,7 +24,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
   display_name?: string;
   display_version?: string;
   icon_url?: string;
-  description?: string;
+  description?: string | Record<string, string>;
   created_at: number;
   updated_at: number;
   owner: string;
@@ -87,7 +87,7 @@ export interface DialAIEntityFeatures {
 export interface DialAIEntity {
   id: string;
   name: string;
-  description?: string | undefined;
+  description?: string | Record<string, string>;
   iconUrl?: string | undefined;
   createdAt?: number;
   updatedAt?: number;

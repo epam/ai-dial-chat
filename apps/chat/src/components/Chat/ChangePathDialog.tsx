@@ -9,10 +9,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getFolderIdFromEntityId,
+  getFolderNestingLevel,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
-  getOrganizationPublishPathDepth,
   organizationFolderIdToPublishPathSuffix,
   publishToUrlToOrganizationFolderId,
   remapPublicFolderToFilesNamespace,
@@ -35,7 +35,10 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import {
+  MAX_NESTED_FOLDERS,
+  MAX_NEW_FOLDER_PATH_SEGMENTS,
+} from '@/src/constants/folders';
 import {
   ChatI18nKeys,
   CommonI18nKeys,
@@ -377,6 +380,8 @@ export const ChangePathDialog = ({
     gridOptions,
     navigationPanelOptions,
     handleRenameValidation,
+    isMaxFolderDepthReached,
+    showMaxDepthError,
     resetGridEditing,
     emptyStateTitle,
     emptyStateDescription,
@@ -395,6 +400,7 @@ export const ChangePathDialog = ({
       folders: additionalOrganizationFolders,
     },
     gridEditingOptions,
+    folderDepthOffset: depth,
   });
 
   const publishedFolderIds = useMemo(
@@ -606,13 +612,12 @@ export const ChangePathDialog = ({
 
   const handleCreateFolderValidate = useCallback(
     (name: string, parentFolder: DialFile) => {
-      const pathDepth = getOrganizationPublishPathDepth(parentFolder.id);
-      if (pathDepth + 1 + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
+      if (isMaxFolderDepthReached(parentFolder.id)) {
         return t(ChatI18nKeys.NotAllowedMoreNestedFolders);
       }
       return handleRenameValidation(name, parentFolder);
     },
-    [depth, handleRenameValidation, t],
+    [handleRenameValidation, isMaxFolderDepthReached, t],
   );
 
   const itemsToRender = useMemo(() => {
@@ -635,9 +640,8 @@ export const ChangePathDialog = ({
   const handleConfirm = useCallback(() => {
     const folderId = currentPath ?? resolvedInitialFolderId;
     const suffix = organizationFolderIdToPublishPathSuffix(folderId);
-    const pathDepth = getOrganizationPublishPathDepth(folderId);
 
-    if (pathDepth + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
+    if (getFolderNestingLevel(folderId) + depth > MAX_NESTED_FOLDERS) {
       dispatch(
         UIActions.showErrorToast({
           message: t(ChatI18nKeys.NotAllowedMoreNestedFolders),
@@ -1010,6 +1014,8 @@ export const ChangePathDialog = ({
         onCreateFolder={handleCreateOrganizationFolder}
         onMoveToFiles={handleOrganizationMoveFiles}
         onCreateFolderValidate={handleCreateFolderValidate}
+        maxNewFolderDepth={MAX_NEW_FOLDER_PATH_SEGMENTS - depth}
+        onNewFolderDepthExceeded={showMaxDepthError}
         onRenameValidate={handleOrganizationRenameValidation}
         onDeleteFiles={handleDeleteTempFolders}
         deleteConfirmationOptions={deleteConfirmationOptions}

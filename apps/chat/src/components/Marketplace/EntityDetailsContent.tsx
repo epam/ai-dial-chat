@@ -8,6 +8,9 @@ import {
 import { EntityType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
+
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ApplicationLimits } from '@/src/components/Marketplace/ApplicationDetails/ApplicationLimits';
 
@@ -18,6 +21,7 @@ interface Props {
 }
 
 export function EntityDetailsContent({ entity }: Props) {
+  const locale = useAppSelector(UISelectors.selectLocale);
   const showLimitsSection =
     isDialAiEntityModel(entity) && entity.type === EntityType.Model;
 
@@ -26,11 +30,11 @@ export function EntityDetailsContent({ entity }: Props) {
       className="divide-y divide-tertiary overflow-auto"
       data-qa="entity-content"
     >
-      {!!getModelDescription(entity) && (
+      {!!getModelDescription(entity, locale) && (
         <section className="px-3 py-4 md:p-6" data-qa="entity-description">
           <div className="flex flex-col gap-4">
             <EntityMarkdownDescription className="!text-sm !leading-[21px]">
-              {getModelDescription(entity) ?? ''}
+              {getModelDescription(entity, locale) ?? ''}
             </EntityMarkdownDescription>
           </div>
         </section>

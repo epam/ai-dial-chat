@@ -304,6 +304,20 @@ export class ConversationData extends FolderData {
     return this.prepareConversationWithTextContent(responseContent, model);
   }
 
+  public prepareConversationWithLargeMdTableContent(
+    rowsCount: number,
+    model?: string | DialAIEntityModel,
+  ) {
+    const tableRows = Array.from(
+      { length: rowsCount },
+      (_, i) => `| Row ${i + 1} | Value ${i + 1} |`,
+    ).join('\n');
+    const largeTableContent =
+      '| Column1 | Column2 |\n| ------------- | ------------- |\n' +
+      `${tableRows}\n`;
+    return this.prepareConversationWithTextContent(largeTableContent, model);
+  }
+
   public prepareNestedFolder(
     nestedLevel: number,
     folderNames?: Record<number, string>,

@@ -23,7 +23,7 @@ export interface ToolsetModel extends ShareEntity {
   allowedTools: string[];
   version: string;
   reference: string;
-  description: string;
+  description: string | Record<string, string>;
   topics: string[];
   type: EntityType.Toolset;
 
