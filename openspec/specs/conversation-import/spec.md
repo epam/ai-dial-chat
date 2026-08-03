@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Client-side import of one export file (`.json` or `.dial`/`.zip`, v5 envelope, old- or new-chat origin) into the current user's conversations. Covers the file-picker entry point and accepted types, tolerant parsing of both archive JSON-entry names, bounded-concurrency attachment re-upload to `uploads/<YYYY-MM-DD>/` with in-batch name-collision handling and path-allowlist validation, attachment-URL rewriting, fresh-UUID id/path regeneration for collision-free saves, a per-file job queue with cancel/retry, and success/failure/warning/unsupported-format notifications.
+Client-side import of one export file (`.json` or `.dial`/`.zip`, v5 envelope, old- or new-chat origin) into the current user's conversations. Covers the file-picker entry point and accepted types, tolerant parsing of both archive JSON-entry names, bounded-concurrency attachment re-upload to `uploads/<YYYY-MM>/` with automatic ` (n)` name-collision disambiguation and path-allowlist validation, attachment-URL and renamed-title rewriting, fresh-UUID id/path regeneration for collision-free saves, a per-file job queue with cancel/retry, and success/failure/warning/unsupported-format notifications.
 
 ## Requirements
 
@@ -68,38 +68,60 @@ For `.dial`/`.zip` files, the system SHALL locate the conversation-JSON entry un
 - **WHEN** a `.zip`/`.dial` archive contains `conversations/conversations_history.json` and `res/<path>` entries
 - **THEN** the envelope is read from that entry and the `res/` entries are collected as attachments
 
-### Requirement: Re-upload archive attachments to a day-level folder
+### Requirement: Re-upload archive attachments to a month-level folder, disambiguating name collisions
 
-For each imported conversation, the system SHALL re-upload every referenced archive attachment to `uploads/<YYYY-MM-DD>/<safe-file-name>` in the current user's bucket, where `<YYYY-MM-DD>` is the local date at import time, using a create-only upload so an existing file at that path is never silently overwritten or renamed. An attachment whose path fails validation, cannot be found in the archive, or fails to upload for any other reason SHALL be skipped and reported as a warning while the conversation still imports.
+For each imported conversation, the system SHALL re-upload every referenced archive attachment to `uploads/<YYYY-MM>/<safe-file-name>` in the current user's bucket, where `<YYYY-MM>` is the local year-month at import time — the same month-level folder convention used by regular (non-import) attachment uploads. Uploads use create-only mode so an existing file is never silently overwritten.
+
+Before uploading, the system SHALL list the destination month folder once per import job and use its contents to pre-fill a per-job name registry. For every attachment about to be uploaded, if the registry already contains its file name — whether from that listing, from an earlier attachment in the same job, or recorded after a create-only conflict — the system SHALL append a ` (n)` suffix before the file extension (`report.pdf` → `report (1).pdf` → `report (2).pdf`, incrementing until free) rather than rejecting the upload. Suffix assignment SHALL be resolved in the fixed order the conversation's attachments are referenced, independent of upload completion order, and the same source file referenced by two different conversations in the archive SHALL be uploaded — and suffixed — as two separate attachments (in contrast to two references to the same file within one conversation, which SHALL still be uploaded once). If a create-only upload is nonetheless rejected as a conflict (a race with a concurrent upload outside this job), the system SHALL retry with the next available suffix up to a bounded number of attempts before giving up. An attachment whose path fails validation, cannot be found in the archive, or exhausts its conflict retries SHALL be skipped and reported as a warning while the conversation still imports.
 
 #### Scenario: Attachment upload and location
 
 - **WHEN** a `.dial` archive conversation references an attachment present under `res/<path>`
-- **THEN** the attachment is uploaded to `uploads/<YYYY-MM-DD>/<safe-file-name>` in the user's bucket
+- **THEN** the attachment is uploaded to `uploads/<YYYY-MM>/<safe-file-name>` in the user's bucket
 
-#### Scenario: Colliding attachment name already exists
+#### Scenario: Colliding attachment name already exists in the bucket
 
-- **WHEN** an archive attachment's upload path `uploads/<YYYY-MM-DD>/<name>` already exists in the user's bucket
-- **THEN** the upload is rejected, a distinct error notification names the conflicting file, and that attachment's reference is left unrewritten while the conversation still imports
+- **WHEN** an archive attachment's file name is already listed in the destination month folder (from an earlier upload or a previous import)
+- **THEN** the attachment is uploaded under a ` (n)`-suffixed name instead of being rejected, and the conversation still imports
+
+#### Scenario: Two archive attachments share a basename
+
+- **WHEN** two different archive attachments — whether from different source folders in one conversation or from two different conversations referencing the same source path — would resolve to the same destination file name
+- **THEN** the first is uploaded under its plain name and the second under a ` (1)`-suffixed name, in the order their conversations and attachment references are processed
+
+#### Scenario: Conflict retry on a race with a concurrent upload
+
+- **WHEN** a create-only upload is rejected as a conflict despite the name registry believing it free
+- **THEN** the system retries under the next available suffix, up to a bounded number of attempts
 
 #### Scenario: Skipped attachment
 
-- **WHEN** an attachment fails path validation or fails to upload for a reason other than a name conflict
+- **WHEN** an attachment fails path validation, cannot be found in the archive, or exhausts its conflict retries
 - **THEN** that attachment is skipped, a warning notification is shown, and the conversation still imports
 
 #### Scenario: JSON import has no attachment upload
 
 - **WHEN** a `.json` (no-archive) file is imported
-- **THEN** no attachment upload occurs and attachment URLs are left unchanged
+- **THEN** no attachment upload, and no destination-folder listing, occurs and attachment URLs are left unchanged
 
 ### Requirement: Rewrite attachment references to new upload locations
 
-After re-uploading an archive attachment, the system SHALL rewrite the corresponding `message.custom_content.attachments[].url` (and `reference_url` where present) to the uploaded file's returned `files/{bucket}/{path}` URL, so the imported conversation points at the newly uploaded files.
+After re-uploading an archive attachment, the system SHALL rewrite the corresponding `message.custom_content.attachments[].url` (and `reference_url` where present) to the uploaded file's returned `files/{bucket}/{path}` URL, so the imported conversation points at the newly uploaded files. When the upload was suffixed to resolve a name collision, the system SHALL also rewrite the attachment's `title` to the suffixed file name, so the displayed name matches the file actually stored; an attachment uploaded under its original name SHALL keep its original `title` unchanged.
 
 #### Scenario: Reference rewrite
 
 - **WHEN** an archive attachment originally referenced as `files/{oldBucket}/{path}` is uploaded to the current user's bucket
-- **THEN** the message attachment's `url` (and `reference_url` if set) is updated to the new `files/{userBucket}/uploads/<YYYY-MM-DD>/<name>` URL
+- **THEN** the message attachment's `url` (and `reference_url` if set) is updated to the new `files/{userBucket}/uploads/<YYYY-MM>/<name>` URL
+
+#### Scenario: Title rewrite on a suffixed upload
+
+- **WHEN** an archive attachment is uploaded under a ` (n)`-suffixed name to resolve a collision
+- **THEN** the message attachment's `title` is updated to that suffixed name
+
+#### Scenario: Title left unchanged on a non-suffixed upload
+
+- **WHEN** an archive attachment is uploaded under its original, unsuffixed name
+- **THEN** the message attachment's `title` is left as it was in the source file
 
 ### Requirement: Save each conversation as a new conversation with a regenerated id
 
@@ -127,7 +149,7 @@ The system SHALL rebase each imported conversation's id/path to the current user
 
 ### Requirement: Import job queue and cancellation
 
-The system SHALL track each imported file as one job in its own `ImportExportQueue` panel instance, separate from (and stacked alongside, not merged with) the export queue panel, with in-progress, success, and failed states and a determinate aggregate progress bar. When a job represents a single conversation and the file carries a source folder path, its row SHALL show that folder-path breadcrumb as a secondary line above the name. An in-progress job SHALL be cancellable (aborting its in-flight requests); a failed job SHALL be retryable in place.
+The system SHALL track each imported file as one job in its own `ImportExportQueue` panel instance, separate from (and stacked alongside, not merged with) the export queue panel, with in-progress, success, and failed states and a determinate aggregate progress bar. When a job represents a single conversation and the file carries a source folder path, its row SHALL show that folder-path breadcrumb as a secondary line above the name. An in-progress job SHALL be cancellable (aborting its in-flight requests); a failed job SHALL be retryable in place. Because this is the same `ImportExportQueue` panel used for export, it also auto-closes 8 seconds after every job succeeds with none in progress or failed — see the auto-close requirement in the conversation-export spec.
 
 #### Scenario: One job per imported file
 

@@ -32,7 +32,7 @@ export const useAttachmentUpload = ({
       try {
         const response = await uploadFile(
           bucket,
-          buildUploadPath(attachment),
+          buildUploadPath(attachment.name),
           attachment.file,
         );
         return response.url;
