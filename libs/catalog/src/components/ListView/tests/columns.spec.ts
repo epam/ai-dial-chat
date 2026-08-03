@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { CatalogEntityType } from '../../../types/entity-type';
 import { CATALOG_COLUMNS } from '../columns';
 
 describe('CATALOG_COLUMNS', () => {
   it('flexes only the Name column — every other column is a fixed pixel width', () => {
-    const columns = CATALOG_COLUMNS;
+    const columns = CATALOG_COLUMNS(CatalogEntityType.Model);
     const byField = Object.fromEntries(columns.map((c) => [c.field, c]));
 
     expect(byField.name?.flex).toBe(1);
@@ -23,7 +24,9 @@ describe('CATALOG_COLUMNS', () => {
   });
 
   it('gives the favorite column a visible header, a fixed width, and right-aligned header text', () => {
-    const favColumn = CATALOG_COLUMNS.find((c) => c.field === 'isStarred');
+    const favColumn = CATALOG_COLUMNS(CatalogEntityType.Model).find(
+      (c) => c.field === 'isStarred',
+    );
 
     expect(favColumn?.headerName).toBe('Favorite');
     expect(favColumn?.width).toBe(72);
@@ -32,7 +35,7 @@ describe('CATALOG_COLUMNS', () => {
   });
 
   it('disables sorting on Type and Tags, but not on Name and Folder', () => {
-    const columns = CATALOG_COLUMNS;
+    const columns = CATALOG_COLUMNS(CatalogEntityType.Model);
     const byField = Object.fromEntries(columns.map((c) => [c.field, c]));
 
     expect(byField.type?.sortable).toBe(false);

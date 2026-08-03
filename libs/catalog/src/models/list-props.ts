@@ -1,5 +1,5 @@
+import type { CatalogEntityType } from '../types/entity-type';
 import { CatalogItem } from './catalog-item';
-
 /** Typography class overrides for `ListView` cells. */
 export interface ListViewTypography {
   /** Typography class for item name text. Default: `'dial-h3-text'`. */
@@ -28,6 +28,8 @@ export interface ListViewStyles {
 
 /** Props for ListView. */
 export interface ListViewProps {
+  /** Type of catalog items being displayed. */
+  type: CatalogEntityType;
   /** Items to display in the table. */
   items: CatalogItem[];
   /** Active search query — passed through grid context so cell renderers can highlight. */
