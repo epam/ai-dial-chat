@@ -21,6 +21,7 @@ interface Props {
   errors: ToolsetFormErrors;
   isSaving: boolean;
   toolsetId: string;
+  isEditMode: boolean;
   onNext: () => void;
   onCancel: () => void;
   onEnsureSaved: () => Promise<string | false>;
@@ -34,6 +35,7 @@ const ToolsetEditorView: FC<Props> = ({
   errors,
   isSaving,
   toolsetId,
+  isEditMode,
   onNext,
   onCancel,
   onEnsureSaved,
@@ -55,6 +57,7 @@ const ToolsetEditorView: FC<Props> = ({
               errors={errors}
               isSaving={isSaving}
               toolsetId={toolsetId}
+              isEditMode={isEditMode}
               onChange={onChange}
               onAuthChange={onAuthChange}
               onEnsureSaved={onEnsureSaved}
