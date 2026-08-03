@@ -1301,49 +1301,6 @@ export interface CreateFolderResponseDto {
 /**
  *
  * @export
- * @interface CreateScheduledTaskBodyDto
- */
-export interface CreateScheduledTaskBodyDto {
-  /**
-   *
-   * @type {string}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  displayName: string;
-  /**
-   *
-   * @type {ScheduleTriggerDto}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  trigger: ScheduleTriggerDto;
-  /**
-   *
-   * @type {string}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  model: string;
-  /**
-   *
-   * @type {string}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  prompt: string;
-  /**
-   *
-   * @type {string}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  description?: string;
-  /**
-   *
-   * @type {boolean}
-   * @memberof CreateScheduledTaskBodyDto
-   */
-  stream?: boolean;
-}
-/**
- *
- * @export
  * @interface CreatePromptDto
  */
 export interface CreatePromptDto {
@@ -1390,6 +1347,49 @@ export interface CreatePromptFolderDto {
    * @memberof CreatePromptFolderDto
    */
   parentId?: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateScheduledTaskBodyDto
+ */
+export interface CreateScheduledTaskBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {ScheduleTriggerDto}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  trigger: ScheduleTriggerDto;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  model: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  prompt: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof CreateScheduledTaskBodyDto
+   */
+  stream?: boolean;
 }
 /**
  *
@@ -3472,16 +3472,16 @@ export interface ListScheduledTasksResponseDto {
   offset?: number;
   /**
    * Upstream URL for the next page, or null if this is the last page.
-   * @type {object}
+   * @type {string}
    * @memberof ListScheduledTasksResponseDto
    */
-  next?: object | null;
+  next?: string | null;
   /**
    * Upstream URL for the previous page, or null if this is the first page.
-   * @type {object}
+   * @type {string}
    * @memberof ListScheduledTasksResponseDto
    */
-  previous?: object | null;
+  previous?: string | null;
 }
 /**
  *
@@ -5427,6 +5427,31 @@ export interface UpdatePinsDto {
 /**
  *
  * @export
+ * @interface UpdatePromptDto
+ */
+export interface UpdatePromptDto {
+  /**
+   * New display name. Must not contain a forward slash.
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  name?: string;
+  /**
+   * Updated description
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  description?: string;
+  /**
+   * Updated prompt text
+   * @type {string}
+   * @memberof UpdatePromptDto
+   */
+  content?: string;
+}
+/**
+ *
+ * @export
  * @interface UpdateScheduledTaskBodyDto
  */
 export interface UpdateScheduledTaskBodyDto {
@@ -5466,31 +5491,6 @@ export interface UpdateScheduledTaskBodyDto {
    * @memberof UpdateScheduledTaskBodyDto
    */
   stream?: boolean;
-}
-/**
- *
- * @export
- * @interface UpdatePromptDto
- */
-export interface UpdatePromptDto {
-  /**
-   * New display name. Must not contain a forward slash.
-   * @type {string}
-   * @memberof UpdatePromptDto
-   */
-  name?: string;
-  /**
-   * Updated description
-   * @type {string}
-   * @memberof UpdatePromptDto
-   */
-  description?: string;
-  /**
-   * Updated prompt text
-   * @type {string}
-   * @memberof UpdatePromptDto
-   */
-  content?: string;
 }
 /**
  *

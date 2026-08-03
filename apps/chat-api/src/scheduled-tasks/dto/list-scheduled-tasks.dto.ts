@@ -34,6 +34,7 @@ export class ListScheduledTasksResponseDto {
   offset?: number;
 
   @ApiPropertyOptional({
+    type: String,
     example: null,
     nullable: true,
     description:
@@ -44,6 +45,7 @@ export class ListScheduledTasksResponseDto {
   next?: string | null;
 
   @ApiPropertyOptional({
+    type: String,
     example: null,
     nullable: true,
     description:
