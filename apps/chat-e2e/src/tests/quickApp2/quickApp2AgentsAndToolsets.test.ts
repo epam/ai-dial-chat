@@ -1007,9 +1007,9 @@ dialAdminTest(
 );
 
 dialTest(
-  '[Quick app 2.0]: Not available toolset/agent display\n' +
+  '[Selected] Deleted Toolset becomes red, has specific tooltip, nothing happens on click\n' +
     '[Agents & Toolsets] Not available agent and toolset stay selected when user removes/adds new item\n' +
-    "[Quick app 2.0]: Not available toolset/agent stays attached if open Editor and click 'Save and exit'", // EPMRTC-6998 + EPMRTC-6999 + EPMDIAL-7321
+    "[Quick app 2.0]: Not available toolset/agent stays attached if open Editor and click 'Save and exit'",
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -1030,7 +1030,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMDIAL-4822', 'EPMDIAL-7329', 'EPMDIAL-7321');
+    setTestIds('EPMDIAL-4825', 'EPMDIAL-7329', 'EPMDIAL-7321');
     const notAvailableAgentName = GeneratorUtil.randomApplicationName();
     const notAvailableToolsetName = GeneratorUtil.randomToolsetName();
     const validAgentName = GeneratorUtil.randomApplicationName();
