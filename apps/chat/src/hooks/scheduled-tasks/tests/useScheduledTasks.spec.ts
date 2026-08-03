@@ -27,7 +27,11 @@ describe('useScheduledTasks', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(listScheduledTasks).toHaveBeenCalledWith(
-      expect.objectContaining({ offset: 0, search: '' }),
+      expect.objectContaining({
+        offset: 0,
+        search: '',
+        sort: ScheduledTasksSortKey.FirstToRun,
+      }),
     );
     expect(result.current.items).toHaveLength(1);
     expect(result.current.error).toBeNull();
@@ -130,25 +134,40 @@ describe('useScheduledTasks', () => {
     expect(listScheduledTasks).toHaveBeenCalledOnce();
   });
 
-  it('does not fetch when sortKey changes', async () => {
-    vi.mocked(listScheduledTasks).mockResolvedValue({
-      items: [
-        { id: '1', displayName: 'B', trigger: {} },
-        { id: '2', displayName: 'A', trigger: {} },
-      ],
-      next: null,
-    });
+  it('changing sortKey resets pagination and refetches page 0 with the new sort', async () => {
+    vi.mocked(listScheduledTasks)
+      .mockResolvedValueOnce({
+        items: [
+          { id: '1', displayName: 'B', trigger: {} },
+          { id: '2', displayName: 'A', trigger: {} },
+        ],
+        next: 'cursor-1',
+      })
+      .mockResolvedValueOnce({
+        items: [{ id: '2', displayName: 'A', trigger: {} }],
+        next: null,
+      });
 
     const { result } = renderHook(() => useScheduledTasks());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.hasMore).toBe(true);
     vi.mocked(listScheduledTasks).mockClear();
 
     act(() => {
       result.current.setSortKey(ScheduledTasksSortKey.NameAZ);
     });
 
-    expect(listScheduledTasks).not.toHaveBeenCalled();
     expect(result.current.sortKey).toBe(ScheduledTasksSortKey.NameAZ);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(listScheduledTasks).toHaveBeenCalledOnce();
+    expect(listScheduledTasks).toHaveBeenCalledWith(
+      expect.objectContaining({
+        offset: 0,
+        sort: ScheduledTasksSortKey.NameAZ,
+      }),
+    );
+    expect(result.current.items.map((item) => item.id)).toEqual(['2']);
   });
 
   it('loadMore appends the next page and derives hasMore from next', async () => {
@@ -174,7 +193,10 @@ describe('useScheduledTasks', () => {
     expect(result.current.items.map((item) => item.id)).toEqual(['1', '2']);
     expect(result.current.hasMore).toBe(false);
     expect(listScheduledTasks).toHaveBeenLastCalledWith(
-      expect.objectContaining({ offset: 1 }),
+      expect.objectContaining({
+        offset: 1,
+        sort: ScheduledTasksSortKey.FirstToRun,
+      }),
     );
   });
 
