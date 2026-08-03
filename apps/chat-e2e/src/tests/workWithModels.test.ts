@@ -440,10 +440,12 @@ dialTest(
         await baseAssertion.assertElementState(
           chatMessages.regenerate,
           'visible',
+          ExpectedMessages.regenerateIsAvailable,
         );
         await baseAssertion.assertElementState(
           sendMessage.regenerate,
           'visible',
+          ExpectedMessages.regenerateIsAvailable,
         );
       },
     );
@@ -473,21 +475,25 @@ dialTest(
       'Verify partial content is preserved and model icon is visible',
       async () => {
         const generatedContent = await chatMessages.getLastMessageContent();
-        expect
-          .soft(generatedContent, ExpectedMessages.messageContentIsValid)
-          .not.toBe('');
-
+        chatMessagesAssertion.assertNumberIsGreaterThan(
+          generatedContent.length,
+          0,
+          ExpectedMessages.messageContentIsValid,
+        );
         await chatMessagesAssertion.assertMessageIcon(
           undefined,
           expectedModelIcon,
         );
-
-        await expect
-          .soft(
-            chatMessages.regenerate.getElementLocator(),
-            ExpectedMessages.regenerateIsAvailable,
-          )
-          .toBeVisible();
+        await baseAssertion.assertElementState(
+          chatMessages.regenerate,
+          'visible',
+          ExpectedMessages.regenerateIsAvailable,
+        );
+        await baseAssertion.assertElementState(
+          sendMessage.sendMessageButton,
+          'visible',
+          ExpectedMessages.sendMessageButtonEnabled,
+        );
       },
     );
 

@@ -12,12 +12,11 @@ export class ChatHeaderAssertion<T extends ChatHeader> extends BaseAssertion {
   }
 
   public async assertHeaderTitle(expectedTitle: string) {
-    await expect
-      .soft(
-        this.chatHeader.chatTitle.getElementLocator(),
-        ExpectedMessages.headerTitleIsValid,
-      )
-      .toHaveText(expectedTitle);
+    await this.assertElementText(
+      this.chatHeader.chatTitle,
+      expectedTitle,
+      ExpectedMessages.headerTitleIsValid,
+    );
   }
 
   public async assertHeaderWidth(option: { hasFullWidth: boolean }) {

@@ -396,14 +396,14 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(conversation.name);
-        await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+        await conversationDropdownMenuAssertion.assertMenuOptions([
           MenuOptions.select,
           MenuOptions.rename,
           MenuOptions.compare,
           MenuOptions.moveTo,
           MenuOptions.info,
           MenuOptions.delete,
-        );
+        ]);
       },
     );
 

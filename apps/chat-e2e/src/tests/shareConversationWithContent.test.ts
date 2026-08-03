@@ -577,6 +577,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserLocalStorageManager,
     additionalShareUserFileManagerPage,
+    additionalShareUserNavigationPanel,
     additionalShareUserFileManagerToolbar,
     additionalShareUserFileManager,
     additionalShareUserFileManagerGridAssertion,
@@ -630,6 +631,7 @@ dialSharedWithMeTest(
         await additionalShareUserDataInjector.createConversations([
           secondUserEmptyConversation,
         ]);
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
         await additionalShareUserLocalStorageManager.setRecentModelsIdsAndUseLastModel(
           attachmentModel,
         );
@@ -637,11 +639,18 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'User 1 shares conversation and User 2 accepts invite by another user',
+      'User 1 shares conversation and User 2 accepts the invite',
       async () => {
         const shareByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink([imageConversation]);
-        await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        await additionalShareUserDialHomePage.navigateToUrl(
+          ExpectedConstants.sharedSideBarEntityUrl(
+            shareByLinkResponse.invitationLink,
+          ),
+        );
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          selectedSharedConversationName: imageConversation.name,
+        });
       },
     );
 
@@ -706,15 +715,30 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
+      'User 2 opens "File manager" and verifies that the file is not visible',
+      async () => {
+        await additionalShareUserNavigationPanel.goToFileManager();
+        await additionalShareUserFileManagerPage.waitForPageLoaded({
+          isGridVisible: false,
+        });
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.cloudImageName,
+          'hidden',
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
       'User2 opens the file in the shared chat and verifies the picture is shown in requests',
       async () => {
-        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
-        await additionalShareUserDialHomePage.openHomePage();
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserNavigationPanel.backToChat();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          selectedSharedConversationName: imageConversation.name,
+        });
         await additionalShareUserSharedWithMeConversations.selectEntity(
           imageConversation.name,
         );
-
         await additionalShareUserChatMessages.expandChatMessageAttachment(
           1,
           Attachment.cloudImageName,
@@ -724,27 +748,6 @@ dialSharedWithMeTest(
           3,
           Attachment.sunImageName,
           { isHttpMethodTriggered: false },
-        );
-      },
-    );
-
-    await dialSharedWithMeTest.step(
-      'User 2 opens "File manager" and verifies that the file is not visible',
-      async () => {
-        await additionalShareUserFileManagerPage.openFileManagerPage({
-          updateInstalledDeployments: false,
-          getInstalledDeployments: true,
-          updateInstalledToolsets: false,
-          getInstalledToolsets: true,
-          getStyles: false,
-        });
-        await additionalShareUserFileManagerPage.waitForPageLoaded({
-          isGridVisible: false,
-        });
-        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
-        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
-          Attachment.cloudImageName,
-          'hidden',
         );
       },
     );
@@ -810,7 +813,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User 2 opens the "File manager" and verifies "Shared with me" tab is empty',
       async () => {
-        await additionalShareUserFileManagerPage.reloadPage();
+        await additionalShareUserNavigationPanel.goToFileManager();
         await additionalShareUserFileManagerPage.waitForPageLoaded({
           isGridVisible: false,
         });
