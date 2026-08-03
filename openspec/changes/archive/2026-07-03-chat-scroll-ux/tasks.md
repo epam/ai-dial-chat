@@ -17,7 +17,7 @@
 ## 3. Streaming and scroll-button behavior (verify, adjust if needed)
 
 - [x] 3.1 Verify the existing pinned-to-bottom auto-follow during streaming (`scrollToBottom(true)` gated by `userScrolledRef`) still behaves correctly immediately after the new near-top anchoring on send — i.e. the first streamed token doesn't yank the view back to the container bottom before the user has seen the near-top-anchored message.
-- [x] 3.2 Verify `isScrollButtonVisible` / `NEAR_BOTTOM_THRESHOLD` logic continues to correctly show/hide `DialFabButton` given the new anchoring behavior (e.g. right after sending, when the assistant placeholder is short, the user is now intentionally not at the bottom — confirm the button correctly appears if there is streamed content below the fold).
+- [x] 3.2 Verify `isScrollButtonVisible` / `NEAR_BOTTOM_THRESHOLD` logic continues to correctly show/hide `FabButton` given the new anchoring behavior (e.g. right after sending, when the assistant placeholder is short, the user is now intentionally not at the bottom — confirm the button correctly appears if there is streamed content below the fold).
 - [x] 3.3 Verify `handleScrollToBottom` (button click) still resets `userScrolledRef` and smooth-scrolls to the true bottom, resuming auto-follow.
 
 ## 4. Quality gates

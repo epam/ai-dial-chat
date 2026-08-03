@@ -28,7 +28,7 @@
   color: var(--ci-text, var(--text-primary, #161b2d));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #9fa6bd));
+    color: var(--ci-placeholder, var(--text-secondary, #6b7280));
   }
 
   &:disabled {
@@ -48,7 +48,7 @@
 }
 
 .stopIcon {
-  color: var(--ci-stop-color, var(--text-secondary, #575f73));
+  color: var(--ci-stop-color, var(--text-secondary, #6b7280));
 }
 
 .modelSelectorButton {
@@ -75,97 +75,5 @@
         var(--controls-text-primary-disable, #696e7c)
       );
     }
-  }
-}
-
-/*
- * Enter/exit pop: mirrors the springy overshoot easing already used for
- * the mobile header's `new-chat-pop` animation (`apps/chat/src/styles.scss`)
- * so newly-appearing chrome in the composer feels consistent. Exit is
- * driven by `.sendButtonExiting`, applied by `SendButton.tsx` while
- * `useDelayedUnmount` (`libs/conversation-input/src/hooks`) keeps the
- * button mounted just long enough for the animation to finish before
- * `Input.tsx` actually removes it from the tree.
- *
- * Scale range is a subtle 0.85-1, not a dramatic 0.5-1: at this button's
- * small size (32px), animating `transform: scale()` through a bigger range
- * made the `border-radius: 9999px` circle visibly render as a rounded
- * square partway through (a rasterization artifact of scaling a small
- * circular clip, confirmed via computed styles — `border-radius` itself
- * stays correct throughout). Keeping the scale delta small avoids it.
- */
-@keyframes sendButtonEnter {
-  from {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes sendButtonExit {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-}
-
-/*
- * Same gradient used by `PrimaryButton`'s solid variant
- * (`.dial-primary-solid-button.dial-primary-solid-button` in
- * `libs/ai-dial-kit/src/components/Button/Buttons.scss`), reused here so
- * the Send button matches the app's other primary CTAs instead of a flat
- * solid blue. No box-shadow glow (unlike the pill-shaped PrimaryButton):
- * on this small 32px circle, the same shadow blur radius rendered as a
- * visible square halo around the circle rather than a soft round glow.
- */
-.sendButton {
-  background-color: transparent;
-  background-image: var(
-    --ci-send-bg-gradient,
-    linear-gradient(135deg, #4b7be6 0%, #9355f4 100%)
-  );
-  color: var(--ci-send-text, var(--controls-text-permanent, #fcfcfc));
-  transition: filter 150ms ease;
-  animation: sendButtonEnter 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  &:hover {
-    filter: brightness(1.08);
-  }
-
-  &:active {
-    filter: brightness(0.92);
-  }
-
-  &.sendButtonExiting {
-    animation: sendButtonExit 160ms ease-in forwards;
-    pointer-events: none;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-
-    &.sendButtonExiting {
-      animation: none;
-    }
-  }
-
-  &:disabled {
-    background-image: none;
-    background-color: var(
-      --ci-send-bg-disabled,
-      var(--controls-bg-disable, #d1dbea)
-    );
-    color: var(
-      --ci-send-text-disabled,
-      var(--controls-text-primary-disable, #696e7c)
-    );
-    filter: none;
   }
 }

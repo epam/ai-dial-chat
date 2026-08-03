@@ -1,8 +1,8 @@
 import { BASE_MD_ICON_PROPS } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { DialDropdown, DialRoundedButton } from '@epam/ai-dial-ui-kit';
+import { DialDropdown, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { IconDots, IconDotsVertical } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { StarterButtonsProps } from '../../models/starter-props';
 
 const MAX_VISIBLE = 4;
@@ -123,7 +123,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
               pillRefs.current[index] = el;
             }}
           >
-            <DialRoundedButton
+            <NeutralButton
               label={starter.title}
               onClick={() => onSelect(starter)}
             />
@@ -138,7 +138,7 @@ export const StarterButtons: FC<StarterButtonsProps> = ({
               matchReferenceWidth={false}
               listClassName="cp-dropdown-overlay"
             >
-              <DialRoundedButton
+              <NeutralButton
                 iconAfter={
                   isMobile ? (
                     <IconDots {...iconProps} />

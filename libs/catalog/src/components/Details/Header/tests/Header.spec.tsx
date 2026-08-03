@@ -9,14 +9,10 @@ import {
 } from '../../../../types/toolset-auth';
 import { Header } from '../Header';
 
-vi.mock('@epam/ai-dial-kit', () => ({
-  PrimaryButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  GhostButton: ({ label, onClick }: { label: string; onClick: () => void }) => (
+    <button onClick={onClick}>{label}</button>
+  ),
   NeutralButton: ({
     label,
     onClick,
@@ -24,12 +20,14 @@ vi.mock('@epam/ai-dial-kit', () => ({
     label: string;
     onClick: () => void;
   }) => <button onClick={onClick}>{label}</button>,
-  GhostButton: ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <button onClick={onClick}>{label}</button>
-  ),
-}));
-vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
   FolderPath: ({ segments }: { segments: string[] }) => (
     <>{segments.join(' / ')}</>
   ),

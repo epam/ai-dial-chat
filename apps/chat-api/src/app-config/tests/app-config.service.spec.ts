@@ -71,6 +71,21 @@ describe('AppConfigService', () => {
       expect(result.config.enabledUiFeatures).toBeNull();
       expect(result.config.announcementHtml).toBeNull();
       expect(result.config.footerHtmlMessage).toBe('');
+      expect(result.config.customVisualizers).toEqual([]);
+    });
+
+    it('surfaces the resolved customVisualizers registry verbatim', async () => {
+      const entry = {
+        contentType: 'application/x-my-viz',
+        url: 'https://viz.example.com',
+        title: 'my-viz',
+      };
+      const { service } = makeService(async (key: string) =>
+        key === 'customVisualizers' ? [entry] : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.customVisualizers).toEqual([entry]);
     });
 
     it('returns resolved values when providers succeed', async () => {

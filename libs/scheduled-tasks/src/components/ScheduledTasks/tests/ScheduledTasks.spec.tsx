@@ -11,20 +11,6 @@ import { ScheduledTasksSortKey } from '../../../types/scheduled-tasks-sort-key';
 import { ScheduledTasks } from '../ScheduledTasks';
 
 vi.mock('@epam/ai-dial-kit', () => ({
-  PrimaryButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
-  GhostButton: ({
-    label,
-    onClick,
-  }: {
-    label: string;
-    onClick?: () => void;
-  }) => <button onClick={onClick}>{label}</button>,
   SearchBar: ({
     value,
     onChange,
@@ -53,6 +39,20 @@ vi.mock('@epam/ai-dial-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  GhostButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick?: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label: string;
+    onClick: () => void;
+  }) => <button onClick={onClick}>{label}</button>,
   FolderPath: ({ segments }: { segments: string[] }) => (
     <>{segments.join(' / ')}</>
   ),
@@ -70,7 +70,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialSkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
   DialDropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
-  DialIconButton: ({
+  IconButton: ({
     icon,
     ...rest
   }: { icon: ReactNode } & Record<string, unknown>) => (

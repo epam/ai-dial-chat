@@ -1,12 +1,10 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  ButtonAppearance,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DialConfirmationPopup,
   DialDropdown,
-  DialIconButton,
   ElementSize,
+  GhostIconButton,
   NotificationVariant,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
@@ -44,9 +42,8 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
       listClassName="cp-dropdown-overlay"
       onOpenChange={setIsOpen}
     >
-      <DialIconButton
+      <GhostIconButton
         aria-label={label}
-        appearance={ButtonAppearance.Ghost}
         size={ElementSize.Small}
         icon={
           <IconDotsVertical
@@ -54,10 +51,6 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
             className={isOpen ? 'text-accent-primary' : 'text-secondary'}
           />
         }
-        className={mergeClasses(
-          'flex items-center justify-center rounded',
-          isOpen && 'bg-controls-accent-primary-alpha-active',
-        )}
       />
     </DialDropdown>
   );

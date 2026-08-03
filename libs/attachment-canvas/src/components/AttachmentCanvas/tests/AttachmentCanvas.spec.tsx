@@ -25,6 +25,16 @@ vi.mock('react-json-view-lite', () => ({
   defaultStyles: {},
 }));
 
+vi.mock('@epam/ai-dial-visualizer-connector', () => ({
+  VisualizerConnector: vi.fn().mockImplementation(function () {
+    return {
+      ready: vi.fn().mockReturnValue(new Promise(() => undefined)),
+      send: vi.fn(),
+      destroy: vi.fn(),
+    };
+  }),
+}));
+
 const plainTextContent: AttachmentCanvasContent = {
   type: AttachmentContentType.PlainText,
   text: 'Hello, world!\nSecond line.',
@@ -206,6 +216,42 @@ describe('AttachmentCanvas', () => {
         <AttachmentCanvas
           {...defaultProps}
           content={errorContent}
+          onDownload={vi.fn()}
+        />,
+      );
+      expect(screen.queryByRole('button', { name: /download/i })).toBeNull();
+    });
+  });
+
+  describe('Visualizer content', () => {
+    const visualizerContent: AttachmentCanvasContent = {
+      type: AttachmentContentType.Visualizer,
+      url: 'https://viz.example.com',
+      mimeType: 'application/x-my-viz',
+      data: { series: [1, 2, 3] },
+      layout: { themeId: 'dark' },
+      visualizerName: 'my-viz',
+    };
+
+    it('mounts the visualizer renderer inside the panel body', () => {
+      render(
+        <AttachmentCanvas {...defaultProps} content={visualizerContent} />,
+      );
+      expect(screen.getByRole('status')).toBeDefined();
+    });
+
+    it('still renders the fileName as the panel title', () => {
+      render(
+        <AttachmentCanvas {...defaultProps} content={visualizerContent} />,
+      );
+      expect(screen.getByText('notes.txt')).toBeDefined();
+    });
+
+    it('does not render a download button even when onDownload is provided', () => {
+      render(
+        <AttachmentCanvas
+          {...defaultProps}
+          content={visualizerContent}
           onDownload={vi.fn()}
         />,
       );

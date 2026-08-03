@@ -15,6 +15,7 @@ import {
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
   ChangeEvent,
+  ClipboardEvent,
   type FC,
   KeyboardEvent,
   useCallback,
@@ -105,6 +106,8 @@ export const Input: FC<InputProps> = ({
   maximumAttachmentsAmount,
   onAttachmentsLimitExceeded,
   isAttachmentsEnabled = true,
+  usageLimitsSlot,
+  onMessageTooLong,
 }) => {
   const isMobile = useIsMobile();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -200,9 +203,27 @@ export const Input: FC<InputProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { handlePaste } = useClipboardPaste(
+  const { handlePaste: handleClipboardPaste } = useClipboardPaste(
     addAttachments,
     isAttachmentsEnabled ? pasteTextThreshold : Infinity,
+  );
+
+  const handlePaste = useCallback(
+    (e: ClipboardEvent<HTMLTextAreaElement>) => {
+      if (!isAttachmentsEnabled) {
+        const text = e.clipboardData.getData('text/plain');
+        if (text.length >= pasteTextThreshold) {
+          onMessageTooLong?.(text.length, pasteTextThreshold);
+        }
+      }
+      handleClipboardPaste(e);
+    },
+    [
+      isAttachmentsEnabled,
+      pasteTextThreshold,
+      onMessageTooLong,
+      handleClipboardPaste,
+    ],
   );
 
   const hasSendableContent =
@@ -227,21 +248,21 @@ export const Input: FC<InputProps> = ({
     onToolToggle != null;
   /*
    * Stacked layout: textarea on its own row above the action bar. Used when the
-   * caller opts in (edit mode), whenever attachments are present, when the
+   * caller opts in (edit mode), whenever the
    * message spans multiple visual lines, or when one or more tools are selected
    * (chips need the row between textarea and buttons).
    */
   const isStackedLayout =
-    isStacked ||
-    attachments.length > 0 ||
-    message.includes('\n') ||
-    isMultiLine ||
-    hasSelectedTools;
+    isStacked || message.includes('\n') || isMultiLine || hasSelectedTools;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
 
   const handleSend = async () => {
     if (isSendDisabled) return;
+    if (!isAttachmentsEnabled && message.length >= pasteTextThreshold) {
+      onMessageTooLong?.(message.length, pasteTextThreshold);
+      return;
+    }
 
     const currentMessage = message;
     const currentAttachments = attachments;
@@ -461,6 +482,7 @@ export const Input: FC<InputProps> = ({
               renderFooterActions({ canSend, onSend: handleSend })
             ) : (
               <>
+                {usageLimitsSlot}
                 <ModelSelectorControl
                   deployments={deployments}
                   selectedDeploymentId={selectedDeploymentId}

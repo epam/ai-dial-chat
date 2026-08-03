@@ -123,6 +123,14 @@ export interface EditMessageInputProps {
    * When absent the cards are not rendered as interactive.
    */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Character count above which pasted plain-text triggers `onMessageTooLong` when attachments are disabled. Defaults to `4000`. */
+  pasteTextThreshold?: number;
+  /**
+   * Called when the user pastes text whose length is ≥ `pasteTextThreshold` while
+   * `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
+   * host is responsible for surfacing the error to the user.
+   */
+  onMessageTooLong?: (length: number, max: number) => void;
 }
 
 /** Props accepted by the `ConversationInput` component. */
@@ -304,4 +312,12 @@ export interface ConversationInputProps {
   toolsBackLabel?: string;
   /** Labels for the selected-tools chip row shown in the input when tools are active. */
   toolsChipLabels?: ToolsChipLabels;
+  /** Arbitrary slot rendered in the action row before the model selector. Use to inject app-level controls (e.g. a token-usage indicator). */
+  usageLimitsSlot?: ReactNode;
+  /**
+   * Called when the user pastes text whose length is ≥ `pasteTextThreshold` while
+   * `isAttachmentsEnabled` is `false`. The text is still inserted inline — the
+   * host is responsible for surfacing the error to the user.
+   */
+  onMessageTooLong?: (length: number, max: number) => void;
 }

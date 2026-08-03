@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Chat API (1.0.0)",
-    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 73 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
+    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 93 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -124,6 +124,28 @@
           }
         },
         {
+          "name": "Update an application",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My App\",\n  \"description\": \"A custom application.\",\n  \"iconUrl\": \"https://example.com/icon.svg\",\n  \"topics\": [\n    \"nlp\",\n    \"assistant\"\n  ],\n  \"intro\": \"Summarizes long documents in one line.\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/applications/{{applicationName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "applications", "{{applicationName}}"]
+            },
+            "description": "Updates the General-step fields (name, description, iconUrl, topics, intro) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties, version) is preserved untouched. Invalidates the applications and deployments list caches on success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
           "name": "Delete an application",
           "request": {
             "method": "DELETE",
@@ -241,6 +263,80 @@
       ]
     },
     {
+      "name": "client-channel",
+      "item": [
+        {
+          "name": "Subscribe to the DIAL Core client channel",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              {
+                "key": "x-dial-client-channel-id",
+                "value": "x-dial-client-channel-id",
+                "disabled": true
+              },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/client-channel/subscribe",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "client-channel", "subscribe"]
+            },
+            "description": "Opens an SSE stream proxying DIAL Core's client-channel RPC events (e.g. `toolset/signin`) for the authenticated session. Relays the upstream stream without buffering and echoes the assigned X-DIAL-CLIENT-CHANNEL-ID response header. Send the same header on reconnect to resume an existing channel.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Report an RPC response on the client channel",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              {
+                "key": "x-dial-client-channel-id",
+                "value": "x-dial-client-channel-id"
+              },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"a1b2c3d4-e5f6-4789-a012-3456789abcde\",\n  \"result\": \"success\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/client-channel/report",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "client-channel", "report"]
+            },
+            "description": "Forwards a `{ id, result }` RPC response (e.g. a toolset sign-in success/denial) to DIAL Core for the given channel, so Core can resume or terminate the blocked tool call.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Unsubscribe from the client channel",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              {
+                "key": "x-dial-client-channel-id",
+                "value": "x-dial-client-channel-id"
+              },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/client-channel/unsubscribe",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "client-channel", "unsubscribe"]
+            },
+            "description": "Closes the given client channel on DIAL Core. Treats an already-gone channel (404) as idempotent success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        }
+      ]
+    },
+    {
       "name": "conversations",
       "item": [
         {
@@ -295,7 +391,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"conversation\": {\n    \"id\": \"test-bucket/uuid__Hello\",\n    \"folderId\": \"test-bucket\",\n    \"name\": \"Hello\",\n    \"model\": {\n      \"id\": \"anthropic.claude-v3-sonnet\"\n    },\n    \"prompt\": \"\",\n    \"temperature\": 1,\n    \"messages\": [\n      {\n        \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n        \"role\": \"user\",\n        \"content\": \"Hello!\",\n        \"timestamp\": \"2026-05-19T16:00:00.000Z\",\n        \"custom_content\": {\n          \"attachments\": [\n            {\n              \"index\": 0,\n              \"type\": \"type\",\n              \"title\": \"title\",\n              \"data\": \"data\",\n              \"url\": \"url\",\n              \"reference_type\": \"reference_type\",\n              \"reference_url\": \"reference_url\"\n            }\n          ],\n          \"configuration_value\": {\n            \"button\": 1\n          },\n          \"form_value\": {\n            \"field1\": \"value\",\n            \"field2\": 42\n          },\n          \"event_type\": \"model_changed\",\n          \"previous_deployment_id\": \"gpt-4o\",\n          \"new_deployment_id\": \"claude-3\"\n        }\n      }\n    ],\n    \"lastActivityDate\": 1779206400000,\n    \"updatedAt\": 1779206400000,\n    \"selectedAddons\": [],\n    \"assistantModelId\": \"anthropic.claude-v3-sonnet\",\n    \"responseFormat\": \"markdown\",\n    \"llmNamingDone\": false\n  }\n}\n",
+              "raw": "{\n  \"conversation\": {\n    \"id\": \"test-bucket/uuid__Hello\",\n    \"folderId\": \"test-bucket\",\n    \"name\": \"Hello\",\n    \"model\": {\n      \"id\": \"anthropic.claude-v3-sonnet\"\n    },\n    \"prompt\": \"\",\n    \"temperature\": 1,\n    \"messages\": [\n      {\n        \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n        \"role\": \"user\",\n        \"content\": \"Hello!\",\n        \"timestamp\": \"2026-05-19T16:00:00.000Z\",\n        \"custom_content\": {\n          \"attachments\": [\n            {\n              \"index\": 0,\n              \"type\": \"type\",\n              \"title\": \"title\",\n              \"data\": \"data\",\n              \"url\": \"url\",\n              \"reference_type\": \"reference_type\",\n              \"reference_url\": \"reference_url\"\n            }\n          ],\n          \"configuration_value\": {\n            \"button\": 1\n          },\n          \"form_value\": {\n            \"field1\": \"value\",\n            \"field2\": 42\n          },\n          \"event_type\": \"model_changed\",\n          \"previous_deployment_id\": \"gpt-4o\",\n          \"new_deployment_id\": \"claude-3\"\n        },\n        \"streamErrorMessage\": \"You have exceeded your daily token limit.\"\n      }\n    ],\n    \"lastActivityDate\": 1779206400000,\n    \"updatedAt\": 1779206400000,\n    \"selectedAddons\": [],\n    \"assistantModelId\": \"anthropic.claude-v3-sonnet\",\n    \"responseFormat\": \"markdown\",\n    \"llmNamingDone\": false\n  }\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -387,12 +483,6 @@
                   "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
                   "disabled": true,
                   "description": "Pagination cursor returned in the previous response as `nextToken`. Omit for the first page."
-                },
-                {
-                  "key": "path",
-                  "value": "{{path}}",
-                  "disabled": true,
-                  "description": "DIAL Core subfolder path to scope the listing. Omit or pass an empty string to list all conversations from the bucket root (\"My Files\")."
                 }
               ]
             },
@@ -435,7 +525,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"generationId\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n  \"path\": \"gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n  \"model\": \"anthropic.claude-v3-sonnet\",\n  \"mode\": \"append\",\n  \"message\": \"What is the capital of France?\",\n  \"messageIndex\": 3,\n  \"custom_content\": {\n    \"attachments\": [\n      {\n        \"index\": 0,\n        \"type\": \"type\",\n        \"title\": \"title\",\n        \"data\": \"data\",\n        \"url\": \"url\",\n        \"reference_type\": \"reference_type\",\n        \"reference_url\": \"reference_url\"\n      }\n    ],\n    \"configuration_value\": {\n      \"button\": 1\n    },\n    \"form_value\": {\n      \"field1\": \"value\",\n      \"field2\": 42\n    }\n  }\n}\n",
+              "raw": "{\n  \"generationId\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n  \"path\": \"gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n  \"model\": \"anthropic.claude-v3-sonnet\",\n  \"mode\": \"append\",\n  \"message\": \"What is the capital of France?\",\n  \"messageIndex\": 3,\n  \"custom_content\": {\n    \"attachments\": [\n      {\n        \"index\": 0,\n        \"type\": \"type\",\n        \"title\": \"title\",\n        \"data\": \"data\",\n        \"url\": \"url\",\n        \"reference_type\": \"reference_type\",\n        \"reference_url\": \"reference_url\"\n      }\n    ],\n    \"configuration_value\": {\n      \"button\": 1\n    },\n    \"form_value\": {\n      \"field1\": \"value\",\n      \"field2\": 42\n    }\n  },\n  \"clientChannelId\": \"a1b2c3d4-e5f6-4789-a012-3456789abcde\"\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -646,6 +736,12 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "deployments"],
               "query": [
+                {
+                  "key": "refresh",
+                  "value": "false",
+                  "disabled": true,
+                  "description": "Bypass the short server-side deployments list cache and refresh from DIAL Core"
+                },
                 {
                   "key": "interface_type",
                   "value": "chat",
@@ -1065,28 +1161,6 @@
           }
         },
         {
-          "name": "Create a share invitation link for files and folders",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Accept", "value": "application/json" },
-              { "key": "Origin", "value": "{{origin}}" },
-              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"items\": [\n    {\n      \"bucket\": \"my-bucket\",\n      \"path\": \"reports/q1.pdf\"\n    }\n  ],\n  \"permission\": \"read\"\n}\n",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/files/share",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "files", "share"]
-            },
-            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
-          }
-        },
-        {
           "name": "Revoke all shared access to files and folders",
           "request": {
             "method": "POST",
@@ -1159,6 +1233,55 @@
       ]
     },
     {
+      "name": "footer",
+      "item": [
+        {
+          "name": "Submit a Request API Key form",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_id\": \"My AI Project\",\n  \"project_stream\": \"Stream A\",\n  \"project_lead\": \"lead@example.com\",\n  \"business_reason\": \"We need access for automated document processing.\",\n  \"project_end\": \"31/12/2025\",\n  \"access_scenario\": \"Daily batch processing of documents.\",\n  \"workload_pattern\": \"Estimated 10k tokens per day.\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/footer/request-api-key",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "footer", "request-api-key"]
+            },
+            "description": "Proxies the form submission to the configured Azure Function. The requester email is injected server-side from the authenticated session.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Submit a Report an Issue form",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Something is broken\",\n  \"description\": \"When I click the button, nothing happens.\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/footer/report-issue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "footer", "report-issue"]
+            },
+            "description": "Proxies the form submission to the configured Azure Function. The reporter email is injected server-side from the authenticated session.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        }
+      ]
+    },
+    {
       "name": "health",
       "item": [
         {
@@ -1203,6 +1326,253 @@
               "path": ["api", "v1", "models", "{{modelName}}"]
             },
             "description": "Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller's session access token. Results are cached server-side for 60 seconds per user per model."
+          }
+        }
+      ]
+    },
+    {
+      "name": "prompts",
+      "item": [
+        {
+          "name": "List personal prompts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts"]
+            },
+            "description": "Returns all personal prompts and the folder hierarchy."
+          }
+        },
+        {
+          "name": "Create a personal prompt",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Prompt\",\n  \"description\": \"description\",\n  \"content\": \"content\",\n  \"folderId\": \"Work/AI\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Update a personal prompt",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"name\",\n  \"description\": \"description\",\n  \"content\": \"content\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Prompt path to update"
+                }
+              ]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Delete a personal prompt",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Prompt path to delete"
+                }
+              ]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Get a personal prompt",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts/item?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts", "item"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Prompt path within the prompts namespace"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List organisation prompts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts", "public"]
+            }
+          }
+        },
+        {
+          "name": "Get an organisation prompt",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts/public/item?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts", "public", "item"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Prompt path within the prompts namespace"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create a prompt folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"AI\",\n  \"parentId\": \"Work\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts/folders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts", "folders"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Rename a prompt folder",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Machine Learning\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts/folders?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts", "folders"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Folder path to rename"
+                }
+              ]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Delete a prompt folder",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts/folders?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts", "folders"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Folder path to delete"
+                }
+              ]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Move a personal prompt to a different folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetFolderId\": \"Work/AI\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/prompts/move?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "prompts", "move"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Prompt path to move"
+                }
+              ]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         }
       ]
@@ -1289,6 +1659,81 @@
       ]
     },
     {
+      "name": "scheduled-tasks",
+      "item": [
+        {
+          "name": "List scheduled tasks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scheduled-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "scheduled-tasks"]
+            },
+            "description": "Returns the DIAL Scheduler schedules visible to the authenticated session user. Proxies the DIAL Scheduler routed-deployment API using the session access token. Results are cached server-side for 30 seconds per user."
+          }
+        },
+        {
+          "name": "Create a scheduled task",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Daily summary\",\n  \"trigger\": {\n    \"date\": \"2026-07-24T09:00:00.000Z\",\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      }\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Summarizes unread inbox items every morning\",\n  \"stream\": true\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scheduled-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "scheduled-tasks"]
+            },
+            "description": "Creates a DIAL Scheduler schedule that runs a chat completion on the given model and prompt, using the authenticated session user's dial-oauth credentials. Invalidates the scheduled tasks list cache on success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Get a scheduled task by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scheduled-tasks/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "scheduled-tasks", "{{scheduleId}}"]
+            },
+            "description": "Returns a single DIAL Scheduler schedule by id, proxying DIAL Scheduler using the session user's access token. Not cached."
+          }
+        },
+        {
+          "name": "Update a scheduled task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Daily summary\",\n  \"trigger\": {\n    \"date\": \"2026-07-24T09:00:00.000Z\",\n    \"cron\": {\n      \"fields\": {\n        \"minute\": \"0\",\n        \"hour\": \"9\"\n      }\n    }\n  },\n  \"model\": \"gpt-4.1-mini-2025-04-14\",\n  \"prompt\": \"Summarize my inbox\",\n  \"description\": \"Summarizes unread inbox items every morning\",\n  \"stream\": true\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scheduled-tasks/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "scheduled-tasks", "{{scheduleId}}"]
+            },
+            "description": "Updates an existing DIAL Scheduler schedule for the authenticated session user. Invalidates the scheduled tasks list cache on success.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        }
+      ]
+    },
+    {
       "name": "share",
       "item": [
         {
@@ -1310,7 +1755,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "share"]
             },
-            "description": "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — or conversation) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+            "description": "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — conversation, or prompt) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         },
         {
@@ -1519,7 +1964,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "toolsets", "{{toolsetName}}", "logout"]
             },
-            "description": "Revokes a toolset's credentials by proxying DIAL Core (POST /v1/ops/toolset/signout).\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+            "description": "Revokes a toolset's credentials by proxying DIAL Core (POST /v1/ops/toolset/signout). When the request body omits `authenticationType`, the toolset's own stored authentication type is looked up first (same lookup as `GET /api/v1/toolsets/{toolsetName}`).\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         }
       ]

@@ -32,7 +32,24 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
   useCodeCopy: vi.fn(() => ({ isCopied: false, copy: vi.fn() })),
 }));
 
-vi.mock('@epam/ai-dial-kit', () => ({
+vi.mock('../../../../utils/mcp-endpoint-url', () => ({
+  buildToolsetMcpUrl: vi.fn(
+    (base: string, id: string) => `${base}/v1/toolset/${id}/mcp`,
+  ),
+}));
+
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  PrimaryButton: ({
+    label,
+    onClick,
+  }: {
+    label?: string;
+    onClick?: () => void;
+  }) => (
+    <button type="button" onClick={onClick}>
+      {label}
+    </button>
+  ),
   NeutralButton: ({
     label,
     onClick,
@@ -44,15 +61,6 @@ vi.mock('@epam/ai-dial-kit', () => ({
       {label}
     </button>
   ),
-}));
-
-vi.mock('../../../../utils/mcp-endpoint-url', () => ({
-  buildToolsetMcpUrl: vi.fn(
-    (base: string, id: string) => `${base}/v1/toolset/${id}/mcp`,
-  ),
-}));
-
-vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialInput: ({
     value,
     onChange,

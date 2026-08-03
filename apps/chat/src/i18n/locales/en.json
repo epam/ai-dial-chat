@@ -267,7 +267,8 @@
       "step_other": "steps"
     },
     "attachMenuDialFileSystem": "DIAL file system",
-    "addMenuTitle": "Add files"
+    "addMenuTitle": "Add files",
+    "messageTooLong": "Max allowed message length is {{max}}"
   },
   "conversationPanel": {
     "title": "Chats",
@@ -328,7 +329,7 @@
   },
   "conversationExport": {
     "exportLabel": "Export",
-    "exportAllLabel": "Export conservations",
+    "exportAllLabel": "Export conversations",
     "withAttachmentsOption": "With attachments",
     "withoutAttachmentsOption": "Without attachments",
     "queueTitle": "Exporting",
@@ -858,5 +859,14 @@
     "selectedCount_one": "{{count}} tool",
     "selectedCount_other": "{{count}} tools",
     "removeTool": "Remove {{label}}"
+  },
+  "conversationInput": {
+    "usageLimits": {
+      "triggerAriaLabel": "Monthly token usage: {{value}}",
+      "popoverTitle": "Usage Limit",
+      "error": "Could not load usage limits",
+      "tokensRemaining": "{{count}} tokens remaining",
+      "progressAriaLabel": "Monthly token usage: {{used}} of {{total}} tokens used"
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Input, NeutralButton } from '@epam/ai-dial-kit';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { Input } from '@epam/ai-dial-kit';
+import { DIAL_ICON_SIZE, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
 import { FC } from 'react';
 import styles from '../SharePopover/SharePopover.module.scss';

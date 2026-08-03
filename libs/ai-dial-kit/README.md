@@ -50,18 +50,6 @@ import { SearchBar } from '@epam/ai-dial-kit';
 />;
 ```
 
-### Button variants
-
-Three button variants for different visual emphasis levels.
-
-```tsx
-import { PrimaryButton, NeutralButton, GhostButton } from '@epam/ai-dial-kit';
-
-<PrimaryButton onClick={handleSave}>Save</PrimaryButton>
-<NeutralButton onClick={handleCancel}>Cancel</NeutralButton>
-<GhostButton onClick={handleMore}>More</GhostButton>
-```
-
 ### GhostIconButton
 
 An icon-only button with a ghost (transparent) background.

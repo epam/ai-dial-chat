@@ -1,5 +1,4 @@
-import { NeutralButton } from '@epam/ai-dial-kit';
-import { ElementSize } from '@epam/ai-dial-ui-kit';
+import { ElementSize, NeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC, memo, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CitationsI18nKeys } from '../../../constants/translation-keys';

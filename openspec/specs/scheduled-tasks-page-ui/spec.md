@@ -223,6 +223,8 @@ Search is now server-driven and full-dataset; sort remains a client-side operati
 
 `ScheduledTasksPage` SHALL send `searchQuery` to `GET /api/v1/scheduled-tasks` as the `search` query parameter (see the modified `scheduled-tasks-api` "List scheduled tasks" requirement) instead of filtering the fetched array locally; `filterScheduledTaskItems` is removed from `libs/scheduled-tasks/src/utils/filter-sort.ts`. `ScheduledTasks`/`ScheduledTasksPage` SHALL continue to sort the currently-loaded `items` by `sortKey` using `sortScheduledTaskItems` (unchanged): `firstToRun`/`lastToRun` order by `sortValues.nextRunAt` ascending/descending (items missing `nextRunAt` sort last), `newest` orders by `sortValues.createdAt` descending (items missing `createdAt` sort last), and `nameAZ` orders by `displayName` ascending. Because pagination now loads the dataset incrementally (see the new "Infinite scroll loads and appends additional pages" requirement), sort only orders the pages fetched so far, not the full remote dataset — an accepted, documented limitation, not a regression versus today's single-page behavior.
 
+`map-scheduled-task-dto.ts`'s `formatCronScheduleLabel` SHALL convert the stored UTC `cron.fields.hour`/`minute` (and `day_of_week`/`day` when present) back to the current browser's local time before formatting the display label, using the same reference-`Date` conversion technique (inverse direction) as the submit-side conversion in `buildCronFields`, so the displayed recurring schedule time always matches the wall-clock time that will actually execute. This mirrors the existing local-display behavior already used for "once" schedules via `Intl.DateTimeFormat(undefined, ...)`.
+
 #### Scenario: Search sends a server request instead of filtering locally
 
 - **WHEN** `searchQuery = "competitor"` is set
@@ -242,6 +244,16 @@ Search is now server-driven and full-dataset; sort remains a client-side operati
 
 - **WHEN** the user changes `sortKey`
 - **THEN** no new `GET /api/v1/scheduled-tasks` request is sent; only the already-loaded `items` are reordered for rendering
+
+#### Scenario: Recurring schedule label shows the local equivalent of the stored UTC time
+
+- **WHEN** a task's `trigger.cron.fields` stores UTC `hour = '7'`, `minute = '0'`, and the browser's timezone is UTC+2
+- **THEN** `formatCronScheduleLabel` renders a label showing `09:00`, not `07:00`
+
+#### Scenario: Weekly recurring label shows the local day, not the stored UTC day
+
+- **WHEN** a task's `trigger.cron.fields` stores UTC `day_of_week` for Tuesday with `hour = '21'`, `minute = '30'`, and the browser's timezone is UTC+2 (so the local equivalent is Monday `23:30`)
+- **THEN** `formatCronScheduleLabel` renders a label showing Monday `23:30`, not Tuesday `21:30`
 
 ### Requirement: Scheduled Tasks card and list strings flow through react-i18next
 

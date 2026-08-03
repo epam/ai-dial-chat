@@ -32,8 +32,6 @@ export interface ToolbarColors {
   icon?: string;
   /** Vertical divider color next to sort dropdown. Fallback: `--stroke-secondary`. */
   divider?: string;
-  /** Clear-all button text color. Fallback: `--text-error`. */
-  clearAll?: string;
   /** Bottom border color of tabs row. Fallback: `--stroke-secondary`. */
   tabsBorder?: string;
 }

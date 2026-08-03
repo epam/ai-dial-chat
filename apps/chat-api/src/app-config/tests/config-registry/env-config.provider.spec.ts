@@ -341,6 +341,157 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('customVisualizers', () => {
+    it('returns undefined when CUSTOM_VISUALIZERS is not set', async () => {
+      const { provider } = makeProvider({ CUSTOM_VISUALIZERS: undefined });
+      expect(await provider.resolve('customVisualizers', ctx)).toBeUndefined();
+    });
+
+    it('returns [] and logs an error when CUSTOM_VISUALIZERS is invalid JSON', async () => {
+      const { provider } = makeProvider({ CUSTOM_VISUALIZERS: 'not-json' });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('customVisualizers', ctx)).toEqual([]);
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+
+    it('returns [] and logs an error when CUSTOM_VISUALIZERS is valid JSON but not an array', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify({ contentType: 'x' }),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      expect(await provider.resolve('customVisualizers', ctx)).toEqual([]);
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+
+    it('accepts a valid entry and preserves its fields verbatim', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            title: 'my-viz',
+            description: 'my viz description',
+
+            contentType: 'application/x-my-viz',
+            url: 'https://viz.example.com',
+          },
+        ]),
+      });
+
+      expect(await provider.resolve('customVisualizers', ctx)).toEqual([
+        {
+          title: 'my-viz',
+          description: 'my viz description',
+
+          contentType: 'application/x-my-viz',
+          url: 'https://viz.example.com',
+          requestTimeout: undefined,
+          passAuthInfo: undefined,
+          passExplicitToken: undefined,
+        },
+      ]);
+    });
+
+    it('keeps other valid entries when one entry fails validation', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            title: 'my-viz',
+
+            contentType: 'application/x-my-viz',
+            url: 'https://viz.example.com',
+          },
+          { contentType: '', url: 'not-a-url', title: 'bad', icon: 'x' },
+        ]),
+      });
+      const loggerErrorSpy = vi.spyOn(provider['logger'], 'error');
+
+      const result = (await provider.resolve(
+        'customVisualizers',
+        ctx,
+      )) as unknown[];
+
+      expect(result).toHaveLength(1);
+      expect(loggerErrorSpy).toHaveBeenCalled();
+    });
+
+    it('drops an entry with a missing title', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            contentType: 'application/x-my-viz',
+            url: 'https://viz.example.com',
+          },
+        ]),
+      });
+
+      expect(await provider.resolve('customVisualizers', ctx)).toEqual([]);
+    });
+
+    it('accepts a whitespace-only title (some visualizers use spaces as appName)', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            contentType: 'application/x-my-viz',
+            url: 'https://viz.example.com',
+            title: ' ',
+          },
+        ]),
+      });
+
+      const result = (await provider.resolve('customVisualizers', ctx)) as {
+        title: string;
+      }[];
+      expect(result).toHaveLength(1);
+      expect(result[0].title).toBe(' ');
+    });
+
+    it('accepts a comma-separated contentType and stores it verbatim', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            contentType: 'application/x-a, application/x-b',
+            url: 'https://viz.example.com',
+            title: 'multi',
+          },
+        ]),
+      });
+
+      const result = (await provider.resolve(
+        'customVisualizers',
+        ctx,
+      )) as Array<{ contentType: string }>;
+      expect(result[0].contentType).toBe('application/x-a, application/x-b');
+    });
+
+    it('keeps an entry with unrecognized fields, logging a warning listing them', async () => {
+      const { provider } = makeProvider({
+        CUSTOM_VISUALIZERS: JSON.stringify([
+          {
+            title: 'my-viz',
+            contentType: 'application/x-my-viz',
+            url: 'https://viz.example.com',
+            width: 800,
+            expanded: true,
+          },
+        ]),
+      });
+      const loggerWarnSpy = vi.spyOn(provider['logger'], 'warn');
+
+      const result = (await provider.resolve(
+        'customVisualizers',
+        ctx,
+      )) as Array<Record<string, unknown>>;
+
+      expect(result).toHaveLength(1);
+      expect(result[0].width).toBe(800);
+      expect(result[0]).not.toHaveProperty('expanded');
+      expect(loggerWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('expanded'),
+      );
+    });
+  });
+
   describe('unknown key', () => {
     it('returns undefined for an unknown key', async () => {
       const { provider } = makeProvider();

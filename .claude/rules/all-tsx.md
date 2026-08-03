@@ -31,24 +31,6 @@ className={mergeClasses(nameClassName, styles.nameText)}
 1. **Look for a UI kit component** — check if a suitable `Dial*` component exists for your use case using the MCP tools below.
 2. **Use raw elements only as last resort** — if and only if no UI kit component meets the requirements, use native HTML (and document why).
 
-### Buttons
-
-**Never** import button components directly from `@epam/ai-dial-ui-kit`. Always use the app-level wrappers from `libs/ai-dial-kit/src/components/Button/Buttons.tsx`:
-
-| Use case                   | Component       |
-| -------------------------- | --------------- |
-| Primary action             | `PrimaryButton` |
-| Neutral / secondary action | `NeutralButton` |
-| Ghost / tertiary action    | `GhostButton`   |
-
-```tsx
-// Correct
-import { PrimaryButton, NeutralButton, GhostButton } from '@epam/ai-dial-kit';
-
-// Wrong — do not import directly from ui-kit
-import { DialPrimaryButton, DialGhostButton } from '@epam/ai-dial-ui-kit';
-```
-
 ### Search bar
 
 **Never** use `DialSearch` from `@epam/ai-dial-ui-kit`. Use `SearchBar` from `@epam/ai-dial-kit` instead.
