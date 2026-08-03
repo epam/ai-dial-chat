@@ -5,7 +5,7 @@ import type {
   Stage,
   StreamChunk,
 } from '@epam/ai-dial-chat-shared';
-import { normalizeRawAnnotations } from './annotation';
+import { normalizeRawAnnotations } from '@epam/ai-dial-quotations';
 
 const mergeAnnotations = (
   existing: Annotation[],

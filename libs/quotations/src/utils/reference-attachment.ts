@@ -22,10 +22,7 @@ export interface PdfPageReference {
 
 const PDF_PAGE_REFERENCE_REGEX = /^(.*\.pdf)(?:#page=(\d+))?$/i;
 
-/**
- * Parses a reference URL that points at a PDF file, optionally with a
- * `#page=N` fragment. Returns `null` when the URL does not target a PDF.
- */
+/** Parses a reference URL that points at a PDF file, optionally with a `#page=N` fragment. Returns `null` when the URL does not target a PDF. */
 export const parsePdfPageReference = (url: string): PdfPageReference | null => {
   const match = PDF_PAGE_REFERENCE_REGEX.exec(url);
   if (!match) return null;

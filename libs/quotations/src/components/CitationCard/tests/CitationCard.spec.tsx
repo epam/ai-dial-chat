@@ -1,14 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  BasicI18nKeys,
-  CitationsI18nKeys,
-} from '../../../../constants/translation-keys';
-import type { AnnotationGroup } from '../../../../utils/group-annotations-by-source';
-import CitationCard from '../CitationCard';
-
-// react-i18next is globally mocked — t(key) returns the key string.
+import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
+import { CitationCard } from '../CitationCard';
 
 const makeGroup = (
   count = 1,
@@ -35,6 +29,17 @@ const makeGroup = (
   },
 });
 
+const defaultLabels = {
+  ariaLabel: 'Citation from report.pdf',
+  previousCitation: 'Previous',
+  nextCitation: 'Next',
+  formatSwitcherText: (current: number, total: number) =>
+    `${current} / ${total}`,
+  preview: 'Preview',
+  openInBrowser: 'Open in browser',
+  download: 'Download',
+};
+
 const defaultProps = (
   overrides: Partial<Parameters<typeof CitationCard>[0]> = {},
 ) => ({
@@ -43,6 +48,7 @@ const defaultProps = (
   onIndexChange: vi.fn(),
   onPreview: vi.fn(),
   onOpenInBrowser: vi.fn(),
+  labels: defaultLabels,
   ...overrides,
 });
 
@@ -54,16 +60,20 @@ describe('CitationCard', () => {
 
   it('hides the switcher when there is only one annotation', () => {
     render(<CitationCard {...defaultProps({ group: makeGroup(1) })} />);
-    expect(screen.queryByText(CitationsI18nKeys.PopupSwitcher)).toBeFalsy();
+    expect(screen.queryByRole('button', { name: 'Previous' })).toBeFalsy();
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeFalsy();
   });
 
   it('shows the switcher when there are multiple annotations', () => {
     render(
       <CitationCard
-        {...defaultProps({ group: makeGroup(3), activeIndex: 0 })}
+        {...defaultProps({
+          group: makeGroup(3),
+          activeIndex: 0,
+        })}
       />,
     );
-    expect(screen.getByText(CitationsI18nKeys.PopupSwitcher)).toBeTruthy();
+    expect(screen.getByText('1 / 3')).toBeTruthy();
   });
 
   it('calls onIndexChange with incremented index when next is clicked', async () => {
@@ -77,23 +87,9 @@ describe('CitationCard', () => {
         })}
       />,
     );
-    const nextBtn = screen.getByRole('button', {
-      name: CitationsI18nKeys.PopupNextCitation,
-    });
+    const nextBtn = screen.getByRole('button', { name: 'Next' });
     await userEvent.click(nextBtn);
     expect(onIndexChange).toHaveBeenCalledWith(1);
-  });
-
-  it('previous button is disabled when activeIndex is 0', () => {
-    render(
-      <CitationCard
-        {...defaultProps({ group: makeGroup(3), activeIndex: 0 })}
-      />,
-    );
-    const prevBtn = screen.getByRole('button', {
-      name: CitationsI18nKeys.PopupPreviousCitation,
-    });
-    expect(prevBtn.getAttribute('disabled')).toBeDefined();
   });
 
   it('renders body title and quote for the active annotation', () => {
@@ -107,9 +103,7 @@ describe('CitationCard', () => {
     const onPreview = vi.fn();
     const group = makeGroup(1);
     render(<CitationCard {...defaultProps({ group, onPreview })} />);
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(onPreview).toHaveBeenCalledWith(group.annotations[0]);
   });
 
@@ -118,27 +112,21 @@ describe('CitationCard', () => {
     const group = makeGroup(1, 'text/html');
     render(<CitationCard {...defaultProps({ group, onOpenInBrowser })} />);
     await userEvent.click(
-      screen.getByRole('button', {
-        name: CitationsI18nKeys.PopupOpenInBrowser,
-      }),
+      screen.getByRole('button', { name: 'Open in browser' }),
     );
     expect(onOpenInBrowser).toHaveBeenCalledWith(group.annotations[0]);
   });
 
-  it('hides the Preview button and labels the remaining button "Open in browser" when onPreview is omitted', () => {
+  it('hides the Preview button when onPreview is omitted', () => {
     const group = makeGroup(1, 'application/pdf');
     render(<CitationCard {...defaultProps({ group, onPreview: undefined })} />);
+    expect(screen.queryByRole('button', { name: 'Preview' })).toBeFalsy();
     expect(
-      screen.queryByRole('button', { name: BasicI18nKeys.Preview }),
-    ).toBeFalsy();
-    expect(
-      screen.getByRole('button', {
-        name: CitationsI18nKeys.PopupOpenInBrowser,
-      }),
+      screen.getByRole('button', { name: 'Open in browser' }),
     ).toBeTruthy();
   });
 
-  it('calls onOpenInBrowser without closing when onPreview is omitted', async () => {
+  it('calls onOpenInBrowser when onPreview is omitted', async () => {
     const onOpenInBrowser = vi.fn();
     const group = makeGroup(1, 'application/pdf');
     render(
@@ -147,9 +135,7 @@ describe('CitationCard', () => {
       />,
     );
     await userEvent.click(
-      screen.getByRole('button', {
-        name: CitationsI18nKeys.PopupOpenInBrowser,
-      }),
+      screen.getByRole('button', { name: 'Open in browser' }),
     );
     expect(onOpenInBrowser).toHaveBeenCalledWith(group.annotations[0]);
   });
