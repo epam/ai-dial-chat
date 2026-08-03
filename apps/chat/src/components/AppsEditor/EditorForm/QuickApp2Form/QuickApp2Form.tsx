@@ -411,6 +411,48 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             />
           )}
         />
+
+        <Controller
+          name="addAttachment"
+          control={control}
+          render={({ field }) => (
+            <ToggleSwitchField
+              isOn={field.value}
+              handleSwitch={() => field.onChange(!field.value)}
+              switchOnText="ON"
+              switchOFFText="OFF"
+              label={t(MarketplaceI18nKeys.AddAttachment)}
+              additionalText={t(
+                MarketplaceI18nKeys.AllowTheAgentToAttachFilesToTheResponse,
+              )}
+              info={t(MarketplaceI18nKeys.AddAttachmentDescription)}
+              className="flex items-center gap-2"
+              disabled={isAppPublic}
+              tooltip={isAppPublicTooltip}
+            />
+          )}
+        />
+
+        <Controller
+          name="webFetch"
+          control={control}
+          render={({ field }) => (
+            <ToggleSwitchField
+              isOn={field.value}
+              handleSwitch={() => field.onChange(!field.value)}
+              switchOnText="ON"
+              switchOFFText="OFF"
+              label={t(MarketplaceI18nKeys.WebFetch)}
+              additionalText={t(
+                MarketplaceI18nKeys.AllowTheAgentToFetchWebResources,
+              )}
+              info={t(MarketplaceI18nKeys.WebFetchDescription)}
+              className="flex items-center gap-2"
+              disabled={isAppPublic}
+              tooltip={isAppPublicTooltip}
+            />
+          )}
+        />
       </FormCollapsibleSection>
 
       <FormCollapsibleSection
