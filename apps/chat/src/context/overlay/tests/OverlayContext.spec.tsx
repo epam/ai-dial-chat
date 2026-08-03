@@ -1,5 +1,6 @@
 import {
   OverlayEventType,
+  OverlayRequestErrorCode,
   OverlayRequestType,
 } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -624,7 +625,7 @@ describe('OverlayContext', () => {
       });
     });
 
-    it('rejects malformed active-conversation request payloads without responding', () => {
+    it('responds with a structured error for malformed active-conversation request payloads', () => {
       const { result } = renderHook(() => useOverlay(), { wrapper });
       establishHostDomain();
       const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
@@ -651,18 +652,22 @@ describe('OverlayContext', () => {
       ).not.toThrow();
 
       expect(sendMessage).not.toHaveBeenCalled();
-      expect(
-        postMessageSpy.mock.calls.some(
-          ([message]) =>
-            (message as { requestId?: string }).requestId === 'malformed-send',
-        ),
-      ).toBe(false);
+      const response = postMessageSpy.mock.calls.find(
+        ([message]) =>
+          (message as { requestId?: string }).requestId === 'malformed-send',
+      )?.[0] as {
+        error: { code: OverlayRequestErrorCode; message: string };
+      };
+      expect(response.error).toEqual({
+        code: OverlayRequestErrorCode.InvalidPayload,
+        message: expect.stringContaining(OverlayRequestType.SendMessage),
+      });
       expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('malformed'),
+        expect.stringContaining(OverlayRequestErrorCode.InvalidPayload),
       );
     });
 
-    it('handles rejected bridge calls without sending a false success response', async () => {
+    it('responds with a structured error when a bridge call rejects', async () => {
       const { result } = renderHook(() => useOverlay(), { wrapper });
       establishHostDomain();
       const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
@@ -690,16 +695,49 @@ describe('OverlayContext', () => {
       await waitFor(() => {
         expect(sendMessage).toHaveBeenCalledWith('hi');
         expect(console.warn).toHaveBeenCalledWith(
-          expect.stringContaining('failed to execute'),
+          expect.stringContaining(
+            OverlayRequestErrorCode.RequestExecutionFailed,
+          ),
           expect.any(Error),
         );
       });
-      expect(
-        postMessageSpy.mock.calls.some(
-          ([message]) =>
-            (message as { requestId?: string }).requestId === 'rejected-send',
-        ),
-      ).toBe(false);
+      const response = postMessageSpy.mock.calls.find(
+        ([message]) =>
+          (message as { requestId?: string }).requestId === 'rejected-send',
+      )?.[0] as {
+        error: { code: OverlayRequestErrorCode; message: string };
+      };
+      expect(response.error).toEqual({
+        code: OverlayRequestErrorCode.RequestExecutionFailed,
+        message: 'send failed',
+      });
+    });
+
+    it('responds immediately when an active-conversation method is called from the empty composer', () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      act(() => {
+        result.current.notifyConversationLoaded();
+      });
+      dispatchFromHost({
+        type: OverlayRequestType.GetMessages,
+        requestId: 'get-without-conversation',
+      });
+
+      const response = postMessageSpy.mock.calls.find(
+        ([message]) =>
+          (message as { requestId?: string }).requestId ===
+          'get-without-conversation',
+      )?.[0] as {
+        error: { code: OverlayRequestErrorCode; message: string };
+      };
+      expect(response.error).toEqual({
+        code: OverlayRequestErrorCode.ActiveConversationUnavailable,
+        message:
+          'No active conversation is open. Open or create a conversation before calling this method.',
+      });
     });
 
     it('answers subsequent requests against a newly-registered bridge, not the previous one', async () => {

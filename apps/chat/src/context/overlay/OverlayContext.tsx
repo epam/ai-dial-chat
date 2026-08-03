@@ -12,6 +12,7 @@ import {
   type OverlayMessageResponse,
   OverlayEventType,
   OverlayFeature,
+  OverlayRequestErrorCode,
   OverlayRequestType,
   type RenameConversationPayload,
   type RenameConversationResponse,
@@ -316,6 +317,9 @@ const logOverlayWarning = (message: string, error?: unknown): void => {
   console.warn(`Overlay: ${message}`);
 };
 
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error && error.message ? error.message : String(error);
+
 const logUnknownEnabledFeatures = (features: readonly string[]): void => {
   const warnedFeatures = new Set<string>();
   features.forEach((feature) => {
@@ -388,6 +392,23 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       return true;
     },
     [],
+  );
+
+  const postRequestError = useCallback(
+    (
+      request: OverlayMessageRequest,
+      code: OverlayRequestErrorCode,
+      message: string,
+      cause?: unknown,
+    ) => {
+      logOverlayWarning(`${request.type} failed [${code}]: ${message}`, cause);
+      postToHost({
+        type: `${request.type}/RESPONSE`,
+        requestId: request.requestId,
+        error: { code, message },
+      });
+    },
+    [postToHost],
   );
 
   const flushConversationLoadedEvent = useCallback(() => {
@@ -464,6 +485,14 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
       }
       const bridge = activeBridgeRef.current;
       if (!bridge) {
+        if (hasEmittedReadyToInteractRef.current) {
+          postRequestError(
+            request,
+            OverlayRequestErrorCode.ActiveConversationUnavailable,
+            'No active conversation is open. Open or create a conversation before calling this method.',
+          );
+          return;
+        }
         queuePendingRequest(pendingBridgeRequestsRef, request);
         return;
       }
@@ -476,11 +505,20 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           request.payload,
         );
       } catch (error) {
-        logOverlayWarning(`failed to execute ${requestType}`, error);
+        postRequestError(
+          request,
+          OverlayRequestErrorCode.RequestExecutionFailed,
+          getErrorMessage(error),
+          error,
+        );
         return;
       }
       if (!responsePromise) {
-        logOverlayWarning(`rejected malformed ${requestType} payload`);
+        postRequestError(
+          request,
+          OverlayRequestErrorCode.InvalidPayload,
+          `The request payload does not match the ${requestType} contract.`,
+        );
         return;
       }
       void responsePromise
@@ -492,10 +530,15 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           });
         })
         .catch((error) => {
-          logOverlayWarning(`failed to execute ${requestType}`, error);
+          postRequestError(
+            request,
+            OverlayRequestErrorCode.RequestExecutionFailed,
+            getErrorMessage(error),
+            error,
+          );
         });
     },
-    [executeAgainstBridge, postToHost],
+    [executeAgainstBridge, postRequestError, postToHost],
   );
 
   const buildSelectedConversationProjection =
@@ -670,11 +713,23 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
       if (requestType === OverlayRequestType.SelectConversation) {
         if (!hasSelectConversationPayload(request.payload)) {
-          logOverlayWarning(`rejected malformed ${requestType} payload`);
+          postRequestError(
+            request,
+            OverlayRequestErrorCode.InvalidPayload,
+            `The request payload does not match the ${requestType} contract.`,
+          );
           return;
         }
         const bridge = conversationListBridgeRef.current;
         if (!bridge) {
+          if (hasEmittedReadyToInteractRef.current) {
+            postRequestError(
+              request,
+              OverlayRequestErrorCode.ConversationListUnavailable,
+              'The conversation list is not available yet.',
+            );
+            return;
+          }
           queuePendingRequest(pendingConversationListRequestsRef, request);
           return;
         }
@@ -688,6 +743,14 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
       const bridge = conversationListBridgeRef.current;
       if (!bridge) {
+        if (hasEmittedReadyToInteractRef.current) {
+          postRequestError(
+            request,
+            OverlayRequestErrorCode.ConversationListUnavailable,
+            'The conversation list is not available yet.',
+          );
+          return;
+        }
         queuePendingRequest(pendingConversationListRequestsRef, request);
         return;
       }
@@ -699,11 +762,20 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           request.payload,
         );
       } catch (error) {
-        logOverlayWarning(`failed to execute ${requestType}`, error);
+        postRequestError(
+          request,
+          OverlayRequestErrorCode.RequestExecutionFailed,
+          getErrorMessage(error),
+          error,
+        );
         return;
       }
       if (!responsePromise) {
-        logOverlayWarning(`rejected malformed ${requestType} payload`);
+        postRequestError(
+          request,
+          OverlayRequestErrorCode.InvalidPayload,
+          `The request payload does not match the ${requestType} contract.`,
+        );
         return;
       }
       void responsePromise
@@ -715,12 +787,18 @@ export const OverlayProvider: FC<{ children: ReactNode }> = ({ children }) => {
           });
         })
         .catch((error) => {
-          logOverlayWarning(`failed to execute ${requestType}`, error);
+          postRequestError(
+            request,
+            OverlayRequestErrorCode.RequestExecutionFailed,
+            getErrorMessage(error),
+            error,
+          );
         });
     },
     [
       buildSelectedConversationProjection,
       executeAgainstConversationListBridge,
+      postRequestError,
       postToHost,
       queueConversationSelectionWait,
     ],

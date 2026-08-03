@@ -48,6 +48,27 @@ The sandbox SHALL provide at least one case using `ChatOverlay` directly and at 
 - **WHEN** the sandbox's case list and every case's controls are inspected
 - **THEN** none of them presents an action for playback conversations, import/export, or custom message buttons — these remain out of scope for this change
 
+### Requirement: Direct and Manager request failures are observable
+
+Every promise-returning overlay request action exposed by the Direct ChatOverlay and ChatOverlayManager cases (`getMessages`, `sendMessage`, `setOverlayOptions`, `setInputContent`, `setSystemPrompt`, and `setTemperature`) SHALL handle a rejected promise without producing an unhandled-promise error. The case SHALL write one diagnostic containing the action name and the original error message to both `console.error` and its `EventLog`. Structured `ChatOverlayRequestError` details, including codes such as `ACTIVE_CONVERSATION_UNAVAILABLE`, SHALL remain visible in that diagnostic.
+
+#### Scenario: Empty-composer error appears immediately in Event log
+
+- **WHEN** the Direct case is ready on the empty composer and the user selects "Get messages"
+- **AND** the library rejects with `ChatOverlayRequestError` code `ACTIVE_CONVERSATION_UNAVAILABLE`
+- **THEN** the Event log receives an entry containing `getMessages`, `ACTIVE_CONVERSATION_UNAVAILABLE`, and the explanatory message
+- **AND** no unhandled promise rejection is emitted
+
+#### Scenario: Manager action reports the same diagnostic
+
+- **WHEN** a request action in the ChatOverlayManager case rejects
+- **THEN** the action name and original error message are written to that case's Event log and to `console.error`
+
+#### Scenario: Rejection logging is covered by a component test
+
+- **WHEN** the Direct case component test mocks `getMessages()` to reject and invokes its control
+- **THEN** the test observes the error in both the Event log and `console.error`
+
 ### Requirement: Case wiring is covered by automated component tests
 
 Each sandbox case wrapper component SHALL have a Vitest component test (co-located `tests/` folder, matching this repo's component-test convention) asserting that it constructs `ChatOverlay`/`ChatOverlayManager` with the expected options for that case, using a mocked/faked iframe (no real network or real chat backend). Deeper protocol behavior (handshake, timeouts, origin checks) is covered by `libs/chat-overlay`'s own unit tests (`chat-overlay-protocol`) and is not re-tested here - this capability's automated coverage verifies wiring/configuration, not protocol correctness. Real end-to-end browser verification against a live `apps/chat` instance is not established by this change (no existing e2e harness in this repo) and is out of scope.

@@ -144,6 +144,29 @@ describe('useActiveConversationBridge', () => {
     });
   });
 
+  it('makes freshly loaded conversation history available before any user action', () => {
+    const overlay = makeOverlay();
+    mockUseOptionalOverlay.mockReturnValue(overlay);
+    const loadedConversation = makeConversation();
+    const conversationRef = { current: null as Conversation | null };
+
+    renderHook(() =>
+      useActiveConversationBridge({
+        conversation: loadedConversation,
+        conversationId: 'bucket/gpt-4o__Hello__uuid',
+        conversationRef,
+        setConversation: vi.fn(),
+        handleSend: vi.fn(),
+        setOverlayInputContent: vi.fn(),
+      }),
+    );
+
+    expect(conversationRef.current).toBe(loadedConversation);
+    expect(getRegisteredBridge(overlay).getMessages()).toEqual({
+      messages: [{ id: '0', role: 'user', content: 'Hi' }],
+    });
+  });
+
   it('sendMessage calls handleSend and returns the post-send messages', async () => {
     const overlay = makeOverlay();
     mockUseOptionalOverlay.mockReturnValue(overlay);

@@ -251,6 +251,11 @@ Practical implications:
 - A queued call's timeout starts when the request is actually posted to the
   iframe, not when it enters the queue.
 - Every request receives a `requestId` and `expiresAt`.
+- A request the embedded chat cannot execute rejects immediately with
+  `ChatOverlayRequestError`; inspect its `code` and `requestType` fields.
+- Active-conversation methods called while the empty composer is open reject
+  with `OverlayRequestErrorCode.ActiveConversationUnavailable` rather than
+  waiting for the request timeout.
 - `setOverlayOptions()` may be called before `ready()` because it participates
   in the handshake.
 - `destroy()` rejects pending requests and removes the iframe, loader, and
@@ -336,8 +341,9 @@ if (result.error) {
 }
 ```
 
-`getConversations()` and `getSelectedConversations()` do not return an `error`
-field. A transport failure appears as a timeout or rejected promise.
+`getConversations()` and `getSelectedConversations()` do not return a domain
+`error` field. A request-level failure rejects with `ChatOverlayRequestError`;
+a missing protocol response still appears as a timeout.
 
 There is one known asymmetry: the overlay cannot always distinguish an
 inaccessible conversation from one that is still loading. In this case,

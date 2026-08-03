@@ -7,6 +7,7 @@ import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
 import { getChatOverlayHost } from '../../env';
+import { runLoggedOverlayAction } from '../../logOverlayAction';
 
 const OVERLAY_ID = 'sandbox-manager-overlay';
 const HANDSHAKE_WARNING_TIMEOUT_MS = 5000;
@@ -117,52 +118,84 @@ const ManagerOverlayCase: FC = () => {
     void managerRef.current?.openFullscreen(OVERLAY_ID);
   };
   const handleGetMessages = async () => {
-    const response = await managerRef.current?.getMessages(OVERLAY_ID);
-    appendLog(`getMessages -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'getMessages',
+      async () => managerRef.current?.getMessages(OVERLAY_ID),
+      (response) => `getMessages -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
   const handleSendMessage = async () => {
-    const response = await managerRef.current?.sendMessage(
-      OVERLAY_ID,
-      'Hello from the manager sandbox',
+    await runLoggedOverlayAction(
+      'sendMessage',
+      async () =>
+        managerRef.current?.sendMessage(
+          OVERLAY_ID,
+          'Hello from the manager sandbox',
+        ),
+      (response) => `sendMessage -> ${JSON.stringify(response)}`,
+      appendLog,
     );
-    appendLog(`sendMessage -> ${JSON.stringify(response)}`);
   };
   const handleUpdateThemeAndModel = async () => {
-    const response = await managerRef.current?.setOverlayOptions(OVERLAY_ID, {
-      theme: 'dark',
-      modelId: 'gpt-4o',
-    });
-    appendLog(
-      `setOverlayOptions(theme, modelId) -> ${JSON.stringify(response)}`,
+    await runLoggedOverlayAction(
+      'setOverlayOptions(theme, modelId)',
+      async () =>
+        managerRef.current?.setOverlayOptions(OVERLAY_ID, {
+          theme: 'dark',
+          modelId: 'gpt-4o',
+        }),
+      (response) =>
+        `setOverlayOptions(theme, modelId) -> ${JSON.stringify(response)}`,
+      appendLog,
     );
   };
   const handleUpdateThemeToLight = async () => {
-    const response = await managerRef.current?.setOverlayOptions(OVERLAY_ID, {
-      theme: 'light',
-    });
-    appendLog(`setOverlayOptions(theme: light) -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'setOverlayOptions(theme: light)',
+      async () =>
+        managerRef.current?.setOverlayOptions(OVERLAY_ID, { theme: 'light' }),
+      (response) =>
+        `setOverlayOptions(theme: light) -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
   const handleSetInputContent = async () => {
-    await managerRef.current?.setInputContent(
-      OVERLAY_ID,
-      'Drafted from the manager sandbox',
+    await runLoggedOverlayAction(
+      'setInputContent',
+      async () =>
+        managerRef.current?.setInputContent(
+          OVERLAY_ID,
+          'Drafted from the manager sandbox',
+        ),
+      () => 'setInputContent("Drafted from the manager sandbox")',
+      appendLog,
     );
-    appendLog('setInputContent("Drafted from the manager sandbox")');
   };
   const handleClearInputContent = async () => {
-    await managerRef.current?.setInputContent(OVERLAY_ID, '');
-    appendLog('setInputContent("")');
+    await runLoggedOverlayAction(
+      'setInputContent',
+      async () => managerRef.current?.setInputContent(OVERLAY_ID, ''),
+      () => 'setInputContent("")',
+      appendLog,
+    );
   };
   const handleSetSystemPrompt = async () => {
-    const response = await managerRef.current?.setSystemPrompt(
-      OVERLAY_ID,
-      'Answer concisely.',
+    await runLoggedOverlayAction(
+      'setSystemPrompt',
+      async () =>
+        managerRef.current?.setSystemPrompt(OVERLAY_ID, 'Answer concisely.'),
+      (response) => `setSystemPrompt -> ${JSON.stringify(response)}`,
+      appendLog,
     );
-    appendLog(`setSystemPrompt -> ${JSON.stringify(response)}`);
   };
   const handleSetTemperature = async () => {
-    const response = await managerRef.current?.setTemperature(OVERLAY_ID, 0.2);
-    appendLog(`setTemperature -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'setTemperature',
+      async () => managerRef.current?.setTemperature(OVERLAY_ID, 0.2),
+      (response) => `setTemperature -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
 
   if (!host) {

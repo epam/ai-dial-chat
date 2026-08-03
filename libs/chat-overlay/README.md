@@ -114,6 +114,14 @@ await overlay.deleteConversation(conversation!.id);
 
 `selectConversation`, `createConversation`, `deleteConversation`, and `renameConversation` responses carry an optional `error: { code: 'NOT_FOUND' | 'FORBIDDEN' | 'INVALID_ARGUMENT'; message: string }` field for invalid ids/values/forbidden actions instead of the request silently timing out. `getConversations`/`getSelectedConversations` have no error field — they are snapshot reads with no failure mode beyond the request timeout. One documented asymmetry: `selectConversation`/a persisted `createConversation` for an inaccessible id has no way to distinguish "will never load" from "still loading", so it degrades to the request's ordinary timeout rather than an explicit error.
 
+Request-level failures reject immediately with `ChatOverlayRequestError`. Its
+`code` and `requestType` fields can be used for programmatic handling. For
+example, calling `getMessages()`, `sendMessage()`, `setInputContent()`,
+`setSystemPrompt()`, or `setTemperature()` while the composer is open rejects
+with `OverlayRequestErrorCode.ActiveConversationUnavailable` instead of waiting
+for the request timeout. Other request-level codes are
+`ConversationListUnavailable`, `InvalidPayload`, and `RequestExecutionFailed`.
+
 **Compatibility break:** `createConversation`'s signature replaces the historical positional `(parentPath?, local?)` shape used by pre-`@epam/ai-dial-chat-overlay` overlay integrations with `createConversation(options?: { deploymentId?: string; firstMessage?: string })`. `parentPath` has no replacement — this app has no folder concept for conversations. The old `local` boolean is replaced by omitting `firstMessage`: `createConversation()` called with no `firstMessage` behaves identically to `createLocalConversation()`.
 
 ### ChatOverlayManager

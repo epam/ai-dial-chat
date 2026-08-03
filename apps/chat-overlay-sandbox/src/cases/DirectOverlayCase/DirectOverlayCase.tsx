@@ -3,6 +3,7 @@ import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
 import { getChatOverlayHost } from '../../env';
+import { runLoggedOverlayAction } from '../../logOverlayAction';
 
 const HANDSHAKE_WARNING_TIMEOUT_MS = 5000;
 
@@ -97,48 +98,73 @@ const DirectOverlayCase: FC = () => {
     : `Handshake is still pending. Check that the embedded chat backend has OVERLAY_ENABLED=true and ALLOWED_IFRAME_ORIGINS includes ${window.location.origin}.`;
 
   const handleGetMessages = async () => {
-    const response = await overlayRef.current?.getMessages();
-    appendLog(`getMessages -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'getMessages',
+      async () => overlayRef.current?.getMessages(),
+      (response) => `getMessages -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
 
   const handleSendMessage = async () => {
-    const response = await overlayRef.current?.sendMessage(
-      'Hello from the sandbox',
+    await runLoggedOverlayAction(
+      'sendMessage',
+      async () => overlayRef.current?.sendMessage('Hello from the sandbox'),
+      (response) => `sendMessage -> ${JSON.stringify(response)}`,
+      appendLog,
     );
-    appendLog(`sendMessage -> ${JSON.stringify(response)}`);
   };
 
   const handleUpdateThemeAndModel = async () => {
-    const response = await overlayRef.current?.setOverlayOptions({
-      theme: 'dark',
-      modelId: 'gpt-4o',
-    });
-    appendLog(
-      `setOverlayOptions(theme, modelId) -> ${JSON.stringify(response)}`,
+    await runLoggedOverlayAction(
+      'setOverlayOptions(theme, modelId)',
+      async () =>
+        overlayRef.current?.setOverlayOptions({
+          theme: 'dark',
+          modelId: 'gpt-4o',
+        }),
+      (response) =>
+        `setOverlayOptions(theme, modelId) -> ${JSON.stringify(response)}`,
+      appendLog,
     );
   };
 
   const handleUpdateThemeToLight = async () => {
-    const response = await overlayRef.current?.setOverlayOptions({
-      theme: 'light',
-    });
-    appendLog(`setOverlayOptions(theme: light) -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'setOverlayOptions(theme: light)',
+      async () => overlayRef.current?.setOverlayOptions({ theme: 'light' }),
+      (response) =>
+        `setOverlayOptions(theme: light) -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
 
   const handleSetInputContent = async () => {
-    await overlayRef.current?.setInputContent('Drafted from the sandbox');
-    appendLog('setInputContent("Drafted from the sandbox")');
+    await runLoggedOverlayAction(
+      'setInputContent',
+      async () =>
+        overlayRef.current?.setInputContent('Drafted from the sandbox'),
+      () => 'setInputContent("Drafted from the sandbox")',
+      appendLog,
+    );
   };
 
   const handleSetSystemPrompt = async () => {
-    const response =
-      await overlayRef.current?.setSystemPrompt('Answer concisely.');
-    appendLog(`setSystemPrompt -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'setSystemPrompt',
+      async () => overlayRef.current?.setSystemPrompt('Answer concisely.'),
+      (response) => `setSystemPrompt -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
 
   const handleSetTemperature = async () => {
-    const response = await overlayRef.current?.setTemperature(0.2);
-    appendLog(`setTemperature -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'setTemperature',
+      async () => overlayRef.current?.setTemperature(0.2),
+      (response) => `setTemperature -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
 
   if (!host) {

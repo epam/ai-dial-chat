@@ -2,12 +2,13 @@ import {
   OverlayAuthUiMode,
   OverlayEventType,
   OverlayFeature,
+  OverlayRequestErrorCode,
   type OverlayMessageRequest,
   OverlayRequestType,
   type ChatOverlayOptions,
 } from '@epam/ai-dial-chat-shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChatOverlay } from '../ChatOverlay';
+import { ChatOverlay, ChatOverlayRequestError } from '../ChatOverlay';
 
 const DOMAIN = 'https://chat.example.com/embed';
 
@@ -515,6 +516,35 @@ describe('ChatOverlay', () => {
     dispatchFromApp(iframe, { type: OverlayEventType.ReadyToInteract });
 
     await expect(overlay.getMessages()).rejects.toThrow(/GET_MESSAGES.*50/);
+  });
+
+  it('rejects immediately with the structured error returned by the embedded chat', async () => {
+    const { overlay, iframe } = setup();
+    advanceHandshakeToReadyToInteract(iframe, 'irrelevant');
+    await overlay.ready();
+    const postMessageSpy = vi.spyOn(
+      iframe.contentWindow as Window,
+      'postMessage',
+    );
+
+    const responsePromise = overlay.getMessages();
+    await Promise.resolve();
+    const sent = postMessageSpy.mock.calls[0][0] as OverlayMessageRequest;
+    dispatchFromApp(iframe, {
+      type: `${OverlayRequestType.GetMessages}/RESPONSE`,
+      requestId: sent.requestId,
+      error: {
+        code: OverlayRequestErrorCode.ActiveConversationUnavailable,
+        message: 'No active conversation is open.',
+      },
+    });
+
+    await expect(responsePromise).rejects.toMatchObject({
+      name: ChatOverlayRequestError.name,
+      code: OverlayRequestErrorCode.ActiveConversationUnavailable,
+      requestType: OverlayRequestType.GetMessages,
+      message: expect.stringContaining('No active conversation is open.'),
+    });
   });
 
   it('ignores a response whose requestId matches no pending request', () => {

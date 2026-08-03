@@ -63,9 +63,9 @@ While the app is framed and `AppConfigContext.status === 'loading'`, `OverlayMod
 
 ### Requirement: Active-conversation bridge registration
 
-`OverlayContext` SHALL expose `registerActiveConversationBridge(bridge: ActiveConversationBridge | null, conversationId: string | null)` where `ActiveConversationBridge` provides `getMessages`, `sendMessage`, `setInputContent`, `setSystemPrompt`, `setTemperature` backed by whichever conversation `ConversationPage` currently has mounted, and `conversationId` is that conversation's id (or `null` when no conversation is mounted, e.g. the composer route). `OverlayContext` SHALL track the most recently registered `conversationId` for use by `GET_SELECTED_CONVERSATIONS`, `SELECT_CONVERSATION`, and the persisted branch of `CREATE_CONVERSATION` (see the conversation-list requirements below). `ConversationPage` SHALL call this registration in overlay mode from an effect that re-registers on every change to its local conversation reference and unregisters (`registerActiveConversationBridge(null, null)`) on unmount. An overlay request for one of the active-conversation methods received while no bridge is registered SHALL remain pending until either a bridge registers (and answers it) or the request's own timeout elapses (`chat-overlay-protocol`) — the app SHALL NOT respond with an error immediately just because no conversation is mounted yet.
+`OverlayContext` SHALL expose `registerActiveConversationBridge(bridge: ActiveConversationBridge | null, conversationId: string | null)` where `ActiveConversationBridge` provides `getMessages`, `sendMessage`, `setInputContent`, `setSystemPrompt`, `setTemperature` backed by whichever conversation `ConversationPage` currently has mounted, and `conversationId` is that conversation's id (or `null` when no conversation is mounted, e.g. the composer route). `OverlayContext` SHALL track the most recently registered `conversationId` for use by `GET_SELECTED_CONVERSATIONS`, `SELECT_CONVERSATION`, and the persisted branch of `CREATE_CONVERSATION` (see the conversation-list requirements below). `ConversationPage` SHALL call this registration in overlay mode from an effect that first synchronizes its mutable conversation ref with the latest loaded React state, re-registers on every change to that conversation or `conversationId`, and unregisters (`registerActiveConversationBridge(null, null)`) on unmount. Before the first `READY_TO_INTERACT`, an active-conversation request received while no bridge is registered SHALL remain pending so a bridge that is still mounting can answer it. After `READY_TO_INTERACT`, the absence of a bridge is a settled empty-composer/no-active-conversation state, so the app SHALL respond immediately with the structured `ACTIVE_CONVERSATION_UNAVAILABLE` request error from `chat-overlay-protocol`.
 
-Trusted-host and expiry rules: an active-conversation request SHALL be accepted only after a valid `SET_OVERLAY_OPTIONS` has established the trusted host origin. If the request is queued while no bridge is registered, the app SHALL drop it when the request's `expiresAt` deadline passes (`chat-overlay-protocol`; default app-side cap `10000` ms when absent).
+Trusted-host and expiry rules: an active-conversation request SHALL be accepted only after a valid `SET_OVERLAY_OPTIONS` has established the trusted host origin. If a pre-`READY_TO_INTERACT` request is queued while no bridge is registered, the app SHALL drop it when the request's `expiresAt` deadline passes (`chat-overlay-protocol`; default app-side cap `10000` ms when absent).
 
 #### Scenario: Active request before host validation is ignored
 
@@ -76,11 +76,26 @@ Trusted-host and expiry rules: an active-conversation request SHALL be accepted 
 #### Scenario: Request answered once a conversation mounts
 
 - **WHEN** `GET_MESSAGES` is received before any `ConversationPage` instance has registered a bridge, and a bridge registers 200ms later
+- **AND** `READY_TO_INTERACT` has not yet been emitted
 - **THEN** the request is answered using that bridge once it registers, within the request's timeout
+
+#### Scenario: Loaded history is available before the first new message
+
+- **WHEN** an existing conversation finishes loading with stored messages and its active bridge registers
+- **AND** the host calls `GET_MESSAGES` before the user or host sends another message
+- **THEN** the response contains the loaded stored messages rather than an empty array
+
+#### Scenario: Empty composer rejects an active-conversation request immediately
+
+- **WHEN** the composer route has emitted `READY_TO_INTERACT` with no active-conversation bridge registered
+- **AND** the trusted host sends `GET_MESSAGES` or `SET_TEMPERATURE`
+- **THEN** the app posts the matching response immediately with `error.code: 'ACTIVE_CONVERSATION_UNAVAILABLE'`
+- **AND** the response message explains that a conversation must be opened or created
 
 #### Scenario: Queued request expires before a conversation mounts
 
 - **WHEN** `GET_MESSAGES` is received from the trusted host while no bridge is registered
+- **AND** `READY_TO_INTERACT` has not yet been emitted
 - **AND** the request's `expiresAt` time passes before any bridge registers
 - **THEN** the request is dropped
 - **AND** registering a bridge later does not invoke `getMessages` for that expired request
@@ -93,7 +108,9 @@ Trusted-host and expiry rules: an active-conversation request SHALL be accepted 
 #### Scenario: Unregister on unmount leaves no stale bridge
 
 - **WHEN** `ConversationPage` unmounts (e.g. navigating to `/catalog`)
-- **THEN** `registerActiveConversationBridge(null, null)` is called, and a subsequent active-conversation request stays pending rather than resolving against a stale conversation
+- **THEN** `registerActiveConversationBridge(null, null)` is called
+- **AND** a subsequent active-conversation request does not resolve against a stale conversation
+- **AND** after `READY_TO_INTERACT` it rejects with `ACTIVE_CONVERSATION_UNAVAILABLE`
 
 #### Scenario: Tracked conversationId updates with the bridge
 
@@ -201,23 +218,33 @@ Overlay mode SHALL NOT change the embedded app's accessibility or RTL behavior �
 
 ### Requirement: Conversation-list bridge registration
 
-`OverlayContext` SHALL expose `registerConversationListBridge(bridge: ConversationListBridge | null)`, structurally parallel to `registerActiveConversationBridge`, where `ConversationListBridge` provides `getConversations`, `createConversation`, `deleteConversation`, `renameConversation`, and `selectConversation`, backed by `ConversationsContext`/`DeploymentsContext`/navigation. A new hook mounted once inside the app tree — below `ConversationsProvider` and `DeploymentsProvider`, so both are reachable — SHALL register this bridge on mount/dependency-change and unregister it on unmount, following the same effect-cleanup pattern as `useActiveConversationBridge`. `GET_CONVERSATIONS`, `CREATE_CONVERSATION`, `CREATE_LOCAL_CONVERSATION`, `DELETE_CONVERSATION`, and `RENAME_CONVERSATION` requests received while no conversation-list bridge is registered SHALL remain pending until either the bridge registers (and answers them) or the request's own `expiresAt` deadline passes — the same queue-and-expire mechanism already used for active-conversation requests, not a new timer construct.
+`OverlayContext` SHALL expose `registerConversationListBridge(bridge: ConversationListBridge | null)`, structurally parallel to `registerActiveConversationBridge`, where `ConversationListBridge` provides `getConversations`, `createConversation`, `deleteConversation`, `renameConversation`, and `selectConversation`, backed by `ConversationsContext`/`DeploymentsContext`/navigation. A new hook mounted once inside the app tree — below `ConversationsProvider` and `DeploymentsProvider`, so both are reachable — SHALL register this bridge on mount/dependency-change and unregister it on unmount, following the same effect-cleanup pattern as `useActiveConversationBridge`. Before `READY_TO_INTERACT`, conversation-list requests received while no bridge is registered SHALL remain pending until either the bridge registers or `expiresAt` passes. After `READY_TO_INTERACT`, a missing conversation-list bridge SHALL produce the immediate structured `CONVERSATION_LIST_UNAVAILABLE` request error from `chat-overlay-protocol`.
 
 #### Scenario: Bridge answers a request once registered
 
 - **WHEN** `GET_CONVERSATIONS` is received before the conversation-list bridge has registered, and it registers 100ms later
+- **AND** `READY_TO_INTERACT` has not yet been emitted
 - **THEN** the request is answered using that bridge once it registers, within the request's timeout
 
 #### Scenario: Queued conversation-list request expires if the bridge never registers
 
 - **WHEN** `DELETE_CONVERSATION` is received from the trusted host while no conversation-list bridge is registered
+- **AND** `READY_TO_INTERACT` has not yet been emitted
 - **AND** the request's `expiresAt` time passes before the bridge registers
 - **THEN** the request is dropped and produces no response
+
+#### Scenario: Missing conversation-list bridge after readiness rejects immediately
+
+- **WHEN** `READY_TO_INTERACT` has been emitted and no conversation-list bridge is registered
+- **AND** the trusted host sends `GET_CONVERSATIONS`
+- **THEN** the app posts the matching response with `error.code: 'CONVERSATION_LIST_UNAVAILABLE'`
 
 #### Scenario: Bridge unregisters on unmount
 
 - **WHEN** the component owning the conversation-list bridge unmounts
-- **THEN** `registerConversationListBridge(null)` is called, and a subsequent conversation-list request stays pending rather than resolving against a stale bridge
+- **THEN** `registerConversationListBridge(null)` is called
+- **AND** a subsequent request does not resolve against the stale bridge
+- **AND** after `READY_TO_INTERACT` it rejects with `CONVERSATION_LIST_UNAVAILABLE`
 
 ### Requirement: getConversations returns the current in-memory list, no forced refresh
 

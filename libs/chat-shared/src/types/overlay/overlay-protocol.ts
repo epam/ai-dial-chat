@@ -127,6 +127,26 @@ export enum OverlayAuthUiMode {
   SameWindow = 'sameWindow',
 }
 
+/** Machine-readable reasons why an overlay request could not be completed. */
+export enum OverlayRequestErrorCode {
+  /** The method requires an open conversation, but the composer is currently shown. */
+  ActiveConversationUnavailable = 'ACTIVE_CONVERSATION_UNAVAILABLE',
+  /** The method requires the conversation-list integration, but it is not available. */
+  ConversationListUnavailable = 'CONVERSATION_LIST_UNAVAILABLE',
+  /** The request payload does not match the method contract. */
+  InvalidPayload = 'INVALID_PAYLOAD',
+  /** The embedded chat failed while executing the requested operation. */
+  RequestExecutionFailed = 'REQUEST_EXECUTION_FAILED',
+}
+
+/** Structured failure returned for an overlay request. */
+export interface OverlayRequestError {
+  /** Stable code suitable for programmatic handling. */
+  code: OverlayRequestErrorCode;
+  /** Human-readable explanation suitable for logs and diagnostics. */
+  message: string;
+}
+
 /** Minimal message shape carried in overlay protocol payloads. */
 export interface OverlayChatMessage {
   /** Message id. */
@@ -369,6 +389,8 @@ export interface OverlayMessageResponse<TPayload = unknown> {
   requestId: string;
   /** Response-specific payload. */
   payload?: TPayload;
+  /** Present when the embedded chat could not complete the request. */
+  error?: OverlayRequestError;
 }
 
 /**
@@ -414,8 +436,24 @@ export const isOverlayMessageResponse = (
   ) {
     return false;
   }
-  return (Object.values(OverlayRequestType) as string[]).some(
-    (requestType) => candidate.type === `${requestType}/RESPONSE`,
+  const hasKnownResponseType = (
+    Object.values(OverlayRequestType) as string[]
+  ).some((requestType) => candidate.type === `${requestType}/RESPONSE`);
+  if (!hasKnownResponseType) {
+    return false;
+  }
+  if (!('error' in candidate)) {
+    return true;
+  }
+  const error = candidate.error;
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    typeof (error as Record<string, unknown>).code === 'string' &&
+    (Object.values(OverlayRequestErrorCode) as string[]).includes(
+      (error as Record<string, unknown>).code as string,
+    ) &&
+    typeof (error as Record<string, unknown>).message === 'string'
   );
 };
 

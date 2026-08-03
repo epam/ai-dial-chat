@@ -32,7 +32,7 @@
 
 ### Requirement: Public API surface
 
-`libs/chat-overlay/src/index.ts` SHALL preserve its existing public API and additionally export the `OverlayAuthUiMode` enum (re-exported from `@epam/ai-dial-chat-shared`) and the pure protocol types from `@epam/ai-dial-chat-shared` needed by consumers (`ChatOverlayOptions`, the request/event type unions, response payload types for every v1 method). It SHALL NOT export the internal `Task`/`DeferredRequest`-equivalent helper classes.
+`libs/chat-overlay/src/index.ts` SHALL preserve its existing public API and additionally export the `OverlayAuthUiMode` and `OverlayRequestErrorCode` enums (re-exported from `@epam/ai-dial-chat-shared`), the `ChatOverlayRequestError` class, and the pure protocol types from `@epam/ai-dial-chat-shared` needed by consumers (`ChatOverlayOptions`, `OverlayRequestError`, the request/event type unions, response payload types for every v1 method). It SHALL NOT export the internal `Task`/`DeferredRequest`-equivalent helper classes.
 
 #### Scenario: Internal transport helpers are not exported
 
@@ -48,6 +48,11 @@
 
 - **WHEN** a consumer imports `OverlayAuthUiMode` from `'@epam/ai-dial-chat-overlay'`
 - **THEN** it has members `External` and `SameWindow` without requiring a separate `@epam/ai-dial-chat-shared` import
+
+#### Scenario: Request errors are available from the library entry point
+
+- **WHEN** a consumer imports `ChatOverlayRequestError` and `OverlayRequestErrorCode` from `@epam/ai-dial-chat-overlay`
+- **THEN** both imports resolve without importing the shared or internal transport packages directly
 
 ### Requirement: ChatOverlay creates and manages a single iframe
 
@@ -120,6 +125,27 @@
 - **AND** `ready()` has not resolved after 50ms
 - **THEN** the promise has not rejected yet
 - **AND** the request is posted only after `ready()` resolves
+
+### Requirement: Structured app failures reject with ChatOverlayRequestError
+
+When a matching response contains a top-level protocol `error`, `ChatOverlay` SHALL remove the request from its pending set and reject its promise immediately with `ChatOverlayRequestError`. The error SHALL have `name: 'ChatOverlayRequestError'`, expose the stable protocol `code`, expose the original `requestType`, and include the app-provided message in its human-readable `message`. `ChatOverlayManager` SHALL preserve this rejection unchanged when forwarding methods. This path is distinct from the existing unanswered-request timeout error.
+
+#### Scenario: Active conversation is unavailable
+
+- **WHEN** `overlay.getMessages()` receives a matching response with `error.code: 'ACTIVE_CONVERSATION_UNAVAILABLE'`
+- **THEN** it rejects before `requestTimeout` with `ChatOverlayRequestError`
+- **AND** the error's `code` is `OverlayRequestErrorCode.ActiveConversationUnavailable`
+- **AND** its `requestType` is `OverlayRequestType.GetMessages`
+
+#### Scenario: Manager preserves a structured rejection
+
+- **WHEN** `manager.setTemperature(overlayId, 0.2)` is rejected by the underlying overlay with `ChatOverlayRequestError`
+- **THEN** the manager promise rejects with that error rather than replacing it with a generic timeout or manager error
+
+#### Scenario: Unanswered request still uses timeout error
+
+- **WHEN** a posted request receives neither a success response nor an error response before `requestTimeout`
+- **THEN** its promise rejects with the existing timeout error naming the request type and timeout
 
 ### Requirement: destroy() releases all resources
 
