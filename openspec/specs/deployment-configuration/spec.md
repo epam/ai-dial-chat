@@ -4,7 +4,9 @@
 
 ### Requirement: Backend exposes deployment configuration schema endpoint
 
-`GET /api/deployments/:deployment/configuration` SHALL proxy the DIAL Core `GET /v1/deployments/{deployment_name}/configuration` endpoint using the authenticated session user's access token. The response body SHALL be the raw JSON object returned by DIAL Core (`Record<string, unknown>`). The endpoint is hosted on the **unversioned** `DeploymentsController` (no `version: '1'` decorator), so the route resolves to `/api/deployments/...` (not `/api/v1/...`). The endpoint SHALL be documented in Swagger under the `deployments` tag.
+`GET /api/v1/deployments/:deployment/configuration` SHALL proxy the DIAL Core `GET /v1/deployments/{deployment_name}/configuration` endpoint using the authenticated session user's access token. The response body SHALL be the raw JSON object returned by DIAL Core (`Record<string, unknown>`). The endpoint is hosted on the versioned `DeploymentsController`, so the route resolves below `/api/v1/deployments`. The endpoint SHALL be documented in Swagger under the `deployments` tag.
+
+The decoded `deployment` parameter may be a single-segment static deployment name or a slash-separated DIAL resource identifier. The BFF MUST reject identifiers longer than 2048 characters, empty segments, `.` or `..` segments, and ASCII control characters with 400 before calling DIAL Core. For accepted values it MUST percent-encode every segment independently before passing the identifier to the DIAL SDK, preserving structural `/` separators.
 
 Cache: results SHALL be cached in-memory for 60 seconds, keyed as `deployments:configuration:<userSub>:<deploymentName>`.
 
@@ -12,7 +14,7 @@ Rate limiting: inherits the global throttler default (no per-route override requ
 
 #### Scenario: Configuration returned for a configurable deployment
 
-- **WHEN** an authenticated user calls `GET /api/deployments/my-model/configuration` and DIAL Core returns a JSON Schema object
+- **WHEN** an authenticated user calls `GET /api/v1/deployments/my-model/configuration` and DIAL Core returns a JSON Schema object
 - **THEN** the endpoint returns HTTP 200 with the JSON Schema body
 
 #### Scenario: Cache hit avoids upstream call
@@ -39,6 +41,11 @@ Rate limiting: inherits the global throttler default (no per-route override requ
 
 - **WHEN** the request carries no valid session cookie
 - **THEN** the endpoint returns HTTP 401
+
+#### Scenario: Unsafe deployment id is rejected before proxying
+
+- **WHEN** the decoded `deployment` parameter contains an empty segment, a `.` or `..` segment, or an ASCII control character
+- **THEN** the endpoint returns HTTP 400 without calling DIAL Core
 
 ---
 
@@ -182,9 +189,9 @@ Each button SHALL use `DialRoundedButton` from `@epam/ai-dial-ui-kit`. The list 
 - `getDeploymentConfigurationRaw(requestParameters: GetDeploymentConfigurationRequest): Promise<runtime.ApiResponse<Record<string, unknown>>>`
 - `getDeploymentConfiguration(requestParameters: GetDeploymentConfigurationRequest): Promise<Record<string, unknown>>`
 
-The path SHALL be `/api/deployments/{deployment}/configuration` (unversioned, matching the backend controller).
+The path SHALL be `/api/v1/deployments/{deployment}/configuration` (versioned, matching the backend controller).
 
-The `openapi.json` source SHALL include a `GET /api/deployments/{deployment}/configuration` operation with:
+The `openapi.json` source SHALL include a `GET /api/v1/deployments/{deployment}/configuration` operation with:
 - `operationId`: `getDeploymentConfiguration`
 - Path parameter `deployment` (string, required)
 - Response 200: `application/json` with schema `{ type: object, additionalProperties: true }`

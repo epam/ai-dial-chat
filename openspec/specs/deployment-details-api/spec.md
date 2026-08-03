@@ -4,10 +4,12 @@
 
 ### Requirement: GET /api/v1/deployments/{deployment}/details endpoint
 
-The system SHALL expose `GET /api/v1/deployments/{deployment}/details` on the existing `DeploymentsController` (`apps/chat-api/src/deployments/deployments.controller.ts`), following the same `:deployment` single-path-segment param convention already used by `:deployment/configuration` and `:deployment/limits`. The endpoint fetches full per-entity data for one deployment id and returns it as `DeploymentDetailsDto`.
+The system SHALL expose `GET /api/v1/deployments/{deployment}/details` on the existing `DeploymentsController` (`apps/chat-api/src/deployments/deployments.controller.ts`), following the same encoded `:deployment` path-param convention already used by `:deployment/configuration` and `:deployment/limits`. The decoded value may contain structural `/` separators for DIAL resource identifiers. The endpoint fetches full per-entity data for one deployment id and returns it as `DeploymentDetailsDto`.
 
 The endpoint:
 - MUST require authentication via `SessionGuard`; respond 401 when no valid session is present.
+- MUST reject an identifier longer than 2048 characters, an empty segment, a `.` or `..` segment, or an ASCII control character with 400 before calling DIAL Core; spaces and URL-reserved characters remain valid when percent-encoded by the caller.
+- MUST percent-encode every validated `/`-separated segment independently before passing the identifier to any DIAL SDK detail method, preserving structural `/` separators.
 - SHALL resolve the deployment's type from the `deployment` id prefix, mirroring the `toolsets/`/`applications/` prefix convention already relied on by the frontend (`apps/chat/src/utils/map-deployment-to-catalog-item.ts`'s `TOOLSETS_PREFIX`/`APPLICATIONS_PREFIX`), rather than calling `listDeployments` — avoids an expensive full-catalog fetch just to classify one id:
   - `deployment` starting with `toolsets/` → call `getToolset` directly.
   - `deployment` starting with `applications/` → call `getApplication` directly.
@@ -50,6 +52,11 @@ The endpoint:
 
 - **WHEN** `GET /api/v1/deployments/{id}/details` is called with an id that does not exist in DIAL Core
 - **THEN** the direct call (or, for an ambiguous unprefixed id, the full `getModel` → `getApplication` → `getToolset` fallback chain) returns 404 and the endpoint responds 404
+
+#### Scenario: Unsafe deployment id is rejected at the BFF boundary
+
+- **WHEN** the decoded `deployment` parameter contains `../`, an empty path segment, or an ASCII control character
+- **THEN** the endpoint responds 400 without calling `getModel`, `getApplication`, `getToolset`, or `getToolSetTools`
 
 #### Scenario: Success response with no body is treated as not found
 
