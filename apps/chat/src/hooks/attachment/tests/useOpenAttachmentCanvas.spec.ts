@@ -249,7 +249,11 @@ describe('useOpenAttachmentCanvas routing', () => {
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
     expect(mockResolveJson).not.toHaveBeenCalled();
     expect(mockResolveText).not.toHaveBeenCalled();
-    expect(mockOpenCanvas).toHaveBeenCalledWith(pdfContent, 'doc.pdf', 'doc.pdf');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      pdfContent,
+      'doc.pdf',
+      'doc.pdf',
+    );
   });
 
   it('routes .pdf extension to the PDF resolver', async () => {
@@ -311,7 +315,11 @@ describe('useOpenAttachmentCanvas routing', () => {
     );
 
     expect(opened).toBe(true);
-    expect(mockOpenCanvas).toHaveBeenCalledWith(pdfContent, 'report.pdf', 'report.pdf');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      pdfContent,
+      'report.pdf',
+      'report.pdf',
+    );
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
   });
 
@@ -551,7 +559,11 @@ describe('useOpenAttachmentCanvas — visualizer routing', () => {
     );
 
     expect(opened).toBe(true);
-    expect(mockOpenCanvas).toHaveBeenCalledWith(vizContent, 'chart.x-my-viz', 'chart.x-my-viz');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      vizContent,
+      'chart.x-my-viz',
+      'chart.x-my-viz',
+    );
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
   });
 

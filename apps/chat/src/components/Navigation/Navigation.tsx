@@ -55,7 +55,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           tooltipProps={{ tooltip: t(labelKey) }}
           tabIndex={-1}
           className={mergeClasses(
-            'hover:bg-control-accent-alpha-hover active:bg-control-accent-alpha-active rounded',
+            'rounded hover:bg-control-accent-alpha-hover active:bg-control-accent-alpha-active',
             isActive ? 'text-accent' : undefined,
           )}
         />
