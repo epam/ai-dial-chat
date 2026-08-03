@@ -49,13 +49,16 @@ export interface ToolsetAuthFormData {
   codeChallengeMethod?: string;
 }
 
-export interface ToolsetFormData {
+export interface DeploymentGeneralFormData {
   name: string;
   version: string;
   iconUrl: string;
   description: string;
   topics: string[];
   intro: string;
+}
+
+export interface ToolsetFormData extends DeploymentGeneralFormData {
   endpoint: string;
   protocol: ToolsetTransportType;
   allowedTools: string[];

@@ -1,6 +1,6 @@
 import { Input, TagInput, Textarea } from '@epam/ai-dial-kit';
 import type { FC } from 'react';
-import { memo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CustomAppI18nKeys } from '../../../constants/translation-keys';
 import type {
@@ -18,8 +18,11 @@ interface Props {
   onChange: (patch: Partial<CustomAppFormData>) => void;
 }
 
-const FEATURES_DATA_PLACEHOLDER =
-  '{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}';
+interface Props {
+  form: CustomAppFormData;
+  errors: CustomAppFormErrors;
+  onChange: (patch: Partial<CustomAppFormData>) => void;
+}
 
 const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
   const { t } = useTranslation();
@@ -28,22 +31,30 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
     string | undefined
   >(undefined);
 
-  const handleAttachmentTypesChange = (inputAttachmentTypes: string[]) => {
-    const hasInvalid = inputAttachmentTypes.some(
-      (tag) => !MIME_TYPE_REGEX.test(tag),
-    );
-    setMimeError(hasInvalid ? t(CustomAppI18nKeys.InvalidMimeType) : undefined);
-    onChange({ inputAttachmentTypes });
-  };
+  const handleAttachmentTypesChange = useCallback(
+    (inputAttachmentTypes: string[]) => {
+      const hasInvalid = inputAttachmentTypes.some(
+        (tag) => !MIME_TYPE_REGEX.test(tag),
+      );
+      setMimeError(
+        hasInvalid ? t(CustomAppI18nKeys.InvalidMimeType) : undefined,
+      );
+      onChange({ inputAttachmentTypes });
+    },
+    [onChange, t],
+  );
 
-  const handleFeaturesDataChange = (value: string) => {
-    onChange({ featuresData: value });
-    setFeaturesDataError(
-      value.trim() && !isValidFeaturesData(value)
-        ? t(CustomAppI18nKeys.FeaturesDataInvalid)
-        : undefined,
-    );
-  };
+  const handleFeaturesDataChange = useCallback(
+    (value: string) => {
+      onChange({ featuresData: value });
+      setFeaturesDataError(
+        value.trim() && !isValidFeaturesData(value)
+          ? t(CustomAppI18nKeys.FeaturesDataInvalid)
+          : undefined,
+      );
+    },
+    [onChange, t],
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,7 +66,7 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
           label: t(CustomAppI18nKeys.FeaturesDataLabel),
           caption: t(CustomAppI18nKeys.FeaturesDataDescription),
         }}
-        placeholder={FEATURES_DATA_PLACEHOLDER}
+        placeholder={t(CustomAppI18nKeys.FeaturesDataPlaceholder)}
         error={featuresDataError}
         invalid={!!featuresDataError || undefined}
         resize
@@ -89,7 +100,7 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
           label: t(CustomAppI18nKeys.MaxAttachmentsLabel),
           caption: t(CustomAppI18nKeys.MaxAttachmentsDescription),
         }}
-        min={1}
+        min={0}
       />
 
       <Input

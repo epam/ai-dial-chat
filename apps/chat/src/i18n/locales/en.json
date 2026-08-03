@@ -888,7 +888,7 @@
       "attachmentTypesPlaceholder": "Enter one or more attachment types",
       "maxAttachmentsLabel": "Max. input attachments",
       "maxAttachmentsDescription": "Maximum number of input attachments allowed.",
-      "maxAttachmentsInvalid": "Enter a number greater than or equal to 1",
+      "maxAttachmentsInvalid": "Enter a number greater than or equal to 0",
       "enterAttachmentTypes": "Enter one or more attachment types",
       "enterMaxAttachments": "Enter the maximum number of attachments",
       "typeChatCompletionUrl": "Type chat completion URL",
@@ -906,7 +906,8 @@
     },
     "error": {
       "createFailed": "Failed to create custom app. Please try again.",
-      "saveFailed": "Failed to save custom app. Please try again."
+      "saveFailed": "Failed to save custom app. Please try again.",
+      "loadFailed": "Failed to load custom app. Please try again."
     }
   }
 }

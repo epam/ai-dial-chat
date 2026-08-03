@@ -109,7 +109,13 @@ const CustomAppEditor: FC = () => {
         });
       })
       .catch(() => {
-        if (!cancelled) navigate(returnUrl, { replace: true });
+        if (!cancelled) {
+          showNotification({
+            variant: NotificationVariant.Error,
+            message: t(CustomAppI18nKeys.ErrorLoadFailed),
+          });
+          navigate(returnUrl, { replace: true });
+        }
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -193,7 +199,16 @@ const CustomAppEditor: FC = () => {
     try {
       if (isEditMode) {
         const parsedFeatures = settingsForm.featuresData.trim()
-          ? (JSON.parse(settingsForm.featuresData) as Record<string, unknown>)
+          ? (() => {
+              try {
+                return JSON.parse(settingsForm.featuresData) as Record<
+                  string,
+                  unknown
+                >;
+              } catch {
+                return undefined;
+              }
+            })()
           : undefined;
         await updateApplication(customAppId, {
           name: generalForm.name,
@@ -226,7 +241,13 @@ const CustomAppEditor: FC = () => {
               : undefined,
         };
         if (settingsForm.featuresData.trim()) {
-          appProperties.features = JSON.parse(settingsForm.featuresData);
+          try {
+            appProperties.features = JSON.parse(
+              settingsForm.featuresData,
+            ) as Record<string, unknown>;
+          } catch {
+            // invalid JSON — omit features; dialog already warned the user
+          }
         }
         const body: CreateApplicationBodyDto = {
           name: generalForm.name,

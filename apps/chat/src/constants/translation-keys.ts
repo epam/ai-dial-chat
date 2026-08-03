@@ -823,6 +823,7 @@ export enum CustomAppI18nKeys {
   TypeChatCompletionURL = 'customApp.settings.typeChatCompletionUrl',
   ErrorCreateFailed = 'customApp.error.createFailed',
   ErrorSaveFailed = 'customApp.error.saveFailed',
+  ErrorLoadFailed = 'customApp.error.loadFailed',
   SaveConfirmTitle = 'customApp.saveConfirm.title',
   SaveConfirmDescription = 'customApp.saveConfirm.description',
   SaveConfirmLabel = 'customApp.saveConfirm.confirmLabel',

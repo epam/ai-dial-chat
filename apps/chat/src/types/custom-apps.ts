@@ -1,11 +1,4 @@
-export interface CustomAppGeneralFormData {
-  name: string;
-  version: string;
-  iconUrl: string;
-  description: string;
-  topics: string[];
-  intro: string;
-}
+export type { DeploymentGeneralFormData as CustomAppGeneralFormData } from './toolsets';
 
 export interface CustomAppFormData {
   completionUrl: string;
