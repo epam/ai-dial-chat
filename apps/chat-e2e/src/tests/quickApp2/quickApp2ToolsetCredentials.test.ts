@@ -1,4 +1,5 @@
 import { Publication } from '@/chat/types/publication';
+import { ToolsetCredentialsLevel } from '@/chat/types/toolsets';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -12,7 +13,11 @@ import { ApiKeyMockHelper } from '@/src/testData/toolsets/apiKeyMockHelper';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { ToolsetSignInMockHelper } from '@/src/testData/toolsets/toolsetSignInMockHelper';
 import { GeneratorUtil } from '@/src/utils';
-import { PublishActions, Toolset } from '@epam/ai-dial-shared';
+import {
+  PublishActions,
+  Toolset,
+  ToolsetAuthTypes,
+} from '@epam/ai-dial-shared';
 
 dialAdminTest(
   '[Quick app 2.0] Manage credentials form is available for public toolsets from Quick app 2.0 editor', // EPMRTC-7997
@@ -539,6 +544,384 @@ dialTest(
         await baseAssertion.assertElementState(
           toolsetLoginEventsModal,
           'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Quick app 2.0] Login modal form is displayed for each message in chat if quick app has at least one logged out toolset despite login was declined in previous message\n' + // EPMRTC-8574
+    '[Quick app 2.0] Login modal form is displayed for each regenerated message in chat if quick app has at least one logged out toolset despite login was declined in previous message', // EPMRTC-8598
+  async ({
+    page,
+    marketplacePage,
+    entityEditorPage,
+    quickApp2Builder,
+    toolsetBuilder,
+    toolsetApiHelper,
+    applicationApiHelper,
+    modelApiHelper,
+    dialHomePage,
+    sendMessage,
+    chatMessages,
+    toolsetLoginEventsModal,
+    toolsetSignInMock,
+    toast,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-8574', 'EPMRTC-8598');
+    const declinedToolsetName = GeneratorUtil.randomToolsetName();
+    const loggedInToolsetName = GeneratorUtil.randomToolsetName();
+    const endpoint = GeneratorUtil.randomUrl();
+    const quickAppName = GeneratorUtil.randomApplicationName();
+    let declinedToolset: Toolset;
+    let loggedInToolset: Toolset;
+    let oauthMock: OAuthMockHelper;
+
+    await dialTest.step(
+      'Precondition: create two own toolsets (logged out)',
+      async () => {
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(declinedToolsetName).build(),
+        );
+        declinedToolset =
+          (await toolsetApiHelper.getToolset(declinedToolsetName))!;
+
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(loggedInToolsetName).build(),
+        );
+        loggedInToolset =
+          (await toolsetApiHelper.getToolset(loggedInToolsetName))!;
+      },
+    );
+
+    await dialTest.step(
+      'Mock both toolsets as logged-out OAuth and serve the enriched listing',
+      async () => {
+        oauthMock = new OAuthMockHelper(page, loggedInToolset, endpoint);
+        await oauthMock.setupToolsetRoutes();
+        await oauthMock.setupSignInRoute();
+        await oauthMock.setupOAuthRedirectRoute();
+        await oauthMock.setupSignOutRoute();
+        oauthMock.enableMocking();
+
+        const oauthSettings = ToolsetSignInMockHelper.loggedOutOAuthSettings(
+          oauthMock.getMockConfig(),
+        );
+        await toolsetSignInMock.setupToolsetsListingRoute(
+          await toolsetApiHelper.listToolsets(),
+          [
+            { toolset: declinedToolset, authSettings: oauthSettings },
+            { toolset: loggedInToolset, authSettings: oauthSettings },
+          ],
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Precondition: create a Quick app 2.0 with a tool-supporting orchestrator and both toolsets',
+      async () => {
+        const toolSupportingModel =
+          await modelApiHelper.getToolSupportingModel();
+        await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(quickAppName)
+            .withOrchestratorModel(toolSupportingModel.id)
+            .addToolset(declinedToolset.id!)
+            .addToolset(loggedInToolset.id!)
+            .build(),
+        );
+      },
+    );
+
+    await dialTest.step('Open the Quick app 2.0 in edit mode', async () => {
+      const quickApp = await modelApiHelper.getAgentByNameAndVersion({
+        name: quickAppName,
+      });
+      await marketplacePage.openEditQuickApp2Page(quickApp.reference);
+      await entityEditorPage.waitForPageLoadedForEdit(
+        EntityEditorAppTypes.QuickApp2,
+      );
+    });
+
+    await dialTest.step(
+      'Send a message in the preview to trigger the sign-in modal',
+      async () => {
+        await toolsetSignInMock.setupSignInChannel([
+          declinedToolset,
+          loggedInToolset,
+        ]);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await sendMessage.messageInput.fillInInput(
+          GeneratorUtil.randomString(10),
+        );
+        await sendMessage.sendMessageButton.click();
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'visible',
+        );
+      },
+    );
+
+    // NOTE: the ticket also expects a tools-initialization error in the response
+    // stages after a decline. It is not asserted here: that text comes from the
+    // real orchestration, while this test mocks /api/chat, so the stages would
+    // only ever echo our own mock. Covered manually.
+    await dialTest.step(
+      'Decline one toolset and log in to the other — the modal closes',
+      async () => {
+        await toolsetLoginEventsModal
+          .getDeclineButton(declinedToolsetName)
+          .click();
+        await baseAssertion.assertElementText(
+          toast,
+          ExpectedConstants.toolsetSignInRequestDeclined,
+        );
+        await toast.closeToast();
+
+        const popupPromise = page.waitForEvent('popup');
+        await toolsetLoginEventsModal
+          .getLoginButton(loggedInToolsetName)
+          .click();
+        await oauthMock.navigateToCallback(await popupPromise);
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'hidden',
+        );
+        await toast.closeToast();
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8574: send the next message — the declined toolset asks to log in again',
+      async () => {
+        await sendMessage.messageInput.fillInInput(
+          GeneratorUtil.randomString(10),
+        );
+        await sendMessage.sendMessageButton.click();
+        // Queue the request only after the message is sent, mirroring the
+        // backend asking again for a still logged-out toolset. Queueing it
+        // earlier would pop the modal on the channel's own reconnect, before
+        // the message was even sent. The logged-in one is not asked again.
+        toolsetSignInMock.requestSignInAgain([declinedToolset]);
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal.getRowByToolsetName(declinedToolsetName),
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal.getRowByToolsetName(loggedInToolsetName),
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Decline it again so the modal closes and a response is generated',
+      async () => {
+        await toolsetLoginEventsModal
+          .getDeclineButton(declinedToolsetName)
+          .click();
+        await toast.closeToast();
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8598: regenerate the response — the login form appears again',
+      async () => {
+        await chatMessages.regenerateResponse(false);
+        toolsetSignInMock.requestSignInAgain([declinedToolset]);
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal.getRowByToolsetName(declinedToolsetName),
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest.only(
+  '[Quick app 2.0] [Not Admin] login form for one public toolset in Chat - Login happens with personal creds', // EPMRTC-8571
+  async ({
+    page,
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
+    dialHomePage,
+    sendMessage,
+    quickApp2Builder,
+    toolsetBuilder,
+    toolsetApiHelper,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    adminUserItemApiHelper,
+    publishRequestBuilder,
+    applicationApiHelper,
+    modelApiHelper,
+    toolsetLoginEventsModal,
+    toolsetSignInMock,
+    toolsetApiAuthenticationAssertion,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-8571');
+    const toolsetName = GeneratorUtil.randomToolsetName();
+    const endpoint = GeneratorUtil.randomUrl();
+    const quickAppName = GeneratorUtil.randomApplicationName();
+    let publishedToolset: Toolset;
+    let oauthMock: OAuthMockHelper;
+
+    await dialTest.step(
+      'Precondition: create and publish a toolset so it becomes public',
+      async () => {
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(toolsetName).build(),
+        );
+        const initialToolset =
+          (await toolsetApiHelper.getToolset(toolsetName))!;
+
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withToolsetResource(initialToolset, PublishActions.ADD)
+          .build();
+        const publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+
+        const toolsetResource = publication.resources.find(
+          (r) => r.sourceUrl === initialToolset.id,
+        )!;
+        publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
+          toolsetResource.targetUrl,
+        );
+        // A published toolset comes back without `id`, so keep the resource path
+        // — it is what the app config and the sign-in events refer to.
+        publishedToolset.id ??= toolsetResource.targetUrl;
+      },
+    );
+
+    await dialTest.step(
+      'Mock the public toolset as logged out with both org and personal creds',
+      async () => {
+        oauthMock = new OAuthMockHelper(page, publishedToolset, endpoint);
+        await oauthMock.setupToolsetRoutes();
+        await oauthMock.setupSignInRoute();
+        await oauthMock.setupOAuthRedirectRoute();
+        await oauthMock.setupSignOutRoute();
+        oauthMock.enableMocking();
+
+        await toolsetSignInMock.setupToolsetsListingRoute(
+          await toolsetApiHelper.listToolsets(),
+          [
+            {
+              toolset: publishedToolset,
+              authSettings: ToolsetSignInMockHelper.loggedOutOAuthSettings(
+                oauthMock.getMockConfig(),
+              ),
+            },
+          ],
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Precondition: create a Quick app 2.0 with the public toolset',
+      async () => {
+        const toolSupportingModel =
+          await modelApiHelper.getToolSupportingModel();
+        await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(quickAppName)
+            .withOrchestratorModel(toolSupportingModel.id)
+            .addToolset(publishedToolset.id!)
+            .build(),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open the Quick app 2.0 card and click Use application to start a chat',
+      async () => {
+        await marketplacePage.openMyWorkspacePage({
+          updateInstalledDeployments: false,
+          getStyles: true,
+        });
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(quickAppName);
+        const quickAppCard =
+          await marketplaceEntitiesSection.findEntityElement(quickAppName);
+        await quickAppCard.click();
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+        // The app is our own and already in the workspace, so Use does not
+        // trigger an installed-deployments update.
+        await entityDetailsModal.clickUseButton({
+          isInstalledDeploymentsUpdated: false,
+        });
+        // Not a fresh page load, so wait for the chat input rather than the
+        // whole home page (its side panels stay collapsed here).
+        await baseAssertion.assertElementState(
+          sendMessage.messageInput,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Send a message in the chat to trigger the sign-in modal',
+      async () => {
+        await toolsetSignInMock.setupSignInChannel([publishedToolset]);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await sendMessage.messageInput.fillInInput(
+          GeneratorUtil.randomString(10),
+        );
+        await sendMessage.sendMessageButton.click();
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Log in and verify a public toolset is signed in with personal creds',
+      async () => {
+        const popupPromise = page.waitForEvent('popup');
+        await toolsetLoginEventsModal.getLoginButton(toolsetName).click();
+        await oauthMock.navigateToCallback(await popupPromise);
+        await baseAssertion.assertElementState(
+          toolsetLoginEventsModal,
+          'hidden',
+        );
+        // A regular user logging in to a PUBLIC toolset always signs in at the
+        // user level — this is the actual behaviour under test, not the mock.
+        toolsetApiAuthenticationAssertion.assertSignInRequest(
+          oauthMock.getUserSignInRequest()!,
+          {
+            url: publishedToolset.name!,
+            authType: ToolsetAuthTypes.OAUTH,
+            credentialsLevel: ToolsetCredentialsLevel.USER,
+            authorizationCode: oauthMock.getAuthorizationCode(),
+          },
         );
       },
     );

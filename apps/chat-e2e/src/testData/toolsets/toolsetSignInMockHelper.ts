@@ -36,6 +36,13 @@ const TOOLSET_SIGN_IN_METHOD = 'toolset/signin';
 export class ToolsetSignInMockHelper {
   constructor(private readonly page: Page) {}
 
+  // Toolsets the channel will ask to log in on its next connect; emptied once
+  // pushed, so reconnects don't re-add already resolved events.
+  private pendingToolsets: Toolset[] = [];
+  // The full set the channel was set up with, used as the default to re-ask for.
+  private channelToolsets: Toolset[] = [];
+  private eventId = 0;
+
   // Logged-out OAuth auth settings — endpoints must match the OAuthMockHelper
   // config so the login popup redirect is intercepted.
   static loggedOutOAuthSettings(config: OAuthEndpoints): AuthSettings {
@@ -86,35 +93,21 @@ export class ToolsetSignInMockHelper {
   // Ask the user to log in to each toolset, then keep the report endpoint
   // resolvable so logged-in/declined rows clear.
   async setupSignInChannel(toolsets: Toolset[]): Promise<void> {
-    // Each event's toolsetId is decoded via decodeApiUrl on the client; use the
-    // toolset id so it matches both the toolsets map key and the login-success
-    // payload that resolves (removes) the event.
-    const body = toolsets
-      .map((toolset, index) =>
-        [
-          'data:',
-          JSON.stringify({
-            id: `${index + 1}`,
-            method: TOOLSET_SIGN_IN_METHOD,
-            params: { toolsetId: toolset.id },
-          }),
-        ].join(' '),
-      )
-      .join('\n');
+    this.channelToolsets = [...toolsets];
+    this.pendingToolsets = [...toolsets];
 
     // The real channel is one long-lived stream; our mock closes the response,
-    // so the client reconnects. Push the events only on the FIRST subscribe —
-    // otherwise reconnects re-add already-resolved toolsets and their rows
-    // reappear. Keep the channel id on every response so report stays valid.
-    let eventsPushed = false;
+    // so the client reconnects every few seconds. Push the queued events once
+    // and clear the queue — otherwise every reconnect re-adds already resolved
+    // events and the toolset just logged in reappears. Keep the channel id on
+    // every response so report stays resolvable.
     await this.page.route(`**${API.subscribeHost()}`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
         headers: { [CHANNEL_ID_HEADER]: CHANNEL_ID },
-        body: eventsPushed ? '' : body,
+        body: this.takePendingEvents(),
       });
-      eventsPushed = true;
     });
 
     await this.page.route(`**${API.reportHost()}`, (route) =>
@@ -124,5 +117,35 @@ export class ToolsetSignInMockHelper {
         body: '{}',
       }),
     );
+  }
+
+  /**
+   * Queue another sign-in request, as the backend does for every new message
+   * while a toolset stays logged out. The channel reconnects on its own, so the
+   * events reach the client shortly after.
+   * @param toolsets defaults to the ones passed to setupSignInChannel
+   */
+  requestSignInAgain(toolsets?: Toolset[]): void {
+    this.pendingToolsets = [...(toolsets ?? this.channelToolsets)];
+  }
+
+  private takePendingEvents(): string {
+    // Each event's toolsetId is decoded via decodeApiUrl on the client; use the
+    // toolset id so it matches both the toolsets map key and the login-success
+    // payload that resolves (removes) the event.
+    const body = this.pendingToolsets
+      .map((toolset) =>
+        [
+          'data:',
+          JSON.stringify({
+            id: `${++this.eventId}`,
+            method: TOOLSET_SIGN_IN_METHOD,
+            params: { toolsetId: toolset.id },
+          }),
+        ].join(' '),
+      )
+      .join('\n');
+    this.pendingToolsets = [];
+    return body;
   }
 }
