@@ -411,6 +411,44 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             />
           )}
         />
+
+        <Controller
+          name="addAttachment"
+          control={control}
+          render={({ field }) => (
+            <ToggleSwitchField
+              isOn={field.value}
+              handleSwitch={() => field.onChange(!field.value)}
+              switchOnText="ON"
+              switchOFFText="OFF"
+              label={t('Add attachment')}
+              additionalText={t('add attachment toggle label')}
+              info={t('Add attachment description')}
+              className="flex items-center gap-2"
+              disabled={isAppPublic}
+              tooltip={isAppPublicTooltip}
+            />
+          )}
+        />
+
+        <Controller
+          name="webFetch"
+          control={control}
+          render={({ field }) => (
+            <ToggleSwitchField
+              isOn={field.value}
+              handleSwitch={() => field.onChange(!field.value)}
+              switchOnText="ON"
+              switchOFFText="OFF"
+              label={t('Web fetch')}
+              additionalText={t('web fetch toggle label')}
+              info={t('web fetch description')}
+              className="flex items-center gap-2"
+              disabled={isAppPublic}
+              tooltip={isAppPublicTooltip}
+            />
+          )}
+        />
       </FormCollapsibleSection>
 
       <FormCollapsibleSection
