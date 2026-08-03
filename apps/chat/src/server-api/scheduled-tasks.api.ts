@@ -8,10 +8,23 @@ import type {
 } from '@epam/chat-api-client';
 import { scheduledTasksApi } from './api-client';
 
-export const listScheduledTasks = (
-  signal?: AbortSignal,
-): Promise<ListScheduledTasksResponseDto> =>
-  scheduledTasksApi.listScheduledTasks(signal ? { signal } : undefined);
+export interface ListScheduledTasksParams {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  signal?: AbortSignal;
+}
+
+export const listScheduledTasks = ({
+  limit,
+  offset,
+  search,
+  signal,
+}: ListScheduledTasksParams = {}): Promise<ListScheduledTasksResponseDto> =>
+  scheduledTasksApi.listScheduledTasks(
+    { limit, offset, search },
+    signal ? { signal } : undefined,
+  );
 
 export const createScheduledTask = (
   body: CreateScheduledTaskBodyDto,

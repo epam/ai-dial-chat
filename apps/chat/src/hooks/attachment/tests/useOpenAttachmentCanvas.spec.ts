@@ -4,9 +4,9 @@ import type {
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import { AttachmentType } from '@epam/ai-dial-chat-shared';
+import { annotationsToPdfHighlights } from '@epam/ai-dial-quotations';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { annotationsToPdfHighlights } from '../../../utils/annotation';
 import { useOpenAttachmentCanvas } from '../useOpenAttachmentCanvas';
 
 const {
