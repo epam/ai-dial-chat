@@ -33,7 +33,7 @@ export interface ApiApplicationResponseBase {
   display_name: string;
   display_version: string;
   icon_url: string;
-  description: string;
+  description: string | Record<string, string>;
   features: DialAIEntityFeatures;
   input_attachment_types: string[];
   max_input_attachments: number;
@@ -71,7 +71,7 @@ export interface ApiApplicationModelBase {
   display_name: string;
   display_version: string;
   icon_url: string;
-  description?: string;
+  description?: string | Record<string, string>;
   features?: DialAIEntityFeatures;
   input_attachment_types?: string[];
   max_input_attachments?: number;

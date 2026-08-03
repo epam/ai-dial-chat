@@ -29,7 +29,11 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
+import {
+  ModelsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
@@ -85,6 +89,7 @@ const EmptyChatDescriptionView = ({
 
   const { t } = useTranslation(Translation.Chat);
 
+  const locale = useAppSelector(UISelectors.selectLocale);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
@@ -243,7 +248,7 @@ const EmptyChatDescriptionView = ({
                 />
                 {model && <FunctionStatusIndicator entity={model} />}
               </div>
-              {!!getModelDescription(model) && (
+              {!!getModelDescription(model, locale) && (
                 <span
                   className="whitespace-pre-wrap text-secondary"
                   data-qa="agent-descr"
@@ -252,7 +257,7 @@ const EmptyChatDescriptionView = ({
                     className="!text-base"
                     isShortDescription
                   >
-                    {getModelDescription(model)}
+                    {getModelDescription(model, locale)}
                   </EntityMarkdownDescription>
                 </span>
               )}

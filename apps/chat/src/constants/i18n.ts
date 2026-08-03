@@ -231,6 +231,8 @@ export enum CommonI18nKeys {
   SelectAuthMethod = 'Select one of the methods below that will be used to authenticate',
   AllowedTools = 'Allowed tools',
   EnterOneOrMoreTools = 'Enter one or more tools',
+  AddOption = 'Add "{{value}}"',
+  AllowedToolsEditorDescription = 'The list of tools will be available after filling in the definition and authentication sections',
   LogOutBeforeChangingAuthType = 'Log out before changing authentication type',
   LoggingOutCommon = 'Logging out',
   AreYouSureLogOutCommon = 'Are you sure you want to log out?',
