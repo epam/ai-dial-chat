@@ -6,8 +6,10 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { ApiUtils } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { getFullToken } from '@/src/utils/server/server';
+import { ServerUtils, getFullToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
+import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 
 import {
@@ -24,8 +26,9 @@ interface TranscribeRequestBody {
 }
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   if (req.method !== HTTPMethod.POST) {
-    return res.status(405).json({ error: 'Method not allowed' });
+    throw new DialAIError('Method not allowed', 405, req);
   }
 
   const session = await getServerSession(req, res, authOptions);
@@ -37,12 +40,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const asrModelId = process.env.ASR_MODEL;
   if (!asrModelId) {
     logger.error('ASR_MODEL environment variable is not configured');
-    return res.status(500).json({ error: errorsMessages.generalServer });
+    throw new DialAIError(errorsMessages.generalServer, 500, req);
   }
 
   const { audioData, mimeType } = req.body as TranscribeRequestBody;
   if (!audioData || !mimeType) {
-    return res.status(400).json({ error: errorsMessages[400] });
+    throw new DialAIError(errorsMessages[400], 400, req);
   }
 
   try {
@@ -101,7 +104,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).json({ transcript });
   } catch (error) {
     logger.error({ error }, 'Error during audio transcription');
-    return res.status(500).json({ error: errorsMessages.generalServer });
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 

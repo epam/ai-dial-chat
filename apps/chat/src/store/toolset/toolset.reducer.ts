@@ -71,7 +71,9 @@ export const toolsetSlice = createSlice({
     },
     createToolsetFailed: (
       state,
-      _action: PayloadAction<{ message: string } | undefined>,
+      _action: PayloadAction<
+        { message?: string; traceId?: string } | undefined
+      >,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
     },
@@ -201,7 +203,10 @@ export const toolsetSlice = createSlice({
         payload.reference,
       );
     },
-    deleteToolsetFail: (state) => state,
+    deleteToolsetFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
 
     startSignInProcess: (
       state,

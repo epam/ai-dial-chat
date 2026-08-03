@@ -8,6 +8,7 @@ import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { DialAIError } from '@/src/types/error';
 
@@ -41,6 +42,7 @@ const getEntityUrlFromSlugs = (
 };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   const entityType = ServerUtils.getEntityTypeFromPath(req);
   if (!entityType || !isValidEntityApiType(entityType)) {
     return res.status(400).json(errorsMessages.notValidEntityType);
@@ -80,12 +82,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).send(json);
   } catch (error: unknown) {
     logger.error(error);
-    if (error instanceof DialAIError) {
-      return res
-        .status(parseInt(error.code, 10) || 500)
-        .send(error.message || errorsMessages.generalServer);
-    }
-    return res.status(500).send(errorsMessages.generalServer);
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 
