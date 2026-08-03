@@ -38,7 +38,7 @@ dialTest(
     chatMessages,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-476');
+    setTestIds('EPMDIAL-5913');
     let conversation: Conversation;
     const userRequests = [
       'first request',
@@ -98,7 +98,7 @@ dialTest(
     toast,
     toastAssertion,
   }) => {
-    setTestIds('EPMRTC-477', 'EPMRTC-1463');
+    setTestIds('EPMDIAL-5914', 'EPMDIAL-6176');
     await dialTest.step(
       'Set random application theme and installed model',
       async () => {
@@ -200,7 +200,7 @@ dialTest(
     chatMessages,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-485', 'EPMRTC-486', 'EPMRTC-487');
+    setTestIds('EPMDIAL-5921', 'EPMDIAL-5922', 'EPMDIAL-5924');
     const editData = 'updated message';
     let conversation: Conversation;
     const userRequests = ['1+2=', '2+3=', '3+4='];
@@ -294,7 +294,7 @@ dialTest(
     confirmationDialog,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-488', 'EPMRTC-489');
+    setTestIds('EPMDIAL-5927', 'EPMDIAL-5928');
     const conversation =
       conversationData.prepareModelConversationBasedOnRequests(userRequests);
     await dialTest.step('Prepare conversation with 3 requests', async () => {
@@ -355,7 +355,7 @@ dialTest.skip(
     talkToAgentDialog,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
-    setTestIds('EPMRTC-1085');
+    setTestIds('EPMDIAL-5937');
     await dialTest.step(
       'Set system prompt for model and send request',
       async () => {
@@ -404,7 +404,7 @@ dialTest(
     chatMessagesAssertion,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
-    setTestIds('EPMRTC-478', 'EPMRTC-1480', 'EPMRTC-1309');
+    setTestIds('EPMDIAL-5915', 'EPMDIAL-6177', 'EPMDIAL-5926');
     const expectedModelIcon = iconApiHelper.getEntityIcon(simpleRequestModel!);
 
     await dialTest.step('Set random application theme', async () => {
@@ -523,7 +523,7 @@ dialTest(
     chatBar,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
-    setTestIds('EPMRTC-538', 'EPMRTC-386');
+    setTestIds('EPMDIAL-6200', 'EPMDIAL-7282');
     await dialTest.step(
       'Send request, verify Compare button is disabled while generating the response, model icon is jumping',
       async () => {
@@ -566,7 +566,7 @@ dialTest(
     setTestIds,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
-    setTestIds('EPMRTC-1010', 'EPMRTC-1945');
+    setTestIds('EPMDIAL-3671', 'EPMDIAL-3672');
     let prompt: Prompt;
 
     await dialTest.step('Prepare prompt with content', async () => {

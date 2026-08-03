@@ -15,7 +15,7 @@ import { PublishActions, Toolset } from '@epam/ai-dial-shared';
 
 dialTest(
   '[Select agents and toolsets] No changes are applied if user closes the modal on Cancel\n' +
-    '[Select agents and toolsets] No changes are applied if user closes the modal on X', // EPMRTC-7320 + EPMRTC-7321
+    '[Select agents and toolsets] No changes are applied if user closes the modal on X', // EPMDIAL-4803 + EPMDIAL-4804
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -32,7 +32,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7320', 'EPMRTC-7321');
+    setTestIds('EPMDIAL-4803', 'EPMDIAL-4804');
     const agentName = GeneratorUtil.randomApplicationName();
     const toolsetName = GeneratorUtil.randomToolsetName();
     const quickAppName = GeneratorUtil.randomApplicationName();
@@ -167,7 +167,7 @@ dialTest(
 
 dialTest(
   '[Select agents and toolsets] the quick app which is currently being CREATED could not be found and added\n' +
-    '[Select agents and toolsets] the quick app which is currently being EDITED could not be found and added', // EPMRTC-7285 + EPMRTC-7286
+    '[Select agents and toolsets] the quick app which is currently being EDITED could not be found and added', // EPMDIAL-4801 + EPMDIAL-4802
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -181,7 +181,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7285', 'EPMRTC-7286');
+    setTestIds('EPMDIAL-4801', 'EPMDIAL-4802');
     const quickAppName = GeneratorUtil.randomApplicationName();
 
     await dialTest.step('Open My workspace', async () => {
@@ -290,7 +290,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7322', 'EPMRTC-7220', 'EPMRTC-7963');
+    setTestIds('EPMDIAL-4805', 'EPMDIAL-4806', 'EPMDIAL-4807');
     const appName = GeneratorUtil.randomApplicationName();
     const toolsetName = GeneratorUtil.randomToolsetName();
     const quickAppName = GeneratorUtil.randomApplicationName();
@@ -408,7 +408,7 @@ dialTest(
 dialSharedWithMeTest(
   "[Select agents and toolsets] available agents and toolsets on 'My workspace'\n" +
     "[Select agents and toolsets] available agents and toolsets on 'Marketplace'\n" +
-    "[Select agents and toolsets] External app is not available on 'My workspace'/'Marketplace'", // EPMRTC-7318 + EPMRTC-7319 + EPMRTC-7976
+    "[Select agents and toolsets] External app is not available on 'My workspace'/'Marketplace'", // EPMDIAL-4796 + EPMDIAL-4797 + EPMDIAL-4798
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -436,7 +436,7 @@ dialSharedWithMeTest(
     setTestIds,
   }) => {
     dialSharedWithMeTest.slow();
-    setTestIds('EPMRTC-7318', 'EPMRTC-7319', 'EPMRTC-7976');
+    setTestIds('EPMDIAL-4796', 'EPMDIAL-4797', 'EPMDIAL-4798');
     const myAppName = GeneratorUtil.randomApplicationName();
     const myToolsetName = GeneratorUtil.randomToolsetName();
     const bookmarkedAppName = GeneratorUtil.randomApplicationName();
@@ -629,7 +629,7 @@ dialSharedWithMeTest(
 );
 
 dialTest(
-  '[UI][Select agents and toolsets] the modal when there is no any agent and toolset bookmarked or created', // EPMRTC-7291
+  '[UI][Select agents and toolsets] the modal when there is no any agent and toolset bookmarked or created', // EPMDIAL-4795
   async ({
     marketplacePage,
     entityEditorPage,
@@ -643,7 +643,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7291');
+    setTestIds('EPMDIAL-4795');
     const quickAppName = GeneratorUtil.randomApplicationName();
 
     await dialTest.step(
@@ -711,7 +711,7 @@ dialTest(
 );
 
 dialTest(
-  "[Select agents and toolsets] Sorting order of agents and toolsets on 'My workspace' and 'Marketplace'", // EPMRTC-7348
+  "[Select agents and toolsets] Sorting order of agents and toolsets on 'My workspace' and 'Marketplace'", // EPMDIAL-4800
   async ({
     marketplacePage,
     entityEditorPage,
@@ -729,7 +729,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7348');
+    setTestIds('EPMDIAL-4800');
     // Names always start with our E2E prefix (so cleanup catches them); the
     // ASCII-boundary char comes right after and drives the sort within each type.
     const seed = GeneratorUtil.randomString(5);

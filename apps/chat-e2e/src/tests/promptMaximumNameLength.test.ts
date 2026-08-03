@@ -26,7 +26,7 @@ dialTest(
     localStorageManager,
     promptPreviewModal,
   }) => {
-    setTestIds('EPMRTC-3171', 'EPMRTC-958', 'EPMRTC-3168');
+    setTestIds('EPMDIAL-3760', 'EPMDIAL-3761', 'EPMDIAL-3759');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     const longName = GeneratorUtil.randomString(300);

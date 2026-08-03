@@ -49,15 +49,15 @@ dialAdminTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-4786',
-      'EPMRTC-4785',
-      'EPMRTC-4782',
-      'EPMRTC-4783',
-      'EPMRTC-4784',
-      'EPMRTC-4781',
-      'EPMRTC-4789',
-      'EPMRTC-4788',
-      'EPMRTC-4787',
+      'EPMDIAL-6025',
+      'EPMDIAL-6024',
+      'EPMDIAL-6021',
+      'EPMDIAL-6022',
+      'EPMDIAL-6023',
+      'EPMDIAL-6020',
+      'EPMDIAL-6028',
+      'EPMDIAL-6027',
+      'EPMDIAL-6026',
     );
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),

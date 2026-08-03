@@ -21,7 +21,7 @@ dialTest(
     chatMessagesAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-8469', 'EPMRTC-7058', 'EPMRTC-7059');
+    setTestIds('EPMDIAL-6048', 'EPMDIAL-6049', 'EPMDIAL-6050');
     let stageConversation: Conversation;
     const stageContent = GeneratorUtil.randomString(35000);
     //NEXT_PUBLIC_STAGE_CONTENT_LIMIT=20 is configured on review/e2e envs
@@ -117,7 +117,7 @@ dialTest(
     chatMessagesAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-435');
+    setTestIds('EPMDIAL-6040');
     let errorStageConversation: Conversation;
     const messageIndex = 2;
     const stageIndex = 1;

@@ -32,7 +32,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1597', 'EPMRTC-1631');
+    setTestIds('EPMDIAL-3078', 'EPMDIAL-3079');
     let nestedFolders: FolderInterface[];
     let nestedSharedConversations: Conversation[];
     let nestedConversations: Conversation[];
@@ -212,7 +212,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1635', 'EPMRTC-1636');
+    setTestIds('EPMDIAL-3847', 'EPMDIAL-3848');
     let nestedFolders: FolderInterface[];
     let nestedSharedPrompts: Prompt[];
     let nestedPrompts: Prompt[];

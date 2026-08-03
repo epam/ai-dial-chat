@@ -30,7 +30,7 @@ dialSharedWithMeTest(
     additionalShareUserPublishingRulesAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3655');
+    setTestIds('EPMDIAL-3468');
     const publishFolder = GeneratorUtil.randomString(10);
     const filterValue = 'age';
     let additionalUserConversation: Conversation;

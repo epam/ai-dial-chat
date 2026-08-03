@@ -38,12 +38,12 @@ dialTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-5268',
-      'EPMRTC-5273',
-      'EPMRTC-5444',
-      'EPMRTC-5270',
-      'EPMRTC-5324',
-      'EPMRTC-5325',
+      'EPMDIAL-2575',
+      'EPMDIAL-2577',
+      'EPMDIAL-2578',
+      'EPMDIAL-2576',
+      'EPMDIAL-2582',
+      'EPMDIAL-2583',
     );
     dialTest.slow();
     const appFirstVersion = ExpectedConstants.defaultEntityVersion;

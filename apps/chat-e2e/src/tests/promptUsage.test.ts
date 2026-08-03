@@ -32,13 +32,13 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-3843',
-      'EPMRTC-3836',
-      'EPMRTC-3834',
-      'EPMRTC-1014',
-      'EPMRTC-3812',
-      'EPMRTC-3837',
-      'EPMRTC-3843',
+      'EPMDIAL-3668',
+      'EPMDIAL-3666',
+      'EPMDIAL-3664',
+      'EPMDIAL-3669',
+      'EPMDIAL-3670',
+      'EPMDIAL-3667',
+      'EPMDIAL-3668',
     );
     const prompts: Prompt[] = [];
     let promptToSelect: Prompt;
@@ -142,7 +142,7 @@ dialTest(
     localStorageManager,
     chat,
   }) => {
-    setTestIds('EPMRTC-3823', 'EPMRTC-3803', 'EPMRTC-4371');
+    setTestIds('EPMDIAL-3676', 'EPMDIAL-3678', 'EPMDIAL-6350');
     let simplePrompt: Prompt;
     let promptWithVariable: Prompt;
     const simplePromptContent = GeneratorUtil.randomString(10);
@@ -229,7 +229,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3844', 'EPMRTC-3838');
+    setTestIds('EPMDIAL-3693', 'EPMDIAL-3691');
     let prompt: Prompt;
     const content =
       'Why do we use it?\n' +
@@ -284,7 +284,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3829', 'EPMRTC-3830', 'EPMRTC-3842', 'EPMRTC-3832');
+    setTestIds('EPMDIAL-3685', 'EPMDIAL-3686', 'EPMDIAL-3687', 'EPMDIAL-3689');
     let prompt: Prompt;
     const painterVar = 'Painter';
     const painterVarDefaultValue = 'Picasso';
@@ -450,7 +450,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3833', 'EPMRTC-1015', 'EPMRTC-3865');
+    setTestIds('EPMDIAL-3690', 'EPMDIAL-3683', 'EPMDIAL-3682');
     let prompt: Prompt;
     const promptName = 'testName'.repeat(20);
     const promptDescription = 'testDescription';
@@ -536,7 +536,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3821', 'EPMRTC-3883');
+    setTestIds('EPMDIAL-3673', 'EPMDIAL-6328');
     let prompt: Prompt;
     const aVar = 'a';
     const aVarValue = '5';
@@ -642,7 +642,7 @@ dialSharedWithMeTest(
     setTestIds,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-3502');
+    setTestIds('EPMDIAL-3839');
     let folderPrompt: FolderPrompt;
     let promptWithParams: Prompt;
     let promptInFolder: Prompt;
@@ -775,7 +775,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-6108', 'EPMRTC-6146');
+    setTestIds('EPMDIAL-3722', 'EPMDIAL-3641');
     let prompt: Prompt;
     const aVar = 'a';
     const aVarDefaultValue = '5';

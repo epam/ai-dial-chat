@@ -35,7 +35,7 @@ dialTest(
     chatMessages,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1583');
+    setTestIds('EPMDIAL-6464');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,
     );
@@ -111,7 +111,7 @@ dialTest(
     fileManagerModalGridAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1763', 'EPMRTC-1901');
+    setTestIds('EPMDIAL-6483', 'EPMDIAL-6481');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,
     );

@@ -70,11 +70,11 @@ dialOverlayTest(
     setTestIds,
   }) => {
     setTestIds(
-      'EPMRTC-4845',
-      'EPMRTC-395',
-      'EPMRTC-4850',
-      'EPMRTC-4506',
-      'EPMRTC-4853',
+      'EPMDIAL-2332',
+      'EPMDIAL-2336',
+      'EPMDIAL-2340',
+      'EPMDIAL-2335',
+      'EPMDIAL-2341',
     );
     const firstRequestContent = 'Hello';
     const secondRequestContent = 'test';
@@ -251,7 +251,7 @@ dialOverlayTest(
     adminDataInjector,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-396', 'EPMRTC-4852');
+    setTestIds('EPMDIAL-2339', 'EPMDIAL-2334');
     let todayConversation: Conversation;
     let folderConversation: FolderConversation;
     let publishedConversation: Conversation;
@@ -537,7 +537,7 @@ dialOverlayTest(
     overlayDataInjector,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4840', 'EPMRTC-6177');
+    setTestIds('EPMDIAL-2343', 'EPMDIAL-2345');
 
     await dialOverlayTest.step(
       'Create set of conversations in folders',
@@ -639,7 +639,7 @@ dialOverlayTest(
     overlayDataInjector,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6479');
+    setTestIds('EPMDIAL-2344');
 
     await dialOverlayTest.step(
       'Create a conversation with "New conversation 2" name in Today section',
@@ -701,7 +701,7 @@ dialOverlayTest(
     overlayActions,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-5695', 'EPMRTC-6322');
+    setTestIds('EPMDIAL-2346', 'EPMDIAL-2350');
     const firstConversationName = GeneratorUtil.randomString(7);
     const secondConversationName = GeneratorUtil.randomString(7);
 
@@ -798,7 +798,7 @@ dialOverlayTest(
     overlayDialog,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6323');
+    setTestIds('EPMDIAL-2347');
     let todayConversation: Conversation;
     const defaultModelId = ModelsUtil.getDefaultAgent()!.reference;
     const expectedConversationName =
@@ -923,7 +923,7 @@ dialOverlayTest(
     adminDataInjector,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-6326');
+    setTestIds('EPMDIAL-2349');
     let folderConversation: FolderConversation;
     let publishedConversation: Conversation;
     let sharedConversation: Conversation;
@@ -1120,7 +1120,7 @@ dialOverlayTest(
     overlayDataInjector,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6394');
+    setTestIds('EPMDIAL-2348');
     let todayConversation: Conversation;
 
     await dialOverlayTest.step(
@@ -1208,7 +1208,7 @@ dialOverlayTest(
     adminDataInjector,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-6328');
+    setTestIds('EPMDIAL-2352');
     let folderConversation: FolderConversation;
     let publishedConversation: Conversation;
     let publishRequest: PublicationRequestModel;
@@ -1416,7 +1416,7 @@ dialOverlayTest(
     overlayItemApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-6330');
+    setTestIds('EPMDIAL-2354');
     let folderConversation: FolderConversation;
     const newConversationWithHistoryName = GeneratorUtil.randomString(7);
 
@@ -1531,7 +1531,7 @@ dialOverlayTest(
     setIssueIds,
   }) => {
     setIssueIds('4173');
-    setTestIds('EPMRTC-6331');
+    setTestIds('EPMDIAL-2355');
     const newEmptyConversationName = GeneratorUtil.randomString(7);
 
     await dialOverlayTest.step(

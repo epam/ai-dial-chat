@@ -45,7 +45,7 @@ dialAdminTest(
     adminChatSettingsTooltip,
     adminApproveRequiredConversationDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-6472', 'EPMRTC-6665');
+    setTestIds('EPMDIAL-3342', 'EPMDIAL-3350');
     let publishedConversation: Conversation;
     const unpublishRequestName = GeneratorUtil.randomUnpublishRequestName();
     let publication: Publication;
@@ -248,7 +248,7 @@ dialAdminTest(
     adminChatMessagesAssertion,
     adminPublicationReviewControl,
   }) => {
-    setTestIds('EPMRTC-6736', 'EPMRTC-6737', 'EPMRTC-6475', 'EPMRTC-6485');
+    setTestIds('EPMDIAL-3352', 'EPMDIAL-3353', 'EPMDIAL-3343', 'EPMDIAL-3344');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const newSystemPrompt = 'new system prompt';
@@ -383,7 +383,7 @@ dialAdminTest(
     adminConfirmationDialog,
     adminSendMessage,
   }) => {
-    setTestIds('EPMRTC-6488', 'EPMRTC-6483', 'EPMRTC-6489');
+    setTestIds('EPMDIAL-3345', 'EPMDIAL-3347', 'EPMDIAL-3348');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
 
@@ -488,7 +488,7 @@ dialAdminTest(
     baseAssertion,
     adminPublicationReviewControl,
   }) => {
-    setTestIds('EPMRTC-6498');
+    setTestIds('EPMDIAL-3349');
     let conversation: Conversation;
     let playbackConversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -569,7 +569,7 @@ dialAdminTest(
     adminInputAttachments,
     adminChat,
   }) => {
-    setTestIds('EPMRTC-6599', 'EPMRTC-6607', 'EPMRTC-6604');
+    setTestIds('EPMDIAL-3355', 'EPMDIAL-3356', 'EPMDIAL-3357');
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const model = GeneratorUtil.randomArrayElement(
@@ -742,13 +742,13 @@ dialAdminTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-6605',
-      'EPMRTC-6608',
-      'EPMRTC-6609',
-      'EPMRTC-6606',
-      'EPMRTC-6464',
-      'EPMRTC-6798',
-      'EPMRTC-6797',
+      'EPMDIAL-3358',
+      'EPMDIAL-3360',
+      'EPMDIAL-3361',
+      'EPMDIAL-3359',
+      'EPMDIAL-3321',
+      'EPMDIAL-3325',
+      'EPMDIAL-3324',
     );
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -1073,15 +1073,15 @@ dialAdminTest(
     testInfo,
   ) => {
     setTestIds(
-      'EPMRTC-6474',
-      'EPMRTC-6493',
-      'EPMRTC-6658',
-      'EPMRTC-6456',
-      'EPMRTC-6787',
-      'EPMRTC-6550',
-      // 'EPMRTC-6789',
-      'EPMRTC-6502',
-      'EPMRTC-6567',
+      'EPMDIAL-3306',
+      'EPMDIAL-3307',
+      'EPMDIAL-3308',
+      'EPMDIAL-3313',
+      'EPMDIAL-3309',
+      'EPMDIAL-3311',
+      // 'EPMDIAL-3315',
+      'EPMDIAL-3314',
+      'EPMDIAL-3312',
     );
     const conversation: Conversation =
       conversationData.prepareDefaultConversation(
@@ -1378,7 +1378,7 @@ dialAdminTest(
     },
     testInfo,
   ) => {
-    setTestIds(/*'EPMRTC-6500',*/ 'EPMRTC-6790', 'EPMRTC-6459');
+    setTestIds(/*'EPMDIAL-3319',*/ 'EPMDIAL-3317', 'EPMDIAL-3318');
     let publishedConversation: Conversation;
     const initialVersion = '1.1.1';
     const firstVersion = ExpectedConstants.defaultEntityVersion;
@@ -1474,7 +1474,7 @@ dialAdminTest(
       },
     );
 
-    //TODO EPMRTC-6500 case needs to be fixed. Issue id: 3410
+    //TODO EPMDIAL-3319 case needs to be fixed. Issue id: 3410
     // await dialAdminTest.step(
     //   'View that previous version 0.0.1 and current version 0.0.2 are displayed on the request form',
     //   async () => {
@@ -1598,7 +1598,7 @@ dialAdminTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-6465', 'EPMRTC-6549', 'EPMRTC-6466');
+    setTestIds('EPMDIAL-3320', 'EPMDIAL-3310', 'EPMDIAL-3322');
     let folderConversation: FolderConversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     let updatedFolderName: string;

@@ -62,12 +62,12 @@ dialSharedWithMeTest(
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
-      'EPMRTC-1826',
-      'EPMRTC-1875',
-      'EPMRTC-2766',
-      'EPMRTC-2881',
-      'EPMRTC-2722',
-      'EPMRTC-1877',
+      'EPMDIAL-3027',
+      'EPMDIAL-3035',
+      'EPMDIAL-3038',
+      'EPMDIAL-3042',
+      'EPMDIAL-3023',
+      'EPMDIAL-2986',
     );
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getModels().filter(
@@ -199,7 +199,7 @@ dialSharedWithMeTest(
     setTestIds,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1827', 'EPMRTC-1854');
+    setTestIds('EPMDIAL-3028', 'EPMDIAL-3033');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -278,7 +278,7 @@ dialSharedWithMeTest(
     additionalShareUserSharedWithMeFoldersAssertion,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-1828', 'EPMRTC-2767', 'EPMRTC-1833', 'EPMRTC-2869');
+    setTestIds('EPMDIAL-3030', 'EPMDIAL-3039', 'EPMDIAL-3041', 'EPMDIAL-3025');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -442,7 +442,7 @@ dialSharedWithMeTest(
     localStorageManager,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1829', 'EPMRTC-2771');
+    setTestIds('EPMDIAL-3031', 'EPMDIAL-3060');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -592,7 +592,7 @@ dialSharedWithMeTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2758');
+    setTestIds('EPMDIAL-3065');
     let sharedConversationInFolder: FolderConversation;
     let conversationInFolder: FolderConversation;
     let singleConversation: Conversation;
@@ -725,7 +725,7 @@ dialSharedWithMeTest(
     itemApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2759');
+    setTestIds('EPMDIAL-3058');
     let sharedConversationInFolder: FolderConversation;
     let sharedConversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -807,7 +807,7 @@ dialSharedWithMeTest(
     setTestIds,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1834');
+    setTestIds('EPMDIAL-3040');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -870,7 +870,7 @@ dialSharedWithMeTest(
     shareApiAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1855');
+    setTestIds('EPMDIAL-3034');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -949,7 +949,7 @@ dialSharedWithMeTest(
     localStorageManager,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-2770', 'EPMRTC-2772', 'EPMRTC-2726');
+    setTestIds('EPMDIAL-3061', 'EPMDIAL-3064', 'EPMDIAL-2990');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkFolderResponse: ShareByLinkResponseModel;
@@ -1063,7 +1063,7 @@ dialSharedWithMeTest(
     additionalShareUserConversationDropdownMenuAssertion,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1846', 'EPMRTC-4777', 'EPMRTC-4778');
+    setTestIds('EPMDIAL-3051', 'EPMDIAL-5997', 'EPMDIAL-6015');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -1179,7 +1179,7 @@ dialSharedWithMeTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-5553', 'EPMRTC-4739', 'EPMRTC-1847');
+    setTestIds('EPMDIAL-3554', 'EPMDIAL-5996', 'EPMDIAL-3052');
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const currentDate = DateUtil.getCurrentLocalDate();
@@ -1272,7 +1272,7 @@ dialSharedWithMeTest(
     setTestIds,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-2807');
+    setTestIds('EPMDIAL-2995');
     let nestedFolders: FolderInterface[];
     let nestedConversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -1343,7 +1343,7 @@ dialTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-2753');
+    setTestIds('EPMDIAL-3022');
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
 
@@ -1410,7 +1410,7 @@ dialTest(
     mainUserShareApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8857');
+    setTestIds('EPMDIAL-2992');
     let conversationsInFolder: FolderConversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let openedConversationName: string;

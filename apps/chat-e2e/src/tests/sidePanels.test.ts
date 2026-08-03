@@ -18,7 +18,7 @@ dialTest(
     promptBar,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-352', 'EPMRTC-353', 'EPMRTC-354');
+    setTestIds('EPMDIAL-2366', 'EPMDIAL-2367', 'EPMDIAL-2369');
 
     await dialTest.step('Open chat panel', async () => {
       await dialHomePage.openHomePage();
@@ -61,7 +61,7 @@ dialTest(
     localStorageManager,
     baseAssertion,
   }) => {
-    setTestIds('EPMRTC-1642', 'EPMRTC-1650', 'EPMRTC-1641', 'EPMRTC-1647');
+    setTestIds('EPMDIAL-2395', 'EPMDIAL-2399', 'EPMDIAL-2397', 'EPMDIAL-2396');
     let appBounding;
     let maxChatBarBounding;
     let maxPromptBarBounding;

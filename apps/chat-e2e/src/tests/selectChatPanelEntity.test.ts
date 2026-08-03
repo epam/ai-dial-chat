@@ -34,7 +34,7 @@ dialTest(
     tooltipAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3638', 'EPMRTC-3639', 'EPMRTC-3644');
+    setTestIds('EPMDIAL-3527', 'EPMDIAL-3529', 'EPMDIAL-3526');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let folderWithConversations: FolderConversation;
@@ -409,7 +409,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3641', 'EPMRTC-3643');
+    setTestIds('EPMDIAL-3530', 'EPMDIAL-3531');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let rootFolder: FolderConversation;
@@ -580,7 +580,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3645', 'EPMRTC-3647', 'EPMRTC-3646');
+    setTestIds('EPMDIAL-3539', 'EPMDIAL-3535', 'EPMDIAL-3532');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let rootFolder: FolderConversation;
@@ -775,7 +775,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3654');
+    setTestIds('EPMDIAL-3536');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let lowLevelFolderConversation: Conversation;
@@ -991,7 +991,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3663', 'EPMRTC-3649');
+    setTestIds('EPMDIAL-3537', 'EPMDIAL-3541');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let lowLevelFolderConversation: Conversation;
@@ -1259,7 +1259,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3664', 'EPMRTC-3648', 'EPMRTC-3652');
+    setTestIds('EPMDIAL-3538', 'EPMDIAL-3540', 'EPMDIAL-3542');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let lowLevelFolderConversation: Conversation;
@@ -1468,7 +1468,7 @@ dialTest(
     chatHeader,
     chatHeaderAssertion,
   }) => {
-    setTestIds('EPMRTC-3650', 'EPMRTC-4733');
+    setTestIds('EPMDIAL-3544', 'EPMDIAL-5989');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let singleConversation: Conversation;
@@ -1612,7 +1612,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-3911');
+    setTestIds('EPMDIAL-3546');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let lowLevelFolderConversation: Conversation;

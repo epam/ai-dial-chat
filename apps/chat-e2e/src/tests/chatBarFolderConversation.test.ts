@@ -34,11 +34,11 @@ dialTest(
     localStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-569',
-      'EPMRTC-2005',
-      'EPMRTC-4157',
-      'EPMRTC-3567',
-      'EPMRTC-3497',
+      'EPMDIAL-2781',
+      'EPMDIAL-2961',
+      'EPMDIAL-3164',
+      'EPMDIAL-3172',
+      'EPMDIAL-3170',
     );
     let folderEmptyConversation: FolderConversation;
     let folderReplayConversation: FolderConversation;
@@ -147,11 +147,11 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds(
-      'EPMRTC-571',
-      'EPMRTC-1371',
-      'EPMRTC-1627',
-      'EPMRTC-2891',
-      'EPMRTC-2893',
+      'EPMDIAL-2788',
+      'EPMDIAL-2791',
+      'EPMDIAL-2862',
+      'EPMDIAL-2876',
+      'EPMDIAL-2878',
     );
     const newNameWithSpaces = '  updated    folder name  ';
     const randomFolderIndex = GeneratorUtil.randomNumberInRange(2) + 1;
@@ -231,12 +231,12 @@ dialTest(
     chatBarFolderAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-572',
-      'EPMRTC-587',
-      'EPMRTC-2889',
-      'EPMRTC-2890',
-      'EPMRTC-6713',
-      'EPMRTC-575',
+      'EPMDIAL-2789',
+      'EPMDIAL-2871',
+      'EPMDIAL-2874',
+      'EPMDIAL-2875',
+      'EPMDIAL-2872',
+      'EPMDIAL-2877',
     );
     const newNameWithEndDot = 'updated folder name.';
     const leadingDotFolderName = `.${GeneratorUtil.randomString(5)}`;
@@ -351,7 +351,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-573', 'EPMRTC-574', 'EPMRTC-3190');
+    setTestIds('EPMDIAL-2790', 'EPMDIAL-2792', 'EPMDIAL-2910');
     const folderName = GeneratorUtil.randomString(70);
     const newFolderNameToSet = `${GeneratorUtil.randomString(300)}.`;
     const expectedNewFolderName = newFolderNameToSet.substring(
@@ -435,7 +435,7 @@ dialTest(
     localStorageManager,
     chatBarFolderAssertion,
   }) => {
-    setTestIds('EPMRTC-579');
+    setTestIds('EPMDIAL-2782');
     let conversationInFolder: FolderConversation;
 
     await dialTest.step('Prepare conversation inside folder', async () => {
@@ -481,7 +481,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-606', 'EPMRTC-1373');
+    setTestIds('EPMDIAL-2818', 'EPMDIAL-2813');
 
     await dialTest.step('Create max nested folders structure', async () => {
       await localStorageManager.setChatCollapsedSection(
@@ -574,7 +574,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-605');
+    setTestIds('EPMDIAL-2812');
     const conversationInFolder =
       conversationData.prepareDefaultConversationInFolder();
     await dataInjector.createConversations(
@@ -614,7 +614,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1372');
+    setTestIds('EPMDIAL-2814');
     const levelsCount = 4;
     const levelToDelete = 2;
     let nestedFolders: FolderInterface[];
@@ -695,7 +695,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1277');
+    setTestIds('EPMDIAL-2873');
 
     await dialTest.step(
       'Create a new folder and rename to name with special symbols',
@@ -738,7 +738,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-2954');
+    setTestIds('EPMDIAL-2879');
     const updatedFolderName = `😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß`;
     let folderConversation: FolderConversation;
 
@@ -813,7 +813,7 @@ dialTest(
     toastAssertion,
     conversationDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923, EPMRTC-1764');
+    setTestIds('EPMDIAL-2833', 'EPMDIAL-2834', 'EPMDIAL-2835, EPMDIAL-2787');
     let firstConversation: Conversation;
 
     await dialTest.step('Prepare folders hierarchy', async () => {
@@ -964,7 +964,7 @@ dialTest(
     conversationDropdownMenuAssertion,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1138', 'EPMRTC-1598');
+    setTestIds('EPMDIAL-2798', 'EPMDIAL-2841');
     const conversation = conversationData.prepareDefaultConversation();
     conversationData.resetData();
     const replayConversation =

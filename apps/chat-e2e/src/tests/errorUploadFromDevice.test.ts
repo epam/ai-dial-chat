@@ -20,7 +20,7 @@ dialTest(
     fileApiHelper,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1777', 'EPMRTC-1778');
+    setTestIds('EPMDIAL-6904', 'EPMDIAL-6906');
 
     await dialTest.step('Upload file with long name to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
@@ -74,7 +74,7 @@ dialTest(
     sendMessage,
     sendMessageInputAttachmentsAssertions,
   }) => {
-    setTestIds('EPMRTC-1802');
+    setTestIds('EPMDIAL-6499');
     const replacedSymbolsFilename =
       ExpectedConstants.replacedRestrictedCharsName(
         Attachment.restrictedCharsFilename,
@@ -118,10 +118,9 @@ dialTest(
   },
 );
 
+//TODO: update current test to correspond EPMDIAL-6905, EPMDIAL-6911
 dialTest(
-  '[Upload from device] Duplicate names in upload list are auto-renamed on upload.\n' +
-    '[Upload from device] Files with restricted chars in the name are sanitized and uploaded.\n' +
-    '[Upload from device] Upload succeeds when batch contains files that sanitize to the same name',
+  '[Upload from device] Upload succeeds when batch contains files that sanitize to the same name',
   async ({
     dialHomePage,
     setTestIds,
@@ -135,7 +134,7 @@ dialTest(
     fileConflictConfirmationPopupAssertion,
     sendMessageInputAttachmentsAssertions,
   }) => {
-    setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
+    setTestIds('EPMDIAL-6911');
 
     const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
     const uploadFolder = `${ExpectedConstants.fileUploadFolder}/${yearMonthSubfolder}`;
@@ -252,7 +251,7 @@ dialTest(
     fileManagerModalGridAssertion,
     sendMessageInputAttachmentsAssertions,
   }) => {
-    setTestIds('EPMRTC-3113');
+    setTestIds('EPMDIAL-6917');
 
     await dialTest.step(
       'Upload file without extension through chat bar attachment menu',

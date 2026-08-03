@@ -47,7 +47,7 @@ dialAdminTest(
     adminLocalStorageManager,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3198', 'EPMRTC-3515', 'EPMRTC-4061', 'EPMRTC-6395');
+    setTestIds('EPMDIAL-3095', 'EPMDIAL-3107', 'EPMDIAL-3127', 'EPMDIAL-3128');
     const publishRequestConversations: Conversation[] = [];
     const subFolder = 'subfolder 3.1';
     const subFolderSearchTerm = subFolder.split(' ')[1];
@@ -268,14 +268,14 @@ dialAdminTest(
   }) => {
     dialAdminTest.slow();
     setTestIds(
-      'EPMRTC-3199',
-      'EPMRTC-3577',
-      'EPMRTC-3458',
-      'EPMRTC-4060',
-      'EPMRTC-4905',
-      'EPMRTC-3797',
-      'EPMRTC-3459',
-      'EPMRTC-9092',
+      'EPMDIAL-3098',
+      'EPMDIAL-3112',
+      'EPMDIAL-3105',
+      'EPMDIAL-3126',
+      'EPMDIAL-3140',
+      'EPMDIAL-3124',
+      'EPMDIAL-3102',
+      'EPMDIAL-3152',
     );
     let publishApiModels: {
       request: PublicationRequestModel;

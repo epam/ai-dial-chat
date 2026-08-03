@@ -90,7 +90,7 @@ dialTest(
     chatMessages,
     chatMessagesAssertion,
   }) => {
-    setTestIds('EPMRTC-8109');
+    setTestIds('EPMDIAL-6106');
     let imageConversationsMap: Map<string, Conversation> = new Map();
     let relativeImageUrl: string;
     let expectedUrl: string | RegExp = '';
@@ -183,7 +183,7 @@ dialTest(
     chatMessages,
     chatMessagesAssertion,
   }) => {
-    setTestIds('EPMRTC-6142', 'EPMRTC-431', 'EPMRTC-8313');
+    setTestIds('EPMDIAL-6111', 'EPMDIAL-6075', 'EPMDIAL-6076');
 
     let conversation: Conversation;
     const codeTitle = 'latex';

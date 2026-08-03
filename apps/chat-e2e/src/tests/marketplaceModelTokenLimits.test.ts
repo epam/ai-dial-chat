@@ -23,7 +23,7 @@ dialTest(
     page,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-9077', 'EPMRTC-9078');
+    setTestIds('EPMDIAL-2624', 'EPMDIAL-2625');
 
     const model = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
@@ -109,7 +109,7 @@ dialTest(
     page,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-9079');
+    setTestIds('EPMDIAL-2627');
 
     const [model1, model2, model3] = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels(),

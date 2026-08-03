@@ -27,7 +27,7 @@ dialTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
+    setTestIds('EPMDIAL-2387', 'EPMDIAL-2389', 'EPMDIAL-2390');
     let conversation: Conversation;
     let chatBarBounding;
     let navigationPanelBounding;
