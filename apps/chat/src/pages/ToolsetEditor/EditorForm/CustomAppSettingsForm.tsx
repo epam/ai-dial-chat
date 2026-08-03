@@ -1,4 +1,4 @@
-import { DialInput, DialTagInput, DialTextarea } from '@epam/ai-dial-ui-kit';
+import { Input, TagInput, Textarea } from '@epam/ai-dial-kit';
 import type { FC } from 'react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -47,7 +47,7 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <DialTextarea
+      <Textarea
         id="custom-app-features-data"
         value={form.featuresData}
         onChange={handleFeaturesDataChange}
@@ -61,7 +61,7 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
         resize
       />
 
-      <DialTagInput
+      <TagInput
         elementId="custom-app-attachment-types"
         label={t(CustomAppI18nKeys.AttachmentTypesLabel)}
         caption={t(CustomAppI18nKeys.AttachmentTypesDescription)}
@@ -72,7 +72,7 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
         errorText={mimeError ?? errors.inputAttachmentTypes}
       />
 
-      <DialInput
+      <Input
         id="custom-app-max-attachments"
         type="number"
         value={
@@ -92,7 +92,7 @@ const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
         min={1}
       />
 
-      <DialInput
+      <Input
         id="custom-app-completion-url"
         value={form.completionUrl}
         onChange={(value) => onChange({ completionUrl: value ?? '' })}
