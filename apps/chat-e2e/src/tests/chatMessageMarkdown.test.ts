@@ -1,7 +1,8 @@
 import { Conversation } from '@/chat/types/chat';
 import config from '@/config/chat.playwright.config';
 import dialTest from '@/src/core/dialFixtures';
-import { API, Attachment } from '@/src/testData';
+import { API, Attachment, ExpectedMessages } from '@/src/testData';
+import { Attributes } from '@/src/ui/domData';
 import { FileUtil } from '@/src/utils';
 import { markdownToTxt } from 'markdown-to-txt';
 import path from 'path';
@@ -27,7 +28,7 @@ dialTest(
     chatMessages,
     chatMessagesAssertion,
   }) => {
-    setTestIds('EPMRTC-8108');
+    setTestIds('EPMDIAL-6101');
     let imageConversations: Conversation[] = [];
 
     await dialTest.step(
@@ -246,6 +247,232 @@ dialTest(
         chatMessagesAssertion.assertCopiedMessage(
           copiedMarkdown,
           markdownResponse,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Markdown recognition in the model output',
+  async ({
+    dialHomePage,
+    setTestIds,
+    conversations,
+    conversationData,
+    dataInjector,
+    localStorageManager,
+    chatMessages,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMDIAL-6107');
+
+    const dollarResponse = '$2 + $3 is equal to $5.';
+    const poemLines = [
+      'Roses are red,',
+      'Violets are blue,',
+      'Sugar is sweet,',
+      'And so are you.',
+    ];
+    const poemResponse = poemLines.join('\n');
+    const dollarMessageIndex = 2;
+    const poemMessageIndex = 4;
+    let conversation: Conversation;
+
+    await dialTest.step(
+      'Prepare conversation with several prompts: one response contains a dollar amount, another - a multi-line poem',
+      async () => {
+        const dollarConversation =
+          conversationData.prepareConversationWithTextContent(dollarResponse);
+        conversationData.resetData();
+        const poemConversation =
+          conversationData.prepareConversationWithTextContent(poemResponse);
+        conversation = conversationData.prepareHistoryConversation(
+          dollarConversation,
+          poemConversation,
+        );
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open conversation and verify the dollar amounts are rendered literally as a single row, not swallowed as LaTeX',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await baseAssertion.assertElementText(
+          chatMessages.getChatMessageContent(dollarMessageIndex),
+          dollarResponse,
+          ExpectedMessages.messageContentIsValid,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify the poem is rendered with each line preserved as a separate row',
+      async () => {
+        baseAssertion.assertValuesAreEqual(
+          await chatMessages.getChatMessageContentLines(poemMessageIndex),
+          poemLines,
+          ExpectedMessages.messageContentIsValid,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Md is collapsed',
+  async ({
+    dialHomePage,
+    setTestIds,
+    conversations,
+    conversationData,
+    dataInjector,
+    localStorageManager,
+    chatMessages,
+    chatMessagesAssertion,
+  }) => {
+    setTestIds('EPMDIAL-6096');
+
+    const codeBlock = '```ruby\nputs "Hello World"\n```';
+    const expectedSummaries = [
+      'Root collapsed sections',
+      'First level collapsed sections',
+      'Second level collapsed sections',
+    ];
+    const secondLevelSection =
+      `<details>\n<summary>${expectedSummaries[2]}</summary>\n\n` +
+      `${codeBlock}\n\n` +
+      `</details>`;
+    const firstLevelSection =
+      `<details>\n<summary>${expectedSummaries[1]}</summary>\n\n` +
+      `${codeBlock}\n\n` +
+      `${secondLevelSection}\n\n` +
+      `</details>`;
+    const rootSection =
+      `<details>\n<summary>${expectedSummaries[0]}</summary>\n\n` +
+      'You can add text within a collapsed section.\n\n' +
+      'You can add an image or a code block, too.\n\n' +
+      `${codeBlock}\n\n` +
+      `${firstLevelSection}\n\n` +
+      `</details>`;
+    const messageIndex = 2;
+    let conversation: Conversation;
+
+    await dialTest.step(
+      'Prepare conversation with a response containing root, first level and second level nested collapsed sections',
+      async () => {
+        conversation =
+          conversationData.prepareConversationWithTextContent(rootSection);
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setShowSideBarPanels();
+      },
+    );
+
+    await dialTest.step(
+      'Open conversation and verify all collapsed sections are rendered, collapsed by default',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectEntity(conversation.name);
+        await chatMessagesAssertion.assertElementsCount(
+          chatMessages.getChatMessageDetailsSection(messageIndex),
+          expectedSummaries.length,
+          ExpectedMessages.collapsedSectionsCountIsValid,
+        );
+        for (let i = 1; i <= expectedSummaries.length; i++) {
+          await chatMessagesAssertion.assertElementText(
+            chatMessages.getChatMessageDetailsSummary(messageIndex, i),
+            expectedSummaries[i - 1],
+            ExpectedMessages.collapsedSectionSummaryIsValid,
+          );
+        }
+        await chatMessagesAssertion.assertElementAttributeAbsence(
+          chatMessages.getChatMessageDetailsSection(messageIndex, 1),
+          Attributes.open,
+          ExpectedMessages.collapsedSectionIsCollapsed,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 1),
+          'visible',
+          ExpectedMessages.sectionIsVisible,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 2),
+          'hidden',
+          ExpectedMessages.sectionIsNotVisible,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 3),
+          'hidden',
+          ExpectedMessages.sectionIsNotVisible,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Expand the root section and verify the first level section becomes visible, still collapsed',
+      async () => {
+        await chatMessages.expandDetailsSummary(messageIndex, 1);
+        await chatMessagesAssertion.assertElementAttribute(
+          chatMessages.getChatMessageDetailsSection(messageIndex, 1),
+          Attributes.open,
+          '',
+          ExpectedMessages.collapsedSectionIsExpanded,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 1),
+          'visible',
+          ExpectedMessages.sectionIsVisible,
+        );
+        await chatMessagesAssertion.assertElementAttributeAbsence(
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 2),
+          Attributes.open,
+          ExpectedMessages.collapsedSectionIsCollapsed,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 3),
+          'hidden',
+          ExpectedMessages.sectionIsNotVisible,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Expand the first level section and verify the second level section becomes visible, still collapsed',
+      async () => {
+        await chatMessages.expandDetailsSummary(messageIndex, 2);
+        await chatMessagesAssertion.assertElementAttribute(
+          chatMessages.getChatMessageDetailsSection(messageIndex, 2),
+          Attributes.open,
+          '',
+          ExpectedMessages.collapsedSectionIsExpanded,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 3),
+          'visible',
+          ExpectedMessages.sectionIsVisible,
+        );
+        await chatMessagesAssertion.assertElementAttributeAbsence(
+          chatMessages.getChatMessageDetailsSummary(messageIndex, 3),
+          Attributes.open,
+          ExpectedMessages.collapsedSectionIsCollapsed,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Expand the second level section and verify it becomes visible',
+      async () => {
+        await chatMessages.expandDetailsSummary(messageIndex, 3);
+        await chatMessagesAssertion.assertElementAttribute(
+          chatMessages.getChatMessageDetailsSection(messageIndex, 3),
+          Attributes.open,
+          '',
+          ExpectedMessages.collapsedSectionIsExpanded,
         );
       },
     );

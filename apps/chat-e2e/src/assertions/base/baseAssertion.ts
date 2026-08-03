@@ -220,6 +220,20 @@ export class BaseAssertion {
       .toHaveAttribute(attribute, expectedValue);
   }
 
+  public async assertElementAttributeAbsence(
+    element: BaseElement | Locator,
+    attribute: string,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = BaseElement.getElementLocator(element);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.elementAttributeIsAbsent,
+      )
+      .not.toHaveAttribute(attribute);
+  }
+
   public async assertCheckboxState(
     element: BaseElement | Locator,
     expectedState: CheckboxState,

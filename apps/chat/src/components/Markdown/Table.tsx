@@ -351,6 +351,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
         <div
           ref={headerScrollRef}
           className="overflow-hidden border-l border-t border-tertiary"
+          data-qa="table-header-scroll-container"
         >
           <table
             ref={headerTableRef}
@@ -365,6 +366,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
         ref={bodyScrollRef}
         onScroll={syncHeaderScroll}
         className="max-h-[68vh] overflow-auto border-x border-tertiary"
+        data-qa="table-body-scroll-container"
       >
         <table
           ref={bodyTableRef}
