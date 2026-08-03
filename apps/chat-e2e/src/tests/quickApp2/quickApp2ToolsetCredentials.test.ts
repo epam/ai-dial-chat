@@ -755,7 +755,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Quick app 2.0] [Not Admin] login form for one public toolset in Chat - Login happens with personal creds', // EPMRTC-8571
   async ({
     page,
@@ -870,13 +870,9 @@ dialTest.only(
           await marketplaceEntitiesSection.findEntityElement(quickAppName);
         await quickAppCard.click();
         await baseAssertion.assertElementState(entityDetailsModal, 'visible');
-        // The app is our own and already in the workspace, so Use does not
-        // trigger an installed-deployments update.
         await entityDetailsModal.clickUseButton({
           isInstalledDeploymentsUpdated: false,
         });
-        // Not a fresh page load, so wait for the chat input rather than the
-        // whole home page (its side panels stay collapsed here).
         await baseAssertion.assertElementState(
           sendMessage.messageInput,
           'visible',
@@ -912,8 +908,6 @@ dialTest.only(
           toolsetLoginEventsModal,
           'hidden',
         );
-        // A regular user logging in to a PUBLIC toolset always signs in at the
-        // user level — this is the actual behaviour under test, not the mock.
         toolsetApiAuthenticationAssertion.assertSignInRequest(
           oauthMock.getUserSignInRequest()!,
           {
