@@ -1,25 +1,25 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
   DialDropdownIcon,
-  DialGhostIconButton,
   DialTooltip,
   ElementSize,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
-import { type CSSProperties, type FC, useState } from 'react';
+import { type CSSProperties, type FC, ReactNode, useState } from 'react';
 import { useModelSelector } from '../../hooks/useModelSelector';
-import type { InputProps } from '../../models/Input';
+import type { ModelSelectorLabels } from '../../models/Input';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet';
 import styles from './Input.module.scss';
 
 interface Props {
-  deployments: InputProps['deployments'];
-  selectedDeploymentId: InputProps['selectedDeploymentId'];
-  onDeploymentChange: InputProps['onDeploymentChange'];
-  modelSelectorLabels: InputProps['modelSelectorLabels'];
+  deployments?: DeploymentItem[];
+  selectedDeploymentId?: string | null;
+  onDeploymentChange?: (id: string) => void;
+  modelSelectorLabels?: ModelSelectorLabels;
   isStreaming: boolean;
   isMobile: boolean;
   isInputDisabled?: boolean;
@@ -29,7 +29,7 @@ interface Props {
    */
   isDisabled?: boolean;
   style: CSSProperties;
-  modelPickerOverlay: InputProps['modelPickerOverlay'];
+  modelPickerOverlay?: (onClose: () => void) => ReactNode;
   /** Whether the model picker popover is open (controlled from Input). */
   isPickerOpen?: boolean;
   /** Toggles the model picker popover open/closed. */
@@ -91,7 +91,7 @@ export const ModelSelectorControl: FC<Props> = ({
     return (
       <>
         <DialTooltip tooltip={selectedLabel}>
-          <DialGhostIconButton
+          <GhostIconButton
             icon={
               <div className="flex items-center gap-1">
                 {selectorIcon}
@@ -159,7 +159,7 @@ export const ModelSelectorControl: FC<Props> = ({
             type="button"
             aria-label={selectorAriaLabel}
             className={mergeClasses(
-              'flex items-center justify-center gap-1 rounded-md p-2',
+              'flex items-center justify-center gap-1 rounded-full p-2',
               styles.modelSelectorButton,
               isInputDisabled || isStreaming || isDisabled
                 ? disabledIconClassName

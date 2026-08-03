@@ -4,7 +4,7 @@
 
 ### Requirement: Add menu button
 
-The `Input` component SHALL include a `+` button (`DialGhostIconButton`, 40×40, icon 18px `BASE_ICON_SIZE`) that opens a `DialDropdown` positioned below the trigger (`placement="bottom-start"`). The menu lists available content sources; in phase 1 it contains a single item: "Attach file". Items are extensible — future phases add more sources without changing the trigger or surrounding layout.
+The `Input` component SHALL include a `+` button (`GhostIconButton`, 40×40, icon 18px `BASE_ICON_SIZE`) that opens a `DialDropdown` positioned below the trigger (`placement="bottom-start"`). The menu lists available content sources; in phase 1 it contains a single item: "Attach file". Items are extensible — future phases add more sources without changing the trigger or surrounding layout.
 
 #### Scenario: Plus button opens dropdown
 

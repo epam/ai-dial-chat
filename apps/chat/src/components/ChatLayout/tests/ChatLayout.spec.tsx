@@ -16,7 +16,7 @@ vi.mock('../../Header/SourcesSidebarToggle', () => ({
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { LG: 24 },
-  DialGhostIconButton: ({
+  GhostIconButton: ({
     'aria-label': ariaLabel,
     onClick,
     className,

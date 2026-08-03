@@ -2,7 +2,6 @@ import { NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { ProviderInfoDto } from '@epam/chat-api-client';
 import {
   memo,
-  SyntheticEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -11,19 +10,13 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import ProviderIcon from '../../components/ProviderIcon/ProviderIcon';
 import { AuthI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { getProviders } from '../../server-api/auth.api';
 import { getIconPath } from '../../utils/icon-path';
-
-const getProviderIconUrl = (id: string) =>
-  `https://authjs.dev/img/providers/${id.replace(/[1-9]\d*$/, '')}.svg`;
-
-const handleIconError = (e: SyntheticEvent<HTMLImageElement>) => {
-  e.currentTarget.style.display = 'none';
-};
 
 const renderProviders = (
   providers: ProviderInfoDto[],
@@ -40,15 +33,7 @@ const renderProviders = (
             <NeutralButton
               className="w-full"
               tabIndex={-1}
-              iconBefore={
-                <img
-                  src={getProviderIconUrl(provider.id)}
-                  alt=""
-                  aria-hidden="true"
-                  className="size-5 shrink-0"
-                  onError={handleIconError}
-                />
-              }
+              iconBefore={<ProviderIcon providerId={provider.id} />}
               label={provider.label}
             />
           </a>

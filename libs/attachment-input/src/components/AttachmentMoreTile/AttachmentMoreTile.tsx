@@ -19,13 +19,13 @@ export const AttachmentMoreTile: FC<AttachmentMoreTileProps> = ({
     colors,
   } = tileStyles ?? {};
   const cssVars = buildCssVars({
-    '--ci-more-tile-bg': colors?.background,
-    '--ci-more-tile-border': colors?.border,
-    '--ci-more-tile-color': colors?.color,
-    '--ci-more-tile-bg-hover': colors?.backgroundHover,
-    '--ci-more-tile-color-hover': colors?.colorHover,
-    '--ci-more-tile-border-hover': colors?.borderHover,
-    '--ci-more-tile-focus-outline': colors?.focusOutline,
+    '--ai-more-tile-bg': colors?.background,
+    '--ai-more-tile-border': colors?.border,
+    '--ai-more-tile-color': colors?.color,
+    '--ai-more-tile-bg-hover': colors?.backgroundHover,
+    '--ai-more-tile-color-hover': colors?.colorHover,
+    '--ai-more-tile-border-hover': colors?.borderHover,
+    '--ai-more-tile-focus-outline': colors?.focusOutline,
   });
 
   return (

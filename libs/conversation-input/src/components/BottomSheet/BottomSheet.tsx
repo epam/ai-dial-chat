@@ -1,8 +1,23 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Button } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC, ReactNode } from 'react';
+import type { BottomSheetShellColors } from '../BottomSheetShell/BottomSheetShell';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import styles from './BottomSheet.module.scss';
+
+/** Color overrides for the `BottomSheet` component, applied as CSS custom properties. */
+export interface BottomSheetColors {
+  /** Item label text color. Defaults to `--text-primary`. */
+  itemText?: string;
+  /** Item hover background. Defaults to `--bg-layer-3`. */
+  itemHoverBg?: string;
+  /** Item active/pressed background. Defaults to `--bg-layer-4`. */
+  itemActiveBg?: string;
+  /** Item leading-icon color. Defaults to `--text-secondary`. */
+  itemIcon?: string;
+  /** Color overrides forwarded to the underlying `BottomSheetShell` (backdrop, panel background, title, divider). */
+  shell?: BottomSheetShellColors;
+}
 
 /** A single action entry in the bottom-sheet menu. */
 export interface BottomSheetItem {
@@ -42,6 +57,8 @@ export interface BottomSheetProps {
   itemLabelClassName?: string;
   /** CSS class applied to each item button text. Defaults to empty string */
   btnTextClassName?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: BottomSheetColors;
 }
 
 /** Generic mobile bottom-sheet overlay with a list of tappable action items. */
@@ -56,11 +73,19 @@ export const BottomSheet: FC<BottomSheetProps> = ({
   titleClassName = 'dial-body-semi-text',
   itemLabelClassName = 'dial-small-text',
   btnTextClassName = '',
+  colors,
 }) => {
   const handleItemClick = (onClick: () => void) => {
     onClick();
     onClose();
   };
+
+  const cssVars = buildCssVars({
+    '--ci-sheet-text': colors?.itemText,
+    '--ci-sheet-item-hover': colors?.itemHoverBg,
+    '--ci-sheet-item-active': colors?.itemActiveBg,
+    '--ci-sheet-icon': colors?.itemIcon,
+  });
 
   return (
     <BottomSheetShell
@@ -71,15 +96,16 @@ export const BottomSheet: FC<BottomSheetProps> = ({
       style={style}
       className={className}
       titleClassName={titleClassName}
+      colors={colors?.shell}
     >
-      <ul role="list" className="flex flex-col">
+      <ul role="list" className="flex flex-col" style={cssVars}>
         {items.map(({ key, label, icon, iconAfter, onClick }) => (
           <li key={key}>
             <Button
               type="button"
               className={mergeClasses(
                 styles.item,
-                'flex w-full items-center gap-3 px-4 py-[10px] text-start',
+                'w-full gap-3 px-4 py-[10px] text-start',
               )}
               iconBefore={<span className={styles.itemIcon}>{icon}</span>}
               iconAfter={

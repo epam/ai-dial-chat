@@ -22,7 +22,6 @@ import NewConversationComposer, {
 } from '../../components/NewConversationComposer/NewConversationComposer';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
-import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import { ChatI18nKeys, ToolsI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -242,7 +241,6 @@ const ConversationRoute: FC = () => {
         placeholder={t(ChatI18nKeys.Placeholder)}
         introText={starterIntroText}
         message={inputMessage}
-        inputStyles={CONVERSATION_ROUTE_INPUT_STYLES}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
         toolsMenuItems={toolsMenuItems}

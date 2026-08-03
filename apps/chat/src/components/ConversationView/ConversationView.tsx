@@ -40,7 +40,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
-import { CONVERSATION_VIEW_INPUT_STYLES } from '../../constants/input-styles';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -200,7 +199,8 @@ const ConversationView: FC<Props> = ({
   >([]);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
-  const { openCanvas } = useAttachmentCanvas();
+  const { openCanvas, attachmentId: selectedAttachmentKey } =
+    useAttachmentCanvas();
 
   const handlePreviewReference = useCallback(
     (annotation: Annotation) => {
@@ -523,8 +523,14 @@ const ConversationView: FC<Props> = ({
   );
 
   const handleMessageAttachmentClick = useCallback(
-    (attachment: DisplayAttachment) => {
-      void openAttachmentCanvas(attachment);
+    (attachment: DisplayAttachment, messageIndex: number) => {
+      /*
+       * DisplayAttachment.id is derived from content (url/data/title), so the
+       * same id can recur across different messages (e.g. the same file
+       * attached twice) — prefix with the message index so the "selected"
+       * tile highlight can't spuriously match a different message's tile.
+       */
+      void openAttachmentCanvas(attachment, `${messageIndex}:${attachment.id}`);
     },
     [openAttachmentCanvas],
   );
@@ -639,7 +645,10 @@ const ConversationView: FC<Props> = ({
                       !isAttachmentsAllowed || !isInputFilesEnabled
                     }
                     fileAccept={fileAccept}
-                    onAttachmentClick={handleMessageAttachmentClick}
+                    onAttachmentClick={(attachment) =>
+                      handleMessageAttachmentClick(attachment, index)
+                    }
+                    selectedAttachmentKey={selectedAttachmentKey}
                     onDialFileSystemClick={
                       isAttachmentsAllowed
                         ? () => setIsDialFileManagerOpen(true)
@@ -701,7 +710,6 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
-                styles={CONVERSATION_VIEW_INPUT_STYLES}
                 message={inputContent}
                 messageRevision={inputContentRevision}
                 onSend={handleSendWithAnchor}

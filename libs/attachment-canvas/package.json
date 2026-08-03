@@ -23,7 +23,7 @@
     "@epam/ai-dial-shared": "0.48.0",
     "@epam/ai-dial-sidebar": "0.0.1",
     "@epam/ai-dial-visualizer-connector": "0.48.0",
-    "@epam/ai-dial-ui-kit": "^0.13.0-dev.23",
+    "@epam/ai-dial-ui-kit": "^0.13.0-dev.25",
     "@epam/pdf-highlighter-kit": ">=0.0.14",
     "@tabler/icons-react": "^3.44.0",
     "react": "^19.0.0",

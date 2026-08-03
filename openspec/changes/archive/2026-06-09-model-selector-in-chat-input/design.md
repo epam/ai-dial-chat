@@ -2,7 +2,7 @@
 
 `ConversationService.createConversation` currently hard-codes `model: { id: 'anthropic.claude-v3-sonnet' }` (line ~50 in `apps/chat-api/src/conversations/conversation.service.ts`). `CreateConversationDto` has no field for the desired deployment. The frontend `ConversationRoute` and `ConversationView` call `apiCreateConversation(message, attachments)` without any model selection. A `CatalogContext` already exists on `feat/catalog` with `items`, `selectedItemId`, and `setSelectedItemId` — it is mounted in `apps/chat/src/main.tsx` and is ready to be consumed.
 
-The `libs/conversation-input` library already has an attachment menu using `DialDropdown` and `DialGhostIconButton`. The model selector extends this input with a second interactive element: a `DialDropdownIcon` trigger for picking the active deployment. The library is app-agnostic and must not import React context or i18n hooks.
+The `libs/conversation-input` library already has an attachment menu using `DialDropdown` and `GhostIconButton`. The model selector extends this input with a second interactive element: a `DialDropdownIcon` trigger for picking the active deployment. The library is app-agnostic and must not import React context or i18n hooks.
 
 Figma reference nodes define the target layout and must be treated as the source of truth:
 

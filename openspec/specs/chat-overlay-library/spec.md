@@ -32,7 +32,7 @@
 
 ### Requirement: Public API surface
 
-`libs/chat-overlay/src/index.ts` SHALL export exactly: the `ChatOverlay` class, the `ChatOverlayManager` class, the `ChatOverlayManagerOptions` type, and re-exports of the pure protocol types from `@epam/ai-dial-chat-shared` needed by consumers (`ChatOverlayOptions`, the request/event type unions, response payload types for every v1 method). It SHALL NOT export the internal `Task`/`DeferredRequest`-equivalent helper classes.
+`libs/chat-overlay/src/index.ts` SHALL preserve its existing public API and additionally export the `OverlayAuthUiMode` and `OverlayRequestErrorCode` enums (re-exported from `@epam/ai-dial-chat-shared`), the `ChatOverlayRequestError` class, and the pure protocol types from `@epam/ai-dial-chat-shared` needed by consumers (`ChatOverlayOptions`, `OverlayRequestError`, the request/event type unions, response payload types for every v1 method). It SHALL NOT export the internal `Task`/`DeferredRequest`-equivalent helper classes.
 
 #### Scenario: Internal transport helpers are not exported
 
@@ -41,8 +41,18 @@
 
 #### Scenario: Consumer can import everything needed from one entry point
 
-- **WHEN** a consumer writes `import { ChatOverlay, ChatOverlayManager, ChatOverlayOptions } from '@epam/ai-dial-chat-overlay'`
+- **WHEN** a consumer writes `import { ChatOverlay, ChatOverlayManager, ChatOverlayOptions, OverlayAuthUiMode } from '@epam/ai-dial-chat-overlay'`
 - **THEN** the import resolves without needing a separate import from `@epam/ai-dial-chat-shared`
+
+#### Scenario: OverlayAuthUiMode is available from the library entry point
+
+- **WHEN** a consumer imports `OverlayAuthUiMode` from `'@epam/ai-dial-chat-overlay'`
+- **THEN** it has members `External` and `SameWindow` without requiring a separate `@epam/ai-dial-chat-shared` import
+
+#### Scenario: Request errors are available from the library entry point
+
+- **WHEN** a consumer imports `ChatOverlayRequestError` and `OverlayRequestErrorCode` from `@epam/ai-dial-chat-overlay`
+- **THEN** both imports resolve without importing the shared or internal transport packages directly
 
 ### Requirement: ChatOverlay creates and manages a single iframe
 
@@ -115,6 +125,27 @@
 - **AND** `ready()` has not resolved after 50ms
 - **THEN** the promise has not rejected yet
 - **AND** the request is posted only after `ready()` resolves
+
+### Requirement: Structured app failures reject with ChatOverlayRequestError
+
+When a matching response contains a top-level protocol `error`, `ChatOverlay` SHALL remove the request from its pending set and reject its promise immediately with `ChatOverlayRequestError`. The error SHALL have `name: 'ChatOverlayRequestError'`, expose the stable protocol `code`, expose the original `requestType`, and include the app-provided message in its human-readable `message`. `ChatOverlayManager` SHALL preserve this rejection unchanged when forwarding methods. This path is distinct from the existing unanswered-request timeout error.
+
+#### Scenario: Active conversation is unavailable
+
+- **WHEN** `overlay.getMessages()` receives a matching response with `error.code: 'ACTIVE_CONVERSATION_UNAVAILABLE'`
+- **THEN** it rejects before `requestTimeout` with `ChatOverlayRequestError`
+- **AND** the error's `code` is `OverlayRequestErrorCode.ActiveConversationUnavailable`
+- **AND** its `requestType` is `OverlayRequestType.GetMessages`
+
+#### Scenario: Manager preserves a structured rejection
+
+- **WHEN** `manager.setTemperature(overlayId, 0.2)` is rejected by the underlying overlay with `ChatOverlayRequestError`
+- **THEN** the manager promise rejects with that error rather than replacing it with a generic timeout or manager error
+
+#### Scenario: Unanswered request still uses timeout error
+
+- **WHEN** a posted request receives neither a success response nor an error response before `requestTimeout`
+- **THEN** its promise rejects with the existing timeout error naming the request type and timeout
 
 ### Requirement: destroy() releases all resources
 
@@ -237,3 +268,58 @@ Enabling `enabledFeatures` after construction does not retroactively change the 
 
 - **WHEN** `libs/chat-overlay/README.md` is inspected
 - **THEN** it contains a code example calling `setOverlayOptions({ enabledFeatures: [...] })` and a note that the array replaces the previous value rather than merging with it
+
+### Requirement: ChatOverlay stores and transmits provider-mode option
+
+`ChatOverlay`'s constructor SHALL accept the new optional `auth` field on `ChatOverlayOptions` and store it alongside the other options. When `sendCurrentOverlayOptions()` serializes the `SET_OVERLAY_OPTIONS` payload, it SHALL include `authProviderUiModes` in the payload if and only if `options.auth?.providerUiModes` is set and non-empty; if the map is absent or empty, the field SHALL be omitted from the payload (matching the pattern used for `theme`, `modelId`, and `overlayConversationId`).
+
+`setOverlayOptions()` SHALL accept an updated `auth` option via the `Partial<Pick<...>>` shape: when `auth` is included in the update, the stored `options.auth` SHALL be replaced. When `auth` is absent from the update, the existing stored `auth` SHALL be preserved. The updated options are re-sent to the iframe via `sendCurrentOverlayOptions()` as before. An in-progress external login attempt (managed by the app side) is NOT affected by this update; the new map takes effect on the next login initiation.
+
+`libs/chat-overlay` MUST NOT fetch providers, construct `/api` URL paths, read auth/session state, inspect cookies, or encode any knowledge of specific IdP brands.
+
+#### Scenario: Constructor without auth option compiles and behaves as before
+
+- **WHEN** `new ChatOverlay('#root', { domain: 'https://chat.example.com' })` is called
+- **THEN** the instance is created without error
+- **AND** the `SET_OVERLAY_OPTIONS` payload does NOT include `authProviderUiModes`
+
+#### Scenario: Constructor with auth.providerUiModes transmits authProviderUiModes
+
+- **WHEN** `ChatOverlay` is constructed with `auth: { providerUiModes: { 'my-id': OverlayAuthUiMode.SameWindow } }`
+- **AND** `sendCurrentOverlayOptions()` is called
+- **THEN** the `SET_OVERLAY_OPTIONS` payload includes `authProviderUiModes: { 'my-id': 'sameWindow' }`
+
+#### Scenario: Empty providerUiModes omits authProviderUiModes from payload
+
+- **WHEN** `ChatOverlay` is constructed with `auth: { providerUiModes: {} }`
+- **AND** `sendCurrentOverlayOptions()` is called
+- **THEN** the `SET_OVERLAY_OPTIONS` payload does NOT include `authProviderUiModes`
+
+#### Scenario: setOverlayOptions replaces stored auth when provided
+
+- **WHEN** `setOverlayOptions({ auth: { providerUiModes: { 'new-id': OverlayAuthUiMode.External } } })` is called
+- **THEN** the stored `auth` is updated to the new value
+- **AND** the next `SET_OVERLAY_OPTIONS` payload contains `authProviderUiModes: { 'new-id': 'external' }`
+
+#### Scenario: setOverlayOptions preserves stored auth when absent from update
+
+- **WHEN** the instance has `auth: { providerUiModes: { 'my-id': OverlayAuthUiMode.SameWindow } }` stored
+- **AND** `setOverlayOptions({ theme: 'dark' })` is called (no `auth` key)
+- **THEN** the stored `auth` is unchanged
+- **AND** subsequent `SET_OVERLAY_OPTIONS` still includes `authProviderUiModes: { 'my-id': 'sameWindow' }`
+
+---
+
+### Requirement: README usage example for provider-mode option
+
+`libs/chat-overlay/README.md` SHALL include a usage example demonstrating the `auth.providerUiModes` option. The example MUST show at least two providers with different modes and MUST include a comment stating that `SameWindow` requires the host to verify that the provider supports iframe login for their specific configuration.
+
+#### Scenario: README example type-checks
+
+- **WHEN** the README example TypeScript snippet is type-checked in isolation
+- **THEN** it produces no TypeScript errors
+
+#### Scenario: README example includes SameWindow disclaimer comment
+
+- **WHEN** the README is inspected
+- **THEN** the `auth.providerUiModes` example contains a comment about host responsibility for verifying iframe compatibility

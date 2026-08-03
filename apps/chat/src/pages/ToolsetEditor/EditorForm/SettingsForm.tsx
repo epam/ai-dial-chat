@@ -1,8 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-catalog';
 import {
-  ButtonAppearance,
   DIAL_ICON_SIZE,
-  DialIconButton,
+  DialGhostIconButton,
   DialInput,
   DialSelect,
   DialTagInput,
@@ -34,6 +33,7 @@ interface Props {
   errors: ToolsetFormErrors;
   isSaving: boolean;
   toolsetId: string;
+  isEditMode: boolean;
   onChange: (patch: Partial<ToolsetFormData>) => void;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
   onEnsureSaved: () => Promise<string | false>;
@@ -44,6 +44,7 @@ const SettingsForm: FC<Props> = ({
   errors,
   isSaving,
   toolsetId,
+  isEditMode,
   onChange,
   onAuthChange,
   onEnsureSaved,
@@ -104,9 +105,8 @@ const SettingsForm: FC<Props> = ({
             invalid={!!errors.endpoint}
           />
         </div>
-        <DialIconButton
+        <DialGhostIconButton
           aria-label={t(ToolsetEditorI18nKeys.CopyUrlLabel)}
-          appearance={ButtonAppearance.Ghost}
           size={ElementSize.Standard}
           onClick={handleCopyEndpoint}
           icon={
@@ -144,6 +144,7 @@ const SettingsForm: FC<Props> = ({
         errors={errors}
         isSaving={isSaving}
         toolsetId={toolsetId}
+        isEditMode={isEditMode}
         endpoint={form.endpoint}
         onAuthChange={onAuthChange}
         onEnsureSaved={onEnsureSaved}

@@ -30,7 +30,6 @@ import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
-import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
@@ -314,7 +313,6 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
             placeholder={t(AppsEditorI18nKeys.PreviewChatPlaceholder)}
             introText={quickAppStarters.introText}
             message={inputMessage}
-            inputStyles={CONVERSATION_ROUTE_INPUT_STYLES}
             onCreateConversation={handleCreateConversation}
           >
             <StarterButtons

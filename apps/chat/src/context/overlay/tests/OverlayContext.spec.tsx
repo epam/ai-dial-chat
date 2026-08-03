@@ -1,5 +1,6 @@
 import {
   OverlayEventType,
+  OverlayRequestErrorCode,
   OverlayRequestType,
 } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -174,6 +175,97 @@ describe('OverlayContext', () => {
   });
 
   describe('SET_OVERLAY_OPTIONS', () => {
+    it('accepts a missing auth provider mode map and exposes undefined', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      dispatchFromHost({
+        type: OverlayRequestType.SetOverlayOptions,
+        requestId: 'req-no-auth-modes',
+        payload: { hostDomain: 'https://partner.example.com' },
+      });
+
+      expect(result.current.authProviderUiModes).toBeUndefined();
+      await waitFor(() => {
+        expect(
+          postMessageSpy.mock.calls.some(
+            ([message]) =>
+              (message as { requestId?: string }).requestId ===
+              'req-no-auth-modes',
+          ),
+        ).toBe(true);
+      });
+    });
+
+    it('stores a valid auth provider mode map', async () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+
+      act(() => {
+        dispatchFromHost({
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-auth-modes',
+          payload: {
+            hostDomain: 'https://partner.example.com',
+            authProviderUiModes: { keycloak: 'sameWindow' },
+          },
+        });
+      });
+
+      await waitFor(() => {
+        expect(result.current.authProviderUiModes).toEqual({
+          keycloak: 'sameWindow',
+        });
+      });
+    });
+
+    it.each([
+      ['a non-object value', 'invalid'],
+      ['a map containing a non-string value', { keycloak: 42 }],
+    ])('treats %s for auth provider modes as absent', async (_, value) => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      act(() => {
+        dispatchFromHost({
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-invalid-auth-modes',
+          payload: {
+            hostDomain: 'https://partner.example.com',
+            authProviderUiModes: value,
+          },
+        });
+      });
+
+      expect(result.current.authProviderUiModes).toBeUndefined();
+      await waitFor(() => {
+        expect(
+          postMessageSpy.mock.calls.some(
+            ([message]) =>
+              (message as { requestId?: string }).requestId ===
+              'req-invalid-auth-modes',
+          ),
+        ).toBe(true);
+      });
+    });
+
+    it('rejects an auth provider mode map from an untrusted origin', () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+
+      dispatchFromHost(
+        {
+          type: OverlayRequestType.SetOverlayOptions,
+          requestId: 'req-untrusted-auth-modes',
+          payload: {
+            hostDomain: 'https://evil.example.com',
+            authProviderUiModes: { keycloak: 'sameWindow' },
+          },
+        },
+        'https://evil.example.com',
+      );
+
+      expect(result.current.authProviderUiModes).toBeUndefined();
+    });
+
     it('rejects an origin outside the allowlist: no theme change, no response', () => {
       mockOverlayAllowedOrigins = ['https://partner.example.com'];
       renderHook(() => useOverlay(), { wrapper });
@@ -533,7 +625,7 @@ describe('OverlayContext', () => {
       });
     });
 
-    it('rejects malformed active-conversation request payloads without responding', () => {
+    it('responds with a structured error for malformed active-conversation request payloads', () => {
       const { result } = renderHook(() => useOverlay(), { wrapper });
       establishHostDomain();
       const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
@@ -560,18 +652,22 @@ describe('OverlayContext', () => {
       ).not.toThrow();
 
       expect(sendMessage).not.toHaveBeenCalled();
-      expect(
-        postMessageSpy.mock.calls.some(
-          ([message]) =>
-            (message as { requestId?: string }).requestId === 'malformed-send',
-        ),
-      ).toBe(false);
+      const response = postMessageSpy.mock.calls.find(
+        ([message]) =>
+          (message as { requestId?: string }).requestId === 'malformed-send',
+      )?.[0] as {
+        error: { code: OverlayRequestErrorCode; message: string };
+      };
+      expect(response.error).toEqual({
+        code: OverlayRequestErrorCode.InvalidPayload,
+        message: expect.stringContaining(OverlayRequestType.SendMessage),
+      });
       expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('malformed'),
+        expect.stringContaining(OverlayRequestErrorCode.InvalidPayload),
       );
     });
 
-    it('handles rejected bridge calls without sending a false success response', async () => {
+    it('responds with a structured error when a bridge call rejects', async () => {
       const { result } = renderHook(() => useOverlay(), { wrapper });
       establishHostDomain();
       const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
@@ -599,16 +695,49 @@ describe('OverlayContext', () => {
       await waitFor(() => {
         expect(sendMessage).toHaveBeenCalledWith('hi');
         expect(console.warn).toHaveBeenCalledWith(
-          expect.stringContaining('failed to execute'),
+          expect.stringContaining(
+            OverlayRequestErrorCode.RequestExecutionFailed,
+          ),
           expect.any(Error),
         );
       });
-      expect(
-        postMessageSpy.mock.calls.some(
-          ([message]) =>
-            (message as { requestId?: string }).requestId === 'rejected-send',
-        ),
-      ).toBe(false);
+      const response = postMessageSpy.mock.calls.find(
+        ([message]) =>
+          (message as { requestId?: string }).requestId === 'rejected-send',
+      )?.[0] as {
+        error: { code: OverlayRequestErrorCode; message: string };
+      };
+      expect(response.error).toEqual({
+        code: OverlayRequestErrorCode.RequestExecutionFailed,
+        message: 'send failed',
+      });
+    });
+
+    it('responds immediately when an active-conversation method is called from the empty composer', () => {
+      const { result } = renderHook(() => useOverlay(), { wrapper });
+      establishHostDomain();
+      const postMessageSpy = vi.spyOn(window.parent, 'postMessage');
+
+      act(() => {
+        result.current.notifyConversationLoaded();
+      });
+      dispatchFromHost({
+        type: OverlayRequestType.GetMessages,
+        requestId: 'get-without-conversation',
+      });
+
+      const response = postMessageSpy.mock.calls.find(
+        ([message]) =>
+          (message as { requestId?: string }).requestId ===
+          'get-without-conversation',
+      )?.[0] as {
+        error: { code: OverlayRequestErrorCode; message: string };
+      };
+      expect(response.error).toEqual({
+        code: OverlayRequestErrorCode.ActiveConversationUnavailable,
+        message:
+          'No active conversation is open. Open or create a conversation before calling this method.',
+      });
     });
 
     it('answers subsequent requests against a newly-registered bridge, not the previous one', async () => {

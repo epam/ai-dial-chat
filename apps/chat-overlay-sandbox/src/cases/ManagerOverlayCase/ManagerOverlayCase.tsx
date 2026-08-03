@@ -3,10 +3,12 @@ import {
   OverlayEventType,
   OverlayPosition,
 } from '@epam/ai-dial-chat-overlay';
+import { DialDangerButton, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
 import { getChatOverlayHost } from '../../env';
+import { runLoggedOverlayAction } from '../../logOverlayAction';
 
 const OVERLAY_ID = 'sandbox-manager-overlay';
 const HANDSHAKE_WARNING_TIMEOUT_MS = 5000;
@@ -117,52 +119,84 @@ const ManagerOverlayCase: FC = () => {
     void managerRef.current?.openFullscreen(OVERLAY_ID);
   };
   const handleGetMessages = async () => {
-    const response = await managerRef.current?.getMessages(OVERLAY_ID);
-    appendLog(`getMessages -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'getMessages',
+      async () => managerRef.current?.getMessages(OVERLAY_ID),
+      (response) => `getMessages -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
   const handleSendMessage = async () => {
-    const response = await managerRef.current?.sendMessage(
-      OVERLAY_ID,
-      'Hello from the manager sandbox',
+    await runLoggedOverlayAction(
+      'sendMessage',
+      async () =>
+        managerRef.current?.sendMessage(
+          OVERLAY_ID,
+          'Hello from the manager sandbox',
+        ),
+      (response) => `sendMessage -> ${JSON.stringify(response)}`,
+      appendLog,
     );
-    appendLog(`sendMessage -> ${JSON.stringify(response)}`);
   };
   const handleUpdateThemeAndModel = async () => {
-    const response = await managerRef.current?.setOverlayOptions(OVERLAY_ID, {
-      theme: 'dark',
-      modelId: 'gpt-4o',
-    });
-    appendLog(
-      `setOverlayOptions(theme, modelId) -> ${JSON.stringify(response)}`,
+    await runLoggedOverlayAction(
+      'setOverlayOptions(theme, modelId)',
+      async () =>
+        managerRef.current?.setOverlayOptions(OVERLAY_ID, {
+          theme: 'dark',
+          modelId: 'gpt-4o',
+        }),
+      (response) =>
+        `setOverlayOptions(theme, modelId) -> ${JSON.stringify(response)}`,
+      appendLog,
     );
   };
   const handleUpdateThemeToLight = async () => {
-    const response = await managerRef.current?.setOverlayOptions(OVERLAY_ID, {
-      theme: 'light',
-    });
-    appendLog(`setOverlayOptions(theme: light) -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'setOverlayOptions(theme: light)',
+      async () =>
+        managerRef.current?.setOverlayOptions(OVERLAY_ID, { theme: 'light' }),
+      (response) =>
+        `setOverlayOptions(theme: light) -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
   const handleSetInputContent = async () => {
-    await managerRef.current?.setInputContent(
-      OVERLAY_ID,
-      'Drafted from the manager sandbox',
+    await runLoggedOverlayAction(
+      'setInputContent',
+      async () =>
+        managerRef.current?.setInputContent(
+          OVERLAY_ID,
+          'Drafted from the manager sandbox',
+        ),
+      () => 'setInputContent("Drafted from the manager sandbox")',
+      appendLog,
     );
-    appendLog('setInputContent("Drafted from the manager sandbox")');
   };
   const handleClearInputContent = async () => {
-    await managerRef.current?.setInputContent(OVERLAY_ID, '');
-    appendLog('setInputContent("")');
+    await runLoggedOverlayAction(
+      'setInputContent',
+      async () => managerRef.current?.setInputContent(OVERLAY_ID, ''),
+      () => 'setInputContent("")',
+      appendLog,
+    );
   };
   const handleSetSystemPrompt = async () => {
-    const response = await managerRef.current?.setSystemPrompt(
-      OVERLAY_ID,
-      'Answer concisely.',
+    await runLoggedOverlayAction(
+      'setSystemPrompt',
+      async () =>
+        managerRef.current?.setSystemPrompt(OVERLAY_ID, 'Answer concisely.'),
+      (response) => `setSystemPrompt -> ${JSON.stringify(response)}`,
+      appendLog,
     );
-    appendLog(`setSystemPrompt -> ${JSON.stringify(response)}`);
   };
   const handleSetTemperature = async () => {
-    const response = await managerRef.current?.setTemperature(OVERLAY_ID, 0.2);
-    appendLog(`setTemperature -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'setTemperature',
+      async () => managerRef.current?.setTemperature(OVERLAY_ID, 0.2),
+      (response) => `setTemperature -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
 
   if (!host) {
@@ -170,79 +204,103 @@ const ManagerOverlayCase: FC = () => {
   }
 
   return (
-    <div>
-      <h1>ChatOverlayManager case</h1>
+    <div className="max-w-[960px] pb-6">
+      <h1 className="text-3xl font-bold">ChatOverlayManager case</h1>
       <p aria-live="polite">
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}
       </p>
       {isHandshakeSlow && !isReady && <p role="alert">{handshakeHint}</p>}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button type="button" onClick={handleShow} disabled={!isCreated}>
-          Show overlay
-        </button>
-        <button type="button" onClick={handleHide} disabled={!isCreated}>
-          Hide overlay
-        </button>
-        <button type="button" onClick={handleRemove} disabled={!isCreated}>
-          Remove overlay
-        </button>
-        <button
+      <div className="my-3 flex flex-wrap gap-2">
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Show overlay"
+          onClick={handleShow}
+          disabled={!isCreated}
+        />
+        <DialNeutralButton
+          className="min-h-11"
+          type="button"
+          label="Hide overlay"
+          onClick={handleHide}
+          disabled={!isCreated}
+        />
+        <DialDangerButton
+          className="min-h-11"
+          type="button"
+          label="Remove overlay"
+          onClick={handleRemove}
+          disabled={!isCreated}
+        />
+        <DialNeutralButton
+          className="min-h-11"
+          type="button"
+          label="Open full screen"
           onClick={handleOpenFullscreen}
           disabled={!isCreated}
-        >
-          Open full screen
-        </button>
-        <button type="button" onClick={handleGetMessages} disabled={!isReady}>
-          Get messages
-        </button>
-        <button type="button" onClick={handleSendMessage} disabled={!isReady}>
-          Send message
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Get messages"
+          onClick={handleGetMessages}
+          disabled={!isReady}
+        />
+        <DialNeutralButton
+          className="min-h-11"
+          type="button"
+          label="Send message"
+          onClick={handleSendMessage}
+          disabled={!isReady}
+        />
+        <DialNeutralButton
+          className="min-h-11"
+          type="button"
+          label="Update theme + model"
           onClick={handleUpdateThemeAndModel}
           disabled={!isReady}
-        >
-          Update theme + model
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Update theme to light"
           onClick={handleUpdateThemeToLight}
           disabled={!isReady}
-        >
-          Update theme to light
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Set input content"
           onClick={handleSetInputContent}
           disabled={!isReady}
-        >
-          Set input content
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Clear input content"
           onClick={handleClearInputContent}
           disabled={!isReady}
-        >
-          Clear input content
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Set system prompt"
           onClick={handleSetSystemPrompt}
           disabled={!isReady}
-        >
-          Set system prompt
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Set temperature"
           onClick={handleSetTemperature}
           disabled={!isReady}
-        >
-          Set temperature
-        </button>
+        />
       </div>
-      <EventLog entries={log} />
+      <EventLog
+        entries={log}
+        triggerClassName="end-[84px]"
+        onClear={() => setLog([])}
+      />
     </div>
   );
 };

@@ -2,7 +2,7 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialConditionalResizableContainer,
-  DialGhostIconButton,
+  GhostIconButton,
   ResizableContainerSide,
 } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
@@ -127,9 +127,9 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     orientation === SidebarOrientation.Right
       ? ResizableContainerSide.Left
       : ResizableContainerSide.Right;
-
+  // TODO: is Close button
   const closeButton = onClose ? (
-    <DialGhostIconButton
+    <GhostIconButton
       icon={<IconX size={DIAL_ICON_SIZE.LG} stroke={1.5} aria-hidden />}
       aria-label={labels.closeLabel}
       tooltipProps={{ tooltip: labels.closeLabel }}

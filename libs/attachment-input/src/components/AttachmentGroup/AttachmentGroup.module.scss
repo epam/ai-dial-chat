@@ -1,14 +1,10 @@
 .container {
-  background: var(--ci-group-bg, var(--bg-layer-2, #eef1f7));
-  border-color: var(--ci-group-border, var(--stroke-secondary, #d1dbea));
+  background: var(--ai-group-bg, var(--bg-layer-2, #eef1f7));
+  border-color: var(--ai-group-border, var(--stroke-secondary, #d1dbea));
 }
 
 .headerIcon,
 .headerLabel,
 .downloadAllButton {
-  color: var(--ci-group-text, var(--text-secondary, #6b7280));
-}
-
-.imageTile {
-  --ci-card-bg: var(--bg-layer-3, #fcfcfc);
+  color: var(--ai-group-text, var(--text-secondary, #6b7280));
 }

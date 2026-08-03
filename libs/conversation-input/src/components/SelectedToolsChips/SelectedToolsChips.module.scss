@@ -1,5 +1,5 @@
 .chip {
-  background: var(--ci-chip-bg, var(--bg-layer-2, #eef1f7));
+  background: var(--ci-chip-bg, var(--bg-layer-base, #f5f7fa));
   border-color: var(--ci-chip-border, var(--stroke-secondary, #d1dbea));
 }
 

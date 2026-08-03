@@ -6,12 +6,6 @@ export type {
   SearchBarLabels,
   SearchBarStyles,
 } from './components/SearchBar/SearchBar';
-export { GhostIconButton } from './components/GhostIconButton/GhostIconButton';
-export type {
-  GhostIconButtonProps,
-  GhostIconButtonColors,
-  GhostIconButtonStyles,
-} from './components/GhostIconButton/GhostIconButton';
 export { TabRow } from './components/TabRow/TabRow';
 export type {
   TabRowProps,
