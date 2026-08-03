@@ -102,10 +102,17 @@ export class ScheduledTasksService {
     );
   }
 
+  /*
+   * `limit`/`offset` are always validated, delimiter-free digit sequences
+   * (or the empty string), so the leading two `:`-separated fields can never
+   * be ambiguous with each other or with `search`. `search` is still
+   * percent-encoded before being embedded, purely so a colon in a search
+   * term doesn't make the raw cache key/log line harder for a human to read.
+   */
   private normalizeListQuery(query: ListScheduledTasksQueryDto): string {
     const limit = query.limit ?? '';
     const offset = query.offset ?? 0;
-    const search = query.search ?? '';
+    const search = encodeURIComponent(query.search ?? '');
     return `${limit}:${offset}:${search}`;
   }
 

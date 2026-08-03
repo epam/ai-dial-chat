@@ -144,6 +144,29 @@ describe('ScheduledTasksService', () => {
     );
   });
 
+  it('percent-encodes a search value containing a colon in the cache key', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const cacheManager = makeCacheManager();
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      cacheManager as never,
+    );
+
+    await service.listScheduledTasks('user-1', 'token', {
+      search: 'a:b',
+    });
+
+    expect(cacheManager.set).toHaveBeenCalledWith(
+      'scheduled-tasks:list:user-1:0::0:a%3Ab',
+      expect.anything(),
+      30_000,
+    );
+  });
+
   it('does not send an upstream name param when search is empty', async () => {
     fetchMock.mockResolvedValue({
       ok: true,

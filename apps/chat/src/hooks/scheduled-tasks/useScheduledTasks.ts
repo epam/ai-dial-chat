@@ -35,6 +35,12 @@ interface UseScheduledTasksResult {
   refetch: () => void;
 }
 
+/** Tracks the cancellation state of an in-flight `loadMore` fetch so a superseded search/reset can abort it. */
+interface LoadMoreCancellation {
+  abort: () => void;
+  cancelled: { value: boolean };
+}
+
 /**
  * Owns pagination and server-driven search for the Scheduled Tasks list.
  * `searchQuery` changes (debounced) and `refetch()` reset `items` and fetch
@@ -45,7 +51,7 @@ interface UseScheduledTasksResult {
  */
 export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
   const [items, setItems] = useState<ScheduledTaskDto[]>([]);
-  const [searchQuery, setSearchQueryState] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<ScheduledTasksSortKey>(
     ScheduledTasksSortKey.FirstToRun,
   );
@@ -55,15 +61,26 @@ export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
   const [hasMore, setHasMore] = useState(false);
   const [resetToken, setResetToken] = useState(0);
 
-  const debouncedSearchRef = useRef(searchQuery);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
+  /*
+   * The next offset to request from the server. Deliberately independent of
+   * `items.length`: `items` is deduplicated by id before being stored, so its
+   * length can fall behind how many rows the server has actually served
+   * across all pages (e.g. if a page boundary happens to repeat a row).
+   * Using `items.length` as the offset would then re-request an
+   * already-served window instead of the next one.
+   */
+  const nextOffsetRef = useRef(0);
+
+  /* Lets the main load effect cancel a `loadMore` fetch that's still in
+   * flight when a new search/reset supersedes it, so its result can't be
+   * appended onto an unrelated, newer `items` array. */
+  const loadMoreCancelRef = useRef<LoadMoreCancellation | null>(null);
+
   useEffect(() => {
-    debouncedSearchRef.current = searchQuery;
     const timeoutId = setTimeout(() => {
-      if (debouncedSearchRef.current === searchQuery) {
-        setDebouncedSearchQuery(searchQuery);
-      }
+      setDebouncedSearchQuery(searchQuery);
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
@@ -91,6 +108,7 @@ export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
         if (!cancelled.value) {
           setItems(response.items);
           setHasMore(response.next != null);
+          nextOffsetRef.current = response.items.length;
         }
       } catch (err) {
         if (!cancelled.value) {
@@ -112,6 +130,11 @@ export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
     return () => {
       cancelled.value = true;
       controller.abort();
+      loadMoreCancelRef.current?.abort();
+      if (loadMoreCancelRef.current) {
+        loadMoreCancelRef.current.cancelled.value = true;
+      }
+      loadMoreCancelRef.current = null;
     };
   }, [enabled, debouncedSearchQuery, resetToken]);
 
@@ -121,55 +144,54 @@ export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
     }
 
     const controller = new AbortController();
-    const offset = items.length;
+    const cancelled = { value: false };
+    loadMoreCancelRef.current = { abort: () => controller.abort(), cancelled };
+    const offset = nextOffsetRef.current;
 
-    setIsLoadingMore(true);
-    setError(null);
-
-    listScheduledTasks({
-      limit: PAGE_SIZE,
-      offset,
-      search: debouncedSearchQuery,
-      signal: controller.signal,
-    })
-      .then((response) => {
-        setItems((current) => {
-          const existingIds = new Set(current.map((item) => item.id));
-          const newItems = response.items.filter(
-            (item) => !existingIds.has(item.id),
-          );
-          return [...current, ...newItems];
+    const run = async () => {
+      setIsLoadingMore(true);
+      setError(null);
+      try {
+        const response = await listScheduledTasks({
+          limit: PAGE_SIZE,
+          offset,
+          search: debouncedSearchQuery,
+          signal: controller.signal,
         });
-        setHasMore(response.next != null);
-      })
-      .catch((err: unknown) => {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error('Failed to load more scheduled tasks'),
-        );
-      })
-      .finally(() => {
-        setIsLoadingMore(false);
-      });
-  }, [
-    enabled,
-    hasMore,
-    isLoadingMore,
-    isLoading,
-    items.length,
-    debouncedSearchQuery,
-  ]);
+        if (!cancelled.value) {
+          setItems((current) => {
+            const existingIds = new Set(current.map((item) => item.id));
+            const newItems = response.items.filter(
+              (item) => !existingIds.has(item.id),
+            );
+            return [...current, ...newItems];
+          });
+          setHasMore(response.next != null);
+          nextOffsetRef.current = offset + response.items.length;
+        }
+      } catch (err) {
+        if (!cancelled.value) {
+          setError(
+            err instanceof Error
+              ? err
+              : new Error('Failed to load more scheduled tasks'),
+          );
+        }
+      } finally {
+        if (!cancelled.value) {
+          setIsLoadingMore(false);
+        }
+      }
+    };
+
+    run();
+  }, [enabled, hasMore, isLoadingMore, isLoading, debouncedSearchQuery]);
 
   const refetch = useCallback(() => {
     if (enabled) {
       setResetToken((token) => token + 1);
     }
   }, [enabled]);
-
-  const setSearchQuery = useCallback((query: string) => {
-    setSearchQueryState(query);
-  }, []);
 
   return {
     items,

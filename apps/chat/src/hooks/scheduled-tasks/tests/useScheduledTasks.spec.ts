@@ -213,4 +213,139 @@ describe('useScheduledTasks', () => {
 
     expect(listScheduledTasks).not.toHaveBeenCalled();
   });
+
+  it('loadMore requests the next offset based on the raw server page size, not the deduplicated items length', async () => {
+    vi.mocked(listScheduledTasks)
+      .mockResolvedValueOnce({
+        items: [{ id: '1', displayName: 'First', trigger: {} }],
+        next: 'cursor-1',
+      })
+      .mockResolvedValueOnce({
+        // Server re-serves id "1" alongside a new item; dedupe drops it from
+        // `items`, but the next offset must still advance by the full raw
+        // page size the server returned, not by the post-dedupe count.
+        items: [
+          { id: '1', displayName: 'First', trigger: {} },
+          { id: '2', displayName: 'Second', trigger: {} },
+        ],
+        next: 'cursor-2',
+      })
+      .mockResolvedValueOnce({
+        items: [{ id: '3', displayName: 'Third', trigger: {} }],
+        next: null,
+      });
+
+    const { result } = renderHook(() => useScheduledTasks());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.loadMore();
+    });
+    await waitFor(() => expect(result.current.isLoadingMore).toBe(false));
+    expect(result.current.items).toHaveLength(2);
+
+    act(() => {
+      result.current.loadMore();
+    });
+    await waitFor(() => expect(result.current.isLoadingMore).toBe(false));
+
+    expect(listScheduledTasks).toHaveBeenLastCalledWith(
+      expect.objectContaining({ offset: 3 }),
+    );
+    expect(result.current.items.map((item) => item.id)).toEqual([
+      '1',
+      '2',
+      '3',
+    ]);
+  });
+
+  it('cancels an in-flight loadMore when searchQuery changes, so its response is never applied', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    let resolveLoadMore: (value: {
+      items: { id: string; displayName: string; trigger: object }[];
+      next: null;
+    }) => void = () => {};
+
+    vi.mocked(listScheduledTasks)
+      .mockResolvedValueOnce({
+        items: [{ id: '1', displayName: 'First', trigger: {} }],
+        next: 'cursor-1',
+      })
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveLoadMore = resolve;
+        }),
+      )
+      .mockResolvedValueOnce({
+        items: [{ id: 'new', displayName: 'New search result', trigger: {} }],
+        next: null,
+      });
+
+    const { result } = renderHook(() => useScheduledTasks());
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.loadMore();
+    });
+    expect(result.current.isLoadingMore).toBe(true);
+
+    act(() => {
+      result.current.setSearchQuery('daily');
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.items.map((item) => item.id)).toEqual(['new']);
+
+    // The stale loadMore response arrives after the new search already
+    // resolved; it must not be appended onto the new search's result.
+    await act(async () => {
+      resolveLoadMore({
+        items: [{ id: '1', displayName: 'First', trigger: {} }],
+        next: null,
+      });
+      await Promise.resolve();
+    });
+
+    expect(result.current.items.map((item) => item.id)).toEqual(['new']);
+  });
+
+  it('does not warn about updating state after unmount when a loadMore fetch resolves late', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    let resolveLoadMore: (value: {
+      items: never[];
+      next: null;
+    }) => void = () => {};
+
+    vi.mocked(listScheduledTasks)
+      .mockResolvedValueOnce({
+        items: [{ id: '1', displayName: 'First', trigger: {} }],
+        next: 'cursor-1',
+      })
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveLoadMore = resolve;
+        }),
+      );
+
+    const { result, unmount } = renderHook(() => useScheduledTasks());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.loadMore();
+    });
+    unmount();
+
+    await act(async () => {
+      resolveLoadMore({ items: [], next: null });
+      await Promise.resolve();
+    });
+
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
 });

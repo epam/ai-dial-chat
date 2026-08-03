@@ -157,7 +157,14 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
     scrollRoot.addEventListener('scroll', checkVisibility, { passive: true });
     checkVisibility();
     return () => scrollRoot.removeEventListener('scroll', checkVisibility);
-  }, [hasMore, isLoadingMore, isLoading, onLoadMore, items.length]);
+    /*
+     * `items.length` is intentionally not a dependency here: whenever a page
+     * finishes loading and `items` grows, `isLoadingMore` (or `isLoading` for
+     * the first page) flips in the same render, which already re-runs this
+     * effect and re-checks the newly taller layout. Listing `items.length`
+     * too would only force a redundant teardown/re-attach of the listener.
+     */
+  }, [hasMore, isLoadingMore, isLoading, onLoadMore]);
 
   const renderContent = () => {
     if (isLoading) {
