@@ -1,5 +1,4 @@
 import {
-  mergeClasses,
   ResponseFormat,
   type ToolMenuItem,
   useIsMobile,
@@ -8,7 +7,8 @@ import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DialDropdown,
-  DialGhostIconButton,
+  ElementSize,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconCheck,
@@ -202,14 +202,12 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
     <>
       {isMobile ? (
         <>
-          <DialGhostIconButton
+          <GhostIconButton
             icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
             aria-label={addMenuTitle}
+            size={ElementSize.Large}
             tooltipProps={{ tooltip: addMenuTitle }}
-            className={mergeClasses(
-              'size-10 flex-shrink-0',
-              isDisabled && 'pointer-events-none opacity-50',
-            )}
+            disabled={isDisabled}
             onClick={() => setIsSheetOpen(true)}
           />
           <BottomSheet
@@ -283,11 +281,10 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             listClassName={listClassName}
             items={menuItems}
           >
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
               aria-label={addMenuTitle}
               tooltipProps={{ tooltip: addMenuTitle }}
-              className="size-10 flex-shrink-0"
               disabled={isDisabled}
             />
           </DialDropdown>

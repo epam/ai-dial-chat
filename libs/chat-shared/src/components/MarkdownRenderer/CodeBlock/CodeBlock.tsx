@@ -1,8 +1,7 @@
 import {
-  ButtonVariant,
   DIAL_ICON_SIZE,
-  DialGhostIconButton,
   ElementSize,
+  GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy, IconDownload } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
@@ -124,25 +123,25 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
           </span>
           {!isStreaming && (
             <div className="flex items-center gap-1">
-              <DialGhostIconButton
+              <GhostIconButton
                 icon={<IconDownload size={DIAL_ICON_SIZE.SM} />}
                 aria-label={downloadLabel}
-                variant={ButtonVariant.Primary}
                 size={ElementSize.Small}
                 onClick={handleDownload}
               />
-              <DialGhostIconButton
+              <GhostIconButton
                 icon={
                   isCopied ? (
-                    <IconCheck size={DIAL_ICON_SIZE.SM} />
+                    <IconCheck
+                      size={DIAL_ICON_SIZE.SM}
+                      className={styles.copiedIcon}
+                    />
                   ) : (
                     <IconCopy size={DIAL_ICON_SIZE.SM} />
                   )
                 }
                 aria-label={isCopied ? copiedLabel : copyLabel}
-                variant={ButtonVariant.Primary}
                 size={ElementSize.Small}
-                className={isCopied ? styles.copiedIcon : undefined}
                 onClick={copy}
               />
             </div>

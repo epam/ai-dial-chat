@@ -34,7 +34,9 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   const { colors, typography, className, bubbleClassName } = bubbleStyles ?? {};
   const {
     showMoreLabel = 'Show more',
+    showLessLabel = 'Show less',
     showMoreAriaLabel,
+    showLessAriaLabel,
     attachmentClickLabel,
     attachmentRetryLabel,
     attachmentOpenInNewTabLabel,

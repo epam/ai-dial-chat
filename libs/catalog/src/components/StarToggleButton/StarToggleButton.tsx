@@ -1,6 +1,6 @@
 import {
   DIAL_ICON_SIZE,
-  DialGhostIconButton,
+  GhostIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
@@ -29,7 +29,7 @@ export const StarToggleButton: FC<StarToggleButtonProps> = ({
   ariaLabel = 'Toggle favorite',
   className,
 }) => (
-  <DialGhostIconButton
+  <GhostIconButton
     size={size}
     className={className}
     icon={

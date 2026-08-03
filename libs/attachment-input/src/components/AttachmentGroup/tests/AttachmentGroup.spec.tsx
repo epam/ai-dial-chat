@@ -70,7 +70,9 @@ describe('AttachmentGroup', () => {
       const grid = screen.getByRole('list');
       expect(grid.className).toContain('grid');
       expect(grid.className).toContain('grid-cols-[repeat(5,83px)]');
-      expect(screen.queryByRole('button', { name: /show \d+ more/i })).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: /show \d+ more/i }),
+      ).toBeNull();
       expect(screen.queryByRole('button', { name: /show less/i })).toBeNull();
     });
 

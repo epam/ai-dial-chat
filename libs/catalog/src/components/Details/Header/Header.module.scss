@@ -1,6 +1,0 @@
-@use '../../../styles/gradient-button' as *;
-
-// Double-class specificity (0,2,0) overrides .dial-primary-solid-button (0,1,0).
-.gradientBtn.gradientBtn {
-  @include catalog-gradient-btn;
-}

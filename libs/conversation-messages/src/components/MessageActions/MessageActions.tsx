@@ -5,7 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialGhostIconButton,
+  GhostIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -75,7 +75,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
       {role === MessageRole.User ? (
         <>
           {onEdit && (
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               aria-label={ariaLabels?.editMessage ?? 'Edit message'}
@@ -86,7 +86,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             />
           )}
           {onDelete && (
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconTrashX size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               aria-label={ariaLabels?.deleteMessage ?? 'Delete message'}
@@ -98,7 +98,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
       ) : (
         <>
           {onRegenerate && (
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconRefresh size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               aria-label={
@@ -109,7 +109,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             />
           )}
           {onCopy && (
-            <DialGhostIconButton
+            <GhostIconButton
               icon={
                 copied === 'copy' ? (
                   <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
@@ -129,7 +129,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             />
           )}
           {onCopyMarkdown && (
-            <DialGhostIconButton
+            <GhostIconButton
               icon={
                 copied === 'markdown' ? (
                   <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
@@ -149,29 +149,27 @@ export const MessageActions: FC<MessageActionsProps> = ({
             />
           )}
           {onLike && (
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               aria-label={ariaLabels?.likeResponse ?? 'Like response'}
               aria-pressed={activeRating === MessageRating.Like}
               className={
-                activeRating === MessageRating.Like
-                  ? '!text-accent-primary'
-                  : undefined
+                activeRating === MessageRating.Like ? '!text-accent' : undefined
               }
               tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
               onClick={onLike}
             />
           )}
           {onDislike && (
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconThumbDown size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
               aria-label={ariaLabels?.dislikeResponse ?? 'Dislike response'}
               aria-pressed={activeRating === MessageRating.Dislike}
               className={
                 activeRating === MessageRating.Dislike
-                  ? '!text-accent-primary'
+                  ? '!text-accent'
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}

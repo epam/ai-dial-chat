@@ -8,6 +8,7 @@ import {
   DialProgressBar,
   DialProgressBarSize,
   ElementSize,
+  GhostIconButton,
   IconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -210,11 +211,10 @@ const ImportExportQueue: FC<Props> = ({
             onClick={() => setIsCollapsed((value) => !value)}
             className={STATUS_SLOT_CLASS}
           />
-          <DialIconButton
+          <GhostIconButton
             aria-label={t(ConversationExportI18nKeys.CloseQueueAriaLabel)}
-            appearance={ButtonAppearance.Ghost}
             size={ElementSize.Small}
-            icon={<IconX size={DIAL_ICON_SIZE.SM} className="text-secondary" />}
+            icon={<IconX size={DIAL_ICON_SIZE.SM} />}
             onClick={handleClose}
             className={STATUS_SLOT_CLASS}
           />
