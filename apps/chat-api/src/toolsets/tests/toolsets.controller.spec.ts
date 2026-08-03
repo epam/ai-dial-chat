@@ -223,6 +223,15 @@ describe('ToolsetsController — write operations (integration)', () => {
         .expect(400);
     });
 
+    it('returns 400 when authSettings is omitted, and does not call the service', async () => {
+      const { authSettings: _omitted, ...noAuthSettings } = validBody;
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets')
+        .send(noAuthSettings)
+        .expect(400);
+      expect(service.createToolset).not.toHaveBeenCalled();
+    });
+
     it('returns 400 for an unknown extra property (forbidNonWhitelisted)', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/toolsets')
