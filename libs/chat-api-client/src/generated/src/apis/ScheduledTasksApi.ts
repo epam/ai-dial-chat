@@ -34,6 +34,7 @@ export interface ListScheduledTasksRequest {
   limit?: number;
   offset?: number;
   search?: string;
+  sort?: ListScheduledTasksSortEnum;
 }
 
 export interface UpdateScheduledTaskRequest {
@@ -172,6 +173,10 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
       queryParameters['search'] = requestParameters['search'];
     }
 
+    if (requestParameters['sort'] != null) {
+      queryParameters['sort'] = requestParameters['sort'];
+    }
+
     const headerParameters: runtime.HTTPHeaders = {};
 
     let urlPath = `/api/v1/scheduled-tasks`;
@@ -267,3 +272,15 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
     return await response.value();
   }
 }
+
+/**
+ * @export
+ */
+export const ListScheduledTasksSortEnum = {
+  FirstToRun: 'firstToRun',
+  LastToRun: 'lastToRun',
+  Newest: 'newest',
+  NameAz: 'nameAZ',
+} as const;
+export type ListScheduledTasksSortEnum =
+  (typeof ListScheduledTasksSortEnum)[keyof typeof ListScheduledTasksSortEnum];

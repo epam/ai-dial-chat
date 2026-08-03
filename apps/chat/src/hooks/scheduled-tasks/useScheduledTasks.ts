@@ -17,7 +17,7 @@ interface UseScheduledTasksResult {
   searchQuery: string;
   /** Updates `searchQuery`. */
   setSearchQuery: (query: string) => void;
-  /** Currently selected sort key. Purely a client-side concern — changing it never triggers a fetch. */
+  /** Currently selected sort key. Changing it immediately resets `items` and refetches page 0 with the new value. */
   sortKey: ScheduledTasksSortKey;
   /** Updates `sortKey`. */
   setSortKey: (key: ScheduledTasksSortKey) => void;
@@ -42,12 +42,11 @@ interface LoadMoreCancellation {
 }
 
 /**
- * Owns pagination and server-driven search for the Scheduled Tasks list.
- * `searchQuery` changes (debounced) and `refetch()` reset `items` and fetch
- * page 0; `loadMore()` appends the next page. `sortKey` is tracked here for
- * convenience but never sent to the server — the upstream DIAL Scheduler has
- * no sort capability, so sorting stays a client-side concern over whatever
- * has been loaded so far.
+ * Owns pagination, server-driven search, and server-driven sort for the
+ * Scheduled Tasks list. `searchQuery` changes (debounced), `sortKey` changes
+ * (immediate), and `refetch()` all reset `items` and fetch page 0 with the
+ * current `search`/`sort`; `loadMore()` appends the next page using the same
+ * `sort` so appended pages stay in server order.
  */
 export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
   const [items, setItems] = useState<ScheduledTaskDto[]>([]);
@@ -103,6 +102,7 @@ export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
           limit: PAGE_SIZE,
           offset: 0,
           search: debouncedSearchQuery,
+          sort: sortKey,
           signal: controller.signal,
         });
         if (!cancelled.value) {
@@ -136,7 +136,7 @@ export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
       }
       loadMoreCancelRef.current = null;
     };
-  }, [enabled, debouncedSearchQuery, resetToken]);
+  }, [enabled, debouncedSearchQuery, sortKey, resetToken]);
 
   const loadMore = useCallback(() => {
     if (!enabled || !hasMore || isLoadingMore || isLoading) {
@@ -156,6 +156,7 @@ export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
           limit: PAGE_SIZE,
           offset,
           search: debouncedSearchQuery,
+          sort: sortKey,
           signal: controller.signal,
         });
         if (!cancelled.value) {
@@ -185,7 +186,14 @@ export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
     };
 
     run();
-  }, [enabled, hasMore, isLoadingMore, isLoading, debouncedSearchQuery]);
+  }, [
+    enabled,
+    hasMore,
+    isLoadingMore,
+    isLoading,
+    debouncedSearchQuery,
+    sortKey,
+  ]);
 
   const refetch = useCallback(() => {
     if (enabled) {
