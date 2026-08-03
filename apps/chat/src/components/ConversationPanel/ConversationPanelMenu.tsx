@@ -51,6 +51,7 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
             className={isOpen ? 'text-accent-primary' : 'text-secondary'}
           />
         }
+        className={isOpen ? 'bg-control-accent-alpha-hover' : undefined}
       />
     </DialDropdown>
   );

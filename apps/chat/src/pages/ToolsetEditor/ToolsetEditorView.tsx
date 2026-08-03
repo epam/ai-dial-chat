@@ -22,6 +22,7 @@ interface Props {
   errors: ToolsetFormErrors;
   isSaving: boolean;
   toolsetId: string;
+  isEditMode: boolean;
   onNext: () => void;
   onCancel: () => void;
   onEnsureSaved: () => Promise<string | false>;
@@ -35,6 +36,7 @@ const ToolsetEditorView: FC<Props> = ({
   errors,
   isSaving,
   toolsetId,
+  isEditMode,
   onNext,
   onCancel,
   onEnsureSaved,
@@ -64,6 +66,7 @@ const ToolsetEditorView: FC<Props> = ({
               errors={errors}
               isSaving={isSaving}
               toolsetId={toolsetId}
+              isEditMode={isEditMode}
               onChange={onChange}
               onAuthChange={onAuthChange}
               onEnsureSaved={onEnsureSaved}
@@ -74,13 +77,11 @@ const ToolsetEditorView: FC<Props> = ({
         {isGeneralStep && (
           <div className="flex shrink-0 items-center justify-end gap-3 border-t border-t-tertiary px-4 py-3">
             <NeutralButton
-              type="button"
               label={t(ButtonsI18nKeys.Cancel)}
               onClick={onCancel}
               disabled={isSaving}
             />
             <PrimaryButton
-              type="button"
               label={t(EditorI18nKeys.NextButton)}
               onClick={onNext}
               disabled={isSaving}

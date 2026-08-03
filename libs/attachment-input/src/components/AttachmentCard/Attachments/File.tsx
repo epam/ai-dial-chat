@@ -1,8 +1,10 @@
 import {
   AttachmentErrorReason,
+  AttachmentType,
   mergeClasses,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
+import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type KeyboardEvent,
@@ -44,6 +46,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
   onExpand,
   isExpandable,
   onRemove,
+  isSelected,
 }) => {
   const {
     clickLabel = 'Download attachment',
@@ -53,13 +56,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     errorReasonLabels,
     genericErrorLabel = 'Upload failed',
   } = labels ?? {};
-  const {
-    typography: {
-      nameClassName = 'dial-caption-text',
-      metaClassName = 'dial-caption-text',
-    } = {},
-    className,
-  } = rowStyles ?? {};
+  const { typography, className } = rowStyles ?? {};
 
   const { id, name, status, errorReason } = attachment;
 
@@ -101,9 +98,12 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 
   const tileClassName = mergeClasses(
     ATTACHMENT_TILE_BASE_CLASS,
-    'group relative flex-col justify-between items-start gap-1 overflow-hidden p-1.5',
+    'group/attachment-tile relative flex-col justify-between items-start gap-1 overflow-hidden p-1.5',
     styles.tile,
-    !isError && styles.tileLight,
+    (attachment.type === AttachmentType.Prompt ||
+      attachment.type === AttachmentType.Pasted) &&
+      'hovered',
+    isSelected && styles.selected,
     isError && styles.tileError,
   );
 
@@ -111,7 +111,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     <div
       title={displayName}
       className={mergeClasses(
-        nameClassName,
+        typography?.nameClassName ?? 'dial-caption-text',
         'line-clamp-2 min-w-0 break-all',
         styles.nameText,
         !isError && cornerIconSpacing,
@@ -132,7 +132,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
 
       <span
         className={mergeClasses(
-          metaClassName,
+          typography?.metaClassName ?? 'dial-caption-text',
           'min-w-0 flex-1 truncate',
           styles.typeText,
         )}
@@ -173,12 +173,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
             styles.track,
           )}
         >
-          <div
-            className={mergeClasses(
-              'h-full w-1/3 rounded-full',
-              styles.indeterminateFill,
-            )}
-          />
+          <DialSpinner size={32} />
         </div>
       )}
 

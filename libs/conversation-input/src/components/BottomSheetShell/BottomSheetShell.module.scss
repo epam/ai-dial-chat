@@ -9,7 +9,7 @@
 }
 
 .backdrop {
-  background: var(--ci-background-Backdrop, #0c101db2);
+  background: var(--ci-backdrop, var(--bg-backdrop, #0c101db2));
 }
 
 .sheet {

@@ -2,7 +2,7 @@
 
 ### Requirement: Protocol types are pure and live in libs/chat-shared
 
-`libs/chat-shared/src/types/overlay/` SHALL export: the namespace constant (`@DIAL_OVERLAY`), an `OverlayRequestType` enum covering exactly the v1 requests (`GET_MESSAGES`, `SEND_MESSAGE`, `SET_INPUT_CONTENT`, `SET_SYSTEM_PROMPT`, `SET_TEMPERATURE`, `SET_OVERLAY_OPTIONS`) plus the conversation-list requests added by this change (`GET_CONVERSATIONS`, `GET_SELECTED_CONVERSATIONS`, `SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `CREATE_LOCAL_CONVERSATION`, `DELETE_CONVERSATION`, `RENAME_CONVERSATION`), an `OverlayEventType` enum covering exactly the v1 events (`INIT_READY`, `READY`, `READY_TO_INTERACT`, `SELECTED_CONVERSATION_LOADED`, `GPT_START_GENERATING`, `GPT_END_GENERATING`, `STOP_GENERATING`, `CONVERSATIONS_UPDATED`) — unchanged by this change, no new event types are introduced — the `ChatOverlayOptions` interface, and one response payload interface per implemented request. This module SHALL import nothing from `apps/*`, `libs/chat-overlay`, `libs/chat-api-client`, or any other lib/app — it contains only enums and interfaces, no functions with logic beyond type guards.
+`libs/chat-shared/src/types/overlay/` SHALL export: the namespace constant (`@DIAL_OVERLAY`), an `OverlayRequestType` enum covering exactly the v1 requests (`GET_MESSAGES`, `SEND_MESSAGE`, `SET_INPUT_CONTENT`, `SET_SYSTEM_PROMPT`, `SET_TEMPERATURE`, `SET_OVERLAY_OPTIONS`) plus the conversation-list requests (`GET_CONVERSATIONS`, `GET_SELECTED_CONVERSATIONS`, `SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `CREATE_LOCAL_CONVERSATION`, `DELETE_CONVERSATION`, `RENAME_CONVERSATION`), an `OverlayEventType` enum covering exactly the v1 events (`INIT_READY`, `READY`, `READY_TO_INTERACT`, `SELECTED_CONVERSATION_LOADED`, `GPT_START_GENERATING`, `GPT_END_GENERATING`, `STOP_GENERATING`, `CONVERSATIONS_UPDATED`) — no new event types are introduced by this change — the `ChatOverlayOptions` interface (including the new optional `auth` field), a new `OverlayAuthUiMode` enum, `OverlayRequestErrorCode`, `OverlayRequestError`, and one response payload interface per implemented request. The `SetOverlayOptionsPayload` interface SHALL include the new optional `authProviderUiModes?: Record<string, string>` field. This module SHALL import nothing from `apps/*`, `libs/chat-overlay`, `libs/chat-api-client`, or any other lib/app — it contains only enums and interfaces, no functions with logic beyond type guards.
 
 #### Scenario: Overlay types module has no runtime logic imports
 
@@ -19,9 +19,24 @@
 - **WHEN** `OverlayRequestType` is inspected
 - **THEN** it has members `GetConversations = '@DIAL_OVERLAY/GET_CONVERSATIONS'`, `GetSelectedConversations = '@DIAL_OVERLAY/GET_SELECTED_CONVERSATIONS'`, `SelectConversation = '@DIAL_OVERLAY/SELECT_CONVERSATION'`, `CreateConversation = '@DIAL_OVERLAY/CREATE_CONVERSATION'`, `CreateLocalConversation = '@DIAL_OVERLAY/CREATE_LOCAL_CONVERSATION'`, `DeleteConversation = '@DIAL_OVERLAY/DELETE_CONVERSATION'`, `RenameConversation = '@DIAL_OVERLAY/RENAME_CONVERSATION'`
 
+#### Scenario: OverlayAuthUiMode enum is exported from chat-shared
+
+- **WHEN** `@epam/ai-dial-chat-shared` is imported
+- **THEN** `OverlayAuthUiMode` is available with members `External = 'external'` and `SameWindow = 'sameWindow'`
+
+#### Scenario: SetOverlayOptionsPayload includes authProviderUiModes
+
+- **WHEN** `SetOverlayOptionsPayload` is inspected
+- **THEN** it has an optional `authProviderUiModes?: Record<string, string>` field
+
+#### Scenario: ChatOverlayOptions includes auth field
+
+- **WHEN** `ChatOverlayOptions` is inspected
+- **THEN** it has an optional `auth?: { providerUiModes?: Record<string, OverlayAuthUiMode> }` field
+
 ### Requirement: Message envelope shapes
 
-A request from host to iframe SHALL be `{ type: '@DIAL_OVERLAY/<REQUEST>', requestId: string, expiresAt?: number, payload?: unknown }`, where `expiresAt` is epoch milliseconds after which the app must stop waiting for prerequisites and drop the request. A response from iframe to host SHALL be `{ type: '@DIAL_OVERLAY/<REQUEST>/RESPONSE', requestId: string, payload?: unknown }`, using the same `requestId` as the request it answers. An event from iframe to host SHALL be `{ type: '@DIAL_OVERLAY/<EVENT>', payload?: unknown }` with no `requestId` field.
+A request from host to iframe SHALL be `{ type: '@DIAL_OVERLAY/<REQUEST>', requestId: string, expiresAt?: number, payload?: unknown }`, where `expiresAt` is epoch milliseconds after which the app must stop waiting for prerequisites and drop the request. A response from iframe to host SHALL be `{ type: '@DIAL_OVERLAY/<REQUEST>/RESPONSE', requestId: string, payload?: unknown, error?: OverlayRequestError }`, using the same `requestId` as the request it answers. `payload` carries a successful or domain-level response; the top-level `error` carries a request-execution failure. An event from iframe to host SHALL be `{ type: '@DIAL_OVERLAY/<EVENT>', payload?: unknown }` with no `requestId` field.
 
 #### Scenario: Request/response requestId round-trips
 
@@ -33,9 +48,15 @@ A request from host to iframe SHALL be `{ type: '@DIAL_OVERLAY/<REQUEST>', reque
 - **WHEN** the app emits `GPT_START_GENERATING`
 - **THEN** the posted message has no `requestId` property (not even `undefined` — the key is absent)
 
+#### Scenario: Request failure preserves requestId
+
+- **WHEN** the app cannot execute `GET_MESSAGES` because no conversation is open
+- **THEN** it responds with `{ type: '@DIAL_OVERLAY/GET_MESSAGES/RESPONSE', requestId: 'abc', error: { code: 'ACTIVE_CONVERSATION_UNAVAILABLE', message: '...' } }`
+- **AND** the `requestId` is the same one received in the request
+
 ### Requirement: Handshake sequencing
 
-On overlay-mode initialization the app SHALL emit `INIT_READY` first (once), then `READY` once models/auth-required-state is resolved (once). The library, on receiving `READY`, SHALL send `SET_OVERLAY_OPTIONS` with its current options, omitting unset optional fields (`theme`, `modelId`, `overlayConversationId`) from the payload. The app, on receiving `SET_OVERLAY_OPTIONS`, SHALL treat absent, `null`, or `undefined` optional option fields as unset rather than malformed, apply the options, and respond with `SET_OVERLAY_OPTIONS/RESPONSE` using the request's `requestId`. Once the app has selected/loaded its active conversation for the first time after options are applied, it SHALL emit `READY_TO_INTERACT` (once). The library's `ready()` SHALL resolve only after `READY_TO_INTERACT` is observed (not merely after `READY`).
+On overlay-mode initialization the app SHALL emit `INIT_READY` first (once), then `READY` once models/auth-required-state is resolved (once). The library, on receiving `READY`, SHALL send `SET_OVERLAY_OPTIONS` with its current options, omitting unset optional fields (`theme`, `modelId`, `overlayConversationId`) from the payload; when `auth.providerUiModes` is set on the `ChatOverlay` instance, `authProviderUiModes` SHALL be included in the payload (mapping string keys to their string values), otherwise it SHALL be omitted. The app, on receiving `SET_OVERLAY_OPTIONS`, SHALL treat absent, `null`, or `undefined` optional option fields as unset rather than malformed, apply the options, and respond with `SET_OVERLAY_OPTIONS/RESPONSE` using the request's `requestId`. Once the app has selected/loaded its active conversation for the first time after options are applied, it SHALL emit `READY_TO_INTERACT` (once). The library's `ready()` SHALL resolve only after `READY_TO_INTERACT` is observed (not merely after `READY`).
 
 #### Scenario: ready() does not resolve on READY alone
 
@@ -64,9 +85,27 @@ On overlay-mode initialization the app SHALL emit `INIT_READY` first (once), the
 - **WHEN** overlay-mode initialization runs to completion
 - **THEN** exactly one `INIT_READY` message and exactly one `READY` message are observed on the host side, even if the app's own initialization effects re-run (e.g. React Strict Mode double-invoke)
 
+#### Scenario: authProviderUiModes is included when configured
+
+- **WHEN** the `ChatOverlay` was constructed with `auth.providerUiModes` containing entries
+- **AND** the app has sent `READY`
+- **THEN** the library's `SET_OVERLAY_OPTIONS` payload includes `authProviderUiModes` with the configured entries
+
+#### Scenario: authProviderUiModes is omitted when not configured
+
+- **WHEN** the `ChatOverlay` was constructed without an `auth` option
+- **AND** the app has sent `READY`
+- **THEN** the library's `SET_OVERLAY_OPTIONS` payload does NOT include an `authProviderUiModes` key
+
+#### Scenario: Older iframe ignores unknown authProviderUiModes field
+
+- **WHEN** a newer host library sends `SET_OVERLAY_OPTIONS` with `authProviderUiModes` to an older app that does not know this field
+- **THEN** the older app accepts the payload and responds with `SET_OVERLAY_OPTIONS/RESPONSE`
+- **AND** the handshake completes normally with external-only login behavior
+
 ### Requirement: Request/response matching with timeout
 
-Every library-issued request SHALL generate a unique `requestId`, include an `expiresAt` deadline derived from its dispatch time, and race its response against `options.requestTimeout` (default `10000` ms if unset). Requests that are called before `ready()` resolves SHALL NOT start their timeout until the request is actually posted to the iframe. On timeout, the request's promise SHALL reject with an error naming the request type and the configured timeout. A response whose `requestId` matches no pending request SHALL be ignored without throwing.
+Every library-issued request SHALL generate a unique `requestId`, include an `expiresAt` deadline derived from its dispatch time, and race its response against `options.requestTimeout` (default `10000` ms if unset). Requests that are called before `ready()` resolves SHALL NOT start their timeout until the request is actually posted to the iframe. On timeout, the request's promise SHALL reject with an error naming the request type and the configured timeout. A matching response with a top-level `error` SHALL reject immediately with `ChatOverlayRequestError` rather than waiting for the timeout. A response whose `requestId` matches no pending request SHALL be ignored without throwing.
 
 #### Scenario: Request times out when unanswered
 
@@ -89,6 +128,34 @@ Every library-issued request SHALL generate a unique `requestId`, include an `ex
 
 - **WHEN** a request's matching response is received and its promise resolves
 - **THEN** a later message reusing the same (already-consumed) `requestId` does not resolve or reject anything
+
+#### Scenario: Structured error rejects immediately
+
+- **WHEN** a pending `GET_MESSAGES` request receives a matching response with `error.code: 'ACTIVE_CONVERSATION_UNAVAILABLE'`
+- **THEN** its promise rejects immediately with `ChatOverlayRequestError`
+- **AND** the error exposes `code: 'ACTIVE_CONVERSATION_UNAVAILABLE'`, `requestType: '@DIAL_OVERLAY/GET_MESSAGES'`, and the app-provided message
+
+### Requirement: Structured request-execution errors
+
+`OverlayRequestErrorCode` SHALL define `ACTIVE_CONVERSATION_UNAVAILABLE`, `CONVERSATION_LIST_UNAVAILABLE`, `INVALID_PAYLOAD`, and `REQUEST_EXECUTION_FAILED`. `OverlayRequestError` SHALL be `{ code: OverlayRequestErrorCode; message: string }`. After `READY_TO_INTERACT`, the app SHALL answer a trusted, unexpired request it cannot execute with a matching response carrying this error at the response-envelope level. It SHALL use `ACTIVE_CONVERSATION_UNAVAILABLE` when an active-conversation method requires a mounted conversation but the composer is open, `CONVERSATION_LIST_UNAVAILABLE` when a conversation-list bridge is unavailable, `INVALID_PAYLOAD` when the payload does not match the request contract, and `REQUEST_EXECUTION_FAILED` when the registered bridge throws or rejects. The app SHALL log the request type, code, and message to its console when emitting such an error.
+
+#### Scenario: Empty composer fails without a timeout
+
+- **WHEN** `READY_TO_INTERACT` has been emitted for the empty composer and the trusted host sends `GET_MESSAGES`, `SEND_MESSAGE`, `SET_INPUT_CONTENT`, `SET_SYSTEM_PROMPT`, or `SET_TEMPERATURE`
+- **THEN** the app responds immediately with top-level `error.code: 'ACTIVE_CONVERSATION_UNAVAILABLE'`
+- **AND** the message tells the host to open or create a conversation
+- **AND** the request is not left pending until `requestTimeout`
+
+#### Scenario: Bridge rejection is observable
+
+- **WHEN** a registered bridge rejects while executing a valid request
+- **THEN** the app responds with top-level `error.code: 'REQUEST_EXECUTION_FAILED'` and the failure message
+- **AND** the app logs a warning containing the request type and error code
+
+#### Scenario: Malformed payload is rejected explicitly
+
+- **WHEN** a trusted host sends a request whose payload does not match that request's contract
+- **THEN** the app responds with top-level `error.code: 'INVALID_PAYLOAD'` instead of silently leaving the host to time out
 
 ### Requirement: Event subscription and duplicate delivery
 
@@ -170,7 +237,7 @@ The library SHALL remove its `window` `message` listener and reject/clear all pe
 
 ### Requirement: Explicit error signal for conversation-list methods
 
-`OverlayConversationError` SHALL be exported as `{ code: 'NOT_FOUND' | 'FORBIDDEN' | 'INVALID_ARGUMENT'; message: string }`. Every response type for `SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `DELETE_CONVERSATION`, and `RENAME_CONVERSATION` SHALL carry an optional `error` field of this type; when `error` is present, any success field (`conversation`) on that same response SHALL be absent. `GET_CONVERSATIONS` and `GET_SELECTED_CONVERSATIONS` SHALL NOT carry an `error` field — they are snapshot reads with no failure mode beyond the pre-existing request timeout. This error signal is additive and applies only to the seven conversation-list requests; the five pre-existing v1 requests (`GET_MESSAGES`, `SEND_MESSAGE`, `SET_INPUT_CONTENT`, `SET_SYSTEM_PROMPT`, `SET_TEMPERATURE`) and `SET_OVERLAY_OPTIONS` keep their existing response shapes unchanged — this change does not retrofit an error field onto them.
+`OverlayConversationError` SHALL be exported as `{ code: 'NOT_FOUND' | 'FORBIDDEN' | 'INVALID_ARGUMENT'; message: string }`. Every response payload type for `SELECT_CONVERSATION`, `CREATE_CONVERSATION`, `DELETE_CONVERSATION`, and `RENAME_CONVERSATION` SHALL carry an optional domain-level `error` field of this type; when that payload error is present, any success field (`conversation`) on the same payload SHALL be absent. `GET_CONVERSATIONS` and `GET_SELECTED_CONVERSATIONS` SHALL NOT carry a domain-level `error` field. This payload error remains distinct from the response envelope's `OverlayRequestError`, which is available for every request when the app cannot execute it. The five pre-existing active-conversation response payloads and `SET_OVERLAY_OPTIONS` keep their existing payload shapes unchanged.
 
 #### Scenario: Invalid id produces an explicit error response, not a timeout
 
@@ -182,10 +249,11 @@ The library SHALL remove its `window` `message` listener and reject/clear all pe
 - **WHEN** a `RENAME_CONVERSATION/RESPONSE` payload is inspected
 - **THEN** it has either a `conversation` field (success) or an `error` field (failure), never both
 
-#### Scenario: v1 methods are unaffected by the new error shape
+#### Scenario: v1 payloads are unaffected by the request-error envelope
 
 - **WHEN** `SendMessageResponse`/`SetSystemPromptResponse`/`SetTemperatureResponse`/`GetMessagesResponse` are inspected
-- **THEN** none of them gains an `error` field as part of this change
+- **THEN** none of their payload interfaces gains a domain-level `error` field
+- **AND** failures are represented by the optional top-level `OverlayMessageResponse.error`
 
 ### Requirement: Conversation-list requests follow the same origin and timeout rules as active-conversation requests
 

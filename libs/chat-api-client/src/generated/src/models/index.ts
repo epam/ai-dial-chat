@@ -3484,16 +3484,16 @@ export interface ListScheduledTasksResponseDto {
   offset?: number;
   /**
    * Upstream URL for the next page, or null if this is the last page.
-   * @type {object}
+   * @type {string}
    * @memberof ListScheduledTasksResponseDto
    */
-  next?: object | null;
+  next?: string | null;
   /**
    * Upstream URL for the previous page, or null if this is the first page.
-   * @type {object}
+   * @type {string}
    * @memberof ListScheduledTasksResponseDto
    */
-  previous?: object | null;
+  previous?: string | null;
 }
 /**
  *

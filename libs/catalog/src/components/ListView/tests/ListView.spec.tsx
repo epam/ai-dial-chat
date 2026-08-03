@@ -86,6 +86,7 @@ describe('ListView', () => {
         <ListView
           items={[]}
           query=""
+          type={CatalogEntityType.Model}
           ariaLabel="Catalog"
           emptyStateTitle="No items"
         />,
@@ -98,6 +99,7 @@ describe('ListView', () => {
       <ListView
         items={[]}
         query=""
+        type={CatalogEntityType.Model}
         ariaLabel="Catalog"
         emptyStateTitle="No items"
       />,
@@ -112,6 +114,7 @@ describe('ListView', () => {
       <ListView
         items={[item]}
         query=""
+        type={CatalogEntityType.Model}
         ariaLabel="Catalog"
         onToggleFavorite={onToggleFavorite}
       />,
@@ -127,6 +130,7 @@ describe('ListView', () => {
       <ListView
         items={[item1, item2]}
         query=""
+        type={CatalogEntityType.Model}
         ariaLabel="Catalog"
         selectedItemId="item-2"
       />,
@@ -143,6 +147,7 @@ describe('ListView', () => {
       <ListView
         items={[item]}
         query=""
+        type={CatalogEntityType.Model}
         ariaLabel="Catalog"
         selectedItemId="item-1"
       />,
@@ -154,6 +159,7 @@ describe('ListView', () => {
   it('uses a fixed dense row height — constant across every row regardless of content', () => {
     render(
       <ListView
+        type={CatalogEntityType.Model}
         items={[makeItem({ id: 'x', name: 'x' })]}
         query=""
         ariaLabel="Catalog"
@@ -167,6 +173,7 @@ describe('ListView', () => {
   it('removes ag-grid header column dividers (no vertical dividers in this view)', () => {
     render(
       <ListView
+        type={CatalogEntityType.Model}
         items={[makeItem({ id: 'x', name: 'x' })]}
         query=""
         ariaLabel="Catalog"
@@ -182,6 +189,7 @@ describe('ListView', () => {
   it("does not enable ag-grid's built-in alternating row colors (zebra striping is done via CSS override instead, to avoid stacking with it)", () => {
     render(
       <ListView
+        type={CatalogEntityType.Model}
         items={[makeItem({ id: 'x', name: 'x' })]}
         query=""
         ariaLabel="Catalog"

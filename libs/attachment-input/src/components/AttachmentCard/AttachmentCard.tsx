@@ -17,25 +17,29 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   onDownload,
   labels,
   styles: cardStyles,
+  isSelected,
 }) => {
   const { colors } = cardStyles ?? {};
   const isPasted = attachment.type === AttachmentType.Pasted;
   const isExpandable = isPasted && onExpand !== undefined;
 
   const cssVars = buildCssVars({
-    '--ci-tile-bg': colors?.background,
-    '--ci-tile-border': colors?.border,
-    '--ci-tile-border-hover': colors?.borderHover,
-    '--ci-tile-focus-outline': colors?.focusOutline,
-    '--ci-tile-bg-error': colors?.backgroundError,
-    '--ci-tile-border-error': colors?.borderError,
-    '--ci-tile-error-text': colors?.errorText,
-    '--ci-tile-name-text': colors?.nameText,
-    '--ci-tile-type-text': colors?.typeText,
-    '--ci-tile-hover-icon-bg': colors?.hoverIconBackground,
-    '--ci-tile-hover-icon-color': colors?.hoverIconColor,
-    '--ci-tile-track-bg': colors?.trackBackground,
-    '--ci-tile-fill-bg': colors?.fillBackground,
+    '--ai-tile-bg': colors?.background,
+    '--ai-tile-border': colors?.border,
+    '--ai-tile-bg-hover': colors?.backgroundHover,
+    '--ai-tile-border-hover': colors?.borderHover,
+    '--ai-tile-bg-selected': colors?.backgroundSelected,
+    '--ai-tile-border-selected': colors?.borderSelected,
+    '--ai-tile-focus-outline': colors?.focusOutline,
+    '--ai-tile-bg-error': colors?.backgroundError,
+    '--ai-tile-border-error': colors?.borderError,
+    '--ai-tile-error-text': colors?.errorText,
+    '--ai-tile-name-text': colors?.nameText,
+    '--ai-tile-type-text': colors?.typeText,
+    '--ai-tile-hover-icon-bg': colors?.hoverIconBackground,
+    '--ai-tile-hover-icon-color': colors?.hoverIconColor,
+    '--ai-tile-progress-track': colors?.trackBackground,
+    '--ai-tile-fill-bg': colors?.fillBackground,
   });
 
   const { isImage, isAudio, isLink } = useMemo(
@@ -54,6 +58,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         searchQuery={searchQuery}
         styles={cardStyles}
         cssVars={cssVars}
+        isSelected={isSelected}
       />
     );
   }
@@ -69,6 +74,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         onRemove={onRemove}
         cssVars={cssVars}
         onDownload={onDownload}
+        isSelected={isSelected}
       />
     );
   }
@@ -87,6 +93,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
       onExpand={onExpand}
       cssVars={cssVars}
       isExpandable={isExpandable}
+      isSelected={isSelected}
     />
   );
 };

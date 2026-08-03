@@ -156,8 +156,8 @@ The shell renders fixed chrome: 360 px width, full-height column, 48 px header b
 It assembles:
 
 - `<SidebarPanel side="right">` as the shell.
-- A search `DialGhostIconButton` (`IconSearch`) as `leftActions` — passes `onSearch` callback (no-op default).
-- A download-all `DialGhostIconButton` (`IconDownload`) as `rightActions` — passes `onDownloadAll` callback (no-op default). The shell's built-in close button is appended after it (right edge).
+- A search `GhostIconButton` (`IconSearch`) as `leftActions` — passes `onSearch` callback (no-op default).
+- A download-all `GhostIconButton` (`IconDownload`) as `rightActions` — passes `onDownloadAll` callback (no-op default). The shell's built-in close button is appended after it (right edge).
 - Two `FilesSection` components (uploaded, generated) and one `SourcesSection` in the body.
 
 `UploadedFilesSection` and `GeneratedFilesSection` were merged into a single `FilesSection` component because they are structurally identical in this slice (same props, same layout, same `AttachmentCard` grid). If a future iteration requires divergent behaviour or visuals between uploaded and generated cards, the two-component structure can be re-introduced by splitting `FilesSection` back at that point.
@@ -200,7 +200,7 @@ The current `Header` is `min-h-[49px]`, centred logo only. The toggle goes at th
 [ left spacer ] [ centred Logo ] [ right toggle button ]
 ```
 
-It uses `DialGhostIconButton` with `IconFile` (matches Figma's "files & sources" affordance), `aria-pressed={isOpen}`, and an i18n tooltip. Header layout switches from flex-centre to a 3-column grid (`grid-cols-[1fr_auto_1fr]`) so the logo stays centred regardless of which side has buttons.
+It uses `GhostIconButton` with `IconFile` (matches Figma's "files & sources" affordance), `aria-pressed={isOpen}`, and an i18n tooltip. Header layout switches from flex-centre to a 3-column grid (`grid-cols-[1fr_auto_1fr]`) so the logo stays centred regardless of which side has buttons.
 
 ### 10 — `apps/chat` component conventions
 

@@ -1,4 +1,4 @@
-export { ChatOverlay } from './lib/ChatOverlay';
+export { ChatOverlay, ChatOverlayRequestError } from './lib/ChatOverlay';
 export { ChatOverlayManager, OverlayPosition } from './lib/ChatOverlayManager';
 export type { ChatOverlayManagerOptions } from './lib/ChatOverlayManager';
 
@@ -15,6 +15,7 @@ export type {
   OverlayChatMessage,
   OverlayConversation,
   OverlayConversationError,
+  OverlayRequestError,
   RenameConversationPayload,
   RenameConversationResponse,
   SelectConversationPayload,
@@ -25,7 +26,9 @@ export type {
   SetTemperatureResponse,
 } from '@epam/ai-dial-chat-shared';
 export {
+  OverlayAuthUiMode,
   OverlayEventType,
   OverlayFeature,
+  OverlayRequestErrorCode,
   OverlayRequestType,
 } from '@epam/ai-dial-chat-shared';

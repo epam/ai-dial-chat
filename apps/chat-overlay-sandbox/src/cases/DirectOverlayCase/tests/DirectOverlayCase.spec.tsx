@@ -155,6 +155,39 @@ describe('DirectOverlayCase', () => {
     );
   });
 
+  it('reports rejected actions in the console and Event log', async () => {
+    const user = userEvent.setup();
+    const error = new Error(
+      'ChatOverlay: request "@DIAL_OVERLAY/GET_MESSAGES" failed [ACTIVE_CONVERSATION_UNAVAILABLE]: No active conversation is open.',
+    );
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    mocks.instanceMethods.ready.mockResolvedValueOnce(true);
+    mocks.instanceMethods.getMessages.mockRejectedValueOnce(error);
+    render(<DirectOverlayCase />);
+
+    const getMessagesButton = await screen.findByRole('button', {
+      name: 'Get messages',
+    });
+    await waitFor(() =>
+      expect((getMessagesButton as HTMLButtonElement).disabled).toBe(false),
+    );
+    await user.click(getMessagesButton);
+
+    const eventLogButton = await screen.findByRole('button', {
+      name: /Event log 1 events/i,
+    });
+    await user.click(eventLogButton);
+    expect(
+      screen.getByText(/getMessages failed.*ACTIVE_CONVERSATION_UNAVAILABLE/),
+    ).toBeTruthy();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('ACTIVE_CONVERSATION_UNAVAILABLE'),
+      error,
+    );
+  });
+
   it('shows a configuration hint when the overlay handshake stays pending', () => {
     vi.useFakeTimers();
 

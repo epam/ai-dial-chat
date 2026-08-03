@@ -65,6 +65,10 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DialSpinner: () => <div role="progressbar" />,
+  DialSkeleton: ({ color }: { color?: string }) => (
+    <div data-skeleton data-color={color} />
+  ),
+  DialSkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
   DialDropdown: ({ children }: { children: ReactNode }) => <>{children}</>,
   IconButton: ({
     icon,
@@ -132,6 +136,7 @@ const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
         errorLabel: 'Something went wrong',
         retryLabel: 'Retry',
         sharedSectionTitle: 'Shared',
+        loadingMoreLabel: 'Loading more scheduled tasks…',
       }}
       onCreateClick={vi.fn()}
       searchQuery=""
@@ -201,14 +206,23 @@ describe('ScheduledTasks', () => {
     ).toBeGreaterThan(0);
   });
 
-  it('renders the no-results state, not the empty state, when search filters everything out', () => {
+  it('renders the no-results state, not the empty state, when the server returns zero matches for an active search', () => {
     renderScheduledTasks({
-      items: [buildItem({ displayName: 'Daily summary' })],
+      items: [],
       searchQuery: 'nonexistent',
     });
 
     expect(screen.getAllByText('No results').length).toBeGreaterThan(0);
     expect(screen.queryByText('No scheduled tasks yet')).toBeNull();
+  });
+
+  it('does not re-filter items client-side — an item not matching searchQuery still renders', () => {
+    renderScheduledTasks({
+      items: [buildItem({ displayName: 'Daily summary' })],
+      searchQuery: 'nonexistent',
+    });
+
+    expect(screen.getByText('Daily summary')).toBeTruthy();
   });
 
   it('renders cards for each matching item without a "My tasks" section heading', () => {
@@ -278,5 +292,173 @@ describe('ScheduledTasks', () => {
     );
 
     expect(onSearchQueryChange).toHaveBeenCalledWith('a');
+  });
+
+  const countSkeletonCards = (container: HTMLElement) =>
+    container.querySelectorAll('article[aria-hidden="true"]').length;
+
+  it('renders exactly 6 skeleton cards below the loaded cards when isLoadingMore', () => {
+    const { container } = renderScheduledTasks({
+      items: [buildItem()],
+      hasMore: true,
+      isLoadingMore: true,
+    });
+
+    expect(countSkeletonCards(container)).toBe(6);
+  });
+
+  it('forwards styles.colors.skeletonColor down to every skeleton bar', () => {
+    const { container } = renderScheduledTasks({
+      items: [buildItem()],
+      hasMore: true,
+      isLoadingMore: true,
+      styles: { colors: { skeletonColor: '#ff00ff' } },
+    });
+
+    const bars = container.querySelectorAll('[data-skeleton]');
+    expect(bars.length).toBeGreaterThan(0);
+    bars.forEach((bar) => {
+      expect(bar.getAttribute('data-color')).toBe('#ff00ff');
+    });
+  });
+
+  it('renders a custom skeletonCount of placeholder cards', () => {
+    const { container } = renderScheduledTasks({
+      items: [buildItem()],
+      hasMore: true,
+      isLoadingMore: true,
+      skeletonCount: 3,
+    });
+
+    expect(countSkeletonCards(container)).toBe(3);
+  });
+
+  it('renders no skeleton cards when isLoadingMore is false', () => {
+    const { container } = renderScheduledTasks({
+      items: [buildItem()],
+      hasMore: true,
+      isLoadingMore: false,
+    });
+
+    expect(countSkeletonCards(container)).toBe(0);
+  });
+
+  it('announces the loading-more label via the aria-live status region', () => {
+    renderScheduledTasks({
+      items: [buildItem()],
+      hasMore: true,
+      isLoadingMore: true,
+    });
+
+    expect(screen.getByRole('status').textContent).toBe(
+      'Loading more scheduled tasks…',
+    );
+  });
+
+  it('renders no skeleton cards during the initial loading state', () => {
+    const { container } = renderScheduledTasks({
+      items: [],
+      isLoading: true,
+      isLoadingMore: true,
+    });
+
+    expect(countSkeletonCards(container)).toBe(0);
+    expect(screen.getByRole('progressbar')).toBeTruthy();
+  });
+
+  describe('scroll sentinel', () => {
+    const mockScrollableAncestor = () => {
+      const getComputedStyleSpy = vi
+        .spyOn(window, 'getComputedStyle')
+        .mockImplementation(
+          (el) =>
+            ({
+              overflow: 'visible',
+              overflowY: el === document.body ? 'visible' : ('auto' as string),
+            }) as CSSStyleDeclaration,
+        );
+      return () => getComputedStyleSpy.mockRestore();
+    };
+
+    const mockIntersecting = (isIntersecting: boolean) => {
+      const rect = (top: number, bottom: number) =>
+        ({ top, bottom }) as DOMRect;
+      const isSentinel = (el: Element) =>
+        el.tagName === 'DIV' && el.getAttribute('aria-hidden') === 'true';
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+        function (this: Element) {
+          if (isSentinel(this)) {
+            return isIntersecting ? rect(700, 750) : rect(900, 950);
+          }
+          return rect(0, 800);
+        },
+      );
+    };
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('calls onLoadMore when the sentinel intersects the scroll container and hasMore is true', () => {
+      const restoreStyle = mockScrollableAncestor();
+      mockIntersecting(true);
+      const onLoadMore = vi.fn();
+
+      renderScheduledTasks({
+        items: [buildItem()],
+        hasMore: true,
+        isLoadingMore: false,
+        onLoadMore,
+      });
+
+      expect(onLoadMore).toHaveBeenCalledOnce();
+      restoreStyle();
+    });
+
+    it('does not call onLoadMore when hasMore is false', () => {
+      const restoreStyle = mockScrollableAncestor();
+      mockIntersecting(true);
+      const onLoadMore = vi.fn();
+
+      renderScheduledTasks({
+        items: [buildItem()],
+        hasMore: false,
+        onLoadMore,
+      });
+
+      expect(onLoadMore).not.toHaveBeenCalled();
+      restoreStyle();
+    });
+
+    it('does not call onLoadMore while isLoadingMore is true', () => {
+      const restoreStyle = mockScrollableAncestor();
+      mockIntersecting(true);
+      const onLoadMore = vi.fn();
+
+      renderScheduledTasks({
+        items: [buildItem()],
+        hasMore: true,
+        isLoadingMore: true,
+        onLoadMore,
+      });
+
+      expect(onLoadMore).not.toHaveBeenCalled();
+      restoreStyle();
+    });
+
+    it('does not call onLoadMore when the sentinel is not intersecting', () => {
+      const restoreStyle = mockScrollableAncestor();
+      mockIntersecting(false);
+      const onLoadMore = vi.fn();
+
+      renderScheduledTasks({
+        items: [buildItem()],
+        hasMore: true,
+        onLoadMore,
+      });
+
+      expect(onLoadMore).not.toHaveBeenCalled();
+      restoreStyle();
+    });
   });
 });

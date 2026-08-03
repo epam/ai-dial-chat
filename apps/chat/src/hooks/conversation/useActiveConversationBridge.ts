@@ -33,6 +33,13 @@ export const useActiveConversationBridge = ({
   useEffect(() => {
     if (!overlay) return;
 
+    /*
+     * Loading an existing conversation updates React state before any user
+     * action updates the mutable ref. Keep the bridge's live source in sync so
+     * its first request sees the loaded history and settings.
+     */
+    conversationRef.current = conversation;
+
     overlay.registerActiveConversationBridge(
       {
         getMessages: () => ({

@@ -1,22 +1,6 @@
 import type { ScheduledTaskItem } from '../models/scheduled-task-item';
 import { ScheduledTasksSortKey } from '../types/scheduled-tasks-sort-key';
 
-/** Case-insensitive substring match against `displayName` and `descriptionPreview`. */
-export const filterScheduledTaskItems = (
-  items: ScheduledTaskItem[],
-  searchQuery: string,
-): ScheduledTaskItem[] => {
-  const query = searchQuery.trim().toLowerCase();
-  if (!query) {
-    return items;
-  }
-  return items.filter(
-    (item) =>
-      item.displayName.toLowerCase().includes(query) ||
-      item.descriptionPreview?.toLowerCase().includes(query),
-  );
-};
-
 /* Items missing the field a comparator sorts by are pushed to the end,
  * regardless of sort direction, rather than being treated as smallest. */
 const compareByOptionalDate = (

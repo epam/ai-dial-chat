@@ -41,7 +41,10 @@ export const useOpenAttachmentCanvas = () => {
   const { currentTheme: themeId } = useTheme();
 
   const openFileCanvas = useCallback(
-    async (attachment: DisplayAttachment): Promise<boolean> => {
+    async (
+      attachment: DisplayAttachment,
+      canvasAttachmentId: string | undefined,
+    ): Promise<boolean> => {
       if (attachment.url == null && attachment.referenceUrl != null) {
         const pdfContent = referenceAttachmentToPdfCanvasContent({
           type: attachment.contentType,
@@ -49,7 +52,7 @@ export const useOpenAttachmentCanvas = () => {
           title: attachment.name,
         });
         if (pdfContent != null) {
-          openCanvas(pdfContent, attachment.name);
+          openCanvas(pdfContent, attachment.name, canvasAttachmentId);
           return true;
         }
       }
@@ -67,7 +70,7 @@ export const useOpenAttachmentCanvas = () => {
           themeId,
         );
         if (content != null) {
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
       }
@@ -75,7 +78,7 @@ export const useOpenAttachmentCanvas = () => {
       if (!contentType && attachment.data != null) {
         const content = await resolveTextCanvasContent(attachment);
         if (content != null) {
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
       }
@@ -87,6 +90,7 @@ export const useOpenAttachmentCanvas = () => {
             content ??
               createUnsupportedCanvasContent(resolveDialUrl(attachment)),
             attachment.name,
+            canvasAttachmentId,
           );
           return true;
         }
@@ -96,6 +100,7 @@ export const useOpenAttachmentCanvas = () => {
             content ??
               createUnsupportedCanvasContent(resolveDialUrl(attachment)),
             attachment.name,
+            canvasAttachmentId,
           );
           return true;
         }
@@ -105,6 +110,7 @@ export const useOpenAttachmentCanvas = () => {
             content ??
               createUnsupportedCanvasContent(resolveDialUrl(attachment)),
             attachment.name,
+            canvasAttachmentId,
           );
           return true;
         }
@@ -119,19 +125,19 @@ export const useOpenAttachmentCanvas = () => {
         case FileExtension.MarkdownAlt: {
           const content = await resolveMarkdownCanvasContent(attachment);
           if (content == null) return false;
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
         case FileExtension.JSON: {
           const content = await resolveJsonCanvasContent(attachment);
           if (content == null) return false;
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
         case FileExtension.PDF: {
           const content = await resolvePdfCanvasContent(attachment);
           if (content == null) return false;
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
       }
@@ -140,27 +146,38 @@ export const useOpenAttachmentCanvas = () => {
         openCanvas(
           createUnsupportedCanvasContent(resolveDialUrl(attachment)),
           attachment.name,
+          canvasAttachmentId,
         );
         return true;
       }
 
       const content = await resolveTextCanvasContent(attachment);
       if (content == null) return false;
-      openCanvas(content, attachment.name);
+      openCanvas(content, attachment.name, canvasAttachmentId);
       return true;
     },
     [openCanvas, customVisualizers, themeId],
   );
 
   const openAttachmentCanvas = useCallback(
-    async (attachment: DisplayAttachment): Promise<boolean> => {
+    async (
+      attachment: DisplayAttachment,
+      /*
+       * DisplayAttachment.id is derived from content (url/data/title), so the
+       * same id can recur across different messages (e.g. the same file
+       * attached twice). Callers that need to track which specific tile
+       * opened the canvas (to highlight it as selected) pass a caller-scoped
+       * key here instead of relying on the content-derived id.
+       */
+      canvasAttachmentId: string | undefined = attachment.id,
+    ): Promise<boolean> => {
       switch (attachment.type) {
         case AttachmentType.Image: {
           const content = resolveImageCanvasContent(attachment);
           if (content == null) return false;
           closePanel();
           closeSourcesPanel();
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
         case AttachmentType.Audio: {
@@ -173,14 +190,15 @@ export const useOpenAttachmentCanvas = () => {
               mimeType: attachment.contentType || undefined,
             },
             attachment.name,
+            canvasAttachmentId,
           );
           return true;
         }
         case AttachmentType.File: {
           closePanel();
           closeSourcesPanel();
-          openCanvasLoading(attachment.name);
-          const opened = await openFileCanvas(attachment);
+          openCanvasLoading(attachment.name, canvasAttachmentId);
+          const opened = await openFileCanvas(attachment, canvasAttachmentId);
           if (!opened) closeCanvas();
           return opened;
         }
@@ -188,13 +206,13 @@ export const useOpenAttachmentCanvas = () => {
         case AttachmentType.Prompt: {
           closePanel();
           closeSourcesPanel();
-          openCanvasLoading(attachment.name);
+          openCanvasLoading(attachment.name, canvasAttachmentId);
           const content = await resolveTextCanvasContent(attachment);
           if (content == null) {
             closeCanvas();
             return false;
           }
-          openCanvas(content, attachment.name);
+          openCanvas(content, attachment.name, canvasAttachmentId);
           return true;
         }
         default:

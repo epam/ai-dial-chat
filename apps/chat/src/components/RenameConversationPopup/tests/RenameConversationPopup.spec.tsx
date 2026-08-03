@@ -79,7 +79,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   DialSpinner: () => <span role="status">Loading</span>,
   DIAL_ICON_SIZE: { SM: 18, MD: 20 },
-  DialGhostIconButton: ({
+  GhostIconButton: ({
     icon,
     onClick,
     disabled,

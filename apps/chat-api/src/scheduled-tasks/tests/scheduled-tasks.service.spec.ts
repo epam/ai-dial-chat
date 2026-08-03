@@ -19,11 +19,20 @@ const makeDialClient = (): DialClientService =>
     dialApiVersion: '2025-01-01-preview',
   }) as unknown as DialClientService;
 
-const makeCacheManager = () => ({
-  get: vi.fn().mockResolvedValue(undefined),
-  set: vi.fn().mockResolvedValue(undefined),
-  del: vi.fn().mockResolvedValue(undefined),
-});
+const makeCacheManager = () => {
+  const store = new Map<string, unknown>();
+  return {
+    get: vi.fn((key: string) => Promise.resolve(store.get(key))),
+    set: vi.fn((key: string, value: unknown) => {
+      store.set(key, value);
+      return Promise.resolve(value);
+    }),
+    del: vi.fn((key: string) => {
+      store.delete(key);
+      return Promise.resolve(true);
+    }),
+  };
+};
 
 describe('ScheduledTasksService', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -100,10 +109,117 @@ describe('ScheduledTasksService', () => {
     await service.listScheduledTasks('user-1', 'token');
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(cacheManager.set).toHaveBeenCalledWith(
-      'scheduled-tasks:list:user-1',
+      'scheduled-tasks:list:user-1:0::0:',
       expect.anything(),
       30_000,
     );
+  });
+
+  it('forwards limit/offset/search (as name) to the upstream request, and caches per query variant', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const cacheManager = makeCacheManager();
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      cacheManager as never,
+    );
+
+    await service.listScheduledTasks('user-1', 'token', {
+      limit: 12,
+      offset: 24,
+      search: 'inbox',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/?limit=12&offset=24&name=inbox',
+      expect.objectContaining({ method: 'GET' }),
+    );
+    expect(cacheManager.set).toHaveBeenCalledWith(
+      'scheduled-tasks:list:user-1:0:12:24:inbox',
+      expect.anything(),
+      30_000,
+    );
+  });
+
+  it('percent-encodes a search value containing a colon in the cache key', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const cacheManager = makeCacheManager();
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      cacheManager as never,
+    );
+
+    await service.listScheduledTasks('user-1', 'token', {
+      search: 'a:b',
+    });
+
+    expect(cacheManager.set).toHaveBeenCalledWith(
+      'scheduled-tasks:list:user-1:0::0:a%3Ab',
+      expect.anything(),
+      30_000,
+    );
+  });
+
+  it('does not send an upstream name param when search is empty', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      makeCacheManager() as never,
+    );
+
+    await service.listScheduledTasks('user-1', 'token', { search: '' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://dial-core/v1/deployments/applications/scheduler-app/route/v1/schedules/',
+      expect.objectContaining({ method: 'GET' }),
+    );
+  });
+
+  it('bypasses a differently-parameterized cached variant for the same user', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const cacheManager = makeCacheManager();
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      cacheManager as never,
+    );
+
+    await service.listScheduledTasks('user-1', 'token', { search: 'daily' });
+    await service.listScheduledTasks('user-1', 'token', { search: 'weekly' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('reuses the cached response for an identical query within the TTL', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const cacheManager = makeCacheManager();
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      cacheManager as never,
+    );
+
+    await service.listScheduledTasks('user-1', 'token', { search: 'daily' });
+    await service.listScheduledTasks('user-1', 'token', { search: 'daily' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('resolves items from the paginated {results} envelope the live DIAL Scheduler returns', async () => {
@@ -184,12 +300,40 @@ describe('ScheduledTasksService', () => {
       prompt: 'Summarize my inbox',
     });
 
-    expect(cacheManager.del).toHaveBeenCalledWith(
-      'scheduled-tasks:list:user-1',
+    expect(cacheManager.set).toHaveBeenCalledWith(
+      'scheduled-tasks:list-epoch:user-1',
+      1,
+      24 * 60 * 60 * 1000,
     );
     expect(
       debugSpy.mock.calls.map(([message]) => String(message)).join('\n'),
     ).not.toContain('Summarize my inbox');
+  });
+
+  it('invalidating the list cache makes a previously cached list variant unreachable', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ results: [] }),
+    });
+    const cacheManager = makeCacheManager();
+    const service = new ScheduledTasksService(
+      makeDialClient(),
+      makeConfigService('scheduler-app') as never,
+      cacheManager as never,
+    );
+
+    await service.listScheduledTasks('user-1', 'token');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await service.createScheduledTask('user-1', 'token', {
+      displayName: 'Daily summary',
+      trigger: { date: '2026-07-24T09:00:00.000Z' },
+      model: 'gpt-4.1-mini-2025-04-14',
+      prompt: 'Summarize my inbox',
+    });
+
+    await service.listScheduledTasks('user-1', 'token');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it('does not invalidate the list cache when update fails', async () => {
@@ -214,7 +358,11 @@ describe('ScheduledTasksService', () => {
       }),
     ).rejects.toThrow();
 
-    expect(cacheManager.del).not.toHaveBeenCalled();
+    expect(cacheManager.set).not.toHaveBeenCalledWith(
+      'scheduled-tasks:list-epoch:user-1',
+      expect.anything(),
+      expect.anything(),
+    );
   });
 
   it('aborts when reading a successful response body exceeds the timeout', async () => {

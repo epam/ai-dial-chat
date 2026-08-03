@@ -13,6 +13,9 @@ the create request body. The `endpoint` field SHALL be required to be present bu
 empty string — an empty string is accepted so the toolset editor can create a draft toolset
 right after its General step, before the endpoint is collected on the Settings step; when
 non-empty, `endpoint` SHALL still be validated as a well-formed `http(s)://` or `sse://` URL.
+The `authSettings` field SHALL be required to be present in the request body — an entirely
+omitted `authSettings` SHALL fail DTO validation and SHALL NOT reach the DIAL Core call,
+regardless of whether its nested `authenticationType` is itself valid.
 
 #### Scenario: Successful create with a draft (empty) endpoint
 - **WHEN** an authenticated user POSTs a toolset body with `endpoint` set to an empty string
@@ -23,6 +26,11 @@ non-empty, `endpoint` SHALL still be validated as a well-formed `http(s)://` or 
 - **WHEN** an authenticated user POSTs a toolset body with the `endpoint` field omitted
   entirely
 - **THEN** the endpoint responds with a 400 and does not call DIAL Core
+
+#### Scenario: Missing authSettings field
+- **WHEN** an authenticated user POSTs a toolset body with the `authSettings` field omitted
+  entirely
+- **THEN** the endpoint responds with a 400 naming `authSettings` and does not call DIAL Core
 
 #### Scenario: Successful create
 - **WHEN** an authenticated user POSTs a valid toolset body

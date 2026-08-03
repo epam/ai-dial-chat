@@ -34,6 +34,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   onRetry,
   labels,
   styles: groupStyles,
+  selectedAttachmentId,
 }) => {
   const {
     ariaLabel = 'Attachments',
@@ -53,9 +54,9 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
     className,
   } = groupStyles ?? {};
   const cssVars = buildCssVars({
-    '--ci-group-bg': colors?.background,
-    '--ci-group-border': colors?.border,
-    '--ci-group-text': colors?.text,
+    '--ai-group-bg': colors?.background,
+    '--ai-group-border': colors?.border,
+    '--ai-group-text': colors?.text,
   });
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -166,6 +167,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
                 imageLabel,
                 openInNewTabLabel,
               }}
+              isSelected={attachment.id === selectedAttachmentId}
             />
           </div>
         ))}

@@ -38,6 +38,8 @@ export interface ScheduledTasksLabels {
   retryLabel: string;
   /** Title for the section grouping items with `sectionKey: 'shared'`. */
   sharedSectionTitle: string;
+  /** Announced via `aria-live` while a load-more fetch is in flight (`isLoadingMore`). Optional — no announcement is made when omitted. */
+  loadingMoreLabel?: string;
   /** Localized labels forwarded as-is to every card in the grid. */
   cardLabels?: ScheduledTaskCardGridLabels;
 }
@@ -53,6 +55,8 @@ export interface ScheduledTasksColors {
   subtitleText?: string;
   /** Sort control label/icon color. Fallback: `--text-accent-primary`. */
   sortButtonText?: string;
+  /** Background color of the load-more placeholder skeleton bars. Fallback: `--bg-layer-4`. */
+  skeletonColor?: string;
 }
 
 /** Typography overrides for the {@link ScheduledTasks} component. */
@@ -87,7 +91,7 @@ export interface ScheduledTasksProps {
   sortKey: ScheduledTasksSortKey;
   /** Called when the user selects a different sort option. */
   onSortChange: (key: ScheduledTasksSortKey) => void;
-  /** Fetched tasks to render as cards, grouped by `sectionKey` and sorted by `sortKey`. */
+  /** Tasks to render as cards, already search-matched server-side; grouped by `sectionKey` and sorted client-side by `sortKey`. */
   items: ScheduledTaskItem[];
   /** When `true`, the content region shows a loading spinner instead of `items`. Defaults to `false`. */
   isLoading?: boolean;
@@ -95,6 +99,14 @@ export interface ScheduledTasksProps {
   error?: Error | null;
   /** Called when the user activates the retry action shown alongside `error`. */
   onRetry?: () => void;
+  /** Whether another page of `items` is available beyond what has been loaded so far. Defaults to `false`. */
+  hasMore?: boolean;
+  /** When `true`, `skeletonCount` placeholder cards render below the loaded cards while the next page is fetched. Defaults to `false`. */
+  isLoadingMore?: boolean;
+  /** Number of placeholder cards shown while `isLoadingMore` is `true`. Defaults to `6`. */
+  skeletonCount?: number;
+  /** Called when the trailing scroll sentinel becomes visible and `hasMore && !isLoadingMore && !isLoading`. */
+  onLoadMore?: () => void;
   /** Called with a task id when the user activates "Edit" on a card. Omit to hide the action on every card. */
   onEdit?: (id: string) => void;
   /** Called with a task id when the user activates "Run now" on a card. Omit to hide the action on every card. */

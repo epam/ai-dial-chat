@@ -63,7 +63,7 @@ Both are members of the `StorageKey` enum in `apps/chat/src/constants/storage.ts
 
 ## Risks / Trade-offs
 
-- **`SidebarPanel` now conditionally renders a ui-kit component** → `@epam/ai-dial-ui-kit` was already a peer dependency of `libs/sidebar` (`DialGhostIconButton`); no new dep.
+- **`SidebarPanel` now conditionally renders a ui-kit component** → `@epam/ai-dial-ui-kit` was already a peer dependency of `libs/sidebar` (`GhostIconButton`); no new dep.
 - **`DialConditionalResizableContainer` inner div adds bg/divide styles** → `SidebarPanel`'s `<aside>` has its own CSS-variable background; verify the two layers don't produce a double background in the verify step.
 - **Stored width stale after viewport resize** → `maxWidth` recomputes on every render; stored value clamped on load.
 - **Mobile breakpoint mismatch** → `useIsMobile` and Tailwind's `mobile:` prefix both resolve from the same media query in `useBreakpoint.ts`.

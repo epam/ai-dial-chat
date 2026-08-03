@@ -146,6 +146,65 @@ The audio card variant SHALL use the same border and background CSS custom prope
 
 ---
 
+### Requirement: Attachment tile action buttons are hidden until the tile is hovered or focused
+
+Every attachment tile variant (`FileAttachment`, `ImageAttachment`, `AudioAttachment`) SHALL apply the Tailwind named group `group/attachment-tile` to its root element. The shared `ActionButton` in `libs/attachment-input/src/components/AttachmentCard/Attachments/Actions.tsx` (used by `DownloadAction`, `RemoveAction`, `ReloadAction`, `OpenLinkAction`) SHALL render with `opacity-0` by default, becoming fully opaque via `group-hover/attachment-tile:opacity-100`, `group-focus-within/attachment-tile:opacity-100`, and `focus-visible:opacity-100` — the last so a keyboard user tabbing directly to the button also reveals it, per the keyboard-parity rule for hover-only affordances.
+
+`ImageAttachment`'s `DownloadAction`/`RemoveAction` additionally receive `styles.imageActionButton`, which renders a persistent background/icon-color chip (backed by `--ai-tile-hover-icon-bg`/`--ai-tile-hover-icon-color`) so the button stays legible against arbitrary image content once revealed, without depending on the cursor being directly over the small button itself. `FileAttachment` and `AudioAttachment` do not apply this chip.
+
+#### Scenario: Action buttons are invisible on an unhovered, unfocused tile
+
+- **WHEN** an attachment tile is rendered with `onDownload`/`onRemove` and is neither hovered nor focused
+- **THEN** the action button(s) have `opacity-0`
+
+#### Scenario: Hovering or focusing the tile reveals its action buttons
+
+- **WHEN** the user hovers the tile, or moves keyboard focus to any focusable descendant of the tile (including the action button itself)
+- **THEN** the action button(s) become fully opaque
+
+#### Scenario: Image tile action buttons render with a persistent background chip
+
+- **WHEN** `ImageAttachment`'s `DownloadAction`/`RemoveAction` are revealed via hover or focus
+- **THEN** they render with the `imageActionButton` background/color chip, independent of whether the cursor is directly over the button
+
+---
+
+### Requirement: AttachmentCard, AttachmentGroup, and MessageBubble support a selected-tile visual state
+
+`AttachmentCardProps`, `FileAttachmentProps`, and the inline `ImageAttachmentProps`/`AudioAttachmentProps` interfaces in `libs/attachment-input` SHALL each accept an optional `isSelected?: boolean`. When `true`, the tile SHALL apply the standalone `.selected` CSS module class (`libs/attachment-input/src/components/AttachmentCard/Attachments/Attachment.module.scss`), which sets `background`/`border-color` via `--ai-tile-bg-selected`/`--ai-tile-border-selected` (each falling back through a themed token to a hex default). `.selected` is independent of `.tile` so it applies uniformly to `FileAttachment`/`ImageAttachment` (which also carry `.tile`) and to `AudioAttachment` (which does not).
+
+`AttachmentGroupProps` SHALL accept an optional `selectedAttachmentId?: string`. `AttachmentGroup` SHALL compute `isSelected={attachment.id === selectedAttachmentId}` for each rendered `AttachmentCard`. This comparison is `DisplayAttachment.id`-based, so it is only correct when the caller guarantees `selectedAttachmentId` is scoped to the same attachment list `AttachmentGroup` is rendering (see the message-scoped key below) — `DisplayAttachment.id` is derived from content (`dto.url ?? dto.data ?? dto.title`, see `messageAttachmentToDisplayAttachment`), not a globally unique generated ID, so the same value can legitimately recur across different messages (e.g. the same file attached twice in a conversation).
+
+`BaseMessageBubbleProps` (`libs/conversation-messages/src/models/message-bubble.ts`) SHALL accept the same optional `selectedAttachmentId?: string`, forwarded by `UserMessageBubble` and `AssistantMessageBubble` to their `AttachmentGroup`. This prop is always a raw `DisplayAttachment.id` scoped to the single message's own attachment list — never the app-level composite key described below — so lib code never needs to know about message indices.
+
+At the app layer, `AttachmentCanvasContextValue` (`libs/attachment-canvas`) SHALL track `attachmentId: string | undefined` — an opaque caller-supplied key identifying whatever is currently displayed in the canvas — set by `openCanvas`/`openCanvasLoading`'s optional third/second `attachmentId` parameter and cleared by `closeCanvas`. The lib itself SHALL NOT assume any structure for this key; it is purely stored and returned.
+
+`apps/chat/src/hooks/attachment/useOpenAttachmentCanvas.ts`'s `openAttachmentCanvas(attachment, canvasAttachmentId?)` SHALL accept an optional second parameter used as the tracked key instead of `attachment.id`, defaulting to `attachment.id` when omitted (non-message callers — the edit-message tray, `ConversationSourcesPanel` — rely on this default). `ConversationView.tsx`'s `handleMessageAttachmentClick(attachment, messageIndex)` SHALL call `openAttachmentCanvas` with the composite key `` `${messageIndex}:${attachment.id}` ``, so that two different messages containing content-identical attachments (same derived `id`) never collide.
+
+`ConversationView.tsx` SHALL read this composite key back from `useAttachmentCanvas().attachmentId` and pass it to each `ConversationMessageItem` as `selectedAttachmentKey`. `ConversationMessageItem` SHALL derive a message-scoped `selectedAttachmentId` by checking whether `selectedAttachmentKey` starts with `` `${index}:` `` (its own message index) and, if so, stripping that prefix; otherwise it passes `undefined`. Only the matching message's `MessageBubble` receives a defined `selectedAttachmentId` — every other message's `ConversationMessageItem` computes `undefined` for the same global key, so no other message's tile can render as selected even if one of its attachments shares the same content-derived `id`.
+
+#### Scenario: Attachment tile shows selected styling when its ID matches within its own message
+
+- **WHEN** `AttachmentGroup` is rendered with `selectedAttachmentId` equal to one of its attachments' `id`
+- **THEN** that attachment's tile carries the `.selected` class and no other tile in the same group does
+
+#### Scenario: Opening an attachment in the canvas marks its tile selected
+
+- **WHEN** the user clicks a message attachment and the canvas panel opens with that attachment's content
+- **THEN** the same attachment's tile in the same message renders with the selected visual state
+
+#### Scenario: Duplicate content-derived IDs across different messages do not cross-select
+
+- **WHEN** two different messages each contain a `DisplayAttachment` with the same derived `id` (e.g. the identical file attached in both), and the user opens the canvas from the first message's tile
+- **THEN** only the first message's tile renders as selected; the second message's tile with the matching `id` does NOT render as selected
+
+#### Scenario: Closing the canvas clears the selected state
+
+- **WHEN** the canvas panel is closed (`closeCanvas`)
+- **THEN** `attachmentId` becomes `undefined`, `selectedAttachmentKey` becomes `undefined` for every message, and no attachment tile renders as selected
+
+---
+
 ### Requirement: All existing tests pass
 All existing tests in `libs/conversation-input` and `apps/chat` that cover the moved code SHALL continue to pass without modification (other than updating import paths as needed).
 

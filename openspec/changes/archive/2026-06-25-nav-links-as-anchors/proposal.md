@@ -4,7 +4,7 @@ Navigation sidebar buttons use `onClick={() => navigate(path)}` which are not re
 
 ## What Changes
 
-- Each `DialGhostIconButton` in the desktop `<Navigation>` sidebar is wrapped in a React Router `<Link to={path}>` so the DOM contains a real `<a href="...">` element.
+- Each `GhostIconButton` in the desktop `<Navigation>` sidebar is wrapped in a React Router `<Link to={path}>` so the DOM contains a real `<a href="...">` element.
 - The `onClick={() => navigate(path)}` handler is removed from the button; navigation on left-click is now handled natively by the `<Link>`.
 - The `<Link>` is styled to remove anchor decoration and not interfere with the button's existing layout.
 - The `navigation-routing` spec requirement "Navigation buttons perform client-side navigation" is updated to describe the link-wrapping approach.

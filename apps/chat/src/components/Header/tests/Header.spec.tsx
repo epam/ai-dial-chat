@@ -40,22 +40,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       onClick={onClick}
     />
   ),
-  DialGhostIconButton: ({
-    'aria-label': ariaLabel,
-    'aria-pressed': ariaPressed,
-    onClick,
-  }: {
-    'aria-label': string;
-    'aria-pressed'?: AriaAttributes['aria-pressed'];
-    onClick?: () => void;
-  }) => (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      aria-pressed={ariaPressed}
-      onClick={onClick}
-    />
-  ),
 }));
 
 const renderHeader = (props?: Partial<ComponentProps<typeof Header>>) =>

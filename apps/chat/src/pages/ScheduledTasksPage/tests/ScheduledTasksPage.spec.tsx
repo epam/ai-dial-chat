@@ -24,6 +24,9 @@ vi.mock('../../../context/auth/UserContext', () => ({
 }));
 
 const refetchMock = vi.fn();
+const setSearchQueryMock = vi.fn();
+const setSortKeyMock = vi.fn();
+const loadMoreMock = vi.fn();
 const useScheduledTasksMock = vi.fn();
 vi.mock('../../../hooks/scheduled-tasks/useScheduledTasks', () => ({
   useScheduledTasks: (enabled: boolean) => useScheduledTasksMock(enabled),
@@ -46,18 +49,36 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
     items,
     error,
     onRetry,
+    searchQuery,
+    onSearchQueryChange,
+    sortKey,
+    hasMore,
+    isLoadingMore,
+    onLoadMore,
   }: {
     labels: { title: string; createButtonLabel: string; retryLabel: string };
     onCreateClick: () => void;
     items: { id: string }[];
     error: Error | null;
     onRetry: () => void;
+    searchQuery: string;
+    onSearchQueryChange: (query: string) => void;
+    sortKey: string;
+    hasMore?: boolean;
+    isLoadingMore?: boolean;
+    onLoadMore?: () => void;
   }) => (
     <div>
       {labels.title}
       <span>items:{items.length}</span>
+      <span>searchQuery:{searchQuery}</span>
+      <span>sortKey:{sortKey}</span>
+      <span>hasMore:{String(hasMore)}</span>
+      <span>isLoadingMore:{String(isLoadingMore)}</span>
       {error && <button onClick={onRetry}>{labels.retryLabel}</button>}
       <button onClick={onCreateClick}>{labels.createButtonLabel}</button>
+      <button onClick={() => onSearchQueryChange('daily')}>set search</button>
+      <button onClick={onLoadMore}>load more</button>
     </div>
   ),
 }));
@@ -96,8 +117,15 @@ describe('ScheduledTasksPage', () => {
     vi.clearAllMocks();
     useScheduledTasksMock.mockReturnValue({
       items: [],
+      searchQuery: '',
+      setSearchQuery: setSearchQueryMock,
+      sortKey: 'firstToRun',
+      setSortKey: setSortKeyMock,
       isLoading: false,
+      isLoadingMore: false,
       error: null,
+      hasMore: false,
+      loadMore: loadMoreMock,
       refetch: refetchMock,
     });
     useUserMock.mockReturnValue({ user: { sub: 'user-1' } });
@@ -149,8 +177,15 @@ describe('ScheduledTasksPage', () => {
         { id: '1', displayName: 'Daily summary', trigger: {} },
         { id: '2', displayName: 'Weekly digest', trigger: {} },
       ],
+      searchQuery: '',
+      setSearchQuery: setSearchQueryMock,
+      sortKey: 'firstToRun',
+      setSortKey: setSortKeyMock,
       isLoading: false,
+      isLoadingMore: false,
       error: null,
+      hasMore: false,
+      loadMore: loadMoreMock,
       refetch: refetchMock,
     });
     renderScheduledTasksPage();
@@ -162,8 +197,15 @@ describe('ScheduledTasksPage', () => {
     useFeatureFlagMock.mockReturnValue(true);
     useScheduledTasksMock.mockReturnValue({
       items: [],
+      searchQuery: '',
+      setSearchQuery: setSearchQueryMock,
+      sortKey: 'firstToRun',
+      setSortKey: setSortKeyMock,
       isLoading: false,
+      isLoadingMore: false,
       error: new Error('boom'),
+      hasMore: false,
+      loadMore: loadMoreMock,
       refetch: refetchMock,
     });
     renderScheduledTasksPage();
@@ -175,6 +217,41 @@ describe('ScheduledTasksPage', () => {
     );
 
     expect(refetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('binds searchQuery/setSearchQuery from the hook to the lib component', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    renderScheduledTasksPage();
+
+    expect(screen.getByText('searchQuery:')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'set search' }));
+
+    expect(setSearchQueryMock).toHaveBeenCalledWith('daily');
+  });
+
+  it('passes hasMore/isLoadingMore and wires onLoadMore to the hook loadMore', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    useScheduledTasksMock.mockReturnValue({
+      items: [],
+      searchQuery: '',
+      setSearchQuery: setSearchQueryMock,
+      sortKey: 'firstToRun',
+      setSortKey: setSortKeyMock,
+      isLoading: false,
+      isLoadingMore: true,
+      error: null,
+      hasMore: true,
+      loadMore: loadMoreMock,
+      refetch: refetchMock,
+    });
+    renderScheduledTasksPage();
+
+    expect(screen.getByText('hasMore:true')).toBeTruthy();
+    expect(screen.getByText('isLoadingMore:true')).toBeTruthy();
+
+    await userEvent.click(screen.getByRole('button', { name: 'load more' }));
+
+    expect(loadMoreMock).toHaveBeenCalledOnce();
   });
 
   it('navigates to the create route with returnUrl when New task is clicked', async () => {

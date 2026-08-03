@@ -86,7 +86,7 @@ export type MessageSource = 'User' | 'Agent';
 
 ```
 <div>                    ← wrapper (flex, gap-1, opacity-0, group-hover:opacity-100)
-  <DialGhostIconButton>  ← one per action, repeated per source variant
+  <GhostIconButton>  ← one per action, repeated per source variant
   ...
 ```
 
@@ -104,7 +104,7 @@ The wrapper starts invisible (`opacity-0`) and becomes visible on parent hover (
 | `Agent` | Like            | `IconThumbUp`   | "Like response"       |
 | `Agent` | Dislike         | `IconThumbDown` | "Dislike response"    |
 
-All icons are rendered at `size={16}` via `@tabler/icons-react`. All buttons use `DialGhostIconButton` from `@epam/ai-dial-ui-kit` at `ElementSize.Small` (24×24px).
+All icons are rendered at `size={16}` via `@tabler/icons-react`. All buttons use `GhostIconButton` from `@epam/ai-dial-ui-kit` at `ElementSize.Small` (24×24px).
 
 ### Exports (current gaps)
 

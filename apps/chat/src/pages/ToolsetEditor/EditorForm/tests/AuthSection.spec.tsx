@@ -78,6 +78,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         <input
           value={value ?? ''}
           disabled={disabled}
+          required={labelProps?.required}
           onChange={(e) => onChange?.(e.target.value)}
         />
       </label>
@@ -224,6 +225,7 @@ const renderSection = (
   endpoint = VALID_ENDPOINT,
   errors: ToolsetFormErrors = {},
   onEnsureSaved = vi.fn().mockResolvedValue(toolsetId),
+  isEditMode = Boolean(toolsetId),
 ) =>
   render(
     <AuthSection
@@ -231,6 +233,7 @@ const renderSection = (
       errors={errors}
       isSaving={false}
       toolsetId={toolsetId}
+      isEditMode={isEditMode}
       endpoint={endpoint}
       onAuthChange={onAuthChange}
       onEnsureSaved={onEnsureSaved}
@@ -390,6 +393,51 @@ describe('AuthSection', () => {
       expect(
         screen.getByLabelText(ToolsetEditorI18nKeys.WithConfigLabel),
       ).toBeTruthy();
+    });
+
+    it('keeps client secret required while creating a new toolset even after a draft is auto-saved', () => {
+      renderSection(
+        oauthWithConfigAuth(),
+        'toolsets/b/draft-123__1.0.0',
+        vi.fn(),
+        VALID_ENDPOINT,
+        {},
+        vi.fn(),
+        false,
+      );
+      expect(
+        (
+          screen.getByLabelText(
+            ToolsetEditorI18nKeys.ClientSecretLabel,
+          ) as HTMLInputElement
+        ).required,
+      ).toBe(true);
+    });
+
+    it('does not require client secret when editing an already-saved toolset', () => {
+      renderSection(
+        { ...oauthWithConfigAuth(), clientSecret: '' },
+        'toolsets/b/my__1.0.0',
+        vi.fn(),
+        VALID_ENDPOINT,
+        {},
+        vi.fn(),
+        true,
+      );
+      expect(
+        (
+          screen.getByLabelText(
+            ToolsetEditorI18nKeys.ClientSecretLabel,
+          ) as HTMLInputElement
+        ).required,
+      ).toBe(false);
+      expect(
+        (
+          screen.getByRole('button', {
+            name: ButtonsI18nKeys.LogIn,
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(false);
     });
 
     it('renders OAuth endpoint URL validation errors', () => {
