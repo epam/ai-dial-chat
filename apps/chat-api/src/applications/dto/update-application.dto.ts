@@ -77,6 +77,7 @@ export class UpdateApplicationBodyDto {
   @ApiPropertyOptional({ example: ['image/png'], type: [String] })
   @IsArray()
   @IsString({ each: true })
+  @Matches(/^([a-zA-Z0-9!*\-.+]+|\*)\/([a-zA-Z0-9!*\-.+]+|\*)$/, { each: true })
   @IsOptional()
   inputAttachmentTypes?: string[];
 

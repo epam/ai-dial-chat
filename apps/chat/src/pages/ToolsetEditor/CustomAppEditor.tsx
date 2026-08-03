@@ -50,10 +50,10 @@ const CustomAppEditor: FC = () => {
     ToolsetEditorSteps.General;
   const customAppId = searchParams.get(ToolsetEditorQuery.Id) ?? '';
   const isEditMode = Boolean(customAppId);
-  const returnUrl = useMemo(
-    () => searchParams.get(ToolsetEditorQuery.ReturnUrl) ?? ROUTES.Catalog,
-    [searchParams],
-  );
+  const returnUrl = useMemo(() => {
+    const raw = searchParams.get(ToolsetEditorQuery.ReturnUrl);
+    return raw?.startsWith('/') && !raw.startsWith('//') ? raw : ROUTES.Catalog;
+  }, [searchParams]);
 
   const [generalForm, setGeneralForm] = useState<ToolsetFormData>(
     DEFAULT_CUSTOM_APP_GENERAL_FORM,

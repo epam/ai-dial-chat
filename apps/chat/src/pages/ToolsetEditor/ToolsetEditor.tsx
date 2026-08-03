@@ -92,10 +92,10 @@ const ToolsetEditor: FC = () => {
   const step =
     (searchParams.get(ToolsetEditorQuery.Step) as ToolsetEditorSteps) ??
     ToolsetEditorSteps.General;
-  const returnUrl = useMemo(
-    () => searchParams.get(ToolsetEditorQuery.ReturnUrl) ?? ROUTES.Catalog,
-    [searchParams],
-  );
+  const returnUrl = useMemo(() => {
+    const raw = searchParams.get(ToolsetEditorQuery.ReturnUrl);
+    return raw?.startsWith('/') && !raw.startsWith('//') ? raw : ROUTES.Catalog;
+  }, [searchParams]);
 
   const [form, setForm] = useState<ToolsetFormData | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(isEditMode);
