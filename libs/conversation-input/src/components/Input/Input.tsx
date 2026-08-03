@@ -15,6 +15,7 @@ import {
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
   ChangeEvent,
+  ClipboardEvent,
   type FC,
   KeyboardEvent,
   useCallback,
@@ -106,6 +107,7 @@ export const Input: FC<InputProps> = ({
   onAttachmentsLimitExceeded,
   isAttachmentsEnabled = true,
   usageLimitsSlot,
+  onMessageTooLong,
 }) => {
   const isMobile = useIsMobile();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -202,9 +204,27 @@ export const Input: FC<InputProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { handlePaste } = useClipboardPaste(
+  const { handlePaste: handleClipboardPaste } = useClipboardPaste(
     addAttachments,
     isAttachmentsEnabled ? pasteTextThreshold : Infinity,
+  );
+
+  const handlePaste = useCallback(
+    (e: ClipboardEvent<HTMLTextAreaElement>) => {
+      if (!isAttachmentsEnabled) {
+        const text = e.clipboardData.getData('text/plain');
+        if (text.length >= pasteTextThreshold) {
+          onMessageTooLong?.(text.length, pasteTextThreshold);
+        }
+      }
+      handleClipboardPaste(e);
+    },
+    [
+      isAttachmentsEnabled,
+      pasteTextThreshold,
+      onMessageTooLong,
+      handleClipboardPaste,
+    ],
   );
 
   const hasSendableContent =
@@ -244,6 +264,10 @@ export const Input: FC<InputProps> = ({
 
   const handleSend = async () => {
     if (isSendDisabled) return;
+    if (!isAttachmentsEnabled && message.length >= pasteTextThreshold) {
+      onMessageTooLong?.(message.length, pasteTextThreshold);
+      return;
+    }
 
     const currentMessage = message;
     const currentAttachments = attachments;

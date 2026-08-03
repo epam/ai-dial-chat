@@ -17,8 +17,6 @@ export interface UsageLimitsLabels {
   triggerAriaLabel: (params: { value: string }) => string;
   /** Popover title. */
   popoverTitle: string;
-  /** Display value for an unlimited monthly allowance. */
-  unlimited: string;
   /** Non-blocking request error. */
   error: string;
   /** Builds the remaining-token text from a locale-formatted number. */
@@ -86,20 +84,11 @@ const UsageLimitsControl: FC<Props> = ({ deploymentId, labels }) => {
     return null;
   }
 
-  const isThresholdReached =
-    !limit.isUnlimited && limit.usedPercent >= USAGE_LIMIT_THRESHOLD_PERCENT;
+  const isThresholdReached = limit.usedPercent >= USAGE_LIMIT_THRESHOLD_PERCENT;
   const formattedUsed = numberFormatter.format(limit.used);
-  const formattedTotal = limit.isUnlimited
-    ? labels.unlimited
-    : numberFormatter.format(limit.total);
+  const formattedTotal = numberFormatter.format(limit.total);
   const formattedRemaining = numberFormatter.format(limit.remaining);
-  const triggerValue = limit.isUnlimited
-    ? labels.unlimited
-    : `${limit.usedPercent}%`;
-  const progressValue = limit.isUnlimited
-    ? Math.min(limit.used, limit.total)
-    : limit.usedPercent;
-  const progressMax = limit.isUnlimited ? limit.total : 100;
+  const triggerValue = `${limit.usedPercent}%`;
   const ringStyle = {
     '--usage-percent': limit.usedPercent,
   } as CSSProperties;
@@ -177,8 +166,8 @@ const UsageLimitsControl: FC<Props> = ({ deploymentId, labels }) => {
           )}
 
           <DialProgressBar
-            value={progressValue}
-            max={progressMax}
+            value={limit.usedPercent}
+            max={100}
             size={DialProgressBarSize.Small}
             className="w-full"
             ariaLabel={labels.progressAriaLabel({
@@ -188,9 +177,7 @@ const UsageLimitsControl: FC<Props> = ({ deploymentId, labels }) => {
           />
 
           <p className="dial-tiny-text text-secondary">
-            {limit.isUnlimited
-              ? labels.unlimited
-              : labels.tokensRemaining({ count: formattedRemaining })}
+            {labels.tokensRemaining({ count: formattedRemaining })}
           </p>
         </div>
       )}

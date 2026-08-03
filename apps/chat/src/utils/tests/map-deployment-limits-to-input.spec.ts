@@ -28,7 +28,6 @@ describe('mapDeploymentLimitsToInput', () => {
       total: 10000,
       remaining: 7500,
       usedPercent: 25,
-      isUnlimited: false,
     });
   });
 
@@ -53,11 +52,10 @@ describe('mapDeploymentLimitsToInput', () => {
       total: 1000,
       remaining: 1000,
       usedPercent: 0,
-      isUnlimited: false,
     });
   });
 
-  it('marks MAX_SAFE_INTEGER totals as unlimited', () => {
+  it('returns undefined for MAX_SAFE_INTEGER totals (unlimited allowance)', () => {
     expect(
       mapDeploymentLimitsToInput({
         monthTokenStats: {
@@ -65,13 +63,7 @@ describe('mapDeploymentLimitsToInput', () => {
           total: Number.MAX_SAFE_INTEGER,
         },
       }),
-    ).toEqual({
-      used: 500,
-      total: Number.MAX_SAFE_INTEGER,
-      remaining: 0,
-      usedPercent: 0,
-      isUnlimited: true,
-    });
+    ).toBeUndefined();
   });
 
   it('clamps over-limit percentage and remaining tokens', () => {
@@ -84,7 +76,6 @@ describe('mapDeploymentLimitsToInput', () => {
       total: 10000,
       remaining: 0,
       usedPercent: 100,
-      isUnlimited: false,
     });
   });
 

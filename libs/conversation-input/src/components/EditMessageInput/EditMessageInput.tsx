@@ -49,6 +49,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   pendingAttachments,
   onPendingAttachmentsConsumed,
   onAttachmentClick,
+  pasteTextThreshold,
+  onMessageTooLong,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDropFiles, setPendingDropFiles] = useState<File[]>([]);
@@ -89,9 +91,15 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   );
 
   const handleSaveClick = () => {
-    if (canSend) {
-      handleSend(currentText, currentNewAttachments);
+    if (!canSend) return;
+    if (
+      !isAttachmentsEnabled &&
+      currentText.length >= (pasteTextThreshold ?? 4000)
+    ) {
+      onMessageTooLong?.(currentText.length, pasteTextThreshold ?? 4000);
+      return;
     }
+    handleSend(currentText, currentNewAttachments);
   };
 
   const handleDropFilesConsumed = useCallback(
@@ -147,6 +155,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         pendingAttachments={pendingAttachments}
         onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
         onAttachmentClick={onAttachmentClick}
+        pasteTextThreshold={pasteTextThreshold}
+        onMessageTooLong={onMessageTooLong}
       />
 
       {/* Action row — outside the bordered box */}

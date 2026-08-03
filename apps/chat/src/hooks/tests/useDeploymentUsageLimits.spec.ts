@@ -14,7 +14,6 @@ vi.mock('../../utils/map-deployment-limits-to-input', () => ({
     total: 10000,
     remaining: 7500,
     usedPercent: 25,
-    isUnlimited: false,
   })),
 }));
 

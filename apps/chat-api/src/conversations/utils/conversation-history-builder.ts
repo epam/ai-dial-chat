@@ -19,6 +19,7 @@ const makeUserMessage = (
     Object.keys(customContent).length > 0 && {
       custom_content: {
         attachments: customContent.attachments,
+        configuration_value: customContent.configuration_value,
         form_value: customContent.form_value,
       },
     }),

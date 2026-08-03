@@ -105,10 +105,21 @@ export const useConversationHandlers = ({
       if (!conversationId || !conversation) return;
 
       const attachmentDtos = attachmentsToDtos(attachments);
+      const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
+      const customContent: MessageCustomContent | undefined =
+        attachmentDtos?.length || hasToolConfig
+          ? {
+              ...(attachmentDtos?.length
+                ? { attachments: attachmentDtos }
+                : {}),
+              ...(hasToolConfig
+                ? { configuration_value: toolConfigurationValue }
+                : {}),
+            }
+          : undefined;
       const { userMessage, assistantMessage } = createMessagePair(
         message,
-        attachmentDtos,
-        undefined,
+        customContent,
         selectedItemId,
       );
       setConversation((prev) => {
@@ -121,19 +132,12 @@ export const useConversationHandlers = ({
         return next;
       });
 
-      const hasToolConfig = hasActiveToolConfig(toolConfigurationValue);
-
       startStream(
         conversationId,
         message,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
-        {
-          attachments: attachmentDtos,
-          ...(hasToolConfig
-            ? { configuration_value: toolConfigurationValue }
-            : {}),
-        },
+        customContent,
         crypto.randomUUID(),
         CompletionMode.Append,
       );
@@ -349,10 +353,19 @@ export const useConversationHandlers = ({
       const hasConfigurationValue =
         Object.keys(mergedConfigurationValue).length > 0;
 
+      const customContent: MessageCustomContent | undefined =
+        configurationValue || hasConfigurationValue
+          ? {
+              ...(configurationValue ? { form_value: configurationValue } : {}),
+              ...(hasConfigurationValue
+                ? { configuration_value: mergedConfigurationValue }
+                : {}),
+            }
+          : undefined;
+
       const { userMessage, assistantMessage } = createMessagePair(
         displayText,
-        undefined,
-        configurationValue,
+        customContent,
         selectedItemId,
       );
       setConversation((prev) => {
@@ -376,14 +389,7 @@ export const useConversationHandlers = ({
         submitText,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
-        configurationValue || hasConfigurationValue
-          ? {
-              ...(configurationValue ? { form_value: configurationValue } : {}),
-              ...(hasConfigurationValue
-                ? { configuration_value: mergedConfigurationValue }
-                : {}),
-            }
-          : undefined,
+        customContent,
         crypto.randomUUID(),
         CompletionMode.Append,
       );
@@ -515,7 +521,7 @@ export const useConversationHandlers = ({
         text,
         updatedMessages.length - 1,
         selectedItemId ?? conversation.model.id,
-        allAttachments.length > 0 ? { attachments: allAttachments } : undefined,
+        updatedCustomContent,
         crypto.randomUUID(),
         CompletionMode.Edit,
       );

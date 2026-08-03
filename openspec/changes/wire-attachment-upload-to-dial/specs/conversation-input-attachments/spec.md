@@ -2,6 +2,47 @@
 
 ---
 
+### Requirement: Message length validation when attachments are disabled
+
+When `isAttachmentsEnabled` is `false` and the user pastes plain text whose length is ≥ `pasteTextThreshold` (default `4000`), the `Input` component SHALL call `onMessageTooLong(length, max)`. The pasted text is still inserted inline — the component does NOT call `preventDefault`. The host app is responsible for surfacing the error to the user (e.g. via a notification).
+
+This applies to all three surfaces that embed `Input`:
+- `ConversationInput` (used in `ConversationView` and `NewConversationComposer`)
+- `EditMessageInput` (used in `ConversationMessageItem`)
+
+#### Scenario: Paste exceeds limit while attachments are disabled
+
+- **GIVEN** `isAttachmentsEnabled` is `false`
+- **WHEN** the user pastes text of length ≥ `pasteTextThreshold`
+- **THEN** `onMessageTooLong(length, pasteTextThreshold)` is called and the text is inserted inline
+
+#### Scenario: Paste within limit while attachments are disabled
+
+- **GIVEN** `isAttachmentsEnabled` is `false`
+- **WHEN** the user pastes text of length < `pasteTextThreshold`
+- **THEN** `onMessageTooLong` is NOT called and the text is inserted inline normally
+
+#### Scenario: Paste exceeds limit while attachments are enabled
+
+- **GIVEN** `isAttachmentsEnabled` is `true`
+- **WHEN** the user pastes text of length ≥ `pasteTextThreshold`
+- **THEN** the pasted text is converted to an attachment as usual and `onMessageTooLong` is NOT called
+
+#### Scenario: Send blocked when message exceeds limit
+
+- **GIVEN** `isAttachmentsEnabled` is `false` and the textarea contains text of length ≥ `pasteTextThreshold`
+- **WHEN** the user clicks the send button or presses the send key
+- **THEN** `onMessageTooLong(length, pasteTextThreshold)` is called and the message is NOT sent
+- **THEN** the textarea retains its current content
+
+#### Scenario: EditMessageInput Save & Submit blocked when message exceeds limit
+
+- **GIVEN** `isAttachmentsEnabled` is `false` and the edit textarea contains text of length ≥ `pasteTextThreshold`
+- **WHEN** the user clicks Save & Submit
+- **THEN** `onMessageTooLong(length, pasteTextThreshold)` is called and the edit is NOT submitted
+
+---
+
 ### Requirement: Rate-limited upload dispatching
 
 When `addAttachments` is called with multiple files, the `Input` component SHALL dispatch uploads at a steady rate of `MAX_UPLOADS_PER_MINUTE` (100) starts per minute rather than firing all requests simultaneously. Uploads run concurrently — the rate limit controls when each upload **starts**, not how many are in flight at once.

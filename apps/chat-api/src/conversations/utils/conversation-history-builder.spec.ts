@@ -62,6 +62,26 @@ describe('buildConversationHistory', () => {
       expect(conversation.messages).toHaveLength(4);
       expect(assistantMessageIndex).toBe(3);
     });
+
+    it('persists configuration_value on the appended user message', () => {
+      const conv = makeConversation([]);
+      const { conversation } = buildConversationHistory(
+        CompletionMode.Append,
+        conv,
+        'Use deep research',
+        undefined,
+        {
+          configuration_value: { deep_research: true },
+          form_value: { topic: 'testing' },
+        },
+      );
+
+      expect(conversation.messages[0].custom_content).toEqual({
+        attachments: undefined,
+        configuration_value: { deep_research: true },
+        form_value: { topic: 'testing' },
+      });
+    });
   });
 
   describe('ContinueLastUser mode', () => {

@@ -382,7 +382,6 @@ const ConversationView: FC<Props> = ({
       triggerAriaLabel: ({ value }: { value: string }) =>
         t(ConversationInputI18nKeys.TriggerAriaLabel, { value }),
       popoverTitle: t(ConversationInputI18nKeys.PopoverTitle),
-      unlimited: t(ConversationInputI18nKeys.Unlimited),
       error: t(ConversationInputI18nKeys.Error),
       tokensRemaining: ({ count }: { count: string }) =>
         t(ConversationInputI18nKeys.TokensRemaining, { count }),
@@ -501,6 +500,16 @@ const ConversationView: FC<Props> = ({
           count,
           limit,
         }),
+      });
+    },
+    [showNotification, t],
+  );
+
+  const handleMessageTooLong = useCallback(
+    (_length: number, max: number) => {
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(ConversationI18nKeys.MessageTooLong, { max }),
       });
     },
     [showNotification, t],
@@ -658,6 +667,7 @@ const ConversationView: FC<Props> = ({
                         ? () => setPendingDialAttachments([])
                         : undefined
                     }
+                    onMessageTooLong={handleMessageTooLong}
                   />
                 </div>
               );
@@ -776,6 +786,7 @@ const ConversationView: FC<Props> = ({
                 fileAccept={fileAccept}
                 onAttachmentClick={handleInputAttachmentClick}
                 modelPickerOverlay={isModelFixed ? undefined : renderOverlay}
+                onMessageTooLong={handleMessageTooLong}
                 usageLimitsSlot={
                   <UsageLimitsControl
                     deploymentId={
