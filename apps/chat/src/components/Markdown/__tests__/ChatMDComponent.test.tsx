@@ -283,6 +283,76 @@ describe('ChatMDComponent', () => {
     });
   });
 
+  describe('empty paragraphs', () => {
+    const getParagraphs = () => screen.queryAllByRole('paragraph');
+
+    it('drops a paragraph containing only a non-breaking space', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={'First section\n\n&nbsp;\n\nSecond section'}
+        />,
+      );
+
+      expect(getParagraphs()).toHaveLength(2);
+      expect(screen.getByText('First section')).toBeInTheDocument();
+      expect(screen.getByText('Second section')).toBeInTheDocument();
+    });
+
+    it('drops an empty raw HTML paragraph', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={'First section\n\n<p></p>\n\nSecond section'}
+        />,
+      );
+
+      expect(getParagraphs()).toHaveLength(2);
+    });
+
+    it('keeps paragraphs that contain only a line break', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={
+            '**4. To Kill a Mockingbird** by Harper Lee\nNarrated by Scout.'
+          }
+        />,
+      );
+
+      expect(getParagraphs()).toHaveLength(1);
+      expect(screen.getByText('4. To Kill a Mockingbird')).toBeInTheDocument();
+      expect(screen.getByText(/Narrated by Scout/)).toBeInTheDocument();
+    });
+
+    it('preserves normal paragraph structure', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={'Para one\n\nPara two\n\nPara three'}
+        />,
+      );
+
+      expect(getParagraphs()).toHaveLength(3);
+      expect(screen.getByText('Para one')).toBeInTheDocument();
+      expect(screen.getByText('Para three')).toBeInTheDocument();
+    });
+
+    it('keeps a paragraph whose only content is an image', () => {
+      renderWithStore(
+        <ChatMDComponent
+          isShowResponseLoader={false}
+          content={
+            '![alt text](data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==)'
+          }
+        />,
+      );
+
+      expect(screen.getByAltText('alt text')).toBeInTheDocument();
+      expect(getParagraphs()).toHaveLength(1);
+    });
+  });
+
   describe('response loader', () => {
     it('shows response loader cursor when isShowResponseLoader is true', () => {
       renderWithStore(

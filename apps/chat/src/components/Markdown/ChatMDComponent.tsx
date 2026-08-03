@@ -47,6 +47,21 @@ import remarkMath from 'remark-math';
 const replaceCursor = (cursorSign: string) =>
   cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
 
+const BLANK_TEXT_REGEXP = /^(?:\s|\u00a0|\u200b|\u200c|\u200d|\ufeff)*$/;
+
+const isBlankNode = (node: ReactNode): boolean => {
+  if (node === null || node === undefined || typeof node === 'boolean') {
+    return true;
+  }
+  if (typeof node === 'string') {
+    return BLANK_TEXT_REGEXP.test(node);
+  }
+  if (Array.isArray(node)) {
+    return node.every(isBlankNode);
+  }
+  return false;
+};
+
 interface ChatMDComponentProps {
   isShowResponseLoader: boolean;
   content: string;
@@ -125,6 +140,10 @@ const getMDComponents = (
         if (children?.[0] == modelCursorSignWithBackquote) {
           children = `${replaceCursor(children[0])}${children.slice(1)}`;
         }
+      }
+
+      if (isBlankNode(children)) {
+        return null;
       }
 
       return (
@@ -274,7 +293,11 @@ export const ChatMDComponent = memo(
     const screenState = useScreenState();
 
     const mdClassNames = classnames(
-      'prose min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
+      // `prose-chat` tightens the article-oriented vertical rhythm the
+      // typography plugin ships with. Defined in tailwind.config.js so every
+      // element is tuned in one place; applied only here so user messages,
+      // attachments and descriptions keep the stock spacing.
+      'prose prose-chat min-w-full dark:prose-invert prose-a:text-primary prose-a:underline',
       isChatFullWidth && 'max-w-none',
       isOverlay && 'text-sm',
       (screenState === ScreenState.SM || isOverlay) && 'leading-[150%]',
