@@ -27,6 +27,7 @@ import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
+import { MAX_NEW_FOLDER_PATH_SEGMENTS } from '@/src/constants/folders';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
@@ -368,6 +369,8 @@ export const FileManagerModal = memo(
       handleUploadArchive,
       handleMoveFiles,
       handleRenameValidation,
+      handleCreateFolderValidate,
+      showMaxDepthError,
       sharedWithMeIds,
 
       uploadEnabled,
@@ -513,7 +516,9 @@ export const FileManagerModal = memo(
               onUploadArchive={handleUploadArchive}
               onMoveToFiles={handleMoveFiles}
               onRenameValidate={handleRenameValidation}
-              onCreateFolderValidate={handleRenameValidation}
+              onCreateFolderValidate={handleCreateFolderValidate}
+              maxNewFolderDepth={MAX_NEW_FOLDER_PATH_SEGMENTS}
+              onNewFolderDepthExceeded={showMaxDepthError}
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
               getDisabledTooltip={getDisabledTooltip}

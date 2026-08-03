@@ -29,7 +29,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { MAX_FOLDERS_DEPTH } from '@/src/constants/folders';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PROMPT_PANEL_PUBLICATION_FEATURE_TYPES } from '@/src/constants/publication';
 import {
@@ -272,7 +272,7 @@ const PromptFolderTemplate = ({
         denyDrop={isExternal || isSelectMode}
       />
       <Folder
-        maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
+        maxDepth={MAX_FOLDERS_DEPTH}
         searchTerm={searchTerm}
         currentFolder={folder}
         itemComponent={PromptComponent}
