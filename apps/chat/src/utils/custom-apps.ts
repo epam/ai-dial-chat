@@ -33,6 +33,18 @@ export const isValidAbsoluteUrl = (value: string): boolean => {
   }
 };
 
+export const parseFeaturesData = (
+  value: string,
+): Record<string, unknown> | undefined => {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  try {
+    return JSON.parse(trimmed) as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+};
+
 export const isValidFeaturesData = (value: string): boolean => {
   const trimmed = value.trim();
   if (!trimmed) return true;

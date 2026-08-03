@@ -18,12 +18,6 @@ interface Props {
   onChange: (patch: Partial<CustomAppFormData>) => void;
 }
 
-interface Props {
-  form: CustomAppFormData;
-  errors: CustomAppFormErrors;
-  onChange: (patch: Partial<CustomAppFormData>) => void;
-}
-
 const CustomAppSettingsForm: FC<Props> = ({ form, errors, onChange }) => {
   const { t } = useTranslation();
   const [mimeError, setMimeError] = useState<string | undefined>(undefined);

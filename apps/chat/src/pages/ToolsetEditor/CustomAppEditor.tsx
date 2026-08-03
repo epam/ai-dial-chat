@@ -34,6 +34,7 @@ import {
   isValidAbsoluteUrl,
   isValidFeaturesData,
   MIME_TYPE_REGEX,
+  parseFeaturesData,
 } from '../../utils/custom-apps';
 import CustomAppEditorView from './CustomAppEditorView';
 import ToolsetEditorHeader from './ToolsetEditorHeader';
@@ -198,18 +199,7 @@ const CustomAppEditor: FC = () => {
     setIsSaving(true);
     try {
       if (isEditMode) {
-        const parsedFeatures = settingsForm.featuresData.trim()
-          ? (() => {
-              try {
-                return JSON.parse(settingsForm.featuresData) as Record<
-                  string,
-                  unknown
-                >;
-              } catch {
-                return undefined;
-              }
-            })()
-          : undefined;
+        const parsedFeatures = parseFeaturesData(settingsForm.featuresData);
         await updateApplication(customAppId, {
           name: generalForm.name,
           description: generalForm.description || undefined,
@@ -240,14 +230,9 @@ const CustomAppEditor: FC = () => {
               ? settingsForm.maxInputAttachments
               : undefined,
         };
-        if (settingsForm.featuresData.trim()) {
-          try {
-            appProperties.features = JSON.parse(
-              settingsForm.featuresData,
-            ) as Record<string, unknown>;
-          } catch {
-            // invalid JSON — omit features; dialog already warned the user
-          }
+        const parsedFeatures = parseFeaturesData(settingsForm.featuresData);
+        if (parsedFeatures !== undefined) {
+          appProperties.features = parsedFeatures;
         }
         const body: CreateApplicationBodyDto = {
           name: generalForm.name,
