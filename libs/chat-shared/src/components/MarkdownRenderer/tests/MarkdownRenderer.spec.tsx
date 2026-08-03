@@ -39,6 +39,12 @@ const EXTENDED_MARKDOWN = `#### Smaller heading
 
 ~~Removed~~`;
 
+const POEM_MARKDOWN = 'Line one\nLine two\nLine three';
+
+const TWO_PARAGRAPHS_MARKDOWN = 'Paragraph one.\n\nParagraph two.';
+
+const LIST_MARKDOWN = '- Item one\n- Item two\n- Item three';
+
 describe('MarkdownRenderer', () => {
   it('renders GFM tables in a horizontally scrollable container', () => {
     render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
@@ -223,5 +229,62 @@ describe('MarkdownRenderer', () => {
     const checkbox = screen.getByRole('checkbox') as HTMLInputElement;
     expect(checkbox.checked).toBe(true);
     expect(checkbox.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('renders single-newline-separated lines with a visible line break between each pair', () => {
+    const { container } = render(<MarkdownRenderer content={POEM_MARKDOWN} />);
+
+    const paragraph = container.querySelector('p');
+    const text = paragraph?.textContent ?? '';
+    expect(text).toContain('Line one');
+    expect(text).toContain('Line two');
+    expect(text).toContain('Line three');
+    expect(text.indexOf('Line one')).toBeLessThan(text.indexOf('Line two'));
+    expect(text.indexOf('Line two')).toBeLessThan(text.indexOf('Line three'));
+    expect(paragraph?.querySelectorAll('br').length).toBe(2);
+    expect(container.querySelectorAll('br').length).toBe(2);
+  });
+
+  it('keeps blank-line-separated paragraphs as two distinct <p> elements with no extra break inside either', () => {
+    render(<MarkdownRenderer content={TWO_PARAGRAPHS_MARKDOWN} />);
+
+    const firstParagraph = screen.getByText('Paragraph one.');
+    const secondParagraph = screen.getByText('Paragraph two.');
+    expect(firstParagraph.tagName).toBe('P');
+    expect(secondParagraph.tagName).toBe('P');
+    expect(firstParagraph).not.toBe(secondParagraph);
+    expect(firstParagraph.querySelectorAll('br').length).toBe(0);
+    expect(secondParagraph.querySelectorAll('br').length).toBe(0);
+  });
+
+  it('renders a list as list items rather than line-broken plain text', () => {
+    render(<MarkdownRenderer content={LIST_MARKDOWN} />);
+
+    const list = screen.getByRole('list');
+    const items = screen.getAllByRole('listitem');
+    expect(list.querySelectorAll('br').length).toBe(0);
+    expect(items.map((item) => item.textContent)).toEqual([
+      'Item one',
+      'Item two',
+      'Item three',
+    ]);
+  });
+
+  it('does not inject extra line breaks inside a fenced code block with internal newlines', () => {
+    const { container } = render(
+      <MarkdownRenderer content={FENCED_NO_LANG_MARKDOWN} />,
+    );
+
+    expect(container.querySelector('pre')?.querySelectorAll('br').length).toBe(
+      0,
+    );
+  });
+
+  it('renders an inline code span with no newline unaffected by break handling', () => {
+    render(<MarkdownRenderer content="Use `const x = 1;` here" />);
+
+    const codeEl = screen.getByText('const x = 1;');
+    expect(codeEl.tagName).toBe('CODE');
+    expect(codeEl.querySelectorAll('br').length).toBe(0);
   });
 });
