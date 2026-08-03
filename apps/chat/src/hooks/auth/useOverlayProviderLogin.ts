@@ -32,8 +32,7 @@ const buildProviderLoginUrl = (
  * edge while reusing the established external-login polling lifecycle.
  */
 export const useOverlayProviderLogin = (): OverlayProviderLogin => {
-  const authProviderUiModes =
-    useOptionalOverlay()?.authProviderUiModes ?? undefined;
+  const authProviderUiModes = useOptionalOverlay()?.authProviderUiModes;
   const hasProviderConfiguration =
     authProviderUiModes !== undefined &&
     Object.keys(authProviderUiModes).length > 0;
@@ -116,10 +115,6 @@ export const useOverlayProviderLogin = (): OverlayProviderLogin => {
     [cancelExternalLogin, getProviderUiMode, openExternalLogin],
   );
 
-  const openLogin = useCallback(() => {
-    openExternalLogin();
-  }, [openExternalLogin]);
-
   return {
     hasProviderConfiguration,
     providers,
@@ -127,7 +122,7 @@ export const useOverlayProviderLogin = (): OverlayProviderLogin => {
     hasProviderError,
     retryLoadProviders,
     openProviderLogin,
-    openLogin,
+    openLogin: openExternalLogin,
     externalLoginStatus,
   };
 };

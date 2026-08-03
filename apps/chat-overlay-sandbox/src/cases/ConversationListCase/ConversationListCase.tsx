@@ -327,7 +327,7 @@ const ConversationListCase: FC = () => {
         onDeleteConversation={(id) => void handleDirectDeleteConversation(id)}
       />
       <div ref={directRootRef} className="conversation-list-case__overlay" />
-      <EventLog entries={directLog} />
+      <EventLog entries={directLog} onClear={() => setDirectLog([])} />
     </div>
   );
 };

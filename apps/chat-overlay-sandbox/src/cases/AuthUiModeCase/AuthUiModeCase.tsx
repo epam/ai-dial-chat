@@ -203,7 +203,7 @@ const AuthUiModeCase: FC = () => {
       </fieldset>
 
       <div ref={rootRef} className="auth-ui-mode-case__overlay" />
-      <EventLog entries={log} />
+      <EventLog entries={log} onClear={() => setLog([])} />
     </main>
   );
 };

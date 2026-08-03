@@ -206,7 +206,7 @@ const DirectOverlayCase: FC = () => {
           marginBottom: 16,
         }}
       />
-      <EventLog entries={log} />
+      <EventLog entries={log} onClear={() => setLog([])} />
     </div>
   );
 };

@@ -147,7 +147,7 @@ const EnabledFeaturesCase: FC = () => {
         }}
       />
 
-      <EventLog entries={log} />
+      <EventLog entries={log} onClear={() => setLog([])} />
     </div>
   );
 };

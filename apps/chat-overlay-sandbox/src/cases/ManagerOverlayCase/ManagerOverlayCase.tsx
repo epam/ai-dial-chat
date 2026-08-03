@@ -170,7 +170,7 @@ const ManagerOverlayCase: FC = () => {
   }
 
   return (
-    <div>
+    <div className="manager-overlay-case">
       <h1>ChatOverlayManager case</h1>
       <p aria-live="polite">
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}
@@ -242,7 +242,7 @@ const ManagerOverlayCase: FC = () => {
           Set temperature
         </button>
       </div>
-      <EventLog entries={log} />
+      <EventLog entries={log} onClear={() => setLog([])} />
     </div>
   );
 };
