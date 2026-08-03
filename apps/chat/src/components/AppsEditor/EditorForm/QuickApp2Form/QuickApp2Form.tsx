@@ -421,9 +421,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               handleSwitch={() => field.onChange(!field.value)}
               switchOnText="ON"
               switchOFFText="OFF"
-              label={t('Add attachment')}
-              additionalText={t('add attachment toggle label')}
-              info={t('Add attachment description')}
+              label={t(MarketplaceI18nKeys.AddAttachment)}
+              additionalText={t(
+                MarketplaceI18nKeys.AllowTheAgentToAttachFilesToTheResponse,
+              )}
+              info={t(MarketplaceI18nKeys.AddAttachmentDescription)}
               className="flex items-center gap-2"
               disabled={isAppPublic}
               tooltip={isAppPublicTooltip}
@@ -440,9 +442,11 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               handleSwitch={() => field.onChange(!field.value)}
               switchOnText="ON"
               switchOFFText="OFF"
-              label={t('Web fetch')}
-              additionalText={t('web fetch toggle label')}
-              info={t('web fetch description')}
+              label={t(MarketplaceI18nKeys.WebFetch)}
+              additionalText={t(
+                MarketplaceI18nKeys.AllowTheAgentToFetchWebResources,
+              )}
+              info={t(MarketplaceI18nKeys.WebFetchDescription)}
               className="flex items-center gap-2"
               disabled={isAppPublic}
               tooltip={isAppPublicTooltip}
