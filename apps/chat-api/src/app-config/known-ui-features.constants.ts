@@ -1,12 +1,9 @@
 /**
  * The set of recognized `OverlayFeature` wire values, duplicated here rather
- * than imported from `@epam/ai-dial-chat-shared`: that package's only build
- * output is a single bundle (`libs/chat-shared/src/index.ts`) that pulls in
- * browser-only dependencies (e.g. `decode-named-character-reference`'s DOM
- * variant, which calls `document.createElement` at module-evaluation time).
- * Importing it from this Node-only service crashes at process startup.
+ * than imported from the browser-facing overlay package, keeping this
+ * Node-only service independent of the frontend SDK.
  * Keep this list in sync with `OverlayFeature`
- * (`libs/chat-shared/src/types/overlay/overlay-protocol.ts`) — its own test
+ * (`libs/chat-overlay/src/protocol/overlay-protocol.ts`) — its own test
  * suite asserts it has exactly 38 members, matching the count here.
  */
 export const KNOWN_UI_FEATURES: ReadonlySet<string> = new Set([

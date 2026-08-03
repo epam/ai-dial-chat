@@ -1,7 +1,5 @@
-import {
-  isAudioTranscriptionSupported,
-  OverlayFeature,
-} from '@epam/ai-dial-chat-shared';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { isAudioTranscriptionSupported } from '@epam/ai-dial-chat-shared';
 import { useMemo } from 'react';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useUiFeature } from '../useUiFeature';

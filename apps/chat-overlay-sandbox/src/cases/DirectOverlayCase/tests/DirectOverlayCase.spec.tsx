@@ -1,4 +1,4 @@
-import { OverlayEventType } from '@epam/ai-dial-chat-shared';
+import { OverlayEventType } from '@epam/ai-dial-chat-overlay';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';

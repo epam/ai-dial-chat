@@ -18,9 +18,16 @@ The library is vanilla DOM/TypeScript with no React dependency, so it can be use
 }
 ```
 
-## Peer Dependencies
+## Protocol API
 
-- `@epam/ai-dial-chat-shared` — supplies the `@DIAL_OVERLAY` protocol types (`ChatOverlayOptions`, request/event enums, response payload types), re-exported from this package's entry point so no separate import is needed.
+Protocol types, request/event enums, and validation helpers are included in this package and exported from its main entry point:
+
+```ts
+import {
+  OverlayEventType,
+  type OverlayMessageRequest,
+} from '@epam/ai-dial-chat-overlay';
+```
 
 ## Classes
 

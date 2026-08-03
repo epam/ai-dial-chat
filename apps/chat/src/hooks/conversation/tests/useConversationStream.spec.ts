@@ -1,7 +1,7 @@
 import {
   OverlayEventType,
   OverlayRequestType,
-} from '@epam/ai-dial-chat-shared';
+} from '@epam/ai-dial-chat-overlay';
 import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';

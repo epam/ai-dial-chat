@@ -25,9 +25,6 @@ export default defineConfig(() => ({
       fileName: 'index',
       formats: ['es' as const],
     },
-    rollupOptions: {
-      external: ['@epam/ai-dial-chat-shared'],
-    },
   },
   test: {
     name: '@epam/ai-dial-chat-overlay',

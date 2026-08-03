@@ -2,7 +2,8 @@ import {
   AttachmentCanvasContainer,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import { CodeBlockTheme, OverlayFeature } from '@epam/ai-dial-chat-shared';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
 import {
   lazy,
