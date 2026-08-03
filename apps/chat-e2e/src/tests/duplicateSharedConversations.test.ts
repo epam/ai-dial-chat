@@ -43,7 +43,7 @@ dialSharedWithMeTest(
     additionalShareUserLocalStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1845', 'EPMRTC-2768', 'EPMRTC-6102');
+    setTestIds('EPMDIAL-3044', 'EPMDIAL-3054', 'EPMDIAL-3562');
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const currentDate = DateUtil.getCurrentLocalDate();
@@ -135,7 +135,7 @@ dialSharedWithMeTest(
     setTestIds,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1844');
+    setTestIds('EPMDIAL-3046');
     let folderConversation: FolderConversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let conversationName: string;
@@ -222,7 +222,7 @@ dialSharedWithMeTest(
     additionalShareUserConversationAssertion,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1835', 'EPMRTC-1843', 'EPMRTC-1838');
+    setTestIds('EPMDIAL-3043', 'EPMDIAL-3045', 'EPMDIAL-3050');
     let firstComparedConversation: Conversation;
     let secondComparedConversation: Conversation;
     let thirdComparedConversation: Conversation;

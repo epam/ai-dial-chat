@@ -79,29 +79,29 @@ dialSharedWithMeTest(
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
-      'EPMRTC-4133',
-      'EPMRTC-4134',
-      /*'EPMRTC-4135,'*/
-      'EPMRTC-4155',
-      'EPMRTC-4166',
-      'EPMRTC-4156',
-      'EPMRTC-4123',
-      'EPMRTC-3116',
-      'EPMRTC-3122',
-      'EPMRTC-4164',
+      'EPMDIAL-6694',
+      'EPMDIAL-6692',
+      /*'EPMDIAL-6693,'*/
+      'EPMDIAL-6699',
+      'EPMDIAL-6735',
+      'EPMDIAL-6722',
+      'EPMDIAL-6700',
+      'EPMDIAL-6703',
+      'EPMDIAL-6704',
+      'EPMDIAL-6706',
     );
     let imageUrl: string;
     let imageUrl2: string;
     let imageInConversationInFolderUrl: string;
     let specialCharsImageUrl: string;
-    //TODO EPMRTC-4135 blocked by the #1076
+    //TODO EPMDIAL-6693 blocked by the #1076
     // let imageInFolderUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let shareFolderByLinkResponse: ShareByLinkResponseModel;
     let randomModelWithImageAttachment: DialAIEntityModel;
     let randomModelWithImageAttachmentId: string;
     let conversationInFolder: Conversation;
-    //TODO EPMRTC-4135 blocked by the #1076
+    //TODO EPMDIAL-6693 blocked by the #1076
     // let conversationToMove: Conversation;
     const folderName = 'Folder with conversation';
     const specialCharsFolder = `Folder ${ExpectedConstants.allowedSpecialChars}`;
@@ -152,7 +152,7 @@ dialSharedWithMeTest(
           { parentPath: specialCharsFolder },
         );
 
-        //TODO EPMRTC-4135 blocked by the #1076
+        //TODO EPMDIAL-6693 blocked by the #1076
         // imageInFolderUrl2 = await fileApiHelper.putFile(
         //   Attachment.heartImageName,
         //   API.modelFilePath(defaultModel),
@@ -191,7 +191,7 @@ dialSharedWithMeTest(
           randomModelWithImageAttachment,
         );
 
-        //TODO EPMRTC-4135 blocked by the #1076
+        //TODO EPMDIAL-6693 blocked by the #1076
         // conversationData.resetData();
         // conversationToMove = conversationData.prepareConversationWithAttachmentInResponse(
         //   imageInFolderUrl2,
@@ -226,7 +226,7 @@ dialSharedWithMeTest(
       await localStorageManager.setShowSideBarPanels();
     });
 
-    //TODO EPMRTC-4135 blocked by the #1076
+    //TODO EPMDIAL-6693 blocked by the #1076
     // await dialTest.step(
     //   'Move the second conversation to the shared folder',
     //   async () => {
@@ -280,7 +280,7 @@ dialSharedWithMeTest(
           expectedArrowColor,
         );
 
-        //TODO EPMRTC-4135 blocked by the #1076
+        //TODO EPMDIAL-6693 blocked by the #1076
         // const fourthImageEntity: TreeEntity = { name: Attachment.heartImageName };
         // await manageAttachmentsAssertion.assertSharedFileArrowIconState(fourthImageEntity, 'visible');
         // await manageAttachmentsAssertion.assertEntityArrowIconColor(fourthImageEntity, expectedArrowColor);
@@ -538,19 +538,19 @@ dialSharedWithMeTest(
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
-      'EPMRTC-3520',
-      'EPMRTC-4129',
-      'EPMRTC-4130',
-      'EPMRTC-4149',
-      'EPMRTC-4150',
-      'EPMRTC-4151',
-      'EPMRTC-4152',
-      'EPMRTC-4153',
-      'EPMRTC-4158',
-      'EPMRTC-4159',
-      'EPMRTC-4162',
-      'EPMRTC-4165',
-      'EPMRTC-8177',
+      'EPMDIAL-6715',
+      'EPMDIAL-6716',
+      'EPMDIAL-6719',
+      'EPMDIAL-6723',
+      'EPMDIAL-6724',
+      'EPMDIAL-6727',
+      'EPMDIAL-6728',
+      'EPMDIAL-6731',
+      'EPMDIAL-6733',
+      'EPMDIAL-6734',
+      'EPMDIAL-6738',
+      'EPMDIAL-6732',
+      'EPMDIAL-6740',
     );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
@@ -1090,7 +1090,7 @@ dialSharedWithMeTest(
     additionalShareUserFileManagerGridAssertion,
     additionalSecondUserShareApiHelper,
   }) => {
-    setTestIds('EPMRTC-5821');
+    setTestIds('EPMDIAL-6739');
     let imageUrl: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let conversation: Conversation;
@@ -1191,7 +1191,7 @@ dialAdminTest(
     adminDataInjector,
     conversationData,
   }) => {
-    setTestIds('EPMRTC-6743');
+    setTestIds('EPMDIAL-6863');
     const modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment(
       true,
       ['*/*'],

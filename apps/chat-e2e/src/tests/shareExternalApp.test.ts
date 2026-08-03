@@ -37,7 +37,7 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     shareApiAssertion,
   }) => {
-    setTestIds('EPMRTC-6583', 'EPMRTC-6586', 'EPMRTC-6590', 'EPMRTC-6588');
+    setTestIds('EPMDIAL-5310', 'EPMDIAL-5311', 'EPMDIAL-5317', 'EPMDIAL-5312');
     const appEntity = {
       name: GeneratorUtil.randomApplicationName(),
       version: GeneratorUtil.randomEntityVersion(),

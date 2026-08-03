@@ -6,7 +6,7 @@ import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 dialTest(
   'Another chat is not available while AI is generating a response.\n' +
-    'Chat menu is not available while AI is generating a response.\n' +
+    'Current chat menu is not available while AI is generating an answer in this chat.\n' +
     'Switching to another chat is not available while AI is replaying a chat\n' +
     'Switching to another chat is not available while AI is regenerating response in compare mode',
   async ({
@@ -25,13 +25,7 @@ dialTest(
     localStorageManager,
     sendMessageAssertion,
   }) => {
-    setTestIds(
-      'EPMRTC-598',
-      'EPMRTC-599',
-      'EPMRTC-600',
-      'EPMRTC-601',
-      'EPMRTC-602',
-    );
+    setTestIds('EPMDIAL-2941', 'EPMDIAL-2942', 'EPMDIAL-2943', 'EPMDIAL-2944');
     const request =
       'give me a sci-fi story with a main topic of your choice. 200 tokens minimum';
     let firstConversation: Conversation;

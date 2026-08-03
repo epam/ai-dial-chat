@@ -74,20 +74,20 @@ dialAdminTest(
   ) => {
     dialAdminTest.slow();
     setTestIds(
-      'EPMRTC-3270',
-      'EPMRTC-3585',
-      'EPMRTC-4013',
-      'EPMRTC-3578',
-      'EPMRTC-3928',
-      'EPMRTC-3228',
-      'EPMRTC-5558',
-      'EPMRTC-4189',
-      'EPMRTC-3503',
-      'EPMRTC-3224',
-      'EPMRTC-4070',
-      'EPMRTC-3278',
-      'EPMRTC-3230',
-      'EPMRTC-3292',
+      'EPMDIAL-3093',
+      'EPMDIAL-3118',
+      'EPMDIAL-3101',
+      'EPMDIAL-3113',
+      'EPMDIAL-3115',
+      'EPMDIAL-3224',
+      'EPMDIAL-3558',
+      'EPMDIAL-3239',
+      'EPMDIAL-3233',
+      'EPMDIAL-3225',
+      'EPMDIAL-3132',
+      'EPMDIAL-3103',
+      'EPMDIAL-3210',
+      'EPMDIAL-3211',
     );
     let conversation: Conversation;
     const requestName = `${GeneratorUtil.randomPublicationRequestName()}  ${GeneratorUtil.randomPublicationRequestName()}`;
@@ -459,11 +459,11 @@ dialAdminTest(
     adminLocalStorageManager,
   }) => {
     setTestIds(
-      'EPMRTC-3575',
-      'EPMRTC-3584',
-      'EPMRTC-3589',
-      'EPMRTC-4741',
-      'EPMRTC-4057',
+      'EPMDIAL-3116',
+      'EPMDIAL-3114',
+      'EPMDIAL-3117',
+      'EPMDIAL-6000',
+      'EPMDIAL-3243',
     );
     const publicationNames = [
       `${GeneratorUtil.randomPublicationRequestName()}name\t\twith\ttabs`,
@@ -602,11 +602,11 @@ dialTest(
     publishRequestBuilder,
   }) => {
     setTestIds(
-      'EPMRTC-5555',
-      'EPMRTC-4738',
-      'EPMRTC-5557',
-      'EPMRTC-6100',
-      'EPMRTC-4742',
+      'EPMDIAL-3556',
+      'EPMDIAL-5994',
+      'EPMDIAL-3557',
+      'EPMDIAL-3561',
+      'EPMDIAL-5995',
     );
     let conversation: Conversation;
     let playbackConversation: Conversation;

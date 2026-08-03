@@ -44,7 +44,7 @@ dialAdminTest(
     },
     testInfo,
   ) => {
-    setTestIds('EPMRTC-6122');
+    setTestIds('EPMDIAL-4011');
     let folderPrompt: FolderPrompt;
     const unpublishRequestName = GeneratorUtil.randomUnpublishRequestName();
     let unpublishApiModels: {

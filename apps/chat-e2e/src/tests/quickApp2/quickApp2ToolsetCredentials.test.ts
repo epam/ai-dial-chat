@@ -15,7 +15,7 @@ import { GeneratorUtil } from '@/src/utils';
 import { PublishActions, Toolset } from '@epam/ai-dial-shared';
 
 dialAdminTest(
-  '[Quick app 2.0] Manage credentials form is available for public toolsets from Quick app 2.0 editor', // EPMRTC-7997
+  '[Quick app 2.0] Manage credentials form is available for public toolsets from Quick app 2.0 editor', // EPMDIAL-5557
   async ({
     toolsetBuilder,
     toolsetApiHelper,
@@ -34,7 +34,7 @@ dialAdminTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-7997');
+    setTestIds('EPMDIAL-5557');
     const toolsetName = GeneratorUtil.randomToolsetName();
     const toolsetEndpoint = GeneratorUtil.randomUrl();
     const quickAppName = GeneratorUtil.randomApplicationName();
@@ -173,11 +173,11 @@ dialAdminTest(
 );
 
 dialTest(
-  '[Quick app 2.0] Login form for one not public toolset in App editor - Log in Oauth\n' + // EPMRTC-8559
-    '[Quick app 2.0] Login form for one not public toolset in App editor - Log in API key\n' + // EPMRTC-8561
-    '[Quick app 2.0] Login form for more than one not public toolset in App editor - Login for each\n' + // EPMRTC-8560
-    '[Quick app 2.0] Login form for one not public toolset in App editor - Decline\n' + // EPMRTC-8562
-    '[Quick app 2.0] Login form for more than one not public toolset in App editor - Decline one', // EPMRTC-8564
+  '[Quick app 2.0] Login form for one not public toolset in App editor - Log in Oauth\n' + // EPMDIAL-5096
+    '[Quick app 2.0] Login form for one not public toolset in App editor - Log in API key\n' + // EPMDIAL-5097
+    '[Quick app 2.0] Login form for more than one not public toolset in App editor - Login for each\n' + // EPMDIAL-5100
+    '[Quick app 2.0] Login form for one not public toolset in App editor - Decline\n' + // EPMDIAL-5098
+    '[Quick app 2.0] Login form for more than one not public toolset in App editor - Decline one', // EPMDIAL-5101
   async ({
     page,
     marketplacePage,
@@ -198,11 +198,11 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds(
-      'EPMRTC-8559',
-      'EPMRTC-8561',
-      'EPMRTC-8560',
-      'EPMRTC-8562',
-      'EPMRTC-8564',
+      'EPMDIAL-5096',
+      'EPMDIAL-5097',
+      'EPMDIAL-5100',
+      'EPMDIAL-5098',
+      'EPMDIAL-5101',
     );
     const oauthToolsetName = GeneratorUtil.randomToolsetName();
     const apiKeyToolsetName = GeneratorUtil.randomToolsetName();
@@ -357,7 +357,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8562/8564: decline one toolset — its row is removed with a toast, the rest stay',
+      'EPMDIAL-5098/8564: decline one toolset — its row is removed with a toast, the rest stay',
       async () => {
         await toolsetLoginEventsModal
           .getDeclineButton(declineToolsetName)
@@ -381,7 +381,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8559: log in the OAuth toolset via the popup — its row disappears',
+      'EPMDIAL-5096: log in the OAuth toolset via the popup — its row disappears',
       async () => {
         const popupPromise = page.waitForEvent('popup');
         await toolsetLoginEventsModal.getLoginButton(oauthToolsetName).click();
@@ -399,7 +399,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'EPMRTC-8561: log in the API key toolset — its row disappears and the modal closes',
+      'EPMDIAL-5097: log in the API key toolset — its row disappears and the modal closes',
       async () => {
         await toolsetLoginEventsModal.getLoginButton(apiKeyToolsetName).click();
         await previewToolsetLoginModalAssertion.assertElementState(
@@ -420,8 +420,8 @@ dialTest(
 );
 
 dialTest(
-  '[Quick app 2.0] Login form for one not public toolset in App editor - Decline all\n' + // EPMRTC-8563
-    '[Quick app 2.0] Login form for more than one not public toolset in App editor - Decline all', // EPMRTC-8565
+  '[Quick app 2.0] Login form for one not public toolset in App editor - Decline all\n' + // EPMDIAL-5099
+    '[Quick app 2.0] Login form for more than one not public toolset in App editor - Decline all', // EPMDIAL-5102
   async ({
     marketplacePage,
     entityEditorPage,
@@ -438,7 +438,7 @@ dialTest(
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-8563', 'EPMRTC-8565');
+    setTestIds('EPMDIAL-5099', 'EPMDIAL-5102');
     const firstToolsetName = GeneratorUtil.randomToolsetName();
     const secondToolsetName = GeneratorUtil.randomToolsetName();
     const endpoint = GeneratorUtil.randomUrl();

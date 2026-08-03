@@ -46,7 +46,7 @@ dialTest(
     chatHeaderAssertion,
     agentInfo,
   }) => {
-    setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
+    setTestIds('EPMDIAL-6263', 'EPMDIAL-6264', 'EPMDIAL-6265');
     let theme: string;
     let conversation: Conversation;
     const conversationModels = [defaultModel, nonDefaultModel];
@@ -405,7 +405,7 @@ dialTest(
     chatMessagesAssertion,
     chatHeaderAssertion,
   }) => {
-    setTestIds('EPMRTC-1420', 'EPMRTC-1421');
+    setTestIds('EPMDIAL-6267', 'EPMDIAL-6268');
     let conversation: Conversation;
     let playbackConversation: Conversation;
     const playNextKeys = [
@@ -598,7 +598,7 @@ dialTest(
     conversations,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1425', 'EPMRTC-4736');
+    setTestIds('EPMDIAL-6271', 'EPMDIAL-5992');
     let conversation: Conversation;
     let playbackConversation: Conversation;
 
@@ -691,7 +691,7 @@ dialTest(
     setTestIds,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1427', 'EPMRTC-1470', 'EPMRTC-1473', 'EPMRTC-1428');
+    setTestIds('EPMDIAL-6273', 'EPMDIAL-6277', 'EPMDIAL-6278', 'EPMDIAL-6275');
     let conversation: Conversation;
     let playbackConversation: Conversation;
 

@@ -11,7 +11,7 @@ dialOverlayTest(
     page,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1404');
+    setTestIds('EPMDIAL-2229');
 
     await dialTest.step(
       'Click on the right bottom overlay button and verify frame is opened',

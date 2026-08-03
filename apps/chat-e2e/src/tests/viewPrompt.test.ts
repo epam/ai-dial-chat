@@ -46,15 +46,15 @@ dialTest(
     confirmationDialogAssertion,
   }) => {
     setTestIds(
-      'EPMRTC-6144',
-      'EPMRTC-6139',
-      'EPMRTC-6153',
-      'EPMRTC-6148',
-      'EPMRTC-6149',
-      'EPMRTC-6150',
-      'EPMRTC-6151',
-      'EPMRTC-6152',
-      'EPMRTC-6154',
+      'EPMDIAL-3639',
+      'EPMDIAL-3644',
+      'EPMDIAL-3652',
+      'EPMDIAL-3647',
+      'EPMDIAL-3648',
+      'EPMDIAL-3649',
+      'EPMDIAL-3650',
+      'EPMDIAL-3651',
+      'EPMDIAL-3653',
     );
     let prompt: Prompt;
     const aVar = 'a';

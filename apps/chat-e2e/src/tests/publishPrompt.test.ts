@@ -67,18 +67,18 @@ dialAdminTest(
   ) => {
     dialAdminTest.slow();
     setTestIds(
-      'EPMRTC-3305',
-      'EPMRTC-3595',
-      'EPMRTC-3313',
-      'EPMRTC-3596',
-      'EPMRTC-3604',
-      'EPMRTC-3606',
-      'EPMRTC-5657',
-      'EPMRTC-3326',
-      'EPMRTC-5571',
-      'EPMRTC-5634',
-      'EPMRTC-3794',
-      'EPMRTC-3340',
+      'EPMDIAL-3851',
+      'EPMDIAL-3853',
+      'EPMDIAL-3854',
+      'EPMDIAL-3855',
+      'EPMDIAL-3860',
+      'EPMDIAL-3861',
+      'EPMDIAL-3873',
+      'EPMDIAL-3933',
+      'EPMDIAL-4099',
+      'EPMDIAL-3936',
+      'EPMDIAL-3930',
+      'EPMDIAL-3925',
     );
     let prompt1: Prompt;
     let prompt2: Prompt;
@@ -521,15 +521,15 @@ dialAdminTest(
   ) => {
     dialAdminTest.slow();
     setTestIds(
-      'EPMRTC-3599',
-      'EPMRTC-3600',
-      'EPMRTC-3601',
-      'EPMRTC-3608',
-      'EPMRTC-8120',
-      'EPMRTC-3603',
-      'EPMRTC-3605',
-      'EPMRTC-5660',
-      'EPMRTC-5653',
+      'EPMDIAL-3857',
+      'EPMDIAL-3858',
+      'EPMDIAL-3859',
+      'EPMDIAL-3864',
+      'EPMDIAL-3865',
+      'EPMDIAL-3862',
+      'EPMDIAL-3863',
+      'EPMDIAL-3937',
+      'EPMDIAL-4101',
     );
     let prompt1: Prompt;
     const folderNameTemplate = GeneratorUtil.randomString(10);
@@ -833,11 +833,11 @@ dialAdminTest(
     publishRequestBuilder,
   }) => {
     setTestIds(
-      'EPMRTC-5569',
-      'EPMRTC-5570',
-      'EPMRTC-6156',
-      'EPMRTC-6178',
-      'EPMRTC-6104',
+      'EPMDIAL-4096',
+      'EPMDIAL-4097',
+      'EPMDIAL-3655',
+      'EPMDIAL-3656',
+      'EPMDIAL-4102',
     );
     let prompt: Prompt;
     const firstVersion = ExpectedConstants.defaultEntityVersion;
@@ -1010,7 +1010,7 @@ dialAdminTest(
     adminPublicationApiHelper,
     publishRequestBuilder,
   }) => {
-    setTestIds('EPMRTC-3342');
+    setTestIds('EPMDIAL-3927');
     let prompt: Prompt;
     const publicationRequestName = GeneratorUtil.randomPublicationRequestName();
 

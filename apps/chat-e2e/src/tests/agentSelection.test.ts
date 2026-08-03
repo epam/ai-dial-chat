@@ -45,11 +45,11 @@ dialTest(
   }) => {
     dialTest.slow();
     setTestIds(
-      'EPMRTC-4878',
-      'EPMRTC-4880',
-      'EPMRTC-4386',
-      'EPMRTC-4356',
-      'EPMRTC-5168',
+      'EPMDIAL-5808',
+      'EPMDIAL-5810',
+      'EPMDIAL-5826',
+      'EPMDIAL-5821',
+      'EPMDIAL-5822',
     );
     let searchInput: BaseElement;
     const models = GeneratorUtil.randomArrayElements(
@@ -278,7 +278,7 @@ dialAdminTest(
     localStorageAssertion,
     chat,
   }) => {
-    setTestIds('EPMRTC-4881', 'EPMRTC-5162', 'EPMRTC-5163');
+    setTestIds('EPMDIAL-5811', 'EPMDIAL-5812', 'EPMDIAL-5813');
 
     //Prepare models and set recent models in local storage
     const models = GeneratorUtil.randomArrayElements(
@@ -445,7 +445,7 @@ dialTest(
     chatMessages,
     localStorageAssertion,
   }) => {
-    setTestIds('EPMRTC-4883', 'EPMRTC-4884', 'EPMRTC-5177', 'EPMRTC-5167');
+    setTestIds('EPMDIAL-5814', 'EPMDIAL-5818', 'EPMDIAL-5819', 'EPMDIAL-5820');
     dialTest.slow();
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
@@ -635,7 +635,7 @@ dialTest(
     marketplaceEntitiesSection,
     talkToAgentDialogAssertion,
   }) => {
-    setTestIds('EPMRTC-4356', 'EPMRTC-5113');
+    setTestIds('EPMDIAL-5821', 'EPMDIAL-5749');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
@@ -732,7 +732,7 @@ dialSharedWithMeTest(
     chat,
     chatMessages,
   }) => {
-    setTestIds('EPMRTC-4882', 'EPMRTC-5165', 'EPMRTC-5164');
+    setTestIds('EPMDIAL-5815', 'EPMDIAL-5816', 'EPMDIAL-5817');
     const models = GeneratorUtil.randomArrayElements(
       ModelsUtil.getLatestModels().filter((m) => m.iconUrl !== undefined),
       2,
