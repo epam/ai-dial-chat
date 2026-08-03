@@ -658,7 +658,7 @@ const CatalogView: FC<Props> = ({ isSelectorMode = false, onClose }) => {
       });
     }
 
-    if (isCustomAppsEnabled) {
+    if (isCustomAppsEnabled && !isHideCustomAppCreationEnabled) {
       options.push({
         label: t(CatalogI18nKeys.CreateCustomApp),
         onClick: () => {
