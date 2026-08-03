@@ -7,6 +7,8 @@ const generateRequestId = (): string => {
 
 /** A single outstanding overlay request: owns its `requestId` and resolves/rejects when the matching response arrives or the timeout elapses. */
 export class DeferredRequest<T = unknown> {
+  /** Exact request type sent to the embedded app. */
+  readonly requestType: string;
   /** Unique id used to match this request to its response message. */
   readonly requestId: string;
   /** Exact response type expected for this request. */
@@ -20,6 +22,7 @@ export class DeferredRequest<T = unknown> {
   private readonly timeoutHandle: ReturnType<typeof setTimeout>;
 
   constructor(requestType: string, timeoutMs: number) {
+    this.requestType = requestType;
     this.requestId = generateRequestId();
     this.responseType = `${requestType}/RESPONSE`;
     this.promise = new Promise<T>((resolve, reject) => {

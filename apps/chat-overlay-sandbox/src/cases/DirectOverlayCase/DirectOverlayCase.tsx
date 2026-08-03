@@ -1,8 +1,10 @@
 import { ChatOverlay, OverlayEventType } from '@epam/ai-dial-chat-overlay';
+import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
 import { getChatOverlayHost } from '../../env';
+import { runLoggedOverlayAction } from '../../logOverlayAction';
 
 const HANDSHAKE_WARNING_TIMEOUT_MS = 5000;
 
@@ -97,48 +99,73 @@ const DirectOverlayCase: FC = () => {
     : `Handshake is still pending. Check that the embedded chat backend has OVERLAY_ENABLED=true and ALLOWED_IFRAME_ORIGINS includes ${window.location.origin}.`;
 
   const handleGetMessages = async () => {
-    const response = await overlayRef.current?.getMessages();
-    appendLog(`getMessages -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'getMessages',
+      async () => overlayRef.current?.getMessages(),
+      (response) => `getMessages -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
 
   const handleSendMessage = async () => {
-    const response = await overlayRef.current?.sendMessage(
-      'Hello from the sandbox',
+    await runLoggedOverlayAction(
+      'sendMessage',
+      async () => overlayRef.current?.sendMessage('Hello from the sandbox'),
+      (response) => `sendMessage -> ${JSON.stringify(response)}`,
+      appendLog,
     );
-    appendLog(`sendMessage -> ${JSON.stringify(response)}`);
   };
 
   const handleUpdateThemeAndModel = async () => {
-    const response = await overlayRef.current?.setOverlayOptions({
-      theme: 'dark',
-      modelId: 'gpt-4o',
-    });
-    appendLog(
-      `setOverlayOptions(theme, modelId) -> ${JSON.stringify(response)}`,
+    await runLoggedOverlayAction(
+      'setOverlayOptions(theme, modelId)',
+      async () =>
+        overlayRef.current?.setOverlayOptions({
+          theme: 'dark',
+          modelId: 'gpt-4o',
+        }),
+      (response) =>
+        `setOverlayOptions(theme, modelId) -> ${JSON.stringify(response)}`,
+      appendLog,
     );
   };
 
   const handleUpdateThemeToLight = async () => {
-    const response = await overlayRef.current?.setOverlayOptions({
-      theme: 'light',
-    });
-    appendLog(`setOverlayOptions(theme: light) -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'setOverlayOptions(theme: light)',
+      async () => overlayRef.current?.setOverlayOptions({ theme: 'light' }),
+      (response) =>
+        `setOverlayOptions(theme: light) -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
 
   const handleSetInputContent = async () => {
-    await overlayRef.current?.setInputContent('Drafted from the sandbox');
-    appendLog('setInputContent("Drafted from the sandbox")');
+    await runLoggedOverlayAction(
+      'setInputContent',
+      async () =>
+        overlayRef.current?.setInputContent('Drafted from the sandbox'),
+      () => 'setInputContent("Drafted from the sandbox")',
+      appendLog,
+    );
   };
 
   const handleSetSystemPrompt = async () => {
-    const response =
-      await overlayRef.current?.setSystemPrompt('Answer concisely.');
-    appendLog(`setSystemPrompt -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'setSystemPrompt',
+      async () => overlayRef.current?.setSystemPrompt('Answer concisely.'),
+      (response) => `setSystemPrompt -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
 
   const handleSetTemperature = async () => {
-    const response = await overlayRef.current?.setTemperature(0.2);
-    appendLog(`setTemperature -> ${JSON.stringify(response)}`);
+    await runLoggedOverlayAction(
+      'setTemperature',
+      async () => overlayRef.current?.setTemperature(0.2),
+      (response) => `setTemperature -> ${JSON.stringify(response)}`,
+      appendLog,
+    );
   };
 
   if (!host) {
@@ -147,66 +174,67 @@ const DirectOverlayCase: FC = () => {
 
   return (
     <div>
-      <h1>Direct ChatOverlay case</h1>
+      <h1 className="text-3xl font-bold">Direct ChatOverlay case</h1>
       <p aria-live="polite">
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}
       </p>
       {isHandshakeSlow && !isReady && <p role="alert">{handshakeHint}</p>}
-      <div
-        style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}
-      >
-        <button type="button" onClick={handleGetMessages} disabled={!isReady}>
-          Get messages
-        </button>
-        <button type="button" onClick={handleSendMessage} disabled={!isReady}>
-          Send message
-        </button>
-        <button
+      <div className="my-3 flex flex-wrap gap-2">
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Get messages"
+          onClick={handleGetMessages}
+          disabled={!isReady}
+        />
+        <DialNeutralButton
+          className="min-h-11"
+          type="button"
+          label="Send message"
+          onClick={handleSendMessage}
+          disabled={!isReady}
+        />
+        <DialNeutralButton
+          className="min-h-11"
+          type="button"
+          label="Update theme + model"
           onClick={handleUpdateThemeAndModel}
           disabled={!isReady}
-        >
-          Update theme + model
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Update theme to light"
           onClick={handleUpdateThemeToLight}
           disabled={!isReady}
-        >
-          Update theme to light
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Set input content"
           onClick={handleSetInputContent}
           disabled={!isReady}
-        >
-          Set input content
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Set system prompt"
           onClick={handleSetSystemPrompt}
           disabled={!isReady}
-        >
-          Set system prompt
-        </button>
-        <button
+        />
+        <DialNeutralButton
+          className="min-h-11"
           type="button"
+          label="Set temperature"
           onClick={handleSetTemperature}
           disabled={!isReady}
-        >
-          Set temperature
-        </button>
+        />
       </div>
       <div
         ref={rootRef}
-        style={{
-          position: 'relative',
-          width: 'min(100%, 380px)',
-          height: 600,
-          marginBottom: 16,
-        }}
+        className="relative mb-4 h-[min(600px,78dvh)] w-[min(100%,380px)] desktop:h-[600px]"
       />
-      <EventLog entries={log} />
+      <EventLog entries={log} onClear={() => setLog([])} />
     </div>
   );
 };

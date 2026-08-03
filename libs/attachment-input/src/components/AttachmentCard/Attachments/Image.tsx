@@ -32,6 +32,8 @@ interface ImageAttachmentProps {
   styles?: AttachmentCardStyles;
   cssVars?: CSSProperties;
   onDownload?: (id: string) => void;
+  /** Whether this attachment is the one currently open in the canvas panel. Renders the tile's selected visual state. */
+  isSelected?: boolean;
 }
 
 /** Square tile for a single image attachment inside the composer tray. */
@@ -44,10 +46,11 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
   cssVars,
   onDownload,
   styles: cardStyles,
+  isSelected,
 }) => {
   const { clickLabel = 'Open attachment', expandLabel = 'Expand pasted text' } =
     labels ?? {};
-  const { typography, className } = cardStyles ?? {};
+  const { className } = cardStyles ?? {};
   const { id, name } = attachment;
   const imageSrc = attachment.previewUrl ?? attachment.url;
   const isPasted = attachment.type === AttachmentType.Pasted;
@@ -83,8 +86,10 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
 
   const cardClassName = mergeClasses(
     ATTACHMENT_TILE_BASE_CLASS,
+    'group/attachment-tile',
     isClickable && 'cursor-pointer',
     styles.tile,
+    isSelected && styles.selected,
     className,
   );
 
@@ -101,8 +106,20 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
       }
     >
       <div className="relative h-full w-full overflow-hidden">
-        {onRemove && <RemoveAction onClick={onRemove} id={id} />}
-        {onDownload && <DownloadAction onClick={onDownload} id={id} />}
+        {onRemove && (
+          <RemoveAction
+            onClick={onRemove}
+            id={id}
+            className={styles.imageActionButton}
+          />
+        )}
+        {onDownload && (
+          <DownloadAction
+            onClick={onDownload}
+            id={id}
+            className={styles.imageActionButton}
+          />
+        )}
         {imageLoadStatus !== LazyImageLoadStatus.Loaded && (
           <DialSkeleton
             variant={DialSkeletonVariant.Rectangular}
@@ -112,9 +129,7 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
             overlay={
               <IconPhoto
                 size={DIAL_ICON_SIZE.LG}
-                className={
-                  typography?.placeholderIconClassName ?? 'text-secondary'
-                }
+                className={styles.typeText}
                 aria-hidden
               />
             }

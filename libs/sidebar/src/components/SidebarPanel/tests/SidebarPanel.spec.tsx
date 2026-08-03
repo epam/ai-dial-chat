@@ -4,10 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { SidebarOrientation } from '../../../types/orientation';
 import { SidebarPanel } from '../SidebarPanel';
 
-// Minimal mock so DialGhostIconButton passes through aria-label and calls onClick.
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { LG: 24 },
-  DialGhostIconButton: ({
+  GhostIconButton: ({
     'aria-label': ariaLabel,
     onClick,
   }: {

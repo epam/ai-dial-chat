@@ -491,6 +491,7 @@ const ToolsetEditor: FC = () => {
         errors={visibleErrors}
         isSaving={isSaving}
         toolsetId={persistedToolsetId}
+        isEditMode={isEditMode}
         onNext={handleNext}
         onCancel={handleCancel}
         onEnsureSaved={handleEnsureSaved}

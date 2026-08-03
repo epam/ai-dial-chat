@@ -35,6 +35,7 @@ const findScrollParent = (el: Element | null): Element | null => {
 /** ag-grid table view of catalog items with infinite-scroll windowing. */
 export const ListView: FC<ListViewProps> = ({
   items,
+  type,
   query = '',
   ariaLabel = 'Catalog',
   emptyStateTitle,
@@ -141,7 +142,7 @@ export const ListView: FC<ListViewProps> = ({
     >
       <div className={mergeClasses('rounded-xl', styles.gridClip)}>
         <DialGrid<CatalogItem>
-          columnDefs={CATALOG_COLUMNS}
+          columnDefs={CATALOG_COLUMNS(type)}
           rowData={windowedItems}
           getRowId={(r) => r.id}
           withoutHeaderBorders

@@ -2,7 +2,7 @@
 
 ### Requirement: Navigation buttons perform client-side navigation
 
-Each navigation item in the desktop `<Navigation>` sidebar MUST be rendered as a React Router `<Link to={path}>` wrapping a `DialGhostIconButton`. The `<Link>` MUST render a native `<a href="...">` element so the browser exposes the target URL. Left-click on the link MUST perform client-side SPA navigation (no full page reload). Middle-click MUST open the target route in a new browser tab. The `DialGhostIconButton` MUST carry `tabIndex={-1}` so only the `<a>` participates in the tab order. The `<Link>` wrapper MUST use `className="contents"` so it introduces no new box in the layout.
+Each navigation item in the desktop `<Navigation>` sidebar MUST be rendered as a React Router `<Link to={path}>` wrapping a `GhostIconButton`. The `<Link>` MUST render a native `<a href="...">` element so the browser exposes the target URL. Left-click on the link MUST perform client-side SPA navigation (no full page reload). Middle-click MUST open the target route in a new browser tab. The `GhostIconButton` MUST carry `tabIndex={-1}` so only the `<a>` participates in the tab order. The `<Link>` wrapper MUST use `className="contents"` so it introduces no new box in the layout.
 
 #### Scenario: Left-click navigates in the same tab
 

@@ -5,7 +5,6 @@ import {
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
-import styles from './PublishFooter.module.scss';
 
 /** Text overrides for all user-visible strings in {@link PublishFooter}. */
 export interface PublishFooterLabels {
@@ -70,7 +69,6 @@ export const PublishFooter: FC<PublishFooterProps> = ({
         label={cancelLabel}
         disabled={isSubmitLoading}
         onClick={onCancel}
-        className={styles.cancelButton}
       />
       <NeutralButton
         label={submitLabel}

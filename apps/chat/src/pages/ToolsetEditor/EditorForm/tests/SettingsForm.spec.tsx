@@ -131,7 +131,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       />
     </label>
   ),
-  DialIconButton: ({
+  DialGhostIconButton: ({
     onClick,
     'aria-label': ariaLabel,
     icon,
@@ -144,7 +144,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {icon}
     </button>
   ),
-  ButtonAppearance: { Ghost: 'ghost' },
   ElementSize: { Standard: 'standard' },
   DIAL_ICON_SIZE: { SM: 16 },
 }));
@@ -175,6 +174,7 @@ const renderSettings = (endpoint = 'https://example.com/mcp') =>
       errors={{}}
       isSaving={false}
       toolsetId="toolsets/b/my__1.0.0"
+      isEditMode
       onChange={vi.fn()}
       onAuthChange={vi.fn()}
       onEnsureSaved={vi.fn().mockResolvedValue(true)}
@@ -230,6 +230,7 @@ describe('SettingsForm — copy endpoint', () => {
         errors={{ endpoint: 'toolsetEditor.settings.endpointRequired' }}
         isSaving={false}
         toolsetId=""
+        isEditMode={false}
         onChange={vi.fn()}
         onAuthChange={vi.fn()}
         onEnsureSaved={vi.fn().mockResolvedValue(true)}
@@ -270,6 +271,7 @@ describe('SettingsForm — Connect toolset section', () => {
         errors={{}}
         isSaving={false}
         toolsetId=""
+        isEditMode={false}
         onChange={vi.fn()}
         onAuthChange={vi.fn()}
         onEnsureSaved={vi.fn().mockResolvedValue(true)}
@@ -293,6 +295,7 @@ describe('SettingsForm — Connect toolset section', () => {
         errors={{}}
         isSaving={false}
         toolsetId="toolsets/b/my__1.0.0"
+        isEditMode
         onChange={vi.fn()}
         onAuthChange={vi.fn()}
         onEnsureSaved={vi.fn().mockResolvedValue(true)}

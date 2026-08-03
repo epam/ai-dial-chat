@@ -1,26 +1,15 @@
 .wrapper {
-  background: var(--ci-bg, var(--bg-layer-0, #fcfcfc));
-  border-color: var(--ci-border, rgba(0, 0, 0, 0.05));
-  box-shadow: var(--ci-shadow, 0 8px 24px rgba(16, 24, 40, 0.08));
-  transition:
-    border-color 150ms ease,
-    box-shadow 150ms ease;
+  background: var(--ci-bg, var(--bg-control-neutral, #fcfcfc));
+  border-color: var(--ci-border, var(--stroke-tertiary, #e0e6f0));
 
-  &:hover:not(:focus-within) {
-    border-color: var(--ci-border-hover, rgba(0, 0, 0, 0.12));
-  }
-
-  &:focus-within {
-    border-color: var(
-      --ci-border-focus,
-      color-mix(in srgb, var(--stroke-accent-primary, #7da4ff) 50%, transparent)
-    );
-    box-shadow: var(--ci-shadow-focus, 0 8px 24px rgba(16, 24, 40, 0.08));
+  &:focus-within,
+  &:active {
+    border-color: var(--ci-border-focus, var(--stroke-info, #124ace));
   }
 
   &.wrapperDisabled {
-    background: var(--ci-bg-disabled, var(--controls-bg-disable, #d1dbea));
-    cursor: not-allowed;
+    color: var(--ci-text-disabled, var(--text-control-disable, #6b7280));
+    @apply cursor-not-allowed;
   }
 }
 
@@ -32,47 +21,36 @@
   }
 
   &:disabled {
-    color: var(
-      --ci-text-disabled,
-      var(--controls-text-primary-disable, #696e7c)
-    );
-    cursor: not-allowed;
-
-    &::placeholder {
-      color: var(
-        --ci-placeholder-disabled,
-        var(--controls-text-secondary-disable, #9fa6bd)
-      );
-    }
+    color: var(--ci-text-disabled, var(--text-control-disable, #6b7280));
+    @apply cursor-not-allowed;
   }
-}
-
-.stopIcon {
-  color: var(--ci-stop-color, var(--text-secondary, #6b7280));
 }
 
 .modelSelectorButton {
   .modelSelectorCaret {
     color: var(--ci-model-selector-caret-color, var(--text-primary, #161b2d));
   }
-  &:hover,
+
+  &:hover {
+    background: var(
+      --ci-model-selector-hover-bg,
+      var(--bg-control-accent-alpha-hover, #2764d924)
+    );
+  }
+
   &:active {
     background: var(
       --ci-model-selector-hover-bg,
-      var(--controls-bg-accent-primary-alpha-active, #7da4ff5c)
+      var(--bg-control-accent-alpha-active, #2764d933)
     );
   }
 
   &.modelSelectorButtonDisabled {
-    color: var(
-      --ci-model-selector-disabled-color,
-      var(--controls-text-primary-disable, #696e7c)
-    );
-
+    @apply opacity-50;
     .modelSelectorCaret {
       color: var(
         --ci-model-selector-disabled-color,
-        var(--controls-text-primary-disable, #696e7c)
+        var(--text-control-disable, #6b7280)
       );
     }
   }

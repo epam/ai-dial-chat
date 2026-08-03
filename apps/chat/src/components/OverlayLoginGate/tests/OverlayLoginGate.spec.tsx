@@ -4,89 +4,153 @@ import {
   AuthI18nKeys,
   ButtonsI18nKeys,
 } from '../../../constants/translation-keys';
-import {
-  OverlayExternalLoginStatus,
-  useOverlayExternalLogin,
-} from '../../../hooks/auth/useOverlayExternalLogin';
+import { OverlayExternalLoginStatus } from '../../../hooks/auth/useOverlayExternalLogin';
+import { useOverlayProviderLogin } from '../../../hooks/auth/useOverlayProviderLogin';
 import OverlayLoginGate from '../OverlayLoginGate';
 
-vi.mock('../../../hooks/auth/useOverlayExternalLogin', () => ({
-  OverlayExternalLoginStatus: {
-    Idle: 'idle',
-    Opening: 'opening',
-    Waiting: 'waiting',
-    Blocked: 'blocked',
-    TakingLonger: 'takingLonger',
-  },
-  useOverlayExternalLogin: vi.fn(),
+vi.mock('../../../hooks/auth/useOverlayProviderLogin', () => ({
+  useOverlayProviderLogin: vi.fn(),
 }));
 
 describe('OverlayLoginGate', () => {
-  const openLoginSpy = vi.fn();
-  const mockUseOverlayExternalLogin = vi.mocked(useOverlayExternalLogin);
+  const openLogin = vi.fn();
+  const openProviderLogin = vi.fn();
+  const retryLoadProviders = vi.fn();
+  const mockUseOverlayProviderLogin = vi.mocked(useOverlayProviderLogin);
+
+  const mockHook = (
+    overrides: Partial<ReturnType<typeof useOverlayProviderLogin>> = {},
+  ) => {
+    mockUseOverlayProviderLogin.mockReturnValue({
+      hasProviderConfiguration: false,
+      providers: null,
+      isLoadingProviders: false,
+      hasProviderError: false,
+      retryLoadProviders,
+      openProviderLogin,
+      openLogin,
+      externalLoginStatus: OverlayExternalLoginStatus.Idle,
+      ...overrides,
+    });
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseOverlayExternalLogin.mockReturnValue({
-      status: OverlayExternalLoginStatus.Idle,
-      openLogin: openLoginSpy,
-    });
+    mockHook();
   });
 
-  it('renders the localized gate content and login action', () => {
+  it('renders the single login action when no provider configuration exists', () => {
     render(<OverlayLoginGate />);
 
-    expect(screen.getByText(AuthI18nKeys.OverlayLoginTitle)).toBeTruthy();
-    expect(screen.getByText(AuthI18nKeys.OverlayLoginDescription)).toBeTruthy();
     expect(
-      (
-        screen.getByRole('button', {
-          name: ButtonsI18nKeys.LogIn,
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(false);
+      screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText(AuthI18nKeys.OverlayProviderPickerLoading),
+    ).toBeNull();
   });
 
-  it('calls openLogin when the login action is clicked', () => {
+  it('opens the generic login flow from the single action', () => {
     render(<OverlayLoginGate />);
 
     fireEvent.click(
       screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
     );
 
-    expect(openLoginSpy).toHaveBeenCalledOnce();
+    expect(openLogin).toHaveBeenCalledOnce();
   });
 
-  it.each([
-    OverlayExternalLoginStatus.Opening,
-    OverlayExternalLoginStatus.Waiting,
-  ])(
-    'disables the login action while the external login state is %s',
-    (status) => {
-      mockUseOverlayExternalLogin.mockReturnValue({
-        status,
-        openLogin: openLoginSpy,
-      });
+  it('announces provider loading and marks the gate busy', () => {
+    mockHook({
+      hasProviderConfiguration: true,
+      isLoadingProviders: true,
+    });
 
-      const { container } = render(<OverlayLoginGate />);
+    const { container } = render(<OverlayLoginGate />);
 
-      expect(
-        container.querySelector('section')?.getAttribute('aria-busy'),
-      ).toBe('true');
-      expect(
-        (
-          screen.getByRole('button', {
-            name: ButtonsI18nKeys.LogIn,
-          }) as HTMLButtonElement
-        ).disabled,
-      ).toBe(true);
-    },
-  );
+    expect(
+      screen.getByText(AuthI18nKeys.OverlayProviderPickerLoading),
+    ).toBeTruthy();
+    expect(container.querySelector('section')?.getAttribute('aria-busy')).toBe(
+      'true',
+    );
+  });
 
-  it('announces a blocked external login window as an alert and keeps retry enabled', () => {
-    mockUseOverlayExternalLogin.mockReturnValue({
-      status: OverlayExternalLoginStatus.Blocked,
-      openLogin: openLoginSpy,
+  it('announces provider errors and retries loading', () => {
+    mockHook({
+      hasProviderConfiguration: true,
+      hasProviderError: true,
+    });
+
+    render(<OverlayLoginGate />);
+    expect(screen.getByRole('alert').textContent).toBe(
+      AuthI18nKeys.OverlayProvidersError,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.Retry }),
+    );
+    expect(retryLoadProviders).toHaveBeenCalledOnce();
+  });
+
+  it('renders one action per provider and starts the selected provider flow', () => {
+    mockHook({
+      hasProviderConfiguration: true,
+      providers: [
+        { id: 'keycloak', label: 'Keycloak' },
+        { id: 'entra', label: 'Microsoft Entra ID' },
+      ],
+    });
+
+    render(<OverlayLoginGate />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Keycloak' }));
+    expect(
+      screen.getByRole('button', { name: 'Microsoft Entra ID' }),
+    ).toBeTruthy();
+    expect(openProviderLogin).toHaveBeenCalledWith('keycloak');
+  });
+
+  it('allows replacing an external login while it is waiting', () => {
+    mockHook({
+      hasProviderConfiguration: true,
+      providers: [
+        { id: 'keycloak', label: 'Keycloak' },
+        { id: 'entra', label: 'Microsoft Entra ID' },
+      ],
+      externalLoginStatus: OverlayExternalLoginStatus.Waiting,
+    });
+
+    render(<OverlayLoginGate />);
+
+    const keycloakButton = screen.getByRole<HTMLButtonElement>('button', {
+      name: 'Keycloak',
+    });
+    expect(keycloakButton.disabled).toBe(false);
+
+    fireEvent.click(keycloakButton);
+    expect(openProviderLogin).toHaveBeenCalledWith('keycloak');
+  });
+
+  it('allows replacing a generic external login while it is waiting', () => {
+    mockHook({
+      externalLoginStatus: OverlayExternalLoginStatus.Waiting,
+    });
+
+    render(<OverlayLoginGate />);
+
+    const loginButton = screen.getByRole<HTMLButtonElement>('button', {
+      name: ButtonsI18nKeys.LogIn,
+    });
+    expect(loginButton.disabled).toBe(false);
+
+    fireEvent.click(loginButton);
+    expect(openLogin).toHaveBeenCalledOnce();
+  });
+
+  it('announces a blocked external login as an alert', () => {
+    mockHook({
+      externalLoginStatus: OverlayExternalLoginStatus.Blocked,
     });
 
     render(<OverlayLoginGate />);
@@ -94,31 +158,17 @@ describe('OverlayLoginGate', () => {
     expect(screen.getByRole('alert').textContent).toBe(
       AuthI18nKeys.OverlayExternalLoginBlocked,
     );
-    expect(
-      (
-        screen.getByRole('button', {
-          name: ButtonsI18nKeys.LogIn,
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(false);
   });
 
-  it('announces a long-running attempt politely and keeps retry enabled', () => {
-    mockUseOverlayExternalLogin.mockReturnValue({
-      status: OverlayExternalLoginStatus.TakingLonger,
-      openLogin: openLoginSpy,
+  it('announces a long-running attempt politely', () => {
+    mockHook({
+      externalLoginStatus: OverlayExternalLoginStatus.TakingLonger,
     });
 
     const { container } = render(<OverlayLoginGate />);
 
-    const liveRegion = container.querySelector('[aria-live="polite"]');
-    expect(liveRegion?.textContent).toBe(AuthI18nKeys.OverlayLoginTakingLonger);
-    expect(
-      (
-        screen.getByRole('button', {
-          name: ButtonsI18nKeys.LogIn,
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(false);
+    expect(container.querySelector('[aria-live="polite"]')?.textContent).toBe(
+      AuthI18nKeys.OverlayLoginTakingLonger,
+    );
   });
 });

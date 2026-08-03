@@ -64,3 +64,16 @@ describe('ToolsetBodyDto — endpoint', () => {
     expect(errors.some((e) => e.property === 'endpoint')).toBe(true);
   });
 });
+
+describe('ToolsetBodyDto — authSettings', () => {
+  it('rejects when authSettings is missing', async () => {
+    const { authSettings: _omitted, ...noAuthSettings } = BASE_BODY;
+    const errors = await validateDto(noAuthSettings);
+    expect(errors.some((e) => e.property === 'authSettings')).toBe(true);
+  });
+
+  it('rejects when authSettings is an empty object', async () => {
+    const errors = await validateDto({ ...BASE_BODY, authSettings: {} });
+    expect(errors.some((e) => e.property === 'authSettings')).toBe(true);
+  });
+});

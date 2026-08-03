@@ -50,17 +50,6 @@ import { SearchBar } from '@epam/ai-dial-kit';
 />;
 ```
 
-### GhostIconButton
-
-An icon-only button with a ghost (transparent) background.
-
-```tsx
-import { GhostIconButton } from '@epam/ai-dial-kit';
-import { IconSettings } from '@tabler/icons-react';
-
-<GhostIconButton icon={IconSettings} onClick={handleSettings} />;
-```
-
 ### TabRow
 
 Horizontal tab navigation component.

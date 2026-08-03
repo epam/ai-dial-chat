@@ -8,11 +8,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ElementSize: { Small: 'small' },
   mergeClasses: (...classes: (string | undefined)[]) =>
     classes.filter(Boolean).join(' '),
-  DialGhostIconButton: ({
-    'aria-label': ariaLabel,
-  }: {
-    'aria-label': string;
-  }) => <button type="button" aria-label={ariaLabel} />,
+  GhostIconButton: ({ 'aria-label': ariaLabel }: { 'aria-label': string }) => (
+    <button type="button" aria-label={ariaLabel} />
+  ),
 }));
 
 const makeSource = (

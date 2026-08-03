@@ -65,6 +65,7 @@ export enum ApiI18nKeys {
 }
 
 export enum ButtonsI18nKeys {
+  Retry = 'buttons.retry',
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
   Create = 'buttons.create',
@@ -245,6 +246,7 @@ export enum ScheduledTasksI18nKeys {
   ListErrorLabel = 'scheduledTasks.list.errorLabel',
   ListRetryLabel = 'scheduledTasks.list.retryLabel',
   ListSharedSectionTitle = 'scheduledTasks.list.sharedSectionTitle',
+  ListLoadingMoreLabel = 'scheduledTasks.list.loadingMoreLabel',
   CardNewBadgeLabel = 'scheduledTasks.card.newBadgeLabel',
   CardActionsLabel = 'scheduledTasks.card.actionsLabel',
   CardEditActionLabel = 'scheduledTasks.card.editActionLabel',
@@ -427,6 +429,8 @@ export enum AuthI18nKeys {
   OverlayLoginDescription = 'auth.overlayLoginDescription',
   OverlayExternalLoginBlocked = 'auth.overlayExternalLoginBlocked',
   OverlayLoginTakingLonger = 'auth.overlayLoginTakingLonger',
+  OverlayProviderPickerLoading = 'auth.overlayProviderPickerLoading',
+  OverlayProvidersError = 'auth.overlayProvidersError',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
   UserAvatar = 'auth.userAvatar',

@@ -7,8 +7,57 @@ import type {
 } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DialClientService } from '../../dial/dial-client.service';
+import type { UserConfig } from '../dto/user-config.dto';
 import { UserConfigController } from '../user-config.controller';
 import { UserConfigService } from '../user-config.service';
+
+const makeDialClient = () =>
+  ({
+    client: {
+      downloadFile: vi.fn(),
+      uploadFile: vi.fn(),
+      deleteFile: vi.fn(),
+    },
+    baseUrl: 'http://localhost:3000',
+    dialApiVersion: '2024-10-21',
+  }) as unknown as DialClientService;
+
+const makeSingleDownloadSpy = (
+  service: UserConfigService,
+  options: { ok: boolean; body?: string },
+) =>
+  vi.spyOn(service['dialClient'].client, 'downloadFile').mockResolvedValue({
+    response: {
+      ok: options.ok,
+      text: async () => options.body ?? '',
+    },
+  } as never);
+
+const makeUploadSpy = (service: UserConfigService) =>
+  vi.spyOn(service['dialClient'].client, 'uploadFile').mockResolvedValue({
+    response: { status: 200, text: async () => '' },
+  } as never);
+
+const getUploadedConfigAt = async (
+  uploadSpy: ReturnType<typeof vi.spyOn>,
+  callIndex: number,
+) => {
+  const formData = (uploadSpy.mock.calls[callIndex] as unknown[])[2] as {
+    body: FormData;
+  };
+  const file = formData.body.get('file') as Blob;
+  return JSON.parse(await file.text()) as UserConfig;
+};
+
+const v3Config = (overrides?: Partial<UserConfig>): UserConfig => ({
+  version: 3,
+  conversations: { pinnedIds: [] },
+  toolsets: { installed: [] },
+  deployments: { installed: [], selectedId: null },
+  legacyMigrationDone: true,
+  ...overrides,
+});
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -311,5 +360,90 @@ describe('UserConfigController (integration)', () => {
         TEST_USER.bucket,
       );
     });
+  });
+});
+
+describe('PATCH /api/v1/user-config/toolsets — real service', () => {
+  let app: INestApplication;
+  let realService: UserConfigService;
+
+  beforeEach(async () => {
+    realService = new UserConfigService(makeDialClient());
+
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [UserConfigController],
+      providers: [{ provide: UserConfigService, useValue: realService }],
+    }).compile();
+
+    app = module.createNestApplication();
+    app.use(
+      (req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
+        req.user = TEST_USER;
+        next();
+      },
+    );
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+    await app.init();
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('is idempotent when installing an already-installed toolset id', async () => {
+    /*
+     * `legacyMigrationDone: true` (v3Config) short-circuits the legacy
+     * installation-file consolidation in readConfig, so each request writes
+     * back exactly once — matching the pattern in
+     * user-config.service.spec.ts's "does not duplicate" unit test.
+     */
+    makeSingleDownloadSpy(realService, {
+      ok: true,
+      body: JSON.stringify(
+        v3Config({ toolsets: { installed: ['toolset-abc'] } }),
+      ),
+    });
+    const uploadSpy = makeUploadSpy(realService);
+
+    await request(app.getHttpServer())
+      .patch('/user-config/toolsets')
+      .send({ id: 'toolset-abc', isInstalled: true })
+      .expect(204);
+    await request(app.getHttpServer())
+      .patch('/user-config/toolsets')
+      .send({ id: 'toolset-abc', isInstalled: true })
+      .expect(204);
+
+    expect(uploadSpy).toHaveBeenCalledTimes(2);
+    const firstUpload = await getUploadedConfigAt(uploadSpy, 0);
+    const secondUpload = await getUploadedConfigAt(uploadSpy, 1);
+    for (const uploaded of [firstUpload, secondUpload]) {
+      expect(
+        uploaded.toolsets.installed.filter((id) => id === 'toolset-abc'),
+      ).toHaveLength(1);
+    }
+  });
+
+  it('is a no-op when uninstalling a toolset id that is not installed', async () => {
+    makeSingleDownloadSpy(realService, {
+      ok: true,
+      body: JSON.stringify(v3Config()),
+    });
+    const uploadSpy = makeUploadSpy(realService);
+
+    await request(app.getHttpServer())
+      .patch('/user-config/toolsets')
+      .send({ id: 'toolset-missing', isInstalled: false })
+      .expect(204);
+
+    const uploaded = await getUploadedConfigAt(uploadSpy, 0);
+    expect(uploaded.toolsets.installed).toHaveLength(0);
   });
 });

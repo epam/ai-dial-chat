@@ -6,7 +6,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   DialEllipsisTooltip,
-  DialGhostIconButton,
+  GhostIconButton,
   ElementSize,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
@@ -117,7 +117,7 @@ export const CitationCard: FC<CitationCardProps> = ({
         </div>
         {hasSwitcher && (
           <div className="flex shrink-0 items-center gap-1">
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconChevronLeft size={14} className="rtl:scale-x-[-1]" />}
               size={ElementSize.Small}
               aria-label={labels.previousCitation}
@@ -126,7 +126,7 @@ export const CitationCard: FC<CitationCardProps> = ({
             <span className={mergeClasses(switcherClassName, 'text-secondary')}>
               {labels.formatSwitcherText(activeIndex + 1, total)}
             </span>
-            <DialGhostIconButton
+            <GhostIconButton
               icon={<IconChevronRight size={14} className="rtl:scale-x-[-1]" />}
               size={ElementSize.Small}
               aria-label={labels.nextCitation}

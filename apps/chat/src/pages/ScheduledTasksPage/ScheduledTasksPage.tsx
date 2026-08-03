@@ -2,14 +2,7 @@ import {
   ScheduledTasks,
   ScheduledTasksSortKey,
 } from '@epam/ai-dial-scheduled-tasks';
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FC,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -37,15 +30,17 @@ const ScheduledTasksPage: FC = () => {
 
   const {
     items: taskDtos,
+    searchQuery,
+    setSearchQuery,
+    sortKey,
+    setSortKey,
     isLoading,
+    isLoadingMore,
     error,
+    hasMore,
+    loadMore,
     refetch,
   } = useScheduledTasks(isEnabled);
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortKey, setSortKey] = useState<ScheduledTasksSortKey>(
-    ScheduledTasksSortKey.FirstToRun,
-  );
 
   useEffect(() => {
     const state = location.state as NavigationState | null;
@@ -94,6 +89,7 @@ const ScheduledTasksPage: FC = () => {
       errorLabel: t(ScheduledTasksI18nKeys.ListErrorLabel),
       retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
       sharedSectionTitle: t(ScheduledTasksI18nKeys.ListSharedSectionTitle),
+      loadingMoreLabel: t(ScheduledTasksI18nKeys.ListLoadingMoreLabel),
       cardLabels: {
         newBadgeLabel: t(ScheduledTasksI18nKeys.CardNewBadgeLabel),
         actionsLabel: t(ScheduledTasksI18nKeys.CardActionsLabel),
@@ -132,6 +128,9 @@ const ScheduledTasksPage: FC = () => {
       isLoading={isLoading}
       error={error}
       onRetry={refetch}
+      hasMore={hasMore}
+      isLoadingMore={isLoadingMore}
+      onLoadMore={loadMore}
     />
   );
 };

@@ -16,6 +16,7 @@ import { EnvironmentVariables } from '../config/environment.config';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
+import type { ListScheduledTasksQueryDto } from './dto/list-scheduled-tasks-query.dto';
 import type { ListScheduledTasksResponseDto } from './dto/list-scheduled-tasks.dto';
 import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
 import type { UpdateScheduledTaskBodyDto } from './dto/update-scheduled-task.dto';
@@ -26,6 +27,7 @@ import {
 } from './scheduled-tasks.mapper';
 
 const LIST_CACHE_TTL_MS = 30 * 1000;
+const LIST_CACHE_EPOCH_TTL_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class ScheduledTasksService {
@@ -63,6 +65,63 @@ export class ScheduledTasksService {
     return scheduleId
       ? `${base}/${encodeURIComponent(scheduleId)}`
       : `${base}/`;
+  }
+
+  private buildSchedulesListUrl(query: ListScheduledTasksQueryDto): string {
+    const searchParams = new URLSearchParams();
+    if (query.limit != null) {
+      searchParams.set('limit', String(query.limit));
+    }
+    if (query.offset != null) {
+      searchParams.set('offset', String(query.offset));
+    }
+    if (query.search) {
+      searchParams.set('name', query.search);
+    }
+    const queryString = searchParams.toString();
+    const url = this.buildSchedulesUrl();
+    return queryString ? `${url}?${queryString}` : url;
+  }
+
+  /*
+   * cache-manager's `Cache` type has no key-enumeration/prefix-delete API, so
+   * invalidating "every cached list variant for a user" (one per limit/offset/
+   * search combination) can't be done by scanning keys. Instead, each user has
+   * an "epoch" counter baked into their list cache keys; bumping the epoch on
+   * create/update makes every previously cached variant unreachable without
+   * needing to know or delete each key individually.
+   */
+  private listCacheEpochKey(userSub: string): string {
+    return `scheduled-tasks:list-epoch:${userSub}`;
+  }
+
+  private async getListCacheEpoch(userSub: string): Promise<number> {
+    return (
+      (await this.cacheManager.get<number>(this.listCacheEpochKey(userSub))) ??
+      0
+    );
+  }
+
+  /*
+   * `limit`/`offset` are always validated, delimiter-free digit sequences
+   * (or the empty string), so the leading two `:`-separated fields can never
+   * be ambiguous with each other or with `search`. `search` is still
+   * percent-encoded before being embedded, purely so a colon in a search
+   * term doesn't make the raw cache key/log line harder for a human to read.
+   */
+  private normalizeListQuery(query: ListScheduledTasksQueryDto): string {
+    const limit = query.limit ?? '';
+    const offset = query.offset ?? 0;
+    const search = encodeURIComponent(query.search ?? '');
+    return `${limit}:${offset}:${search}`;
+  }
+
+  private async buildListCacheKey(
+    userSub: string,
+    query: ListScheduledTasksQueryDto,
+  ): Promise<string> {
+    const epoch = await this.getListCacheEpoch(userSub);
+    return `scheduled-tasks:list:${userSub}:${epoch}:${this.normalizeListQuery(query)}`;
   }
 
   private async fetchUpstream(
@@ -176,16 +235,17 @@ export class ScheduledTasksService {
   async listScheduledTasks(
     userSub: string,
     accessToken: string,
+    query: ListScheduledTasksQueryDto = {},
   ): Promise<ListScheduledTasksResponseDto> {
     return withCachedDialRequest({
       cacheManager: this.cacheManager,
-      cacheKey: `scheduled-tasks:list:${userSub}`,
+      cacheKey: await this.buildListCacheKey(userSub, query),
       ttlMs: LIST_CACHE_TTL_MS,
       context: 'list scheduled tasks',
       logger: this.logger,
       fetch: async () => {
         const result = await this.fetchUpstream(
-          this.buildSchedulesUrl(),
+          this.buildSchedulesListUrl(query),
           'GET',
           accessToken,
           'list scheduled tasks',
@@ -266,7 +326,12 @@ export class ScheduledTasksService {
 
   private async invalidateListCache(userSub: string): Promise<void> {
     try {
-      await this.cacheManager.del(`scheduled-tasks:list:${userSub}`);
+      const epoch = await this.getListCacheEpoch(userSub);
+      await this.cacheManager.set(
+        this.listCacheEpochKey(userSub),
+        epoch + 1,
+        LIST_CACHE_EPOCH_TTL_MS,
+      );
     } catch (err) {
       handleDialFetchError(
         err,

@@ -175,7 +175,7 @@ describe('useOpenAttachmentCanvas routing', () => {
     );
 
     expect(opened).toBe(true);
-    expect(mockOpenCanvas).toHaveBeenCalledWith(content, 'doc.md');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(content, 'doc.md', 'doc.md');
   });
 
   it('routes text/markdown MIME type to the markdown resolver (ignores .pdf extension in title)', async () => {
@@ -249,7 +249,11 @@ describe('useOpenAttachmentCanvas routing', () => {
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
     expect(mockResolveJson).not.toHaveBeenCalled();
     expect(mockResolveText).not.toHaveBeenCalled();
-    expect(mockOpenCanvas).toHaveBeenCalledWith(pdfContent, 'doc.pdf');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      pdfContent,
+      'doc.pdf',
+      'doc.pdf',
+    );
   });
 
   it('routes .pdf extension to the PDF resolver', async () => {
@@ -311,7 +315,11 @@ describe('useOpenAttachmentCanvas routing', () => {
     );
 
     expect(opened).toBe(true);
-    expect(mockOpenCanvas).toHaveBeenCalledWith(pdfContent, 'report.pdf');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      pdfContent,
+      'report.pdf',
+      'report.pdf',
+    );
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
   });
 
@@ -354,6 +362,7 @@ describe('useOpenAttachmentCanvas routing', () => {
         type: 'plain_text',
         text: 'A serene sunrise over a tranquil landscape.',
       },
+      'Revised prompt',
       'Revised prompt',
     );
   });
@@ -550,7 +559,11 @@ describe('useOpenAttachmentCanvas — visualizer routing', () => {
     );
 
     expect(opened).toBe(true);
-    expect(mockOpenCanvas).toHaveBeenCalledWith(vizContent, 'chart.x-my-viz');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      vizContent,
+      'chart.x-my-viz',
+      'chart.x-my-viz',
+    );
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
   });
 
@@ -630,6 +643,7 @@ describe('useOpenAttachmentCanvas — visualizer routing', () => {
     expect(opened).toBe(true);
     expect(mockOpenCanvas).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'unsupported' }),
+      'chart.viz',
       'chart.viz',
     );
   });

@@ -18,7 +18,6 @@ import ConversationView from '../../components/ConversationView/ConversationView
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
 import { getConversationRoute } from '../../constants/routes';
 import {
-  AttachmentsI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationPanelI18nKeys,
@@ -47,6 +46,7 @@ import {
   saveConversation,
 } from '../../server-api/conversations.api';
 import { ROUTES } from '../../types/routes';
+import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { getConversationPath } from '../../utils/conversation-path';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
 import { isAwaitingGenerationResume } from '../../utils/generation-resume';
@@ -106,24 +106,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     (filenames: string[]) => {
       showNotification({
         variant: NotificationVariant.Error,
-        title: t(AttachmentsI18nKeys.NetworkErrorTitle),
-        message: (
-          <div className="min-w-0 overflow-hidden">
-            <span className="whitespace-pre-line">
-              {t(AttachmentsI18nKeys.NetworkErrorMessage)}
-            </span>
-            <ul className="mt-1 max-w-[508px]">
-              {filenames.map((name, i) => (
-                <li key={i} className="flex items-center gap-1 overflow-hidden">
-                  <span className="shrink-0" aria-hidden>
-                    •
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{name}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ),
+        ...buildNetworkUploadErrorNotification(filenames, t),
       });
     },
     [showNotification, t],

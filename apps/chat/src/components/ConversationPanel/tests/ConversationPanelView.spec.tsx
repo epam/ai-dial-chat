@@ -162,19 +162,6 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         </div>
       );
     },
-    DialIconButton: ({
-      'aria-label': ariaLabel,
-      onClick,
-      icon,
-    }: {
-      'aria-label': string;
-      onClick?: () => void;
-      icon?: ReactNode;
-    }) => (
-      <button aria-label={ariaLabel} onClick={onClick}>
-        {icon}
-      </button>
-    ),
     ErrorMessageNotification: ({
       message,
       onClose,

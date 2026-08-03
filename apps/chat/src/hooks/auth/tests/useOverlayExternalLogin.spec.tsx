@@ -201,6 +201,40 @@ describe('useOverlayExternalLogin', () => {
     expect(result.current.status).toBe(OverlayExternalLoginStatus.Waiting);
   });
 
+  it('cancels polling and returns to idle when the user cancels login', async () => {
+    let resolveRefresh: (status: AuthStatus) => void = () => undefined;
+    refreshSpy.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveRefresh = resolve;
+        }),
+    );
+    const { result } = renderHook(() => useOverlayExternalLogin());
+
+    act(() => {
+      result.current.openLogin();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(refreshSpy).toHaveBeenCalledOnce();
+
+    act(() => {
+      result.current.cancelLogin();
+    });
+
+    expect(authWindow.close).toHaveBeenCalledOnce();
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    expect(result.current.status).toBe(OverlayExternalLoginStatus.Idle);
+
+    await act(async () => {
+      resolveRefresh(AuthStatus.Unauthenticated);
+      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(refreshSpy).toHaveBeenCalledOnce();
+  });
+
   it('cleans up poll and long-wait timers on unmount', () => {
     const { result, unmount } = renderHook(() => useOverlayExternalLogin());
     act(() => {

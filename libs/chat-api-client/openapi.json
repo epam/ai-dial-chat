@@ -4131,7 +4131,43 @@
       "get": {
         "description": "Returns the DIAL Scheduler schedules visible to the authenticated session user. Proxies the DIAL Scheduler routed-deployment API using the session access token. Results are cached server-side for 30 seconds per user.",
         "operationId": "listScheduledTasks",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of scheduled tasks to return.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset of the first scheduled task to return.",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive substring match against the scheduled task display name.",
+            "schema": {
+              "maxLength": 200,
+              "example": "daily",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successfully retrieved scheduled task list",
@@ -4142,6 +4178,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid limit, offset, or search query parameter"
           },
           "401": {
             "description": "Not authenticated"
@@ -8427,13 +8466,13 @@
             "description": "Offset of `items` within the full upstream result set."
           },
           "next": {
-            "type": "object",
+            "type": "string",
             "example": null,
             "nullable": true,
             "description": "Upstream URL for the next page, or null if this is the last page."
           },
           "previous": {
-            "type": "object",
+            "type": "string",
             "example": null,
             "nullable": true,
             "description": "Upstream URL for the previous page, or null if this is the first page."

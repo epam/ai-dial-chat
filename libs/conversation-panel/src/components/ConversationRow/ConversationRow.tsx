@@ -1,10 +1,9 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Button,
-  ButtonAppearance,
   DIAL_ICON_SIZE,
   DialDropdown,
-  DialIconButton,
+  DialGhostIconButton,
   DialSkeleton,
   DialSkeletonVariant,
   ElementSize,
@@ -203,7 +202,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
           onClick={item.href ? undefined : () => onSelectConversation(item.id)}
           tabIndex={item.href ? -1 : undefined}
           className={mergeClasses(
-            'flex h-8 w-full items-center justify-start gap-2 rounded-xl py-2 ps-3',
+            'h-8 w-full justify-start gap-2 rounded-xl py-2 ps-3',
             buttonPaddingEnd,
             styles.item,
             isActive && styles.itemActive,
@@ -227,7 +226,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
             matchReferenceWidth={false}
             listClassName="w-[140px] cp-dropdown-overlay"
           >
-            <DialIconButton
+            <DialGhostIconButton
               ref={actionTriggerRef}
               icon={
                 <IconDotsVertical
@@ -236,7 +235,6 @@ export const ConversationRow: FC<ConversationRowProps> = ({
                   aria-hidden
                 />
               }
-              appearance={ButtonAppearance.Ghost}
               size={ElementSize.Small}
               aria-label={actionsLabel}
               className={mergeClasses(
