@@ -185,7 +185,9 @@ fetch('/api/v1/user-config/toolsets', {
     'X-CSRF-Token': '<token from a Network tab response header>',
   },
   body: JSON.stringify({ id: 'toolset-abc', isInstalled: true }),
-}).then((r) => r.status).then(console.log);
+})
+  .then((r) => r.status)
+  .then(console.log);
 ```
 
 ## 6. Negative Cases
