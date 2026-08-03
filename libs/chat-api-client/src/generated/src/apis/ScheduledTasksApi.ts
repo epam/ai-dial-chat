@@ -30,6 +30,12 @@ export interface GetScheduledTaskRequest {
   scheduleId: string;
 }
 
+export interface ListScheduledTasksRequest {
+  limit?: number;
+  offset?: number;
+  search?: string;
+}
+
 export interface UpdateScheduledTaskRequest {
   scheduleId: string;
   updateScheduledTaskBodyDto: UpdateScheduledTaskBodyDto;
@@ -149,9 +155,22 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
    * List scheduled tasks
    */
   async listScheduledTasksRaw(
+    requestParameters: ListScheduledTasksRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<ListScheduledTasksResponseDto>> {
     const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['offset'] != null) {
+      queryParameters['offset'] = requestParameters['offset'];
+    }
+
+    if (requestParameters['search'] != null) {
+      queryParameters['search'] = requestParameters['search'];
+    }
 
     const headerParameters: runtime.HTTPHeaders = {};
 
@@ -175,9 +194,13 @@ export class ScheduledTasksApi extends runtime.BaseAPI {
    * List scheduled tasks
    */
   async listScheduledTasks(
+    requestParameters: ListScheduledTasksRequest = {},
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ListScheduledTasksResponseDto> {
-    const response = await this.listScheduledTasksRaw(initOverrides);
+    const response = await this.listScheduledTasksRaw(
+      requestParameters,
+      initOverrides,
+    );
     return await response.value();
   }
 

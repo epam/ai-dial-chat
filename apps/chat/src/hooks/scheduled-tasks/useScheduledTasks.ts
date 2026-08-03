@@ -1,29 +1,89 @@
+import { ScheduledTasksSortKey } from '@epam/ai-dial-scheduled-tasks';
 import type { ScheduledTaskDto } from '@epam/chat-api-client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { listScheduledTasks } from '../../server-api/scheduled-tasks.api';
+
+/** Page size requested from the BFF on each fetch (initial page and every subsequent load-more page). */
+const PAGE_SIZE = 20;
+
+/** Debounce delay before a `searchQuery` change triggers a server refetch, to avoid a request per keystroke. */
+const SEARCH_DEBOUNCE_MS = 300;
 
 /** Result of {@link useScheduledTasks}. */
 interface UseScheduledTasksResult {
-  /** Fetched scheduled tasks. Empty until the first successful fetch resolves. */
+  /** Accumulated scheduled tasks across all loaded pages. Empty until the first successful fetch resolves. */
   items: ScheduledTaskDto[];
-  /** Whether a fetch (initial or triggered by `refetch`) is in flight. */
+  /** Current search query. Changing it (debounced) resets `items` and refetches page 0 with the new value. */
+  searchQuery: string;
+  /** Updates `searchQuery`. */
+  setSearchQuery: (query: string) => void;
+  /** Currently selected sort key. Purely a client-side concern — changing it never triggers a fetch. */
+  sortKey: ScheduledTasksSortKey;
+  /** Updates `sortKey`. */
+  setSortKey: (key: ScheduledTasksSortKey) => void;
+  /** Whether the initial fetch (or a fetch triggered by a `searchQuery` change or `refetch`) is in flight. */
   isLoading: boolean;
+  /** Whether a `loadMore` fetch is in flight. */
+  isLoadingMore: boolean;
   /** Set when the most recent fetch failed; `null` otherwise. */
   error: Error | null;
-  /** Triggers a new fetch, e.g. after returning from the create flow or on retry. */
+  /** Whether another page exists beyond the currently loaded `items`. */
+  hasMore: boolean;
+  /** Fetches and appends the next page, when `hasMore` and no fetch is already in flight. */
+  loadMore: () => void;
+  /** Resets to page 0 with the current `searchQuery`, e.g. after returning from the create flow or on retry. */
   refetch: () => void;
 }
 
+/** Tracks the cancellation state of an in-flight `loadMore` fetch so a superseded search/reset can abort it. */
+interface LoadMoreCancellation {
+  abort: () => void;
+  cancelled: { value: boolean };
+}
+
 /**
- * Fetches the scheduled tasks list when enabled and on demand via `refetch`.
- * Aborts the in-flight request and skips state updates if the component
- * unmounts or a new fetch is triggered before the previous one resolves.
+ * Owns pagination and server-driven search for the Scheduled Tasks list.
+ * `searchQuery` changes (debounced) and `refetch()` reset `items` and fetch
+ * page 0; `loadMore()` appends the next page. `sortKey` is tracked here for
+ * convenience but never sent to the server — the upstream DIAL Scheduler has
+ * no sort capability, so sorting stays a client-side concern over whatever
+ * has been loaded so far.
  */
 export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
   const [items, setItems] = useState<ScheduledTaskDto[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortKey, setSortKey] = useState<ScheduledTasksSortKey>(
+    ScheduledTasksSortKey.FirstToRun,
+  );
   const [isLoading, setIsLoading] = useState(enabled);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [refetchToken, setRefetchToken] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [resetToken, setResetToken] = useState(0);
+
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  /*
+   * The next offset to request from the server. Deliberately independent of
+   * `items.length`: `items` is deduplicated by id before being stored, so its
+   * length can fall behind how many rows the server has actually served
+   * across all pages (e.g. if a page boundary happens to repeat a row).
+   * Using `items.length` as the offset would then re-request an
+   * already-served window instead of the next one.
+   */
+  const nextOffsetRef = useRef(0);
+
+  /* Lets the main load effect cancel a `loadMore` fetch that's still in
+   * flight when a new search/reset supersedes it, so its result can't be
+   * appended onto an unrelated, newer `items` array. */
+  const loadMoreCancelRef = useRef<LoadMoreCancellation | null>(null);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!enabled) {
@@ -39,9 +99,16 @@ export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await listScheduledTasks(controller.signal);
+        const response = await listScheduledTasks({
+          limit: PAGE_SIZE,
+          offset: 0,
+          search: debouncedSearchQuery,
+          signal: controller.signal,
+        });
         if (!cancelled.value) {
           setItems(response.items);
+          setHasMore(response.next != null);
+          nextOffsetRef.current = response.items.length;
         }
       } catch (err) {
         if (!cancelled.value) {
@@ -63,14 +130,80 @@ export const useScheduledTasks = (enabled = true): UseScheduledTasksResult => {
     return () => {
       cancelled.value = true;
       controller.abort();
+      loadMoreCancelRef.current?.abort();
+      if (loadMoreCancelRef.current) {
+        loadMoreCancelRef.current.cancelled.value = true;
+      }
+      loadMoreCancelRef.current = null;
     };
-  }, [enabled, refetchToken]);
+  }, [enabled, debouncedSearchQuery, resetToken]);
+
+  const loadMore = useCallback(() => {
+    if (!enabled || !hasMore || isLoadingMore || isLoading) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const cancelled = { value: false };
+    loadMoreCancelRef.current = { abort: () => controller.abort(), cancelled };
+    const offset = nextOffsetRef.current;
+
+    const run = async () => {
+      setIsLoadingMore(true);
+      setError(null);
+      try {
+        const response = await listScheduledTasks({
+          limit: PAGE_SIZE,
+          offset,
+          search: debouncedSearchQuery,
+          signal: controller.signal,
+        });
+        if (!cancelled.value) {
+          setItems((current) => {
+            const existingIds = new Set(current.map((item) => item.id));
+            const newItems = response.items.filter(
+              (item) => !existingIds.has(item.id),
+            );
+            return [...current, ...newItems];
+          });
+          setHasMore(response.next != null);
+          nextOffsetRef.current = offset + response.items.length;
+        }
+      } catch (err) {
+        if (!cancelled.value) {
+          setError(
+            err instanceof Error
+              ? err
+              : new Error('Failed to load more scheduled tasks'),
+          );
+        }
+      } finally {
+        if (!cancelled.value) {
+          setIsLoadingMore(false);
+        }
+      }
+    };
+
+    run();
+  }, [enabled, hasMore, isLoadingMore, isLoading, debouncedSearchQuery]);
 
   const refetch = useCallback(() => {
     if (enabled) {
-      setRefetchToken((token) => token + 1);
+      setResetToken((token) => token + 1);
     }
   }, [enabled]);
 
-  return { items, isLoading, error, refetch };
+  return {
+    items,
+    searchQuery,
+    setSearchQuery,
+    sortKey,
+    setSortKey,
+    isLoading,
+    isLoadingMore,
+    error,
+    hasMore,
+    loadMore,
+    refetch,
+  };
 };

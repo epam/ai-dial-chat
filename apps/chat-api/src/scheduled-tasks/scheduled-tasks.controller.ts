@@ -7,10 +7,17 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
@@ -22,6 +29,7 @@ import {
   CreatedScheduledTaskDto,
 } from './dto/create-scheduled-task.dto';
 import { GetScheduledTaskDto } from './dto/get-scheduled-task.dto';
+import { ListScheduledTasksQueryDto } from './dto/list-scheduled-tasks-query.dto';
 import { ListScheduledTasksResponseDto } from './dto/list-scheduled-tasks.dto';
 import { ScheduledTaskDto } from './dto/scheduled-task.dto';
 import {
@@ -39,7 +47,7 @@ export class ScheduledTasksController {
 
   @Get()
   @Throttle({ default: { limit: 60, ttl: 60000 } })
-  @Header('Cache-Control', 'private, max-age=30')
+  @Header('Cache-Control', 'private, no-store')
   @ApiOperation({
     operationId: 'listScheduledTasks',
     summary: 'List scheduled tasks',
@@ -48,10 +56,33 @@ export class ScheduledTasksController {
       'Proxies the DIAL Scheduler routed-deployment API using the session access token. ' +
       'Results are cached server-side for 30 seconds per user.',
   })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Maximum number of scheduled tasks to return.',
+  })
+  @ApiQuery({
+    name: 'offset',
+    required: false,
+    type: Number,
+    description: 'Offset of the first scheduled task to return.',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description:
+      'Case-insensitive substring match against the scheduled task display name.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Successfully retrieved scheduled task list',
     type: ListScheduledTasksResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid limit, offset, or search query parameter',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({
@@ -71,9 +102,10 @@ export class ScheduledTasksController {
   })
   listScheduledTasks(
     @Req() req: Request,
+    @Query() query: ListScheduledTasksQueryDto,
   ): Promise<ListScheduledTasksResponseDto> {
     const { sub, at } = req.user as SessionUser;
-    return this.scheduledTasksService.listScheduledTasks(sub, at);
+    return this.scheduledTasksService.listScheduledTasks(sub, at, query);
   }
 
   @Post()

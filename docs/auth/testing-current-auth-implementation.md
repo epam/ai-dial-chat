@@ -2,8 +2,8 @@
 
 This guide covers the auth behavior that exists today:
 
-- Implemented: BFF OIDC login, callback, encrypted session cookie, `GET /api/v1/auth/me`, global `SessionGuard`, and transparent refresh.
-- Not implemented yet: SPA auth integration, `POST /api/v1/auth/logout`, CSRF guard, and multi-provider manual smoke beyond configured local providers.
+- Implemented: BFF OIDC login, callback, encrypted session cookie, `GET /api/v1/auth/me`, global `SessionGuard`, global `CsrfGuard` on mutating requests, and transparent refresh.
+- Not implemented yet: SPA auth integration, `POST /api/v1/auth/logout`, and multi-provider manual smoke beyond configured local providers.
 
 ## 1. Automated Verification
 
@@ -121,7 +121,74 @@ http://localhost:4207/api/themes
 
 Expected auth result: the request passes the auth guard. The final HTTP status may still be `200`, `404`, `502`, or `503` depending on `THEMES_CONFIG_URL` and the external themes service, but it should no longer be `401`.
 
-## 5. Negative Cases
+## 5. Testing CSRF-Protected Mutation Endpoints Externally
+
+The global `CsrfGuard` (`apps/chat-api/src/auth/csrf/csrf.guard.ts`) protects every mutating
+request (`POST`/`PATCH`/`PUT`/`DELETE`) on a non-`@Public()` route. It rejects the request
+with `403 Forbidden` (`{ "code": "CSRF_INVALID", ... }` when the token check fails) unless
+**both** of these hold:
+
+1. The `Origin` header (or, if absent, `Referer`'s origin) matches `CORS_ORIGIN`.
+2. The `X-CSRF-Token` request header exactly matches the CSRF secret bound to the caller's
+   session.
+
+Calling a mutation endpoint straight from Postman/curl with only the session cookie — as in
+[issue #7728](https://github.com/epam/ai-dial-chat/issues/7728) — hits this guard and returns
+`403 Origin check failed` or `403 CSRF_INVALID` before the request ever reaches the handler.
+This is intended behavior, not a bug: the guard is what stops a third-party site from forging
+a mutating request using a victim's browser session. To exercise a mutation endpoint (e.g.
+`PATCH /api/v1/user-config/toolsets`) from an external HTTP client, obtain both a valid
+session and a matching CSRF token first:
+
+1. Complete the login flow (Section 3, steps 1–6) so the session cookie is set.
+2. Fetch the current CSRF token from any authenticated response header — the simplest source
+   is `GET /api/v1/auth/me`, which always sets `X-CSRF-Token` on the response
+   (`apps/chat-api/src/auth/auth.controller.ts`, `getCurrentUser`). Using curl with a cookie
+   jar:
+
+   ```bash
+   curl -i -c cookies.txt -b cookies.txt http://localhost:4207/api/v1/auth/me
+   # read the X-CSRF-Token response header
+   ```
+
+3. Send the mutation with the same cookie jar, the captured token in `X-CSRF-Token`, and an
+   `Origin` header matching `CORS_ORIGIN`:
+
+   ```bash
+   curl -i -b cookies.txt \
+     -H "Content-Type: application/json" \
+     -H "X-CSRF-Token: <token from step 2>" \
+     -H "Origin: http://localhost:4207" \
+     -X PATCH http://localhost:4207/api/v1/user-config/toolsets \
+     -d '{"id":"toolset-abc","isInstalled":true}'
+   ```
+
+   Expected: `204` for a valid body, `400` for a body that fails DTO validation (e.g. missing
+   `id`, non-boolean `isInstalled`) — never `403`, once the cookie/token/origin are all
+   correct.
+
+The token rotates on some responses (`X-CSRF-Token` may reappear with a new value); if a
+mutation unexpectedly 403s with `CSRF_INVALID` partway through a longer manual session,
+re-fetch `GET /api/v1/auth/me` and use its latest token.
+
+**In the browser instead of curl:** the session cookie is `HttpOnly`, so it cannot be read
+from `document.cookie` — but it is sent automatically. Open DevTools on the SPA origin
+(`http://localhost:4207`) after logging in, find the `X-CSRF-Token` response header on any
+recent `Network` request (or from step 2 above), and issue the request from the **Console**
+tab so the browser attaches the session cookie and same-page `Origin`/`Referer` automatically:
+
+```js
+fetch('/api/v1/user-config/toolsets', {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': '<token from a Network tab response header>',
+  },
+  body: JSON.stringify({ id: 'toolset-abc', isInstalled: true }),
+}).then((r) => r.status).then(console.log);
+```
+
+## 6. Negative Cases
 
 Check these directly in the browser or with an HTTP client:
 
@@ -159,6 +226,6 @@ GET /api/v1/auth/callback/keycloak?code=anything&state=<real-state>&iss=https%3A
 
 Expected: `400` with `Issuer mismatch`. Use the real provider id and a real in-flight transaction cookie when checking this manually.
 
-## 6. Current Known Gaps
+## 7. Current Known Gaps
 
 - The Swagger setup still needs final cookie-auth documentation cleanup.

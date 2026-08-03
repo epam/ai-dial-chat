@@ -2,6 +2,7 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsDefined,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -169,6 +170,7 @@ export class ToolsetBodyDto {
   reference?: string;
 
   @ApiProperty({ type: () => ToolsetAuthSettingsBodyDto })
+  @IsDefined()
   @ValidateNested()
   @Type(() => ToolsetAuthSettingsBodyDto)
   authSettings!: ToolsetAuthSettingsBodyDto;
