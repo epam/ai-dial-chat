@@ -1,7 +1,10 @@
 import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { RequestStatus, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { BASE_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import {
+  BASE_ICON_SIZE,
+  NeutralButton,
+  PrimaryButton,
+} from '@epam/ai-dial-ui-kit';
 import { IconFile } from '@tabler/icons-react';
 import {
   ChangeEvent,
@@ -46,6 +49,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   pendingAttachments,
   onPendingAttachmentsConsumed,
   onAttachmentClick,
+  pasteTextThreshold,
+  onMessageTooLong,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDropFiles, setPendingDropFiles] = useState<File[]>([]);
@@ -86,9 +91,15 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   );
 
   const handleSaveClick = () => {
-    if (canSend) {
-      handleSend(currentText, currentNewAttachments);
+    if (!canSend) return;
+    if (
+      !isAttachmentsEnabled &&
+      currentText.length >= (pasteTextThreshold ?? 4000)
+    ) {
+      onMessageTooLong?.(currentText.length, pasteTextThreshold ?? 4000);
+      return;
     }
+    handleSend(currentText, currentNewAttachments);
   };
 
   const handleDropFilesConsumed = useCallback(
@@ -144,6 +155,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         pendingAttachments={pendingAttachments}
         onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
         onAttachmentClick={onAttachmentClick}
+        pasteTextThreshold={pasteTextThreshold}
+        onMessageTooLong={onMessageTooLong}
       />
 
       {/* Action row — outside the bordered box */}

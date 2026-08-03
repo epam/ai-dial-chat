@@ -22,14 +22,14 @@
 }
 
 .icon {
-  color: var(--text-tertiary, #98a2b3);
+  color: var(--text-tertiary, #c7cbd4);
 }
 
 .input {
   background-color: transparent;
-  color: var(--text-primary, #131a29);
+  color: var(--text-primary, #161b2d);
 
   &::placeholder {
-    color: var(--text-tertiary, #98a2b3);
+    color: var(--text-tertiary, #c7cbd4);
   }
 }

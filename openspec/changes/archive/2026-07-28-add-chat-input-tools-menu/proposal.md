@@ -8,6 +8,7 @@ Deployments on DIAL Core can expose boolean configuration properties (e.g. "Deep
 - **Temporary `DEEP_RESEARCH_TOOL_ID` env/config value** — surfaces the tool id (`deep_research`) through the existing `app-config` pipeline so the frontend can identify the relevant deployment-configuration schema property without hard-coding.
 - **Tool selection state in the app layer** — initialized from the deployment schema's `default` value, preserved per active input session, reset when the selected deployment changes.
 - **Tool choices sent as `configuration_value`** — reuses the existing `custom_content.configuration_value` → `custom_fields.configuration` path so DIAL Core receives `{ "deep_research": true }` alongside other configuration values.
+- **Tool choices persisted per user message** — optimistic frontend state and backend conversation history both retain `configuration_value` so regenerate and edit reuse the configuration of the affected message rather than an older fallback.
 - **Host-agnostic tools contract in `libs/conversation-input`** — the lib receives resolved tool models and selection callbacks as props; it renders the UI but has no knowledge of deployment configuration schemas, app config, or env vars.
 
 ## Capabilities
@@ -22,10 +23,10 @@ Deployments on DIAL Core can expose boolean configuration properties (e.g. "Deep
 
 - **Frontend libs** — `libs/conversation-input`: new `toolsMenuItems` prop on `AddAttachmentButton` / `InputProps`; new `ToolsSubmenu` / `ToolsBottomSheet` components inside the lib.
 - **Frontend app** — `apps/chat`: new hook (`useToolsMenu`) in `apps/chat/src/hooks/conversation/` that reads `DeploymentsContext.selectedDeploymentConfiguration`, matches the configured tool id, derives the tool model array, and manages toggle state. Wires into `ConversationView` → `ConversationInput` → `AddAttachmentButton`.
-- **Backend** — `apps/chat-api`: new `DEEP_RESEARCH_TOOL_ID` env var in `EnvironmentVariables`; new config definition in `CONFIG_DEFINITIONS` (visibility: `client`). No new HTTP endpoint — reuses the existing deployment-configuration and completion paths.
+- **Backend** — `apps/chat-api`: new `DEEP_RESEARCH_TOOL_ID` env var in `EnvironmentVariables`; new config definition in `CONFIG_DEFINITIONS` (visibility: `client`); preserve `configuration_value` when completion modes create a user message in conversation history. No new HTTP endpoint.
 - **Shared types** — `libs/chat-shared`: new `ToolMenuItem` interface for the lib prop contract.
 - **i18n** — new keys: `tools.menuTitle`, `tools.deepResearch` (fallback label if schema title is empty).
-- **Existing behavior preserved** — starter buttons, form values, and existing `configuration_value` pass-through remain unchanged. The new tool choices are merged into `configuration_value` alongside existing values.
+- **Existing behavior preserved** — starter buttons, form values, and existing `configuration_value` pass-through remain unchanged. The new tool choices are merged into `configuration_value` alongside existing values and stored with each user message.
 
 ### Closest existing files (investigation evidence)
 

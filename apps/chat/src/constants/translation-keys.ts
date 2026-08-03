@@ -297,6 +297,7 @@ export enum ConversationI18nKeys {
   StagesStep = 'conversation.stages.step',
   AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
   AddMenuTitle = 'conversation.addMenuTitle',
+  MessageTooLong = 'conversation.messageTooLong',
 }
 
 export enum DialFileManagerI18nKeys {
@@ -783,4 +784,12 @@ export enum ToolsI18nKeys {
   DeepResearchFallback = 'tools.deepResearchFallback',
   SelectedCount = 'tools.selectedCount',
   RemoveTool = 'tools.removeTool',
+}
+
+export enum ConversationInputI18nKeys {
+  TriggerAriaLabel = 'conversationInput.usageLimits.triggerAriaLabel',
+  PopoverTitle = 'conversationInput.usageLimits.popoverTitle',
+  Error = 'conversationInput.usageLimits.error',
+  TokensRemaining = 'conversationInput.usageLimits.tokensRemaining',
+  ProgressAriaLabel = 'conversationInput.usageLimits.progressAriaLabel',
 }

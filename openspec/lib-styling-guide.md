@@ -71,10 +71,10 @@ Not allowed in SCSS (use Tailwind instead):
 }
 
 .textarea {
-  color: var(--ci-text, var(--text-primary, #eef1f7));
+  color: var(--ci-text, var(--text-primary, #161B2D));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #575F73));
+    color: var(--ci-placeholder, var(--text-secondary, #6B7280));
   }
 }
 
@@ -174,7 +174,7 @@ Wire the typography vars in `.module.scss` on the element(s) where font styles a
 ```scss
 // ✅ correct — no fallback needed; unset var inherits from parent
 .content {
-  color: var(--ci-text, var(--text-primary, #eef1f7));
+  color: var(--ci-text, var(--text-primary, #161B2D));
   font-size: var(--ci-font-size);
   font-weight: var(--ci-font-weight);
   line-height: var(--ci-line-height);

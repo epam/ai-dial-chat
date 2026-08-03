@@ -8,7 +8,7 @@
 
 Topic checkboxes are sorted alphabetically (`[...values].sort()`).
 
-The `DialLinkButton` trigger label is computed by `getFilterButtonLabel`:
+The `LinkButton` trigger label is computed by `getFilterButtonLabel`:
 - Neither active → `defaultLabel` (default: `'From'`).
 - Only `isMyAppsActive` → `myAppsLabel` (default: `'My Apps'`).
 - Only topics → `getFromLabel(checked, values, defaultLabel)`.

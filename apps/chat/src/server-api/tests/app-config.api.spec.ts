@@ -26,6 +26,7 @@ describe('app-config API', () => {
         overlayAllowedOrigins: [],
         enabledUiFeatures: null,
         footerHtmlMessage: '',
+        customVisualizers: [],
       },
     });
 

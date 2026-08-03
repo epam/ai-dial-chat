@@ -16,15 +16,32 @@ This document defines functional and non-functional requirements for the initial
 
 ### FR-1 — Conversation Input (`@epam/ai-dial-conversation-input`)
 
-| ID     | Requirement                                                                              | Priority |
-| ------ | ---------------------------------------------------------------------------------------- | -------- |
-| FR-1.1 | User can type a message and send it via the Send button or `Enter` key                   | Must     |
-| FR-1.2 | `Shift+Enter` inserts a newline without sending                                          | Must     |
-| FR-1.3 | Send button is disabled when the input is empty or a response is streaming               | Must     |
-| FR-1.4 | User can attach files to a message; attached files are displayed as chips before sending | Should   |
-| FR-1.5 | User can remove an attached file chip before sending                                     | Should   |
-| FR-1.6 | Input supports slash commands (e.g. `/help`) with a dropdown picker                      | Could    |
-| FR-1.7 | Input supports `@mention` syntax with a dropdown picker                                  | Could    |
+| ID     | Requirement                                                                                                                    | Priority |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| FR-1.1 | User can type a message and send it via the Send button or `Enter` key                                                         | Must     |
+| FR-1.2 | `Shift+Enter` inserts a newline without sending                                                                                | Must     |
+| FR-1.3 | Send button is disabled when the input is empty or a response is streaming                                                     | Must     |
+| FR-1.4 | User can attach files to a message; attached files are displayed as chips before sending                                       | Should   |
+| FR-1.5 | User can remove an attached file chip before sending                                                                           | Should   |
+| FR-1.6 | Input supports slash commands (e.g. `/help`) with a dropdown picker                                                            | Could    |
+| FR-1.7 | Input supports `@mention` syntax with a dropdown picker                                                                        | Could    |
+| FR-1.8 | Conversation Input shows the selected deployment's finite or unlimited monthly token allowance through a compact usage control | Should   |
+| FR-1.9 | Finite limits reveal a percentage; unlimited limits reveal `Unlimited`; both open a one-bar `Usage Limit` popover              | Should   |
+
+#### Token-usage limits control
+
+The app-owned `UsageLimitsControl` is passed to the isolated Conversation Input
+library through `usageLimitsSlot`. It reads only `monthTokenStats`. At rest the
+trigger shows a compact circular ring; hover, keyboard focus, and the open state
+reveal either the finite percentage or the localized `Unlimited` value at the
+ring's inline-start side inside one rounded capsule.
+
+For finite limits the popover shows one monthly `DialProgressBar` and
+`N tokens remaining`. For unlimited limits it follows the Catalog convention:
+the row remains visible, the progress bar uses the normalized `used` and raw
+`total`, and the value is `Unlimited`. Opening the popover refreshes data
+silently without replacing its content with a loader. At 90% finite usage the
+ring and percentage use the theme error color.
 
 ### FR-2 — Message Feed (`@epam/ai-dial-conversation-messages`)
 

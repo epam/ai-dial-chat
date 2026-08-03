@@ -5,6 +5,7 @@ import type {
   MarkdownCanvasContent,
   PdfCanvasContent,
   PlainTextCanvasContent,
+  VisualizerCanvasContent,
 } from '@epam/ai-dial-attachment-canvas';
 import {
   AttachmentContentType,
@@ -15,21 +16,22 @@ import type {
   Annotation,
   Attachment,
   AttachmentResource,
+  CustomVisualizer,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import { FileExtension, MIMEType } from '@epam/ai-dial-chat-shared';
-import { LRUCache } from 'lru-cache';
 import {
   annotationHighlightId,
   annotationsToPdfHighlights,
-} from './annotation';
+  parsePdfPageReference,
+  type AnnotationGroup,
+} from '@epam/ai-dial-quotations';
+import { LRUCache } from 'lru-cache';
 import {
   isDialFileId,
   resolveDialFileDownloadUrl,
   resolveDialUrl,
 } from './dial-file';
-import type { AnnotationGroup } from './group-annotations-by-source';
-import { parsePdfPageReference } from './reference-attachment';
 
 /**
  * Decodes a base64 string into raw bytes, or `undefined` if the string is not
@@ -390,4 +392,48 @@ export const resolveJsonCanvasContent = async (
   } catch {
     return { type: AttachmentContentType.PlainText, text: result };
   }
+};
+
+/**
+ * Fetches the attachment payload and builds a `VisualizerCanvasContent` for the
+ * given registry entry and theme. Returns `null` when the payload cannot be
+ * fetched (caller should fall through to default content-type handling).
+ *
+ * Only JSON payloads are parsed into `data`. Non-JSON payloads (plain text,
+ * CSV, binary, …) resolve with `data: {}` — the visualizer still receives
+ * `mimeType` and `layout`, just no payload body. This is intentional: only
+ * JSON attachment content is forwarded to visualizers in this version.
+ */
+export const resolveVisualizerCanvasContent = async (
+  attachment: DisplayAttachment,
+  entry: CustomVisualizer,
+  themeId: string,
+): Promise<VisualizerCanvasContent | null> => {
+  const result = await resolveAttachmentText(attachment);
+  if (result == null || typeof result !== 'string') return null;
+
+  let data: unknown = {};
+  try {
+    const parsed = JSON.parse(result);
+    if (typeof parsed === 'object' && parsed !== null) {
+      data = parsed;
+    }
+  } catch {
+    /* non-JSON payload — send as empty object; visualizer receives raw mimeType */
+  }
+
+  return {
+    type: AttachmentContentType.Visualizer,
+    url: entry.url,
+    mimeType: attachment.contentType,
+    data,
+    layout: {
+      width: entry.width,
+      height: entry.height,
+      mobileHeight: entry.mobileHeight,
+      themeId,
+    },
+    visualizerName: entry.title,
+    requestTimeout: entry.requestTimeout,
+  };
 };

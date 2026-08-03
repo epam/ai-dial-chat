@@ -1,4 +1,4 @@
-import { PrimaryButton } from '@epam/ai-dial-kit';
+import { PrimaryButton } from '@epam/ai-dial-ui-kit';
 import {
   DialFileManager,
   DialFileManagerActions,

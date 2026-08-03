@@ -127,6 +127,31 @@ describe('useConversationHandlers — handleSend', () => {
     );
   });
 
+  it('stores tool configuration on the optimistic user message', async () => {
+    mockAttachmentsToDtos.mockReturnValue(undefined);
+    const params = makeParams({
+      toolConfigurationValue: { deep_research: true },
+    });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await result.current.handleSend('Research this', []);
+
+    const updateConversation = params.setConversation.mock.calls[0][0] as (
+      previous: Conversation,
+    ) => Conversation;
+    const updated = updateConversation(params.conversation);
+
+    expect(updated.messages[0].custom_content).toEqual({
+      configuration_value: { deep_research: true },
+    });
+    expect(params.startStream.mock.calls[0][4]).toEqual({
+      configuration_value: { deep_research: true },
+    });
+    expect(params.startStream.mock.calls[0][4]).toBe(
+      updated.messages[0].custom_content,
+    );
+  });
+
   it('calls startStream with the selected deployment', async () => {
     mockAttachmentsToDtos.mockReturnValue(undefined);
     const params = makeParams();
@@ -139,7 +164,7 @@ describe('useConversationHandlers — handleSend', () => {
       'hello',
       1,
       'selected-deployment',
-      { attachments: undefined },
+      undefined,
       expect.any(String),
       'append',
     );
@@ -160,7 +185,7 @@ describe('useConversationHandlers — handleSend', () => {
       'hello',
       1,
       'selected-deployment',
-      { attachments: undefined },
+      undefined,
       expect.any(String),
       'append',
     );
@@ -210,6 +235,52 @@ describe('useConversationHandlers — handleSend', () => {
     await result.current.handleSend('hello', []);
 
     expect(params.startStream).not.toHaveBeenCalled();
+  });
+});
+
+describe('useConversationHandlers - handleEditMessage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('preserves configuration and form values when editing a message', async () => {
+    mockAttachmentsToDtos.mockReturnValue(undefined);
+    const conversation = {
+      ...makeConversation(),
+      messages: [
+        {
+          role: MessageRole.User,
+          content: 'Original question',
+          custom_content: {
+            configuration_value: { deep_research: true },
+            form_value: { topic: 'testing' },
+          },
+        },
+        { role: MessageRole.Assistant, content: 'Original answer' },
+      ],
+    } as Conversation;
+    const params = makeParams({
+      conversation,
+      conversationRef: { current: conversation },
+    });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await act(async () => {
+      await result.current.handleEditMessage(0, 'Edited question', [], []);
+    });
+
+    expect(params.startStream).toHaveBeenCalledWith(
+      'conv-1',
+      'Edited question',
+      1,
+      'selected-deployment',
+      {
+        configuration_value: { deep_research: true },
+        form_value: { topic: 'testing' },
+      },
+      expect.any(String),
+      'edit',
+    );
   });
 });
 
@@ -297,6 +368,18 @@ describe('useConversationHandlers — handleButtonSelect', () => {
       expect.any(String),
       'append',
     );
+
+    const updateConversation = params.setConversation.mock.calls[0][0] as (
+      previous: Conversation,
+    ) => Conversation;
+    const updated = updateConversation(params.conversation);
+    expect(updated.messages[0].custom_content).toEqual({
+      form_value: { starter: 0 },
+      configuration_value: { starter: true, deep_research: true },
+    });
+    expect(params.startStream.mock.calls[0][4]).toBe(
+      updated.messages[0].custom_content,
+    );
   });
 });
 
@@ -309,7 +392,13 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
     const conversation = {
       ...makeConversation(),
       messages: [
-        { role: MessageRole.User, content: 'First question' },
+        {
+          role: MessageRole.User,
+          content: 'First question',
+          custom_content: {
+            configuration_value: { deep_research: true },
+          },
+        },
         {
           role: MessageRole.Assistant,
           content: 'First answer',
@@ -350,7 +439,7 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
       'First question',
       1,
       'selected-deployment',
-      undefined,
+      { configuration_value: { deep_research: true } },
       expect.any(String),
       'regenerate',
     );
@@ -371,7 +460,7 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
       'hello',
       1,
       'selected-deployment',
-      { attachments: undefined },
+      undefined,
       expect.any(String),
       'append',
     );

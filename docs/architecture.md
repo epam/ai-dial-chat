@@ -428,7 +428,7 @@ Three-tier fallback pattern (defined in `openspec/lib-styling-guide.md`):
 ```scss
 // libs/conversation-input/src/components/ConversationInput/ConversationInput.module.scss
 .welcome {
-  color: var(--ci-welcome-color, var(--text-primary, #eef1f7));
+  color: var(--ci-welcome-color, var(--text-primary, #161b2d));
   font-size: var(--ci-welcome-font-size, 24px);
 }
 ```
@@ -437,7 +437,7 @@ Tiers:
 
 1. `--ci-welcome-color` — set by parent app via `colors` prop → `style={{ '--ci-welcome-color': value }}`
 2. `--text-primary` — global DIAL Theme token injected by `ThemeProvider`
-3. `#eef1f7` — hardcoded hex fallback (dark theme defaults)
+3. `#161B2D` — hardcoded hex fallback (dark theme defaults)
 
 CSS variable naming: `--{lib-prefix}-{property}` (e.g. `--ci-*` for conversation-input, `--cm-*` for conversation-messages).
 
@@ -491,11 +491,11 @@ theme.json (from /api/themes)
 ThemeProvider (apps/chat)
     │  injects tokens as CSS variables on :root
     ▼
---bg-layer-0, --text-primary, --controls-bg-accent-primary, ...
+--bg-layer-0, --text-primary, --control-accent, ...
     │
     ├──▶ Tailwind config → bg-[var(--bg-layer-0)], text-[var(--text-primary)], ...
     │
-    └──▶ SCSS Modules in libs → var(--text-primary, #eef1f7)
+    └──▶ SCSS Modules in libs → var(--text-primary, #161B2D)
 ```
 
 ---

@@ -1,10 +1,12 @@
 import type { DisplayAttachment, Message } from '@epam/ai-dial-chat-shared';
 import { MessageRole } from '@epam/ai-dial-chat-shared';
+import {
+  isReferenceOnlyAttachment,
+  resolveMessageAnnotations,
+} from '@epam/ai-dial-quotations';
 import type { QuotationSource } from '@epam/ai-dial-source-panel';
 import { useMemo } from 'react';
-import { resolveMessageAnnotations } from '../../utils/annotation';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
-import { isReferenceOnlyAttachment } from '../../utils/reference-attachment';
 
 /**
  * Derives uploaded (user), generated (assistant) attachment lists, and quotation sources

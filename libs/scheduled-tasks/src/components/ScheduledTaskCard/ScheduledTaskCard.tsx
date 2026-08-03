@@ -3,10 +3,10 @@ import {
   CardShell,
   DIAL_ICON_SIZE,
   DialDropdown,
-  DialIconButton,
   type DropdownItem,
   FolderPath,
   Highlight,
+  IconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconDotsVertical,
@@ -129,7 +129,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
             matchReferenceWidth={false}
             placement="bottom-end"
           >
-            <DialIconButton
+            <IconButton
               icon={<IconDotsVertical size={DIAL_ICON_SIZE.SM} aria-hidden />}
               aria-label={actionsLabel}
               className="shrink-0"
