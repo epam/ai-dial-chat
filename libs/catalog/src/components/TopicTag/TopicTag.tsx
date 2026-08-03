@@ -1,6 +1,13 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag, DialTooltip } from '@epam/ai-dial-ui-kit';
-import { FC, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  FC,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import styles from './TopicTag.module.scss';
 
 /** Props for TopicTag. */
