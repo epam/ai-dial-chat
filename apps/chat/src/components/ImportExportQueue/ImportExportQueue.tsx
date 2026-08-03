@@ -96,7 +96,7 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
                 title: job.label,
               })}
               appearance={ButtonAppearance.Ghost}
-              size={ElementSize.Small}
+              size={ElementSize.Large}
               icon={
                 <IconRefresh
                   size={DIAL_ICON_SIZE.SM}
@@ -104,7 +104,6 @@ const JobRow: FC<JobRowProps> = ({ job, onDismiss, onRetry }) => {
                 />
               }
               onClick={() => onRetry(job.id)}
-              className="size-7"
             />
             <span className={STATUS_SLOT_CLASS}>
               <IconAlertCircleFilled size={16} className="text-error" />
